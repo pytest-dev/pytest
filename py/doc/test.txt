@@ -657,7 +657,7 @@ requirements for remote machines:
 Hot to use it
 -----------------------
 
-When you issue ``py.test --session=R`` then your computer becomes
+When you issue ``py.test -d`` then your computer becomes
 the distributor of tests ("master") and will start collecting
 and distributing tests to several machines.  The machines
 need to be specified in a ``conftest.py`` file.  
