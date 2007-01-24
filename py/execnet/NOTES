@@ -1,0 +1,122 @@
+=============================================================================
+                      Channel implementation notes
+=============================================================================
+
+
+The public API of channels make them appear either opened or closed.
+When a channel is closed, we can't send any more items, and it will not
+receive any more items than already queued.
+
+Callbacks make the situation slightly more subtle.  Callbacks are
+attached to the ChannelFactory object, so that Channel objects can be
+garbage-collected and still leave behind an active callback that can
+continue to receive items.
+
+The CHANNEL_CLOSE message is sent when a channel id is about to be removed
+from the ChannelFactory, which means when the Channel object has been
+garbage-collected *and* there is no callback any more.
+
+If a Channel object is garbage-collected but the ChannelFactory has a
+callback for it, a CHANNEL_LAST_MESSAGE message is sent.  It is only useful
+if both sides' Channel objects have an associated callback.  In this
+situation, CHANNEL_LAST_MESSAGE allows its receiver to un-register its own
+callback; if/when in addition the receiver side also looses the last
+reference to its Channel object, the Channel is closed.  So in this particular
+situation both sides must forget about the Channel object for it to be
+automatically closed.
+
+
+
+gateway   <--->    channelfactory ---> {id: weakref(channel)}
+                                  ---> {id: callback}
+
+
+
+State and invariants of Channel objects
+---------------------------------------
+
+_channels and _callbacks are dictionaries on the ChannelFactory.
+Other attributes are on the Channel objects.
+
+All states are valid at any time (even with multithreading) unless
+marked with {E}, which means that they may be temporary invalid.
+They are eventually restored.
+
+
+States ("sendonly" means opened but won't receive any more items):
+
+  opened               sendonly          closed                deleted
+ =================    ==============    ==================    ===============
+  not _closed          not _closed       _closed               <no ref left>
+  not _receiveclosed   _receiveclosed    {E} _receiveclosed
+
+In the presence of callbacks, "deleted" does not imply "closed" nor "sendonly".
+It only means that no more items can be sent.  The (logical) channel can
+continue to receive data via the call-back even if the channel object no
+longer exists.
+
+
+The two kinds of channels, with or without callback:
+
+   items read by receive()           has a callback
+  =============================     =======================================
+   _items is a Queue                 _items is None
+   id not in _callbacks
+                                     state==opened: id in _callbacks
+   {E} state==sendonly: there is     {E} state!=opened: id not in _callbacks
+         an ENDMARKER in _items
+   {E} state==closed: there is
+         an ENDMARKER in _items
+
+Callback calls should be considered asynchronuous.  The channel can be in any
+state and change its state while the callback runs.
+
+
+The ChannelFactory's WeakValueDictionary _channels maps some ids to their
+channel object, depending on their state:
+
+  opened               sendonly          closed              deleted
+ =================    ==============    ================    ===============
+  id in _channels      {E} not in        {E} not in          not in
+
+
+All received RemoteErrors are handled exactly once: they are normally
+re-raised once in waitclose() or receive().  If it is not possible, they are
+at the moment dumped to stderr.  (XXX should use logging/tracing)
+Only channels in {E} "closed" state can hold RemoteErrors.
+
+
+Methods:
+
+ * close()      returns with the channel in "closed" state
+ * send()       either send the data or raise if "closed"
+ * receive()    wait for the next item.  If no item left and the state
+                   changes to non-"opened", raise
+ * waitclose()  wait for a non-"opened" state
+
+
+Assuming the channel is connected and the connection is alive, the local state
+eventually influences the state of the corresponding remote channel object:
+
+    local |   opened    sendonly    closed    deleted
+remote    |
+=======================================================
+          |
+   opened |     ok         n/a        (1)       (2)
+          |
+ sendonly |     n/a        n/a        n/a       ok
+          |
+   closed |     (1)        n/a        ok        ok
+          |
+  deleted |     (2)        ok         ok        ok
+
+(1)  The side with the closed channel object must send a CHANNEL_CLOSE message,
+     which will eventually put the other side's channel in "closed" state if
+     it is still "opened".
+
+(2)  If the deleted channel has no callback, this is equivalent to (1).
+     Otherwide, the side with the deleted channel must send a
+     CHANNEL_LAST_MESSAGE, which will eventually put the other side's channel in
+     "sendonly" state if it is still "opened".
+
+n/a  These configuration should never occur.

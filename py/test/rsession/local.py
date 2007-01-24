@@ -1,0 +1,76 @@
+
+""" local-only operations
+"""
+
+from py.__.test.rsession.executor import BoxExecutor, RunExecutor
+from py.__.test.rsession import report
+from py.__.test.rsession.outcome import ReprOutcome
+
+# XXX copied from session.py
+def startcapture(session):
+    if not session.config.option.nocapture and not session.config.option.usepdb:
+        # XXX refactor integrate capturing
+        from py.__.misc.simplecapture import SimpleOutErrCapture
+        session._capture = SimpleOutErrCapture()
+
+def finishcapture(session): 
+    if hasattr(session, '_capture'): 
+        capture = session._capture 
+        del session._capture
+        return capture.reset()
+    return "", ""
+
+def box_runner(item, session, reporter):
+    r = BoxExecutor(item)
+    return ReprOutcome(r.execute())
+
+def plain_runner(item, session, reporter):
+    # box executor is doing stdout/err catching for us, let's do it here
+    startcapture(session)
+    r = RunExecutor(item, usepdb=session.config.option.usepdb, reporter=reporter)
+    outcome = r.execute()
+    outcome = ReprOutcome(outcome.make_repr())
+    outcome.stdout, outcome.stderr = finishcapture(session)
+    return outcome
+
+RunnerPolicy = {
+    'plain_runner':plain_runner,
+    'box_runner':box_runner
+}
+
+def benchmark_runner(item, session, reporter):
+    raise NotImplementedError()
+
+def apigen_runner(item, session, reporter):
+    r = RunExecutor(item, reporter=reporter)
+    session.tracer.start_tracing()
+    retval = plain_runner(item, session, reporter)
+    session.tracer.end_tracing()
+    return retval
+
+def exec_runner(item, session, reporter):
+    raise NotImplementedError()
+
+# runner interface is here to perform several different types of run
+#+1. box_runner - for running normal boxed tests
+#+2. plain_runner - for performing running without boxing (necessary for pdb)
+#    XXX: really?
+#-3. exec_runner - for running under different interpreter
+#-4. benchmark_runner - for running with benchmarking
+#-5. apigen_runner - for running under apigen to generate api out of it.
+def local_loop(session, reporter, itemgenerator, shouldstop, config, runner=None):
+    assert runner is not None
+    #if runner is None:
+    #    if session.config.option.apigen:
+    #        runner = apigen_runner
+    #    else:
+    #    runner = box_runner
+    while 1:
+        try:
+            item = itemgenerator.next()
+            if shouldstop():
+                return
+            outcome = runner(item, session, reporter)
+            reporter(report.ReceivedItemOutcome(None, item, outcome))
+        except StopIteration:
+            break

@@ -1,0 +1,26 @@
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\pagestyle{fancy}
+\usepackage[pdftex]{graphicx}
+
+%(have_tocdepth)s\setcounter{tocdepth}{%(toc_depth)s}
+
+%(sans_serif)s\renewcommand{\familydefault}{\sfdefault}
+%(specified_font)s\usepackage{%(font_package)s}
+\lhead{
+\begin{tabular}{l}
+\textbf{\Large %(heading)s}\tabularnewline
+\thepage\ of \pageref{LastPage},  \today
+\tabularnewline
+\tabularnewline
+\end{tabular}
+}
+\rhead{
+%(have_logo)s\includegraphics[height=4\baselineskip]{%(logo)s}
+}
+\cfoot{}
+\addtolength{\headheight}{3\baselineskip}
+\addtolength{\headheight}{0.61pt}
+\setlength\parskip{\medskipamount}
+\setlength\parindent{0pt}
+

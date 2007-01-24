@@ -1,0 +1,2 @@
+this formula contains a fraction, that means it also contains a backslash:
+:latexformula:`$\frac{x^2}{y^2}$`

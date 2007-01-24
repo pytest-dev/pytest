@@ -1,0 +1,19 @@
+.. contents::
+
+This is the first part of the example rest file
+===============================================
+
+
+some content.
+
+fancy subsection heading
+-------------------------
+
+some more content.
+
+really stupid document
+------------------------
+
+we are all thankful that it ends now.
+
+

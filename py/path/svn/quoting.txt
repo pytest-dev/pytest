@@ -1,0 +1,81 @@
+URL escaping in Subversion
+==========================
+
+A quick document describing the rules (as far as we've found out, that is) that
+apply to quoting of URLs and file paths in Subversion. Handling quoting
+properly is a bit of a challenge, since different rules apply for file paths
+and URLs, and those rules aren't entirely clear in either case.
+
+What follows is a list of semi-random notes that need to be taken into
+consideration when implementing proper quoting in the 'py lib'.
+
+**DISCLAIMER**: currently the idea is just to have this document around as a
+TODO list for implementation, not sure what will happen to it in the future...
+Don't consider it part of the py lib documentation, and do understand it may be
+incomplete or even incorrect...
+
+* SVN deals with remote objects using URLs and local ones using paths
+
+URL related notes
+-----------------
+
+* URLs follow (almost) normal `URL encoding rules`_
+
+  characters that aren't allowed in URL paths (such as :, @, %, etc.) should
+  be replaced with a % sign following the ASCII value of the character (two
+  digit HEX)
+  
+  an exception (the only one I could find so far) is the drive letter in a file
+  URL in windows, the following path was required to get a file 'bar' from a
+  repo in 'c:\\foo'::
+
+    file:///c:/foo/bar
+
+* URLs always have / as seperator
+
+  on Windows, the \\ characters in paths will have to be replaced with a /
+
+  also (see above) if the path contains a drive letter, a / should be prepended
+
+* ignore casing on Windows?
+
+  since Windows is case-insensitive, it may make sense to consider ignoring
+  case on that platform(?)
+
+* long file names
+
+  don't even want to go there... `filed an issue on this on in the tracker`_...
+
+Path related notes
+------------------
+
+* all characters that are supported in paths by any operating system seem to
+  be supported by SVN
+
+  basically SVN doesn't think about platforms that aren't capable of using
+  certain characters: it will happily allow you to check a file with a name
+  containing a backslash (\\) in, resulting in a repo that isn't usable in
+  Windows anymore (you'll get a nasty message explaining how your local
+  checkout is broken on checking it out)...
+
+  I think py.path.svn* should take the approach of not allowing the characters
+  that will result in failing checkouts on Windows. These characters are (I
+  think, list taken from `some website`_)::
+
+    * | \ / : < > ?
+
+  This would mean that both svnwc and svnurl should fail on initializing when
+  the path (or the path part of the URL) contains one of these characters. Also
+  join() and other functions that take (parts of) paths as arguments should
+  check for, and fail on, these characters.
+
+* paths don't require encoding
+
+  normally paths don't have to be encoded, however @ can confuse SVN in certain
+  cases; a workaround is to add @HEAD after the path (also works for relative
+  paths, I encountered this doing an SVN info on a file called 'bar@baz', in
+  the end the command 'svn info bar@baz@HEAD' worked)
+
+.. _`filed an issue on this on in the tracker`: https://codespeak.net/issue/py-dev/issue38
+.. _`URL encoding rules`: http://en.wikipedia.org/wiki/Percent-encoding
+.. _`some website`: http://linuxboxadmin.com/articles/filefriction.php

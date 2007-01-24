@@ -1,0 +1,640 @@
+===============================================================
+py.code_template: Lightweight and flexible code template system
+===============================================================
+
+.. contents::
+.. sectnum::
+
+Motivation
+==========
+
+There are as many python templating systems as there are web frameworks
+(a lot).  This is partly because it is so darned easy to write a templating
+system in Python.  What are the distinguishing characteristics of the
+py.code_template templating system?
+
+  * Optimized for generating code (Python, C, bash scripts, etc.),
+    not XML or HTML
+
+  * Designed for use by Python programmers, not by web artists
+
+      + Aesthetic sensibilities are different
+
+      + The templates should be an organic part of a module -- just more code
+
+      + Templates do not need to be incredibly full-featured, because
+        programmers are perfectly capable of escaping to Python for
+        advanced features.
+
+          - No requirement to support inheritance
+          - No requirement to support exec
+
+  * Designed so that templates can be coded in the most natural way
+    for the task at hand
+
+      + Generation of code and scripts often does not follow MVC paradigm!
+
+      + Small template fragments are typically coded *inside* Python modules
+
+      + Sometimes it is natural to put strings inside code; sometimes it is
+        natural to put code inside strings.  Both should be supported as
+        reasonably and naturally as possible.
+
+Imaginary-world examples
+========================
+
+These would be real-world examples, but, not only is this module not yet
+implemented, as of now, PyPy is not incredibly useful to the average
+programmer...
+
+translator/c/genc.py
+--------------------
+
+The original function::
+
+    def gen_readable_parts_of_main_c_file(f, database, preimplementationlines=[]):
+        #
+        # All declarations
+        #
+        structdeflist = database.getstructdeflist()
+        print >> f
+        print >> f, '/***********************************************************/'
+        print >> f, '/***  Structure definitions                              ***/'
+        print >> f
+        for node in structdeflist:
+            print >> f, 'struct %s;' % node.name
+        print >> f
+        for node in structdeflist:
+            for line in node.definition():
+                print >> f, line
+        print >> f
+        print >> f, '/***********************************************************/'
+        print >> f, '/***  Forward declarations                               ***/'
+        print >> f
+        for node in database.globalcontainers():
+            for line in node.forward_declaration():
+                print >> f, line
+
+        #
+        # Implementation of functions and global structures and arrays
+        #
+        print >> f
+        print >> f, '/***********************************************************/'
+        print >> f, '/***  Implementations                                    ***/'
+        print >> f
+        for line in preimplementationlines:
+            print >> f, line
+        print >> f, '#include "src/g_include.h"'
+        print >> f
+        blank = True
+        for node in database.globalcontainers():
+            if blank:
+                print >> f
+                blank = False
+            for line in node.implementation():
+                print >> f, line
+                blank = True
+
+This could be refactored heavily.  An initial starting point
+would look something like this, although later, the template
+instance could be passed in and reused directly, rather than
+passing the file handle around::
+
+    def gen_readable_parts_of_main_c_file(f, database, preimplementationlines=[]):
+        def container_implementation():
+            # Helper function designed to introduce blank lines
+            # between container implementations
+
+            blank = True
+            for node in database.globalcontainers():
+                if blank:
+                    yield ''
+                    blank = False
+                for line in node.implementation():
+                    yield line
+                    blank = True
+
+        t = code_template.Template()
+        #
+        # All declarations
+        #
+        structdeflist = database.getstructdeflist()
+        t.write(dedent=8, text='''
+
+            /***********************************************************/
+            /***  Structure definitions                              ***/
+
+                {for node in structdeflist}
+            struct {node.name};
+                {endfor}
+
+                {for node in structdeflist}
+                    {for line in node.definition}
+            {line}
+                    {endfor}
+                {endfor}
+
+            /***********************************************************/
+            /***  Forward declarations                               ***/
+
+                {for node in database.globalcontainers()}
+                    {for line in node.forward_declaration()}
+            {line}
+                    {endfor}
+                {endfor}
+
+            {**
+             ** Implementation of functions and global structures and arrays
+             **}
+
+            /***********************************************************/
+            /***  Implementations                                    ***/
+
+                {for line in preimplementationlines}
+        {line}
+                {endfor}
+
+            #include "src/g_include.h"
+
+                {for line in container_implementation()}
+        {line}
+                {endfor}
+    """)
+    t.output(f)
+
+translator/c/genc.py gen_makefile
+---------------------------------
+
+The original code::
+
+    MAKEFILE = '''
+    CC = gcc
+
+    $(TARGET): $(OBJECTS)
+    \t$(CC) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBDIRS) $(LIBS)
+
+    %.o: %.c
+    \t$(CC) $(CFLAGS) -o $@ -c $< $(INCLUDEDIRS)
+
+    clean:
+    \trm -f $(OBJECTS)
+    '''
+
+    def gen_makefile(self, targetdir):
+        def write_list(lst, prefix):
+            for i, fn in enumerate(lst):
+                print >> f, prefix, fn,
+                if i < len(lst)-1:
+                    print >> f, '\\'
+                else:
+                    print >> f
+                prefix = ' ' * len(prefix)
+
+        compiler = self.getccompiler(extra_includes=['.'])
+        cfiles = []
+        ofiles = []
+        for fn in compiler.cfilenames:
+            fn = py.path.local(fn).basename
+            assert fn.endswith('.c')
+            cfiles.append(fn)
+            ofiles.append(fn[:-2] + '.o')
+
+        f = targetdir.join('Makefile').open('w')
+        print >> f, '# automatically generated Makefile'
+        print >> f
+        print >> f, 'TARGET =', py.path.local(compiler.outputfilename).basename
+        print >> f
+        write_list(cfiles, 'SOURCES =')
+        print >> f
+        write_list(ofiles, 'OBJECTS =')
+        print >> f
+        args = ['-l'+libname for libname in compiler.libraries]
+        print >> f, 'LIBS =', ' '.join(args)
+        args = ['-L'+path for path in compiler.library_dirs]
+        print >> f, 'LIBDIRS =', ' '.join(args)
+        args = ['-I'+path for path in compiler.include_dirs]
+        write_list(args, 'INCLUDEDIRS =')
+        print >> f
+        print >> f, 'CFLAGS =', ' '.join(compiler.compile_extra)
+        print >> f, 'LDFLAGS =', ' '.join(compiler.link_extra)
+        print >> f, MAKEFILE.strip()
+        f.close()
+
+
+Could look something like this::
+
+    MAKEFILE = '''
+    # automatically generated Makefile
+
+    TARGET = {py.path.local(compiler.outputfilename).basename}
+
+        {for line in write_list(cfiles, 'SOURCES =')}
+    {line}
+        {endfor}
+
+        {for line in write_list(ofiles, 'OBJECTS =')}
+    {line}
+        {endfor}
+
+    LIBS ={for libname in compiler.libraries} -l{libname}{endfor}
+    LIBDIRS ={for path in compiler.library_dirs} -L{path}{endfor}
+    INCLUDEDIRS ={for path in compiler.include_dirs} -I{path}{endfor}
+
+    CFLAGS ={for extra in compiler.compile_extra} {extra}{endfor}
+    LDFLAGS ={for extra in compiler.link_extra} {extra}{endfor}
+
+    CC = gcc
+
+    $(TARGET): $(OBJECTS)
+    \t$(CC) $(LDFLAGS) -o $@ $(OBJECTS) $(LIBDIRS) $(LIBS)
+
+    %.o: %.c
+    \t$(CC) $(CFLAGS) -o $@ -c $< $(INCLUDEDIRS)
+
+    clean:
+    \trm -f $(OBJECTS)
+    '''
+
+    def gen_makefile(self, targetdir):
+        def write_list(lst, prefix):
+            for i, fn in enumerate(lst):
+                yield '%s %s %s' % (prefix, fn, i < len(list)-1 and '\\' or '')
+                prefix = ' ' * len(prefix)
+
+        compiler = self.getccompiler(extra_includes=['.'])
+        cfiles = []
+        ofiles = []
+        for fn in compiler.cfilenames:
+            fn = py.path.local(fn).basename
+            assert fn.endswith('.c')
+            cfiles.append(fn)
+            ofiles.append(fn[:-2] + '.o')
+
+        code_template.Template(MAKEFILE).output(targetdir.join('Makefile'))
+
+
+translator/llvm/module/excsupport.py
+------------------------------------
+
+The original string::
+
+    invokeunwind_code = '''
+    ccc %(returntype)s%%__entrypoint__%(entrypointname)s {
+        %%result = invoke %(cconv)s %(returntype)s%%%(entrypointname)s to label %%no_exception except label %%exception
+
+    no_exception:
+        store %%RPYTHON_EXCEPTION_VTABLE* null, %%RPYTHON_EXCEPTION_VTABLE** %%last_exception_type
+        ret %(returntype)s %%result
+
+    exception:
+        ret %(noresult)s
+    }
+
+    ccc int %%__entrypoint__raised_LLVMException() {
+        %%tmp    = load %%RPYTHON_EXCEPTION_VTABLE** %%last_exception_type
+        %%result = cast %%RPYTHON_EXCEPTION_VTABLE* %%tmp to int
+        ret int %%result
+    }
+
+    internal fastcc void %%unwind() {
+        unwind
+    }
+    '''
+
+Could look something like this if it was used in conjunction with a template::
+
+    invokeunwind_code = '''
+    ccc {returntype}%__entrypoint__{entrypointname} {
+        %result = invoke {cconv} {returntype}%{entrypointname} to label %no_exception except label %exception
+
+    no_exception:
+        store %RPYTHON_EXCEPTION_VTABLE* null, %RPYTHON_EXCEPTION_VTABLE** %last_exception_type
+        ret {returntype} %result
+
+    exception:
+        ret {noresult}
+    }
+
+    ccc int %__entrypoint__raised_LLVMException() {
+        %tmp    = load %RPYTHON_EXCEPTION_VTABLE** %last_exception_type
+        %result = cast %RPYTHON_EXCEPTION_VTABLE* %tmp to int
+        ret int %result
+    }
+
+    internal fastcc void %unwind() {
+        unwind
+    }
+    '''
+
+
+Template syntax
+===============
+
+Design decision
+---------------
+
+As all programmers must know by now, all the special symbols on the keyboard
+are quite heavily overloaded.  Often, template systems work around this fact
+by having special notation like `<*` ... `*>` or {% ... %}.  Some template systems
+even have multiple special notations -- one for comments, one for statements,
+one for expressions, etc.
+
+I find these hard to type and ugly.  Other markups are either too lightweight,
+or use characters which occur so frequently in the target languages that it
+becomes hard to distinguish marked-up content from content which should be
+rendered as-is.
+
+The compromise taken by *code_template* is to use braces (**{}**) for markup.
+
+This immediately raises the question: what about when the marked-up language
+is C or C++?  The answer is that if the leading brace is immediately followed
+by whitespace, it is normal text; if not it is the start of markup.
+
+To support normal text which has a leading brace immediately followed by
+an identifier, if the first whitespace character after the brace is a space
+character (e.g. not a newline or tab), it will be removed from the output.
+
+Examples::
+
+       { This is normal text and the space between { and This will be removed}
+       {'this must be a valid Python expression' + ' because it is treated as markup'}
+       {
+           This is normal text, but nothing is altered (the newline is kept intact)
+       }
+
+       {{1:'Any valid Python expression is allowed as markup'}[1].ljust(30)}
+
+.. _`Code element`:
+
+Elements
+--------
+
+Templates consist of normal text and code elements.
+(Comments are considered to be code elements.)
+
+All code elements start with a `left brace`_ which is not followed by
+whitespace.
+
+Keyword element
+~~~~~~~~~~~~~~~
+
+A keyword element is a `code element`_ which starts with a keyword_.
+
+For example, *{if foo}* is a keyword element, but *{foo}* is a `substituted expression`_.
+
+Keyword
+~~~~~~~
+
+A keyword is a word used in `conditional text`_ or in `repeated text`_, e.g.
+one of *if*, *elif*, *else*, *endif*, *for*, or *endfor*.
+
+Keywords are designed to match their Python equivalents.  However, since
+templates cannot use spacing to indicate expression nesting, the additional
+keywords *endif* and *endfor* are required.
+
+Left brace
+~~~~~~~~~~
+
+All elements other than normal text start with a left brace -- the symbol '{',
+sometimes known as a 'curly bracket'.  A left brace is itself considered
+to be normal text if it is followed by whitespace.  If the whitespace starts
+with a space character, that space character will be stripped from the output.
+If the whitespace starts with a tab or linefeed character, the whitespace will
+be left in the output.
+
+Normal Text
+~~~~~~~~~~~
+
+Normal text remains unsubstituted.  Transition from text to the other elements
+is effected by use of a `left brace`_ which is not followed by whitespace.
+
+Comment
+~~~~~~~
+
+A comment starts with a left brace followed by an asterisk ('{`*`'), and
+ends with an asterisk followed by a right brace ('`*`}')::
+
+        This is a template -- this text will be copied to the output.
+        {* This is a comment and this text will not be copied to the output *}
+
+        {*
+             Comments can span lines,
+             but cannot be nested
+        *}
+
+Substituted expression
+~~~~~~~~~~~~~~~~~~~~~~
+
+Any python expression may be used::
+
+        Dear {record.name},
+        we are sorry to inform you that you did not win {record.contest}.
+
+The expression must be surrounded by braces, and there must not be any
+whitespace between the leftmost brace and the start of the expression.
+
+The expression will automatically be converted to a string with str().
+
+Conditional text
+~~~~~~~~~~~~~~~~
+
+The following template has text which is included conditionally::
+
+        This text will always be included in the output
+        {if foo}
+        This text will be included if foo is true
+        {elif bar}
+        This text will be included if foo is not true but bar is true
+        {else}
+        This text will be included if neither foo nor bar is true
+        {endif}
+
+The {elif} and {else} elements are optional.
+
+Repeated text
+~~~~~~~~~~~~~
+
+The following template shows how to pull multiple items out of a list::
+
+        {for student, score in sorted(scorelist)}
+            {student.ljust(20)}  {score}
+        {endfor}
+
+Whitespace removal or modification
+----------------------------------
+
+In general, whitespace in `Normal Text`_ is transferred unchanged to the
+output.  There are three exceptions to this rule:
+
+Line separators
+~~~~~~~~~~~~~~~
+
+Each newline is converted to the final output using os.linesep.
+
+Beginning or end of string
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+py.code_template is designed to allow easy use of templates inside of python
+modules.  The canonical way to write a template is inside a triple-quoted
+string, e.g.::
+
+      my_template = '''
+      This is my template.  It can have any text at all in it except
+      another triple-single-quote.
+                    '''
+
+To support this usage, if the first character is a newline, it will be
+removed, and if the last line consists solely of whitespace with no
+trailing newline, it will also be removed.
+
+A comment or single keyword element on a line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Whenever a `keyword element`_ or comment_ is on a line
+*by itself*, that line will not be copied to the output.
+
+This happens when:
+    - There is nothing on the line before the keyword element
+      or comment except whitespace (spaces and/or tabs).
+
+    - There is nothing on the line after the keyword element
+      or comment except a newline.
+
+Note that even a multi-line comment or keyword element can
+have the preceding whitespace and subsequent newline stripped
+by this rule.
+
+The primary purpose of this rule is to allow the Python
+programmer to use indentation, **even inside a template**::
+
+        This is a template
+
+        {if mylist}
+        List items:
+            {for item in mylist}
+         - {item}
+            {endfor}
+        {endif}
+
+Template usage
+==============
+
+Templates are used by importing the Template class from py.code_template,
+constructing a template, and then sending data with the write() method.
+
+In general, there are four methods for getting the formatted data back out
+of the template object:
+
+   - read() reads all the data currently in the object
+
+   - output(fobj) outputs the data to a file
+
+         fobj can either be an open file object, or a string.  If it is
+         a string, the file will be opened, written, and closed.
+
+   - open(fobj) (or calling the object constructor with a file object)
+
+         If the open() method is used, or if a file object is passed to
+         the constructor, each write() will automatically flush the data
+         out to the file.  If the fobj is a string, it is considered to
+         be *owned*, otherwise it is considered to be *borrowed*.  *Owned*
+         file objects are closed when the class is deleted.
+
+   - write() can be explicitly called with a file object, in which case
+     it will invoke output() on that object after it generates the data.
+
+Template instantiation and methods
+==================================
+
+template = code_template.Template(outf=None, cache=None)
+
+If outf is given, it will be passed to the open() method
+
+cache may be given as a mapping.  If not given, the template will use
+the shared default cache.  This is not thread safe.
+
+template.open
+-------------
+
+template.open(outf, borrowed = None)
+
+The open method closes the internal file object if it was already open,
+and then re-opens it on the given file.  It is an error to call open()
+if there is data in the object left over from previous writes.  (Call
+output() instead.)
+
+borrowed defaults to 0 if outf is a string, and 1 if it is a file object.
+
+borrowed can also be set explicitly if required.
+
+template.close
+--------------
+
+close() disassociates the file from the template, and closes the file if
+it was not borrowed.  close() is automatically called by the destructor.
+
+template.write
+--------------
+
+template.write(text='', outf=None, dedent=0, localvars=None, globalvars=None,
+framelevel=1)
+
+The write method has the following parameters:
+
+  - text is the template itself
+
+  - if outf is not None, the output method will be invoked on the object
+    after the current template is processed.  If no outf is given, data
+    will be accumulated internal to the instance until a write() with outf
+    is processed, or read() or output() is called, whichever comes first, if
+    there is no file object.  If there is a file object, data will be flushed
+    to the file after every write.
+
+  - dedent, if given is applied to each line in the template, to "de-indent"
+
+  - localvars and globalvars default to the dictionaries of the caller.  A copy
+    of localvars is made so that the __TrueSpace__ identifier can be added.
+
+  - cache may be given as a mapping.  If not given, the template will use
+    the shared default cache.  This is not thread safe.
+
+  - framelevel is used to determine which stackframe to access for globals
+    and locals if localvars and/or globalvars are not specified.  The default
+    is to use the caller's frame.
+
+The write method supports the print >> file protocol by deleting the softspace
+attribute on every invocation.  This allows code like::
+
+    t = code_template.Template()
+    print >> t, "Hello, world"
+
+
+template.read
+--------------
+
+This method reads and flushes all accumulated data in the object.  Note that
+if a file has been associated with the object, there will never be any data
+to read.
+
+template.output
+---------------
+
+This method takes one parameter, outf.  template.output() first
+invokes template.read() to read and flush all accumulated data,
+and then outputs the data to the file specified by outf.
+
+If outf has a write() method, that will be invoked with the
+data.  If outf has no write() method, it will be treated as
+a filename, and that file will be replaced.
+
+Caching and thread safety
+=========================
+
+The compiled version of every template is cached internal to the
+code_template module (unless a separate cache object is specified).
+
+This allows efficient template reuse, but is not currently thread-safe.
+Alternatively, each invocation of a template object can specify a
+cache object.  This is thread-safe, but not very efficient.  A shared
+model could be implemented later.
+

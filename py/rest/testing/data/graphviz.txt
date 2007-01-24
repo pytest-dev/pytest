@@ -1,0 +1,7 @@
+This tests the graphviz directive
+=================================
+
+let's embed the cool graphviz example:
+
+.. graphviz:: example1.dot
+   :scale: 50

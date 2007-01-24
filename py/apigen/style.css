@@ -1,0 +1,105 @@
+#sidebar {
+  width: 9em;
+  float: left;
+  vertical-align: top;
+  margin-top: 0.5em;
+}
+
+#main {
+  margin-left: 10em;
+}
+
+#content {
+  border: 0px;
+  height: 95%;
+  width: 100%;
+}
+
+#breadcrumb {
+  height: 5%;
+  display: none;
+}
+
+#logo {
+  /* float: left; */
+}
+
+#logo img {
+  border-width: 0px;
+}
+
+#menubar a {
+  text-decoration: none;
+  color: blue;
+}
+
+#menubar div.selected a {
+  color: purple;
+}
+
+.project_title {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+body, div, p, h1, h2, h3, h4 {
+  font-family: Trebuchet MS, Verdana, Arial;
+  background-color: #FFE;
+  color: black;
+}
+
+a {
+  color: #006;
+  text-decoration: none;
+}
+
+ul {
+  padding-left: 0em;
+  margin-top: 0px;
+}
+
+ul li {
+  list-style-type: none;
+}
+
+.code a {
+    color: blue;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #005;
+}
+                
+.lineno {
+    text-align: right;
+    color: #555;
+    width: 3em;
+    padding-right: 1em;
+    border: 0px solid black;
+    border-right-width: 1px;
+}
+
+.code {
+    padding-left: 1em;
+    white-space: pre;
+    font-family: monospace, Monaco;
+}
+
+.comment {
+    color: purple;
+}
+
+.string {
+    color: #777;
+}
+
+.keyword {
+    color: blue;
+}
+
+.alt_keyword {
+    color: green;
+}
+                

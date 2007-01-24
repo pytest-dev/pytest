@@ -1,0 +1,15 @@
+py lib contact and communication 
+===================================
+
+* `development mailing list`_ for conceptual and coding discussions (low to medium traffic). 
+
+* `subversion commit mailing list`_ all updates to the trunk/branch source and documentation tree. 
+
+* `development bug/feature tracker`_ for filing bugs and feature requests. 
+
+* IRC Channel #pylib on irc.freenode.net 
+
+.. _`subversion commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn
+.. _`development mailing list`: http://codespeak.net/mailman/listinfo/py-dev
+.. _`development bug/feature tracker`: https://codespeak.net/issue/py-dev/ 
+

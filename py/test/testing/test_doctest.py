@@ -1,0 +1,43 @@
+
+import py
+from py.__.test.doctest import DoctestText
+
+def test_simple_docteststring():
+    testitem = DoctestText(name="dummy", parent=None)
+    testitem._setcontent("""
+    >>> i = 0
+    >>> i + 1
+    1
+    """)
+    res = testitem.run()
+    assert res is None
+    
+def test_simple_docteststring_failing():
+    testitem = DoctestText(name="dummy2", parent=None)
+    testitem._setcontent("""
+    >>> i = 0
+    >>> i + 1
+    2
+    """)
+    py.test.raises(py.test.Item.Failed, "testitem.run()")
+   
+
+def test_collect_doctest_files_with_test_prefix():
+    o = py.test.ensuretemp("testdoctest")
+    checkfile = o.ensure("test_something.txt")
+    o.ensure("whatever.txt")
+    checkfile.write(py.code.Source("""
+        alskdjalsdk
+        >>> i = 5
+        >>> i-1
+        4
+    """))
+    from py.__.test.collect import getfscollector
+    for x in (o, checkfile): 
+        #print "checking that %s returns custom items" % (x,) 
+        col = getfscollector(x)
+        items = list(col.tryiter(py.test.Item))
+        assert len(items) == 1
+        assert isinstance(items[0], DoctestText)
+   
+     

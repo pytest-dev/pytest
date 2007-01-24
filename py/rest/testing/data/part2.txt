@@ -1,0 +1,7 @@
+This is the second part of the test file
+=========================================
+
+.. contents::
+
+the text in it is not much more interesting.
+

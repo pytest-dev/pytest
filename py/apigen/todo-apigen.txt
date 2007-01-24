@@ -1,0 +1,68 @@
+
+* format docstrings more nicely (with tests) 
+
+* have the API function view be as informative as possible
+  without having to go to the "single method" view
+  (do we even need a single method view?), for example: 
+
+  browsing the class views (and clicking on methods) 
+  should always make it obvious which class is being
+  viewed.  method views (when navigating there through
+  the class view) should also have the source there 
+
+* have class-level attributes be displayed 
+
+* use "inherited" doc strings, i.e. for
+    class A:
+        def meth(self):
+            "doc1"
+    class B(A):
+        def meth(self): 
+            pass
+
+    B.meth should display the A.meth docstring, probably 
+    with special formatting (italics or so). 
+
+* factor out some common code in the build_* functions
+
+* refactor the apigen/rsession interaction to become
+  cleaner (e.g. apigen's get_documentable_items should
+  be separately tested and the caller should not need
+  to guess what it will get, i think) 
+
+* look out for and streamline all apigen/source-viewer
+  documentation into one document 
+
+
+
+* consider automating dependencies: 
+
+  e.g. something like: queue_render(page, fspath, linker, ...) 
+  would defer the rendering until later. 
+  then a loop does:
+
+  maxlength = len(queue)
+  while queue: 
+       page, fspath, linker, ... = queue.get()
+       # fill outputpath/link here or even earlier
+       if all_links_resolve(page, linker): 
+           render it and write to filesystem
+           maxlength = len(queue) 
+       else:
+           queue.append(...)
+           maxlength -= 1
+           if maxlength <= 0:  
+               print "ERROR: seems i can't make progress"
+               print "unresolved links follow: "
+               ... 
+               print "unresolved pages/fspaths:"
+               ... 
+               XXX maybe: print "filling linker with dummy hrefs, and rendering anyway"
+               ... 
+               raise ... 
+
+* also we might have a support function for tests that
+  fills the linker with "dummy hrefs" for certain types
+  like source links
+       
+* XXX list more here 

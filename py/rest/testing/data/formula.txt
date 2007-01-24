@@ -1,0 +1,8 @@
+Euklids proof about the infinitude of primes
+============================================
+
+If there were only a finite amount of primes then there would be a largest
+prime :latexformula:`p`. However, the number :latexformula:`p! + 1` is not
+divisible by any number :latexformula:`1, ..., p`. Therefore, a prime dividing
+:latexformula:`p! + 1` has to be bigger than :latexformula:`p`. Therefore there
+is an infinite number of primes. 

@@ -1,0 +1,772 @@
+================================
+The ``py.test`` tool and library 
+================================
+
+.. contents::
+.. sectnum::
+
+starting point: ``py.test`` command line tool 
+=============================================
+
+First, see `getting started`_ for how to install the 'py.test' tool 
+on your system.
+
+``py.test`` is the command line tool to run tests. You can supply it
+with any Python module by passing it as an argument::
+
+  py.test test_sample.py
+
+``py.test`` looks for any functions and methods in the module that
+start with with ``test_`` and will then run those methods.  Assertions
+about test outcomes are done via the standard ``assert`` statement.
+
+This means you can write tests without any boilerplate::
+
+    # content of test_sample.py 
+    def test_answer():
+        assert 42 == 43 
+
+As you can see, you can have test functions as well as test
+methods. This in contrast to the Python standard library's
+``unittest.py``.
+
+You can use ``py.test`` to run all tests in a directory structure by
+invoking it without any arguments::
+
+  py.test
+
+This will automatically collect and run any Python module whose filenames 
+start with ``test_`` or ends with ``_test`` from the directory and any
+subdirectories, starting with the current directory, and run them. Each 
+Python test module is inspected for test methods starting with ``test_``. 
+
+.. _features: 
+
+Basic Features of ``py.test`` 
+=============================
+
+assert with the ``assert`` statement
+------------------------------------
+
+Writing assertions is very simple and this is one of py.test's
+most noticeable features, as you can use the ``assert``
+statement with arbitrary expressions.  For example you can 
+write the following in your tests:: 
+
+     assert hasattr(x, 'attribute') 
+
+to state that your object has a certain ``attribute``. In case this
+assertion fails the test ``reporter`` will provide you with a very
+helpful analysis and a clean traceback.
+
+Note that in order to display helpful analysis of a failing
+``assert`` statement some magic takes place behind the
+scenes.  For now, you only need to know that if something
+looks strange or you suspect a bug in that
+*behind-the-scenes-magic* you may turn off the magic by 
+providing the ``--nomagic`` option. 
+
+how to write assertions about exceptions 
+----------------------------------------
+
+In order to write assertions about exceptions, you use
+one of two forms::
+
+    py.test.raises(Exception, func, *args, **kwargs) 
+    py.test.raises(Exception, "func(*args, **kwargs)")
+
+both of which execute the given function with args and kwargs and
+asserts that the given ``Exception`` is raised.  The reporter will
+provide you with helpful output in case of failures such as *no
+exception* or *wrong exception*.
+
+
+automatic collection of tests on all levels
+-------------------------------------------
+
+The automated test collection process walks the current
+directory (or the directory given as a command line argument)
+and all its subdirectories and collects python modules with a
+leading ``test_`` or trailing ``_test`` filename.  From each 
+test module every function with a leading ``test_`` or class with 
+a leading ``Test`` name is collected.  The collecting process can 
+be customized at directory, module or class level.  (see 
+`collection process`_ for some implementation details). 
+
+.. _`generative tests`: 
+
+generative tests: yielding more tests
+------------------------------------- 
+
+*Generative tests* are test methods that are *generator functions* which
+``yield`` callables and their arguments.  This is most useful for running a
+test function multiple times against different parameters.
+Example::
+
+    def test_generative(): 
+        for x in (42,17,49): 
+            yield check, x 
+    
+    def check(arg): 
+        assert arg % 7 == 0   # second generated tests fails!
+
+Note that ``test_generative()`` will cause three tests 
+to get run, notably ``check(42)``, ``check(17)`` and ``check(49)``
+of which the middle one will obviously fail. 
+
+.. _`selection by keyword`: 
+
+selecting tests by keyword 
+--------------------------
+
+You can selectively run tests by specifiying a keyword 
+on the command line. Example:: 
+
+    py.test -k test_simple 
+
+will run all tests that are found from the current directory 
+and where the word "test_simple" equals the start of one part of the 
+path  leading up to the test item.  Directory and file basenames as well 
+as function, class and function/method names each form a possibly
+matching name. 
+
+    Note that the exact semantics are still experimental but 
+    should always remain intuitive.   
+
+testing with multiple python versions / executables 
+---------------------------------------------------
+
+With ``--exec=EXECUTABLE`` you can specify a python
+executable (e.g. ``python2.2``) with which the tests 
+will be executed. 
+
+
+testing starts immediately 
+--------------------------
+
+Testing starts as soon as the first ``test item`` 
+is collected.  The collection process is iterative 
+and does not need to complete before your first 
+test items are executed. 
+
+no interference with cmdline utilities 
+--------------------------------------
+
+As ``py.test`` mainly operates as a separate cmdline 
+tool you can easily have a command line utility and
+some tests in the same file.  
+
+debug with the ``print`` statement
+----------------------------------
+
+By default, ``py.test`` catches text written to stdout/stderr during
+the execution of each individual test. This output will only be
+displayed however if the test fails; you will not see it
+otherwise. This allows you to put debugging print statements in your
+code without being overwhelmed by all the output that might be
+generated by tests that do not fail.
+
+Each failing test that produced output during the running of the test
+will have its output displayed in the ``recorded stdout`` section.
+
+The catching of stdout/stderr output can be disabled using the 
+``--nocapture`` option to the ``py.test`` tool.  Any output will 
+in this case be displayed as soon as it is generated.
+
+order of execution is guaranteed
+--------------------------------
+
+Tests will run in the order in which they appear in the files. 
+If you invoke ``py.test`` multiple times you should find that tests 
+execute in exactly the same order within each file. 
+
+Besides making it easier to compare test output this allows 
+multi-stage tests where you can rely on your test to iteratively 
+build up a test structure.
+
+`Note: This is not true for distributed tests`
+
+useful tracebacks, recursion detection 
+--------------------------------------
+
+A lot of care is taken to present nice tracebacks in case of test
+failure. Try::
+
+    py.test py/documentation/example/pytest/failure_demo.py
+
+to see a variety of 17 tracebacks, each tailored to a different
+failure situation.
+
+``py.test`` uses the same order for presenting tracebacks as Python
+itself: the outer function is shown first, and the most recent call is
+shown last. Similarly, a ``py.test`` reported traceback starts with your
+failing test function and then works its way downwards. If the maximum
+recursion depth has been exceeded during the running of a test, for
+instance because of infinite recursion, ``py.test`` will indicate
+where in the code the recursion was taking place.  You can  
+inhibit traceback "cutting" magic by supplying ``--fulltrace``. 
+
+no inheritance requirement 
+--------------------------
+
+Test classes are recognized by their leading ``Test`` name.  Unlike
+``unitest.py``, you don't need to inherit from some base class to make
+them be found by the test runner. Besides being easier, it also allows
+you to write test classes that subclass from application level
+classes.
+
+disabling a test class
+---------------------- 
+
+If you want to disable a complete test class you
+can set the class-level attribute ``disabled``. 
+For example, in order to avoid running some tests on Win32:: 
+
+    class TestEgSomePosixStuff: 
+        disabled = sys.platform == 'win32'
+    
+        def test_xxx(self):
+            ... 
+
+testing for deprecated APIs
+------------------------------
+
+In your tests you can use ``py.test.deprecated_call(func, *args, **kwargs)``
+to test that a particular function call triggers a DeprecationWarning. 
+This is useful for testing phasing out of old APIs in your projects. 
+
+Managing test state across test modules, classes and methods 
+------------------------------------------------------------
+
+Often you want to create some files, database connections or other
+state in order to run tests in a certain environment.  With
+``py.test`` there are three scopes for which you can provide hooks to
+manage such state.  Again, ``py.test`` will detect these hooks in
+modules on a name basis. The following module-level hooks will
+automatically be called by the session::
+
+    def setup_module(module):
+        """ setup up any state specific to the execution
+            of the given module. 
+        """
+
+    def teardown_module(module):
+        """ teardown any state that was previously setup 
+            with a setup_module method. 
+        """
+
+The following hooks are available for test classes::
+
+    def setup_class(cls): 
+        """ setup up any state specific to the execution
+            of the given class (which usually contains tests). 
+        """
+
+    def teardown_class(cls): 
+        """ teardown any state that was previously setup 
+            with a call to setup_class.
+        """
+
+    def setup_method(self, method):
+        """ setup up any state tied to the execution of the given 
+            method in a class.  setup_method is invoked for every 
+            test method of a class. 
+        """
+
+    def teardown_method(self, method): 
+        """ teardown any state that was previously setup 
+            with a setup_method call. 
+        """
+
+The last two hooks, ``setup_method`` and ``teardown_method``, are
+equivalent to ``setUp`` and ``tearDown`` in the Python standard
+library's ``unitest`` module.
+
+All setup/teardown methods are optional.  You could have a
+``setup_module`` but no ``teardown_module`` and the other way round.
+
+Note that while the test session guarantees that for every ``setup`` a
+corresponding ``teardown`` will be invoked (if it exists) it does
+*not* guarantee that any ``setup`` is called only happens once. For
+example, the session might decide to call the ``setup_module`` /
+``teardown_module`` pair more than once during the execution of a test
+module.
+
+Experimental doctest support 
+------------------------------------------------------------
+
+If you want to integrate doctests, ``py.test`` now by default
+picks up files matching the ``test_*.txt`` or ``*_test.txt`` 
+patterns and processes them as text files containing doctests. 
+This is an experimental feature and likely to change
+its implementation. 
+
+Working Examples
+================
+
+Example for managing state at module, class and method level 
+------------------------------------------------------------
+
+Here is a working example for what goes on when you setup modules, 
+classes and methods:: 
+
+    # [[from py/documentation/example/pytest/test_setup_flow_example.py]]
+
+    def setup_module(module):
+        module.TestStateFullThing.classcount = 0
+
+    class TestStateFullThing:
+        def setup_class(cls):
+            cls.classcount += 1
+
+        def teardown_class(cls):
+            cls.classcount -= 1
+
+        def setup_method(self, method):
+            self.id = eval(method.func_name[5:])
+
+        def test_42(self):
+            assert self.classcount == 1
+            assert self.id == 42
+
+        def test_23(self):
+            assert self.classcount == 1
+            assert self.id == 23
+
+    def teardown_module(module):
+        assert module.TestStateFullThing.classcount == 0
+
+For this example the control flow happens as follows::
+
+    import test_setup_flow_example
+    setup_module(test_setup_flow_example)
+       setup_class(TestStateFullThing) 
+           instance = TestStateFullThing()
+           setup_method(instance, instance.test_42) 
+              instance.test_42()
+           setup_method(instance, instance.test_23) 
+              instance.test_23()
+       teardown_class(TestStateFullThing) 
+    teardown_module(test_setup_flow_example)
+
+
+Note that ``setup_class(TestStateFullThing)`` is called and not 
+``TestStateFullThing.setup_class()`` which would require you
+to insert ``setup_class = classmethod(setup_class)`` to make
+your setup function callable. Did we mention that lazyness
+is a virtue? 
+
+.. _`basicpicture`:
+
+
+Collecting and running tests / implementation remarks 
+====================================================== 
+
+In order to customize ``py.test`` it's good to understand 
+its basic architure (WARNING: these are not guaranteed 
+yet to stay the way they are now!)::
+
+     ___________________
+    |                   |
+    |    Collector      |
+    |___________________|
+           / \                
+            |                Item.run()
+            |               ^
+     receive test Items    /
+            |             /execute test Item 
+            |            /
+     ___________________/
+    |                   |      
+    |     Session       |
+    |___________________|
+                                          
+                        .............................
+                        . conftest.py configuration .
+                        . cmdline options           .
+                        .............................
+
+
+The *Session* basically receives test *Items* from a *Collector*, 
+and executes them via the ``Item.run()`` method.  It monitors 
+the outcome of the test and reports about failures and successes. 
+
+.. _`collection process`: 
+
+Collectors and the test collection process 
+------------------------------------------
+
+The collecting process is iterative, i.e. the session 
+traverses and generates a *collector tree*.  Here is an example of such
+a tree, generated with the command ``py.test --collectonly py/xmlobj``:: 
+
+    <Directory 'xmlobj'>
+        <Directory 'testing'>
+            <Module 'test_html.py' (py.__.xmlobj.testing.test_html)>
+                <Function 'test_html_name_stickyness'>
+                <Function 'test_stylenames'>
+                <Function 'test_class_None'>
+                <Function 'test_alternating_style'>
+            <Module 'test_xml.py' (py.__.xmlobj.testing.test_xml)>
+                <Function 'test_tag_with_text'>
+                <Function 'test_class_identity'>
+                <Function 'test_tag_with_text_and_attributes'>
+                <Function 'test_tag_with_subclassed_attr_simple'>
+                <Function 'test_tag_nested'>
+                <Function 'test_tag_xmlname'>
+
+
+By default all directories not starting with a dot are traversed, 
+looking for ``test_*.py`` and ``*_test.py`` files.  Those files 
+are imported under their `package name`_. 
+
+.. _`collector API`: 
+
+test items are collectors as well
+--------------------------------- 
+
+To make the reporting life simple for the session object 
+items offer a ``run()`` method as well.  In fact the session
+distinguishes "collectors" from "items" solely by interpreting 
+their return value.  If it is a list, then we recurse into 
+it, otherwise we consider the "test" as passed.  
+
+.. _`package name`: 
+
+constructing the package name for modules
+----------------------------------------- 
+
+Test modules are imported under their fully qualified 
+name.  Given a module ``path`` the fully qualified package 
+name is constructed as follows:
+
+* determine the last "upward" directory from ``path`` that 
+  contains an ``__init__.py`` file.  Going upwards 
+  means repeatedly calling the ``dirpath()`` method 
+  on a path object (which returns the parent directory
+  as a path object). 
+
+* insert this base directory into the sys.path list 
+  as its first element 
+
+* import the root package 
+
+* determine the fully qualified name for the module located 
+  at ``path`` ... 
+
+  * if the imported root package has a __package__ object  
+    then call ``__package__.getimportname(path)`` 
+
+  * otherwise use the relative path of the module path to
+    the base dir and turn slashes into dots and strike
+    the trailing ``.py``. 
+
+The Module collector will eventually trigger 
+``__import__(mod_fqdnname, ...)`` to finally get to 
+the live module object.  
+
+Side note: this whole logic is performed by local path 
+object's ``pyimport()`` method. 
+
+Module Collector 
+----------------- 
+
+The default Module collector looks for test functions 
+and test classes and methods. Test functions and methods
+are prefixed ``test`` by default.  Test classes must 
+start with a capitalized ``Test`` prefix. 
+
+
+Customizing the testing process 
+===============================
+
+writing conftest.py files
+-----------------------------------
+
+XXX
+
+
+customizing the collecting and running process 
+-----------------------------------------------
+
+To introduce different test items you can create 
+one or more ``conftest.py`` files in your project. 
+When the collection process traverses directories 
+and modules the default collectors will produce 
+custom Collectors and Items if they are found 
+in a local ``conftest.py`` file.  
+
+example: perform additional ReST checs 
+++++++++++++++++++++++++++++++++++++++
+
+With your custom collectors or items you can completely 
+derive from the standard way of collecting and running
+tests in a localized manner.  Let's look at an example. 
+If you invoke ``py.test --collectonly py/documentation`` 
+then you get:: 
+
+    <DocDirectory 'documentation'>
+        <DocDirectory 'example'>
+            <DocDirectory 'pytest'>
+                <Module 'test_setup_flow_example.py' (test_setup_flow_example)>
+                    <Class 'TestStateFullThing'>
+                        <Instance '()'>
+                            <Function 'test_42'>
+                            <Function 'test_23'>
+        <ReSTChecker 'TODO.txt'>
+            <ReSTSyntaxTest 'TODO.txt'>
+            <LinkCheckerMaker 'checklinks'>
+        <ReSTChecker 'api.txt'>
+            <ReSTSyntaxTest 'api.txt'>
+            <LinkCheckerMaker 'checklinks'>
+                <CheckLink 'getting-started.html'>
+        ... 
+
+In ``py/documentation/conftest.py`` you find the following 
+customization:: 
+
+    class DocDirectory(py.test.collect.Directory):
+
+        def run(self):
+            results = super(DocDirectory, self).run()
+            for x in self.fspath.listdir('*.txt', sort=True):
+                    results.append(x.basename)
+            return results
+
+        def join(self, name):
+            if not name.endswith('.txt'):
+                return super(DocDirectory, self).join(name)
+            p = self.fspath.join(name)
+            if p.check(file=1):
+                return ReSTChecker(p, parent=self)
+
+    Directory = DocDirectory
+
+The existence of the 'Directory' name in the 
+``pypy/documentation/conftest.py`` module makes the collection 
+process defer to our custom "DocDirectory" collector.  We extend 
+the set of collected test items by ``ReSTChecker`` instances 
+which themselves create ``ReSTSyntaxTest`` and ``LinkCheckerMaker`` 
+items.  All of this instances (need to) follow the `collector API`_. 
+
+
+Customizing the collection process in a module
+---------------------------------------------- 
+
+    REPEATED WARNING: details of the collection and running process are 
+    still subject to refactorings and thus details will change.  
+    If you are customizing py.test at "Item" level then you 
+    definitely want to be subscribed to the `py-dev mailing list`_ 
+    to follow ongoing development.
+
+If you have a module where you want to take responsibility for
+collecting your own test Items and possibly even for executing
+a test then you can provide `generative tests`_ that yield 
+callables and possibly arguments as a tuple.   This should 
+serve some immediate purposes like paramtrized tests. 
+
+The other extension possibility goes deeper into the machinery 
+and allows you to specify a custom test ``Item`` class which 
+is responsible for setting up and executing an underlying 
+test.  [XXX not working: You can integrate your custom ``py.test.Item`` subclass 
+by binding an ``Item`` name to a test class.]  Or you can 
+extend the collection process for a whole directory tree 
+by putting Items in a ``conftest.py`` configuration file. 
+The collection process constantly looks at according names 
+in the *chain of conftest.py* modules to determine collectors
+and items at ``Directory``, ``Module``, ``Class``, ``Function`` 
+or ``Generator`` level.  Note that, right now, except for ``Function`` 
+items all classes are pure collectors, i.e. will return a list 
+of names (possibly empty). 
+
+XXX implement doctests as alternatives to ``Function`` items. 
+
+Customizing execution of Functions 
+---------------------------------- 
+
+- Function test items allow total control of executing their 
+  contained test method.  ``function.run()`` will get called by the
+  session in order to actually run a test.  The method is responsible
+  for performing proper setup/teardown ("Test Fixtures") for a 
+  Function test. 
+
+- ``Function.execute(target, *args)`` methods are invoked by
+  the default ``Function.run()`` to actually execute a python 
+  function with the given (usually empty set of) arguments. 
+
+.. _`getting started`: getting-started.html
+.. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
+
+
+Automated Distributed Testing
+==================================
+
+If you have a project with a large number of tests, and you have 
+machines accessible through SSH, ``py.test`` can distribute
+tests across the machines.  It does not require any particular
+installation on the remote machine sides as it uses `py.execnet`_ 
+mechanisms to distribute execution.  Using distributed testing 
+can speed up your development process considerably and it
+may also be useful where you need to use a remote server
+that has more resources (e.g. RAM/diskspace) than your
+local machine. 
+
+*WARNING*: support for distributed testing is experimental, 
+its mechanics and configuration options may change without 
+prior notice.  Particularly, not all reporting features 
+of the in-process py.test have been integrated into
+the distributed testing approach. 
+
+Requirements
+------------
+
+Local requirements: 
+
+* ssh client
+* python
+
+requirements for remote machines:
+
+* ssh daemon running
+* ssh keys setup to allow login without a password
+* python (2.3 or 2.4 should work)
+* unix like machine (reliance on ``os.fork``)
+
+Hot to use it
+-----------------------
+
+When you issue ``py.test --session=R`` then your computer becomes
+the distributor of tests ("master") and will start collecting
+and distributing tests to several machines.  The machines
+need to be specified in a ``conftest.py`` file.  
+
+At start up, the master connects to each node using `py.execnet.SshGateway`_ 
+and *rsyncs* all specified python packages to all nodes. 
+Then the master collects all of the tests and immediately sends test item
+descriptions to its connected nodes. Each node has a local queue of tests 
+to run and begins to execute the tests, following the setup and teardown 
+semantics.   The test are distributed at function and method level. 
+When a test run on a node is completed it reports back the result
+to the master. 
+
+The master can run one of three reporters to process the events 
+from the testing nodes: command line, rest output and ajaxy web based. 
+
+.. _`py.execnet`: execnet.html
+.. _`py.execnet.SshGateway`: execnet.html
+
+Differences from local tests
+----------------------------
+
+* Test order is *not* guaranteed.
+* Hanging nodes or tests are not detected properly.
+* ``conftest.py`` cannot reference files outside of the copied packages.
+
+Configuration
+-------------
+
+You must create a conftest.py in any parent directory above your tests.
+
+The options that you need to specify in that conftest.py file are:
+
+* `dist_hosts` - a list of ssh addresses (including a specific path if it 
+  should be different than the default: ``$HOME/pytestcache-hostname``)
+* `dist_rsync_roots` - a list of packages to copy to the remote machines.
+* `dist_remotepython` - the remote python to run.
+* `SessionOptions` - containing some specific tuning options
+
+Sample configuration::
+
+    dist_hosts = ['localhost', 'user@someserver:/tmp/somedir']
+    dist_rsync_roots = ['pypy', 'py']
+    dist_remotepython = 'python2.4'
+    dist_nicelevel = 10 
+    dist_boxing = True
+    dist_maxwait = 100 
+    dist_taskspernode = 10
+
+Running server is done by ``-w`` command line option or ``--startserver``
+(the former might change at some point due to conflicts).
+
+Possible `SessionOptions` arguments:
+
+* `nice_level` - Level of nice under which tests are run
+* `runner_policy` - (for `LSession` only) - contains policy for the test boxig.
+  `"plain_runner"` means no boxing, `"box_runner"` means boxing.
+* `waittime` - Default maximum waiting time for remote host to execute
+  one test.
+* `max_tasks_per_node` - Maximum number of tasks which can be send to one node.
+* `import_pypy` - Flag to control pypy importing for js regeneration (defaults
+  to False)
+
+Development Notes
+-----------------
+
+Changing the behavior of the web based reporter requires `pypy`_ since the
+javascript is actually generated fom rpython source.
+
+There exists as well `L/Rsession document`_ which discusses in more details
+unique features and developement notes.
+
+.. _`pypy`: http://codespeak.net/pypy
+.. _`L/Rsession document`: test-distributed.html
+
+Future/Planned Features of py.test 
+==================================
+
+Please note that the following descriptions of future features
+sound factual although they aren't implemented yet.  This
+allows easy migration to real documentation later.
+Nevertheless, none of the described planned features is
+set in stone, yet. In fact, they are open to discussion on
+py-dev at codespeak dot net. 
+
+Hey, if you want to suggest new features or command line options 
+for py.test it would be great if you could do it by providing 
+documentation for the feature.  Welcome to documentation driven 
+development :-) 
+
+selecting tests by queries/full text search 
+-------------------------------------------
+
+    Note: there already is experimental support for test `selection by keyword`_. 
+    Otherwise the following is not yet implemented
+
+You can selectively run tests by specifiying words 
+on the command line in a google-like way. Example:: 
+
+    py.test simple 
+
+will run all tests that are found from the current directory 
+and that have the word "simple" somewhere in their `test address`_.  
+``test_simple1`` and ``TestSomething.test_whatever_simpleton`` would both 
+qualify.  If you want to exclude the latter test method you could say:: 
+
+    py.test -- simple -simpleton 
+
+Note that the doubledash "--" signals the end of option parsing so
+that "-simpleton" will not be misinterpreted as a command line option. 
+
+Interpreting positional arguments as specifying search queries 
+means that you can only restrict the set of tests. There is no way to 
+say "run all 'simple' in addition to all 'complex' tests".  If this proves
+to be a problem we can probably come up with a command line option 
+that allows to specify multiple queries which all add to the set of
+tests-to-consider. 
+
+.. _`test address`: 
+
+the concept of a test address
+----------------------------- 
+
+For specifiying tests it is convenient to define the notion
+of a *test address*, representable as a filesystem path and a 
+list of names leading to a test item.  If represented as a single 
+string the path and names are separated by a `/` character, for example: 
+
+    ``somedir/somepath.py/TestClass/test_method``
+
+Such representations can be used to memoize failing tests 
+by writing them out in a file or communicating them across
+process and computer boundaries. 
+

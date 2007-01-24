@@ -1,0 +1,5 @@
+rest_sources = ['part1.txt', 'part2.txt']
+
+rest_options = ["--use-latex-toc", "--generator"] # generator is easy to test
+
+toc_depth = 1

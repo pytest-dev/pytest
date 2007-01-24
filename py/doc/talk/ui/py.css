@@ -1,0 +1,74 @@
+body, h1, h2, h3, h4, td, p, div {
+  /*margin-top: 80px; 
+  position: fixed;*/
+  font-family: sans-serif;
+  font-size: 0.9em;
+}
+
+#slide0 h1.title {
+  text-align: center;
+  font-family: sans-serif;
+}
+
+div#header, div#footer, div#controls {
+  background-color: white;
+}
+
+div#header {
+  background-image: url("merlinux-klein.png");
+  background-repeat: no-repeat;
+  margin: 3px;
+  height: 100px;
+  border-bottom: 1px solid black;
+}
+
+.slide h1 {
+  background-color: white;
+  margin-left: 180px;
+  padding-left: 0px;
+  color: black;
+  font-size: 1.2em;
+}
+
+div#footer {
+  padding: 3px;
+  height: 4em;
+  border-top: 1px solid black;
+}
+
+div#footer h1, div#footer h2, div#footer h3 {
+  font-family: "Times New Roman";
+  font-style: italic;
+  padding: 0px;
+}
+
+div#footer h1 {
+  font-size: 2em;
+}
+
+#controls {
+  border: 1px solid red;
+  background-color: red;
+  width: 100px;
+  visibility: hidden;
+}
+
+#controls #controlForm {
+  visibility: visible;
+}
+
+#navList, #navLinks {
+  background-color: transparent;
+}
+
+#navLinks a#toggle, #navLinks a#prev, #navLinks a#next {
+  background-color: transparent;
+}
+
+/* some hacks to fix whitespace between list items */
+
+li, li p {
+  line-height: 1.2em;
+  font-size: 1em;
+  margin: 0px;
+}

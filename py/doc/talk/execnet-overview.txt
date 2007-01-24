@@ -1,0 +1,64 @@
+.. include:: <s5defs.txt>
+
+=================================================
+py.execnet - simple ad-hoc networking
+=================================================
+
+:Authors: Holger Krekel, merlinux GmbH
+:Date: 13th March 2006 
+
+remote method invocation is cumbersome
+========================================
+
+- CORBA/RMI/SOAP model is cumbersome 
+- "infection" with object references throughout your program
+- need to define interfaces, generate stubs/skeletons
+- need to start server processes ahead of time 
+- complicates programming 
+
+what you want of ad-hoc networks 
+====================================
+
+- ad hoc **local protocols**
+- avoid defining and maintaining global interfaces 
+- deploy protocols purely from the client side 
+- zero installation required on server side 
+
+py.execnet model of ad-hoc networks
+====================================
+
+- *Gateways* can be setup via e.g. SSH logins or via Popen
+- *Gateway.remote_exec* allows execution of arbitrary code 
+- means of communication between the two sides: *Channels* 
+  (with send & receive methods) 
+- example requirements: ssh login + python installed
+
+py.execnet.SshGateway example 
+====================================
+
+interactive::
+
+    gw = py.execnet.SshGateway('codespeak.net')
+
+    channel = gw.remote_exec("""
+        for filename in channel: 
+            try:
+                content = open(filename).read()
+            except (OSError, IOError):
+                content = None
+            channel.send(content)
+    """)
+            
+next steps / references 
+====================================
+
+- ad-hoc p2p networks 
+- chaining channels / passing channels around 
+- ensure it also works nicely on win32 
+- btw, py.execnet is part of the py lib 
+
+     http://codespeak.net/py/ 
+        
+.. |bullet| unicode:: U+02022
+.. footer:: Holger Krekel (merlinux) |bullet| 13th March 2006
+

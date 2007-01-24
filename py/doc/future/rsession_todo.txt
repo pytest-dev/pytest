@@ -1,0 +1,15 @@
+Various tasks which needs to be done at some point
+==================================================
+
+* Write down pinging interface, so we'll know if hosts are responding or
+  are mostly down (detecting hanging nodes)
+
+* Write down support for rsync progress
+
+* Discovery of nodes which are available for accepting distributed testing
+
+* Test the tests rescheduling, so high-latency nodes would not take part
+  in that.
+
+* make sure that C-c semantics are ok (nodes are killed properly). 
+  There was an attempt to do so, but it's not tested and not always work.
