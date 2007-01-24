@@ -35,7 +35,7 @@ class MasterNode(object):
             self.reporter(report.SendItem(self.channel, item))
 
 def itemgen(colitems, reporter, keyword, reporterror):
-    for x in colitems: 
+    for x in colitems:
         for y in x.tryiter(reporterror = lambda x: reporterror(reporter, x), keyword = keyword):
             yield y
 
@@ -56,9 +56,7 @@ def dispatch_loop(masternodes, itemgenerator, shouldstop,
                   waiter = lambda: py.std.time.sleep(0.1),
                   max_tasks_per_node=None):
     if not max_tasks_per_node:
-        from py.__.test.rsession.rsession import session_options
-    
-        max_tasks_per_node = session_options.max_tasks_per_node
+        max_tasks_per_node = py.test.config.getvalue("dist_taskspernode")
     all_tests = {}
     while 1:
         try:
@@ -76,12 +74,14 @@ def dispatch_loop(masternodes, itemgenerator, shouldstop,
         waiter()
     return all_tests
 
-def setup_slave(gateway, pkgpath, options):
+def setup_slave(gateway, pkgpath, config):
     from py.__.test.rsession import slave
     import os
     ch = gateway.remote_exec(str(py.code.Source(slave.setup, "setup()")))
     #if hasattr(gateway, 'sshaddress'):
     #    assert not os.path.isabs(pkgpath)
     ch.send(str(pkgpath))
-    ch.send(options)
+    ch.send(config.make_repr(defaultconftestnames))
     return ch
+
+defaultconftestnames = ['dist_nicelevel']

@@ -76,7 +76,7 @@ def test_apigen_functional():
     parentdir = py.magic.autopath().dirpath().dirpath()
     pkgdir = fs_root.join('pkg')
     try:
-        output = py.process.cmdexec('APIGEN_TARGET="%s" py.test --session=L '
+        output = py.process.cmdexec('APIGEN_TARGET="%s" py.test '
                                     '--apigen="%s/apigen.py" "%s"' % (
                                         tempdir, parentdir, pkgdir))
     except py.error.Error, e:

@@ -178,9 +178,9 @@ class TestReportBackend:
         assert l[0] is None
 
     def test_start_tests(self):
-        config = py.test.config._reparse([])
+        config = py.test.config._reparse([datadir/'filetest.py'])
         self.backend.start_tests(config = config,
-                                 args = [str(datadir / 'filetest.py')],
+                                 args = config.args,
                                  tests = [])
         while self.backend.running:
             self.backend.update()

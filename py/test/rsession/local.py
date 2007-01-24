@@ -21,22 +21,17 @@ def finishcapture(session):
     return "", ""
 
 def box_runner(item, session, reporter):
-    r = BoxExecutor(item)
+    r = BoxExecutor(item, config=session.config)
     return ReprOutcome(r.execute())
 
 def plain_runner(item, session, reporter):
     # box executor is doing stdout/err catching for us, let's do it here
     startcapture(session)
-    r = RunExecutor(item, usepdb=session.config.option.usepdb, reporter=reporter)
+    r = RunExecutor(item, usepdb=session.config.option.usepdb, reporter=reporter, config=session.config)
     outcome = r.execute()
-    outcome = ReprOutcome(outcome.make_repr())
+    outcome = ReprOutcome(outcome.make_repr(session.config.option.tbstyle))
     outcome.stdout, outcome.stderr = finishcapture(session)
     return outcome
-
-RunnerPolicy = {
-    'plain_runner':plain_runner,
-    'box_runner':box_runner
-}
 
 def benchmark_runner(item, session, reporter):
     raise NotImplementedError()

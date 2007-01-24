@@ -29,46 +29,6 @@ def checkpyfilechange(rootdir, statcache={}):
                 changed = True
     return changed
 
-class FailingCollector(py.test.collect.Collector):
-    def __init__(self, faileditems):
-        self._faileditems = faileditems
-
-    def __iter__(self):
-        for x in self._faileditems:
-            yield x
-
-def waitfinish(channel):
-    try:
-        while 1:
-            try:
-                channel.waitclose(0.1)
-            except (IOError, py.error.Error):
-                continue
-            else:
-                return channel.receive()
-    finally:
-        #print "closing down channel and gateway"
-        channel.gateway.exit()
-
-def failure_slave(channel):
-    """ we run this on the other side. """
-    args, failures = channel.receive()
-    config = py.test.config._reparse(args) 
-    # making this session definitely non-remote 
-    config.option.executable = py.std.sys.executable 
-    config.option.looponfailing = False 
-    config.option._remote = False 
-    config.option._fromremote = True 
-    if failures: 
-        cols = getfailureitems(failures)
-    else:
-        cols = args 
-    #print "processing", cols
-    session = config.getsessionclass()(config) 
-    session.shouldclose = channel.isclosed 
-    failures = session.main()
-    channel.send(failures)
-
 def getfailureitems(failures): 
     l = []
     for rootpath, names in failures:
@@ -91,61 +51,77 @@ def getfailureitems(failures):
             l.append(current) 
     return l
 
-def failure_master(executable, out, args, failures):
-    gw = py.execnet.PopenGateway(executable) 
-    channel = gw.remote_exec("""
-        from py.__.test.terminal.remote import failure_slave
-        failure_slave(channel) 
-    """, stdout=out, stderr=out) 
-    channel.send((args, failures))
-    return waitfinish(channel)
+class RemoteTerminalSession(object):
+    def __init__(self, config, file=None):
+        self.config = config 
+        self._setexecutable()
+        if file is None:
+            file = py.std.sys.stdout 
+        self._file = file
+        self.out = getout(file)
 
-def generalize(p1, p2): 
-    general = p1 
-    for x, y in zip(p1.parts(), p2.parts()): 
-        if x != y: 
-            break 
-        general = x 
-    return general 
+    def _setexecutable(self):
+        name = self.config.option.executable
+        if name is None:
+            executable = py.std.sys.executable 
+        else:
+            executable = py.path.local.sysfind(name)
+            assert executable is not None, executable 
+        self.executable = executable 
 
-def getrootdir(args): 
-    tops = []
-    for arg in args: 
-        p = py.path.local(arg)
-        tops.append(p.pypkgpath() or p)
-    p = reduce(generalize, tops) 
-    if p.check(file=1): 
-        p = p.dirpath()
-    return p 
+    def main(self):
+        rootdir = self.config.topdir 
+        wasfailing = False 
+        failures = []
+        while 1:
+            if self.config.option.looponfailing and (failures or not wasfailing): 
+                while not checkpyfilechange(rootdir):
+                    py.std.time.sleep(0.4)
+            wasfailing = len(failures)
+            failures = self.run_remote_session(failures)
+            if not self.config.option.looponfailing: 
+                break
+            print "#" * 60
+            print "# looponfailing: mode: %d failures args" % len(failures)
+            for root, names in failures:
+                name = "/".join(names) # XXX
+                print "Failure at: %r" % (name,) 
+            print "#    watching py files below %s" % rootdir
+            print "#                           ", "^" * len(str(rootdir))
+        return failures
 
-def main(config, file, args): 
-    """ testing process and output happens at a remote place. """ 
-    assert file  
-    if hasattr(file, 'write'): 
-        def out(data): 
-            file.write(data) 
-            file.flush() 
-    else: 
-        out = file 
-    failures = []
-    args = list(args)
-    rootdir = getrootdir(config.remaining) 
-    #print "rootdir", rootdir
-    wasfailing = False 
-    while 1:
-        if config.option.looponfailing and (failures or not wasfailing): 
-            while not checkpyfilechange(rootdir):
-                py.std.time.sleep(0.4)
-        wasfailing = len(failures)
-        failures = failure_master(config.option.executable, out, args, failures)
-        if not config.option.looponfailing: 
-            break
-        print "#" * 60
-        print "# looponfailing: mode: %d failures remaining" % len(failures)
-        for root, names in failures:
-            name = "/".join(names) # XXX
-            print "Failure at: %r" % (name,) 
-        print "#    watching py files below %s" % rootdir
-        print "#                           ", "^" * len(str(rootdir))
-    return failures
+    def run_remote_session(self, failures):
+        print "* opening PopenGateway: ", self.executable 
+        gw = py.execnet.PopenGateway(self.executable)
+        channel = gw.remote_exec("""
+            from py.__.test.terminal.remote import slaverun_TerminalSession
+            slaverun_TerminalSession(channel) 
+        """, stdout=self.out, stderr=self.out) 
+        print "MASTER: triggered slave terminal session ->"
+        repr = self.config.make_repr(conftestnames=[])
+        channel.send((str(self.config.topdir), repr, failures))
+        print "MASTER: send start info" 
+        try:
+            return channel.receive()
+        except channel.RemoteError, e:
+            print e
+            return []
 
+def slaverun_TerminalSession(channel):
+    """ we run this on the other side. """
+    print "SLAVE: starting"
+    topdir, repr, failures = channel.receive()
+    print "SLAVE: received configuration" 
+    config = py.test.config 
+    config.initdirect(topdir, repr, failures)
+    config.option.looponfailing = False 
+    config.option.usepdb = False 
+    config.option.executable = None
+
+    session = config.initsession()
+    session.shouldclose = channel.isclosed 
+    print "SLAVE: starting session.main()"
+    session.main()
+    failures = session.getitemoutcomepairs(py.test.Item.Failed)
+    failures = [config.get_collector_trail(item) for item,_ in failures]
+    channel.send(failures)

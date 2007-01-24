@@ -12,10 +12,12 @@ class RunExecutor(object):
     """
     wraps = False
     
-    def __init__(self, item, usepdb=False, reporter=None):
+    def __init__(self, item, usepdb=False, reporter=None, config=None):
         self.item = item
         self.usepdb = usepdb
         self.reporter = reporter
+        self.config = config
+        assert self.config
     
     def execute(self):
         try:
@@ -36,7 +38,8 @@ class RunExecutor(object):
             if self.usepdb:
                 if self.reporter is not None:
                     self.reporter(report.ImmediateFailure(self.item,
-                        ReprOutcome(outcome.make_repr())))
+                        ReprOutcome(outcome.make_repr
+                                    (self.config.option.tbstyle))))
                 import pdb
                 pdb.post_mortem(excinfo._excinfo[2])
                 # XXX hmm, we probably will not like to continue from that
@@ -54,8 +57,8 @@ class BoxExecutor(RunExecutor):
     def execute(self):
         def fun():
             outcome = RunExecutor.execute(self)
-            return outcome.make_repr()
-        b = Box(fun)
+            return outcome.make_repr(self.config.option.tbstyle)
+        b = Box(fun, config=self.config)
         pid = b.run()
         assert pid
         if b.retval is not None:
@@ -76,13 +79,13 @@ class AsyncExecutor(RunExecutor):
     def execute(self):
         def fun():
             outcome = RunExecutor.execute(self)
-            return outcome.make_repr()
+            return outcome.make_repr(self.config.option.tbstyle)
         
-        b = Box(fun)
+        b = Box(fun, config=self.config)
         parent, pid = b.run(continuation=True)
         
-        def cont():
-            parent(pid)
+        def cont(waiter=os.waitpid):
+            parent(pid, waiter=waiter)
             if b.retval is not None:
                 passed, setupfailure, excinfo, skipped,\
                     critical, _, _, _ = b.retval

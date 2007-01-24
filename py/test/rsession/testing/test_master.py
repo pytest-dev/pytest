@@ -11,17 +11,14 @@ if sys.platform == 'win32':
 
 from py.__.test.rsession.master import dispatch_loop, setup_slave, MasterNode, randomgen
 from py.__.test.rsession.outcome import ReprOutcome, Outcome 
-from py.__.test.rsession.testing.test_slave import funcpass_spec, funcfail_spec
+from py.__.test.rsession.testing.test_slave import funcpass_spec, funcfail_spec, funchang_spec
 from py.__.test.rsession import report
-from py.__.test.rsession.rsession import session_options, remote_options
 from py.__.test.rsession.hostmanage import HostInfo
 
 def setup_module(mod):
     # bind an empty config
     config = py.test.config._reparse([])
-    config.option.max_tasks_per_node = 10
-    session_options.bind_config(config)
-    #assert not remote_options.exitfirst
+    config._overwrite('dist_taskspernode', 10)
     mod.pkgdir = py.path.local(py.__file__).dirpath()
 
 class DummyGateway(object):
@@ -92,11 +89,12 @@ def test_dispatch_loop():
 
 def test_slave_setup():
     gw = py.execnet.PopenGateway()
-    channel = setup_slave(gw, pkgdir, remote_options.d)
+    config = py.test.config._reparse([])
+    channel = setup_slave(gw, pkgdir, config)
     channel.send(funcpass_spec)
     output = ReprOutcome(channel.receive())
     assert output.passed
-    channel.send(None)
+    channel.send(42)
     channel.waitclose(10)
     gw.exit()
 
@@ -114,7 +112,8 @@ def test_slave_running():
         gw = py.execnet.PopenGateway()
         gw.host = HostInfo("localhost")
         gw.host.gw = gw
-        channel = setup_slave(gw, pkgdir, remote_options.d)
+        config = py.test.config._reparse([])
+        channel = setup_slave(gw, pkgdir, config)
         mn = MasterNode(channel, simple_report, {})
         return mn
     
@@ -126,6 +125,34 @@ def test_slave_running():
                          [funcpass_item] * 5 + [funcfail_item] * 5)
     shouldstop = lambda : False
     dispatch_loop(master_nodes, itemgenerator, shouldstop)
+
+def test_slave_running_interrupted():
+    #def simple_report(event):
+    #    if not isinstance(event, report.ReceivedItemOutcome):
+    #        return
+    #    item = event.item
+    #    if item.code.name == 'funcpass':
+    #        assert event.outcome.passed
+    #    else:
+    #        assert not event.outcome.passed
+    reports = []
+    
+    def open_gw():
+        gw = py.execnet.PopenGateway()
+        gw.host = HostInfo("localhost")
+        gw.host.gw = gw
+        config = py.test.config._reparse([])
+        channel = setup_slave(gw, pkgdir, config)
+        mn = MasterNode(channel, reports.append, {})
+        return mn, gw, channel
+
+    mn, gw, channel = open_gw()
+    rootcol = py.test.collect.Directory(pkgdir.dirpath())
+    funchang_item = rootcol.getitembynames(funchang_spec)
+    mn.send(funchang_item)
+    mn.send(StopIteration)
+    # XXX: We have to wait here a bit to make sure that it really did happen
+    channel.waitclose(2)
 
 def test_randomgen():
     d = {}

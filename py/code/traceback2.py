@@ -23,6 +23,10 @@ class TracebackEntry(object):
         return self.frame.code.path
     path = property(path, None, None, "path to the full source code")
 
+    def getlocals(self):
+        return self.frame.f_locals
+    locals = property(getlocals, None, None, "locals of underlaying frame")
+
     def reinterpret(self):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
@@ -77,6 +81,10 @@ class TracebackEntry(object):
         except EnvironmentError, e: 
             line = "<could not get sourceline>"
         return "  File %r:%d in %s\n  %s\n" %(fn, self.lineno+1, name, line) 
+
+    def name(self):
+        return self.frame.code.raw.co_name
+    name = property(name, None, None, "co_name of underlaying code")
 
 class Traceback(list):
     """ Traceback objects encapsulate and offer higher level 

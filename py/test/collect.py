@@ -29,31 +29,9 @@ import py
 def configproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
-        return py.test.config.getvalue(name, self.fspath) 
+        return self.config.getvalue(name, self.fspath) 
     return property(fget)
 
-def getfscollector(fspath):
-    if isinstance(fspath, str): 
-        fspath = py.path.local(fspath)
-    if not fspath.check(): 
-       raise py.error.ENOENT(fspath) 
-    pkgpath = fspath.pypkgpath() 
-    if pkgpath is None:
-        if fspath.check(dir=1):
-            pkgpath = fspath
-        else:
-            pkgpath = fspath.dirpath()
-    Directory = py.test.config.getvalue('Directory', pkgpath)
-    current = Directory(pkgpath) 
-    #print "pkgpath", pkgpath
-    names = filter(None, fspath.relto(pkgpath).split(fspath.sep))
-    for name in names: 
-        current = current.join(name) 
-        assert current, "joining %r resulted in None!" % (names,)
-    top = current.listchain()[0]
-    #top._config = config 
-    return current 
- 
 class Collector(object): 
     """ Collector instances are iteratively generated
         (through their run() and join() methods)
@@ -63,10 +41,10 @@ class Collector(object):
                 (or None if it is the root collector)
         name:   basename of this collector object
     """
-    def __init__(self, name, parent=None): 
+    def __init__(self, name, parent=None):
         self.name = name 
         self.parent = parent 
-        self.option = getattr(parent, 'option', None)
+        self.config = getattr(parent, 'config', py.test.config)
         self.fspath = getattr(parent, 'fspath', None) 
 
     Module = configproperty('Module')
@@ -187,9 +165,10 @@ class Collector(object):
             namelist = namelist.split("/")
         cur = self
         for name in namelist:
-            next = cur.join(name)
-            assert next is not None, (cur, name, namelist)
-            cur = next
+            if name:
+                next = cur.join(name)
+                assert next is not None, (cur, name, namelist)
+                cur = next
         return cur
 
     def haskeyword(self, keyword): 
@@ -211,8 +190,10 @@ class Collector(object):
                 newl.append(x.name) 
         return ".".join(newl) 
 
-    # XXX: Copied from session
     def skipbykeyword(self, keyword): 
+        """ raise Skipped() exception if the given keyword 
+            matches for this collector. 
+        """
         if not keyword:
             return
         chain = self.listchain()
@@ -342,15 +323,15 @@ class PyCollectorMixin(object):
                     d[name] = res 
         return d
 
-    def makeitem(self, name, obj, usefilters=True): 
+    def makeitem(self, name, obj, usefilters=True):
         if (not usefilters or self.classnamefilter(name)) and \
-            py.std.inspect.isclass(obj): 
-            return self.Class(name, parent=self) 
+            py.std.inspect.isclass(obj):
+            return self.Class(name, parent=self)
         elif (not usefilters or self.funcnamefilter(name)) and callable(obj): 
             if obj.func_code.co_flags & 32: # generator function 
-                return self.Generator(name, parent=self) 
+                return self.Generator(name, parent=self)
             else: 
-                return self.Function(name, parent=self) 
+                return self.Function(name, parent=self)
 
     def _prepare(self): 
         if not hasattr(self, '_name2items'): 
@@ -391,7 +372,7 @@ class Module(FSCollector, PyCollectorMixin):
         return res
     
     def startcapture(self): 
-        if not self.option.nocapture:
+        if not self.config.option.nocapture:
             assert not hasattr(self, '_capture')
             #self._capture = py.io.OutErrCapture() 
             # XXX integrate this into py.io / refactor

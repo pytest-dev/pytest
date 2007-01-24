@@ -36,6 +36,14 @@ class Globals(object):
 
 glob = Globals()
 
+class Options(object):
+    """ Store global options
+    """
+    def __init__(self):
+        self.scroll = True
+
+opts = Options()
+
 def comeback(msglist):
     if len(msglist) == 0:
         return
@@ -62,11 +70,29 @@ def hide_info():
     info = dom.document.getElementById("info")
     info.style.visibility = "hidden"
 
+def show_interrupt():
+    glob.finished = True
+    dom.document.title = "Py.test [interrupted]"
+    dom.document.getElementById("Tests").childNodes[0].nodeValue = "Tests [interrupted]"
+
+def show_crash():
+    glob.finished = True
+    dom.document.title = "Py.test [crashed]"
+    dom.document.getElementById("Tests").childNodes[0].nodeValue = "Tests [crashed]"
+
 SCROLL_LINES = 50
 
+def opt_scroll():
+    if opts.scroll:
+        opts.scroll = False
+    else:
+        opts.scroll = True
+
 def scroll_down_if_needed(mbox):
-    if dom.window.scrollMaxY - dom.window.scrollY < SCROLL_LINES:
-        mbox.parentNode.scrollIntoView()
+    if not opts.scroll:
+        return
+    #if dom.window.scrollMaxY - dom.window.scrollY < SCROLL_LINES:
+    mbox.parentNode.scrollIntoView()
 
 def hide_messagebox():
     mbox = dom.document.getElementById("messagebox")
@@ -175,6 +201,7 @@ def process(msg):
         add_received_item_outcome(msg, module_part)
     elif msg['type'] == 'TestFinished':
         text = "FINISHED %s run, %s failures, %s skipped" % (msg['run'], msg['fails'], msg['skips'])
+        glob.finished = True
         dom.document.title = "Py.test %s" % text
         dom.document.getElementById("Tests").childNodes[0].nodeValue = \
                                                     "Tests [%s]" % text
@@ -202,6 +229,10 @@ def process(msg):
         module_part.appendChild(tr)
     elif msg['type'] == 'RsyncFinished':
         glob.rsync_done = True
+    elif msg['type'] == 'InterruptedExecution':
+        show_interrupt()
+    elif msg['type'] == 'CrashedExecution':
+        show_crash()
     if glob.data_empty:
         mbox = dom.document.getElementById('messagebox')
         scroll_down_if_needed(mbox)
@@ -262,6 +293,8 @@ def hide_host():
     glob.host = ""
 
 def update_rsync():
+    if glob.finished:
+        return
     elem = dom.document.getElementById("Tests")
     if glob.rsync_done is True:
         elem.childNodes[0].nodeValue = "Tests"
@@ -294,11 +327,23 @@ def host_init(host_dict):
     for key in host_dict.keys():
         glob.host_pending[key] = []
 
+def key_pressed(key):
+    if key.charCode == ord('s'):
+        scroll_box = dom.document.getElementById("opt_scroll")
+        if opts.scroll:
+            scroll_box.removeAttribute("checked")
+            opts.scroll = False
+        else:
+            scroll_box.setAttribute("checked", "true")
+            opts.scroll = True
+
 def sessid_comeback(id):
     glob.sessid = id
     exported_methods.show_all_statuses(id, comeback)
 
 def main():
+    glob.finished = False
     exported_methods.show_hosts(host_init)
     exported_methods.show_sessid(sessid_comeback)
-
+    dom.document.onkeypress = key_pressed
+    dom.document.getElementById("opt_scroll").setAttribute("checked", "True")

@@ -32,10 +32,10 @@ def test_collect_doctest_files_with_test_prefix():
         >>> i-1
         4
     """))
-    from py.__.test.collect import getfscollector
     for x in (o, checkfile): 
         #print "checking that %s returns custom items" % (x,) 
-        col = getfscollector(x)
+        config = py.test.config._reparse([x])
+        col = config._getcollector(x)
         items = list(col.tryiter(py.test.Item))
         assert len(items) == 1
         assert isinstance(items[0], DoctestText)

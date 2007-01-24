@@ -9,8 +9,8 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37056 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-01-20 13:11:01 +0100 (Sat, 20 Jan 2007) $',
+    revision = int('$LastChangedRevision: 37278 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-01-24 17:46:46 +0100 (Wed, 24 Jan 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
@@ -32,7 +32,7 @@ initpkg(__name__,
     'test.compat.TestCase'   : ('./test/compat.py', 'TestCase'),
 
     # configuration/initialization related test api
-    'test.config'            : ('./test/config.py', 'config'),
+    'test.config'            : ('./test/config.py', 'config_per_process'),
     'test.ensuretemp'        : ('./test/config.py', 'ensuretemp'),
     'test.cmdline.main'      : ('./test/cmdline.py', 'main'),
 
@@ -92,6 +92,9 @@ initpkg(__name__,
     'execnet.SocketGateway'  : ('./execnet/register.py', 'SocketGateway'),
     'execnet.PopenGateway'   : ('./execnet/register.py', 'PopenGateway'),
     'execnet.SshGateway'     : ('./execnet/register.py', 'SshGateway'),
+
+    # execnet scripts
+    'execnet.RSync'          : ('./execnet/rsync.py', 'RSync'),
 
     # input-output helping 
     'io.dupfile'             : ('./io/dupfile.py', 'dupfile'), 

@@ -76,7 +76,7 @@ def f():
         assert _type == "link"
         path = os.path.join(destdir, relpath)
         try:
-            os.unlink(path)
+            remove(path)
         except OSError:
             pass
 

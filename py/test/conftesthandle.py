@@ -51,9 +51,10 @@ class Conftest(object):
         # affect us by always returning a copy of the actual list 
         return clist[:]
 
-    def lget(self, name, path=None):
-        modules = self.getconftestmodules(path)
-        return self._get(name, modules)
+    # XXX no real use case, may probably go 
+    #def lget(self, name, path=None):
+    #    modules = self.getconftestmodules(path)
+    #    return self._get(name, modules)
    
     def rget(self, name, path=None):
         modules = self.getconftestmodules(path)

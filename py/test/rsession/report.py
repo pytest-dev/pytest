@@ -124,3 +124,9 @@ class PongReceived(ReportEvent):
     def __init__(self, hostid, result):
         self.hostid = hostid
         self.result = result
+
+class InterruptedExecution(ReportEvent):
+    pass
+
+class CrashedExecution(ReportEvent):
+    pass

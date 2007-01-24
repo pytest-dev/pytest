@@ -31,18 +31,23 @@ class RestReporter(AbstractReporter):
         if self.config.option.verbose:
             self.add_rest(Paragraph("Unknown report: %s" % what))
 
+    def gethost(self, item):
+        if item.channel:
+            return item.channel.gateway.host
+        return self.hosts[0]
+
     def report_SendItem(self, item):
-        address = item.channel.gateway.host.hostname
+        address = self.gethost(item)
         if self.config.option.verbose:
             self.add_rest(Paragraph('sending item %s to %s' % (item.item,
                                                                address)))
 
     def report_HostRSyncing(self, item):
-        self.add_rest(LiteralBlock('%10s: RSYNC ==> %s' % (item.hostname[:10],
+        self.add_rest(LiteralBlock('%10s: RSYNC ==> %s' % (item.host.hostname[:10],
                                                         item.remoterootpath)))
 
     def report_HostReady(self, item):
-        self.add_rest(LiteralBlock('%10s: READY' % (item.hostname[:10],)))
+        self.add_rest(LiteralBlock('%10s: READY' % (item.host.hostname[:10],)))
 
     def report_TestStarted(self, event):
         txt = "Running tests on hosts: %s" % ", ".join(event.hosts)
@@ -91,7 +96,7 @@ class RestReporter(AbstractReporter):
         self.out.write(self.rest.render_links())
 
     def report_ReceivedItemOutcome(self, event):
-        host = event.channel.gateway.host
+        host = self.gethost(event)
         if event.outcome.passed:
             status = [Strong("PASSED")]
             self.passed[host] += 1

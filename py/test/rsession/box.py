@@ -18,12 +18,14 @@ from StringIO import StringIO
 class FileBox(object):
     count = 0
     
-    def __init__(self, fun, args=None, kwargs=None):
+    def __init__(self, fun, args=None, kwargs=None, config=None):
         if args is None:
             args = []
         if kwargs is None:
             kwargs = {}
         self.fun = fun
+        self.config = config
+        assert self.config
         self.args = args
         self.kwargs = kwargs
     
@@ -35,8 +37,7 @@ class FileBox(object):
         self.PYTESTSTDOUT = tempdir.join('stdout')
         self.PYTESTSTDERR = tempdir.join('stderr')
 
-        from py.__.test.rsession.rsession import remote_options
-        nice_level = remote_options.nice_level
+        nice_level = self.config.getvalue('dist_nicelevel')
         pid = os.fork()
         if pid:
             if not continuation:
@@ -48,10 +49,12 @@ class FileBox(object):
                 outcome = self.children(nice_level)
             except:
                 excinfo = py.code.ExceptionInfo()
-                print "Internal box error"
+                x = open("/tmp/traceback", "w")
+                print >>x, "Internal box error"
                 for i in excinfo.traceback:
-                    print str(i)[2:-1]
-                print excinfo
+                    print >>x, str(i)[2:-1]
+                print >>x, excinfo
+                x.close()
                 os._exit(1)
             os.close(1)
             os.close(2)
@@ -83,8 +86,8 @@ class FileBox(object):
             retvalf.close()
         os._exit(0)
     
-    def parent(self, pid):
-        pid, exitstat = os.waitpid(pid, 0)
+    def parent(self, pid, waiter=os.waitpid):
+        pid, exitstat = waiter(pid, 0)
         self.signal = exitstat & 0x7f
         self.exitstat = exitstat & 0xff00
 

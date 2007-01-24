@@ -20,50 +20,81 @@ class Outcome(object):
         self.signal = 0
         assert bool(self.passed) + bool(excinfo) + bool(skipped) == 1
     
-    def make_excinfo_repr(self):
+    def make_excinfo_repr(self, tbstyle):
         if self.excinfo is None:
             return None
         excinfo = self.excinfo
-        tb_info = [self.traceback_entry_repr(x) for x in excinfo.traceback]
-        return (excinfo.type.__name__, str(excinfo.value), tb_info)
+        tb_info = [self.traceback_entry_repr(x, tbstyle)
+                   for x in excinfo.traceback]
+        rec_index = excinfo.traceback.recursionindex()
+        return (excinfo.type.__name__, str(excinfo.value), (tb_info, rec_index))
     
-    def traceback_entry_repr(self, tb_entry):
+    def traceback_entry_repr(self, tb_entry, tb_style):
         lineno = tb_entry.lineno
         relline = lineno - tb_entry.frame.code.firstlineno
         path = str(tb_entry.path)
-        try:
-            from py.__.test.rsession.rsession import remote_options
-            if remote_options.tbstyle == 'long':
-                source = str(tb_entry.getsource())
-            else:
-                source = str(tb_entry.getsource()).split("\n")[relline]
-        except:
-            source = "<could not get source>"
-        return (relline, lineno, source, path)
+        #try:
+        if tb_style == 'long':
+            source = str(tb_entry.getsource())
+        else:
+            source = str(tb_entry.getsource()).split("\n")[relline]
+        name = tb_entry.frame.code.raw.co_name
+        # XXX: Bare except. What can getsource() raise anyway?
+        # SyntaxError, AttributeError, IndentationError for sure, check it
+        #except:
+        #    source = "<could not get source>"
+        return (relline, lineno, source, path, name)
         
-    def make_repr(self):
+    def make_repr(self, tbstyle="long"):
         return (self.passed, self.setupfailure, 
-                self.make_excinfo_repr(), 
+                self.make_excinfo_repr(tbstyle), 
                 self.skipped, self.is_critical, 0, "", "")
 
 class TracebackEntryRepr(object):
     def __init__(self, tbentry):
-        relline, lineno, self.source, self.path = tbentry
+        relline, lineno, self.source, self.path, self.name = tbentry
         self.relline = int(relline)
+        self.path = py.path.local(self.path)
         self.lineno = int(lineno)
+        self.locals = {}
     
     def __repr__(self):
         return "line %s in %s\n  %s" %(self.lineno, self.path, self.source[100:])
 
+    def getsource(self):
+        return py.code.Source(self.source).strip()
+
+    def getfirstlinesource(self):
+        return self.lineno - self.relline
+
+class TracebackRepr(list):
+    def recursionindex(self):
+        return self.recursion_index
+
 class ExcInfoRepr(object):
     def __init__(self, excinfo):
-        self.typename, self.value, tb = excinfo
-        self.traceback = [TracebackEntryRepr(x) for x in tb]
+        self.typename, self.value, tb_i = excinfo
+        tb, rec_index = tb_i
+        self.traceback = TracebackRepr([TracebackEntryRepr(x) for x in tb])
+        self.traceback.recursion_index = rec_index
     
     def __repr__(self):
         l = ["%s=%s" %(x, getattr(self, x))
                 for x in "typename value traceback".split()]
         return "<ExcInfoRepr %s>" %(" ".join(l),)
+
+    def exconly(self, tryshort=False):
+        """ Somehow crippled version of original one
+        """
+        return "%s: %s" % (self.typename, self.value)
+
+    def errisinstance(self, exc_t):
+        if not isinstance(exc_t, tuple):
+            exc_t = (exc_t,)
+        for exc in exc_t:
+            if self.typename == str(exc).split('.')[-1]:
+                return True
+        return False
 
 class ReprOutcome(object):
     def __init__(self, repr_tuple):

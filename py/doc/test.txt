@@ -669,11 +669,14 @@ You must create a conftest.py in any parent directory above your tests.
 
 The options that you need to specify in that conftest.py file are:
 
-* `dist_hosts` - a list of ssh addresses (including a specific path if it 
-  should be different than the default: ``$HOME/pytestcache-hostname``)
+* **`dist_hosts`**: a required list of ssh addresses (which each may
+  include a path, default path is: ``$HOME/pytestcache-HOSTNAME``)
 * `dist_rsync_roots` - a list of packages to copy to the remote machines.
-* `dist_remotepython` - the remote python to run.
-* `SessionOptions` - containing some specific tuning options
+* `dist_remotepython` - the remote python executable to run.
+* `dist_nicelevel` - process priority of remote nodes. 
+* `dist_boxing` - will run each single test in a separate process 
+  (allowing to survive segfaults for example) 
+* `dist_taskspernode` - Maximum number of tasks being queued to remote nodes 
 
 Sample configuration::
 
@@ -687,17 +690,6 @@ Sample configuration::
 
 Running server is done by ``-w`` command line option or ``--startserver``
 (the former might change at some point due to conflicts).
-
-Possible `SessionOptions` arguments:
-
-* `nice_level` - Level of nice under which tests are run
-* `runner_policy` - (for `LSession` only) - contains policy for the test boxig.
-  `"plain_runner"` means no boxing, `"box_runner"` means boxing.
-* `waittime` - Default maximum waiting time for remote host to execute
-  one test.
-* `max_tasks_per_node` - Maximum number of tasks which can be send to one node.
-* `import_pypy` - Flag to control pypy importing for js regeneration (defaults
-  to False)
 
 Development Notes
 -----------------

@@ -11,73 +11,11 @@ import time
 from py.__.test.rsession import report
 from py.__.test.rsession.master import \
      setup_slave, MasterNode, dispatch_loop, itemgen, randomgen
-from py.__.test.rsession.hostmanage import init_hosts, teardown_hosts, HostInfo
+from py.__.test.rsession.hostmanage import HostInfo, HostOptions, HostManager
 
 from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
-    box_runner, RunnerPolicy
+    box_runner
 from py.__.test.rsession.reporter import LocalReporter, RemoteReporter
-
-class RemoteOptions(object):
-    def __init__(self, d):
-        self.d = d
-    
-    def __getattr__(self, attr):
-        if attr == 'd':
-            return self.__dict__['d']
-        return self.d[attr]
-    
-    def __setitem__(self, item, val):
-        self.d[item] = val
-
-# XXX: Must be initialised somehow
-remote_options = RemoteOptions({'we_are_remote':False})
-
-class SessionOptions:
-    defaults = {
-        'max_tasks_per_node' : 15,
-        'runner_policy' : 'plain_runner',
-        'nice_level' : 0,
-        'waittime' : 100.0,
-        'import_pypy' : False,
-    }
-    
-    config = None
-    
-    def getvalue(self, opt):
-        try:
-            return getattr(self.config.getvalue('SessionOptions'), opt)
-        except (KeyError, AttributeError): 
-            try:
-                return self.defaults[opt]
-            except KeyError:
-                raise AttributeError("Option %s undeclared" % opt)
-    
-    def bind_config(self, config):
-        self.config = config
-        # copy to remote session options
-        try:
-            ses_opt = self.config.getvalue('SessionOptions').__dict__
-        except KeyError:
-            ses_opt = self.defaults
-        for key in self.defaults:
-            try:
-                val = ses_opt[key]
-            except KeyError:
-                val = self.defaults[key]
-            remote_options[key] = val
-        # copy to remote all options
-        for item, val in config.option.__dict__.items():
-            remote_options[item] = val
-    
-    def __repr__(self):
-        return "<SessionOptions %s>" % self.config
-    
-    def __getattr__(self, attr):
-        if self.config is None:
-            raise AttributeError("Need to set up config first")
-        return self.getvalue(attr)
-
-session_options = SessionOptions()
 
 class AbstractSession(object):
     """
@@ -114,17 +52,29 @@ class AbstractSession(object):
     getpkgdir = staticmethod(getpkgdir)
 
     def init_reporter(self, reporter, sshhosts, reporter_class, arg=""):
+        """ This initialises so called `reporter` class, which will
+        handle all event presenting to user. Does not get called
+        if main received custom reporter
+        """
         startserverflag = self.config.option.startserver
         restflag = self.config.option.restreport
         
         if startserverflag and reporter is None:
             from py.__.test.rsession.web import start_server, exported_methods
+            if self.config.option.runbrowser:
+                from socket import INADDR_ANY
+                port = INADDR_ANY   # pick a random port when starting browser
+            else:
+                port = 8000         # stick to a fixed port otherwise
             
             reporter = exported_methods.report
-            start_server()
+            httpd = start_server(server_address = ('', port))
+            port = httpd.server_port
             if self.config.option.runbrowser:
-                import webbrowser
-                webbrowser.open("http://localhost:8000")
+                import webbrowser, thread
+                # webbrowser.open() may block until the browser finishes or not
+                url = "http://localhost:%d" % (port,)
+                thread.start_new_thread(webbrowser.open, (url,))
         elif reporter is None: 
             if restflag:
                 from py.__.test.rsession.rest import RestReporter
@@ -150,6 +100,8 @@ class AbstractSession(object):
     reporterror = staticmethod(reporterror)
 
     def kill_server(self, startserverflag):
+        """ Kill web server
+        """
         if startserverflag:
             from py.__.test.rsession.web import kill_server
             kill_server()
@@ -172,6 +124,8 @@ class AbstractSession(object):
         return new_reporter, checkfun
 
 def parse_directories(sshhosts):
+    """ Parse sshadresses of hosts to have distinct hostname/hostdir
+    """
     directories = {}
     for host in sshhosts:
         m = re.match("^(.*?):(.*)$", host.hostname)
@@ -186,9 +140,8 @@ class RSession(AbstractSession):
     """
     def main(self, reporter=None):
         """ main loop for running tests. """
-        args = self.config.remaining
+        args = self.config.args
 
-        session_options.bind_config(self.config)
         sshhosts, remotepython, rsync_roots = self.read_distributed_config()
         reporter, startserverflag = self.init_reporter(reporter,
             sshhosts, RemoteReporter)
@@ -198,22 +151,42 @@ class RSession(AbstractSession):
 
         pkgdir = self.getpkgdir(args[0])
         done_dict = {}
-        nodes = init_hosts(reporter, sshhosts, pkgdir,
-            rsync_roots, remotepython, remote_options=remote_options.d,
-            optimise_localhost=self.optimise_localhost, done_dict=done_dict)
-        reporter(report.RsyncFinished())
-        
+        hostopts = HostOptions(rsync_roots=rsync_roots,
+                               remote_python=remotepython,
+                            optimise_localhost=self.optimise_localhost)
+        hostmanager = HostManager(sshhosts, self.config, pkgdir, hostopts)
         try:
-            self.dispatch_tests(nodes, args, pkgdir, reporter, checkfun, done_dict)
-        finally:
-            teardown_hosts(reporter, [node.channel for node in nodes], nodes, 
+            nodes = hostmanager.init_hosts(reporter, done_dict)
+            reporter(report.RsyncFinished())
+            try:
+                self.dispatch_tests(nodes, args, pkgdir, reporter, checkfun, done_dict)
+            except (KeyboardInterrupt, SystemExit):
+                print >>sys.stderr, "C-c pressed waiting for gateways to teardown..."
+                channels = [node.channel for node in nodes]
+                hostmanager.kill_channels(channels)
+                hostmanager.teardown_gateways(reporter, channels)
+                print >>sys.stderr, "... Done"
+                raise
+
+            channels = [node.channel for node in nodes]
+            hostmanager.teardown_hosts(reporter, channels, nodes, 
                 exitfirst=self.config.option.exitfirst)
-        reporter(report.Nodes(nodes))
-        retval = reporter(report.TestFinished())
-        self.kill_server(startserverflag)
-        return retval
+            reporter(report.Nodes(nodes))
+            retval = reporter(report.TestFinished())
+            self.kill_server(startserverflag)
+            return retval
+        except (KeyboardInterrupt, SystemExit):
+            reporter(report.InterruptedExecution())
+            self.kill_server(startserverflag)
+            raise
+        except:
+            reporter(report.CrashedExecution())
+            self.kill_server(startserverflag)
+            raise
 
     def read_distributed_config(self):
+        """ Read from conftest file the configuration of distributed testing
+        """
         try:
             rsync_roots = self.config.getvalue("distrsync_roots")
         except:
@@ -221,10 +194,7 @@ class RSession(AbstractSession):
         sshhosts = [HostInfo(i) for i in
                     self.config.getvalue("disthosts")]
         parse_directories(sshhosts)
-        try:
-            remotepython = self.config.getvalue("dist_remotepython")
-        except:
-            remotepython = None
+        remotepython = self.config.getvalue("dist_remotepython")
         return sshhosts, remotepython, rsync_roots
 
     def dispatch_tests(self, nodes, args, pkgdir, reporter, checkfun, done_dict):
@@ -247,14 +217,13 @@ class LSession(AbstractSession):
     """
     def main(self, reporter=None, runner=None):
         # check out if used options makes any sense
-        args = self.config.remaining  
+        args = self.config.args  
         
         sshhosts = [HostInfo('localhost')] # this is just an info to reporter
         
         if not self.config.option.nomagic:
             py.magic.invoke(assertion=1)
 
-        session_options.bind_config(self.config)
         reporter, startserverflag = self.init_reporter(reporter, 
             sshhosts, LocalReporter, args[0])
         reporter, checkfun = self.wrap_reporter(reporter)
@@ -321,4 +290,8 @@ class LSession(AbstractSession):
             self.tracer = Tracer(self.docstorage)
             return apigen_runner
         else:
-            return RunnerPolicy[session_options.runner_policy]
+            if (self.config.getvalue('dist_boxing') or self.config.option.boxing)\
+                   and not self.config.option.nocapture:
+                return box_runner
+            return plain_runner
+

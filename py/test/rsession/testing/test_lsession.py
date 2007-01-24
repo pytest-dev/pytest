@@ -5,7 +5,7 @@
 import py
 from py.__.test.rsession.rsession import LSession
 from py.__.test.rsession import report
-from py.__.test.rsession.local import box_runner, plain_runner
+from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
 
 def setup_module(mod): 
     mod.tmp = py.test.ensuretemp("lsession_module") 
@@ -82,22 +82,26 @@ class TestLSession(object):
         l = []
         def some_fun(*args):
             l.append(args)
-        
-        pdb.post_mortem = some_fun
-        args = [str(tmpdir.join(subdir)), '--pdb']
-        config = py.test.config._reparse(args)
-        lsession = LSession(config)
-        allevents = []
+
         try:
-            lsession.main(reporter=allevents.append, runner=plain_runner)
-        except SystemExit:
-            pass
-        else:
-            py.test.fail("Didn't raise system exit")
-        failure_events = [event for event in allevents if isinstance(event,
-            report.ImmediateFailure)]
-        assert len(failure_events) == 1
-        assert len(l) == 1
+            post_mortem = pdb.post_mortem
+            pdb.post_mortem = some_fun
+            args = [str(tmpdir.join(subdir)), '--pdb']
+            config = py.test.config._reparse(args)
+            lsession = LSession(config)
+            allevents = []
+            try:
+                lsession.main(reporter=allevents.append, runner=plain_runner)
+            except SystemExit:
+                pass
+            else:
+                py.test.fail("Didn't raise system exit")
+            failure_events = [event for event in allevents if isinstance(event,
+                                                     report.ImmediateFailure)]
+            assert len(failure_events) == 1
+            assert len(l) == 1
+        finally:
+            pdb.post_mortem = post_mortem
 
     def test_minus_x(self):
         if not hasattr(py.std.os, 'fork'):
@@ -262,3 +266,31 @@ class TestLSession(object):
         assert testevents[0].outcome.passed
         assert testevents[0].outcome.stderr == ""
         assert testevents[0].outcome.stdout == "1\n2\n3\n"
+
+    def test_runner_selection(self):
+        tmpdir = py.test.ensuretemp("lsession_runner_selection")
+        tmpdir.ensure("apigen.py").write(py.code.Source("""
+        def get_documentable_items(*args):
+            return {}
+        """))
+        opt_mapping = {
+            '': plain_runner,
+            '--box': box_runner,
+            '--apigen=%s/apigen.py' % str(tmpdir): apigen_runner,
+        }
+        pkgdir = tmpdir.dirpath()
+        for opt in opt_mapping.keys():
+            if opt:
+                all = opt + " " + str(tmpdir)
+            else:
+                all = str(tmpdir)
+            config = py.test.config._reparse(all.split(" "))
+            lsession = LSession(config)
+            assert lsession.init_runner(pkgdir) is opt_mapping[opt]
+        #tmpdir.dirpath().ensure("conftest.py").write(py.code.Source("""
+        #dist_boxing=True
+        #"""))
+        #config = py.test.config._reparse([str(tmpdir)])
+        #lsession = LSession(config)
+        #assert lsession.init_runner(pkgdir) is box_runner
+        # XXX check why it fails

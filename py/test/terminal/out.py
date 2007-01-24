@@ -10,8 +10,9 @@ class Out(object):
     def __init__(self, file):
         self.file = py.io.dupfile(file)
 
-    def sep(self, sepchar, title=None):
-        fullwidth = self.fullwidth
+    def sep(self, sepchar, title=None, fullwidth=None):
+        if not fullwidth:
+            fullwidth = self.fullwidth
         # the goal is to have the line be as long as possible
         # under the condition that len(line) <= fullwidth
         if title is not None:
@@ -37,15 +38,10 @@ class TerminalOut(Out):
     tty = True
     def __init__(self, file):
         super(TerminalOut, self).__init__(file)
-        try:
-            import termios,fcntl,struct
-            call = fcntl.ioctl(0,termios.TIOCGWINSZ,"\000"*8)
-            height,width = struct.unpack( "hhhh", call ) [:2]
-            self.fullwidth = width
-        except (SystemExit, KeyboardInterrupt), e:
-            raise
-        except:
-            pass
+
+    def sep(self, sepchar, title=None):
+        super(TerminalOut, self).sep(sepchar, title,
+                                     terminal_helper.get_terminal_width())
 
     def write(self, s):
         self.file.write(str(s))
@@ -84,8 +80,10 @@ def getout(file):
     #
     if file is None: 
         file = py.std.sys.stdout 
-    elif hasattr(file, 'send'):  # likely a channel like thing
+    elif hasattr(file, 'send'):
         file = WriteFile(file.send) 
+    elif callable(file):
+        file = WriteFile(file)
     if hasattr(file, 'isatty') and file.isatty(): 
         return TerminalOut(file)
     else:

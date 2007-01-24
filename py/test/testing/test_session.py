@@ -5,52 +5,27 @@ def setup_module(mod):
     mod.datadir = setupdatadir()
     mod.tmpdir = py.test.ensuretemp(mod.__name__) 
 
-class TestDefaultSession: 
-    def test_simple(self): 
-        config = py.test.config._reparse([datadir/'filetest.py']) 
-        session = config.getsessionclass()(config, py.std.sys.stdout)
-        session.main()
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
-        assert len(l) == 2 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
-        assert not l 
+def test_default_session_options():
+    for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
+                 ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
+                 ['--traceconfig'], ['-v'], ['-v', '-v']):
+        yield runfiletest, opts
 
-    def test_simple_verbose(self): 
-        config = py.test.config._reparse([datadir/'filetest.py', 
-                                                '--verbose']) 
-        session = config.getsessionclass()(config, py.std.sys.stdout)
-        session.main()
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
-        assert len(l) == 2 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
-        assert not l 
-
-    def test_simple_verbose_verbose(self): 
-        config = py.test.config._reparse([datadir/'filetest.py', 
-                                                '-v', '-v']) 
-        session = config.getsessionclass()(config, py.std.sys.stdout)
-        session.main()
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
-        assert len(l) == 2 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
-        assert not l 
-
-    def test_session_parsing(self):
-        from py.__.test.terminal.terminal import TerminalSession
-        from py.__.test.tkinter.reportsession import ReportSession
-        config = py.test.config._reparse(['--session=terminal'])
-        assert issubclass(config.getsessionclass(), TerminalSession)
-        config = py.test.config._reparse(['--session=tkinter'])
-        assert issubclass(config.getsessionclass(), ReportSession)
-        config = py.test.config._reparse(['--tkinter'])
-        assert issubclass(config.getsessionclass(), ReportSession)
+def runfiletest(opts):
+    config = py.test.config._reparse(opts + [datadir/'filetest.py']) 
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    assert len(l) == 2 
+    l = session.getitemoutcomepairs(py.test.Item.Passed)
+    assert not l 
 
 class TestKeywordSelection: 
     def test_select_simple(self): 
         for keyword in ['test_one', 'est_on']:
             config = py.test.config._reparse([datadir/'filetest.py', 
                                                    '-k', keyword])
-            session = config.getsessionclass()(config, py.std.sys.stdout)
+            session = config._getsessionclass()(config, py.std.sys.stdout)
             session.main()
             l = session.getitemoutcomepairs(py.test.Item.Failed)
             assert len(l) == 1 
@@ -79,7 +54,7 @@ class TestKeywordSelection:
                         'TestClass test_2', 'xxx TestClass test_2',): 
             f = py.std.StringIO.StringIO()
             config = py.test.config._reparse([o, '-k', keyword]) 
-            session = config.getsessionclass()(config, f) 
+            session = config._getsessionclass()(config, f) 
             session.main()
             print "keyword", repr(keyword)
             l = session.getitemoutcomepairs(py.test.Item.Passed)
@@ -318,9 +293,8 @@ class TestTerminalSession:
         assert expected_output in out
 
 
-from py.__.test.terminal.remote import getrootdir 
 class TestRemote: 
-    def test_rootdir_is_package(self): 
+    def XXXtest_rootdir_is_package(self): 
         d = tmpdir.ensure('rootdirtest1', dir=1) 
         d.ensure('__init__.py')
         x1 = d.ensure('subdir', '__init__.py')
@@ -332,7 +306,7 @@ class TestRemote:
         assert getrootdir([x3,x2]) == d 
         assert getrootdir([x2,x3]) == d 
 
-    def test_rootdir_is_not_package(self): 
+    def XXXtest_rootdir_is_not_package(self): 
         one = tmpdir.ensure('rootdirtest1', 'hello') 
         rootdir = getrootdir([one]) 
         assert rootdir == one.dirpath() 
@@ -348,8 +322,7 @@ class TestRemote:
         config = py.test.config._reparse(
                         ['--exec=' + py.std.sys.executable, 
                          o])
-        assert config.option._remote 
-        cls = config.getsessionclass() 
+        cls = config._getsessionclass() 
         out = []  # out = py.std.Queue.Queue() 
         session = cls(config, out.append) 
         session.main()
@@ -368,16 +341,16 @@ class TestRemote:
         """))
         print py.std.sys.executable
         config = py.test.config._reparse(['--looponfailing', str(o)])
-        assert config.option._remote 
-        cls = config.getsessionclass() 
+        cls = config._getsessionclass() 
         out = py.std.Queue.Queue() 
         session = cls(config, out.put) 
         pool = py._thread.WorkerPool() 
         reply = pool.dispatch(session.main)
         while 1: 
-            s = out.get()
+            s = out.get(timeout=1.0)
             if s.find('1 failed') != -1: 
                 break 
+            print s
         else: 
             py.test.fail("did not see test_1 failure") 
         # XXX we would like to have a cleaner way to finish 

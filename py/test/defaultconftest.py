@@ -10,15 +10,25 @@ Instance = py.test.collect.Instance
 
 additionalinfo = None
 
+
+# ===================================================
+# Distributed testing specific options 
+
+#dist_hosts: needs to be provided by user
+#dist_rsync_roots: might be provided by user, if not present or None,
+#                  whole pkgdir will be rsynced
+dist_remotepython = "python"
+dist_taskspernode = 15
+dist_boxing = False
+if hasattr(py.std.os, 'nice'):
+    dist_nicelevel = py.std.os.nice(0) # nice py.test works
+else:
+    dist_nicelevel = 0
+_dist_import_pypy = False # used for regenerating JS application 
+
+# ===================================================
+
 Option = py.test.config.Option
-
-sessionimportpaths = {
-    'RSession': 'py.__.test.rsession.rsession', 
-    'LSession': 'py.__.test.rsession.rsession', 
-    'TerminalSession': 'py.__.test.terminal.terminal', 
-    'TkinterSession': 'py.__.test.tkinter.reportsession', 
-}
-
 def adddefaultoptions():
     py.test.config.addoptions('general options',
         Option('-v', '--verbose',
@@ -56,35 +66,41 @@ def adddefaultoptions():
         Option('', '--traceconfig',
                action="store_true", dest="traceconfig", default=False,
                help="trace considerations of conftest.py files."),
+    )
+
+    py.test.config.addoptions('EXPERIMENTAL options',
+        Option('-f', '--looponfailing',
+               action="store_true", dest="looponfailing", default=False,
+               help="loop on failing test set."),
+        Option('', '--exec',
+               action="store", dest="executable", default=None,
+               help="python executable to run the tests with."),
+        Option('-d', '--dist',
+               action="store_true", dest="dist", default=False,
+               help="ad-hoc distribute tests across machines (requires conftest settings)"), 
+        Option('-w', '--startserver',
+               action="store_true", dest="startserver", default=False,
+               help="starts local web server for displaying test progress.", 
+               ),
+        Option('-r', '--runbrowser',
+               action="store_true", dest="runbrowser", default=False,
+               help="run browser (implies --startserver)."
+               ),
+        Option('', '--tkinter',
+               action="store_true", dest="tkinter", default=False,
+               help="use tkinter test session frontend."),
+        Option('', '--box',
+               action="store_true", dest="boxing",
+               help="use boxing (running each test in external process)"),
+        Option('', '--rest',
+               action='store_true', dest="restreport", default=False,
+               help="restructured text output reporting."),
         Option('', '--apigen',
                action="store", dest="apigen",
                help="generate api documentation while testing (requires"
                "argument pointing to a script)."),
-    )
-
-    py.test.config.addoptions('test-session related options',
-        Option('', '--tkinter',
-               action="store_true", dest="tkinter", default=False,
-               help="use tkinter test session frontend."),
-        Option('', '--looponfailing',
-               action="store_true", dest="looponfailing", default=False,
-               help="loop on failing test set."),
         Option('', '--session',
                action="store", dest="session", default=None,
-               help="use given sessionclass, default is terminal."),
-        Option('', '--exec',
-               action="store", dest="executable", default=None,
-               help="python executable to run the tests with."),
-        Option('-w', '--startserver',
-               action="store_true", dest="startserver", default=False,
-               help="start HTTP server listening on localhost:8000 for test."
-               ),
-        Option('', '--runbrowser',
-               action="store_true", dest="runbrowser", default=False,
-               help="run browser to point to your freshly started web server."
-               ),
-        Option('-r', '--rest',
-               action='store_true', dest="restreport", default=False,
-               help="restructured text output reporting."),
+               help="lookup given sessioname in conftest.py files and use it."), 
     )
     

@@ -12,18 +12,6 @@ def test_failing_import_execfile():
     py.test.raises(ImportError, col.run)
     py.test.raises(ImportError, col.run)
 
-def XXXtest_finds_root(): 
-    fn = datadir / 'filetest.py'
-    col = py.test.collect.Module(fn) 
-    root, namelist = col.fromroot() 
-    assert isinstance(root, py.test.collect.Directory) 
-    cur = root
-    for x in namelist: 
-        cur = cur.join(x) 
-    assert cur.name == col.name 
-    assert cur.parent == col.parent  
-    assert cur.fspath == cur.fspath 
-
 def test_collect_listnames_and_back():
     col1 = py.test.collect.Directory(datadir.dirpath())
     col2 = col1.join(datadir.basename) 
@@ -203,10 +191,10 @@ def test_custom_python_collection_from_conftest():
                 assert 23 == 23
         """)
 
-    from py.__.test.collect import getfscollector
     for x in (o, checkfile, checkfile.dirpath()): 
+        config = py.test.config._reparse([x])
         #print "checking that %s returns custom items" % (x,) 
-        col = getfscollector(x)
+        col = config._getcollector(x)
         assert len(list(col.tryiter(py.test.Item))) == 2 
         #assert items[1].__class__.__name__ == 'MyFunction'
 
@@ -215,7 +203,7 @@ def test_custom_python_collection_from_conftest():
     try: 
         config = py.test.config._reparse([]) 
         out = py.std.cStringIO.StringIO()
-        session = config.getsessionclass()(config, out) 
+        session = config._getsessionclass()(config, out) 
         session.main() 
         l = session.getitemoutcomepairs(py.test.Item.Passed) 
         assert len(l) == 2
@@ -225,7 +213,7 @@ def test_custom_python_collection_from_conftest():
     # test that running the file directly works 
     config = py.test.config._reparse([str(checkfile)]) 
     out = py.std.cStringIO.StringIO()
-    session = config.getsessionclass()(config, out) 
+    session = config._getsessionclass()(config, out) 
     session.main() 
     l = session.getitemoutcomepairs(py.test.Item.Passed) 
     assert len(l) == 2
@@ -250,10 +238,10 @@ def test_custom_NONpython_collection_from_conftest():
         """)
     checkfile = o.ensure('somedir', 'moredir', 'check_something.txt')
 
-    from py.__.test.collect import getfscollector
     for x in (o, checkfile, checkfile.dirpath()): 
         print "checking that %s returns custom items" % (x,) 
-        col = getfscollector(x)
+        config = py.test.config._reparse([x])
+        col = config._getcollector(x)
         assert len(list(col.tryiter(py.test.Item))) == 1
         #assert items[1].__class__.__name__ == 'MyFunction'
 
@@ -262,7 +250,7 @@ def test_custom_NONpython_collection_from_conftest():
     try: 
         config = py.test.config._reparse([]) 
         out = py.std.cStringIO.StringIO()
-        session = config.getsessionclass()(config, out) 
+        session = config._getsessionclass()(config, out) 
         session.main() 
         l = session.getitemoutcomepairs(py.test.Item.Passed) 
         assert len(l) == 1
@@ -272,12 +260,14 @@ def test_custom_NONpython_collection_from_conftest():
     # test that running the file directly works 
     config = py.test.config._reparse([str(checkfile)]) 
     out = py.std.cStringIO.StringIO()
-    session = config.getsessionclass()(config, out) 
+    session = config._getsessionclass()(config, out) 
     session.main() 
     l = session.getitemoutcomepairs(py.test.Item.Passed) 
     assert len(l) == 1
 
 def test_order_of_execution_generator_same_codeline():
+    if py.test.config.is_boxed():
+        py.test.skip("Does not work with boxing")
     test_list = []
     expected_list = range(6)
 
@@ -295,6 +285,8 @@ def test_order_of_execution_generator_same_codeline():
 
 
 def test_order_of_execution_generator_different_codeline():
+    if py.test.config.is_boxed():
+        py.test.skip("Does not work with boxing")
     test_list = []
     expected_list = range(3)
 

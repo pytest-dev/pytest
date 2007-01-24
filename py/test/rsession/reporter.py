@@ -2,7 +2,7 @@
 """ reporter - different reporter for different purposes ;-)
     Still lacks:
     
-    1. Hanging nodes are not good done
+    1. Hanging nodes are not done well
 """
 
 import py
@@ -10,6 +10,10 @@ import py
 from py.__.test.terminal.out import getout
 from py.__.test.rsession import report
 from py.__.test.rsession import outcome
+from py.__.misc.terminal_helper import ansi_print, get_terminal_width
+from py.__.test.representation import Presenter
+
+import sys
 
 class AbstractReporter(object):
     def __init__(self, config, hosts, pkgdir=py.path.local(py.__file__)):
@@ -19,6 +23,7 @@ class AbstractReporter(object):
         self.failed_tests_outcome = []
         self.skipped_tests_outcome = []
         self.out = getout(py.std.sys.stdout)
+        self.presenter = Presenter(self.out, config)
         self.failed = dict([(host, 0) for host in hosts])
         self.skipped = dict([(host, 0) for host in hosts])
         self.passed = dict([(host, 0) for host in hosts])
@@ -46,6 +51,7 @@ class AbstractReporter(object):
     
     def report_SendItem(self, item):
         address = item.host.hostname
+        assert isinstance(item.host.hostname, str)
         if self.config.option.verbose: 
             print "Sending %s to %s" % (item.item,
                                         address)
@@ -108,6 +114,7 @@ class AbstractReporter(object):
                 self.out.sep('_', "%s on %s" % 
                     (" ".join(event.item.listnames()), host))
                 if event.outcome.signal:
+                    self.presenter.repr_item_info(event.item)
                     self.repr_signal(event.item, event.outcome)
                 else:
                     self.repr_failure(event.item, event.outcome)
@@ -119,7 +126,7 @@ class AbstractReporter(object):
     def gethost(self, event):
         return event.host.hostname
     
-    def repr_failure(self, item, outcome): 
+    def repr_failure(self, item, outcome):
         excinfo = outcome.excinfo
         traceback = excinfo.traceback
         #if item and not self.config.option.fulltrace: 
@@ -127,18 +134,11 @@ class AbstractReporter(object):
         if not traceback: 
             self.out.line("empty traceback from item %r" % (item,)) 
             return
-        #handler = getattr(self, 'repr_failure_tb%s' % self.config.option.tbstyle)
-        self.repr_traceback(item, excinfo, traceback)
-        if outcome.stdout:
-            self.out.sep('-', " Captured process stdout: ")
-            self.out.write(outcome.stdout)
-        if outcome.stderr:
-            self.out.sep('-', " Captured process stderr: ")
-            self.out.write(outcome.stderr)
-    
-    def repr_signal(self, item, outcome):
-        signal = outcome.signal
-        self.out.line("Received signal: %d" % outcome.signal)
+
+        handler = getattr(self.presenter, 'repr_failure_tb%s' % self.config.option.tbstyle)
+        handler(item, excinfo, traceback, lambda: self.repr_out_err(outcome))
+
+    def repr_out_err(self, outcome):
         if outcome.stdout:
             self.out.sep('-', " Captured process stdout: ")
             self.out.write(outcome.stdout)
@@ -146,25 +146,11 @@ class AbstractReporter(object):
             self.out.sep('-', " Captured process stderr: ")
             self.out.write(outcome.stderr)
 
-    def repr_traceback(self, item, excinfo, traceback):
-        if self.config.option.tbstyle == 'long':
-            for index, entry in py.builtin.enumerate(traceback): 
-                self.out.sep('-')
-                self.out.line("%s: %s" % (entry.path, entry.lineno))
-                self.repr_source(entry.relline, str(entry.source))
-        elif self.config.option.tbstyle == 'short':
-            for index, entry in py.builtin.enumerate(traceback): 
-                self.out.line("%s: %s" % (entry.path, entry.lineno))
-                self.out.line(entry.source)
-        self.out.line("%s: %s" % (excinfo.typename, excinfo.value))
+    def repr_signal(self, item, outcome):
+        signal = outcome.signal
+        self.out.line("Received signal: %d" % outcome.signal)
+        self.repr_out_err(outcome)
     
-    def repr_source(self, relline, source):
-        for num, line in enumerate(source.split("\n")):
-            if num == relline:
-                self.out.line(">>>>" + line)
-            else:
-                self.out.line("    " + line)
-            
     def skips(self):
         texts = {}
         for event in self.skipped_tests_outcome:
@@ -225,19 +211,30 @@ class AbstractReporter(object):
     def report_ReceivedItemOutcome(self, event):
         host = event.host
         if event.outcome.passed:
-            status = "PASSED "
             self.passed[host] += 1
+            sys.stdout.write("%10s: PASSED  " % host.hostname[:10])
         elif event.outcome.skipped:
-            status = "SKIPPED"
             self.skipped_tests_outcome.append(event)
             self.skipped[host] += 1
+            sys.stdout.write("%10s: SKIPPED " % host.hostname[:10])
         else:
-            status = "FAILED "
             self.failed[host] += 1
             self.failed_tests_outcome.append(event)
-            # we'll take care of them later
-        itempath = " ".join(event.item.listnames()[1:])
-        print "%10s: %s %s" %(host.hostname[:10], status, itempath)
+            sys.stdout.write("%10s: " % host.hostname[:10])
+            ansi_print("FAILED", esc=(31,1), newline=False, file=sys.stdout)
+            sys.stdout.write("  ")
+        # we should have printed 20 characters to this point
+        itempath = ".".join(event.item.listnames()[1:-1])
+        funname = event.item.listnames()[-1]
+        lgt = get_terminal_width() - 20
+        # mark the function name, to be sure
+        to_display = len(itempath) + len(funname) + 1
+        if to_display > lgt:
+            sys.stdout.write("..." + itempath[to_display-lgt+4:])
+        else:
+            sys.stdout.write(itempath)
+        sys.stdout.write(" ")
+        ansi_print(funname, esc=32, file=sys.stdout)
     
     def report_Nodes(self, event):
         self.nodes = event.nodes

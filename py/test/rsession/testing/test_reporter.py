@@ -166,11 +166,12 @@ class AbstractTestReporter(object):
         r.report(report.HostReady(hosts[2]))
         out, err = cap.reset()
         assert not err
-        expected = """=================  Test started, hosts: host1, host2, host3  ==================
-     host1: READY (still 2 to go)
+        expected1 = "Test started, hosts: host1, host2, host3"
+        expected2 = """host1: READY (still 2 to go)
      host2: READY (still 1 to go)
      host3: READY"""
-        assert out.find(expected) != -1
+        assert out.find(expected1) != -1
+        assert out.find(expected2) != -1
 
 class TestLocalReporter(AbstractTestReporter):
     reporter = LocalReporter
@@ -181,8 +182,9 @@ class TestLocalReporter(AbstractTestReporter):
 
     def test_module(self):
         #py.test.skip("XXX rewrite test to not rely on exact formatting")
-        assert self._test_module().endswith("test_slave.py[9] FsF."),\
-            self._test_module()
+        output = self._test_module()
+        assert output.find("test_slave") != -1
+        assert output.endswith("FsF."), output
     
     def test_full_module(self):
         #py.test.skip("XXX rewrite test to not rely on exact formatting")
@@ -202,20 +204,20 @@ class TestRemoteReporter(AbstractTestReporter):
     def test_report_received_item_outcome(self):
         #py.test.skip("XXX rewrite test to not rely on exact formatting")
         val = self.report_received_item_outcome()
-        expected = """ localhost: FAILED  py test rsession testing test_slave.py funcpass
- localhost: SKIPPED py test rsession testing test_slave.py funcpass
- localhost: FAILED  py test rsession testing test_slave.py funcpass
- localhost: PASSED  py test rsession testing test_slave.py funcpass
+        expected = """ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
+ localhost: SKIPPED py.test.rsession.testing.test_slave.py funcpass
+ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
+ localhost: PASSED  py.test.rsession.testing.test_slave.py funcpass
 """
         assert val.find(expected) != -1
     
     def test_module(self):
         val = self._test_module()
         print val
-        expected = """ localhost: FAILED  py test rsession testing test_slave.py funcpass
- localhost: SKIPPED py test rsession testing test_slave.py funcpass
- localhost: FAILED  py test rsession testing test_slave.py funcpass
- localhost: PASSED  py test rsession testing test_slave.py funcpass
+        expected = """ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
+ localhost: SKIPPED py.test.rsession.testing.test_slave.py funcpass
+ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
+ localhost: PASSED  py.test.rsession.testing.test_slave.py funcpass
 """
         assert val.find(expected) != -1
     

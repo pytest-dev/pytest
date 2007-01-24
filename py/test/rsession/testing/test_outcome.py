@@ -28,7 +28,7 @@ def test_exception_info_repr():
     except:
         outcome = Outcome(excinfo=py.code.ExceptionInfo())
         
-    repr = outcome.make_excinfo_repr()
+    repr = outcome.make_excinfo_repr("long")
     assert marshal.dumps(repr)
     excinfo = ExcInfoRepr(repr)
     

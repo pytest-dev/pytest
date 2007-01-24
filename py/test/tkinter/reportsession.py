@@ -3,7 +3,7 @@ import py
 from util import TestReport
 from py.__.test.session import Session
 
-class ReportSession(Session):
+class TkinterSession(Session):
 
     def __init__(self, config = None, channel = None):
         super(ReportSession, self).__init__(config)
@@ -44,5 +44,5 @@ class ReportSession(Session):
     def sendreport(self, report):
         self.channel.send(report.to_channel())
 
-TkinterSession = ReportSession
+ReportSession = TkinterSession
 

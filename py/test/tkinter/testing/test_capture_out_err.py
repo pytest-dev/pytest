@@ -8,7 +8,7 @@ def test_capture_out_err():
     config = py.test.config._reparse([datadir/'filetest.py'])
     backend = ReportBackend()
     backend.start_tests(config = config,
-                                 args = config.remaining, 
+                                 args = config.args, 
                                  tests = [])
     while backend.running:
         backend.update()

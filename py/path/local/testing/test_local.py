@@ -17,6 +17,13 @@ class LocalSetup:
 
 class TestLocalPath(LocalSetup, CommonFSTests):
 
+    def test_join_normpath(self):
+        assert self.tmpdir.join(".") == self.tmpdir
+        p = self.tmpdir.join("../%s" % self.tmpdir.basename)
+        assert p == self.tmpdir
+        p = self.tmpdir.join("..//%s/" % self.tmpdir.basename)
+        assert p == self.tmpdir
+
     def test_gethash(self):
         import md5
         import sha

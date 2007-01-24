@@ -31,7 +31,7 @@ class SetupState(object):
 
 class Item(py.test.collect.Collector): 
     def startcapture(self): 
-        if not self.option.nocapture:
+        if not self.config.option.nocapture:
             # XXX refactor integrate capturing
             #self._capture = py.io.OutErrCapture() 
             from py.__.misc.simplecapture import SimpleOutErrCapture

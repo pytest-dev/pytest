@@ -1,6 +1,19 @@
 import sys, os
 
-terminal_width = int(os.environ.get('COLUMNS', 80))-1
+def get_terminal_width():
+    try:
+        import termios,fcntl,struct
+        call = fcntl.ioctl(0,termios.TIOCGWINSZ,"\000"*8)
+        height,width = struct.unpack( "hhhh", call ) [:2]
+        terminal_width = width
+    except (SystemExit, KeyboardInterrupt), e:
+        raise
+    except:
+        # FALLBACK
+        terminal_width = int(os.environ.get('COLUMNS', 80))-1
+    return terminal_width
+
+terminal_width = get_terminal_width()
 
 def ansi_print(text, esc, file=None, newline=True, flush=False):
     if file is None:

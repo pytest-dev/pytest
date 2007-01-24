@@ -1,5 +1,5 @@
 import py
-from py.__.test.rsession.rsync import RSync
+from py.execnet import RSync
 
 
 def setup_module(mod):

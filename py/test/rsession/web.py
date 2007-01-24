@@ -14,18 +14,18 @@ import sys
 import socket
 
 import py
-from py.__.test.rsession.rsession import RSession, session_options
+from py.__.test.rsession.rsession import RSession
 from py.__.test.rsession import report
 from py.__.test import collect
 from py.__.test.rsession.webdata import json
 
 DATADIR = py.path.local(__file__).dirpath("webdata")
 FUNCTION_LIST = ["main", "show_skip", "show_traceback", "show_info", "hide_info",
-    "show_host", "hide_host", "hide_messagebox"]
+    "show_host", "hide_host", "hide_messagebox", "opt_scroll"]
 
 try:
     try:
-        if not session_options.import_pypy:
+        if not py.test.config.getvalue('_dist_import_pypy'):
             raise ImportError
     except AttributeError:
         pass
@@ -416,10 +416,10 @@ def start_server(server_address = ('', 8000), handler=TestHandler, start_new=Tru
 
     if start_new:
         thread.start_new_thread(httpd.serve_forever, ())
-        print "Server started, listening on %s" % (server_address,)
+        print "Server started, listening on port %d" % (httpd.server_port,)
         return httpd
     else:
-        print "Server started, listening on %s" % (server_address,)
+        print "Server started, listening on port %d" % (httpd.server_port,)
         httpd.serve_forever()
 
 def kill_server():

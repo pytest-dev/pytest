@@ -38,12 +38,11 @@ class Session(object):
 
     def main(self): 
         """ main loop for running tests. """
-        colitems = self._map2colitems(self.config.remaining) 
+        colitems = self.config.getcolitems()
         try:
             self.header(colitems) 
             try:
                 for colitem in colitems: 
-                    colitem.option = self.config.option
                     self.runtraced(colitem)
             except KeyboardInterrupt: 
                 raise 
@@ -53,9 +52,6 @@ class Session(object):
                 self.footer(colitems) 
         except Exit, ex:
             pass
-        # return [(fspath as string, [names as string])]
-        return [(str(item.listchain()[0].fspath), item.listnames())
-                for item, outcome in self.getitemoutcomepairs(py.test.Item.Failed)]
 
     def runtraced(self, colitem):
         if self.shouldclose(): 
@@ -91,7 +87,7 @@ class Session(object):
         if self.config.option.collectonly and isinstance(colitem, py.test.Item): 
             return 
         if isinstance(colitem, py.test.Item): 
-            self.skipbykeyword(colitem)
+            colitem.skipbykeyword(self.config.option.keyword)
         res = colitem.run() 
         if res is None: 
             return py.test.Item.Passed() 
@@ -109,39 +105,6 @@ class Session(object):
                 if finish: 
                     finish() 
         return res 
-
-    def skipbykeyword(self, colitem): 
-        keyword = self.config.option.keyword
-        if not keyword: 
-            return 
-        chain = colitem.listchain()
-        for key in filter(None, keyword.split()): 
-            eor = key[:1] == '-' 
-            if eor: 
-                key = key[1:]
-            if not (eor ^ self._matchonekeyword(key, chain)): 
-                py.test.skip("test not selected by keyword %r" %(keyword,))
-
-    def _matchonekeyword(self, key, chain): 
-        for subitem in chain: 
-            if subitem.haskeyword(key): 
-                return True 
-        return False
-
-
-    def _map2colitems(items): 
-        # first convert all path objects into collectors 
-        from py.__.test.collect import getfscollector 
-        colitems = []
-        for item in items: 
-            if isinstance(item, (list, tuple)): 
-                colitems.extend(Session._map2colitems(item))
-            elif not isinstance(item, py.test.collect.Collector): 
-                colitems.append(getfscollector(item))
-            else:
-                colitems.append(item)
-        return colitems 
-    _map2colitems = staticmethod(_map2colitems) 
 
 class Exit(Exception):
     """ for immediate program exits without tracebacks and reporter/summary. """

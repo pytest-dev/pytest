@@ -1,6 +1,6 @@
 
 """ Testing the slave side node code (in a local way). """
-from py.__.test.rsession.slave import SlaveNode, slave_main
+from py.__.test.rsession.slave import SlaveNode, slave_main, setup, PidInfo
 from py.__.test.rsession.outcome import ReprOutcome
 import py, sys
 
@@ -11,10 +11,7 @@ if sys.platform == 'win32':
     py.test.skip("rsession is unsupported on Windows.")
 
 def setup_module(module):
-    from py.__.test.rsession.rsession import session_options
     module.rootdir = py.path.local(py.__file__).dirpath().dirpath()
-    config = py.test.config._reparse([])
-    session_options.bind_config(config)
 
 # ----------------------------------------------------------------------
 # inlined testing functions used below
@@ -34,13 +31,8 @@ def funcprintfail():
     print "samfing elz"
     asddsa
 
-def funcoption():
-    from py.__.test.rsession.rsession import remote_options
-    assert remote_options.we_are_remote
-
 def funcoptioncustom():
-    from py.__.test.rsession.rsession import remote_options
-    assert remote_options.custom == "custom"
+    assert py.test.config.getvalue("custom")
 
 def funchang():
     import time
@@ -52,7 +44,6 @@ funcfail_spec = (BASE + "funcfail").split("/")
 funcskip_spec = (BASE + "funcskip").split("/")
 funcprint_spec = (BASE + "funcprint").split("/")
 funcprintfail_spec = (BASE + "funcprintfail").split("/")
-funcoption_spec = (BASE + "funcoption").split("/")
 funcoptioncustom_spec = (BASE + "funcoptioncustom").split("/")
 funchang_spec = (BASE + "funchang").split("/")
 mod_spec = BASE[:-1].split("/")
@@ -63,7 +54,9 @@ from py.__.test.rsession.executor import RunExecutor
 
 def gettestnode():
     rootcol = py.test.collect.Directory(rootdir)
-    node = SlaveNode(rootcol, executor=RunExecutor) 
+    config = py.test.config._reparse([rootdir])
+    pidinfo = PidInfo()
+    node = SlaveNode(rootcol, config, pidinfo, executor=RunExecutor) 
     return node
 
 def test_slave_run_passing():
@@ -116,7 +109,9 @@ def test_slave_main_simple():
          funcpass_spec, 
          funcfail_spec
         ]
-    slave_main(q.pop, res.append, str(rootdir))
+    config = py.test.config._reparse([])
+    pidinfo = PidInfo()
+    slave_main(q.pop, res.append, str(rootdir), config, pidinfo)
     assert len(res) == 2
     res_repr = [ReprOutcome(r) for r in res]
     assert not res_repr[0].passed and res_repr[1].passed
@@ -126,8 +121,8 @@ def test_slave_run_different_stuff():
     node.run("py doc log.txt".split())
 
 def test_slave_setup_fails_on_import_error():
-    from py.__.test.rsession.slave import setup 
     tmp = py.test.ensuretemp("slavesetup")
+    config = py.test.config._reparse([tmp])
     class C:
         def __init__(self):
             self.count = 0
@@ -136,12 +131,15 @@ def test_slave_setup_fails_on_import_error():
             if self.count == 0:
                 retval = str(tmp)
             elif self.count == 1:
-                from py.__.test.rsession.rsession import remote_options
-                retval = remote_options.d
+                retval = config.make_repr(conftestnames=['dist_nicelevel'])
             else:
                 raise NotImplementedError("more data")
             self.count += 1
             return retval
+
+        def close(self):
+            pass
+        
     try:
         exec py.code.Source(setup, "setup()").compile() in {
             'channel': C()}
@@ -153,16 +151,14 @@ def test_slave_setup_fails_on_import_error():
 def test_slave_setup_exit():
     tmp = py.test.ensuretemp("slaveexit")
     tmp.ensure("__init__.py")
-    from py.__.test.rsession.slave import setup
-    from Queue import Queue
-    q = Queue()
+    q = py.std.Queue.Queue()
+    config = py.test.config._reparse([tmp])
     
     class C:
         res = []
         def __init__(self):
-            from py.__.test.rsession.rsession import remote_options
             self.q = [str(tmp),
-                remote_options.d,
+                config.make_repr(conftestnames=['dist_nicelevel']),
                 funchang_spec,
                 42,
                 funcpass_spec]
@@ -178,6 +174,9 @@ def test_slave_setup_exit():
                     callback(self.q.pop())
             f()
             #thread.start_new_thread(f, ())
+
+        def close(self):
+            pass
         
         send = res.append
     try:
@@ -188,8 +187,8 @@ def test_slave_setup_exit():
         py.test.fail("Did not exit")
 
 def test_slave_setup_fails_on_missing_pkg():
-    from py.__.test.rsession.slave import setup 
     tmp = py.test.ensuretemp("slavesetup2")
+    config = py.test.config._reparse([tmp])
     x = tmp.ensure("sometestpackage", "__init__.py")
     class C: 
         def __init__(self):
@@ -199,8 +198,7 @@ def test_slave_setup_fails_on_missing_pkg():
             if self.count == 0:
                 retval = str(x.dirpath())
             elif self.count == 1:
-                from py.__.test.rsession.rsession import remote_options
-                retval = remote_options.d
+                retval = config.make_repr(conftestnames=['dist_nicelevel'])
             else:
                 raise NotImplementedError("more data")
             self.count += 1
@@ -223,3 +221,19 @@ def test_slave_setup_fails_on_missing_pkg():
     else:
         py.test.fail("missing exception") 
     
+
+def test_pidinfo():
+    if not hasattr(os, 'fork') or not hasattr(os, 'waitpid'):
+        py.test.skip("Platform does not support fork")
+    pidinfo = PidInfo()
+    pid = os.fork()
+    if pid:
+        pidinfo.set_pid(pid)
+        pidinfo.waitandclear(pid, 0)
+    else:
+        import time, sys
+        time.sleep(.3)
+        os._exit(0)
+    # check if this really exits
+    py.test.raises(OSError, "os.waitpid(pid, 0)")
+

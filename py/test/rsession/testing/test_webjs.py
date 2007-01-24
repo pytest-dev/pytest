@@ -23,9 +23,7 @@ def setup_module(mod):
     dom.window = dom.Window(html)
     dom.document = dom.window.document
     config = py.test.config._reparse([])
-    from py.__.test.rsession.rsession import session_options
-    session_options.bind_config(config)
-    session_options.import_pypy = True
+    config._overwrite('_dist_import_pypy', True)
     from py.__.test.rsession import webjs
     from py.__.test.rsession.web import exported_methods
     mod.webjs = webjs

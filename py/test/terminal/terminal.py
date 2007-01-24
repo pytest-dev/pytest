@@ -4,6 +4,7 @@ from time import time as now
 Item = py.test.Item
 from py.__.test.terminal.out import getout 
 import py.__.code.safe_repr
+from py.__.test.representation import Presenter
 
 def getrelpath(source, dest): 
     base = source.common(dest)
@@ -25,15 +26,8 @@ class TerminalSession(Session):
             file = py.std.sys.stdout 
         self._file = file
         self.out = getout(file) 
-        self._started = {}
         self._opencollectors = []
-
-    def main(self): 
-        if self.config.option._remote: 
-            from py.__.test.terminal import remote 
-            return remote.main(self.config, self._file, self.config._origargs)
-        else: 
-            return super(TerminalSession, self).main() 
+        self.presenter = Presenter(self.out, config)
 
     # ---------------------
     # PROGRESS information 
@@ -128,10 +122,10 @@ class TerminalSession(Session):
         for name in 'looponfailing', 'exitfirst', 'nomagic': 
             if getattr(option, name): 
                 modes.append(name) 
-        if option._fromremote:
-            modes.insert(0, 'child process') 
-        else:
-            modes.insert(0, 'inprocess')
+        #if self._isremoteoption._fromremote:
+        #    modes.insert(0, 'child process') 
+        #else:
+        #    modes.insert(0, 'inprocess')
         mode = "/".join(modes)
         self.out.line("testing-mode: %s" % mode)
         self.out.line("executable:   %s  (%s)" %
@@ -146,7 +140,7 @@ class TerminalSession(Session):
                 self.out.line("test target:  %s" %(x.fspath,))
 
             conftestmodules = self.config.conftest.getconftestmodules(None)
-            for i,x in py.builtin.enumerate(conftestmodules): 
+            for i,x in py.builtin.enumerate(conftestmodules):
                 self.out.line("initial conf %d: %s" %(i, x.__file__)) 
 
             #for i, x in py.builtin.enumerate(py.test.config.configpaths):
@@ -279,173 +273,8 @@ class TerminalSession(Session):
         if not traceback: 
             self.out.line("empty traceback from item %r" % (item,)) 
             return
-        handler = getattr(self, 'repr_failure_tb%s' % self.config.option.tbstyle)
-        handler(item, excinfo, traceback)
-
-    def repr_failure_tblong(self, item, excinfo, traceback):
-        if not self.config.option.nomagic and excinfo.errisinstance(RuntimeError):
-            recursionindex = traceback.recursionindex()
-        else:
-            recursionindex = None
-        last = traceback[-1]
-        first = traceback[0]
-        for index, entry in py.builtin.enumerate(traceback): 
-            if entry == first: 
-                if item: 
-                    self.repr_failure_info(item, entry) 
-                    self.out.line()
-            else: 
-                self.out.line("")
-            source = self.getentrysource(entry)
-            firstsourceline = entry.getfirstlinesource()
-            marker_location = entry.lineno - firstsourceline
-            if entry == last: 
-                self.repr_source(source, 'E', marker_location)
-                self.repr_failure_explanation(excinfo, source) 
-            else:
-                self.repr_source(source, '>', marker_location)
-            self.out.line("") 
-            self.out.line("[%s:%d]" %(entry.frame.code.path, entry.lineno+1))  
-            self.repr_locals(entry) 
-
-            # trailing info 
-            if entry == last: 
-                #if item: 
-                #    self.repr_failure_info(item, entry) 
-                self.repr_out_err(item) 
-                self.out.sep("_")
-            else: 
-                self.out.sep("_ ")
-                if index == recursionindex:
-                    self.out.line("Recursion detected (same locals & position)")
-                    self.out.sep("!")
-                    break 
-
-    def repr_failure_tbshort(self, item, excinfo, traceback):
-        # print a Python-style short traceback
-        if not self.config.option.nomagic and excinfo.errisinstance(RuntimeError):
-            recursionindex = traceback.recursionindex()
-        else:
-            recursionindex = None
-        last = traceback[-1]
-        first = traceback[0]
-        self.out.line()
-        for index, entry in py.builtin.enumerate(traceback): 
-            code = entry.frame.code
-            self.out.line('  File "%s", line %d, in %s' % (
-                code.raw.co_filename, entry.lineno+1, code.raw.co_name))
-            try:
-                fullsource = entry.frame.code.fullsource
-            except py.error.ENOENT:
-                source = ["?"]
-            else:
-                try:
-                    source = [fullsource[entry.lineno].lstrip()]
-                except IndexError:
-                    source = []
-            if entry == last:
-                if source:
-                    self.repr_source(source, 'E')
-                self.repr_failure_explanation(excinfo, source) 
-            else:
-                if source:
-                    self.repr_source(source, ' ')
-            self.repr_locals(entry) 
-
-            # trailing info 
-            if entry == last: 
-                #if item: 
-                #    self.repr_failure_info(item, entry) 
-                self.repr_out_err(item) 
-                self.out.sep("_")
-            else: 
-                if index == recursionindex:
-                    self.out.line("Recursion detected (same locals & position)")
-                    self.out.sep("!")
-                    break 
-
-    # the following is only used by the combination '--pdb --tb=no'
-    repr_failure_tbno = repr_failure_tbshort
-
-    def repr_failure_info(self, item, entry): 
-        root = item.fspath 
-        modpath = item.getmodpath() 
-        try: 
-            fn, lineno = item.getpathlineno() 
-        except TypeError: 
-            assert isinstance(item.parent, py.test.collect.Generator) 
-            # a generative test yielded a non-callable 
-            fn, lineno = item.parent.getpathlineno() 
-        # hum, the following overloads traceback output 
-        #if fn != entry.frame.code.path or \
-        #   entry.frame.code.firstlineno != lineno: 
-        #    self.out.line("testcode: %s:%d" % (fn, lineno+1)) 
-        if root == fn: 
-            self.out.sep("_", "entrypoint: %s" %(modpath))
-        else:
-            self.out.sep("_", "entrypoint: %s %s" %(root.basename, modpath))
-
-    def getentrysource(self, entry):
-        try: 
-            source = entry.getsource() 
-        except py.error.ENOENT:
-            source = py.code.Source("[failure to get at sourcelines from %r]\n" % entry)
-        return source.deindent()
-
-    def repr_source(self, source, marker=">", marker_location=-1):
-        if marker_location < 0:
-            marker_location += len(source)
-            if marker_location < 0:
-                marker_location = 0
-        if marker_location >= len(source):
-            marker_location = len(source) - 1
-        for i in range(len(source)):
-            if i == marker_location:
-                prefix = marker + "   "
-            else:
-                prefix = "    "
-            self.out.line(prefix + source[i])
-
-    def repr_failure_explanation(self, excinfo, source): 
-        try: 
-            s = str(source.getstatement(len(source)-1))
-        except KeyboardInterrupt: 
-            raise 
-        except: 
-            s = str(source[-1])
-        indent = " " * (4 + (len(s) - len(s.lstrip())))
-        # get the real exception information out 
-        lines = excinfo.exconly(tryshort=True).split('\n') 
-        self.out.line('>' + indent[:-1] + lines.pop(0)) 
-        for x in lines: 
-            self.out.line(indent + x) 
-        return
-
-        # XXX reinstate the following with a --magic option? 
-        # the following line gets user-supplied messages (e.g.
-        # for "assert 0, 'custom message'")
-        msg = getattr(getattr(excinfo, 'value', ''), 'msg', '') 
-        info = None
-        if not msg: 
-            special = excinfo.errisinstance((SyntaxError, SystemExit, KeyboardInterrupt))
-            if not self.config.option.nomagic and not special: 
-                try: 
-                    info = excinfo.traceback[-1].reinterpret() # very detailed info
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    if self.config.option.verbose >= 1:
-                        self.out.line("[reinterpretation traceback]")
-                        py.std.traceback.print_exc(file=py.std.sys.stdout)
-                    else:
-                        self.out.line("[reinterpretation failed, increase "
-                                      "verbosity to see details]")
-        # print reinterpreted info if any 
-        if info: 
-            lines = info.split('\n') 
-            self.out.line('>' + indent[:-1] + lines.pop(0)) 
-            for x in lines: 
-                self.out.line(indent + x) 
+        handler = getattr(self.presenter, 'repr_failure_tb%s' % self.config.option.tbstyle)
+        handler(item, excinfo, traceback, lambda : self.repr_out_err(item))
 
     def repr_out_err(self, colitem): 
         for parent in colitem.listchain(): 
@@ -453,23 +282,6 @@ class TerminalSession(Session):
                 if obj: 
                     self.out.sep("- ", "%s: recorded std%s" % (parent.name, name))
                     self.out.line(obj)
-            
-    def repr_locals(self, entry): 
-        if self.config.option.showlocals:
-            self.out.sep('- ', 'locals')
-            for name, value in entry.frame.f_locals.items():
-                if name == '__builtins__': 
-                    self.out.line("__builtins__ = <builtins>")
-                else:
-                    # This formatting could all be handled by the _repr() function, which is 
-                    # only repr.Repr in disguise, so is very configurable.
-                    str_repr = py.__.code.safe_repr._repr(value)
-                    if len(str_repr) < 70 or not isinstance(value,
-                                                (list, tuple, dict)):
-                        self.out.line("%-10s = %s" %(name, str_repr))
-                    else:
-                        self.out.line("%-10s =\\" % (name,))
-                        py.std.pprint.pprint(value, stream=self.out)
 
 def repr_pythonversion():
     v = py.std.sys.version_info

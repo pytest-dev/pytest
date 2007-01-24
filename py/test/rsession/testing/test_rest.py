@@ -10,6 +10,8 @@ from py.__.test.rsession.rest import RestReporter, NoLinkWriter
 from py.__.rest.rst import *
 from py.__.test.rsession.hostmanage import HostInfo
 
+py.test.skip("This tests are not really testing, needs rewrite")
+
 class RestTestReporter(RestReporter):
     def __init__(self, *args, **kwargs):
         if args:

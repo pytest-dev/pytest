@@ -94,7 +94,7 @@ testing
     - running "py.test --looponfailing" 
     - running "py.test" distributed on some hosts
 
-* fix --box on config branch (XXX guido - find tests that depend on each other)
+* consider --box on trunk (XXX guido - find tests that depend on each other)
 
 * tests should not create any tempdirectories in the source code base
 
@@ -109,15 +109,6 @@ testing
 distributed testing 
 ----------------------
 
-* the main rsession methods should have docstrings 
-  explaining the purpose 
-
-  (done)
-
-* move RSync class to py.execnet.RSync, document its usage and
-  features in the class and method docstrings
-
-  (done)
 
 code quality
 -----------------

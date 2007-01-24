@@ -5,12 +5,12 @@
 import py
 from py.__.test.rsession import report
 from py.__.test.rsession.rsession import RSession, parse_directories,\
-    session_options, remote_options, parse_directories
-from py.__.test.rsession.hostmanage import init_hosts, teardown_hosts,\
+    parse_directories
+from py.__.test.rsession.hostmanage import HostOptions, HostManager,\
      HostInfo
 from py.__.test.rsession.testing.test_slave import funcfail_spec,\
     funcpass_spec, funcskip_spec, funcprint_spec, funcprintfail_spec, \
-    funcoptioncustom_spec, funcoption_spec
+    funcoptioncustom_spec
 
 def setup_module(mod):
     mod.pkgdir = py.path.local(py.__file__).dirpath()
@@ -18,7 +18,8 @@ def setup_module(mod):
 def test_setup_non_existing_hosts(): 
     setup_events = []
     hosts = [HostInfo("alskdjalsdkjasldkajlsd")]
-    cmd = "init_hosts(setup_events.append, hosts, pkgdir)"
+    hm = HostManager(hosts, None, pkgdir)
+    cmd = "hm.init_hosts(setup_events.append)"
     py.test.raises((py.process.cmdexec.Error, IOError, EOFError), cmd)
     #assert setup_events
 
@@ -105,7 +106,7 @@ class TestRSessionRemote:
         tmpdir = py.test.ensuretemp("example_distribution")
         tmpdir.ensure(subdir, "conftest.py").write(py.code.Source("""
             disthosts = [%r]
-            distrsync_roots = ["%s"]
+            distrsync_roots = ["%s", "py"]
         """ % ('localhost', subdir)))
         tmpdir.ensure(subdir, "__init__.py")
         tmpdir.ensure(subdir, "test_one.py").write(py.code.Source("""
@@ -119,7 +120,11 @@ class TestRSessionRemote:
                 pass
             def test_5():
                 assert __file__ != '%s'
-        """ % str(tmpdir.join(subdir))))
+            def test_6():
+                import py
+                assert py.__file__ != '%s'
+        """ % (str(tmpdir.join(subdir)), py.__file__)))
+        tmpdir.join("py").mksymlinkto(py.path.local(py.__file__).dirpath())
         args = [str(tmpdir.join(subdir))]
         config = py.test.config._reparse(args)
         rsession = RSession(config, optimise_localhost=False)
@@ -131,21 +136,21 @@ class TestRSessionRemote:
         passevents = [i for i in testevents if i.outcome.passed]
         failevents = [i for i in testevents if i.outcome.excinfo]
         skippedevents = [i for i in testevents if i.outcome.skipped]
-        assert len(testevents) == 5
-        assert len(passevents) == 2
+        assert len(testevents) == 6
+        assert len(passevents) == 3
         assert len(failevents) == 3
         tb = failevents[0].outcome.excinfo.traceback
-        assert tb[0].path.find("test_one") != -1
+        assert str(tb[0].path).find("test_one") != -1
         assert tb[0].source.find("test_2") != -1
         assert failevents[0].outcome.excinfo.typename == 'AssertionError'
         tb = failevents[1].outcome.excinfo.traceback
-        assert tb[0].path.find("test_one") != -1
+        assert str(tb[0].path).find("test_one") != -1
         assert tb[0].source.find("test_3") != -1
         assert failevents[1].outcome.excinfo.typename == 'ValueError'
         assert failevents[1].outcome.excinfo.value == '23'
         tb = failevents[2].outcome.excinfo.traceback
         assert failevents[2].outcome.excinfo.typename == 'TypeError'
-        assert tb[0].path.find("executor") != -1
+        assert str(tb[0].path).find("executor") != -1
         assert tb[0].source.find("execute") != -1
         
     def test_setup_teardown_ssh(self):
@@ -155,10 +160,10 @@ class TestRSessionRemote:
         teardown_events = []
         
         config = py.test.config._reparse([])
-        session_options.bind_config(config)
-        nodes = init_hosts(setup_events.append, hosts, pkgdir,
-            rsync_roots=["py"], optimise_localhost=False, remote_options=remote_options.d)
-        teardown_hosts(teardown_events.append, 
+        opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+        hm = HostManager(hosts, config, pkgdir, opts)
+        nodes = hm.init_hosts(setup_events.append)
+        hm.teardown_hosts(teardown_events.append, 
                        [node.channel for node in nodes], nodes)
         
         count_rsyn_calls = [i for i in setup_events 
@@ -182,9 +187,9 @@ class TestRSessionRemote:
         allevents = []
         
         config = py.test.config._reparse([])
-        session_options.bind_config(config)
-        nodes = init_hosts(allevents.append, hosts, pkgdir,
-            rsync_roots=["py"], optimise_localhost=False, remote_options=remote_options.d)
+        opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+        hm = HostManager(hosts, config, pkgdir, opts)
+        nodes = hm.init_hosts(allevents.append)
         
         from py.__.test.rsession.testing.test_executor \
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping
@@ -202,7 +207,7 @@ class TestRSessionRemote:
             node.send(itemskip)
             node.send(itemprint)
 
-        teardown_hosts(allevents.append, [node.channel for node in nodes], nodes)
+        hm.teardown_hosts(allevents.append, [node.channel for node in nodes], nodes)
 
         events = [i for i in allevents 
                         if isinstance(i, report.ReceivedItemOutcome)]
@@ -224,31 +229,33 @@ class TestRSessionRemote:
         hosts = [HostInfo('localhost')]
         parse_directories(hosts)
         config = py.test.config._reparse([])
-        session_options.bind_config(config)
-        d = remote_options.d.copy()
-        d['custom'] = 'custom'
-        nodes = init_hosts(allevents.append, hosts, pkgdir, 
-            rsync_roots=["py"], remote_options=d,
-            optimise_localhost=False)
-        
-        rootcol = py.test.collect.Directory(pkgdir.dirpath())
-        itempass = rootcol.getitembynames(funcoption_spec)
-        itempassaswell = rootcol.getitembynames(funcoptioncustom_spec)
-        
-        for node in nodes:
-            node.send(itempass)
-            node.send(itempassaswell)
-        
-        teardown_hosts(allevents.append, [node.channel for node in nodes], nodes)
-        events = [i for i in allevents 
-                        if isinstance(i, report.ReceivedItemOutcome)]
-        passed = [i for i in events 
-                        if i.outcome.passed]
-        skipped = [i for i in events 
-                        if i.outcome.skipped]
-        assert len(passed) == 2 * len(nodes)
-        assert len(skipped) == 0
-        assert len(events) == len(passed)
+        config._overwrite('custom', 'custom')
+        # we need to overwrite default list to serialize
+        from py.__.test.rsession.master import defaultconftestnames
+        defaultconftestnames.append("custom")
+        try:
+            opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+            hm = HostManager(hosts, config, pkgdir, opts)
+            nodes = hm.init_hosts(allevents.append)
+
+            rootcol = py.test.collect.Directory(pkgdir.dirpath())
+            itempass = rootcol.getitembynames(funcoptioncustom_spec)
+
+            for node in nodes:
+                node.send(itempass)
+
+            hm.teardown_hosts(allevents.append, [node.channel for node in nodes], nodes)
+            events = [i for i in allevents 
+                            if isinstance(i, report.ReceivedItemOutcome)]
+            passed = [i for i in events 
+                            if i.outcome.passed]
+            skipped = [i for i in events 
+                            if i.outcome.skipped]
+            assert len(passed) == 1 * len(nodes)
+            assert len(skipped) == 0
+            assert len(events) == len(passed)
+        finally:
+            defaultconftestnames.remove("custom")
     
     def test_nice_level(self):
         """ Tests if nice level behaviour is ok
@@ -258,14 +265,16 @@ class TestRSessionRemote:
         parse_directories(hosts)
         tmpdir = py.test.ensuretemp("nice")
         tmpdir.ensure("__init__.py")
-        tmpdir.ensure("conftest.py").write("""disthosts = ['localhost']""")
+        tmpdir.ensure("conftest.py").write(py.code.Source("""
+        disthosts = ['localhost']
+        dist_nicelevel = 10
+        """))
         tmpdir.ensure("test_one.py").write("""def test_nice():
             import os
             assert os.nice(0) == 10
         """)
         
         config = py.test.config._reparse([tmpdir])
-        config.option.nice_level = 10
         rsession = RSession(config)
         allevents = []
         rsession.main(reporter=allevents.append) 
@@ -298,7 +307,10 @@ class TestInithosts(object):
         hostnames = ['h1:/tmp', 'h1:/tmp', 'h1:/other', 'h2', 'h2:home']
         hosts = [HostInfo(i) for i in hostnames]
         parse_directories(hosts)
-        init_hosts(testevents.append, hosts, pkgdir, do_sync=False)
+        config = py.test.config._reparse([])
+        opts = HostOptions(do_sync=False, create_gateways=False)
+        hm = HostManager(hosts, config, pkgdir, opts)
+        nodes = hm.init_hosts(testevents.append)        
         events = [i for i in testevents if isinstance(i, report.HostRSyncing)]
         assert len(events) == 4
         assert events[0].host.hostname == 'h1'

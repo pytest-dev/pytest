@@ -10,8 +10,7 @@ from py.__.test.rsession.testing.test_slave import funcprint_spec, \
 
 def setup_module(mod):
     mod.rootdir = py.path.local(py.__file__).dirpath().dirpath()
-    from py.__.test.rsession.rsession import remote_options
-    remote_options['nice_level'] = 0
+    mod.config = py.test.config._reparse([mod.rootdir])
     
 def XXXtest_executor_passing_function():
     ex = Executor(example1.f1)
@@ -61,32 +60,32 @@ class ItemTestSkipping(py.test.Item):
         py.test.skip("hello")
 
 def test_run_executor():
-    ex = RunExecutor(ItemTestPassing("pass"))
+    ex = RunExecutor(ItemTestPassing("pass"), config=config)
     outcome = ex.execute()
     assert outcome.passed
     
-    ex = RunExecutor(ItemTestFailing("fail"))
+    ex = RunExecutor(ItemTestFailing("fail"), config=config)
     outcome = ex.execute()
     assert not outcome.passed
 
-    ex = RunExecutor(ItemTestSkipping("skip"))
+    ex = RunExecutor(ItemTestSkipping("skip"), config=config)
     outcome = ex.execute()
     assert outcome.skipped 
     assert not outcome.passed
     assert not outcome.excinfo 
 
 def test_box_executor():
-    ex = BoxExecutor(ItemTestPassing("pass"))
+    ex = BoxExecutor(ItemTestPassing("pass"), config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
     assert outcome.passed
     
-    ex = BoxExecutor(ItemTestFailing("fail"))
+    ex = BoxExecutor(ItemTestFailing("fail"), config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
     assert not outcome.passed
 
-    ex = BoxExecutor(ItemTestSkipping("skip"))
+    ex = BoxExecutor(ItemTestSkipping("skip"), config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
     assert outcome.skipped 
@@ -96,7 +95,7 @@ def test_box_executor():
 def test_box_executor_stdout():
     rootcol = py.test.collect.Directory(rootdir)
     item = rootcol.getitembynames(funcprint_spec)
-    ex = BoxExecutor(item)
+    ex = BoxExecutor(item, config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
     assert outcome.passed
@@ -105,7 +104,7 @@ def test_box_executor_stdout():
 def test_box_executor_stdout_error():
     rootcol = py.test.collect.Directory(rootdir)
     item = rootcol.getitembynames(funcprintfail_spec)
-    ex = BoxExecutor(item)
+    ex = BoxExecutor(item, config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
     assert not outcome.passed
@@ -114,7 +113,7 @@ def test_box_executor_stdout_error():
 def test_cont_executor():
     rootcol = py.test.collect.Directory(rootdir)
     item = rootcol.getitembynames(funcprintfail_spec)
-    ex = AsyncExecutor(item)
+    ex = AsyncExecutor(item, config=config)
     cont, pid = ex.execute()
     assert pid
     outcome_repr = cont()

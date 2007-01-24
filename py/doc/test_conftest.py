@@ -7,7 +7,6 @@ def setup_module(mod):
 def test_doctest_basic(): 
     # XXX get rid of the next line: 
     py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
-    tmpdir.ensure('__init__.py')
 
     xtxt = tmpdir.join('x.txt')
     xtxt.write(py.code.Source("""
@@ -29,7 +28,7 @@ def test_doctest_basic():
         end
     """))
     config = py.test.config._reparse([xtxt]) 
-    session = config.getsessionclass()(config, py.std.sys.stdout)
+    session = config.initsession()
     session.main()
     l = session.getitemoutcomepairs(py.test.Item.Failed)
     assert len(l) == 0 
@@ -47,7 +46,7 @@ def test_js_ignore():
     .. _`blah`: javascript:some_function()
     """))
     config = py.test.config._reparse([xtxt]) 
-    session = config.getsessionclass()(config, py.std.sys.stdout)
+    session = config.initsession()
     session.main()
     l = session.getitemoutcomepairs(py.test.Item.Failed)
     assert len(l) == 0 

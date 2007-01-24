@@ -14,9 +14,7 @@ except ImportError:
 
 def setup_module(mod):
     config = py.test.config._reparse([])
-    from py.__.test.rsession.rsession import session_options
-    session_options.bind_config(config)
-    session_options.import_pypy = True
+    config._overwrite('_dist_import_pypy', True)
     from py.__.test.rsession.web import TestHandler as _TestHandler
     from py.__.test.rsession.web import MultiQueue
     mod._TestHandler = _TestHandler

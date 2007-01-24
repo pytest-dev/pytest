@@ -189,7 +189,7 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                     strpath += sep
                 strpath += arg
         obj = self.new()
-        obj.strpath = strpath
+        obj.strpath = os.path.normpath(strpath)
         return obj
 
     def __eq__(self, other):
