@@ -128,12 +128,13 @@ class TestApiPageBuilder(AbstractBuilderTest):
         html = snippet.unicode()
         print html
         run_string_sequence_test(html, [
-            'arg1 :: AnyOf(',
+            'arg1 : AnyOf(',
             'href="',
             'Class SomeClass',
             'Int&gt;',
-            'return value :: &lt;None&gt;',
-            'origin: %s' % (self.fs_root.join('pkg/func.py'),),
+            'return value:',
+            '&lt;None&gt;',
+            'source: %s' % (self.fs_root.join('pkg/func.py'),),
             'def func(arg1):',
         ])
         _checkhtmlsnippet(html)

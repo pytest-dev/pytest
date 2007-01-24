@@ -293,21 +293,21 @@ class ApiPageBuilder(AbstractPageBuilder):
         docstring = func.__doc__
         localname = func.__name__
         argdesc = get_param_htmldesc(self.linker, func)
-        valuedesc = self.build_callable_value_description(dotted_name)
+        valuedesc = self.build_callable_signature_description(dotted_name)
 
         sourcefile = inspect.getsourcefile(func)
         callable_source = self.dsa.get_function_source(dotted_name)
-        is_in_pkg = py.path.local(sourcefile).relto(self.projpath)
         # i assume they're both either available or unavailable(XXX ?)
+        is_in_pkg = self.is_in_pkg(sourcefile)
         if is_in_pkg and sourcefile and callable_source:
             csource = H.div(H.br(),
-                            H.a('origin: %s' % (sourcefile,),
+                            H.a('source: %s' % (sourcefile,),
                                 href=self.linker.get_lazyhref(sourcefile)),
                             H.br(),
                             H.SourceDef(H.pre(callable_source)))
         elif not is_in_pkg and sourcefile and callable_source:
             csource = H.div(H.br(),
-                            H.em('origin: %s' % (sourcefile,)),
+                            H.em('source: %s' % (sourcefile,)),
                             H.br(),
                             H.SourceDef(H.pre(callable_source)))
         else:
@@ -525,25 +525,32 @@ class ApiPageBuilder(AbstractPageBuilder):
                                                selected))
         return H.Navigation(*navitems)
 
-    def build_callable_value_description(self, dotted_name):
+    def build_callable_signature_description(self, dotted_name):
         args, retval = self.dsa.get_function_signature(dotted_name)
         valuedesc = H.ValueDescList()
-        for name, _type in args + [('return value', retval)]:
-            l = self.process_type_link(_type)
-            items = []
-            next = "%s :: " % name
-            for item in l:
-                if isinstance(item, str):
-                    next += item
-                else:
-                    if next:
-                        items.append(next)
-                        next = ""
-                    items.append(item)
-            if next:
-                items.append(next)
-            valuedesc.append(H.ValueDescItem(*items))
-        return H.div(H.div('where:'), valuedesc)
+        for name, _type in args:
+            valuedesc.append(self.build_sig_value_description(name, _type))
+        if retval:
+            retval = self.process_type_link(retval)
+        ret = H.div(H.div('where:'), valuedesc, H.div('return value:'),
+                    retval or 'None')
+        return ret
+
+    def build_sig_value_description(self, name, _type):
+        l = self.process_type_link(_type)
+        items = []
+        next = "%s : " % name
+        for item in l:
+            if isinstance(item, str):
+                next += item
+            else:
+                if next:
+                    items.append(next)
+                    next = ""
+                items.append(item)
+        if next:
+            items.append(next)
+        return H.ValueDescItem(*items)
 
     def process_type_link(self, _type):
         # now we do simple type dispatching and provide a link in this case
@@ -561,7 +568,11 @@ class ApiPageBuilder(AbstractPageBuilder):
             linktarget = self.linker.get_lazyhref(name)
             lst.append(H.a(str(_type), href=linktarget))
         else:
+            raise IOError('do not think we ever get here?')
             # we should provide here some way of linking to sourcegen directly
             lst.append(name)
         return lst
+
+    def is_in_pkg(self, sourcefile):
+        return py.path.local(sourcefile).relto(self.projpath)
 

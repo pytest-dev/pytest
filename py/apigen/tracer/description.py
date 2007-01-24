@@ -18,7 +18,20 @@ class CallFrame(object):
         self.filename = frame.code.raw.co_filename
         self.lineno = frame.lineno
         self.firstlineno = frame.code.firstlineno
-        self.source = frame.code.source()
+
+        fname = frame.code.raw.co_filename
+        if fname == '<string>':
+            self.source = ''
+        elif hasattr(fname, '__source__'):
+            # is a py.code.Source object
+            self.source = str(fname.__source__)
+            # XXX should we do this?
+            # self.filename = fname.split('<')[1].split('>')[0]
+        else:
+            try:
+                self.source = frame.code.source()
+            except IOError:
+                raise IOError(self.filename)
 
     def _getval(self):
         return (self.filename, self.lineno)

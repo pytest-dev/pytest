@@ -390,11 +390,15 @@ def setup_fs_project():
     """))
     temp.ensure('pkg/somenamespace.py').write(py.code.Source("""\
         from pkg.main.sub import func
+        import py
     
         def foo():
             return 'bar'
+
         def baz(qux):
             return qux
+
+        quux = py.code.Source('print "foo"')
     """))
     temp.ensure("pkg/__init__.py").write(py.code.Source("""\
         from py.initpkg import initpkg
@@ -409,11 +413,15 @@ def setup_fs_project():
     """))
     return temp, 'pkg'
 
-def test_get_initpkg_star_items():
+def setup_pkg_docstorage():
     pkgdir, pkgname = setup_fs_project()
     py.std.sys.path.insert(0, str(pkgdir))
     pkg = __import__(pkgname)
     ds = DocStorage().from_pkg(pkg)
+    return pkg, ds
+
+def test_get_initpkg_star_items():
+    pkg, ds = setup_pkg_docstorage()
     sit = ds.get_star_import_tree(pkg.other, 'pkg.other')
     print sit
     assert sorted(sit.keys()) == ['pkg.other.baz', 'pkg.other.foo']

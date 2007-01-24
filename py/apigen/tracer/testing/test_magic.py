@@ -3,7 +3,7 @@
 """
 
 import py
-py.test.skip("These features has been disabled")
+py.test.skip("These features have been disabled")
 
 from py.__.apigen.tracer.magic import trace, get_storage, stack_copier, \
     DocStorageKeeper
