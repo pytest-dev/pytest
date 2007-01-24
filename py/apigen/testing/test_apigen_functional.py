@@ -73,12 +73,13 @@ def setup_fs_project():
 def test_apigen_functional():
     fs_root, package_name = setup_fs_project()
     tempdir = py.test.ensuretemp('test_apigen_functional_results')
-    parentdir = py.magic.autopath().dirpath().dirpath()
+    pydir = py.magic.autopath().dirpath().dirpath().dirpath()
     pkgdir = fs_root.join('pkg')
     try:
-        output = py.process.cmdexec('APIGEN_TARGET="%s" py.test '
+        output = py.process.cmdexec('APIGEN_TARGET="%s" %s/bin/py.test '
                                     '--apigen="%s/apigen.py" "%s"' % (
-                                        tempdir, parentdir, pkgdir))
+                                        tempdir, pydir, pydir.join('apigen'),
+                                        pkgdir))
     except py.error.Error, e:
         print e.out
         raise
