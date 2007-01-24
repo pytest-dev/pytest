@@ -322,7 +322,9 @@ class ApiPageBuilder(AbstractPageBuilder):
             H.FunctionDef(localname, argdesc),
             H.Docstring(docstring or H.em('no docstring available')),
             H.div(H.a('show/hide info',
-                      onclick='showhideel(this.parentNode.lastChild);'),
+                      href='#',
+                      onclick=('showhideel(this.parentNode.lastChild);'
+                               'return false;')),
                   H.div(valuedesc, csource, style='display: none',
                         class_='funcinfo')),
         )
