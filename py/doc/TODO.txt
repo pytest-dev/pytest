@@ -101,6 +101,9 @@ testing
 * (DONE more or less) try to be as 2.2 compatible as possible 
   (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
 
+* have all sessions check their options via Session.fixoptions()
+  and have session-particular tests and checks accordingly. 
+
 distributed testing / RSession
 ------------------------------------
 
