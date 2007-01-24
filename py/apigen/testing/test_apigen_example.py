@@ -127,16 +127,25 @@ class TestApiPageBuilder(AbstractBuilderTest):
         snippet = apb.build_callable_view('main.sub.func')
         html = snippet.unicode()
         print html
-        run_string_sequence_test(html, [
-            'arg1 : AnyOf(',
-            'href="',
-            'Class SomeClass',
-            'Int&gt;',
-            'return value:',
-            '&lt;None&gt;',
-            'source: %s' % (self.fs_root.join('pkg/func.py'),),
-            'def func(arg1):',
-        ])
+        # XXX somewhat grokky tests because the order of the items may change
+        assert 'arg1: AnyOf(' in html
+        pos1 = html.find('arg1: AnyOf(')
+        assert pos1 > -1
+        pos2 = html.find('href="', pos1)
+        assert pos2 > pos1
+        pos3 = html.find('Class SomeClass', pos2)
+        assert pos3 > pos2
+        pos4 = html.find('Int&gt;', pos1)
+        assert pos4 > pos1
+        pos5 = html.find('return value:', pos4)
+        assert pos5 > pos4 and pos5 > pos3
+        pos6 = html.find('&lt;None&gt;', pos5)
+        assert pos6 > pos5
+        pos7 = html.find('source: %s' % (self.fs_root.join('pkg/func.py'),),
+                          pos6)
+        assert pos7 > pos6
+        pos8 = html.find('def func(arg1):', pos7)
+        assert pos8 > pos7
         _checkhtmlsnippet(html)
 
     def test_build_function_pages(self):
