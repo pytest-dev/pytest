@@ -258,7 +258,9 @@ class LocalReporter(AbstractReporter):
     
     def report_SkippedTryiter(self, event):
         #self.show_item(event.item, False)
-        self.out.write("- skipped (%s)" % event.excinfo.value)
+        #self.out.write("- skipped (%s)" % event.excinfo.value)
+        self.out.write("s")
+        self.skipped_tests_outcome.append(event)
     
     def report_FailedTryiter(self, event):
         #self.show_item(event.item, False)
