@@ -91,9 +91,14 @@ testing
     - running "py.test --looponfailing" 
     - running "py.test" distributed on some hosts
 
+* see why startcapture() does not use FD-based 
+  "py.io.OutErrCapture" to isolate standard output. 
+  use that check if all py and PyPy tests pass
+  as good as they do without. 
+
 * make --box run on the trunk 
 
-* (done) try to be as 2.2 compatible as possible 
+* (DONE more or less) try to be as 2.2 compatible as possible 
   (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
 
 distributed testing / RSession
@@ -117,12 +122,12 @@ code quality
 py.test
 -------
 
-* adjust py.test documentation to reflect new
-  collector/session architecture (mostly done) 
+* (needs review) adjust py.test documentation to reflect new
+  collector/session architecture 
 
-* document py.test's conftest.py approach (somewhat done) 
+* (in-progress) document py.test's conftest.py approach
 
-* py.test fails to parse strangely formatted code after assertion failure
+* (postponed, likely) py.test fails to parse strangely formatted code after assertion failure
 
 Missing docstrings
 ------------------
