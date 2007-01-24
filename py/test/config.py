@@ -123,7 +123,9 @@ class Config(object):
         """ return an initialized session object. """
         cls = self._getsessionclass()
         session = cls(self)
-        #session.fixoptions()
+        # XXX: all sessions should have one
+        if hasattr(session, 'fixoptions'):
+            session.fixoptions()
         return session
 
     def _getsessionclass(self): 

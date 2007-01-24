@@ -138,6 +138,22 @@ def parse_directories(sshhosts):
 class RSession(AbstractSession):
     """ Remote version of session
     """
+    def fixoptions(self):
+        config = self.config
+        try:
+            config.getvalue('disthosts')
+        except KeyError:
+            print "You're trying to run RSession without disthosts specified"
+            print "you need to specify it in your conftest.py (ie. ~/conftest.py)"
+            print "for example:"
+            print "   disthosts = ['localhost'] * 4 # for 3 processors"
+            print "      - or -"
+            print "   disthosts = ['you@some.remote.com'] # for remote testing"
+            print "   # with your remote ssh account"
+            print "http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
+            print "   for more info..."
+            raise SystemExit
+    
     def main(self, reporter=None):
         """ main loop for running tests. """
         args = self.config.args

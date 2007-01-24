@@ -322,3 +322,8 @@ class TestInithosts(object):
         assert events[3].host.hostname == 'h2'
         assert events[3].host.relpath == 'home-h2'
         
+def test_rsession_no_disthost():
+    tmpdir = py.test.ensuretemp("rsession_no_disthost")
+    tmpdir.ensure("conftest.py")
+    config = py.test.config._reparse([str(tmpdir), '-d'])
+    py.test.raises(SystemExit, "config.initsession()")
