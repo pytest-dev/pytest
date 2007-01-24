@@ -6,6 +6,7 @@ to allow further use outside the pylib
 """
 
 import py
+from py.__.code import safe_repr
 
 class Presenter(object):
     """ Class used for presentation of various objects,
@@ -84,7 +85,7 @@ class Presenter(object):
                 else:
                     # This formatting could all be handled by the _repr() function, which is 
                     # only repr.Repr in disguise, so is very configurable.
-                    str_repr = py.__.code.safe_repr._repr(value)
+                    str_repr = safe_repr._repr(value)
                     if len(str_repr) < 70 or not isinstance(value,
                                                 (list, tuple, dict)):
                         self.out.line("%-10s = %s" %(name, str_repr))
