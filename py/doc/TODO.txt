@@ -68,20 +68,17 @@ packaging
 APIGEN / source viewer
 -------------------------------------
 
-* make py.test --apigen=PATH_TO_SCRIPT 
+* (DONE) make py.test --apigen=PATH_TO_SCRIPT 
   collect tracing information and call the apigen 
   script to produce api and source code documentation
-
-  (done)
 
 * deploy the above "py.test --apigen" run on codespeak 
   regularly, determine directory locations and URL namespace design. 
 
-* integrate rest directive into py/documentation/conftest.py 
+* (DONE, XXX functions/methods?) integrate rest directive into 
+  py/documentation/conftest.py 
   with help code from py.__.rest.directive.... 
   make sure that the txt files in py/documentation/ use it
-
-  (done XXX functions/methods)
 
 testing
 -----------
@@ -94,17 +91,10 @@ testing
     - running "py.test --looponfailing" 
     - running "py.test" distributed on some hosts
 
-* consider --box on trunk (XXX guido - find tests that depend on each other)
+* make --box run on the trunk 
 
-* tests should not create any tempdirectories in the source code base
-
-
-  (done)
-
-* try to be as 2.2 compatible as possible 
+* (done) try to be as 2.2 compatible as possible 
   (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
-
-  (done)
 
 distributed testing / RSession
 ------------------------------------
