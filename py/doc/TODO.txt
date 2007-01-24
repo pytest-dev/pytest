@@ -106,9 +106,12 @@ testing
 
   (done)
 
-distributed testing 
-----------------------
+distributed testing / RSession
+------------------------------------
 
+* cleanup initialisation of config / get rid of pkgdir
+* unify option names (dist_*) 
+* (optional) see if more of py/test/session.py's Session can be reused 
 
 code quality
 -----------------
