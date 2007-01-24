@@ -33,9 +33,9 @@ class Item(py.test.collect.Collector):
     def startcapture(self): 
         if not self.config.option.nocapture:
             # XXX refactor integrate capturing
-            #self._capture = py.io.OutErrCapture() 
-            from py.__.misc.simplecapture import SimpleOutErrCapture
-            self._capture = SimpleOutErrCapture()
+            self._capture = py.io.OutErrCapture() 
+            #from py.__.misc.simplecapture import SimpleOutErrCapture
+            #self._capture = SimpleOutErrCapture()
 
     def finishcapture(self): 
         if hasattr(self, '_capture'): 
