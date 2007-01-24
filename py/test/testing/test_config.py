@@ -17,19 +17,37 @@ def test_config_cmdline_options():
             option.tdest = True
         Option = py.test.config.Option
         option = py.test.config.addoptions("testing group", 
-            Option('-g', '--glong', action="store", default=42,
+            Option('-G', '--glong', action="store", default=42,
                    type="int", dest="gdest", help="g value."), 
             # XXX note: special case, option without a destination
-            Option('-t', '--tlong', action="callback", callback=_callback,
+            Option('-T', '--tlong', action="callback", callback=_callback,
                     help='t value'),
             )
         """))
     old = o.chdir() 
     try: 
-        config = py.test.config._reparse(['-g', '17'])
+        config = py.test.config._reparse(['-G', '17'])
     finally: 
         old.chdir() 
     assert config.option.gdest == 17 
+
+def test_config_cmdline_options_only_lowercase(): 
+    o = py.test.ensuretemp('test_config_cmdline_options_only_lowercase')
+    o.ensure("conftest.py").write(py.code.Source(""" 
+        import py
+        Option = py.test.config.Option
+        options = py.test.config.addoptions("testing group", 
+            Option('-g', '--glong', action="store", default=42,
+                   type="int", dest="gdest", help="g value."), 
+            )
+        """))
+    old = o.chdir() 
+    try: 
+        py.test.raises(ValueError, """
+            py.test.config._reparse(['-g', '17'])
+        """)
+    finally: 
+        old.chdir() 
 
 def test_parsing_again_fails():
     dir = py.test.ensuretemp("parsing_again_fails")
@@ -160,10 +178,10 @@ def test_config_rconfig():
     import py
     Option = py.test.config.Option
     option = py.test.config.addoptions("testing group", 
-            Option('-g', '--glong', action="store", default=42,
+            Option('-G', '--glong', action="store", default=42,
                    type="int", dest="gdest", help="g value."))
     """))
-    config = py.test.config._reparse([tmp, "-g", "11"])
+    config = py.test.config._reparse([tmp, "-G", "11"])
     assert config.option.gdest == 11
     repr = config.make_repr(conftestnames=[])
     config = py.test.config._reparse([tmp.dirpath()])

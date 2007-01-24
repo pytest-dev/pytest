@@ -485,6 +485,28 @@ writing conftest.py files
 
 XXX
 
+adding custom options
++++++++++++++++++++++++
+
+To register a project-specific command line option 
+you may have the following code within a ``conftest.py`` file::
+
+    import py
+    Option = py.test.config.Option
+    option = py.test.config.addoptions("pypy options",
+        Option('-V', '--view', action="store_true", dest="view", default=False,
+               help="view translation tests' flow graphs with Pygame"),
+    )
+
+and you can then access ``option.view`` like this:: 
+
+    if option.view:
+        print "view this!"
+
+The option will be available if you type ``py.test -h``
+Note that you may only register upper case short
+options.  ``py.test`` reserves all lower 
+case short options for its own cross-project usage. 
 
 customizing the collecting and running process 
 -----------------------------------------------
@@ -671,7 +693,7 @@ The options that you need to specify in that conftest.py file are:
 
 * **`dist_hosts`**: a required list of ssh addresses (which each may
   include a path, default path is: ``$HOME/pytestcache-HOSTNAME``)
-* `dist_rsync_roots` - a list of packages to copy to the remote machines.
+* `dist_rsyncroots` - a list of packages to copy to the remote machines.
 * `dist_remotepython` - the remote python executable to run.
 * `dist_nicelevel` - process priority of remote nodes. 
 * `dist_boxing` - will run each single test in a separate process 
@@ -681,7 +703,7 @@ The options that you need to specify in that conftest.py file are:
 Sample configuration::
 
     dist_hosts = ['localhost', 'user@someserver:/tmp/somedir']
-    dist_rsync_roots = ['pypy', 'py']
+    dist_rsyncroots = ['pypy', 'py']
     dist_remotepython = 'python2.4'
     dist_nicelevel = 10 
     dist_boxing = True

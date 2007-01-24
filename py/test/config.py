@@ -2,6 +2,7 @@ from __future__ import generators
 
 import py
 from conftesthandle import Conftest
+from py.__.test.defaultconftest import adddefaultoptions
 
 optparse = py.compat.optparse
 
@@ -42,8 +43,8 @@ class Config(object):
         assert not self._initialized, (
                 "can only parse cmdline args once per Config object")
         self._initialized = True
+        adddefaultoptions(self)
         self.conftest.setinitial(args) 
-        self.conftest.rget('adddefaultoptions')()
         args = [str(x) for x in args]
         cmdlineoption, args = self._parser.parse_args(args) 
         self.option.__dict__.update(vars(cmdlineoption))
@@ -89,6 +90,16 @@ class Config(object):
         """ add a named group of options to the current testing session. 
             This function gets invoked during testing session initialization. 
         """ 
+        for spec in specs:
+            for shortopt in spec._short_opts:
+                if not shortopt.isupper(): 
+                    raise ValueError(
+                        "custom options must be capital letter "
+                        "got %r" %(spec,)
+                    )
+        return self._addoptions(groupname, *specs)
+
+    def _addoptions(self, groupname, *specs):
         optgroup = optparse.OptionGroup(self._parser, groupname) 
         optgroup.add_options(specs) 
         self._parser.add_option_group(optgroup)

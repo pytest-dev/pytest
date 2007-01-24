@@ -28,9 +28,9 @@ _dist_import_pypy = False # used for regenerating JS application
 
 # ===================================================
 
-Option = py.test.config.Option
-def adddefaultoptions():
-    py.test.config.addoptions('general options',
+def adddefaultoptions(config):
+    Option = config.Option 
+    config._addoptions('general options',
         Option('-v', '--verbose',
                action="count", dest="verbose", default=0,
                help="increase verbosity."),
@@ -68,7 +68,7 @@ def adddefaultoptions():
                help="trace considerations of conftest.py files."),
     )
 
-    py.test.config.addoptions('EXPERIMENTAL options',
+    config._addoptions('EXPERIMENTAL options',
         Option('-f', '--looponfailing',
                action="store_true", dest="looponfailing", default=False,
                help="loop on failing test set."),
