@@ -1,0 +1,561 @@
+Things to do before 0.9.0 
+========================= 
+
+
+
+py/bin
+-----------
+
+* review py/bin scripts abit
+  py.test 
+  py.rest 
+  py.lookup  
+  py.cleanup  
+  py.countloc  
+
+review all py lib documentation
+-------------------------------------
+
+* (hpk, in-progress) rename py/documentation to py/doc
+  (check web page and pypy usage of it)
+
+streamline exported API 
+-------------------------------------
+
+* (hpk, should be done) move not-to-be-exported Gateway() methods to _ - methods. 
+* docstrings  for all exported API
+
+* remove: 
+  test.compat.TestCAse 
+
+* check and likely remove already deprecated API
+ 
+* remove from public namespace: 
+  XXX consider py.magic. invoke/revoke/patch/revert 
+ 
+* make "_" namespace:  
+  py.path.extpy -> py.path._extpy
+  py.log -> py._log (pypy!) 
+
+* review py.io and write py.io.dupfile docstring (XXX guido)
+
+* re-consider what to do with read and write methods of py.path classes (since
+  there are places that check for file-ness by doing hasattr(... 'write'))
+
+  (XXX guido talk to holger)
+
+packaging
+-------------------------------------
+
+* debian and TAR/zip packages for py lib, 
+  particularly look into C module issues (greenlet most importantly) 
+
+* do something about c-extensions both on unix-ish 
+  versus win32 systems 
+
+* ensure compatibility with Python 2.3 - 2.5, 
+  see what is missing for 2.2 
+
+* optional: support setuptools (eggs?) installs, and instally
+  from pypi (and register pylib there) 
+
+* see if things work on Win32 (partially done) 
+
+* refine and implement `releasescheme`_ 
+
+.. _releasescheme: releasescheme.html
+
+APIGEN / source viewer
+-------------------------------------
+
+* make py.test --apigen=PATH_TO_SCRIPT 
+  collect tracing information and call the apigen 
+  script to produce api and source code documentation
+
+  (done)
+
+* deploy the above "py.test --apigen" run on codespeak 
+  regularly, determine directory locations and URL namespace design. 
+
+* integrate rest directive into py/documentation/conftest.py 
+  with help code from py.__.rest.directive.... 
+  make sure that the txt files in py/documentation/ use it
+
+  (done XXX functions/methods)
+
+testing
+-----------
+
+* windows tests (rev 36514 passes without errors, many skips) (XXX guido)
+
+* these should all work on 0.9 and on the py lib and pypy:
+    - running "py.test -s" 
+    - running "py.test --pdb" 
+    - running "py.test --looponfailing" 
+    - running "py.test" distributed on some hosts
+
+* consider --box on trunk (XXX guido - find tests that depend on each other)
+
+* tests should not create any tempdirectories in the source code base
+
+
+  (done)
+
+* try to be as 2.2 compatible as possible 
+  (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
+
+  (done)
+
+distributed testing 
+----------------------
+
+
+code quality
+-----------------
+
+* no function implementation longer than 30 lines 
+
+* no lines longer than 80 characters 
+
+* review the pylib issue tracker
+  (cfbolz: done: what has a 0.8.0 or a 0.9.0 tag should be looked at again)
+
+
+py.test
+-------
+
+* adjust py.test documentation to reflect new
+  collector/session architecture (mostly done) 
+
+* document py.test's conftest.py approach (somewhat done) 
+
+* py.test fails to parse strangely formatted code after assertion failure
+
+Missing docstrings
+------------------
+
+::
+
+    code.Traceback.recursionindex misses a docstring
+    code.Traceback.filter misses a docstring
+    code.Traceback.cut misses a docstring
+    code.Traceback.__getitem__ misses a docstring
+    code.Traceback.Entry misses a docstring
+    code.Traceback.Entry.ishidden misses a docstring
+    code.Traceback.Entry.getfirstlinesource misses a docstring
+    code.Traceback.Entry.__str__ misses a docstring
+    code.Traceback.Entry.__repr__ misses a docstring
+    code.Traceback.Entry.__init__ misses a docstring
+    code.Source.getblockend misses a docstring
+    code.Source.__str__ misses a docstring
+    code.Source.__len__ misses a docstring
+    code.Source.__init__ misses a docstring
+    code.Source.__getslice__ misses a docstring
+    code.Source.__getitem__ misses a docstring
+    code.Source.__eq__ misses a docstring
+    code.Frame.repr misses a docstring
+    code.Frame.is_true misses a docstring
+    code.Frame.getargs misses a docstring
+    code.Frame.exec_ misses a docstring
+    code.Frame.eval misses a docstring
+    code.Frame.__init__ misses a docstring
+    code.ExceptionInfo.exconly misses a docstring
+    code.ExceptionInfo.errisinstance misses a docstring
+    code.ExceptionInfo.__str__ misses a docstring
+    code.ExceptionInfo.__init__ misses a docstring
+    code.Code misses a docstring
+    code.Code.source misses a docstring
+    code.Code.getargs misses a docstring
+    code.Code.__init__ misses a docstring
+    code.Code.__eq__ misses a docstring
+    execnet.SshGateway misses a docstring
+    execnet.SshGateway.join misses a docstring
+    execnet.SshGateway.exit misses a docstring
+    execnet.SshGateway.__repr__ misses a docstring
+    execnet.SshGateway.__init__ misses a docstring
+    execnet.SshGateway.ThreadOut.write misses a docstring
+    execnet.SshGateway.ThreadOut.setwritefunc misses a docstring
+    execnet.SshGateway.ThreadOut.setdefaultwriter misses a docstring
+    execnet.SshGateway.ThreadOut.resetdefault misses a docstring
+    execnet.SshGateway.ThreadOut.isatty misses a docstring
+    execnet.SshGateway.ThreadOut.flush misses a docstring
+    execnet.SshGateway.ThreadOut.delwritefunc misses a docstring
+    execnet.SshGateway.ThreadOut.deinstall misses a docstring
+    execnet.SocketGateway misses a docstring
+    execnet.SocketGateway.join misses a docstring
+    execnet.SocketGateway.exit misses a docstring
+    execnet.SocketGateway.__repr__ misses a docstring
+    execnet.SocketGateway.__init__ misses a docstring
+    execnet.PopenGateway misses a docstring
+    execnet.PopenGateway.remote_bootstrap_gateway misses a docstring
+    execnet.PopenGateway.join misses a docstring
+    execnet.PopenGateway.exit misses a docstring
+    execnet.PopenGateway.__repr__ misses a docstring
+    execnet.PopenGateway.__init__ misses a docstring
+    initpkg misses a docstring
+    io.dupfile misses a docstring
+    log.setconsumer misses a docstring
+    log.get misses a docstring
+    log.Syslog misses a docstring
+    log.STDOUT misses a docstring
+    log.STDERR misses a docstring
+    log.Producer.set_consumer misses a docstring
+    log.Producer.get_consumer misses a docstring
+    log.Producer.__repr__ misses a docstring
+    log.Producer.__init__ misses a docstring
+    log.Producer.__getattr__ misses a docstring
+    log.Producer.__call__ misses a docstring
+    log.Producer.Message misses a docstring
+    log.Producer.Message.prefix misses a docstring
+    log.Producer.Message.content misses a docstring
+    log.Producer.Message.__str__ misses a docstring
+    log.Producer.Message.__init__ misses a docstring
+    log.Path misses a docstring
+    log.Path.__init__ misses a docstring
+    log.Path.__call__ misses a docstring
+    magic.View.__viewkey__ misses a docstring
+    magic.View.__repr__ misses a docstring
+    magic.View.__new__ misses a docstring
+    magic.View.__matchkey__ misses a docstring
+    magic.View.__getattr__ misses a docstring
+    magic.AssertionError misses a docstring
+    path.svnwc.visit misses a docstring
+    path.svnwc.mkdir misses a docstring
+    path.svnwc.dump misses a docstring
+    path.svnwc.check misses a docstring
+    path.svnwc.add misses a docstring
+    path.svnwc.__str__ misses a docstring
+    path.svnwc.__repr__ misses a docstring
+    path.svnwc.__new__ misses a docstring
+    path.svnwc.__iter__ misses a docstring
+    path.svnwc.__hash__ misses a docstring
+    path.svnwc.__eq__ misses a docstring
+    path.svnwc.__div__ misses a docstring
+    path.svnwc.__contains__ misses a docstring
+    path.svnwc.__cmp__ misses a docstring
+    path.svnwc.__add__ misses a docstring
+    path.svnwc.Checkers misses a docstring
+    path.svnurl.visit misses a docstring
+    path.svnurl.check misses a docstring
+    path.svnurl.__repr__ misses a docstring
+    path.svnurl.__new__ misses a docstring
+    path.svnurl.__ne__ misses a docstring
+    path.svnurl.__iter__ misses a docstring
+    path.svnurl.__hash__ misses a docstring
+    path.svnurl.__div__ misses a docstring
+    path.svnurl.__contains__ misses a docstring
+    path.svnurl.__cmp__ misses a docstring
+    path.svnurl.__add__ misses a docstring
+    path.svnurl.Checkers misses a docstring
+    path.local.visit misses a docstring
+    path.local.sysexec has an 'XXX' in its docstring
+    path.local.check misses a docstring
+    path.local.__repr__ misses a docstring
+    path.local.__iter__ misses a docstring
+    path.local.__hash__ misses a docstring
+    path.local.__eq__ misses a docstring
+    path.local.__div__ misses a docstring
+    path.local.__contains__ misses a docstring
+    path.local.__cmp__ misses a docstring
+    path.local.__add__ misses a docstring
+    path.local.Checkers misses a docstring
+    path.extpy.visit misses a docstring
+    path.extpy.samefile misses a docstring
+    path.extpy.relto misses a docstring
+    path.extpy.listobj misses a docstring
+    path.extpy.listdir misses a docstring
+    path.extpy.join misses a docstring
+    path.extpy.getpymodule misses a docstring
+    path.extpy.getfilelineno misses a docstring
+    path.extpy.dirpath misses a docstring
+    path.extpy.check misses a docstring
+    path.extpy.__str__ misses a docstring
+    path.extpy.__repr__ misses a docstring
+    path.extpy.__new__ misses a docstring
+    path.extpy.__iter__ misses a docstring
+    path.extpy.__hash__ misses a docstring
+    path.extpy.__contains__ misses a docstring
+    path.extpy.__cmp__ misses a docstring
+    path.extpy.__add__ misses a docstring
+    path.extpy.Checkers misses a docstring
+    test.rest.RestReporter misses a docstring
+    test.rest.RestReporter.summary misses a docstring
+    test.rest.RestReporter.skips misses a docstring
+    test.rest.RestReporter.repr_traceback misses a docstring
+    test.rest.RestReporter.repr_source misses a docstring
+    test.rest.RestReporter.repr_signal misses a docstring
+    test.rest.RestReporter.repr_failure misses a docstring
+    test.rest.RestReporter.report_unknown misses a docstring
+    test.rest.RestReporter.report_TestStarted misses a docstring
+    test.rest.RestReporter.report_TestFinished misses a docstring
+    test.rest.RestReporter.report_SkippedTryiter misses a docstring
+    test.rest.RestReporter.report_SendItem misses a docstring
+    test.rest.RestReporter.report_RsyncFinished misses a docstring
+    test.rest.RestReporter.report_ReceivedItemOutcome misses a docstring
+    test.rest.RestReporter.report_Nodes misses a docstring
+    test.rest.RestReporter.report_ItemStart misses a docstring
+    test.rest.RestReporter.report_ImmediateFailure misses a docstring
+    test.rest.RestReporter.report_HostReady misses a docstring
+    test.rest.RestReporter.report_HostRSyncing misses a docstring
+    test.rest.RestReporter.report_FailedTryiter misses a docstring
+    test.rest.RestReporter.report misses a docstring
+    test.rest.RestReporter.print_summary misses a docstring
+    test.rest.RestReporter.prepare_source misses a docstring
+    test.rest.RestReporter.hangs misses a docstring
+    test.rest.RestReporter.get_rootpath misses a docstring
+    test.rest.RestReporter.get_path_from_item misses a docstring
+    test.rest.RestReporter.get_linkwriter misses a docstring
+    test.rest.RestReporter.get_item_name misses a docstring
+    test.rest.RestReporter.get_host misses a docstring
+    test.rest.RestReporter.failures misses a docstring
+    test.rest.RestReporter.add_rest misses a docstring
+    test.rest.RestReporter.__init__ misses a docstring
+    test.rest.RelLinkWriter misses a docstring
+    test.rest.RelLinkWriter.get_link misses a docstring
+    test.rest.NoLinkWriter misses a docstring
+    test.rest.NoLinkWriter.get_link misses a docstring
+    test.rest.LinkWriter misses a docstring
+    test.rest.LinkWriter.get_link misses a docstring
+    test.rest.LinkWriter.__init__ misses a docstring
+    test.exit misses a docstring
+    test.deprecated_call misses a docstring
+    test.collect.Module misses a docstring
+    test.collect.Module.tryiter has an 'XXX' in its docstring
+    test.collect.Module.teardown misses a docstring
+    test.collect.Module.startcapture misses a docstring
+    test.collect.Module.skipbykeyword misses a docstring
+    test.collect.Module.setup misses a docstring
+    test.collect.Module.run misses a docstring
+    test.collect.Module.makeitem misses a docstring
+    test.collect.Module.listnames misses a docstring
+    test.collect.Module.join misses a docstring
+    test.collect.Module.haskeyword misses a docstring
+    test.collect.Module.getsortvalue misses a docstring
+    test.collect.Module.getpathlineno misses a docstring
+    test.collect.Module.getouterr misses a docstring
+    test.collect.Module.getitembynames misses a docstring
+    test.collect.Module.funcnamefilter misses a docstring
+    test.collect.Module.finishcapture misses a docstring
+    test.collect.Module.classnamefilter misses a docstring
+    test.collect.Module.buildname2items misses a docstring
+    test.collect.Module.__repr__ misses a docstring
+    test.collect.Module.__ne__ misses a docstring
+    test.collect.Module.__init__ misses a docstring
+    test.collect.Module.__hash__ misses a docstring
+    test.collect.Module.__eq__ misses a docstring
+    test.collect.Module.__cmp__ misses a docstring
+    test.collect.Module.Skipped misses a docstring
+    test.collect.Module.Passed misses a docstring
+    test.collect.Module.Outcome misses a docstring
+    test.collect.Module.Failed misses a docstring
+    test.collect.Module.ExceptionFailure misses a docstring
+    test.collect.Instance misses a docstring
+    test.collect.Instance.tryiter has an 'XXX' in its docstring
+    test.collect.Instance.teardown misses a docstring
+    test.collect.Instance.startcapture misses a docstring
+    test.collect.Instance.skipbykeyword misses a docstring
+    test.collect.Instance.setup misses a docstring
+    test.collect.Instance.run misses a docstring
+    test.collect.Instance.makeitem misses a docstring
+    test.collect.Instance.listnames misses a docstring
+    test.collect.Instance.join misses a docstring
+    test.collect.Instance.haskeyword misses a docstring
+    test.collect.Instance.getsortvalue misses a docstring
+    test.collect.Instance.getpathlineno misses a docstring
+    test.collect.Instance.getouterr misses a docstring
+    test.collect.Instance.getitembynames misses a docstring
+    test.collect.Instance.funcnamefilter misses a docstring
+    test.collect.Instance.finishcapture misses a docstring
+    test.collect.Instance.classnamefilter misses a docstring
+    test.collect.Instance.buildname2items misses a docstring
+    test.collect.Instance.__repr__ misses a docstring
+    test.collect.Instance.__ne__ misses a docstring
+    test.collect.Instance.__init__ misses a docstring
+    test.collect.Instance.__hash__ misses a docstring
+    test.collect.Instance.__eq__ misses a docstring
+    test.collect.Instance.__cmp__ misses a docstring
+    test.collect.Generator misses a docstring
+    test.collect.Generator.tryiter has an 'XXX' in its docstring
+    test.collect.Generator.teardown misses a docstring
+    test.collect.Generator.startcapture misses a docstring
+    test.collect.Generator.skipbykeyword misses a docstring
+    test.collect.Generator.setup misses a docstring
+    test.collect.Generator.run misses a docstring
+    test.collect.Generator.listnames misses a docstring
+    test.collect.Generator.join misses a docstring
+    test.collect.Generator.haskeyword misses a docstring
+    test.collect.Generator.getsortvalue misses a docstring
+    test.collect.Generator.getpathlineno misses a docstring
+    test.collect.Generator.getouterr misses a docstring
+    test.collect.Generator.getitembynames misses a docstring
+    test.collect.Generator.getcallargs misses a docstring
+    test.collect.Generator.finishcapture misses a docstring
+    test.collect.Generator.buildname2items misses a docstring
+    test.collect.Generator.__repr__ misses a docstring
+    test.collect.Generator.__ne__ misses a docstring
+    test.collect.Generator.__init__ misses a docstring
+    test.collect.Generator.__hash__ misses a docstring
+    test.collect.Generator.__eq__ misses a docstring
+    test.collect.Generator.__cmp__ misses a docstring
+    test.collect.DoctestFile misses a docstring
+    test.collect.DoctestFile.tryiter has an 'XXX' in its docstring
+    test.collect.DoctestFile.teardown misses a docstring
+    test.collect.DoctestFile.startcapture misses a docstring
+    test.collect.DoctestFile.skipbykeyword misses a docstring
+    test.collect.DoctestFile.setup misses a docstring
+    test.collect.DoctestFile.run misses a docstring
+    test.collect.DoctestFile.makeitem misses a docstring
+    test.collect.DoctestFile.listnames misses a docstring
+    test.collect.DoctestFile.join misses a docstring
+    test.collect.DoctestFile.haskeyword misses a docstring
+    test.collect.DoctestFile.getsortvalue misses a docstring
+    test.collect.DoctestFile.getpathlineno misses a docstring
+    test.collect.DoctestFile.getouterr misses a docstring
+    test.collect.DoctestFile.getitembynames misses a docstring
+    test.collect.DoctestFile.funcnamefilter misses a docstring
+    test.collect.DoctestFile.finishcapture misses a docstring
+    test.collect.DoctestFile.classnamefilter misses a docstring
+    test.collect.DoctestFile.buildname2items misses a docstring
+    test.collect.DoctestFile.__repr__ misses a docstring
+    test.collect.DoctestFile.__ne__ misses a docstring
+    test.collect.DoctestFile.__init__ misses a docstring
+    test.collect.DoctestFile.__hash__ misses a docstring
+    test.collect.DoctestFile.__eq__ misses a docstring
+    test.collect.DoctestFile.__cmp__ misses a docstring
+    test.collect.Directory misses a docstring
+    test.collect.Directory.tryiter has an 'XXX' in its docstring
+    test.collect.Directory.teardown misses a docstring
+    test.collect.Directory.startcapture misses a docstring
+    test.collect.Directory.skipbykeyword misses a docstring
+    test.collect.Directory.setup misses a docstring
+    test.collect.Directory.run misses a docstring
+    test.collect.Directory.recfilter misses a docstring
+    test.collect.Directory.makeitem misses a docstring
+    test.collect.Directory.listnames misses a docstring
+    test.collect.Directory.join misses a docstring
+    test.collect.Directory.haskeyword misses a docstring
+    test.collect.Directory.getsortvalue misses a docstring
+    test.collect.Directory.getpathlineno misses a docstring
+    test.collect.Directory.getouterr misses a docstring
+    test.collect.Directory.getitembynames misses a docstring
+    test.collect.Directory.finishcapture misses a docstring
+    test.collect.Directory.filefilter misses a docstring
+    test.collect.Directory.buildname2items misses a docstring
+    test.collect.Directory.__repr__ misses a docstring
+    test.collect.Directory.__ne__ misses a docstring
+    test.collect.Directory.__init__ misses a docstring
+    test.collect.Directory.__hash__ misses a docstring
+    test.collect.Directory.__eq__ misses a docstring
+    test.collect.Directory.__cmp__ misses a docstring
+    test.collect.Collector misses a docstring
+    test.collect.Collector.tryiter has an 'XXX' in its docstring
+    test.collect.Collector.teardown misses a docstring
+    test.collect.Collector.startcapture misses a docstring
+    test.collect.Collector.skipbykeyword misses a docstring
+    test.collect.Collector.setup misses a docstring
+    test.collect.Collector.run misses a docstring
+    test.collect.Collector.listnames misses a docstring
+    test.collect.Collector.join misses a docstring
+    test.collect.Collector.haskeyword misses a docstring
+    test.collect.Collector.getsortvalue misses a docstring
+    test.collect.Collector.getpathlineno misses a docstring
+    test.collect.Collector.getouterr misses a docstring
+    test.collect.Collector.getitembynames misses a docstring
+    test.collect.Collector.finishcapture misses a docstring
+    test.collect.Collector.buildname2items misses a docstring
+    test.collect.Collector.__repr__ misses a docstring
+    test.collect.Collector.__ne__ misses a docstring
+    test.collect.Collector.__init__ misses a docstring
+    test.collect.Collector.__hash__ misses a docstring
+    test.collect.Collector.__eq__ misses a docstring
+    test.collect.Collector.__cmp__ misses a docstring
+    test.collect.Class misses a docstring
+    test.collect.Class.tryiter has an 'XXX' in its docstring
+    test.collect.Class.teardown misses a docstring
+    test.collect.Class.startcapture misses a docstring
+    test.collect.Class.skipbykeyword misses a docstring
+    test.collect.Class.setup misses a docstring
+    test.collect.Class.run misses a docstring
+    test.collect.Class.makeitem misses a docstring
+    test.collect.Class.listnames misses a docstring
+    test.collect.Class.join misses a docstring
+    test.collect.Class.haskeyword misses a docstring
+    test.collect.Class.getsortvalue misses a docstring
+    test.collect.Class.getpathlineno misses a docstring
+    test.collect.Class.getouterr misses a docstring
+    test.collect.Class.getitembynames misses a docstring
+    test.collect.Class.funcnamefilter misses a docstring
+    test.collect.Class.finishcapture misses a docstring
+    test.collect.Class.classnamefilter misses a docstring
+    test.collect.Class.buildname2items misses a docstring
+    test.collect.Class.__repr__ misses a docstring
+    test.collect.Class.__ne__ misses a docstring
+    test.collect.Class.__init__ misses a docstring
+    test.collect.Class.__hash__ misses a docstring
+    test.collect.Class.__eq__ misses a docstring
+    test.collect.Class.__cmp__ misses a docstring
+    test.cmdline.main misses a docstring
+    test.Item misses a docstring
+    test.Item.tryiter has an 'XXX' in its docstring
+    test.Item.teardown misses a docstring
+    test.Item.startcapture misses a docstring
+    test.Item.skipbykeyword misses a docstring
+    test.Item.setup misses a docstring
+    test.Item.run misses a docstring
+    test.Item.listnames misses a docstring
+    test.Item.join misses a docstring
+    test.Item.haskeyword misses a docstring
+    test.Item.getsortvalue misses a docstring
+    test.Item.getpathlineno misses a docstring
+    test.Item.getouterr misses a docstring
+    test.Item.getitembynames misses a docstring
+    test.Item.finishcapture misses a docstring
+    test.Item.buildname2items misses a docstring
+    test.Item.__repr__ misses a docstring
+    test.Item.__ne__ misses a docstring
+    test.Item.__init__ misses a docstring
+    test.Item.__hash__ misses a docstring
+    test.Item.__eq__ misses a docstring
+    test.Item.__cmp__ misses a docstring
+    test.Function.tryiter has an 'XXX' in its docstring
+    test.Function.teardown misses a docstring
+    test.Function.startcapture misses a docstring
+    test.Function.skipbykeyword misses a docstring
+    test.Function.setup misses a docstring
+    test.Function.run misses a docstring
+    test.Function.listnames misses a docstring
+    test.Function.join misses a docstring
+    test.Function.haskeyword misses a docstring
+    test.Function.getsortvalue misses a docstring
+    test.Function.getpathlineno misses a docstring
+    test.Function.getouterr misses a docstring
+    test.Function.getitembynames misses a docstring
+    test.Function.finishcapture misses a docstring
+    test.Function.buildname2items misses a docstring
+    test.Function.__repr__ misses a docstring
+    test.Function.__ne__ misses a docstring
+    test.Function.__init__ misses a docstring
+    test.Function.__hash__ misses a docstring
+    test.Function.__eq__ misses a docstring
+    test.Function.__cmp__ misses a docstring
+    test.Config.__init__ misses a docstring
+    xml.raw.__init__ misses a docstring
+    xml.html misses a docstring
+    xml.html.__tagclass__ misses a docstring
+    xml.html.__tagclass__.unicode misses a docstring
+    xml.html.__tagclass__.__unicode__ misses a docstring
+    xml.html.__tagclass__.__repr__ misses a docstring
+    xml.html.__tagclass__.__init__ misses a docstring
+    xml.html.__tagclass__.Attr misses a docstring
+    xml.html.__tagclass__.Attr.__init__ misses a docstring
+    xml.html.__metaclass__ misses a docstring
+    xml.html.__metaclass__.__getattr__ misses a docstring
+    xml.html.Style misses a docstring
+    xml.html.Style.__init__ misses a docstring
+    xml.escape misses a docstring
+    xml.Tag misses a docstring
+    xml.Tag.unicode misses a docstring
+    xml.Tag.__unicode__ misses a docstring
+    xml.Tag.__repr__ misses a docstring
+    xml.Tag.__init__ misses a docstring
+    xml.Namespace misses a docstring
