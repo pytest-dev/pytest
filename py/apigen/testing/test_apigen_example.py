@@ -200,6 +200,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         print html
         run_string_sequence_test(html, [
             'href="../style.css"',
+            'src="../api.js"',
             'href="index.html">pkg',
             'href="main.html">main',
             'href="main.SomeClass.html">SomeClass',

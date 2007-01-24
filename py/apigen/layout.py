@@ -11,6 +11,7 @@ class LayoutPage(Page):
 
     def __init__(self, *args, **kwargs):
         self.nav = kwargs.pop('nav')
+        self.scripturls = kwargs.pop('scripturls', [])
         super(LayoutPage, self).__init__(*args, **kwargs)
 
     def set_content(self, contentel):
@@ -20,4 +21,7 @@ class LayoutPage(Page):
         super(LayoutPage, self).fill()
         self.menubar[:] = []
         self.menubar.append(self.nav)
+        for scripturl in self.scripturls:
+            self.head.append(py.xml.html.script(type="text/javascript",
+                                         src=scripturl))
 

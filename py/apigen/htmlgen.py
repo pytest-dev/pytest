@@ -130,13 +130,16 @@ def create_namespace_tree(dotted_names):
                 ret[ns].append(itempath)
     return ret
 
-def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl):
+def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl,
+              scripturls):
     page = LayoutPage(project, title, nav=navel, encoding='UTF-8',
-                      stylesheeturl=stylesheeturl)
+                      stylesheeturl=stylesheeturl, scripturls=scripturls)
     page.set_content(contentel)
     here = py.magic.autopath().dirpath()
     style = here.join('style.css').read()
     outputpath.join('style.css').write(style)
+    apijs = here.join('api.js').read()
+    outputpath.join('api.js').write(apijs)
     return page
 
 # the PageBuilder classes take care of producing the docs (using the stuff
@@ -146,8 +149,10 @@ class AbstractPageBuilder(object):
         targetpath = self.base.join(reltargetpath)
         stylesheeturl = relpath('%s/' % (targetpath.dirpath(),),
                                 self.base.join('style.css').strpath)
+        scripturls = [relpath('%s/' % (targetpath.dirpath(),),
+                              self.base.join('api.js').strpath)]
         page = wrap_page(project, title,
-                         tag, nav, self.base, stylesheeturl)
+                         tag, nav, self.base, stylesheeturl, scripturls)
         content = self.linker.call_withbase(reltargetpath, page.unicode)
         targetpath.ensure()
         targetpath.write(content.encode("utf8"))
@@ -315,9 +320,11 @@ class ApiPageBuilder(AbstractPageBuilder):
 
         snippet = H.FunctionDescription(
             H.FunctionDef(localname, argdesc),
-            valuedesc,
             H.Docstring(docstring or H.em('no docstring available')),
-            csource,
+            H.div(H.a('show/hide info',
+                      onclick='showhideel(this.parentNode.lastChild);'),
+                  H.div(valuedesc, csource, style='display: none',
+                        class_='funcinfo')),
         )
         
         return snippet
@@ -532,7 +539,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             valuedesc.append(self.build_sig_value_description(name, _type))
         if retval:
             retval = self.process_type_link(retval)
-        ret = H.div(H.div('where:'), valuedesc, H.div('return value:'),
+        ret = H.div(H.div('arguments:'), valuedesc, H.div('return value:'),
                     retval or 'None')
         return ret
 
