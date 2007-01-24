@@ -51,6 +51,7 @@ def test_importall():
     nodirs = (
         base.join('test', 'tkinter'), 
         base.join('test', 'testing', 'data'),
+        base.join('apigen', 'tracer', 'testing', 'package'),
         base.join('test', 'testing', 'test'),
         base.join('magic', 'greenlet.py'), 
         base.join('path', 'extpy', 'testing', 'test_data'),
