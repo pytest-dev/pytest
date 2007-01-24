@@ -42,13 +42,12 @@ class Session(object):
         try:
             self.header(colitems) 
             try:
-                for colitem in colitems: 
-                    self.runtraced(colitem)
-            except KeyboardInterrupt: 
-                raise 
-            except: 
-                self.footer(colitems) 
-            else: 
+                try:
+                    for colitem in colitems: 
+                        self.runtraced(colitem)
+                except KeyboardInterrupt: 
+                    raise 
+            finally: 
                 self.footer(colitems) 
         except Exit, ex:
             pass
