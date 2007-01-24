@@ -539,7 +539,7 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_sig_value_description(self, name, _type):
         l = self.process_type_link(_type)
         items = []
-        next = "%s : " % name
+        next = "%s: " % name
         for item in l:
             if isinstance(item, str):
                 next += item
