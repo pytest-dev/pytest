@@ -385,8 +385,8 @@ def setup_fs_project():
         from someclass import SomeClass
         class SomeSubClass(SomeClass):
             " docstring somesubclass "
-            def get_somevar(self):
-                return self.somevar + 1
+            #def get_somevar(self):
+            #    return self.somevar + 1
     """))
     temp.ensure('pkg/somenamespace.py').write(py.code.Source("""\
         from pkg.main.sub import func
@@ -405,8 +405,7 @@ def setup_fs_project():
         initpkg(__name__, exportdefs = {
             'main.sub.func': ("./func.py", "func"),
             'main.SomeClass': ('./someclass.py', 'SomeClass'),
-            'main.SomeInstance': ('./someclass.py', 'SomeInstance'),
-            'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
+            #'main.SomeInstance': ('./someclass.py', 'SomeInstance'),
             'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
             'other':             ('./somenamespace.py', '*'),
         })
@@ -423,6 +422,22 @@ def setup_pkg_docstorage():
 def test_get_initpkg_star_items():
     pkg, ds = setup_pkg_docstorage()
     sit = ds.get_star_import_tree(pkg.other, 'pkg.other')
-    print sit
     assert sorted(sit.keys()) == ['pkg.other.baz', 'pkg.other.foo']
+    t = Tracer(ds)
+    t.start_tracing()
+    pkg.main.sub.func("a1")
+    pkg.main.SomeClass(3).get_somevar()
+    pkg.main.SomeSubClass("xxx").get_somevar()
+    t.end_tracing()
+    assert isinstance(ds.descs['main.sub.func'].inputcells[0], model.SomeString)
+    desc = ds.descs['main.SomeClass']
+    assert ds.descs['main.SomeClass.get_somevar'] is desc.fields['get_somevar']
+    cell = desc.fields['get_somevar'].inputcells[0]
+    assert isinstance(cell, model.SomeInstance)
+    assert cell.classdef.cls is desc.pyobj
+    desc = ds.descs['main.SomeSubClass']
+    assert ds.descs['main.SomeSubClass.get_somevar'] is desc.fields['get_somevar']
+    cell = desc.fields['get_somevar'].inputcells[0]
+    assert isinstance(cell, model.SomeInstance)
+    assert cell.classdef.cls is desc.pyobj
 
