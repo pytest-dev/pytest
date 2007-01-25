@@ -38,10 +38,15 @@ def benchmark_runner(item, session, reporter):
 
 def apigen_runner(item, session, reporter):
     r = RunExecutor(item, reporter=reporter, config=session.config)
+    startcapture(session)
+    #retval = plain_runner(item, session, reporter)
+    r = RunExecutor(item, reporter=reporter, config=session.config)
     session.tracer.start_tracing()
-    retval = plain_runner(item, session, reporter)
+    outcome = r.execute()
     session.tracer.end_tracing()
-    return retval
+    outcome = ReprOutcome(outcome.make_repr(session.config.option.tbstyle))    
+    outcome.stdout, outcome.stderr = finishcapture(session)
+    return outcome
 
 def exec_runner(item, session, reporter):
     raise NotImplementedError()
