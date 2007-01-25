@@ -87,9 +87,11 @@ def test_siblingconftest_fails_maybe():
     assert cfg.getvalue(path=o.join('sister1'), name='x') == 2
     old = o.chdir()
     try:
-        print py.process.cmdexec("py.test sister1")
+        pytestpath = py.magic.autopath().dirpath().dirpath().dirpath().join(
+                        'bin/py.test')
+        print py.process.cmdexec('python "%s" sister1' % (pytestpath,))
         o.join('sister1').chdir()
-        print py.process.cmdexec("py.test") 
+        print py.process.cmdexec('python "%s"' % (pytestpath,))
     finally:
         old.chdir()
 
