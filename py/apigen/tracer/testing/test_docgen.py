@@ -427,7 +427,7 @@ def test_get_initpkg_star_items():
     t.start_tracing()
     pkg.main.sub.func("a1")
     pkg.main.SomeClass(3).get_somevar()
-    pkg.main.SomeSubClass("xxx").get_somevar()
+    pkg.main.SomeSubClass(4).get_somevar()
     t.end_tracing()
     assert isinstance(ds.descs['main.sub.func'].inputcells[0], model.SomeString)
     desc = ds.descs['main.SomeClass']
