@@ -62,18 +62,20 @@ class ReSTSyntaxTest(py.test.Item):
 
 class DoctestText(py.test.Item): 
     def run(self): 
-        s = self.fspath.read()
+        # XXX quite nasty... but it works (fixes win32 issues)
+        s = self._normalize_linesep()
         l = []
         prefix = '.. >>> '
         mod = py.std.types.ModuleType(self.fspath.purebasename) 
-        for line in s.split('\n'): 
-            if line.startswith(prefix): 
-                exec py.code.Source(line[len(prefix):]).compile() in mod.__dict__ 
+        for line in s.split('\n'):
+            if line.startswith(prefix):
+                exec py.code.Source(line[len(prefix):]).compile() in \
+                     mod.__dict__
                 line = ""
-            else: 
+            else:
                 l.append(line)
-        docstring = "\n".join(l) 
-        self.execute(mod, docstring) 
+        docstring = "\n".join(l)
+        self.execute(mod, docstring)
 
     def execute(self, mod, docstring): 
         mod.__doc__ = docstring 
@@ -81,6 +83,20 @@ class DoctestText(py.test.Item):
         if failed: 
             py.test.fail("doctest %s: %s failed out of %s" %(
                          self.fspath, failed, tot))
+
+    def _normalize_linesep(self):
+        s = self.fspath.read()
+        linesep = '\n'
+        if '\r' in s:
+            if '\n' not in s:
+                linesep = '\r'
+            else:
+                linesep = '\r\n'
+        print 'linesep:', repr(linesep)
+        s = s.replace(linesep, '\n')
+        self.fspath.write(s)
+        print 's:', repr(s)
+        return s
         
 class LinkCheckerMaker(py.test.collect.Collector): 
     def run(self): 

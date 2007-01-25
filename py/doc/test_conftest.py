@@ -36,6 +36,21 @@ def test_doctest_basic():
     l2 = session.getitemoutcomepairs(py.test.Item.Skipped)
     assert len(l+l2) == 2
 
+def test_doctest_eol(): 
+    # XXX get rid of the next line: 
+    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
+
+    ytxt = tmpdir.join('y.txt')
+    ytxt.write(py.code.Source(".. >>> 1 + 1\r\n   2\r\n\r\n"))
+    config = py.test.config._reparse([ytxt]) 
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    assert len(l) == 0 
+    l = session.getitemoutcomepairs(py.test.Item.Passed)
+    l2 = session.getitemoutcomepairs(py.test.Item.Skipped)
+    assert len(l+l2) == 2
+
 def test_js_ignore():
     py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
     tmpdir.ensure('__init__.py')
