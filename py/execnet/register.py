@@ -145,9 +145,7 @@ class SocketGateway(InstallableGateway):
             given gateway. 
         """ 
         if hostport is None: 
-            # XXX not sure about this one... is this what's intended? it used
-            # to use '' for the hostname, which breaks Windows...
-            host, port = ('127.0.0.1', 0) 
+            host, port = ('', 0) 
         else:   
             host, port = hostport 
         socketserverbootstrap = py.code.Source(
@@ -163,12 +161,10 @@ class SocketGateway(InstallableGateway):
         channel = gateway.remote_exec(socketserverbootstrap)
         hostname, (realhost, realport) = channel.receive() 
         if not hostname:
-            # XXX this is strange... shouldn't it be 'realhost = hostname' or
-            # something?
             hostname = realhost
         #gateway._trace("remote_install received" 
         #              "port=%r, hostname = %r" %(realport, hostname))
-        return py.execnet.SocketGateway(realhost, realport) 
+        return py.execnet.SocketGateway(hostname, realport) 
     remote_install = classmethod(remote_install)
     
 class SshGateway(PopenCmdGateway):
