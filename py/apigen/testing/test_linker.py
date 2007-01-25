@@ -17,8 +17,6 @@ class TestLinker(object):
                     linker.get_target, 'py.path.local')
         assert relpath == 'path/local.html'
 
-
-        
 testspec = [
     'a    a/b   a/b', 
     '/a   /a/b  a/b', 
@@ -28,17 +26,17 @@ testspec = [
     '/a/b  /c/d   ../c/d', 
     'a/b  a     ../a', 
     '/a/b /a   ../a', 
-]     
+    'c:\\foo\\bar c:\\foo ../foo',
+]
 
 def gen_check(frompath, topath, expected):
     result = relpath(frompath, topath)
-    print "linking", frompath, "to", topath
     assert result == expected
 
 def test_gen_check():
     for line in testspec:
         frompath, topath, expected = line.split()
-        yield gen_check, frompath, topath, expected
+        yield gen_check, frompath, topath, expected, 
 
 def test_check_incompatible():
     py.test.raises(ValueError, "relpath('/a', 'b')")

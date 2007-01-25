@@ -1,4 +1,5 @@
 import py
+import os
 import inspect
 from py.__.apigen.layout import LayoutPage
 from py.__.apigen.source import browser as source_browser
@@ -167,11 +168,11 @@ class SourcePageBuilder(AbstractPageBuilder):
     def build_navigation(self, fspath):
         nav = H.Navigation()
         relpath = fspath.relto(self.projroot)
-        path = relpath.split('/')
+        path = relpath.split(os.path.sep)
         indent = 0
         # build links to parents
         for i in xrange(len(path)):
-            dirpath = '/'.join(path[:i])
+            dirpath = os.path.sep.join(path[:i])
             abspath = self.projroot.join(dirpath).strpath
             if i == 0:
                 text = 'root'
@@ -244,15 +245,17 @@ class SourcePageBuilder(AbstractPageBuilder):
             if fspath.ext in ['.pyc', '.pyo']:
                 continue
             relfspath = fspath.relto(base)
-            if relfspath.find('/.') > -1:
+            if relfspath.find('%s.' % (os.path.sep,)) > -1:
                 # skip hidden dirs and files
                 continue
             elif fspath.check(dir=True):
                 if relfspath != '':
-                    relfspath += '/'
-                reloutputpath = 'source/%sindex.html' % (relfspath,)
+                    relfspath += os.path.sep
+                reloutputpath = 'source%s%sindex.html' % (os.path.sep,
+                                                          relfspath)
             else:
-                reloutputpath = "source/%s.html" % (relfspath,)
+                reloutputpath = "source%s%s.html" % (os.path.sep, relfspath)
+            reloutputpath = reloutputpath.replace(os.path.sep, '/')
             outputpath = self.base.join(reloutputpath)
             self.linker.set_link(str(fspath), reloutputpath)
             passed.append((fspath, outputpath))
@@ -279,7 +282,7 @@ class SourcePageBuilder(AbstractPageBuilder):
             else:
                 tag, nav = self.build_nonpython_page(fspath)
             title = 'sources for %s' % (fspath.basename,)
-            reltargetpath = outputpath.relto(self.base)
+            reltargetpath = outputpath.relto(self.base).replace(os.path.sep, '/')
             self.write_page(title, reltargetpath, project, tag, nav)
 
 class ApiPageBuilder(AbstractPageBuilder):
