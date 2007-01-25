@@ -45,22 +45,21 @@ class Linker(object):
 def relpath(p1, p2, sep='/', back='..', normalize=True):
     """ create a relative path from p1 to p2
 
-        sep is the seperator used, set to '\\' on windows (but only
-        when not using 'normalize'! see below)
+        sep is the seperator used for input and (depending
+        on the setting of 'normalize', see below) output
 
         back is the string used to indicate the parent directory
 
         when 'normalize' is True, any backslashes (\) in the path
         will be replaced with forward slashes, resulting in a consistent
-        output on Windows and the rest of the world (this happens before
-        the 'sep' argument is used, and therefore renders that useless!)
+        output on Windows and the rest of the world
 
         paths to directories must end on a / (URL style)
     """
     if normalize:
+        p1 = p1.replace(sep, '/')
+        p2 = p2.replace(sep, '/')
         sep = '/'
-        p1 = p1.replace(os.path.sep, '/')
-        p2 = p2.replace(os.path.sep, '/')
         # XXX would be cool to be able to do long filename expansion and drive
         # letter fixes here, and such... iow: windows sucks :(
     if (p1.startswith(sep) ^ p2.startswith(sep)): 
