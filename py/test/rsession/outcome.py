@@ -34,10 +34,13 @@ class Outcome(object):
         relline = lineno - tb_entry.frame.code.firstlineno
         path = str(tb_entry.path)
         #try:
-        if tb_style == 'long':
-            source = str(tb_entry.getsource())
-        else:
-            source = str(tb_entry.getsource()).split("\n")[relline]
+        try:
+            if tb_style == 'long':
+                source = str(tb_entry.getsource())
+            else:
+                source = str(tb_entry.getsource()).split("\n")[relline]
+        except py.error.ENOENT:
+            source = "[cannot get source]"
         name = tb_entry.frame.code.raw.co_name
         # XXX: Bare except. What can getsource() raise anyway?
         # SyntaxError, AttributeError, IndentationError for sure, check it
