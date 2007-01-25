@@ -270,20 +270,13 @@ class LSession(AbstractSession):
         if self.config.option.apigen:
             from py.__.apigen.tracer.docstorage import DocStorageAccessor
             apigen = py.path.local(self.config.option.apigen).pyimport()
+            if not hasattr(apigen, 'build'):
+                raise NotImplementedError("Provided script does not seem "
+                                          "to contain build function")
             print >>sys.stderr, 'building documentation'
             capture = py.io.OutErrCapture()
             try:
-                try:
-                    apigen.build(pkgdir, DocStorageAccessor(self.docstorage))
-                except (ValueError, AttributeError):
-                    #import traceback
-                    #exc, e, tb = sys.exc_info()
-                    #print '%s - %s' % (exc, e)
-                    #print ''.join(traceback.format_tb(tb))
-                    #del tb
-                    #print '-' * 79
-                    raise NotImplementedError("Provided script does not seem "
-                                              "to contain build function")
+                apigen.build(pkgdir, DocStorageAccessor(self.docstorage))
             finally:
                 capture.reset()
 
