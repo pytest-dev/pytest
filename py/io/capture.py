@@ -72,3 +72,4 @@ def callcapture(func, *args, **kwargs):
     finally: 
         out, err = so.reset()
     return res, out, err 
+
