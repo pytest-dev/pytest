@@ -6,19 +6,15 @@
 
 import os
 import py
+import sys
 from py.__.apigen import htmlgen
 from py.__.apigen import linker
 from py.__.apigen import project
 
-def import_pkgdir(pkgdir):
-    if pkgdir.check(dir=True):
-        return pkgdir.join('__init__.py').getpymodule()
-    else:
-        # XXX not sure if this is ever used normally...
-        return pkgdir.getpymodule()
-
 def get_documentable_items(pkgdir):
-    rootmod = import_pkgdir(pkgdir)
+    sys.path.insert(0, str(pkgdir.dirpath()))
+    rootmod = __import__(pkgdir.basename)
+    #rootmod = import_pkgdir(pkgdir)
     if hasattr(rootmod, '__package__'):
         return rootmod
     # XXX fix non-initpkg situations(?)
