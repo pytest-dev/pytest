@@ -3,7 +3,6 @@ import py
 from time import time as now
 Item = py.test.Item
 from py.__.test.terminal.out import getout 
-import py.__.code.safe_repr
 from py.__.test.representation import Presenter
 
 def getrelpath(source, dest): 
