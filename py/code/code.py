@@ -13,7 +13,10 @@ class Code(object):
         self.name = rawcode.co_name
         
     def __eq__(self, other): 
-        return self.raw == other.raw 
+        return self.raw == other.raw
+
+    def __ne__(self):
+        return not self == other
 
     def new(self, rec=False, **kwargs): 
         """ return new code object with modified attributes. 
