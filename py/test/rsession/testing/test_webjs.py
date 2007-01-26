@@ -4,7 +4,6 @@ try:
     import pypy
     from pypy.translator.js.modules import dom
     from pypy.translator.js.tester import schedule_callbacks
-    from py.__.test.rsession.rsession import session_options
     dom.Window # check whether dom was properly imported or is just a 
                # leftover in sys.modules
 except (ImportError, AttributeError):
