@@ -250,7 +250,12 @@ class Collector(object):
     def finishcapture(self): 
         return None # by default collectors don't capture output 
     def getouterr(self): 
-        return self.captured_out, self.captured_err 
+        return self.captured_out, self.captured_err
+
+    def get_collector_trail(self):
+        """ Shortcut
+        """
+        return self.config.get_collector_trail(self)
 
 class FSCollector(Collector): 
     def __init__(self, fspath, parent=None): 
