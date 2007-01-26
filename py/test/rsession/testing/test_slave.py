@@ -127,43 +127,7 @@ def test_slave_run_different_stuff():
     node.run(rootcol.getitembynames("py doc log.txt".split()).
              get_collector_trail())
 
-def test_slave_setup_fails_on_import_error():
-    py.test.skip("WIP")
-    tmp = py.test.ensuretemp("slavesetup")
-    config = py.test.config._reparse([tmp])
-    class C:
-        def __init__(self):
-            self.count = 0
-        
-        def receive(self):
-            if self.count == 0:
-                retval = str(tmp)
-            elif self.count == 1:
-                retval = config.make_repr(conftestnames=['dist_nicelevel'])
-            else:
-                raise NotImplementedError("more data")
-            self.count += 1
-            return retval
-
-        def close(self):
-            pass
-
-        def setcallback(self, cb):
-            pass
-
-        def send(self, x):
-            pass
-        
-    try:
-        exec py.code.Source(setup, "setup()").compile() in {
-            'channel': C()}
-    except ImportError: 
-        pass # expected 
-    else:
-        py.test.fail("missing exception") 
-    
 def test_slave_setup_exit():
-    py.test.skip("WIP")
     tmp = py.test.ensuretemp("slaveexit")
     tmp.ensure("__init__.py")
     q = py.std.Queue.Queue()
@@ -200,43 +164,6 @@ def test_slave_setup_exit():
         pass
     else:
         py.test.fail("Did not exit")
-
-def test_slave_setup_fails_on_missing_pkg():
-    py.test.skip("WIP")
-    tmp = py.test.ensuretemp("slavesetup2")
-    config = py.test.config._reparse([tmp])
-    x = tmp.ensure("sometestpackage", "__init__.py")
-    class C: 
-        def __init__(self):
-            self.count = 0
-
-        def receive(self):
-            if self.count == 0:
-                retval = str(x.dirpath())
-            elif self.count == 1:
-                retval = config.make_repr(conftestnames=['dist_nicelevel'])
-            else:
-                raise NotImplementedError("more data")
-            self.count += 1
-            return retval
-    try:
-        exec py.code.Source(setup, "setup()").compile() in {'channel': C()}
-    except AttributeError: # channel.send 
-        pass
-    else:
-        py.test.fail("missing exception") 
-
-    # now create a parallel structure 
-    tmp = py.test.ensuretemp("slavesetup3")
-    x = tmp.ensure("sometestpackage", "__init__.py")
-    try:
-        exec py.code.Source(setup, "setup()").compile() in {
-            'channel': C()}
-    except AssertionError: 
-        pass # expected 
-    else:
-        py.test.fail("missing exception") 
-    
 
 def test_pidinfo():
     if not hasattr(os, 'fork') or not hasattr(os, 'waitpid'):
