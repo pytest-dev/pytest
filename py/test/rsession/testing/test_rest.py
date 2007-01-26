@@ -9,23 +9,12 @@ from py.__.test.rsession import report
 from py.__.test.rsession.rest import RestReporter, NoLinkWriter
 from py.__.rest.rst import *
 from py.__.test.rsession.hostmanage import HostInfo
-
-py.test.skip("This tests are not really testing, needs rewrite")
+from py.__.test.rsession.outcome import Outcome
 
 class RestTestReporter(RestReporter):
     def __init__(self, *args, **kwargs):
         if args:
             super(RestReporter, self).__init__(*args, **kwargs)
-
-class Container(object):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-class FakeOutcome(Container, report.ReceivedItemOutcome):
-    pass
-
-class FakeTryiter(Container, report.SkippedTryiter):
-    pass
 
 class TestRestUnits(object):
     def setup_method(self, method):
@@ -47,30 +36,31 @@ class TestRestUnits(object):
         self.config.option.verbose = False
     
     def test_report_SendItem(self):
-        item = Container(item='foo/bar.py', channel=ch)
-        reporter.report_SendItem(item)
+        event = report.SendItem(item='foo/bar.py', channel=ch)
+        reporter.report(event)
         assert stdout.getvalue() == ''
         stdout.seek(0)
         stdout.truncate()
         reporter.config.option.verbose = True
-        reporter.report_SendItem(item)
+        reporter.report(event)
         assert stdout.getvalue() == ('sending item foo/bar.py to '
                                      'localhost\n\n')
     
     def test_report_HostRSyncing(self):
-        item = Container(hostname='localhost', remoterootpath='/foo/bar')
-        reporter.report_HostRSyncing(item)
+        event = report.HostRSyncing(HostInfo('localhost', '/foo/bar'))
+        reporter.report(event)
         assert stdout.getvalue() == ('::\n\n   localhost: RSYNC ==> '
                                      '/foo/bar\n\n')
 
     def test_report_HostReady(self):
-        item = Container(hostname='localhost')
-        reporter.report_HostReady(item)
+        event = report.HostReady(HostInfo('localhost'))
+        reporter.report(event)
         assert stdout.getvalue() == '::\n\n   localhost: READY\n\n'
 
     def test_report_TestStarted(self):
-        event = Container(hosts=['localhost', 'foo.com'], timestart=0)
-        reporter.report_TestStarted(event)
+        event = report.TestStarted(hosts=[HostInfo('localhost'),
+                                          HostInfo('foo.com')])
+        reporter.report(event)
         assert stdout.getvalue() == """\
 ===========================================
 Running tests on hosts\: localhost, foo.com
@@ -87,9 +77,15 @@ Running tests on hosts\: localhost, foo.com
                 return ['test_foo', 'test_bar']
             def listnames(self):
                 return ['package', 'foo', 'bar.py']
+
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+        
         parent = Container(parent=None, fspath=py.path.local('.'))
-        event = Container(item=FakeModule(parent))
-        reporter.report_ItemStart(event)
+        event = report.ItemStart(item=FakeModule(parent))
+        reporter.report(event)
         assert stdout.getvalue() == """\
 Testing module foo/bar.py (2 items)
 -----------------------------------
@@ -108,32 +104,58 @@ Testing module foo/bar.py (2 items)
 """
 
     def test_ReceivedItemOutcome_PASSED(self):
-        outcome = Container(passed=True, excinfo=False)
+        outcome = Outcome()
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = Container(channel=ch, outcome=outcome, item=item)
-        reporter.report_ReceivedItemOutcome(event)
+        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        reporter.report(event)
         assert stdout.getvalue() == ('* localhost\\: **PASSED** '
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_SKIPPED(self):
-        outcome = Container(passed=False, skipped=True, excinfo=False)
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+
+        outcome = Outcome(skipped="reason")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = Container(channel=ch, outcome=outcome, item=item)
-        reporter.report_ReceivedItemOutcome(event)
+        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        reporter.report(event)
         assert stdout.getvalue() == ('* localhost\\: **SKIPPED** '
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_FAILED(self):
-        outcome = Container(passed=False, skipped=False)
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+
+        outcome = Outcome(excinfo="xxx")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = Container(channel=ch, outcome=outcome, item=item)
-        reporter.report_ReceivedItemOutcome(event)
+        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        reporter.report(event)
         assert stdout.getvalue() == """\
 * localhost\: **FAILED** `traceback0`_ foo.py/bar()/baz
 
 """
     
     def test_skips(self):
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+
+        class FakeOutcome(Container, report.ReceivedItemOutcome):
+            pass
+
+        class FakeTryiter(Container, report.SkippedTryiter):
+            pass
+        
         reporter.skips()
         assert stdout.getvalue() == ''
         reporter.skipped_tests_outcome = [
@@ -153,6 +175,15 @@ Reasons for skipped tests\:
 """
 
     def test_failures(self):
+        py.test.skip("This one is totally artificial, needs to be rewritten")
+        class Container(object):
+            def __init__(self, **args):
+                for arg, val in args.items():
+                    setattr(self, arg, val) 
+
+        class FakeOutcome(Container, report.ReceivedItemOutcome):
+            pass
+
         parent = Container(parent=None, fspath=py.path.local('.'))
         reporter.failed_tests_outcome = [
             FakeOutcome(

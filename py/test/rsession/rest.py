@@ -37,20 +37,21 @@ class RestReporter(AbstractReporter):
         return self.hosts[0]
 
     def report_SendItem(self, item):
-        address = self.gethost(item)
+        address = self.gethost(item).hostname
         if self.config.option.verbose:
             self.add_rest(Paragraph('sending item %s to %s' % (item.item,
                                                                address)))
 
     def report_HostRSyncing(self, item):
         self.add_rest(LiteralBlock('%10s: RSYNC ==> %s' % (item.host.hostname[:10],
-                                                        item.remoterootpath)))
+                                                        item.host.relpath)))
 
     def report_HostReady(self, item):
         self.add_rest(LiteralBlock('%10s: READY' % (item.host.hostname[:10],)))
 
     def report_TestStarted(self, event):
-        txt = "Running tests on hosts: %s" % ", ".join(event.hosts)
+        txt = "Running tests on hosts: %s" % ", ".join([i.hostname for i in
+                                                        event.hosts])
         self.add_rest(Title(txt, abovechar='=', belowchar='='))
         self.timestart = event.timestart
 
