@@ -19,7 +19,8 @@ def setup_module(mod):
     # bind an empty config
     config = py.test.config._reparse([])
     config._overwrite('dist_taskspernode', 10)
-    mod.pkgdir = py.path.local(py.__file__).dirpath()
+    mod.pkgdir = py.path.local(py.__file__).dirpath().dirpath()
+    mod.rootcol = py.test.collect.Directory(mod.pkgdir)
 
 class DummyGateway(object):
     def __init__(self):
@@ -38,6 +39,7 @@ class DummyChannel(object):
         self.sent.append(item)
 
 def test_masternode():
+    py.test.skip("cannot send non-fs items nowadays")
     try:
         raise ValueError()
     except ValueError:
@@ -57,6 +59,7 @@ def test_masternode():
     assert not received[1].outcome.passed 
 
 def test_unique_nodes():
+    py.test.skip("cannot send non-fs items nowadays")
     ch = DummyChannel()
     reportlist = []
     mnode = MasterNode(ch, reportlist.append, {})
@@ -91,7 +94,8 @@ def test_slave_setup():
     gw = py.execnet.PopenGateway()
     config = py.test.config._reparse([])
     channel = setup_slave(gw, pkgdir, config)
-    channel.send(funcpass_spec)
+    spec = rootcol.getitembynames(funcpass_spec).get_collector_trail()
+    channel.send(spec)
     output = ReprOutcome(channel.receive())
     assert output.passed
     channel.send(42)
@@ -118,7 +122,6 @@ def test_slave_running():
         return mn
     
     master_nodes = [open_gw(), open_gw(), open_gw()]
-    rootcol = py.test.collect.Directory(pkgdir.dirpath())
     funcpass_item = rootcol.getitembynames(funcpass_spec)
     funcfail_item = rootcol.getitembynames(funcfail_spec)
     itemgenerator = iter([funcfail_item] + 
@@ -147,7 +150,7 @@ def test_slave_running_interrupted():
         return mn, gw, channel
 
     mn, gw, channel = open_gw()
-    rootcol = py.test.collect.Directory(pkgdir.dirpath())
+    rootcol = py.test.collect.Directory(pkgdir)
     funchang_item = rootcol.getitembynames(funchang_spec)
     mn.send(funchang_item)
     mn.send(StopIteration)

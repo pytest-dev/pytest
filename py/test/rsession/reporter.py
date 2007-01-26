@@ -16,9 +16,8 @@ from py.__.test.representation import Presenter
 import sys
 
 class AbstractReporter(object):
-    def __init__(self, config, hosts, pkgdir=py.path.local(py.__file__)):
+    def __init__(self, config, hosts):
         self.config = config
-        self.pkgdir = pkgdir
         self.hosts = hosts
         self.failed_tests_outcome = []
         self.skipped_tests_outcome = []
@@ -296,7 +295,7 @@ class LocalReporter(AbstractReporter):
             # print names relative to current workdir
             name = "/".join(item.listnames())
             local = str(py.path.local())
-            d = str(self.pkgdir.dirpath().dirpath())
+            d = str(self.config.topdir)
             if local.startswith(d):
                 local = local[len(d) + 1:]
             if local and name.startswith(local):

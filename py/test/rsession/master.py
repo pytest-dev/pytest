@@ -29,8 +29,8 @@ class MasterNode(object):
             self.channel.send(42)
         else:
             self.pending.insert(0, item)
-            itemspec = item.listnames()[1:]
-            self.channel.send(itemspec)
+            #itemspec = item.listnames()[1:]
+            self.channel.send(item.config.get_collector_trail(item))
             # send start report
             self.reporter(report.SendItem(self.channel, item))
 

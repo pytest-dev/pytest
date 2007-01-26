@@ -74,15 +74,14 @@ class HostOptions(object):
         self.create_gateways = create_gateways
 
 class HostManager(object):
-    def __init__(self, sshhosts, config, pkgdir, options=HostOptions()):
+    def __init__(self, sshhosts, config, options=HostOptions()):
         self.sshhosts = sshhosts
-        self.pkgdir = pkgdir
         self.config = config
         self.options = options
         if not options.create_gateways:
             self.prepare_gateways = self.prepare_dummy_gateways
-        assert pkgdir.join("__init__.py").check(), (
-            "%s probably wrong" %(pkgdir,))
+        #assert pkgdir.join("__init__.py").check(), (
+        #    "%s probably wrong" %(pkgdir,))
 
     def prepare_dummy_gateways(self):
         for host in self.sshhosts:
@@ -113,7 +112,7 @@ class HostManager(object):
             gw = py.execnet.PopenGateway()
         else:
             gw = py.execnet.PopenGateway(python=self.options.remote_python)
-        host.relpath = str(self.pkgdir.dirpath())
+        host.relpath = str(self.config.topdir)
         return gw
 
     def prepare_gateways(self):
@@ -159,15 +158,14 @@ class HostManager(object):
                 rsync.add_target(host.gw, host.relpath, done)
         if not self.options.do_sync:
             return # for testing only
-        rsync.send(self.pkgdir.dirpath())
+        rsync.send(self.config.topdir)
         # hosts ready
         return self.setup_nodes(reporter, done_dict)
 
     def setup_nodes(self, reporter, done_dict):
         nodes = []
         for host in self.sshhosts:
-            ch = setup_slave(host.gw, os.path.join(host.relpath,\
-                         self.pkgdir.basename), self.config)
+            ch = setup_slave(host.gw, host.relpath, self.config)
             nodes.append(MasterNode(ch, reporter, done_dict))
     
         return nodes

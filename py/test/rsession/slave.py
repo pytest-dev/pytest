@@ -45,14 +45,15 @@ class PidInfo(object):
             self.lock.release()
 
 class SlaveNode(object):
-    def __init__(self, rootcollector, config, pidinfo, executor=AsyncExecutor):
-        self.rootcollector = rootcollector
+    def __init__(self, config, pidinfo, executor=AsyncExecutor):
+        #self.rootcollector = rootcollector
         self.config = config
         self.executor = executor
         self.pidinfo = pidinfo
 
     def execute(self, itemspec):
-        item = self.rootcollector.getitembynames(itemspec)
+        #item = self.rootcollector.getitembynames(itemspec)
+        item = self.config._getcollector(itemspec)
         #if isinstance(item, py.test.Function):
         #    ex = Executor(item.obj, setup=item.setup)
         #else:
@@ -84,7 +85,7 @@ def slave_main(receive, send, path, config, pidinfo):
         if node is not None:
             return node
         col = py.test.collect.Directory(str(py.path.local(path).join(item[0])))
-        node = nodes[item[0]] = SlaveNode(col, config, pidinfo)
+        node = nodes[item[0]] = SlaveNode(config, pidinfo)
         return node
     while 1:
         nextitem = receive()
@@ -92,7 +93,7 @@ def slave_main(receive, send, path, config, pidinfo):
             break
         try:
             node = getnode(nextitem)
-            res = node.run(nextitem[1:])
+            res = node.run(nextitem)
         except py.test.Item.Skipped, s:
             send(Outcome(skipped=str(s)).make_repr())
         except:
@@ -120,10 +121,8 @@ def setup():
         return callback
 
     import os, sys
-    pkgdir = channel.receive()   # path is ready 
-    config_repr = channel.receive()  
-    basedir = os.path.dirname(pkgdir)
-    pkgname = os.path.basename(pkgdir)
+    basedir = channel.receive()   # path is ready 
+    config_repr = channel.receive()
     # setup defaults...
     sys.path.insert(0, basedir)
     import py
@@ -133,11 +132,8 @@ def setup():
         config.merge_repr(config_repr)
     else:
         config.initdirect(basedir, config_repr)
-        #config.conftest.lget('adddefaultoptions')()
     if not config.option.nomagic:
         py.magic.invoke(assertion=1)
-    mod = __import__(pkgname)
-    assert py.path.local(mod.__file__).dirpath() == py.path.local(pkgdir)
     from py.__.test.rsession.slave import slave_main, PidInfo
     queue = py.std.Queue.Queue()
     pidinfo = PidInfo()

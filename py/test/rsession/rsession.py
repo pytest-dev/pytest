@@ -26,23 +26,6 @@ class AbstractSession(object):
         self.config = config
         self.optimise_localhost = optimise_localhost
         
-    def make_colitems(paths, baseon): 
-        # we presume that from the base we can simply get to 
-        # the target paths by joining the basenames 
-        res = []
-        for x in paths: 
-            x = py.path.local(x)
-            current = py.test.collect.Directory(baseon)  
-            relparts = x.relto(baseon).split(x.sep) 
-            assert relparts 
-            for part in relparts: 
-                next = current.join(part) 
-                assert next is not None, (current, part) 
-                current = next 
-            res.append(current) 
-        return res 
-    make_colitems = staticmethod(make_colitems) 
-
     def getpkgdir(path):
         path = py.path.local(path)
         pkgpath = path.pypkgpath()
@@ -80,7 +63,7 @@ class AbstractSession(object):
                 from py.__.test.rsession.rest import RestReporter
                 reporter_class = RestReporter
             if arg:
-                reporter_instance = reporter_class(self.config, sshhosts, self.getpkgdir(arg))
+                reporter_instance = reporter_class(self.config, sshhosts)
             else:
                 reporter_instance = reporter_class(self.config, sshhosts)
             reporter = reporter_instance.report
@@ -165,17 +148,16 @@ class RSession(AbstractSession):
 
         reporter(report.TestStarted(sshhosts))
 
-        pkgdir = self.getpkgdir(args[0])
         done_dict = {}
         hostopts = HostOptions(rsync_roots=rsync_roots,
                                remote_python=remotepython,
                             optimise_localhost=self.optimise_localhost)
-        hostmanager = HostManager(sshhosts, self.config, pkgdir, hostopts)
+        hostmanager = HostManager(sshhosts, self.config, hostopts)
         try:
             nodes = hostmanager.init_hosts(reporter, done_dict)
             reporter(report.RsyncFinished())
             try:
-                self.dispatch_tests(nodes, args, pkgdir, reporter, checkfun, done_dict)
+                self.dispatch_tests(nodes, reporter, checkfun, done_dict)
             except (KeyboardInterrupt, SystemExit):
                 print >>sys.stderr, "C-c pressed waiting for gateways to teardown..."
                 channels = [node.channel for node in nodes]
@@ -213,8 +195,8 @@ class RSession(AbstractSession):
         remotepython = self.config.getvalue("dist_remotepython")
         return sshhosts, remotepython, rsync_roots
 
-    def dispatch_tests(self, nodes, args, pkgdir, reporter, checkfun, done_dict):
-        colitems = self.make_colitems(args, baseon=pkgdir.dirpath())
+    def dispatch_tests(self, nodes, reporter, checkfun, done_dict):
+        colitems = self.config.getcolitems()
         keyword = self.config.option.keyword
         itemgenerator = itemgen(colitems, reporter, keyword, self.reporterror)
         
@@ -246,7 +228,7 @@ class LSession(AbstractSession):
         
         reporter(report.TestStarted(sshhosts))
         pkgdir = self.getpkgdir(args[0])
-        colitems = self.make_colitems(args, baseon=pkgdir.dirpath())
+        colitems = self.config.getcolitems()
         reporter(report.RsyncFinished())
 
         if runner is None:
@@ -276,7 +258,17 @@ class LSession(AbstractSession):
             print >>sys.stderr, 'building documentation'
             capture = py.io.OutErrCapture()
             try:
-                apigen.build(pkgdir, DocStorageAccessor(self.docstorage))
+                try:
+                    apigen.build(pkgdir, DocStorageAccessor(self.docstorage))
+                except AttributeError:
+                    import traceback
+                    exc, e, tb = sys.exc_info()
+                    print '%s - %s' % (exc, e)
+                    print ''.join(traceback.format_tb(tb))
+                    del tb
+                    print '-' * 79
+                    raise NotImplementedError("Provided script does not seem "
+                                              "to contain build function")
             finally:
                 capture.reset()
 
@@ -292,8 +284,20 @@ class LSession(AbstractSession):
                 else:
                     self.docstorage = DocStorage().from_pkg(items)
             except ImportError:
+                import traceback
+                exc, e, tb = sys.exc_info()
+                print '%s - %s' % (exc, e)
+                print ''.join(traceback.format_tb(tb))
+                del tb
+                print '-' * 79
                 raise ImportError("Provided script cannot be imported")
             except (ValueError, AttributeError):
+                import traceback
+                exc, e, tb = sys.exc_info()
+                print '%s - %s' % (exc, e)
+                print ''.join(traceback.format_tb(tb))
+                del tb
+                print '-' * 79
                 raise NotImplementedError("Provided script does not seem "
                                           "to contain get_documentable_items")
             self.tracer = Tracer(self.docstorage)

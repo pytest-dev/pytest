@@ -18,7 +18,8 @@ def setup_module(mod):
 def test_setup_non_existing_hosts(): 
     setup_events = []
     hosts = [HostInfo("alskdjalsdkjasldkajlsd")]
-    hm = HostManager(hosts, None, pkgdir)
+    config = py.test.config._reparse([])
+    hm = HostManager(hosts, config)
     cmd = "hm.init_hosts(setup_events.append)"
     py.test.raises((py.process.cmdexec.Error, IOError, EOFError), cmd)
     #assert setup_events
@@ -36,23 +37,23 @@ def test_getpkdir_no_inits():
     fn = tmp.ensure("hello.py")
     assert RSession.getpkgdir(fn) == fn
 
-def test_make_colitems():
-    one = pkgdir.join("initpkg.py")
-    two = pkgdir.join("path", "__init__.py")
+#def test_make_colitems():
+#    one = pkgdir.join("initpkg.py")
+#    two = pkgdir.join("path", "__init__.py")#
 
-    cols = RSession.make_colitems([one, two], baseon=pkgdir) 
-    assert len(cols) == 2
-    col_one, col_two = cols
-    assert col_one.listnames() == ["py", "initpkg.py"]
-    assert col_two.listnames() == ["py", "path", "__init__.py"]
-
-    cols = RSession.make_colitems([one, two], baseon=pkgdir.dirpath()) 
-    assert len(cols) == 2
-    col_one, col_two = cols
-    assert col_one.listnames() == [pkgdir.dirpath().basename, 
-                                   "py", "initpkg.py"]
-    assert col_two.listnames() == [pkgdir.dirpath().basename, 
-                                   "py", "path", "__init__.py"]
+#    cols = RSession.make_colitems([one, two], baseon=pkgdir) 
+#    assert len(cols) == 2
+#    col_one, col_two = cols
+#    assert col_one.listnames() == ["py", "initpkg.py"]
+#    assert col_two.listnames() == ["py", "path", "__init__.py"]#
+#
+#    cols = RSession.make_colitems([one, two], baseon=pkgdir.dirpath()) 
+#    assert len(cols) == 2
+#    col_one, col_two = cols
+#    assert col_one.listnames() == [pkgdir.dirpath().basename, 
+#                                   "py", "initpkg.py"]
+#    assert col_two.listnames() == [pkgdir.dirpath().basename, 
+#                                   "py", "path", "__init__.py"]
 
 def test_example_tryiter():
     events = []
@@ -161,7 +162,7 @@ class TestRSessionRemote:
         
         config = py.test.config._reparse([])
         opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
-        hm = HostManager(hosts, config, pkgdir, opts)
+        hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(setup_events.append)
         hm.teardown_hosts(teardown_events.append, 
                        [node.channel for node in nodes], nodes)
@@ -188,7 +189,7 @@ class TestRSessionRemote:
         
         config = py.test.config._reparse([])
         opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
-        hm = HostManager(hosts, config, pkgdir, opts)
+        hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(allevents.append)
         
         from py.__.test.rsession.testing.test_executor \
@@ -235,7 +236,7 @@ class TestRSessionRemote:
         defaultconftestnames.append("custom")
         try:
             opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
-            hm = HostManager(hosts, config, pkgdir, opts)
+            hm = HostManager(hosts, config, opts)
             nodes = hm.init_hosts(allevents.append)
 
             rootcol = py.test.collect.Directory(pkgdir.dirpath())
@@ -309,7 +310,7 @@ class TestInithosts(object):
         parse_directories(hosts)
         config = py.test.config._reparse([])
         opts = HostOptions(do_sync=False, create_gateways=False)
-        hm = HostManager(hosts, config, pkgdir, opts)
+        hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(testevents.append)        
         events = [i for i in testevents if isinstance(i, report.HostRSyncing)]
         assert len(events) == 4
