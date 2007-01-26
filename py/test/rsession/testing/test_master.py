@@ -38,8 +38,11 @@ class DummyChannel(object):
         assert py.std.marshal.dumps(item)
         self.sent.append(item)
 
+class Item(py.test.Item):
+    def get_collector_trail(self):
+        return (self.name,)
+
 def test_masternode():
-    py.test.skip("cannot send non-fs items nowadays")
     try:
         raise ValueError()
     except ValueError:
@@ -48,8 +51,8 @@ def test_masternode():
     ch = DummyChannel()
     reportlist = []
     mnode = MasterNode(ch, reportlist.append, {})
-    mnode.send(py.test.Item("ok"))
-    mnode.send(py.test.Item("notok"))
+    mnode.send(Item("ok"))
+    mnode.send(Item("notok"))
     ch.callback(Outcome().make_repr())
     ch.callback(Outcome(excinfo=excinfo).make_repr())
     assert len(reportlist) == 4
@@ -59,12 +62,11 @@ def test_masternode():
     assert not received[1].outcome.passed 
 
 def test_unique_nodes():
-    py.test.skip("cannot send non-fs items nowadays")
     ch = DummyChannel()
     reportlist = []
     mnode = MasterNode(ch, reportlist.append, {})
-    mnode.send(py.test.Item("ok"))
-    mnode.send(py.test.Item("ok"))
+    mnode.send(Item("ok"))
+    mnode.send(Item("ok"))
     ch.callback(Outcome().make_repr())
     ch.callback(Outcome().make_repr())
     assert len(reportlist) == 3
