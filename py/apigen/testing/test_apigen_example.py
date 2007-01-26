@@ -104,15 +104,19 @@ class AbstractBuilderTest(object):
         self.base = base = py.test.ensuretemp('%s_%s' % (
                             self.__class__.__name__, meth.im_func.func_name))
         self.linker = linker = LinkerForTests()
-        self.apb = ApiPageBuilder(base, linker, self.dsa, self.fs_root)
-        self.spb = SourcePageBuilder(base, linker, self.fs_root)
-        self.namespace_tree = create_namespace_tree(['main.sub',
-                                                     'main.sub.func',
-                                                     'main.SomeClass',
-                                                     'main.SomeSubClass',
-                                                     'main.SomeInstance',
-                                                     'other.foo',
-                                                     'other.bar'])
+        namespace_tree = create_namespace_tree(['main.sub',
+                                                'main.sub.func',
+                                                'main.SomeClass',
+                                                'main.SomeSubClass',
+                                                'main.SomeInstance',
+                                                'other.foo',
+                                                'other.bar'])
+        self.namespace_tree = namespace_tree
+        self.apb = ApiPageBuilder(base, linker, self.dsa,
+                                  self.fs_root.join(self.pkg_name),
+                                  namespace_tree)
+        self.spb = SourcePageBuilder(base, linker,
+                                     self.fs_root.join(self.pkg_name))
 
 class TestApiPageBuilder(AbstractBuilderTest):
     def test_build_callable_view(self):
@@ -123,7 +127,8 @@ class TestApiPageBuilder(AbstractBuilderTest):
         pkg.main.sub.func(10)
         pkg.main.sub.func(pkg.main.SomeClass(10))
         t.end_tracing()
-        apb = ApiPageBuilder(self.base, self.linker, dsa, self.fs_root)
+        apb = ApiPageBuilder(self.base, self.linker, dsa, self.fs_root,
+                             self.namespace_tree)
         snippet = apb.build_callable_view('main.sub.func')
         html = snippet.unicode()
         print html
@@ -149,8 +154,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtmlsnippet(html)
 
     def test_build_function_pages(self):
-        data = self.apb.prepare_function_pages(self.namespace_tree,
-                                               ['main.sub.func'])
+        data = self.apb.prepare_function_pages(['main.sub.func'])
         self.apb.build_function_pages(data, self.project)
         funcfile = self.base.join('api/main.sub.func.html')
         assert funcfile.check()
@@ -163,8 +167,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtmlsnippet(html)
 
     def test_build_class_pages(self):
-        data = self.apb.prepare_class_pages(self.namespace_tree,
-                                            ['main.SomeClass',
+        data = self.apb.prepare_class_pages(['main.SomeClass',
                                              'main.SomeSubClass'])
         self.apb.build_class_pages(data, self.project)
         clsfile = self.base.join('api/main.SomeClass.html')
@@ -173,8 +176,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_class_pages_instance(self):
-        data = self.apb.prepare_class_pages(self.namespace_tree,
-                                            ['main.SomeClass',
+        data = self.apb.prepare_class_pages(['main.SomeClass',
                                              'main.SomeSubClass',
                                              'main.SomeInstance'])
         self.apb.build_class_pages(data, self.project)
@@ -187,8 +189,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         ])
 
     def test_build_class_pages_nav_links(self):
-        data = self.apb.prepare_class_pages(self.namespace_tree,
-                                            ['main.SomeSubClass',
+        data = self.apb.prepare_class_pages(['main.SomeSubClass',
                                              'main.SomeClass'])
         # fake some stuff that would be built from other methods
         self.linker.set_link('', 'api/index.html')
@@ -212,8 +213,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_class_pages_base_link(self):
-        data = self.apb.prepare_class_pages(self.namespace_tree,
-                                            ['main.SomeSubClass',
+        data = self.apb.prepare_class_pages(['main.SomeSubClass',
                                              'main.SomeClass'])
         self.apb.build_class_pages(data, self.project)
         clsfile = self.base.join('api/main.SomeSubClass.html')
@@ -227,8 +227,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_source_links(self):
-        data = self.apb.prepare_class_pages(self.namespace_tree,
-                                            ['main.SomeSubClass',
+        data = self.apb.prepare_class_pages(['main.SomeSubClass',
                                              'main.SomeClass'])
         sourcedata = self.spb.prepare_pages(self.fs_root)
         self.apb.build_class_pages(data, self.project)
@@ -238,7 +237,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(funchtml)
 
     def test_build_namespace_pages(self):
-        data = self.apb.prepare_namespace_pages(self.namespace_tree)
+        data = self.apb.prepare_namespace_pages()
         self.apb.build_namespace_pages(data, self.project)
         mainfile = self.base.join('api/main.html')
         assert mainfile.check()
@@ -258,7 +257,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(otherhtml)
 
     def test_build_namespace_pages_index(self):
-        data = self.apb.prepare_namespace_pages(self.namespace_tree)
+        data = self.apb.prepare_namespace_pages()
         self.apb.build_namespace_pages(data, self.project)
         pkgfile = self.base.join('api/index.html')
         assert pkgfile.check()
@@ -267,7 +266,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_namespace_pages_subnamespace(self):
-        data = self.apb.prepare_namespace_pages(self.namespace_tree)
+        data = self.apb.prepare_namespace_pages()
         self.apb.build_namespace_pages(data, self.project)
         subfile = self.base.join('api/main.sub.html')
         assert subfile.check()
@@ -275,8 +274,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_function_api_pages_nav(self):
-        data = self.apb.prepare_function_pages(self.namespace_tree,
-                                                   ['main.sub.func'])
+        data = self.apb.prepare_function_pages(['main.sub.func'])
         self.linker.set_link('', 'api/index.html')
         self.linker.set_link('main', 'api/main.html')
         self.linker.set_link('main.sub', 'api/main.sub.html')
@@ -293,22 +291,30 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_function_navigation(self):
-        self.apb.prepare_namespace_pages(self.namespace_tree)
-        self.apb.prepare_function_pages(self.namespace_tree, ['main.sub.func'])
-        nav = self.apb.build_navigation('main.sub', ['main.sub.func'],
-                                        'main.sub.func')
+        self.apb.prepare_namespace_pages()
+        self.apb.prepare_function_pages(['main.sub.func'])
+        self.apb.prepare_class_pages(['main.SomeClass',
+                                             'main.SomeSubClass',
+                                             'main.SomeInstance'])
+        nav = self.apb.build_navigation('main.sub.func', False)
         html = nav.unicode(indent=0)
         print html.encode('UTF-8')
-        assert (u'<div><a href="api/index.html">pkg</a></div>'
-                u'<div>\xa0\xa0<a href="api/main.html">main</a></div>'
-                u'<div>\xa0\xa0\xa0\xa0'
+        assert (u'<div class="selected"><a href="api/index.html">pkg</a></div>'
+                u'<div class="selected">\xa0\xa0<a href="api/main.html">main</a></div>'
+                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeClass.html">'
+                    u'SomeClass</a></div>'
+                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeInstance.html">'
+                    u'SomeInstance</a></div>'
+                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeSubClass.html">'
+                    u'SomeSubClass</a></div>'
+                u'<div class="selected">\xa0\xa0\xa0\xa0'
                     u'<a href="api/main.sub.html">sub</a></div>'
                 u'<div class="selected">\xa0\xa0\xa0\xa0\xa0\xa0'
                     u'<a href="api/main.sub.func.html">func</a></div>'
         ) in html
 
     def test_build_root_namespace_view(self):
-        data = self.apb.prepare_namespace_pages(self.namespace_tree)
+        data = self.apb.prepare_namespace_pages()
         self.apb.build_namespace_pages(data, self.project)
         rootfile = self.base.join('api/index.html')
         assert rootfile.check()
@@ -332,7 +338,6 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         print html
         run_string_sequence_test(html, [
             'href="../../style.css"',
-            '<a href="../index.html">root</a>',
             '<a href="index.html">pkg</a>',
             '<a href="someclass.py.html">someclass.py</a>',
             '<a href="somesubclass.py.html">somesubclass.py</a>',
@@ -347,7 +352,6 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         print html
         run_string_sequence_test(html, [
             'href="../../style.css"',
-            '<a href="../index.html">root</a>',
             '<a href="index.html">pkg</a>',
             '<a href="func.py.html">func.py</a>',
             '<a href="someclass.py.html">someclass.py</a>',
@@ -362,7 +366,6 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         html = nav.unicode(indent=0)
         print html.encode('UTF-8')
         run_string_sequence_test(html, [
-            'href="source/index.html">root',
             'href="source/pkg/index.html">pkg',
             'href="source/pkg/func.py.html">func.py',
             'href="source/pkg/someclass.py.html">someclass.py',

@@ -180,16 +180,17 @@ class SourcePageBuilder(AbstractPageBuilder):
         path = relpath.split(os.path.sep)
         indent = 0
         # build links to parents
-        for i in xrange(len(path)):
-            dirpath = os.path.sep.join(path[:i])
-            abspath = self.projroot.join(dirpath).strpath
-            if i == 0:
-                text = 'root'
-            else:
-                text = path[i-1]
-            nav.append(build_navitem_html(self.linker, text, abspath,
-                                          indent, False))
-            indent += 1
+        if relpath != '':
+            for i in xrange(len(path)):
+                dirpath = os.path.sep.join(path[:i])
+                abspath = self.projroot.join(dirpath).strpath
+                if i == 0:
+                    text = self.projroot.basename
+                else:
+                    text = path[i-1]
+                nav.append(build_navitem_html(self.linker, text, abspath,
+                                              indent, False))
+                indent += 1
         # build siblings or children and self
         if fspath.check(dir=True):
             # we're a dir, build ourselves and our children
@@ -296,12 +297,13 @@ class SourcePageBuilder(AbstractPageBuilder):
 
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
-    def __init__(self, base, linker, dsa, projroot):
+    def __init__(self, base, linker, dsa, projroot, namespace_tree):
         self.base = base
         self.linker = linker
         self.dsa = dsa
         self.projroot = projroot
         self.projpath = py.path.local(projroot)
+        self.namespace_tree = namespace_tree
         
     def build_callable_view(self, dotted_name):
         """ build the html for a class method """
@@ -428,18 +430,17 @@ class ApiPageBuilder(AbstractPageBuilder):
             )
         return snippet
 
-    def prepare_class_pages(self, namespace_tree, classes_dotted_names):
+    def prepare_class_pages(self, classes_dotted_names):
         passed = []
         for dotted_name in sorted(classes_dotted_names):
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             try:
-                sibling_dotted_names = namespace_tree[parent_dotted_name]
+                sibling_dotted_names = self.namespace_tree[parent_dotted_name]
             except KeyError:
                 # no siblings (built-in module or sth)
                 sibling_dotted_names = []
             tag = H.Content(self.build_class_view(dotted_name))
-            nav = self.build_navigation(parent_dotted_name,
-                                        sibling_dotted_names, dotted_name)
+            nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
             passed.append((dotted_name, tag, nav, reltargetpath))
@@ -451,17 +452,16 @@ class ApiPageBuilder(AbstractPageBuilder):
             title = 'api documentation for %s' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
-    def prepare_method_pages(self, namespace_tree, method_dotted_names):
+    def prepare_method_pages(self, method_dotted_names):
         # XXX note that even though these pages are still built, there's no nav
         # pointing to them anymore...
         passed = []
         for dotted_name in sorted(method_dotted_names):
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             module_dotted_name, _ = split_of_last_part(parent_dotted_name)
-            sibling_dotted_names = namespace_tree[module_dotted_name]
+            sibling_dotted_names = self.namespace_tree[module_dotted_name]
             tag = self.build_callable_view(dotted_name)
-            nav = self.build_navigation(parent_dotted_name,
-                                        sibling_dotted_names, dotted_name)
+            nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
             passed.append((dotted_name, tag, nav, reltargetpath))
@@ -472,15 +472,14 @@ class ApiPageBuilder(AbstractPageBuilder):
             title = 'api documentation for %s' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
-    def prepare_function_pages(self, namespace_tree, method_dotted_names):
+    def prepare_function_pages(self, method_dotted_names):
         passed = []
         for dotted_name in sorted(method_dotted_names):
             # XXX should we create a build_function_view instead?
             parent_dotted_name, _ = split_of_last_part(dotted_name)
-            sibling_dotted_names = namespace_tree[parent_dotted_name]
+            sibling_dotted_names = self.namespace_tree[parent_dotted_name]
             tag = H.Content(self.build_callable_view(dotted_name))
-            nav = self.build_navigation(parent_dotted_name,
-                                        sibling_dotted_names, dotted_name)
+            nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
             passed.append((dotted_name, tag, nav, reltargetpath))
@@ -491,22 +490,21 @@ class ApiPageBuilder(AbstractPageBuilder):
             title = 'api documentation for %s' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
-    def prepare_namespace_pages(self, namespace_tree):
+    def prepare_namespace_pages(self):
         passed = []
         module_name = self.dsa.get_module_name().split('/')[-1]
 
-        names = namespace_tree.keys()
+        names = self.namespace_tree.keys()
         names.sort()
         function_names = self.dsa.get_function_names()
         class_names = self.dsa.get_class_names()
         for dotted_name in sorted(names):
             if dotted_name in function_names or dotted_name in class_names:
                 continue
-            subitem_dotted_names = namespace_tree[dotted_name]
+            subitem_dotted_names = self.namespace_tree[dotted_name]
             tag = H.Content(self.build_namespace_view(dotted_name,
                                                       subitem_dotted_names))
-            nav = self.build_navigation(dotted_name, subitem_dotted_names,
-                                        dotted_name)
+            nav = self.build_navigation(dotted_name, True)
             if dotted_name == '':
                 reltargetpath = 'api/index.html'
             else:
@@ -522,7 +520,39 @@ class ApiPageBuilder(AbstractPageBuilder):
             title = 'index of %s namespace' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
-    def build_navigation(self, dotted_name, item_dotted_names, selection):
+    def build_navigation(self, dotted_name, build_children=True):
+        navitems = []
+
+        # top namespace, index.html
+        module_name = self.dsa.get_module_name().split('/')[-1]
+        navitems.append(build_navitem_html(self.linker, module_name, '', 0,
+                                           True))
+        def build_nav_level(dotted_name, depth=1):
+            navitems = []
+            path = dotted_name.split('.')[:depth]
+            siblings = self.namespace_tree.get('.'.join(path[:-1]))
+            for dn in sorted(siblings):
+                selected = dn == '.'.join(path)
+                sibpath = dn.split('.')
+                navitems.append(build_navitem_html(self.linker, sibpath[-1],
+                                                   dn, depth,
+                                                   selected))
+                if selected:
+                    lastlevel = dn.count('.') == dotted_name.count('.')
+                    if not lastlevel:
+                        navitems += build_nav_level(dotted_name, depth+1)
+                    elif lastlevel and build_children:
+                        # XXX hack
+                        navitems += build_nav_level('%s.' % (dotted_name,),
+                                                    depth+2)
+
+            return navitems
+
+        navitems += build_nav_level(dotted_name)
+        return H.Navigation(*navitems)
+
+
+    
         navitems = []
 
         # top namespace, index.html
