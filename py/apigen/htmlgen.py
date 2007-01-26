@@ -14,8 +14,11 @@ raw = py.xml.raw
 
 # HTML related stuff
 class H(html):
-    class Description(html.div):
+    class Content(html.div):
         style = html.Style(margin_left='15em')
+
+    class Description(html.div):
+        pass
     
     class NamespaceDescription(Description):
         pass
@@ -78,6 +81,12 @@ class H(html):
 
     class ValueDescItem(html.li):
         pass
+
+    class CallStackDescription(Description):
+        pass
+
+    class CallStackItem(html.div):
+        class_ = 'callstackitem'
 
 def get_param_htmldesc(linker, func):
     """ get the html for the parameters of a function """
@@ -321,14 +330,23 @@ class ApiPageBuilder(AbstractPageBuilder):
         else:
             csource = H.SourceDef('could not get source file')
 
+        csdiv = H.div(style='display: none')
+        for cs, _ in self.dsa.get_function_callpoints(dotted_name):
+            csdiv.append(self.build_callsite(dotted_name, cs))
+        callstack = H.CallStackDescription(
+            H.a('show/hide call sites',
+                href='#',
+                onclick='showhideel(getnextsibling(this)); return false;'),
+            csdiv,
+        )
         snippet = H.FunctionDescription(
             H.FunctionDef(localname, argdesc),
             H.Docstring(docstring or H.em('no docstring available')),
             H.div(H.a('show/hide info',
                       href='#',
-                      onclick=('showhideel(this.parentNode.lastChild);'
+                      onclick=('showhideel(getnextsibling(this));'
                                'return false;')),
-                  H.div(valuedesc, csource, style='display: none',
+                  H.div(valuedesc, csource, callstack, style='display: none',
                         class_='funcinfo')),
         )
         
@@ -397,7 +415,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             H.NamespaceDef(namespace_dotted_name),
             H.Docstring(docstring or H.em('no docstring available'))
         )
-        for dotted_name in item_dotted_names:
+        for dotted_name in sorted(item_dotted_names):
             itemname = dotted_name.split('.')[-1]
             if is_private(itemname):
                 continue
@@ -412,26 +430,20 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def prepare_class_pages(self, namespace_tree, classes_dotted_names):
         passed = []
-        methodsdata = []
-        for dotted_name in classes_dotted_names:
+        for dotted_name in sorted(classes_dotted_names):
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             try:
                 sibling_dotted_names = namespace_tree[parent_dotted_name]
             except KeyError:
                 # no siblings (built-in module or sth)
                 sibling_dotted_names = []
-            tag = self.build_class_view(dotted_name)
+            tag = H.Content(self.build_class_view(dotted_name))
             nav = self.build_navigation(parent_dotted_name,
                                         sibling_dotted_names, dotted_name)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
             passed.append((dotted_name, tag, nav, reltargetpath))
-            method_dotted_names = ['%s.%s' % (dotted_name, method_name) for
-                                   method_name in
-                                   self.dsa.get_class_methods(dotted_name)]
-            methodsdata += self.prepare_method_pages(namespace_tree,
-                                                     method_dotted_names)
-        return passed, methodsdata
+        return passed
         
     def build_class_pages(self, data, project):
         """ build the full api pages for a set of classes """
@@ -443,7 +455,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         # XXX note that even though these pages are still built, there's no nav
         # pointing to them anymore...
         passed = []
-        for dotted_name in method_dotted_names:
+        for dotted_name in sorted(method_dotted_names):
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             module_dotted_name, _ = split_of_last_part(parent_dotted_name)
             sibling_dotted_names = namespace_tree[module_dotted_name]
@@ -462,11 +474,11 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def prepare_function_pages(self, namespace_tree, method_dotted_names):
         passed = []
-        for dotted_name in method_dotted_names:
+        for dotted_name in sorted(method_dotted_names):
             # XXX should we create a build_function_view instead?
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             sibling_dotted_names = namespace_tree[parent_dotted_name]
-            tag = self.build_callable_view(dotted_name)
+            tag = H.Content(self.build_callable_view(dotted_name))
             nav = self.build_navigation(parent_dotted_name,
                                         sibling_dotted_names, dotted_name)
             reltargetpath = "api/%s.html" % (dotted_name,)
@@ -485,9 +497,14 @@ class ApiPageBuilder(AbstractPageBuilder):
 
         names = namespace_tree.keys()
         names.sort()
-        for dotted_name in names:
+        function_names = self.dsa.get_function_names()
+        class_names = self.dsa.get_class_names()
+        for dotted_name in sorted(names):
+            if dotted_name in function_names or dotted_name in class_names:
+                continue
             subitem_dotted_names = namespace_tree[dotted_name]
-            tag = self.build_namespace_view(dotted_name, subitem_dotted_names)
+            tag = H.Content(self.build_namespace_view(dotted_name,
+                                                      subitem_dotted_names))
             nav = self.build_navigation(dotted_name, subitem_dotted_names,
                                         dotted_name)
             if dotted_name == '':
@@ -587,4 +604,43 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def is_in_pkg(self, sourcefile):
         return py.path.local(sourcefile).relto(self.projpath)
+
+    def build_callsite(self, functionname, call_site):
+        tbtag = self.gen_traceback(functionname, call_site)
+        tag = H.CallStackItem(
+            H.a("%s - line %s" % (call_site[0].filename, call_site[0].lineno + 1),
+                href='#',
+                onclick="showhideel(getnextsibling(this)); return false;"),
+            H.div(tbtag, style='display: none')
+        )
+        return tag
+    
+    def gen_traceback(self, funcname, call_site):
+        tbdiv = H.div()
+        for line in call_site:
+            lineno = line.lineno - line.firstlineno
+            source = line.source
+            sourcefile = line.filename
+            mangled = []
+            for i, sline in enumerate(str(source).split('\n')):
+                if i == lineno:
+                    l = '-> %s' % (sline,)
+                else:
+                    l = '   %s' % (sline,)
+                mangled.append(l)
+            if sourcefile:
+                linktext = '%s - line %s' % (sourcefile, line.lineno + 1)
+                # skip py.code.Source objects and source files outside of the
+                # package
+                if (not sourcefile.startswith('None') and
+                        self.is_in_pkg(sourcefile)):
+                    href = self.linker.get_lazyhref(sourcefile)
+                    sourcelink = H.a(linktext, href=href)
+                else:
+                    sourcelink = H.div(linktext)
+            else:
+                sourcelink = H.div('source unknown')
+            tbdiv.append(sourcelink)
+            tbdiv.append(H.pre('\n'.join(mangled)))
+        return tbdiv
 

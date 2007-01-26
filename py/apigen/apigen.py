@@ -37,7 +37,7 @@ def build(pkgdir, dsa):
 
     ns_data = apb.prepare_namespace_pages(namespace_tree)
     class_names = dsa.get_class_names()
-    class_data, method_data = apb.prepare_class_pages(namespace_tree,
+    class_data = apb.prepare_class_pages(namespace_tree,
                                                       class_names)
     function_names = dsa.get_function_names()
     func_data = apb.prepare_function_pages(namespace_tree, function_names)
@@ -45,7 +45,7 @@ def build(pkgdir, dsa):
 
     apb.build_namespace_pages(ns_data, proj)
     apb.build_class_pages(class_data, proj)
-    apb.build_method_pages(method_data, proj)
+    #apb.build_method_pages(method_data, proj)
     apb.build_function_pages(func_data, proj)
     spb.build_pages(source_data, proj, pkgdir)
 

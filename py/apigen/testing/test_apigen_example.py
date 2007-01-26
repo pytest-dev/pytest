@@ -163,9 +163,9 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtmlsnippet(html)
 
     def test_build_class_pages(self):
-        data, methodsdata = self.apb.prepare_class_pages(self.namespace_tree,
-                                                         ['main.SomeClass',
-                                                          'main.SomeSubClass'])
+        data = self.apb.prepare_class_pages(self.namespace_tree,
+                                            ['main.SomeClass',
+                                             'main.SomeSubClass'])
         self.apb.build_class_pages(data, self.project)
         clsfile = self.base.join('api/main.SomeClass.html')
         assert clsfile.check()
@@ -173,10 +173,10 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_class_pages_instance(self):
-        data, methodsdata = self.apb.prepare_class_pages(self.namespace_tree,
-                                                         ['main.SomeClass',
-                                                          'main.SomeSubClass',
-                                                          'main.SomeInstance'])
+        data = self.apb.prepare_class_pages(self.namespace_tree,
+                                            ['main.SomeClass',
+                                             'main.SomeSubClass',
+                                             'main.SomeInstance'])
         self.apb.build_class_pages(data, self.project)
         clsfile = self.base.join('api/main.SomeInstance.html')
         assert clsfile.check()
@@ -187,9 +187,9 @@ class TestApiPageBuilder(AbstractBuilderTest):
         ])
 
     def test_build_class_pages_nav_links(self):
-        data, methodsdata = self.apb.prepare_class_pages(self.namespace_tree,
-                                                         ['main.SomeSubClass',
-                                                          'main.SomeClass'])
+        data = self.apb.prepare_class_pages(self.namespace_tree,
+                                            ['main.SomeSubClass',
+                                             'main.SomeClass'])
         # fake some stuff that would be built from other methods
         self.linker.set_link('', 'api/index.html')
         self.linker.set_link('main', 'api/main.html')
@@ -212,9 +212,9 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_class_pages_base_link(self):
-        data, methodsdata = self.apb.prepare_class_pages(self.namespace_tree,
-                                                        ['main.SomeSubClass',
-                                                         'main.SomeClass'])
+        data = self.apb.prepare_class_pages(self.namespace_tree,
+                                            ['main.SomeSubClass',
+                                             'main.SomeClass'])
         self.apb.build_class_pages(data, self.project)
         clsfile = self.base.join('api/main.SomeSubClass.html')
         assert clsfile.check()
@@ -227,9 +227,9 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_source_links(self):
-        data, methodsdata = self.apb.prepare_class_pages(self.namespace_tree,
-                                                         ['main.SomeSubClass',
-                                                          'main.SomeClass'])
+        data = self.apb.prepare_class_pages(self.namespace_tree,
+                                            ['main.SomeSubClass',
+                                             'main.SomeClass'])
         sourcedata = self.spb.prepare_pages(self.fs_root)
         self.apb.build_class_pages(data, self.project)
         self.spb.build_pages(sourcedata, self.project, self.fs_root)

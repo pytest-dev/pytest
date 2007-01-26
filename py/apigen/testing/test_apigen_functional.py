@@ -113,9 +113,9 @@ def test_apigen_functional():
     html = sometestclass_source.read()
     assert '<div class="project_title">sources for sometestclass.py</div>' in html
 
-    # XXX later...
-    #index = sourcedir.join('index.html')
-    #assert index.check(file=True)
-    #html = index.read()
-    #assert '<a href="main/index.html">main</a>' in html
+    index = sourcedir.join('index.html')
+    assert index.check(file=True)
+    html = index.read()
+    print html
+    assert '<a href="test/index.html">test</a>' in html
 
