@@ -53,8 +53,8 @@ def bind_and_listen(hostport):
         old = fcntl.fcntl(serversock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(serversock.fileno(), fcntl.F_SETFD, old | fcntl.FD_CLOEXEC)
     # allow the address to be re-used in a reasonable amount of time
-    if os.name == 'posix' and sys.platform != 'cygwin':
-        serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #if os.name == 'posix' and sys.platform != 'cygwin':
+    serversock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
     serversock.bind(hostport)
     serversock.listen(5)
@@ -83,5 +83,5 @@ if __name__ == '__main__':
     else:
         hostport = ':8888'
     serversock = bind_and_listen(hostport)
-    startserver(serversock, loop=True)
+    startserver(serversock, loop=False)
 
