@@ -286,7 +286,7 @@ class TestLSession(object):
                 all = str(tmpdir)
             config = py.test.config._reparse(all.split(" "))
             lsession = LSession(config)
-            assert lsession.init_runner(pkgdir) is opt_mapping[opt]
+            assert lsession.init_runner() is opt_mapping[opt]
         #tmpdir.dirpath().ensure("conftest.py").write(py.code.Source("""
         #dist_boxing=True
         #"""))

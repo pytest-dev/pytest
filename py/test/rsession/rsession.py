@@ -227,12 +227,11 @@ class LSession(AbstractSession):
         reporter, checkfun = self.wrap_reporter(reporter)
         
         reporter(report.TestStarted(sshhosts))
-        pkgdir = self.getpkgdir(args[0])
         colitems = self.config.getcolitems()
         reporter(report.RsyncFinished())
 
         if runner is None:
-            runner = self.init_runner(pkgdir)
+            runner = self.init_runner()
 
         keyword = self.config.option.keyword
 
@@ -245,10 +244,10 @@ class LSession(AbstractSession):
         if not self.config.option.nomagic:
             py.magic.revoke(assertion=1)
 
-        self.write_docs(pkgdir)
+        self.write_docs()
         return retval
 
-    def write_docs(self, pkgdir):
+    def write_docs(self):
         if self.config.option.apigen:
             from py.__.apigen.tracer.docstorage import DocStorageAccessor
             apigen = py.path.local(self.config.option.apigen).pyimport()
@@ -259,7 +258,8 @@ class LSession(AbstractSession):
             capture = py.io.OutErrCapture()
             try:
                 try:
-                    apigen.build(pkgdir, DocStorageAccessor(self.docstorage))
+                    apigen.build(self.config.topdir,
+                                 DocStorageAccessor(self.docstorage))
                 except AttributeError:
                     import traceback
                     exc, e, tb = sys.exc_info()
@@ -272,13 +272,13 @@ class LSession(AbstractSession):
             finally:
                 capture.reset()
 
-    def init_runner(self, pkgdir):
+    def init_runner(self):
         if self.config.option.apigen:
             from py.__.apigen.tracer.tracer import Tracer, DocStorage
             module = py
             try:
                 apigen = py.path.local(self.config.option.apigen).pyimport()
-                items = apigen.get_documentable_items(pkgdir)
+                items = apigen.get_documentable_items(self.config.topdir)
                 if isinstance(items, dict):
                     self.docstorage = DocStorage().from_dict(items)
                 else:
