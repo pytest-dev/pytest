@@ -79,6 +79,7 @@ class AbstractNode(object):
             
             returns a reference to the child
         """
+        self._add(child)
         return child
         
     def _add(self, child):
@@ -349,7 +350,8 @@ class Link(AbstractText):
         if self.rest is None:
             self.rest = self.find_rest()
         if self.rest.links.get(self._text, self.target) != self.target:
-            raise ValueError('link name already in use for a different target')
+            raise ValueError('link name %r already in use for a different '
+                             'target' % (self.target,))
         self.rest.links[self._text] = self.target
         return AbstractText.text(self)
 

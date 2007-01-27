@@ -88,7 +88,7 @@ def test_basic_inline_2():
     txt = Strong('bar').text()
     assert txt == '**bar**'
 
-def test_text_join():
+def test_text_multiple_arguments():
     txt = Paragraph(Text("dupa"), Text("dupa")).text()
     assert txt == "dupa dupa"
 
@@ -96,6 +96,12 @@ def test_text_join():
     txt = Paragraph(Text("worse things"))
     txt = txt.join(Text("happen at sea"), Text("you know"))
     assert txt.text() == "worse things happen at sea you know"
+
+def test_text_add():
+    p = Paragraph(Text('grmbl'))
+    p2 = p.add(Text('grmbl too'))
+    assert p2.text() == 'grmbl too'
+    assert p.text() == 'grmbl grmbl too'
 
 def test_paragraph_basic():
     txt = Paragraph(Text('spam')).text()
