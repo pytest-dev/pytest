@@ -37,12 +37,13 @@ streamline exported API
   py.path.extpy -> py.path._extpy
   py.log -> py._log (pypy!) 
 
-* review py.io and write py.io.dupfile docstring (XXX guido)
+* review py.io and write py.io.dupfile docstring
+
+  (guido - added docstring, and code looks okay (what was the reason for the
+  review? anything specific?)
 
 * re-consider what to do with read and write methods of py.path classes (since
   there are places that check for file-ness by doing hasattr(... 'write'))
-
-  (XXX guido talk to holger)
 
 packaging
 -------------------------------------
@@ -83,13 +84,18 @@ APIGEN / source viewer
 testing
 -----------
 
-* windows tests (rev 36514 passes without errors, many skips) (XXX guido)
+* windows tests (rev 36514 passes without errors, many skips)
+
+  (guido tested again, and fixed newly broken tests, all work again now)
 
 * these should all work on 0.9 and on the py lib and pypy:
     - running "py.test -s" 
     - running "py.test --pdb" 
     - running "py.test --looponfailing" 
     - running "py.test" distributed on some hosts
+
+  (guido tested all on win32, everything works except --dist (requires
+  os.fork to work))
 
 * see why startcapture() does not use FD-based 
   "py.io.OutErrCapture" to isolate standard output. 
@@ -112,10 +118,14 @@ distributed testing / RSession
 * (optional) see if more of py/test/session.py's Session can be reused 
 * have dist_rsyncroots be relative to the conftest.py file
   so that projects can define it for themselves, e.g. 
-  pypy/conftest.py would contain
+  pypy/conftest.py would contain::
+  
       dist_rsyncroots = ['../pypy', '../py']
-  for this there probably needs to be a
+
+  for this there probably needs to be a::
+
      config.getvalue_and_conftestpath()
+
   method with tests and documentation, and with providing
   the right example. 
 
@@ -202,7 +212,6 @@ Missing docstrings
     execnet.PopenGateway.__repr__ misses a docstring
     execnet.PopenGateway.__init__ misses a docstring
     initpkg misses a docstring
-    io.dupfile misses a docstring
     log.setconsumer misses a docstring
     log.get misses a docstring
     log.Syslog misses a docstring
