@@ -258,7 +258,8 @@ class LSession(AbstractSession):
             capture = py.io.OutErrCapture()
             try:
                 try:
-                    apigen.build(self.config.topdir,
+                    pkgdir = self.getpkgdir(self.config.args[0])
+                    apigen.build(pkgdir,
                                  DocStorageAccessor(self.docstorage))
                 except AttributeError:
                     import traceback
@@ -277,8 +278,9 @@ class LSession(AbstractSession):
             from py.__.apigen.tracer.tracer import Tracer, DocStorage
             module = py
             try:
+                pkgdir = self.getpkgdir(self.config.args[0])
                 apigen = py.path.local(self.config.option.apigen).pyimport()
-                items = apigen.get_documentable_items(self.config.topdir)
+                items = apigen.get_documentable_items(pkgdir)
                 if isinstance(items, dict):
                     self.docstorage = DocStorage().from_dict(items)
                 else:
