@@ -446,8 +446,11 @@ Spam, eggs and spam.
 
 def test_nonstring_text():
     expected = """\
-/foo/bar.py
+<foobar>
 """
-    txt = Rest(Paragraph(Text(py.path.local('/foo/bar.py')))).text()
+    class FooBar(object):
+        def __str__(self):
+            return '<foobar>'
+    txt = Rest(Paragraph(Text(FooBar()))).text()
     assert txt == expected
 
