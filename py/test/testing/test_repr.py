@@ -5,12 +5,18 @@ from py.__.test.terminal.out import getout
 from StringIO import StringIO
 import sys
 
+def newconfig(*args):
+    tmpdir = py.test.ensuretemp("newconfig")
+    args = list(args)
+    args.append(tmpdir)
+    return py.test.config._reparse(args)
+    
 def test_repr_source():
     source = py.code.Source("""
     def f(x):
         pass
     """).strip()
-    config = py.test.config._reparse([])
+    config = newconfig()
     s = StringIO()
     out = getout(s)
     p = Presenter(out, config)
@@ -32,7 +38,7 @@ def test_repr_failure_explanation():
         except:
             e = py.code.ExceptionInfo()
         return e
-    config = py.test.config._reparse([])
+    config = newconfig()
     s = StringIO()
     out = getout(s)
     p = Presenter(out, config)
@@ -42,7 +48,7 @@ def test_repr_failure_explanation():
     assert s.getvalue().startswith(">   ")
 
 def test_repr_local():
-    config = py.test.config._reparse(['--showlocals'])
+    config = newconfig('--showlocals')
     s = StringIO()
     out = getout(s)
     p = Presenter(out, config)
