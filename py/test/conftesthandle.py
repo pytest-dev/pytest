@@ -57,18 +57,23 @@ class Conftest(object):
     #    return self._get(name, modules)
    
     def rget(self, name, path=None):
+        return self._rget(name, path)[0]
+
+    def _rget(self, name, path=None):
         modules = self.getconftestmodules(path)
         modules.reverse()
-        return self._get(name, modules) 
+        return self._get(name, modules)
+
+    def rget_path(self, name, path=None):
+        return self._rget(name, path)
 
     def _get(self, name, modules):
-        for mod in modules: 
+        for mod in modules:
             try:
-                return getattr(mod, name)
+                return getattr(mod, name), mod
             except AttributeError:
                 continue
         raise KeyError, name
-
 
 def importconfig(configpath):
     if not configpath.dirpath('__init__.py').check(file=1): 

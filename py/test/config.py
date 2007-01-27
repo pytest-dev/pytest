@@ -117,7 +117,14 @@ class Config(object):
         try:
             return self._overwrite_dict[name]
         except KeyError:
-            return self.conftest.rget(name, path) 
+            return self.conftest.rget(name, path)
+
+    def getvalue_and_confpath(self, name, path=None):
+        """ same as previous, but returns conftest's path
+        as well
+        """
+        val, mod = self.conftest.rget_path(name, path)
+        return val, py.path.local(mod.__file__).dirpath()
 
     def initsession(self):
         """ return an initialized session object. """
