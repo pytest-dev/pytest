@@ -1,7 +1,6 @@
 from __future__ import generators
 import py
 from py.__.misc import rest 
-from py.__.rest import directive
 
 Option = py.test.config.Option 
 option = py.test.config.addoptions("documentation check options", 
@@ -15,11 +14,18 @@ option = py.test.config.addoptions("documentation check options",
         )
 ) 
 
+_initialized = False
 def checkdocutils(): 
+    global _initialized
     try:
         import docutils
     except ImportError:
         py.test.skip("docutils not importable")
+    if not _initialized:
+        from py.__.rest import directive
+        directive.register_linkrole('api', resolve_linkrole)
+        directive.register_linkrole('source', resolve_linkrole)
+        _initialized = True
 
 def restcheck(path):
     localpath = path
@@ -251,6 +257,4 @@ def resolve_linkrole(name, text):
         else:
             relpath += '.html'
         return text, '../../apigen/source/%s' % (relpath,)
-directive.register_linkrole('api', resolve_linkrole)
-directive.register_linkrole('source', resolve_linkrole)
 
