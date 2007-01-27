@@ -110,6 +110,14 @@ distributed testing / RSession
 * cleanup initialisation of config / get rid of pkgdir
 * unify option names (dist_*) 
 * (optional) see if more of py/test/session.py's Session can be reused 
+* have dist_rsyncroots be relative to the conftest.py file
+  so that projects can define it for themselves, e.g. 
+  pypy/conftest.py would contain
+      dist_rsyncroots = ['../pypy', '../py']
+  for this there probably needs to be a
+     config.getvalue_and_conftestpath()
+  method with tests and documentation, and with providing
+  the right example. 
 
 code quality
 -----------------
