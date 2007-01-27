@@ -6,16 +6,17 @@
 import py
 from py.__.apigen import apigen
 
-def setup_fs_project():
-    temp = py.test.ensuretemp('apigen_functional')
-    temp.ensure("pkg/func.py").write(py.code.Source("""\
+def setup_fs_project(name):
+    temp = py.test.ensuretemp(name)
+    assert temp.listdir() == []
+    temp.ensure("pak/func.py").write(py.code.Source("""\
         def func(arg1):
             "docstring"
 
         def func_2(arg1, arg2):
             return arg1(arg2)
     """))
-    temp.ensure('pkg/sometestclass.py').write(py.code.Source("""\
+    temp.ensure('pak/sometestclass.py').write(py.code.Source("""\
         class SomeTestClass(object):
             " docstring sometestclass "
             def __init__(self, somevar):
@@ -25,20 +26,20 @@ def setup_fs_project():
                 " get_somevar docstring "
                 return self.somevar
     """))
-    temp.ensure('pkg/sometestsubclass.py').write(py.code.Source("""\
+    temp.ensure('pak/sometestsubclass.py').write(py.code.Source("""\
         from sometestclass import SomeTestClass
         class SomeTestSubClass(SomeTestClass):
             " docstring sometestsubclass "
             def get_somevar(self):
                 return self.somevar + 1
     """))
-    temp.ensure('pkg/somenamespace.py').write(py.code.Source("""\
+    temp.ensure('pak/somenamespace.py').write(py.code.Source("""\
         def foo():
             return 'bar'
         def baz(qux):
             return qux
     """))
-    temp.ensure("pkg/__init__.py").write(py.code.Source("""\
+    temp.ensure("pak/__init__.py").write(py.code.Source("""\
         from py.initpkg import initpkg
         initpkg(__name__, exportdefs = {
             'main.sub.func': ("./func.py", "func"),
@@ -48,41 +49,41 @@ def setup_fs_project():
                                       'SomeTestSubClass'),
         })
     """))
-    temp.ensure('pkg/test/test_pkg.py').write(py.code.Source("""\
+    temp.ensure('pak/test/test_pak.py').write(py.code.Source("""\
         import py
         py.std.sys.path.insert(0,
             py.magic.autopath().dirpath().dirpath().dirpath().strpath)
-        import pkg
+        import pak
 
         # this mainly exists to provide some data to the tracer
-        def test_pkg():
-            s = pkg.main.SomeTestClass(10)
+        def test_pak():
+            s = pak.main.SomeTestClass(10)
             assert s.get_somevar() == 10
-            s = pkg.main.SomeTestClass('10')
+            s = pak.main.SomeTestClass('10')
             assert s.get_somevar() == '10'
-            s = pkg.main.SomeTestSubClass(10)
+            s = pak.main.SomeTestSubClass(10)
             assert s.get_somevar() == 11
-            s = pkg.main.SomeTestSubClass('10')
+            s = pak.main.SomeTestSubClass('10')
             py.test.raises(TypeError, 's.get_somevar()')
-            assert pkg.main.sub.func(10) is None
-            assert pkg.main.sub.func(20) is None
-            s = pkg.main.func(pkg.main.SomeTestClass, 10)
-            assert isinstance(s, pkg.main.SomeTestClass)
+            assert pak.main.sub.func(10) is None
+            assert pak.main.sub.func(20) is None
+            s = pak.main.func(pak.main.SomeTestClass, 10)
+            assert isinstance(s, pak.main.SomeTestClass)
     """))
-    return temp, 'pkg'
+    return temp, 'pak'
 
 def test_get_documentable_items():
-    fs_root, package_name = setup_fs_project()
+    fs_root, package_name = setup_fs_project('test_get_documentable_items')
     documentable = apigen.get_documentable_items(fs_root.join(package_name))
     assert sorted(documentable.__package__.exportdefs.keys()) ==  [
         'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
         'main.sub.func']
 
 def test_apigen_functional():
-    fs_root, package_name = setup_fs_project()
+    fs_root, package_name = setup_fs_project('test_apigen_functional')
     tempdir = py.test.ensuretemp('test_apigen_functional_results')
     pydir = py.magic.autopath().dirpath().dirpath().dirpath()
-    pkgdir = fs_root.join('pkg')
+    pakdir = fs_root.join('pak')
     if py.std.sys.platform == 'win32':
         cmd = 'set APIGEN_TARGET=%s && python "%s/bin/py.test"' % (tempdir,
                                                                    pydir)
@@ -91,7 +92,7 @@ def test_apigen_functional():
     try:
         output = py.process.cmdexec('%s --apigen="%s/apigen.py" "%s"' % (
                                         cmd, pydir.join('apigen'),
-                                        pkgdir))
+                                        pakdir))
     except py.error.Error, e:
         print e.out
         raise
