@@ -74,9 +74,9 @@ def setup_fs_project():
 def test_get_documentable_items():
     fs_root, package_name = setup_fs_project()
     documentable = apigen.get_documentable_items(fs_root.join(package_name))
-    assert documentable.__package__.exportdefs.keys() == [
-        'main.sub.func', 'main.func', 'main.SomeTestSubClass',
-        'main.SomeTestClass']
+    assert sorted(documentable.__package__.exportdefs.keys()) ==  [
+        'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
+        'main.sub.func']
 
 def test_apigen_functional():
     fs_root, package_name = setup_fs_project()
