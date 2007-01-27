@@ -429,16 +429,25 @@ def test_directive_content():
 
 def test_title_following_links_empty_line():
     expected = """\
-Foo, bar and `baz`_.
+Foo, bar and `baz`_
+
+Spam
+====
+
+Spam, eggs and spam.
 
 .. _`baz`: http://www.baz.com
 
-Spam
-----
-
-Spam, eggs and spam.
 """
     txt = Rest(Paragraph("Foo, bar and ", Link("baz", "http://www.baz.com")),
-               Title('Spam'), Paragraph('Spam, eggs and spam.'))
+               Title('Spam'), Paragraph('Spam, eggs and spam.')).text()
+    assert txt == expected
     checkrest(txt)
+
+def test_nonstring_text():
+    expected = """\
+/foo/bar.py
+"""
+    txt = Rest(Paragraph(Text(py.path.local('/foo/bar.py')))).text()
+    assert txt == expected
 

@@ -15,6 +15,8 @@ import py
 
 def escape(txt):
     """escape ReST markup"""
+    if not isinstance(txt, str) and not isinstance(txt, unicode):
+        txt = str(txt)
     # XXX this takes a very naive approach to escaping, but it seems to be
     # sufficient...
     for c in '\\*`|:_':
@@ -231,6 +233,8 @@ class AbstractText(AbstractNode):
         return self.start + text + self.end
 
     def escape(self, text):
+        if not isinstance(text, str) and not isinstance(text, unicode):
+            text = str(text)
         if self.start:
             text = text.replace(self.start, '\\%s' % (self.start,))
         if self.end and self.end != self.start:
