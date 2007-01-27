@@ -90,30 +90,40 @@ class RemoteTerminalSession(object):
             print "#                           ", "^" * len(str(rootdir))
         return failures
 
-    def run_remote_session(self, failures):
+    def _initslavegateway(self):
         print "* opening PopenGateway: ", self.executable 
-        gw = py.execnet.PopenGateway(self.executable)
+        topdir = self.config.topdir
+        return py.execnet.PopenGateway(self.executable), topdir
+
+    def run_remote_session(self, failures):
+        gw, topdir = self._initslavegateway()
         channel = gw.remote_exec("""
             from py.__.test.terminal.remote import slaverun_TerminalSession
             slaverun_TerminalSession(channel) 
         """, stdout=self.out, stderr=self.out) 
-        print "MASTER: triggered slave terminal session ->"
+        print "MASTER: initiated slave terminal session ->"
         repr = self.config.make_repr(conftestnames=[])
-        channel.send((str(self.config.topdir), repr, failures))
-        print "MASTER: send start info" 
+        channel.send((str(topdir), repr, failures))
+        print "MASTER: send start info, topdir=%s" % (topdir,)
         try:
             return channel.receive()
         except channel.RemoteError, e:
+            print "*" * 70
+            print "ERROR while waiting for proper slave startup"
+            print "*" * 70
             print e
             return []
 
 def slaverun_TerminalSession(channel):
     """ we run this on the other side. """
-    print "SLAVE: starting"
+    print "SLAVE: initializing ..."
     topdir, repr, failures = channel.receive()
-    print "SLAVE: received configuration" 
+    print "SLAVE: received configuration, using topdir:", topdir
     config = py.test.config 
+    import sys
+    sys.stdout.flush()
     config.initdirect(topdir, repr, failures)
+    config.option.session = None
     config.option.looponfailing = False 
     config.option.usepdb = False 
     config.option.executable = None
