@@ -140,7 +140,10 @@ class RestReporter(AbstractReporter):
                     self.add_rest(ListItem('%s: %s' % (item, text)))
 
     def get_host(self, event):
-        return event.channel.gateway.host
+        try:
+            return event.channel.gateway.host
+        except AttributeError:
+            return None
 
     def failures(self):
         self.traceback_num = 0
@@ -160,7 +163,8 @@ class RestReporter(AbstractReporter):
                     t.add(Link(itempath, link))
                 else:
                     t.add(Text(itempath))
-                t.add(Text('on %s' % (host.hostname,)))
+                if host:
+                    t.add(Text('on %s' % (host.hostname,)))
                 self.add_rest(t)
                 if event.outcome.signal:
                     self.repr_signal(event.item, event.outcome)

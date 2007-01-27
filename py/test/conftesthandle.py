@@ -26,7 +26,7 @@ class Conftest(object):
         for arg in args + [current]:
             anchor = current.join(arg, abs=1)
             if anchor.check(): # we found some file object 
-                #print "initializing conftest from", anchor
+                print >>py.std.sys.stderr, "initializing conftest from", anchor
                 # conftest-lookups without a path actually mean 
                 # lookups with our initial path. 
                 self._path2confmods[None] = self.getconftestmodules(anchor)

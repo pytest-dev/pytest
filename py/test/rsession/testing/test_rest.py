@@ -11,6 +11,11 @@ from py.__.rest.rst import *
 from py.__.test.rsession.hostmanage import HostInfo
 from py.__.test.rsession.outcome import Outcome
 
+class Container(object):
+    def __init__(self, **args):
+        for arg, val in args.items():
+            setattr(self, arg, val) 
+
 class RestTestReporter(RestReporter):
     def __init__(self, *args, **kwargs):
         if args:
@@ -78,11 +83,6 @@ Running tests on hosts\: localhost, foo.com
             def listnames(self):
                 return ['package', 'foo', 'bar.py']
 
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
-        
         parent = Container(parent=None, fspath=py.path.local('.'))
         event = report.ItemStart(item=FakeModule(parent))
         reporter.report(event)
@@ -105,11 +105,6 @@ Testing module foo/bar.py (2 items)
 
     def test_ReceivedItemOutcome_PASSED(self):
         outcome = Outcome()
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
-
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
@@ -117,11 +112,6 @@ Testing module foo/bar.py (2 items)
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_SKIPPED(self):
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
-
         outcome = Outcome(skipped="reason")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
@@ -130,11 +120,6 @@ Testing module foo/bar.py (2 items)
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_FAILED(self):
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
-
         outcome = Outcome(excinfo="xxx")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
@@ -143,13 +128,45 @@ Testing module foo/bar.py (2 items)
 * localhost\: **FAILED** `traceback0`_ foo.py/bar()/baz
 
 """
-    
-    def test_skips(self):
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
 
+    def test_ReceivedItemOutcome_FAILED_stdout(self):
+        excinfo = Container(
+            typename='FooError',
+            value='A foo has occurred',
+            traceback=[
+                Container(
+                    path='foo/bar.py',
+                    lineno=1,
+                    relline=1,
+                    source='foo()',
+                ),
+                Container(
+                    path='foo/baz.py',
+                    lineno=4,
+                    relline=1,
+                    source='raise FooError("A foo has occurred")',
+                ),
+            ]
+        )
+        outcome = Outcome(excinfo=excinfo)
+        outcome.stdout = '<printed>'
+        outcome.stderr = ''
+        parent = Container(parent=None, fspath=py.path.local('.'))
+        item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'],
+                         parent=parent, fspath=py.path.local('foo'))
+        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome,
+                                           item=item)
+        reporter.report(event)
+        reporter.timestart = 10
+        reporter.timeend = 20
+        reporter.timersync = 15
+        reporter.print_summary(10, '', '')
+
+        reporter.print_summary(1, 'skipped', 'failed')
+        out = stdout.getvalue()
+        assert out.find('<printed>') > -1
+
+    def test_skips(self):
         class FakeOutcome(Container, report.ReceivedItemOutcome):
             pass
 
@@ -175,12 +192,6 @@ Reasons for skipped tests\:
 """
 
     def test_failures(self):
-        py.test.skip("This one is totally artificial, needs to be rewritten")
-        class Container(object):
-            def __init__(self, **args):
-                for arg, val in args.items():
-                    setattr(self, arg, val) 
-
         class FakeOutcome(Container, report.ReceivedItemOutcome):
             pass
 

@@ -27,7 +27,10 @@ class Outcome(object):
         tb_info = [self.traceback_entry_repr(x, tbstyle)
                    for x in excinfo.traceback]
         rec_index = excinfo.traceback.recursionindex()
-        return (excinfo.type.__name__, str(excinfo.value), (tb_info, rec_index))
+        etype = excinfo.type
+        if hasattr(etype, '__name__'):
+            etype = etype.__name__
+        return (etype, str(excinfo.value), (tb_info, rec_index))
     
     def traceback_entry_repr(self, tb_entry, tb_style):
         lineno = tb_entry.lineno
