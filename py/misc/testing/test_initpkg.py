@@ -57,6 +57,7 @@ def test_importall():
         base.join('path', 'extpy', 'testing', 'test_data'),
         base.join('path', 'gateway',),
         base.join('doc',),
+        base.join('rest', 'directive.py'),
         base.join('test', 'testing', 'import_test'),
         base.join('c-extension',), 
         base.join('magic', 'greenlet.py'), 
