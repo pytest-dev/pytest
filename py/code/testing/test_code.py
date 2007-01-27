@@ -8,6 +8,12 @@ def test_newcode():
     newco = code.new() 
     assert co == newco 
 
+def test_ne():
+    code1 = py.code.Code(compile('foo = "bar"', '', 'exec'))
+    assert code1 == code1
+    code2 = py.code.Code(compile('foo = "baz"', '', 'exec'))
+    assert code2 != code1
+
 def test_newcode_unknown_args(): 
     code = py.code.Code(compile("", '', 'exec'))
     py.test.raises(TypeError, 'code.new(filename="hello")')
