@@ -29,6 +29,7 @@ class MyRSync(py.execnet.RSync):
     
 class MySession(RemoteTerminalSession):
     socketserveradr = ('10.9.4.148', 8888)
+    socketserveradr = ('10.9.2.62', 8888)
 
     def _initslavegateway(self):
         print "MASTER: initializing remote socket gateway"
