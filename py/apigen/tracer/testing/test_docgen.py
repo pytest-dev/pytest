@@ -415,6 +415,11 @@ def setup_fs_project():
 def setup_pkg_docstorage():
     pkgdir, pkgname = setup_fs_project()
     py.std.sys.path.insert(0, str(pkgdir))
+    # XXX test_get_initpkg_star_items depends on package not
+    #     being imported already
+    for key in py.std.sys.modules.keys():
+        if key == pkgname or key.startswith(pkgname + "."):
+            del py.std.sys.modules[key]
     pkg = __import__(pkgname)
     ds = DocStorage().from_pkg(pkg)
     return pkg, ds
