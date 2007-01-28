@@ -437,7 +437,9 @@ class SocketGatewaySetup:
     def setup_class(cls):
         # open a gateway to a fresh child process
         cls.proxygw = py.execnet.PopenGateway() 
-        cls.gw = py.execnet.SocketGateway.remote_install(cls.proxygw) 
+        cls.gw = py.execnet.SocketGateway.remote_install(cls.proxygw,
+                                                         ("127.0.0.1", 0)
+                                                            ) 
 
 ##    def teardown_class(cls):
 ##        cls.gw.exit()

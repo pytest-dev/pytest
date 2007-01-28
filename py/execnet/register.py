@@ -145,7 +145,7 @@ class SocketGateway(InstallableGateway):
             given gateway. 
         """ 
         if hostport is None: 
-            host, port = ('', 0) 
+            host, port = ('', 0)  # XXX works on all platforms? 
         else:   
             host, port = hostport 
         socketserverbootstrap = py.code.Source(
@@ -153,18 +153,16 @@ class SocketGateway(InstallableGateway):
             """
             import socket
             sock = bind_and_listen((%r, %r)) 
-            hostname = socket.gethostname() 
-            channel.send((hostname, sock.getsockname()))
+            port = sock.getsockname()
+            channel.send(port) 
             startserver(sock)
         """ % (host, port)) 
         # execute the above socketserverbootstrap on the other side
         channel = gateway.remote_exec(socketserverbootstrap)
-        hostname, (realhost, realport) = channel.receive() 
-        if not hostname:
-            hostname = realhost
+        (realhost, realport) = channel.receive()
         #gateway._trace("remote_install received" 
         #              "port=%r, hostname = %r" %(realport, hostname))
-        return py.execnet.SocketGateway(hostname, realport) 
+        return py.execnet.SocketGateway(host, realport) 
     remote_install = classmethod(remote_install)
     
 class SshGateway(PopenCmdGateway):
