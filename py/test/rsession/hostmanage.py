@@ -51,10 +51,10 @@ class HostRSync(py.execnet.RSync):
         dir, base = os.path.split(path)
         if base == '.svn':
             return False
-        if self.rsync_roots is None or dir != self.sourcedir:
+        if dir != self.sourcedir: 
             return True
         else:
-            return base in self.rsync_roots
+            return self.rsync_roots is None or path in self.rsync_roots
 
 class DummyGateway(object):
     pass

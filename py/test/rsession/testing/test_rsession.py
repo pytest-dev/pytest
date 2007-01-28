@@ -76,7 +76,7 @@ class TestRSessionRemote:
     def test_example_distribution_minus_x(self):
         tmpdir = py.test.ensuretemp("example_distribution_minus_x")
         tmpdir.ensure("sub", "conftest.py").write(py.code.Source("""
-            disthosts = [%r]
+            dist_hosts = [%r]
         """ % ('localhost',)))
         tmpdir.ensure("sub", "__init__.py")
         tmpdir.ensure("sub", "test_one.py").write(py.code.Source("""
@@ -106,9 +106,9 @@ class TestRSessionRemote:
         subdir = "sub_example_dist"
         tmpdir = py.test.ensuretemp("example_distribution")
         tmpdir.ensure(subdir, "conftest.py").write(py.code.Source("""
-            disthosts = [%r]
-            distrsync_roots = ["%s", "py"]
-        """ % ('localhost', subdir)))
+            dist_hosts = [%r]
+            dist_rsync_roots = ["%s", "../py"]
+        """ % ('localhost', tmpdir.join(subdir), )))
         tmpdir.ensure(subdir, "__init__.py")
         tmpdir.ensure(subdir, "test_one.py").write(py.code.Source("""
             def test_1(): 
@@ -161,7 +161,8 @@ class TestRSessionRemote:
         teardown_events = []
         
         config = py.test.config._reparse([])
-        opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+        opts = HostOptions(optimise_localhost=False, 
+                           rsync_roots=[py.path.local(py.__file__).dirpath()])
         hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(setup_events.append)
         hm.teardown_hosts(teardown_events.append, 
@@ -188,7 +189,8 @@ class TestRSessionRemote:
         allevents = []
         
         config = py.test.config._reparse([])
-        opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+        opts = HostOptions(optimise_localhost=False, 
+                           rsync_roots=[py.path.local(py.__file__).dirpath()])
         hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(allevents.append)
         
@@ -235,7 +237,8 @@ class TestRSessionRemote:
         from py.__.test.rsession.master import defaultconftestnames
         defaultconftestnames.append("custom")
         try:
-            opts = HostOptions(optimise_localhost=False, rsync_roots=['py'])
+            opts = HostOptions(optimise_localhost=False, 
+                               rsync_roots=[py.path.local(py.__file__).dirpath()])
             hm = HostManager(hosts, config, opts)
             nodes = hm.init_hosts(allevents.append)
 
@@ -267,7 +270,7 @@ class TestRSessionRemote:
         tmpdir = py.test.ensuretemp("nice")
         tmpdir.ensure("__init__.py")
         tmpdir.ensure("conftest.py").write(py.code.Source("""
-        disthosts = ['localhost']
+        dist_hosts = ['localhost']
         dist_nicelevel = 10
         """))
         tmpdir.ensure("test_one.py").write("""def test_nice():

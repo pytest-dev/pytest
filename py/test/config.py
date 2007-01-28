@@ -118,13 +118,6 @@ class Config(object):
         except KeyError:
             return self.conftest.rget(name, path)
 
-    def getvalue_and_confpath(self, name, path=None):
-        """ same as previous, but returns conftest's path
-        as well
-        """
-        val, mod = self.conftest.rget_with_confmod(name, path)
-        return val, py.path.local(mod.__file__).dirpath()
-
     def initsession(self):
         """ return an initialized session object. """
         cls = self._getsessionclass()

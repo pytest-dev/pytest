@@ -133,17 +133,17 @@ class RSession(AbstractSession):
         super(RSession, self).fixoptions()
         config = self.config
         try:
-            config.getvalue('disthosts')
+            config.getvalue('dist_hosts')
         except KeyError:
-            print "You're trying to run RSession without disthosts specified"
-            print "you need to specify it in your conftest.py (ie. ~/conftest.py)"
+            print "For running ad-hoc distributed tests you need to specify"
+            print "dist_hosts in a local conftest.py file, for example:"
             print "for example:"
-            print "   disthosts = ['localhost'] * 4 # for 3 processors"
-            print "      - or -"
-            print "   disthosts = ['you@some.remote.com'] # for remote testing"
-            print "   # with your remote ssh account"
-            print "http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
-            print "   for more info..."
+            print
+            print "  dist_hosts = ['localhost'] * 4 # for 3 processors"
+            print "  dist_hosts = ['you@remote.com', '...'] # for testing on ssh accounts"
+            print "   # with your remote ssh accounts"
+            print 
+            print "see also: http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
             raise SystemExit
     
     def main(self, reporter=None):
@@ -195,11 +195,22 @@ class RSession(AbstractSession):
         """ Read from conftest file the configuration of distributed testing
         """
         try:
-            rsync_roots = self.config.getvalue("distrsync_roots")
-        except:
-            rsync_roots = None    # all files and directories in the pkgdir
+            conftest = self.config.conftest
+            value, mod = conftest.rget_with_confmod('dist_rsync_roots')
+        except KeyError:
+            rsync_roots = [self.config.topdir] # our best guess likely
+        else:
+            assert isinstance(value, (list,tuple)), value
+            base = py.path.local(mod.__file__).dirpath()
+            print "base", base
+            rsync_roots = [base.join(path, abs=True)
+                                for path in value]
+            for root in rsync_roots:
+                assert root.check(dir=1)
+            #rsync_roots = value
+            print "rsync_roots", rsync_roots
         sshhosts = [HostInfo(i) for i in
-                    self.config.getvalue("disthosts")]
+                    self.config.getvalue("dist_hosts")]
         parse_directories(sshhosts)
         remotepython = self.config.getvalue("dist_remotepython")
         return sshhosts, remotepython, rsync_roots
