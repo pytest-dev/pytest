@@ -103,13 +103,14 @@ class CommonSvnTests(CommonFSTests):
         res = url.info()
         assert res.size > len("samplefile") and res.created_rev >= 0
 
-    def xxxtest_info_log(self):
+    def test_log_simple(self):
+        py.test.skip("XXX: does not work at least on svn below 1.3")
         url = self.root.join("samplefile")
-        res = url.log(rev_start=1155, rev_end=1155, verbose=True)
-        assert res[0].revision == 1155 and res[0].author == "jum"
-        from time import gmtime
-        t = gmtime(res[0].date)
-        assert t.tm_year == 2003 and t.tm_mon == 7 and t.tm_mday == 17
+        logentries = url.log()
+        for logentry in logentries:
+            assert logentry.rev == 1
+            assert hasattr(logentry, 'author')
+            assert hasattr(logentry, 'date')
 
 class CommonCommandAndBindingTests(CommonSvnTests):
     def test_trailing_slash_is_stripped(self):

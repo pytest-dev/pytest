@@ -5,9 +5,9 @@ from py.__.path.svn.testing.svntestbase import CommonCommandAndBindingTests, \
 import datetime
 import time
 
-
-if py.path.local.sysfind('svn') is None:
-    py.test.skip("cannot test py.path.svn, 'svn' binary not found")
+def setup_module(mod):
+    if py.path.local.sysfind('svn') is None:
+        py.test.skip("cannot test py.path.svn, 'svn' binary not found")
 
 class TestSvnCommandPath(CommonCommandAndBindingTests):
     def setup_class(cls): 
@@ -32,6 +32,9 @@ class TestSvnCommandPath(CommonCommandAndBindingTests):
     def test_svnurl_characters_colon_port(self):
         py.path.svnurl("http://host.com:8080/some/dir")
 
+    def test_svnurl_characters_tilde_end(self):
+        py.path.svnurl("http://host.com/some/file~")
+
     def test_svnurl_characters_colon_path(self):
         if py.std.sys.platform == 'win32':
             # colons are allowed on win32, because they're part of the drive
@@ -39,24 +42,6 @@ class TestSvnCommandPath(CommonCommandAndBindingTests):
             # other parts, I think
             py.test.skip('XXX fixme win32')
         py.test.raises(ValueError, 'py.path.svnurl("http://host.com/foo:bar")')
-        
-    def test_svnurl_characters_tilde_end(self):
-        py.path.svnurl("http://host.com/some/file~")
-        
-    # XXX 
-    def xtest_copy_file(self):
-        raise py.test.Skipped(msg="XXX fix svnurl first")
-
-    def xtest_copy_dir(self):
-        py.test.skipp("XXX fix svnurl first")
-
-    def XXXtest_info_log(self):
-        url = self.root.join("samplefile")
-        res = url.log(rev_start=1155, rev_end=1155, verbose=True)
-        assert res[0].revision == 1155 and res[0].author == "jum"
-        from time import gmtime
-        t = gmtime(res[0].date)
-        assert t.tm_year == 2003 and t.tm_mon == 7 and t.tm_mday == 17
 
 class TestSvnInfoCommand:
 
