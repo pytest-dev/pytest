@@ -40,7 +40,7 @@ class InstallableGateway(gateway.Gateway):
             gateway starts with odd numbers.  This allows to
             uniquely identify channels across both sides.
         """
-        bootstrap = ["we_are_remote=True", extra]
+        bootstrap = [extra]
         bootstrap += [getsource(x) for x in startup_modules]
         bootstrap += [io.server_stmt, "Gateway(io=io, startcount=2).join(joinexec=False)",]
         source = "\n".join(bootstrap)
@@ -135,7 +135,7 @@ class SocketGateway(InstallableGateway):
         self.port = port = int(port)
         sock.connect((host, port))
         io = inputoutput.SocketIO(sock)
-        InstallableGateway.__init__(self, io=io)
+        super(SocketGateway, self).__init__(io=io)
 
     def _getremoteaddress(self):
         return '%s:%d' % (self.host, self.port)

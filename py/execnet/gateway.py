@@ -55,12 +55,16 @@ class Gateway(object):
             addr = '[%s]' % (addr,)
         else:
             addr = ''
-        r = (len(self.pool.getstarted('receiver'))
-             and "receiving" or "not receiving")
-        s = (len(self.pool.getstarted('sender')) 
-             and "sending" or "not sending")
-        i = len(self.channelfactory.channels())
-        return "<%s%s %s/%s (%d active channels)>" %(
+        try:
+            r = (len(self.pool.getstarted('receiver'))
+                 and "receiving" or "not receiving")
+            s = (len(self.pool.getstarted('sender')) 
+                 and "sending" or "not sending")
+            i = len(self.channelfactory.channels())
+        except AttributeError:
+            r = s = "uninitialized"
+            i = "no"
+        return "<%s%s %s/%s (%s active channels)>" %(
                 self.__class__.__name__, addr, r, s, i)
 
     def _getremoteaddress(self):
