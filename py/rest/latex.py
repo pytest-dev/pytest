@@ -122,7 +122,7 @@ def process_rest_file(restfile, stylesheet=None, debug=False, rest_options=None)
     if stylesheet is not None:
         sty = path.join(stylesheet)
         if sty.check():
-             options.append('--stylesheet=%s' % (sty.relto(f), ))
+            options.append('--stylesheet=%s' % (sty.relto(f.dirpath()), ))
     options.append(f.new(basename=tex))
     options = map(str, options)
     if rest_options is not None:
