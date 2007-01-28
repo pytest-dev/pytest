@@ -8,6 +8,10 @@ from py.__.apigen.project import Project
 from py.__.test.web import webcheck
 from py.__.apigen.conftest import option
 
+def setup_module(mod):
+    if py.std.sys.platform == "win32": 
+        py.test.skip("apigen does not fully support win32 yet") 
+
 def run_string_sequence_test(data, seq):
     currpos = -1
     for s in seq:
