@@ -101,18 +101,21 @@ class RemoteTerminalSession(object):
             from py.__.test.terminal.remote import slaverun_TerminalSession
             slaverun_TerminalSession(channel) 
         """, stdout=self.out, stderr=self.out) 
-        print "MASTER: initiated slave terminal session ->"
-        repr = self.config.make_repr(conftestnames=[])
-        channel.send((str(topdir), repr, failures))
-        print "MASTER: send start info, topdir=%s" % (topdir,)
         try:
-            return channel.receive()
-        except channel.RemoteError, e:
-            print "*" * 70
-            print "ERROR while waiting for proper slave startup"
-            print "*" * 70
-            print e
-            return []
+            print "MASTER: initiated slave terminal session ->"
+            repr = self.config.make_repr(conftestnames=[])
+            channel.send((str(topdir), repr, failures))
+            print "MASTER: send start info, topdir=%s" % (topdir,)
+            try:
+                return channel.receive()
+            except channel.RemoteError, e:
+                print "*" * 70
+                print "ERROR while waiting for proper slave startup"
+                print "*" * 70
+                print e
+                return []
+        finally:
+            gw.exit()
 
 def slaverun_TerminalSession(channel):
     """ we run this on the other side. """
