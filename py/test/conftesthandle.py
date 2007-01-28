@@ -64,7 +64,7 @@ class Conftest(object):
         modules.reverse()
         return self._get(name, modules)
 
-    def rget_path(self, name, path=None):
+    def rget_with_confmod(self, name, path=None):
         return self._rget(name, path)
 
     def _get(self, name, modules):

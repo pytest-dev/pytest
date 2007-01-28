@@ -122,7 +122,7 @@ class Config(object):
         """ same as previous, but returns conftest's path
         as well
         """
-        val, mod = self.conftest.rget_path(name, path)
+        val, mod = self.conftest.rget_with_confmod(name, path)
         return val, py.path.local(mod.__file__).dirpath()
 
     def initsession(self):
