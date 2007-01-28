@@ -34,14 +34,16 @@ class MySession(RemoteTerminalSession):
         print "MASTER: initializing remote socket gateway"
         gw = py.execnet.SocketGateway(*self.socketserveradr)
         rsync = MyRSync(delete=True)
+        pkgname = 'py' # xxx flexibilize
         channel = gw.remote_exec("""
             import os
-            path = os.path.join(os.environ['HOMEPATH'], 'pytestcache')
-            channel.send(path)
-        """)
-        remotetopdir = channel.receive()
-        rsync.add_target(gw, remotetopdir) 
-        sendpath = py.path.local(py.__file__).dirpath().dirpath()
+            topdir = os.path.join(os.environ['HOMEPATH'], 'pytestcache')
+            pkgdir = os.path.join(topdir, %r)
+            channel.send((topdir, pkgdir))
+        """ % (pkgname,))
+        remotetopdir, remotepkgdir = channel.receive()
+        rsync.add_target(gw, remotepkgdir) 
+        sendpath = py.path.local(py.__file__).dirpath()
         rsync.send(sendpath)
         channel = gw.remote_exec("""
             import os, sys
