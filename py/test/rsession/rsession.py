@@ -261,8 +261,8 @@ class LSession(AbstractSession):
             from py.__.apigen.tracer.docstorage import DocStorageAccessor
             apigen = py.path.local(self.config.option.apigen).pyimport()
             if not hasattr(apigen, 'build'):
-                raise NotImplementedError("Provided script does not seem "
-                                          "to contain build function")
+                raise NotImplementedError("%s does not contain 'build' "
+                                          "function" %(apigen,))
             print >>sys.stderr, 'building documentation'
             capture = py.io.OutErrCapture()
             try:
