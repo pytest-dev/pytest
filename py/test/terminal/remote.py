@@ -130,6 +130,8 @@ def slaverun_TerminalSession(channel):
     config.option.looponfailing = False 
     config.option.usepdb = False 
     config.option.executable = None
+    if failures:
+        config.option.verbose = True
 
     session = config.initsession()
     session.shouldclose = channel.isclosed 

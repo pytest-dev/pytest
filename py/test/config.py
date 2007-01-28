@@ -226,6 +226,7 @@ class Config(object):
         class override:
             def __init__(self, d):
                 self.__dict__.update(d)
+                self.__file__ = "<options from remote>"
         args, conftestdict, cmdlineopts = repr
         self.args = [self.topdir.join(x) for x in args]
         self.conftest.setinitial(self.args)
