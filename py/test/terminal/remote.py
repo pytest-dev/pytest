@@ -1,7 +1,7 @@
 from __future__ import generators
 import py
+from py.__.test.session import Session
 from py.__.test.terminal.out import getout 
-import sys
 
 def checkpyfilechange(rootdir, statcache={}):
     """ wait until project files are changed. """
@@ -51,9 +51,9 @@ def getfailureitems(failures):
             l.append(current) 
     return l
 
-class RemoteTerminalSession(object):
+class RemoteTerminalSession(Session):
     def __init__(self, config, file=None):
-        self.config = config 
+        super(RemoteTerminalSession, self).__init__(config=config)
         self._setexecutable()
         if file is None:
             file = py.std.sys.stdout 
@@ -123,8 +123,6 @@ def slaverun_TerminalSession(channel):
     topdir, repr, failures = channel.receive()
     print "SLAVE: received configuration, using topdir:", topdir
     config = py.test.config 
-    import sys
-    sys.stdout.flush()
     config.initdirect(topdir, repr, failures)
     config.option.session = None
     config.option.looponfailing = False 

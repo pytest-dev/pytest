@@ -1,13 +1,20 @@
 import py
 
+def setup_module(mod):
+    mod.datadir = setupdatadir()
+    mod.tmpdir = py.test.ensuretemp(mod.__name__) 
+
 def setupdatadir():
     datadir = py.test.ensuretemp("datadir")
-    if not datadir.listdir():
-        for name, content in namecontent:
+    names = [x.basename for x in datadir.listdir()]
+    for name, content in namecontent:
+        if name not in names:
             datadir.join(name).write(content)
     return datadir
 
 namecontent = [
+('syntax_error.py', "this is really not python\n"),
+
 ('disabled_module.py', py.code.Source('''
         disabled = True
 

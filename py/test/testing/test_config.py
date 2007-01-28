@@ -231,7 +231,8 @@ class TestSessionAndOptions:
 
     def test_sessionname_lookup_custom(self):
         self.tmpdir.join("conftest.py").write(py.code.Source("""
-            class MySession:
+            from py.__.test.session import Session
+            class MySession(Session):
                 def __init__(self, config):
                     self.config = config 
         """)) 
@@ -357,3 +358,4 @@ class TestConfigColitems:
         col3 = config._getcollector(config.topdir.dirpath())
         py.test.raises(ValueError, 
               "config.get_collector_trail(col3)")
+

@@ -16,15 +16,23 @@ from py.__.test.rsession.hostmanage import HostInfo, HostOptions, HostManager
 from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
     box_runner
 from py.__.test.rsession.reporter import LocalReporter, RemoteReporter
+from py.__.test.session import Session
 
-class AbstractSession(object):
+class AbstractSession(Session): 
     """
         An abstract session executes collectors/items through a runner. 
 
     """
     def __init__(self, config, optimise_localhost=True):
-        self.config = config
+        super(AbstractSession, self).__init__(config=config)
         self.optimise_localhost = optimise_localhost
+
+    def fixoptions(self):
+        option = self.config.option 
+        if option.runbrowser and not option.startserver:
+            #print "--runbrowser implies --startserver"
+            option.startserver = True
+        super(AbstractSession, self).fixoptions()
         
     def getpkgdir(path):
         path = py.path.local(path)
@@ -122,6 +130,7 @@ class RSession(AbstractSession):
     """ Remote version of session
     """
     def fixoptions(self):
+        super(RSession, self).fixoptions()
         config = self.config
         try:
             config.getvalue('disthosts')

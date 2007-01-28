@@ -23,6 +23,21 @@ class Session(object):
         if not self.config.option.nomagic:
             py.magic.revoke(assertion=1)
 
+    def fixoptions(self):
+        """ check, fix and determine conflicting options. """
+        option = self.config.option
+        # implied options
+        if option.usepdb:
+            if not option.nocapture:
+                option.nocapture = True
+        # conflicting options
+        if option.looponfailing and option.usepdb:
+            raise ValueError, "--looponfailing together with --pdb not supported."
+        if option.looponfailing and option.dist:
+            raise ValueError, "--looponfailing together with --dist not supported."
+        if option.executable and option.usepdb:
+            raise ValueError, "--exec together with --pdb not supported."
+
     def start(self, colitem): 
         """ hook invoked before each colitem.run() invocation. """ 
 

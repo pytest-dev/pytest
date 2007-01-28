@@ -48,7 +48,6 @@ class Config(object):
         args = [str(x) for x in args]
         cmdlineoption, args = self._parser.parse_args(args) 
         self.option.__dict__.update(vars(cmdlineoption))
-        fixoptions(self.option)  # XXX fixing should be moved to sessions
         if not args:
             args.append(py.std.os.getcwd())
         self.topdir = gettopdir(args)
@@ -130,9 +129,7 @@ class Config(object):
         """ return an initialized session object. """
         cls = self._getsessionclass()
         session = cls(self)
-        # XXX: all sessions should have one
-        if hasattr(session, 'fixoptions'):
-            session.fixoptions()
+        session.fixoptions()
         return session
 
     def _getsessionclass(self): 
@@ -271,28 +268,6 @@ def checkmarshal(name, value):
         py.std.marshal.dumps(value)
     except ValueError:
         raise ValueError("%s=%r is not marshallable" %(name, value))
-
-def fixoptions(option):
-    """ sanity checks and making option values canonical. """
-
-    # implied options
-    if option.usepdb:
-        if not option.nocapture:
-            #print "--pdb implies --nocapture"
-            option.nocapture = True
-
-    if option.runbrowser and not option.startserver:
-        #print "--runbrowser implies --startserver"
-        option.startserver = True
-
-    # conflicting options 
-    if option.looponfailing and option.usepdb:
-        raise ValueError, "--looponfailing together with --pdb not supported."
-    if option.looponfailing and option.dist:
-        raise ValueError, "--looponfailing together with --dist not supported."
-    if option.executable and option.usepdb:
-        raise ValueError, "--exec together with --pdb not supported."
-
 
 def gettopdir(args): 
     """ return the top directory for the given paths.

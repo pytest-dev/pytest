@@ -1,9 +1,38 @@
 import py
-from setupdata import setupdatadir
+from setupdata import setup_module # sets up global 'tmpdir' 
 
-def setup_module(mod):
-    mod.datadir = setupdatadir()
-    mod.tmpdir = py.test.ensuretemp(mod.__name__) 
+implied_options = {
+    '--pdb': 'usepdb and nocapture', 
+    '-v': 'verbose', 
+    '-l': 'showlocals',
+    '--runbrowser': 'startserver and runbrowser', 
+}
+
+conflict_options = ('--looponfailing --pdb',
+                    '--dist --pdb', 
+                    '--exec=%s --pdb' % py.std.sys.executable, 
+                   )
+
+def test_conflict_options():
+    for spec in conflict_options: 
+        opts = spec.split()
+        yield check_conflict_option, opts
+
+def check_conflict_option(opts):
+    print "testing if options conflict:", " ".join(opts)
+    config = py.test.config._reparse(opts + [datadir/'filetest.py'])
+    py.test.raises((ValueError, SystemExit), """
+        config.initsession()
+    """)
+    
+def test_implied_options():
+    for key, expr in implied_options.items():
+        yield check_implied_option, [key], expr
+
+def check_implied_option(opts, expr):
+    config = py.test.config._reparse(opts + [datadir/'filetest.py'])
+    session = config.initsession()
+    assert eval(expr, session.config.option.__dict__)
 
 def test_default_session_options():
     for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
@@ -63,15 +92,7 @@ class TestKeywordSelection:
             l = session.getitemoutcomepairs(py.test.Item.Skipped)
             assert l[0][0].name == 'test_1' 
    
-#f = open('/tmp/logfile', 'wa')  
 class TestTerminalSession: 
-
-    def setup_class(cls):
-        (datadir / 'syntax_error.py').write("\nthis is really not python\n")
-
-    def teardown_class(cls):
-        (datadir / 'syntax_error.py').remove()
-
     def mainsession(self, *args): 
         from py.__.test.terminal.terminal import TerminalSession
         self.file = py.std.StringIO.StringIO() 
@@ -291,72 +312,3 @@ class TestTerminalSession:
         expected_output = '\nE   ' + line_to_report + '\n'
         print 'Looking for:', expected_output
         assert expected_output in out
-
-
-class TestRemote: 
-    def XXXtest_rootdir_is_package(self): 
-        d = tmpdir.ensure('rootdirtest1', dir=1) 
-        d.ensure('__init__.py')
-        x1 = d.ensure('subdir', '__init__.py')
-        x2 = d.ensure('subdir2', '__init__.py')
-        x3 = d.ensure('subdir3', 'noinit', '__init__.py')
-        assert getrootdir([x1]) == d 
-        assert getrootdir([x2]) == d 
-        assert getrootdir([x1,x2]) == d 
-        assert getrootdir([x3,x2]) == d 
-        assert getrootdir([x2,x3]) == d 
-
-    def XXXtest_rootdir_is_not_package(self): 
-        one = tmpdir.ensure('rootdirtest1', 'hello') 
-        rootdir = getrootdir([one]) 
-        assert rootdir == one.dirpath() 
-
-    def test_exec(self): 
-        o = tmpdir.ensure('remote', dir=1) 
-        tfile = o.join('test_exec.py')
-        tfile.write(py.code.Source("""
-            def test_1():
-                assert 1 == 0 
-        """))
-        print py.std.sys.executable
-        config = py.test.config._reparse(
-                        ['--exec=' + py.std.sys.executable, 
-                         o])
-        cls = config._getsessionclass() 
-        out = []  # out = py.std.Queue.Queue() 
-        session = cls(config, out.append) 
-        session.main()
-        for s in out: 
-            if s.find('1 failed') != -1: 
-                break 
-        else: 
-            py.test.fail("did not see test_1 failure") 
-
-    def test_looponfailing(self): 
-        o = tmpdir.ensure('looponfailing', dir=1) 
-        tfile = o.join('test_looponfailing.py')
-        tfile.write(py.code.Source("""
-            def test_1():
-                assert 1 == 0 
-        """))
-        print py.std.sys.executable
-        config = py.test.config._reparse(['--looponfailing', str(o)])
-        cls = config._getsessionclass() 
-        out = py.std.Queue.Queue() 
-        session = cls(config, out.put) 
-        pool = py._thread.WorkerPool() 
-        reply = pool.dispatch(session.main)
-        while 1: 
-            s = out.get(timeout=1.0)
-            if s.find('1 failed') != -1: 
-                break 
-            print s
-        else: 
-            py.test.fail("did not see test_1 failure") 
-        # XXX we would like to have a cleaner way to finish 
-        try: 
-            reply.get(timeout=0.5) 
-        except IOError, e: 
-            assert str(e).lower().find('timeout') != -1 
-
-        
