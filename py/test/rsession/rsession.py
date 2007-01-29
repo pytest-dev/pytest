@@ -277,19 +277,9 @@ class LSession(AbstractSession):
             print >>sys.stderr, 'building documentation'
             capture = py.io.OutErrCapture()
             try:
-                try:
-                    pkgdir = self.getpkgdir(self.config.args[0])
-                    apigen.build(pkgdir,
-                                 DocStorageAccessor(self.docstorage))
-                except AttributeError:
-                    import traceback
-                    exc, e, tb = sys.exc_info()
-                    print '%s - %s' % (exc, e)
-                    print ''.join(traceback.format_tb(tb))
-                    del tb
-                    print '-' * 79
-                    raise NotImplementedError("Provided script does not seem "
-                                              "to contain build function")
+                pkgdir = self.getpkgdir(self.config.args[0])
+                apigen.build(pkgdir,
+                             DocStorageAccessor(self.docstorage))
             finally:
                 capture.reset()
 
@@ -329,4 +319,5 @@ class LSession(AbstractSession):
                    and not self.config.option.nocapture:
                 return box_runner
             return plain_runner
+
 
