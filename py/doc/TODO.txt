@@ -102,14 +102,15 @@ testing
   use that check if all py and PyPy tests pass
   as good as they do without. 
 
-* make --box run on the trunk. This requires having some sort of
+* (DONE, except py.path.svn) make --box run on the trunk.
+  This requires having some sort of
   is_boxed() function, while having it on config object seems
   to be not that smart idea.
 
 * (DONE more or less) try to be as 2.2 compatible as possible 
   (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
 
-* (DONE for rsession) have all sessions check their options via
+* (DONE) have all sessions check their options via
   Session.fixoptions() and have session-particular tests and checks
   accordingly. 
 
