@@ -119,7 +119,8 @@ distributed testing / RSession
 * (DONE, except apigen) cleanup initialisation of config / get rid of pkgdir
 * unify option names (dist_*) 
 * (optional) see if more of py/test/session.py's Session can be reused 
-* have dist_rsyncroots be relative to the conftest.py file
+* (DONE, but slightly different way)
+  have dist_rsyncroots be relative to the conftest.py file
   so that projects can define it for themselves, e.g. 
   pypy/conftest.py would contain::
   
@@ -131,6 +132,15 @@ distributed testing / RSession
 
   method with tests and documentation, and with providing
   the right example. 
+
+  way it's done:
+
+  dist_rsyncroots refer *only* to a directory where it's placed.
+  This avoids tons of confusion, like what to do if different conftests
+  point to the same place. So by now pypy rootdir should contain
+  conftest.py with::
+
+    dist_rsyncroots = ['pypy', 'pylib', 'lib-python']
 
 code quality
 -----------------
