@@ -261,6 +261,8 @@ class TestExecution(LocalSetup):
                 assert not numdir.new(ext=str(i-3)).check()
 
     def test_locked_make_numbered_dir(self):
+        if py.test.config.is_boxed():
+            py.test.skip("Fails under boxing")
         root = self.tmpdir
         for i in range(10):
             numdir = local.make_numbered_dir(prefix='base.', rootdir=root,
