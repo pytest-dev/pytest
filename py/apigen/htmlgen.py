@@ -19,26 +19,23 @@ def deindent(str, linesep=os.linesep):
         line to the side always, and determines the indentation of the rest
         of the text by taking that of the least indented (filled) line
     """
-    lines = str.split(linesep)
+    lines = str.strip().split(linesep)
     normalized = []
     deindent = None
     normalized.append(lines[0].strip())
+    # replace tabs with spaces, empty lines that contain spaces only, and
+    # find out what the smallest indentation is
     for line in lines[1:]:
-        if not line.strip():
+        line = line.replace('\t', '     ')
+        stripped = line.strip()
+        if not stripped:
             normalized.append('')
         else:
-            line = line.rstrip()
-            line = line.replace('\t', '     ')
-            indent = 0
-            for c in line:
-                if c != ' ':
-                    break
-                indent += 1
+            rstripped = line.rstrip()
+            indent = len(rstripped) - len(stripped)
             if deindent is None or indent < deindent:
                 deindent = indent
             normalized.append(line)
-    while normalized[-1] == '':
-        normalized.pop()
     ret = [normalized[0]]
     for line in normalized[1:]:
         if not line:
@@ -182,10 +179,12 @@ def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl,
                       stylesheeturl=stylesheeturl, scripturls=scripturls)
     page.set_content(contentel)
     here = py.magic.autopath().dirpath()
-    style = here.join('style.css').read()
-    outputpath.join('style.css').write(style)
-    apijs = here.join('api.js').read()
-    outputpath.join('api.js').write(apijs)
+    style = here.join(stylesheeturl.split('/')[-1]).read()
+    outputpath.join(stylesheeturl.split('/')[-1]).write(style)
+    for spath in scripturls:
+        sname = spath.split('/')[-1]
+        sdata = here.join(sname).read()
+        outputpath.join(sname).write(sdata)
     return page
 
 # the PageBuilder classes take care of producing the docs (using the stuff
@@ -281,6 +280,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         try:
             tag = H.NonPythonSource(unicode(fspath.read(), 'utf-8'))
         except UnicodeError:
+            # XXX we should fix non-ascii support here!!
             tag = H.NonPythonSource('no source available (binary file?)')
         nav = self.build_navigation(fspath)
         return tag, nav
@@ -380,7 +380,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             csdiv,
         )
         snippet = H.FunctionDescription(
-            H.FunctionDef(localname, argdesc),
+            H.FunctionDef('def %s' % (localname,), argdesc),
             H.Docstring(docstring or '*no docstring available*'),
             H.div(H.a('show/hide info',
                       href='#',
@@ -684,7 +684,7 @@ class ApiPageBuilder(AbstractPageBuilder):
                     call_site[0].filename, call_site[0].lineno + 1),
                 href='#',
                 onclick="showhideel(getnextsibling(this)); return false;"),
-            H.div(tbtag, style='display: none')
+            H.div(tbtag, style='display: none', class_='callstackitem'),
         )
         return tag
     

@@ -15,6 +15,44 @@ from py.__.apigen.tracer import model
 
 sorted = py.builtin.sorted
 
+def pkg_to_dict(module):
+    defs = module.__package__.exportdefs
+    d = {}
+    for key, value in defs.iteritems():
+        chain = key.split('.')
+        base = module
+        for elem in chain:
+            base = getattr(base, elem)
+        if value[1] == '*':
+            d.update(get_star_import_tree(base, key))
+        else:
+            d[key] = base
+    return d
+
+def get_star_import_tree(module, modname):
+    """ deal with '*' entries in an initpkg situation """
+    ret = {}
+    modpath = py.path.local(inspect.getsourcefile(module))
+    pkgpath = module.__package__.getpath()
+    for objname in dir(module):
+        if objname.startswith('_'):
+            continue # also skip __*__ attributes
+        obj = getattr(module, objname)
+        if (isinstance(obj, types.ClassType) or
+                isinstance(obj, types.ObjectType)):
+            try:
+                sourcefile_object = py.path.local(
+                                        inspect.getsourcefile(obj))
+            except TypeError:
+                continue
+            else:
+                if sourcefile_object.strpath != modpath.strpath:
+                    # not in this package
+                    continue
+            dotted_name = '%s.%s' % (modname, objname)
+            ret[dotted_name] = obj
+    return ret
+    
 class DocStorage(object):
     """ Class storing info about API
     """
@@ -117,45 +155,10 @@ class DocStorage(object):
 
     def from_pkg(self, module, keep_frames=False):
         self.module = module
-        defs = module.__package__.exportdefs
-        d = {}
-        for key, value in defs.iteritems():
-            chain = key.split('.')
-            base = module
-            for elem in chain:
-                base = getattr(base, elem)
-            if value[1] == '*':
-                d.update(self.get_star_import_tree(base, key))
-            else:
-                d[key] = base
-        self.from_dict(d, keep_frames)
+        self.from_dict(pkg_to_dict(module), keep_frames)
         # XXX
         return self
 
-    def get_star_import_tree(self, module, modname):
-        """ deal with '*' entries in an initpkg situation """
-        ret = {}
-        modpath = py.path.local(inspect.getsourcefile(module))
-        pkgpath = module.__package__.getpath()
-        for objname in dir(module):
-            if objname.startswith('_'):
-                continue # also skip __*__ attributes
-            obj = getattr(module, objname)
-            if (isinstance(obj, types.ClassType) or
-                    isinstance(obj, types.ObjectType)):
-                try:
-                    sourcefile_object = py.path.local(
-                                            inspect.getsourcefile(obj))
-                except TypeError:
-                    continue
-                else:
-                    if sourcefile_object.strpath != modpath.strpath:
-                        # not in this package
-                        continue
-                dotted_name = '%s.%s' % (modname, objname)
-                ret[dotted_name] = obj
-        return ret
-    
     def from_module(self, func):
         raise NotImplementedError("From module")
 

@@ -47,6 +47,7 @@ def setup_fs_project(name):
             'main.SomeTestClass': ('./sometestclass.py', 'SomeTestClass'),
             'main.SomeTestSubClass': ('./sometestsubclass.py',
                                       'SomeTestSubClass'),
+            'somenamespace': ('./somenamespace.py', '*'),
         })
     """))
     temp.ensure('pak/test/test_pak.py').write(py.code.Source("""\
@@ -82,9 +83,9 @@ def setup_fs_project(name):
 def test_get_documentable_items():
     fs_root, package_name = setup_fs_project('test_get_documentable_items')
     documentable = apigen.get_documentable_items(fs_root.join(package_name))
-    assert sorted(documentable.__package__.exportdefs.keys()) ==  [
+    assert sorted(documentable.keys()) ==  [
         'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
-        'main.sub.func']
+        'main.sub.func', 'somenamespace.baz', 'somenamespace.foo']
 
 def test_apigen_functional():
     fs_root, package_name = setup_fs_project('test_apigen_functional')

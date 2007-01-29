@@ -10,11 +10,12 @@ import sys
 from py.__.apigen import htmlgen
 from py.__.apigen import linker
 from py.__.apigen import project
+from py.__.apigen.tracer.docstorage import pkg_to_dict
 
 def get_documentable_items(pkgdir):
     sys.path.insert(0, str(pkgdir.dirpath()))
     rootmod = __import__(pkgdir.basename)
-    return rootmod
+    return pkg_to_dict(rootmod)
 
 def build(pkgdir, dsa):
     l = linker.Linker()

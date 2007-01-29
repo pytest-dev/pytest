@@ -6,8 +6,9 @@ import py
 import sys
 
 #try:
-from py.__.apigen.tracer.tracer import DocStorage, Tracer
-from py.__.apigen.tracer.docstorage import DocStorageAccessor
+from py.__.apigen.tracer.tracer import Tracer
+from py.__.apigen.tracer.docstorage import DocStorageAccessor, DocStorage, \
+                                           get_star_import_tree, pkg_to_dict
 from py.__.apigen.tracer.testing.runtest import cut_pyc
 from py.__.apigen.tracer.description import FunctionDesc
 from py.__.apigen.tracer import model
@@ -426,7 +427,7 @@ def setup_pkg_docstorage():
 
 def test_get_initpkg_star_items():
     pkg, ds = setup_pkg_docstorage()
-    sit = ds.get_star_import_tree(pkg.other, 'pkg.other')
+    sit = get_star_import_tree(pkg.other, 'pkg.other')
     assert sorted(sit.keys()) == ['pkg.other.baz', 'pkg.other.foo']
     t = Tracer(ds)
     t.start_tracing()
@@ -445,4 +446,12 @@ def test_get_initpkg_star_items():
     cell = desc.fields['get_somevar'].inputcells[0]
     assert isinstance(cell, model.SomeInstance)
     assert cell.classdef.cls is desc.pyobj
+
+def test_pkg_to_dict():
+    pkg, ds = setup_pkg_docstorage()
+    assert sorted(pkg_to_dict(pkg).keys()) == ['main.SomeClass',
+                                               'main.SomeSubClass',
+                                               'main.sub.func',
+                                               'other.baz',
+                                               'other.foo']
 

@@ -42,10 +42,13 @@
   font-weight: bold;
 }
 
-body, div, p, h1, h2, h3, h4 {
-  font-family: Trebuchet MS, Verdana, Arial;
+body {
   background-color: #FFE;
   color: black;
+}
+
+body, div, p, h1, h2, h3, h4 {
+  font-family: Trebuchet MS, Verdana, Arial;
 }
 
 a {
@@ -107,5 +110,11 @@ a:hover {
   border: 1px solid black;
   color: black;
   padding: 1em;
+  background-color: white;
+}
+
+.callstackitem {
+  border: 1px solid black;
+  margin-bottom: 1em;
 }
 
