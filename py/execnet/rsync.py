@@ -139,6 +139,7 @@ class RSync(object):
             basename = path[len(self.sourcedir) + 1:]
             if not linkpoint.startswith(os.sep):
                 # relative link, just send it
+                # XXX: do sth with ../ links
                 self._send_link(basename, linkpoint)
             elif linkpoint.startswith(self.sourcedir):
                 self._send_link(basename, linkpoint[len(self.sourcedir) + 1:])
