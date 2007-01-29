@@ -636,15 +636,17 @@ class ApiPageBuilder(AbstractPageBuilder):
         return py.path.local(sourcefile).relto(self.projpath)
 
     def build_callsite(self, functionname, call_site):
-        tbtag = self.gen_traceback(functionname, call_site)
+        tbtag = self.gen_traceback(functionname, reversed(call_site))
         tag = H.CallStackItem(
-            H.a("%s - line %s" % (call_site[0].filename, call_site[0].lineno + 1),
+            H.a("show/hide stack trace %s - line %s" % (
+                    call_site[0].filename, call_site[0].lineno + 1),
                 href='#',
                 onclick="showhideel(getnextsibling(this)); return false;"),
             H.div(tbtag, style='display: none')
         )
         return tag
     
+    _reg_source = py.std.re.compile(r'([^>]*)<(.*)>')
     def gen_traceback(self, funcname, call_site):
         tbdiv = H.div()
         for line in call_site:
@@ -662,8 +664,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                 linktext = '%s - line %s' % (sourcefile, line.lineno + 1)
                 # skip py.code.Source objects and source files outside of the
                 # package
-                if (not sourcefile.startswith('None') and
-                        self.is_in_pkg(sourcefile)):
+                is_code_source = self._reg_source.match(sourcefile)
+                if (not is_code_source and self.is_in_pkg(sourcefile)):
                     href = self.linker.get_lazyhref(sourcefile)
                     sourcelink = H.a(linktext, href=href)
                 else:
