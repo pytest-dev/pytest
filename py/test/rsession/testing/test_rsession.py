@@ -161,8 +161,7 @@ class TestRSessionRemote:
         teardown_events = []
         
         config = py.test.config._reparse([])
-        opts = HostOptions(optimise_localhost=False, 
-                           rsync_roots=[py.path.local(py.__file__).dirpath()])
+        opts = HostOptions(optimise_localhost=False)
         hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(setup_events.append)
         hm.teardown_hosts(teardown_events.append, 
@@ -189,8 +188,7 @@ class TestRSessionRemote:
         allevents = []
         
         config = py.test.config._reparse([])
-        opts = HostOptions(optimise_localhost=False, 
-                           rsync_roots=[py.path.local(py.__file__).dirpath()])
+        opts = HostOptions(optimise_localhost=False)
         hm = HostManager(hosts, config, opts)
         nodes = hm.init_hosts(allevents.append)
         
@@ -237,8 +235,7 @@ class TestRSessionRemote:
         from py.__.test.rsession.master import defaultconftestnames
         defaultconftestnames.append("custom")
         try:
-            opts = HostOptions(optimise_localhost=False, 
-                               rsync_roots=[py.path.local(py.__file__).dirpath()])
+            opts = HostOptions(optimise_localhost=False)
             hm = HostManager(hosts, config, opts)
             nodes = hm.init_hosts(allevents.append)
 

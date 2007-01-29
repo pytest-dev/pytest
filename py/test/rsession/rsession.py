@@ -150,7 +150,7 @@ class RSession(AbstractSession):
         """ main loop for running tests. """
         args = self.config.args
 
-        sshhosts, remotepython, rsync_roots = self.read_distributed_config()
+        sshhosts, remotepython = self.read_distributed_config()
         reporter, startserverflag = self.init_reporter(reporter,
             sshhosts, RemoteReporter)
         reporter, checkfun = self.wrap_reporter(reporter)
@@ -158,8 +158,7 @@ class RSession(AbstractSession):
         reporter(report.TestStarted(sshhosts))
 
         done_dict = {}
-        hostopts = HostOptions(rsync_roots=rsync_roots,
-                               remote_python=remotepython,
+        hostopts = HostOptions(remote_python=remotepython,
                             optimise_localhost=self.optimise_localhost)
         hostmanager = HostManager(sshhosts, self.config, hostopts)
         try:
@@ -194,26 +193,11 @@ class RSession(AbstractSession):
     def read_distributed_config(self):
         """ Read from conftest file the configuration of distributed testing
         """
-        try:
-            conftest = self.config.conftest
-            value, mod = conftest.rget_with_confmod('dist_rsync_roots')
-        except KeyError:
-            rsync_roots = [self.config.topdir] # our best guess likely
-        else:
-            assert isinstance(value, (list,tuple)), value
-            base = py.path.local(mod.__file__).dirpath()
-            print "base", base
-            rsync_roots = [base.join(path, abs=True)
-                                for path in value]
-            for root in rsync_roots:
-                assert root.check(dir=1)
-            #rsync_roots = value
-            print "rsync_roots", rsync_roots
         sshhosts = [HostInfo(i) for i in
                     self.config.getvalue("dist_hosts")]
         parse_directories(sshhosts)
         remotepython = self.config.getvalue("dist_remotepython")
-        return sshhosts, remotepython, rsync_roots
+        return sshhosts, remotepython
 
     def dispatch_tests(self, nodes, reporter, checkfun, done_dict):
         colitems = self.config.getcolitems()

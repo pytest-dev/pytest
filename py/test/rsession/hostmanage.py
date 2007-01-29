@@ -41,20 +41,24 @@ class HostInfo(object):
 class HostRSync(py.execnet.RSync):
     """ An rsync wrapper which filters out *~, .svn/ and *.pyc
     """
-    def __init__(self, rsync_roots):
+    def __init__(self, config):
         py.execnet.RSync.__init__(self, delete=True)
-        self.rsync_roots = rsync_roots
+        self.config = config
 
     def filter(self, path):
         if path.endswith('.pyc') or path.endswith('~'):
             return False
         dir, base = os.path.split(path)
+        try:
+            rsync_roots = self.config.getvalue_from_confpath("dist_rsyncroots",
+                                                             dir)
+        except AttributeError:
+            rsync_roots = None
         if base == '.svn':
             return False
-        if dir != self.sourcedir: 
+        if rsync_roots is None:
             return True
-        else:
-            return self.rsync_roots is None or path in self.rsync_roots
+        return base in rsync_roots
 
 class DummyGateway(object):
     pass
@@ -64,10 +68,9 @@ class HostOptions(object):
     as different function parameters, mostly related to
     tests only
     """
-    def __init__(self, rsync_roots=None, remote_python="python",
+    def __init__(self, remote_python="python",
                  optimise_localhost=True, do_sync=True,
                  create_gateways=True):
-        self.rsync_roots = rsync_roots
         self.remote_python = remote_python
         self.optimise_localhost = optimise_localhost
         self.do_sync = do_sync
@@ -145,7 +148,7 @@ class HostManager(object):
         rsynced = {}
 
         if self.options.do_sync:
-            rsync = HostRSync(self.options.rsync_roots)
+            rsync = HostRSync(self.config)
         for host in hosts:
             if not self.need_rsync(rsynced, host.hostname, host.relpath):
                 reporter(report.HostReady(host))

@@ -11,6 +11,7 @@ class Conftest(object):
     """ 
     def __init__(self, path=None):
         self._path2confmods = {}
+        self._path2conftest_files = {} # direct cache of conftest files, to avoid confusion
         if path is not None:
             self.setinitial([path])
 
@@ -41,15 +42,29 @@ class Conftest(object):
         except KeyError:
             dp = path.dirpath()
             if dp == path: 
-                return [importconfig(defaultconftestpath)]
+                return [self.importconfig(defaultconftestpath)]
             clist = self.getconftestmodules(dp)
             conftestpath = path.join("conftest.py")
             if conftestpath.check(file=1):
-                clist.append(importconfig(conftestpath))
+                clist.append(self.importconfig(conftestpath))
             self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
         # affect us by always returning a copy of the actual list 
         return clist[:]
+
+    def getconftest(self, path):
+        """ Return a direct module of that path
+        """
+        try:
+            return self._path2conftest_files[path]
+        except KeyError:
+            conftestpath = path.join("conftest.py")
+            if conftestpath.check(file=1):
+                return self.importconfig(conftestpath)
+            raise AttributeError
+        # we raise here AttributeError to unify error reporting in case
+        # of lack of variable in conftest or lack of file, but we do not want to
+        # hide ImportError
 
     # XXX no real use case, may probably go 
     #def lget(self, name, path=None):
@@ -57,29 +72,32 @@ class Conftest(object):
     #    return self._get(name, modules)
    
     def rget(self, name, path=None):
-        return self._rget(name, path)[0]
-
-    def _rget(self, name, path=None):
         modules = self.getconftestmodules(path)
         modules.reverse()
         return self._get(name, modules)
 
-    def rget_with_confmod(self, name, path=None):
-        return self._rget(name, path)
+    def rget_path(self, name, path):
+        """ can raise AttributeError
+        """
+        return getattr(self.getconftest(path), name)
 
     def _get(self, name, modules):
         for mod in modules:
             try:
-                return getattr(mod, name), mod
+                return getattr(mod, name)
             except AttributeError:
                 continue
         raise KeyError, name
 
-def importconfig(configpath):
-    if not configpath.dirpath('__init__.py').check(file=1): 
-        # HACK: we don't want any "globally" imported conftest.py, 
-        #       prone to conflicts and subtle problems 
-        modname = str(configpath).replace('.', configpath.sep) 
-        return configpath.pyimport(modname=modname) 
-    else: 
-        return configpath.pyimport() 
+    def importconfig(self, configpath):
+        # We could have used caching here, but it's redundant since
+        # they're cached on path anyway, so we use it only when doing rget_path
+        if not configpath.dirpath('__init__.py').check(file=1): 
+            # HACK: we don't want any "globally" imported conftest.py, 
+            #       prone to conflicts and subtle problems 
+            modname = str(configpath).replace('.', configpath.sep)
+            mod = configpath.pyimport(modname=modname)
+        else:
+            mod = configpath.pyimport()
+        self._path2conftest_files[configpath.dirpath()] = mod
+        return mod

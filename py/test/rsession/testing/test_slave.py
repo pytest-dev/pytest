@@ -179,4 +179,3 @@ def test_pidinfo():
         os._exit(0)
     # check if this really exits
     py.test.raises(OSError, "os.waitpid(pid, 0)")
-
