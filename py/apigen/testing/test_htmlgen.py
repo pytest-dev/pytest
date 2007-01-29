@@ -43,3 +43,12 @@ def test_source_dirs_files():
     assert dirnames == ['sub']
     assert filenames == ['file1.py', 'file3.c']
 
+def test_deindent():
+    assert htmlgen.deindent('foo\n\n    bar\n    ') == 'foo\n\nbar\n'
+    assert htmlgen.deindent(' foo\n\n    bar\n    ') == 'foo\n\nbar\n'
+    assert htmlgen.deindent('foo\n\n    bar\n    baz') == 'foo\n\nbar\nbaz\n'
+    assert htmlgen.deindent(' foo\n\n    bar\n      baz\n') == (
+        'foo\n\nbar\n  baz\n')
+    assert htmlgen.deindent('foo\n\n      bar\n    baz\n') == (
+        'foo\n\n  bar\nbaz\n')
+

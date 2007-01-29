@@ -12,6 +12,41 @@ sorted = py.builtin.sorted
 html = py.xml.html
 raw = py.xml.raw
 
+def deindent(str, linesep=os.linesep):
+    """ de-indent string
+
+        can be used to de-indent Python docstrings, it de-indents the first
+        line to the side always, and determines the indentation of the rest
+        of the text by taking that of the least indented (filled) line
+    """
+    lines = str.split(linesep)
+    normalized = []
+    deindent = None
+    normalized.append(lines[0].strip())
+    for line in lines[1:]:
+        if not line.strip():
+            normalized.append('')
+        else:
+            line = line.rstrip()
+            line = line.replace('\t', '     ')
+            indent = 0
+            for c in line:
+                if c != ' ':
+                    break
+                indent += 1
+            if deindent is None or indent < deindent:
+                deindent = indent
+            normalized.append(line)
+    while normalized[-1] == '':
+        normalized.pop()
+    ret = [normalized[0]]
+    for line in normalized[1:]:
+        if not line:
+            ret.append(line)
+        else:
+            ret.append(line[deindent:])
+    return '%s\n' % (linesep.join(ret),)
+
 # HTML related stuff
 class H(html):
     class Content(html.div):
@@ -50,8 +85,9 @@ class H(html):
     class ParameterDescription(html.div):
         pass
 
-    class Docstring(html.div):
-        style = html.Style(white_space='pre', min_height='3em')
+    class Docstring(html.pre):
+        #style = html.Style(white_space='pre', min_height='3em')
+        pass
 
     class Navigation(html.div):
         style = html.Style(min_height='99%', float='left', margin_top='1.2em',
@@ -309,7 +345,9 @@ class ApiPageBuilder(AbstractPageBuilder):
         """ build the html for a class method """
         # XXX we may want to have seperate
         func = self.dsa.get_obj(dotted_name)
-        docstring = func.__doc__
+        docstring = func.__doc__ 
+        if docstring:
+            docstring = deindent(docstring)
         localname = func.__name__
         argdesc = get_param_htmldesc(self.linker, func)
         valuedesc = self.build_callable_signature_description(dotted_name)
@@ -343,7 +381,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         )
         snippet = H.FunctionDescription(
             H.FunctionDef(localname, argdesc),
-            H.Docstring(docstring or H.em('no docstring available')),
+            H.Docstring(docstring or '*no docstring available*'),
             H.div(H.a('show/hide info',
                       href='#',
                       onclick=('showhideel(getnextsibling(this));'
@@ -372,6 +410,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                     href=self.linker.get_lazyhref(sourcefile)))
 
         docstring = cls.__doc__
+        if docstring:
+            docstring = deindent(docstring)
         methods = self.dsa.get_class_methods(dotted_name)
         basehtml = []
         bases = self.dsa.get_possible_base_classes(dotted_name)
@@ -394,7 +434,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         snippet = H.ClassDescription(
             # XXX bases HTML
             H.ClassDef('%s(' % (clsname,), *basehtml),
-            H.Docstring(docstring or H.em('no docstring available')),
+            H.Docstring(docstring or '*no docstring available*'),
             sourcelink,
         )
         if methods:
@@ -413,9 +453,11 @@ class ApiPageBuilder(AbstractPageBuilder):
             docstring = None
         else:
             docstring = obj.__doc__
+            if docstring:
+                docstring = deindent(docstring)
         snippet = H.NamespaceDescription(
             H.NamespaceDef(namespace_dotted_name),
-            H.Docstring(docstring or H.em('no docstring available'))
+            H.Docstring(docstring or '*no docstring available*')
         )
         for dotted_name in sorted(item_dotted_names):
             itemname = dotted_name.split('.')[-1]

@@ -19,7 +19,10 @@ class CallFrame(object):
         self.filename = frame.code.raw.co_filename
         self.lineno = frame.lineno
         self.firstlineno = frame.code.firstlineno
-        self.source = getsource(frame.code.raw)
+        try:
+            self.source = getsource(frame.code.raw)
+        except IOError:
+            self.source = "could not get to source"
 
     def _getval(self):
         return (self.filename, self.lineno)

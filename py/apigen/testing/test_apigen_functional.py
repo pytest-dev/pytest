@@ -69,6 +69,13 @@ def setup_fs_project(name):
             assert pak.main.sub.func(20) is None
             s = pak.main.func(pak.main.SomeTestClass, 10)
             assert isinstance(s, pak.main.SomeTestClass)
+
+            # some nice things to confuse the tracer/storage
+            source = py.code.Source('''\
+                pak.main.sub.func(10)
+            ''')
+            c = compile(str(source), '<test>', 'exec')
+            exec c in globals()
     """))
     return temp, 'pak'
 
