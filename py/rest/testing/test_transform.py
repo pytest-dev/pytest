@@ -22,8 +22,7 @@ def test_transform_basic_html():
                             '<pre>foo\tbar</pre>'),
                            (Rest(Paragraph(Link('foo',
                                                 'http://www.foo.com/'))),
-                            ('<p>\n  <a href="http://www.foo.com/">foo</a>'
-                             '</p>'))):
+                            '<p><a href="http://www.foo.com/">foo</a></p>')):
         html = convert_to_html(rest)
         assert html == expected
 
