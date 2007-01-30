@@ -98,10 +98,7 @@ class DoctestText(py.test.Item):
                 linesep = '\r'
             else:
                 linesep = '\r\n'
-        print 'linesep:', repr(linesep)
         s = s.replace(linesep, '\n')
-        self.fspath.write(s)
-        print 's:', repr(s)
         return s
         
 class LinkCheckerMaker(py.test.collect.Collector): 
