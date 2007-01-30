@@ -4,7 +4,7 @@ The py.execnet library
 .. contents::
 .. sectnum::
 
-Execnet deals with letting your python programs execute and 
+``py.execnet`` deals with letting your python programs execute and 
 communicate across process and computer barriers.  At the
 core it is a very simple and powerful mechanism: executing 
 source code at "the other side" and communicating with
@@ -15,35 +15,18 @@ in some ways.  So some of the described features are not
 there yet.  You may refer to the `py API`_ reference for
 further information. 
 
-The "shpy" way, historical remarks 
-----------------------------------
-
-Some of you may have seen the pygame-based editor **shpy**
-that Armin Rigo, Holger Krekel and Michael Hudson demonstrated
-at EuroPython 2004 during the lightning talks. It is a
-multiline interactive python environment which allows multiple
-remote users to have their own cursors and shared interaction
-with the graphical shell which can execute python code, of
-course. 
-
-**py.execnet** extracts and refines the basic mechanism that
-was originally developed from the one-week hack that is the
-current **shpy**.  No, the latter is not released but hopefully
-Armin, Holger and others get to do a second one-week sprint at
-some point to be able to release it. If you are interested
-drop them a note. This is real fun if you are willing to 
-bend your mind a bit. 
 
 A new view on distributed execution
 ----------------------------------- 
 
-**py.execnet** takes the view of **asynchronously executing
-client-provided code fragments** to help address a core
-problem of distributed programs.  A core feature of
-**py.execnet** is that **the communication protocols can be
-defined by the client side**.  Usually, with server/client
-apps and especially RMI systems you often have to upgrade your
-server if you upgrade your client. 
+**py.execnet** lets you asynchronously execute source code on
+remote places.  The sending and receiving side communicate via
+Channels that transport marshallable objects.  A core feature
+of **py.execnet** is that **the communication protocols can be
+completely defined by the client side**.  Usually, with
+server/client apps and especially Remote Method Based (RMI) 
+approaches you have to define interfaces and have to
+upgrade your server and client and restart both. 
 
 What about Security? Are you completely nuts? 
 ---------------------------------------------
@@ -68,24 +51,29 @@ With ''py.execnet'' you get the means
 High Level Interface: **remote_exec**
 -------------------------------------
 
-These gateways offer one main high level interface::
+All gateways offer one main high level interface,
+e.g.  
 
     def remote_exec(source): 
         """return channel object for communicating with the asynchronously 
         executing 'source' code which will have a corresponding 'channel' 
         object in its executing namespace."""
-    
-The most important property of execnet gateways is that the
-protocol they speak with each other ``is determined by the
-client side``.  If you open a gateway on some server in order
-to coordinate with some other programs you determine your
-communication protocol.  Multiple clients can run their own
-gateway versions in the same remote process (e.g. connecting
-through their version of a SocketGateway). 
+
+With `remote_exec` you send source code to the other
+side and get both a local and a remote Channel_ object,
+which you can use to have the local and remote site
+communicate data in a structured way.   
+
+This approach implements the idea to ``determining 
+protocol and remote code from the client/local side``. 
+This makes distributing a program run in an ad-hoc
+manner (using e.g. :api:`py.path.SshGateway`) very easy. 
 
 You should not need to maintain software on the other sides 
-you are running your code at.  
+you are running your code at, other than the Python 
+executable itself. 
 
+.. _`Channel`: 
 .. _`channel-api`: 
 .. _`exchange data`: 
 
@@ -128,7 +116,8 @@ Here is the current interface::
         A remote side blocking on receive() on this channel 
         will get woken up and see an EOFError exception. 
 
-A simple and useful Example for Channels 
+
+The complete Fileserver example 
 ........................................ 
 
 problem: retrieving contents of remote files::
@@ -154,6 +143,7 @@ problem: retrieving contents of remote files::
      
     # later you can exit / close down the gateway
     contentgateway.exit()
+
 
 A more complicated "nested" Gateway Example 
 ........................................... 
