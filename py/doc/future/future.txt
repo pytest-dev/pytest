@@ -188,8 +188,8 @@ Here is a sketch of how the py libs ``__init__.py`` file
 might or should look like:: 
 
     """
-        the py lib version 0.8
-        http://codespeak.net/py/0.8
+        the py lib version 1.0
+        http://codespeak.net/py/1.0
     """
 
     from py import pkg
