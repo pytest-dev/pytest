@@ -54,10 +54,6 @@ class CommonPathTests:
         x = other.common(self.root)
         assert x == self.root
 
-        third = py.path.extpy('x', 'whatever')
-        x = other.common(third)
-        assert x is None
-
 
     #def test_parents_nonexisting_file(self):
     #    newpath = self.root / 'dirnoexist' / 'nonexisting file'

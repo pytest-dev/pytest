@@ -7,7 +7,7 @@ import os, sys
 import py
 
 def checktype(pathinstance, kw):
-    names = ('local', 'svnwc', 'svnurl', 'py', 'extpy')
+    names = ('local', 'svnwc', 'svnurl', 'py', )
     for name,value in kw.items():
         if name in names:
             cls = getattr(py.path, name)

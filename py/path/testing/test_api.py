@@ -9,7 +9,7 @@ class TestAPI:
 
     def repr_eval_test(self, p):
         r = repr(p)
-        from py.path import local,svnurl, svnwc, extpy
+        from py.path import local,svnurl, svnwc
         y = eval(r)
         assert y == p
 
@@ -21,7 +21,6 @@ class TestAPI:
         assert p.check()
         assert p.check(local=1)
         assert p.check(svnwc=0)
-        assert p.check(extpy=0)
         assert not p.check(svnwc=1)
         self.repr_eval_test(p)
 

@@ -32,9 +32,9 @@ streamline exported API
  
 * remove from public namespace: 
   XXX consider py.magic. invoke/revoke/patch/revert 
+  (DONE) remove py.path.extpy 
  
 * make "_" namespace:  
-  py.path.extpy -> py.path._extpy
   py.log -> py._log (pypy!) 
 
 * review py.io and write py.io.dupfile docstring
@@ -97,7 +97,7 @@ testing
   (guido tested all on win32, everything works except --dist (requires
   os.fork to work))
 
-* see why startcapture() does not use FD-based 
+* see why startcapture() used to not use FD-based 
   "py.io.OutErrCapture" to isolate standard output. 
   use that check if all py and PyPy tests pass
   as good as they do without. 
@@ -118,7 +118,6 @@ distributed testing / RSession
 ------------------------------------
 
 * (DONE, except apigen) cleanup initialisation of config / get rid of pkgdir
-* unify option names (dist_*) 
 * (optional) see if more of py/test/session.py's Session can be reused 
 * (DONE, but slightly different way)
   have dist_rsyncroots be relative to the conftest.py file
@@ -291,25 +290,6 @@ Missing docstrings
     path.local.__cmp__ misses a docstring
     path.local.__add__ misses a docstring
     path.local.Checkers misses a docstring
-    path.extpy.visit misses a docstring
-    path.extpy.samefile misses a docstring
-    path.extpy.relto misses a docstring
-    path.extpy.listobj misses a docstring
-    path.extpy.listdir misses a docstring
-    path.extpy.join misses a docstring
-    path.extpy.getpymodule misses a docstring
-    path.extpy.getfilelineno misses a docstring
-    path.extpy.dirpath misses a docstring
-    path.extpy.check misses a docstring
-    path.extpy.__str__ misses a docstring
-    path.extpy.__repr__ misses a docstring
-    path.extpy.__new__ misses a docstring
-    path.extpy.__iter__ misses a docstring
-    path.extpy.__hash__ misses a docstring
-    path.extpy.__contains__ misses a docstring
-    path.extpy.__cmp__ misses a docstring
-    path.extpy.__add__ misses a docstring
-    path.extpy.Checkers misses a docstring
     test.rest.RestReporter misses a docstring
     test.rest.RestReporter.summary misses a docstring
     test.rest.RestReporter.skips misses a docstring

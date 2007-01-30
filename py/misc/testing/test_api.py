@@ -10,7 +10,6 @@ class TestAPI_V0_namespace_consistence:
         assert_class('py.path', 'local')
         assert_class('py.path', 'svnwc')
         assert_class('py.path', 'svnurl')
-        assert_class('py.path', 'extpy')
 
     def test_magic_entrypoints(self):
         assert_function('py.magic', 'invoke')

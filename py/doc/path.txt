@@ -69,10 +69,6 @@ Example usage of :api:`py.path.svnwc`::
 
 .. _`Subversion`: http://subversion.tigris.org/
 
-:api:`py.path.extpy`/gateway?
------------------------------
-
-XXX do we want any of this?
 
 Common vs. specific API
 =======================

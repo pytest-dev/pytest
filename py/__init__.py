@@ -9,8 +9,8 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37278 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-01-24 17:46:46 +0100 (Wed, 24 Jan 2007) $',
+    revision = int('$LastChangedRevision: 37641 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-01-30 23:22:15 +0100 (Tue, 30 Jan 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
@@ -61,7 +61,6 @@ initpkg(__name__,
     'path.svnwc'             : ('./path/svn/wccommand.py', 'SvnWCCommandPath'),
     'path.svnurl'            : ('./path/svn/urlcommand.py', 'SvnCommandPath'),
     'path.local'             : ('./path/local/local.py', 'LocalPath'),
-    'path.extpy'             : ('./path/extpy/extpy.py', 'Extpy'),
 
     # some nice slightly magic APIs
     'magic.greenlet'         : ('./magic/greenlet.py', 'greenlet'),
