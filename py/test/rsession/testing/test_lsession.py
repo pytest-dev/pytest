@@ -271,7 +271,7 @@ class TestLSession(object):
         tmpdir = py.test.ensuretemp("lsession_runner_selection")
         tmpdir.ensure("apigen.py").write(py.code.Source("""
         def get_documentable_items(*args):
-            return {}
+            return 'foo', {}
         """))
         opt_mapping = {
             '': plain_runner,
