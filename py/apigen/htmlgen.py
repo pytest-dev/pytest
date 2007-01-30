@@ -12,7 +12,7 @@ sorted = py.builtin.sorted
 html = py.xml.html
 raw = py.xml.raw
 
-def deindent(str, linesep=os.linesep):
+def deindent(str, linesep='\n'):
     """ de-indent string
 
         can be used to de-indent Python docstrings, it de-indents the first
@@ -26,7 +26,7 @@ def deindent(str, linesep=os.linesep):
     # replace tabs with spaces, empty lines that contain spaces only, and
     # find out what the smallest indentation is
     for line in lines[1:]:
-        line = line.replace('\t', '     ')
+        line = line.replace('\t', ' ' * 4)
         stripped = line.strip()
         if not stripped:
             normalized.append('')
