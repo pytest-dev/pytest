@@ -11,7 +11,6 @@ class Conftest(object):
     """ 
     def __init__(self, path=None):
         self._path2confmods = {}
-        self._path2conftest_files = {} # direct cache of conftest files, to avoid confusion
         if path is not None:
             self.setinitial([path])
 
@@ -55,12 +54,14 @@ class Conftest(object):
     def getconftest(self, path):
         """ Return a direct module of that path
         """
+        if isinstance(path, str):
+            path = py.path.local(path)
         try:
-            return self._path2conftest_files[path]
+            conftestmod = self.getconftestmodules(path)[-1]
+            if py.path.local(conftestmod.__file__).dirpath() != path:
+                raise AttributeError
+            return conftestmod
         except KeyError:
-            conftestpath = path.join("conftest.py")
-            if conftestpath.check(file=1):
-                return self.importconfig(conftestpath)
             raise AttributeError
         # we raise here AttributeError to unify error reporting in case
         # of lack of variable in conftest or lack of file, but we do not want to
@@ -99,5 +100,4 @@ class Conftest(object):
             mod = configpath.pyimport(modname=modname)
         else:
             mod = configpath.pyimport()
-        self._path2conftest_files[configpath.dirpath()] = mod
         return mod
