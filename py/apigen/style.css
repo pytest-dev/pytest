@@ -88,6 +88,8 @@ a:hover {
   padding-left: 1em;
   white-space: pre;
   font-family: monospace, Monaco;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .comment {

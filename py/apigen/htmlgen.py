@@ -332,6 +332,20 @@ class SourcePageBuilder(AbstractPageBuilder):
             reltargetpath = outputpath.relto(self.base).replace(os.path.sep, '/')
             self.write_page(title, reltargetpath, project, tag, nav)
 
+def enumerate_and_color(codelines, firstlineno, enc):
+    tokenizer = source_color.Tokenizer(source_color.PythonSchema)
+    colored = []
+    for i, line in enumerate(codelines):
+        try:
+            colored.append(H.span('%04s: ' % (i + firstlineno + 1)))
+            colored.append(source_html.prepare_line([line], tokenizer, enc))
+            colored.append('\n')
+        except py.error.ENOENT:
+            # error reading source code, giving up
+            colored = org
+            break
+    return colored
+
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
     def __init__(self, base, linker, dsa, projroot, namespace_tree):
@@ -359,19 +373,17 @@ class ApiPageBuilder(AbstractPageBuilder):
         is_in_pkg = self.is_in_pkg(sourcefile)
         if sourcefile and callable_source:
             enc = source_html.get_module_encoding(sourcefile)
+            tokenizer = source_color.Tokenizer(source_color.PythonSchema)
+            firstlineno = func.func_code.co_firstlineno
+            org = callable_source.split('\n')
+            colored = enumerate_and_color(org, firstlineno, enc)
             if is_in_pkg:
-                csource = H.div(H.br(),
-                                H.a('source: %s' % (sourcefile,),
-                                    href=self.linker.get_lazyhref(sourcefile)),
-                                H.br(),
-                                H.SourceDef(H.pre(unicode(callable_source,
-                                                          enc))))
-            elif not is_in_pkg:
-                csource = H.div(H.br(),
-                                H.em('source: %s' % (sourcefile,)),
-                                H.br(),
-                                H.SourceDef(H.pre(unicode(callable_source,
-                                                          enc))))
+                slink = H.a('source: %s' % (sourcefile,),
+                            href=self.linker.get_lazyhref(sourcefile))
+            else:
+                slink = H.em('source: %s' % (sourcefile,))
+            csource = H.div(H.br(), slink, H.br(),
+                            H.SourceDef(H.div(class_='code', *colored)))
         else:
             csource = H.SourceDef('could not get source file')
 
@@ -465,8 +477,6 @@ class ApiPageBuilder(AbstractPageBuilder):
             H.Docstring(docstring or '*no docstring available*')
         )
         for dotted_name in sorted(item_dotted_names):
-            if dotted_name.startswith('_'):
-                continue
             itemname = dotted_name.split('.')[-1]
             if is_private(itemname):
                 continue
@@ -583,9 +593,11 @@ class ApiPageBuilder(AbstractPageBuilder):
             for dn in sorted(siblings):
                 selected = dn == '.'.join(path)
                 sibpath = dn.split('.')
-                navitems.append(build_navitem_html(self.linker, sibpath[-1],
-                                                   dn, depth,
-                                                   selected))
+                sibname = sibpath[-1]
+                if is_private(sibname):
+                    continue
+                navitems.append(build_navitem_html(self.linker, sibname,
+                                                   dn, depth, selected))
                 if selected:
                     lastlevel = dn.count('.') == dotted_name.count('.')
                     if not lastlevel:
@@ -723,17 +735,7 @@ class ApiPageBuilder(AbstractPageBuilder):
                 else:
                     enc = 'latin-1'
                     sourcelink = H.div(linktext)
-                colored = []
-                for i, line in enumerate(mangled):
-                    try:
-                        colored.append(H.span('%02s: ' %
-                                              (i + frame.firstlineno + 1)))
-                        colored.append(source_html.prepare_line(
-                                        [line], tokenizer, enc))
-                        colored.append('\n')
-                    except py.error.ENOENT:
-                        colored = mangled
-                        break
+                colored = enumerate_and_color(mangled, frame.firstlineno, enc)
             else:
                 sourcelink = H.div('source unknown')
             tbdiv.append(sourcelink)

@@ -63,6 +63,7 @@ def setup_fs_project():
             'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
             'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
             'other':             ('./somenamespace.py', '*'),
+            '_test':             ('./somenamespace.py', '*'),
         })
     """))
     return temp, 'pkg'
@@ -114,7 +115,8 @@ class AbstractBuilderTest(object):
                                                 'main.SomeSubClass',
                                                 'main.SomeInstance',
                                                 'other.foo',
-                                                'other.bar'])
+                                                'other.bar',
+                                                '_test'])
         self.namespace_tree = namespace_tree
         self.apb = ApiPageBuilder(base, linker, self.dsa,
                                   self.fs_root.join(self.pkg_name),
@@ -195,6 +197,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
     def test_build_class_pages_nav_links(self):
         data = self.apb.prepare_class_pages(['main.SomeSubClass',
                                              'main.SomeClass'])
+        self.apb.prepare_namespace_pages()
         # fake some stuff that would be built from other methods
         self.linker.set_link('', 'api/index.html')
         self.linker.set_link('main', 'api/main.html')
@@ -211,8 +214,8 @@ class TestApiPageBuilder(AbstractBuilderTest):
             'href="main.SomeClass.html">SomeClass',
             'href="main.SomeSubClass.html">SomeSubClass',
         ])
-        assert not 'href="main.sub.func.html"' in html
-        py.test.skip('WOP from here')
+        assert 'href="main.sub.func.html"' not in html
+        assert 'href="_test' not in html
         assert 'href="main.sub.html">sub' in html
         _checkhtml(html)
 
