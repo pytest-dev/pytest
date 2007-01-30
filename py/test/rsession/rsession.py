@@ -270,32 +270,14 @@ class LSession(AbstractSession):
     def init_runner(self):
         if self.config.option.apigen:
             from py.__.apigen.tracer.tracer import Tracer, DocStorage
-            module = py
-            try:
-                pkgdir = self.getpkgdir(self.config.args[0])
-                apigen = py.path.local(self.config.option.apigen).pyimport()
-                items = apigen.get_documentable_items(pkgdir)
-                if isinstance(items, dict):
-                    self.docstorage = DocStorage().from_dict(items)
-                else:
-                    self.docstorage = DocStorage().from_pkg(items)
-            except ImportError:
-                import traceback
-                exc, e, tb = sys.exc_info()
-                print '%s - %s' % (exc, e)
-                print ''.join(traceback.format_tb(tb))
-                del tb
-                print '-' * 79
-                raise ImportError("Provided script cannot be imported")
-            except (ValueError, AttributeError):
-                import traceback
-                exc, e, tb = sys.exc_info()
-                print '%s - %s' % (exc, e)
-                print ''.join(traceback.format_tb(tb))
-                del tb
-                print '-' * 79
+            pkgdir = self.getpkgdir(self.config.args[0])
+            apigen = py.path.local(self.config.option.apigen).pyimport()
+            if not hasattr(apigen, 'get_documentable_items'):
                 raise NotImplementedError("Provided script does not seem "
                                           "to contain get_documentable_items")
+            pkgname, items = apigen.get_documentable_items(pkgdir)
+            self.docstorage = DocStorage().from_dict(items,
+                                                     module_name=pkgname)
             self.tracer = Tracer(self.docstorage)
             return apigen_runner
         else:

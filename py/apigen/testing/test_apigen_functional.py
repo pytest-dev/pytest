@@ -82,7 +82,9 @@ def setup_fs_project(name):
 
 def test_get_documentable_items():
     fs_root, package_name = setup_fs_project('test_get_documentable_items')
-    documentable = apigen.get_documentable_items(fs_root.join(package_name))
+    pkgname, documentable = apigen.get_documentable_items(
+                                                fs_root.join(package_name))
+    assert pkgname == 'py'
     assert sorted(documentable.keys()) ==  [
         'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
         'main.sub.func', 'somenamespace.baz', 'somenamespace.foo']

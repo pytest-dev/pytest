@@ -15,7 +15,7 @@ from py.__.apigen.tracer.docstorage import pkg_to_dict
 def get_documentable_items(pkgdir):
     sys.path.insert(0, str(pkgdir.dirpath()))
     rootmod = __import__(pkgdir.basename)
-    return pkg_to_dict(rootmod)
+    return 'py', pkg_to_dict(rootmod)
 
 def build(pkgdir, dsa):
     l = linker.Linker()

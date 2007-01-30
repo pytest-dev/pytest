@@ -56,6 +56,9 @@ def get_star_import_tree(module, modname):
 class DocStorage(object):
     """ Class storing info about API
     """
+    def __init__(self):
+        self.module_name = None
+
     def consider_call(self, frame, caller_frame, upward_cut_frame=None):
         assert isinstance(frame, py.code.Frame)
         desc = self.find_desc(frame.code, frame.raw.f_locals)
@@ -102,7 +105,8 @@ class DocStorage(object):
         for key, desc in self.descs.iteritems():
             self.desc_cache[desc] = desc
     
-    def from_dict(self, _dict, keep_frames = False):
+    def from_dict(self, _dict, keep_frames=False, module_name=None):
+        self.module_name = module_name
         self.descs = {}
         for key, val in _dict.iteritems():
             to_key, to_val = self.make_desc(key, val)
@@ -155,7 +159,7 @@ class DocStorage(object):
 
     def from_pkg(self, module, keep_frames=False):
         self.module = module
-        self.from_dict(pkg_to_dict(module), keep_frames)
+        self.from_dict(pkg_to_dict(module), keep_frames, module.__name__)
         # XXX
         return self
 
@@ -260,7 +264,9 @@ class DocStorageAccessor(AbstractDocStorageAccessor):
         return sorted([i.__name__ for i in self.ds.descs[name].exceptions.keys()])
 
     def get_module_name(self):
-        if hasattr(self.ds, 'module'):
+        if self.ds.module_name is not None:
+            return self.ds.module_name
+        elif hasattr(self.ds, 'module'):
             return self.ds.module.__name__
         return "Unknown module"
     
