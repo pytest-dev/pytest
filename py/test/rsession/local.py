@@ -2,7 +2,8 @@
 """ local-only operations
 """
 
-from py.__.test.rsession.executor import BoxExecutor, RunExecutor
+from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
+     ApigenExecutor
 from py.__.test.rsession import report
 from py.__.test.rsession.outcome import ReprOutcome
 
@@ -37,13 +38,10 @@ def benchmark_runner(item, session, reporter):
     raise NotImplementedError()
 
 def apigen_runner(item, session, reporter):
-    r = RunExecutor(item, reporter=reporter, config=session.config)
     startcapture(session)
     #retval = plain_runner(item, session, reporter)
-    r = RunExecutor(item, reporter=reporter, config=session.config)
-    session.tracer.start_tracing()
-    outcome = r.execute()
-    session.tracer.end_tracing()
+    r = ApigenExecutor(item, reporter=reporter, config=session.config)
+    outcome = r.execute(session.tracer)
     outcome = ReprOutcome(outcome.make_repr(session.config.option.tbstyle))    
     outcome.stdout, outcome.stderr = finishcapture(session)
     return outcome

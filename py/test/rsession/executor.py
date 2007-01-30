@@ -18,10 +18,13 @@ class RunExecutor(object):
         self.reporter = reporter
         self.config = config
         assert self.config
+
+    def run(self):
+        self.item.run()
     
     def execute(self):
         try:
-            self.item.run()
+            self.run()
             outcome = Outcome()
         except py.test.Item.Skipped, e: 
             outcome = Outcome(skipped=str(e))
@@ -49,8 +52,33 @@ class RunExecutor(object):
         outcome.stderr = ""
         return outcome
 
+class ApigenExecutor(RunExecutor):
+    """ Same as RunExecutor, but takes tracer to trace calls as
+    an argument to execute
+    """
+    def execute(self, tracer):
+        self.tracer = tracer
+        return super(ApigenExecutor, self).execute()
+
+    def wrap_underlaying(self, target):
+        def f(*args):
+            try:
+                self.tracer.start_tracing()
+                return target(*args)
+            finally:
+                self.tracer.end_tracing()
+        return f
+
+    def run(self):
+        """ We want to trace *only* function objects here. Unsure
+        what to do with custom collectors at all
+        """
+        if hasattr(self.item, 'obj') and type(self.item.obj) is py.test.Function:
+            self.item.obj = self.wrap_underlaying(self.item.obj)
+        self.item.run()
+
 class BoxExecutor(RunExecutor):
-    """ Same as run executor, but boxes test instead
+    """ Same as RunExecutor, but boxes test instead
     """
     wraps = True
     
