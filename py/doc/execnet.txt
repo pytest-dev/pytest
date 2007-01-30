@@ -67,7 +67,7 @@ communicate data in a structured way.
 This approach implements the idea to ``determining 
 protocol and remote code from the client/local side``. 
 This makes distributing a program run in an ad-hoc
-manner (using e.g. :api:`py.path.SshGateway`) very easy. 
+manner (using e.g. :api:`py.execnet.SshGateway`) very easy. 
 
 You should not need to maintain software on the other sides 
 you are running your code at, other than the Python 
