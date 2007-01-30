@@ -78,8 +78,11 @@ def cut_stack(stack, frame, upward_frame=None):
     if upward_frame:
         if hasattr(upward_frame, 'raw'):
             upward_frame = upward_frame.raw
-        return CallStack([py.code.Frame(i) for i in stack[stack.index(frame):\
-                stack.index(upward_frame)+1]])
+        lst = [py.code.Frame(i) for i in stack[stack.index(frame):\
+                stack.index(upward_frame)+1]]
+        if len(lst) > 1:
+            return CallStack(lst[:-1])
+        return CallStack(lst)
     return CallStack([py.code.Frame(i) for i in stack[stack.index(frame):]])
 
 ##class CallSite(object):
