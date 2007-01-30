@@ -4,7 +4,7 @@ import re
 
 class PythonSchema(object):
     """ contains information for syntax coloring """
-    comment = [('#', '\n')]
+    comment = [('#', '\n'), ('#', '$')]
     multiline_string = ['"""', "'''"]
     string = ['"""', "'''", '"', "'"]
     # XXX not complete
@@ -124,7 +124,6 @@ class Tokenizer(object):
                 token = Token(s, type='string')
                 break
         return data, token
-
 
     def _check_comments(self, data):
         # fortunately we don't have to deal with multi-line comments

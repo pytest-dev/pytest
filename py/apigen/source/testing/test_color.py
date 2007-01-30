@@ -45,8 +45,12 @@ class TestTokenizer(object):
         assert self.tokens('foo # bar\n') == [Token('foo', type='word'),
                                               Token(' ', type='whitespace'),
                                               Token('# bar\n', type='comment')]
+        assert self.tokens("# foo 'bar\n") == [Token("# foo 'bar\n",
+                                                     type='comment')]
+        assert self.tokens('# foo') == [Token('# foo', type='comment')]
 
     def test_string_simple(self):
+        assert self.tokens('""') == [Token('""', type='string')]
         assert self.tokens('"foo"') == [Token('"foo"', type='string')]
         assert self.tokens('"foo"\'bar\'') == [Token('"foo"', type='string'),
                                                Token("'bar'", type='string')]

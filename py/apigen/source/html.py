@@ -46,7 +46,10 @@ def prepare_line(text, tokenizer, encoding):
         if type(item) in [str, unicode]:
             tokens = tokenizer.tokenize(item)
             for t in tokens:
-                data = unicode(t.data, encoding)
+                if not isinstance(t.data, unicode):
+                    data = unicode(t.data, encoding)
+                else:
+                    data = t.data
                 if t.type in ['keyword', 'alt_keyword', 'number',
                               'string', 'comment']:
                     ret.append(html.span(data, class_=t.type))
