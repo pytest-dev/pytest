@@ -48,11 +48,30 @@ With ''py.execnet'' you get the means
   doesn't run in a kernel-level jail [#]_ in which case 
   even that is virtualized. 
 
-High Level Interface: **remote_exec**
+
+Available Gateways/Connection methods
+-----------------------------------------
+
+You may use one of the following connection methods:
+
+* :api:`py.execnet.PopenGateway` a subprocess on the local 
+  machine.  Useful for jailing certain parts of a program
+  or for making use of multiple processors. 
+
+* :api:`py.execnet.SshGateway` a way to connect to 
+  a remote ssh server and distribute execution to it. 
+
+* :api:`py.execnet.SocketGateway` a way to connect to 
+  a remote Socket based server. *Note* that this method
+  requires a manually started 
+  :source:py/execnet/script/socketserver.py
+  script.  You can run this "server script" without 
+  having the py lib installed on that remote system. 
+
+Remote execution approach 
 -------------------------------------
 
-All gateways offer one main high level interface,
-e.g.  
+All gateways offer one main high level function: 
 
     def remote_exec(source): 
         """return channel object for communicating with the asynchronously 
@@ -62,9 +81,17 @@ e.g.
 With `remote_exec` you send source code to the other
 side and get both a local and a remote Channel_ object,
 which you can use to have the local and remote site
-communicate data in a structured way.   
+communicate data in a structured way.   Here is 
+an example: 
 
-This approach implements the idea to ``determining 
+  >>> import py 
+  >>> gw = py.execnet.PopenGateway(python="python2.3")
+  >>> channel = gw.remote_exec("import sys ; channel.send(sys.version_info)")
+  >>> channel.receive()[:2]
+  (2, 3)
+  >>> gw.exit()
+
+`remote_exec` implements the idea to ``determine
 protocol and remote code from the client/local side``. 
 This makes distributing a program run in an ad-hoc
 manner (using e.g. :api:`py.execnet.SshGateway`) very easy. 
