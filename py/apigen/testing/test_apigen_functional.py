@@ -94,8 +94,8 @@ def test_get_documentable_items():
         'main.sub.func', 'somenamespace.baz', 'somenamespace.foo']
 
 def test_apigen_functional():
-    if py.std.sys.platform == "win32":
-        py.test.skip("XXX test fails on windows")
+    #if py.std.sys.platform == "win32":
+    #    py.test.skip("XXX test fails on windows")
     fs_root, package_name = setup_fs_project('test_apigen_functional')
     tempdir = py.test.ensuretemp('test_apigen_functional_results')
     pydir = py.magic.autopath().dirpath().dirpath().dirpath()

@@ -42,7 +42,7 @@ class Linker(object):
         finally:
             del self.fromlocation 
     
-def relpath(p1, p2, sep='/', back='..', normalize=True):
+def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
     """ create a relative path from p1 to p2
 
         sep is the seperator used for input and (depending

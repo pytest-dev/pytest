@@ -193,9 +193,9 @@ def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl,
 class AbstractPageBuilder(object):
     def write_page(self, title, reltargetpath, project, tag, nav):
         targetpath = self.base.join(reltargetpath)
-        stylesheeturl = relpath('%s/' % (targetpath.dirpath(),),
+        stylesheeturl = relpath('%s%s' % (targetpath.dirpath(), os.path.sep),
                                 self.base.join('style.css').strpath)
-        scripturls = [relpath('%s/' % (targetpath.dirpath(),),
+        scripturls = [relpath('%s%s' % (targetpath.dirpath(), os.path.sep),
                               self.base.join('api.js').strpath)]
         page = wrap_page(project, title,
                          tag, nav, self.base, stylesheeturl, scripturls)
