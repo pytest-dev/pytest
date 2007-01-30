@@ -85,11 +85,14 @@ communicate data in a structured way.   Here is
 an example: 
 
   >>> import py 
-  >>> gw = py.execnet.PopenGateway(python="python2.3")
-  >>> channel = gw.remote_exec("import sys ; channel.send(sys.version_info)")
-  >>> channel.receive()[:2]
-  (2, 3)
-  >>> gw.exit()
+  >>> gw = py.execnet.PopenGateway()
+  >>> channel = gw.remote_exec("""
+  ...     import os
+  ...     channel.send(os.getpid())
+  ... """)
+  >>> remote_pid = channel.receive()
+  >>> remote_pid != py.std.os.getpid()
+  True
 
 `remote_exec` implements the idea to ``determine
 protocol and remote code from the client/local side``. 
