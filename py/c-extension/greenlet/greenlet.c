@@ -394,7 +394,8 @@ static void g_initialstub(void* mark)
 		/* in the new greenlet */
 		PyObject* args;
 		PyObject* result;
-		ts_current->stack_start = (char*) 1;  /* running */
+		PyGreenlet* ts_self = ts_current;
+		ts_self->stack_start = (char*) 1;  /* running */
 
 		args = ts_passaround;
 		if (args == NULL)    /* pending exception */
@@ -407,8 +408,8 @@ static void g_initialstub(void* mark)
 		Py_DECREF(run);
 		result = g_handle_exit(result);
 		/* jump back to parent */
-		ts_current->stack_start = NULL;  /* dead */
-		g_switch(ts_current->parent, result);
+		ts_self->stack_start = NULL;  /* dead */
+		g_switch(ts_self->parent, result);
 		/* must not return from here! */
 		Py_FatalError("XXX memory exhausted at a very bad moment");
 	}
@@ -463,6 +464,8 @@ static int kill_greenlet(PyGreenlet* self)
 		   because the 'parent' field chain would hold a
 		   reference */
 		PyObject* result;
+		if (!STATE_OK)
+			return -1;
 		Py_INCREF(ts_current);
 		self->parent = ts_current;
 		/* Send the greenlet a GreenletExit exception. */

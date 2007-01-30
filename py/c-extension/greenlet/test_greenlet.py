@@ -142,3 +142,17 @@ def test_frame():
     assert not g
     assert next == "meaning of life"
     assert g.gr_frame is None
+
+def test_thread_bug():
+    if not thread:
+        py.test.skip("this is a test about thread")
+    import time
+    def runner(x):
+        g = greenlet(lambda: time.sleep(x))
+        g.switch()
+    t1 = threading.Thread(target=runner, args=(0.2,))
+    t2 = threading.Thread(target=runner, args=(0.3,))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
