@@ -1,0 +1,109 @@
+=======
+py.path
+=======
+
+.. contents::
+.. sectnum::
+
+The 'py' lib provides an elegant, high-level api to deal with filesystems
+and filesystem-like interfaces: :api:`py.path`. Here a simple but powerful 
+interface to deal with object trees (reading from and writing to nodes, adding
+nodes and examining the structure, etc.) in a filesystem-oriented way is
+defined, along with a number of readily available implementations.
+
+source: :source:`py/path/`
+
+Path implementations provided by :api:`py.path`
+===============================================
+
+:api:`py.path.local`
+--------------------
+
+The first and most obvious of the implementations is a wrapper around a local
+filesystem. It's just a bit nicer in usage than the regular Python APIs, and
+of course all the functionality is bundled together rather than spread over a
+number of modules.
+
+Example usage, here we use the :api:`py.test.ensuretemp()` function to create
+a :api:`py.path.local` object for us (which wraps a directory)::
+
+  >>> import py
+  >>> temppath = py.test.ensuretemp('py.path_documentation')
+  >>> foopath = temppath.join('foo') # get child 'foo' (lazily)
+  >>> foopath.check() # check if child 'foo' exists
+  False
+  >>> foopath.write('bar') # write some data to it
+  >>> foopath.check()
+  True
+  >>> foopath.read()
+  'bar'
+
+:api:`py.path.svnurl` and :api:`py.path.svnwc`
+----------------------------------------------
+
+Two other :api:`py.path` implementations that the py lib provides wrap the
+popular `Subversion`_ revision control system: the first (called 'svnurl')
+by interfacing with a remote server, the second by wrapping a local checkout.
+Both allow you to access relatively advanced features such as metadata and
+versioning, and both in a way more user-friendly manner than existing other
+solutions.
+
+Some example usage of :api:`py.path.svnurl`::
+
+  >>> url = py.path.svnurl('http://codespeak.net/svn/py')
+  >>> info = url.info()
+  >>> info.kind
+  'dir'
+  >>> firstentry = url.log()[-1]
+  >>> import time
+  >>> time.strftime('%Y-%m-%d', time.gmtime(firstentry.date))
+  '2004-10-02'
+
+Example usage of :api:`py.path.svnwc`::
+
+  >>> temp = py.test.ensuretemp('py.path_documentation')
+  >>> wc = py.path.svnwc(temp.join('svnwc'))
+  >>> wc.checkout('http://codespeak.net/svn/py/dist/py/path/local')
+  >>> wc.join('local.py').check()
+  True
+
+.. _`Subversion`: http://subversion.tigris.org/
+
+:api:`py.path.extpy`/gateway?
+-----------------------------
+
+XXX do we want any of this?
+
+Common vs. specific API
+=======================
+
+If required, backend-specific extensions are allowed, but the common API is
+already quite rich and should be enough for most of the use cases. This
+common set includes functions such as 'path.read()' to read data from a node,
+'path.write()' to write data, 'path.listdir()' to get a list of a node's
+children, 'path.check()' to examine if a node exists, 'path.join()' to get
+to a (grand)child, 'path.visit()' to recursively walk through a node's
+children, etc. Only things that are not common on filesystems, such as handling
+metadata, will require extensions.
+
+Extending the path interface
+----------------------------
+
+XXX do we want to go here at all?!? :|
+
+Future plans
+============
+
+Not sure here.
+
+Known problems
+==============
+
+There are certain known problems, mostly related to cleanups and consistency
+issues:
+
+ * XXX find known issues
+
+We hope to have these solved as good as possible in the 1.0 release of the
+py lib.
+
