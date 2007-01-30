@@ -229,7 +229,7 @@ Dying greenlet
     sent to its parent.  If ``run()`` terminates with an exception, the
     exception is propagated to its parent (unless it is a
     ``greenlet.GreenletExit`` exception, in which case the exception
-    object itself is sent to the parent).
+    object is caught and *returned* to the parent).
 
 Apart from the cases described above, the target greenlet normally
 receives the object as the return value of the call to ``switch()`` in
@@ -262,6 +262,9 @@ Methods and attributes of greenlets
 
 ``g.gr_frame``
     The current top frame, or None.
+
+``g.dead``
+    True if ``g`` is dead (i.e. it finished its execution).
 
 ``bool(g)``
     True if ``g`` is active, False if it is dead or not yet started.
