@@ -6,8 +6,6 @@ currently working configurations
 
 2.3 - 2.4.2 work
 
-2.5 has obscure problems
-
 with setuptools: 2.3 - 2.4.2 as 'develop'
 
 regular installation: works mostly, strange test-failures
