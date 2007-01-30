@@ -224,11 +224,6 @@ class TestSessionAndOptions:
         config = py.test.config._reparse([self.tmpdir, '--dist', '--exec=x'])
         assert config._getsessionname() == 'RSession'
 
-    def test_tkintersession(self):
-        config = py.test.config._reparse([self.tmpdir, '--tkinter'])
-        assert config._getsessionname() == 'TkinterSession'
-        config = py.test.config._reparse([self.tmpdir, '--dist'])
-
     def test_sessionname_lookup_custom(self):
         self.tmpdir.join("conftest.py").write(py.code.Source("""
             from py.__.test.session import Session

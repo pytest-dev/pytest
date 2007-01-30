@@ -150,8 +150,6 @@ class Config(object):
         name = 'TerminalSession'
         if self.option.dist:
             name = 'RSession'
-        elif self.option.tkinter:
-            name = 'TkinterSession'
         else:
             optnames = 'startserver runbrowser apigen restreport boxing'.split()
             for opt in optnames:
@@ -253,8 +251,6 @@ config_per_process = Config()
 
 # default import paths for sessions 
 
-TkinterSession = 'py.__.test.tkinter.reportsession'
-TerminalSession = 'py.__.test.terminal.terminal'
 TerminalSession = 'py.__.test.terminal.terminal'
 RemoteTerminalSession = 'py.__.test.terminal.remote'
 RSession = 'py.__.test.rsession.rsession'

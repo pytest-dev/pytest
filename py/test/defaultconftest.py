@@ -86,9 +86,6 @@ def adddefaultoptions(config):
                action="store_true", dest="runbrowser", default=False,
                help="run browser (implies --startserver)."
                ),
-        Option('', '--tkinter',
-               action="store_true", dest="tkinter", default=False,
-               help="use tkinter test session frontend."),
         Option('', '--box',
                action="store_true", dest="boxing",
                help="use boxing (running each test in external process)"),
