@@ -2,14 +2,13 @@
 """ html - generating ad-hoc html out of source browser
 """
 
+import py
 from py.xml import html, raw
 from compiler import ast
 import time
 from py.__.apigen.source.color import Tokenizer, PythonSchema
 
 class HtmlEnchanter(object):
-    reserved_words = ['if', 'for', 'return', 'yield']
-
     def __init__(self, mod):
         self.mod = mod
         self.create_caches()
@@ -37,8 +36,30 @@ class HtmlEnchanter(object):
         except KeyError:
             return [row] # no more info
 
+def prepare_line(text, tokenizer, encoding):
+    """ adds html formatting to text items (list)
+
+        only processes items if they're of a string type (or unicode)
+    """
+    ret = []
+    for item in text:
+        if type(item) in [str, unicode]:
+            tokens = tokenizer.tokenize(item)
+            for t in tokens:
+                data = unicode(t.data, encoding)
+                if t.type in ['keyword', 'alt_keyword', 'number',
+                              'string', 'comment']:
+                    ret.append(html.span(data, class_=t.type))
+                else:
+                    ret.append(data)
+        else:
+            ret.append(item)
+    return ret
+
 class HTMLDocument(object):
-    def __init__(self, tokenizer=None):
+    def __init__(self, encoding, tokenizer=None):
+        self.encoding = encoding
+
         self.html = root = html.html()
         self.head = head = self.create_head()
         root.append(head)
@@ -119,30 +140,11 @@ class HTMLDocument(object):
         table.append(tbody)
         return table, tbody
 
-    def prepare_line(self, text):
-        """ adds html formatting to text items (list)
-
-            only processes items if they're of a string type (or unicode)
-        """
-        ret = []
-        for item in text:
-            if type(item) in [str, unicode]:
-                tokens = self.tokenizer.tokenize(item)
-                for t in tokens:
-                    if t.type in ['keyword', 'alt_keyword', 'number',
-                                  'string', 'comment']:
-                        ret.append(html.span(t.data, class_=t.type))
-                    else:
-                        ret.append(t.data)
-            else:
-                ret.append(item)
-        return ret
-
     def add_row(self, lineno, text):
         if text == ['']:
             text = [raw('&#xa0;')]
         else:
-            text = self.prepare_line(text)
+            text = prepare_line(text, self.tokenizer, self.encoding)
         self.tbody.append(html.tr(html.td(str(lineno), class_='lineno'),
                                   html.td(class_='code', *text)))
 
@@ -157,7 +159,8 @@ def create_html(mod):
     lines = mod.path.open().readlines()
     
     enchanter = HtmlEnchanter(mod)
-    doc = HTMLDocument()
+    enc = get_module_encoding(mod.path)
+    doc = HTMLDocument(enc)
     for i, row in enumerate(lines):
         row = enchanter.enchant_row(i + 1, row)
         doc.add_row(i + 1, row)
@@ -247,4 +250,17 @@ def create_unknown_html(path):
         ),
     )
     return h.unicode()
+
+_reg_enc = py.std.re.compile(r'coding[:=]\s*([-\w.]+)')
+def get_module_encoding(path):
+    if hasattr(path, 'strpath'):
+        path = path.strpath
+    if path[-1] in ['c', 'o']:
+        path = path[:-1]
+    fpath = py.path.local(path)
+    code = fpath.read()
+    match = _reg_enc.search(code)
+    if match:
+        return match.group(1)
+    return 'ISO-8859-1'
 

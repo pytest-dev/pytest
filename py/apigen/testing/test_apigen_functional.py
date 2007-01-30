@@ -38,6 +38,8 @@ def setup_fs_project(name):
             return 'bar'
         def baz(qux):
             return qux
+        def _hidden():
+            return 'quux'
     """))
     temp.ensure("pak/__init__.py").write(py.code.Source("""\
         from py.initpkg import initpkg
@@ -77,6 +79,8 @@ def setup_fs_project(name):
             ''')
             c = compile(str(source), '<test>', 'exec')
             exec c in globals()
+
+            assert pak.somenamespace._hidden() == 'quux'
     """))
     return temp, 'pak'
 

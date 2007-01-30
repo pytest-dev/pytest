@@ -361,12 +361,12 @@ class ApiPageBuilder(AbstractPageBuilder):
                             H.a('source: %s' % (sourcefile,),
                                 href=self.linker.get_lazyhref(sourcefile)),
                             H.br(),
-                            H.SourceDef(H.pre(callable_source)))
+                            H.SourceDef(H.pre(unicode(callable_source, 'UTF-8'))))
         elif not is_in_pkg and sourcefile and callable_source:
             csource = H.div(H.br(),
                             H.em('source: %s' % (sourcefile,)),
                             H.br(),
-                            H.SourceDef(H.pre(callable_source)))
+                            H.SourceDef(H.pre(unicode(callable_source, 'UTF-8'))))
         else:
             csource = H.SourceDef('could not get source file')
 
@@ -460,6 +460,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             H.Docstring(docstring or '*no docstring available*')
         )
         for dotted_name in sorted(item_dotted_names):
+            if dotted_name.startswith('_'):
+                continue
             itemname = dotted_name.split('.')[-1]
             if is_private(itemname):
                 continue
@@ -586,7 +588,7 @@ class ApiPageBuilder(AbstractPageBuilder):
                     elif lastlevel and build_children:
                         # XXX hack
                         navitems += build_nav_level('%s.' % (dotted_name,),
-                                                    depth+2)
+                                                    depth+1)
 
             return navitems
 
@@ -698,9 +700,9 @@ class ApiPageBuilder(AbstractPageBuilder):
             mangled = []
             for i, sline in enumerate(str(source).split('\n')):
                 if i == lineno:
-                    l = '-> %s' % (sline,)
+                    l = '-> %s' % (unicode(sline, 'UTF-8'),)
                 else:
-                    l = '   %s' % (sline,)
+                    l = '   %s' % (unicode(sline, 'UTF-8'),)
                 mangled.append(l)
             if sourcefile:
                 linktext = '%s - line %s' % (sourcefile, line.lineno + 1)
