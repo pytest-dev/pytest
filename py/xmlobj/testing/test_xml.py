@@ -55,3 +55,4 @@ def test_raw():
     x = ns.some(py.xml.raw("<p>literal</p>"))
     u = unicode(x)
     assert u == "<some><p>literal</p></some>"
+

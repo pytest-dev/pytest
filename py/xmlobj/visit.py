@@ -50,7 +50,7 @@ class SimpleUnicodeVisitor(object):
             tag.parent = None 
         self.visited[id(tag)] = 1
         tagname = getattr(tag, 'xmlname', tag.__class__.__name__)
-        if self.curindent:
+        if self.curindent and not self._isinline(tagname):
             self.write("\n" + u' ' * self.curindent) 
         if tag:
             self.curindent += self.indent 
@@ -99,4 +99,8 @@ class SimpleUnicodeVisitor(object):
     def _issingleton(self, tagname):
         """can (and will) be overridden in subclasses"""
         return self.shortempty
+
+    def _isinline(self, tagname):
+        """can (and will) be overridden in subclasses"""
+        return False
 

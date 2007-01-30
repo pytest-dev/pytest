@@ -46,3 +46,9 @@ def test_singleton():
     
     h = html.head(html.script(src="foo"))
     assert unicode(h) == '<head><script src="foo"></script></head>'
+
+def test_inline():
+    h = html.div(html.span('foo'), html.span('bar'))
+    assert (h.unicode(indent=2) ==
+            '<div><span>foo</span><span>bar</span></div>')
+
