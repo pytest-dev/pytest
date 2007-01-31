@@ -49,12 +49,10 @@ def test_virtual_module_identity():
 def test_importall():
     base = py.path.local(py.__file__).dirpath()
     nodirs = (
-        base.join('test', 'tkinter'), 
         base.join('test', 'testing', 'data'),
         base.join('apigen', 'tracer', 'testing', 'package'),
         base.join('test', 'testing', 'test'),
         base.join('magic', 'greenlet.py'), 
-        base.join('path', 'extpy', 'testing', 'test_data'),
         base.join('path', 'gateway',),
         base.join('doc',),
         base.join('rest', 'directive.py'),
@@ -63,7 +61,6 @@ def test_importall():
         base.join('magic', 'greenlet.py'), 
         base.join('bin'),
         base.join('execnet', 'script'),
-        base.join('compat'),
     )
     for p in base.visit('*.py', lambda x: x.check(dotfile=0)): 
         if p.basename == '__init__.py':

@@ -9,8 +9,8 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37641 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-01-30 23:22:15 +0100 (Tue, 30 Jan 2007) $',
+    revision = int('$LastChangedRevision: 37696 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-01-31 22:55:30 +0100 (Wed, 31 Jan 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
@@ -29,7 +29,6 @@ initpkg(__name__,
     'test.skip'              : ('./test/item.py', 'skip'),
     'test.fail'              : ('./test/item.py', 'fail'),
     'test.exit'              : ('./test/session.py', 'exit'),
-    'test.compat.TestCase'   : ('./test/compat.py', 'TestCase'),
 
     # configuration/initialization related test api
     'test.config'            : ('./test/config.py', 'config_per_process'),
