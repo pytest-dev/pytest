@@ -1,0 +1,24 @@
+I think the nice code in this directory
+should be refactored so that you can use
+it like this: 
+
+    rp = gateway.get_remote_path(relpath) 
+
+and relpath could be absolute, relative (should
+follow remote-platform syntax) or None/"." (the
+current dir on the other side). 
+
+The tricky part probably is defining sensible 
+setup/teardown semantics with respect to 
+starting the "Path" server on the other side, 
+we at least don't want to have multiple threads
+that serve path requests and maybe we want
+to be able to explicitely shutdown a once
+started RemotePath server (not sure though). 
+
+For a single-threaded py.execnet it might be helpful to be
+able to install new network messages (which are lower level
+than remote_exec() and work with callbacks, so don't follow
+the nice "synchronous" programming model that you get with
+threads/greenlets/tasklets). 
+
