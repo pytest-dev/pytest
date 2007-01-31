@@ -9,17 +9,16 @@ a ".".
 """
 from _findpy import py 
 import py
-from py.compat import optparse
 
-parser = optparse.OptionParser(usage=__doc__)
+parser = py.compat.optparse.OptionParser(usage=__doc__)
 
 if __name__ == '__main__':
     (options, args) = parser.parse_args()
     
-    if len(args) >= 1:
-        path = py.path.local(args)
-    else:
-        path = py.path.local()
-    print "cleaning path", path
-    for x in path.visit('*.pyc', lambda x: x.check(dotfile=0, link=0)):
-        x.remove()
+    if not args:
+        args = ["."]
+    for arg in args:
+        path = py.path.local(arg)
+        print "cleaning path", path
+        for x in path.visit('*.pyc', lambda x: x.check(dotfile=0, link=0)):
+            x.remove()
