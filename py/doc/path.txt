@@ -5,13 +5,10 @@ py.path
 .. contents::
 .. sectnum::
 
-The 'py' lib provides an elegant, high-level api to deal with filesystems
-and filesystem-like interfaces: :api:`py.path`. Here a simple but powerful 
-interface to deal with object trees (reading from and writing to nodes, adding
-nodes and examining the structure, etc.) in a filesystem-oriented way is
-defined, along with a number of readily available implementations.
-
-source: :source:`py/path/`
+The 'py' lib provides a uniform high-level api to deal with filesystems
+and filesystem-like interfaces: :api:`py.path`.  It aims to offer a central
+object to fs-like object trees (reading from and writing to files, adding
+files/directories, examining the types and structure, etc.). 
 
 Path implementations provided by :api:`py.path`
 ===============================================
@@ -69,37 +66,84 @@ Example usage of :api:`py.path.svnwc`::
 
 .. _`Subversion`: http://subversion.tigris.org/
 
-
 Common vs. specific API
 =======================
 
-If required, backend-specific extensions are allowed, but the common API is
-already quite rich and should be enough for most of the use cases. This
-common set includes functions such as 'path.read()' to read data from a node,
-'path.write()' to write data, 'path.listdir()' to get a list of a node's
-children, 'path.check()' to examine if a node exists, 'path.join()' to get
-to a (grand)child, 'path.visit()' to recursively walk through a node's
-children, etc. Only things that are not common on filesystems, such as handling
-metadata, will require extensions.
+All Path objects support a common set of operations, suitable
+for many use cases and allowing to transparently switch the 
+path object within an application (e.g. from "local" to "svnwc"). 
+The common set includes functions such as `path.read()` to read all data 
+from a file, `path.write()` to write data, `path.listdir()` to get a list 
+of directory entries, and `path.check()` to check if a node exists
+and is of a particular type, `path.join()` to get
+to a (grand)child, `path.visit()` to recursively walk through a node's
+children, etc.  Only things that are not common on all filesystems, such 
+as handling metadata (e.g. the subversion "properties") require
+using specific APIs. 
 
-Extending the path interface
-----------------------------
+Examples
+---------------------------------
 
-XXX do we want to go here at all?!? :|
+Searching `.txt` files 
++++++++++++++++++++++++++++++++++++++
+
+XXX example
+
+
+Joining and checking path types 
++++++++++++++++++++++++++++++++++++++
+
+XXX example
+
+setting svn-properties 
++++++++++++++++++++++++++++++++++++++++
+
+XXX example
+
+
+XXX more examples (look at API)
++++++++++++++++++++++++++++++++++++++++
+
+XXX
+
+Known problems / limitations
+===================================
+
+There are some known issues, most importantly 
+that using the Subversion Paths requires the
+command line `svn` binary and parsing its output
+is a bit fragile across versions and locales
+(it basically only works with an english locale!).  
+
+XXX note more here
+
 
 Future plans
 ============
 
-Not sure here.
+The Subversion path implementations are based
+on the `svn` command line, not on the bindings. 
+It makes sense now to directly use the bindings. 
 
-Known problems
-==============
+Moreover, it would be good, also considering 
+`py.execnet`_ distribution of programs, to
+be able to manipulate Windows Paths on Linux
+and vice versa.  So we'd like to consider
+refactoring the path implementations 
+to provide this choice (and getting rid
+of platform-dependencies as much as possible). 
 
-There are certain known problems, mostly related to cleanups and consistency
-issues:
+There are various hacks out there to have
+Memory-Filesystems and even path objects
+being directly mountable under Linux (via `fuse`). 
+However, the Path object implementations 
+do not internally have a clean abstraction 
+of going to the filesystem - so with some
+refactoring it should become easier to 
+have very custom Path objects, still offering
+the quite full interface without requiring 
+to know about all details of the full path 
+implementation. 
 
- * XXX find known issues
-
-We hope to have these solved as good as possible in the 1.0 release of the
-py lib.
+.. _`py.execnet`: execnet.html
 
