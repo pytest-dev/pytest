@@ -7,6 +7,10 @@ py.test and the py lib - documentation
 
 `py.magic.greenlet`_:  Lightweight in-process concurrent programming (aka Stackless)
 
+`py.path`_: Path and Filesystem access and manipulation for local and svn based trees
+
+`py.code`_: High-level access/manipulation of Python code and traceback objects. 
+
 `py.xml`_ a fast'n'easy way to generate xml/html documents (including CSS-styling) 
 
 `py.log`_ an alpha document about the ad-hoc logging facilities 
@@ -29,6 +33,8 @@ test driven development** :-)
 .. _`py.execnet`: execnet.html 
 .. _`py.magic.greenlet`: greenlet.html 
 .. _`py.log`: log.html
+.. _`py.path`: path.html
+.. _`py.code`: code.html
 .. _`py.test`: test.html 
 .. _`py lib scripts`: bin.html
 .. _`py.xml`: xml.html 
