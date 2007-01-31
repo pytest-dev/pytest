@@ -76,7 +76,7 @@ class RemoteTerminalSession(Session):
         while 1:
             if self.config.option.looponfailing and (failures or not wasfailing): 
                 while not checkpyfilechange(rootdir):
-                    py.std.time.sleep(2.4)
+                    py.std.time.sleep(4.4)
             wasfailing = len(failures)
             failures = self.run_remote_session(failures)
             if not self.config.option.looponfailing: 
