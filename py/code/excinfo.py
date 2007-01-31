@@ -22,6 +22,13 @@ class ExceptionInfo(object):
         self.traceback = py.code.Traceback(tb) 
 
     def exconly(self, tryshort=False): 
+        """ return the exception as a string
+        
+            when 'tryshort' resolves to True, and the exception is a
+            py.magic.AssertionError, only the actual exception part of
+            the exception representation is returned (so 'AssertionError: ' is
+            removed from the beginning)
+        """
         lines = py.std.traceback.format_exception_only(self.type, self.value)
         text = ''.join(lines)
         if text.endswith('\n'):
@@ -32,6 +39,7 @@ class ExceptionInfo(object):
         return text
 
     def errisinstance(self, exc): 
+        """ return True if the exception is an instance of exc """
         return isinstance(self.value, exc) 
 
     def __str__(self):

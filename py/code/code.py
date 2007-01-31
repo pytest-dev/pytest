@@ -1,6 +1,7 @@
 import py
 
 class Code(object):
+    """ wrapper around Python code objects """
     def __init__(self, rawcode):
         rawcode = getattr(rawcode, 'im_func', rawcode)
         rawcode = getattr(rawcode, 'func_code', rawcode)
@@ -57,6 +58,7 @@ class Code(object):
         )
 
     def path(self):
+        """ return a py.path.local object wrapping the source of the code """
         try:
             return self.raw.co_filename.__path__
         except AttributeError:
@@ -64,6 +66,8 @@ class Code(object):
     path = property(path, None, None, "path of this code object")
 
     def fullsource(self):
+        """ return a py.code.Source object for the full source file of the code
+        """
         fn = self.raw.co_filename
         try:
             return fn.__source__
@@ -73,11 +77,16 @@ class Code(object):
                           "full source containing this code object")
     
     def source(self):
+        """ return a py.code.Source object for the code object's source only
+        """
         # return source only for that part of code
         import inspect
         return py.code.Source(inspect.getsource(self.raw))
 
     def getargs(self):
+        """ return a tuple with the argument names for the code object
+        """
         # handfull shortcut for getting args
         raw = self.raw
         return raw.co_varnames[:raw.co_argcount]
+

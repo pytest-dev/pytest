@@ -2,6 +2,8 @@ from __future__ import generators
 import py 
 
 class TracebackEntry(object):
+    """ a single entry in a traceback """
+    
     exprinfo = None 
 
     def __init__(self, rawentry):
@@ -14,6 +16,7 @@ class TracebackEntry(object):
         return "<TracebackEntry %s:%d>" %(self.frame.code.path, self.lineno+1)
 
     def statement(self):
+        """ return a py.code.Source object for the current statement """
         source = self.frame.code.fullsource
         return source.getstatement(self.lineno)
     statement = property(statement, None, None,
@@ -63,6 +66,11 @@ class TracebackEntry(object):
     source = property(getsource)
 
     def ishidden(self):
+        """ return True if the current frame has a var __tracebackhide__ 
+            resolving to True
+            
+            mostly for internal use
+        """
         try: 
             return self.frame.eval("__tracebackhide__") 
         except (SystemExit, KeyboardInterrupt): 
@@ -103,6 +111,15 @@ class Traceback(list):
             list.__init__(self, tb)
 
     def cut(self, path=None, lineno=None, firstlineno=None):
+        """ return a Traceback instance wrapping part of this Traceback
+
+            by provding any combination of path, lineno and firstlineno, the
+            first frame to start the to-be-returned traceback is determined
+
+            this allows cutting the first part of a Traceback instance e.g.
+            for formatting reasons (removing some uninteresting bits that deal
+            with handling of the exception/traceback)
+        """
         for x in self:
             if ((path is None or x.frame.code.path == path) and
                 (lineno is None or x.lineno == lineno) and
@@ -114,9 +131,18 @@ class Traceback(list):
         val = super(Traceback, self).__getitem__(key)
         if isinstance(key, type(slice(0))):
             val = self.__class__(val)
-        return val 
+        return val
 
     def filter(self, fn=lambda x: not x.ishidden()):
+        """ return a Traceback instance with certain items removed
+
+            fn is a function that gets a single argument, a TracebackItem
+            instance, and should return True when the item should be added
+            to the Traceback, False when not
+
+            by default this removes all the TracebackItems which are hidden
+            (see ishidden() above)
+        """
         return Traceback(filter(fn, self))
 
     def getcrashentry(self):
@@ -129,6 +155,9 @@ class Traceback(list):
         return tb[-1]
 
     def recursionindex(self):
+        """ return the index of the frame/TracebackItem where recursion
+            originates if appropriate, None if no recursion occurred
+        """
         cache = {}
         for i, entry in py.builtin.enumerate(self):
             key = entry.frame.code.path, entry.lineno 
@@ -155,3 +184,4 @@ class Traceback(list):
 
 co_equal = compile('__recursioncache_locals_1 == __recursioncache_locals_2',
                    '?', 'eval')
+
