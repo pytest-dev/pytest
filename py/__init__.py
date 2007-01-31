@@ -9,8 +9,8 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37696 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-01-31 22:55:30 +0100 (Wed, 31 Jan 2007) $',
+    revision = int('$LastChangedRevision: 37699 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-01-31 23:23:24 +0100 (Wed, 31 Jan 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
@@ -21,8 +21,6 @@ initpkg(__name__,
     long_description = globals()['__doc__'],
 
     exportdefs = {
-    '_dist.setup'            : ('./misc/_dist.py', 'setup'),
-
     # helpers for use from test functions or collectors
     'test.raises'            : ('./test/raises.py', 'raises'),
     'test.deprecated_call'   : ('./test/deprecate.py', 'deprecated_call'), 

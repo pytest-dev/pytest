@@ -51,16 +51,17 @@ def make_distfiles(tmpdir):
     distdir = tmpdir.ensure('dist', dir=1)
     oldir = rootdir.chdir()
     try: 
+        from py.__.misc.dist import setup 
         trace("invoking sdist, generating into %s" % (distdir,)) 
-        py._dist.setup(py, script_name="setup.py", 
-                           script_args=('-q', 'sdist', '--no-prune', 
-                                        '-m', str(manifest), 
-                                        '--formats=gztar,zip',  
-                                        '-d', str(distdir)))
-        py._dist.setup(py, script_name="setup.py", 
-                           script_args=('-q', 'bdist_wininst', 
-                                        #'-m', str(manifest), 
-                                        '-d', str(distdir)))
+        setup(py, script_name="setup.py", 
+              script_args=('-q', 'sdist', '--no-prune', 
+                           '-m', str(manifest), 
+                           '--formats=gztar,zip',  
+                           '-d', str(distdir)))
+        setup(py, script_name="setup.py", 
+              script_args=('-q', 'bdist_wininst', 
+                           #'-m', str(manifest), 
+                           '-d', str(distdir)))
     finally: 
         oldir.chdir()
     return distdir 
