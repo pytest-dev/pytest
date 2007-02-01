@@ -209,10 +209,10 @@ to provide this choice (and getting rid
 of platform-dependencies as much as possible). 
 
 There is some experimental small approach 
-(:source:`py/path/gateway`) aiming at having
+(:source:`py/path/gateway/`) aiming at having
 a convenient Remote Path implementation
 and some considerations about future 
-works in the according :source:`py/path/gateway/todo.txt`
+works in the according :source:`py/path/gateway/TODO.txt`
 
 There are various hacks out there to have
 Memory-Filesystems and even path objects

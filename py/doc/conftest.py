@@ -14,25 +14,27 @@ option = py.test.config.addoptions("documentation check options",
         )
 ) 
 
-_initialized = False
-def checkdocutils(path): 
-    global _initialized
+def checkdocutils():
     try:
         import docutils
     except ImportError:
         py.test.skip("docutils not importable")
-    if not _initialized:
-        from py.__.rest import directive
-        directive.register_linkrole('api', get_resolve_linkrole(path))
-        directive.register_linkrole('source', get_resolve_linkrole(path))
-        _initialized = True
+
+def initrestdirectives(path):
+    from py.__.rest import directive
+    dirpath = path.dirpath()
+    # XXX note that this gets called for every test, because the path is
+    # different every test...
+    directive.register_linkrole('api', get_resolve_linkrole(dirpath))
+    directive.register_linkrole('source', get_resolve_linkrole(dirpath))
 
 def restcheck(path):
     localpath = path
     if hasattr(path, 'localpath'):
         localpath = path.localpath
     _checkskip(localpath)
-    checkdocutils(localpath) 
+    checkdocutils() 
+    initrestdirectives(localpath)
     import docutils.utils
 
     try: 
@@ -262,6 +264,7 @@ def get_resolve_linkrole(checkpath=None):
             if not py.path.local(checkpath).join(ret[1]).check():
                 raise AssertionError(
                     '%s linkrole: %s points to non-existant path %s' % (
-                     name, ret[0], ret[1]))
+                     name, ret[0], py.path.local(checkpath).join(ret[1])))
         return ret
     return resolve_linkrole
+

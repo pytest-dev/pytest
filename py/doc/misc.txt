@@ -93,7 +93,8 @@ sources:
 Currently, the py lib offers two ways to interact with
 system executables. :api:`py.process.cmdexec()` invokes
 the shell in order to execute a string.  The other
-one, :api:`py.path.local.sysexec()` lets you directly execute a binary. 
+one, :api:`py.path.local`'s 'sysexec()' method lets you 
+directly execute a binary. 
 
 Both approaches will raise an exception in case of a return-
 code other than 0 and otherwise return the stdout-output 
@@ -217,3 +218,4 @@ are pure-Python reimplementations. These currently are:
    module)
 
 :api:`py.builtin.BaseException` is just ``Exception`` before Python 2.5.
+
