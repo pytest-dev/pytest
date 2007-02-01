@@ -205,10 +205,11 @@ class AbstractPageBuilder(object):
 
 class SourcePageBuilder(AbstractPageBuilder):
     """ builds the html for a source docs page """
-    def __init__(self, base, linker, projroot):
+    def __init__(self, base, linker, projroot, capture=None):
         self.base = base
         self.linker = linker
         self.projroot = projroot
+        self.capture = capture
     
     def build_navigation(self, fspath):
         nav = H.Navigation()
@@ -348,14 +349,16 @@ def enumerate_and_color(codelines, firstlineno, enc):
 
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
-    def __init__(self, base, linker, dsa, projroot, namespace_tree):
+    def __init__(self, base, linker, dsa, projroot, namespace_tree,
+                 capture=None):
         self.base = base
         self.linker = linker
         self.dsa = dsa
         self.projroot = projroot
         self.projpath = py.path.local(projroot)
         self.namespace_tree = namespace_tree
-        
+        self.capture = capture
+
     def build_callable_view(self, dotted_name):
         """ build the html for a class method """
         # XXX we may want to have seperate
@@ -728,7 +731,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                 # skip py.code.Source objects and source files outside of the
                 # package
                 is_code_source = self._reg_source.match(sourcefile)
-                if (not is_code_source and self.is_in_pkg(sourcefile)):
+                if (not is_code_source and self.is_in_pkg(sourcefile) and
+                        py.path.local(sourcefile).check()):
                     enc = source_html.get_module_encoding(sourcefile)
                     href = self.linker.get_lazyhref(sourcefile)
                     sourcelink = H.a(linktext, href=href)
@@ -737,7 +741,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                     sourcelink = H.div(linktext)
                 colored = enumerate_and_color(mangled, frame.firstlineno, enc)
             else:
-                sourcelink = H.div('source unknown')
+                sourcelink = H.div('source unknown (%s)' % (sourcefile,))
+                colored = mangled[:]
             tbdiv.append(sourcelink)
             tbdiv.append(H.div(class_='code', *colored))
         return tbdiv

@@ -29,8 +29,9 @@ def build(pkgdir, dsa, capture):
 
     all_names = dsa._get_names(filter=lambda x, y: True)
     namespace_tree = htmlgen.create_namespace_tree(all_names)
-    apb = htmlgen.ApiPageBuilder(targetdir, l, dsa, pkgdir, namespace_tree)
-    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir)
+    apb = htmlgen.ApiPageBuilder(targetdir, l, dsa, pkgdir, namespace_tree,
+                                 capture)
+    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, capture)
 
     capture.err.writeorg('preparing namespace pages\n')
     ns_data = apb.prepare_namespace_pages()
