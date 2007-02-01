@@ -176,8 +176,8 @@ right version::
 
 
 
-Python version compatibility helpers
-=====================================
+Cross-Python Version compatibility helpers
+=============================================
 
 sources: 
 
