@@ -47,7 +47,6 @@ def build(pkgdir, dsa, capture):
     apb.build_namespace_pages(ns_data, proj)
     capture.err.writeorg('building class pages\n')
     apb.build_class_pages(class_data, proj)
-    apb.build_method_pages(method_data, proj)
     capture.err.writeorg('building function pages\n')
     apb.build_function_pages(func_data, proj)
     capture.err.writeorg('building source pages\n')
