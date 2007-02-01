@@ -78,3 +78,24 @@ def test_callback():
 
     assert total == {("list", 110):True, ("ack", 100):True, ("ack", 10):True}
 
+def test_file_disappearing():
+    base = py.test.ensuretemp("file_disappearing")
+    dest = base.join("dest")
+    source = base.join("source")
+    source.ensure("ex").write("a" * 100)
+    source.ensure("ex2").write("a" * 100)
+
+    class DRsync(RSync):
+        def filter(self, x):
+            if x.endswith("ex2"):
+                self.x = 1
+                source.join("ex2").remove()
+            return True
+
+    rsync = DRsync()
+    rsync.add_target(gw, dest)
+    rsync.send(source)
+    assert rsync.x == 1
+    assert len(dest.listdir()) == 1
+    assert len(source.listdir()) == 1
+    

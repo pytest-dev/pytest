@@ -85,26 +85,33 @@ class RSync(object):
                 elif command == "send":
                     modified_rel_path, checksum = data
                     modifiedpath = os.path.join(self.sourcedir, *modified_rel_path)
-                    f = open(modifiedpath, 'rb')
-                    data = f.read()
+                    try:
+                        f = open(modifiedpath, 'rb')
+                        data = f.read()
+                    except IOError:
+                        data = None
 
                     # provide info to progress callback function
                     modified_rel_path = "/".join(modified_rel_path)
-                    self.paths[modified_rel_path] = len(data)
+                    if data is not None:
+                        self.paths[modified_rel_path] = len(data)
+                    else:
+                        self.paths[modified_rel_path] = 0
                     if channel not in self.to_send:
                         self.to_send[channel] = []
                     self.to_send[channel].append(modified_rel_path)
 
-                    f.close()
-                    if checksum is not None and checksum == md5.md5(data).digest():
-                        data = None     # not really modified
-                    else:
-                        # ! there is a reason for the interning:
-                        # sharing multiple copies of the file's data
-                        data = intern(data)
-                        print '%s <= %s' % (
-                            channel.gateway._getremoteaddress(),
-                            modified_rel_path)
+                    if data is not None:
+                        f.close()
+                        if checksum is not None and checksum == md5.md5(data).digest():
+                            data = None     # not really modified
+                        else:
+                            # ! there is a reason for the interning:
+                            # sharing multiple copies of the file's data
+                            data = intern(data)
+                            print '%s <= %s' % (
+                                channel.gateway._getremoteaddress(),
+                                modified_rel_path)
                     channel.send(data)
                     del data
                 else:
@@ -118,7 +125,11 @@ class RSync(object):
         self.links.append(("link", basename, linkpoint))
 
     def _send_directory_structure(self, path):
-        st = os.lstat(path)
+        try:
+            st = os.lstat(path)
+        except OSError:
+            self._broadcast((0, 0))
+            return
         if stat.S_ISREG(st.st_mode):
             # regular file: send a timestamp/size pair
             self._broadcast((st.st_mtime, st.st_size))

@@ -65,7 +65,10 @@ def f():
             f = open(path, 'wb')
             f.write(data)
             f.close()
-        os.utime(path, (time, time))
+        try:
+            os.utime(path, (time, time))
+        except OSError:
+            pass
         del data
     channel.send(("links", None))
 
