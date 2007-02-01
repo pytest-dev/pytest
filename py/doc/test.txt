@@ -654,7 +654,7 @@ requirements for remote machines:
 * python (2.3 or 2.4 should work)
 * unix like machine (reliance on ``os.fork``)
 
-Hot to use it
+How to use it
 -----------------------
 
 When you issue ``py.test -d`` then your computer becomes
