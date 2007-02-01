@@ -35,6 +35,7 @@ test driven development** :-)
 .. _`py.execnet`: execnet.html 
 .. _`py.magic.greenlet`: greenlet.html 
 .. _`py.log`: log.html
+.. _`py.io`: io.html
 .. _`py.path`: path.html
 .. _`py.code`: code.html
 .. _`py.test`: test.html 
