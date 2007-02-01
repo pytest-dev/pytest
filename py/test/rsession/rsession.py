@@ -263,7 +263,8 @@ class LSession(AbstractSession):
             try:
                 pkgdir = self.getpkgdir(self.config.args[0])
                 apigen.build(pkgdir,
-                             DocStorageAccessor(self.docstorage))
+                             DocStorageAccessor(self.docstorage),
+                             capture)
             finally:
                 capture.reset()
 

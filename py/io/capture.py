@@ -1,9 +1,12 @@
 
-import os, sys
+import os
+import sys
+import thread
 import py
 
 class FDCapture: 
     """ Capture IO to/from a given os-level filedescriptor. """
+    
     def __init__(self, targetfd, tmpfile=None): 
         self.targetfd = targetfd
         if tmpfile is None: 
@@ -14,16 +17,22 @@ class FDCapture:
         self._patched = []
 
     def setasfile(self, name, module=sys): 
+        """ patch <module>.<name> to self.tmpfile
+        """
         key = (module, name)
         self._patched.append((key, getattr(module, name)))
         setattr(module, name, self.tmpfile) 
 
     def unsetfiles(self): 
+        """ unpatch all patched items
+        """
         while self._patched: 
             (module, name), value = self._patched.pop()
             setattr(module, name, value) 
 
     def done(self): 
+        """ unpatch and clean up, returns the self.tmpfile (file object)
+        """
         os.dup2(self._savefd, self.targetfd) 
         self.unsetfiles() 
         os.close(self._savefd) 
@@ -31,10 +40,22 @@ class FDCapture:
         return self.tmpfile 
 
     def maketmpfile(self): 
+        """ create a temporary file
+        """
         f = os.tmpfile()
         newf = py.io.dupfile(f) 
         f.close()
         return newf 
+
+    def writeorg(self, str):
+        """ write a string to the original file descriptor
+        """
+        tempfp = os.tmpfile()
+        try:
+            os.dup2(self._savefd, tempfp.fileno())
+            tempfp.write(str)
+        finally:
+            tempfp.close()
 
 class OutErrCapture: 
     """ capture Stdout and Stderr both on filedescriptor 
@@ -51,6 +72,11 @@ class OutErrCapture:
                 self.err.setasfile('stderr')
 
     def reset(self): 
+        """ reset sys.stdout and sys.stderr
+
+            returns a tuple of file objects (out, err) for the captured
+            data
+        """
         out = err = ""
         if hasattr(self, 'out'): 
             outfile = self.out.done() 
@@ -59,6 +85,20 @@ class OutErrCapture:
             errfile = self.err.done() 
             err = errfile.read()
         return out, err 
+
+    def writeorgout(self, str):
+        """ write something to the original stdout
+        """
+        if not hasattr(self, 'out'):
+            raise IOError('stdout not patched')
+        self.out.writeorg(str)
+
+    def writeorgerr(self, str):
+        """ write something to the original stderr
+        """
+        if not hasattr(self, 'err'):
+            raise IOError('stderr not patched')
+        self.err.writeorg(str)
 
 def callcapture(func, *args, **kwargs): 
     """ call the given function with args/kwargs

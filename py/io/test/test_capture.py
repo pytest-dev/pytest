@@ -30,6 +30,33 @@ class TestFDCapture:
         f = cap.done()
         assert x == "3"
 
+    def test_writeorg(self):
+        tmppath = py.test.ensuretemp('test_writeorg').ensure('stderr',
+                                                             file=True)
+        tmpfp = tmppath.open('w+b')
+        try:
+            cap = py.io.FDCapture(tmpfp.fileno())
+            print >>tmpfp, 'foo'
+            cap.writeorg('bar\n')
+        finally:
+            tmpfp.close()
+        f = cap.done()
+        scap = f.read()
+        assert scap == 'foo\n'
+        stmp = tmppath.read()
+        assert stmp == "bar\n"
+
+    def test_writeorg_wrongtype(self):
+        tmppath = py.test.ensuretemp('test_writeorg').ensure('stdout',
+                                                             file=True)
+        tmpfp = tmppath.open('r')
+        try:
+            cap = py.io.FDCapture(tmpfp.fileno())
+            py.test.raises(IOError, "cap.writeorg('bar\\n')")
+        finally:
+            tmpfp.close()
+        f = cap.done()
+
 class TestCapturing: 
     def getcapture(self): 
         return py.io.OutErrCapture()
