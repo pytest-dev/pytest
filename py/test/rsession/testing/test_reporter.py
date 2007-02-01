@@ -74,7 +74,7 @@ class AbstractTestReporter(object):
             for outcome in outcomes:
                 r.report(report.ReceivedItemOutcome(ch, item, outcome))
         
-        cap = py.io.OutErrCapture()
+        cap = py.io.StdCaptureFD()
         boxfun(config, item, outcomes)
         out, err = cap.reset()
         assert not err
@@ -97,7 +97,7 @@ class AbstractTestReporter(object):
             for outcome in outcomes:
                 r.report(report.ReceivedItemOutcome(ch, funcitem, outcome))
         
-        cap = py.io.OutErrCapture()
+        cap = py.io.StdCaptureFD()
         boxfun(self.pkgdir, config, moditem, funcitem, outcomes)
         out, err = cap.reset()
         assert not err
@@ -125,7 +125,7 @@ class AbstractTestReporter(object):
             r = self.reporter(config, hosts)
             list(rootcol.tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
 
-        cap = py.io.OutErrCapture()
+        cap = py.io.StdCaptureFD()
         boxfun()
         out, err = cap.reset()
         assert not err
@@ -147,7 +147,7 @@ class AbstractTestReporter(object):
             list(rootcol.tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
             r.report(report.TestFinished())
         
-        cap = py.io.OutErrCapture()
+        cap = py.io.StdCaptureFD()
         boxfun()
         out, err = cap.reset()
         assert not err
@@ -156,7 +156,7 @@ class AbstractTestReporter(object):
     def _test_still_to_go(self):
         tmpdir = py.test.ensuretemp("stilltogo")
         tmpdir.ensure("__init__.py")
-        cap = py.io.OutErrCapture()
+        cap = py.io.StdCaptureFD()
         config = py.test.config._reparse([str(tmpdir)])
         hosts = [HostInfo(i) for i in ["host1", "host2", "host3"]]
         r = self.reporter(config, hosts)

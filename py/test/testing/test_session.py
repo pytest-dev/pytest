@@ -189,7 +189,7 @@ class TestTerminalSession:
             import py
             class Function(py.test.Function): 
                 def startcapture(self): 
-                    self._mycapture = py.io.OutErrCapture() 
+                    self._mycapture = py.io.StdCaptureFD() 
                     
                 def finishcapture(self): 
                     self._testmycapture = self._mycapture.reset()

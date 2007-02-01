@@ -9,14 +9,14 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37699 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-01-31 23:23:24 +0100 (Wed, 31 Jan 2007) $',
+    revision = int('$LastChangedRevision: 37741 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-01 16:20:39 +0100 (Thu, 01 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
     license = "MIT license",
     platforms = ['unix', 'linux', 'cygwin'],
-    author = "holger krekel & others",
+    author = "holger krekel, Armin Rigo, Guido Wesdorp, Maciej Fijalkowski & others",
     author_email = "py-dev@codespeak.net",
     long_description = globals()['__doc__'],
 
@@ -94,9 +94,9 @@ initpkg(__name__,
 
     # input-output helping 
     'io.dupfile'             : ('./io/dupfile.py', 'dupfile'), 
-    'io.FDCapture'           : ('./io/capture.py', 'FDCapture'), 
-    'io.OutErrCapture'       : ('./io/capture.py', 'OutErrCapture'), 
-    'io.callcapture'         : ('./io/capture.py', 'callcapture'), 
+    'io.FDCapture'           : ('./io/fdcapture.py', 'FDCapture'), 
+    'io.StdCapture'          : ('./io/stdcapture.py', 'StdCapture'), 
+    'io.StdCaptureFD'        : ('./io/stdcapture.py', 'StdCaptureFD'), 
 
     # error module, defining all errno's as Classes
     'error'                  : ('./misc/error.py', 'error'),

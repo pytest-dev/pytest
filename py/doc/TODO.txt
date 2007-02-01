@@ -97,7 +97,7 @@ testing
   os.fork to work))
 
 * see why startcapture() used to not use FD-based 
-  "py.io.OutErrCapture" to isolate standard output. 
+  "py.io.StdCaptureFD" to isolate standard output. 
   use that check if all py and PyPy tests pass
   as good as they do without. 
 

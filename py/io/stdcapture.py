@@ -1,13 +1,55 @@
-"""
-
-capture stdout/stderr
-
-"""
+import os
 import sys
+import py
 try: from cStringIO import StringIO
 except ImportError: from StringIO import StringIO
 
-class SimpleOutErrCapture:
+class Capture(object):
+    def call(cls, func, *args, **kwargs): 
+        """ return a (res, out, err) tuple where
+            out and err represent the output/error output
+            during function execution. 
+            call the given function with args/kwargs
+            and capture output/error during its execution. 
+        """ 
+        so = cls()
+        try: 
+            res = func(*args, **kwargs)
+        finally: 
+            out, err = so.reset()
+        return res, out, err 
+    call = classmethod(call) 
+
+class StdCaptureFD(Capture): 
+    """ capture Stdout and Stderr both on filedescriptor 
+        and sys.stdout/stderr level. 
+    """
+    def __init__(self, out=True, err=True, patchsys=True): 
+        if out: 
+            self.out = py.io.FDCapture(1) 
+            if patchsys: 
+                self.out.setasfile('stdout')
+        if err: 
+            self.err = py.io.FDCapture(2) 
+            if patchsys: 
+                self.err.setasfile('stderr')
+
+    def reset(self): 
+        """ reset sys.stdout and sys.stderr
+
+            returns a tuple of file objects (out, err) for the captured
+            data
+        """
+        out = err = ""
+        if hasattr(self, 'out'): 
+            outfile = self.out.done() 
+            out = outfile.read()
+        if hasattr(self, 'err'): 
+            errfile = self.err.done() 
+            err = errfile.read()
+        return out, err 
+
+class StdCapture(Capture):
     """ capture sys.stdout/sys.stderr (but not system level fd 1 and 2).
 
     this captures only "In-Memory" and is currently intended to be
@@ -48,11 +90,3 @@ class DontReadFromInput:
     readline = read
     readlines = read
     __iter__ = read
-
-def callcapture(func, *args, **kwargs): 
-    so = SimpleOutErrCapture()
-    try: 
-        res = func(*args, **kwargs)
-    finally: 
-        out, err = so.reset()
-    return res, out, err 

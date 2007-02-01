@@ -379,11 +379,7 @@ class Module(FSCollector, PyCollectorMixin):
     def startcapture(self): 
         if not self.config.option.nocapture:
             assert not hasattr(self, '_capture')
-            self._capture = py.io.OutErrCapture() 
-            # XXX integrate this into py.io / refactor
-            #     execnet/py.test capturing mechanisms
-            #from py.__.misc.simplecapture import SimpleOutErrCapture
-            #self._capture = SimpleOutErrCapture()
+            self._capture = py.io.StdCaptureFD() 
 
     def finishcapture(self): 
         if hasattr(self, '_capture'): 

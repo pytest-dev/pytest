@@ -77,7 +77,7 @@ def test_join_timeout():
     pool.join(timeout=0.1) 
 
 def test_pool_clean_shutdown():
-    capture = py.io.OutErrCapture() 
+    capture = py.io.StdCaptureFD() 
     pool = WorkerPool()
     def f():
         pass

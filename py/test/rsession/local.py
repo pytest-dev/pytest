@@ -2,6 +2,7 @@
 """ local-only operations
 """
 
+import py
 from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
      ApigenExecutor
 from py.__.test.rsession import report
@@ -9,10 +10,8 @@ from py.__.test.rsession.outcome import ReprOutcome
 
 # XXX copied from session.py
 def startcapture(session):
-    if not session.config.option.nocapture and not session.config.option.usepdb:
-        # XXX refactor integrate capturing
-        from py.__.misc.simplecapture import SimpleOutErrCapture
-        session._capture = SimpleOutErrCapture()
+    if not session.config.option.nocapture:
+        session._capture = py.io.StdCapture()
 
 def finishcapture(session): 
     if hasattr(session, '_capture'): 

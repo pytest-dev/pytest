@@ -1,6 +1,7 @@
 import py
-from py.__.misc.simplecapture import callcapture
 import sys
+
+callcapture = py.io.StdCapture.call
 
 def setup_module(mod): 
     mod.tempdir = py.test.ensuretemp("py.log-test") 

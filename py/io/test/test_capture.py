@@ -59,7 +59,7 @@ class TestFDCapture:
 
 class TestCapturing: 
     def getcapture(self): 
-        return py.io.OutErrCapture()
+        return py.io.StdCaptureFD()
 
     def test_capturing_simple(self):
         cap = self.getcapture()
@@ -120,13 +120,13 @@ def test_callcapture():
         print >>py.std.sys.stderr, y
         return 42
   
-    res, out, err = py.io.callcapture(func, 3, y=4) 
+    res, out, err = py.io.StdCaptureFD.call(func, 3, y=4) 
     assert res == 42 
     assert out.startswith("3") 
     assert err.startswith("4") 
     
 def test_just_out_capture(): 
-    cap = py.io.OutErrCapture(out=True, err=False)
+    cap = py.io.StdCaptureFD(out=True, err=False)
     print >>sys.stdout, "hello"
     print >>sys.stderr, "world"
     out, err = cap.reset()
@@ -134,7 +134,7 @@ def test_just_out_capture():
     assert not err 
 
 def test_just_err_capture(): 
-    cap = py.io.OutErrCapture(out=False, err=True)
+    cap = py.io.StdCaptureFD(out=False, err=True)
     print >>sys.stdout, "hello"
     print >>sys.stderr, "world"
     out, err = cap.reset()
@@ -142,7 +142,7 @@ def test_just_err_capture():
     assert not out 
 
 def test_capture_no_sys(): 
-    cap = py.io.OutErrCapture(patchsys=False)
+    cap = py.io.StdCaptureFD(patchsys=False)
     print >>sys.stdout, "hello"
     print >>sys.stderr, "world"
     os.write(1, "1")

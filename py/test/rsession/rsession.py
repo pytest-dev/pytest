@@ -259,7 +259,7 @@ class LSession(AbstractSession):
                 raise NotImplementedError("%s does not contain 'build' "
                                           "function" %(apigen,))
             print >>sys.stderr, 'building documentation'
-            capture = py.io.OutErrCapture()
+            capture = py.io.StdCaptureFD()
             try:
                 pkgdir = self.getpkgdir(self.config.args[0])
                 apigen.build(pkgdir,

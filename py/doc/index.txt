@@ -11,7 +11,9 @@ py.test and the py lib - documentation
 
 `py.code`_: High-level access/manipulation of Python code and traceback objects. 
 
-`py.xml`_ a fast'n'easy way to generate xml/html documents (including CSS-styling) 
+`py.xml`_ for generating in-memory xml/html object trees 
+
+`py.io`_ Helper Classes for Capturing of Input/Output 
 
 `py.log`_ an alpha document about the ad-hoc logging facilities 
 
