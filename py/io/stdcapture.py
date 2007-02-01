@@ -52,8 +52,8 @@ class StdCaptureFD(Capture):
 class StdCapture(Capture):
     """ capture sys.stdout/sys.stderr (but not system level fd 1 and 2).
 
-    this captures only "In-Memory" and is currently intended to be
-    used by the unittest package to capture print-statements in tests.
+    This class allows to capture writes to sys.stdout|stderr "in-memory"
+    and will raise errors on tries to read from sys.stdin. 
     """
     def __init__(self):
         self.oldin  = sys.stdin
