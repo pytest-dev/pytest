@@ -177,3 +177,14 @@ def test_get_encoding_for_real():
     """)))
     assert get_module_encoding(fpath.strpath) == 'UTF-8'
 
+def test_get_encoding_matching_pattern_elsewhere():
+    temp = py.test.ensuretemp('test_get_encoding')
+    fpath = temp.join('matching_pattern.py')
+    fpath.write(str(py.code.Source("""\
+        #!/usr/bin/env python
+        
+        def foo(coding=None):
+            pass
+    """)))
+    assert get_module_encoding(fpath.strpath) == 'ISO-8859-1'
+

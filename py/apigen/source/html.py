@@ -261,8 +261,15 @@ def get_module_encoding(path):
     if path[-1] in ['c', 'o']:
         path = path[:-1]
     fpath = py.path.local(path)
-    code = fpath.read()
-    match = _reg_enc.search(code)
+    fp = fpath.open()
+    lines = []
+    try:
+        # encoding is only allowed in the first two lines
+        for i in range(2):
+            lines.append(fp.readline())
+    finally:
+        fp.close()
+    match = _reg_enc.search('\n'.join(lines))
     if match:
         return match.group(1)
     return 'ISO-8859-1'
