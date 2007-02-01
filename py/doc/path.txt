@@ -109,9 +109,9 @@ specific directory.
   >>> results = []
   >>> for fpath in dirpath.visit('*.txt'):
   ...   if 'bar' in fpath.read():
-  ...     results.append(fpath.relto(dirpath))
+  ...     results.append(fpath.basename)
   >>> results
-  ['textfile1.txt', 'textfile2.txt', 'subdir/textfile2.txt']
+  ['textfile1.txt', 'textfile2.txt', 'textfile2.txt']
 
 Joining path types 
 ++++++++++++++++++++
@@ -122,9 +122,10 @@ performed on a string level (so the paths don't have to exist, either)::
 
   >>> p1 = py.path.local('/foo/bar')
   >>> p2 = p1.join('baz/qux')
-  >>> p2.strpath
-  '/foo/bar/baz/qux'
-  >>> p2.relto(p1)
+  >>> p2 == py.path.local('/foo/bar/baz/qux')
+  True
+  >>> sep = py.path.local.sep
+  >>> p2.relto(p1).replace(sep, '/') # os-specific path sep in the string
   'baz/qux'
   >>> p3 = p1 / 'baz/qux' # the / operator allows joining, too
   >>> p2 == p3
