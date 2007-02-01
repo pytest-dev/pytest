@@ -15,7 +15,9 @@ from py.__.apigen.tracer.docstorage import pkg_to_dict
 def get_documentable_items(pkgdir):
     sys.path.insert(0, str(pkgdir.dirpath()))
     rootmod = __import__(pkgdir.basename)
-    return 'py', pkg_to_dict(rootmod)
+    d = pkg_to_dict(rootmod)
+    d['execnet.Channel'] = py.__.execnet.channel.Channel
+    return 'py', d
 
 def build(pkgdir, dsa, capture):
     l = linker.Linker()
