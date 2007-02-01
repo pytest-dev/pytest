@@ -57,9 +57,9 @@ class TestFDCapture:
             tmpfp.close()
         f = cap.done()
 
-class TestCapturing: 
-    def getcapture(self): 
-        return py.io.StdCaptureFD()
+class TestStdCapture: 
+    def getcapture(self, **kw):
+        return py.io.StdCapture(**kw)
 
     def test_capturing_simple(self):
         cap = self.getcapture()
@@ -68,6 +68,15 @@ class TestCapturing:
         out, err = cap.reset()
         assert out == "hello world\n"
         assert err == "hello error\n"
+
+    def test_capturing_mixed(self):
+        cap = self.getcapture(mixed=True)
+        print "hello",
+        print >>sys.stderr, "world",
+        print >>sys.stdout, ".",
+        out, err = cap.reset()
+        assert out.strip() == "hello world ."
+        assert not err
 
     def test_capturing_twice_error(self):
         cap = self.getcapture() 
@@ -101,6 +110,26 @@ class TestCapturing:
         out1, err1 = cap1.reset() 
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
+    
+    def test_just_out_capture(self): 
+        cap = self.getcapture(out=True, err=False)
+        print >>sys.stdout, "hello"
+        print >>sys.stderr, "world"
+        out, err = cap.reset()
+        assert out == "hello\n"
+        assert not err 
+
+    def test_just_err_capture(self): 
+        cap = self.getcapture(out=False, err=True) 
+        print >>sys.stdout, "hello"
+        print >>sys.stderr, "world"
+        out, err = cap.reset()
+        assert err == "world\n"
+        assert not out 
+
+class TestStdCaptureFD(TestStdCapture): 
+    def getcapture(self, **kw): 
+        return py.io.StdCaptureFD(**kw)
 
     def test_intermingling(self): 
         cap = self.getcapture()
@@ -114,32 +143,16 @@ class TestCapturing:
         assert out == "123" 
         assert err == "abc" 
 
-def test_callcapture(): 
-    def func(x, y): 
-        print x
-        print >>py.std.sys.stderr, y
-        return 42
-  
-    res, out, err = py.io.StdCaptureFD.call(func, 3, y=4) 
-    assert res == 42 
-    assert out.startswith("3") 
-    assert err.startswith("4") 
-    
-def test_just_out_capture(): 
-    cap = py.io.StdCaptureFD(out=True, err=False)
-    print >>sys.stdout, "hello"
-    print >>sys.stderr, "world"
-    out, err = cap.reset()
-    assert out == "hello\n"
-    assert not err 
-
-def test_just_err_capture(): 
-    cap = py.io.StdCaptureFD(out=False, err=True)
-    print >>sys.stdout, "hello"
-    print >>sys.stderr, "world"
-    out, err = cap.reset()
-    assert err == "world\n"
-    assert not out 
+    def test_callcapture(self): 
+        def func(x, y): 
+            print x
+            print >>py.std.sys.stderr, y
+            return 42
+      
+        res, out, err = py.io.StdCaptureFD.call(func, 3, y=4) 
+        assert res == 42 
+        assert out.startswith("3") 
+        assert err.startswith("4") 
 
 def test_capture_no_sys(): 
     cap = py.io.StdCaptureFD(patchsys=False)
@@ -151,6 +164,15 @@ def test_capture_no_sys():
     assert out == "1"
     assert err == "2"
 
-#class TestCapturingOnFDs(TestCapturingOnSys):
-#    def getcapture(self): 
-#        return Capture() 
+def test_callcapture_nofd(): 
+    def func(x, y): 
+        os.write(1, "hello")
+        os.write(2, "hello")
+        print x
+        print >>py.std.sys.stderr, y
+        return 42
+   
+    res, out, err = py.io.StdCapture.call(func, 3, y=4) 
+    assert res == 42 
+    assert out.startswith("3") 
+    assert err.startswith("4") 
