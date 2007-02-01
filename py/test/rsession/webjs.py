@@ -7,7 +7,6 @@ from py.__.test.rsession.web import exported_methods
 try:
     from pypy.translator.js.modules import dom
     from pypy.translator.js.helper import __show_traceback
-    from pypy.translator.transformer.debug import traceback_handler
 except ImportError:
     py.test.skip("PyPy not found")
 
