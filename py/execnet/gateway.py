@@ -31,12 +31,12 @@ debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
 sysex = (KeyboardInterrupt, SystemExit)
 
 class Gateway(object):
-    num_worker_threads = 2
     ThreadOut = ThreadOut 
+    remoteaddress = ""
 
     def __init__(self, io, startcount=2, maxthreads=None):
         global registered_cleanup
-        self._execpool = WorkerPool() 
+        self._execpool = WorkerPool(maxthreads=maxthreads) 
 ##        self.running = True 
         self.io = io
         self._outgoing = Queue.Queue()
@@ -50,7 +50,7 @@ class Gateway(object):
                                     sender = self.thread_sender)
 
     def __repr__(self):
-        addr = self._getremoteaddress()
+        addr = self.remoteaddress 
         if addr:
             addr = '[%s]' % (addr,)
         else:
@@ -66,9 +66,6 @@ class Gateway(object):
             i = "no"
         return "<%s%s %s/%s (%s active channels)>" %(
                 self.__class__.__name__, addr, r, s, i)
-
-    def _getremoteaddress(self):
-        return None
 
 ##    def _local_trystopexec(self):
 ##        self._execpool.shutdown() 

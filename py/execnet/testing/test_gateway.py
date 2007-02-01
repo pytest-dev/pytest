@@ -62,8 +62,8 @@ class PopenGatewayTestSetup:
     def setup_class(cls):
         cls.gw = py.execnet.PopenGateway()
 
-##    def teardown_class(cls):
-##        cls.gw.exit()
+    def teardown_class(cls):
+        cls.gw.exit()
 
 class BasicRemoteExecution:
     def test_correct_setup(self):
@@ -455,7 +455,7 @@ class TestSshGateway(BasicRemoteExecution):
         cls.gw = py.execnet.SshGateway(option.sshtarget) 
 
     def test_sshaddress(self):
-        assert self.gw.sshaddress == option.sshtarget
+        assert self.gw.remoteaddress == option.sshtarget
 
     def test_failed_connexion(self):
         gw = py.execnet.SshGateway('nowhere.codespeak.net')

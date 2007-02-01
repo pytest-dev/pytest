@@ -110,7 +110,7 @@ class RSync(object):
                             # sharing multiple copies of the file's data
                             data = intern(data)
                             print '%s <= %s' % (
-                                channel.gateway._getremoteaddress(),
+                                channel.gateway.remoteaddress, 
                                 modified_rel_path)
                     channel.send(data)
                     del data

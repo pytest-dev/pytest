@@ -136,9 +136,7 @@ class SocketGateway(InstallableGateway):
         sock.connect((host, port))
         io = inputoutput.SocketIO(sock)
         super(SocketGateway, self).__init__(io=io)
-
-    def _getremoteaddress(self):
-        return '%s:%d' % (self.host, self.port)
+        self.remoteaddress = '%s:%d' % (self.host, self.port)
 
     def remote_install(cls, gateway, hostport=None): 
         """ return a connected socket gateway through the
@@ -167,7 +165,7 @@ class SocketGateway(InstallableGateway):
     
 class SshGateway(PopenCmdGateway):
     def __init__(self, sshaddress, remotepython='python', identity=None): 
-        self.sshaddress = sshaddress
+        self.remoteaddress = sshaddress
         remotecmd = '%s -u -c "exec input()"' % (remotepython,)
         cmdline = [sshaddress, remotecmd]
         # XXX Unix style quoting
@@ -178,9 +176,6 @@ class SshGateway(PopenCmdGateway):
             cmd += ' -i %s' % (identity,)
         cmdline.insert(0, cmd) 
         super(SshGateway, self).__init__(' '.join(cmdline))
-
-    def _getremoteaddress(self):
-        return self.sshaddress
 
 class ExecGateway(PopenGateway):
     def remote_exec_sync_stdcapture(self, lines, callback):
