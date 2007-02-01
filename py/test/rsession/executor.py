@@ -60,21 +60,19 @@ class ApigenExecutor(RunExecutor):
         self.tracer = tracer
         return super(ApigenExecutor, self).execute()
 
-    def wrap_underlaying(self, target):
-        def f(*args):
-            try:
-                self.tracer.start_tracing()
-                return target(*args)
-            finally:
-                self.tracer.end_tracing()
-        return f
+    def wrap_underlaying(self, target, *args):
+        try:
+            self.tracer.start_tracing()
+            return target(*args)
+        finally:
+            self.tracer.end_tracing()
 
     def run(self):
         """ We want to trace *only* function objects here. Unsure
         what to do with custom collectors at all
         """
-        if hasattr(self.item, 'obj') and type(self.item.obj) is py.test.Function:
-            self.item.obj = self.wrap_underlaying(self.item.obj)
+        if hasattr(self.item, 'obj') and type(self.item) is py.test.Function:
+            self.item.execute = self.wrap_underlaying
         self.item.run()
 
 class BoxExecutor(RunExecutor):
