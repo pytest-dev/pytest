@@ -70,7 +70,8 @@ def test_js_ignore():
     assert len(l+l2) == 3
 
 def test_resolve_linkrole():
-    from py.__.doc.conftest import resolve_linkrole
+    from py.__.doc.conftest import get_resolve_linkrole
+    resolve_linkrole = get_resolve_linkrole(None)
     assert resolve_linkrole('api', 'py.foo.bar') == (
         'py.foo.bar', '../../apigen/api/foo.bar.html')
     assert resolve_linkrole('api', 'py.foo.bar()') == (
@@ -85,4 +86,15 @@ def test_resolve_linkrole():
     assert resolve_linkrole('source', 'py/') == (
         'py/', '../../apigen/source/index.html')
     py.test.raises(AssertionError, 'resolve_linkrole("source", "/foo/bar/")')
+
+def test_resolve_linkrole_relpath():
+    from py.__.doc.conftest import get_resolve_linkrole
+    pypath = tmpdir.join('py')
+    docpath = pypath.join('doc')
+    apipath = tmpdir.join('apigen/api')
+    apipath.ensure('foo.bar.html')
+    resolve_linkrole = get_resolve_linkrole(docpath)
+    
+    assert resolve_linkrole('api', 'py.foo.bar')
+    py.test.raises(AssertionError, "resolve_linkrole('api', 'py.foo.baz')")
 
