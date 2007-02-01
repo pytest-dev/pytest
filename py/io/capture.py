@@ -86,20 +86,6 @@ class OutErrCapture:
             err = errfile.read()
         return out, err 
 
-    def writeorgout(self, str):
-        """ write something to the original stdout
-        """
-        if not hasattr(self, 'out'):
-            raise IOError('stdout not patched')
-        self.out.writeorg(str)
-
-    def writeorgerr(self, str):
-        """ write something to the original stderr
-        """
-        if not hasattr(self, 'err'):
-            raise IOError('stderr not patched')
-        self.err.writeorg(str)
-
 def callcapture(func, *args, **kwargs): 
     """ call the given function with args/kwargs
         and return a (res, out, err) tuple where
