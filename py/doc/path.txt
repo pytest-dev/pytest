@@ -8,7 +8,8 @@ py.path
 The 'py' lib provides a uniform high-level api to deal with filesystems
 and filesystem-like interfaces: :api:`py.path`.  It aims to offer a central
 object to fs-like object trees (reading from and writing to files, adding
-files/directories, examining the types and structure, etc.). 
+files/directories, examining the types and structure, etc.), and out-of-the-box
+provides a number of implementations of this API.
 
 Path implementations provided by :api:`py.path`
 ===============================================
@@ -34,6 +35,9 @@ a :api:`py.path.local` object for us (which wraps a directory)::
   True
   >>> foopath.read()
   'bar'
+  >>> foofile = foopath.open() # return a 'real' file object
+  >>> foofile.read(1)
+  'b'
 
 :api:`py.path.svnurl` and :api:`py.path.svnwc`
 ----------------------------------------------
@@ -74,32 +78,103 @@ for many use cases and allowing to transparently switch the
 path object within an application (e.g. from "local" to "svnwc"). 
 The common set includes functions such as `path.read()` to read all data 
 from a file, `path.write()` to write data, `path.listdir()` to get a list 
-of directory entries, and `path.check()` to check if a node exists
+of directory entries, `path.check()` to check if a node exists
 and is of a particular type, `path.join()` to get
 to a (grand)child, `path.visit()` to recursively walk through a node's
-children, etc.  Only things that are not common on all filesystems, such 
-as handling metadata (e.g. the subversion "properties") require
+children, etc.  Only things that are not common on 'normal' filesystems (yet), 
+such as handling metadata (e.g. the Subversion "properties") require
 using specific APIs. 
 
 Examples
 ---------------------------------
 
+A quick 'cookbook' of small examples that will be useful 'in real life',
+which also presents parts of the 'common' API, and shows some non-common
+methods:
+
 Searching `.txt` files 
 +++++++++++++++++++++++++++++++++++++
 
-XXX example
+Search for a particular string inside all files with a .txt extension in a
+specific directory.
 
+::
 
-Joining and checking path types 
-+++++++++++++++++++++++++++++++++++++
+  >>> dirpath = temppath.ensure('testdir', dir=True)
+  >>> dirpath.join('textfile1.txt').write('foo bar baz')
+  >>> dirpath.join('textfile2.txt').write('frob bar spam eggs')
+  >>> subdir = dirpath.ensure('subdir', dir=True)
+  >>> subdir.join('textfile1.txt').write('foo baz')
+  >>> subdir.join('textfile2.txt').write('spam eggs spam foo bar spam')
+  >>> results = []
+  >>> for fpath in dirpath.visit('*.txt'):
+  ...   if 'bar' in fpath.read():
+  ...     results.append(fpath.relto(dirpath))
+  >>> results
+  ['textfile1.txt', 'textfile2.txt', 'subdir/textfile2.txt']
 
-XXX example
+Joining path types 
+++++++++++++++++++++
 
-setting svn-properties 
+This example shows the :api:`py.path` features to deal with actual paths
+(strings). Note that the filesystem is never touched, all operations are
+performed on a string level (so the paths don't have to exist, either)::
+
+  >>> p1 = py.path.local('/foo/bar')
+  >>> p2 = p1.join('baz/qux')
+  >>> p2.strpath
+  '/foo/bar/baz/qux'
+  >>> p2.relto(p1)
+  'baz/qux'
+  >>> p3 = p1 / 'baz/qux' # the / operator allows joining, too
+  >>> p2 == p3
+  True
+
+This should be possible on every implementation of :api:`py.path`, so
+regardless of whether the implementation wraps a UNIX filesystem, a Windows
+one, or a database or object tree, these functions should be available (each
+with their own notion of path seperators and dealing with conversions, etc.).
+
+Checking path types
++++++++++++++++++++++
+
+Now we will show a bit about the powerful 'check()' method on paths, which
+allows you to check whether a file exists, what type it is, etc.::
+
+  >>> file1 = temppath.join('file1')
+  >>> file1.check() # does it exist?
+  False
+  >>> file1 = file1.ensure(file=True) # 'touch' the file
+  >>> file1.check()
+  True
+  >>> file1.check(dir=True) # is it a dir?
+  False
+  >>> file1.check(file=True) # or a file?
+  True
+  >>> file1.check(ext='.txt') # check the extension
+  False
+  >>> textfile = temppath.ensure('text.txt', file=True)
+  >>> textfile.check(ext='.txt')
+  True
+  >>> file1.check(basename='file1') # we can use all the path's properties here
+  True
+
+Setting svn-properties 
 +++++++++++++++++++++++++++++++++++++++
 
-XXX example
+As an example of 'uncommon' methods, we'll show how to read and write
+properties in an :api:`py.path.svnwc` instance::
 
+  >>> wc.propget('foo')
+  ''
+  >>> wc.propset('foo', 'bar')
+  >>> wc.propget('foo')
+  'bar'
+  >>> len(wc.status().prop_modified) # our own props
+  1
+  >>> msg = wc.revert() # roll back our changes
+  >>> len(wc.status().prop_modified)
+  0
 
 XXX more examples (look at API)
 +++++++++++++++++++++++++++++++++++++++
@@ -116,7 +191,6 @@ is a bit fragile across versions and locales
 (it basically only works with an english locale!).  
 
 XXX note more here
-
 
 Future plans
 ============
