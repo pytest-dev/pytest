@@ -22,6 +22,16 @@ class Capture(object):
         return res, out, err 
     call = classmethod(call) 
 
+    def reset(self): 
+        """ reset sys.stdout and sys.stderr
+
+            returns a tuple of file objects (out, err) for the captured
+            data
+        """
+        outfile, errfile = self.done()
+        return outfile.read(), errfile.read()
+
+
 class StdCaptureFD(Capture): 
     """ capture Stdout and Stderr both on filedescriptor 
         and sys.stdout/stderr level. 
@@ -40,18 +50,14 @@ class StdCaptureFD(Capture):
             if patchsys: 
                 self.err.setasfile('stderr')
 
-    def reset(self): 
-        """ reset sys.stdout and sys.stderr
-
-            returns a tuple of file objects (out, err) for the captured
-            data
-        """
+    def done(self):
+        """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = emptyfile
         if hasattr(self, 'out'): 
             outfile = self.out.done() 
         if hasattr(self, 'err'): 
             errfile = self.err.done() 
-        return outfile.read(), errfile.read()
+        return outfile, errfile 
 
 class StdCapture(Capture):
     """ capture sys.stdout/sys.stderr (but not system level fd 1 and 2).
@@ -76,11 +82,12 @@ class StdCapture(Capture):
         sys.stdin  = self.newin  = DontReadFromInput()
 
     def reset(self):
-        """ return captured output and restore sys.stdout/err."""
+        """ return captured output as strings and restore sys.stdout/err."""
         x, y = self.done() 
         return x.read(), y.read() 
 
     def done(self): 
+        """ return (outfile, errfile) and stop capturing. """
         o,e = sys.stdout, sys.stderr
         outfile = errfile = emptyfile
         if self._out: 

@@ -61,7 +61,15 @@ class TestStdCapture:
     def getcapture(self, **kw):
         return py.io.StdCapture(**kw)
 
-    def test_capturing_simple(self):
+    def test_capturing_done_simple(self):
+        cap = self.getcapture()
+        print "hello world"
+        print >>sys.stderr, "hello error"
+        outfile, errfile = cap.done()
+        assert outfile.read() == "hello world\n"
+        assert errfile.read() == "hello error\n"
+
+    def test_capturing_reset_simple(self):
         cap = self.getcapture()
         print "hello world"
         print >>sys.stderr, "hello error"
