@@ -11,7 +11,6 @@ def make_module_from_c(cfile):
     import os, sys, imp
     from distutils.core import setup
     from distutils.extension import Extension
-    import stdoutcapture
     debug = 0
 
     #try:
@@ -36,7 +35,7 @@ def make_module_from_c(cfile):
     if lib.check():
         lib.remove()
 
-    c = stdoutcapture.Capture(mixed_out_err = True)
+    c = py.io.StdCaptureFD()
     try:
         try:
             saved_environ = os.environ.items()

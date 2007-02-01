@@ -1,7 +1,7 @@
 import py
 try:
     from py.magic import greenlet
-except RuntimeError, e:
+except (ImportError, RuntimeError), e:
     py.test.skip(str(e))
 
 
