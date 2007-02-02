@@ -70,31 +70,30 @@ def test_js_ignore():
     assert len(l+l2) == 3
 
 def test_resolve_linkrole():
-    from py.__.doc.conftest import get_resolve_linkrole
-    resolve_linkrole = get_resolve_linkrole(None)
-    assert resolve_linkrole('api', 'py.foo.bar') == (
+    from py.__.doc.conftest import resolve_linkrole
+    assert resolve_linkrole('api', 'py.foo.bar', False) == (
         'py.foo.bar', '../../apigen/api/foo.bar.html')
-    assert resolve_linkrole('api', 'py.foo.bar()') == (
+    assert resolve_linkrole('api', 'py.foo.bar()', False) == (
         'py.foo.bar()', '../../apigen/api/foo.bar.html')
-    assert resolve_linkrole('api', 'py') == (
+    assert resolve_linkrole('api', 'py', False) == (
         'py', '../../apigen/api/index.html')
     py.test.raises(AssertionError, 'resolve_linkrole("api", "foo.bar")')
-    assert resolve_linkrole('source', 'py/foo/bar.py') == (
+    assert resolve_linkrole('source', 'py/foo/bar.py', False) == (
         'py/foo/bar.py', '../../apigen/source/foo/bar.py.html')
-    assert resolve_linkrole('source', 'py/foo/') == (
+    assert resolve_linkrole('source', 'py/foo/', False) == (
         'py/foo/', '../../apigen/source/foo/index.html')
-    assert resolve_linkrole('source', 'py/') == (
+    assert resolve_linkrole('source', 'py/', False) == (
         'py/', '../../apigen/source/index.html')
     py.test.raises(AssertionError, 'resolve_linkrole("source", "/foo/bar/")')
 
-def test_resolve_linkrole_relpath():
-    from py.__.doc.conftest import get_resolve_linkrole
-    pypath = tmpdir.join('py')
-    docpath = pypath.join('doc')
-    apipath = tmpdir.join('apigen/api')
-    apipath.ensure('foo.bar.html')
-    resolve_linkrole = get_resolve_linkrole(docpath)
-    
-    assert resolve_linkrole('api', 'py.foo.bar')
+def test_resolve_linkrole_check_api():
+    from py.__.doc.conftest import resolve_linkrole
+    assert resolve_linkrole('api', 'py.test.ensuretemp')
     py.test.raises(AssertionError, "resolve_linkrole('api', 'py.foo.baz')")
+
+def test_resolve_linkrole_check_source():
+    from py.__.doc.conftest import resolve_linkrole
+    assert resolve_linkrole('source', 'py/path/common.py')
+    py.test.raises(AssertionError,
+                   "resolve_linkrole('source', 'py/foo/bar.py')")
 

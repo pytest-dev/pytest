@@ -14,19 +14,18 @@ option = py.test.config.addoptions("documentation check options",
         )
 ) 
 
+_initialized = False
 def checkdocutils():
+    global _initialized
     try:
         import docutils
     except ImportError:
         py.test.skip("docutils not importable")
-
-def initrestdirectives(path):
-    from py.__.rest import directive
-    dirpath = path.dirpath()
-    # XXX note that this gets called for every test, because the path is
-    # different every test...
-    directive.register_linkrole('api', get_resolve_linkrole(dirpath))
-    directive.register_linkrole('source', get_resolve_linkrole(dirpath))
+    if not _initialized:
+        from py.__.rest import directive
+        directive.register_linkrole('api', resolve_linkrole)
+        directive.register_linkrole('source', resolve_linkrole)
+        _initialized = True
 
 def restcheck(path):
     localpath = path
@@ -34,7 +33,6 @@ def restcheck(path):
         localpath = path.localpath
     _checkskip(localpath)
     checkdocutils() 
-    initrestdirectives(localpath)
     import docutils.utils
 
     try: 
@@ -236,35 +234,42 @@ class DocDirectory(py.test.collect.Directory):
             return self.ReSTChecker(p, parent=self) 
 Directory = DocDirectory
 
-def get_resolve_linkrole(checkpath=None):
-    # XXX yuck...
-    def resolve_linkrole(name, text):
-        if name == 'api':
-            if text == 'py':
-                ret = ('py', '../../apigen/api/index.html')
-            else:
-                assert text.startswith('py.'), (
-                    'api link "%s" does not point to the py package') % (text,)
-                dotted_name = text
-                if dotted_name.find('(') > -1:
-                    dotted_name = dotted_name[:text.find('(')]
-                # remove pkg root
-                dotted_name = '.'.join(dotted_name.split('.')[1:])
-                ret = (text, '../../apigen/api/%s.html' % (dotted_name,))
-        elif name == 'source':
-            assert text.startswith('py/'), ('source link "%s" does not point '
-                                            'to the py package') % (text,)
-            relpath = '/'.join(text.split('/')[1:])
-            if relpath.endswith('/') or not relpath:
-                relpath += 'index.html'
-            else:
-                relpath += '.html'
-            ret = (text, '../../apigen/source/%s' % (relpath,))
-        if checkpath:
-            if not py.path.local(checkpath).join(ret[1]).check():
-                raise AssertionError(
-                    '%s linkrole: %s points to non-existant path %s' % (
-                     name, ret[0], py.path.local(checkpath).join(ret[1])))
-        return ret
-    return resolve_linkrole
+def resolve_linkrole(name, text, check=True):
+    if name == 'api':
+        if text == 'py':
+            return ('py', '../../apigen/api/index.html')
+        else:
+            assert text.startswith('py.'), (
+                'api link "%s" does not point to the py package') % (text,)
+            dotted_name = text
+            if dotted_name.find('(') > -1:
+                dotted_name = dotted_name[:text.find('(')]
+            # remove pkg root
+            path = dotted_name.split('.')[1:]
+            dotted_name = '.'.join(path)
+            obj = py
+            if check:
+                for chunk in path:
+                    try:
+                        obj = getattr(obj, chunk)
+                    except AttributeError:
+                        raise AssertionError(
+                            'problem with linkrole :api:`%s`: can not resolve '
+                            'dotted name %s' % (text, dotted_name,))
+            return (text, '../../apigen/api/%s.html' % (dotted_name,))
+    elif name == 'source':
+        assert text.startswith('py/'), ('source link "%s" does not point '
+                                        'to the py package') % (text,)
+        relpath = '/'.join(text.split('/')[1:])
+        if check:
+            pkgroot = py.__package__.getpath()
+            abspath = pkgroot.join(relpath)
+            assert pkgroot.join(relpath).check(), (
+                    'problem with linkrole :source:`%s`: '
+                    'path %s does not exist' % (text, relpath))
+        if relpath.endswith('/') or not relpath:
+            relpath += 'index.html'
+        else:
+            relpath += '.html'
+        return (text, '../../apigen/source/%s' % (relpath,))
 
