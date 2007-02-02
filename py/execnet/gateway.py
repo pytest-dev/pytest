@@ -202,6 +202,10 @@ class Gateway(object):
         """ return channel object for communicating with the asynchronously
             executing 'source' code which will have a corresponding 'channel'
             object in its executing namespace. 
+
+            You may provide callback functions 'stdout' and 'stderr' 
+            which will get called with the remote stdout/stderr output
+            piece by piece.
         """
         try:
             source = str(Source(source))
