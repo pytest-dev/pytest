@@ -28,7 +28,8 @@ class RSync(object):
         return True
 
     def add_target(self, gateway, destdir, finishedcallback=None):
-        """ Adds a target for to-be-send data
+        """ Adds a remote target specified via a 'gateway'
+            and a remote destination directory. 
         """
         def itemcallback(req):
             self.receivequeue.put((channel, req))
@@ -38,7 +39,7 @@ class RSync(object):
         self.channels[channel] = finishedcallback
 
     def send(self, sourcedir):
-        """ Sends a sourcedir to previously prepared targets
+        """ Sends a sourcedir to all added targets. 
         """
         self.sourcedir = str(sourcedir)
         # normalize a trailing '/' away
