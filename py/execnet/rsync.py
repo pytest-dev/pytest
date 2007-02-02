@@ -3,18 +3,17 @@ from Queue import Queue
 
 
 class RSync(object):
-    """ This is an example usage of py.execnet - a sample RSync
-    protocol, which can perform syncing 1-to-n.
+    """ This class allows to synchronise files and directories 
+        with one or multiple remote filesystems.
 
-    Sample usage: you instantiate this class, eventually providing a
-    callback when rsyncing is done, than add some targets
-    (gateway + destdir) by running add_target and finally
-    invoking send() which will send provided source tree remotely.
+        An RSync instance allows to dynamically add remote targets 
+        and then synchronizes the remote filesystems with
+        any provided source directory. 
 
-    There is limited support for symlinks, which means that symlinks
-    pointing to the sourcetree will be send "as is" while external
-    symlinks will be just copied (regardless of existance of such
-    a path on remote side)
+        There is limited support for symlinks, which means that symlinks
+        pointing to the sourcetree will be send "as is" while external
+        symlinks will be just copied (regardless of existance of such
+        a path on remote side). 
     """
     def __init__(self, callback=None, **options):
         for name in options:
