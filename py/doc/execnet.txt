@@ -4,29 +4,29 @@ The py.execnet library
 .. contents::
 .. sectnum::
 
-``py.execnet`` deals with letting your python programs execute and 
-communicate across process and computer barriers.  At the
-core it is a very simple and powerful mechanism: executing 
-source code at "the other side" and communicating with
-remote parts of your program.  
-
-A warning note: We are doing documentation-driven development
-in some ways.  So some of the described features are not
-there yet.  You may refer to the `py API`_ reference for
-further information. 
-
-
 A new view on distributed execution
 ----------------------------------- 
 
-**py.execnet** lets you asynchronously execute source code on
-remote places.  The sending and receiving side communicate via
-Channels that transport marshallable objects.  A core feature
-of **py.execnet** is that **the communication protocols can be
-completely defined by the client side**.  Usually, with
-server/client apps and especially Remote Method Based (RMI) 
-approaches you have to define interfaces and have to
-upgrade your server and client and restart both. 
+``py.execnet`` supports ad-hoc distribution of parts of
+a program across process and network barriers.  *Ad-hoc*
+means that the client side may completely control 
+
+* which parts of a program execute remotely and 
+
+* which data protocols are used between them 
+
+without requiring any prior manual installation 
+of user program code on the remote side.  In fact,
+not even a prior installation of any server code
+is required, provided there is a way to get 
+an input/output connection to a python interpreter
+(for example via "ssh" and a "python" executable). 
+
+By comparison, traditional Remote Method Based (RMI) 
+require prior installation and manual rather
+heavy processes of setup, distribution and 
+communication between program parts.  
+
 
 What about Security? Are you completely nuts? 
 ---------------------------------------------
