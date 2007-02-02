@@ -19,15 +19,6 @@ def test_create_namespace_tree():
                     'pkg': ['pkg.sub', 'pkg.SomeClass',
                             'pkg.SomeSubClass']}
 
-def test_build_navitem_html():
-    l = Linker()
-    l.set_link('spam.eggs.foo', 'foo.html')
-    h = htmlgen.build_navitem_html(l, 'foo', 'spam.eggs.foo', 0, False)
-    assert unicode(h) == u'<div><a href="foo.html">foo</a></div>'
-    h = htmlgen.build_navitem_html(l, 'bar', 'spam.eggs.foo', 1, True)
-    assert unicode(h) == (u'<div class="selected">\xa0\xa0'
-                          u'<a href="foo.html">bar</a></div>')
-
 def test_source_dirs_files():
     temp = py.test.ensuretemp('test_source_dirs_files')
     temp.join('dir').ensure(dir=True)
@@ -51,4 +42,16 @@ def test_deindent():
         'foo\n\nbar\n  baz\n')
     assert htmlgen.deindent('foo\n\n      bar\n    baz\n') == (
         'foo\n\n  bar\nbaz\n')
+
+def test_enumerate_and_color():
+    colored = htmlgen.enumerate_and_color(['def foo():', '  print "bar"'], 0,
+                                          'ascii')
+    div = py.xml.html.div(*colored).unicode(indent=0)
+    assert div == ('<div>'
+                   '<span>   1: </span>'
+                   '<span class="alt_keyword">def</span> foo():\n'
+                   '<span>   2: </span>'
+                   '  <span class="keyword">print</span>'
+                   ' <span class="string">&quot;bar&quot;</span>\n'
+                   '</div>')
 

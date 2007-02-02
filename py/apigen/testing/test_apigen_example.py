@@ -364,6 +364,16 @@ class TestSourcePageBuilder(AbstractBuilderTest):
             '<h2>files</h2>'])
         _checkhtml(html)
 
+    def test_build_source_page(self):
+        data = self.spb.prepare_pages(self.fs_root)
+        self.spb.build_pages(data, self.project, self.fs_root)
+        funcsource = self.base.join('source/pkg/func.py.html')
+        assert funcsource.check(file=True)
+        html = funcsource.read()
+        print html
+        assert ('<span class="alt_keyword">def</span> '
+                '<a href="#func" name="func">func</a>(arg1):') in html
+
     def test_build_navigation_root(self):
         self.spb.prepare_pages(self.fs_root)
         nav = self.spb.build_navigation(self.fs_root.join('pkg'))

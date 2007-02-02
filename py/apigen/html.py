@@ -31,10 +31,22 @@ class H(html):
         pass
 
     class FunctionDescription(Description):
-        pass
+        def __init__(self, localname, argdesc, docstring, valuedesc, csource,
+                     callstack):
+            fd = H.FunctionDef(localname, argdesc)
+            ds = H.Docstring(docstring or '*no docstring available*')
+            fi = H.FunctionInfo(valuedesc, csource, callstack)
+            super(H.FunctionDescription, self).__init__(fd, ds, fi)
 
     class FunctionDef(html.h2):
-        pass
+        def __init__(self, name, argdesc):
+            super(H.FunctionDef, self).__init__('def %s%s:' % (name, argdesc))
+
+    class FunctionInfo(html.div):
+        def __init__(self, valuedesc, csource, callstack):
+            super(H.FunctionInfo, self).__init__(
+                H.Hideable('funcinfo', 'funcinfo', valuedesc, csource,
+                           callstack))
 
     class ParameterDescription(html.div):
         pass
@@ -49,11 +61,26 @@ class H(html):
         pass
 
     class NavigationItem(html.div):
-        pass
+        def __init__(self, linker, linkid, name, indent, selected):
+            href = linker.get_lazyhref(linkid)
+            super(H.NavigationItem, self).__init__((indent * 2 * u'\xa0'),
+                                                 H.a(name, href=href))
+            if selected:
+                self.attr.class_ = 'selected'
 
     class BaseDescription(html.a):
         pass
 
+    class SourceSnippet(html.div):
+        def __init__(self, text, href, sourceels=None):
+            if sourceels is None:
+                sourceels = []
+            link = text
+            if href:
+                link = H.a(text, href=href)
+            super(H.SourceSnippet, self).__init__(
+                link, H.div(class_='code', *sourceels))
+    
     class SourceDef(html.div):
         pass
 
@@ -74,8 +101,24 @@ class H(html):
         pass
 
     class CallStackDescription(Description):
-        pass
+        def __init__(self, callstackdiv):
+            super(H.CallStackDescription, self).__init__(
+                H.Hideable('callsites', 'callsites', csdiv))
 
     class CallStackItem(html.div):
-        class_ = 'callstackitem'
+        def __init__(self, filename, lineno, traceback):
+            super(H.CallStackItem, self).__init__(
+                H.Hideable("stack trace %s - line %s" % (filename, lineno),
+                           'callstackitem', traceback))
+
+    class Hideable(html.div):
+        def __init__(self, name, class_, *content):
+            super(H.Hideable, self).__init__(
+                H.div(H.a('show/hide %s' % (name,),
+                          href='#',
+                          onclick=('showhideel(getnextsibling(this));'
+                                   'return false;')),
+                      H.div(style='display: none',
+                            class_=class_,
+                            *content)))
 

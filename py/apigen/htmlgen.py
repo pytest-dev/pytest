@@ -50,14 +50,7 @@ def get_param_htmldesc(linker, func):
     """ get the html for the parameters of a function """
     import inspect
     # XXX copy and modify formatargspec to produce html
-    return H.em(inspect.formatargspec(*inspect.getargspec(func)))
-
-def build_navitem_html(linker, name, linkid, indent, selected):
-    href = linker.get_lazyhref(linkid)
-    navitem = H.NavigationItem((indent * 2 * u'\xa0'), H.a(name, href=href))
-    if selected:
-        navitem.attr.class_ = 'selected'
-    return navitem
+    return inspect.formatargspec(*inspect.getargspec(func))
 
 # some helper functionality
 def source_dirs_files(fspath):
@@ -139,15 +132,15 @@ class SourcePageBuilder(AbstractPageBuilder):
                     text = self.projroot.basename
                 else:
                     text = path[i-1]
-                nav.append(build_navitem_html(self.linker, text, abspath,
-                                              indent, False))
+                nav.append(H.NavigationItem(self.linker, abspath, text,
+                                            indent, False))
                 indent += 1
         # build siblings or children and self
         if fspath.check(dir=True):
             # we're a dir, build ourselves and our children
             dirpath = fspath
-            nav.append(build_navitem_html(self.linker, dirpath.basename,
-                                          dirpath.strpath, indent, True))
+            nav.append(H.NavigationItem(self.linker, dirpath.strpath,
+                                        dirpath.basename, indent, True))
             indent += 1
         elif fspath.strpath == self.projroot.strpath:
             dirpath = fspath
@@ -156,13 +149,13 @@ class SourcePageBuilder(AbstractPageBuilder):
             dirpath = fspath.dirpath()
         diritems, fileitems = source_dirs_files(dirpath)
         for dir in diritems:
-            nav.append(build_navitem_html(self.linker, dir.basename,
-                                          dir.strpath, indent, False))
+            nav.append(H.NavigationItem(self.linker, dir.strpath, dir.basename,
+                                        indent, False))
         for file in fileitems:
             selected = (fspath.check(file=True) and
                         file.basename == fspath.basename)
-            nav.append(build_navitem_html(self.linker, file.basename,
-                                          file.strpath, indent, selected))
+            nav.append(H.NavigationItem(self.linker, file.strpath,
+                                        file.basename, indent, selected))
         return nav
 
     re = py.std.re
@@ -232,6 +225,7 @@ class SourcePageBuilder(AbstractPageBuilder):
                 except (KeyboardInterrupt, SystemError):
                     raise
                 except: # XXX strange stuff going wrong at times... need to fix
+                    raise
                     exc, e, tb = py.std.sys.exc_info()
                     print '%s - %s' % (exc, e)
                     print
@@ -288,41 +282,26 @@ class ApiPageBuilder(AbstractPageBuilder):
         callable_source = self.dsa.get_function_source(dotted_name)
         # i assume they're both either available or unavailable(XXX ?)
         is_in_pkg = self.is_in_pkg(sourcefile)
+        href = None
+        text = 'could not get to source file'
+        colored = []
         if sourcefile and callable_source:
             enc = source_html.get_module_encoding(sourcefile)
             tokenizer = source_color.Tokenizer(source_color.PythonSchema)
             firstlineno = func.func_code.co_firstlineno
             org = callable_source.split('\n')
             colored = enumerate_and_color(org, firstlineno, enc)
+            text = 'source: %s' % (sourcefile,)
             if is_in_pkg:
-                slink = H.a('source: %s' % (sourcefile,),
-                            href=self.linker.get_lazyhref(sourcefile))
-            else:
-                slink = H.em('source: %s' % (sourcefile,))
-            csource = H.div(H.br(), slink, H.br(),
-                            H.SourceDef(H.div(class_='code', *colored)))
-        else:
-            csource = H.SourceDef('could not get source file')
+                href = self.linker.get_lazyhref(sourcefile)
 
-        csdiv = H.div(style='display: none')
-        for cs, _ in self.dsa.get_function_callpoints(dotted_name):
-            csdiv.append(self.build_callsite(dotted_name, cs))
-        callstack = H.CallStackDescription(
-            H.a('show/hide call sites',
-                href='#',
-                onclick='showhideel(getnextsibling(this)); return false;'),
-            csdiv,
-        )
-        snippet = H.FunctionDescription(
-            H.FunctionDef('def %s' % (localname,), argdesc),
-            H.Docstring(docstring or '*no docstring available*'),
-            H.div(H.a('show/hide info',
-                      href='#',
-                      onclick=('showhideel(getnextsibling(this));'
-                               'return false;')),
-                  H.div(valuedesc, csource, callstack, style='display: none',
-                        class_='funcinfo')),
-        )
+        csource = H.SourceSnippet(text, href, colored)
+        callstack = self.dsa.get_function_callpoints(dotted_name)
+        csitems = []
+        for cs, _ in callstack:
+            csitems.append(self.build_callsite(dotted_name, cs))
+        snippet = H.FunctionDescription(localname, argdesc, docstring,
+                                        valuedesc, csource, csitems)
         
         return snippet
 
@@ -501,8 +480,8 @@ class ApiPageBuilder(AbstractPageBuilder):
 
         # top namespace, index.html
         module_name = self.dsa.get_module_name().split('/')[-1]
-        navitems.append(build_navitem_html(self.linker, module_name, '', 0,
-                                           True))
+        navitems.append(H.NavigationItem(self.linker, '', module_name, 0,
+                                         True))
         def build_nav_level(dotted_name, depth=1):
             navitems = []
             path = dotted_name.split('.')[:depth]
@@ -513,8 +492,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                 sibname = sibpath[-1]
                 if is_private(sibname):
                     continue
-                navitems.append(build_navitem_html(self.linker, sibname,
-                                                   dn, depth, selected))
+                navitems.append(H.NavigationItem(self.linker, dn, sibname,
+                                                 depth, selected))
                 if selected:
                     lastlevel = dn.count('.') == dotted_name.count('.')
                     if not lastlevel:
@@ -581,15 +560,10 @@ class ApiPageBuilder(AbstractPageBuilder):
         return py.path.local(sourcefile).relto(self.projpath)
 
     def build_callsite(self, functionname, call_site):
+        print 'building callsite for', functionname
         tbtag = self.gen_traceback(functionname, reversed(call_site))
-        tag = H.CallStackItem(
-            H.a("show/hide stack trace %s - line %s" % (
-                    call_site[0].filename, call_site[0].lineno + 1),
-                href='#',
-                onclick="showhideel(getnextsibling(this)); return false;"),
-            H.div(tbtag, style='display: none', class_='callstackitem'),
-        )
-        return tag
+        return H.CallStackItem(call_site[0].filename, call_site[0].lineno + 1,
+                               tbtag)
     
     _reg_source = py.std.re.compile(r'([^>]*)<(.*)>')
     def gen_traceback(self, funcname, call_site):
