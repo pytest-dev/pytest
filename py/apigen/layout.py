@@ -7,12 +7,14 @@ import py
 from py.__.doc import confrest
 from py.__.apigen import linker
 
+here = py.magic.autopath().dirpath()
+
 class LayoutPage(confrest.PyPage):
     """ this provides the layout and style information """
 
-    stylesheets = [(py.path.local('../doc/style.css'), 'style.css'),
-                   (py.path.local('style.css'), 'apigen_style.css')]
-    scripts = [(py.path.local('api.js'), 'api.js')]
+    stylesheets = [(here.join('../doc/style.css'), 'style.css'),
+                   (here.join('style.css'), 'apigen_style.css')]
+    scripts = [(here.join('api.js'), 'api.js')]
 
     def __init__(self, *args, **kwargs):
         self.nav = kwargs.pop('nav')
