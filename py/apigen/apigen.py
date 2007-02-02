@@ -16,7 +16,8 @@ def get_documentable_items(pkgdir):
     sys.path.insert(0, str(pkgdir.dirpath()))
     rootmod = __import__(pkgdir.basename)
     d = pkg_to_dict(rootmod)
-    d['execnet.Channel'] = py.__.execnet.channel.Channel
+    from py.__.execnet.channel import Channel
+    #d['execnet.Channel'] = Channel  # XXX doesn't work 
     return 'py', d
 
 def build(pkgdir, dsa, capture):
