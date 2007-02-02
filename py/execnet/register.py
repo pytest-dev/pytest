@@ -86,7 +86,7 @@ class SocketGateway(InstallableGateway):
         SocketGateway connections. 
     """
     def __init__(self, host, port):
-        """ instantiate a gateway to a processed accessed
+        """ instantiate a gateway to a process accessed
             via a host/port specified socket. 
         """
         self.host = host = str(host)
