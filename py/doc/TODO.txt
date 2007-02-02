@@ -22,7 +22,8 @@ review all py lib documentation
 streamline exported API 
 -------------------------------------
 
-* (hpk, should be done) move not-to-be-exported Gateway() methods to _ - methods. 
+* (DONE) move not-to-be-exported Gateway() methods to _ - methods. 
+
 * docstrings  for all exported API
 
 * (DONE) remove: test.compat.TestCAse 

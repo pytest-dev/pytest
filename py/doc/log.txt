@@ -15,8 +15,8 @@ This document is an attempt to briefly state the actual specification of the
 :code:`py.log` module.  It was written by Francois Pinard and also contains
 some ideas for enhancing the py.log facilities. 
 
-
-NOTE that `py.log` is an ALPHA interface, it can change any time. 
+NOTE that `py.log` is subject to refactorings, it may change with
+the next release. 
 
 This document is meant to trigger or facilitate discussions.  It shamelessly
 steals from the `Agile Testing`__ comments, and from other sources as well,
@@ -24,8 +24,6 @@ without really trying to sort them out.
 
 __ http://agiletesting.blogspot.com/2005/06/keyword-based-logging-with-py-library.html
 
-My knowledge of English is fairly rough and approximative, I hope
-readers will kindly and spontaneously offer stylistic corrections.
 
 Logging organisation
 ====================
