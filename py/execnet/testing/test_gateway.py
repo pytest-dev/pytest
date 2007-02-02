@@ -302,10 +302,11 @@ class BasicRemoteExecution:
     def test_remote_exec_redirect_multi(self): 
         num = 3
         l = [[] for x in range(num)]
-        channels = [self.gw.remote_exec("print %d" % i, stdout=l[i].append)
+        channels = [self.gw.remote_exec("print %d" % i, 
+                                        stdout=l[i].append)
                         for i in range(num)]
         for x in channels: 
-            x.waitclose(1.0) 
+            x.waitclose(5.0) 
 
         for i in range(num): 
             subl = l[i] 
@@ -451,9 +452,9 @@ class SocketGatewaySetup:
     def setup_class(cls):
         # open a gateway to a fresh child process
         cls.proxygw = py.execnet.PopenGateway() 
-        cls.gw = py.execnet.SocketGateway.remote_install(cls.proxygw,
-                                                         ("127.0.0.1", 0)
-                                                            ) 
+        cls.gw = py.execnet.SocketGateway.new_remote(cls.proxygw,
+                                                     ("127.0.0.1", 0)
+                                                     ) 
 
 ##    def teardown_class(cls):
 ##        cls.gw.exit()

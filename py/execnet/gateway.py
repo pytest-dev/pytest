@@ -33,23 +33,25 @@ sysex = (KeyboardInterrupt, SystemExit)
 class Gateway(object):
     _ThreadOut = ThreadOut 
     remoteaddress = ""
-
-    def __init__(self, io, startcount=2, maxthreads=None):
+    def __init__(self, io, execthreads=None, _startcount=2): 
+        """ initialize core gateway, using the given 
+            inputoutput object and 'execthreads' execution
+            threads. 
+        """
         global registered_cleanup
-        self._execpool = WorkerPool(maxthreads=maxthreads) 
-##        self.running = True 
+        self._execpool = WorkerPool(maxthreads=execthreads)
         self._io = io
         self._outgoing = Queue.Queue()
-        self._channelfactory = ChannelFactory(self, startcount)
-##        self._exitlock = threading.Lock()
+        self._channelfactory = ChannelFactory(self, _startcount)
         if not registered_cleanup:
             atexit.register(cleanup_atexit)
             registered_cleanup = True
         _active_sendqueues[self._outgoing] = True
         self._pool = NamedThreadPool(receiver = self._thread_receiver, 
-                                    sender = self._thread_sender)
+                                     sender = self._thread_sender)
 
     def __repr__(self):
+        """ return string representing gateway type and status. """
         addr = self.remoteaddress 
         if addr:
             addr = '[%s]' % (addr,)
@@ -199,13 +201,12 @@ class Gateway(object):
         return self._channelfactory.new()
 
     def remote_exec(self, source, stdout=None, stderr=None): 
-        """ return channel object for communicating with the asynchronously
-            executing 'source' code which will have a corresponding 'channel'
-            object in its executing namespace. 
-
-            You may provide callback functions 'stdout' and 'stderr' 
-            which will get called with the remote stdout/stderr output
-            piece by piece.
+        """ return channel object and connect it to a remote
+            execution thread where the given 'source' executes
+            and has the sister 'channel' object in its global 
+            namespace.  The callback functions 'stdout' and 
+            'stderr' get called on receival of remote 
+            stdout/stderr output strings. 
         """
         try:
             source = str(Source(source))
@@ -252,29 +253,8 @@ class Gateway(object):
                         c.waitclose(1.0) 
         return Handle()
 
-##    def exit(self):
-##        """ initiate full gateway teardown.   
-##            Note that the  teardown of sender/receiver threads happens 
-##            asynchronously and timeouts on stopping worker execution 
-##            threads are ignored.  You can issue join() or join(joinexec=False) 
-##            if you want to wait for a full teardown (possibly excluding 
-##            execution threads). 
-##        """ 
-##        # note that threads may still be scheduled to start
-##        # during our execution! 
-##        self._exitlock.acquire()
-##        try:
-##            if self.running: 
-##                self.running = False 
-##                if not self._pool.getstarted('sender'): 
-##                    raise IOError("sender thread not alive anymore!") 
-##                self._outgoing.put(None)
-##                self._trace("exit procedure triggered, pid %d " % (os.getpid(),))
-##                _gateways.remove(self) 
-##        finally:
-##            self._exitlock.release()
-
     def exit(self):
+        """ Try to stop all IO activity. """
         try:
             del _active_sendqueues[self._outgoing]
         except KeyError:
@@ -283,6 +263,9 @@ class Gateway(object):
             self._outgoing.put(None)
 
     def join(self, joinexec=True):
+        """ Wait for all IO (and by default all execution activity) 
+            to stop. 
+        """
         current = threading.currentThread()
         for x in self._pool.getstarted(): 
             if x != current: 
