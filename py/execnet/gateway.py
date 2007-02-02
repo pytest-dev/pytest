@@ -10,7 +10,7 @@ import __future__
 # other modules) execute not only on the local side but 
 # also on any gateway's remote side.  On such remote sides
 # we cannot assume the py library to be there and 
-# InstallableGateway.remote_bootstrap_gateway() (located 
+# InstallableGateway._remote_bootstrap_gateway() (located 
 # in register.py) will take care to send source fragments
 # to the other side.  Yes, it is fragile but we have a 
 # few tests that try to catch when we mess up. 
@@ -38,15 +38,15 @@ class Gateway(object):
         global registered_cleanup
         self._execpool = WorkerPool(maxthreads=maxthreads) 
 ##        self.running = True 
-        self.io = io
+        self._io = io
         self._outgoing = Queue.Queue()
-        self.channelfactory = ChannelFactory(self, startcount)
+        self._channelfactory = ChannelFactory(self, startcount)
 ##        self._exitlock = threading.Lock()
         if not registered_cleanup:
             atexit.register(cleanup_atexit)
             registered_cleanup = True
         _active_sendqueues[self._outgoing] = True
-        self.pool = NamedThreadPool(receiver = self._thread_receiver, 
+        self._pool = NamedThreadPool(receiver = self._thread_receiver, 
                                     sender = self._thread_sender)
 
     def __repr__(self):
@@ -56,11 +56,11 @@ class Gateway(object):
         else:
             addr = ''
         try:
-            r = (len(self.pool.getstarted('receiver'))
+            r = (len(self._pool.getstarted('receiver'))
                  and "receiving" or "not receiving")
-            s = (len(self.pool.getstarted('sender')) 
+            s = (len(self._pool.getstarted('sender')) 
                  and "sending" or "not sending")
-            i = len(self.channelfactory.channels())
+            i = len(self._channelfactory.channels())
         except AttributeError:
             r = s = "uninitialized"
             i = "no"
@@ -98,7 +98,7 @@ class Gateway(object):
             from sys import exc_info
             while 1:
                 try:
-                    msg = Message.readfrom(self.io)
+                    msg = Message.readfrom(self._io)
                     self._trace("received <- %r" % msg)
                     msg.received(self)
                 except sysex:
@@ -110,7 +110,7 @@ class Gateway(object):
                     break 
         finally:
             self._outgoing.put(None)
-            self.channelfactory._finished_receiving()
+            self._channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
 
     def _thread_sender(self):
@@ -121,9 +121,9 @@ class Gateway(object):
                 msg = self._outgoing.get()
                 try:
                     if msg is None:
-                        self.io.close_write()
+                        self._io.close_write()
                         break
-                    msg.writeto(self.io)
+                    msg.writeto(self._io)
                 except:
                     excinfo = exc_info()
                     self._traceex(excinfo)
@@ -140,7 +140,7 @@ class Gateway(object):
         l = []
         for name, id in ('stdout', outid), ('stderr', errid): 
             if id: 
-                channel = self.channelfactory.new(outid)
+                channel = self._channelfactory.new(outid)
                 out = self._ThreadOut(sys, name)
                 out.setwritefunc(channel.send) 
                 l.append((out, channel))
@@ -196,7 +196,7 @@ class Gateway(object):
     #
     def newchannel(self): 
         """ return new channel object.  """ 
-        return self.channelfactory.new()
+        return self._channelfactory.new()
 
     def remote_exec(self, source, stdout=None, stderr=None): 
         """ return channel object for communicating with the asynchronously
@@ -218,7 +218,7 @@ class Gateway(object):
                                (source, outid, errid)))
         return channel 
 
-    def remote_redirect(self, stdout=None, stderr=None): 
+    def _remote_redirect(self, stdout=None, stderr=None): 
         """ return a handle representing a redirection of a remote 
             end's stdout to a local file object.  with handle.close() 
             the redirection will be reverted.   
@@ -262,7 +262,7 @@ class Gateway(object):
 ##        try:
 ##            if self.running: 
 ##                self.running = False 
-##                if not self.pool.getstarted('sender'): 
+##                if not self._pool.getstarted('sender'): 
 ##                    raise IOError("sender thread not alive anymore!") 
 ##                self._outgoing.put(None)
 ##                self._trace("exit procedure triggered, pid %d " % (os.getpid(),))
@@ -279,7 +279,7 @@ class Gateway(object):
 
     def join(self, joinexec=True):
         current = threading.currentThread()
-        for x in self.pool.getstarted(): 
+        for x in self._pool.getstarted(): 
             if x != current: 
                 self._trace("joining %s" % x)
                 x.join()

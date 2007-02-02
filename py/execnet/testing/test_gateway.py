@@ -62,13 +62,13 @@ class PopenGatewayTestSetup:
     def setup_class(cls):
         cls.gw = py.execnet.PopenGateway()
 
-    def teardown_class(cls):
-        cls.gw.exit()
+    #def teardown_class(cls):
+    #    cls.gw.exit()
 
 class BasicRemoteExecution:
     def test_correct_setup(self):
         for x in 'sender', 'receiver':  
-            assert self.gw.pool.getstarted(x) 
+            assert self.gw._pool.getstarted(x) 
 
     def test_repr_doesnt_crash(self):
         assert isinstance(repr(self), str)
@@ -127,13 +127,13 @@ class BasicRemoteExecution:
         py.test.raises(channel.RemoteError, channel.receive)
 
     def test_channel__local_close(self):
-        channel = self.gw.channelfactory.new()
-        self.gw.channelfactory._local_close(channel.id)
+        channel = self.gw._channelfactory.new()
+        self.gw._channelfactory._local_close(channel.id)
         channel.waitclose(0.1)
 
     def test_channel__local_close_error(self):
-        channel = self.gw.channelfactory.new()
-        self.gw.channelfactory._local_close(channel.id,
+        channel = self.gw._channelfactory.new()
+        self.gw._channelfactory._local_close(channel.id,
                                             channel.RemoteError("error"))
         py.test.raises(channel.RemoteError, channel.waitclose, 0.01)
 
@@ -177,10 +177,10 @@ class BasicRemoteExecution:
 
         # check that the both sides previous channels are really gone
         channel.waitclose(0.3)
-        assert channel.id not in self.gw.channelfactory._channels
-        #assert c.id not in self.gw.channelfactory
+        assert channel.id not in self.gw._channelfactory._channels
+        #assert c.id not in self.gw._channelfactory
         newchan = self.gw.remote_exec('''
-                    assert %d not in channel.gateway.channelfactory._channels
+                    assert %d not in channel.gateway._channelfactory._channels
                   ''' % (channel.id))
         newchan.waitclose(0.3)
 
@@ -278,7 +278,7 @@ class BasicRemoteExecution:
 
     def test_remote_redirect_stdout(self): 
         out = py.std.StringIO.StringIO() 
-        handle = self.gw.remote_redirect(stdout=out) 
+        handle = self.gw._remote_redirect(stdout=out) 
         c = self.gw.remote_exec("print 42")
         c.waitclose(1.0)
         handle.close() 

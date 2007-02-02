@@ -29,10 +29,10 @@ from py.__.execnet import inputoutput, gateway
 class InstallableGateway(gateway.Gateway):
     """ initialize gateways on both sides of a inputoutput object. """
     def __init__(self, io):
-        self.remote_bootstrap_gateway(io)
+        self._remote_bootstrap_gateway(io)
         super(InstallableGateway, self).__init__(io=io, startcount=1)
 
-    def remote_bootstrap_gateway(self, io, extra=''):
+    def _remote_bootstrap_gateway(self, io, extra=''):
         """ return Gateway with a asynchronously remotely
             initialized counterpart Gateway (which may or may not succeed).
             Note that the other sides gateways starts enumerating
@@ -84,7 +84,7 @@ class PopenGateway(PopenCmdGateway):
         cmd = '%s -u -c "exec input()"' % python
         super(PopenGateway, self).__init__(cmd)
 
-    def remote_bootstrap_gateway(self, io, extra=''):
+    def _remote_bootstrap_gateway(self, io, extra=''):
         # XXX the following hack helps us to import the same version
         #     of the py lib and other dependcies, but only works for 
         #     PopenGateways because we can assume to have access to 
@@ -126,7 +126,7 @@ class PopenGateway(PopenCmdGateway):
             """)),
             ""
             ])
-        super(PopenGateway, self).remote_bootstrap_gateway(io, s)
+        super(PopenGateway, self)._remote_bootstrap_gateway(io, s)
 
 class SocketGateway(InstallableGateway):
     def __init__(self, host, port):

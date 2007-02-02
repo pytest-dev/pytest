@@ -62,32 +62,32 @@ def _setupmessages():
 
     class CHANNEL_OPEN(Message):
         def received(self, gateway):
-            channel = gateway.channelfactory.new(self.channelid)
+            channel = gateway._channelfactory.new(self.channelid)
             gateway._local_schedulexec(channel=channel, sourcetask=self.data)
 
     class CHANNEL_NEW(Message):
         def received(self, gateway):
             """ receive a remotely created new (sub)channel. """
             newid = self.data
-            newchannel = gateway.channelfactory.new(newid)
-            gateway.channelfactory._local_receive(self.channelid, newchannel)
+            newchannel = gateway._channelfactory.new(newid)
+            gateway._channelfactory._local_receive(self.channelid, newchannel)
 
     class CHANNEL_DATA(Message):
         def received(self, gateway):
-            gateway.channelfactory._local_receive(self.channelid, self.data)
+            gateway._channelfactory._local_receive(self.channelid, self.data)
 
     class CHANNEL_CLOSE(Message):
         def received(self, gateway):
-            gateway.channelfactory._local_close(self.channelid)
+            gateway._channelfactory._local_close(self.channelid)
 
     class CHANNEL_CLOSE_ERROR(Message):
         def received(self, gateway):
-            remote_error = gateway.channelfactory.RemoteError(self.data)
-            gateway.channelfactory._local_close(self.channelid, remote_error)
+            remote_error = gateway._channelfactory.RemoteError(self.data)
+            gateway._channelfactory._local_close(self.channelid, remote_error)
 
     class CHANNEL_LAST_MESSAGE(Message):
         def received(self, gateway):
-            gateway.channelfactory._local_last_message(self.channelid)
+            gateway._channelfactory._local_last_message(self.channelid)
 
     classes = [x for x in locals().values() if hasattr(x, '__bases__')]
     classes.sort(lambda x,y : cmp(x.__name__, y.__name__))

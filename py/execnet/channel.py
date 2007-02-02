@@ -37,10 +37,10 @@ class Channel(object):
 
     def setcallback(self, callback, endmarker=NO_ENDMARKER_WANTED):
         queue = self._items
-        lock = self.gateway.channelfactory._receivelock
+        lock = self.gateway._channelfactory._receivelock
         lock.acquire()
         try:
-            _callbacks = self.gateway.channelfactory._callbacks
+            _callbacks = self.gateway._channelfactory._callbacks
             dictvalue = (callback, endmarker)
             if _callbacks.setdefault(self.id, dictvalue) != dictvalue:
                 raise IOError("%r has callback already registered" %(self,))
@@ -58,7 +58,7 @@ class Channel(object):
                         callback(olditem)
             if self._closed or self._receiveclosed.isSet():
                 # no need to keep a callback
-                self.gateway.channelfactory._close_callback(self.id)
+                self.gateway._channelfactory._close_callback(self.id)
         finally:
             lock.release()
          
@@ -129,7 +129,7 @@ class Channel(object):
             queue = self._items
             if queue is not None:
                 queue.put(ENDMARKER)
-            self.gateway.channelfactory._no_longer_opened(self.id)
+            self.gateway._channelfactory._no_longer_opened(self.id)
 
     def waitclose(self, timeout=None):
         """ wait until this channel is closed (or the remote side
