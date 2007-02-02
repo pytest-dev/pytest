@@ -275,11 +275,12 @@ class Gateway(object):
 ##            self._exitlock.release()
 
     def exit(self):
-        self._outgoing.put(None)
         try:
             del _active_sendqueues[self._outgoing]
         except KeyError:
             pass
+        else:
+            self._outgoing.put(None)
 
     def join(self, joinexec=True):
         current = threading.currentThread()
