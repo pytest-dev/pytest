@@ -8,6 +8,7 @@ from py.__.apigen.source import color as source_color
 from py.__.apigen.tracer.description import is_private
 from py.__.apigen.rest.genrest import split_of_last_part
 from py.__.apigen.linker import relpath
+from py.__.apigen.html import H
 
 sorted = py.builtin.sorted
 html = py.xml.html
@@ -44,83 +45,6 @@ def deindent(str, linesep='\n'):
         else:
             ret.append(line[deindent:])
     return '%s\n' % (linesep.join(ret),)
-
-# HTML related stuff
-class H(html):
-    class Content(html.div):
-        style = html.Style(margin_left='15em')
-
-    class Description(html.div):
-        pass
-    
-    class NamespaceDescription(Description):
-        pass
-
-    class NamespaceItem(html.div):
-        pass
-
-    class NamespaceDef(html.h1):
-        pass
-
-    class ClassDescription(Description):
-        pass
-
-    class ClassDef(html.h1):
-        pass
-
-    class MethodDescription(Description):
-        pass
-
-    class MethodDef(html.h2):
-        pass
-
-    class FunctionDescription(Description):
-        pass
-
-    class FunctionDef(html.h2):
-        pass
-
-    class ParameterDescription(html.div):
-        pass
-
-    class Docstring(html.pre):
-        #style = html.Style(white_space='pre', min_height='3em')
-        pass
-
-    class Navigation(html.div):
-        style = html.Style(min_height='99%', float='left', margin_top='1.2em',
-                           overflow='auto', width='15em', white_space='nowrap')
-
-    class NavigationItem(html.div):
-        pass
-
-    class BaseDescription(html.a):
-        pass
-
-    class SourceDef(html.div):
-        pass
-
-    class NonPythonSource(html.pre):
-        style = html.Style(margin_left='15em')
-
-    class DirList(html.div):
-        style = html.Style(margin_left='15em')
-
-    class DirListItem(html.div):
-        pass
-
-    class ValueDescList(html.ul):
-        def __init__(self, *args, **kwargs):
-            super(H.ValueDescList, self).__init__(*args, **kwargs)
-
-    class ValueDescItem(html.li):
-        pass
-
-    class CallStackDescription(Description):
-        pass
-
-    class CallStackItem(html.div):
-        class_ = 'callstackitem'
 
 def get_param_htmldesc(linker, func):
     """ get the html for the parameters of a function """
@@ -174,18 +98,11 @@ def create_namespace_tree(dotted_names):
                 ret[ns].append(itempath)
     return ret
 
-def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl,
-              scripturls):
+def wrap_page(project, title, contentel, navel, relbase, basepath):
     page = LayoutPage(project, title, nav=navel, encoding='UTF-8',
-                      stylesheeturl=stylesheeturl, scripturls=scripturls)
+                      relpath=relbase)
     page.set_content(contentel)
-    here = py.magic.autopath().dirpath()
-    style = here.join(stylesheeturl.split('/')[-1]).read()
-    outputpath.join(stylesheeturl.split('/')[-1]).write(style)
-    for spath in scripturls:
-        sname = spath.split('/')[-1]
-        sdata = here.join(sname).read()
-        outputpath.join(sname).write(sdata)
+    page.setup_scripts_styles(basepath)
     return page
 
 # the PageBuilder classes take care of producing the docs (using the stuff
@@ -193,12 +110,9 @@ def wrap_page(project, title, contentel, navel, outputpath, stylesheeturl,
 class AbstractPageBuilder(object):
     def write_page(self, title, reltargetpath, project, tag, nav):
         targetpath = self.base.join(reltargetpath)
-        stylesheeturl = relpath('%s%s' % (targetpath.dirpath(), os.path.sep),
-                                self.base.join('style.css').strpath)
-        scripturls = [relpath('%s%s' % (targetpath.dirpath(), os.path.sep),
-                              self.base.join('api.js').strpath)]
-        page = wrap_page(project, title,
-                         tag, nav, self.base, stylesheeturl, scripturls)
+        relbase= relpath('%s%s' % (targetpath.dirpath(), targetpath.sep),
+                         self.base.strpath + '/')
+        page = wrap_page(project, title, tag, nav, relbase, self.base)
         content = self.linker.call_withbase(reltargetpath, page.unicode)
         targetpath.ensure()
         targetpath.write(content.encode("utf8"))
@@ -212,7 +126,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         self.capture = capture
     
     def build_navigation(self, fspath):
-        nav = H.Navigation()
+        nav = H.Navigation(class_='sidebar')
         relpath = fspath.relto(self.projroot)
         path = relpath.split(os.path.sep)
         indent = 0
@@ -613,40 +527,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             return navitems
 
         navitems += build_nav_level(dotted_name)
-        return H.Navigation(*navitems)
-
-
-    
-        navitems = []
-
-        # top namespace, index.html
-        module_name = self.dsa.get_module_name().split('/')[-1]
-        navitems.append(build_navitem_html(self.linker, module_name, '', 0,
-                                           (selection == '')))
-
-        indent = 1
-        path = dotted_name.split('.')
-        if dotted_name != '':
-            # build html for each item in path to dotted_name item
-            for i in xrange(len(path)):
-                name = path[i]
-                item_dotted_name = '.'.join(path[:i+1])
-                selected = (selection == item_dotted_name)
-                navitems.append(build_navitem_html(self.linker, name,
-                                                   item_dotted_name, indent,
-                                                   selected))
-                indent += 1
-
-        # build sub items of dotted_name item
-        for item_dotted_name in py.builtin.sorted(item_dotted_names):
-            itemname = item_dotted_name.split('.')[-1]
-            if is_private(itemname):
-                continue
-            selected = (item_dotted_name == selection)
-            navitems.append(build_navitem_html(self.linker, itemname,
-                                               item_dotted_name, indent,
-                                               selected))
-        return H.Navigation(*navitems)
+        return H.Navigation(class_='sidebar', *navitems)
 
     def build_callable_signature_description(self, dotted_name):
         args, retval = self.dsa.get_function_signature(dotted_name)
