@@ -57,7 +57,7 @@ packaging
 * optional: support setuptools (eggs?) installs, and instally
   from pypi (and register pylib there) 
 
-* see if things work on Win32 (partially done) 
+* (DONE/c-modules don't) see if things work on Win32 (partially done) 
 
 * refine and implement `releasescheme`_ 
 
@@ -81,10 +81,6 @@ APIGEN / source viewer
 testing
 -----------
 
-* windows tests (rev 36514 passes without errors, many skips)
-
-  (guido tested again, and fixed newly broken tests, all work again now)
-
 * these should all work on 0.9 and on the py lib and pypy:
     - running "py.test -s" 
     - running "py.test --pdb" 
@@ -94,7 +90,7 @@ testing
   (guido tested all on win32, everything works except --dist (requires
   os.fork to work))
 
-* see why startcapture() used to not use FD-based 
+* (DONE) see why startcapture() used to not use FD-based 
   "py.io.StdCaptureFD" to isolate standard output. 
   use that check if all py and PyPy tests pass
   as good as they do without. 
