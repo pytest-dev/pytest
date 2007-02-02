@@ -25,6 +25,20 @@ def test_getsource_no_colision():
                                      (name, dottedname, olddottedname)) 
                 seen[name] = (dottedname, value) 
 
+def test_stdouterrin_setnull():
+    cap = py.io.StdCaptureFD()
+    from py.__.execnet.register import stdouterrin_setnull
+    stdouterrin_setnull()
+    import os
+    os.write(1, "hello")
+    if os.name == "nt":
+        os.write(2, "world")
+    os.read(0, 1)
+    out, err = cap.reset()
+    assert not out
+    assert not err
+
+
 class TestMessage:
     def test_wire_protocol(self):
         for cls in gateway.Message._types.values():
@@ -177,12 +191,12 @@ class BasicRemoteExecution:
 
         # check that the both sides previous channels are really gone
         channel.waitclose(0.3)
-        assert channel.id not in self.gw._channelfactory._channels
         #assert c.id not in self.gw._channelfactory
         newchan = self.gw.remote_exec('''
                     assert %d not in channel.gateway._channelfactory._channels
                   ''' % (channel.id))
         newchan.waitclose(0.3)
+        assert channel.id not in self.gw._channelfactory._channels
 
     def test_channel_receiver_callback(self): 
         l = []
@@ -453,9 +467,6 @@ class TestSshGateway(BasicRemoteExecution):
         if option.sshtarget is None: 
             py.test.skip("no known ssh target, use -S to set one")
         cls.gw = py.execnet.SshGateway(option.sshtarget) 
-
-    def test_confusion_from_os_write_stdout(self):
-        py.test.skip("writing to FD 1 with SshGateways not supported yet")
 
     def test_sshaddress(self):
         assert self.gw.remoteaddress == option.sshtarget

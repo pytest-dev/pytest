@@ -97,33 +97,8 @@ class PopenGateway(PopenCmdGateway):
         s = "\n".join([extra, 
             "import sys ; sys.path[:0] = %r" % (plist,), 
             "import os ; os.environ['PYTHONPATH'] = %r" % ppath, 
-            # redirect file descriptors 0 and 1 to /dev/null, to avoid
-            # complete confusion (this is independent from the sys.stdout
-            # and sys.stderr redirection that gateway.remote_exec() can do)
-            # note that we redirect fd 2 on win too, since for some reason that
-            # blocks there, while it works (sending to stderr if possible else
-            # ignoring) on *nix
-            str(py.code.Source("""
-                try:
-                    devnull = os.devnull
-                except AttributeError:
-                    if os.name == 'nt':
-                        devnull = 'NUL'
-                    else:
-                        devnull = '/dev/null'
-                sys.stdin  = os.fdopen(os.dup(0), 'rb', 0)
-                sys.stdout = os.fdopen(os.dup(1), 'wb', 0)
-                if os.name == 'nt':
-                    sys.stderr = os.fdopen(os.dup(2), 'wb', 0)
-                fd = os.open(devnull, os.O_RDONLY)
-                os.dup2(fd, 0)
-                os.close(fd)
-                fd = os.open(devnull, os.O_WRONLY)
-                os.dup2(fd, 1)
-                if os.name == 'nt':
-                    os.dup2(fd, 2)
-                os.close(fd)
-            """)),
+            str(py.code.Source(stdouterrin_setnull)), 
+            "stdouterrin_setnull()",
             ""
             ])
         super(PopenGateway, self)._remote_bootstrap_gateway(io, s)
@@ -176,6 +151,46 @@ class SshGateway(PopenCmdGateway):
             cmd += ' -i %s' % (identity,)
         cmdline.insert(0, cmd) 
         super(SshGateway, self).__init__(' '.join(cmdline))
+       
+    def _remote_bootstrap_gateway(self, io, s=""): 
+        extra = "\n".join([
+            str(py.code.Source(stdouterrin_setnull)), 
+            "stdouterrin_setnull()",
+            s, 
+        ])
+        super(SshGateway, self)._remote_bootstrap_gateway(io, extra)
+
+def stdouterrin_setnull():
+    # redirect file descriptors 0 and 1 to /dev/null, to avoid
+    # complete confusion (this is independent from the sys.stdout
+    # and sys.stderr redirection that gateway.remote_exec() can do)
+    # note that we redirect fd 2 on win too, since for some reason that
+    # blocks there, while it works (sending to stderr if possible else
+    # ignoring) on *nix
+    import sys, os
+    try:
+        devnull = os.devnull
+    except AttributeError:
+        if os.name == 'nt':
+            devnull = 'NUL'
+        else:
+            devnull = '/dev/null'
+    sys.stdin  = os.fdopen(os.dup(0), 'rb', 0)
+    sys.stdout = os.fdopen(os.dup(1), 'wb', 0)
+    if os.name == 'nt':
+        sys.stderr = os.fdopen(os.dup(2), 'wb', 0)
+    fd = os.open(devnull, os.O_RDONLY)
+    os.dup2(fd, 0)
+    os.close(fd)
+    fd = os.open(devnull, os.O_WRONLY)
+    os.dup2(fd, 1)
+    if os.name == 'nt':
+        os.dup2(fd, 2)
+    os.close(fd)
+
+# XXX
+# XXX unusued code below
+# XXX
 
 class ExecGateway(PopenGateway):
     def remote_exec_sync_stdcapture(self, lines, callback):
@@ -224,3 +239,4 @@ class ExecGateway(PopenGateway):
         callback = self.callbacks[answerid]
         del self.callbacks[answerid]
         callback(value)
+
