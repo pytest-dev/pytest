@@ -18,11 +18,11 @@ class RSync(object):
     def __init__(self, callback=None, **options):
         for name in options:
             assert name in ('delete')
-        self.options = options
-        self.callback = callback
-        self.channels = {}
-        self.receivequeue = Queue()
-        self.links = []
+        self._options = options
+        self._callback = callback
+        self._channels = {}
+        self._receivequeue = Queue()
+        self._links = []
 
     def filter(self, path):
         return True
@@ -32,32 +32,32 @@ class RSync(object):
             and a remote destination directory. 
         """
         def itemcallback(req):
-            self.receivequeue.put((channel, req))
+            self._receivequeue.put((channel, req))
         channel = gateway.remote_exec(REMOTE_SOURCE)
         channel.setcallback(itemcallback, endmarker = None)
-        channel.send((str(destdir), self.options))
-        self.channels[channel] = finishedcallback
+        channel.send((str(destdir), self._options))
+        self._channels[channel] = finishedcallback
 
     def send(self, sourcedir):
         """ Sends a sourcedir to all added targets. 
         """
-        self.sourcedir = str(sourcedir)
+        self._sourcedir = str(sourcedir)
         # normalize a trailing '/' away
-        self.sourcedir = os.path.dirname(os.path.join(self.sourcedir, 'x'))
+        self._sourcedir = os.path.dirname(os.path.join(self._sourcedir, 'x'))
         # send directory structure and file timestamps/sizes
-        self._send_directory_structure(self.sourcedir)
+        self._send_directory_structure(self._sourcedir)
 
         # paths and to_send are only used for doing
         # progress-related callbacks
-        self.paths = {}
-        self.to_send = {}
+        self._paths = {}
+        self._to_send = {}
 
         # send modified file to clients
-        while self.channels:
-            channel, req = self.receivequeue.get()
+        while self._channels:
+            channel, req = self._receivequeue.get()
             if req is None:
                 # end-of-channel
-                if channel in self.channels:
+                if channel in self._channels:
                     # too early!  we must have got an error
                     channel.waitclose()
                     # or else we raise one
@@ -66,25 +66,25 @@ class RSync(object):
             else:
                 command, data = req
                 if command == "links":
-                    for link in self.links:
+                    for link in self._links:
                         channel.send(link)
                     # completion marker, this host is done
                     channel.send(42)
                 elif command == "done":
-                    finishedcallback = self.channels.pop(channel)
+                    finishedcallback = self._channels.pop(channel)
                     if finishedcallback:
                         finishedcallback()
                 elif command == "ack":
-                    if self.callback:
-                        self.callback("ack", self.paths[data], channel)
+                    if self._callback:
+                        self._callback("ack", self._paths[data], channel)
                 elif command == "list_done":
                     # sum up all to send
-                    if self.callback:
-                        s = sum([self.paths[i] for i in self.to_send[channel]])
-                        self.callback("list", s, channel)
+                    if self._callback:
+                        s = sum([self._paths[i] for i in self._to_send[channel]])
+                        self._callback("list", s, channel)
                 elif command == "send":
                     modified_rel_path, checksum = data
-                    modifiedpath = os.path.join(self.sourcedir, *modified_rel_path)
+                    modifiedpath = os.path.join(self._sourcedir, *modified_rel_path)
                     try:
                         f = open(modifiedpath, 'rb')
                         data = f.read()
@@ -94,12 +94,12 @@ class RSync(object):
                     # provide info to progress callback function
                     modified_rel_path = "/".join(modified_rel_path)
                     if data is not None:
-                        self.paths[modified_rel_path] = len(data)
+                        self._paths[modified_rel_path] = len(data)
                     else:
-                        self.paths[modified_rel_path] = 0
-                    if channel not in self.to_send:
-                        self.to_send[channel] = []
-                    self.to_send[channel].append(modified_rel_path)
+                        self._paths[modified_rel_path] = 0
+                    if channel not in self._to_send:
+                        self._to_send[channel] = []
+                    self._to_send[channel].append(modified_rel_path)
 
                     if data is not None:
                         f.close()
@@ -118,11 +118,11 @@ class RSync(object):
                     assert "Unknown command %s" % command
 
     def _broadcast(self, msg):
-        for channel in self.channels:
+        for channel in self._channels:
             channel.send(msg)
     
     def _send_link(self, basename, linkpoint):
-        self.links.append(("link", basename, linkpoint))
+        self._links.append(("link", basename, linkpoint))
 
     def _send_directory_structure(self, path):
         try:
@@ -147,13 +147,13 @@ class RSync(object):
                 self._send_directory_structure(p)
         elif stat.S_ISLNK(st.st_mode):
             linkpoint = os.readlink(path)
-            basename = path[len(self.sourcedir) + 1:]
+            basename = path[len(self._sourcedir) + 1:]
             if not linkpoint.startswith(os.sep):
                 # relative link, just send it
                 # XXX: do sth with ../ links
                 self._send_link(basename, linkpoint)
-            elif linkpoint.startswith(self.sourcedir):
-                self._send_link(basename, linkpoint[len(self.sourcedir) + 1:])
+            elif linkpoint.startswith(self._sourcedir):
+                self._send_link(basename, linkpoint[len(self._sourcedir) + 1:])
             else:
                 self._send_link(basename, linkpoint)
             self._broadcast(None)
