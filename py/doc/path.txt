@@ -108,17 +108,18 @@ specific directory.
   >>> subdir.join('textfile2.txt').write('spam eggs spam foo bar spam')
   >>> results = []
   >>> for fpath in dirpath.visit('*.txt'):
-  ...   if 'bar' in fpath.read():
-  ...     results.append(fpath.basename)
+  ...     if 'bar' in fpath.read():
+  ...         results.append(fpath.basename)
   >>> results
   ['textfile1.txt', 'textfile2.txt', 'textfile2.txt']
 
-Joining path types 
+Working with Paths 
 ++++++++++++++++++++
 
-This example shows the :api:`py.path` features to deal with actual paths
-(strings). Note that the filesystem is never touched, all operations are
-performed on a string level (so the paths don't have to exist, either)::
+This example shows the :api:`py.path` features to deal with
+filesystem paths Note that the filesystem is never touched,
+all operations are performed on a string level (so the paths
+don't have to exist, either)::
 
   >>> p1 = py.path.local('/foo/bar')
   >>> p2 = p1.join('baz/qux')
@@ -129,6 +130,13 @@ performed on a string level (so the paths don't have to exist, either)::
   'baz/qux'
   >>> p3 = p1 / 'baz/qux' # the / operator allows joining, too
   >>> p2 == p3
+  True
+  >>> p4 = p1 + ".py"  
+  >>> p4.basename == "bar.py"
+  True
+  >>> p4.ext == ".py"
+  True
+  >>> p4.purebasename == "bar"
   True
 
 This should be possible on every implementation of :api:`py.path`, so

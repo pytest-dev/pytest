@@ -37,10 +37,7 @@ streamline exported API
 * make "_" namespace:  
   py.log -> py._log (pypy!) 
 
-* review py.io and write py.io.dupfile docstring
-
-  (guido - added docstring, and code looks okay (what was the reason for the
-  review? anything specific?)
+* (done mostly) review py.io and write py.io.dupfile docstring
 
 * re-consider what to do with read and write methods of py.path classes (since
   there are places that check for file-ness by doing hasattr(... 'write'))
