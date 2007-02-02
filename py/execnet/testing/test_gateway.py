@@ -454,6 +454,9 @@ class TestSshGateway(BasicRemoteExecution):
             py.test.skip("no known ssh target, use -S to set one")
         cls.gw = py.execnet.SshGateway(option.sshtarget) 
 
+    def test_confusion_from_os_write_stdout(self):
+        py.test.skip("writing to FD 1 with SshGateways not supported yet")
+
     def test_sshaddress(self):
         assert self.gw.remoteaddress == option.sshtarget
 
