@@ -31,7 +31,7 @@ debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
 sysex = (KeyboardInterrupt, SystemExit)
 
 class Gateway(object):
-    ThreadOut = ThreadOut 
+    _ThreadOut = ThreadOut 
     remoteaddress = ""
 
     def __init__(self, io, startcount=2, maxthreads=None):
@@ -46,8 +46,8 @@ class Gateway(object):
             atexit.register(cleanup_atexit)
             registered_cleanup = True
         _active_sendqueues[self._outgoing] = True
-        self.pool = NamedThreadPool(receiver = self.thread_receiver, 
-                                    sender = self.thread_sender)
+        self.pool = NamedThreadPool(receiver = self._thread_receiver, 
+                                    sender = self._thread_sender)
 
     def __repr__(self):
         addr = self.remoteaddress 
@@ -92,7 +92,7 @@ class Gateway(object):
                                     excinfo[1])
         self._trace(errortext)
 
-    def thread_receiver(self):
+    def _thread_receiver(self):
         """ thread to read and handle Messages half-sync-half-async. """
         try:
             from sys import exc_info
@@ -113,7 +113,7 @@ class Gateway(object):
             self.channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
 
-    def thread_sender(self):
+    def _thread_sender(self):
         """ thread to send Messages over the wire. """
         try:
             from sys import exc_info
@@ -141,7 +141,7 @@ class Gateway(object):
         for name, id in ('stdout', outid), ('stderr', errid): 
             if id: 
                 channel = self.channelfactory.new(outid)
-                out = ThreadOut(sys, name)
+                out = self._ThreadOut(sys, name)
                 out.setwritefunc(channel.send) 
                 l.append((out, channel))
         def close(): 
@@ -150,7 +150,7 @@ class Gateway(object):
                 channel.close() 
         return close 
 
-    def thread_executor(self, channel, (source, outid, errid)):
+    def _thread_executor(self, channel, (source, outid, errid)):
         """ worker thread to execute source objects from the execution queue. """
         from sys import exc_info
         try:
@@ -177,7 +177,7 @@ class Gateway(object):
 
     def _local_schedulexec(self, channel, sourcetask): 
         self._trace("dispatching exec")
-        self._execpool.dispatch(self.thread_executor, channel, sourcetask) 
+        self._execpool.dispatch(self._thread_executor, channel, sourcetask) 
 
     def _newredirectchannelid(self, callback): 
         if callback is None: 
@@ -231,7 +231,7 @@ class Gateway(object):
                 channel = self.remote_exec(""" 
                     import sys
                     outchannel = channel.receive() 
-                    outchannel.gateway.ThreadOut(sys, %r).setdefaultwriter(outchannel.send)
+                    outchannel.gateway._ThreadOut(sys, %r).setdefaultwriter(outchannel.send)
                 """ % name) 
                 channel.send(outchannel)
                 clist.append(channel)
@@ -243,7 +243,7 @@ class Gateway(object):
                     if out: 
                         c = self.remote_exec("""
                             import sys
-                            channel.gateway.ThreadOut(sys, %r).resetdefault()
+                            channel.gateway._ThreadOut(sys, %r).resetdefault()
                         """ % name) 
                         c.waitclose(1.0) 
         return Handle()
