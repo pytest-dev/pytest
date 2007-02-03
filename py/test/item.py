@@ -46,13 +46,13 @@ class Function(Item):
     """ a Function Item is responsible for setting up  
         and executing a Python callable test object.
     """
-    state = SetupState()
+    _state = SetupState()
     def __init__(self, name, parent, args=(), obj=_dummy, sort_value = None):
         super(Function, self).__init__(name, parent) 
-        self.args = args
+        self._args = args
         if obj is not _dummy: 
             self._obj = obj 
-        self.sort_value = sort_value
+        self._sort_value = sort_value
         
     def __repr__(self): 
         return "<%s %r>" %(self.__class__.__name__, self.name)
@@ -62,13 +62,13 @@ class Function(Item):
         return code.path, code.firstlineno 
 
     def _getsortvalue(self):  
-        if self.sort_value is None:
+        if self._sort_value is None:
             return self._getpathlineno()
-        return self.sort_value
+        return self._sort_value
 
     def run(self):
-        self.state.prepare(self) 
-        self.execute(self.obj, *self.args)
+        self._state.prepare(self) 
+        self.execute(self.obj, *self._args)
 
     def execute(self, target, *args):
         """ default implementation for calling a test target is to

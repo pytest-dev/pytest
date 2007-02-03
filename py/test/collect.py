@@ -457,7 +457,7 @@ class Generator(PyCollectorMixin, Collector):
         d = {} 
         # slightly hackish to invoke setup-states on
         # collection ...
-        self.Function.state.prepare(self)
+        self.Function._state.prepare(self)
         for i, x in py.builtin.enumerate(self.obj()): 
             call, args = self.getcallargs(x)
             if not callable(call): 

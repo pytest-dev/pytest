@@ -1,7 +1,6 @@
 import py
 
 from time import time as now
-Item = py.test.Item
 from py.__.test.terminal.out import getout 
 from py.__.test.representation import Presenter
 from py.__.test.outcome import Skipped, Passed, Failed
@@ -91,7 +90,7 @@ class TerminalSession(Session):
             return
         colitem.elapsedtime = end - colitem.start 
         if self.config.option.usepdb:
-            if isinstance(outcome, Item.Failed): 
+            if isinstance(outcome, Failed): 
                 print "dispatching to ppdb", colitem
                 self.repr_failure(colitem, outcome) 
                 import pdb

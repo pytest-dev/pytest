@@ -20,7 +20,7 @@ class Session(object):
 
     def footer(self, colitems):
         """ teardown any resources after a test run. """ 
-        py.test.Function.state.teardown_all()
+        py.test.Function._state.teardown_all()
         if not self.config.option.nomagic:
             py.magic.revoke(assertion=1)
 
