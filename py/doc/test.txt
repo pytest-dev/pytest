@@ -702,7 +702,7 @@ The options that you need to specify in that conftest.py file are:
 Sample configuration::
 
     dist_hosts = ['localhost', 'user@someserver:/tmp/somedir']
-    dist_rsyncroots = ['../pypy', '../py']
+    dist_rsync_roots = ['../pypy', '../py']
     dist_remotepython = 'python2.4'
     dist_nicelevel = 10 
     dist_boxing = True

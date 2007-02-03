@@ -50,7 +50,7 @@ class HostRSync(py.execnet.RSync):
             return False
         dir, base = os.path.split(path)
         try:
-            name = "dist_rsyncroots" 
+            name = "dist_rsync_roots" 
             rsync_roots = self.config.conftest.rget_path(name, dir)
         except AttributeError:
             rsync_roots = None
