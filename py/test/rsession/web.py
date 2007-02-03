@@ -62,7 +62,7 @@ def add_item(event):
          'itemname': itemname}
     #if itemtype == 'Module':
     try:
-        d['length'] = str(len(list(event.item.tryiter())))
+        d['length'] = str(len(list(event.item._tryiter())))
     except:
         d['length'] = "?"
     return d

@@ -40,7 +40,7 @@ def test_found_certain_testfiles():
     tmp.ensure('found_test.py')
 
     colitem = py.test.collect.Directory(tmp) 
-    items = list(colitem.tryiter(py.test.collect.Module))
+    items = list(colitem._tryiter(py.test.collect.Module))
     assert len(items) == 2
     items = [item.name for item in items]
     assert 'test_found.py' in items
@@ -57,7 +57,7 @@ def test_ignored_certain_directories():
     tmp.ensure('test_found.py')
 
     colitem = py.test.collect.Directory(tmp) 
-    items = list(colitem.tryiter(py.test.collect.Module))
+    items = list(colitem._tryiter(py.test.collect.Module))
     assert len(items) == 2
     for item in items: 
         assert item.name == 'test_found.py' 
@@ -196,7 +196,7 @@ def test_custom_python_collection_from_conftest():
         config = py.test.config._reparse([x])
         #print "checking that %s returns custom items" % (x,) 
         col = config._getcollector(x)
-        assert len(list(col.tryiter(py.test.Item))) == 2 
+        assert len(list(col._tryiter(py.test.Item))) == 2 
         #assert items[1].__class__.__name__ == 'MyFunction'
 
     # test that running a session works from the directories
@@ -243,7 +243,7 @@ def test_custom_NONpython_collection_from_conftest():
         print "checking that %s returns custom items" % (x,) 
         config = py.test.config._reparse([x])
         col = config._getcollector(x)
-        assert len(list(col.tryiter(py.test.Item))) == 1
+        assert len(list(col._tryiter(py.test.Item))) == 1
         #assert items[1].__class__.__name__ == 'MyFunction'
 
     # test that running a session works from the directories
@@ -319,13 +319,13 @@ def test_documentation_virtual_collector_interaction():
     try:
         conf.option.forcegen = 1
         col = py.test.collect.Directory(rootdir)
-        x = list(col.tryiter(yieldtype=py.test.Function))
+        x = list(col._tryiter(yieldtype=py.test.Function))
     finally:
         conf.option.forcegen = old
     
 
-def test_tryiter_ignores_skips():
-    tmp = py.test.ensuretemp("tryiterskip")
+def test__tryiter_ignores_skips():
+    tmp = py.test.ensuretemp("_tryiterskip")
     tmp.ensure("subdir", "conftest.py").write(py.code.Source("""
         import py
         class Directory(py.test.collect.Directory):
@@ -334,7 +334,7 @@ def test_tryiter_ignores_skips():
     """))
     col = py.test.collect.Directory(tmp)
     try:
-        list(col.tryiter())
+        list(col._tryiter())
     except KeyboardInterrupt: 
         raise
     except:
@@ -342,14 +342,14 @@ def test_tryiter_ignores_skips():
         py.test.fail("should not have raised: %s"  %(exc,))
     
     
-def test_tryiter_ignores_failing_collectors(): 
-    tmp = py.test.ensuretemp("tryiterfailing")
+def test__tryiter_ignores_failing_collectors(): 
+    tmp = py.test.ensuretemp("_tryiterfailing")
     tmp.ensure("subdir", "conftest.py").write(py.code.Source("""
         bla bla bla
     """))
     col = py.test.collect.Directory(tmp)
     try:
-        list(col.tryiter())
+        list(col._tryiter())
     except KeyboardInterrupt: 
         raise
     except:
@@ -357,7 +357,7 @@ def test_tryiter_ignores_failing_collectors():
         py.test.fail("should not have raised: %s"  %(exc,))
 
     l = []
-    list(col.tryiter(reporterror=l.append))
+    list(col._tryiter(reporterror=l.append))
     assert len(l) == 2
     excinfo, item = l[-1]
     assert isinstance(excinfo, py.code.ExceptionInfo)
@@ -368,7 +368,7 @@ def test_tryiter_handles_keyboardinterrupt():
         raise KeyboardInterrupt() 
     """))
     col = py.test.collect.Directory(tmp)
-    py.test.raises(KeyboardInterrupt, list, col.tryiter())
+    py.test.raises(KeyboardInterrupt, list, col._tryiter())
 
 def test_check_random_inequality():
     tmp = py.test.ensuretemp("ineq")
@@ -376,7 +376,7 @@ def test_check_random_inequality():
         pass
     """))
     col = py.test.collect.Directory(tmp)
-    fn = col.tryiter().next()
+    fn = col._tryiter().next()
     assert fn != 3
     assert fn != col
     assert fn != [1,2,3]
@@ -399,7 +399,7 @@ def test_check_generator_collect_problems():
     tmp.ensure("__init__.py")
     col = py.test.collect.Module(tmp.join("test_one.py"))
     errors = []
-    l = list(col.tryiter(reporterror=errors.append))
+    l = list(col._tryiter(reporterror=errors.append))
     assert len(errors) == 2
 
 def test_check_collect_hashes():
@@ -420,7 +420,7 @@ def test_check_collect_hashes():
     """))
     tmp.ensure("__init__.py")
     col = py.test.collect.Directory(tmp)
-    l = list(col.tryiter())
+    l = list(col._tryiter())
     assert len(l) == 4
     for numi, i in enumerate(l):
         for numj, j in enumerate(l):

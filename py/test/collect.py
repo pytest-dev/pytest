@@ -192,7 +192,7 @@ class Collector(object):
                 return True 
         return False
 
-    def tryiter(self, yieldtype=None, reporterror=None, keyword=None):
+    def _tryiter(self, yieldtype=None, reporterror=None, keyword=None):
         """ yield stop item instances from flattening the collector. 
             XXX deprecated: this way of iteration is not safe in all
             cases. 
@@ -213,7 +213,7 @@ class Collector(object):
                     if reporterror is not None:
                         reporterror((None, self))
                     for x in self.run(): 
-                        for y in self.join(x).tryiter(yieldtype, 
+                        for y in self.join(x)._tryiter(yieldtype, 
                                             reporterror, keyword): 
                             yield y
                 except KeyboardInterrupt:
@@ -226,7 +226,7 @@ class Collector(object):
     def _getsortvalue(self): 
         return self.name 
 
-    captured_out = captured_err = None
+    _captured_out = _captured_err = None
     def startcapture(self): 
         return None # by default collectors don't capture output
 
@@ -234,7 +234,7 @@ class Collector(object):
         return None # by default collectors don't capture output
 
     def _getouterr(self): 
-        return self.captured_out, self.captured_err
+        return self._captured_out, self._captured_err
 
     def _get_collector_trail(self):
         """ Shortcut
@@ -369,7 +369,7 @@ class Module(FSCollector, PyCollectorMixin):
         if hasattr(self, '_capture'): 
             capture = self._capture 
             del self._capture 
-            self.captured_out, self.captured_err = capture.reset()
+            self._captured_out, self._captured_err = capture.reset()
 
     def __repr__(self): 
         return "<%s %r>" % (self.__class__.__name__, self.name)
@@ -436,7 +436,7 @@ class Class(PyCollectorMixin, Collector):
         except IOError:
             pass
         # fall back...
-        for x in self.tryiter((py.test.collect.Generator, py.test.Item)):
+        for x in self._tryiter((py.test.collect.Generator, py.test.Item)):
             return x._getsortvalue()
 
 class Instance(PyCollectorMixin, Collector): 

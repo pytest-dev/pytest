@@ -78,7 +78,7 @@ Running tests on hosts\: localhost, foo.com
             def __init__(self, parent):
                 self.parent = parent
                 self.fspath = py.path.local('.')
-            def tryiter(self):
+            def _tryiter(self):
                 return ['test_foo', 'test_bar']
             def listnames(self):
                 return ['package', 'foo', 'bar.py']

@@ -39,7 +39,7 @@ class Item(py.test.collect.Collector):
         if hasattr(self, '_capture'): 
             capture = self._capture 
             del self._capture
-            self.captured_out, self.captured_err = capture.reset()
+            self._captured_out, self._captured_err = capture.reset()
             
 
 class Function(Item): 

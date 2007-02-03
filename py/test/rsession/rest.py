@@ -66,7 +66,7 @@ class RestReporter(AbstractReporter):
     def report_ItemStart(self, event):
         item = event.item
         if isinstance(item, py.test.collect.Module):
-            lgt = len(list(item.tryiter()))
+            lgt = len(list(item._tryiter()))
             lns = item.listnames()[1:]
             name = "/".join(lns)
             link = self.get_linkwriter().get_link(self.get_rootpath(item),

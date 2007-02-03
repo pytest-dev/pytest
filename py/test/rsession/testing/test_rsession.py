@@ -68,7 +68,7 @@ def test_example_tryiter():
             pass
     """))
     rootcol = py.test.collect.Directory(tmpdir)
-    data = list(rootcol.tryiter(reporterror=events.append))
+    data = list(rootcol._tryiter(reporterror=events.append))
     assert len(events) == 2
     assert str(events[1][0].value) == "Reason"
 

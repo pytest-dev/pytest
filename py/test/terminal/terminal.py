@@ -64,8 +64,8 @@ class TerminalSession(Session):
             and not self.config.option.collectonly): 
             try: 
                 sum = 0
-                for sub in subitems: 
-                    sum += len(list(colitem.join(sub).tryiter()))
+                for sub in subitems:
+                    sum += len(list(colitem.join(sub)._tryiter()))
             except (SystemExit, KeyboardInterrupt): 
                 raise 
             except: 

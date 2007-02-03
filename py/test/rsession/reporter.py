@@ -288,7 +288,7 @@ class LocalReporter(AbstractReporter):
             # XXX This is a terrible hack, I don't like it
             #     and will rewrite it at some point
             #self.count = 0
-            lgt = len(list(item.tryiter()))
+            lgt = len(list(item._tryiter()))
             #self.lgt = lgt
             # print names relative to current workdir
             name = "/".join(item.listnames())

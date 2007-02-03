@@ -123,7 +123,7 @@ class AbstractTestReporter(object):
             rootcol = py.test.collect.Directory(tmpdir)
             hosts = [HostInfo('localhost')]
             r = self.reporter(config, hosts)
-            list(rootcol.tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
+            list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
 
         cap = py.io.StdCaptureFD()
         boxfun()
@@ -144,7 +144,7 @@ class AbstractTestReporter(object):
             r = self.reporter(config, [host])
             r.report(report.TestStarted([host]))
             r.report(report.RsyncFinished())
-            list(rootcol.tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
+            list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
             r.report(report.TestFinished())
         
         cap = py.io.StdCaptureFD()

@@ -36,7 +36,7 @@ class MasterNode(object):
 
 def itemgen(colitems, reporter, keyword, reporterror):
     for x in colitems:
-        for y in x.tryiter(reporterror = lambda x: reporterror(reporter, x), keyword = keyword):
+        for y in x._tryiter(reporterror = lambda x: reporterror(reporter, x), keyword = keyword):
             yield y
 
 def randomgen(items, done_dict):
