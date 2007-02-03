@@ -239,3 +239,9 @@ class TestRealModule:
 ##def test_help():
 #    help(std.path)
 #    #assert False
+
+def test_url_of_version():
+    py.test.skip("FAILING!")
+    from urllib import URLopener
+    URLopener().open(py.__package__.download_url)
+
