@@ -79,6 +79,22 @@ class TestStdCapture:
         assert err == "world\n"
         assert not out 
 
+    def test_stdin_restored(self):
+        old = sys.stdin 
+        cap = self.getcapture(in_=True)
+        newstdin = sys.stdin 
+        out, err = cap.reset()
+        assert newstdin != sys.stdin
+        assert sys.stdin is old 
+
+    def test_stdin_nulled_by_default(self):
+        print "XXX this test may well hang instead of crashing"
+        print "XXX which indicates an error in the underlying capturing"
+        print "XXX mechanisms" 
+        cap = self.getcapture()
+        py.test.raises(IOError, "sys.stdin.read()")
+        out, err = cap.reset()
+
 class TestStdCaptureFD(TestStdCapture): 
     def getcapture(self, **kw): 
         return py.io.StdCaptureFD(**kw)
