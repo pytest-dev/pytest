@@ -5,6 +5,7 @@ Node code for slaves.
 import py
 from py.__.test.rsession.executor import RunExecutor, BoxExecutor, AsyncExecutor
 from py.__.test.rsession.outcome import Outcome
+from py.__.test.outcome import Skipped
 import thread
 import os
 
@@ -90,7 +91,7 @@ def slave_main(receive, send, path, config, pidinfo):
         try:
             node = getnode(nextitem)
             res = node.run(nextitem)
-        except py.test.Item.Skipped, s:
+        except Skipped, s:
             send(Outcome(skipped=str(s)).make_repr())
         except:
             excinfo = py.code.ExceptionInfo()

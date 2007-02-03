@@ -25,6 +25,7 @@ The is a schematic example of a tree of collectors and test items::
 """ 
 from __future__ import generators 
 import py
+from py.__.test.outcome import Skipped, Failed, Passed
 
 def configproperty(name):
     def fget(self):
@@ -203,7 +204,7 @@ class Collector(object):
             try:
                 self._skipbykeyword(keyword)
                 yield self
-            except py.test.Item.Skipped:
+            except Skipped:
                 if reporterror is not None:
                     excinfo = py.code.ExceptionInfo()
                     reporterror((excinfo, self))
