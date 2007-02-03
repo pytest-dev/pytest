@@ -61,6 +61,7 @@ def test_importall():
         base.join('magic', 'greenlet.py'), 
         base.join('bin'),
         base.join('execnet', 'script'),
+        base.join('compat', 'testing'),
     )
     for p in base.visit('*.py', lambda x: x.check(dotfile=0)): 
         if p.basename == '__init__.py':
