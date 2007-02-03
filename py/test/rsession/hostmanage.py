@@ -50,8 +50,8 @@ class HostRSync(py.execnet.RSync):
             return False
         dir, base = os.path.split(path)
         try:
-            rsync_roots = self.config.getvalue_from_confpath("dist_rsyncroots",
-                                                             dir)
+            name = "dist_rsyncroots" 
+            rsync_roots = self.config.conftest.rget_path(name, dir)
         except AttributeError:
             rsync_roots = None
         if base == '.svn':
