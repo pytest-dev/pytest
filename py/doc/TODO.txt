@@ -78,6 +78,30 @@ APIGEN / source viewer
   with help code from py.__.rest.directive.... 
   make sure that the txt files in py/documentation/ use it
 
+* private py.test not-meant-to-be-public API: 
+  here is a rough list what we want public on collectors: 
+
+  py.test.Collector.
+        startcapture()
+        finishcapture()
+        setup()
+        teardown()
+        listchain()
+        listnames()
+        run()
+        join()
+        * all collector class properties *
+
+  and on py.test.Function|Item (which also has the collector interface):
+        execute()
+
+  move all Outcome (Skipped/Passed/...) classes to
+  a global place (outcome.py?) 
+
+  all other attributes of collectors shall become private
+
+* after the above API cleanup there might be more :) 
+
 testing
 -----------
 
