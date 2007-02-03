@@ -67,16 +67,16 @@ class Function(Item):
         return self._sort_value
 
     def run(self):
+        """ setup and execute the underlying test function. """
         self._state.prepare(self) 
         self.execute(self.obj, *self._args)
 
     def execute(self, target, *args):
-        """ default implementation for calling a test target is to
-            simply call it.
-        """
+        """ execute the given test function. """
         target(*args)
 
     def setup(self): 
+        """ perform setup for this test function. """
         if getattr(self.obj, 'im_self', None): 
             name = 'setup_method' 
         else: 
@@ -87,6 +87,7 @@ class Function(Item):
             return meth(self.obj) 
 
     def teardown(self): 
+        """ perform teardown for this test function. """
         if getattr(self.obj, 'im_self', None): 
             name = 'teardown_method' 
         else: 

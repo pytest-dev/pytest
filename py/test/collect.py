@@ -25,7 +25,7 @@ The is a schematic example of a tree of collectors and test items::
 """ 
 from __future__ import generators 
 import py
-from py.__.test.outcome import Skipped, Failed, Passed
+from py.__.test.outcome import Skipped
 
 def configproperty(name):
     def fget(self):
