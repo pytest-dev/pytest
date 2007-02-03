@@ -1,6 +1,7 @@
 import py
 
 from inspect import isclass, ismodule
+from py.__.test.outcome import Skipped, Failed, Passed
 
 _dummy = object()
 
@@ -101,10 +102,10 @@ class Function(Item):
 def skip(msg="unknown reason"):
     """ skip with the given Message. """
     __tracebackhide__ = True
-    raise py.test.Item.Skipped(msg=msg) 
+    raise Skipped(msg=msg) 
 
 def fail(msg="unknown failure"):
     """ fail with the given Message. """
     __tracebackhide__ = True
-    raise py.test.Item.Failed(msg=msg) 
+    raise Failed(msg=msg) 
 

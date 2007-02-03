@@ -6,6 +6,7 @@ import py, os
 from py.__.test.rsession.outcome import Outcome, ReprOutcome
 from py.__.test.rsession.box import Box
 from py.__.test.rsession import report
+from py.__.test.outcome import Skipped, Failed
 
 class RunExecutor(object):
     """ Same as in executor, but just running run
@@ -26,7 +27,7 @@ class RunExecutor(object):
         try:
             self.run()
             outcome = Outcome()
-        except py.test.Item.Skipped, e: 
+        except Skipped, e: 
             outcome = Outcome(skipped=str(e))
         except (KeyboardInterrupt, SystemExit):
             raise

@@ -1,5 +1,6 @@
 
 import py
+from py.__.test.outcome import Skipped, Failed, Passed
 
 def setup_module(mod): 
     mod.tmpdir = py.test.ensuretemp('docdoctest')
@@ -30,10 +31,10 @@ def test_doctest_basic():
     config = py.test.config._reparse([xtxt]) 
     session = config.initsession()
     session.main()
-    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    l = session.getitemoutcomepairs(Failed)
     assert len(l) == 0 
-    l = session.getitemoutcomepairs(py.test.Item.Passed)
-    l2 = session.getitemoutcomepairs(py.test.Item.Skipped)
+    l = session.getitemoutcomepairs(Passed)
+    l2 = session.getitemoutcomepairs(Skipped)
     assert len(l+l2) == 2
 
 def test_doctest_eol(): 
@@ -45,10 +46,10 @@ def test_doctest_eol():
     config = py.test.config._reparse([ytxt]) 
     session = config.initsession()
     session.main()
-    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    l = session.getitemoutcomepairs(Failed)
     assert len(l) == 0 
-    l = session.getitemoutcomepairs(py.test.Item.Passed)
-    l2 = session.getitemoutcomepairs(py.test.Item.Skipped)
+    l = session.getitemoutcomepairs(Passed)
+    l2 = session.getitemoutcomepairs(Skipped)
     assert len(l+l2) == 2
 
 def test_js_ignore():
@@ -63,10 +64,10 @@ def test_js_ignore():
     config = py.test.config._reparse([xtxt]) 
     session = config.initsession()
     session.main()
-    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    l = session.getitemoutcomepairs(Failed)
     assert len(l) == 0 
-    l = session.getitemoutcomepairs(py.test.Item.Passed)
-    l2 = session.getitemoutcomepairs(py.test.Item.Skipped)
+    l = session.getitemoutcomepairs(Passed)
+    l2 = session.getitemoutcomepairs(Skipped)
     assert len(l+l2) == 3
 
 def test_resolve_linkrole():

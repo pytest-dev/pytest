@@ -1,6 +1,7 @@
 
 import py
 from py.__.test.doctest import DoctestText
+from py.__.test.outcome import Skipped, Failed, Passed, Outcome
 
 def test_simple_docteststring():
     testitem = DoctestText(name="dummy", parent=None)
@@ -19,7 +20,7 @@ def test_simple_docteststring_failing():
     >>> i + 1
     2
     """)
-    py.test.raises(py.test.Item.Failed, "testitem.run()")
+    py.test.raises(Failed, "testitem.run()")
    
 
 def test_collect_doctest_files_with_test_prefix():

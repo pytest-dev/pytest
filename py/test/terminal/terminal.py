@@ -4,6 +4,7 @@ from time import time as now
 Item = py.test.Item
 from py.__.test.terminal.out import getout 
 from py.__.test.representation import Presenter
+from py.__.test.outcome import Skipped, Passed, Failed
 
 def getrelpath(source, dest): 
     base = source.common(dest)
@@ -167,14 +168,14 @@ class TerminalSession(Session):
     # progress information 
     # --------------------
     typemap = {
-        Item.Passed: '.',
-        Item.Skipped: 's',
-        Item.Failed: 'F',
+        Passed: '.',
+        Skipped: 's',
+        Failed: 'F',
     }
     namemap = {
-        Item.Passed: 'ok',
-        Item.Skipped: 'SKIP',
-        Item.Failed: 'FAIL',
+        Passed: 'ok',
+        Skipped: 'SKIP',
+        Failed: 'FAIL',
     }
 
     def repr_progress_short_result(self, item, outcome):
@@ -194,11 +195,11 @@ class TerminalSession(Session):
             return 'UNKNOWN'
 
     def repr_progress_module_result(self, item, outcome):
-        if isinstance(outcome, py.test.Item.Failed):
+        if isinstance(outcome, Failed):
             return "FAILED TO LOAD MODULE"
-        elif isinstance(outcome, py.test.Item.Skipped):
+        elif isinstance(outcome, Skipped):
             return "skipped"
-        elif not isinstance(outcome, (list, py.test.Item.Passed)):
+        elif not isinstance(outcome, (list, Passed)):
             return "?"
 
     # --------------------
@@ -207,7 +208,7 @@ class TerminalSession(Session):
     def summaryline(self): 
         outlist = []
         sum = 0
-        for typ in Item.Passed, Item.Failed, Item.Skipped:
+        for typ in Passed, Failed, Skipped:
             l = self.getitemoutcomepairs(typ)
             if l:
                 outlist.append('%d %s' % (len(l), typ.__name__.lower()))
@@ -232,7 +233,7 @@ class TerminalSession(Session):
         
     def skippedreasons(self):
         texts = {}
-        for colitem, outcome in self.getitemoutcomepairs(Item.Skipped):
+        for colitem, outcome in self.getitemoutcomepairs(Skipped):
             raisingtb = self.getlastvisible(outcome.excinfo.traceback) 
             fn = raisingtb.frame.code.path
             lineno = raisingtb.lineno
@@ -251,7 +252,7 @@ class TerminalSession(Session):
     def failures(self):
         if self.config.option.tbstyle == 'no':
             return   # skip the detailed failure reports altogether
-        l = self.getitemoutcomepairs(Item.Failed)
+        l = self.getitemoutcomepairs(Failed)
         if l: 
             self.out.sep('_')
             for colitem, outcome in l: 

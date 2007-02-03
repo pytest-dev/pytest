@@ -1,4 +1,5 @@
 import py
+from py.__.test.outcome import Outcome, Failed, Passed, Skipped
 
 class Session(object):
     """
@@ -82,17 +83,17 @@ class Session(object):
                     outcome = self.run(colitem) 
                 except (KeyboardInterrupt, Exit): 
                     raise 
-                except colitem.Outcome, outcome: 
+                except Outcome, outcome: 
                     if outcome.excinfo is None: 
                         outcome.excinfo = py.code.ExceptionInfo() 
                 except: 
                     excinfo = py.code.ExceptionInfo() 
-                    outcome = colitem.Failed(excinfo=excinfo) 
+                    outcome = Failed(excinfo=excinfo) 
                 assert (outcome is None or 
-                        isinstance(outcome, (list, colitem.Outcome)))
+                        isinstance(outcome, (list, Outcome)))
             finally: 
                 self.finish(colitem, outcome) 
-            if isinstance(outcome, colitem.Failed) and self.config.option.exitfirst:
+            if isinstance(outcome, Failed) and self.config.option.exitfirst:
                 py.test.exit("exit on first problem configured.", item=colitem)
         finally: 
             colitem.finishcapture()
@@ -104,7 +105,7 @@ class Session(object):
             colitem.skipbykeyword(self.config.option.keyword)
         res = colitem.run() 
         if res is None: 
-            return py.test.Item.Passed() 
+            return Passed() 
         elif not isinstance(res, (list, tuple)): 
             raise TypeError("%r.run() returned neither "
                             "list, tuple nor None: %r" % (colitem, res))

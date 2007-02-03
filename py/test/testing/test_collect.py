@@ -1,6 +1,7 @@
 from __future__ import generators
 import py
 from setupdata import setupdatadir
+from py.__.test.outcome import Skipped, Failed, Passed, Outcome
 
 def setup_module(mod):
     mod.datadir = setupdatadir()
@@ -205,7 +206,7 @@ def test_custom_python_collection_from_conftest():
         out = py.std.cStringIO.StringIO()
         session = config._getsessionclass()(config, out) 
         session.main() 
-        l = session.getitemoutcomepairs(py.test.Item.Passed) 
+        l = session.getitemoutcomepairs(Passed) 
         assert len(l) == 2
     finally: 
         old.chdir() 
@@ -215,7 +216,7 @@ def test_custom_python_collection_from_conftest():
     out = py.std.cStringIO.StringIO()
     session = config._getsessionclass()(config, out) 
     session.main() 
-    l = session.getitemoutcomepairs(py.test.Item.Passed) 
+    l = session.getitemoutcomepairs(Passed) 
     assert len(l) == 2
 
 def test_custom_NONpython_collection_from_conftest():
@@ -252,7 +253,7 @@ def test_custom_NONpython_collection_from_conftest():
         out = py.std.cStringIO.StringIO()
         session = config._getsessionclass()(config, out) 
         session.main() 
-        l = session.getitemoutcomepairs(py.test.Item.Passed) 
+        l = session.getitemoutcomepairs(Passed) 
         assert len(l) == 1
     finally: 
         old.chdir() 
@@ -262,7 +263,7 @@ def test_custom_NONpython_collection_from_conftest():
     out = py.std.cStringIO.StringIO()
     session = config._getsessionclass()(config, out) 
     session.main() 
-    l = session.getitemoutcomepairs(py.test.Item.Passed) 
+    l = session.getitemoutcomepairs(Passed) 
     assert len(l) == 1
 
 def test_order_of_execution_generator_same_codeline():

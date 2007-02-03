@@ -1,6 +1,6 @@
 import sys
 import py
-ExceptionFailure = py.test.Item.ExceptionFailure
+from py.__.test.outcome import ExceptionFailure
 
 def raises(ExpectedException, *args, **kwargs):
     """ raise AssertionError, if target code does not raise the expected

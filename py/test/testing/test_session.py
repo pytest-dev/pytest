@@ -1,5 +1,6 @@
 import py
 from setupdata import setup_module # sets up global 'tmpdir' 
+from py.__.test.outcome import Skipped, Failed, Passed, Outcome
 
 implied_options = {
     '--pdb': 'usepdb and nocapture', 
@@ -44,9 +45,9 @@ def runfiletest(opts):
     config = py.test.config._reparse(opts + [datadir/'filetest.py']) 
     session = config.initsession()
     session.main()
-    l = session.getitemoutcomepairs(py.test.Item.Failed)
+    l = session.getitemoutcomepairs(Failed)
     assert len(l) == 2 
-    l = session.getitemoutcomepairs(py.test.Item.Passed)
+    l = session.getitemoutcomepairs(Passed)
     assert not l 
 
 class TestKeywordSelection: 
@@ -56,11 +57,11 @@ class TestKeywordSelection:
                                                    '-k', keyword])
             session = config._getsessionclass()(config, py.std.sys.stdout)
             session.main()
-            l = session.getitemoutcomepairs(py.test.Item.Failed)
+            l = session.getitemoutcomepairs(Failed)
             assert len(l) == 1 
             item = l[0][0]
             assert item.name == 'test_one'
-            l = session.getitemoutcomepairs(py.test.Item.Skipped)
+            l = session.getitemoutcomepairs(Skipped)
             assert len(l) == 1 
 
     def test_select_extra_keywords(self): 
@@ -86,10 +87,10 @@ class TestKeywordSelection:
             session = config._getsessionclass()(config, f) 
             session.main()
             print "keyword", repr(keyword)
-            l = session.getitemoutcomepairs(py.test.Item.Passed)
+            l = session.getitemoutcomepairs(Passed)
             assert len(l) == 1
             assert l[0][0].name == 'test_2'
-            l = session.getitemoutcomepairs(py.test.Item.Skipped)
+            l = session.getitemoutcomepairs(Skipped)
             assert l[0][0].name == 'test_1' 
    
 class TestTerminalSession: 
@@ -104,13 +105,13 @@ class TestTerminalSession:
     def test_terminal(self): 
         session = self.mainsession(datadir / 'filetest.py')
         out = self.file.getvalue() 
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 2
         assert out.find('2 failed') != -1 
 
     def test_syntax_error_module(self): 
         session = self.mainsession(datadir / 'syntax_error.py')
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 1 
         out = self.file.getvalue() 
         assert out.find(str('syntax_error.py')) != -1
@@ -120,9 +121,9 @@ class TestTerminalSession:
         session = self.mainsession("--exitfirst", 
                                    datadir / 'filetest.py')
         assert session.config.option.exitfirst
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 1 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
+        l = session.getitemoutcomepairs(Passed)
         assert not l 
 
     def test_collectonly(self): 
@@ -131,7 +132,7 @@ class TestTerminalSession:
         assert session.config.option.collectonly
         out = self.file.getvalue()
         #print out 
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         #if l: 
         #    x = l[0][1].excinfo
         #    print x.exconly() 
@@ -195,7 +196,7 @@ class TestTerminalSession:
                     self._testmycapture = self._mycapture.reset()
         """))
         session = self.mainsession(o) 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
+        l = session.getitemoutcomepairs(Passed)
         assert len(l) == 1
         item = l[0][0]
         assert hasattr(item, '_testmycapture')
@@ -250,9 +251,9 @@ class TestTerminalSession:
         """))
 
         session = self.mainsession(o) 
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 0 
-        l = session.getitemoutcomepairs(py.test.Item.Passed)
+        l = session.getitemoutcomepairs(Passed)
         assert len(l) == 7 
         # also test listnames() here ... 
         item, result = l[-1]
@@ -273,7 +274,7 @@ class TestTerminalSession:
             a = 1
         """))
         session = self.mainsession(o) 
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 1 
         item, outcome = l[0]
         assert str(outcome.excinfo).find('does_not_work') != -1 
@@ -284,7 +285,7 @@ class TestTerminalSession:
         print 'Output of simulated "py.test brokenrepr.py":'
         print out
         
-        l = session.getitemoutcomepairs(py.test.Item.Failed)
+        l = session.getitemoutcomepairs(Failed)
         assert len(l) == 2
         assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
         assert out.find("[unknown exception raised in repr()]") != -1

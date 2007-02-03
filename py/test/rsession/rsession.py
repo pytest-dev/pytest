@@ -17,6 +17,7 @@ from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
     box_runner
 from py.__.test.rsession.reporter import LocalReporter, RemoteReporter
 from py.__.test.session import Session
+from py.__.test.outcome import Skipped, Failed
 
 class AbstractSession(Session): 
     """
@@ -84,7 +85,7 @@ class AbstractSession(Session):
             excinfo, item = data
             if excinfo is None:
                 reporter(report.ItemStart(item))
-            elif excinfo.type is py.test.Item.Skipped:
+            elif excinfo.type is Skipped:
                 reporter(report.SkippedTryiter(excinfo, item))
             else:
                 reporter(report.FailedTryiter(excinfo, item))

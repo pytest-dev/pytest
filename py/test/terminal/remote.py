@@ -1,7 +1,8 @@
 from __future__ import generators
 import py
 from py.__.test.session import Session
-from py.__.test.terminal.out import getout 
+from py.__.test.terminal.out import getout
+from py.__.test.outcome import Failed, Passed, Skipped
 
 def checkpyfilechange(rootdir, statcache={}):
     """ wait until project files are changed. """
@@ -135,6 +136,6 @@ def slaverun_TerminalSession(channel):
     session.shouldclose = channel.isclosed 
     print "SLAVE: starting session.main()"
     session.main()
-    failures = session.getitemoutcomepairs(py.test.Item.Failed)
+    failures = session.getitemoutcomepairs(Failed)
     failures = [config.get_collector_trail(item) for item,_ in failures]
     channel.send(failures)
