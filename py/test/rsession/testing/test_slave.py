@@ -62,7 +62,7 @@ def gettestnode():
 def test_slave_run_passing():
     node = gettestnode()
     item = rootcol.getitembynames(funcpass_spec)
-    outcome = node.execute(item.get_collector_trail())
+    outcome = node.execute(item._get_collector_trail())
     assert outcome.passed 
     assert not outcome.setupfailure 
 
@@ -74,7 +74,7 @@ def test_slave_run_passing():
 def test_slave_run_failing():
     node = gettestnode()
     item = rootcol.getitembynames(funcfail_spec)
-    outcome = node.execute(item.get_collector_trail())
+    outcome = node.execute(item._get_collector_trail())
     assert not outcome.passed 
     assert not outcome.setupfailure 
     assert len(outcome.excinfo.traceback) == 1
@@ -89,7 +89,7 @@ def test_slave_run_failing():
 def test_slave_run_skipping():
     node = gettestnode()
     item = rootcol.getitembynames(funcskip_spec)    
-    outcome = node.execute(item.get_collector_trail())
+    outcome = node.execute(item._get_collector_trail())
     assert not outcome.passed
     assert outcome.skipped
 
@@ -101,7 +101,7 @@ def test_slave_run_skipping():
 def test_slave_run_failing_wrapped():
     node = gettestnode()
     item = rootcol.getitembynames(funcfail_spec)
-    repr_outcome = node.run(item.get_collector_trail()) 
+    repr_outcome = node.run(item._get_collector_trail()) 
     outcome = ReprOutcome(repr_outcome)  
     assert not outcome.passed 
     assert not outcome.setupfailure 
@@ -112,8 +112,8 @@ def test_slave_main_simple():
     failitem = rootcol.getitembynames(funcfail_spec)
     passitem = rootcol.getitembynames(funcpass_spec)
     q = [None, 
-         passitem.get_collector_trail(),
-         failitem.get_collector_trail()
+         passitem._get_collector_trail(),
+         failitem._get_collector_trail()
         ]
     config = py.test.config._reparse([])
     pidinfo = PidInfo()
@@ -125,7 +125,7 @@ def test_slave_main_simple():
 def test_slave_run_different_stuff():
     node = gettestnode()
     node.run(rootcol.getitembynames("py doc log.txt".split()).
-             get_collector_trail())
+             _get_collector_trail())
 
 def test_slave_setup_exit():
     tmp = py.test.ensuretemp("slaveexit")

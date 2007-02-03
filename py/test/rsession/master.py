@@ -30,7 +30,7 @@ class MasterNode(object):
         else:
             self.pending.insert(0, item)
             #itemspec = item.listnames()[1:]
-            self.channel.send(item.get_collector_trail())
+            self.channel.send(item._get_collector_trail())
             # send start report
             self.reporter(report.SendItem(self.channel, item))
 

@@ -81,7 +81,7 @@ APIGEN / source viewer
 * private py.test not-meant-to-be-public API: 
   here is a rough list what we want public on collectors: 
 
-  py.test.Collector.
+  py.test.collect.Collector.
         startcapture()
         finishcapture()
         setup()

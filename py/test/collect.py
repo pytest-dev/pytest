@@ -231,7 +231,7 @@ class Collector(object):
     def getouterr(self): 
         return self.captured_out, self.captured_err
 
-    def get_collector_trail(self):
+    def _get_collector_trail(self):
         """ Shortcut
         """
         return self.config.get_collector_trail(self)

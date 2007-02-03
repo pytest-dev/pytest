@@ -39,7 +39,7 @@ class DummyChannel(object):
         self.sent.append(item)
 
 class Item(py.test.Item):
-    def get_collector_trail(self):
+    def _get_collector_trail(self):
         return (self.name,)
 
 def test_masternode():
@@ -96,7 +96,7 @@ def test_slave_setup():
     gw = py.execnet.PopenGateway()
     config = py.test.config._reparse([])
     channel = setup_slave(gw, pkgdir, config)
-    spec = rootcol.getitembynames(funcpass_spec).get_collector_trail()
+    spec = rootcol.getitembynames(funcpass_spec)._get_collector_trail()
     channel.send(spec)
     output = ReprOutcome(channel.receive())
     assert output.passed
