@@ -43,13 +43,13 @@ class Presenter(object):
         """ This method represents py.test.Item info (path and module)
         """
         root = item.fspath 
-        modpath = item.getmodpath() 
+        modpath = item._getmodpath() 
         try: 
-            fn, lineno = item.getpathlineno() 
+            fn, lineno = item._getpathlineno() 
         except TypeError: 
             assert isinstance(item.parent, py.test.collect.Generator) 
             # a generative test yielded a non-callable 
-            fn, lineno = item.parent.getpathlineno() 
+            fn, lineno = item.parent._getpathlineno() 
         if root == fn:
             self.out.sep("_", "entrypoint: %s" %(modpath))
         else:

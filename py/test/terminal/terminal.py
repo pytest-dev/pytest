@@ -77,9 +77,9 @@ class TerminalSession(Session):
     def start_Item(self, colitem): 
         if self.config.option.verbose >= 1: 
             if isinstance(colitem, py.test.Item): 
-                realpath, lineno = colitem.getpathlineno()
+                realpath, lineno = colitem._getpathlineno()
                 location = "%s:%d" % (realpath.basename, lineno+1)
-                self.out.write("%-20s %s " % (location, colitem.getmodpath()))
+                self.out.write("%-20s %s " % (location, colitem._getmodpath()))
   
     def finish(self, colitem, outcome):
         end = now()
@@ -265,7 +265,7 @@ class TerminalSession(Session):
         #print "repr_failures sees traceback"
         #py.std.pprint.pprint(traceback)
         if item and not self.config.option.fulltrace: 
-            path, firstlineno = item.getpathlineno()
+            path, firstlineno = item._getpathlineno()
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
@@ -278,7 +278,7 @@ class TerminalSession(Session):
 
     def repr_out_err(self, colitem): 
         for parent in colitem.listchain(): 
-            for name, obj in zip(['out', 'err'], parent.getouterr()): 
+            for name, obj in zip(['out', 'err'], parent._getouterr()): 
                 if obj: 
                     self.out.sep("- ", "%s: recorded std%s" % (parent.name, name))
                     self.out.line(obj)

@@ -19,9 +19,9 @@ def test_collect_listnames_and_back():
     col3 = col2.join('filetest.py')
     l = col3.listnames()
     assert len(l) == 3
-    x = col1.getitembynames(l[1:])
+    x = col1._getitembynames(l[1:])
     assert x.name == "filetest.py"
-    x = col1.getitembynames("/".join(l[1:]))
+    x = col1._getitembynames("/".join(l[1:]))
     assert x.name == "filetest.py"
     l2 = x.listnames()
     assert len(l2) == 3

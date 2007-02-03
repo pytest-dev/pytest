@@ -128,8 +128,6 @@ class AbstractReporter(object):
     def repr_failure(self, item, outcome):
         excinfo = outcome.excinfo
         traceback = excinfo.traceback
-        #if item and not self.config.option.fulltrace: 
-        #    path, firstlineno = item.getpathlineno()
         if not traceback: 
             self.out.line("empty traceback from item %r" % (item,)) 
             return

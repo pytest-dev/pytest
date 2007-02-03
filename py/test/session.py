@@ -102,7 +102,7 @@ class Session(object):
         if self.config.option.collectonly and isinstance(colitem, py.test.Item): 
             return 
         if isinstance(colitem, py.test.Item): 
-            colitem.skipbykeyword(self.config.option.keyword)
+            colitem._skipbykeyword(self.config.option.keyword)
         res = colitem.run() 
         if res is None: 
             return Passed() 

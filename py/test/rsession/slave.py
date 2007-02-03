@@ -52,11 +52,7 @@ class SlaveNode(object):
         self.pidinfo = pidinfo
 
     def execute(self, itemspec):
-        #item = self.rootcollector.getitembynames(itemspec)
         item = self.config._getcollector(itemspec)
-        #if isinstance(item, py.test.Function):
-        #    ex = Executor(item.obj, setup=item.setup)
-        #else:
         ex = self.executor(item, config=self.config)
         if self.executor is AsyncExecutor:
             cont, pid = ex.execute()

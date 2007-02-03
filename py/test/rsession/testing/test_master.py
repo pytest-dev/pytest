@@ -96,7 +96,7 @@ def test_slave_setup():
     gw = py.execnet.PopenGateway()
     config = py.test.config._reparse([])
     channel = setup_slave(gw, pkgdir, config)
-    spec = rootcol.getitembynames(funcpass_spec)._get_collector_trail()
+    spec = rootcol._getitembynames(funcpass_spec)._get_collector_trail()
     channel.send(spec)
     output = ReprOutcome(channel.receive())
     assert output.passed
@@ -124,8 +124,8 @@ def test_slave_running():
         return mn
     
     master_nodes = [open_gw(), open_gw(), open_gw()]
-    funcpass_item = rootcol.getitembynames(funcpass_spec)
-    funcfail_item = rootcol.getitembynames(funcfail_spec)
+    funcpass_item = rootcol._getitembynames(funcpass_spec)
+    funcfail_item = rootcol._getitembynames(funcfail_spec)
     itemgenerator = iter([funcfail_item] + 
                          [funcpass_item] * 5 + [funcfail_item] * 5)
     shouldstop = lambda : False
@@ -153,7 +153,7 @@ def test_slave_running_interrupted():
 
     mn, gw, channel = open_gw()
     rootcol = py.test.collect.Directory(pkgdir)
-    funchang_item = rootcol.getitembynames(funchang_spec)
+    funchang_item = rootcol._getitembynames(funchang_spec)
     mn.send(funchang_item)
     mn.send(StopIteration)
     # XXX: We have to wait here a bit to make sure that it really did happen

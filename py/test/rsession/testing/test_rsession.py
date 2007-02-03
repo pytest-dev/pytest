@@ -196,10 +196,10 @@ class TestRSessionRemote:
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping
         
         rootcol = py.test.collect.Directory(pkgdir.dirpath())
-        itempass = rootcol.getitembynames(funcpass_spec)
-        itemfail = rootcol.getitembynames(funcfail_spec)
-        itemskip = rootcol.getitembynames(funcskip_spec)
-        itemprint = rootcol.getitembynames(funcprint_spec)
+        itempass = rootcol._getitembynames(funcpass_spec)
+        itemfail = rootcol._getitembynames(funcfail_spec)
+        itemskip = rootcol._getitembynames(funcskip_spec)
+        itemprint = rootcol._getitembynames(funcprint_spec)
 
         # actually run some tests
         for node in nodes:
@@ -240,7 +240,7 @@ class TestRSessionRemote:
             nodes = hm.init_hosts(allevents.append)
 
             rootcol = py.test.collect.Directory(pkgdir.dirpath())
-            itempass = rootcol.getitembynames(funcoptioncustom_spec)
+            itempass = rootcol._getitembynames(funcoptioncustom_spec)
 
             for node in nodes:
                 node.send(itempass)

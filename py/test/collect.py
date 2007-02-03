@@ -29,7 +29,7 @@ import py
 def configproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
-        return self.config.getvalue(name, self.fspath) 
+        return self._config.getvalue(name, self.fspath) 
     return property(fget)
 
 class Collector(object): 
@@ -43,8 +43,11 @@ class Collector(object):
     """
     def __init__(self, name, parent=None):
         self.name = name 
-        self.parent = parent 
-        self.config = getattr(parent, 'config', py.test.config)
+        self.parent = parent
+        self._config = getattr(parent, '_config', py.test.config)
+        if parent is not None:
+            if hasattr(parent, 'config'):
+                py.test.pdb()
         self.fspath = getattr(parent, 'fspath', None) 
 
     Module = configproperty('Module')
@@ -73,8 +76,8 @@ class Collector(object):
         return not self == other
 
     def __cmp__(self, other): 
-        s1 = self.getsortvalue()
-        s2 = other.getsortvalue()
+        s1 = self._getsortvalue()
+        s2 = other._getsortvalue()
         #print "cmp", s1, s2
         return cmp(s1, s2) 
 
@@ -116,7 +119,7 @@ class Collector(object):
         """ return a list of colitems for the given namelist. """ 
         return [self.join(name) for name in namelist]
 
-    def getpathlineno(self): 
+    def _getpathlineno(self): 
         return self.fspath, py.std.sys.maxint 
 
     def setup(self): 
@@ -139,7 +142,7 @@ class Collector(object):
     def listnames(self): 
         return [x.name for x in self.listchain()]
 
-    def getitembynames(self, namelist):
+    def _getitembynames(self, namelist):
         if isinstance(namelist, str):
             namelist = namelist.split("/")
         cur = self
@@ -150,10 +153,10 @@ class Collector(object):
                 cur = next
         return cur
 
-    def haskeyword(self, keyword): 
+    def _haskeyword(self, keyword): 
         return keyword in self.name
 
-    def getmodpath(self):
+    def _getmodpath(self):
         """ return dotted module path (relative to the containing). """ 
         inmodule = False 
         newl = []
@@ -169,7 +172,7 @@ class Collector(object):
                 newl.append(x.name) 
         return ".".join(newl) 
 
-    def skipbykeyword(self, keyword): 
+    def _skipbykeyword(self, keyword): 
         """ raise Skipped() exception if the given keyword 
             matches for this collector. 
         """
@@ -184,8 +187,8 @@ class Collector(object):
                 py.test.skip("test not selected by keyword %r" %(keyword,))
 
     def _matchonekeyword(self, key, chain): 
-        for subitem in chain: 
-            if subitem.haskeyword(key): 
+        for subitem in chain:
+            if subitem._haskeyword(key): 
                 return True 
         return False
 
@@ -198,7 +201,7 @@ class Collector(object):
             yieldtype = py.test.Item 
         if isinstance(self, yieldtype):
             try:
-                self.skipbykeyword(keyword)
+                self._skipbykeyword(keyword)
                 yield self
             except py.test.Item.Skipped:
                 if reporterror is not None:
@@ -220,21 +223,23 @@ class Collector(object):
                         excinfo = py.code.ExceptionInfo()
                         reporterror((excinfo, self)) 
 
-    def getsortvalue(self): 
+    def _getsortvalue(self): 
         return self.name 
 
     captured_out = captured_err = None
     def startcapture(self): 
-        return None # by default collectors don't capture output 
+        return None # by default collectors don't capture output
+
     def finishcapture(self): 
-        return None # by default collectors don't capture output 
-    def getouterr(self): 
+        return None # by default collectors don't capture output
+
+    def _getouterr(self): 
         return self.captured_out, self.captured_err
 
     def _get_collector_trail(self):
         """ Shortcut
         """
-        return self.config.get_collector_trail(self)
+        return self._config.get_collector_trail(self)
 
 class FSCollector(Collector): 
     def __init__(self, fspath, parent=None): 
@@ -356,7 +361,7 @@ class Module(FSCollector, PyCollectorMixin):
         return res
     
     def startcapture(self): 
-        if not self.config.option.nocapture:
+        if not self._config.option.nocapture:
             assert not hasattr(self, '_capture')
             self._capture = py.io.StdCaptureFD() 
 
@@ -418,7 +423,7 @@ class Class(PyCollectorMixin, Collector):
             teardown_class = getattr(teardown_class, 'im_func', teardown_class) 
             teardown_class(self.obj) 
 
-    def getsortvalue(self):
+    def _getsortvalue(self):
         # try to locate the class in the source - not nice, but probably
         # the most useful "solution" that we have
         try:
@@ -432,7 +437,7 @@ class Class(PyCollectorMixin, Collector):
             pass
         # fall back...
         for x in self.tryiter((py.test.collect.Generator, py.test.Item)):
-            return x.getsortvalue()
+            return x._getsortvalue()
 
 class Instance(PyCollectorMixin, Collector): 
     def _getobj(self): 
@@ -468,12 +473,12 @@ class Generator(PyCollectorMixin, Collector):
             call, args = obj, ()
         return call, args 
 
-    def getpathlineno(self): 
+    def _getpathlineno(self): 
         code = py.code.Code(self.obj) 
         return code.path, code.firstlineno 
 
-    def getsortvalue(self):  
-        return self.getpathlineno() 
+    def _getsortvalue(self):  
+        return self._getpathlineno() 
 
 class DoctestFile(PyCollectorMixin, FSCollector): 
     def run(self):

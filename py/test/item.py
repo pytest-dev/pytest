@@ -32,7 +32,7 @@ class SetupState(object):
 
 class Item(py.test.collect.Collector): 
     def startcapture(self): 
-        if not self.config.option.nocapture:
+        if not self._config.option.nocapture:
             self._capture = py.io.StdCaptureFD() 
 
     def finishcapture(self): 
@@ -57,13 +57,13 @@ class Function(Item):
     def __repr__(self): 
         return "<%s %r>" %(self.__class__.__name__, self.name)
 
-    def getpathlineno(self):
+    def _getpathlineno(self):
         code = py.code.Code(self.obj) 
         return code.path, code.firstlineno 
 
-    def getsortvalue(self):  
+    def _getsortvalue(self):  
         if self.sort_value is None:
-            return self.getpathlineno()
+            return self._getpathlineno()
         return self.sort_value
 
     def run(self):

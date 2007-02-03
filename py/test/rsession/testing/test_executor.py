@@ -94,7 +94,7 @@ def test_box_executor():
 
 def test_box_executor_stdout():
     rootcol = py.test.collect.Directory(rootdir)
-    item = rootcol.getitembynames(funcprint_spec)
+    item = rootcol._getitembynames(funcprint_spec)
     ex = BoxExecutor(item, config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
@@ -103,7 +103,7 @@ def test_box_executor_stdout():
 
 def test_box_executor_stdout_error():
     rootcol = py.test.collect.Directory(rootdir)
-    item = rootcol.getitembynames(funcprintfail_spec)
+    item = rootcol._getitembynames(funcprintfail_spec)
     ex = BoxExecutor(item, config=config)
     outcome_repr = ex.execute()
     outcome = ReprOutcome(outcome_repr)
@@ -112,7 +112,7 @@ def test_box_executor_stdout_error():
 
 def test_cont_executor():
     rootcol = py.test.collect.Directory(rootdir)
-    item = rootcol.getitembynames(funcprintfail_spec)
+    item = rootcol._getitembynames(funcprintfail_spec)
     ex = AsyncExecutor(item, config=config)
     cont, pid = ex.execute()
     assert pid
@@ -154,13 +154,13 @@ def test_apigen_executor():
     """))
     rootcol = py.test.collect.Directory(tmpdir)
     tracer = Tracer()
-    item = rootcol.getitembynames("test_one.py/test_1")
+    item = rootcol._getitembynames("test_one.py/test_1")
     ex = ApigenExecutor(item, config=config)
     out1 = ex.execute(tracer)
-    item = rootcol.getitembynames("test_one.py/TestX/()/test_one")
+    item = rootcol._getitembynames("test_one.py/TestX/()/test_one")
     ex = ApigenExecutor(item, config=config)
     out2 = ex.execute(tracer)
-    item = rootcol.getitembynames("test_one.py/TestX/()/test_raise")
+    item = rootcol._getitembynames("test_one.py/TestX/()/test_raise")
     ex = ApigenExecutor(item, config=config)
     out3 = ex.execute(tracer)
     assert tracer.starts == 3

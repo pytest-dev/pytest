@@ -75,14 +75,14 @@ class Config(object):
             assert path.check(), "%s: path does not exist" %(path,)
             col = self._getrootcollector(path)
             names = path.relto(col.fspath).split(path.sep)
-        return col.getitembynames(names)
+        return col._getitembynames(names)
 
     def _getrootcollector(self, path):
         pkgpath = path.pypkgpath()
         if pkgpath is None:
             pkgpath = path.check(file=1) and path.dirpath() or path
         col = self.conftest.rget("Directory", pkgpath)(pkgpath)
-        col.config = self
+        col._config = self
         return col 
              
     def addoptions(self, groupname, *specs): 

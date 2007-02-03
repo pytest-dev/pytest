@@ -272,7 +272,7 @@ class TestConfigColitems:
         col = colitems[0]
         assert isinstance(col, py.test.collect.Directory)
         for col in col.listchain():
-            assert col.config is config 
+            assert col._config is config 
 
     def test_getcolitems_twodirs(self):
         config = py.test.config._reparse([self.tmpdir, self.tmpdir])
@@ -292,7 +292,7 @@ class TestConfigColitems:
         assert col2.name == 'a'
         for col in colitems:
             for subcol in col.listchain():
-                assert col.config is config 
+                assert col._config is config 
 
     def test__getcol_global_file(self):
         x = self.tmpdir.ensure("x.py")
@@ -303,7 +303,7 @@ class TestConfigColitems:
         assert col.parent.name == self.tmpdir.basename 
         assert col.parent.parent is None
         for col in col.listchain():
-            assert col.config is config 
+            assert col._config is config 
 
     def test__getcol_global_dir(self):
         x = self.tmpdir.ensure("a", dir=1)
@@ -313,7 +313,7 @@ class TestConfigColitems:
         print col.listchain()
         assert col.name == 'a'
         assert col.parent is None
-        assert col.config is config 
+        assert col._config is config 
 
     def test__getcol_pkgfile(self):
         x = self.tmpdir.ensure("x.py")
@@ -325,7 +325,7 @@ class TestConfigColitems:
         assert col.parent.name == x.dirpath().basename 
         assert col.parent.parent is None
         for col in col.listchain():
-            assert col.config is config 
+            assert col._config is config 
 
     def test_get_collector_trail_and_back(self):
         a = self.tmpdir.ensure("a", dir=1)

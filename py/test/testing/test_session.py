@@ -76,9 +76,9 @@ class TestKeywordSelection:
         conftest = o.join('conftest.py').write(py.code.Source("""
             import py
             class Class(py.test.collect.Class): 
-                def haskeyword(self, keyword): 
+                def _haskeyword(self, keyword): 
                     return keyword == 'xxx' or \
-                           super(Class, self).haskeyword(keyword) 
+                           super(Class, self)._haskeyword(keyword) 
         """))
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1', 
                         'TestClass test_2', 'xxx TestClass test_2',): 
@@ -206,7 +206,7 @@ class TestTerminalSession:
         assert int(err.strip()) == 23 
 
         assert isinstance(item.parent, py.test.collect.Module)
-        out, err = item.parent.getouterr()
+        out, err = item.parent._getouterr()
         assert out.find('module level output') != -1 
         allout = self.file.getvalue()
         print "allout:", allout

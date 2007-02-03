@@ -64,7 +64,7 @@ class AbstractTestReporter(object):
         config = py.test.config._reparse(["some_sub"])
         # we just go...
         rootcol = py.test.collect.Directory(self.pkgdir.dirpath())
-        item = rootcol.getitembynames(funcpass_spec)
+        item = rootcol._getitembynames(funcpass_spec)
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, outcomes):
@@ -84,8 +84,8 @@ class AbstractTestReporter(object):
         config = py.test.config._reparse(["some_sub"])
         # we just go...
         rootcol = py.test.collect.Directory(self.pkgdir.dirpath())
-        funcitem = rootcol.getitembynames(funcpass_spec)
-        moditem = rootcol.getitembynames(mod_spec)
+        funcitem = rootcol._getitembynames(funcpass_spec)
+        moditem = rootcol._getitembynames(mod_spec)
         outcomes = self.prepare_outcomes()
         
         def boxfun(pkgdir, config, item, funcitem, outcomes):
