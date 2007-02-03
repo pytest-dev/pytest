@@ -171,16 +171,19 @@ def stdouterrin_setnull():
             devnull = 'NUL'
         else:
             devnull = '/dev/null'
+    # stdin
     sys.stdin  = os.fdopen(os.dup(0), 'rb', 0)
-    sys.stdout = os.fdopen(os.dup(1), 'wb', 0)
-    if os.name == 'nt':
-        sys.stderr = os.fdopen(os.dup(2), 'wb', 0)
     fd = os.open(devnull, os.O_RDONLY)
     os.dup2(fd, 0)
     os.close(fd)
+
+    # stdout
+    sys.stdout = os.fdopen(os.dup(1), 'wb', 0)
     fd = os.open(devnull, os.O_WRONLY)
     os.dup2(fd, 1)
+
+    # stderr for win32
     if os.name == 'nt':
+        sys.stderr = os.fdopen(os.dup(2), 'wb', 0)
         os.dup2(fd, 2)
     os.close(fd)
-
