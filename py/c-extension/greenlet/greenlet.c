@@ -411,7 +411,8 @@ static void g_initialstub(void* mark)
 		ts_self->stack_start = NULL;  /* dead */
 		g_switch(ts_self->parent, result);
 		/* must not return from here! */
-		Py_FatalError("XXX memory exhausted at a very bad moment");
+		PyErr_WriteUnraisable((PyObject*) ts_self);
+		Py_FatalError("greenlets cannot continue");
 	}
 	/* back in the parent */
 }
