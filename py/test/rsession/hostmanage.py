@@ -124,19 +124,17 @@ class HostManager(object):
                                       finishedcallback=donecallback)
             rsync.send(root)
 
-    def init_hosts(self, reporter, done_dict=None):
-        if done_dict is None:
-            done_dict = {}
+    def init_hosts(self, reporter):
         # hosts ready
         self.init_rsync(reporter)
-        return self.setup_nodes(reporter, done_dict)
+        return self.setup_nodes(reporter)
 
-    def setup_nodes(self, reporter, done_dict):
+    def setup_nodes(self, reporter):
         nodes = []
         for host in self.sshhosts:
             if hasattr(host.gw, 'remote_exec'): # otherwise dummy for tests :/
                 ch = setup_slave(host, self.config)
-                nodes.append(MasterNode(ch, reporter, done_dict))
+                nodes.append(MasterNode(ch, reporter))
         return nodes
 
     def teardown_hosts(self, reporter, channels, nodes,

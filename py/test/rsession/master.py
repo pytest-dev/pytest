@@ -6,17 +6,15 @@ from py.__.test.rsession.outcome import ReprOutcome
 from py.__.test.rsession import report
 
 class MasterNode(object):
-    def __init__(self, channel, reporter, done_dict):
+    def __init__(self, channel, reporter):
         self.channel = channel
         self.reporter = reporter
-        
-        def callback(outcome):
-            item = self.pending.pop()
-            if not item in done_dict:
-                self.receive_result(outcome, item)
-                done_dict[item] = True
-        channel.setcallback(callback)
         self.pending = []
+        channel.setcallback(self._callback)
+       
+    def _callback(self, outcome):
+        item = self.pending.pop()
+        self.receive_result(outcome, item)
 
     def receive_result(self, outcomestring, item):
         repr_outcome = ReprOutcome(outcomestring)
@@ -38,19 +36,6 @@ def itemgen(colitems, reporter, keyword, reporterror):
     for x in colitems:
         for y in x._tryiter(reporterror = lambda x: reporterror(reporter, x), keyword = keyword):
             yield y
-
-def randomgen(items, done_dict):
-    """ Generator, which randomly gets all the tests from items as long
-    as they're not in done_dict
-    """
-    import random
-    while items:
-        values = items.keys()
-        item = values[int(random.random()*len(values))]
-        if item in done_dict:
-            del items[item]
-        else:
-            yield item
 
 def dispatch_loop(masternodes, itemgenerator, shouldstop, 
                   waiter = lambda: py.std.time.sleep(0.1),

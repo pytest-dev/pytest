@@ -9,7 +9,7 @@ import py, sys
 if sys.platform == 'win32':
     py.test.skip("rsession is unsupported on Windows.")
 
-from py.__.test.rsession.master import dispatch_loop, MasterNode, randomgen
+from py.__.test.rsession.master import dispatch_loop, MasterNode
 from py.__.test.rsession.slave import setup_slave 
 from py.__.test.rsession.outcome import ReprOutcome, Outcome 
 from py.__.test.rsession import report
@@ -51,7 +51,7 @@ def test_masternode():
     
     ch = DummyChannel()
     reportlist = []
-    mnode = MasterNode(ch, reportlist.append, {})
+    mnode = MasterNode(ch, reportlist.append)
     mnode.send(Item("ok"))
     mnode.send(Item("notok"))
     ch.callback(Outcome().make_repr())
@@ -62,15 +62,19 @@ def test_masternode():
     assert received[0].outcome.passed 
     assert not received[1].outcome.passed 
 
-def test_unique_nodes():
+def test_sending_two_noes():
+    # XXX fijal: this test previously tested that the second
+    #     item result would not get send. why? did i miss
+    #     something? 
+    #     
     ch = DummyChannel()
     reportlist = []
-    mnode = MasterNode(ch, reportlist.append, {})
+    mnode = MasterNode(ch, reportlist.append)
     mnode.send(Item("ok"))
     mnode.send(Item("ok"))
     ch.callback(Outcome().make_repr())
     ch.callback(Outcome().make_repr())
-    assert len(reportlist) == 3
+    assert len(reportlist) == 4
 
 def test_outcome_repr():
     out = ReprOutcome(Outcome(skipped=True).make_repr())
@@ -183,16 +187,4 @@ def test_slave_running_interrupted():
     mn.send(StopIteration)
     # XXX: We have to wait here a bit to make sure that it really did happen
     channel.waitclose(2)
-
-def test_randomgen():
-    d = {}
-    gen = randomgen({1:True, 2:True, 3:True}, d)
-    for i in range(100):
-        assert gen.next() in [1,2,3]
-    d[3] = True
-    for i in range(100):
-        assert gen.next() in [1,2]
-    d[2] = True
-    d[1] = True
-    py.test.raises(StopIteration, "gen.next()")
 

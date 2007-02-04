@@ -9,8 +9,7 @@ import re
 import time
 
 from py.__.test.rsession import report
-from py.__.test.rsession.master import \
-     MasterNode, dispatch_loop, itemgen, randomgen
+from py.__.test.rsession.master import MasterNode, dispatch_loop, itemgen
 from py.__.test.rsession.hostmanage import HostInfo, HostManager
 from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
     box_runner
@@ -133,13 +132,12 @@ class RSession(AbstractSession):
 
         reporter(report.TestStarted(sshhosts))
 
-        done_dict = {}
         hostmanager = HostManager(sshhosts, self.config)
         try:
-            nodes = hostmanager.init_hosts(reporter, done_dict)
+            nodes = hostmanager.init_hosts(reporter)
             reporter(report.RsyncFinished())
             try:
-                self.dispatch_tests(nodes, reporter, checkfun, done_dict)
+                self.dispatch_tests(nodes, reporter, checkfun)
             except (KeyboardInterrupt, SystemExit):
                 print >>sys.stderr, "C-c pressed waiting for gateways to teardown..."
                 channels = [node.channel for node in nodes]
@@ -168,20 +166,12 @@ class RSession(AbstractSession):
         return [HostInfo(spec) for spec in
                                     self.config.getvalue("dist_hosts")]
 
-    def dispatch_tests(self, nodes, reporter, checkfun, done_dict):
+    def dispatch_tests(self, nodes, reporter, checkfun):
         colitems = self.config.getcolitems()
         keyword = self.config.option.keyword
         itemgenerator = itemgen(colitems, reporter, keyword, self.reporterror)
         
         all_tests = dispatch_loop(nodes, itemgenerator, checkfun)
-        #if all_tests:
-        #    todo = {}
-        #    for key, value in all_tests.items():
-        #        if key not in done_dict:
-        #            todo[key] = True
-        #    rg = randomgen(todo, done_dict)
-        #    dispatch_loop(nodes, rg, lambda:False, max_tasks_per_node=1)
-
 
 class LSession(AbstractSession):
     """ Local version of session
