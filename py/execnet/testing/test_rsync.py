@@ -87,6 +87,7 @@ def test_file_disappearing():
 
     class DRsync(RSync):
         def filter(self, x):
+            assert x != source
             if x.endswith("ex2"):
                 self.x = 1
                 source.join("ex2").remove()

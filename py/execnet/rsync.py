@@ -19,6 +19,7 @@ class RSync(object):
         for name in options:
             assert name in ('delete')
         self._options = options
+        assert callback is None or callable(callback)
         self._callback = callback
         self._channels = {}
         self._receivequeue = Queue()
@@ -31,6 +32,7 @@ class RSync(object):
         """ Adds a remote target specified via a 'gateway'
             and a remote destination directory. 
         """
+        assert finishedcallback is None or callable(finishedcallback)
         def itemcallback(req):
             self._receivequeue.put((channel, req))
         channel = gateway.remote_exec(REMOTE_SOURCE)
