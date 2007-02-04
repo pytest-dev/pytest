@@ -10,28 +10,10 @@ from py.__.test.rsession.testing.test_slave import funcfail_spec,\
     funcpass_spec, funcskip_spec, funcprint_spec, funcprintfail_spec, \
     funcoptioncustom_spec
 
+from test_hostmanage import DirSetup
+
 def setup_module(mod):
     mod.pkgdir = py.path.local(py.__file__).dirpath()
-    mod.tmpdir = py.test.ensuretemp(mod.__name__)
-
-
-#def test_make_colitems():
-#    one = pkgdir.join("initpkg.py")
-#    two = pkgdir.join("path", "__init__.py")#
-
-#    cols = RSession.make_colitems([one, two], baseon=pkgdir) 
-#    assert len(cols) == 2
-#    col_one, col_two = cols
-#    assert col_one.listnames() == ["py", "initpkg.py"]
-#    assert col_two.listnames() == ["py", "path", "__init__.py"]#
-#
-#    cols = RSession.make_colitems([one, two], baseon=pkgdir.dirpath()) 
-#    assert len(cols) == 2
-#    col_one, col_two = cols
-#    assert col_one.listnames() == [pkgdir.dirpath().basename, 
-#                                   "py", "initpkg.py"]
-#    assert col_two.listnames() == [pkgdir.dirpath().basename, 
-#                                   "py", "path", "__init__.py"]
 
 def test_example_tryiter():
     events = []
@@ -50,15 +32,13 @@ def test_example_tryiter():
     assert len(events) == 2
     assert str(events[1][0].value) == "Reason"
 
-class TestRSessionRemote: 
+class TestRSessionRemote(DirSetup): 
     def test_example_distribution_minus_x(self):
-        destdir = py.test.ensuretemp("example_dist_dest_x")
-        tmpdir = py.test.ensuretemp("example_distribution_minus_x")
-        tmpdir.ensure("sub", "conftest.py").write(py.code.Source("""
+        self.source.ensure("sub", "conftest.py").write(py.code.Source("""
             dist_hosts = ['localhost:%s']
-        """ % destdir))
-        tmpdir.ensure("sub", "__init__.py")
-        tmpdir.ensure("sub", "test_one.py").write(py.code.Source("""
+        """ % self.dest))
+        self.source.ensure("sub", "__init__.py")
+        self.source.ensure("sub", "test_one.py").write(py.code.Source("""
             def test_1(): 
                 pass
             def test_x():
@@ -71,7 +51,7 @@ class TestRSessionRemote:
             def test_4(someargs):
                 pass
         """))
-        config = py.test.config._reparse([tmpdir.join("sub"), '-x'])
+        config = py.test.config._reparse([self.source.join("sub"), '-x'])
         rsession = RSession(config)
         allevents = []
         rsession.main(reporter=allevents.append)
@@ -139,7 +119,7 @@ class TestRSessionRemote:
         hosts = [HostInfo('localhost')]
         setup_events = []
         teardown_events = []
-        
+        tmpdir = py.test.ensuretemp("emptyconftest") 
         config = py.test.config._reparse([tmpdir])
         hm = HostManager(hosts, config)
         nodes = hm.init_hosts(setup_events.append)
