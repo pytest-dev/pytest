@@ -127,12 +127,15 @@ class TestRealModule:
         tfile.write(py.code.Source("""
             import py
             py.initpkg('realtest', {
+                'x.module.__doc__': ('./testmodule.py', '__doc__'),
                 'x.module': ('./testmodule.py', '*'), 
             })
         """))
 
         tfile = pkgdir.join('testmodule.py')
         tfile.write(py.code.Source("""
+            'test module'
+
             __all__ = ['mytest0', 'mytest1', 'MyTest']
         
             def mytest0():
@@ -185,6 +188,11 @@ class TestRealModule:
         assert 'mytest0' in moddict
         assert 'mytest1' in moddict
         assert 'MyTest' in moddict
+
+    def test_realmodule___doc__(self):
+        """test whether the __doc__ attribute is set properly from initpkg"""
+        import realtest.x.module
+        assert realtest.x.module.__doc__ == 'test module'
 
 #class TestStdHook:
 #    """Tests imports for the standard Python library hook."""

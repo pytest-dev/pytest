@@ -2,6 +2,8 @@
 import sys
 
 class Std(object):
+    """ (lazily) hook into the top-level standard library """
+
     def __init__(self):
         self.__dict__ = sys.modules
 

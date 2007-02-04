@@ -1,1 +1,1 @@
-#
+""" ad-hoc networking mechanism """

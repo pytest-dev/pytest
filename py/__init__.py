@@ -9,8 +9,8 @@ version = "0.8.80-alpha2"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37863 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-03 13:15:23 +0100 (Sat, 03 Feb 2007) $',
+    revision = int('$LastChangedRevision: 37912 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-04 15:27:10 +0100 (Sun, 04 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
@@ -22,6 +22,7 @@ initpkg(__name__,
 
     exportdefs = {
     # helpers for use from test functions or collectors
+    'test.__doc__'           : ('./test/__init__.py', '__doc__'),
     'test.raises'            : ('./test/raises.py', 'raises'),
     'test.deprecated_call'   : ('./test/deprecate.py', 'deprecated_call'), 
     'test.skip'              : ('./test/item.py', 'skip'),
@@ -52,14 +53,17 @@ initpkg(__name__,
     # hook into the top-level standard library
     'std'                    : ('./misc/std.py', 'std'),
 
+    'process.__doc__'        : ('./process/__init__.py', '__doc__'),
     'process.cmdexec'        : ('./process/cmdexec.py', 'cmdexec'),
 
-    # path implementations
+    # path implementation
+    'path.__doc__'           : ('./path/__init__.py', '__doc__'),
     'path.svnwc'             : ('./path/svn/wccommand.py', 'SvnWCCommandPath'),
     'path.svnurl'            : ('./path/svn/urlcommand.py', 'SvnCommandPath'),
     'path.local'             : ('./path/local/local.py', 'LocalPath'),
 
     # some nice slightly magic APIs
+    'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),
     'magic.greenlet'         : ('./magic/greenlet.py', 'greenlet'),
     'magic.invoke'           : ('./magic/invoke.py', 'invoke'),
     'magic.revoke'           : ('./magic/invoke.py', 'revoke'),
@@ -69,6 +73,7 @@ initpkg(__name__,
     'magic.AssertionError'   : ('./magic/assertion.py', 'AssertionError'),
 
     # python inspection/code-generation API
+    'code.__doc__'           : ('./code/__init__.py', '__doc__'),
     'code.compile'           : ('./code/source.py', 'compile_'),
     'code.Source'            : ('./code/source.py', 'Source'),
     'code.Code'              : ('./code/code.py', 'Code'),
@@ -77,6 +82,7 @@ initpkg(__name__,
     'code.Traceback'         : ('./code/traceback2.py', 'Traceback'),
 
     # backports and additions of builtins
+    'builtin.__doc__'        : ('./builtin/__init__.py', '__doc__'),
     'builtin.enumerate'      : ('./builtin/enumerate.py', 'enumerate'),
     'builtin.reversed'       : ('./builtin/reversed.py',  'reversed'),
     'builtin.sorted'         : ('./builtin/sorted.py',    'sorted'),
@@ -85,6 +91,7 @@ initpkg(__name__,
     'builtin.frozenset'      : ('./builtin/set.py',       'frozenset'),
 
     # gateways into remote contexts
+    'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),
     'execnet.SocketGateway'  : ('./execnet/register.py', 'SocketGateway'),
     'execnet.PopenGateway'   : ('./execnet/register.py', 'PopenGateway'),
     'execnet.SshGateway'     : ('./execnet/register.py', 'SshGateway'),
@@ -93,6 +100,7 @@ initpkg(__name__,
     'execnet.RSync'          : ('./execnet/rsync.py', 'RSync'),
 
     # input-output helping 
+    'io.__doc__'             : ('./io/__init__.py', '__doc__'),
     'io.dupfile'             : ('./io/dupfile.py', 'dupfile'), 
     'io.FDCapture'           : ('./io/fdcapture.py', 'FDCapture'), 
     'io.StdCapture'          : ('./io/stdcapture.py', 'StdCapture'), 
@@ -102,6 +110,7 @@ initpkg(__name__,
     'error'                  : ('./misc/error.py', 'error'),
 
     # small and mean xml/html generation
+    'xml.__doc__'            : ('./xmlobj/__init__.py', '__doc__'),
     'xml.html'               : ('./xmlobj/html.py', 'html'),
     'xml.Tag'                : ('./xmlobj/xml.py', 'Tag'),
     'xml.raw'                : ('./xmlobj/xml.py', 'raw'),
@@ -109,6 +118,7 @@ initpkg(__name__,
     'xml.escape'             : ('./xmlobj/misc.py', 'escape'),
 
     # logging API ('producers' and 'consumers' connected via keywords)
+    'log.__doc__'            : ('./log/__init__.py', '__doc__'),
     'log.Producer'           : ('./log/producer.py', 'Producer'),
     'log.default'            : ('./log/producer.py', 'default'),
     'log._getstate'          : ('./log/producer.py', '_getstate'),
@@ -121,8 +131,10 @@ initpkg(__name__,
     'log.get'                : ('./log/logger.py', 'get'), 
 
     # compatibility modules (taken from 2.4.4) 
+    'compat.__doc__'         : ('./compat/__init__.py', '__doc__'),
     'compat.doctest'         : ('./compat/doctest.py', '*'),
     'compat.optparse'        : ('./compat/optparse.py', '*'),
     'compat.textwrap'        : ('./compat/textwrap.py', '*'),
     'compat.subprocess'      : ('./compat/subprocess.py', '*'),
 })
+

@@ -259,7 +259,11 @@ def initpkg(pkgname, exportdefs, **kw):
                    "only root modules are allowed to be non-lazy. "
             deferred_imports.append((mod, pyparts[-1], extpy))
         else:
-            mod.__map__[lastmodpart] = extpy 
+            if extpy[1] == '__doc__':
+                mod.__doc__ = pkg._resolve(extpy)
+            else:
+                mod.__map__[lastmodpart] = extpy 
 
     for mod, pypart, extpy in deferred_imports: 
         setattr(mod, pypart, pkg._resolve(extpy))
+
