@@ -608,11 +608,19 @@ class LocalPath(common.FSPathBase, PlatformMixin):
         # put a .lock file in the new directory that will be removed at
         # process exit
         lockfile = udir.join('.lock')
+        mypid = os.getpid()
         if hasattr(lockfile, 'mksymlinkto'):
-            lockfile.mksymlinkto(str(os.getpid()))
+            lockfile.mksymlinkto(str(mypid))
         else:
-            lockfile.write(str(os.getpid()))
+            lockfile.write(str(mypid))
         def try_remove_lockfile():
+            # in a fork() situation, only the last process should
+            # remove the .lock, otherwise the other processes run the
+            # risk of seeing their temporary dir disappear.  For now
+            # we remove the .lock in the parent only (i.e. we assume
+            # that the children finish before the parent).
+            if os.getpid() != mypid:
+                return
             try:
                 lockfile.remove()
             except py.error.Error:
