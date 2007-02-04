@@ -52,7 +52,7 @@ class TestRestUnits(object):
                                      'localhost\n\n')
     
     def test_report_HostRSyncing(self):
-        event = report.HostRSyncing(HostInfo('localhost', '/foo/bar'))
+        event = report.HostRSyncing(HostInfo('localhost:/foo/bar'))
         reporter.report(event)
         assert stdout.getvalue() == ('::\n\n   localhost: RSYNC ==> '
                                      '/foo/bar\n\n')

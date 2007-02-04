@@ -2,32 +2,59 @@ import sys, os
 import py
 import time
 import thread, threading 
-from py.__.test.rsession.master import \
-     setup_slave, MasterNode
+from py.__.test.rsession.master import MasterNode
+from py.__.test.rsession.slave import setup_slave
+
 from py.__.test.rsession import report 
 
 class HostInfo(object):
     """ Class trying to store all necessary attributes
     for host
     """
-    host_ids = {}
+    _hostname2list = {}
+    localdest = None
     
-    def __init__(self, hostname, relpath=None):
-        self.hostid = self._getuniqueid(hostname)
-        self.hostname = hostname
-        self.relpath = relpath
+    def __init__(self, spec):
+        parts = spec.split(':', 1)
+        self.hostname = parts.pop(0)
+        if parts:
+            self.relpath = parts[0]
+        else:
+            self.relpath = "pytestcache-" + self.hostname 
+        self.hostid = self._getuniqueid(self.hostname) 
 
-    def _getuniqueid(cls, hostname):
-        if not hostname in cls.host_ids:
-            cls.host_ids[hostname] = 0
-            return hostname
-        retval = hostname + '_' + str(cls.host_ids[hostname])
-        cls.host_ids[hostname] += 1
-        return retval
-    _getuniqueid = classmethod(_getuniqueid)
+    def _getuniqueid(self, hostname):
+        l = self._hostname2list.setdefault(hostname, [])
+        hostid = hostname + "_" * len(l)
+        l.append(hostid)
+        return hostid
+
+    def initgateway(self, python="python"):
+        assert not hasattr(self, 'gw')
+        if self.hostname == "localhost": 
+            gw = py.execnet.PopenGateway(python=python)
+        else:
+            gw = py.execnet.SshGateway(self.hostname, 
+                                       remotepython=python)
+        self.gw = gw
+        channel = gw.remote_exec("""
+            import os
+            targetdir = %r
+            if not os.path.isabs(targetdir):
+                homedir = os.environ['HOME']
+                targetdir = os.path.join(homedir, targetdir)
+            if not os.path.exists(targetdir):
+                os.makedirs(targetdir)
+            channel.send(os.path.abspath(targetdir))
+        """ % self.relpath)
+        self.gw_remotepath = channel.receive()
+        #print "initialized", gw, "with remotepath", self.gw_remotepath
+        if self.hostname == "localhost":
+            self.localdest = py.path.local(self.gw_remotepath)
+            assert self.localdest.check(dir=1)
 
     def __str__(self):
-        return "<HostInfo %s>" % (self.hostname,)
+        return "<HostInfo %s:%s>" % (self.hostname, self.relpath)
 
     def __hash__(self):
         return hash(self.hostid)
@@ -39,138 +66,77 @@ class HostInfo(object):
         return not self == other
 
 class HostRSync(py.execnet.RSync):
-    """ An rsync wrapper which filters out *~, .svn/ and *.pyc
+    """ RSyncer that filters out common files 
     """
-    def __init__(self, config):
-        py.execnet.RSync.__init__(self, delete=True)
-        self.config = config
+    def __init__(self, *args, **kwargs):
+        self._synced = {}
+        super(HostRSync, self).__init__(*args, **kwargs)
 
     def filter(self, path):
-        if path.endswith('.pyc') or path.endswith('~'):
-            return False
-        dir, base = os.path.split(path)
-        try:
-            name = "dist_rsync_roots" 
-            rsync_roots = self.config.conftest.rget_path(name, dir)
-        except AttributeError:
-            rsync_roots = None
-        if base == '.svn':
-            return False
-        if rsync_roots is None:
-            return True
-        return base in rsync_roots
+        path = py.path.local(path)
+        if not path.ext in ('.pyc', '.pyo'):
+            if not path.basename.endswith('~'): 
+                if path.check(dotfile=0):
+                    return True
 
-class DummyGateway(object):
-    pass
-
-class HostOptions(object):
-    """ Dummy container for host options, not to keep that
-    as different function parameters, mostly related to
-    tests only
-    """
-    def __init__(self, remote_python="python",
-                 optimise_localhost=True, do_sync=True,
-                 create_gateways=True):
-        self.remote_python = remote_python
-        self.optimise_localhost = optimise_localhost
-        self.do_sync = do_sync
-        self.create_gateways = create_gateways
+    def add_target_host(self, host, destrelpath=None, finishedcallback=None):
+        key = host.hostname, host.relpath 
+        if key in self._synced:
+            if finishedcallback:
+                finishedcallback()
+            return False 
+        self._synced[key] = True
+        # the follow attributes are set from host.initgateway()
+        gw = host.gw
+        remotepath = host.gw_remotepath
+        if destrelpath is not None:
+            remotepath = os.path.join(remotepath, destrelpath)
+        super(HostRSync, self).add_target(gw, 
+                                          remotepath, 
+                                          finishedcallback)
+        return True # added the target
 
 class HostManager(object):
-    def __init__(self, sshhosts, config, options=HostOptions()):
+    def __init__(self, sshhosts, config):
         self.sshhosts = sshhosts
         self.config = config
-        self.options = options
-        if not options.create_gateways:
-            self.prepare_gateways = self.prepare_dummy_gateways
-        #assert pkgdir.join("__init__.py").check(), (
-        #    "%s probably wrong" %(pkgdir,))
-
-    def prepare_dummy_gateways(self):
-        for host in self.sshhosts:
-            gw = DummyGateway()
-            host.gw = gw
-            gw.host = host
-        return self.sshhosts
-
-    def prepare_ssh_gateway(self, host):
-        if self.options.remote_python is None:
-            gw = py.execnet.SshGateway(host.hostname)
-        else:
-            gw = py.execnet.SshGateway(host.hostname,
-                                       remotepython=self.options.remote_python)
-        return gw
-
-    def prepare_popen_rsync_gateway(self, host):
-        """ Popen gateway, but with forced rsync
-        """
-        from py.__.execnet.register import PopenCmdGateway
-        gw = PopenCmdGateway("cd ~; python -u -c 'exec input()'")
-        if not host.relpath.startswith("/"):
-            host.relpath = os.environ['HOME'] + '/' + host.relpath
-        return gw
-
-    def prepare_popen_gateway(self, host):
-        if self.options.remote_python is None:
-            gw = py.execnet.PopenGateway()
-        else:
-            gw = py.execnet.PopenGateway(python=self.options.remote_python)
-        host.relpath = str(self.config.topdir)
-        return gw
 
     def prepare_gateways(self):
+        dist_remotepython = self.config.getvalue("dist_remotepython")
         for host in self.sshhosts:
-            if host.hostname == 'localhost':
-                if not self.options.optimise_localhost:
-                    gw = self.prepare_popen_rsync_gateway(host)
-                else:
-                    gw = self.prepare_popen_gateway(host)
-            else:
-                gw = self.prepare_ssh_gateway(host)
-            host.gw = gw
-            gw.host = host
-        return self.sshhosts
+            host.initgateway(python=dist_remotepython)
+            host.gw.host = host # XXX would like to avoid it
 
-    def need_rsync(self, rsynced, hostname, remoterootpath):
-        if (hostname, remoterootpath) in rsynced:
-            return False
-        if hostname == 'localhost' and self.options.optimise_localhost:
-            return False
-        return True
+    def init_rsync(self, reporter):
+        # send each rsync roots  
+        roots = self.config.getvalue_pathlist("dist_rsync_roots")
+        if roots is None:
+            roots = [self.config.topdir]
+        self.prepare_gateways()
+        rsync = HostRSync()
+        for root in roots: 
+            destrelpath = root.relto(self.config.topdir)
+            for host in self.sshhosts:
+                reporter(report.HostRSyncing(host))
+                def donecallback():
+                    reporter(report.HostReady(host))
+                rsync.add_target_host(host, destrelpath, 
+                                      finishedcallback=donecallback)
+            rsync.send(root)
 
-    def init_hosts(self, reporter, done_dict={}):
+    def init_hosts(self, reporter, done_dict=None):
         if done_dict is None:
             done_dict = {}
-
-        hosts = self.prepare_gateways()
-        
-        # rsyncing
-        rsynced = {}
-
-        if self.options.do_sync:
-            rsync = HostRSync(self.config)
-        for host in hosts:
-            if not self.need_rsync(rsynced, host.hostname, host.relpath):
-                reporter(report.HostReady(host))
-                continue
-            rsynced[(host.hostname, host.relpath)] = True
-            def done(host=host):
-                reporter(report.HostReady(host))
-            reporter(report.HostRSyncing(host))
-            if self.options.do_sync:
-                rsync.add_target(host.gw, host.relpath, done)
-        if not self.options.do_sync:
-            return # for testing only
-        rsync.send(self.config.topdir)
         # hosts ready
+        self.init_rsync(reporter)
         return self.setup_nodes(reporter, done_dict)
 
     def setup_nodes(self, reporter, done_dict):
         nodes = []
         for host in self.sshhosts:
-            ch = setup_slave(host.gw, host.relpath, self.config)
-            nodes.append(MasterNode(ch, reporter, done_dict))
-    
+            if hasattr(host.gw, 'remote_exec'): # otherwise dummy for tests :/
+                ch = setup_slave(host, self.config)
+                nodes.append(MasterNode(ch, reporter, done_dict))
         return nodes
 
     def teardown_hosts(self, reporter, channels, nodes,

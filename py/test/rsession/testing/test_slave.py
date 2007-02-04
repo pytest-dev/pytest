@@ -11,6 +11,7 @@ if sys.platform == 'win32':
     py.test.skip("rsession is unsupported on Windows.")
 
 def setup_module(module):
+    module.tmpdir = py.test.ensuretemp(module.__name__)
     module.rootdir = py.path.local(py.__file__).dirpath().dirpath()
     module.rootcol = py.test.collect.Directory(rootdir)
 
@@ -107,63 +108,10 @@ def test_slave_run_failing_wrapped():
     assert not outcome.setupfailure 
     assert outcome.excinfo
 
-def test_slave_main_simple(): 
-    res = []
-    failitem = rootcol._getitembynames(funcfail_spec)
-    passitem = rootcol._getitembynames(funcpass_spec)
-    q = [None, 
-         passitem._get_collector_trail(),
-         failitem._get_collector_trail()
-        ]
-    config = py.test.config._reparse([])
-    pidinfo = PidInfo()
-    slave_main(q.pop, res.append, str(rootdir), config, pidinfo)
-    assert len(res) == 2
-    res_repr = [ReprOutcome(r) for r in res]
-    assert not res_repr[0].passed and res_repr[1].passed
-
 def test_slave_run_different_stuff():
     node = gettestnode()
     node.run(rootcol._getitembynames("py doc log.txt".split()).
              _get_collector_trail())
-
-def test_slave_setup_exit():
-    tmp = py.test.ensuretemp("slaveexit")
-    tmp.ensure("__init__.py")
-    q = py.std.Queue.Queue()
-    config = py.test.config._reparse([tmp])
-    
-    class C:
-        res = []
-        def __init__(self):
-            self.q = [str(tmp),
-                config.make_repr(conftestnames=['dist_nicelevel']),
-                funchang_spec,
-                42,
-                funcpass_spec]
-            self.q.reverse()
-    
-        def receive(self):
-            return self.q.pop()
-        
-        def setcallback(self, callback):
-            import thread
-            def f():
-                while 1:
-                    callback(self.q.pop())
-            f()
-            #thread.start_new_thread(f, ())
-
-        def close(self):
-            pass
-        
-        send = res.append
-    try:
-        exec py.code.Source(setup, "setup()").compile() in {'channel':C()}
-    except SystemExit:
-        pass
-    else:
-        py.test.fail("Did not exit")
 
 def test_pidinfo():
     if not hasattr(os, 'fork') or not hasattr(os, 'waitpid'):

@@ -106,6 +106,15 @@ def slave_main(receive, send, path, config, pidinfo):
     while nextitem is not None:
         nextitem = receive()
 
+defaultconftestnames = ['dist_nicelevel']
+def setup_slave(host, config): 
+    channel = host.gw.remote_exec(str(py.code.Source(setup, "setup()")))
+    configrepr = config.make_repr(defaultconftestnames)
+    #print "sending configrepr", configrepr
+    channel.send(host.gw_remotepath)
+    channel.send(configrepr) 
+    return channel
+
 def setup():
     def callback_gen(channel, queue, info):
         def callback(item):
@@ -116,19 +125,16 @@ def setup():
                 sys.exit(0)
             queue.put(item)
         return callback
-
+    # our current dir is the topdir
     import os, sys
-    basedir = channel.receive()   # path is ready 
+    basedir = channel.receive()
     config_repr = channel.receive()
     # setup defaults...
     sys.path.insert(0, basedir)
     import py
     config = py.test.config
-    if config._initialized:
-        config = config._reparse([basedir])
-        config.merge_repr(config_repr)
-    else:
-        config.initdirect(basedir, config_repr)
+    assert not config._initialized 
+    config.initdirect(basedir, config_repr)
     if not config.option.nomagic:
         py.magic.invoke(assertion=1)
     from py.__.test.rsession.slave import slave_main, PidInfo

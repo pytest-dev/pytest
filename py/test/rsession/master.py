@@ -74,14 +74,3 @@ def dispatch_loop(masternodes, itemgenerator, shouldstop,
         waiter()
     return all_tests
 
-def setup_slave(gateway, pkgpath, config):
-    from py.__.test.rsession import slave
-    import os
-    ch = gateway.remote_exec(str(py.code.Source(slave.setup, "setup()")))
-    #if hasattr(gateway, 'sshaddress'):
-    #    assert not os.path.isabs(pkgpath)
-    ch.send(str(pkgpath))
-    ch.send(config.make_repr(defaultconftestnames))
-    return ch
-
-defaultconftestnames = ['dist_nicelevel']

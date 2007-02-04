@@ -10,9 +10,8 @@ import time
 
 from py.__.test.rsession import report
 from py.__.test.rsession.master import \
-     setup_slave, MasterNode, dispatch_loop, itemgen, randomgen
-from py.__.test.rsession.hostmanage import HostInfo, HostOptions, HostManager
-
+     MasterNode, dispatch_loop, itemgen, randomgen
+from py.__.test.rsession.hostmanage import HostInfo, HostManager
 from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
     box_runner
 from py.__.test.rsession.reporter import LocalReporter, RemoteReporter
@@ -24,24 +23,12 @@ class AbstractSession(Session):
         An abstract session executes collectors/items through a runner. 
 
     """
-    def __init__(self, config, optimise_localhost=True):
-        super(AbstractSession, self).__init__(config=config)
-        self.optimise_localhost = optimise_localhost
-
     def fixoptions(self):
         option = self.config.option 
         if option.runbrowser and not option.startserver:
             #print "--runbrowser implies --startserver"
             option.startserver = True
         super(AbstractSession, self).fixoptions()
-        
-    def getpkgdir(path):
-        path = py.path.local(path)
-        pkgpath = path.pypkgpath()
-        if pkgpath is None:
-            pkgpath = path
-        return pkgpath
-    getpkgdir = staticmethod(getpkgdir)
 
     def init_reporter(self, reporter, sshhosts, reporter_class, arg=""):
         """ This initialises so called `reporter` class, which will
@@ -115,18 +102,6 @@ class AbstractSession(Session):
         self.checkfun = checkfun
         return new_reporter, checkfun
 
-def parse_directories(sshhosts):
-    """ Parse sshadresses of hosts to have distinct hostname/hostdir
-    """
-    directories = {}
-    for host in sshhosts:
-        m = re.match("^(.*?):(.*)$", host.hostname)
-        if m:
-            host.hostname = m.group(1)
-            host.relpath = m.group(2) + "-" + host.hostname
-        else:
-            host.relpath = "pytestcache-%s" % host.hostname
-
 class RSession(AbstractSession):
     """ Remote version of session
     """
@@ -151,7 +126,7 @@ class RSession(AbstractSession):
         """ main loop for running tests. """
         args = self.config.args
 
-        sshhosts, remotepython = self.read_distributed_config()
+        sshhosts = self._getconfighosts()
         reporter, startserverflag = self.init_reporter(reporter,
             sshhosts, RemoteReporter)
         reporter, checkfun = self.wrap_reporter(reporter)
@@ -159,9 +134,7 @@ class RSession(AbstractSession):
         reporter(report.TestStarted(sshhosts))
 
         done_dict = {}
-        hostopts = HostOptions(remote_python=remotepython,
-                            optimise_localhost=self.optimise_localhost)
-        hostmanager = HostManager(sshhosts, self.config, hostopts)
+        hostmanager = HostManager(sshhosts, self.config)
         try:
             nodes = hostmanager.init_hosts(reporter, done_dict)
             reporter(report.RsyncFinished())
@@ -191,14 +164,9 @@ class RSession(AbstractSession):
             self.kill_server(startserverflag)
             raise
 
-    def read_distributed_config(self):
-        """ Read from conftest file the configuration of distributed testing
-        """
-        sshhosts = [HostInfo(i) for i in
-                    self.config.getvalue("dist_hosts")]
-        parse_directories(sshhosts)
-        remotepython = self.config.getvalue("dist_remotepython")
-        return sshhosts, remotepython
+    def _getconfighosts(self):
+        return [HostInfo(spec) for spec in
+                                    self.config.getvalue("dist_hosts")]
 
     def dispatch_tests(self, nodes, reporter, checkfun, done_dict):
         colitems = self.config.getcolitems()
@@ -262,7 +230,7 @@ class LSession(AbstractSession):
             print >>sys.stderr, 'building documentation'
             capture = py.io.StdCaptureFD()
             try:
-                pkgdir = self.getpkgdir(self.config.args[0])
+                pkgdir = py.path.local(self.config.args[0]).pypkgpath()
                 apigen.build(pkgdir,
                              DocStorageAccessor(self.docstorage),
                              capture)
@@ -272,7 +240,7 @@ class LSession(AbstractSession):
     def init_runner(self):
         if self.config.option.apigen:
             from py.__.apigen.tracer.tracer import Tracer, DocStorage
-            pkgdir = self.getpkgdir(self.config.args[0])
+            pkgdir = py.path.local(self.config.args[0]).pypkgpath()
             apigen = py.path.local(self.config.option.apigen).pyimport()
             if not hasattr(apigen, 'get_documentable_items'):
                 raise NotImplementedError("Provided script does not seem "
@@ -287,5 +255,4 @@ class LSession(AbstractSession):
                    and not self.config.option.nocapture:
                 return box_runner
             return plain_runner
-
 
