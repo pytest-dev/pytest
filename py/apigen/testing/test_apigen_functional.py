@@ -19,6 +19,7 @@ def setup_fs_project(name):
     temp.ensure('pak/sometestclass.py').write(py.code.Source("""\
         class SomeTestClass(object):
             " docstring sometestclass "
+            someattr = 'somevalue'
             def __init__(self, somevar):
                 self.somevar = somevar
                 
@@ -129,12 +130,10 @@ def test_apigen_functional():
     sometestclass_api = apidir.join('main.SomeTestClass.html')
     assert sometestclass_api.check(file=True)
     html = sometestclass_api.read()
+    print html
     assert '<a href="main.SomeTestClass.html">SomeTestClass</a>' in html
-    # XXX not linking to method files anymore
-    #sometestclass_init_api = apidir.join('main.SomeTestClass.__init__.html')
-    #assert sometestclass_init_api.check(file=True)
-    #assert sometestclass_init_api.read().find(
-    #        '<a href="main.SomeTestClass.__init__.html">__init__</a>') > -1
+    assert '<strong>someattr</strong>: <em>somevalue</em>' in html
+    
     namespace_api = apidir.join('main.html')
     assert namespace_api.check(file=True)
     html = namespace_api.read()
@@ -156,4 +155,5 @@ def test_apigen_functional():
     html = index.read()
     print html
     assert '<a href="test/index.html">test</a>' in html
+    assert 'href="../../py/doc/home.html"'
 

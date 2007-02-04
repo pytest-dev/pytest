@@ -17,6 +17,17 @@ raw = py.xml.raw
 def is_navigateable(name):
     return (not is_private(name) and name != '__doc__')
 
+def show_property(name):
+    if not name.startswith('_'):
+        return True
+    if name.startswith('__') and name.endswith('__'):
+        # XXX do we need to skip more manually here?
+        if (name not in dir(object) and
+                name not in ['__doc__', '__dict__', '__name__', '__module__',
+                             '__weakref__']):
+            return True
+    return False
+
 def deindent(str, linesep='\n'):
     """ de-indent string
 
@@ -351,7 +362,24 @@ class ApiPageBuilder(AbstractPageBuilder):
         docstring = cls.__doc__
         if docstring:
             docstring = deindent(docstring)
-        methods = self.dsa.get_class_methods(dotted_name)
+        if not hasattr(cls, '__name__'):
+            clsname = 'instance of %s' % (cls.__class__.__name__,)
+        else:
+            clsname = cls.__name__
+        bases = self.build_bases(dotted_name)
+        properties = self.build_properties(cls)
+        methods = self.build_methods(dotted_name)
+        snippet = H.ClassDescription(
+            # XXX bases HTML
+            H.ClassDef('%s(' % (clsname,), *bases),
+            H.Docstring(docstring or '*no docstring available*'),
+            sourcelink,
+            *(properties+methods)
+        )
+
+        return snippet
+
+    def build_bases(self, dotted_name):
         basehtml = []
         bases = self.dsa.get_possible_base_classes(dotted_name)
         for base in bases:
@@ -366,23 +394,33 @@ class ApiPageBuilder(AbstractPageBuilder):
         if basehtml:
             basehtml.pop()
         basehtml.append('):')
-        if not hasattr(cls, '__name__'):
-            clsname = 'instance of %s' % (cls.__class__.__name__,)
-        else:
-            clsname = cls.__name__
-        snippet = H.ClassDescription(
-            # XXX bases HTML
-            H.ClassDef('%s(' % (clsname,), *basehtml),
-            H.Docstring(docstring or '*no docstring available*'),
-            sourcelink,
-        )
+        return basehtml
+
+    def build_properties(self, cls):
+        properties = []
+        for attr in dir(cls):
+            val = getattr(cls, attr)
+            if show_property(attr) and not callable(val):
+                if isinstance(val, property):
+                    val = '<property object (dynamically calculated value)>'
+                properties.append((attr, val))
+        properties.sort(key=lambda a: a[0]) # sort on name
+        ret = []
+        if properties:
+            ret.append(H.h2('properties:'))
+            for name, val in properties:
+                ret.append(H.PropertyDescription(name, val))
+        return ret
+
+    def build_methods(self, dotted_name):
+        ret = []
+        methods = self.dsa.get_class_methods(dotted_name)
         if methods:
-            snippet.append(H.h2('methods:'))
+            ret.append(H.h2('methods:'))
             for method in methods:
-                snippet += self.build_callable_view('%s.%s' % (dotted_name,
-                                                    method))
-        # XXX properties
-        return snippet
+                ret += self.build_callable_view('%s.%s' % (dotted_name,
+                                                           method))
+        return ret
 
     def build_namespace_view(self, namespace_dotted_name, item_dotted_names):
         """ build the html for a namespace (module) """

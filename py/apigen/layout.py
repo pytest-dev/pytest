@@ -26,8 +26,16 @@ class LayoutPage(confrest.PyPage):
 
     def fill(self):
         super(LayoutPage, self).fill()
-        #self.menubar[:] = []
+        self.update_menubar_links(self.menubar)
         self.body.insert(0, self.nav)
+
+    def update_menubar_links(self, node):
+        for item in node:
+            if not isinstance(item, py.xml.Tag):
+                continue
+            if (item.__class__.__name__ == 'a' and hasattr(item.attr, 'href')
+                    and not item.attr.href.startswith('http://')):
+                item.attr.href = self.relpath + '../py/doc/' + item.attr.href
 
     def setup_scripts_styles(self, copyto=None):
         for path, name in self.stylesheets:

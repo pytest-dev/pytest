@@ -1,5 +1,7 @@
 
-* format docstrings more nicely (with tests) - DONE I guess
+* format docstrings more nicely (with tests)
+
+  DONE I guess
 
 * have the API function view be as informative as possible
   without having to go to the "single method" view
@@ -10,9 +12,11 @@
   viewed.  method views (when navigating there through
   the class view) should also have the source there 
 
-  DONE I think
+  DONE I think, single method view is gone
 
 * have class-level attributes be displayed
+
+  DONE
 
 * use "inherited" doc strings, i.e. for
     class A:
@@ -25,7 +29,11 @@
     B.meth should display the A.meth docstring, probably 
     with special formatting (italics or so). 
 
+  NOT YET DONE (later?)
+
 * factor out some common code in the build_* functions
+
+  (mostly) DONE
 
 * refactor the apigen/rsession interaction to become
   cleaner (e.g. apigen's get_documentable_items should
@@ -76,9 +84,15 @@
        
 * add syntax coloring for Python source snippets
 
+  DONE
+
 * remove py.test/apigen cruft from stack traces
 
+  DONE, thanks to fijal
+
 * fix non-ascii source encoding support
+
+  DONE
 
 * XXX
 

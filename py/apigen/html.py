@@ -47,12 +47,21 @@ class H(html):
             super(H.FunctionInfo, self).__init__(
                 H.Hideable('funcinfo', 'funcinfo', valuedesc, csource,
                            callstack))
+    
+    class PropertyDescription(html.div):
+        def __init__(self, name, value):
+            if type(value) not in [str, unicode]:
+                value = str(value)
+            if len(value) > 100:
+                value = value[:100] + '...'
+            super(H.PropertyDescription, self).__init__(H.strong(name), ': ',
+                                                      H.em(value),
+                                                      class_='property')
 
     class ParameterDescription(html.div):
         pass
 
     class Docstring(html.pre):
-        style = html.Style(width='100%')
         pass
 
     class Navigation(html.div):

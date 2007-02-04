@@ -55,3 +55,12 @@ def test_enumerate_and_color():
                    ' <span class="string">&quot;bar&quot;</span>\n'
                    '</div>')
 
+def test_show_property():
+    assert htmlgen.show_property('foo')
+    assert not htmlgen.show_property('_foo')
+    assert htmlgen.show_property('__foo__')
+    assert not htmlgen.show_property('__doc__')
+    assert not htmlgen.show_property('__dict__')
+    assert not htmlgen.show_property('__name__')
+    assert not htmlgen.show_property('__class__')
+
