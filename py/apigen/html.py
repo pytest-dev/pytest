@@ -45,7 +45,7 @@ class H(html):
     class FunctionInfo(html.div):
         def __init__(self, valuedesc, csource, callstack):
             super(H.FunctionInfo, self).__init__(
-                H.Hideable('funcinfo', 'funcinfo', valuedesc, csource,
+                H.Hideable('funcinfo', 'funcinfo', valuedesc, H.br(), csource,
                            callstack))
     
     class PropertyDescription(html.div):
@@ -54,9 +54,9 @@ class H(html):
                 value = str(value)
             if len(value) > 100:
                 value = value[:100] + '...'
-            super(H.PropertyDescription, self).__init__(H.strong(name), ': ',
-                                                      H.em(value),
-                                                      class_='property')
+            super(H.PropertyDescription, self).__init__(name, ': ',
+                                                        H.em(value),
+                                                        class_='property')
 
     class ParameterDescription(html.div):
         pass
