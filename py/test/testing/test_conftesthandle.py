@@ -72,7 +72,8 @@ class TestConftestValueAccessGlobal:
         mod, value = conftest.rget_with_confmod("a", topdir)
         assert  value == 1.5
         path = py.path.local(mod.__file__)
-        assert path == self.basedir.join("adir", "b", "conftest.py")
+        assert path.dirpath() == self.basedir.join("adir", "b")
+        assert path.purebasename == "conftest"
 
 class TestConftestValueAccessInPackage(TestConftestValueAccessGlobal):
     def setup_class(cls):
