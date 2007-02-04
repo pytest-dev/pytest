@@ -132,7 +132,7 @@ def test_apigen_functional():
     html = sometestclass_api.read()
     print html
     assert '<a href="main.SomeTestClass.html">SomeTestClass</a>' in html
-    assert '<strong>someattr</strong>: <em>somevalue</em>' in html
+    assert 'someattr: <em>somevalue</em>' in html
     
     namespace_api = apidir.join('main.html')
     assert namespace_api.check(file=True)
