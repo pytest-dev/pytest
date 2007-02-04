@@ -12,7 +12,7 @@ if sys.platform == 'win32':
 from py.__.test.rsession.master import dispatch_loop, MasterNode
 from py.__.test.rsession.slave import setup_slave 
 from py.__.test.rsession.outcome import ReprOutcome, Outcome 
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.hostmanage import HostInfo
 
 def setup_module(mod):
@@ -58,7 +58,7 @@ def test_masternode():
     ch.callback(Outcome(excinfo=excinfo).make_repr())
     assert len(reportlist) == 4
     received = [i for i in reportlist 
-        if isinstance(i, report.ReceivedItemOutcome)]
+        if isinstance(i, repevent.ReceivedItemOutcome)]
     assert received[0].outcome.passed 
     assert not received[1].outcome.passed 
 
@@ -134,7 +134,7 @@ class TestSlave:
     def test_slave_running(self):
         py.test.skip("XXX test broken, needs refactoring")
         def simple_report(event):
-            if not isinstance(event, report.ReceivedItemOutcome):
+            if not isinstance(event, repevent.ReceivedItemOutcome):
                 return
             item = event.item
             if item.code.name == 'funcpass':
@@ -162,7 +162,7 @@ class TestSlave:
 def test_slave_running_interrupted():
     py.test.skip("XXX test broken, needs refactoring")
     #def simple_report(event):
-    #    if not isinstance(event, report.ReceivedItemOutcome):
+    #    if not isinstance(event, repevent.ReceivedItemOutcome):
     #        return
     #    item = event.item
     #    if item.code.name == 'funcpass':

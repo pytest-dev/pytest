@@ -5,7 +5,7 @@
 import py
 from py.__.test.rsession.testing.test_reporter import AbstractTestReporter,\
      DummyChannel
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.rest import RestReporter, NoLinkWriter
 from py.__.rest.rst import *
 from py.__.test.rsession.hostmanage import HostInfo
@@ -41,7 +41,7 @@ class TestRestUnits(object):
         self.config.option.verbose = False
     
     def test_report_SendItem(self):
-        event = report.SendItem(item='foo/bar.py', channel=ch)
+        event = repevent.SendItem(item='foo/bar.py', channel=ch)
         reporter.report(event)
         assert stdout.getvalue() == ''
         stdout.seek(0)
@@ -52,18 +52,18 @@ class TestRestUnits(object):
                                      'localhost\n\n')
     
     def test_report_HostRSyncing(self):
-        event = report.HostRSyncing(HostInfo('localhost:/foo/bar'))
+        event = repevent.HostRSyncing(HostInfo('localhost:/foo/bar'))
         reporter.report(event)
         assert stdout.getvalue() == ('::\n\n   localhost: RSYNC ==> '
                                      '/foo/bar\n\n')
 
     def test_report_HostReady(self):
-        event = report.HostReady(HostInfo('localhost'))
+        event = repevent.HostReady(HostInfo('localhost'))
         reporter.report(event)
         assert stdout.getvalue() == '::\n\n   localhost: READY\n\n'
 
     def test_report_TestStarted(self):
-        event = report.TestStarted(hosts=[HostInfo('localhost'),
+        event = repevent.TestStarted(hosts=[HostInfo('localhost'),
                                           HostInfo('foo.com')])
         reporter.report(event)
         assert stdout.getvalue() == """\
@@ -84,7 +84,7 @@ Running tests on hosts\: localhost, foo.com
                 return ['package', 'foo', 'bar.py']
 
         parent = Container(parent=None, fspath=py.path.local('.'))
-        event = report.ItemStart(item=FakeModule(parent))
+        event = repevent.ItemStart(item=FakeModule(parent))
         reporter.report(event)
         assert stdout.getvalue() == """\
 Testing module foo/bar.py (2 items)
@@ -106,7 +106,7 @@ Testing module foo/bar.py (2 items)
     def test_ReceivedItemOutcome_PASSED(self):
         outcome = Outcome()
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
         assert stdout.getvalue() == ('* localhost\\: **PASSED** '
                                      'foo.py/bar()/baz\n\n')
@@ -114,7 +114,7 @@ Testing module foo/bar.py (2 items)
     def test_ReceivedItemOutcome_SKIPPED(self):
         outcome = Outcome(skipped="reason")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
         assert stdout.getvalue() == ('* localhost\\: **SKIPPED** '
                                      'foo.py/bar()/baz\n\n')
@@ -122,7 +122,7 @@ Testing module foo/bar.py (2 items)
     def test_ReceivedItemOutcome_FAILED(self):
         outcome = Outcome(excinfo="xxx")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
-        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
+        event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
         assert stdout.getvalue() == """\
 * localhost\: **FAILED** `traceback0`_ foo.py/bar()/baz
@@ -154,7 +154,7 @@ Testing module foo/bar.py (2 items)
         parent = Container(parent=None, fspath=py.path.local('.'))
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'],
                          parent=parent, fspath=py.path.local('foo'))
-        event = report.ReceivedItemOutcome(channel=ch, outcome=outcome,
+        event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome,
                                            item=item)
         reporter.report(event)
         reporter.timestart = 10
@@ -167,10 +167,10 @@ Testing module foo/bar.py (2 items)
         assert out.find('<printed>') > -1
 
     def test_skips(self):
-        class FakeOutcome(Container, report.ReceivedItemOutcome):
+        class FakeOutcome(Container, repevent.ReceivedItemOutcome):
             pass
 
-        class FakeTryiter(Container, report.SkippedTryiter):
+        class FakeTryiter(Container, repevent.SkippedTryiter):
             pass
         
         reporter.skips()
@@ -192,7 +192,7 @@ Reasons for skipped tests\:
 """
 
     def test_failures(self):
-        class FakeOutcome(Container, report.ReceivedItemOutcome):
+        class FakeOutcome(Container, repevent.ReceivedItemOutcome):
             pass
 
         parent = Container(parent=None, fspath=py.path.local('.'))

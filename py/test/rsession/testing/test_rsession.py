@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.rsession import RSession 
 from py.__.test.rsession.hostmanage import HostManager, HostInfo
 from py.__.test.rsession.testing.test_slave import funcfail_spec,\
@@ -56,7 +56,7 @@ class TestRSessionRemote(DirSetup):
         allevents = []
         rsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 3
         assert rsession.checkfun()
 
@@ -92,7 +92,7 @@ class TestRSessionRemote(DirSetup):
         allevents = []
         rsession.main(reporter=allevents.append) 
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
         print testevents
         passevents = [i for i in testevents if i.outcome.passed]
@@ -127,17 +127,17 @@ class TestRSessionRemote(DirSetup):
                        [node.channel for node in nodes], nodes)
         
         count_rsyn_calls = [i for i in setup_events 
-                if isinstance(i, report.HostRSyncing)]
+                if isinstance(i, repevent.HostRSyncing)]
         assert len(count_rsyn_calls) == len([i for i in hosts])
         count_ready_calls = [i for i in setup_events 
-                if isinstance(i, report.HostReady)]
+                if isinstance(i, repevent.HostReady)]
         assert len(count_ready_calls) == len([i for i in hosts])
         
         # same for teardown events
         teardown_wait_starts = [i for i in teardown_events 
-                                    if isinstance(i, report.CallStart)]
+                                    if isinstance(i, repevent.CallStart)]
         teardown_wait_ends = [i for i in teardown_events 
-                                    if isinstance(i, report.CallFinish)]
+                                    if isinstance(i, repevent.CallFinish)]
         assert len(teardown_wait_starts) == len(hosts)
         assert len(teardown_wait_ends) == len(hosts)
 
@@ -168,7 +168,7 @@ class TestRSessionRemote(DirSetup):
         hm.teardown_hosts(allevents.append, [node.channel for node in nodes], nodes)
 
         events = [i for i in allevents 
-                        if isinstance(i, report.ReceivedItemOutcome)]
+                        if isinstance(i, repevent.ReceivedItemOutcome)]
         passed = [i for i in events 
                         if i.outcome.passed]
         skipped = [i for i in events 
@@ -201,7 +201,7 @@ class TestRSessionRemote(DirSetup):
         allevents = []
         rsession.main(reporter=allevents.append) 
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         passevents = [x for x in testevents if x.outcome.passed]
         assert len(passevents) == 1
         

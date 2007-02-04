@@ -5,7 +5,7 @@ import py, os
 
 from py.__.test.rsession.outcome import Outcome, ReprOutcome
 from py.__.test.rsession.box import Box
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.outcome import Skipped, Failed
 
 class RunExecutor(object):
@@ -41,7 +41,7 @@ class RunExecutor(object):
             outcome = Outcome(excinfo=excinfo, setupfailure=False)
             if self.usepdb:
                 if self.reporter is not None:
-                    self.reporter(report.ImmediateFailure(self.item,
+                    self.reporter(repevent.ImmediateFailure(self.item,
                         ReprOutcome(outcome.make_repr
                                     (self.config.option.tbstyle))))
                 import pdb

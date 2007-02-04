@@ -4,7 +4,7 @@
 
 import py
 from py.__.test.rsession.rsession import LSession
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
 
 def setup_module(mod): 
@@ -37,7 +37,7 @@ class TestLSession(object):
         allevents = []
         lsession.main(reporter=allevents.append, runner=runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
         passevents = [i for i in testevents if i.outcome.passed]
         failevents = [i for i in testevents if i.outcome.excinfo]
@@ -97,7 +97,7 @@ class TestLSession(object):
             else:
                 py.test.fail("Didn't raise system exit")
             failure_events = [event for event in allevents if isinstance(event,
-                                                     report.ImmediateFailure)]
+                                                     repevent.ImmediateFailure)]
             assert len(failure_events) == 1
             assert len(l) == 1
         finally:
@@ -127,7 +127,7 @@ class TestLSession(object):
         
         lsession.main(reporter=allevents.append, runner=box_runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
         passevents = [i for i in testevents if i.outcome.passed]
         failevents = [i for i in testevents if i.outcome.excinfo]
@@ -156,7 +156,7 @@ class TestLSession(object):
         
         lsession.main(reporter=allevents.append, runner=box_runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
         passevents = [i for i in testevents if i.outcome.passed]
         failevents = [i for i in testevents if i.outcome.excinfo]
@@ -190,7 +190,7 @@ class TestLSession(object):
         
         assert len(allruns) == 4
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 4
         lst = ['test_one', 'test_one_one', 'test_other', 'test_two']
         for num, i in enumerate(testevents):
@@ -214,13 +214,13 @@ class TestLSession(object):
         allevents = []
         lsession.main(reporter=allevents.append, runner=box_runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 0
         failedtryiter = [x for x in allevents 
-                        if isinstance(x, report.FailedTryiter)]
+                        if isinstance(x, repevent.FailedTryiter)]
         assert len(failedtryiter) == 1
         skippedtryiter = [x for x in allevents 
-                        if isinstance(x, report.SkippedTryiter)]
+                        if isinstance(x, repevent.SkippedTryiter)]
         assert len(skippedtryiter) == 1
         
 
@@ -240,7 +240,7 @@ class TestLSession(object):
         allevents = []
         lsession.main(reporter=allevents.append, runner=box_runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         failevents = [i for i in testevents if i.outcome.excinfo]
         assert len(failevents) == 1
         assert len(testevents) == 1
@@ -261,7 +261,7 @@ class TestLSession(object):
         allevents = []
         lsession.main(reporter=allevents.append, runner=plain_runner)
         testevents = [x for x in allevents 
-                        if isinstance(x, report.ReceivedItemOutcome)]
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 1
         assert testevents[0].outcome.passed
         assert testevents[0].outcome.stderr == ""

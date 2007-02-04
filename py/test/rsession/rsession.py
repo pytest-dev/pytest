@@ -8,7 +8,7 @@ import sys
 import re
 import time
 
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.master import MasterNode, dispatch_loop, itemgen
 from py.__.test.rsession.hostmanage import HostInfo, HostManager
 from py.__.test.rsession.local import local_loop, plain_runner, apigen_runner,\
@@ -70,11 +70,11 @@ class AbstractSession(Session):
     def reporterror(reporter, data):
         excinfo, item = data
         if excinfo is None:
-            reporter(report.ItemStart(item))
+            reporter(repevent.ItemStart(item))
         elif excinfo.type is Skipped:
-            reporter(report.SkippedTryiter(excinfo, item))
+            reporter(repevent.SkippedTryiter(excinfo, item))
         else:
-            reporter(report.FailedTryiter(excinfo, item))
+            reporter(repevent.FailedTryiter(excinfo, item))
     reporterror = staticmethod(reporterror)
 
     def kill_server(self, startserverflag):
@@ -90,7 +90,7 @@ class AbstractSession(Session):
         """
         self.was_failure = False
         def new_reporter(event):
-            if isinstance(event, report.ReceivedItemOutcome) and \
+            if isinstance(event, repevent.ReceivedItemOutcome) and \
                    not event.outcome.passed and \
                    not event.outcome.skipped:
                 self.was_failure = True
@@ -130,12 +130,12 @@ class RSession(AbstractSession):
             sshhosts, RemoteReporter)
         reporter, checkfun = self.wrap_reporter(reporter)
 
-        reporter(report.TestStarted(sshhosts))
+        reporter(repevent.TestStarted(sshhosts))
 
         hostmanager = HostManager(sshhosts, self.config)
         try:
             nodes = hostmanager.init_hosts(reporter)
-            reporter(report.RsyncFinished())
+            reporter(repevent.RsyncFinished())
             try:
                 self.dispatch_tests(nodes, reporter, checkfun)
             except (KeyboardInterrupt, SystemExit):
@@ -149,16 +149,16 @@ class RSession(AbstractSession):
             channels = [node.channel for node in nodes]
             hostmanager.teardown_hosts(reporter, channels, nodes, 
                 exitfirst=self.config.option.exitfirst)
-            reporter(report.Nodes(nodes))
-            retval = reporter(report.TestFinished())
+            reporter(repevent.Nodes(nodes))
+            retval = reporter(repevent.TestFinished())
             self.kill_server(startserverflag)
             return retval
         except (KeyboardInterrupt, SystemExit):
-            reporter(report.InterruptedExecution())
+            reporter(repevent.InterruptedExecution())
             self.kill_server(startserverflag)
             raise
         except:
-            reporter(report.CrashedExecution())
+            reporter(repevent.CrashedExecution())
             self.kill_server(startserverflag)
             raise
 
@@ -189,9 +189,9 @@ class LSession(AbstractSession):
             sshhosts, LocalReporter, args[0])
         reporter, checkfun = self.wrap_reporter(reporter)
         
-        reporter(report.TestStarted(sshhosts))
+        reporter(repevent.TestStarted(sshhosts))
         colitems = self.config.getcolitems()
-        reporter(report.RsyncFinished())
+        reporter(repevent.RsyncFinished())
 
         if runner is None:
             runner = self.init_runner()
@@ -201,7 +201,7 @@ class LSession(AbstractSession):
         itemgenerator = itemgen(colitems, reporter, keyword, self.reporterror)
         local_loop(self, reporter, itemgenerator, checkfun, self.config, runner=runner)
         
-        retval = reporter(report.TestFinished())
+        retval = reporter(repevent.TestFinished())
         self.kill_server(startserverflag)
 
         if not self.config.option.nomagic:

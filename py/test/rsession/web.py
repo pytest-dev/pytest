@@ -15,7 +15,7 @@ import socket
 
 import py
 from py.__.test.rsession.rsession import RSession
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test import collect
 from py.__.test.rsession.webdata import json
 
@@ -221,7 +221,7 @@ class ExportedMethods(BasicExternal):
             self.end_event.set()
             return {}
         # some dispatcher here
-        if isinstance(event, report.ReceivedItemOutcome):
+        if isinstance(event, repevent.ReceivedItemOutcome):
             args = {}
             outcome = event.outcome
             for key, val in outcome.__dict__.iteritems():
@@ -246,22 +246,22 @@ class ExportedMethods(BasicExternal):
                 args['hostkey'] = event.channel.gateway.host.hostid
             else:
                 args['hostkey'] = ''
-        elif isinstance(event, report.ItemStart):
+        elif isinstance(event, repevent.ItemStart):
             args = add_item(event)
-        elif isinstance(event, report.TestFinished):
+        elif isinstance(event, repevent.TestFinished):
             args = {}
             args['run'] = str(self.all)
             args['fails'] = str(len(self.fail_reasons))
             args['skips'] = str(len(self.skip_reasons))
-        elif isinstance(event, report.SendItem):
+        elif isinstance(event, repevent.SendItem):
             args = add_item(event)
             args['hostkey'] = event.channel.gateway.host.hostid
-        elif isinstance(event, report.HostReady):
+        elif isinstance(event, repevent.HostReady):
             self.ready_hosts[event.host] = True
             args = {'hostname' : event.host.hostname, 'hostkey' : event.host.hostid}
-        elif isinstance(event, report.FailedTryiter):
+        elif isinstance(event, repevent.FailedTryiter):
             args = add_item(event)
-        elif isinstance(event, report.SkippedTryiter):
+        elif isinstance(event, repevent.SkippedTryiter):
             args = add_item(event)
             args['reason'] = str(event.excinfo.value)
         else:

@@ -6,7 +6,7 @@ import py
 import sys
 from StringIO import StringIO
 from py.__.test.rsession.reporter import AbstractReporter
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.rest.rst import *
 
 class RestReporter(AbstractReporter):
@@ -122,11 +122,11 @@ class RestReporter(AbstractReporter):
         texts = {}
         for event in self.skipped_tests_outcome:
             colitem = event.item
-            if isinstance(event, report.ReceivedItemOutcome):
+            if isinstance(event, repevent.ReceivedItemOutcome):
                 outcome = event.outcome
                 text = outcome.skipped
                 itemname = self.get_item_name(event, colitem)
-            elif isinstance(event, report.SkippedTryiter):
+            elif isinstance(event, repevent.SkippedTryiter):
                 text = str(event.excinfo.value)
                 itemname = "/".join(colitem.listnames())
             if text not in texts:
@@ -153,7 +153,7 @@ class RestReporter(AbstractReporter):
         for i, event in enumerate(self.failed_tests_outcome):
             if i > 0:
                 self.add_rest(Transition())
-            if isinstance(event, report.ReceivedItemOutcome):
+            if isinstance(event, repevent.ReceivedItemOutcome):
                 host = self.get_host(event)
                 itempath = self.get_path_from_item(event.item)
                 root = self.get_rootpath(event.item)

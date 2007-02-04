@@ -5,7 +5,7 @@ import thread, threading
 from py.__.test.rsession.master import MasterNode
 from py.__.test.rsession.slave import setup_slave
 
-from py.__.test.rsession import report 
+from py.__.test.rsession import repevent 
 
 class HostInfo(object):
     """ Class trying to store all necessary attributes
@@ -117,9 +117,9 @@ class HostManager(object):
         for root in roots: 
             destrelpath = root.relto(self.config.topdir)
             for host in self.sshhosts:
-                reporter(report.HostRSyncing(host))
+                reporter(repevent.HostRSyncing(host))
                 def donecallback():
-                    reporter(report.HostReady(host))
+                    reporter(repevent.HostReady(host))
                 rsync.add_target_host(host, destrelpath, 
                                       finishedcallback=donecallback)
             rsync.send(root)
@@ -158,7 +158,7 @@ class HostManager(object):
     def teardown_gateways(self, reporter, channels):
         for channel in channels:
             try:
-                report.wrapcall(reporter, channel.waitclose)
+                repevent.wrapcall(reporter, channel.waitclose)
             except KeyboardInterrupt, SystemExit:
                 raise
             except:

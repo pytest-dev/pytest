@@ -5,7 +5,7 @@
 import py
 from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
      ApigenExecutor
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome
 
 # XXX copied from session.py
@@ -68,6 +68,6 @@ def local_loop(session, reporter, itemgenerator, shouldstop, config, runner=None
             if shouldstop():
                 return
             outcome = runner(item, session, reporter)
-            reporter(report.ReceivedItemOutcome(None, item, outcome))
+            reporter(repevent.ReceivedItemOutcome(None, item, outcome))
         except StopIteration:
             break

@@ -21,7 +21,7 @@ import py, os
 #py.test.skip("in progress")
 from py.__.test.rsession.rsession import LocalReporter, AbstractSession,\
     RemoteReporter
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome, Outcome
 from py.__.test.rsession.testing.test_slave import funcpass_spec, mod_spec
 from py.__.test.rsession.hostmanage import HostInfo
@@ -72,7 +72,7 @@ class AbstractTestReporter(object):
             r = self.reporter(config, hosts)
             ch = DummyChannel(hosts[0])
             for outcome in outcomes:
-                r.report(report.ReceivedItemOutcome(ch, item, outcome))
+                r.report(repevent.ReceivedItemOutcome(ch, item, outcome))
         
         cap = py.io.StdCaptureFD()
         boxfun(config, item, outcomes)
@@ -92,10 +92,10 @@ class AbstractTestReporter(object):
             hosts = [HostInfo('localhost')]
             r = self.reporter(config, hosts)
             #r.pkgdir = pkdgir
-            r.report(report.ItemStart(item))
+            r.report(repevent.ItemStart(item))
             ch = DummyChannel(hosts[0])
             for outcome in outcomes:
-                r.report(report.ReceivedItemOutcome(ch, funcitem, outcome))
+                r.report(repevent.ReceivedItemOutcome(ch, funcitem, outcome))
         
         cap = py.io.StdCaptureFD()
         boxfun(self.pkgdir, config, moditem, funcitem, outcomes)
@@ -142,10 +142,10 @@ class AbstractTestReporter(object):
             rootcol = py.test.collect.Directory(tmpdir)
             host = HostInfo('localhost')
             r = self.reporter(config, [host])
-            r.report(report.TestStarted([host]))
-            r.report(report.RsyncFinished())
+            r.report(repevent.TestStarted([host]))
+            r.report(repevent.RsyncFinished())
             list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
-            r.report(report.TestFinished())
+            r.report(repevent.TestFinished())
         
         cap = py.io.StdCaptureFD()
         boxfun()
@@ -160,10 +160,10 @@ class AbstractTestReporter(object):
         config = py.test.config._reparse([str(tmpdir)])
         hosts = [HostInfo(i) for i in ["host1", "host2", "host3"]]
         r = self.reporter(config, hosts)
-        r.report(report.TestStarted(hosts))
-        r.report(report.HostReady(hosts[0]))
-        r.report(report.HostReady(hosts[1]))
-        r.report(report.HostReady(hosts[2]))
+        r.report(repevent.TestStarted(hosts))
+        r.report(repevent.HostReady(hosts[0]))
+        r.report(repevent.HostReady(hosts[1]))
+        r.report(repevent.HostReady(hosts[2]))
         out, err = cap.reset()
         assert not err
         expected1 = "Test started, hosts: host1, host2, host3"

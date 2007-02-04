@@ -8,7 +8,7 @@
 import py
 
 from py.__.test.terminal.out import getout
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 from py.__.test.rsession import outcome
 from py.__.misc.terminal_helper import ansi_print, get_terminal_width
 from py.__.test.representation import Presenter
@@ -108,7 +108,7 @@ class AbstractReporter(object):
         if self.failed_tests_outcome:
             self.out.sep("=", " FAILURES ")
         for event in self.failed_tests_outcome:
-            if isinstance(event, report.ReceivedItemOutcome):
+            if isinstance(event, repevent.ReceivedItemOutcome):
                 host = self.gethost(event)
                 self.out.sep('_', "%s on %s" % 
                     (" ".join(event.item.listnames()), host))
@@ -152,11 +152,11 @@ class AbstractReporter(object):
         texts = {}
         for event in self.skipped_tests_outcome:
             colitem = event.item
-            if isinstance(event, report.ReceivedItemOutcome):
+            if isinstance(event, repevent.ReceivedItemOutcome):
                 outcome = event.outcome
                 text = outcome.skipped
                 itemname = self.get_item_name(event, colitem)
-            elif isinstance(event, report.SkippedTryiter):
+            elif isinstance(event, repevent.SkippedTryiter):
                 text = str(event.excinfo.value)
                 itemname = "/".join(colitem.listnames())
             if text not in texts:

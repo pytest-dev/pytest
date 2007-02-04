@@ -3,7 +3,7 @@ Node code for Master.
 """
 import py
 from py.__.test.rsession.outcome import ReprOutcome
-from py.__.test.rsession import report
+from py.__.test.rsession import repevent
 
 class MasterNode(object):
     def __init__(self, channel, reporter):
@@ -19,7 +19,7 @@ class MasterNode(object):
     def receive_result(self, outcomestring, item):
         repr_outcome = ReprOutcome(outcomestring)
         # send finish report
-        self.reporter(report.ReceivedItemOutcome(
+        self.reporter(repevent.ReceivedItemOutcome(
                         self.channel, item, repr_outcome))
 
     def send(self, item):
@@ -30,7 +30,7 @@ class MasterNode(object):
             #itemspec = item.listnames()[1:]
             self.channel.send(item._get_collector_trail())
             # send start report
-            self.reporter(report.SendItem(self.channel, item))
+            self.reporter(repevent.SendItem(self.channel, item))
 
 def itemgen(colitems, reporter, keyword, reporterror):
     def rep(x):
