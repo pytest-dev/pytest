@@ -96,7 +96,7 @@ def test_dispatch_loop():
 class TestSlave:
     def setup_class(cls):
         cls.tmpdir = tmpdir = py.test.ensuretemp(cls.__name__)
-        pkgpath = tmpdir.join("pkg")
+        cls.pkgpath = pkgpath = tmpdir.join("slavetestpkg")
         pkgpath.ensure("__init__.py")
         pkgpath.join("test_something.py").write(py.code.Source("""
             def funcpass(): 
@@ -114,10 +114,11 @@ class TestSlave:
         return self.config.get_collector_trail(item) 
         
     def test_slave_setup(self):
+        pkgname = self.pkgpath.basename
         host = HostInfo("localhost:%s" %(self.tmpdir,))
         host.initgateway()
         channel = setup_slave(host, self.config)
-        spec = self._gettrail("pkg", "test_something.py", "funcpass")
+        spec = self._gettrail(pkgname, "test_something.py", "funcpass")
         print "sending", spec
         channel.send(spec)
         output = ReprOutcome(channel.receive())
