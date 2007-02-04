@@ -417,6 +417,9 @@ class ApiPageBuilder(AbstractPageBuilder):
         methods = self.dsa.get_class_methods(dotted_name)
         if methods:
             ret.append(H.h2('methods:'))
+            if '__init__' in methods:
+                methods.remove('__init__')
+                methods.insert(0, '__init__')
             for method in methods:
                 ret += self.build_callable_view('%s.%s' % (dotted_name,
                                                            method))
