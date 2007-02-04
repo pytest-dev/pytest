@@ -93,6 +93,18 @@ class PathBase(object):
     Checkers = Checkers
 
     def check(self, **kw):
+        """ check a path for existence, or query its properties
+
+            without arguments, this returns True if the path exists (on the
+            filesystem), False if not
+
+            with (keyword only) arguments, the object compares the value
+            of the argument with the value of a property with the same name
+            (if it has one, else it raises a TypeError)
+
+            when for example the keyword argument 'ext' is '.py', this will
+            return True if self.ext == '.py', False otherwise
+        """
         if kw:
             kw = kw.copy()
             if not checktype(self, kw):
@@ -177,6 +189,18 @@ class PathBase(object):
         return repr(str(self))
 
     def visit(self, fil=None, rec=None, ignore=_dummyclass):
+        """ yields all paths below the current one
+
+            fil is a filter (glob pattern or callable), if not matching the
+            path will not be yielded, defaulting to None (everything is
+            returned)
+
+            rec is a filter (glob pattern or callable) that controls whether
+            a node is descended, defaulting to None
+
+            ignore is an Exception class that is ignoredwhen calling dirlist()
+            on any of the paths (by default, all exceptions are reported)
+        """
         if isinstance(fil, str):
             fil = fnmatch(fil)
         if rec: 

@@ -55,6 +55,7 @@ class SvnWCCommandPath(common.FSPathBase):
         return svncommon._escape_helper(cmd)
 
     def dump(self, obj):
+        """ pickle object into path location"""
         return self.localpath.dump(obj)
 
     def svnurl(self):
@@ -162,6 +163,10 @@ class SvnWCCommandPath(common.FSPathBase):
             error_enhance(sys.exc_info())
 
     def mkdir(self, *args):
+        """ create & return the directory joined with args. """
+        p = self.join(*args)
+        self._callex(os.mkdir, str(p))
+        return p
         if args:
             return self.join(*args).mkdir()
         else:
@@ -169,6 +174,7 @@ class SvnWCCommandPath(common.FSPathBase):
             return self
 
     def add(self):
+        """ add ourself to svn """
         self._svn('add')
 
     def remove(self, rec=1, force=1):
