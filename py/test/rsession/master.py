@@ -33,8 +33,10 @@ class MasterNode(object):
             self.reporter(report.SendItem(self.channel, item))
 
 def itemgen(colitems, reporter, keyword, reporterror):
+    def rep(x):
+        reporterror(reporter, x)
     for x in colitems:
-        for y in x._tryiter(reporterror = lambda x: reporterror(reporter, x), keyword = keyword):
+        for y in x._tryiter(reporterror=rep, keyword=keyword):
             yield y
 
 def dispatch_loop(masternodes, itemgenerator, shouldstop, 

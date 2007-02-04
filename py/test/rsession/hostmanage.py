@@ -105,10 +105,10 @@ class HostManager(object):
         dist_remotepython = self.config.getvalue("dist_remotepython")
         for host in self.sshhosts:
             host.initgateway(python=dist_remotepython)
-            host.gw.host = host # XXX would like to avoid it
+            host.gw.host = host
 
     def init_rsync(self, reporter):
-        # send each rsync roots  
+        # send each rsync root  
         roots = self.config.getvalue_pathlist("dist_rsync_roots")
         if roots is None:
             roots = [self.config.topdir]

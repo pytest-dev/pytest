@@ -68,13 +68,13 @@ class AbstractSession(Session):
         return reporter, startserverflag
     
     def reporterror(reporter, data):
-            excinfo, item = data
-            if excinfo is None:
-                reporter(report.ItemStart(item))
-            elif excinfo.type is Skipped:
-                reporter(report.SkippedTryiter(excinfo, item))
-            else:
-                reporter(report.FailedTryiter(excinfo, item))
+        excinfo, item = data
+        if excinfo is None:
+            reporter(report.ItemStart(item))
+        elif excinfo.type is Skipped:
+            reporter(report.SkippedTryiter(excinfo, item))
+        else:
+            reporter(report.FailedTryiter(excinfo, item))
     reporterror = staticmethod(reporterror)
 
     def kill_server(self, startserverflag):
