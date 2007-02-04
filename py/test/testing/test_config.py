@@ -256,7 +256,19 @@ class TestSessionAndOptions:
         assert not config.is_boxed()
         config = py.test.config._reparse([tmpdir, '--box'])
         assert config.is_boxed()
-        
+
+    def test_getvalue_pathlist(self):
+        tmpdir = self.tmpdir
+        somepath = tmpdir.join("x", "y", "z")
+        p = tmpdir.join("conftest.py")
+        p.write("pathlist = ['.', %r]" % str(somepath))
+        config = py.test.config._reparse([p])
+        assert config.getvalue_pathlist('notexist') is None
+        pl = config.getvalue_pathlist('pathlist')
+        print pl
+        assert len(pl) == 2
+        assert pl[0] == tmpdir
+        assert pl[1] == somepath
 
 class TestConfigColitems:
     def setup_class(cls):

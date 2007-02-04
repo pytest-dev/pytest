@@ -84,6 +84,19 @@ class Config(object):
         col = self.conftest.rget("Directory", pkgpath)(pkgpath)
         col._config = self
         return col 
+
+    def getvalue_pathlist(self, name, path=None):
+        """ return a matching value, which needs to be sequence
+            of filenames that will be returned as a list of Path
+            objects (they can be relative to the location 
+            where they were found).
+        """
+        try:
+            mod, relroots = self.conftest.rget_with_confmod(name, path)
+        except KeyError:
+            return None
+        modpath = py.path.local(mod.__file__).dirpath()
+        return [modpath.join(x, abs=True) for x in relroots]
              
     def addoptions(self, groupname, *specs): 
         """ add a named group of options to the current testing session. 
@@ -163,6 +176,7 @@ class Config(object):
 
     def _reparse(self, args):
         """ this is used from tests that want to re-invoke parse(). """
+        #assert args # XXX should not be empty
         global config_per_process
         oldconfig = py.test.config
         try:

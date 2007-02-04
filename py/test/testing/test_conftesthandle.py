@@ -65,14 +65,14 @@ class TestConftestValueAccessGlobal:
         #conftest.lget("a") == 1
         #conftest.lget("b") == 1
 
-    def test_value_access_path(self):
+    def test_value_access_with_confmod(self):
         topdir = self.basedir.join("adir", "b")
         topdir.ensure("xx", dir=True)
         conftest = Conftest(topdir)
-        assert conftest.rget_path("a", topdir) == 1.5
-        assert conftest.rget_path("a", topdir.dirpath()) == 1
-        py.test.raises(AttributeError, "conftest.rget_path('a', topdir.join('xx'))")
-        #assert py.path.local(mod.__file__).dirpath() == topdir
+        mod, value = conftest.rget_with_confmod("a", topdir)
+        assert  value == 1.5
+        path = py.path.local(mod.__file__)
+        assert path == self.basedir.join("adir", "b", "conftest.py")
 
 class TestConftestValueAccessInPackage(TestConftestValueAccessGlobal):
     def setup_class(cls):
