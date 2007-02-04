@@ -25,3 +25,5 @@ option = py.test.config.addoptions("execnet options",
                help=("target to run tests requiring ssh, e.g. "
                      "user@codespeak.net")),
     )
+
+dist_rsync_roots = ['.']
