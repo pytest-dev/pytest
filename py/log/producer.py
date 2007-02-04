@@ -49,11 +49,18 @@ class Producer(object):
         return producer 
     
     def __call__(self, *args):
+        """ write a message to the appropriate consumer(s) """
         func = self.get_consumer(self.keywords)
         if func is not None: 
             func(self.Message(self.keywords, args))
    
     def get_consumer(self, keywords): 
+        """ return a consumer matching keywords
+        
+            tries to find the most suitable consumer by walking, starting from
+            the back, the list of keywords, the first consumer matching a
+            keyword is returned (falling back to py.log.default)
+        """
         for i in range(len(self.keywords), 0, -1): 
             try: 
                 return self.keywords2consumer[self.keywords[:i]]
@@ -62,6 +69,7 @@ class Producer(object):
         return self.keywords2consumer.get('default', default_consumer)
 
     def set_consumer(self, consumer): 
+        """ register a consumer matching our own keywords """
         self.keywords2consumer[self.keywords] = consumer 
 
 default = Producer('default')
@@ -74,6 +82,7 @@ def _setstate(state):
     Producer.keywords2consumer.update(state) 
 
 def default_consumer(msg): 
+    """ the default consumer, prints the message to stdout (using 'print') """
     print str(msg) 
 
 Producer.keywords2consumer['default'] = default_consumer 

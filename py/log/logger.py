@@ -61,9 +61,11 @@ class Logger(object):
         setattr(self, name, Processor(self, name, dest))
 
 def get(ident="global", **kwargs): 
+    """ return the Logger with id 'ident', instantiating if appropriate """
     try:
         log = Logger._key2logger[ident]
     except KeyError:
         log = Logger(ident)
     log.ensure_sub(**kwargs)
     return log 
+
