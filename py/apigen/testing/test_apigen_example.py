@@ -116,7 +116,7 @@ class AbstractBuilderTest(object):
         self.namespace_tree = namespace_tree
         self.apb = ApiPageBuilder(base, linker, self.dsa,
                                   self.fs_root.join(self.pkg_name),
-                                  namespace_tree)
+                                  namespace_tree, 'root docstring')
         self.spb = SourcePageBuilder(base, linker,
                                      self.fs_root.join(self.pkg_name))
 
@@ -130,7 +130,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         pkg.main.sub.func(pkg.main.SomeClass(10))
         t.end_tracing()
         apb = ApiPageBuilder(self.base, self.linker, dsa, self.fs_root,
-                             self.namespace_tree)
+                             self.namespace_tree, 'root docstring')
         snippet = apb.build_callable_view('main.sub.func')
         html = snippet.unicode()
         print html
@@ -371,8 +371,7 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         assert funcsource.check(file=True)
         html = funcsource.read()
         print html
-        assert ('<span class="alt_keyword">def</span> '
-                '<a href="#func" name="func">func</a>(arg1):') in html
+        assert ('<span class="alt_keyword">def</span> func(arg1)') in html
 
     def test_build_navigation_root(self):
         self.spb.prepare_pages(self.fs_root)

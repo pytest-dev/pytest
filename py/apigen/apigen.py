@@ -12,13 +12,23 @@ from py.__.apigen import linker
 from py.__.apigen import project
 from py.__.apigen.tracer.docstorage import pkg_to_dict
 
-def get_documentable_items(pkgdir):
+def get_documentable_items_pkgdir(pkgdir):
+    """ get all documentable items from an initpkg pkgdir
+    
+        this is a generic implementation, import as 'get_documentable_items'
+        from your module when using initpkg to get all public stuff in the
+        package documented
+    """
     sys.path.insert(0, str(pkgdir.dirpath()))
     rootmod = __import__(pkgdir.basename)
     d = pkg_to_dict(rootmod)
+    return pkgdir.basename, d
+
+def get_documentable_items(pkgdir):
+    pkgname, pkgdict = get_documentable_items_pkgdir(pkgdir)
     from py.__.execnet.channel import Channel
-    #d['execnet.Channel'] = Channel  # XXX doesn't work 
-    return 'py', d
+    # pkgdict['execnet.Channel'] = Channel  # XXX doesn't work 
+    return pkgname, pkgdict
 
 def build(pkgdir, dsa, capture):
     l = linker.Linker()

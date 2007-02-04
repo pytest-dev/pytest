@@ -42,15 +42,24 @@ def setup_fs_project(name):
             return 'quux'
     """))
     temp.ensure("pak/__init__.py").write(py.code.Source("""\
+        '''pkg docstring'''
         from py.initpkg import initpkg
-        initpkg(__name__, exportdefs = {
-            'main.sub.func': ("./func.py", "func"),
-            'main.func': ("./func.py", "func_2"),
-            'main.SomeTestClass': ('./sometestclass.py', 'SomeTestClass'),
-            'main.SomeTestSubClass': ('./sometestsubclass.py',
-                                      'SomeTestSubClass'),
-            'somenamespace': ('./somenamespace.py', '*'),
-        })
+        initpkg(__name__,
+                long_description=globals()['__doc__'],
+                exportdefs={'main.sub.func': ("./func.py", "func"),
+                            'main.func': ("./func.py", "func_2"),
+                            'main.SomeTestClass': ('./sometestclass.py',
+                                                   'SomeTestClass'),
+                            'main.SomeTestSubClass': ('./sometestsubclass.py',
+                                                      'SomeTestSubClass'),
+                            'somenamespace': ('./somenamespace.py', '*')})
+    """))
+    temp.ensure('apigen.py').write(py.code.Source("""\
+        import py
+        py.std.sys.path.insert(0,
+            py.magic.autopath().dirpath().dirpath().dirpath().strpath)
+        from py.__.apigen.apigen import build, \
+            get_documentable_items_pkgdir as get_documentable_items
     """))
     temp.ensure('pak/test/test_pak.py').write(py.code.Source("""\
         import py
@@ -87,8 +96,8 @@ def setup_fs_project(name):
 def test_get_documentable_items():
     fs_root, package_name = setup_fs_project('test_get_documentable_items')
     pkgname, documentable = apigen.get_documentable_items(
-                                                fs_root.join(package_name))
-    assert pkgname == 'py'
+                                               fs_root.join(package_name))
+    assert pkgname == 'pak'
     assert sorted(documentable.keys()) ==  [
         'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
         'main.sub.func', 'somenamespace.baz', 'somenamespace.foo']
@@ -101,14 +110,14 @@ def test_apigen_functional():
     pydir = py.magic.autopath().dirpath().dirpath().dirpath()
     pakdir = fs_root.join('pak')
     if py.std.sys.platform == 'win32':
-        cmd = 'set APIGEN_TARGET=%s && python "%s/bin/py.test"' % (tempdir,
-                                                                   pydir)
+        cmd = ('set APIGEN_TARGET=%s && set PYTHONPATH=%s && '
+               'python "%s/bin/py.test"') % (tempdir, fs_root, pydir)
     else:
-        cmd = 'APIGEN_TARGET="%s" "%s/bin/py.test"' % (tempdir, pydir)
+        cmd = ('APIGEN_TARGET="%s" PYTHONPATH="%s" '
+               '"%s/bin/py.test"') % (tempdir, fs_root, pydir)
     try:
         output = py.process.cmdexec('%s --apigen="%s/apigen.py" "%s"' % (
-                                        cmd, pydir.join('apigen'),
-                                        pakdir))
+                                        cmd, fs_root, pakdir))
     except py.error.Error, e:
         print e.out
         raise
@@ -130,6 +139,10 @@ def test_apigen_functional():
     assert namespace_api.check(file=True)
     html = namespace_api.read()
     assert '<a href="main.SomeTestClass.html">SomeTestClass</a>' in html
+    index = apidir.join('index.html')
+    assert index.check(file=True)
+    html = index.read()
+    assert 'pkg docstring' in html
 
     sourcedir = tempdir.join('source')
     assert sourcedir.check(dir=True)

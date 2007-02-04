@@ -14,6 +14,9 @@ sorted = py.builtin.sorted
 html = py.xml.html
 raw = py.xml.raw
 
+def is_navigateable(name):
+    return (not is_private(name) and name != '__doc__')
+
 def deindent(str, linesep='\n'):
     """ de-indent string
 
@@ -45,6 +48,16 @@ def deindent(str, linesep='\n'):
         else:
             ret.append(line[deindent:])
     return '%s\n' % (linesep.join(ret),)
+
+def get_linesep(s, default='\n'):
+    """ return the line seperator of a string
+
+        returns 'default' if no seperator can be found
+    """
+    for sep in ('\r\n', '\r', '\n'):
+        if sep in s:
+            return sep
+    return default
 
 def get_param_htmldesc(linker, func):
     """ get the html for the parameters of a function """
@@ -161,27 +174,21 @@ class SourcePageBuilder(AbstractPageBuilder):
     re = py.std.re
     _reg_body = re.compile(r'<body[^>]*>(.*)</body>', re.S)
     def build_python_page(self, fspath):
-        mod = source_browser.parse_path(fspath)
-        # XXX let's cheat a bit here... there should be a different function 
-        # using the linker, and returning a proper py.xml.html element,
-        # at some point
-        html = source_html.create_html(mod)
-        snippet = self._reg_body.search(html).group(1)
-        tag = H.SourceDef(raw(snippet))
+        # XXX two reads of the same file here... not very bad (disk caches
+        # and such) but also not very nice...
+        enc = source_html.get_module_encoding(fspath.strpath)
+        source = fspath.read()
+        sep = get_linesep(source)
+        colored = enumerate_and_color(source.split(sep), 0, enc)
+        tag = H.SourceDef(*colored)
         nav = self.build_navigation(fspath)
         return tag, nav
 
     def build_dir_page(self, fspath):
-        tag = H.DirList()
         dirs, files = source_dirs_files(fspath)
-        tag.append(H.h2('directories'))
-        for path in dirs:
-            tag.append(H.DirListItem(H.a(path.basename,
-                            href=self.linker.get_lazyhref(str(path)))))
-        tag.append(H.h2('files'))
-        for path in files:
-            tag.append(H.DirListItem(H.a(path.basename,
-                            href=self.linker.get_lazyhref(str(path)))))
+        dirs = [(p.basename, self.linker.get_lazyhref(str(p))) for p in dirs]
+        files = [(p.basename, self.linker.get_lazyhref(str(p))) for p in files]
+        tag = H.DirList(dirs, files)
         nav = self.build_navigation(fspath)
         return tag, nav
 
@@ -238,7 +245,8 @@ class SourcePageBuilder(AbstractPageBuilder):
             else:
                 tag, nav = self.build_nonpython_page(fspath)
             title = 'sources for %s' % (fspath.basename,)
-            reltargetpath = outputpath.relto(self.base).replace(os.path.sep, '/')
+            reltargetpath = outputpath.relto(self.base).replace(os.path.sep,
+                                                                '/')
             self.write_page(title, reltargetpath, project, tag, nav)
 
 def enumerate_and_color(codelines, firstlineno, enc):
@@ -255,6 +263,20 @@ def enumerate_and_color(codelines, firstlineno, enc):
             break
     return colored
 
+def get_obj(pkg, dotted_name):
+    full_dotted_name = '%s.%s' % (pkg.__name__, dotted_name)
+    if dotted_name == '':
+        return pkg
+    path = dotted_name.split('.')
+    ret = pkg
+    for item in path:
+        marker = []
+        ret = getattr(ret, item, marker)
+        if ret is marker:
+            raise NameError('can not access %s in %s' % (item,
+                                                         full_dotted_name))
+    return ret
+
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
     def __init__(self, base, linker, dsa, projroot, namespace_tree,
@@ -267,10 +289,13 @@ class ApiPageBuilder(AbstractPageBuilder):
         self.namespace_tree = namespace_tree
         self.capture = capture
 
+        pkgname = self.dsa.get_module_name().split('/')[-1]
+        self.pkg = __import__(pkgname)
+
     def build_callable_view(self, dotted_name):
         """ build the html for a class method """
         # XXX we may want to have seperate
-        func = self.dsa.get_obj(dotted_name)
+        func = get_obj(self.pkg, dotted_name)
         docstring = func.__doc__ 
         if docstring:
             docstring = deindent(docstring)
@@ -289,7 +314,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             enc = source_html.get_module_encoding(sourcefile)
             tokenizer = source_color.Tokenizer(source_color.PythonSchema)
             firstlineno = func.func_code.co_firstlineno
-            org = callable_source.split('\n')
+            sep = get_linesep(callable_source)
+            org = callable_source.split(sep)
             colored = enumerate_and_color(org, firstlineno, enc)
             text = 'source: %s' % (sourcefile,)
             if is_in_pkg:
@@ -307,7 +333,7 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_class_view(self, dotted_name):
         """ build the html for a class """
-        cls = self.dsa.get_obj(dotted_name)
+        cls = get_obj(self.pkg, dotted_name)
         # XXX is this a safe check?
         try:
             sourcefile = inspect.getsourcefile(cls)
@@ -360,21 +386,15 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_namespace_view(self, namespace_dotted_name, item_dotted_names):
         """ build the html for a namespace (module) """
-        try:
-            obj = self.dsa.get_obj(namespace_dotted_name)
-        except KeyError:
-            docstring = None
-        else:
-            docstring = obj.__doc__
-            if docstring:
-                docstring = deindent(docstring)
+        obj = get_obj(self.pkg, namespace_dotted_name)
+        docstring = obj.__doc__
         snippet = H.NamespaceDescription(
             H.NamespaceDef(namespace_dotted_name),
             H.Docstring(docstring or '*no docstring available*')
         )
         for dotted_name in sorted(item_dotted_names):
             itemname = dotted_name.split('.')[-1]
-            if is_private(itemname):
+            if not is_navigateable(itemname):
                 continue
             snippet.append(
                 H.NamespaceItem(
@@ -490,7 +510,7 @@ class ApiPageBuilder(AbstractPageBuilder):
                 selected = dn == '.'.join(path)
                 sibpath = dn.split('.')
                 sibname = sibpath[-1]
-                if is_private(sibname):
+                if not is_navigateable(sibname):
                     continue
                 navitems.append(H.NavigationItem(self.linker, dn, sibname,
                                                  depth, selected))
@@ -560,7 +580,6 @@ class ApiPageBuilder(AbstractPageBuilder):
         return py.path.local(sourcefile).relto(self.projpath)
 
     def build_callsite(self, functionname, call_site):
-        print 'building callsite for', functionname
         tbtag = self.gen_traceback(functionname, reversed(call_site))
         return H.CallStackItem(call_site[0].filename, call_site[0].lineno + 1,
                                tbtag)
@@ -575,7 +594,10 @@ class ApiPageBuilder(AbstractPageBuilder):
 
             tokenizer = source_color.Tokenizer(source_color.PythonSchema)
             mangled = []
-            for i, sline in enumerate(str(source).split('\n')):
+
+            source = str(source)
+            sep = get_linesep(source)
+            for i, sline in enumerate(source.split(sep)):
                 if i == lineno:
                     l = '-> %s' % (sline,)
                 else:

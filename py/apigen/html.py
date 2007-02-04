@@ -82,16 +82,25 @@ class H(html):
                 link, H.div(class_='code', *sourceels))
     
     class SourceDef(html.div):
-        pass
+        def __init__(self, *sourceels):
+            super(H.SourceDef, self).__init__(
+                H.div(class_='code', *sourceels))
 
     class NonPythonSource(html.pre):
         pass # style = html.Style(margin_left='15em')
 
     class DirList(html.div):
-        pass # style = html.Style(margin_left='15em')
+        def __init__(self, dirs, files):
+            dirs = [H.DirListItem(text, href) for (text, href) in dirs]
+            files = [H.DirListItem(text, href) for (text, href) in files]
+            super(H.DirList, self).__init__(
+                H.h2('directories'), dirs,
+                H.h2('files'), files,
+            )
 
     class DirListItem(html.div):
-        pass
+        def __init__(self, text, href):
+            super(H.DirListItem, self).__init__(H.a(text, href=href))
 
     class ValueDescList(html.ul):
         def __init__(self, *args, **kwargs):

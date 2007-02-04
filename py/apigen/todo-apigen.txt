@@ -10,7 +10,7 @@
   viewed.  method views (when navigating there through
   the class view) should also have the source there 
 
-  DONE I guess (todo: add syntax coloring)
+  DONE I think
 
 * have class-level attributes be displayed
 
