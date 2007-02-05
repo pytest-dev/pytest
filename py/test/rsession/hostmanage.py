@@ -5,7 +5,8 @@ import thread, threading
 from py.__.test.rsession.master import MasterNode
 from py.__.test.rsession.slave import setup_slave
 
-from py.__.test.rsession import repevent 
+from py.__.test.rsession import repevent
+from py.__.execnet.register import PopenCmdGateway
 
 class HostInfo(object):
     """ Class trying to store all necessary attributes
@@ -31,8 +32,9 @@ class HostInfo(object):
 
     def initgateway(self, python="python"):
         assert not hasattr(self, 'gw')
-        if self.hostname == "localhost": 
-            gw = py.execnet.PopenGateway(python=python)
+        if self.hostname == "localhost":
+            cmd = 'cd ~; %s -u -c "exec input()"' % python
+            gw = PopenCmdGateway(cmd)
         else:
             gw = py.execnet.SshGateway(self.hostname, 
                                        remotepython=python)
@@ -76,6 +78,7 @@ class HostRSync(py.execnet.RSync):
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
+        kwargs['delete'] = True
         super(HostRSync, self).__init__(*args, **kwargs)
 
     def filter(self, path):
