@@ -332,6 +332,10 @@ def test_pypkgdir():
     assert pkg.pypkgpath() == pkg
     assert pkg.join('subdir', '__init__.py').pypkgpath() == pkg
 
+def test_homedir():
+    homedir = py.path.local._gethomedir()
+    assert homedir.check(dir=1)
+
 #class XTestLocalPath(TestLocalPath):
 #    def __init__(self):
 #        TestLocalPath.__init__(self)

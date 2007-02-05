@@ -537,6 +537,15 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                         pass
         return None
     sysfind = classmethod(sysfind)
+
+    def _gethomedir(cls):
+        try:
+            x = os.environ['HOME']
+        except KeyError:
+            x = os.environ['HOMEPATH']
+        return cls(x)
+    _gethomedir = classmethod(_gethomedir)
+
     #"""
     #special class constructors for local filesystem paths
     #"""
