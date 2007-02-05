@@ -28,18 +28,6 @@ class RSync(object):
     def filter(self, path):
         return True
 
-    def add_target(self, gateway, destdir, finishedcallback=None):
-        """ Adds a remote target specified via a 'gateway'
-            and a remote destination directory. 
-        """
-        assert finishedcallback is None or callable(finishedcallback)
-        def itemcallback(req):
-            self._receivequeue.put((channel, req))
-        channel = gateway.remote_exec(REMOTE_SOURCE)
-        channel.setcallback(itemcallback, endmarker = None)
-        channel.send((str(destdir), self._options))
-        self._channels[channel] = finishedcallback
-
     def _end_of_channel(self, channel):
         if channel in self._channels:
             # too early!  we must have got an error
@@ -104,6 +92,9 @@ class RSync(object):
     def send(self, sourcedir):
         """ Sends a sourcedir to all added targets. 
         """
+        if not self._channels:
+            raise IOError("no targets available, maybing you "
+                          "are trying call send() twice?")
         self._sourcedir = str(sourcedir)
         # normalize a trailing '/' away
         self._sourcedir = os.path.dirname(os.path.join(self._sourcedir, 'x'))
@@ -136,6 +127,19 @@ class RSync(object):
                     del data
                 else:
                     assert "Unknown command %s" % command
+
+    def add_target(self, gateway, destdir, finishedcallback=None):
+        """ Adds a remote target specified via a 'gateway'
+            and a remote destination directory. 
+        """
+        assert finishedcallback is None or callable(finishedcallback)
+        def itemcallback(req):
+            self._receivequeue.put((channel, req))
+        channel = gateway.remote_exec(REMOTE_SOURCE)
+        channel.setcallback(itemcallback, endmarker = None)
+        channel.send((str(destdir), self._options))
+        self._channels[channel] = finishedcallback
+
 
     def _broadcast(self, msg):
         for channel in self._channels:
