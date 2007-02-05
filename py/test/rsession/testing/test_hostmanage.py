@@ -142,6 +142,7 @@ class TestHostManager(DirSetup):
 
     def test_hostmanager_init_rsync_rsync_roots(self):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
+        self.source.ensure("dir1", "somefile", dir=1)
         dir2.ensure("hello")
         self.source.ensure("bogusdir", "file")
         self.source.join("conftest.py").write(py.code.Source("""
@@ -156,6 +157,7 @@ class TestHostManager(DirSetup):
         assert self.dest.join("dir1", "dir2").check()
         assert self.dest.join("dir1", "dir2", 'hello').check()
         assert not self.dest.join("bogus").check()
+        assert not self.dest.join("dir1", "somefile").check()
 
     def test_hostmanager_rsync_ignore(self):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
