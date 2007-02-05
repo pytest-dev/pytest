@@ -4,7 +4,8 @@
 
 import py
 from py.__.test.rsession.hostmanage import HostRSync 
-from py.__.test.rsession.hostmanage import HostInfo, HostManager 
+from py.__.test.rsession.hostmanage import HostInfo, HostManager
+from py.__.test.rsession import repevent
 
 class DirSetup:
     def setup_method(self, method):
@@ -177,3 +178,15 @@ class TestHostManager(DirSetup):
         assert self.dest.join("dir5","file").check()
         assert not self.dest.join("dir6").check()
 
+    def test_hostmanager_rsync_reported_once(self):
+        dir2 = self.source.ensure("dir1", "dir2", dir=1)
+        dir5 = self.source.ensure("dir5", "dir6", "bogus")
+        dirf = self.source.ensure("dir3", "file")
+        config = py.test.config._reparse([self.source])
+        hm = HostManager(config,
+                         hosts=[HostInfo("localhost:" + str(self.dest))
+                                for i in range(3)])
+        events = []
+        hm.init_rsync(reporter=events.append)
+        readies = [i for i in events if isinstance(i, repevent.HostReady)]
+        assert len(readies) == 3
