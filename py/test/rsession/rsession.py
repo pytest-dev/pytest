@@ -133,21 +133,21 @@ class RSession(AbstractSession):
         reporter(repevent.TestStarted(hm.hosts))
 
         try:
-            nodes = hm.init_hosts(reporter)
+            nodes = hm.setup_hosts(reporter)
             reporter(repevent.RsyncFinished())
             try:
                 self.dispatch_tests(nodes, reporter, checkfun)
             except (KeyboardInterrupt, SystemExit):
                 print >>sys.stderr, "C-c pressed waiting for gateways to teardown..."
                 channels = [node.channel for node in nodes]
-                hostmanager.kill_channels(channels)
-                hostmanager.teardown_gateways(reporter, channels)
+                hm.kill_channels(channels)
+                hm.teardown_gateways(reporter, channels)
                 print >>sys.stderr, "... Done"
                 raise
 
             channels = [node.channel for node in nodes]
-            hostmanager.teardown_hosts(reporter, channels, nodes, 
-                exitfirst=self.config.option.exitfirst)
+            hm.teardown_hosts(reporter, channels, nodes, 
+                              exitfirst=self.config.option.exitfirst)
             reporter(repevent.Nodes(nodes))
             retval = reporter(repevent.TestFinished())
             self.kill_server(startserverflag)

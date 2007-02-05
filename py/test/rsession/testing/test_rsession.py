@@ -122,7 +122,7 @@ class TestRSessionRemote(DirSetup):
         tmpdir = py.test.ensuretemp("emptyconftest") 
         config = py.test.config._reparse([tmpdir])
         hm = HostManager(config, hosts)
-        nodes = hm.init_hosts(setup_events.append)
+        nodes = hm.setup_hosts(setup_events.append)
         hm.teardown_hosts(teardown_events.append, 
                        [node.channel for node in nodes], nodes)
         
@@ -147,7 +147,7 @@ class TestRSessionRemote(DirSetup):
         
         config = py.test.config._reparse([])
         hm = HostManager(config, hosts=hosts)
-        nodes = hm.init_hosts(allevents.append)
+        nodes = hm.setup_hosts(allevents.append)
         
         from py.__.test.rsession.testing.test_executor \
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping

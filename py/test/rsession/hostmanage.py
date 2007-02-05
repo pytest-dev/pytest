@@ -127,12 +127,8 @@ class HostManager(object):
                                       finishedcallback=donecallback)
             rsync.send(root)
 
-    def init_hosts(self, reporter):
-        # hosts ready
+    def setup_hosts(self, reporter):
         self.init_rsync(reporter)
-        return self.setup_nodes(reporter)
-
-    def setup_nodes(self, reporter):
         nodes = []
         for host in self.hosts:
             if hasattr(host.gw, 'remote_exec'): # otherwise dummy for tests :/
