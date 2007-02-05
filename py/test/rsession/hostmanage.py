@@ -57,6 +57,9 @@ class HostInfo(object):
     def __str__(self):
         return "<HostInfo %s:%s>" % (self.hostname, self.relpath)
 
+    def __repr__(self):
+        return str(self)
+
     def __hash__(self):
         return hash(self.hostid)
 
@@ -75,8 +78,7 @@ class HostRSync(py.execnet.RSync):
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
-        kwargs['delete'] = True
-        super(HostRSync, self).__init__(*args, **kwargs)
+        super(HostRSync, self).__init__(delete=True)
 
     def filter(self, path):
         path = py.path.local(path)
