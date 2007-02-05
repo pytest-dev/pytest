@@ -123,14 +123,18 @@ class TestStdCaptureFD(TestStdCapture):
         assert err.startswith("4") 
 
 def test_capture_no_sys(): 
-    cap = py.io.StdCaptureFD(patchsys=False)
-    print >>sys.stdout, "hello"
-    print >>sys.stderr, "world"
-    os.write(1, "1")
-    os.write(2, "2")
-    out, err = cap.reset()
-    assert out == "1"
-    assert err == "2"
+    capsys = py.io.StdCapture()
+    try:
+        cap = py.io.StdCaptureFD(patchsys=False)
+        print >>sys.stdout, "hello"
+        print >>sys.stderr, "world"
+        os.write(1, "1")
+        os.write(2, "2")
+        out, err = cap.reset()
+        assert out == "1"
+        assert err == "2"
+    finally:
+        capsys.reset()
 
 def test_callcapture_nofd(): 
     def func(x, y): 
