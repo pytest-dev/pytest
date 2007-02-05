@@ -6,7 +6,6 @@ from py.__.test.rsession.master import MasterNode
 from py.__.test.rsession.slave import setup_slave
 
 from py.__.test.rsession import repevent
-from py.__.execnet.register import PopenCmdGateway
 
 class HostInfo(object):
     """ Class trying to store all necessary attributes
@@ -33,24 +32,22 @@ class HostInfo(object):
     def initgateway(self, python="python"):
         assert not hasattr(self, 'gw')
         if self.hostname == "localhost":
-            cmd = 'cd ~; %s -u -c "exec input()"' % python
-            gw = PopenCmdGateway(cmd)
+            gw = py.execnet.PopenGateway(python=python)
         else:
             gw = py.execnet.SshGateway(self.hostname, 
                                        remotepython=python)
         self.gw = gw
-        channel = gw.remote_exec("""
+        channel = gw.remote_exec(py.code.Source(gethomedir, """
             import os
             targetdir = %r
+            homedir = gethomedir()
             if not os.path.isabs(targetdir):
-                homedir = os.environ.get('HOME', '')
-                if not homedir:
-                    homedir = os.environ.get('HOMEPATH', '.')
                 targetdir = os.path.join(homedir, targetdir)
             if not os.path.exists(targetdir):
                 os.makedirs(targetdir)
-            channel.send(os.path.abspath(targetdir))
-        """ % self.relpath)
+            os.chdir(homedir)
+            channel.send(targetdir)
+        """ % self.relpath))
         self.gw_remotepath = channel.receive()
         #print "initialized", gw, "with remotepath", self.gw_remotepath
         if self.hostname == "localhost":
@@ -177,3 +174,10 @@ class HostManager(object):
             except:
                 pass
             channel.gateway.exit()
+
+def gethomedir():
+    import os
+    homedir = os.environ.get('HOME', '')
+    if not homedir:
+        homedir = os.environ.get('HOMEPATH', '.')
+    return homedir

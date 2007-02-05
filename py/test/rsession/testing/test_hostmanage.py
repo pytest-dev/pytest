@@ -37,6 +37,20 @@ class TestHostInfo:
         py.test.raises((py.process.cmdexec.Error, IOError, EOFError), 
                        host.initgateway)
 
+    def test_remote_has_homedir_as_currentdir(self):
+        host = HostInfo("localhost")
+        old = py.path.local.get_temproot().chdir()
+        try:
+            host.initgateway()
+            channel = host.gw.remote_exec("""
+                import os
+                channel.send(os.getcwd())
+            """)
+            dir = channel.receive()
+            assert dir == py.path.local._gethomedir()
+        finally:
+            old.chdir()
+
     def test_initgateway_localhost_relpath(self):
         name = "pytestcache-localhost"
         x = HostInfo("localhost:%s" % name)
@@ -160,3 +174,4 @@ class TestHostManager(DirSetup):
         assert not self.dest.join("dir1", "dir2").check()
         assert self.dest.join("dir5","file").check()
         assert not self.dest.join("dir6").check()
+
