@@ -1,36 +1,144 @@
+===========================================
 apigen - API documentation generation tool
 ===========================================
 
 What is it?
-------------
+===========
 
 Apigen is a tool for automatically generating API reference documentation for
-Python projects.  It works by examining code at runtime rather than at 
-compile time.  This way it is capable of displaying information 
-about the code base after initialization.  A drawback is that
-you cannot easily document source code that automatically
-starts server processes or has some other irreversible effects upon getting imported. 
+Python projects. It works by examining code at runtime rather than at compile
+time. This way it is capable of displaying information about the code base
+after initialization. A drawback is that you cannot easily document source code
+that automatically starts server processes or has some other irreversible
+effects upon getting imported. 
 
-The apigen functionality can either be used from code, or from
-py.test, in the latter case it will gather information about
-modules, classes to export explicitely by using provided script. 
+The apigen functionality is normally triggered from :api:`py.test`, and while
+running the tests it gathers information such as code paths, arguments and
+return values of callables, and exceptions that can be raised while the code
+runs (XXX not yet!) to include in the documentation. It's also possible to
+run the tracer (which collects the data) in other code if your project
+does not use :api:`py.test` but still wants to collect the runtime information
+and build the docs.
 
-Please note that apigen is currently geared towards documenting the
-py library itself, making it nicely work for other projects
-may still require a bit of adaption and refinement work. 
+Apigen is written for the :api:`py` lib, but can be used to build documentation
+for any project: there are hooks in py.test to, by providing a simple script,
+build api documentation for the tested project when running py.test. Of course
+this does imply :api:`py.test` is actually used: if little or no tests are
+actually ran, the additional information (code paths, arguments and return
+values and exceptions) can not be gathered and thus there will be less of an
+advantage of apigen compared to other solutions.
 
-Using from code
-----------------
+Features
+========
 
-The library provides a simple API to generate a py.rest.rst tree (which
-represents a ReStructuredText document), along with some helper classes to 
-control the output. The most important objects are the Tracer, which traces
-code execution by registering itself with sys.settrace, the DocStorage class,
-that stores Tracer information, and the RestGen class which creates a ReST
-tree (see py.rest.rst).
+Some features were mentioned above already, but here's a complete list of all
+the niceties apigen has to offer:
+
+  * source documents
+
+    Apigen not only builds the API documentation, but also a tree of
+    syntax-colored source files, with links from the API docs to the source
+    files.
+
+  * abundance of information
+
+    compared to other documentation generation tools, apigen produces an
+    abundant amount of information: it provides syntax-colored code snippets,
+    code path traces, etc.
+
+  * linking
+
+    besides links to the source files, apigen provides links all across the
+    documentation: callable arguments and return values link to their
+    definition (if part of the documented code), class definition to their
+    base classes (again, if they're part of the documented code), and
+    everywhere are links to the source files (including in traces)
+
+  * (hopefully) improves testing
+
+    because the documentation is built partially from test results, developers
+    may (especially if they're using the documentation themselves) be more
+    aware of untested parts of the code, or parts can use more tests or need
+    attention
+
+Using apigen
+============
+
+To trigger apigen, all you need to do is run the :source:`py/bin/py.test` tool
+with an --apigen argument, as such::
+
+  $ py.test --apigen=<path>
+
+where <path> is a path to a script containing some special hooks to build
+the documents (see below). The script to build the documents for the :api:`py`
+lib can be found in :source:`py/apigen/apigen.py`, so building those documents
+can be done by cd'ing to the 'py' directory, and executing::
+
+  $ py.test --apigen=apigen/apigen.py
+
+The documents will by default be built in the *parent directory* of the
+*package dir* (in this case the 'py' directory). Be careful that you don't
+overwrite anything!
+
+Other projects
+==============
+
+To use apigen from another project, there are three things that you need to do:
+
+Use :api:`py.test` for unit tests
+---------------------------------
+
+This is a good idea anyway... ;) The more tests, the more tracing information
+and such can be built, so it makes sense to have good test coverage when using
+this tool.
+    
+Provide :api:`py.test` hooks
+----------------------------
+
+To hook into the unit testing framework, you will need to write a script with
+two functions. The first should be called 'get_documentable_items', gets a
+package dir (the root of the project) as argument, and should return a tuple
+with the package name as first element, and a dict as second. The dict should
+contain, for all the to-be-documented items, a dotted name as key and a
+reference to the item as value.
+
+The second function should be called 'build', and gets also the package dir as
+argument, but also a reference to a DocStorageAcessor, which  contains
+information gathered by the tracer, and a reference to a
+:api:`py.io.StdCaptureFD` instance that is used to capture stdout and stderr,
+and allows writing to them, when the docs are built.
+
+This 'build' function is responsible for actually building the documentation,
+and, depending on your needs, can be used to control each aspect of it. In most
+situations you will just copy the code from :source:`py/apigen/apigen.py`'s
+build() function, but if you want you can choose to build entirely different
+output formats by directly accessing the DocStorageAccessor class.
+
+Provide layout
+--------------
+
+For the :api:`py` lib tests, the 'LayoutPage' class found in
+:source:`py/apigen/layout.py` is used, which produces HTML specific for that
+particular library (with a menubar, etc.). To customize this, you will need to
+provide a similar class, most probably using the Page base class from
+:source:`py/doc/confrest.py`. Note that this step depends on how heavy the
+customization in the previous step is done: if you decide to directly use the
+DocStorageAccessor rather than let the code in :source:`py/apigen/htmlgen.py`
+build HTML for you, this can be skipped.
+
+Using apigen from code
+======================
+
+If you want to avoid using :api:`py.test`, or have an other idea of how to best
+collect information while running code, the apigen functionality can be
+directly accessed. The most important classes are the Tracer class found in
+:source:`py/apigen/tracer/tracer.py`, which holds the information gathered
+during the tests, and the DocStorage and DocStorageAccessor classes from
+:source:`py/apigen/tracer/docstorage.py`, which (respectively) store the data,
+and make it accessible.
 
 Gathering information
-++++++++++++++++++++++
+---------------------
 
 To gather information about documentation, you will first need to tell the tool
 what objects it should investigate. Only information for registered objects
@@ -50,71 +158,24 @@ will be stored. An example::
   >>> t.end_tracing()
 
 Now the 'ds' variable should contain all kinds of information about both the
-py.path.local and the py.path.svnwc class (it will walk through 'toregister' to
-find information about all it contains), and things like call stacks, and
-possible argument types, etc. as additional information about
-py.path.local.check() (since it was called from the traced code).
+:api:`py.path.local` and the :api:`py.path.svnwc` classes, and things like call
+stacks, possible argument types, etc. as additional information about
+:api:`py.path.local.check()` (since it was called from the traced code).
 
-Viewing information
-++++++++++++++++++++
+Using the information
+---------------------
 
-Viewing the information stored in the DocStorage instance isn't very hard
-either. As explained there is a RestGen class that creates a py.rest.rst tree,
-which can directly be serialized to ReStructuredText, which can in turn be
-converted to other formats. Also the py.rest.rst tree can be manipulated
-directly, or converted to formats other than ReST (currently only HTML) using
-special transformers.
+To use the information, we need to get a DocStorageAccessor instance to
+provide access to the data stored in the DocStorage object::
 
-There are several helper classes available that wrap the output format 
-generation. There are two types of helper classes, 'LinkWriters' and 'Writers'.
-The first are responsible for generating external links (for viewing source),
-the second for generating the actual output from the py.rest.rst tree, and
-for generating internal links (which is directly related to generating output).
-Instances of these classes are passed to the RestGen class as arguments on
-instantiation.
+  >>> dsa = DocStorageAccessor(ds)
 
-An example of creating a directory with seperate ReST files (using DirWriter)
-from the 'ds' DocumentStorage instance we created below, without any external
-links (using DirectPaste).
-::
-
-  >>> from py.__.apigen.rest.genrest import RestGen, DirectPaste, DirWriter
-  >>> # create a temp dir in /tmp/pytest-<userid>
-  >>> tempdir = py.test.ensuretemp('apigen_example')
-  >>> rg = RestGen(DocStorageAccessor(ds), DirectPaste(), DirWriter(tempdir))
-  >>> rg.write()
-
-An example of a somewhat more 'real-life' use case, writing to a directory of
-HTML files (this uses py.rest.transform), generating links to ViewVC source
-views::
-
-  >>> from py.__.apigen.rest.genrest import ViewVC, HTMLDirWriter
-  >>> from py.__.apigen.rest.htmlhandlers import HTMLHandler
-  >>> tempdir = py.test.ensuretemp('apigen_example_2')
-  >>> rg = RestGen(DocStorageAccessor(ds), ViewVC('http://some.host.com/viewvc/myproj/trunk/'),
-  ...              HTMLDirWriter(HTMLHandler, HTMLHandler, tempdir))
-  >>> rg.write()
-
-Using from py.test
--------------------
-
-Running unit tests forms an ideal opportunity for apigen to find out about what
-happens when code is executed (assuming you have proper test coverage ;). There
-are hooks built into py.test that allow you to do that:
-
-* Write down a python script which contains at least two functions
-
-  - `get_documentable_items() -> {}` - function which will return dictionary
-     of name to object of exported items
-
-  - `build(pkgpath, docstorageaccessor)` - function which will be invoked afterwards
-    with DocStorageAccessor instance as an argument (you should read DocStorageAccessor
-    interface to know how you can access it)
-
-XXX: Write down some example usage after guido implement the script
+Currently there is no API reference available for this object, so you'll have
+to read the source (:source:`py/apigen/tracer/docstorage.py`) to see what
+functionality it offers.
 
 Comparison with other documentation generation tools
-----------------------------------------------------
+====================================================
 
 Apigen is of course not the only documentation generation tool available for
 Python. Although we knew in advance that our tool had certain features the
@@ -122,7 +183,7 @@ others do not offer, we decided to investigate a bit so that we could do a
 proper comparison.
 
 Tools examined
-++++++++++++++
+--------------
 
 After some 'googling around', it turned out that the amount of documentation
 generation tools available was surprisingly low. There were only 5 packages
@@ -179,7 +240,7 @@ Quick overview:
   * written for Twisted, but quite nice output with other applications
 
 Quick overview lists of the other tools
-+++++++++++++++++++++++++++++++++++++++
+---------------------------------------
 
 HappyDoc
 ~~~~~~~~
@@ -217,7 +278,7 @@ https://svn.enthought.com/enthought/wiki/EndoHowTo
        widely used it can not be ignored...
 
 Questions, remarks, etc.
--------------------------
+========================
 
 For more information, questions, remarks, etc. see http://codespeak.net/py.
 This website also contains links to mailing list and IRC channel.
