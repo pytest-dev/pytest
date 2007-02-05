@@ -97,13 +97,16 @@ class HostRSync(py.execnet.RSync):
         return True # added the target
 
 class HostManager(object):
-    def __init__(self, sshhosts, config):
-        self.sshhosts = sshhosts
+    def __init__(self, config, hosts=None):
         self.config = config
+        if hosts is None:
+            hosts = self.config.getvalue("dist_hosts")
+            hosts = [HostInfo(x) for x in hosts]
+        self.hosts = hosts
 
     def prepare_gateways(self):
         dist_remotepython = self.config.getvalue("dist_remotepython")
-        for host in self.sshhosts:
+        for host in self.hosts:
             host.initgateway(python=dist_remotepython)
             host.gw.host = host
 
@@ -116,7 +119,7 @@ class HostManager(object):
         rsync = HostRSync()
         for root in roots: 
             destrelpath = root.relto(self.config.topdir)
-            for host in self.sshhosts:
+            for host in self.hosts:
                 reporter(repevent.HostRSyncing(host))
                 def donecallback():
                     reporter(repevent.HostReady(host))
@@ -131,7 +134,7 @@ class HostManager(object):
 
     def setup_nodes(self, reporter):
         nodes = []
-        for host in self.sshhosts:
+        for host in self.hosts:
             if hasattr(host.gw, 'remote_exec'): # otherwise dummy for tests :/
                 ch = setup_slave(host, self.config)
                 nodes.append(MasterNode(ch, reporter))

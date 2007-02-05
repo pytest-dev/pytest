@@ -29,7 +29,7 @@ class AbstractSession(Session):
             option.startserver = True
         super(AbstractSession, self).fixoptions()
 
-    def init_reporter(self, reporter, sshhosts, reporter_class, arg=""):
+    def init_reporter(self, reporter, hosts, reporter_class, arg=""):
         """ This initialises so called `reporter` class, which will
         handle all event presenting to user. Does not get called
         if main received custom reporter
@@ -58,9 +58,9 @@ class AbstractSession(Session):
                 from py.__.test.rsession.rest import RestReporter
                 reporter_class = RestReporter
             if arg:
-                reporter_instance = reporter_class(self.config, sshhosts)
+                reporter_instance = reporter_class(self.config, hosts)
             else:
-                reporter_instance = reporter_class(self.config, sshhosts)
+                reporter_instance = reporter_class(self.config, hosts)
             reporter = reporter_instance.report
         else:
             startserverflag = False
@@ -125,16 +125,15 @@ class RSession(AbstractSession):
         """ main loop for running tests. """
         args = self.config.args
 
-        sshhosts = self._getconfighosts()
+        hm = HostManager(self.config)
         reporter, startserverflag = self.init_reporter(reporter,
-            sshhosts, RemoteReporter)
+            hm.hosts, RemoteReporter)
         reporter, checkfun = self.wrap_reporter(reporter)
 
-        reporter(repevent.TestStarted(sshhosts))
+        reporter(repevent.TestStarted(hm.hosts))
 
-        hostmanager = HostManager(sshhosts, self.config)
         try:
-            nodes = hostmanager.init_hosts(reporter)
+            nodes = hm.init_hosts(reporter)
             reporter(repevent.RsyncFinished())
             try:
                 self.dispatch_tests(nodes, reporter, checkfun)
@@ -162,10 +161,6 @@ class RSession(AbstractSession):
             self.kill_server(startserverflag)
             raise
 
-    def _getconfighosts(self):
-        return [HostInfo(spec) for spec in
-                                    self.config.getvalue("dist_hosts")]
-
     def dispatch_tests(self, nodes, reporter, checkfun):
         colitems = self.config.getcolitems()
         keyword = self.config.option.keyword
@@ -179,17 +174,17 @@ class LSession(AbstractSession):
     def main(self, reporter=None, runner=None):
         # check out if used options makes any sense
         args = self.config.args  
-        
-        sshhosts = [HostInfo('localhost')] # this is just an info to reporter
-        
+       
+        hm = HostManager(self.config, hosts=[HostInfo('localhost')])
+        hosts = hm.hosts
         if not self.config.option.nomagic:
             py.magic.invoke(assertion=1)
 
         reporter, startserverflag = self.init_reporter(reporter, 
-            sshhosts, LocalReporter, args[0])
+            hosts, LocalReporter, args[0])
         reporter, checkfun = self.wrap_reporter(reporter)
         
-        reporter(repevent.TestStarted(sshhosts))
+        reporter(repevent.TestStarted(hosts))
         colitems = self.config.getcolitems()
         reporter(repevent.RsyncFinished())
 

@@ -109,11 +109,17 @@ class TestSyncing(DirSetup):
         assert not res2
 
 class TestHostManager(DirSetup):
+    def test_hostmanager_custom_hosts(self):
+        config = py.test.config._reparse([self.source])
+        hm = HostManager(config, hosts=[1,2,3])
+        assert hm.hosts == [1,2,3]
+
     def test_hostmanager_init_rsync_topdir(self):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         config = py.test.config._reparse([self.source])
-        hm = HostManager([HostInfo("localhost:" + str(self.dest))], config)
+        hm = HostManager(config, 
+                hosts=[HostInfo("localhost:" + str(self.dest))])
         events = []
         hm.init_rsync(reporter=events.append)
         assert self.dest.join("dir1").check()
@@ -128,7 +134,8 @@ class TestHostManager(DirSetup):
             dist_rsync_roots = ['dir1/dir2']
         """))
         config = py.test.config._reparse([self.source])
-        hm = HostManager([HostInfo("localhost:" + str(self.dest))], config)
+        hm = HostManager(config, 
+                         hosts=[HostInfo("localhost:" + str(self.dest))])
         events = []
         hm.init_rsync(reporter=events.append)
         assert self.dest.join("dir1").check()
