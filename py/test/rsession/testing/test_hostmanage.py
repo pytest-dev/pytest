@@ -142,3 +142,21 @@ class TestHostManager(DirSetup):
         assert self.dest.join("dir1", "dir2").check()
         assert self.dest.join("dir1", "dir2", 'hello').check()
         assert not self.dest.join("bogus").check()
+
+    def test_hostmanager_rsync_ignore(self):
+        dir2 = self.source.ensure("dir1", "dir2", dir=1)
+        dir5 = self.source.ensure("dir5", "dir6", "bogus")
+        dirf = self.source.ensure("dir5", "file")
+        dir2.ensure("hello")
+        self.source.join("conftest.py").write(py.code.Source("""
+            dist_rsync_ignore = ['dir1/dir2', 'dir5/dir6']
+        """))
+        config = py.test.config._reparse([self.source])
+        hm = HostManager(config, 
+                         hosts=[HostInfo("localhost:" + str(self.dest))])
+        events = []
+        hm.init_rsync(reporter=events.append)
+        assert self.dest.join("dir1").check()
+        assert not self.dest.join("dir1", "dir2").check()
+        assert self.dest.join("dir5","file").check()
+        assert not self.dest.join("dir6").check()

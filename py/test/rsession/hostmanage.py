@@ -72,6 +72,10 @@ class HostRSync(py.execnet.RSync):
     """
     def __init__(self, *args, **kwargs):
         self._synced = {}
+        ignores= None
+        if 'ignores' in kwargs:
+            ignores = kwargs.pop('ignores')
+        self._ignores = ignores or []
         super(HostRSync, self).__init__(*args, **kwargs)
 
     def filter(self, path):
@@ -79,7 +83,11 @@ class HostRSync(py.execnet.RSync):
         if not path.ext in ('.pyc', '.pyo'):
             if not path.basename.endswith('~'): 
                 if path.check(dotfile=0):
-                    return True
+                    for x in self._ignores:
+                        if path == x:
+                            break
+                    else:
+                        return True
 
     def add_target_host(self, host, destrelpath=None, finishedcallback=None):
         key = host.hostname, host.relpath 
@@ -115,10 +123,11 @@ class HostManager(object):
     def init_rsync(self, reporter):
         # send each rsync root  
         roots = self.config.getvalue_pathlist("dist_rsync_roots")
+        ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
         if roots is None:
             roots = [self.config.topdir]
         self.prepare_gateways()
-        rsync = HostRSync()
+        rsync = HostRSync(ignores=ignores)
         for root in roots: 
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:

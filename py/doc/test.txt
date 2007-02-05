@@ -693,6 +693,7 @@ The options that you need to specify in that conftest.py file are:
 
 * `dist_hosts`: a required list of host specifications
 * `dist_rsync_roots` - a list of relative locations to copy to the remote machines.
+* `dist_rsync_ignore` - a list of relative locations to ignore for rsyncing 
 * `dist_remotepython` - the remote python executable to run.
 * `dist_nicelevel` - process priority of remote nodes. 
 * `dist_boxing` - will run each single test in a separate process 
