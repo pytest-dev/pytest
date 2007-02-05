@@ -370,6 +370,130 @@ to insert ``setup_class = classmethod(setup_class)`` to make
 your setup function callable. Did we mention that lazyness
 is a virtue? 
 
+Some ``py.test`` command-line options
+=====================================
+
+Regular options
+---------------
+
+``-v, --verbose``:
+
+    Increase verbosity. This shows a test per line while running and also
+    shows the traceback after interrupting the test run with Ctrl-C.
+
+
+``-x, --exitfirst``:
+
+    exit instantly on the first error or the first failed test.
+
+
+``-s, --nocapture``:
+
+    disable catching of sys.stdout/stderr output.
+
+
+``-k KEYWORD``:
+
+    only run test items matching the given keyword expression. You can also add
+    use ``-k -KEYWORD`` to exlude tests from being run. The keyword is matched
+    against filename, test class name, method name.
+
+
+``-l, --showlocals``:
+    show locals in tracebacks: for every frame in the traceback, show the values
+    of the local variables.
+
+
+``--pdb``:
+
+    drop into pdb (the `Python debugger`_) on exceptions. If the debugger is
+    quitted, the next test is run. This implies ``-s``.
+
+
+``--tb=TBSTYLE``:
+    
+    traceback verboseness: ``long`` is the default, ``short`` are the normal
+    Python tracebacks, ``no`` omits tracebacks completely.
+
+
+``--fulltrace``:
+
+    Don't cut any tracebacks. The default is to leave out frames if an infinite
+    recursion is detected.
+
+
+``--nomagic``:
+
+    Refrain from using magic as much as possible. This can be useful if you are
+    suspicious that ``py.test`` somehow interferes with your program in
+    unintended ways (if this is the case, please contact us!).
+
+
+``--collectonly``:
+
+    Only collect tests, don't execute them.
+
+
+``--traceconfig``:
+
+    trace considerations of conftest.py files. Useful when you have various
+    conftest.py files around and are unsure about their interaction.
+
+
+More experimental options
+-------------------------
+
+**Note**: these options could change in the future.
+
+
+``-f, --looponfailing``:
+
+    Loop on failing test set. This is a feature you can use when you are trying
+    to fix a number of failing tests: First all the tests are being run. If a
+    number of tests are failing, these are run repeatedly afterwards. Every
+    repetition is started once a file below the directory that you started
+    testing for is changed. If one of the previously failing tests now passes,
+    it is removed from the test set.
+
+``--exec=EXECUTABLE``:
+
+    Python executable to run the tests with. Useful for testing on different
+    versions of Python.
+
+
+``-d, --dist``:
+
+    ad-hoc `distribute tests across machines`_ (requires conftest settings)
+
+
+``-w, --startserver``:
+
+    starts local web server for displaying test progress.
+
+
+``-r, --runbrowser``:
+
+    Run browser (implies --startserver).
+
+
+``--box``:
+
+    Use boxing: run each test in an external process. Very useful for testing
+    things that occasionally segfault (since normally the segfault then would
+    stop the whole test process).
+
+``--rest``:
+
+    `reStructured Text`_ output reporting.
+
+
+.. _`reStructured Text`: http://docutils.sourceforge.net
+.. _`Python debugger`: http://docs.python.org/lib/module-pdb.html
+
+
+.. _`distribute tests across machines`:
+
+
 Automated Distributed Testing
 ==================================
 
