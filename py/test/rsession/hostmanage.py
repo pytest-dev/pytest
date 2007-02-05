@@ -41,7 +41,9 @@ class HostInfo(object):
             import os
             targetdir = %r
             if not os.path.isabs(targetdir):
-                homedir = os.environ['HOME']
+                homedir = os.environ.get('HOME', '')
+                if not homedir:
+                    homedir = os.environ.get('HOMEPATH', '.')
                 targetdir = os.path.join(homedir, targetdir)
             if not os.path.exists(targetdir):
                 os.makedirs(targetdir)

@@ -43,7 +43,7 @@ class TestHostInfo:
         x.initgateway()
         assert x.gw
         try:
-            homedir = py.path.local(py.std.os.environ['HOME'])
+            homedir = py.path.local._gethomedir() 
             expected = homedir.join(name) 
             assert x.gw_remotepath == str(expected)
             assert x.localdest == expected 
