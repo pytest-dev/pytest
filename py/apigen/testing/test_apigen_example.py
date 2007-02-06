@@ -116,7 +116,7 @@ class AbstractBuilderTest(object):
         self.namespace_tree = namespace_tree
         self.apb = ApiPageBuilder(base, linker, self.dsa,
                                   self.fs_root.join(self.pkg_name),
-                                  namespace_tree, 'root docstring')
+                                  namespace_tree)
         self.spb = SourcePageBuilder(base, linker,
                                      self.fs_root.join(self.pkg_name))
 

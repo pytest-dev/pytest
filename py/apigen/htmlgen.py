@@ -355,15 +355,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         try:
             sourcefile = inspect.getsourcefile(cls)
         except TypeError:
-            sourcelink = 'builtin file, no source available'
-        else:
-            if sourcefile is None:
-                sourcelink = H.div('no source available')
-            else:
-                if sourcefile[-1] in ['o', 'c']:
-                    sourcefile = sourcefile[:-1]
-                sourcelink = H.div(H.a('view source',
-                    href=self.linker.get_lazyhref(sourcefile)))
+            sourcefile = None
 
         docstring = cls.__doc__
         if docstring:
@@ -375,32 +367,35 @@ class ApiPageBuilder(AbstractPageBuilder):
         bases = self.build_bases(dotted_name)
         properties = self.build_properties(cls)
         methods = self.build_methods(dotted_name)
+
+        if sourcefile is None:
+            sourcelink = H.div('no source available')
+        else:
+            if sourcefile[-1] in ['o', 'c']:
+                sourcefile = sourcefile[:-1]
+            sourcelink = H.div(H.a('view source',
+                href=self.linker.get_lazyhref(sourcefile)))
+
         snippet = H.ClassDescription(
             # XXX bases HTML
-            H.ClassDef('%s(' % (clsname,), *bases),
-            H.Docstring(docstring or '*no docstring available*'),
-            sourcelink,
-            *(properties+methods)
+            H.ClassDef(clsname, bases, docstring, sourcelink,
+                       properties, methods),
         )
 
         return snippet
 
     def build_bases(self, dotted_name):
-        basehtml = []
+        ret = []
         bases = self.dsa.get_possible_base_classes(dotted_name)
         for base in bases:
             try:
                 obj = self.dsa.get_obj(base.name)
             except KeyError:
-                basehtml.append(base.name)
+                ret.append((base.name, None))
             else:
                 href = self.linker.get_lazyhref(base.name)
-                basehtml.append(H.BaseDescription(base.name, href=href))
-            basehtml.append(',')
-        if basehtml:
-            basehtml.pop()
-        basehtml.append('):')
-        return basehtml
+                ret.append((base.name, href))
+        return ret
 
     def build_properties(self, cls):
         properties = []
@@ -411,24 +406,17 @@ class ApiPageBuilder(AbstractPageBuilder):
                     val = '<property object (dynamically calculated value)>'
                 properties.append((attr, val))
         properties.sort(key=lambda a: a[0]) # sort on name
-        ret = []
-        if properties:
-            ret.append(H.h2('properties:'))
-            for name, val in properties:
-                ret.append(H.PropertyDescription(name, val))
-        return ret
+        return properties
 
     def build_methods(self, dotted_name):
         ret = []
         methods = self.dsa.get_class_methods(dotted_name)
-        if methods:
-            ret.append(H.h2('methods:'))
-            if '__init__' in methods:
-                methods.remove('__init__')
-                methods.insert(0, '__init__')
-            for method in methods:
-                ret += self.build_callable_view('%s.%s' % (dotted_name,
-                                                           method))
+        if '__init__' in methods:
+            methods.remove('__init__')
+            methods.insert(0, '__init__')
+        for method in methods:
+            ret += self.build_callable_view('%s.%s' % (dotted_name,
+                                                       method))
         return ret
 
     def build_namespace_view(self, namespace_dotted_name, item_dotted_names):
@@ -455,6 +443,8 @@ class ApiPageBuilder(AbstractPageBuilder):
     def prepare_class_pages(self, classes_dotted_names):
         passed = []
         for dotted_name in sorted(classes_dotted_names):
+            #if self.capture:
+            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             try:
                 sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -471,6 +461,8 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_class_pages(self, data, project):
         """ build the full api pages for a set of classes """
         for dotted_name, tag, nav, reltargetpath in data:
+            #if self.capture:
+            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
             title = 'api documentation for %s' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
@@ -497,6 +489,8 @@ class ApiPageBuilder(AbstractPageBuilder):
     def prepare_function_pages(self, method_dotted_names):
         passed = []
         for dotted_name in sorted(method_dotted_names):
+            #if self.capture:
+            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             # XXX should we create a build_function_view instead?
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -509,6 +503,8 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_function_pages(self, data, project):
         for dotted_name, tag, nav, reltargetpath in data:
+            #if self.capture:
+            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
             title = 'api documentation for %s' % (dotted_name,)
             self.write_page(title, reltargetpath, project, tag, nav)
 
@@ -521,6 +517,8 @@ class ApiPageBuilder(AbstractPageBuilder):
         function_names = self.dsa.get_function_names()
         class_names = self.dsa.get_class_names()
         for dotted_name in sorted(names):
+            #if self.capture:
+            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             if dotted_name in function_names or dotted_name in class_names:
                 continue
             subitem_dotted_names = self.namespace_tree[dotted_name]
@@ -537,6 +535,8 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_namespace_pages(self, data, project):
         for dotted_name, tag, nav, reltargetpath in data:
+            #if self.capture:
+            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
             if dotted_name == '':
                 dotted_name = self.dsa.get_module_name().split('/')[-1]
             title = 'index of %s namespace' % (dotted_name,)

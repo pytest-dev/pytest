@@ -23,7 +23,25 @@ class H(html):
         pass
 
     class ClassDef(html.h1):
-        pass
+        def __init__(self, classname, bases, docstring, sourcelink,
+                     properties, methods):
+            super(H.ClassDef, self).__init__('class %s(' % classname,)
+            for name, href in bases:
+                link = name
+                if href is not None:
+                    link = H.a(name, href=href)
+                self.append(H.BaseDescription(link))
+            self.append('):')
+            self.append(H.Docstring(docstring or '*no docstring available*'))
+            self.append(sourcelink)
+            if properties:
+                self.append(H.h2('properties:'))
+                for name, val in properties:
+                    self.append(H.PropertyDescription(name, val))
+            if methods:
+                self.append(H.h2('methods:'))
+                for methodhtml in methods:
+                    self.append(methodhtml)
 
     class MethodDescription(Description):
         pass
