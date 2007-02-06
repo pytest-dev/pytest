@@ -303,7 +303,7 @@ class ExportedMethods(BasicExternal):
     def _host_ready(self, event):
         self.pending_events.put(event)
 
-    def report_HostRSyncRoots(self, item):
+    def report_HostGatewayReady(self, item):
         self.to_rsync[item.host] = len(item.roots)
 
     def report_HostRSyncRootReady(self, item):

@@ -63,6 +63,9 @@ class RestReporter(AbstractReporter):
     def report_ImmediateFailure(self, item):
         pass
 
+    def report_HostGatewayReady(self, item):
+        self.to_rsync[item.host] = len(item.roots)
+
     def report_ItemStart(self, event):
         item = event.item
         if isinstance(item, py.test.collect.Module):

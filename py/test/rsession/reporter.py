@@ -60,8 +60,10 @@ class AbstractReporter(object):
         print "%10s: RSYNC ==> %s" % (item.host.hostname[:10],
                                       item.host.relpath)
 
-    def report_HostRSyncRoots(self, item):
+    def report_HostGatewayReady(self, item):
         self.to_rsync[item.host] = len(item.roots)
+        self.out.write("%10s: gateway initialised (PYTHONPATH = %s)\n"\
+                       % (item.host.hostname, item.host.gw_remotepath))
 
     def report_HostRSyncRootReady(self, item):
         self.to_rsync[item.host] -= 1

@@ -120,18 +120,17 @@ class HostManager(object):
             roots = [self.config.topdir]
         self.roots = roots
 
-    def prepare_gateways(self):
+    def prepare_gateways(self, reporter):
         dist_remotepython = self.config.getvalue("dist_remotepython")
         for host in self.hosts:
             host.initgateway(python=dist_remotepython)
+            reporter(repevent.HostGatewayReady(host, self.roots))
             host.gw.host = host
 
     def init_rsync(self, reporter):
         # send each rsync root
         ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
-        self.prepare_gateways()
-        for host in self.hosts:
-            reporter(repevent.HostRSyncRoots(host, self.roots))
+        self.prepare_gateways(reporter)
         for root in self.roots:
             rsync = HostRSync(ignores=ignores)
             destrelpath = root.relto(self.config.topdir)

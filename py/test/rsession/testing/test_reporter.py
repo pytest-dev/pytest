@@ -162,7 +162,7 @@ class AbstractTestReporter(object):
         r = self.reporter(config, hosts)
         r.report(repevent.TestStarted(hosts, config.topdir, ["a", "b", "c"]))
         for host in hosts:
-            r.report(repevent.HostRSyncRoots(host, ["a", "b", "c"]))
+            r.report(repevent.HostGatewayReady(host, ["a", "b", "c"]))
         for host in hosts:
             for root in ["a", "b", "c"]:
                 r.report(repevent.HostRSyncRootReady(host, root))

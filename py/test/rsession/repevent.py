@@ -77,7 +77,7 @@ class HostRSyncing(ReportEvent):
     def __init__(self, host):
         self.host = host
 
-class HostRSyncRoots(ReportEvent):
+class HostGatewayReady(ReportEvent):
     def __init__(self, host, roots):
         self.host = host
         self.roots = roots

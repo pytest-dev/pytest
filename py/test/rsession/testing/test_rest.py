@@ -60,7 +60,7 @@ class TestRestUnits(object):
     def test_report_HostRSyncRootReady(self):
         h = HostInfo('localhost')
         reporter.hosts_to_rsync = 1
-        reporter.report(repevent.HostRSyncRoots(h, ["a"]))
+        reporter.report(repevent.HostGatewayReady(h, ["a"]))
         event = repevent.HostRSyncRootReady(h, "a")
         reporter.report(event)
         assert stdout.getvalue() == '::\n\n   localhost: READY\n\n'
