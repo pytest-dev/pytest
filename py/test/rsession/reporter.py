@@ -26,6 +26,7 @@ class AbstractReporter(object):
         self.failed = dict([(host, 0) for host in hosts])
         self.skipped = dict([(host, 0) for host in hosts])
         self.passed = dict([(host, 0) for host in hosts])
+        self.to_rsync = {}
 
     def get_item_name(self, event, colitem):
         return "/".join(colitem.listnames())
@@ -58,8 +59,16 @@ class AbstractReporter(object):
     def report_HostRSyncing(self, item):
         print "%10s: RSYNC ==> %s" % (item.host.hostname[:10],
                                       item.host.relpath)
+
+    def report_HostRSyncRoots(self, item):
+        self.to_rsync[item.host] = len(item.roots)
+
+    def report_HostRSyncRootReady(self, item):
+        self.to_rsync[item.host] -= 1
+        if not self.to_rsync[item.host]:
+            self._host_ready(item)
     
-    def report_HostReady(self, item):
+    def _host_ready(self, item):
         self.hosts_to_rsync -= 1
         if self.hosts_to_rsync:
             print "%10s: READY (still %d to go)" % (item.host.hostname[:10],

@@ -77,9 +77,15 @@ class HostRSyncing(ReportEvent):
     def __init__(self, host):
         self.host = host
 
-class HostReady(ReportEvent):
-    def __init__(self, host):
+class HostRSyncRoots(ReportEvent):
+    def __init__(self, host, roots):
         self.host = host
+        self.roots = roots
+
+class HostRSyncRootReady(ReportEvent):
+    def __init__(self, host, root):
+        self.host = host
+        self.root = root
 
 class TestStarted(ReportEvent):
     def __init__(self, hosts):

@@ -80,9 +80,9 @@ class TestRSessionRemote(DirSetup):
                 pass
             def test_5():
                 assert __file__ != '%s'
-            def test_6():
-                import py
-                assert py.__file__ != '%s'
+            #def test_6():
+            #    import py
+            #    assert py.__file__ != '%s'
         """ % (tmpdir.join(subdir), py.__file__)))
         destdir.join("py").mksymlinkto(py.path.local(py.__file__).dirpath())
         config = py.test.config._reparse([tmpdir.join(subdir)])
@@ -98,8 +98,8 @@ class TestRSessionRemote(DirSetup):
         passevents = [i for i in testevents if i.outcome.passed]
         failevents = [i for i in testevents if i.outcome.excinfo]
         skippedevents = [i for i in testevents if i.outcome.skipped]
-        assert len(testevents) == 6
-        assert len(passevents) == 3
+        assert len(testevents) == 5
+        assert len(passevents) == 2
         assert len(failevents) == 3
         tb = failevents[0].outcome.excinfo.traceback
         assert str(tb[0].path).find("test_one") != -1
@@ -130,7 +130,7 @@ class TestRSessionRemote(DirSetup):
                 if isinstance(i, repevent.HostRSyncing)]
         assert len(count_rsyn_calls) == len([i for i in hosts])
         count_ready_calls = [i for i in setup_events 
-                if isinstance(i, repevent.HostReady)]
+                if isinstance(i, repevent.HostRSyncRootReady)]
         assert len(count_ready_calls) == len([i for i in hosts])
         
         # same for teardown events

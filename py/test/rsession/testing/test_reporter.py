@@ -161,9 +161,11 @@ class AbstractTestReporter(object):
         hosts = [HostInfo(i) for i in ["host1", "host2", "host3"]]
         r = self.reporter(config, hosts)
         r.report(repevent.TestStarted(hosts))
-        r.report(repevent.HostReady(hosts[0]))
-        r.report(repevent.HostReady(hosts[1]))
-        r.report(repevent.HostReady(hosts[2]))
+        for host in hosts:
+            r.report(repevent.HostRSyncRoots(host, ["a", "b", "c"]))
+        for host in hosts:
+            for root in ["a", "b", "c"]:
+                r.report(repevent.HostRSyncRootReady(host, root))
         out, err = cap.reset()
         assert not err
         expected1 = "Test started, hosts: host1, host2, host3"

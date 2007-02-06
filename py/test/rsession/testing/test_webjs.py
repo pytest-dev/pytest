@@ -1,5 +1,7 @@
 import py
 
+py.test.skip("WIP")
+
 try:
     import pypy
     from pypy.translator.js.modules import dom

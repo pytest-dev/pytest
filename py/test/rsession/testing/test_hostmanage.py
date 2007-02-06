@@ -179,6 +179,7 @@ class TestHostManager(DirSetup):
         assert not self.dest.join("dir6").check()
 
     def test_hostmanager_rsync_reported_once(self):
+        py.test.skip("XXX not needed any more")
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
         dir5 = self.source.ensure("dir5", "dir6", "bogus")
         dirf = self.source.ensure("dir3", "file")

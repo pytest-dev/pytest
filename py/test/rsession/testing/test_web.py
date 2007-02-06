@@ -3,6 +3,7 @@
 """
 
 import py
+py.test.skip("WIP")
 
 try:
     from pypy.translator.js.main import rpython2javascript

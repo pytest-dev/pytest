@@ -122,21 +122,6 @@ class HostManager(object):
             host.initgateway(python=dist_remotepython)
             host.gw.host = host
 
-    def _send_rsync(self, root, reporter, ignores, make_callback=False):
-        rsync = HostRSync(ignores=ignores)
-        destrelpath = root.relto(self.config.topdir)
-        for host in self.hosts:
-            reporter(repevent.HostRSyncing(host))
-            if make_callback:
-                def donecallback():
-                    reporter(repevent.HostReady(host))
-            else:
-                donecallback = None
-            rsync.add_target_host(host, destrelpath, 
-                                  finishedcallback=donecallback)
-        rsync.send(root)
-
-
     def init_rsync(self, reporter):
         # send each rsync root
         roots = self.config.getvalue_pathlist("dist_rsync_roots")
@@ -144,9 +129,18 @@ class HostManager(object):
         if roots is None:
             roots = [self.config.topdir]
         self.prepare_gateways()
-        for root in roots[:-1]:
-            self._send_rsync(root, reporter, ignores)
-        self._send_rsync(roots[-1], reporter, ignores, True)
+        for host in self.hosts:
+            reporter(repevent.HostRSyncRoots(host, roots))
+        for root in roots:
+            rsync = HostRSync(ignores=ignores)
+            destrelpath = root.relto(self.config.topdir)
+            for host in self.hosts:
+                reporter(repevent.HostRSyncing(host))
+                def donecallback():
+                    reporter(repevent.HostRSyncRootReady(host, root))
+                rsync.add_target_host(host, destrelpath, 
+                                  finishedcallback=donecallback)
+            rsync.send(root)
 
     def setup_hosts(self, reporter):
         self.init_rsync(reporter)

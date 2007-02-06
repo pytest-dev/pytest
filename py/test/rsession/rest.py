@@ -46,7 +46,7 @@ class RestReporter(AbstractReporter):
         self.add_rest(LiteralBlock('%10s: RSYNC ==> %s' % (item.host.hostname[:10],
                                                         item.host.relpath)))
 
-    def report_HostReady(self, item):
+    def _host_ready(self, item):
         self.add_rest(LiteralBlock('%10s: READY' % (item.host.hostname[:10],)))
 
     def report_TestStarted(self, event):

@@ -57,8 +57,11 @@ class TestRestUnits(object):
         assert stdout.getvalue() == ('::\n\n   localhost: RSYNC ==> '
                                      '/foo/bar\n\n')
 
-    def test_report_HostReady(self):
-        event = repevent.HostReady(HostInfo('localhost'))
+    def test_report_HostRSyncRootReady(self):
+        h = HostInfo('localhost')
+        reporter.hosts_to_rsync = 1
+        reporter.report(repevent.HostRSyncRoots(h, ["a"]))
+        event = repevent.HostRSyncRootReady(h, "a")
         reporter.report(event)
         assert stdout.getvalue() == '::\n\n   localhost: READY\n\n'
 

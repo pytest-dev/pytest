@@ -176,7 +176,7 @@ def test_slave_running_interrupted():
         gw.host = HostInfo("localhost")
         gw.host.gw = gw
         config = py.test.config._reparse([tmpdir])
-        channel = setup_slave(gw, pkgdir, config)
+        channel = setup_slave(gw.host, config)
         mn = MasterNode(channel, reports.append, {})
         return mn, gw, channel
 
