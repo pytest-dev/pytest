@@ -115,6 +115,10 @@ class HostManager(object):
             hosts = self.config.getvalue("dist_hosts")
             hosts = [HostInfo(x) for x in hosts]
         self.hosts = hosts
+        roots = self.config.getvalue_pathlist("dist_rsync_roots")
+        if roots is None:
+            roots = [self.config.topdir]
+        self.roots = roots
 
     def prepare_gateways(self):
         dist_remotepython = self.config.getvalue("dist_remotepython")
@@ -124,14 +128,11 @@ class HostManager(object):
 
     def init_rsync(self, reporter):
         # send each rsync root
-        roots = self.config.getvalue_pathlist("dist_rsync_roots")
         ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
-        if roots is None:
-            roots = [self.config.topdir]
         self.prepare_gateways()
         for host in self.hosts:
-            reporter(repevent.HostRSyncRoots(host, roots))
-        for root in roots:
+            reporter(repevent.HostRSyncRoots(host, self.roots))
+        for root in self.roots:
             rsync = HostRSync(ignores=ignores)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:

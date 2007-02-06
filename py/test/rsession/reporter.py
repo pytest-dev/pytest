@@ -82,6 +82,11 @@ class AbstractReporter(object):
         self.hosts_to_rsync = len(item.hosts)
         self.out.sep("=", txt)
         self.timestart = item.timestart
+        self.out.write("Root directory: %s\n" % item.topdir)
+        roots = [str(i.relto(item.topdir)) for i in item.roots]
+        self.out.write("To rsync:\n")
+        for root in roots:
+            self.out.write("    => %s\n" % root)
 
     def report_RsyncFinished(self, item):
         self.timersync = item.time

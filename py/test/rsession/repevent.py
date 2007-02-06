@@ -88,8 +88,10 @@ class HostRSyncRootReady(ReportEvent):
         self.root = root
 
 class TestStarted(ReportEvent):
-    def __init__(self, hosts):
+    def __init__(self, hosts, topdir, roots):
         self.hosts = hosts
+        self.topdir = topdir
+        self.roots = roots
         self.timestart = time.time()
 
 class TestFinished(ReportEvent):

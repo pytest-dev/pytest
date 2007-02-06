@@ -142,7 +142,7 @@ class AbstractTestReporter(object):
             rootcol = py.test.collect.Directory(tmpdir)
             host = HostInfo('localhost')
             r = self.reporter(config, [host])
-            r.report(repevent.TestStarted([host]))
+            r.report(repevent.TestStarted([host], config.topdir, ["a"]))
             r.report(repevent.RsyncFinished())
             list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
             r.report(repevent.TestFinished())
@@ -160,7 +160,7 @@ class AbstractTestReporter(object):
         config = py.test.config._reparse([str(tmpdir)])
         hosts = [HostInfo(i) for i in ["host1", "host2", "host3"]]
         r = self.reporter(config, hosts)
-        r.report(repevent.TestStarted(hosts))
+        r.report(repevent.TestStarted(hosts, config.topdir, ["a", "b", "c"]))
         for host in hosts:
             r.report(repevent.HostRSyncRoots(host, ["a", "b", "c"]))
         for host in hosts:

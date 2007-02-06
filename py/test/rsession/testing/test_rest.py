@@ -66,8 +66,9 @@ class TestRestUnits(object):
         assert stdout.getvalue() == '::\n\n   localhost: READY\n\n'
 
     def test_report_TestStarted(self):
-        event = repevent.TestStarted(hosts=[HostInfo('localhost'),
-                                          HostInfo('foo.com')])
+        event = repevent.TestStarted([HostInfo('localhost'),
+                                          HostInfo('foo.com')],
+                                     "aa", ["a", "b"])
         reporter.report(event)
         assert stdout.getvalue() == """\
 ===========================================

@@ -132,7 +132,8 @@ class RSession(AbstractSession):
             hm.hosts, RemoteReporter)
         reporter, checkfun = self.wrap_reporter(reporter)
 
-        reporter(repevent.TestStarted(hm.hosts))
+        reporter(repevent.TestStarted(hm.hosts, self.config.topdir,
+                                      hm.roots))
 
         try:
             nodes = hm.setup_hosts(reporter)
@@ -186,7 +187,7 @@ class LSession(AbstractSession):
             hosts, LocalReporter, args[0])
         reporter, checkfun = self.wrap_reporter(reporter)
         
-        reporter(repevent.TestStarted(hosts))
+        reporter(repevent.TestStarted(hosts, self.config.topdir, []))
         colitems = self.config.getcolitems()
         reporter(repevent.RsyncFinished())
 
