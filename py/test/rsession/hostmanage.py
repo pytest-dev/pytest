@@ -73,7 +73,8 @@ class HostRSync(py.execnet.RSync):
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
-        super(HostRSync, self).__init__(delete=True)
+        kwargs['delete'] = True
+        super(HostRSync, self).__init__(**kwargs)
 
     def filter(self, path):
         path = py.path.local(path)
@@ -129,7 +130,8 @@ class HostManager(object):
         ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
         self.prepare_gateways(reporter)
         for root in self.roots:
-            rsync = HostRSync(ignores=ignores)
+            rsync = HostRSync(ignores=ignores, 
+                              verbose=self.config.option.verbose)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:
                 def donecallback():
