@@ -94,7 +94,6 @@ class HostRSync(py.execnet.RSync):
             if finishedcallback:
                 finishedcallback()
             return False
-        reporter(repevent.HostRSyncing(host))
         self._synced[key] = True
         # the follow attributes are set from host.initgateway()
         gw = host.gw
@@ -104,7 +103,7 @@ class HostRSync(py.execnet.RSync):
         super(HostRSync, self).add_target(gw, 
                                           remotepath, 
                                           finishedcallback)
-        return True # added the target
+        return remotepath 
 
 class HostManager(object):
     def __init__(self, config, hosts=None):
@@ -136,8 +135,9 @@ class HostManager(object):
             for host in self.hosts:
                 def donecallback():
                     reporter(repevent.HostRSyncRootReady(host, root))
-                rsync.add_target_host(host, reporter, destrelpath, 
-                                  finishedcallback=donecallback)
+                remotepath = rsync.add_target_host(
+                    host, reporter, destrelpath, finishedcallback=donecallback)
+                reporter(repevent.HostRSyncing(host, root, remotepath))
             rsync.send(root)
 
     def setup_hosts(self, reporter):

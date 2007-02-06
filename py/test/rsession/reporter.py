@@ -58,8 +58,13 @@ class AbstractReporter(object):
     
     def report_HostRSyncing(self, item):
         hostrepr = self._hostrepr(item.host)
-        print "%15s: RSYNC ==> %s" % (hostrepr, 
-                                      item.host.relpath)
+        if not item.remotepath:
+            print "%15s: skip duplicate rsync of %r" % (
+                    hostrepr, item.root.basename)
+        else:
+            print "%15s: rsync %r to remote %s" % (hostrepr, 
+                                                   item.root.basename, 
+                                                   item.remotepath)
 
     def report_HostGatewayReady(self, item):
         self.to_rsync[item.host] = len(item.roots)
