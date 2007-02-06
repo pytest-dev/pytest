@@ -1,5 +1,10 @@
+#apigen-content {
+  font-size: 0.8em;
+}
+
 div.sidebar {
   font-family: Verdana, Helvetica, Arial, sans-serif;
+  font-size: 0.9em;
   width: 155px;
   vertical-align: top;
   margin-top: 0.5em;

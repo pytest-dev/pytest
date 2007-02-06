@@ -47,13 +47,54 @@ def test_enumerate_and_color():
     colored = htmlgen.enumerate_and_color(['def foo():', '  print "bar"'], 0,
                                           'ascii')
     div = py.xml.html.div(*colored).unicode(indent=0)
-    assert div == ('<div>'
-                   '<span>   1: </span>'
-                   '<span class="alt_keyword">def</span> foo():\n'
-                   '<span>   2: </span>'
-                   '  <span class="keyword">print</span>'
-                   ' <span class="string">&quot;bar&quot;</span>\n'
-                   '</div>')
+    print repr(div)
+    assert div == (u'<div>'
+                    '<table style="float: left">'
+                    '<tbody>'
+                    '<tr><td class="lineno">1</td></tr>'
+                    '<tr><td class="lineno">2</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '<table>'
+                    '<tbody>'
+                    '<tr><td class="code">'
+                    '<span class="alt_keyword">def</span> foo():'
+                    '</td></tr>'
+                    '<tr><td class="code">'
+                    '  <span class="keyword">print</span>'
+                    ' <span class="string">&quot;bar&quot;</span>'
+                    '</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '</div>')
+
+def test_enumerate_and_color_multiline():
+    colored = htmlgen.enumerate_and_color(['code = """\\', 'foo bar', '"""'],
+                                          0, 'ascii')
+    div = py.xml.html.div(*colored).unicode(indent=0)
+    print repr(div)
+    assert div == (u'<div>'
+                    '<table style="float: left">'
+                    '<tbody>'
+                    '<tr><td class="lineno">1</td></tr>'
+                    '<tr><td class="lineno">2</td></tr>'
+                    '<tr><td class="lineno">3</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '<table>'
+                    '<tbody>'
+                    '<tr><td class="code">'
+                    'code = <span class="string">&quot;&quot;&quot;\\</span>'
+                    '</td></tr>'
+                    '<tr><td class="code">'
+                    '<span class="string">foo bar</span>'
+                    '</td></tr>'
+                    '<tr><td class="code">'
+                    '<span class="string">&quot;&quot;&quot;</span>'
+                    '</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '</div>')
 
 def test_show_property():
     assert htmlgen.show_property('foo')

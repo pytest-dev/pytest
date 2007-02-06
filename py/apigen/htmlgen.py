@@ -115,32 +115,65 @@ def create_namespace_tree(dotted_names):
                 ret[ns].append(itempath)
     return ret
 
-def wrap_page(project, title, contentel, navel, relbase, basepath):
-    page = LayoutPage(project, title, nav=navel, encoding='UTF-8',
+def wrap_page(project, title, contentel, navel, relbase, basepath,
+              pageclass):
+    page = pageclass(project, title, nav=navel, encoding='UTF-8',
                       relpath=relbase)
     page.set_content(contentel)
     page.setup_scripts_styles(basepath)
     return page
 
+def enumerate_and_color(codelines, firstlineno, enc):
+    snippet = H.SourceCode()
+    tokenizer = source_color.Tokenizer(source_color.PythonSchema)
+    for i, line in enumerate(codelines):
+        try:
+            snippet.add_line(i + firstlineno + 1,
+                             source_html.prepare_line([line], tokenizer, enc))
+        except py.error.ENOENT:
+            # error reading source code, giving up
+            snippet = org
+            break
+    return snippet
+
+def get_obj(pkg, dotted_name):
+    full_dotted_name = '%s.%s' % (pkg.__name__, dotted_name)
+    if dotted_name == '':
+        return pkg
+    path = dotted_name.split('.')
+    ret = pkg
+    for item in path:
+        marker = []
+        ret = getattr(ret, item, marker)
+        if ret is marker:
+            raise NameError('can not access %s in %s' % (item,
+                                                         full_dotted_name))
+    return ret
+
 # the PageBuilder classes take care of producing the docs (using the stuff
 # above)
 class AbstractPageBuilder(object):
+    pageclass = LayoutPage
+    
     def write_page(self, title, reltargetpath, project, tag, nav):
         targetpath = self.base.join(reltargetpath)
         relbase= relpath('%s%s' % (targetpath.dirpath(), targetpath.sep),
                          self.base.strpath + '/')
-        page = wrap_page(project, title, tag, nav, relbase, self.base)
+        page = wrap_page(project, title, tag, nav, relbase, self.base,
+                         self.pageclass)
         content = self.linker.call_withbase(reltargetpath, page.unicode)
         targetpath.ensure()
         targetpath.write(content.encode("utf8"))
 
 class SourcePageBuilder(AbstractPageBuilder):
     """ builds the html for a source docs page """
-    def __init__(self, base, linker, projroot, capture=None):
+    def __init__(self, base, linker, projroot, capture=None,
+                 pageclass=LayoutPage):
         self.base = base
         self.linker = linker
         self.projroot = projroot
         self.capture = capture
+        self.pageclass = pageclass
     
     def build_navigation(self, fspath):
         nav = H.Navigation(class_='sidebar')
@@ -191,7 +224,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         source = fspath.read()
         sep = get_linesep(source)
         colored = enumerate_and_color(source.split(sep), 0, enc)
-        tag = H.SourceDef(*colored)
+        tag = H.SourceDef(colored)
         nav = self.build_navigation(fspath)
         return tag, nav
 
@@ -260,38 +293,10 @@ class SourcePageBuilder(AbstractPageBuilder):
                                                                 '/')
             self.write_page(title, reltargetpath, project, tag, nav)
 
-def enumerate_and_color(codelines, firstlineno, enc):
-    tokenizer = source_color.Tokenizer(source_color.PythonSchema)
-    colored = []
-    for i, line in enumerate(codelines):
-        try:
-            colored.append(H.span('%04s: ' % (i + firstlineno + 1)))
-            colored.append(source_html.prepare_line([line], tokenizer, enc))
-            colored.append('\n')
-        except py.error.ENOENT:
-            # error reading source code, giving up
-            colored = org
-            break
-    return colored
-
-def get_obj(pkg, dotted_name):
-    full_dotted_name = '%s.%s' % (pkg.__name__, dotted_name)
-    if dotted_name == '':
-        return pkg
-    path = dotted_name.split('.')
-    ret = pkg
-    for item in path:
-        marker = []
-        ret = getattr(ret, item, marker)
-        if ret is marker:
-            raise NameError('can not access %s in %s' % (item,
-                                                         full_dotted_name))
-    return ret
-
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
     def __init__(self, base, linker, dsa, projroot, namespace_tree,
-                 capture=None):
+                 capture=None, pageclass=LayoutPage):
         self.base = base
         self.linker = linker
         self.dsa = dsa
@@ -299,6 +304,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         self.projpath = py.path.local(projroot)
         self.namespace_tree = namespace_tree
         self.capture = capture
+        self.pageclass = pageclass
 
         pkgname = self.dsa.get_module_name().split('/')[-1]
         self.pkg = __import__(pkgname)
@@ -327,7 +333,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             firstlineno = func.func_code.co_firstlineno
             sep = get_linesep(callable_source)
             org = callable_source.split(sep)
-            colored = enumerate_and_color(org, firstlineno, enc)
+            colored = [enumerate_and_color(org, firstlineno, enc)]
             text = 'source: %s' % (sourcefile,)
             if is_in_pkg:
                 href = self.linker.get_lazyhref(sourcefile)
@@ -657,11 +663,12 @@ class ApiPageBuilder(AbstractPageBuilder):
                 else:
                     enc = 'latin-1'
                     sourcelink = H.div(linktext)
-                colored = enumerate_and_color(mangled, frame.firstlineno, enc)
+                colored = [enumerate_and_color(mangled,
+                                               frame.firstlineno, enc)]
             else:
                 sourcelink = H.div('source unknown (%s)' % (sourcefile,))
                 colored = mangled[:]
             tbdiv.append(sourcelink)
-            tbdiv.append(H.div(class_='code', *colored))
+            tbdiv.append(H.div(*colored))
         return tbdiv
 

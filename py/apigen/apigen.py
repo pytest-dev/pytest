@@ -12,6 +12,8 @@ from py.__.apigen import linker
 from py.__.apigen import project
 from py.__.apigen.tracer.docstorage import pkg_to_dict
 
+from layout import LayoutPage
+
 def get_documentable_items_pkgdir(pkgdir):
     """ get all documentable items from an initpkg pkgdir
     
@@ -31,20 +33,27 @@ def get_documentable_items(pkgdir):
     return pkgname, pkgdict
 
 def build(pkgdir, dsa, capture):
+    # create a linker (link database) for cross-linking
     l = linker.Linker()
+
+    # create a project.Project instance to contain the LayoutPage instances
     proj = project.Project()
 
+    # output dir
     if 'APIGEN_TARGET' in os.environ:
         targetdir = py.path.local(os.environ['APIGEN_TARGET'])
     else:
         targetdir = pkgdir.dirpath().join('apigen')
     targetdir.ensure(dir=True)
 
+    # find out what to build
     all_names = dsa._get_names(filter=lambda x, y: True)
     namespace_tree = htmlgen.create_namespace_tree(all_names)
+
+    # and build it
     apb = htmlgen.ApiPageBuilder(targetdir, l, dsa, pkgdir, namespace_tree,
-                                 capture)
-    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, capture)
+                                 capture, LayoutPage)
+    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, capture, LayoutPage)
 
     capture.err.writeorg('preparing namespace pages\n')
     ns_data = apb.prepare_namespace_pages()

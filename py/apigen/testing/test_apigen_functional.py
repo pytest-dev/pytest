@@ -26,6 +26,14 @@ def setup_fs_project(name):
             def get_somevar(self):
                 " get_somevar docstring "
                 return self.somevar
+            
+            def get_some_source(self):
+                ret = py.code.Source('''\\
+                    def foo():
+                      return 'bar'
+                ''')
+                return ret
+
     """))
     temp.ensure('pak/sometestsubclass.py').write(py.code.Source("""\
         from sometestclass import SomeTestClass

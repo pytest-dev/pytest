@@ -4,7 +4,8 @@ from py.xml import html
 # HTML related stuff
 class H(html):
     class Content(html.div):
-        pass # style = html.Style(margin_left='15em')
+        def __init__(self, *args):
+            super(H.Content, self).__init__(id='apigen-content', *args)
 
     class Description(html.div):
         pass
@@ -88,12 +89,29 @@ class H(html):
             if href:
                 link = H.a(text, href=href)
             super(H.SourceSnippet, self).__init__(
-                link, H.div(class_='code', *sourceels))
+                link, H.div(*sourceels))
     
     class SourceDef(html.div):
         def __init__(self, *sourceels):
             super(H.SourceDef, self).__init__(
-                H.div(class_='code', *sourceels))
+                H.div(*sourceels))
+
+    class SourceCode(html.div):
+        style = html.Style(margin_top='1em', margin_bottom='1em')
+        def __init__(self):
+            self.linenotable = lntable = H.table(style='float: left')
+            self.linenotbody = lntbody = H.tbody()
+            lntable.append(lntbody)
+
+            self.linetable = ltable = H.table()
+            self.linetbody = ltbody = H.tbody()
+            ltable.append(ltbody)
+            
+            super(H.SourceCode, self).__init__(lntable, ltable)
+
+        def add_line(self, lineno, els):
+            self.linenotbody.append(H.tr(H.td(lineno, class_='lineno')))
+            self.linetbody.append(H.tr(H.td(class_='code', *els)))
 
     class NonPythonSource(html.pre):
         pass # style = html.Style(margin_left='15em')
