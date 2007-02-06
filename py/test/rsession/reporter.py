@@ -85,10 +85,9 @@ class AbstractReporter(object):
         self.out.sep("=", txt)
         self.timestart = item.timestart
         self.out.write("local top directory: %s\n" % item.topdir)
-        roots = [str(i.relto(item.topdir)) for i in item.roots]
-        for i, root in py.builtin.enumerate(roots):
-            outof = "%d/%d" %(i+1, len(roots))
-            self.out.write("local RSync root [%s] %s\n" % 
+        for i, root in py.builtin.enumerate(item.roots):
+            outof = "%d/%d" %(i+1, len(item.roots))
+            self.out.write("local RSync root [%s]: %s\n" % 
                            (outof, root))
 
     def report_RsyncFinished(self, item):
