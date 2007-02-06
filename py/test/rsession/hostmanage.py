@@ -37,22 +37,17 @@ class HostInfo(object):
             gw = py.execnet.SshGateway(self.hostname, 
                                        remotepython=python)
         self.gw = gw
-        channel = gw.remote_exec(py.code.Source(gethomedir, """
+        channel = gw.remote_exec(py.code.Source(
+            gethomedir, 
+            getpath_relto_home, """
             import os
-            targetdir = %r
-            homedir = gethomedir()
-            if not os.path.isabs(targetdir):
-                targetdir = os.path.join(homedir, targetdir)
-            if not os.path.exists(targetdir):
-                os.makedirs(targetdir)
-            os.chdir(homedir)
-            channel.send(targetdir)
-        """ % self.relpath))
+            os.chdir(gethomedir())
+            newdir = getpath_relto_home(%r)
+            # we intentionally don't ensure that 'newdir' exists 
+            channel.send(newdir)
+            """ % str(self.relpath)
+        ))
         self.gw_remotepath = channel.receive()
-        #print "initialized", gw, "with remotepath", self.gw_remotepath
-        if self.hostname == "localhost":
-            self.localdest = py.path.local(self.gw_remotepath)
-            assert self.localdest.check(dir=1)
 
     def __str__(self):
         return "<HostInfo %s:%s>" % (self.hostname, self.relpath)
@@ -186,3 +181,10 @@ def gethomedir():
     if not homedir:
         homedir = os.environ.get('HOMEPATH', '.')
     return homedir
+
+def getpath_relto_home(targetpath):
+    import os
+    if not os.path.isabs(targetpath):
+        homedir = gethomedir()
+        targetpath = os.path.join(homedir, targetpath)
+    return targetpath

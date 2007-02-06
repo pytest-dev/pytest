@@ -3,8 +3,8 @@
 """
 
 import py
-from py.__.test.rsession.hostmanage import HostRSync 
-from py.__.test.rsession.hostmanage import HostInfo, HostManager
+from py.__.test.rsession.hostmanage import HostRSync, HostInfo, HostManager
+from py.__.test.rsession.hostmanage import gethomedir, getpath_relto_home
 from py.__.test.rsession import repevent
 
 class DirSetup:
@@ -14,7 +14,15 @@ class DirSetup:
         self.source = self.tmpdir.ensure("source", dir=1)
         self.dest = self.tmpdir.join("dest")
 
-class TestHostInfo:
+class TestHostInfo(DirSetup):
+    def _gethostinfo(self, relpath=""):
+        exampledir = self.tmpdir.join("gethostinfo")
+        if relpath:
+            exampledir = exampledir.join(relpath)
+        assert not exampledir.check()
+        hostinfo = HostInfo("localhost:%s" % exampledir)
+        return hostinfo
+
     def test_defaultpath(self):
         x = HostInfo("localhost")
         assert x.hostname == "localhost"
@@ -39,54 +47,60 @@ class TestHostInfo:
                        host.initgateway)
 
     def test_remote_has_homedir_as_currentdir(self):
-        host = HostInfo("localhost")
+        host = self._gethostinfo()
         old = py.path.local.get_temproot().chdir()
         try:
             host.initgateway()
-            channel = host.gw.remote_exec("""
+            channel = host.gw.remote_exec(py.code.Source(
+                gethomedir, """
                 import os
-                channel.send(os.getcwd())
-            """)
-            dir = channel.receive()
-            assert dir == py.path.local._gethomedir()
+                homedir = gethomedir()
+                curdir = os.getcwd()
+                channel.send((curdir, homedir))
+            """))
+            remote_curdir, remote_homedir = channel.receive()
+            assert remote_curdir == remote_homedir 
         finally:
             old.chdir()
 
     def test_initgateway_localhost_relpath(self):
-        name = "pytestcache-localhost"
-        x = HostInfo("localhost:%s" % name)
-        x.initgateway()
-        assert x.gw
+        host = HostInfo("localhost:somedir")
+        host.initgateway()
+        assert host.gw
         try:
             homedir = py.path.local._gethomedir() 
-            expected = homedir.join(name) 
-            assert x.gw_remotepath == str(expected)
-            assert x.localdest == expected 
+            expected = homedir.join("somedir")
+            assert host.gw_remotepath == str(expected)
         finally:
-            x.gw.exit()
-
+            host.gw.exit()
 
     def test_initgateway_ssh_and_remotepath(self):
         option = py.test.config.option
         if option.sshtarget is None: 
             py.test.skip("no known ssh target, use -S to set one")
-        x = HostInfo("%s" % (option.sshtarget, ))
-        x.initgateway()
-        assert x.gw
-        assert x.gw_remotepath.endswith(x.relpath)
-        channel = x.gw.remote_exec("""
+        host = HostInfo("%s" % (option.sshtarget, ))
+        # this test should be careful to not write/rsync anything
+        # as the remotepath is the default location 
+        # and may be used in the real world 
+        host.initgateway()
+        assert host.gw
+        assert host.gw_remotepath.endswith(host.relpath)
+        channel = host.gw.remote_exec("""
             import os
             homedir = os.environ['HOME']
             relpath = channel.receive()
             path = os.path.join(homedir, relpath)
             channel.send(path) 
         """)
-        channel.send(x.relpath)
+        channel.send(host.relpath)
         res = channel.receive()
-        assert res == x.gw_remotepath
-        assert x.localdest is None
+        assert res == host.gw_remotepath
 
 class TestSyncing(DirSetup): 
+    def _gethostinfo(self):
+        hostinfo = HostInfo("localhost:%s" % self.dest)
+        return hostinfo 
+        
     def test_hrsync_filter(self):
         self.source.ensure("dir", "file.txt")
         self.source.ensure(".svn", "entries")
@@ -102,7 +116,7 @@ class TestSyncing(DirSetup):
         assert 'somedir' in basenames
 
     def test_hrsync_one_host(self):
-        h1 = HostInfo("localhost:%s" % self.dest)
+        h1 = self._gethostinfo()
         finished = []
         rsync = HostRSync()
         h1.initgateway()
@@ -112,8 +126,8 @@ class TestSyncing(DirSetup):
         assert self.dest.join("hello.py").check()
 
     def test_hrsync_same_host_twice(self):
-        h1 = HostInfo("localhost:%s" % self.dest)
-        h2 = HostInfo("localhost:%s" % self.dest)
+        h1 = self._gethostinfo()
+        h2 = self._gethostinfo()
         finished = []
         rsync = HostRSync()
         l = []
@@ -178,16 +192,7 @@ class TestHostManager(DirSetup):
         assert self.dest.join("dir5","file").check()
         assert not self.dest.join("dir6").check()
 
-    def test_hostmanager_rsync_reported_once(self):
-        py.test.skip("XXX not needed any more")
-        dir2 = self.source.ensure("dir1", "dir2", dir=1)
-        dir5 = self.source.ensure("dir5", "dir6", "bogus")
-        dirf = self.source.ensure("dir3", "file")
-        config = py.test.config._reparse([self.source])
-        hm = HostManager(config,
-                         hosts=[HostInfo("localhost:" + str(self.dest))
-                                for i in range(3)])
-        events = []
-        hm.init_rsync(reporter=events.append)
-        readies = [i for i in events if isinstance(i, repevent.HostReady)]
-        assert len(readies) == 3
+def test_getpath_relto_home():
+    x = getpath_relto_home("hello")
+    assert x == py.path.local._gethomedir().join("hello")
+
