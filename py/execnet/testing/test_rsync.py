@@ -69,6 +69,31 @@ class TestRSync(DirSetup):
         assert self.dest2.join('hello').check()
         py.test.raises(IOError, "rsync.send(self.source)")
 
+    def test_rsync_default_reporting(self):
+        source = self.source
+        source.ensure("hello")
+        cap = py.io.StdCapture()
+        try:
+            rsync = RSync()
+            rsync.add_target(gw, self.dest1)
+            rsync.send(self.source)
+        finally:
+            out, err = cap.reset()
+        assert out.find("hello") != -1
+
+    def test_rsync_non_verbose(self):
+        source = self.source
+        source.ensure("hello")
+        cap = py.io.StdCapture()
+        try:
+            rsync = RSync(verbose=False)
+            rsync.add_target(gw, self.dest1)
+            rsync.send(self.source)
+        finally:
+            out, err = cap.reset()
+        assert not out
+        assert not err
+
     def test_symlink_rsync(self):
         if py.std.sys.platform == 'win32':
             py.test.skip("symlinks are unsupported on Windows.")

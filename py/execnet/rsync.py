@@ -15,10 +15,11 @@ class RSync(object):
         symlinks will be just copied (regardless of existance of such
         a path on remote side). 
     """
-    def __init__(self, callback=None, **options):
+    def __init__(self, callback=None, verbose=True, **options):
         for name in options:
             assert name in ('delete')
         self._options = options
+        self._verbose = verbose 
         assert callback is None or callable(callback)
         self._callback = callback
         self._channels = {}
@@ -84,10 +85,12 @@ class RSync(object):
                 # ! there is a reason for the interning:
                 # sharing multiple copies of the file's data
                 data = intern(data)
-                print '%s <= %s' % (
-                    channel.gateway.remoteaddress, 
-                    modified_rel_path)
+                self._report_send_file(channel.gateway, modified_rel_path)
         channel.send(data)
+
+    def _report_send_file(self, gateway, modified_rel_path):
+        if self._verbose:
+            print '%s <= %s' % (gateway.remoteaddress, modified_rel_path)
 
     def send(self, sourcedir):
         """ Sends a sourcedir to all added targets. 
