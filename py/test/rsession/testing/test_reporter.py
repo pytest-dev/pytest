@@ -23,10 +23,9 @@ from py.__.test.rsession.rsession import LocalReporter, AbstractSession,\
     RemoteReporter
 from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome, Outcome
-from py.__.test.rsession.testing.test_slave import funcpass_spec, mod_spec
 from py.__.test.rsession.hostmanage import HostInfo
 from py.__.test.rsession.box import Box
-#from py.__.test.
+from py.__.test.rsession.testing.runtest import BasicRsessionTest
 import sys
 from StringIO import StringIO
 
@@ -38,10 +37,7 @@ class DummyChannel(object):
     def __init__(self, host):
         self.gateway = DummyGateway(host)
 
-class AbstractTestReporter(object):
-    def setup_class(cls):
-        cls.pkgdir = py.path.local(py.__file__).dirpath()
-    
+class AbstractTestReporter(BasicRsessionTest):
     def prepare_outcomes(self):
         # possible outcomes
         try:
@@ -61,10 +57,7 @@ class AbstractTestReporter(object):
         return outcomes
     
     def report_received_item_outcome(self):
-        config = py.test.config._reparse(["some_sub"])
-        # we just go...
-        rootcol = py.test.collect.Directory(self.pkgdir.dirpath())
-        item = rootcol._getitembynames(funcpass_spec)
+        item = self.rootcol._getitembynames(self.funcpass_spec)
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, outcomes):
@@ -75,30 +68,26 @@ class AbstractTestReporter(object):
                 r.report(repevent.ReceivedItemOutcome(ch, item, outcome))
         
         cap = py.io.StdCaptureFD()
-        boxfun(config, item, outcomes)
+        boxfun(self.config, item, outcomes)
         out, err = cap.reset()
         assert not err
         return out
 
     def _test_module(self):
-        config = py.test.config._reparse(["some_sub"])
-        # we just go...
-        rootcol = py.test.collect.Directory(self.pkgdir.dirpath())
-        funcitem = rootcol._getitembynames(funcpass_spec)
-        moditem = rootcol._getitembynames(mod_spec)
+        funcitem = self.rootcol._getitembynames(self.funcpass_spec)
+        moditem = self.rootcol._getitembynames(self.mod_spec)
         outcomes = self.prepare_outcomes()
         
-        def boxfun(pkgdir, config, item, funcitem, outcomes):
+        def boxfun(config, item, funcitem, outcomes):
             hosts = [HostInfo('localhost')]
             r = self.reporter(config, hosts)
-            #r.pkgdir = pkdgir
             r.report(repevent.ItemStart(item))
             ch = DummyChannel(hosts[0])
             for outcome in outcomes:
                 r.report(repevent.ReceivedItemOutcome(ch, funcitem, outcome))
         
         cap = py.io.StdCaptureFD()
-        boxfun(self.pkgdir, config, moditem, funcitem, outcomes)
+        boxfun(self.config, moditem, funcitem, outcomes)
         out, err = cap.reset()
         assert not err
         return out
@@ -185,7 +174,7 @@ class TestLocalReporter(AbstractTestReporter):
     def test_module(self):
         #py.test.skip("XXX rewrite test to not rely on exact formatting")
         output = self._test_module()
-        assert output.find("test_slave") != -1
+        assert output.find("test_one") != -1
         assert output.endswith("FsF."), output
     
     def test_full_module(self):

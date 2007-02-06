@@ -6,11 +6,8 @@ import py
 from py.__.test.rsession import repevent
 from py.__.test.rsession.rsession import RSession 
 from py.__.test.rsession.hostmanage import HostManager, HostInfo
-from py.__.test.rsession.testing.test_slave import funcfail_spec,\
-    funcpass_spec, funcskip_spec, funcprint_spec, funcprintfail_spec, \
-    funcoptioncustom_spec
-
-from test_hostmanage import DirSetup
+from py.__.test.rsession.testing.runtest import BasicRsessionTest
+from py.__.test.rsession.testing.test_hostmanage import DirSetup
 
 def setup_module(mod):
     mod.pkgdir = py.path.local(py.__file__).dirpath()
@@ -32,7 +29,7 @@ def test_example_tryiter():
     assert len(events) == 2
     assert str(events[1][0].value) == "Reason"
 
-class TestRSessionRemote(DirSetup): 
+class TestRSessionRemote(DirSetup, BasicRsessionTest): 
     def test_example_distribution_minus_x(self):
         self.source.ensure("sub", "conftest.py").write(py.code.Source("""
             dist_hosts = ['localhost:%s']
@@ -145,18 +142,16 @@ class TestRSessionRemote(DirSetup):
         hosts = [HostInfo('localhost')]
         allevents = []
         
-        config = py.test.config._reparse([])
-        hm = HostManager(config, hosts=hosts)
+        hm = HostManager(self.config, hosts=hosts)
         nodes = hm.setup_hosts(allevents.append)
         
         from py.__.test.rsession.testing.test_executor \
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping
         
-        rootcol = py.test.collect.Directory(pkgdir.dirpath())
-        itempass = rootcol._getitembynames(funcpass_spec)
-        itemfail = rootcol._getitembynames(funcfail_spec)
-        itemskip = rootcol._getitembynames(funcskip_spec)
-        itemprint = rootcol._getitembynames(funcprint_spec)
+        itempass = self.rootcol._getitembynames(self.funcpass_spec)
+        itemfail = self.rootcol._getitembynames(self.funcfail_spec)
+        itemskip = self.rootcol._getitembynames(self.funcskip_spec)
+        itemprint = self.rootcol._getitembynames(self.funcprint_spec)
 
         # actually run some tests
         for node in nodes:
