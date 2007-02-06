@@ -44,3 +44,6 @@ class BasicRsessionTest(object):
         col = self.collector_test_one.join(funcname)
         assert col is not None, funcname
         return col 
+
+    def getmod(self):
+        return self.collector_test_one

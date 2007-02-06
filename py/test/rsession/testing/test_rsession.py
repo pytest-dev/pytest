@@ -6,7 +6,7 @@ import py
 from py.__.test.rsession import repevent
 from py.__.test.rsession.rsession import RSession 
 from py.__.test.rsession.hostmanage import HostManager, HostInfo
-from py.__.test.rsession.testing.runtest import BasicRsessionTest
+from py.__.test.rsession.testing.basetest import BasicRsessionTest
 from py.__.test.rsession.testing.test_hostmanage import DirSetup
 
 def setup_module(mod):
@@ -148,10 +148,10 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         from py.__.test.rsession.testing.test_executor \
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping
         
-        itempass = self.rootcol._getitembynames(self.funcpass_spec)
-        itemfail = self.rootcol._getitembynames(self.funcfail_spec)
-        itemskip = self.rootcol._getitembynames(self.funcskip_spec)
-        itemprint = self.rootcol._getitembynames(self.funcprint_spec)
+        itempass = self.getexample("pass")
+        itemfail = self.getexample("fail")
+        itemskip = self.getexample("skip")
+        itemprint = self.getexample("print")
 
         # actually run some tests
         for node in nodes:

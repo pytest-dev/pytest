@@ -25,7 +25,7 @@ from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome, Outcome
 from py.__.test.rsession.hostmanage import HostInfo
 from py.__.test.rsession.box import Box
-from py.__.test.rsession.testing.runtest import BasicRsessionTest
+from py.__.test.rsession.testing.basetest import BasicRsessionTest
 import sys
 from StringIO import StringIO
 
@@ -57,7 +57,7 @@ class AbstractTestReporter(BasicRsessionTest):
         return outcomes
     
     def report_received_item_outcome(self):
-        item = self.rootcol._getitembynames(self.funcpass_spec)
+        item = self.getexample("pass")
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, outcomes):
@@ -74,8 +74,8 @@ class AbstractTestReporter(BasicRsessionTest):
         return out
 
     def _test_module(self):
-        funcitem = self.rootcol._getitembynames(self.funcpass_spec)
-        moditem = self.rootcol._getitembynames(self.mod_spec)
+        funcitem = self.getexample("pass")
+        moditem = self.getmod()
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, funcitem, outcomes):

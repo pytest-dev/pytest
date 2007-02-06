@@ -5,7 +5,7 @@ import example1
 from py.__.test.rsession.executor import RunExecutor, BoxExecutor,\
     AsyncExecutor, ApigenExecutor
 from py.__.test.rsession.outcome import ReprOutcome
-from py.__.test.rsession.testing.runtest import BasicRsessionTest
+from py.__.test.rsession.testing.basetest import BasicRsessionTest
 
 #def setup_module(mod):
 #    mod.rootdir = py.path.local(py.__file__).dirpath().dirpath()
@@ -58,7 +58,7 @@ class TestExecutor(BasicRsessionTest):
         assert not outcome.excinfo 
 
     def test_box_executor_stdout(self):
-        item = self.rootcol._getitembynames(self.funcprint_spec)
+        item = self.getexample("print")
         ex = BoxExecutor(item, config=self.config)
         outcome_repr = ex.execute()
         outcome = ReprOutcome(outcome_repr)
@@ -66,7 +66,7 @@ class TestExecutor(BasicRsessionTest):
         assert outcome.stdout.find("samfing") != -1
 
     def test_box_executor_stdout_error(self):
-        item = self.rootcol._getitembynames(self.funcprintfail_spec)
+        item = self.getexample("printfail")
         ex = BoxExecutor(item, config=self.config)
         outcome_repr = ex.execute()
         outcome = ReprOutcome(outcome_repr)
@@ -74,7 +74,7 @@ class TestExecutor(BasicRsessionTest):
         assert outcome.stdout.find("samfing elz") != -1 
 
     def test_cont_executor(self):
-        item = self.rootcol._getitembynames(self.funcprintfail_spec)
+        item = self.getexample("printfail")
         ex = AsyncExecutor(item, config=self.config)
         cont, pid = ex.execute()
         assert pid
