@@ -133,10 +133,11 @@ class HostManager(object):
                               verbose=self.config.option.verbose)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:
-                def donecallback():
+                def donecallback(host, root):
                     reporter(repevent.HostRSyncRootReady(host, root))
                 remotepath = rsync.add_target_host(
-                    host, reporter, destrelpath, finishedcallback=donecallback)
+                    host, reporter, destrelpath, finishedcallback=
+                    lambda host=host, root=root: donecallback(host, root))
                 reporter(repevent.HostRSyncing(host, root, remotepath))
             rsync.send(root)
 
