@@ -137,6 +137,7 @@ class ExportedMethods(BasicExternal):
         self.stdout = {}
         self.stderr = {}
         self.all = 0
+        self.to_rsync = {}
     
     def findmodule(self, item):
         # find the most outwards parent which is module

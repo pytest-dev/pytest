@@ -185,7 +185,7 @@ def process(msg):
         host_elem.childNodes[0].nodeValue = '%s[%s]' % (
                             glob.host_dict[msg['hostkey']], count)
         
-    elif msg['type'] == 'HostReady':
+    elif msg['type'] == 'HostRSyncRootReady':
         host_elem = dom.document.getElementById(msg['hostkey'])
         host_elem.style.background = \
             "#00ff00"
