@@ -91,12 +91,14 @@ class HostRSync(py.execnet.RSync):
                     else:
                         return True
 
-    def add_target_host(self, host, destrelpath=None, finishedcallback=None):
+    def add_target_host(self, host, reporter=lambda x: None,
+                        destrelpath=None, finishedcallback=None):
         key = host.hostname, host.relpath 
         if key in self._synced:
             if finishedcallback:
                 finishedcallback()
-            return False 
+            return False
+        reporter(repevent.HostRSyncing(host))
         self._synced[key] = True
         # the follow attributes are set from host.initgateway()
         gw = host.gw
@@ -135,10 +137,9 @@ class HostManager(object):
             rsync = HostRSync(ignores=ignores)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:
-                reporter(repevent.HostRSyncing(host))
                 def donecallback():
                     reporter(repevent.HostRSyncRootReady(host, root))
-                rsync.add_target_host(host, destrelpath, 
+                rsync.add_target_host(host, reporter, destrelpath, 
                                   finishedcallback=donecallback)
             rsync.send(root)
 
