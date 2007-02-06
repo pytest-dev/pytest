@@ -157,12 +157,15 @@ class AbstractTestReporter(BasicRsessionTest):
                 r.report(repevent.HostRSyncRootReady(host, root))
         out, err = cap.reset()
         assert not err
-        expected1 = "Test started, hosts: host1, host2, host3"
-        expected2 = """host1: READY (still 2 to go)
-     host2: READY (still 1 to go)
-     host3: READY"""
+        expected1 = "Test started, hosts: host1[0], host2[0], host3[0]"
         assert out.find(expected1) != -1
-        assert out.find(expected2) != -1
+        for expected in py.code.Source("""
+            host1[0]: READY (still 2 to go)
+            host2[0]: READY (still 1 to go)
+            host3[0]: READY
+        """).lines:
+            expected = expected.strip()
+            assert out.find(expected) != -1
 
 class TestLocalReporter(AbstractTestReporter):
     reporter = LocalReporter

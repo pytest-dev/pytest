@@ -57,13 +57,15 @@ class AbstractReporter(object):
                                         address)
     
     def report_HostRSyncing(self, item):
-        print "%10s: RSYNC ==> %s" % (item.host.hostname[:10],
+        hostrepr = self._hostrepr(item.host)
+        print "%15s: RSYNC ==> %s" % (hostrepr, 
                                       item.host.relpath)
 
     def report_HostGatewayReady(self, item):
         self.to_rsync[item.host] = len(item.roots)
-        self.out.write("%10s: gateway initialised (remote topdir: %s)\n"\
-                       % (item.host.hostname, item.host.gw_remotepath))
+        hostrepr = self._hostrepr(item.host)
+        self.out.write("%15s: gateway initialised (remote topdir: %s)\n"\
+                       % (hostrepr, item.host.gw_remotepath))
 
     def report_HostRSyncRootReady(self, item):
         self.to_rsync[item.host] -= 1
@@ -72,15 +74,16 @@ class AbstractReporter(object):
     
     def _host_ready(self, item):
         self.hosts_to_rsync -= 1
+        hostrepr = self._hostrepr(item.host)
         if self.hosts_to_rsync:
-            print "%10s: READY (still %d to go)" % (item.host.hostname[:10],
-                                                self.hosts_to_rsync)
+            print "%15s: READY (still %d to go)" % (hostrepr, 
+                                                    self.hosts_to_rsync)
         else:
-            print "%10s: READY" % item.host.hostname[:10]
+            print "%15s: READY" % hostrepr 
     
     def report_TestStarted(self, item):
-        hostnames = [host.hostname for host in item.hosts]
-        txt = " Test started, hosts: %s " % ", ".join(hostnames)
+        hostreprs = [self._hostrepr(host) for host in item.hosts]
+        txt = " Test started, hosts: %s " % ", ".join(hostreprs)
         self.hosts_to_rsync = len(item.hosts)
         self.out.sep("=", txt)
         self.timestart = item.timestart
@@ -163,6 +166,9 @@ class AbstractReporter(object):
         signal = outcome.signal
         self.out.line("Received signal: %d" % outcome.signal)
         self.repr_out_err(outcome)
+
+    def _hostrepr(self, host):
+        return host.hostid
     
     def skips(self):
         texts = {}
@@ -223,17 +229,18 @@ class AbstractReporter(object):
     
     def report_ReceivedItemOutcome(self, event):
         host = event.host
+        hostrepr = self._hostrepr(host)
         if event.outcome.passed:
             self.passed[host] += 1
-            sys.stdout.write("%10s: PASSED  " % host.hostname[:10])
+            sys.stdout.write("%15s: PASSED  " % hostrepr)
         elif event.outcome.skipped:
             self.skipped_tests_outcome.append(event)
             self.skipped[host] += 1
-            sys.stdout.write("%10s: SKIPPED " % host.hostname[:10])
+            sys.stdout.write("%15s: SKIPPED " % hostrepr) 
         else:
             self.failed[host] += 1
             self.failed_tests_outcome.append(event)
-            sys.stdout.write("%10s: " % host.hostname[:10])
+            sys.stdout.write("%15s: " % hostrepr) 
             ansi_print("FAILED", esc=(31,1), newline=False, file=sys.stdout)
             sys.stdout.write("  ")
         # we should have printed 20 characters to this point
