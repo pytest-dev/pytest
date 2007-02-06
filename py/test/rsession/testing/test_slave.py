@@ -3,7 +3,7 @@
 from py.__.test.rsession.slave import SlaveNode, slave_main, setup, PidInfo
 from py.__.test.rsession.outcome import ReprOutcome
 import py, sys
-from py.__.test.rsession.testing.runtest import BasicRsessionTest
+from py.__.test.rsession.testing.basetest import BasicRsessionTest
 
 modlevel = []
 import os
@@ -23,7 +23,7 @@ class TestSlave(BasicRsessionTest):
 
     def test_slave_run_passing(self):
         node = self.gettestnode()
-        item = self.rootcol._getitembynames(self.funcpass_spec)
+        item = self.getexample("pass")
         outcome = node.execute(item._get_collector_trail())
         assert outcome.passed 
         assert not outcome.setupfailure 
@@ -35,7 +35,7 @@ class TestSlave(BasicRsessionTest):
 
     def test_slave_run_failing(self):
         node = self.gettestnode()
-        item = self.rootcol._getitembynames(self.funcfail_spec)
+        item = self.getexample("fail") 
         outcome = node.execute(item._get_collector_trail())
         assert not outcome.passed 
         assert not outcome.setupfailure 
@@ -50,7 +50,7 @@ class TestSlave(BasicRsessionTest):
     
     def test_slave_run_skipping(self):
         node = self.gettestnode()
-        item = self.rootcol._getitembynames(self.funcskip_spec)    
+        item = self.getexample("skip")
         outcome = node.execute(item._get_collector_trail())
         assert not outcome.passed
         assert outcome.skipped
@@ -62,7 +62,7 @@ class TestSlave(BasicRsessionTest):
 
     def test_slave_run_failing_wrapped(self):
         node = self.gettestnode()
-        item = self.rootcol._getitembynames(self.funcfail_spec)
+        item = self.getexample("fail") 
         repr_outcome = node.run(item._get_collector_trail()) 
         outcome = ReprOutcome(repr_outcome)  
         assert not outcome.passed 
