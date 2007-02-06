@@ -62,7 +62,7 @@ class AbstractReporter(object):
 
     def report_HostGatewayReady(self, item):
         self.to_rsync[item.host] = len(item.roots)
-        self.out.write("%10s: gateway initialised (PYTHONPATH = %s)\n"\
+        self.out.write("%10s: gateway initialised (remote topdir: %s)\n"\
                        % (item.host.hostname, item.host.gw_remotepath))
 
     def report_HostRSyncRootReady(self, item):
@@ -84,11 +84,12 @@ class AbstractReporter(object):
         self.hosts_to_rsync = len(item.hosts)
         self.out.sep("=", txt)
         self.timestart = item.timestart
-        self.out.write("Root directory: %s\n" % item.topdir)
+        self.out.write("local top directory: %s\n" % item.topdir)
         roots = [str(i.relto(item.topdir)) for i in item.roots]
-        self.out.write("To rsync:\n")
-        for root in roots:
-            self.out.write("    => %s\n" % root)
+        for i, root in py.builtin.enumerate(roots):
+            outof = "%d/%d" %(i+1, len(roots))
+            self.out.write("local RSync root [%s] %s\n" % 
+                           (outof, root))
 
     def report_RsyncFinished(self, item):
         self.timersync = item.time
