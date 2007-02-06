@@ -256,7 +256,7 @@ class ExportedMethods(BasicExternal):
         elif isinstance(event, repevent.SendItem):
             args = add_item(event)
             args['hostkey'] = event.channel.gateway.host.hostid
-        elif isinstance(event, repevent.HostReady):
+        elif isinstance(event, repevent.HostRSyncRootReady):
             self.ready_hosts[event.host] = True
             args = {'hostname' : event.host.hostname, 'hostkey' : event.host.hostid}
         elif isinstance(event, repevent.FailedTryiter):
@@ -299,6 +299,18 @@ class ExportedMethods(BasicExternal):
     def report_unknown(self, event):
         # XXX: right now, we just pass it for showing
         self.pending_events.put(event)
+
+    def _host_ready(self, event):
+        self.pending_events.put(event)
+
+    def report_HostRSyncRoots(self, item):
+        self.to_rsync[item.host] = len(item.roots)
+
+    def report_HostRSyncRootReady(self, item):
+        self.to_rsync[item.host] -= 1
+        if not self.to_rsync[item.host]:
+            self._host_ready(item)
+
     
     def report_TestStarted(self, event):
         # XXX: It overrides out self.hosts
