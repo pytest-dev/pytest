@@ -15,6 +15,7 @@ class TestMakeRepo(object):
         assert len(self.wc.listdir()) == 0
 
     def test_commit(self):
+        self.wc.checkout(self.repo)
         p = self.wc.join("a_file")
         p.write("test file")
         p.add()
