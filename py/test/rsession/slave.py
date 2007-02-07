@@ -133,7 +133,6 @@ def setup():
     sys.path.insert(0, basedir)
     import py
     config = py.test.config
-    config.option.boxed = True
     assert not config._initialized 
     config.initdirect(basedir, config_repr)
     if not config.option.nomagic:
