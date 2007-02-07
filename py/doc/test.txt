@@ -461,8 +461,8 @@ experimental options
     Run browser (implies --startserver).
 
 
-``--box``
-    Use boxing: run each test in an external process. Very useful for testing
+``--boxed``
+    Use boxed tests: run each test in an external process. Very useful for testing
     things that occasionally segfault (since normally the segfault then would
     stop the whole test process).
 
@@ -553,7 +553,7 @@ The options that you need to specify in that conftest.py file are:
 * `dist_rsync_ignore` - a list of relative locations to ignore for rsyncing 
 * `dist_remotepython` - the remote python executable to run.
 * `dist_nicelevel` - process priority of remote nodes. 
-* `dist_boxing` - will run each single test in a separate process 
+* `dist_boxed` - will run each single test in a separate process 
   (allowing to survive segfaults for example) 
 * `dist_taskspernode` - Maximum number of tasks being queued to remote nodes 
 
@@ -563,7 +563,7 @@ Sample configuration::
     dist_rsync_roots = ['../pypy', '../py']
     dist_remotepython = 'python2.4'
     dist_nicelevel = 10 
-    dist_boxing = True
+    dist_boxed = False
     dist_maxwait = 100 
     dist_taskspernode = 10
 

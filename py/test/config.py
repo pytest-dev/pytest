@@ -156,23 +156,19 @@ class Config(object):
         if self.option.dist:
             name = 'RSession'
         else:
-            optnames = 'startserver runbrowser apigen restreport boxing'.split()
+            optnames = 'startserver runbrowser apigen restreport boxed'.split()
             for opt in optnames:
                 if getattr(self.option, opt, False):
                     name = 'LSession'
                     break
             else:
-                if self.getvalue('dist_boxing'):
+                if self.getvalue('dist_boxed'):
                     name = 'LSession'
                 if self.option.looponfailing:
                     name = 'RemoteTerminalSession'
                 elif self.option.executable:
                     name = 'RemoteTerminalSession'
         return name
-
-    def is_boxed(self):
-        # XXX probably not a good idea to have this special function ...
-        return self.option.boxing or self.getvalue("dist_boxing")
 
     def _reparse(self, args):
         """ this is used from tests that want to re-invoke parse(). """

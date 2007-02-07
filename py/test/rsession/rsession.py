@@ -30,6 +30,8 @@ class AbstractSession(Session):
         if option.nocapture:
             print "Cannot use nocapture with distributed testing"
             sys.exit(1)
+        if self.config.getvalue("dist_boxed"):
+            option.boxed = True
         super(AbstractSession, self).fixoptions()
 
     def init_reporter(self, reporter, hosts, reporter_class, arg=""):
@@ -240,9 +242,8 @@ class LSession(AbstractSession):
                                                      module_name=pkgname)
             self.tracer = Tracer(self.docstorage)
             return apigen_runner
+        elif self.config.option.boxed:
+            return box_runner
         else:
-            if (self.config.getvalue('dist_boxing') or self.config.option.boxing)\
-                   and not self.config.option.nocapture:
-                return box_runner
             return plain_runner
 

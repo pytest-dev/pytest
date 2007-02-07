@@ -7,6 +7,10 @@ def setup_module(mod):
     mod.datadir = setupdatadir()
     mod.tmpdir = py.test.ensuretemp('test_collect') 
 
+def skipboxed():
+    if py.test.config.option.boxed: 
+        py.test.skip("test does not work with boxed tests")
+
 def test_failing_import_execfile():
     dest = datadir / 'failingimport.py'
     col = py.test.collect.Module(dest) 
@@ -267,8 +271,7 @@ def test_custom_NONpython_collection_from_conftest():
     assert len(l) == 1
 
 def test_order_of_execution_generator_same_codeline():
-    if py.test.config.is_boxed():
-        py.test.skip("Does not work with boxing")
+    skipboxed()
     test_list = []
     expected_list = range(6)
 
@@ -286,8 +289,7 @@ def test_order_of_execution_generator_same_codeline():
 
 
 def test_order_of_execution_generator_different_codeline():
-    if py.test.config.is_boxed():
-        py.test.skip("Does not work with boxing")
+    skipboxed()
     test_list = []
     expected_list = range(3)
 

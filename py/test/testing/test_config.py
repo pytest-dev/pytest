@@ -207,7 +207,7 @@ class TestSessionAndOptions:
         assert config._getsessionname() == 'RSession'
 
     def test_implied_lsession(self):
-        optnames = 'startserver runbrowser apigen=x rest box'.split()
+        optnames = 'startserver runbrowser apigen=x rest boxed'.split()
         for x in optnames:
             config = py.test.config._reparse([self.tmpdir, '--%s' % x])
             assert config._getsessionname() == 'LSession'
@@ -240,22 +240,30 @@ class TestSessionAndOptions:
         session = config.initsession()
         assert session.config is config 
 
-    def test_boxing_options(self):
-        # XXX config.is_boxed() is probably not a good idea 
-        tmpdir = self.tmpdir
+    def test_boxed_option_including_implied_from_conftest(self):
+        self.tmpdir.join("conftest.py").write("dist_hosts=[]")
+        tmpdir = self.tmpdir.ensure("subdir", dir=1)
         config = py.test.config._reparse([tmpdir])
-        assert not config.option.boxing 
-        assert not config.is_boxed()
+        config.initsession()
+        assert not config.option.boxed 
+        config = py.test.config._reparse(['--dist', tmpdir])
+        config.initsession()
+        assert not config.option.boxed 
 
-        #tmpdir.join("conftest.py").write("dist_boxing=True\n")
-        #config = py.test.config._reparse([tmpdir])
-        #assert config.is_boxed()
-
-        tmpdir.join("conftest.py").write("dist_boxing=False\n")
-        config = py.test.config._reparse([tmpdir])
-        assert not config.is_boxed()
+        tmpdir.join("conftest.py").write(py.code.Source("""
+            dist_hosts = []
+            dist_boxed = True
+        """))
+        config = py.test.config._reparse(['--dist', tmpdir])
+        config.initsession()
+        assert config.option.boxed 
+        tmpdir.join("conftest.py").write(py.code.Source("""
+            dist_boxed = False
+        """))
         config = py.test.config._reparse([tmpdir, '--box'])
-        assert config.is_boxed()
+        assert config.option.boxed 
+        config.initsession()
+        assert config.option.boxed 
 
     def test_getvalue_pathlist(self):
         tmpdir = self.tmpdir

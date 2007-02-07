@@ -19,7 +19,7 @@ additionalinfo = None
 #                  whole pkgdir will be rsynced
 dist_remotepython = "python"
 dist_taskspernode = 15
-dist_boxing = False
+dist_boxed = False
 if hasattr(py.std.os, 'nice'):
     dist_nicelevel = py.std.os.nice(0) # nice py.test works
 else:
@@ -87,9 +87,9 @@ def adddefaultoptions(config):
                action="store_true", dest="runbrowser", default=False,
                help="run browser (implies --startserver)."
                ),
-        Option('', '--box',
-               action="store_true", dest="boxing",
-               help="use boxing (running each test in external process)"),
+        Option('', '--boxed',
+               action="store_true", dest="boxed", default=False,
+               help="box each test run in a separate process"), 
         Option('', '--rest',
                action='store_true', dest="restreport", default=False,
                help="restructured text output reporting."),

@@ -50,6 +50,10 @@ def runfiletest(opts):
     l = session.getitemoutcomepairs(Passed)
     assert not l 
 
+def test_is_not_boxed_by_default():
+    config = py.test.config._reparse([datadir])
+    assert not config.option.boxed
+
 class TestKeywordSelection: 
     def test_select_simple(self): 
         for keyword in ['test_one', 'est_on']:
