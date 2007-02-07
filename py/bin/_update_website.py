@@ -32,7 +32,8 @@ def run_tests(pkgpath, args=''):
     apigenpath = pkgpath.join('apigen/apigen.py') # XXX be more general here?
     if not apigenpath.check(file=True):
         apigenpath = pypath.join('apigen/apigen.py')
-    cmd = 'PYTHONPATH="%s:%s" "%s" --apigen="%s" "%s" %s' % (pypath.dirpath(),
+    cmd = 'PYTHONPATH="%s:%s" python "%s" --apigen="%s" "%s" %s' % (
+                                                             pypath.dirpath(),
                                                              pkgpath.dirpath(),
                                                              pytestpath,
                                                              apigenpath,
