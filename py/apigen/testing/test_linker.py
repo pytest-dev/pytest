@@ -1,5 +1,5 @@
 import py
-from py.__.apigen.linker import Linker, getrelfspath, relpath
+from py.__.apigen.linker import Linker, TempLinker, getrelfspath, relpath
 
 class TestLinker(object):
     def test_get_target(self):
@@ -28,6 +28,24 @@ testspec = [
     '/a/b           /a          ../a    /',
     'c:\\foo\\bar c:\\foo       ../foo  \\',
 ]
+
+class TestTempLinker(object):
+    def test_get_target(self):
+        linker = TempLinker()
+        temphref = linker.get_lazyhref('py.path.local')
+        linker.set_link('py.path.local', 'py/path/local.html')
+        relpath = linker.get_target(temphref)
+        assert relpath == 'py/path/local.html'
+
+    def test_functional(self):
+        temp = py.test.ensuretemp('TestTempLinker.test_functional')
+        l = TempLinker()
+        bar = temp.ensure('foo/bar.html', file=True)
+        baz = temp.ensure('foo/baz.html', file=True)
+        l.set_link(baz.strpath, baz.relto(temp))
+        bar.write('<a href="%s">baz</a>' % (l.get_lazyhref(baz.strpath),))
+        l.replace_dirpath(temp)
+        assert bar.read() == '<a href="baz.html">baz</a>'
 
 def gen_check(frompath, topath, sep, expected):
     result = relpath(frompath, topath, sep=sep)

@@ -34,7 +34,7 @@ def get_documentable_items(pkgdir):
 
 def build(pkgdir, dsa, capture):
     # create a linker (link database) for cross-linking
-    l = linker.Linker()
+    l = linker.TempLinker()
 
     # create a project.Project instance to contain the LayoutPage instances
     proj = project.Project()
@@ -52,27 +52,26 @@ def build(pkgdir, dsa, capture):
 
     # and build it
     apb = htmlgen.ApiPageBuilder(targetdir, l, dsa, pkgdir, namespace_tree,
-                                 capture, LayoutPage)
-    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, capture, LayoutPage)
-
-    capture.err.writeorg('preparing namespace pages\n')
-    ns_data = apb.prepare_namespace_pages()
-    capture.err.writeorg('preparing class pages\n')
-    class_names = dsa.get_class_names()
-    class_data = apb.prepare_class_pages(class_names)
-    capture.err.writeorg('preparing function pages\n')
-    function_names = dsa.get_function_names()
-    func_data = apb.prepare_function_pages(function_names)
-    capture.err.writeorg('preparing source pages\n')
-    source_data = spb.prepare_pages(pkgdir)
+                                 proj, capture, LayoutPage)
+    spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, proj, capture,
+                                    LayoutPage)
 
     capture.err.writeorg('building namespace pages\n')
-    apb.build_namespace_pages(ns_data, proj)
+    apb.build_namespace_pages()
+
     capture.err.writeorg('building class pages\n')
-    apb.build_class_pages(class_data, proj)
+    class_names = dsa.get_class_names()
+    apb.build_class_pages(class_names)
+
     capture.err.writeorg('building function pages\n')
-    apb.build_function_pages(func_data, proj)
+    function_names = dsa.get_function_names()
+    apb.build_function_pages(function_names)
+
     capture.err.writeorg('building source pages\n')
-    spb.build_pages(source_data, proj, pkgdir)
+    spb.build_pages(pkgdir)
+
+    capture.err.writeorg('replacing temporary links\n')
+    l.replace_dirpath(targetdir)
+
     capture.err.writeorg('done building documentation\n')
 

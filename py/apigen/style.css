@@ -89,3 +89,10 @@ ul li {
   margin-bottom: 1em;
 }
 
+td.lineno {
+  line-height: 1.1em;
+}
+
+td.code {
+  line-height: 1.1em;
+}

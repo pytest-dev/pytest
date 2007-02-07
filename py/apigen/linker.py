@@ -42,6 +42,57 @@ class Linker(object):
         finally:
             del self.fromlocation 
     
+class TempLinker(object):
+    """ performs a similar role to the Linker, but with a different approach
+
+        instead of returning 'lazy' hrefs, this returns a simple URL-style
+        string
+
+        the 'temporary urls' are replaced on the filesystem after building the
+        files, so that means even though a second pass is still required,
+        things don't have to be built in-memory (as with the Linker)
+    """
+    fromlocation = None
+
+    def __init__(self):
+        self._linkid2target = {}
+
+    def get_lazyhref(self, linkid):
+        return 'apigen.linker://%s' % (linkid,)
+
+    def set_link(self, linkid, target):
+        assert linkid not in self._linkid2target
+        self._linkid2target[linkid] = target
+
+    def get_target(self, tempurl, fromlocation=None):
+        linkid = '://'.join(tempurl.split('://')[1:])
+        linktarget = self._linkid2target[linkid]
+        if fromlocation is not None:
+            linktarget = relpath(fromlocation, linktarget)
+        return linktarget
+
+    _reg_tempurl = py.std.re.compile('"(apigen.linker:\/\/[^"\s]*)"')
+    def replace_dirpath(self, dirpath, stoponerrors=True):
+        """ replace temporary links in all html files in dirpath and below """
+        for fpath in dirpath.visit('*.html'):
+            html = fpath.read()
+            while 1:
+                match = self._reg_tempurl.search(html)
+                if not match:
+                    break
+                tempurl = match.group(1)
+                try:
+                    html = html.replace('"' + tempurl + '"',
+                                        '"' + self.get_target(tempurl,
+                                                fpath.relto(dirpath)) + '"')
+                except KeyError:
+                    if stoponerrors:
+                        raise
+                    html = html.replace('"' + tempurl + '"',
+                                        '"apigen.notfound://%s"' % (tempurl,))
+            fpath.write(html)
+            
+
 def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
     """ create a relative path from p1 to p2
 

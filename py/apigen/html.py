@@ -128,6 +128,8 @@ class H(html):
             super(H.SourceCode, self).__init__(lntable, ltable)
 
         def add_line(self, lineno, els):
+            if els == []:
+                els = [u'\xa0']
             self.linenotbody.append(H.tr(H.td(lineno, class_='lineno')))
             self.linetbody.append(H.tr(H.td(class_='code', *els)))
 

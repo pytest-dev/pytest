@@ -1,6 +1,7 @@
+# -*- coding: UTF-8 -*-
 import py
 html = py.xml.html
-from py.__.apigen.linker import Linker
+from py.__.apigen.linker import TempLinker
 from py.__.apigen.htmlgen import *
 from py.__.apigen.tracer.docstorage import DocStorage, DocStorageAccessor
 from py.__.apigen.tracer.tracer import Tracer
@@ -96,15 +97,9 @@ class AbstractBuilderTest(object):
         cls.project = Project()
 
     def setup_method(self, meth):
-        class LinkerForTests(Linker):
-            def get_target(self, linkid):
-                try:
-                    return super(LinkerForTests, self).get_target(linkid)
-                except KeyError:
-                    return 'unknown_link_%s' % (linkid,)
         self.base = base = py.test.ensuretemp('%s_%s' % (
                             self.__class__.__name__, meth.im_func.func_name))
-        self.linker = linker = LinkerForTests()
+        self.linker = linker = TempLinker()
         namespace_tree = create_namespace_tree(['main.sub',
                                                 'main.sub.func',
                                                 'main.SomeClass',
@@ -116,9 +111,10 @@ class AbstractBuilderTest(object):
         self.namespace_tree = namespace_tree
         self.apb = ApiPageBuilder(base, linker, self.dsa,
                                   self.fs_root.join(self.pkg_name),
-                                  namespace_tree)
+                                  namespace_tree, self.project)
         self.spb = SourcePageBuilder(base, linker,
-                                     self.fs_root.join(self.pkg_name))
+                                     self.fs_root.join(self.pkg_name),
+                                     self.project)
 
 class TestApiPageBuilder(AbstractBuilderTest):
     def test_build_callable_view(self):
@@ -156,8 +152,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtmlsnippet(html)
 
     def test_build_function_pages(self):
-        data = self.apb.prepare_function_pages(['main.sub.func'])
-        self.apb.build_function_pages(data, self.project)
+        self.apb.build_function_pages(['main.sub.func'])
         funcfile = self.base.join('api/main.sub.func.html')
         assert funcfile.check()
         html = funcfile.read()
@@ -169,19 +164,16 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtmlsnippet(html)
 
     def test_build_class_pages(self):
-        data = self.apb.prepare_class_pages(['main.SomeClass',
-                                             'main.SomeSubClass'])
-        self.apb.build_class_pages(data, self.project)
+        self.apb.build_class_pages(['main.SomeClass', 'main.SomeSubClass'])
         clsfile = self.base.join('api/main.SomeClass.html')
         assert clsfile.check()
         html = clsfile.read()
         _checkhtml(html)
 
     def test_build_class_pages_instance(self):
-        data = self.apb.prepare_class_pages(['main.SomeClass',
-                                             'main.SomeSubClass',
-                                             'main.SomeInstance'])
-        self.apb.build_class_pages(data, self.project)
+        self.apb.build_class_pages(['main.SomeClass',
+                                    'main.SomeSubClass',
+                                    'main.SomeInstance'])
         clsfile = self.base.join('api/main.SomeInstance.html')
         assert clsfile.check()
         html = clsfile.read()
@@ -191,13 +183,11 @@ class TestApiPageBuilder(AbstractBuilderTest):
         ])
 
     def test_build_class_pages_nav_links(self):
-        data = self.apb.prepare_class_pages(['main.SomeSubClass',
-                                             'main.SomeClass'])
-        self.apb.prepare_namespace_pages()
+        self.apb.build_class_pages(['main.SomeSubClass',
+                                    'main.SomeClass'])
+        self.apb.build_namespace_pages()
         # fake some stuff that would be built from other methods
-        self.linker.set_link('', 'api/index.html')
-        self.linker.set_link('main', 'api/main.html')
-        self.apb.build_class_pages(data, self.project)
+        self.linker.replace_dirpath(self.base, False)
         clsfile = self.base.join('api/main.SomeClass.html')
         assert clsfile.check()
         html = clsfile.read()
@@ -217,9 +207,9 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_class_pages_base_link(self):
-        data = self.apb.prepare_class_pages(['main.SomeSubClass',
-                                             'main.SomeClass'])
-        self.apb.build_class_pages(data, self.project)
+        self.apb.build_class_pages(['main.SomeSubClass',
+                                    'main.SomeClass'])
+        self.linker.replace_dirpath(self.base, False)
         clsfile = self.base.join('api/main.SomeSubClass.html')
         assert clsfile.check()
         html = clsfile.read()
@@ -231,18 +221,15 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_source_links(self):
-        data = self.apb.prepare_class_pages(['main.SomeSubClass',
-                                             'main.SomeClass'])
-        sourcedata = self.spb.prepare_pages(self.fs_root)
-        self.apb.build_class_pages(data, self.project)
-        self.spb.build_pages(sourcedata, self.project, self.fs_root)
+        self.apb.build_class_pages(['main.SomeSubClass', 'main.SomeClass'])
+        self.spb.build_pages(self.fs_root)
+        self.linker.replace_dirpath(self.base, False)
         funchtml = self.base.join('api/main.SomeClass.html').read()
         assert funchtml.find('href="../source/pkg/someclass.py.html"') > -1
         _checkhtml(funchtml)
 
     def test_build_namespace_pages(self):
-        data = self.apb.prepare_namespace_pages()
-        self.apb.build_namespace_pages(data, self.project)
+        self.apb.build_namespace_pages()
         mainfile = self.base.join('api/main.html')
         assert mainfile.check()
         html = mainfile.read()
@@ -261,8 +248,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(otherhtml)
 
     def test_build_namespace_pages_index(self):
-        data = self.apb.prepare_namespace_pages()
-        self.apb.build_namespace_pages(data, self.project)
+        self.apb.build_namespace_pages()
         pkgfile = self.base.join('api/index.html')
         assert pkgfile.check()
         html = pkgfile.read()
@@ -270,19 +256,18 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_namespace_pages_subnamespace(self):
-        data = self.apb.prepare_namespace_pages()
-        self.apb.build_namespace_pages(data, self.project)
+        self.apb.build_namespace_pages()
         subfile = self.base.join('api/main.sub.html')
         assert subfile.check()
         html = subfile.read()
         _checkhtml(html)
 
     def test_build_function_api_pages_nav(self):
-        data = self.apb.prepare_function_pages(['main.sub.func'])
+        self.linker.set_link('main.sub', 'api/main.sub.html')
         self.linker.set_link('', 'api/index.html')
         self.linker.set_link('main', 'api/main.html')
-        self.linker.set_link('main.sub', 'api/main.sub.html')
-        self.apb.build_function_pages(data, self.project)
+        self.apb.build_function_pages(['main.sub.func'])
+        self.linker.replace_dirpath(self.base, False)
         funcfile = self.base.join('api/main.sub.func.html')
         html = funcfile.read()
         print html
@@ -295,31 +280,32 @@ class TestApiPageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_function_navigation(self):
-        self.apb.prepare_namespace_pages()
-        self.apb.prepare_function_pages(['main.sub.func'])
-        self.apb.prepare_class_pages(['main.SomeClass',
-                                             'main.SomeSubClass',
-                                             'main.SomeInstance'])
-        nav = self.apb.build_navigation('main.sub.func', False)
-        html = nav.unicode(indent=0)
-        print html.encode('UTF-8')
-        assert (u'<div class="selected"><a href="api/index.html">pkg</a></div>'
-                u'<div class="selected">\xa0\xa0<a href="api/main.html">main</a></div>'
-                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeClass.html">'
-                    u'SomeClass</a></div>'
-                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeInstance.html">'
-                    u'SomeInstance</a></div>'
-                u'<div>\xa0\xa0\xa0\xa0<a href="api/main.SomeSubClass.html">'
-                    u'SomeSubClass</a></div>'
-                u'<div class="selected">\xa0\xa0\xa0\xa0'
-                    u'<a href="api/main.sub.html">sub</a></div>'
-                u'<div class="selected">\xa0\xa0\xa0\xa0\xa0\xa0'
-                    u'<a href="api/main.sub.func.html">func</a></div>'
-        ) in html
+        self.apb.build_namespace_pages()
+        self.apb.build_function_pages(['main.sub.func'])
+        self.apb.build_class_pages(['main.SomeClass',
+                                    'main.SomeSubClass',
+                                    'main.SomeInstance'])
+        self.linker.replace_dirpath(self.base, False)
+        html = self.base.join('api/main.sub.func.html').read()
+        print html
+        # XXX NOTE: do not mess with the string below, the spaces between the
+        # <div> and <a> are actually UTF-8 \xa0 characters (non-breaking
+        # spaces)!
+        assert """\
+    <div class="sidebar">
+      <div class="selected"><a href="index.html">pkg</a></div>
+      <div class="selected">  <a href="main.html">main</a></div>
+      <div>    <a href="main.SomeClass.html">SomeClass</a></div>
+      <div>    <a href="main.SomeInstance.html">SomeInstance</a></div>
+      <div>    <a href="main.SomeSubClass.html">SomeSubClass</a></div>
+      <div class="selected">    <a href="main.sub.html">sub</a></div>
+      <div class="selected">      <a href="main.sub.func.html">func</a></div>
+      <div>  <a href="other.html">other</a></div></div>
+""" in html
 
     def test_build_root_namespace_view(self):
-        data = self.apb.prepare_namespace_pages()
-        self.apb.build_namespace_pages(data, self.project)
+        self.apb.build_namespace_pages()
+        self.linker.replace_dirpath(self.base, False)
         rootfile = self.base.join('api/index.html')
         assert rootfile.check()
         html = rootfile.read()
@@ -328,14 +314,13 @@ class TestApiPageBuilder(AbstractBuilderTest):
 
 class TestSourcePageBuilder(AbstractBuilderTest):
     def test_build_pages(self):
-        data = self.spb.prepare_pages(self.fs_root)
-        self.spb.build_pages(data, self.project, self.fs_root)
+        self.spb.build_pages(self.fs_root)
         somesource = self.base.join('source/pkg/func.py.html').read()
         _checkhtml(somesource)
 
     def test_build_pages_nav(self):
-        data = self.spb.prepare_pages(self.fs_root)
-        self.spb.build_pages(data, self.project, self.fs_root)
+        self.spb.build_pages(self.fs_root)
+        self.linker.replace_dirpath(self.base, False)
         funcsource = self.base.join('source/pkg/func.py.html')
         assert funcsource.check(file=True)
         html = funcsource.read()
@@ -348,8 +333,8 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         ])
 
     def test_build_dir_page(self):
-        data = self.spb.prepare_pages(self.fs_root)
-        self.spb.build_pages(data, self.project, self.fs_root)
+        self.spb.build_pages(self.fs_root)
+        self.linker.replace_dirpath(self.base, False)
         pkgindex = self.base.join('source/pkg/index.html')
         assert pkgindex.check(file=True)
         html = pkgindex.read()
@@ -365,8 +350,8 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         _checkhtml(html)
 
     def test_build_source_page(self):
-        data = self.spb.prepare_pages(self.fs_root)
-        self.spb.build_pages(data, self.project, self.fs_root)
+        self.spb.build_pages(self.fs_root)
+        self.linker.replace_dirpath(self.base, False)
         funcsource = self.base.join('source/pkg/func.py.html')
         assert funcsource.check(file=True)
         html = funcsource.read()
@@ -374,14 +359,14 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         assert ('<span class="alt_keyword">def</span> func(arg1)') in html
 
     def test_build_navigation_root(self):
-        self.spb.prepare_pages(self.fs_root)
-        nav = self.spb.build_navigation(self.fs_root.join('pkg'))
-        html = nav.unicode(indent=0)
-        print html.encode('UTF-8')
+        self.spb.build_pages(self.fs_root)
+        self.linker.replace_dirpath(self.base)
+        html = self.base.join('source/pkg/index.html').read()
+        print html
         run_string_sequence_test(html, [
-            'href="source/pkg/index.html">pkg',
-            'href="source/pkg/func.py.html">func.py',
-            'href="source/pkg/someclass.py.html">someclass.py',
-            'href="source/pkg/somesubclass.py.html">somesubclass.py',
+            'href="index.html">pkg',
+            'href="func.py.html">func.py',
+            'href="someclass.py.html">someclass.py',
+            'href="somesubclass.py.html">somesubclass.py',
         ])
 

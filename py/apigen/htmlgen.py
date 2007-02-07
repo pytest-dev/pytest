@@ -155,23 +155,26 @@ def get_obj(pkg, dotted_name):
 class AbstractPageBuilder(object):
     pageclass = LayoutPage
     
-    def write_page(self, title, reltargetpath, project, tag, nav):
+    def write_page(self, title, reltargetpath, tag, nav):
         targetpath = self.base.join(reltargetpath)
         relbase= relpath('%s%s' % (targetpath.dirpath(), targetpath.sep),
                          self.base.strpath + '/')
-        page = wrap_page(project, title, tag, nav, relbase, self.base,
+        page = wrap_page(self.project, title, tag, nav, relbase, self.base,
                          self.pageclass)
-        content = self.linker.call_withbase(reltargetpath, page.unicode)
+        # we write the page with _temporary_ hrefs here, need to be replaced
+        # from the TempLinker later
+        content = page.unicode()
         targetpath.ensure()
         targetpath.write(content.encode("utf8"))
 
 class SourcePageBuilder(AbstractPageBuilder):
     """ builds the html for a source docs page """
-    def __init__(self, base, linker, projroot, capture=None,
+    def __init__(self, base, linker, projroot, project, capture=None,
                  pageclass=LayoutPage):
         self.base = base
         self.linker = linker
         self.projroot = projroot
+        self.project = project
         self.capture = capture
         self.pageclass = pageclass
     
@@ -240,13 +243,11 @@ class SourcePageBuilder(AbstractPageBuilder):
         try:
             tag = H.NonPythonSource(unicode(fspath.read(), 'utf-8'))
         except UnicodeError:
-            # XXX we should fix non-ascii support here!!
             tag = H.NonPythonSource('no source available (binary file?)')
         nav = self.build_navigation(fspath)
         return tag, nav
 
-    def prepare_pages(self, base):
-        passed = []
+    def build_pages(self, base):
         for fspath in [base] + list(base.visit()):
             if fspath.ext in ['.pyc', '.pyo']:
                 continue
@@ -264,38 +265,36 @@ class SourcePageBuilder(AbstractPageBuilder):
             reloutputpath = reloutputpath.replace(os.path.sep, '/')
             outputpath = self.base.join(reloutputpath)
             self.linker.set_link(str(fspath), reloutputpath)
-            passed.append((fspath, outputpath))
-        return passed
+            self.build_page(fspath, outputpath, base)
 
-    def build_pages(self, data, project, base):
+    def build_page(self, fspath, outputpath, base):
         """ build syntax-colored source views """
-        for fspath, outputpath in data:
-            if fspath.check(ext='.py'):
-                try:
-                    tag, nav = self.build_python_page(fspath)
-                except (KeyboardInterrupt, SystemError):
-                    raise
-                except: # XXX strange stuff going wrong at times... need to fix
-                    raise
-                    exc, e, tb = py.std.sys.exc_info()
-                    print '%s - %s' % (exc, e)
-                    print
-                    print ''.join(py.std.traceback.format_tb(tb))
-                    print '-' * 79
-                    del tb
-                    tag, nav = self.build_nonpython_page(fspath)
-            elif fspath.check(dir=True):
-                tag, nav = self.build_dir_page(fspath)
-            else:
+        if fspath.check(ext='.py'):
+            try:
+                tag, nav = self.build_python_page(fspath)
+            except (KeyboardInterrupt, SystemError):
+                raise
+            except: # XXX strange stuff going wrong at times... need to fix
+                raise
+                exc, e, tb = py.std.sys.exc_info()
+                print '%s - %s' % (exc, e)
+                print
+                print ''.join(py.std.traceback.format_tb(tb))
+                print '-' * 79
+                del tb
                 tag, nav = self.build_nonpython_page(fspath)
-            title = 'sources for %s' % (fspath.basename,)
-            reltargetpath = outputpath.relto(self.base).replace(os.path.sep,
-                                                                '/')
-            self.write_page(title, reltargetpath, project, tag, nav)
+        elif fspath.check(dir=True):
+            tag, nav = self.build_dir_page(fspath)
+        else:
+            tag, nav = self.build_nonpython_page(fspath)
+        title = 'sources for %s' % (fspath.basename,)
+        reltargetpath = outputpath.relto(self.base).replace(os.path.sep,
+                                                            '/')
+        self.write_page(title, reltargetpath, tag, nav)
 
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
-    def __init__(self, base, linker, dsa, projroot, namespace_tree,
+    def __init__(self, base, linker, dsa, projroot, namespace_tree, project,
                  capture=None, pageclass=LayoutPage):
         self.base = base
         self.linker = linker
@@ -303,6 +302,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         self.projroot = projroot
         self.projpath = py.path.local(projroot)
         self.namespace_tree = namespace_tree
+        self.project = project
         self.capture = capture
         self.pageclass = pageclass
 
@@ -440,11 +440,9 @@ class ApiPageBuilder(AbstractPageBuilder):
             )
         return snippet
 
-    def prepare_class_pages(self, classes_dotted_names):
+    def build_class_pages(self, classes_dotted_names):
         passed = []
         for dotted_name in sorted(classes_dotted_names):
-            #if self.capture:
-            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             try:
                 sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -455,42 +453,13 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            passed.append((dotted_name, tag, nav, reltargetpath))
+            title = 'api documentation for %s' % (dotted_name,)
+            self.write_page(title, reltargetpath, tag, nav)
         return passed
         
-    def build_class_pages(self, data, project):
-        """ build the full api pages for a set of classes """
-        for dotted_name, tag, nav, reltargetpath in data:
-            #if self.capture:
-            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
-            title = 'api documentation for %s' % (dotted_name,)
-            self.write_page(title, reltargetpath, project, tag, nav)
-
-    def prepare_method_pages(self, method_dotted_names):
-        # XXX note that even though these pages are still built, there's no nav
-        # pointing to them anymore...
+    def build_function_pages(self, method_dotted_names):
         passed = []
         for dotted_name in sorted(method_dotted_names):
-            parent_dotted_name, _ = split_of_last_part(dotted_name)
-            module_dotted_name, _ = split_of_last_part(parent_dotted_name)
-            sibling_dotted_names = self.namespace_tree[module_dotted_name]
-            tag = self.build_callable_view(dotted_name)
-            nav = self.build_navigation(dotted_name, False)
-            reltargetpath = "api/%s.html" % (dotted_name,)
-            self.linker.set_link(dotted_name, reltargetpath)
-            passed.append((dotted_name, tag, nav, reltargetpath))
-        return passed
-
-    def build_method_pages(self, data, project):
-        for dotted_name, tag, nav, reltargetpath in data:
-            title = 'api documentation for %s' % (dotted_name,)
-            self.write_page(title, reltargetpath, project, tag, nav)
-
-    def prepare_function_pages(self, method_dotted_names):
-        passed = []
-        for dotted_name in sorted(method_dotted_names):
-            #if self.capture:
-            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             # XXX should we create a build_function_view instead?
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -498,17 +467,11 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            passed.append((dotted_name, tag, nav, reltargetpath))
+            title = 'api documentation for %s' % (dotted_name,)
+            self.write_page(title, reltargetpath, tag, nav)
         return passed
 
-    def build_function_pages(self, data, project):
-        for dotted_name, tag, nav, reltargetpath in data:
-            #if self.capture:
-            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
-            title = 'api documentation for %s' % (dotted_name,)
-            self.write_page(title, reltargetpath, project, tag, nav)
-
-    def prepare_namespace_pages(self):
+    def build_namespace_pages(self):
         passed = []
         module_name = self.dsa.get_module_name().split('/')[-1]
 
@@ -517,8 +480,6 @@ class ApiPageBuilder(AbstractPageBuilder):
         function_names = self.dsa.get_function_names()
         class_names = self.dsa.get_class_names()
         for dotted_name in sorted(names):
-            #if self.capture:
-            #    self.capture.err.writeorg('preparing: %s\n' % (dotted_name,))
             if dotted_name in function_names or dotted_name in class_names:
                 continue
             subitem_dotted_names = self.namespace_tree[dotted_name]
@@ -530,17 +491,11 @@ class ApiPageBuilder(AbstractPageBuilder):
             else:
                 reltargetpath = 'api/%s.html' % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            passed.append((dotted_name, tag, nav, reltargetpath))
-        return passed
-
-    def build_namespace_pages(self, data, project):
-        for dotted_name, tag, nav, reltargetpath in data:
-            #if self.capture:
-            #    self.capture.err.writeorg('building: %s\n' % (dotted_name,))
             if dotted_name == '':
                 dotted_name = self.dsa.get_module_name().split('/')[-1]
             title = 'index of %s namespace' % (dotted_name,)
-            self.write_page(title, reltargetpath, project, tag, nav)
+            self.write_page(title, reltargetpath, tag, nav)
+        return passed
 
     def build_navigation(self, dotted_name, build_children=True):
         navitems = []
