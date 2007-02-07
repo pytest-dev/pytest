@@ -88,6 +88,8 @@ def test_getzipdata():
     s = py.__package__.getzipdata()
 
 def test_getrev():
+    if not py.path.local(py.__file__).dirpath('.svn').check():
+        py.test.skip("py package is not a svn checkout") 
     d = py.__package__.getrev()
     svnversion = py.path.local.sysfind('svnversion')
     if svnversion is None:
