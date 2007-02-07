@@ -2,6 +2,7 @@ from __future__ import generators
 import py
 
 from py.__.test.config import gettopdir
+from py.__.test.testing.test_collect import skipboxed
 
 def test_tmpdir():
     d1 = py.test.ensuretemp('hello') 
@@ -241,14 +242,15 @@ class TestSessionAndOptions:
         assert session.config is config 
 
     def test_boxed_option_including_implied_from_conftest(self):
+        skipboxed()
         self.tmpdir.join("conftest.py").write("dist_hosts=[]")
         tmpdir = self.tmpdir.ensure("subdir", dir=1)
         config = py.test.config._reparse([tmpdir])
         config.initsession()
-        assert not config.option.boxed 
+        assert not config.option.boxed
         config = py.test.config._reparse(['--dist', tmpdir])
         config.initsession()
-        assert not config.option.boxed 
+        assert not config.option.boxed
 
         tmpdir.join("conftest.py").write(py.code.Source("""
             dist_hosts = []
