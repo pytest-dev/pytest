@@ -95,7 +95,7 @@ def adddefaultoptions(config):
                help="restructured text output reporting."),
         Option('', '--apigen',
                action="store", dest="apigen",
-               help="generate api documentation while testing (requires"
+               help="generate api documentation while testing (requires "
                "argument pointing to a script)."),
         Option('', '--session',
                action="store", dest="session", default=None,
