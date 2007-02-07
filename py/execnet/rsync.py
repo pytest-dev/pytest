@@ -96,7 +96,7 @@ class RSync(object):
         """ Sends a sourcedir to all added targets. 
         """
         if not self._channels:
-            raise IOError("no targets available, maybing you "
+            raise IOError("no targets available, maybe you "
                           "are trying call send() twice?")
         self._sourcedir = str(sourcedir)
         # normalize a trailing '/' away
@@ -142,7 +142,6 @@ class RSync(object):
         channel.setcallback(itemcallback, endmarker = None)
         channel.send((str(destdir), self._options))
         self._channels[channel] = finishedcallback
-
 
     def _broadcast(self, msg):
         for channel in self._channels:
