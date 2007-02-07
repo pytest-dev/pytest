@@ -29,6 +29,9 @@ class AbstractSession(Session):
         if option.runbrowser and not option.startserver:
             #print "--runbrowser implies --startserver"
             option.startserver = True
+        if option.nocapture:
+            print "Cannot use nocapture with distributed testing"
+            sys.exit(1)
         super(AbstractSession, self).fixoptions()
 
     def init_reporter(self, reporter, hosts, reporter_class, arg=""):
