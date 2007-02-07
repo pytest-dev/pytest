@@ -151,6 +151,7 @@ def add_received_item_outcome(msg, module_part):
         link.setAttribute("href", "javascript:show_traceback('%s')" % (
                                                 msg['fullitemname'],))
         txt = create_text_elem('F')
+        link.setAttribute('class', 'error') 
         link.appendChild(txt)
         td.appendChild(link)
         exported_methods.show_fail(item_name, fail_come_back)
