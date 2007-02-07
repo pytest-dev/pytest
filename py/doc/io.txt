@@ -33,13 +33,12 @@ For calling functions you may use a shortcut:
 :api:`py.io.StdCaptureFD`
 ---------------------------
 
-If you also want to capture writes to the stdout/stdin
+If you also want to capture writes to the stdout/stderr
 filedescriptors you may invoke: 
 
   >>> import py, sys
   >>> capture = py.io.StdCaptureFD()
-  >>> sys.stdout.write("hello")
   >>> sys.stderr.write("world")
   >>> out,err = capture.reset()
-  >>> out.strip() + err.strip() == "helloworld"
-  True
+  >>> err
+  'world'
