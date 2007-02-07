@@ -5,6 +5,21 @@ from py.__.test.outcome import Skipped, Failed, Passed
 def setup_module(mod): 
     mod.tmpdir = py.test.ensuretemp('docdoctest')
 
+def test_doctest_extra_exec(): 
+    # XXX get rid of the next line: 
+    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
+    xtxt = tmpdir.join('y.txt')
+    xtxt.write(py.code.Source("""
+        hello::
+            .. >>> raise ValueError 
+               >>> None
+    """))
+    config = py.test.config._reparse([xtxt]) 
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(Failed) 
+    assert len(l) == 1
+
 def test_doctest_basic(): 
     # XXX get rid of the next line: 
     py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))

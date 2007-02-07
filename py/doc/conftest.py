@@ -74,6 +74,7 @@ class DoctestText(py.test.Item):
         prefix = '.. >>> '
         mod = py.std.types.ModuleType(self.fspath.purebasename) 
         for line in s.split('\n'):
+            line = line.strip()
             if line.startswith(prefix):
                 exec py.code.Source(line[len(prefix):]).compile() in \
                      mod.__dict__
