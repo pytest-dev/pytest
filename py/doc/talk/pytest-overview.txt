@@ -118,7 +118,7 @@ py.test Implementation
 - uses py lib extensively (py.path/py.execnet) 
 - "conftest.py" per-directory configuration mechanism 
 
-.. _`basic picture`: ../test.html#basicpicture
+.. _`basic picture`: ../test.html
 
 Session objects 
 ===============================
