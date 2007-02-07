@@ -34,7 +34,7 @@ class MasterNode(object):
                 self.reporter(repevent.SendItem(self.channel, item))
         except IOError:
             print "Sending error, channel IOError"
-            print self.channel._getremoterror()
+            print self.channel._getremoteerror()
             # XXX: this should go as soon as we'll have proper detection
             #      of hanging nodes and such
             raise

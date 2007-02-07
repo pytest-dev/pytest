@@ -39,6 +39,16 @@ class DummyChannel(object):
         assert py.std.marshal.dumps(item)
         self.sent.append(item)
 
+class NonWorkingChannel(object):
+    def setcallback(self, func):
+        pass
+
+    def send(self, item):
+        raise IOError
+
+    def _getremoteerror(self):
+        return "blah"
+
 class Item(py.test.Item):
     def _get_collector_trail(self):
         return (self.name,)
@@ -61,6 +71,15 @@ def test_masternode():
         if isinstance(i, repevent.ReceivedItemOutcome)]
     assert received[0].outcome.passed 
     assert not received[1].outcome.passed 
+
+def test_masternode_nonworking_channel():
+    ch = NonWorkingChannel()
+    reportlist = []
+    mnode = MasterNode(ch, reportlist.append)
+    cap = py.io.StdCaptureFD()
+    py.test.raises(IOError, 'mnode.send(Item("ok"))')
+    out, err = cap.reset()
+    assert out.find("blah") != -1
 
 def test_sending_two_noes():
     # XXX fijal: this test previously tested that the second
