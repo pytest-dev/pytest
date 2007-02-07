@@ -115,7 +115,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         assert tb[0].source.find("execute") != -1
         
     def test_setup_teardown_ssh(self):
-        hosts = [HostInfo('localhost')]
+        hosts = [HostInfo('localhost:%s' % self.dest)]
         setup_events = []
         teardown_events = []
         tmpdir = py.test.ensuretemp("emptyconftest") 
@@ -141,7 +141,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         assert len(teardown_wait_ends) == len(hosts)
 
     def test_setup_teardown_run_ssh(self):
-        hosts = [HostInfo('localhost')]
+        hosts = [HostInfo('localhost:%s' % self.dest)]
         allevents = []
         
         hm = HostManager(self.config, hosts=hosts)
@@ -181,13 +181,13 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         """ Tests if nice level behaviour is ok
         """
         allevents = []
-        hosts = [HostInfo('localhost')]
+        hosts = [HostInfo('localhost:%s' % self.dest)]
         tmpdir = py.test.ensuretemp("nice")
         tmpdir.ensure("__init__.py")
         tmpdir.ensure("conftest.py").write(py.code.Source("""
-        dist_hosts = ['localhost']
+        dist_hosts = ['localhost:%s']
         dist_nicelevel = 10
-        """))
+        """ % self.dest))
         tmpdir.ensure("test_one.py").write("""def test_nice():
             import os
             assert os.nice(0) == 10
