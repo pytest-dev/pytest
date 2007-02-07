@@ -27,9 +27,6 @@ class AbstractSession(Session):
         if option.runbrowser and not option.startserver:
             #print "--runbrowser implies --startserver"
             option.startserver = True
-        if option.nocapture:
-            print "Cannot use nocapture with distributed testing"
-            sys.exit(1)
         if self.config.getvalue("dist_boxed"):
             option.boxed = True
         super(AbstractSession, self).fixoptions()
@@ -111,7 +108,12 @@ class RSession(AbstractSession):
     """
     def fixoptions(self):
         super(RSession, self).fixoptions()
+        option = self.config.option 
+        if option.nocapture:
+            print "Cannot use nocapture with distributed testing"
+            sys.exit(1)
         config = self.config
+        config.option.boxed = True
         try:
             config.getvalue('dist_hosts')
         except KeyError:
