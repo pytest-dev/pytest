@@ -271,46 +271,62 @@ def test_custom_NONpython_collection_from_conftest():
     assert len(l) == 1
 
 def test_order_of_execution_generator_same_codeline():
-    skipboxed()
-    test_list = []
-    expected_list = range(6)
+    o = tmpdir.ensure('genorder1', dir=1)
+    o.join("test_order1.py").write(py.code.Source("""
+    def test_generative_order_of_execution():
+        test_list = []
+        expected_list = range(6)
 
-    def list_append(item):
-        test_list.append(item)
+        def list_append(item):
+            test_list.append(item)
+            
+        def assert_order_of_execution():
+            print 'expected order', expected_list
+            print 'but got       ', test_list
+            assert test_list == expected_list
         
-    def assert_order_of_execution():
-        print 'expected order', expected_list
-        print 'but got       ', test_list
-        assert test_list == expected_list
-    
-    for i in expected_list:
-        yield list_append, i
-    yield assert_order_of_execution
-
+        for i in expected_list:
+            yield list_append, i
+        yield assert_order_of_execution
+    """))
+    config = py.test.config._reparse([o])
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(Passed) 
+    assert len(l) == 7
 
 def test_order_of_execution_generator_different_codeline():
-    skipboxed()
-    test_list = []
-    expected_list = range(3)
+    o = tmpdir.ensure('genorder2', dir=2)
+    o.join("test_genorder2.py").write(py.code.Source("""
+    def test_generative_tests_different_codeline():
+        test_list = []
+        expected_list = range(3)
 
-    def list_append_2():
-        test_list.append(2)
+        def list_append_2():
+            test_list.append(2)
 
-    def list_append_1():
-        test_list.append(1)
+        def list_append_1():
+            test_list.append(1)
 
-    def list_append_0():
-        test_list.append(0)
+        def list_append_0():
+            test_list.append(0)
 
-    def assert_order_of_execution():
-        print 'expected order', expected_list
-        print 'but got       ', test_list
-        assert test_list == expected_list
-        
-    yield list_append_0
-    yield list_append_1
-    yield list_append_2
-    yield assert_order_of_execution   
+        def assert_order_of_execution():
+            print 'expected order', expected_list
+            print 'but got       ', test_list
+            assert test_list == expected_list
+            
+        yield list_append_0
+        yield list_append_1
+        yield list_append_2
+        yield assert_order_of_execution   
+    """))
+    config = py.test.config._reparse([o])
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(Passed) 
+    assert len(l) == 4
+    
 
 
 def test_documentation_virtual_collector_interaction():
