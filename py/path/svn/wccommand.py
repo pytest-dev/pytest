@@ -164,9 +164,6 @@ class SvnWCCommandPath(common.FSPathBase):
 
     def mkdir(self, *args):
         """ create & return the directory joined with args. """
-        p = self.join(*args)
-        self._callex(os.mkdir, str(p))
-        return p
         if args:
             return self.join(*args).mkdir()
         else:
