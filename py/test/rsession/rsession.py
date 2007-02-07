@@ -227,6 +227,7 @@ class LSession(AbstractSession):
                              capture)
             finally:
                 capture.reset()
+            print >>sys.stderr, '\ndone'
 
     def init_runner(self):
         if self.config.option.apigen:
