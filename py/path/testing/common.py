@@ -135,7 +135,7 @@ class CommonPathTests:
 
     def test_listdir_fnmatchstring(self):
         l = self.root.listdir('s*dir')
-        assert len(l), 1
+        assert len(l)
         assert l[0], self.root.join('sampledir')
 
     def test_listdir_filter(self):
