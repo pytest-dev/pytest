@@ -6,6 +6,7 @@
 import py
 from py.__.apigen import apigen
 
+
 def setup_fs_project(name):
     temp = py.test.ensuretemp(name)
     assert temp.listdir() == []
@@ -123,7 +124,7 @@ def test_apigen_functional():
                'python "%s/bin/py.test"') % (tempdir, fs_root, pydir)
     else:
         cmd = ('APIGEN_TARGET="%s" PYTHONPATH="%s" '
-               '"%s/bin/py.test"') % (tempdir, fs_root, pydir)
+               'python "%s/bin/py.test"') % (tempdir, fs_root, pydir)
     try:
         output = py.process.cmdexec('%s --apigen="%s/apigen.py" "%s"' % (
                                         cmd, fs_root, pakdir))
