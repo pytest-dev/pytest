@@ -106,8 +106,7 @@ class HostRSync(py.execnet.RSync):
         return remotepath 
 
 class HostManager(object):
-    def __init__(self, config, hosts=None, optimise_localhost=False):
-        self.optimise_localhost = optimise_localhost
+    def __init__(self, config, hosts=None):
         self.config = config
         if hosts is None:
             hosts = self.config.getvalue("dist_hosts")
@@ -133,21 +132,14 @@ class HostManager(object):
             rsync = HostRSync(ignores=ignores, 
                               verbose=self.config.option.verbose)
             destrelpath = root.relto(self.config.topdir)
-            to_send = False
             for host in self.hosts:
-                if host.hostname != 'localhost' or not self.optimise_localhost:
-                    def donecallback(host=host, root=root):
-                        reporter(repevent.HostRSyncRootReady(host, root))
-                    remotepath = rsync.add_target_host(
-                        host, reporter, destrelpath, finishedcallback=
-                        donecallback)
-                    reporter(repevent.HostRSyncing(host, root, remotepath))
-                    to_send = True
-                else:
+                def donecallback(host, root):
                     reporter(repevent.HostRSyncRootReady(host, root))
-            if to_send:
-                # don't send if we have no targets
-                rsync.send(root)
+                remotepath = rsync.add_target_host(
+                    host, reporter, destrelpath, finishedcallback=
+                    lambda host=host, root=root: donecallback(host, root))
+                reporter(repevent.HostRSyncing(host, root, remotepath))
+            rsync.send(root)
 
     def setup_hosts(self, reporter):
         self.init_rsync(reporter)
@@ -161,14 +153,7 @@ class HostManager(object):
     def teardown_hosts(self, reporter, channels, nodes,
                        waiter=lambda : time.sleep(.1), exitfirst=False):
         for channel in channels:
-            try:
-                channel.send(None)
-            except IOError:
-                print "Sending error, channel IOError"
-                print channel._getremoterror()
-                # XXX: this should go as soon as we'll have proper detection
-                #      of hanging nodes and such
-                raise
+            channel.send(None)
     
         clean = exitfirst
         while not clean:
@@ -181,11 +166,7 @@ class HostManager(object):
 
     def kill_channels(self, channels):
         for channel in channels:
-            try:
-                channel.send(42)
-            except IOError:
-                print "Sending error, channel IOError"
-                print channel._getremoterror()
+            channel.send(42)
 
     def teardown_gateways(self, reporter, channels):
         for channel in channels:
