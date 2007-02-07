@@ -11,36 +11,41 @@ from py.__.rest.latex import process_rest_file
 datadir = py.magic.autopath().dirpath().join("data")
 testdir = py.test.ensuretemp("rest")
 
-def test_graphviz_html():
-    if not py.path.local.sysfind("dot"):
-        py.test.skip("graphviz needed")
-    directive.set_backend_and_register_directives("html")
-    if not py.path.local.sysfind("svn"):
-        py.test.skip("svn needed")
-    txt = datadir.join("graphviz.txt")
-    html = txt.new(ext="html")
-    png = datadir.join("example1.png")
-    rest.process(txt)
-    assert html.check()
-    assert png.check()
-    html_content = html.read()
-    assert png.basename in html_content
-    html.remove()
-    png.remove()
+class TestGraphviz(object):
+    def _graphviz_html(self):
+        if not py.path.local.sysfind("dot"):
+            py.test.skip("graphviz needed")
+        directive.set_backend_and_register_directives("html")
+        if not py.path.local.sysfind("svn"):
+            py.test.skip("svn needed")
+        txt = datadir.join("graphviz.txt")
+        html = txt.new(ext="html")
+        png = datadir.join("example1.png")
+        rest.process(txt)
+        assert html.check()
+        assert png.check()
+        html_content = html.read()
+        assert png.basename in html_content
+        html.remove()
+        png.remove()
+        
+    def _graphviz_pdf(self):
+        if not py.path.local.sysfind("dot") or not py.path.local.sysfind("latex"):
+            py.test.skip("graphviz and latex needed")
 
-def test_graphviz_pdf():
-    if not py.path.local.sysfind("dot") or not py.path.local.sysfind("latex"):
-        py.test.skip("graphviz and latex needed")
+        directive.set_backend_and_register_directives("latex")
+        txt = py.path.local(datadir.join("graphviz.txt"))
+        pdf = txt.new(ext="pdf")
+        dotpdf = datadir.join("example1.pdf")
+        process_rest_file(txt)
+        assert pdf.check()
+        assert dotpdf.check()
+        pdf.remove()
+        dotpdf.remove()
 
-    directive.set_backend_and_register_directives("latex")
-    txt = py.path.local(datadir.join("graphviz.txt"))
-    pdf = txt.new(ext="pdf")
-    dotpdf = datadir.join("example1.pdf")
-    process_rest_file(txt)
-    assert pdf.check()
-    assert dotpdf.check()
-    pdf.remove()
-    dotpdf.remove()
+    def test_graphviz(self):
+        self._graphviz_html()
+        self._graphviz_pdf()
 
 def test_own_links():
     def callback(name, text):
