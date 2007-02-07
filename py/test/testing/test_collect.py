@@ -79,11 +79,11 @@ def test_module_file_not_found():
     py.test.raises(py.error.ENOENT, col.run) 
 
 def test_syntax_error_in_module():
-    (datadir / 'syntax_error.py').write("\nthis is really not python\n")
+    p = py.test.ensuretemp("syntaxerror1").join('syntax_error.py')
+    p.write("\nthis is really not python\n")
     modpath = datadir.join('syntax_error.py') 
     col = py.test.collect.Module(modpath) 
     py.test.raises(SyntaxError, col.run)
-    (datadir / 'syntax_error.py').remove()
 
 def test_disabled_class():
     col = py.test.collect.Module(datadir.join('disabled.py'))
