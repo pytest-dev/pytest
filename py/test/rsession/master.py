@@ -33,17 +33,11 @@ class MasterNode(object):
                 # send start report
                 self.reporter(repevent.SendItem(self.channel, item))
         except IOError:
-            
-            try:
-                channel._getremoterror()
-            except:
-                # if this were not remote, we've got no clue
-                excinfo = py.code.ExceptionInfo()
-                for i in excinfo.traceback:
-                    print str(i)[2:-1]
-                print excinfo
-            else:
-                raise
+            print "Sending error, channel IOError"
+            print channel._getremoterror()
+            # XXX: this should go as soon as we'll have proper detection
+            #      of hanging nodes and such
+            raise
 
 def itemgen(colitems, reporter, keyword, reporterror):
     def rep(x):
