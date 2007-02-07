@@ -23,14 +23,27 @@ class MasterNode(object):
                         self.channel, item, repr_outcome))
 
     def send(self, item):
-        if item is StopIteration:
-            self.channel.send(42)
-        else:
-            self.pending.insert(0, item)
+        try:
+            if item is StopIteration:
+                self.channel.send(42)
+            else:
+                self.pending.insert(0, item)
             #itemspec = item.listnames()[1:]
-            self.channel.send(item._get_collector_trail())
-            # send start report
-            self.reporter(repevent.SendItem(self.channel, item))
+                self.channel.send(item._get_collector_trail())
+                # send start report
+                self.reporter(repevent.SendItem(self.channel, item))
+        except IOError:
+            
+            try:
+                channel._getremoterror()
+            except:
+                # if this were not remote, we've got no clue
+                excinfo = py.code.ExceptionInfo()
+                for i in excinfo.traceback:
+                    print str(i)[2:-1]
+                print excinfo
+            else:
+                raise
 
 def itemgen(colitems, reporter, keyword, reporterror):
     def rep(x):
