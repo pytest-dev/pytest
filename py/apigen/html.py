@@ -32,8 +32,10 @@ class H(html):
                     link = H.a(name, href=href)
                 self.append(H.BaseDescription(link))
             self.append('):')
-            self.append(H.Docstring(docstring or '*no docstring available*'))
-            self.append(sourcelink)
+            self.append(H.div(H.Docstring(docstring or
+                                          '*no docstring available*'),
+                              sourcelink,
+                              class_='classdoc'))
             if properties:
                 self.append(H.h2('properties:'))
                 for name, val in properties:

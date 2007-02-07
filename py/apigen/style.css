@@ -34,6 +34,10 @@ ul li {
   list-style-type: none;
 }
 
+.classdoc {
+  font-size: 0.9em;
+}
+
 .code a {
   color: blue;
   font-weight: bold;

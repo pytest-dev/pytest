@@ -251,6 +251,8 @@ class SourcePageBuilder(AbstractPageBuilder):
         for fspath in [base] + list(base.visit()):
             if fspath.ext in ['.pyc', '.pyo']:
                 continue
+            if self.capture:
+                self.capture.err.writeorg('.')
             relfspath = fspath.relto(base)
             if relfspath.find('%s.' % (os.path.sep,)) > -1:
                 # skip hidden dirs and files
@@ -443,6 +445,8 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_class_pages(self, classes_dotted_names):
         passed = []
         for dotted_name in sorted(classes_dotted_names):
+            if self.capture:
+                self.capture.err.writeorg('.')
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             try:
                 sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -460,6 +464,8 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_function_pages(self, method_dotted_names):
         passed = []
         for dotted_name in sorted(method_dotted_names):
+            if self.capture:
+                self.capture.err.writeorg('.')
             # XXX should we create a build_function_view instead?
             parent_dotted_name, _ = split_of_last_part(dotted_name)
             sibling_dotted_names = self.namespace_tree[parent_dotted_name]
@@ -480,6 +486,8 @@ class ApiPageBuilder(AbstractPageBuilder):
         function_names = self.dsa.get_function_names()
         class_names = self.dsa.get_class_names()
         for dotted_name in sorted(names):
+            if self.capture:
+                self.capture.err.writeorg('.')
             if dotted_name in function_names or dotted_name in class_names:
                 continue
             subitem_dotted_names = self.namespace_tree[dotted_name]

@@ -56,22 +56,11 @@ def build(pkgdir, dsa, capture):
     spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, proj, capture,
                                     LayoutPage)
 
-    capture.err.writeorg('building namespace pages\n')
     apb.build_namespace_pages()
-
-    capture.err.writeorg('building class pages\n')
     class_names = dsa.get_class_names()
     apb.build_class_pages(class_names)
-
-    capture.err.writeorg('building function pages\n')
     function_names = dsa.get_function_names()
     apb.build_function_pages(function_names)
-
-    capture.err.writeorg('building source pages\n')
     spb.build_pages(pkgdir)
-
-    capture.err.writeorg('replacing temporary links\n')
     l.replace_dirpath(targetdir)
-
-    capture.err.writeorg('done building documentation\n')
 
