@@ -29,8 +29,6 @@ class RunExecutor(object):
             outcome = Outcome()
         except Skipped, e: 
             outcome = Outcome(skipped=str(e))
-        except (KeyboardInterrupt, SystemExit):
-            raise
         except:
             excinfo = py.code.ExceptionInfo()
             if isinstance(self.item, py.test.Function): 
