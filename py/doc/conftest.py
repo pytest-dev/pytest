@@ -6,8 +6,8 @@ Option = py.test.config.Option
 option = py.test.config.addoptions("documentation check options", 
         Option('-R', '--checkremote',
                action="store_true", dest="checkremote", default=False,
-               help="check remote links in ReST files"
-        ),
+               help="perform tests involving remote accesses (links, svn)"
+        ), 
         Option('', '--forcegen',
                action="store_true", dest="forcegen", default=False,
                help="force generation of html files even if they appear up-to-date"
