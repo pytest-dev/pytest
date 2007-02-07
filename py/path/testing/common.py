@@ -1,7 +1,7 @@
 from py.__.path.common import checker
 import py
 
-class CommonPathTests:
+class CommonPathTests(object):
     root = None  # subclasses have to setup a 'root' attribute
 
     def test_constructor_equality(self):

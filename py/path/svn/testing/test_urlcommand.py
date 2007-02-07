@@ -9,10 +9,26 @@ def setup_module(mod):
     if py.path.local.sysfind('svn') is None:
         py.test.skip("cannot test py.path.svn, 'svn' binary not found")
 
-class TestSvnCommandPath(CommonCommandAndBindingTests):
+class TestSvnURLCommandPath(CommonCommandAndBindingTests):
     def setup_class(cls): 
         repo, wc = getrepowc()
         cls.root = py.path.svnurl(repo)
+
+    def test_move_file(self):  # overrides base class
+        p = self.root.ensure('origfile')
+        newp = p.dirpath('newfile')
+        p.move(newp)
+        assert newp.check(file=1)
+        newp.remove()
+        assert not p.check()
+
+    def test_move_dir(self):  # overrides base class
+        p = self.root.ensure('origdir', dir=1)
+        newp = p.dirpath('newdir')
+        p.move(newp)
+        assert newp.check(dir=1)
+        newp.remove()
+        assert not p.check()
 
     def test_svnurl_needs_arg(self):
         py.test.raises(TypeError, "py.path.svnurl()")
@@ -52,7 +68,9 @@ class TestSvnInfoCommand:
         assert info.last_author == 'hpk'
         assert info.created_rev == 2256
         assert info.kind == 'file'
-        assert time.gmtime(info.mtime)[:6] == (2006, 11, 24, 17, 55, 0)
+        # we don't check for the year (2006), because that depends
+        # on the clock correctly being setup
+        assert time.gmtime(info.mtime)[1:6] == (11, 24, 17, 55, 0)
         assert info.size ==  165
         assert info.time == info.mtime * 1000000
 

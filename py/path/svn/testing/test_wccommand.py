@@ -14,6 +14,18 @@ class TestWCSvnCommandPath(CommonSvnTests):
     def setup_class(cls): 
         repo, cls.root = getrepowc()
 
+    def test_move_file(self):  # overrides base class
+        try:
+            super(TestWCSvnCommandPath, self).test_move_file()
+        finally:
+            self.root.revert(rec=1)
+
+    def test_move_directory(self): # overrides base class
+        try:
+            super(TestWCSvnCommandPath, self).test_move_directory()
+        finally:
+            self.root.revert(rec=1)
+
     def test_status_attributes_simple(self):
         def assert_nochange(p):
             s = p.status()

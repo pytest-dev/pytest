@@ -10,21 +10,16 @@ repodump = mypath.dirpath('repotest.dump')
 # make a wc directory out of a given root url
 # cache previously obtained wcs!
 #
-def getrepowc(reponame='a~bc$aaa~', wcname='wc'):
+def getrepowc(reponame='basetestrepo', wcname='wc'):
     repo = py.test.ensuretemp(reponame)
     wcdir = py.test.ensuretemp(wcname)
     if not repo.listdir():
         #assert not wcdir.check()
         repo.ensure(dir=1)
-        try:
-            py.process.cmdexec('svnadmin create "%s"' %
-                    svncommon._escape_helper(repo))
-            py.process.cmdexec('svnadmin load -q "%s" <"%s"' %
-                    (svncommon._escape_helper(repo), repodump))
-        except py.process.cmdexec.Error:
-            raise
-            repo.remove()
-            raise py.test.skip('could not create temporary svn test repository')
+        py.process.cmdexec('svnadmin create "%s"' %
+                svncommon._escape_helper(repo))
+        py.process.cmdexec('svnadmin load -q "%s" <"%s"' %
+                (svncommon._escape_helper(repo), repodump))
         print "created svn repository", repo
         wcdir.ensure(dir=1)
         wc = py.path.svnwc(wcdir)
