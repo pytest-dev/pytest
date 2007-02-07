@@ -113,7 +113,6 @@ class RSession(AbstractSession):
             print "Cannot use nocapture with distributed testing"
             sys.exit(1)
         config = self.config
-        config.option.boxed = True
         try:
             config.getvalue('dist_hosts')
         except KeyError:

@@ -241,7 +241,7 @@ class TestSessionAndOptions:
         session = config.initsession()
         assert session.config is config 
 
-    def test_boxed_option_including_implied_from_conftest(self):
+    def test_boxed_option_default(self):
         self.tmpdir.join("conftest.py").write("dist_hosts=[]")
         tmpdir = self.tmpdir.ensure("subdir", dir=1)
         config = py.test.config._reparse([tmpdir])
@@ -249,8 +249,11 @@ class TestSessionAndOptions:
         assert not config.option.boxed
         config = py.test.config._reparse(['--dist', tmpdir])
         config.initsession()
-        assert config.option.boxed
+        assert not config.option.boxed
 
+    def test_boxed_option_from_conftest(self):
+        self.tmpdir.join("conftest.py").write("dist_hosts=[]")
+        tmpdir = self.tmpdir.ensure("subdir", dir=1)
         tmpdir.join("conftest.py").write(py.code.Source("""
             dist_hosts = []
             dist_boxed = True
@@ -258,6 +261,9 @@ class TestSessionAndOptions:
         config = py.test.config._reparse(['--dist', tmpdir])
         config.initsession()
         assert config.option.boxed 
+
+    def test_boxed_option_from_conftest2(self):
+        tmpdir = self.tmpdir
         tmpdir.join("conftest.py").write(py.code.Source("""
             dist_boxed = False
         """))
@@ -265,11 +271,9 @@ class TestSessionAndOptions:
         assert config.option.boxed 
         config.initsession()
         assert config.option.boxed
-        config = py.test.config._reparse([tmpdir, '-d'])
-        assert not config.option.boxed
-        config.initsession()
-        assert config.option.boxed
-        config = py.test.config._reparse([tmpdir, '-d', '-s'])
+
+    def test_dist_session_no_capturedisable(self):
+        config = py.test.config._reparse([self.tmpdir, '-d', '-s'])
         py.test.raises(SystemExit, "config.initsession()")
 
     def test_getvalue_pathlist(self):
