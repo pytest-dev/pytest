@@ -192,6 +192,19 @@ class TestHostManager(DirSetup):
         assert self.dest.join("dir5","file").check()
         assert not self.dest.join("dir6").check()
 
+    def test_hostmanager_rsync_optimise_localhost(self):
+        dir1 = self.source.ensure("opt_localhost1", dir=1)
+        config = py.test.config._reparse([self.source])
+        hm = HostManager(config,
+                         hosts=[HostInfo("localhost:" + str(self.dest))],
+                         optimise_localhost=True)
+        events = []
+        hm.init_rsync(reporter=events.append)
+        rr = [i for i in events if isinstance(i, repevent.HostRSyncRootReady)]
+        assert len(rr) == 1
+        hr = [i for i in events if isinstance(i, repevent.HostRSyncing)]
+        assert len(hr) == 0
+
 def test_getpath_relto_home():
     x = getpath_relto_home("hello")
     assert x == py.path.local._gethomedir().join("hello")
