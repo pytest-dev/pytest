@@ -183,18 +183,13 @@ The catching of stdout/stderr output can be disabled using the
 ``--nocapture`` option to the ``py.test`` tool.  Any output will 
 in this case be displayed as soon as it is generated.
 
-order of execution is guaranteed
+test execution order
 --------------------------------
 
-Tests will run in the order in which they appear in the files. 
-If you invoke ``py.test`` multiple times you should find that tests 
-execute in exactly the same order within each file. 
-
-Besides making it easier to compare test output this allows 
-multi-stage tests where you can rely on your test to iteratively 
-build up a test structure.
-
-`Note: This is not true for distributed tests`
+Tests usually run in the order in which they appear in the files. 
+However, tests should not rely on running one after another, as
+this prevents more advanced usages: running tests
+distributedly or selectively, or in "looponfailing" mode. 
 
 useful tracebacks, recursion detection 
 --------------------------------------
