@@ -203,7 +203,7 @@ class CommonFSTests(common.CommonPathTests):
 
     def test_move_file(self):
         p = self.root.join('samplefile')
-        newp = p.dirpath('samplefile_moved')
+        newp = p.dirpath('moved_samplefile')
         p.move(newp)
         assert newp.check(file=1)
         assert not p.check()
