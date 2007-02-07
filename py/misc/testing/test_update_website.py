@@ -44,6 +44,8 @@ def setup_pkg(testname):
     return pkgpath
 
 def test_run_tests():
+    if py.std.sys.platform == "win32":
+        py.test.skip("update_website is not supposed to be run from win32")
     pkgpath = setup_pkg('update_website_run_tests')
     errors = update_website.run_tests(pkgpath)
     assert not errors

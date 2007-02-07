@@ -11,6 +11,8 @@ from py.__.test.rsession.testing.test_hostmanage import DirSetup
 
 def setup_module(mod):
     mod.pkgdir = py.path.local(py.__file__).dirpath()
+    if py.std.sys.platform == "win32":
+        py.test.skip("rsession tests disabled for win32")
 
 def test_example_tryiter():
     events = []

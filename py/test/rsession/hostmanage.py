@@ -183,7 +183,7 @@ def gethomedir():
     homedir = os.environ.get('HOME', '')
     if not homedir:
         homedir = os.environ.get('HOMEPATH', '.')
-    return homedir
+    return os.path.abspath(homedir)
 
 def getpath_relto_home(targetpath):
     import os

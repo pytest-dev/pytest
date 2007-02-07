@@ -7,9 +7,9 @@ from py.__.test.rsession.executor import RunExecutor, BoxExecutor,\
 from py.__.test.rsession.outcome import ReprOutcome
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
 
-#def setup_module(mod):
-#    mod.rootdir = py.path.local(py.__file__).dirpath().dirpath()
-#    mod.config = py.test.config._reparse([mod.rootdir])
+def setup_module(mod):
+    if py.std.sys.platform == "win32":
+        py.test.skip("skipping executor tests (some require os.fork)")
 
 class ItemTestPassing(py.test.Item):    
     def run(self):

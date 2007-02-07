@@ -17,8 +17,6 @@ from py.__.test.rsession.reporter import LocalReporter, RemoteReporter
 from py.__.test.session import Session
 from py.__.test.outcome import Skipped, Failed
 
-old_fork = os.fork
-
 class AbstractSession(Session): 
     """
         An abstract session executes collectors/items through a runner. 
