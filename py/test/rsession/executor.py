@@ -22,6 +22,9 @@ class RunExecutor(object):
 
     def run(self):
         self.item.run()
+
+    def fatals(self):
+        return (SystemExit, KeyboardInterrupt)
     
     def execute(self):
         try:
@@ -29,6 +32,8 @@ class RunExecutor(object):
             outcome = Outcome()
         except Skipped, e: 
             outcome = Outcome(skipped=str(e))
+        except self.fatals():
+            raise
         except:
             excinfo = py.code.ExceptionInfo()
             if isinstance(self.item, py.test.Function): 
@@ -78,7 +83,10 @@ class BoxExecutor(RunExecutor):
     """ Same as RunExecutor, but boxes test instead
     """
     wraps = True
-    
+
+    def fatals(self):
+        return None
+
     def execute(self):
         def fun():
             outcome = RunExecutor.execute(self)
@@ -100,6 +108,9 @@ class AsyncExecutor(RunExecutor):
     computations (more async mode)
     """
     wraps = True
+
+    def fatals(self):
+        return None
     
     def execute(self):
         def fun():
