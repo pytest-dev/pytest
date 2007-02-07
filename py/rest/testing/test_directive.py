@@ -15,10 +15,9 @@ def test_graphviz_html():
     if not py.path.local.sysfind("dot"):
         py.test.skip("graphviz needed")
     directive.set_backend_and_register_directives("html")
-    #for reasons that elude me rest.process expects svnwcs???
     if not py.path.local.sysfind("svn"):
         py.test.skip("svn needed")
-    txt = py.path.svnwc(datadir.join("graphviz.txt"))
+    txt = datadir.join("graphviz.txt")
     html = txt.new(ext="html")
     png = datadir.join("example1.png")
     rest.process(txt)
