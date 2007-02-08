@@ -7,6 +7,7 @@ import py
 import os
 import sys
 import marshal
+from py.__.test import config as pytestconfig
 
 PYTESTSTDOUT = "pyteststdout"
 PYTESTSTDERR = "pyteststderr"
@@ -30,6 +31,7 @@ class FileBox(object):
         self.kwargs = kwargs
     
     def run(self, continuation=False):
+        # XXX we should not use py.test.ensuretemp here
         tempdir = py.test.ensuretemp("box%d" % self.count)
         self.count += 1
         self.tempdir = tempdir
@@ -78,6 +80,11 @@ class FileBox(object):
         try:
             if nice_level:
                 os.nice(nice_level)
+            # with fork() we have duplicated py.test's basetemp
+            # directory so we unset it manually here. 
+            # this may be expensive for some test setups, 
+            # but that is what you get with boxing. 
+            pytestconfig.basetemp = None 
             retval = self.fun(*self.args, **self.kwargs)
             retvalf.write(marshal.dumps(retval))
         finally:
