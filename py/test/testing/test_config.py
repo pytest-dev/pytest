@@ -10,6 +10,21 @@ def test_tmpdir():
     assert d1 == d2
     assert d1.check(dir=1) 
 
+def test_ensuretemp_fork():
+    os = py.std.os
+    org_getpid = os.getpid
+    currpid = 0
+    def getpid():
+        return currpid
+    try:
+        os.getpid = getpid
+        d1 = py.test.ensuretemp('hello')
+        currpid = 1
+        d2 = py.test.ensuretemp('hello')
+    finally:
+        os.getpid = org_getpid
+    assert d1 != d2
+
 def test_config_cmdline_options(): 
     o = py.test.ensuretemp('configoptions') 
     o.ensure("conftest.py").write(py.code.Source(""" 

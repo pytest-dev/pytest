@@ -8,12 +8,15 @@ optparse = py.compat.optparse
 
 # XXX move to Config class
 basetemp = None
+_pid = None
 def ensuretemp(string, dir=1): 
     """ return temporary directory path with
         the given string as the trailing part. 
     """ 
-    global basetemp
-    if basetemp is None: 
+    global basetemp, _pid
+    currpid = py.std.os.getpid()
+    if basetemp is None or _pid != currpid:
+        _pid = currpid
         basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
     return basetemp.ensure(string, dir=dir) 
   
