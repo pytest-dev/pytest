@@ -14,6 +14,24 @@ option = py.test.config.addoptions("documentation check options",
         )
 ) 
 
+def deindent(s, sep='\n'):
+    leastspaces = -1
+    lines = s.split(sep)
+    for line in lines:
+        if not line.strip():
+            continue
+        spaces = len(line) - len(line.lstrip())
+        if leastspaces == -1 or spaces < leastspaces:
+            leastspaces = spaces
+    if leastspaces == -1:
+        return s
+    for i, line in py.builtin.enumerate(lines):
+        if not line.strip():
+            lines[i] = ''
+        else:
+            lines[i] = line[leastspaces:]
+    return sep.join(lines)
+
 _initialized = False
 def checkdocutils():
     global _initialized
@@ -73,10 +91,10 @@ class DoctestText(py.test.Item):
         l = []
         prefix = '.. >>> '
         mod = py.std.types.ModuleType(self.fspath.purebasename) 
-        for line in s.split('\n'):
-            line = line.strip()
-            if line.startswith(prefix):
-                exec py.code.Source(line[len(prefix):]).compile() in \
+        for line in deindent(s).split('\n'):
+            stripped = line.strip()
+            if stripped.startswith(prefix):
+                exec py.code.Source(stripped[len(prefix):]).compile() in \
                      mod.__dict__
                 line = ""
             else:

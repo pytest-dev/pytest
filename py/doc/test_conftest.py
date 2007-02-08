@@ -52,6 +52,15 @@ def test_doctest_basic():
     l2 = session.getitemoutcomepairs(Skipped)
     assert len(l+l2) == 2
 
+def test_deindent():
+    from py.__.doc.conftest import deindent
+    assert deindent('foo') == 'foo'
+    assert deindent('foo\n  bar') == 'foo\n  bar'
+    assert deindent('  foo\n  bar\n') == 'foo\nbar\n'
+    assert deindent('  foo\n\n  bar\n') == 'foo\n\nbar\n'
+    assert deindent(' foo\n  bar\n') == 'foo\n bar\n'
+    assert deindent('  foo\n bar\n') == ' foo\nbar\n'
+
 def test_doctest_eol(): 
     # XXX get rid of the next line: 
     py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
@@ -63,6 +72,21 @@ def test_doctest_eol():
     session.main()
     l = session.getitemoutcomepairs(Failed)
     assert len(l) == 0 
+    l = session.getitemoutcomepairs(Passed)
+    l2 = session.getitemoutcomepairs(Skipped)
+    assert len(l+l2) == 2
+
+def test_doctest_indentation():
+    # XXX get rid of the next line: 
+    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
+
+    txt = tmpdir.join('foo.txt')
+    txt.write('..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
+    config = py.test.config._reparse([txt])
+    session = config.initsession()
+    session.main()
+    l = session.getitemoutcomepairs(Failed)
+    assert len(l) == 0
     l = session.getitemoutcomepairs(Passed)
     l2 = session.getitemoutcomepairs(Skipped)
     assert len(l+l2) == 2
