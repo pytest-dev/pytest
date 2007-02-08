@@ -34,7 +34,6 @@ class MySession(RemoteTerminalSession):
     def _initslavegateway(self):
         print "MASTER: initializing remote socket gateway"
         gw = py.execnet.SocketGateway(*self.socketserveradr)
-        rsync = MyRSync(delete=True)
         pkgname = 'py' # xxx flexibilize
         channel = gw.remote_exec("""
             import os
@@ -43,9 +42,10 @@ class MySession(RemoteTerminalSession):
             channel.send((topdir, pkgdir))
         """ % (pkgname,))
         remotetopdir, remotepkgdir = channel.receive()
-        rsync.add_target(gw, remotepkgdir) 
         sendpath = py.path.local(py.__file__).dirpath()
-        rsync.send(sendpath)
+        rsync = MyRSync(sendpath)
+        rsync.add_target(gw, remotepkgdir, delete=True) 
+        rsync.send()
         channel = gw.remote_exec("""
             import os, sys
             path = %r # os.path.abspath
