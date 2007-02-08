@@ -93,6 +93,13 @@ class RSync(object):
         if self._verbose:
             print '%s <= %s' % (gateway.remoteaddress, modified_rel_path)
 
+    def send_if_targets(self):
+        """ Sends only if there are targets, otherwise returns
+        """
+        if not self._channels:
+            return
+        self.send()
+
     def send(self):
         """ Sends a sourcedir to all added targets. 
         """
