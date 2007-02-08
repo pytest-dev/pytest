@@ -42,13 +42,16 @@ def run_tests(pkgpath, args=''):
     status = py.std.os.system(cmd)
     return status
 
-def main(pkgpath, apidocspath, rhost, rpath, args=''):
+def main(pkgpath, apidocspath, rhost, rpath, args='', ignorefail=False):
     print 'running tests'
     errors = run_tests(pkgpath, args)
     if errors:
         print >>sys.stderr, \
               'Errors while running the unit tests: %s' % (errors,)
-        sys.exit(1)
+        if not ignorefail:
+            print >>sys.stderr, ('if you want to continue the update '
+                                 'regardless of failures, use --ignorefail')
+            sys.exit(1)
     
     print 'rsyncing'
     gateway = py.execnet.SshGateway(rhost)
@@ -58,9 +61,26 @@ def main(pkgpath, apidocspath, rhost, rpath, args=''):
         sys.exit(1)
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+    if '--help' in args or '-h' in args:
+        print 'usage: %s [options]'
+        print
+        print 'run the py lib tests and update the py lib website'
+        print 'options:'
+        print '    --ignorefail: ignore errors in the unit tests and always'
+        print '                  try to rsync'
+        print '    --help: show this message'
+        print
+        print 'any additional arguments are passed on as-is to the py.test'
+        print 'child process'
+        sys.exit()
+    ignorefail = False
+    if '--ignorefail' in args:
+        args.remove('--ignorefail')
+        ignorefail = True
     args = ' '.join(sys.argv[1:])
     pkgpath = py.__package__.getpath()
     apidocspath = pkgpath.dirpath().join('apigen')
     main(pkgpath, apidocspath, 'codespeak.net',
-         '/home/guido/rsynctests', args)
+         '/home/guido/rsynctests', args, ignorefail)
 
