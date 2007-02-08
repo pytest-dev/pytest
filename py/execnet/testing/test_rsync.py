@@ -50,12 +50,12 @@ class TestRSync(DirSetup):
         rsync.send()
         assert dest.join('subdir', 'file1').check(file=1)
         assert dest2.join('subdir', 'file1').check(file=1)
-        rsync = RSync(source, delete=True)
+        rsync = RSync(source)
+        rsync.add_target(gw, dest, delete=True)
         rsync.add_target(gw2, dest2)
-        rsync.add_target(gw, dest)
         rsync.send()
         assert not dest.join('subdir', 'file1').check() 
-        assert not dest2.join('subdir', 'file1').check() 
+        assert dest2.join('subdir', 'file1').check() 
 
     def test_dirsync_twice(self):
         source = self.source

@@ -77,7 +77,6 @@ class HostRSync(py.execnet.RSync):
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
-        kwargs['delete'] = True
         super(HostRSync, self).__init__(source, **kwargs)
 
     def filter(self, path):
@@ -106,7 +105,9 @@ class HostRSync(py.execnet.RSync):
             remotepath = os.path.join(remotepath, destrelpath)
         super(HostRSync, self).add_target(gw, 
                                           remotepath, 
-                                          finishedcallback)
+                                          finishedcallback,
+                                          delete=True,
+                                          )
         return remotepath 
 
 class HostManager(object):

@@ -3,23 +3,16 @@ from Queue import Queue
 
 
 class RSync(object):
-    """ This class allows to synchronise files and directories 
-        with one or multiple remote filesystems.
-
-        An RSync instance allows to dynamically add remote targets 
-        and then synchronizes the remote filesystems with
-        any provided source directory. 
+    """ This class allows to send a directory structure (recursively)
+        to one or multiple remote filesystems.
 
         There is limited support for symlinks, which means that symlinks
         pointing to the sourcetree will be send "as is" while external
         symlinks will be just copied (regardless of existance of such
         a path on remote side). 
     """
-    def __init__(self, sourcedir, callback=None, verbose=True, **options):
-        for name in options:
-            assert name in ('delete')
+    def __init__(self, sourcedir, callback=None, verbose=True): 
         self._sourcedir = str(sourcedir)
-        self._options = options
         self._verbose = verbose 
         assert callback is None or callable(callback)
         self._callback = callback
@@ -135,16 +128,19 @@ class RSync(object):
                 else:
                     assert "Unknown command %s" % command
 
-    def add_target(self, gateway, destdir, finishedcallback=None):
+    def add_target(self, gateway, destdir, 
+                   finishedcallback=None, **options):
         """ Adds a remote target specified via a 'gateway'
             and a remote destination directory. 
         """
         assert finishedcallback is None or callable(finishedcallback)
+        for name in options:
+            assert name in ('delete',)
         def itemcallback(req):
             self._receivequeue.put((channel, req))
         channel = gateway.remote_exec(REMOTE_SOURCE)
         channel.setcallback(itemcallback, endmarker = None)
-        channel.send((str(destdir), self._options))
+        channel.send((str(destdir), options))
         self._channels[channel] = finishedcallback
 
     def _broadcast(self, msg):
