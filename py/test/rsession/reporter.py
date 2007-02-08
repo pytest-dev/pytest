@@ -65,7 +65,7 @@ class AbstractReporter(object):
                         hostrepr, item.remotepath)
             else: 
                 print "%15s: skip duplicate rsync to %r" % (
-                        hostrepr, str(item.root))
+                        hostrepr, item.root)
         else:
             print "%15s: rsync %r to remote %r" % (hostrepr, 
                                                    item.root.basename, 

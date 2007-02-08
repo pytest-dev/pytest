@@ -95,7 +95,7 @@ class HostRSync(py.execnet.RSync):
         if host.hostname == "localhost" and remotepath == self._sourcedir:
             self._synced[key] = True
         synced = key in self._synced 
-        reporter(repevent.HostRSyncing(host, self._sourcedir, 
+        reporter(repevent.HostRSyncing(host, py.path.local(self._sourcedir), 
                                        remotepath, synced))
         def hostrsynced(host=host):
             reporter(repevent.HostRSyncRootReady(host, self._sourcedir))
