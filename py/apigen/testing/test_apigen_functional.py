@@ -110,7 +110,7 @@ def setup_fs_project(name):
 
 def test_get_documentable_items():
     fs_root, package_name = setup_fs_project('test_get_documentable_items')
-    pkgname, documentable = apigen.get_documentable_items(
+    pkgname, documentable = apigen.get_documentable_items_pkgdir(
                                                fs_root.join(package_name))
     assert pkgname == 'pak'
     assert sorted(documentable.keys()) ==  [

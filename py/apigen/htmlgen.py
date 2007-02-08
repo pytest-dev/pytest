@@ -136,7 +136,7 @@ def enumerate_and_color(codelines, firstlineno, enc):
             break
     return snippet
 
-def get_obj(pkg, dotted_name):
+def get_obj(dsa, pkg, dotted_name):
     full_dotted_name = '%s.%s' % (pkg.__name__, dotted_name)
     if dotted_name == '':
         return pkg
@@ -146,8 +146,11 @@ def get_obj(pkg, dotted_name):
         marker = []
         ret = getattr(ret, item, marker)
         if ret is marker:
-            raise NameError('can not access %s in %s' % (item,
-                                                         full_dotted_name))
+            try:
+                return dsa.get_obj(dotted_name)
+            except KeyError:
+                raise NameError('can not access %s in %s' % (item,
+                                 full_dotted_name))
     return ret
 
 # the PageBuilder classes take care of producing the docs (using the stuff
@@ -314,7 +317,7 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_callable_view(self, dotted_name):
         """ build the html for a class method """
         # XXX we may want to have seperate
-        func = get_obj(self.pkg, dotted_name)
+        func = get_obj(self.dsa, self.pkg, dotted_name)
         docstring = func.__doc__ 
         if docstring:
             docstring = deindent(docstring)
@@ -348,7 +351,7 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_class_view(self, dotted_name):
         """ build the html for a class """
-        cls = get_obj(self.pkg, dotted_name)
+        cls = get_obj(self.dsa, self.pkg, dotted_name)
         # XXX is this a safe check?
         try:
             sourcefile = inspect.getsourcefile(cls)
@@ -419,7 +422,7 @@ class ApiPageBuilder(AbstractPageBuilder):
 
     def build_namespace_view(self, namespace_dotted_name, item_dotted_names):
         """ build the html for a namespace (module) """
-        obj = get_obj(self.pkg, namespace_dotted_name)
+        obj = get_obj(self.dsa, self.pkg, namespace_dotted_name)
         docstring = obj.__doc__
         snippet = H.NamespaceDescription(
             H.NamespaceDef(namespace_dotted_name),

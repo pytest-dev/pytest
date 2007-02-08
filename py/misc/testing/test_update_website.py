@@ -35,12 +35,16 @@ def setup_pkg(testname):
         def test_foo():
             assert foo(1) == 2
     """))
-    initfile = pkgpath.ensure('__init__.py').write(py.code.Source("""\
+    initfile = pkgpath.ensure('__init__.py').write(py.code.Source("""
         import py
         from py.__.initpkg import initpkg
         initpkg(__name__, exportdefs={
             'sub.foo': ('./mod.py', 'foo'),
         })
+    """))
+    initfile = pkgpath.ensure('apigen/apigen.py').write(py.code.Source("""
+        from py.__.apigen.apigen import build, \
+             get_documentable_items_pkgdir as get_documentable_items
     """))
     return pkgpath
 
