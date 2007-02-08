@@ -7,4 +7,4 @@ else:
     import py
     gdir = py.path.local(py.__file__).dirpath() 
     path = gdir.join('c-extension', 'greenlet', 'greenlet.c')
-    greenlet = path.getpymodule().greenlet 
+    greenlet = path._getpymodule().greenlet 

@@ -426,15 +426,15 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                     raise
                 return mod
 
-    def getpymodule(self):
+    def _getpymodule(self):
         """resolve this path to a module python object. """
         if self.ext != '.c':
-            return super(LocalPath, self).getpymodule()
+            return super(LocalPath, self)._getpymodule()
         from py.__.misc.buildcmodule import make_module_from_c
         mod = make_module_from_c(self)
         return mod
 
-    def getpycodeobj(self):
+    def _getpycodeobj(self):
         """ read the path and compile it to a code object. """
         dotpy = self.check(ext='.py')
         if dotpy:

@@ -370,14 +370,14 @@ newline will be removed from the end of each line. """
             self.copy(target)
             self.remove()
 
-    def getpymodule(self):
+    def _getpymodule(self):
         """resolve this path to a module python object. """
         modname = str(self)
         modname = modname.replace('.', self.sep)
         try:
             return sys.modules[modname]
         except KeyError:
-            co = self.getpycodeobj()
+            co = self._getpycodeobj()
             mod = py.std.new.module(modname)
             mod.__file__ = PathStr(self)
             if self.basename == '__init__.py':
@@ -390,7 +390,7 @@ newline will be removed from the end of each line. """
                 raise 
             return mod
 
-    def getpycodeobj(self):
+    def _getpycodeobj(self):
         """ read the path and compile it to a py.code.Code object. """
         s = self.read('rU')
         # XXX str(self) should show up somewhere in the code's filename
@@ -421,7 +421,7 @@ def relativeimport(p, name, parent=None):
                 p = p.new(basename=name).join('__init__.py')
                 if not p.check():
                     return None   # not found
-            submodule = p.getpymodule()
+            submodule = p._getpymodule()
             if parent is not None:
                 setattr(parent, name, submodule)
         modules.append(submodule)
