@@ -189,7 +189,8 @@ test execution order
 Tests usually run in the order in which they appear in the files. 
 However, tests should not rely on running one after another, as
 this prevents more advanced usages: running tests
-distributedly or selectively, or in "looponfailing" mode. 
+distributedly or selectively, or in "looponfailing" mode,
+will cause them to run in random order. 
 
 useful tracebacks, recursion detection 
 --------------------------------------
