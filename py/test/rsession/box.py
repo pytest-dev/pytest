@@ -82,10 +82,13 @@ class FileBox(object):
             if nice_level:
                 os.nice(nice_level)
             # with fork() we have duplicated py.test's basetemp
-            # directory so we set it manually here. 
+            # directory so we want to set it manually here. 
             # this may be expensive for some test setups, 
             # but that is what you get with boxing. 
-            pytestconfig.basetemp = self.tempdir.join("childbasetemp")
+            # XXX but we are called in more than strict boxing
+            # mode ("AsyncExecutor") so we can't do the following without
+            # inflicting on --dist speed, hum: 
+            # pytestconfig.basetemp = self.tempdir.join("childbasetemp")
             retval = self.fun(*self.args, **self.kwargs)
             retvalf.write(marshal.dumps(retval))
         finally:
