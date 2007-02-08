@@ -5,7 +5,7 @@ from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
 
 class LocalSetup:
     def setup_class(cls):
-        cls.root = py.test.ensuretemp('TestLocalPath') 
+        cls.root = py.test.ensuretemp(cls.__name__)
         cls.root.ensure(dir=1)
         setuptestfs(cls.root)
 
@@ -265,10 +265,10 @@ class TestExecution(LocalSetup):
             py.test.skip("Fails when run as boxed tests")
         root = self.tmpdir
         for i in range(10):
-            numdir = local.make_numbered_dir(prefix='base.', rootdir=root,
+            numdir = local.make_numbered_dir(prefix='base2.', rootdir=root,
                                              keep=2)
             assert numdir.check()
-            assert numdir.basename == 'base.%d' %i
+            assert numdir.basename == 'base2.%d' %i
             for j in range(i):
                 assert numdir.new(ext=str(j)).check()
 
