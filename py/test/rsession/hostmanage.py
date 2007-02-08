@@ -67,14 +67,14 @@ class HostInfo(object):
 class HostRSync(py.execnet.RSync):
     """ RSyncer that filters out common files 
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, source, *args, **kwargs):
         self._synced = {}
         ignores= None
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
         kwargs['delete'] = True
-        super(HostRSync, self).__init__(**kwargs)
+        super(HostRSync, self).__init__(source, **kwargs)
 
     def filter(self, path):
         path = py.path.local(path)
@@ -129,7 +129,7 @@ class HostManager(object):
         ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
         self.prepare_gateways(reporter)
         for root in self.roots:
-            rsync = HostRSync(ignores=ignores, 
+            rsync = HostRSync(root, ignores=ignores, 
                               verbose=self.config.option.verbose)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:
@@ -139,7 +139,7 @@ class HostManager(object):
                     host, reporter, destrelpath, finishedcallback=
                     lambda host=host, root=root: donecallback(host, root))
                 reporter(repevent.HostRSyncing(host, root, remotepath))
-            rsync.send(root)
+            rsync.send()
 
     def setup_hosts(self, reporter):
         self.init_rsync(reporter)
@@ -170,12 +170,12 @@ class HostManager(object):
 
     def teardown_gateways(self, reporter, channels):
         for channel in channels:
+            #try:
             try:
-                repevent.wrapcall(reporter, channel.waitclose)
-            except KeyboardInterrupt, SystemExit:
-                raise
-            except:
-                pass
+                repevent.wrapcall(reporter, channel.waitclose, 1)
+            except IOError: # timeout
+                # force closing
+                channel.close()
             channel.gateway.exit()
 
 def gethomedir():

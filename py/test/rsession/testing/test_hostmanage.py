@@ -106,7 +106,7 @@ class TestSyncing(DirSetup):
         self.source.ensure(".svn", "entries")
         self.source.ensure(".somedotfile", "moreentries")
         self.source.ensure("somedir", "editfile~")
-        syncer = HostRSync()
+        syncer = HostRSync(self.source)
         l = list(self.source.visit(rec=syncer.filter,
                                    fil=syncer.filter))
         assert len(l) == 3
@@ -118,18 +118,18 @@ class TestSyncing(DirSetup):
     def test_hrsync_one_host(self):
         h1 = self._gethostinfo()
         finished = []
-        rsync = HostRSync()
+        rsync = HostRSync(self.source)
         h1.initgateway()
         rsync.add_target_host(h1)
         self.source.join("hello.py").write("world")
-        rsync.send(self.source)
+        rsync.send()
         assert self.dest.join("hello.py").check()
 
     def test_hrsync_same_host_twice(self):
         h1 = self._gethostinfo()
         h2 = self._gethostinfo()
         finished = []
-        rsync = HostRSync()
+        rsync = HostRSync(self.source)
         l = []
         h1.initgateway()
         res1 = rsync.add_target_host(h1)

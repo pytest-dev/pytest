@@ -21,8 +21,8 @@ class DirSetup:
 
 class TestRSync(DirSetup):
     def test_notargets(self):
-        rsync = RSync()
-        py.test.raises(IOError, "rsync.send(self.source)")
+        rsync = RSync(self.source)
+        py.test.raises(IOError, "rsync.send()")
 
     def test_dirsync(self):
         dest = self.dest1
@@ -31,10 +31,10 @@ class TestRSync(DirSetup):
 
         for s in ('content1', 'content2-a-bit-longer'): 
             source.ensure('subdir', 'file1').write(s) 
-            rsync = RSync()
+            rsync = RSync(self.source)
             rsync.add_target(gw, dest)
             rsync.add_target(gw2, dest2)
-            rsync.send(source)
+            rsync.send()
             assert dest.join('subdir').check(dir=1)
             assert dest.join('subdir', 'file1').check(file=1)
             assert dest.join('subdir', 'file1').read() == s 
@@ -43,40 +43,40 @@ class TestRSync(DirSetup):
             assert dest2.join('subdir', 'file1').read() == s 
         
         source.join('subdir').remove('file1')
-        rsync = RSync()
+        rsync = RSync(source)
         rsync.add_target(gw2, dest2)
         rsync.add_target(gw, dest)
-        rsync.send(source)
+        rsync.send()
         assert dest.join('subdir', 'file1').check(file=1)
         assert dest2.join('subdir', 'file1').check(file=1)
-        rsync = RSync(delete=True)
+        rsync = RSync(source, delete=True)
         rsync.add_target(gw2, dest2)
         rsync.add_target(gw, dest)
-        rsync.send(source)
+        rsync.send()
         assert not dest.join('subdir', 'file1').check() 
         assert not dest2.join('subdir', 'file1').check() 
 
     def test_dirsync_twice(self):
         source = self.source
         source.ensure("hello")
-        rsync = RSync()
+        rsync = RSync(source)
         rsync.add_target(gw, self.dest1)
-        rsync.send(self.source)
+        rsync.send()
         assert self.dest1.join('hello').check()
-        py.test.raises(IOError, "rsync.send(self.source)")
+        py.test.raises(IOError, "rsync.send()")
         rsync.add_target(gw, self.dest2)
-        rsync.send(self.source)
+        rsync.send()
         assert self.dest2.join('hello').check()
-        py.test.raises(IOError, "rsync.send(self.source)")
+        py.test.raises(IOError, "rsync.send()")
 
     def test_rsync_default_reporting(self):
         source = self.source
         source.ensure("hello")
         cap = py.io.StdCapture()
         try:
-            rsync = RSync()
+            rsync = RSync(source)
             rsync.add_target(gw, self.dest1)
-            rsync.send(self.source)
+            rsync.send()
         finally:
             out, err = cap.reset()
         assert out.find("hello") != -1
@@ -86,9 +86,9 @@ class TestRSync(DirSetup):
         source.ensure("hello")
         cap = py.io.StdCapture()
         try:
-            rsync = RSync(verbose=False)
+            rsync = RSync(source, verbose=False)
             rsync.add_target(gw, self.dest1)
-            rsync.send(self.source)
+            rsync.send()
         finally:
             out, err = cap.reset()
         assert not out
@@ -103,10 +103,10 @@ class TestRSync(DirSetup):
         source.join("rellink").mksymlinkto(source.join("existant"), absolute=0)
         source.join('abslink').mksymlinkto(source.join("existant"))
         
-        rsync = RSync()
+        rsync = RSync(source)
         rsync.add_target(gw, dest)
-        rsync.send(source)
-         
+        rsync.send()
+        
         assert dest.join('rellink').readlink() == dest.join("existant")
         assert dest.join('abslink').readlink() == dest.join("existant")
 
@@ -119,10 +119,10 @@ class TestRSync(DirSetup):
         def callback(cmd, lgt, channel):
             total[(cmd, lgt)] = True
 
-        rsync = RSync(callback=callback)
+        rsync = RSync(source, callback=callback)
         #rsync = RSync()
         rsync.add_target(gw, dest)
-        rsync.send(source)
+        rsync.send()
 
         assert total == {("list", 110):True, ("ack", 100):True, ("ack", 10):True}
 
@@ -140,9 +140,9 @@ class TestRSync(DirSetup):
                     source.join("ex2").remove()
                 return True
 
-        rsync = DRsync()
+        rsync = DRsync(source)
         rsync.add_target(gw, dest)
-        rsync.send(source)
+        rsync.send()
         assert rsync.x == 1
         assert len(dest.listdir()) == 1
         assert len(source.listdir()) == 1

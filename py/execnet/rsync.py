@@ -15,9 +15,10 @@ class RSync(object):
         symlinks will be just copied (regardless of existance of such
         a path on remote side). 
     """
-    def __init__(self, callback=None, verbose=True, **options):
+    def __init__(self, sourcedir, callback=None, verbose=True, **options):
         for name in options:
             assert name in ('delete')
+        self._sourcedir = str(sourcedir)
         self._options = options
         self._verbose = verbose 
         assert callback is None or callable(callback)
@@ -92,13 +93,12 @@ class RSync(object):
         if self._verbose:
             print '%s <= %s' % (gateway.remoteaddress, modified_rel_path)
 
-    def send(self, sourcedir):
+    def send(self):
         """ Sends a sourcedir to all added targets. 
         """
         if not self._channels:
             raise IOError("no targets available, maybe you "
                           "are trying call send() twice?")
-        self._sourcedir = str(sourcedir)
         # normalize a trailing '/' away
         self._sourcedir = os.path.dirname(os.path.join(self._sourcedir, 'x'))
         # send directory structure and file timestamps/sizes
