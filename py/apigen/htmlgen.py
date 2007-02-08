@@ -341,13 +341,9 @@ class ApiPageBuilder(AbstractPageBuilder):
                 href = self.linker.get_lazyhref(sourcefile)
 
         csource = H.SourceSnippet(text, href, colored)
-        callstack = self.dsa.get_function_callpoints(dotted_name)
-        csitems = []
-        for cs, _ in callstack:
-            csitems.append(self.build_callsite(dotted_name, cs))
+        cslinks = self.build_callsites(dotted_name)
         snippet = H.FunctionDescription(localname, argdesc, docstring,
-                                        valuedesc, csource, csitems)
-        
+                                        valuedesc, csource, cslinks)
         return snippet
 
     def build_class_view(self, dotted_name):
@@ -589,14 +585,30 @@ class ApiPageBuilder(AbstractPageBuilder):
     def is_in_pkg(self, sourcefile):
         return py.path.local(sourcefile).relto(self.projpath)
 
-    def build_callsite(self, functionname, call_site):
-        tbtag = self.gen_traceback(functionname, reversed(call_site))
-        return H.CallStackItem(call_site[0].filename, call_site[0].lineno + 1,
-                               tbtag)
+    def build_callsites(self, dotted_name):
+        callstack = self.dsa.get_function_callpoints(dotted_name)
+        cslinks = []
+        for i, (cs, _) in enumerate(callstack):
+            link = self.build_callsite(dotted_name, cs, i)
+            cslinks.append(link)
+        return cslinks
+
+    def build_callsite(self, dotted_name, call_site, index):
+        tbtag = self.gen_traceback(dotted_name, reversed(call_site))
+        parent_dotted_name, _ = split_of_last_part(dotted_name)
+        nav = self.build_navigation(parent_dotted_name, False)
+        id = 'callsite_%s_%s' % (dotted_name, index)
+        reltargetpath = "api/%s.html" % (id,)
+        self.linker.set_link(id, reltargetpath)
+        href = self.linker.get_lazyhref(id)
+        self.write_page('call site %s for %s' % (index, dotted_name),
+                        reltargetpath, tbtag, nav)
+        return H.CallStackLink(call_site[0].filename, call_site[0].lineno + 1,
+                               href)
     
     _reg_source = py.std.re.compile(r'([^>]*)<(.*)>')
-    def gen_traceback(self, funcname, call_site):
-        tbdiv = H.div()
+    def gen_traceback(self, dotted_name, call_site):
+        tbtag = H.CallStackDescription()
         for frame in call_site:
             lineno = frame.lineno - frame.firstlineno
             source = frame.source
@@ -631,7 +643,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             else:
                 sourcelink = H.div('source unknown (%s)' % (sourcefile,))
                 colored = mangled[:]
-            tbdiv.append(sourcelink)
-            tbdiv.append(H.div(*colored))
-        return tbdiv
+            tbtag.append(sourcelink)
+            tbtag.append(H.div(*colored))
+        return tbtag
 

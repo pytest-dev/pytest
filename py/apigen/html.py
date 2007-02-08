@@ -160,15 +160,13 @@ class H(html):
         pass
 
     class CallStackDescription(Description):
-        def __init__(self, callstackdiv):
-            super(H.CallStackDescription, self).__init__(
-                H.Hideable('callsites', 'callsites', csdiv))
+        pass
 
-    class CallStackItem(html.div):
-        def __init__(self, filename, lineno, traceback):
-            super(H.CallStackItem, self).__init__(
-                H.Hideable("stack trace %s - line %s" % (filename, lineno),
-                           'callstackitem', traceback))
+    class CallStackLink(html.div):
+        def __init__(self, filename, lineno, href):
+            super(H.CallStackLink, self).__init__(
+                H.a("stack trace %s - line %s" % (filename, lineno),
+                    href=href))
 
     class Hideable(html.div):
         def __init__(self, name, class_, *content):

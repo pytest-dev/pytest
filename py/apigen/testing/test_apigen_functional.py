@@ -100,6 +100,11 @@ def setup_fs_project(name):
             exec c in globals()
 
             assert pak.somenamespace._hidden() == 'quux'
+
+            # this just to see a multi-level stack in the docs
+            def foo():
+                return pak.main.sub.func(10)
+            assert foo() is None
     """))
     return temp, 'pak'
 
