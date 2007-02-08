@@ -126,7 +126,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         pkg.main.sub.func(pkg.main.SomeClass(10))
         t.end_tracing()
         apb = ApiPageBuilder(self.base, self.linker, dsa, self.fs_root,
-                             self.namespace_tree, 'root docstring')
+                             self.namespace_tree, self.project)
         snippet = apb.build_callable_view('main.sub.func')
         html = snippet.unicode()
         print html
@@ -147,8 +147,6 @@ class TestApiPageBuilder(AbstractBuilderTest):
         pos7 = html.find('source: %s' % (self.fs_root.join('pkg/func.py'),),
                           pos6)
         assert pos7 > pos6
-        pos8 = html.find('def func(arg1):', pos7)
-        assert pos8 > pos7
         _checkhtmlsnippet(html)
 
     def test_build_function_pages(self):
