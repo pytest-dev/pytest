@@ -2,7 +2,7 @@ from __future__ import generators
 import os, sys, time, signal
 import py
 from py.__.execnet import gateway
-from py.__.execnet.conftest import option 
+from py.__.conftest import option 
 mypath = py.magic.autopath()
 
 from StringIO import StringIO
