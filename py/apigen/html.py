@@ -22,16 +22,17 @@ class H(html):
     class ClassDescription(Description):
         pass
 
-    class ClassDef(html.h1):
+    class ClassDef(html.div):
         def __init__(self, classname, bases, docstring, sourcelink,
                      properties, methods):
-            super(H.ClassDef, self).__init__('class %s(' % classname,)
+            header = H.h1('class %s(' % (classname,))
             for name, href in bases:
                 link = name
                 if href is not None:
                     link = H.a(name, href=href)
-                self.append(H.BaseDescription(link))
-            self.append('):')
+                header.append(H.BaseDescription(link))
+            header.append('):')
+            super(H.ClassDef, self).__init__(header)
             self.append(H.div(H.Docstring(docstring or
                                           '*no docstring available*'),
                               sourcelink,

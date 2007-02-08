@@ -2,6 +2,12 @@ import py
 import os
 html = py.xml.html
 
+# this here to serve two functions: first it makes the proto part of the temp
+# urls (see TempLinker) customizable easily (for tests and such) and second
+# it makes sure the temp links aren't replaced in generated source code etc.
+# for this file (and its tests) itself.
+TEMPLINK_PROTO = 'apigen.temp'
+
 def getrelfspath(dotted_name):
     # XXX need to make sure its imported on non-py lib 
     return eval(dotted_name, {"py": py})
@@ -58,20 +64,22 @@ class TempLinker(object):
         self._linkid2target = {}
 
     def get_lazyhref(self, linkid):
-        return 'apigen.linker://%s' % (linkid,)
+        return '%s://%s' % (TEMPLINK_PROTO, linkid)
 
     def set_link(self, linkid, target):
         assert linkid not in self._linkid2target
         self._linkid2target[linkid] = target
 
     def get_target(self, tempurl, fromlocation=None):
+        assert tempurl.startswith('%s://' % (TEMPLINK_PROTO,))
         linkid = '://'.join(tempurl.split('://')[1:])
         linktarget = self._linkid2target[linkid]
         if fromlocation is not None:
             linktarget = relpath(fromlocation, linktarget)
         return linktarget
 
-    _reg_tempurl = py.std.re.compile('"(apigen.linker:\/\/[^"\s]*)"')
+    _reg_tempurl = py.std.re.compile('["\'](%s:\/\/[^"\s]*)["\']' % (
+                                      TEMPLINK_PROTO,))
     def replace_dirpath(self, dirpath, stoponerrors=True):
         """ replace temporary links in all html files in dirpath and below """
         for fpath in dirpath.visit('*.html'):
