@@ -175,6 +175,17 @@ Paragraph
     assert txt == expected
     checkrest(txt)
 
+def test_blockquote_empty():
+    expected = """\
+Foo
+
+Bar
+"""
+    txt = Rest(Paragraph('Foo'), LiteralBlock(''), Paragraph('Bar')).text()
+    print repr(txt)
+    assert txt == expected
+    checkrest(txt)
+
 def test_title():
     txt = Title(Text("Some title"), belowchar="=").text()
     assert txt == "Some title\n=========="

@@ -133,7 +133,8 @@ class Rest(AbstractNode):
         for child in self.children:
             outcome.append(child.text())
         
-        text = self.sep.join(outcome) + "\n" # trailing newline
+        # always a trailing newline
+        text = self.sep.join([i for i in outcome if i]) + "\n"
         return text + self.render_links()
 
 class Transition(AbstractNode):
@@ -251,6 +252,8 @@ class LiteralBlock(AbstractText):
     start = '::\n\n'
 
     def text(self):
+        if not self._text.strip():
+            return ''
         text = self.escape(self._text).split('\n')
         for i, line in py.builtin.enumerate(text):
             if line.strip():
