@@ -67,15 +67,15 @@ def adddefaultoptions(config):
         Option('', '--traceconfig',
                action="store_true", dest="traceconfig", default=False,
                help="trace considerations of conftest.py files."),
-    )
-
-    config._addoptions('EXPERIMENTAL options',
         Option('-f', '--looponfailing',
                action="store_true", dest="looponfailing", default=False,
                help="loop on failing test set."),
         Option('', '--exec',
                action="store", dest="executable", default=None,
                help="python executable to run the tests with."),
+    )
+
+    config._addoptions('EXPERIMENTAL options',
         Option('-d', '--dist',
                action="store_true", dest="dist", default=False,
                help="ad-hoc distribute tests across machines (requires conftest settings)"), 
