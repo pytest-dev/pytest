@@ -1,4 +1,5 @@
 import py
+import sys
 
 here = py.magic.autopath().dirpath()
 update_website = here.join('../../bin/_update_website.py').pyimport()
@@ -53,9 +54,11 @@ def test_run_tests():
     assert pkgpath.join('../apigen/api/sub.foo.html').check(file=True)
 
 def test_run_tests_failure():
+    if py.std.sys.platform == "win32":
+        py.test.skip("update_website is not supposed to be run from win32")
     pkgpath = setup_pkg('update_website_run_tests_failure')
     assert not pkgpath.join('../apigen').check(dir=True)
     pkgpath.ensure('../apigen', file=True)
-    errors = update_website.run_tests(pkgpath)
+    errors = update_website.run_tests(pkgpath, '> /dev/null 2>&1')
     assert errors # some error message
 
