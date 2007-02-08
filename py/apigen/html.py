@@ -99,7 +99,7 @@ class H(html):
             if selected:
                 self.attr.class_ = 'selected'
 
-    class BaseDescription(html.a):
+    class BaseDescription(html.span):
         pass
 
     class SourceSnippet(html.div):
