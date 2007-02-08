@@ -14,11 +14,12 @@ PYTESTSTDERR = "pyteststderr"
 PYTESTRETVAL = "pytestretval"
 
 import tempfile
+import itertools
 from StringIO import StringIO
 
+counter = itertools.count().next
+
 class FileBox(object):
-    count = 0
-    
     def __init__(self, fun, args=None, kwargs=None, config=None):
         if args is None:
             args = []
@@ -32,8 +33,8 @@ class FileBox(object):
     
     def run(self, continuation=False):
         # XXX we should not use py.test.ensuretemp here
-        tempdir = py.test.ensuretemp("box%d" % self.count)
-        self.count += 1
+        count = counter()
+        tempdir = py.test.ensuretemp("box%d" % count)
         self.tempdir = tempdir
         self.PYTESTRETVAL = tempdir.join('retval')
         self.PYTESTSTDOUT = tempdir.join('stdout')
@@ -81,10 +82,10 @@ class FileBox(object):
             if nice_level:
                 os.nice(nice_level)
             # with fork() we have duplicated py.test's basetemp
-            # directory so we unset it manually here. 
+            # directory so we set it manually here. 
             # this may be expensive for some test setups, 
             # but that is what you get with boxing. 
-            pytestconfig.basetemp = None 
+            pytestconfig.basetemp = self.tempdir.join("childbasetemp")
             retval = self.fun(*self.args, **self.kwargs)
             retvalf.write(marshal.dumps(retval))
         finally:
