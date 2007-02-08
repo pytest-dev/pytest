@@ -17,14 +17,10 @@ class HostInfo(object):
     def __init__(self, spec):
         parts = spec.split(':', 1)
         self.hostname = parts.pop(0)
-        if parts and parts[0]:
-            self.relpath = parts[0]
-        else:
-            self.relpath = "pytestcache-" + self.hostname
-        if spec.find(':') == -1 and self.hostname == 'localhost':
-            self.rsync_flag = False
-        else:
-            self.rsync_flag = True
+        self.relpath = parts and parts.pop(0) or ""
+        if not self.relpath and self.hostname != "localhost":
+            self.relpath = "pytestcache-%s" % self.hostname
+        assert not parts
         self.hostid = self._getuniqueid(self.hostname) 
 
     def _getuniqueid(self, hostname):
@@ -33,23 +29,24 @@ class HostInfo(object):
         l.append(hostid)
         return hostid
 
-    def initgateway(self, python="python"):
-        assert not hasattr(self, 'gw')
+    def initgateway(self, python="python", topdir=None):
         if self.hostname == "localhost":
-            gw = py.execnet.PopenGateway(python=python)
+            self.gw = py.execnet.PopenGateway(python=python)
         else:
-            gw = py.execnet.SshGateway(self.hostname, 
-                                       remotepython=python)
-        self.gw = gw
-        channel = gw.remote_exec(py.code.Source(
+            self.gw = py.execnet.SshGateway(self.hostname, 
+                                            remotepython=python)
+        relpath = self.relpath or topdir 
+        assert relpath 
+        channel = self.gw.remote_exec(py.code.Source(
             gethomedir, 
             getpath_relto_home, """
             import os
             os.chdir(gethomedir())
-            newdir = getpath_relto_home(%r)
-            # we intentionally don't ensure that 'newdir' exists 
-            channel.send(newdir)
-            """ % str(self.relpath)
+            path = %r
+            if path:
+                path = getpath_relto_home(path)
+            channel.send(path)
+            """ % str(relpath)
         ))
         self.gw_remotepath = channel.receive()
 
@@ -71,13 +68,13 @@ class HostInfo(object):
 class HostRSync(py.execnet.RSync):
     """ RSyncer that filters out common files 
     """
-    def __init__(self, source, *args, **kwargs):
+    def __init__(self, sourcedir, *args, **kwargs):
         self._synced = {}
         ignores= None
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
-        super(HostRSync, self).__init__(source, **kwargs)
+        super(HostRSync, self).__init__(sourcedir=sourcedir, **kwargs)
 
     def filter(self, path):
         path = py.path.local(path)
@@ -91,20 +88,22 @@ class HostRSync(py.execnet.RSync):
                         return True
 
     def add_target_host(self, host, reporter=lambda x: None,
-                        destrelpath=None, finishedcallback=None):
-        key = host.hostname, host.relpath 
-        if not host.rsync_flag or key in self._synced:
+                        destrelpath="", finishedcallback=None):
+        remotepath = host.relpath
+        key = host.hostname, remotepath
+        if host.hostname == "localhost" and not remotepath: 
+            p = py.path.local(host.gw_remotepath)
+            assert p.join(destrelpath) == self._sourcedir
+            self._synced[key] = True
+        if key in self._synced:
             if finishedcallback:
                 finishedcallback()
             return False
         self._synced[key] = True
         # the follow attributes are set from host.initgateway()
-        gw = host.gw
-        remotepath = host.gw_remotepath
-        if destrelpath is not None:
+        if destrelpath:
             remotepath = os.path.join(remotepath, destrelpath)
-        super(HostRSync, self).add_target(gw, 
-                                          remotepath, 
+        super(HostRSync, self).add_target(host.gw, remotepath, 
                                           finishedcallback,
                                           delete=True,
                                           )
@@ -123,9 +122,9 @@ class HostManager(object):
         self.roots = roots
 
     def prepare_gateways(self, reporter):
-        dist_remotepython = self.config.getvalue("dist_remotepython")
+        python = self.config.getvalue("dist_remotepython")
         for host in self.hosts:
-            host.initgateway(python=dist_remotepython)
+            host.initgateway(python=python, topdir=self.config.topdir)
             reporter(repevent.HostGatewayReady(host, self.roots))
             host.gw.host = host
 
