@@ -143,7 +143,7 @@ class HostManager(object):
                     host, reporter, destrelpath, finishedcallback=
                     lambda host=host, root=root: donecallback(host, root))
                 reporter(repevent.HostRSyncing(host, root, remotepath))
-            rsync.send_if_targets()
+            rsync.send(raises=False)
 
     def setup_hosts(self, reporter):
         self.init_rsync(reporter)
