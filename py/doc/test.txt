@@ -425,13 +425,6 @@ Regular options
     trace considerations of conftest.py files. Useful when you have various
     conftest.py files around and are unsure about their interaction.
 
-
-experimental options
---------------------
-
-**Note**: these options could change in the future.
-
-
 ``-f, --looponfailing``
     Loop on failing test set. This is a feature you can use when you are trying
     to fix a number of failing tests: First all the tests are being run. If a
@@ -443,6 +436,13 @@ experimental options
 ``--exec=EXECUTABLE``
     Python executable to run the tests with. Useful for testing on different
     versions of Python.
+
+
+
+experimental options
+--------------------
+
+**Note**: these options could change in the future.
 
 
 ``-d, --dist``
