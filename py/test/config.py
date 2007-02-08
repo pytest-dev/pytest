@@ -6,17 +6,15 @@ from py.__.test.defaultconftest import adddefaultoptions
 
 optparse = py.compat.optparse
 
-def ensuretemp(string, dir=1, _pid2dir={}): 
+# XXX move to Config class
+basetemp = None
+def ensuretemp(string, dir=1): 
     """ return temporary directory path with
         the given string as the trailing part. 
     """ 
-    # we may be in a forking situation and want to use
-    # separate dirs then (XXX or not?)
-    pid = py.std.os.getpid()
-    basetemp = _pid2dir.get(pid, None)
+    global basetemp
     if basetemp is None: 
         basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
-        _pid2dir[pid] = basetemp 
     return basetemp.ensure(string, dir=dir) 
   
 class CmdOptions(object):
