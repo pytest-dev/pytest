@@ -87,24 +87,24 @@ class HostRSync(py.execnet.RSync):
                     else:
                         return True
 
-    def add_target_host(self, host, reporter=lambda x: None,
-                        destrelpath="", finishedcallback=None):
-        remotepath = host.relpath
-        key = host.hostname, remotepath
-        if host.hostname == "localhost" and not remotepath: 
-            p = py.path.local(host.gw_remotepath)
-            assert p.join(destrelpath) == self._sourcedir
-            self._synced[key] = True
-        if key in self._synced:
-            if finishedcallback:
-                finishedcallback()
-            return False
-        self._synced[key] = True
-        # the follow attributes are set from host.initgateway()
+    def add_target_host(self, host, destrelpath="", reporter=lambda x: None):
+        remotepath = host.gw_remotepath 
+        key = host.hostname, host.relpath
         if destrelpath:
             remotepath = os.path.join(remotepath, destrelpath)
+        if host.hostname == "localhost" and remotepath == self._sourcedir:
+            self._synced[key] = True
+        synced = key in self._synced 
+        reporter(repevent.HostRSyncing(host, self._sourcedir, 
+                                       remotepath, synced))
+        def hostrsynced(host=host):
+            reporter(repevent.HostRSyncRootReady(host, self._sourcedir))
+        if key in self._synced:
+            hostrsynced()
+            return
+        self._synced[key] = True
         super(HostRSync, self).add_target(host.gw, remotepath, 
-                                          finishedcallback,
+                                          finishedcallback=hostrsynced,
                                           delete=True,
                                           )
         return remotepath 
@@ -129,20 +129,15 @@ class HostManager(object):
             host.gw.host = host
 
     def init_rsync(self, reporter):
-        # send each rsync root
         ignores = self.config.getvalue_pathlist("dist_rsync_ignore")
         self.prepare_gateways(reporter)
+        # send each rsync root
         for root in self.roots:
             rsync = HostRSync(root, ignores=ignores, 
                               verbose=self.config.option.verbose)
             destrelpath = root.relto(self.config.topdir)
             for host in self.hosts:
-                def donecallback(host, root):
-                    reporter(repevent.HostRSyncRootReady(host, root))
-                remotepath = rsync.add_target_host(
-                    host, reporter, destrelpath, finishedcallback=
-                    lambda host=host, root=root: donecallback(host, root))
-                reporter(repevent.HostRSyncing(host, root, remotepath))
+                rsync.add_target_host(host, destrelpath, reporter)
             rsync.send(raises=False)
 
     def setup_hosts(self, reporter):

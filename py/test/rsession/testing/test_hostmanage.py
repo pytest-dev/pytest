@@ -132,6 +132,7 @@ class TestSyncing(DirSetup):
         rsync = HostRSync(self.source)
         l = []
         h1.initgateway()
+        h2.initgateway()
         res1 = rsync.add_target_host(h1)
         assert res1
         res2 = rsync.add_target_host(h2)

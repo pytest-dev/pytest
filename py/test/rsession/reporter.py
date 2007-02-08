@@ -58,11 +58,16 @@ class AbstractReporter(object):
     
     def report_HostRSyncing(self, item):
         hostrepr = self._hostrepr(item.host)
-        if not item.remotepath:
-            print "%15s: skip duplicate rsync of %r" % (
-                    hostrepr, item.root.basename)
+        if item.synced: 
+            if (item.host.hostname == "localhost" and 
+                item.root == item.remotepath):
+                print "%15s: skipping inplace rsync of %r" %(
+                        hostrepr, item.remotepath)
+            else: 
+                print "%15s: skip duplicate rsync to %r" % (
+                        hostrepr, str(item.root))
         else:
-            print "%15s: rsync %r to remote %s" % (hostrepr, 
+            print "%15s: rsync %r to remote %r" % (hostrepr, 
                                                    item.root.basename, 
                                                    item.remotepath)
 

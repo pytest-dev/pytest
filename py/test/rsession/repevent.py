@@ -74,10 +74,11 @@ class CallFinish(CallEvent):
     pass
 
 class HostRSyncing(ReportEvent):
-    def __init__(self, host, root, remotepath):
+    def __init__(self, host, root, remotepath, synced):
         self.host = host
         self.root = root
         self.remotepath = remotepath
+        self.synced = synced
 
 class HostGatewayReady(ReportEvent):
     def __init__(self, host, roots):
