@@ -18,9 +18,9 @@ def rsync(pkgpath, apidocspath, gateway, remotepath):
     pkgpath.copy(tempdir.ensure(pkgpath.basename, dir=True))
     apidocspath.copy(tempdir.ensure(apidocspath.basename, dir=True))
 
-    rs = py.execnet.RSync(delete=True)
+    rs = py.execnet.RSync(tempdir, delete=True)
     rs.add_target(gateway, remotepath)
-    rs.send(tempdir)
+    rs.send()
 
 def run_tests(pkgpath, args=''):
     """ run the unit tests and build the docs """
