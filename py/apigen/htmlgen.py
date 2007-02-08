@@ -124,7 +124,7 @@ def wrap_page(project, title, contentel, navel, relbase, basepath,
     return page
 
 def enumerate_and_color(codelines, firstlineno, enc):
-    snippet = H.SourceCode()
+    snippet = H.SourceBlock()
     tokenizer = source_color.Tokenizer(source_color.PythonSchema)
     for i, line in enumerate(codelines):
         try:
@@ -230,7 +230,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         source = fspath.read()
         sep = get_linesep(source)
         colored = enumerate_and_color(source.split(sep), 0, enc)
-        tag = H.SourceDef(colored)
+        tag = H.PythonSource(colored)
         nav = self.build_navigation(fspath)
         return tag, nav
 
@@ -597,7 +597,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         return cslinks
 
     def build_callsite(self, dotted_name, call_site, index):
-        tbtag = self.gen_traceback(dotted_name, reversed(call_site))
+        tbtag = H.Content(self.gen_traceback(dotted_name, reversed(call_site)))
         parent_dotted_name, _ = split_of_last_part(dotted_name)
         nav = self.build_navigation(parent_dotted_name, False)
         id = 'callsite_%s_%s' % (dotted_name, index)

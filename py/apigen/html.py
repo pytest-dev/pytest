@@ -112,12 +112,13 @@ class H(html):
             super(H.SourceSnippet, self).__init__(
                 link, H.div(*sourceels))
     
-    class SourceDef(html.div):
+    class PythonSource(Content):
+        style = html.Style(font_size='0.8em')
         def __init__(self, *sourceels):
-            super(H.SourceDef, self).__init__(
+            super(H.PythonSource, self).__init__(
                 H.div(*sourceels))
 
-    class SourceCode(html.div):
+    class SourceBlock(html.div):
         style = html.Style(margin_top='1em', margin_bottom='1em')
         def __init__(self):
             self.linenotable = lntable = H.table(style='float: left')
@@ -128,7 +129,7 @@ class H(html):
             self.linetbody = ltbody = H.tbody()
             ltable.append(ltbody)
             
-            super(H.SourceCode, self).__init__(lntable, ltable)
+            super(H.SourceBlock, self).__init__(lntable, ltable)
 
         def add_line(self, lineno, els):
             if els == []:
@@ -136,10 +137,11 @@ class H(html):
             self.linenotbody.append(H.tr(H.td(lineno, class_='lineno')))
             self.linetbody.append(H.tr(H.td(class_='code', *els)))
 
-    class NonPythonSource(html.pre):
-        pass # style = html.Style(margin_left='15em')
+    class NonPythonSource(Content):
+        def __init__(self, *args):
+            super(H.NonPythonSource, self).__init__(H.pre(*args))
 
-    class DirList(html.div):
+    class DirList(Content):
         def __init__(self, dirs, files):
             dirs = [H.DirListItem(text, href) for (text, href) in dirs]
             files = [H.DirListItem(text, href) for (text, href) in files]

@@ -80,10 +80,6 @@ ul li {
   background-color: white;
 }
 
-.property {
-  font-size: 1.2em;
-}
-
 .callstackitem {
   border: 1px solid black;
   margin-bottom: 1em;
