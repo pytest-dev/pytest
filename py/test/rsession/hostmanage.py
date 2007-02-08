@@ -52,9 +52,7 @@ class HostInfo(object):
 
     def __str__(self):
         return "<HostInfo %s:%s>" % (self.hostname, self.relpath)
-
-    def __repr__(self):
-        return str(self)
+    __repr__ = __str__
 
     def __hash__(self):
         return hash(self.hostid)
@@ -63,7 +61,7 @@ class HostInfo(object):
         return self.hostid == other.hostid
 
     def __ne__(self, other):
-        return not self == other
+        return not self.hostid == other.hostid
 
 class HostRSync(py.execnet.RSync):
     """ RSyncer that filters out common files 
