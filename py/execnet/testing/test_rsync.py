@@ -23,6 +23,7 @@ class TestRSync(DirSetup):
     def test_notargets(self):
         rsync = RSync(self.source)
         py.test.raises(IOError, "rsync.send()")
+        assert rsync.send(raises=False) is None
 
     def test_dirsync(self):
         dest = self.dest1
@@ -64,10 +65,12 @@ class TestRSync(DirSetup):
         rsync.send()
         assert self.dest1.join('hello').check()
         py.test.raises(IOError, "rsync.send()")
+        assert rsync.send(raises=False) is None
         rsync.add_target(gw, self.dest2)
         rsync.send()
         assert self.dest2.join('hello').check()
         py.test.raises(IOError, "rsync.send()")
+        assert rsync.send(raises=False) is None
 
     def test_rsync_default_reporting(self):
         source = self.source

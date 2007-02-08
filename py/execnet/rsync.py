@@ -93,19 +93,16 @@ class RSync(object):
         if self._verbose:
             print '%s <= %s' % (gateway.remoteaddress, modified_rel_path)
 
-    def send_if_targets(self):
-        """ Sends only if there are targets, otherwise returns
+    def send(self, raises=True):
+        """ Sends a sourcedir to all added targets. Flag indicates
+        whether to raise an error or return in case of lack of
+        targets
         """
         if not self._channels:
+            if raises:
+                raise IOError("no targets available, maybe you "
+                              "are trying call send() twice?")
             return
-        self.send()
-
-    def send(self):
-        """ Sends a sourcedir to all added targets. 
-        """
-        if not self._channels:
-            raise IOError("no targets available, maybe you "
-                          "are trying call send() twice?")
         # normalize a trailing '/' away
         self._sourcedir = os.path.dirname(os.path.join(self._sourcedir, 'x'))
         # send directory structure and file timestamps/sizes
