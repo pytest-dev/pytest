@@ -24,7 +24,7 @@ class TestHostInfo(DirSetup):
         return hostinfo
 
     def test_defaultpath(self):
-        x = HostInfo("localhost")
+        x = HostInfo("localhost:")
         assert x.hostname == "localhost"
         assert x.relpath == "pytestcache-" + x.hostname 
 
@@ -34,11 +34,11 @@ class TestHostInfo(DirSetup):
         assert x.hostname == "localhost"
 
     def test_hostid(self):
-        x = HostInfo("localhost")
-        y = HostInfo("localhost")
+        x = HostInfo("localhost:")
+        y = HostInfo("localhost:")
         assert x.hostid != y.hostid 
         x = HostInfo("localhost:/tmp")
-        y = HostInfo("localhost")
+        y = HostInfo("localhost:")
         assert x.hostid != y.hostid 
 
     def test_non_existing_hosts(self):
@@ -191,6 +191,20 @@ class TestHostManager(DirSetup):
         assert not self.dest.join("dir1", "dir2").check()
         assert self.dest.join("dir5","file").check()
         assert not self.dest.join("dir6").check()
+
+    def test_hostmanage_optimise_localhost(self):
+        def add_target(self, a, b, c):
+            assert 0, "Should not rsync here"
+        try:
+            config = py.test.config._reparse([self.source])
+            old_add_target = HostRSync.add_target
+            HostRSync.add_target = add_target
+            hm = HostManager(config, hosts=[HostInfo('localhost') for i in
+                                            range(3)])
+            events = []
+            hm.init_rsync(reporter=events.append)
+        finally:
+            HostRSync.add_target = old_add_target
 
 def test_getpath_relto_home():
     x = getpath_relto_home("hello")

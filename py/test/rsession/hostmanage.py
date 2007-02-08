@@ -17,10 +17,14 @@ class HostInfo(object):
     def __init__(self, spec):
         parts = spec.split(':', 1)
         self.hostname = parts.pop(0)
-        if parts:
+        if parts and parts[0]:
             self.relpath = parts[0]
         else:
-            self.relpath = "pytestcache-" + self.hostname 
+            self.relpath = "pytestcache-" + self.hostname
+        if spec.find(':') == -1 and self.hostname == 'localhost':
+            self.rsync_flag = False
+        else:
+            self.rsync_flag = True
         self.hostid = self._getuniqueid(self.hostname) 
 
     def _getuniqueid(self, hostname):
@@ -90,7 +94,7 @@ class HostRSync(py.execnet.RSync):
     def add_target_host(self, host, reporter=lambda x: None,
                         destrelpath=None, finishedcallback=None):
         key = host.hostname, host.relpath 
-        if key in self._synced:
+        if not host.rsync_flag or key in self._synced:
             if finishedcallback:
                 finishedcallback()
             return False
@@ -139,7 +143,7 @@ class HostManager(object):
                     host, reporter, destrelpath, finishedcallback=
                     lambda host=host, root=root: donecallback(host, root))
                 reporter(repevent.HostRSyncing(host, root, remotepath))
-            rsync.send()
+            rsync.send_if_targets()
 
     def setup_hosts(self, reporter):
         self.init_rsync(reporter)
