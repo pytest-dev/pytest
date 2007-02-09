@@ -12,6 +12,7 @@ class PythonSchema(object):
                'return', 'try', 'while', 'with', 'yield']
     alt_keyword = ['as', 'assert', 'class', 'def', 'del', 'exec', 'from',
                    'global', 'import', 'lambda', 'pass', 'print']
+    linejoin = r'\\'
 
 class Token(object):
     data = None
@@ -59,6 +60,12 @@ class Tokenizer(object):
             self._re_strings_full.append(
                 re.compile(r'%s[^\\%s]+(\\.[^\\%s]*)*%s' % (d, d, d, d)))
             self._re_strings_empty.append(re.compile('%s%s' % (d, d)))
+        if schema.linejoin:
+            j = schema.linejoin
+            for d in schema.string + schema.multiline_string:
+                self._re_strings_multiline.append(
+                    (re.compile('%s.*%s' % (d, j)),
+                     re.compile('.*?%s' % (d,))))
         for d in schema.multiline_string:
             self._re_strings_multiline.append((re.compile('%s.*' % (d,), re.S),
                                                re.compile('.*?%s' % (d,))))
@@ -105,6 +112,7 @@ class Tokenizer(object):
     def _check_multiline_strings(self, data):
         token = None
         for start, end in self._re_strings_multiline:
+            print dir(start), end
             m = start.match(data)
             if m:
                 s = m.group(0)

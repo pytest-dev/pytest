@@ -75,6 +75,15 @@ class TestTokenizer(object):
         res = list(t.tokenize('bar'))
         assert res == [Token('bar', type='word')]
 
+    def test_string_multiline_slash(self):
+        t = Tokenizer(PythonSchema)
+        res = list(t.tokenize("'foo\\"))
+        assert res == [Token("'foo\\", type='string')]
+        res = list(t.tokenize("bar'"))
+        assert res == [Token("bar'", type='string')]
+        res = list(t.tokenize("bar"))
+        assert res == [Token('bar', type='word')]
+
     def test_string_following_printable(self):
         assert self.tokens('."foo"') == [Token('.', type='unknown'),
                                          Token('"foo"', type='string')]
