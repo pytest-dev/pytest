@@ -2,6 +2,26 @@ import py
 from py.__.apigen import htmlgen
 from py.__.apigen.linker import Linker
 
+def assert_eq_string(string1, string2):
+    if string1 == string2:
+        return
+    __tracebackhide__ = True
+    for i, (c1, c2) in py.builtin.enumerate(zip(string1, string2)):
+        if c1 != c2:
+            start = max(0, i-20)
+            end = i + 20
+            py.test.fail("strings not equal in position i=%d\n"
+                         "string1[%d:%d] = %r\n"
+                         "string2[%d:%d] = %r\n"
+                         "string1 = %r\n"
+                         "string2 = %r\n" 
+                         % (i, 
+                            start, end, string1[start:end], 
+                            start, end, string2[start:end], 
+                            string1, string2
+                        ))
+                            
+        
 def test_create_namespace_tree():
     tree = htmlgen.create_namespace_tree(['foo.bar.baz'])
     assert tree == {'': ['foo'],
@@ -48,7 +68,8 @@ def test_enumerate_and_color():
                                           'ascii')
     div = py.xml.html.div(*colored).unicode(indent=0)
     print repr(div)
-    assert div == (u'<div>'
+    assert_eq_string(div, 
+                    u'<div>'
                     '<table style="float: left">'
                     '<tbody>'
                     '<tr><td class="lineno">1</td></tr>'
@@ -61,7 +82,7 @@ def test_enumerate_and_color():
                     '<span class="alt_keyword">def</span> foo():'
                     '</td></tr>'
                     '<tr><td class="code">'
-                    '  <span class="keyword">print</span>'
+                    '  <span class="alt_keyword">print</span>'
                     ' <span class="string">&quot;bar&quot;</span>'
                     '</td></tr>'
                     '</tbody>'
@@ -73,7 +94,8 @@ def test_enumerate_and_color_multiline():
                                           0, 'ascii')
     div = py.xml.html.div(*colored).unicode(indent=0)
     print repr(div)
-    assert div == (u'<div>'
+    assert_eq_string (div, 
+                    u'<div>'
                     '<table style="float: left">'
                     '<tbody>'
                     '<tr><td class="lineno">1</td></tr>'
