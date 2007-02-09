@@ -1,5 +1,6 @@
 
-from py.xml import html
+import py
+html = py.xml.html
 
 # HTML related stuff
 class H(html):
@@ -26,7 +27,9 @@ class H(html):
         def __init__(self, classname, bases, docstring, sourcelink,
                      properties, methods):
             header = H.h1('class %s(' % (classname,))
-            for name, href in bases:
+            for i, (name, href) in py.builtin.enumerate(bases):
+                if i > 0:
+                    header.append(', ')
                 link = name
                 if href is not None:
                     link = H.a(name, href=href)
@@ -132,8 +135,6 @@ class H(html):
             super(H.SourceBlock, self).__init__(lntable, ltable)
 
         def add_line(self, lineno, els):
-            if els == []:
-                els = [u'\xa0']
             self.linenotbody.append(H.tr(H.td(lineno, class_='lineno')))
             self.linetbody.append(H.tr(H.td(class_='code', *els)))
 

@@ -7,11 +7,11 @@ class PythonSchema(object):
     comment = [('#', '\n'), ('#', '$')]
     multiline_string = ['"""', "'''"]
     string = ['"""', "'''", '"', "'"]
-    # XXX not complete
-    keyword = ['for', 'if', 'not', 'then', 'else', 'while', 'from', 'import',
-               'try', 'except', 'finally', 'raise', 'print', 'exec', 'eval',
-               'break', 'in', 'assert', 'None']
-    alt_keyword = ['def', 'class', 'return', 'pass', 'yield']
+    keyword = ['and', 'break', 'continue', 'elif', 'else', 'except',
+               'finally', 'for', 'if', 'in', 'is', 'not', 'or', 'raise',
+               'return', 'try', 'while', 'with', 'yield']
+    alt_keyword = ['as', 'assert', 'class', 'def', 'del', 'exec', 'from',
+                   'global', 'import', 'lambda', 'pass', 'print']
 
 class Token(object):
     data = None

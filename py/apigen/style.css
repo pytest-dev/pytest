@@ -41,6 +41,7 @@ ul li {
 }
 
 .lineno {
+  line-height: 1.4em;
   text-align: right;
   color: #555;
   width: 3em;
@@ -50,6 +51,7 @@ ul li {
 }
 
 .code {
+  line-height: 1.4em;
   padding-left: 1em;
   white-space: pre;
   font-family: monospace, Monaco;
