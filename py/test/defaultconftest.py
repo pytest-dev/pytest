@@ -24,7 +24,6 @@ if hasattr(py.std.os, 'nice'):
     dist_nicelevel = py.std.os.nice(0) # nice py.test works
 else:
     dist_nicelevel = 0
-_dist_import_pypy = False # used for regenerating JS application 
 dist_rsync_ignore = []
 
 # ===================================================

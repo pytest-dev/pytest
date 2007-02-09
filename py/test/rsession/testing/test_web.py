@@ -13,8 +13,6 @@ except ImportError:
     py.test.skip("PyPy not found")
 
 def setup_module(mod):
-    config = py.test.config._reparse([])
-    config._overwrite('_dist_import_pypy', True)
     from py.__.test.rsession.web import TestHandler as _TestHandler
     from py.__.test.rsession.web import MultiQueue
     mod._TestHandler = _TestHandler

@@ -24,11 +24,6 @@ FUNCTION_LIST = ["main", "show_skip", "show_traceback", "show_info", "hide_info"
     "show_host", "hide_host", "hide_messagebox", "opt_scroll"]
 
 try:
-    try:
-        if not py.test.config.getvalue('_dist_import_pypy'):
-            raise ImportError
-    except AttributeError:
-        pass
     from pypy.rpython.ootypesystem.bltregistry import MethodDesc, BasicExternal,\
                                                       described
     from pypy.translator.js.main import rpython2javascript
