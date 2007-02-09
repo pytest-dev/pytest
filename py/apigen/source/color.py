@@ -14,6 +14,13 @@ class PythonSchema(object):
                    'global', 'import', 'lambda', 'pass', 'print']
     linejoin = r'\\'
 
+def assert_keywords():
+    from keyword import kwlist
+    all = PythonSchema.keyword + PythonSchema.alt_keyword
+    for x in kwlist:
+        assert x in all
+assert_keywords()
+
 class Token(object):
     data = None
     type = 'unknown'
