@@ -146,6 +146,10 @@ class Config(object):
             return self.conftest.rget(self.option.session)
         else:
             name = self._getsessionname()
+            try:
+                return self.conftest.rget(name)
+            except KeyError:
+                pass
             importpath = globals()[name]
             mod = __import__(importpath, None, None, '__doc__')
             return getattr(mod, name)
