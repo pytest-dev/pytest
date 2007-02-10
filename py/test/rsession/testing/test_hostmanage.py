@@ -169,10 +169,11 @@ class TestSyncing(DirSetup):
         assert not res2
 
 class TestHostManager(DirSetup):
-    def gethostmanager(self, dist_hosts):
-        self.source.join("conftest.py").write(py.code.Source("""
-            dist_hosts = %r
-        """ % (dist_hosts,)))
+    def gethostmanager(self, dist_hosts, dist_rsync_roots=None):
+        l = ["dist_hosts = %r" % dist_hosts]
+        if dist_rsync_roots:
+            l.append("dist_rsync_roots = %r" % dist_rsync_roots)
+        self.source.join("conftest.py").write("\n".join(l))
         config = py.test.config._reparse([self.source])
         assert config.topdir == self.source
         hm = HostManager(config)
@@ -197,7 +198,21 @@ class TestHostManager(DirSetup):
         assert dest.join("dir1", "dir2").check()
         assert dest.join("dir1", "dir2", 'hello').check()
 
-    def test_hostmanager_init_rsync_rsync_roots(self):
+    def test_hostmanager_init_rsync_topdir_explicit(self):
+        dir2 = self.source.ensure("dir1", "dir2", dir=1)
+        dir2.ensure("hello")
+        hm = self.gethostmanager(
+            dist_hosts = ["localhost:%s" % self.dest]
+            dist_rsync_roots = [self.source]
+        )
+        assert hm.config.topdir == self.source
+        hm.init_rsync([].append)
+        dest = self.dest.join(self.source.basename)
+        assert dest.join("dir1").check()
+        assert dest.join("dir1", "dir2").check()
+        assert dest.join("dir1", "dir2", 'hello').check()
+
+    def test_hostmanager_init_rsync_roots(self):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
         self.source.ensure("dir1", "somefile", dir=1)
         dir2.ensure("hello")

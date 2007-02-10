@@ -124,6 +124,7 @@ class HostManager(object):
         if roots is None:
             roots = [self.config.topdir]
             addrel = self.config.topdir.basename 
+        self._addrel = addrel
         self.roots = roots
         if hosts is None:
             hosts = self.config.getvalue("dist_hosts")
@@ -144,7 +145,7 @@ class HostManager(object):
         for root in self.roots:
             rsync = HostRSync(root, ignores=ignores, 
                               verbose=self.config.option.verbose)
-            if root == self.config.topdir:
+            if self._addrel: 
                 destrelpath = ""
             else:
                 destrelpath = root.basename
