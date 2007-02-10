@@ -44,10 +44,11 @@ class Tokenizer(object):
         very naive tokenizer, state is recorded for multi-line strings, etc.
     """
 
-    _re_word = re.compile('[\w_]+')
-    _re_space = re.compile('\s+')
-    _re_number = re.compile('[\d\.]*\d[\d\.]*l?', re.I)
-    _re_rest = re.compile('[^\w\s\d\'"]+') # XXX cheating a bit with the quotes
+    _re_word = re.compile('[\w_]+', re.U)
+    _re_space = re.compile('\s+', re.U)
+    _re_number = re.compile('[\d\.]*\d[\d\.]*l?', re.I | re.U)
+    # XXX cheating a bit with the quotes
+    _re_rest = re.compile('[^\w\s\d\'"]+', re.U)
 
     # these will be filled using the schema
     _re_strings_full = None
@@ -68,13 +69,14 @@ class Tokenizer(object):
                 re.compile(r'%s[^\\%s]+(\\.[^\\%s]*)*%s' % (d, d, d, d)))
             self._re_strings_empty.append(re.compile('%s%s' % (d, d)))
         for d in schema.multiline_string:
-            self._re_strings_multiline.append((re.compile('%s.*' % (d,), re.S),
+            self._re_strings_multiline.append((re.compile('(%s).*' % (d,),
+                                                          re.S),
                                                re.compile('.*?%s' % (d,))))
         if schema.linejoin:
             j = schema.linejoin
             for d in schema.string:
                 self._re_strings_multiline.append(
-                    (re.compile('%s.*%s$' % (d, j)),
+                    (re.compile('(%s).*%s$' % (d, j)),
                      re.compile('.*?%s' % (d,))))
         # no multi-line comments in Python... phew :)
         self._re_comments = []
@@ -123,7 +125,15 @@ class Tokenizer(object):
             if m:
                 s = m.group(0)
                 data = ''
-                self._inside_multiline = end
+                # XXX take care of a problem which is hard to fix with regexps:
+                # '''foo 'bar' baz''' will not match single-line strings
+                # (because [^"""] matches just a single " already), so let's
+                # try to catch it here... (quite Python specific issue!)
+                endm = end.match(s[len(m.group(1)):])
+                if endm: # see if it ends here already
+                    s = m.group(1) + endm.group(0)
+                else:
+                    self._inside_multiline = end
                 token = Token(s, 'string')
                 break
         return data, token
@@ -184,4 +194,18 @@ class Tokenizer(object):
             return data[len(s):], Token(s, 'unknown')
         return data, None
 
+if __name__ == '__main__':
+    import py, sys
+    if len(sys.argv) != 2:
+        print 'usage: %s <filename>'
+        print '  tokenizes the file and prints the tokens per line'
+        sys.exit(1)
+    t = Tokenizer(PythonSchema)
+    p = py.path.local(sys.argv[1])
+    assert p.ext == '.py'
+    for line in p.read().split('\n'):
+        print repr(line)
+        print 't in multiline mode:', not not t._inside_multiline
+        tokens = t.tokenize(line)
+        print list(tokens)
 

@@ -90,3 +90,8 @@ class TestTokenizer(object):
         assert self.tokens('."foo"') == [Token('.', type='unknown'),
                                          Token('"foo"', type='string')]
 
+    def test_something_strange(self):
+        t = Tokenizer(PythonSchema)
+        tokens = list(t.tokenize('"""foo "bar" baz"""'))
+        assert not t._inside_multiline
+
