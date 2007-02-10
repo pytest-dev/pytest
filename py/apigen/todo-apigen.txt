@@ -1,23 +1,4 @@
 
-* format docstrings more nicely (with tests)
-
-  DONE I guess
-
-* have the API function view be as informative as possible
-  without having to go to the "single method" view
-  (do we even need a single method view?), for example: 
-
-  browsing the class views (and clicking on methods) 
-  should always make it obvious which class is being
-  viewed.  method views (when navigating there through
-  the class view) should also have the source there 
-
-  DONE I think, single method view is gone
-
-* have class-level attributes be displayed
-
-  DONE
-
 * use "inherited" doc strings, i.e. for
     class A:
         def meth(self):
@@ -31,68 +12,7 @@
 
   NOT YET DONE (later?)
 
-* factor out some common code in the build_* functions
+* add SVN info to the (source only?) pages
 
-  (mostly) DONE
-
-* refactor the apigen/rsession interaction to become
-  cleaner (e.g. apigen's get_documentable_items should
-  be separately tested and the caller should not need
-  to guess what it will get, i think) 
-
-  DONE
-
-* look out for and streamline all apigen/source-viewer
-  documentation into one document 
-
-* consider automating dependencies: 
-
-  e.g. something like: queue_render(page, fspath, linker, ...) 
-  would defer the rendering until later. 
-  then a loop does:
-
-  maxlength = len(queue)
-  while queue: 
-       page, fspath, linker, ... = queue.get()
-       # fill outputpath/link here or even earlier
-       if all_links_resolve(page, linker): 
-           render it and write to filesystem
-           maxlength = len(queue) 
-       else:
-           queue.append(...)
-           maxlength -= 1
-           if maxlength <= 0:  
-               print "ERROR: seems i can't make progress"
-               print "unresolved links follow: "
-               ... 
-               print "unresolved pages/fspaths:"
-               ... 
-               XXX maybe: print "filling linker with dummy hrefs, and rendering anyway"
-               ... 
-               raise ... 
-
-  NOT SURE if this is still required
-
-* also we might have a support function for tests that
-  fills the linker with "dummy hrefs" for certain types
-  like source links
-
-  KIND OF DONE, the tests now use a linker that just doesn't
-  barf on non-existing linkids anymore, which seems to be
-  good enough (we may want to add more sophisticated debugging
-  later, but for now this works)
-       
-* add syntax coloring for Python source snippets
-
-  DONE
-
-* remove py.test/apigen cruft from stack traces
-
-  DONE, thanks to fijal
-
-* fix non-ascii source encoding support
-
-  DONE
-
-* XXX
+* add warning about py.test possibly not covering the whole API
 
