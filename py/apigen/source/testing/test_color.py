@@ -83,6 +83,8 @@ class TestTokenizer(object):
         assert res == [Token("bar'", type='string')]
         res = list(t.tokenize("bar"))
         assert res == [Token('bar', type='word')]
+        res = list(t.tokenize('"foo\\bar"'))
+        assert res == [Token('"foo\\bar"', type="string")]
 
     def test_string_following_printable(self):
         assert self.tokens('."foo"') == [Token('.', type='unknown'),

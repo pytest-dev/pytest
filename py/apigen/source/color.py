@@ -71,7 +71,7 @@ class Tokenizer(object):
             j = schema.linejoin
             for d in schema.string + schema.multiline_string:
                 self._re_strings_multiline.append(
-                    (re.compile('%s.*%s' % (d, j)),
+                    (re.compile('%s.*%s$' % (d, j)),
                      re.compile('.*?%s' % (d,))))
         for d in schema.multiline_string:
             self._re_strings_multiline.append((re.compile('%s.*' % (d,), re.S),
