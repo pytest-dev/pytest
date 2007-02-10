@@ -111,7 +111,11 @@ def setup_slave(host, config):
     channel = host.gw.remote_exec(str(py.code.Source(setup, "setup()")))
     configrepr = config.make_repr(defaultconftestnames)
     #print "sending configrepr", configrepr
-    channel.send(host.gw_remotepath)
+    topdir = host.gw_remotepath 
+    if topdir is None:
+        assert host.inplacelocal
+        topdir = config.topdir
+    channel.send(str(topdir))
     channel.send(configrepr) 
     return channel
 

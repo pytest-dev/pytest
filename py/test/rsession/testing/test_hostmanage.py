@@ -4,7 +4,7 @@
 
 import py
 from py.__.test.rsession.hostmanage import HostRSync, HostInfo, HostManager
-from py.__.test.rsession.hostmanage import gethomedir, getpath_relto_home
+from py.__.test.rsession.hostmanage import sethomedir, gethomedir, getpath_relto_home
 from py.__.test.rsession import repevent
 
 class DirSetup:
@@ -27,11 +27,13 @@ class TestHostInfo(DirSetup):
         x = HostInfo("localhost:")
         assert x.hostname == "localhost"
         assert not x.relpath
+        assert x.inplacelocal 
 
     def test_path(self):
         x = HostInfo("localhost:/tmp")
         assert x.relpath == "/tmp"
         assert x.hostname == "localhost"
+        assert not x.inplacelocal 
 
     def test_hostid(self):
         x = HostInfo("localhost:")
@@ -114,6 +116,26 @@ class TestSyncing(DirSetup):
         assert 'dir' in basenames
         assert 'file.txt' in basenames
         assert 'somedir' in basenames
+
+    def test_hrsync_localhost_inplace(self):
+        h1 = HostInfo("localhost")
+        events = []
+        rsync = HostRSync(self.source)
+        h1.initgateway()
+        rsync.add_target_host(h1, reporter=events.append)
+        assert events
+        l = [x for x in events 
+                if isinstance(x, repevent.HostRSyncing)]
+        assert len(l) == 1
+        ev = l[0]
+        assert ev.host == h1
+        assert ev.root == ev.remotepath 
+        l = [x for x in events 
+                if isinstance(x, repevent.HostRSyncRootReady)]
+        assert len(l) == 1
+        ev = l[0]
+        assert ev.root == self.source
+        assert ev.host == h1
 
     def test_hrsync_one_host(self):
         h1 = self._gethostinfo()
@@ -200,11 +222,24 @@ class TestHostManager(DirSetup):
         events = []
         hm.init_rsync(events.append)
         for host in hosts:
-            assert host.gw_remotepath == str(self.source)
+            assert host.inplacelocal
+            assert host.gw_remotepath is None
             assert not host.relpath 
         assert events
 
 def test_getpath_relto_home():
     x = getpath_relto_home("hello")
     assert x == py.path.local._gethomedir().join("hello")
+    x = getpath_relto_home(".")
+    assert x == py.path.local._gethomedir()
+
+def test_sethomedir():
+    old = py.path.local.get_temproot().chdir()
+    try:
+        sethomedir()
+        curdir = py.path.local()
+    finally:
+        old.chdir()
+
+    assert py.path.local._gethomedir() == curdir
 
