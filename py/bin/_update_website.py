@@ -22,7 +22,7 @@ def rsync(pkgpath, apidocspath, gateway, remotepath):
     rs.add_target(gateway, remotepath, delete=True)
     rs.send()
 
-def run_tests(pkgpath, args=''):
+def run_tests(pkgpath, args='', captureouterr=False):
     """ run the unit tests and build the docs """
     pypath = py.__package__.getpath()
     pytestpath = pypath.join('bin/py.test')
@@ -32,13 +32,16 @@ def run_tests(pkgpath, args=''):
     apigenpath = pkgpath.join('apigen/apigen.py') # XXX be more general here?
     if not apigenpath.check(file=True):
         apigenpath = pypath.join('apigen/apigen.py')
-    cmd = 'PYTHONPATH="%s:%s" python "%s" --apigen="%s" "%s" %s' % (
+    cmd = 'PYTHONPATH="%s:%s" python "%s" %s --apigen="%s" "%s"' % (
                                                              pypath.dirpath(),
                                                              pkgpath.dirpath(),
                                                              pytestpath,
+                                                             args,
                                                              apigenpath,
                                                              pkgpath,
-                                                             args)
+                                                             )
+    if captureouterr:
+        cmd += ' > /dev/null 2>&1'
     status = py.std.os.system(cmd)
     return status
 

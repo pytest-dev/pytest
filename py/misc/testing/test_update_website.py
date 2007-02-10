@@ -52,7 +52,7 @@ def test_run_tests():
     if py.std.sys.platform == "win32":
         py.test.skip("update_website is not supposed to be run from win32")
     pkgpath = setup_pkg('update_website_run_tests')
-    errors = update_website.run_tests(pkgpath)
+    errors = update_website.run_tests(pkgpath, captureouterr=True)
     assert not errors
     assert pkgpath.join('../apigen').check(dir=True)
     assert pkgpath.join('../apigen/api/sub.foo.html').check(file=True)
@@ -63,6 +63,6 @@ def test_run_tests_failure():
     pkgpath = setup_pkg('update_website_run_tests_failure')
     assert not pkgpath.join('../apigen').check(dir=True)
     pkgpath.ensure('../apigen', file=True)
-    errors = update_website.run_tests(pkgpath, '> /dev/null 2>&1')
+    errors = update_website.run_tests(pkgpath, captureouterr=True)
     assert errors # some error message
 
