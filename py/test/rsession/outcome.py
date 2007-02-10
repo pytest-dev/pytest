@@ -18,6 +18,8 @@ class Outcome(object):
         self.excinfo = excinfo
         self.is_critical = is_critical
         self.signal = 0
+        self.stdout = "" # XXX temporary
+        self.stderr = ""
         assert bool(self.passed) + bool(excinfo) + bool(skipped) == 1
     
     def make_excinfo_repr(self, tbstyle):
@@ -54,7 +56,7 @@ class Outcome(object):
     def make_repr(self, tbstyle="long"):
         return (self.passed, self.setupfailure, 
                 self.make_excinfo_repr(tbstyle), 
-                self.skipped, self.is_critical, 0, "", "")
+                self.skipped, self.is_critical, 0, self.stdout, self.stderr)
 
 class TracebackEntryRepr(object):
     def __init__(self, tbentry):

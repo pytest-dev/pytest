@@ -9,59 +9,16 @@ from py.__.test.outcome import Skipped
 import thread
 import os
 
-class PidInfo(object):
-    """ Pure container class to store information of actually running
-    pid
-    """
-    def __init__(self):
-        self.pid = 0
-        self.lock = thread.allocate_lock()
-
-    def set_pid(self, pid):
-        self.lock.acquire()
-        try:
-            self.pid = pid
-        finally:
-            self.lock.release()
-
-    def kill(self):
-        self.lock.acquire()
-        try:
-            if self.pid:
-                os.kill(self.pid, 15)
-                self.pid = 0
-        finally:
-            self.lock.release()
-
-    def waitandclear(self, pid, num):
-        """ This is an obscure hack to keep locking properly, adhere to posix semantics
-        and try to clean it as much as possible, not clean at all
-        """
-        self.lock.acquire()
-        try:
-            retval = os.waitpid(self.pid, 0)
-            self.pid = 0
-            return retval
-        finally:
-            self.lock.release()
-
 class SlaveNode(object):
-    def __init__(self, config, pidinfo, executor=AsyncExecutor):
+    def __init__(self, config, executor):
         #self.rootcollector = rootcollector
         self.config = config
         self.executor = executor
-        self.pidinfo = pidinfo
 
     def execute(self, itemspec):
         item = self.config._getcollector(itemspec)
         ex = self.executor(item, config=self.config)
-        if self.executor is AsyncExecutor:
-            cont, pid = ex.execute()
-            self.pidinfo.set_pid(pid)
-        else:
-            # for tests only
-            return ex.execute()
-        return cont(self.pidinfo.waitandclear)
+        return ex.execute()
 
     def run(self, itemspec):
         #outcome = self.execute(itemspec)
@@ -72,7 +29,7 @@ class SlaveNode(object):
         else:
             return outcome.make_repr(self.config.option.tbstyle)
 
-def slave_main(receive, send, path, config, pidinfo):
+def slave_main(receive, send, path, config):
     import os
     assert os.path.exists(path) 
     path = os.path.abspath(path) 
@@ -82,7 +39,11 @@ def slave_main(receive, send, path, config, pidinfo):
         if node is not None:
             return node
         col = py.test.collect.Directory(str(py.path.local(path).join(item[0])))
-        node = nodes[item[0]] = SlaveNode(config, pidinfo)
+        if config.option.boxed:
+            executor = BoxExecutor
+        else:
+            executor = RunExecutor
+        node = nodes[item[0]] = SlaveNode(config, executor)
         return node
     while 1:
         nextitem = receive()
@@ -120,15 +81,6 @@ def setup_slave(host, config):
     return channel
 
 def setup():
-    def callback_gen(channel, queue, info):
-        def callback(item):
-            if item == 42: # magic call-cleanup
-                # XXX should kill a pid here
-                info.kill()
-                channel.close()
-                sys.exit(0)
-            queue.put(item)
-        return callback
     # our current dir is the topdir
     import os, sys
     basedir = channel.receive()
@@ -139,13 +91,13 @@ def setup():
     config = py.test.config
     assert not config._initialized 
     config.initdirect(basedir, config_repr)
+    if hasattr(os, 'nice'):
+        nice_level = config.getvalue('dist_nicelevel')
+        os.nice(nice_level) 
     if not config.option.nomagic:
         py.magic.invoke(assertion=1)
-    from py.__.test.rsession.slave import slave_main, PidInfo
-    queue = py.std.Queue.Queue()
-    pidinfo = PidInfo()
-    channel.setcallback(callback_gen(channel, queue, pidinfo))
-    slave_main(queue.get, channel.send, basedir, config, pidinfo)
+    from py.__.test.rsession.slave import slave_main
+    slave_main(channel.receive, channel.send, basedir, config)
     if not config.option.nomagic:
         py.magic.revoke(assertion=1)
     channel.close()

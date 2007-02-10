@@ -20,12 +20,19 @@ class RunExecutor(object):
         self.config = config
         assert self.config
 
-    def run(self):
-        self.item.run()
+    def run(self, capture=True):
+        if capture:
+            try:
+                self.item.startcapture()
+                self.item.run()
+            finally:
+                self.item.finishcapture()
+        else:
+            self.item.run()
 
-    def execute(self):
+    def execute(self, capture=True):
         try:
-            self.run()
+            self.run(capture)
             outcome = Outcome()
         except Skipped, e: 
             outcome = Outcome(skipped=str(e))
@@ -49,8 +56,7 @@ class RunExecutor(object):
                 # XXX hmm, we probably will not like to continue from that
                 #     point
                 raise SystemExit()
-        outcome.stdout = ""
-        outcome.stderr = ""
+        outcome.stdout, outcome.stderr = self.item._getouterr()
         return outcome
 
 class ApigenExecutor(RunExecutor):
@@ -68,7 +74,7 @@ class ApigenExecutor(RunExecutor):
         finally:
             self.tracer.end_tracing()
 
-    def run(self):
+    def run(self, capture):
         """ We want to trace *only* function objects here. Unsure
         what to do with custom collectors at all
         """
@@ -83,7 +89,7 @@ class BoxExecutor(RunExecutor):
 
     def execute(self):
         def fun():
-            outcome = RunExecutor.execute(self)
+            outcome = RunExecutor.execute(self, False)
             return outcome.make_repr(self.config.option.tbstyle)
         b = Box(fun, config=self.config)
         pid = b.run()
@@ -105,7 +111,7 @@ class AsyncExecutor(RunExecutor):
 
     def execute(self):
         def fun():
-            outcome = RunExecutor.execute(self)
+            outcome = RunExecutor.execute(self, False)
             return outcome.make_repr(self.config.option.tbstyle)
         
         b = Box(fun, config=self.config)

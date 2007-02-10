@@ -8,29 +8,14 @@ from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
 from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome
 
-# XXX copied from session.py
-def startcapture(session):
-    if not session.config.option.nocapture:
-        session._capture = py.io.StdCapture()
-
-def finishcapture(session): 
-    if hasattr(session, '_capture'): 
-        capture = session._capture 
-        del session._capture
-        return capture.reset()
-    return "", ""
-
 def box_runner(item, session, reporter):
     r = BoxExecutor(item, config=session.config)
     return ReprOutcome(r.execute())
 
 def plain_runner(item, session, reporter):
-    # box executor is doing stdout/err catching for us, let's do it here
-    startcapture(session)
     r = RunExecutor(item, usepdb=session.config.option.usepdb, reporter=reporter, config=session.config)
     outcome = r.execute()
     outcome = ReprOutcome(outcome.make_repr(session.config.option.tbstyle))
-    outcome.stdout, outcome.stderr = finishcapture(session)
     return outcome
 
 def benchmark_runner(item, session, reporter):

@@ -11,46 +11,60 @@ def setup_module(mod):
     if py.std.sys.platform == "win32":
         py.test.skip("skipping executor tests (some require os.fork)")
 
-class ItemTestPassing(py.test.Item):    
+class Item(py.test.Item):
+    def __init__(self, name, config):
+        super(Item, self).__init__(name)
+        self._config = config
+
+class ItemTestPassing(Item):    
     def run(self):
         return None
 
-class ItemTestFailing(py.test.Item):
+class ItemTestFailing(Item):
     def run(self):
         assert 0 == 1
 
-class ItemTestSkipping(py.test.Item):
+class ItemTestSkipping(Item):
     def run(self):
         py.test.skip("hello")
 
+class ItemTestPrinting(Item):
+    def run(self):
+        print "hello"
+
 class TestExecutor(BasicRsessionTest):
     def test_run_executor(self):
-        ex = RunExecutor(ItemTestPassing("pass"), config=self.config)
+        ex = RunExecutor(ItemTestPassing("pass", self.config), config=self.config)
         outcome = ex.execute()
         assert outcome.passed
     
-        ex = RunExecutor(ItemTestFailing("fail"), config=self.config)
+        ex = RunExecutor(ItemTestFailing("fail", self.config), config=self.config)
         outcome = ex.execute()
         assert not outcome.passed
 
-        ex = RunExecutor(ItemTestSkipping("skip"), config=self.config)
+        ex = RunExecutor(ItemTestSkipping("skip", self.config), config=self.config)
         outcome = ex.execute()
         assert outcome.skipped 
         assert not outcome.passed
-        assert not outcome.excinfo 
+        assert not outcome.excinfo
+
+    def test_run_executor_capture(self):
+        ex = RunExecutor(ItemTestPrinting("print", self.config), config=self.config)
+        outcome = ex.execute()
+        assert outcome.stdout == "hello\n"
 
     def test_box_executor(self):
-        ex = BoxExecutor(ItemTestPassing("pass"), config=self.config)
+        ex = BoxExecutor(ItemTestPassing("pass", self.config), config=self.config)
         outcome_repr = ex.execute()
         outcome = ReprOutcome(outcome_repr)
         assert outcome.passed
     
-        ex = BoxExecutor(ItemTestFailing("fail"), config=self.config)
+        ex = BoxExecutor(ItemTestFailing("fail", self.config), config=self.config)
         outcome_repr = ex.execute()
         outcome = ReprOutcome(outcome_repr)
         assert not outcome.passed
 
-        ex = BoxExecutor(ItemTestSkipping("skip"), config=self.config)
+        ex = BoxExecutor(ItemTestSkipping("skip", self.config), config=self.config)
         outcome_repr = ex.execute()
         outcome = ReprOutcome(outcome_repr)
         assert outcome.skipped 

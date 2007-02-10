@@ -1,6 +1,6 @@
 
 """ Testing the slave side node code (in a local way). """
-from py.__.test.rsession.slave import SlaveNode, slave_main, setup, PidInfo
+from py.__.test.rsession.slave import SlaveNode, slave_main, setup
 from py.__.test.rsession.outcome import ReprOutcome
 import py, sys
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
@@ -17,8 +17,7 @@ from py.__.test.rsession.executor import RunExecutor
 
 class TestSlave(BasicRsessionTest):
     def gettestnode(self):
-        pidinfo = PidInfo()
-        node = SlaveNode(self.config, pidinfo, executor=RunExecutor) 
+        node = SlaveNode(self.config, executor=RunExecutor) 
         return node
 
     def test_slave_run_passing(self):
@@ -74,18 +73,3 @@ class TestSlave(BasicRsessionTest):
         node = self.gettestnode()
         node.run(self.rootcol._getitembynames("py doc log.txt".split()).
                  _get_collector_trail())
-
-def test_pidinfo():
-    if not hasattr(os, 'fork') or not hasattr(os, 'waitpid'):
-        py.test.skip("Platform does not support fork")
-    pidinfo = PidInfo()
-    pid = os.fork()
-    if pid:
-        pidinfo.set_pid(pid)
-        pidinfo.waitandclear(pid, 0)
-    else:
-        import time, sys
-        time.sleep(.3)
-        os._exit(0)
-    # check if this really exits
-    py.test.raises(OSError, "os.waitpid(pid, 0)")
