@@ -170,6 +170,7 @@ class TestHostManager(DirSetup):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         config = py.test.config._reparse([self.source])
+        assert config.topdir == self.source
         hm = HostManager(config, 
                 hosts=[HostInfo("localhost:" + str(self.dest))])
         events = []
@@ -191,11 +192,9 @@ class TestHostManager(DirSetup):
                          hosts=[HostInfo("localhost:" + str(self.dest))])
         events = []
         hm.init_rsync(reporter=events.append)
-        assert self.dest.join("dir1").check()
-        assert self.dest.join("dir1", "dir2").check()
-        assert self.dest.join("dir1", "dir2", 'hello').check()
+        assert self.dest.join("dir2").check()
+        assert not self.dest.join("dir1").check()
         assert not self.dest.join("bogus").check()
-        assert not self.dest.join("dir1", "somefile").check()
 
     def test_hostmanager_rsync_ignore(self):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
@@ -209,6 +208,7 @@ class TestHostManager(DirSetup):
         hm = HostManager(config, 
                          hosts=[HostInfo("localhost:" + str(self.dest))])
         events = []
+        print events
         hm.init_rsync(reporter=events.append)
         assert self.dest.join("dir1").check()
         assert not self.dest.join("dir1", "dir2").check()

@@ -139,7 +139,10 @@ class HostManager(object):
         for root in self.roots:
             rsync = HostRSync(root, ignores=ignores, 
                               verbose=self.config.option.verbose)
-            destrelpath = root.relto(self.config.topdir)
+            if root == self.config.topdir:
+                destrelpath =""
+            else:
+                destrelpath = root.basename
             for host in self.hosts:
                 rsync.add_target_host(host, destrelpath, reporter)
             rsync.send(raises=False)
