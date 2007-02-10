@@ -29,9 +29,9 @@ class TestHostInfo(DirSetup):
         assert not x.relpath
 
     def test_addrel(self):
-        py.test.raises(ValueError, """
-            HostInfo("localhost:", addrel="whatever")
-        """)
+        host = HostInfo("localhost:", addrel="whatever")
+        assert host.inplacelocal 
+        assert not host.relpath 
         host = HostInfo("localhost:/tmp", addrel="base")
         assert host.relpath == "/tmp/base"
         host = HostInfo("localhost:tmp", addrel="base2")

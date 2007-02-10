@@ -19,9 +19,7 @@ class HostInfo(object):
         self.relpath = parts and parts.pop(0) or ""
         if self.hostname == "localhost" and not self.relpath:
             self.inplacelocal = True
-            if addrel:
-                raise ValueError("inplace localhosts cannot have "
-                                 "additional path %r" % addrel)
+            addrel = "" # inplace localhosts cannot have additions
         else:
             self.inplacelocal = False 
             if not self.relpath:
