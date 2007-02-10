@@ -144,8 +144,10 @@ class TestApiPageBuilder(AbstractBuilderTest):
         assert pos5 > pos4 and pos5 > pos3
         pos6 = html.find('&lt;None&gt;', pos5)
         assert pos6 > pos5
-        pos7 = html.find('source: %s' % (self.fs_root.join('pkg/func.py'),),
-                          pos6)
+        sourcefile = self.fs_root.join('pkg/func.py')
+        pos7 = html.find('source: %s' % (get_rel_sourcepath(apb.projpath,
+                                                            sourcefile),),
+                         pos6)
         assert pos7 > pos6
         _checkhtmlsnippet(html)
 

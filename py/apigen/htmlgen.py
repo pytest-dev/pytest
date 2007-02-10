@@ -153,6 +153,12 @@ def get_obj(dsa, pkg, dotted_name):
                                  full_dotted_name))
     return ret
 
+def get_rel_sourcepath(projpath, filename, default=None):
+    relpath = py.path.local(filename).relto(projpath)
+    if not relpath:
+        return default
+    return relpath
+
 # the PageBuilder classes take care of producing the docs (using the stuff
 # above)
 class AbstractPageBuilder(object):
@@ -339,7 +345,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             sep = get_linesep(callable_source)
             org = callable_source.split(sep)
             colored = [enumerate_and_color(org, firstlineno, enc)]
-            text = 'source: %s' % (sourcefile,)
+            relpath = get_rel_sourcepath(self.projroot, sourcefile, sourcefile)
+            text = 'source: %s' % (relpath,)
             if is_in_pkg:
                 href = self.linker.get_lazyhref(sourcefile)
 
@@ -606,8 +613,9 @@ class ApiPageBuilder(AbstractPageBuilder):
         href = self.linker.get_lazyhref(id)
         self.write_page('call site %s for %s' % (index, dotted_name),
                         reltargetpath, tbtag, nav)
-        return H.CallStackLink(call_site[0].filename, call_site[0].lineno + 1,
-                               href)
+        sourcefile = call_site[0].filename
+        sourcepath = get_rel_sourcepath(self.projpath, sourcefile, sourcefile)
+        return H.CallStackLink(sourcepath, call_site[0].lineno + 1, href)
     
     _reg_source = py.std.re.compile(r'([^>]*)<(.*)>')
     def gen_traceback(self, dotted_name, call_site):
@@ -629,7 +637,9 @@ class ApiPageBuilder(AbstractPageBuilder):
                     l = '   %s' % (sline,)
                 mangled.append(l)
             if sourcefile:
-                linktext = '%s - line %s' % (sourcefile, frame.lineno + 1)
+                relpath = get_rel_sourcepath(self.projpath, sourcefile,
+                                             sourcefile)
+                linktext = '%s - line %s' % (relpath, frame.lineno + 1)
                 # skip py.code.Source objects and source files outside of the
                 # package
                 is_code_source = self._reg_source.match(sourcefile)

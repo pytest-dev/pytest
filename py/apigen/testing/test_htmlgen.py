@@ -20,8 +20,7 @@ def assert_eq_string(string1, string2):
                             start, end, string2[start:end], 
                             string1, string2
                         ))
-                            
-        
+
 def test_create_namespace_tree():
     tree = htmlgen.create_namespace_tree(['foo.bar.baz'])
     assert tree == {'': ['foo'],
@@ -126,4 +125,13 @@ def test_show_property():
     assert not htmlgen.show_property('__dict__')
     assert not htmlgen.show_property('__name__')
     assert not htmlgen.show_property('__class__')
+
+def test_get_rel_sourcepath():
+    projpath = py.path.local('/proj')
+    assert (htmlgen.get_rel_sourcepath(projpath, py.path.local('/proj/foo')) ==
+            'foo')
+    assert (htmlgen.get_rel_sourcepath(projpath, py.path.local('/foo')) is
+            None)
+    assert (htmlgen.get_rel_sourcepath(projpath, py.path.local('<string>')) is
+            None)
 
