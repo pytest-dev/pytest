@@ -22,8 +22,8 @@ class RunExecutor(object):
 
     def run(self, capture=True):
         if capture:
+            self.item.startcapture()
             try:
-                self.item.startcapture()
                 self.item.run()
             finally:
                 self.item.finishcapture()
