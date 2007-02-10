@@ -202,8 +202,8 @@ class TestHostManager(DirSetup):
         dir2 = self.source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         hm = self.gethostmanager(
-            dist_hosts = ["localhost:%s" % self.dest]
-            dist_rsync_roots = [self.source]
+            dist_hosts = ["localhost:%s" % self.dest],
+            dist_rsync_roots = [str(self.source)]
         )
         assert hm.config.topdir == self.source
         hm.init_rsync([].append)
