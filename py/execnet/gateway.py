@@ -104,7 +104,7 @@ class Gateway(object):
                     self._trace("received <- %r" % msg)
                     msg.received(self)
                 except sysex:
-                    raise
+                    break
                 except EOFError:
                     break
                 except:
@@ -131,7 +131,7 @@ class Gateway(object):
                     self._traceex(excinfo)
                     if msg is not None:
                         msg.post_sent(self, excinfo)
-                    raise
+                    break
                 else:
                     self._trace('sent -> %r' % msg)
                     msg.post_sent(self)
@@ -167,7 +167,7 @@ class Gateway(object):
                 close() 
                 self._trace("execution finished:", repr(source)[:50])
         except (KeyboardInterrupt, SystemExit):
-            raise
+            pass 
         except:
             excinfo = exc_info()
             l = traceback.format_exception(*excinfo)
