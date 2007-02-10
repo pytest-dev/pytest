@@ -13,17 +13,23 @@ class HostInfo(object):
     """
     _hostname2list = {}
     
-    def __init__(self, spec):
+    def __init__(self, spec, addrel=""):
         parts = spec.split(':', 1)
         self.hostname = parts.pop(0)
         self.relpath = parts and parts.pop(0) or ""
         if self.hostname == "localhost" and not self.relpath:
             self.inplacelocal = True
+            if addrel:
+                raise ValueError("inplace localhosts cannot have "
+                                 "additional path %r" % addrel)
         else:
             self.inplacelocal = False 
             if not self.relpath:
                 self.relpath = "pytestcache-%s" % self.hostname
+        if addrel:
+            self.relpath += "/" + addrel # XXX too os-dependent
         assert not parts
+        assert self.inplacelocal or self.relpath
         self.hostid = self._getuniqueid(self.hostname) 
 
     def _getuniqueid(self, hostname):
@@ -32,7 +38,7 @@ class HostInfo(object):
         l.append(hostid)
         return hostid
 
-    def initgateway(self, python="python", topdir=None):
+    def initgateway(self, python="python"):
         if self.hostname == "localhost":
             self.gw = py.execnet.PopenGateway(python=python)
         else:
@@ -44,14 +50,13 @@ class HostInfo(object):
             )).waitclose()
             self.gw_remotepath = None
         else:
-            relpath = self.relpath or topdir or ""
-            assert relpath
+            assert self.relpath
             channel = self.gw.remote_exec(py.code.Source(
                 gethomedir,
                 sethomedir, "sethomedir()", 
                 getpath_relto_home, """
                 channel.send(getpath_relto_home(%r))
-            """ % relpath,
+            """ % self.relpath,
             ))
             self.gw_remotepath = channel.receive()
 
@@ -116,19 +121,21 @@ class HostRSync(py.execnet.RSync):
 class HostManager(object):
     def __init__(self, config, hosts=None):
         self.config = config
-        if hosts is None:
-            hosts = self.config.getvalue("dist_hosts")
-            hosts = [HostInfo(x) for x in hosts]
-        self.hosts = hosts
         roots = self.config.getvalue_pathlist("dist_rsync_roots")
+        addrel = ""
         if roots is None:
             roots = [self.config.topdir]
+            addrel = self.config.topdir.basename 
         self.roots = roots
+        if hosts is None:
+            hosts = self.config.getvalue("dist_hosts")
+            hosts = [HostInfo(x, addrel) for x in hosts]
+        self.hosts = hosts
 
     def prepare_gateways(self, reporter):
         python = self.config.getvalue("dist_remotepython")
         for host in self.hosts:
-            host.initgateway(python=python, topdir=self.config.topdir)
+            host.initgateway(python=python)
             reporter(repevent.HostGatewayReady(host, self.roots))
             host.gw.host = host
 
@@ -140,7 +147,7 @@ class HostManager(object):
             rsync = HostRSync(root, ignores=ignores, 
                               verbose=self.config.option.verbose)
             if root == self.config.topdir:
-                destrelpath =""
+                destrelpath = ""
             else:
                 destrelpath = root.basename
             for host in self.hosts:
