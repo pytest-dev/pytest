@@ -5,21 +5,22 @@ unit-testing with practically no boilerplate.
 """
 from initpkg import initpkg
 
-version = "0.8.80-alpha2"
+version = "0.9.0-beta"
 
 initpkg(__name__,
     description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 37912 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-04 15:27:10 +0100 (Sun, 04 Feb 2007) $',
+    revision = int('$LastChangedRevision: 38452 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-11 12:53:42 +0100 (Sun, 11 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
     license = "MIT license",
     platforms = ['unix', 'linux', 'cygwin'],
-    author = "holger krekel, Armin Rigo, Guido Wesdorp, Maciej Fijalkowski & others",
+    author = "holger krekel, Carl Friedrich Bolz, Guido Wesdorp, Maciej Fijalkowski, Armin Rigo & others",
     author_email = "py-dev@codespeak.net",
     long_description = globals()['__doc__'],
 
+    # EXPORTED API 
     exportdefs = {
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
