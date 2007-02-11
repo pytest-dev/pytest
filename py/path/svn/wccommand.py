@@ -193,7 +193,7 @@ class SvnWCCommandPath(common.FSPathBase):
         """ rename this path to target. """
         py.process.cmdexec("svn move --force %s %s" %(str(self), str(target)))
 
-    rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(\S+)\s+(.*)')
+    _rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(\S+)\s+(.*)')
 
     def status(self, updates=0, rec=0, externals=0):
         """ return (collective) Status object for this file. """
@@ -251,7 +251,7 @@ class SvnWCCommandPath(common.FSPathBase):
             #elif c0 in '~!' or c4 == 'S':
             #    raise NotImplementedError("received flag %r" % c0)
 
-            m = self.rex_status.match(rest)
+            m = self._rex_status.match(rest)
             if not m:
                 if c7 == '*':
                     fn = rest.strip()
@@ -328,7 +328,7 @@ class SvnWCCommandPath(common.FSPathBase):
             result.append((int(rev), name, line))
         return result
 
-    rex_commit = re.compile(r'.*Committed revision (\d+)\.$', re.DOTALL)
+    _rex_commit = re.compile(r'.*Committed revision (\d+)\.$', re.DOTALL)
     def commit(self, message=""): 
         """commit() returns None if there was nothing to commit
            and the revision number of the commit otherwise.
@@ -339,7 +339,7 @@ class SvnWCCommandPath(common.FSPathBase):
         except KeyError:
             pass
         if out: 
-            m = self.rex_commit.match(out)
+            m = self._rex_commit.match(out)
             return int(m.group(1))
 
     def propset(self, name, value, *args):
