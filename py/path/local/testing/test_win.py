@@ -24,6 +24,12 @@ class TestWINLocalPath:
             self.root.chmod(mode)
             assert self.root.stat().st_mode == mode
 
+    def test_path_comparison_lowercase_mixed(self):
+        t1 = self.root.join("a_path")
+        t2 = self.root.join("A_path")
+        assert t1 == t1
+        assert t1 == t2
+
     def test_allow_unix_style_paths(self):
         t1 = self.root.join('a_path')
         assert t1 == str(self.root) + '\\a_path'

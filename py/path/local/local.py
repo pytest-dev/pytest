@@ -10,7 +10,9 @@ import sys, os, stat, re, atexit
 import py
 from py.__.path import common
 
-if sys.platform == 'win32':
+iswin32 = sys.platform == "win32"
+
+if iswin32: 
     from py.__.path.local.win import WinMixin as PlatformMixin
 else:
     from py.__.path.local.posix import PosixMixin as PlatformMixin
@@ -193,7 +195,12 @@ class LocalPath(common.FSPathBase, PlatformMixin):
         return obj
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        s1 = str(self)
+        s2 = str(other)
+        if iswin32: 
+            s1 = s1.lower()
+            s2 = s2.lower()
+        return s1 == s2
 
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
