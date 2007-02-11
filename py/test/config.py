@@ -120,8 +120,9 @@ class Config(object):
         return self.option
 
     def getvalue(self, name, path=None): 
-        """ return 'name' value looked up from the first conftest file 
-            found up the path (including the path itself). 
+        """ return 'name' value looked up from the 'options'
+            and then from the first conftest file found up 
+            the path (including the path itself). 
             if path is None, lookup the value in the initial
             conftest modules found during command line parsing. 
         """
