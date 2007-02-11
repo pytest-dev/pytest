@@ -11,9 +11,6 @@ statements within this document - even if they sound factual -
 mostly just express thoughts and ideas. They not always refer to 
 real code so read with some caution.*  
 
-.. _`general-path`: 
-.. _`a more general view on path objects`:
-
 
 Distribute tests ad-hoc across multiple platforms
 ======================================================
@@ -77,6 +74,10 @@ decreased considerably.
 .. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
 .. _`py.test`: ../test.html
 
+
+.. _`general-path`: 
+.. _`a more general view on path objects`:
+
 Refactor path implementations to use a Filesystem Abstraction 
 ============================================================= 
 
@@ -86,7 +87,8 @@ would be transformed to have Filesystem implementations for e.g.
 local, subversion and subversion "working copy" filesystems. Today 
 the according code is scattered through path-handling code. 
 
-On a related note, Armin Rigo has hacked `pylufs`_ which allows to 
+On a related note, Armin Rigo has hacked `pylufs`_ and more recently has
+written `pyfuse`_ which allows to 
 implement kernel-level linux filesystems with pure python. Now 
 the idea is that the mentioned filesystem implementations would 
 be directly usable for such linux-filesystem glue code. 
@@ -102,6 +104,7 @@ is a can of subsequent worms).
 .. _`memoryfs`: http://codespeak.net/svn/user/arigo/hack/pyfuse/memoryfs.py
 .. _`dictfs`: http://codespeak.net/pipermail/py-dev/2005-January/000191.html 
 .. _`pylufs`: http://codespeak.net/svn/user/arigo/hack/pylufs/
+.. _`pyfuse`: http://codespeak.net/svn/user/arigo/hack/pyfuse/
 .. _`reiserfs v4 features`: http://www.namesys.com/v4/v4.html
 
 
