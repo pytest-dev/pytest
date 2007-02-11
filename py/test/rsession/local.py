@@ -8,6 +8,18 @@ from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
 from py.__.test.rsession import repevent
 from py.__.test.rsession.outcome import ReprOutcome
 
+# XXX copied from session.py
+def startcapture(session):
+    if not session.config.option.nocapture:
+        session._capture = py.io.StdCapture()
+
+def finishcapture(session): 
+    if hasattr(session, '_capture'): 
+        capture = session._capture 
+        del session._capture
+        return capture.reset()
+    return "", ""
+
 def box_runner(item, session, reporter):
     r = BoxExecutor(item, config=session.config)
     return ReprOutcome(r.execute())
@@ -23,9 +35,12 @@ def benchmark_runner(item, session, reporter):
 
 def apigen_runner(item, session, reporter):
     #retval = plain_runner(item, session, reporter)
+    startcapture(session)
     r = ApigenExecutor(item, reporter=reporter, config=session.config)
     outcome = r.execute(session.tracer)
-    return ReprOutcome(outcome.make_repr(session.config.option.tbstyle))    
+    outcome = ReprOutcome(outcome.make_repr(session.config.option.tbstyle))
+    outcome.stdout, outcome.stderr = finishcapture(session)
+    return outcome
 
 def exec_runner(item, session, reporter):
     raise NotImplementedError()
