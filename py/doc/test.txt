@@ -530,9 +530,9 @@ from the testing nodes: command line, rest output and ajaxy web based.
 Differences from local tests
 ----------------------------
 
-* Test order is *not* guaranteed.
-* Hanging nodes or tests are not detected properly.
-* ``conftest.py`` cannot reference files outside of the copied packages.
+* Test order is rather random (instead of in file order). 
+* the test process may hang due to network problems 
+* you may not reference files outside of rsynced directory structures
 
 Configuration
 -------------
