@@ -289,6 +289,30 @@ class TestSessionAndOptions:
         assert pl[0] == tmpdir
         assert pl[1] == somepath
 
+    def test_config_iocapturing(self):
+        self.tmpdir
+        config = py.test.config._reparse([self.tmpdir])
+        assert config.getvalue("conf_iocapture")
+        tmpdir = self.tmpdir.ensure("sub-with-conftest", dir=1)
+        tmpdir.join("conftest.py").write(py.code.Source("""
+            conf_iocapture = "sys"
+        """))
+        config = py.test.config._reparse([tmpdir])
+        assert config.getvalue("conf_iocapture") == "sys"
+        class dummy: pass
+        config._startcapture(dummy)
+        print 42
+        py.std.os.write(1, "23")
+        config._finishcapture(dummy)
+        assert dummy._captured_out.strip() == "42"
+        
+        config = py.test.config._reparse([tmpdir.dirpath()])
+        config._startcapture(dummy, path=tmpdir)
+        print 42
+        py.std.os.write(1, "23")
+        config._finishcapture(dummy)
+        assert dummy._captured_out.strip() == "42"
+
 class TestConfigColitems:
     def setup_class(cls):
         cls.tmproot = py.test.ensuretemp(cls.__name__)

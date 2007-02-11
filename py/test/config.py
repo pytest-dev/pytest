@@ -252,6 +252,24 @@ class Config(object):
                          %(chain[0], self.topdir))
         return relpath, tuple([x.name for x in chain[1:]])
 
+    def _startcapture(self, colitem, path=None):
+        if not self.option.nocapture:
+            assert not hasattr(colitem, '_capture')
+            iocapture = self.getvalue("conf_iocapture", path=path)
+            if iocapture == "fd": 
+                capture = py.io.StdCaptureFD()
+            elif iocapture == "sys":
+                capture = py.io.StdCapture()
+            else:
+                raise ValueError("unknown io capturing: " + iocapture)
+            colitem._capture = capture
+
+    def _finishcapture(self, colitem):
+        if hasattr(colitem, '_capture'):
+            capture = colitem._capture 
+            del colitem._capture 
+            colitem._captured_out, colitem._captured_err = capture.reset()
+
 # this is the one per-process instance of py.test configuration 
 config_per_process = Config()
 

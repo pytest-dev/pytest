@@ -8,8 +8,7 @@ Generator = py.test.collect.Generator
 Function = py.test.Function
 Instance = py.test.collect.Instance
 
-additionalinfo = None
-
+conf_iocapture = "fd" # overridable from conftest.py 
 
 # ===================================================
 # Distributed testing specific options 

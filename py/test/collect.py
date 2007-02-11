@@ -362,15 +362,10 @@ class Module(FSCollector, PyCollectorMixin):
         return res
     
     def startcapture(self): 
-        if not self._config.option.nocapture:
-            assert not hasattr(self, '_capture')
-            self._capture = py.io.StdCaptureFD() 
+        self._config._startcapture(self, path=self.fspath)
 
     def finishcapture(self): 
-        if hasattr(self, '_capture'): 
-            capture = self._capture 
-            del self._capture 
-            self._captured_out, self._captured_err = capture.reset()
+        self._config._finishcapture(self)
 
     def __repr__(self): 
         return "<%s %r>" % (self.__class__.__name__, self.name)
