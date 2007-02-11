@@ -98,11 +98,11 @@ class BasicRemoteExecution:
 
     def test_remote_exec_waitclose(self):
         channel = self.gw.remote_exec('pass')
-        channel.waitclose(timeout=1.0)
+        channel.waitclose(timeout=5.0)
 
     def test_remote_exec_waitclose_2(self):
         channel = self.gw.remote_exec('def gccycle(): pass')
-        channel.waitclose(timeout=1.0)
+        channel.waitclose(timeout=5.0)
 
     def test_remote_exec_waitclose_noarg(self):
         channel = self.gw.remote_exec('pass')
@@ -110,7 +110,7 @@ class BasicRemoteExecution:
 
     def test_remote_exec_error_after_close(self):
         channel = self.gw.remote_exec('pass')
-        channel.waitclose(timeout=1.0)
+        channel.waitclose(timeout=5.0)
         py.test.raises(IOError, channel.send, 0)
 
     def test_remote_exec_channel_anonymous(self):
