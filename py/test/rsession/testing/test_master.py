@@ -20,7 +20,7 @@ def setup_module(mod):
     mod.tmpdir = tmpdir = py.test.ensuretemp(mod.__name__)
     # to avoid rsyncing
     config = py.test.config._reparse([tmpdir])
-    config._overwrite('dist_taskspernode', 10)
+    config.option.dist_taskspernode = 10 
     mod.rootcol = config._getcollector(tmpdir)
 
 class DummyGateway(object):

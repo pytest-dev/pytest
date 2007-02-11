@@ -34,7 +34,6 @@ class Config(object):
             usage="usage: %prog [options] [query] [filenames of tests]")
         self.conftest = Conftest()
         self._initialized = False
-        self._overwrite_dict = {}
 
     def parse(self, args): 
         """ parse cmdline arguments into this config object. 
@@ -127,8 +126,8 @@ class Config(object):
             conftest modules found during command line parsing. 
         """
         try:
-            return self._overwrite_dict[name]
-        except KeyError:
+            return getattr(self.option, name)
+        except AttributeError:
             return self.conftest.rget(name, path)
 
     def initsession(self):
@@ -185,11 +184,6 @@ class Config(object):
             return config_per_process
         finally: 
             config_per_process = py.test.config = oldconfig 
-
-    def _overwrite(self, name, value):
-        """ this is used from tests to overwrite values irrespectives of conftests.
-        """
-        self._overwrite_dict[name] = value
 
     def make_repr(self, conftestnames, optnames=None): 
         """ return a marshallable representation 

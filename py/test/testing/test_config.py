@@ -101,7 +101,7 @@ def test_config_overwrite():
     o.ensure("conftest.py").write("x=1")
     config = py.test.config._reparse([str(o)])
     assert config.getvalue('x') == 1
-    config._overwrite('x', 2)
+    config.option.x = 2
     assert config.getvalue('x') == 2
     config = py.test.config._reparse([str(o)])
     assert config.getvalue('x') == 1
