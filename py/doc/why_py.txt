@@ -181,10 +181,8 @@ in 2006 and 2007 major parts of the py lib.
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`test environment`: test.html 
 .. _`PyPy`: http://codespeak.net/pypy
-.. _`envisioned import/export system`: future/future.html#importexport
 .. _future: future/future.html
 .. _`py.test tool and library`: test.html
-.. _`great work that Fred L. Drake, Jr. is doing`: http://www.python.org/doc/2.3.4/lib/lib.html
 .. _merlinux: http://merlinux.de
 
 -- 

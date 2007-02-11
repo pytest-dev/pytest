@@ -142,7 +142,6 @@ interested to hear about them. If you are running a Python older than 2.4 you
 will have to install the `pywin32 package`_.
 
 
-.. _`compile-on-the-fly`: future/future.html#compile-on-the-fly 
 .. _`future book`: future/future.html 
 .. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
 .. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
