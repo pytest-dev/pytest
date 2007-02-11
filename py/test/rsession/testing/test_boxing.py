@@ -38,8 +38,10 @@ def test_boxing_on_fds():
 def test_boxing_signal():
     b = Box(example2.boxseg, config=config)
     b.run()
-    assert b.signal == 11
     assert b.retval is None
+    if py.std.sys.version_info < (2,4):
+        py.test.skip("signal detection does not work with python prior 2.4")
+    assert b.signal == 11
 
 def test_boxing_huge_data():
     b = Box(example2.boxhuge, config=config)
@@ -88,4 +90,6 @@ def test_box_killer():
     par, pid = b.run(continuation=True)
     os.kill(pid, 15)
     par(pid)
+    if py.std.sys.version_info < (2,4):
+        py.test.skip("signal detection does not work with python prior 2.4")
     assert b.signal == 15
