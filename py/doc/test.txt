@@ -580,59 +580,47 @@ unique features and developement notes.
 Future/Planned Features of py.test 
 ==================================
 
-Please note that the following descriptions of future features
-sound factual although they aren't implemented yet.  This
-allows easy migration to real documentation later.
-Nevertheless, none of the described planned features is
-set in stone, yet. In fact, they are open to discussion on
-py-dev at codespeak dot net. 
-
-Hey, if you want to suggest new features or command line options 
-for py.test it would be great if you could do it by providing 
-documentation for the feature.  Welcome to documentation driven 
-development :-) 
-
-selecting tests by queries/full text search 
+integrating various test methods 
 -------------------------------------------
 
-    Note: there already is experimental support for test `selection by keyword`_. 
-    Otherwise the following is not yet implemented
+There are various conftest.py's out there
+that do html-reports, ad-hoc distribute tests
+to windows machines or other fun stuff. 
+These approaches should be offerred natively
+by py.test at some point (requires refactorings). 
+In addition, performing special checks such 
+as w3c-conformance tests or ReST checks
+should be offered from mainline py.test. 
 
-You can selectively run tests by specifiying words 
-on the command line in a google-like way. Example:: 
+more distributed testing 
+-----------------------------------------
 
-    py.test simple 
+We'd like to generalize and extend our ad-hoc 
+distributed testing approach to allow for running
+on multiple platforms simultanously and selectively. 
+The web reporter should learn to deal with driving
+complex multi-platform test runs and providing 
+useful introspection and interactive debugging hooks. 
 
-will run all tests that are found from the current directory 
-and that have the word "simple" somewhere in their `test address`_.  
-``test_simple1`` and ``TestSomething.test_whatever_simpleton`` would both 
-qualify.  If you want to exclude the latter test method you could say:: 
 
-    py.test -- simple -simpleton 
+move to report event based architecture
+--------------------------------------------
 
-Note that the doubledash "--" signals the end of option parsing so
-that "-simpleton" will not be misinterpreted as a command line option. 
+To facilitate writing of custom reporters
+py.test is to learn to generate reporting events
+at all levels which a reporter can choose to 
+interpret and present.  The distributed testing
+approach already uses such an approach and 
+we'd like to unify this with the default 
+in-process py.test mode. 
 
-Interpreting positional arguments as specifying search queries 
-means that you can only restrict the set of tests. There is no way to 
-say "run all 'simple' in addition to all 'complex' tests".  If this proves
-to be a problem we can probably come up with a command line option 
-that allows to specify multiple queries which all add to the set of
-tests-to-consider. 
 
-.. _`test address`: 
+see what other tools do currently (nose, etc.)
+----------------------------------------------------
 
-the concept of a test address
------------------------------ 
+There are various tools out there, among them 
+the nose_ clone. It's about time to look again
+at these and other tools, integrate interesting
+features and maybe collaborate on some issues. 
 
-For specifiying tests it is convenient to define the notion
-of a *test address*, representable as a filesystem path and a 
-list of names leading to a test item.  If represented as a single 
-string the path and names are separated by a `/` character, for example: 
-
-    ``somedir/somepath.py/TestClass/test_method``
-
-Such representations can be used to memoize failing tests 
-by writing them out in a file or communicating them across
-process and computer boundaries. 
-
+.. _nose: http://somethingaboutorange.com/mrl/projects/nose/
