@@ -124,6 +124,9 @@ def win32_exec_cmd(cmd):
         if '"' in cmd and not cmd.startswith('""'):
             cmd = '"%s"' % cmd
 
+    return popen3_exec_cmd(cmd)
+
+def popen3_exec_cmd(cmd):
     stdin, stdout, stderr = os.popen3(cmd)
     out = stdout.read()
     err = stderr.read()
@@ -134,6 +137,8 @@ def win32_exec_cmd(cmd):
         raise ExecutionFailed(status, status, cmd, out, err)
     return out
 
+def pypy_exec_cmd(cmd):
+    return popen3_exec_cmd(cmd)
 
 class ExecutionFailed(py.error.Error):
     def __init__(self, status, systemstatus, cmd, out, err):
@@ -149,8 +154,11 @@ class ExecutionFailed(py.error.Error):
 #
 # choose correct platform-version
 #
+
 if sys.platform == 'win32':
     cmdexec = win32_exec_cmd
+elif hasattr(sys, 'pypy') or hasattr(sys, 'pypy_objspaceclass'):
+    cmdexec = popen3_exec_cmd
 else:
     cmdexec = posix_exec_cmd
 
