@@ -33,6 +33,10 @@ class Page(object):
         self.menubar = html.div(
             html.a("home", href="home.html", class_="menu"), " ",
             html.a("doc", href="index.html", class_="menu"), " ",
+            html.a("api", href="../../apigen/api/index.html", class_="menu"),
+            " ",
+            html.a("source", href="../../apigen/source/index.html",
+                   class_="menu"), " ",
             html.a("contact", href="contact.html", class_="menu"), " ", 
             html.a("getting-started", href="getting-started.html", class_="menu"), " ",
             id="menubar", 

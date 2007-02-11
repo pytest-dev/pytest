@@ -25,7 +25,7 @@ class H(html):
 
     class ClassDef(html.div):
         def __init__(self, classname, bases, docstring, sourcelink,
-                     properties, methods):
+                     attrs, methods):
             header = H.h1('class %s(' % (classname,))
             for i, (name, href) in py.builtin.enumerate(bases):
                 if i > 0:
@@ -40,9 +40,9 @@ class H(html):
                                           '*no docstring available*'),
                               sourcelink,
                               class_='classdoc'))
-            if properties:
-                self.append(H.h2('properties:'))
-                for name, val in properties:
+            if attrs:
+                self.append(H.h2('class attributes and properties:'))
+                for name, val in attrs:
                     self.append(H.PropertyDescription(name, val))
             if methods:
                 self.append(H.h2('methods:'))
@@ -58,20 +58,32 @@ class H(html):
     class FunctionDescription(Description):
         def __init__(self, localname, argdesc, docstring, valuedesc, csource,
                      callstack):
-            fd = H.FunctionDef(localname, argdesc)
-            ds = H.Docstring(docstring or '*no docstring available*')
-            fi = H.FunctionInfo(valuedesc, csource, callstack)
+            infoid = 'info_%s' % (localname.replace('.', '_dot_'),)
+            docstringid = 'docstring_%s' % (localname.replace('.', '_dot_'),)
+            fd = H.FunctionDef(localname, argdesc,
+                               onclick=('showhideel('
+                                        'document.getElementById("%s")); '
+                                        'showhideel('
+                                        'document.getElementById("%s")); '
+                                        'this.scrollIntoView()' % (
+                                         infoid, docstringid)))
+            ds = H.Docstring(docstring or '*no docstring available*',
+                             id=docstringid)
+            fi = H.FunctionInfo(valuedesc, csource, callstack,
+                                id=infoid, style="display: none")
             super(H.FunctionDescription, self).__init__(fd, ds, fi)
 
     class FunctionDef(html.h2):
-        def __init__(self, name, argdesc):
-            super(H.FunctionDef, self).__init__('def %s%s:' % (name, argdesc))
+        style = html.Style(cursor='pointer', color='blue')
+        def __init__(self, name, argdesc, **kwargs):
+            super(H.FunctionDef, self).__init__('def %s%s:' % (name, argdesc),
+                                                **kwargs)
 
     class FunctionInfo(html.div):
-        def __init__(self, valuedesc, csource, callstack):
-            super(H.FunctionInfo, self).__init__(
-                H.Hideable('funcinfo', 'funcinfo', valuedesc, H.br(), csource,
-                           callstack))
+        def __init__(self, valuedesc, csource, callstack, **kwargs):
+            super(H.FunctionInfo, self).__init__(valuedesc, H.br(), csource,
+                                                 callstack, class_='funcinfo',
+                                                 **kwargs)
     
     class PropertyDescription(html.div):
         def __init__(self, name, value):
@@ -86,8 +98,9 @@ class H(html):
     class ParameterDescription(html.div):
         pass
 
-    class Docstring(html.pre):
-        pass
+    class Docstring(html.div):
+        style = html.Style(white_space='pre', color='#666',
+                           margin_left='1em', margin_bottom='1em')
 
     class Navigation(html.div):
         #style = html.Style(min_height='99%', float='left', margin_top='1.2em',

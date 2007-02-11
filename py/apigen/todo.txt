@@ -3,6 +3,8 @@
   special "__*__" methods should come last except for __init__ 
   which comes first 
 
+  DONE
+
 * the page header should read:
   
     py.path.local API documentation [rev XYZ]
@@ -11,9 +13,14 @@
 
     api documentation for path.local 
 
+  DONE, title changed and if possible (read: if source file in SVN) rev is
+        retrieved and added
+
 * have the py/doc/ and apigen page layout have
   an api and source link in the menu bar 
   (e.g.: home doc api source contact getting-started issue)
+
+  DONE
 
 * function view: 
 
@@ -28,12 +35,20 @@
   be "sticking" out (the show/hide info link IMO disrupts this
   and it's not visually clear it belongs to the function above it)
 
+  DONE, but please review if you like it like this...
+
 * can it be avoided that py.execnet.Channel shows up as a
   primary object but still have it documented/linked from 
   remote_exec()'s "return value"? 
 
+  DONE: if you set an attribute __hide_from_nav__ to True on an
+        object somehow, it is hidden from the navigation
+
 * class attributes are not "properties". can they get their
   section? 
+
+  DONE: renamed title to 'class attributes and properties'
+        (as discussed)
 
 * stacktraces: a lot are "duplicates" like:
 
@@ -45,6 +60,12 @@
   i think we should by default strip out these duplicates,
   this would also reduce the generated html files, right? 
 
+  DONE, although I'm not happy with it... I'd rather only display call sites
+        from calls in the test somehow or something...
+
 * allow for flexibility regarding linking from 
   py/doc/*.txt documents to apigen with respect
   to where apigen/ docs are located. 
+
+  LATER, as discussed
+

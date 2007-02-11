@@ -20,6 +20,7 @@ class LayoutPage(confrest.PyPage):
         self.nav = kwargs.pop('nav')
         self.relpath = kwargs.pop('relpath')
         super(LayoutPage, self).__init__(*args, **kwargs)
+        self.project.logo.attr.id = 'logo'
 
     def set_content(self, contentel):
         self.contentspace.append(contentel)

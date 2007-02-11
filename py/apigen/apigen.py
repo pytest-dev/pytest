@@ -30,6 +30,7 @@ def get_documentable_items(pkgdir):
     pkgname, pkgdict = get_documentable_items_pkgdir(pkgdir)
     from py.__.execnet.channel import Channel
     pkgdict['execnet.Channel'] = Channel
+    Channel.__apigen_hide_from_nav__ = True
     return pkgname, pkgdict
 
 def build(pkgdir, dsa, capture):

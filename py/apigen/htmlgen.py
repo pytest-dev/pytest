@@ -14,6 +14,8 @@ sorted = py.builtin.sorted
 html = py.xml.html
 raw = py.xml.raw
 
+REDUCE_CALLSITES = True
+
 def is_navigateable(name):
     return (not is_private(name) and name != '__doc__')
 
@@ -24,7 +26,7 @@ def show_property(name):
         # XXX do we need to skip more manually here?
         if (name not in dir(object) and
                 name not in ['__doc__', '__dict__', '__name__', '__module__',
-                             '__weakref__']):
+                             '__weakref__', '__apigen_hide_from_nav__']):
             return True
     return False
 
@@ -136,10 +138,15 @@ def enumerate_and_color(codelines, firstlineno, enc):
             break
     return snippet
 
+_get_obj_cache = {}
 def get_obj(dsa, pkg, dotted_name):
     full_dotted_name = '%s.%s' % (pkg.__name__, dotted_name)
     if dotted_name == '':
         return pkg
+    try:
+        return _get_obj_cache[dotted_name]
+    except KeyError:
+        pass
     path = dotted_name.split('.')
     ret = pkg
     for item in path:
@@ -147,10 +154,13 @@ def get_obj(dsa, pkg, dotted_name):
         ret = getattr(ret, item, marker)
         if ret is marker:
             try:
-                return dsa.get_obj(dotted_name)
+                ret = dsa.get_obj(dotted_name)
             except KeyError:
                 raise NameError('can not access %s in %s' % (item,
                                  full_dotted_name))
+            else:
+                break
+    _get_obj_cache[dotted_name] = ret
     return ret
 
 def get_rel_sourcepath(projpath, filename, default=None):
@@ -419,6 +429,10 @@ class ApiPageBuilder(AbstractPageBuilder):
     def build_methods(self, dotted_name):
         ret = []
         methods = self.dsa.get_class_methods(dotted_name)
+        # move all __*__ methods to the back
+        methods = ([m for m in methods if not m.startswith('_')] +
+                   [m for m in methods if m.startswith('_')])
+        # except for __init__, which should be first
         if '__init__' in methods:
             methods.remove('__init__')
             methods.insert(0, '__init__')
@@ -437,7 +451,8 @@ class ApiPageBuilder(AbstractPageBuilder):
         )
         for dotted_name in sorted(item_dotted_names):
             itemname = dotted_name.split('.')[-1]
-            if not is_navigateable(itemname):
+            if (not is_navigateable(itemname) or
+                    self.is_hidden_from_nav(dotted_name)):
                 continue
             snippet.append(
                 H.NamespaceItem(
@@ -463,7 +478,10 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            title = 'api documentation for %s' % (dotted_name,)
+            title = '%s API documentation' % (dotted_name,)
+            rev = self.get_revision(dotted_name)
+            if rev:
+                title += ' [rev. %s]' % (rev,)
             self.write_page(title, reltargetpath, tag, nav)
         return passed
         
@@ -479,7 +497,10 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            title = 'api documentation for %s' % (dotted_name,)
+            title = '%s API documentation' % (dotted_name,)
+            rev = self.get_revision(dotted_name)
+            if rev:
+                title += ' [rev. %s]' % (rev,)
             self.write_page(title, reltargetpath, tag, nav)
         return passed
 
@@ -527,6 +548,8 @@ class ApiPageBuilder(AbstractPageBuilder):
                 sibpath = dn.split('.')
                 sibname = sibpath[-1]
                 if not is_navigateable(sibname):
+                    continue
+                if self.is_hidden_from_nav(dn):
                     continue
                 navitems.append(H.NavigationItem(self.linker, dn, sibname,
                                                  depth, selected))
@@ -595,10 +618,18 @@ class ApiPageBuilder(AbstractPageBuilder):
     def is_in_pkg(self, sourcefile):
         return py.path.local(sourcefile).relto(self.projpath)
 
+    _processed_callsites = {}
     def build_callsites(self, dotted_name):
         callstack = self.dsa.get_function_callpoints(dotted_name)
         cslinks = []
         for i, (cs, _) in enumerate(callstack):
+            if REDUCE_CALLSITES:
+                key = (cs[0].filename, cs[0].lineno)
+                if key in self._processed_callsites:
+                    # process one call site per line of test code when
+                    # REDUCE_CALLSITES is set to True
+                    continue
+                self._processed_callsites[key] = 1
             link = self.build_callsite(dotted_name, cs, i)
             cslinks.append(link)
         return cslinks
@@ -659,4 +690,23 @@ class ApiPageBuilder(AbstractPageBuilder):
             tbtag.append(sourcelink)
             tbtag.append(H.div(*colored))
         return tbtag
+
+    def is_hidden_from_nav(self, dotted_name):
+        obj = get_obj(self.dsa, self.pkg, dotted_name)
+        return getattr(obj, '__apigen_hide_from_nav__', False)
+
+    def get_revision(self, dotted_name):
+        obj = get_obj(self.dsa, self.pkg, dotted_name)
+        try:
+            sourcefile = inspect.getsourcefile(obj)
+        except TypeError:
+            return None
+        if sourcefile is None:
+            return None
+        if sourcefile[-1] in ['o', 'c']:
+            sourcefile = sourcefile[:-1]
+        wc = py.path.svnwc(sourcefile)
+        if wc.check(versioned=True):
+            return wc.status().rev
+        return None
 

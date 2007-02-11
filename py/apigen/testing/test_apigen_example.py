@@ -37,6 +37,9 @@ def setup_fs_project():
                 " get_somevar docstring "
                 return self.somevar
         SomeInstance = SomeClass(10)
+        class SomeHiddenClass(object):
+            " docstring somehiddenclass "
+            __apigen_hide_from_nav__ = True # hide it from the navigation
     """))
     temp.ensure('pkg/somesubclass.py').write(py.code.Source("""\
         from someclass import SomeClass
@@ -59,6 +62,7 @@ def setup_fs_project():
             'main.SomeInstance': ('./someclass.py', 'SomeInstance'),
             'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
             'main.SomeSubClass': ('./somesubclass.py', 'SomeSubClass'),
+            'main.SomeHiddenClass': ('./someclass.py', 'SomeHiddenClass'),
             'other':             ('./somenamespace.py', '*'),
             '_test':             ('./somenamespace.py', '*'),
         })
@@ -105,8 +109,9 @@ class AbstractBuilderTest(object):
                                                 'main.SomeClass',
                                                 'main.SomeSubClass',
                                                 'main.SomeInstance',
+                                                'main.SomeHiddenClass',
                                                 'other.foo',
-                                                'other.bar',
+                                                'other.baz',
                                                 '_test'])
         self.namespace_tree = namespace_tree
         self.apb = ApiPageBuilder(base, linker, self.dsa,
@@ -284,7 +289,8 @@ class TestApiPageBuilder(AbstractBuilderTest):
         self.apb.build_function_pages(['main.sub.func'])
         self.apb.build_class_pages(['main.SomeClass',
                                     'main.SomeSubClass',
-                                    'main.SomeInstance'])
+                                    'main.SomeInstance',
+                                    'main.SomeHiddenClass'])
         self.linker.replace_dirpath(self.base, False)
         html = self.base.join('api/main.sub.func.html').read()
         print html

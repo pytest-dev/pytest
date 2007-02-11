@@ -2,6 +2,11 @@
   font-size: 0.8em;
 }
 
+#logo {
+  position: relative;
+  position: fixed;
+}
+
 div.sidebar {
   font-family: Verdana, Helvetica, Arial, sans-serif;
   font-size: 0.9em;
@@ -9,6 +14,7 @@ div.sidebar {
   vertical-align: top;
   margin-top: 0.5em;
   position: absolute;
+  position: fixed;
   top: 130px;
   left: 4px;
   bottom: 4px;
@@ -34,6 +40,10 @@ ul li {
   list-style-type: none;
 }
 
+h2 {
+  padding-top: 0.5em;
+}
+
 .code a {
   color: blue;
   font-weight: bold;
@@ -42,6 +52,7 @@ ul li {
 
 .lineno {
   line-height: 1.4em;
+  height: 1.4em;
   text-align: right;
   color: #555;
   width: 3em;
@@ -52,6 +63,7 @@ ul li {
 
 .code {
   line-height: 1.4em;
+  height: 1.4em;
   padding-left: 1em;
   white-space: pre;
   font-family: monospace, Monaco;
