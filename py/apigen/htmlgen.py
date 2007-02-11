@@ -478,7 +478,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            title = '%s API documentation' % (dotted_name,)
+            title = '%s API' % (dotted_name,)
             rev = self.get_revision(dotted_name)
             if rev:
                 title += ' [rev. %s]' % (rev,)
@@ -497,7 +497,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             nav = self.build_navigation(dotted_name, False)
             reltargetpath = "api/%s.html" % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
-            title = '%s API documentation' % (dotted_name,)
+            title = '%s API' % (dotted_name,)
             rev = self.get_revision(dotted_name)
             if rev:
                 title += ' [rev. %s]' % (rev,)
