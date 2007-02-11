@@ -2,7 +2,9 @@
 import sys
 
 class Std(object):
-    """ (lazily) hook into the top-level standard library """
+    """ makes all standard python modules available as a lazily 
+        computed attribute. 
+    """ 
 
     def __init__(self):
         self.__dict__ = sys.modules
