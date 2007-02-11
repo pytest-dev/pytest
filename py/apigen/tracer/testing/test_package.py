@@ -23,7 +23,7 @@ class TestFullModule(object):
     
     def test_init(self):
         ds = self.ds
-        print sorted(ds.descs.keys())
+        print py.builtin.sorted(ds.descs.keys())
         assert len(ds.descs) == 6
         assert py.builtin.sorted(ds.descs.keys()) == [
                 'notpak.notmod.notclass', 'notpak.notmod.notclass.__init__',

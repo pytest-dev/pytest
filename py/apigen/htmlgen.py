@@ -10,6 +10,8 @@ from py.__.apigen.rest.genrest import split_of_last_part
 from py.__.apigen.linker import relpath
 from py.__.apigen.html import H
 
+reversed = py.builtin.reversed
+
 sorted = py.builtin.sorted
 html = py.xml.html
 raw = py.xml.raw
@@ -423,7 +425,7 @@ class ApiPageBuilder(AbstractPageBuilder):
                 if isinstance(val, property):
                     val = '<property object (dynamically calculated value)>'
                 properties.append((attr, val))
-        properties.sort(key=lambda a: a[0]) # sort on name
+        properties.sort(lambda x,y : cmp(x[0], y[0])) # sort on name
         return properties
 
     def build_methods(self, dotted_name):
