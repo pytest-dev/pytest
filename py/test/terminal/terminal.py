@@ -125,8 +125,8 @@ class TerminalSession(Session):
         #    modes.insert(0, 'child process') 
         #else:
         #    modes.insert(0, 'inprocess')
-        mode = "/".join(modes)
-        self.out.line("testing-mode: %s" % mode)
+        #mode = "/".join(modes)
+        #self.out.line("testing-mode: %s" % mode)
         self.out.line("executable:   %s  (%s)" %
                           (py.std.sys.executable, repr_pythonversion()))
         rev = py.__package__.getrev()
