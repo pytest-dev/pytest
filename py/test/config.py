@@ -91,11 +91,14 @@ class Config(object):
             where they were found).
         """
         try:
-            mod, relroots = self.conftest.rget_with_confmod(name, path)
-        except KeyError:
-            return None
-        modpath = py.path.local(mod.__file__).dirpath()
-        return [modpath.join(x, abs=True) for x in relroots]
+            return getattr(self.option, name)
+        except AttributeError:
+            try:
+                mod, relroots = self.conftest.rget_with_confmod(name, path)
+            except KeyError:
+                return None
+            modpath = py.path.local(mod.__file__).dirpath()
+            return [modpath.join(x, abs=True) for x in relroots]
              
     def addoptions(self, groupname, *specs): 
         """ add a named group of options to the current testing session. 

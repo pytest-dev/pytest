@@ -289,6 +289,10 @@ class TestSessionAndOptions:
         assert pl[0] == tmpdir
         assert pl[1] == somepath
 
+        config.option.mypathlist = [py.path.local()]
+        pl = config.getvalue_pathlist('mypathlist')
+        assert pl == [py.path.local()]
+
     def test_config_iocapturing(self):
         self.tmpdir
         config = py.test.config._reparse([self.tmpdir])
