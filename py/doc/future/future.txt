@@ -9,321 +9,62 @@ This document tries to describe directions and guiding ideas
 for the near-future development of the py lib.  *Note that all
 statements within this document - even if they sound factual -
 mostly just express thoughts and ideas. They not always refer to 
-real code so read with some caution.  This is not a reference guide
-(tm). Moreover, the order in which appear here in the file does 
-not reflect the order in which they may be implemented.* 
+real code so read with some caution.*  
 
 .. _`general-path`: 
 .. _`a more general view on path objects`:
 
-A more general view on ``py.path`` objects 
-==========================================
 
-Seen from a more general persective, the current ``py.path.extpy`` path 
-offers a way to go from a file to the structured content of 
-a file, namely a python object.  The ``extpy`` path retains some
-common ``path`` operations and semantics but offers additional
-methods, e.g. ``resolve()`` gets you a true python object.   
-
-But apart from python files there are many other examples 
-of structured content like xml documents or INI-style 
-config files.  While some tasks will only be convenient 
-to perform in a domain specific manner (e.g. applying xslt 
-etc.pp) ``py.path`` offers a common behaviour for 
-structured content paths. So far only ``py.path.extpy``
-is implemented and used by py.test to address tests 
-and traverse into test files. 
-
-*You are in a maze of twisty passages, all alike*
--------------------------------------------------
-
-Now, for the sake of finding out a good direction, 
-let's consider some code that wants to find all 
-*sections* which have a certain *option* value
-within some given ``startpath``:: 
-
-    def find_option(startpath, optionname): 
-        for section in startpath.listdir(dir=1): 
-            opt = section.join(optionname) 
-            if opt.check(): # does the option exist here? 
-                print section.basename, "found:", opt.read() 
-
-Now the point is that ``find_option()`` would obviously work
-when ``startpath`` is a filesystem-like path like a local
-filesystem path or a subversion URL path. It would then see
-directories as sections and files as option-names and the
-content of the file as values. 
-
-But it also works (today) for ``extpy`` paths if you put the following
-python code in a file:: 
-
-    class Section1:
-        someoption = "i am an option value" 
-
-    class Section2:
-        someoption = "i am another option value" 
-
-An ``extpy()`` path maps classes and modules to directories and 
-name-value bindings to file/read() operations. 
-
-And it could also work for 'xml' paths if you put
-the following xml string in a file:: 
-
-    <xml ...>
-    <root>
-        <section1>      
-            <someoption>value</name></section1>
-        <section2>
-            <someoption>value</name></section2></root>
-
-where tags containing non-text tags map to directories 
-and tags with just text-children map to files (which
-upon read() return the joined content of the text 
-tags possibly as unicode. 
-
-Now, to complete the picture, we could make Config-Parser 
-*ini-style* config files also available::
-
-    [section1]
-    name = value 
-    
-    [section2]
-    othername = value
-
-where sections map to directories and name=value mappings
-to file/contents. 
-
-So it seems that our above ``find_option()`` function would
-work nicely on all these *mappings*. 
-
-Of course, the somewhat open question is how to make the
-transition from a filesystem path to structured content
-useful and unified, as much as possible without overdoing it. 
-
-Again, there are tasks that will need fully domain specific
-solutions (DOM/XSLT/...) but i think the above view warrants
-some experiments and refactoring.  The degree of uniformity 
-still needs to be determined and thought about. 
-
-path objects should be stackable
---------------------------------
- 
-Oh, and btw, a ``py.path.extpy`` file could live on top of a 
-'py.path.xml' path as well, i.e. take::
-
-    <xml ...>
-    <code>
-        <py>      
-            <magic>
-                <assertion>
-                    import py 
-                    ... </assertion>
-                <exprinfo> 
-                    def getmsg(x): pass </exprino></magic></py></code>
-
-and use it to have a ``extpy`` path living on it::
-
-    p = py.path.local(xmlfilename)
-    xmlp = py.path.extxml(p, 'py/magic/exprinfo')
-    p = py.path.extpy(xmlp, 'getmsg')
-  
-    assert p.check(func=1, basename='getmsg') 
-    getmsg = p.resolve() 
-    # we now have a *live* getmsg() function taken and compiled from 
-    # the above xml fragment
-
-There could be generic converters which convert between 
-different content formats ... allowing configuration files to e.g. 
-be in XML/Ini/python or filesystem-format with some common way 
-to find and iterate values. 
-
-*After all the unix filesystem and the python namespaces are 
-two honking great ideas, why not do more of them? :-)*
-
-
-.. _importexport: 
-
-Revising and improving the import/export system 
-===============================================
-
-    or let's wrap the world all around 
-
-the export/import interface 
----------------------------
-
-The py lib already incorporates a mechanism to select which
-namespaces and names get exposed to a user of the library.
-Apart from reducing the outside visible namespaces complexity 
-this allows to quickly rename and refactor stuff in the
-implementation without affecting the caller side.  This export
-control can be used by other python packages as well. 
-
-However, all is not fine as the import/export has a 
-few major deficiencies and shortcomings:
-
-- it doesn't allow to specify doc-strings 
-- it is a bit hackish (see py/initpkg.py)
-- it doesn't present a complete and consistent view of the API. 
-- ``help(constructed_namespace)`` doesn't work for the root 
-  package namespace
-- when the py lib implementation accesses parts of itself 
-  it uses the native python import mechanism which is 
-  limiting in some respects.  Especially for distributed
-  programs as encouraged by `py.execnet`_ it is not clear
-  how the mechanism can nicely integrate to support remote
-  lazy importing. 
-
-Discussions have been going on for a while but it is
-still not clear how to best tackle the problem.  Personally, 
-i believe the main missing thing for the first major release 
-is the docstring one.   The current specification 
-of exported names is dictionary based.  It would be 
-better to declare it in terms of Objects. 
-
-
-Example sketch for a new export specification 
----------------------------------------------
-
-Here is a sketch of how the py libs ``__init__.py`` file 
-might or should look like:: 
-
-    """
-        the py lib version 1.0
-        http://codespeak.net/py/1.0
-    """
-
-    from py import pkg
-    pkg.export(__name__,
-        pkg.Module('path',
-            '''provides path objects for local filesystem, 
-               subversion url and working copy, and extension paths.
-            ''',
-            pkg.Class('local', '''
-               the local filesystem path offering a single
-               point of interaction for many purposes.
-               ''', extpy='./path/local.LocalPath'),
-
-            pkg.Class('svnurl', '''
-               the subversion url path.
-            ''', extpy='./path/local/svn/urlcommand.SvnUrlPath'),
-        ),
-    # it goes on ... 
-    )
-
-The current ``initpkg.py`` code can be cleaned up to support
-this new more explicit style of stating things. Note that
-in principle there is nothing that stops us from retrieving
-implementations over the network, e.g. a subversion repository. 
-
-
-Let there be alternatives 
--------------------------
-
-We could also specify alternative implementations easily::
-
-    pkg.Class('svnwc', '''
-       the subversion working copy.
-    ''', extpy=('./path/local/svn/urlbinding.SvnUrlPath', 
-                './path/local/svn/urlcommand.SvnUrlPath',)
-    )
-
-This would prefer the python binding based implementation over
-the one working through he 'svn' command line utility.  And
-of course, it could uniformly signal if no implementation is 
-available at all. 
-
-
-Problems problems  
------------------
-
-Now there are reasons there isn't a clear conclusion so far. 
-For example, the above approach has some implications, the
-main one being that implementation classes like
-``py/path/local.LocalPath`` are visible to the caller side but
-this presents an inconsistency because the user started out with
-``py.path.local`` and expects that the two classes are really much
-the same.  We have the same problem today, of course. 
-
-The naive solution strategy of wrapping the "implementation
-level" objects into their exported representations may remind
-of the `wrapping techniques PyPy uses`_.  But it
-*may* result in a slightly heavyweight mechanism that affects
-runtime speed.  However, I guess that this standard strategy
-is probably the cleanest. 
-
-
-Every problem can be solved with another level ... 
---------------------------------------------------
-
-The wrapping of implementation level classes in their export
-representations objects adds another level of indirection.
-But this indirection would have interesting advantages: 
-
-- we could easily present a consistent view of the library 
-- it could take care of exceptions as well 
-- it provides natural interception points for logging 
-- it enables remote lazy loading of implementations 
-  or certain versions of interfaces 
-
-And quite likely the extra indirection wouldn't hurt so much
-as it is not much more than a function call and we cared
-we could even generate some c-code (with PyPy :-) to speed
-it up.   
-
-But it can lead to new problems ...
------------------------------------
-
-However, it is critical to avoid to burden the implementation
-code of being aware of its wrapping.  This is what we have 
-to do in PyPy but the import/export mechanism works at 
-a higher level of the language, i think.  
-
-Oh, and we didn't talk about bootstrapping :-) 
-
-.. _`py.execnet`: ../execnet.html 
-.. _`wrapping techniques PyPy uses`: http://codespeak.net/pypy/index.cgi?doc/wrapping.html
-.. _`lightweight xml generation`: 
-
-Extension of py.path.local.sysexec()
-====================================
-
-The `sysexec mechanism`_ allows to directly execute 
-binaries on your system.  Especially after we'll have this
-nicely integrated into Win32 we may also want to run python 
-scripts both locally and from the net::
-
-    vadm = py.path.svnurl('http://codespeak.net/svn/vadm/dist/vadm/cmdline.py') 
-    stdoutput = vadm.execute('diff')
-
-To be able to execute this code fragement, we need either or all of 
-
-- an improved import system that allows remote imports 
-
-- a way to specify what the "neccessary" python import
-  directories are. for example, the above scriptlet will
-  require a certain root included in the python search for module 
-  in order to execute something like "import vadm". 
-
-- a way to specify dependencies ... which opens up another
-  interesting can of worms, suitable for another chapter
-  in the neverending `future book`_. 
-
-.. _`sysexec mechanism`: ../misc.html#sysexec
-.. _`compile-on-the-fly`: 
-
-we need a persistent storage for the py lib 
--------------------------------------------
-
-A somewhat open question is where to store the underlying
-generated pyc-files and other files generated on the fly 
-with `CPython's distutils`_.  We want to have a 
-*persistent location* in order to avoid runtime-penalties
-when switching python versions and platforms (think NFS). 
-
-A *persistent location* for the py lib would be a good idea
-maybe also for other reasons. We could cache some of the
-expensive test setups, like the multi-revision subversion
-repository that is created for each run of the tests. 
+Distribute tests ad-hoc across multiple platforms
+======================================================
+
+After some more refactoring and unification of
+the current testing and distribution support code
+we'd like to be able to run tests on multiple
+platforms simultanously and allow for interaction
+and introspection into the (remote) failures. 
+
+
+Make APIGEN useful for more projects
+================================================
+
+The new APIGEN tool offers rich information 
+derived from running tests against an application: 
+argument types and callsites, i.e. it shows
+the places where a particular API is used. 
+In its first incarnation, there are still
+some specialties that likely prevent it
+from documenting APIs for other projects. 
+We'd like to evolve to a `py.apigen` tool
+that can make use of information provided
+by a py.test run. 
+
+Distribute channels/programs across networks
+================================================
+
+Apart from stabilizing setup/teardown procedures
+for `py.execnet`_, we'd like to generalize its
+implementation to allow connecting two programs
+across multiple hosts, i.e. we'd like to arbitrarily
+send "channels" across the network. Likely this
+will be done by using the "pipe" model, i.e. 
+that each channel is actually a pair of endpoints,
+both of which can be independently transported 
+across the network.  The programs who "own" 
+these endpoints remain connected. 
+
+.. _`py.execnet`: ../execnet.html
+
+Benchmarking and persistent storage 
+=========================================
+
+For storing test results, but also benchmarking
+and other information, we need a solid way 
+to store all kinds of information from test runs. 
+We'd like to generate statistics or html-overview 
+out of it, but also use such information to determine when
+a certain test broke, or when its performance
+decreased considerably. 
 
 .. _`CPython's distutils`: http://www.python.org/dev/doc/devel/lib/module-distutils.html
 
@@ -364,59 +105,12 @@ is a can of subsequent worms).
 .. _`reiserfs v4 features`: http://www.namesys.com/v4/v4.html
 
 
-Improve and unify Path API 
-==========================
 
-visit() grows depth control 
---------------------------- 
+Consider more features
+==================================
 
-Add a ``maxdepth`` argument to the path.visit() method, 
-which will limit traversal to subdirectories. Example:: 
-
-    x = py.path.local.get_tmproot()
-    for x in p.visit('bin', stop=N): 
-        ... 
-
-This will yield all file or directory paths whose basename
-is 'bin', depending on the values of ``stop``:: 
-
-    p                       # stop == 0 or higher (and p.basename == 'bin')
-    p / bin                 # stop == 1 or higher
-    p / ... / bin           # stop == 2 or higher
-    p / ... / ... / bin     # stop == 3 or higher
-
-The default for stop would be `255`. 
-
-But what if `stop < 0`?  We could let that mean to go upwards:: 
-
-    for x in x.visit('py/bin', stop=-255): 
-        # will yield all parent direcotires which have a 
-        # py/bin subpath 
-
-visit() returning a lazy list? 
------------------------------- 
-
-There is a very nice "no-API" `lazy list`_ implementation from 
-Armin Rigo which presents a complete list interface, given some 
-iterable.  The iterable is consumed only on demand and retains 
-memory efficiency as much as possible.  The lazy list 
-provides a number of advantages in addition to the fact that
-a list interface is nicer to deal with than an iterator. 
-For example it lets you do:: 
-
-    for x in p1.visit('*.cfg') + p2.visit('*.cfg'): 
-        # will iterate through all results 
-
-Here the for-iter expression will retain all lazyness (with
-the result of adding lazy lists being another another lazy
-list) by internally concatenating the underlying
-lazylists/iterators.  Moreover, the lazylist implementation
-will know that there are no references left to the lazy list
-and throw away iterated elements.  This makes the iteration
-over the sum of the two visit()s as efficient as if we had 
-used iterables to begin with! 
-
-For this, we would like to move the lazy list into the 
-py lib's namespace, most probably at `py.builtin.lazylist`. 
+There are many more features and useful classes 
+that might be nice to integrate.  For example, we might put 
+Armin's `lazy list`_ implementation into the py lib. 
 
 .. _`lazy list`: http://codespeak.net/svn/user/arigo/hack/misc/collect.py
