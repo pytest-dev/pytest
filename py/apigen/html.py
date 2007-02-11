@@ -74,10 +74,11 @@ class H(html):
             super(H.FunctionDescription, self).__init__(fd, ds, fi)
 
     class FunctionDef(html.h2):
-        style = html.Style(cursor='pointer', color='blue')
+        style = html.Style(cursor='pointer')
         def __init__(self, name, argdesc, **kwargs):
+            class_ = kwargs.pop('class_', 'funcdef')
             super(H.FunctionDef, self).__init__('def %s%s:' % (name, argdesc),
-                                                **kwargs)
+                                                class_=class_, **kwargs)
 
     class FunctionInfo(html.div):
         def __init__(self, valuedesc, csource, callstack, **kwargs):
