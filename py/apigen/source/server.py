@@ -3,10 +3,7 @@
 """
 
 import py
-try:
-    from pypy.translator.js.examples import server
-except ImportError:
-    py.test.skip("PyPy not found")
+from pypy.translator.js.examples import server
 from py.__.apigen.source.browser import parse_path
 from py.__.apigen.source.html import create_html, create_dir_html, create_unknown_html
 from py.xml import html

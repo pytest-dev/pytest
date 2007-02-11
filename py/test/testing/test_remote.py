@@ -38,7 +38,7 @@ class TestRemote:
         pool = py._thread.WorkerPool() 
         reply = pool.dispatch(session.main)
         while 1: 
-            s = out.get(timeout=1.0)
+            s = out.get(timeout=5.0)
             if s.find('1 failed') != -1: 
                 break 
             print s
@@ -46,7 +46,7 @@ class TestRemote:
             py.test.fail("did not see test_1 failure") 
         # XXX we would like to have a cleaner way to finish 
         try: 
-            reply.get(timeout=0.5) 
+            reply.get(timeout=5.0) 
         except IOError, e: 
             assert str(e).lower().find('timeout') != -1 
 

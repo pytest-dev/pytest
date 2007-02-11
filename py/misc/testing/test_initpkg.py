@@ -52,6 +52,8 @@ def test_importall():
         base.join('test', 'testing', 'data'),
         base.join('apigen', 'tracer', 'testing', 'package'),
         base.join('test', 'testing', 'test'),
+        base.join('test', 'rsession', 'webjs.py'),
+        base.join('apigen', 'source', 'server.py'),
         base.join('magic', 'greenlet.py'), 
         base.join('path', 'gateway',),
         base.join('doc',),

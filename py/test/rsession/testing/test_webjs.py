@@ -1,19 +1,26 @@
 import py
 
-try:
-    import pypy
-    from pypy.translator.js.modules import dom
-    from pypy.translator.js.tester import schedule_callbacks
-    dom.Window # check whether dom was properly imported or is just a 
-               # leftover in sys.modules
-except (ImportError, AttributeError):
-    py.test.skip('PyPy not found')
+def check(mod):
+    try:
+        import pypy
+        from pypy.translator.js.modules import dom
+        from pypy.translator.js.tester import schedule_callbacks
+        dom.Window # check whether dom was properly imported or is just a 
+                   # leftover in sys.modules
+    except (ImportError, AttributeError):
+        py.test.skip('PyPy not found')
+    mod.dom = dom
+    mod.schedule_callbacks = schedule_callbacks
 
-from py.__.test.rsession import webjs
-from py.__.test.rsession.web import exported_methods
-here = py.magic.autopath().dirpath()
+    from py.__.test.rsession import webjs
+    from py.__.test.rsession.web import exported_methods
+    mod.webjs = webjs
+    mod.exported_methods = exported_methods
+    mod.here = py.magic.autopath().dirpath()
 
 def setup_module(mod):
+    check(mod)
+
     # load HTML into window object
     html = here.join('../webdata/index.html').read()
     mod.html = html

@@ -4,15 +4,15 @@
 
 import py
 
-try:
-    from pypy.translator.js.main import rpython2javascript
-    from pypy.translator.js import commproxy
-    
-    commproxy.USE_MOCHIKIT = False
-except ImportError:
-    py.test.skip("PyPy not found")
-
 def setup_module(mod):
+    try:
+        from pypy.translator.js.main import rpython2javascript
+        from pypy.translator.js import commproxy
+    except ImportError:
+        py.test.skip("PyPy not found")
+    mod.commproxy.USE_MOCHIKIT = False
+    mod.rpython2javascript = rpython2javascript
+    mod.commproxy = mod.commproxy
     from py.__.test.rsession.web import TestHandler as _TestHandler
     from py.__.test.rsession.web import MultiQueue
     mod._TestHandler = _TestHandler
