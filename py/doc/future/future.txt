@@ -327,7 +327,6 @@ repository that is created for each run of the tests.
 
 .. _`CPython's distutils`: http://www.python.org/dev/doc/devel/lib/module-distutils.html
 
-.. _`getting started`: ../getting-started.html 
 .. _`restructured text`: http://docutils.sourceforge.net/docs/user/rst/quickref.html
 .. _`python standard library`: http://www.python.org/doc/2.3.4/lib/lib.html
 .. _`xpython EuroPython 2004 talk`: http://codespeak.net/svn/user/hpk/talks/xpython-talk.txt

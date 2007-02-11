@@ -1,13 +1,25 @@
-py.test and the py lib - documentation 
----------------------------------------- 
+py lib documentation 
+=================================================
+
+`Download and Installation`_ 
+
+Main tools and API 
+----------------------
 
 `py.test`_ introduces to the **py.test** testing utility
 
-`py.execnet`_ an innovative way to distribute programs across the net (not stable on win32 yet) 
+`py.execnet`_ distribute programs across the net 
 
-`py.magic.greenlet`_:  Lightweight in-process concurrent programming (aka Stackless)
+`py.magic.greenlet`_: micro-threads (lightweight in-process concurrent programming)
 
-`py.path`_: Path and Filesystem access and manipulation for local and svn based trees
+`py.path`_: local and subversion Path and Filesystem access
+
+`py lib scripts`_ describe the scripts contained in the ``py/bin`` directory. 
+
+`apigen`_: a new way to generate rich Python API documentation
+
+support functionality 
+---------------------------------
 
 `py.code`_: High-level access/manipulation of Python code and traceback objects. 
 
@@ -17,23 +29,20 @@ py.test and the py lib - documentation
 
 `py.log`_ an alpha document about the ad-hoc logging facilities 
 
-`py lib scripts`_ describe the scripts contained in the ``py/bin`` directory. 
+`miscellaneous features`_ describes some small but nice py lib features 
 
-`miscellaneous features`_ describes some more py lib features 
+Background and Motivation information 
+-------------------------------------------
 
 `future`_ handles development visions and plans for the near future. 
 
 `why what how py?`_, describing motivation and background of the py lib 
   
-Note that some parts of these texts refer to future development and
-do not reflect the current state.  **Welcome to documentation and 
-test driven development** :-)
-
-
-.. _`getting started`: getting-started.html 
+.. _`download and installation`: download.txt
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`py.execnet`: execnet.html 
 .. _`py.magic.greenlet`: greenlet.html 
+.. _`apigen`: apigen.html 
 .. _`py.log`: log.html
 .. _`py.io`: io.html
 .. _`py.path`: path.html
@@ -43,6 +52,5 @@ test driven development** :-)
 .. _`py.xml`: xml.html 
 .. _`Why What how py?`: why_py.html 
 .. _`future`: future/future.html 
-.. _`getting started`: getting-started.html 
 .. _`miscellaneous features`: misc.html 
 

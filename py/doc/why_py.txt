@@ -127,7 +127,7 @@ release policies:
   completly change the implementation but the public API 
   tests will continue to run. 
 
-- No **tested feature** of the exported `py API`_ is to vanish
+- No **tested feature** of the exported py API is to vanish
   across minor releases until it is marked deprecated.  
 
   For example, pure API tests of a future version 1.0 are to
@@ -269,7 +269,6 @@ to walk up or boot up a windows machine :-)
 .. _`envisioned import/export system`: future/future.html#importexport
 .. _future: future/future.html
 .. _`py.test tool and library`: test.html
-.. _`py API`: api.html 
 .. _`great work that Fred L. Drake, Jr. is doing`: http://www.python.org/doc/2.3.4/lib/lib.html
 
 -- 

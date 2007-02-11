@@ -218,8 +218,6 @@ Here are 20 lines of code making the above triangle happen::
     gw = py.execnet.SocketGateway('localhost', cls.port)
     print "initialized socket gateway to port", cls.port
 
-.. _`py API`: api.html 
-
 .. [#] There is an interesting emerging `Jail`_ linux technology 
        as well as a host of others, of course. 
 

@@ -14,11 +14,12 @@ also document describing the `implementation and the extending of py.test`_.
 starting point: ``py.test`` command line tool 
 =============================================
 
-First, see `getting started`_ for how to install the 'py.test' tool 
-on your system.
+We presume you have done an installation as per the
+download_ page after which you should be able to execute the
+'py.test' tool from a command line shell. 
 
 ``py.test`` is the command line tool to run tests. You can supply it
-with any Python module by passing it as an argument::
+with a Python test file (or directory) by passing it as an argument::
 
   py.test test_sample.py
 
@@ -32,11 +33,9 @@ This means you can write tests without any boilerplate::
     def test_answer():
         assert 42 == 43 
 
-As you can see, you can have test functions as well as test
-methods. This in contrast to the Python standard library's
-``unittest.py``.
-
-You can use ``py.test`` to run all tests in a directory structure by
+You may have test functions and test methods, there is no
+need to subclass or to put tests into a class. 
+You can also use ``py.test`` to run all tests in a directory structure by
 invoking it without any arguments::
 
   py.test
@@ -46,9 +45,7 @@ start with ``test_`` or ends with ``_test`` from the directory and any
 subdirectories, starting with the current directory, and run them. Each 
 Python test module is inspected for test methods starting with ``test_``. 
 
-.. _`getting started`: getting-started.html
-
-
+.. _download: download.html
 .. _features: 
 
 Basic Features of ``py.test`` 

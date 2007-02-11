@@ -59,9 +59,8 @@ packaging
 
 * (DONE/c-modules don't) see if things work on Win32 (partially done) 
 
-* refine and implement `releasescheme`_ 
+* (partly DONE) refine and implement releasescheme/download
 
-.. _releasescheme: releasescheme.html
 
 APIGEN / source viewer
 -------------------------------------
