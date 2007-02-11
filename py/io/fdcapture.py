@@ -1,7 +1,6 @@
 
 import os
 import sys
-import thread
 import py
 
 class FDCapture: 
