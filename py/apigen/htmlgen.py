@@ -311,9 +311,25 @@ class SourcePageBuilder(AbstractPageBuilder):
         else:
             tag, nav = self.build_nonpython_page(fspath)
         title = 'sources for %s' % (fspath.basename,)
+        rev = self.get_revision(fspath)
+        if rev:
+            title += ' [rev. %s]' % (rev,)
         reltargetpath = outputpath.relto(self.base).replace(os.path.sep,
                                                             '/')
         self.write_page(title, reltargetpath, tag, nav)
+    
+    _revcache = {}
+    def get_revision(self, path):
+        strpath = path.strpath
+        if strpath in self._revcache:
+            return self._revcache[strpath]
+        wc = py.path.svnwc(path)
+        if wc.check(versioned=True):
+            rev = wc.info().created_rev
+        else:
+            rev = None
+        self._revcache[strpath] = rev
+        return rev
 
 class ApiPageBuilder(AbstractPageBuilder):
     """ builds the html for an api docs page """
@@ -528,9 +544,13 @@ class ApiPageBuilder(AbstractPageBuilder):
             else:
                 reltargetpath = 'api/%s.html' % (dotted_name,)
             self.linker.set_link(dotted_name, reltargetpath)
+            title_name = dotted_name
             if dotted_name == '':
-                dotted_name = self.dsa.get_module_name().split('/')[-1]
-            title = 'index of %s namespace' % (dotted_name,)
+                title_name = self.dsa.get_module_name()
+            title = 'index of %s' % (title_name,)
+            rev = self.get_revision(dotted_name)
+            if rev:
+                title += ' [rev. %s]' % (rev,)
             self.write_page(title, reltargetpath, tag, nav)
         return passed
 
@@ -697,18 +717,35 @@ class ApiPageBuilder(AbstractPageBuilder):
         obj = get_obj(self.dsa, self.pkg, dotted_name)
         return getattr(obj, '__apigen_hide_from_nav__', False)
 
+    _revcache = {}
+    def get_proj_revision(self):
+        if '' in self._revcache:
+            return self._revcache['']
+        wc = py.path.svnwc(self.projpath)
+        if wc.check(versioned=True):
+            rev = wc.info().created_rev
+        else:
+            rev = None
+        self._revcache[''] = rev
+        return rev
+
     def get_revision(self, dotted_name):
+        if dotted_name in self._revcache:
+            return self._revcache[dotted_name]
         obj = get_obj(self.dsa, self.pkg, dotted_name)
+        rev = None
         try:
             sourcefile = inspect.getsourcefile(obj)
         except TypeError:
-            return None
-        if sourcefile is None:
-            return None
-        if sourcefile[-1] in ['o', 'c']:
-            sourcefile = sourcefile[:-1]
-        wc = py.path.svnwc(sourcefile)
-        if wc.check(versioned=True):
-            return wc.status().rev
-        return None
+            pass
+        else:
+            if sourcefile is not None:
+                if sourcefile[-1] in ['o', 'c']:
+                    sourcefile = sourcefile[:-1]
+                wc = py.path.svnwc(sourcefile)
+                if wc.check(versioned=True):
+                    rev = wc.info().created_rev
+        rev = rev or self.get_proj_revision()
+        self._revcache[dotted_name] = rev
+        return rev
 

@@ -12,7 +12,5 @@
 
   NOT YET DONE (later?)
 
-* add SVN info to the (source only?) pages
-
 * add warning about py.test possibly not covering the whole API
 

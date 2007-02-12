@@ -8,6 +8,7 @@ from py.__.apigen.tracer.tracer import Tracer
 from py.__.apigen.project import Project
 from py.__.test.web import webcheck
 from py.__.apigen.conftest import option
+from py.__.path.svn.testing.svntestbase import make_test_repo
 
 def run_string_sequence_test(data, seq):
     currpos = -1
@@ -21,8 +22,7 @@ def run_string_sequence_test(data, seq):
             py.test.fail('string %r: %s' % (s, message))
         currpos = newpos
 
-def setup_fs_project():
-    temp = py.test.ensuretemp('apigen_example')
+def setup_fs_project(temp):
     temp.ensure("pkg/func.py").write(py.code.Source("""\
         def func(arg1):
             "docstring"
@@ -96,7 +96,8 @@ def _checkhtmlsnippet(htmlstring):
 
 class AbstractBuilderTest(object):
     def setup_class(cls):
-        cls.fs_root, cls.pkg_name = setup_fs_project()
+        temp = py.test.ensuretemp('apigen_example')
+        cls.fs_root, cls.pkg_name = setup_fs_project(temp)
         cls.ds, cls.dsa = get_dsa(cls.fs_root, cls.pkg_name)
         cls.project = Project()
 
@@ -240,14 +241,14 @@ class TestApiPageBuilder(AbstractBuilderTest):
         html = mainfile.read()
         print html
         run_string_sequence_test(html, [
-            'index of main namespace',
+            'index of main',
         ])
         otherfile = self.base.join('api/other.html')
         assert otherfile.check()
         otherhtml = otherfile.read()
         print otherhtml
         run_string_sequence_test(otherhtml, [
-            'index of other namespace',
+            'index of other',
         ])
         _checkhtml(html)
         _checkhtml(otherhtml)
@@ -257,7 +258,7 @@ class TestApiPageBuilder(AbstractBuilderTest):
         pkgfile = self.base.join('api/index.html')
         assert pkgfile.check()
         html = pkgfile.read()
-        assert 'index of project pkg namespace'
+        assert 'index of pkg' in html
         _checkhtml(html)
 
     def test_build_namespace_pages_subnamespace(self):
@@ -318,6 +319,66 @@ class TestApiPageBuilder(AbstractBuilderTest):
         assert '<a href="main.html">' in html
         _checkhtml(html)
 
+    def test_get_revision(self):
+        # XXX a lot of setup required for this one... more like a functional
+        # test I fear
+        
+        # create test repo and checkout
+        repo = make_test_repo('test_get_revision_api_repo')
+        wc = py.path.svnwc(py.test.ensuretemp('test_get_revision_api_wc'))
+        wc.checkout(repo.url)
+        assert wc.status().rev == '0'
+
+        # create a temp package inside the working copy
+        fs_root, pkg_name = setup_fs_project(wc)
+        ds, dsa = get_dsa(self.fs_root, self.pkg_name)
+        wc.commit('test get revision commit')
+        wc.update()
+
+        # clear cache
+        py.__.apigen.htmlgen._get_obj_cache = {}
+
+        # fiddle about a bit with paths so that our package is picked up :|
+        old_path = py.std.sys.path
+        try:
+            py.std.sys.path.insert(0, fs_root.strpath)
+            pkgkeys = [k for k in py.std.sys.modules.keys() if
+                       k == 'pkg' or k.startswith('pkg.')]
+            # remove modules from sys.modules
+            for key in pkgkeys:
+                del py.std.sys.modules[key]
+
+            # now create a new apb that uses the wc pkg
+            apb = ApiPageBuilder(self.base, self.linker, dsa,
+                                 fs_root.join(pkg_name),
+                                 self.namespace_tree, self.project)
+            apb._revcache = {} # clear cache, this is on class level!!
+
+            pkg = wc.join('pkg')
+            assert pkg.check(versioned=True)
+            assert pkg.info().created_rev == 1
+
+            funcpath = pkg.join('func.py')
+            classpath = pkg.join('someclass.py')
+            assert funcpath.check(versioned=True)
+            assert classpath.check(versioned=True)
+            assert apb.get_revision('main.sub.func') == 1
+            assert apb.get_revision('main.SomeClass') == 1
+            assert apb.get_revision('') == 1
+            assert apb.get_revision('main.sub') == 1
+            funcpath.write(funcpath.read() + '\n')
+            funcpath.commit('updated func')
+            wc.update()
+            apb._revcache = {} # clear cache
+            assert apb.get_revision('main.sub.func') == 2
+            assert apb.get_revision('') == 1
+            assert apb.get_revision('main.SomeClass') == 1
+        finally:
+            py.std.sys.path = old_path
+            # clear caches again
+            py.__.apigen.htmlgen._get_obj_cache = {}
+            apb._revcache = {}
+
 class TestSourcePageBuilder(AbstractBuilderTest):
     def test_build_pages(self):
         self.spb.build_pages(self.fs_root)
@@ -376,3 +437,25 @@ class TestSourcePageBuilder(AbstractBuilderTest):
             'href="somesubclass.py.html">somesubclass.py',
         ])
 
+    def test_get_revision(self):
+        repo = make_test_repo('test_get_revision_source_repo')
+        wc = py.path.svnwc(py.test.ensuretemp('test_get_revision_source_wc'))
+        wc.checkout(repo.url)
+
+        dir = wc.ensure('dir', dir=True)
+        file = dir.ensure('file.py', file=True)
+        wc.commit('added dir and file')
+        wc.update()
+        assert file.check(versioned=True)
+        assert wc.status().rev == '1'
+
+        assert self.spb.get_revision(dir) == 1
+        assert self.spb.get_revision(file) == 1
+
+        file.write('while 1:\n  print "py lib is cool\n"')
+        file.commit('added some code')
+        assert file.status().rev == '2'
+        self.spb._revcache = {}
+        assert self.spb.get_revision(file) == 2
+        assert self.spb.get_revision(dir) == 1
+        
