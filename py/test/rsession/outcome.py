@@ -37,7 +37,7 @@ class Outcome(object):
             etype = excinfo.typename
         val = getattr(excinfo, 'value', None)
         if not val:
-            val = exinfo.exconly()
+            val = excinfo.exconly()
         val = str(val)
         return (etype, val, (tb_info, rec_index))
     
