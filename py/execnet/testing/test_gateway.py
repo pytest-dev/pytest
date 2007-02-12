@@ -8,6 +8,8 @@ mypath = py.magic.autopath()
 from StringIO import StringIO
 from py.__.execnet.register import startup_modules, getsource 
 
+TESTTIMEOUT = 10.0 # seconds
+
 def test_getsource_import_modules(): 
     for dottedname in startup_modules: 
         yield getsource, dottedname 
@@ -98,11 +100,11 @@ class BasicRemoteExecution:
 
     def test_remote_exec_waitclose(self):
         channel = self.gw.remote_exec('pass')
-        channel.waitclose(timeout=5.0)
+        channel.waitclose(TESTTIMEOUT)
 
     def test_remote_exec_waitclose_2(self):
         channel = self.gw.remote_exec('def gccycle(): pass')
-        channel.waitclose(timeout=5.0)
+        channel.waitclose(TESTTIMEOUT)
 
     def test_remote_exec_waitclose_noarg(self):
         channel = self.gw.remote_exec('pass')
@@ -110,7 +112,7 @@ class BasicRemoteExecution:
 
     def test_remote_exec_error_after_close(self):
         channel = self.gw.remote_exec('pass')
-        channel.waitclose(timeout=5.0)
+        channel.waitclose(TESTTIMEOUT)
         py.test.raises(IOError, channel.send, 0)
 
     def test_remote_exec_channel_anonymous(self):
@@ -190,12 +192,12 @@ class BasicRemoteExecution:
         assert x == 42
 
         # check that the both sides previous channels are really gone
-        channel.waitclose(0.3)
+        channel.waitclose(TESTTIMEOUT)
         #assert c.id not in self.gw._channelfactory
         newchan = self.gw.remote_exec('''
                     assert %d not in channel.gateway._channelfactory._channels
                   ''' % (channel.id))
-        newchan.waitclose(0.3)
+        newchan.waitclose(TESTTIMEOUT)
         assert channel.id not in self.gw._channelfactory._channels
 
     def test_channel_receiver_callback(self): 
@@ -208,7 +210,7 @@ class BasicRemoteExecution:
             ''') 
         channel.setcallback(callback=l.append)
         py.test.raises(IOError, channel.receive)
-        channel.waitclose(1.0) 
+        channel.waitclose(TESTTIMEOUT)
         assert len(l) == 3
         assert l[:2] == [42,13]
         assert isinstance(l[2], channel.__class__) 
@@ -224,7 +226,7 @@ class BasicRemoteExecution:
         assert x == 42
         channel.setcallback(callback=l.append)
         py.test.raises(IOError, channel.receive)
-        channel.waitclose(1.0) 
+        channel.waitclose(TESTTIMEOUT) 
         assert len(l) == 2
         assert l[0] == 13
         assert isinstance(l[1], channel.__class__) 
@@ -238,7 +240,7 @@ class BasicRemoteExecution:
             channel.send(42)
             ''')
         channel.setcallback(callback)
-        channel.waitclose(1.0)
+        channel.waitclose(TESTTIMEOUT) 
         assert l == [42]
 
     def test_channel_callback_stays_active(self, earlyfree=True):
@@ -273,7 +275,7 @@ class BasicRemoteExecution:
 
     def test_channel_callback_remote_freed(self):
         channel = self.test_channel_callback_stays_active(False)
-        channel.waitclose(1.0) # freed automatically at the end of producer()
+        channel.waitclose(TESTTIMEOUT) # freed automatically at the end of producer()
 
     def test_channel_endmarker_callback(self):
         l = []
@@ -284,7 +286,7 @@ class BasicRemoteExecution:
             ''') 
         channel.setcallback(l.append, 999)
         py.test.raises(IOError, channel.receive)
-        channel.waitclose(1.0) 
+        channel.waitclose(TESTTIMEOUT)
         assert len(l) == 4
         assert l[:2] == [42,13]
         assert isinstance(l[2], channel.__class__) 
@@ -294,7 +296,7 @@ class BasicRemoteExecution:
         out = py.std.StringIO.StringIO() 
         handle = self.gw._remote_redirect(stdout=out) 
         c = self.gw.remote_exec("print 42")
-        c.waitclose(1.0)
+        c.waitclose(TESTTIMEOUT)
         handle.close() 
         s = out.getvalue() 
         assert s.strip() == "42" 
@@ -306,7 +308,7 @@ class BasicRemoteExecution:
                                         stdout=l[i].append)
                         for i in range(num)]
         for x in channels: 
-            x.waitclose(5.0) 
+            x.waitclose(TESTTIMEOUT) 
 
         for i in range(num): 
             subl = l[i] 
@@ -329,7 +331,7 @@ class BasicRemoteExecution:
     def test_channel_file_write_error(self): 
         channel = self.gw.remote_exec("pass") 
         f = channel.makefile() 
-        channel.waitclose(1.0) 
+        channel.waitclose(TESTTIMEOUT)
         py.test.raises(IOError, f.write, 'hello')
 
     def test_channel_file_proxyclose(self): 
@@ -441,9 +443,9 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
         time.sleep(0.5) 
         os.kill(remote, signal.SIGKILL)
         time.sleep(1)
-        channel.waitclose(1.0)
+        channel.waitclose(TESTTIMEOUT)
         py.test.raises(EOFError, channel.receive)
-        #channel.waitclose(1.0)
+        #channel.waitclose(TESTTIMEOUT)
         #channel.send('#')
         
         

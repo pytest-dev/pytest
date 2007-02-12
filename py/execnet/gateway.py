@@ -241,7 +241,7 @@ class Gateway(object):
                 channel.send(outchannel)
                 clist.append(channel)
         for c in clist: 
-            c.waitclose(1.0) 
+            c.waitclose() 
         class Handle: 
             def close(_): 
                 for name, out in ('stdout', stdout), ('stderr', stderr): 
@@ -250,7 +250,7 @@ class Gateway(object):
                             import sys
                             channel.gateway._ThreadOut(sys, %r).resetdefault()
                         """ % name) 
-                        c.waitclose(1.0) 
+                        c.waitclose() 
         return Handle()
 
     def exit(self):
