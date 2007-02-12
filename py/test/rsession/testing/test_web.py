@@ -8,6 +8,8 @@ def setup_module(mod):
     try:
         from pypy.translator.js.main import rpython2javascript
         from pypy.translator.js import commproxy
+        mod.commproxy = commproxy
+        mod.rpython2javascript = rpython2javascript
     except ImportError:
         py.test.skip("PyPy not found")
     mod.commproxy.USE_MOCHIKIT = False
