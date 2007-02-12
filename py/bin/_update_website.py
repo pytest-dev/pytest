@@ -5,7 +5,7 @@
     rsyncs the whole package (with all the ReST docs converted to HTML) as well
     as the apigen docs to a given remote host and path
 """
-
+from _findpy import py
 import py
 import sys
 
