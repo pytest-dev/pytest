@@ -1,4 +1,4 @@
-"""\
+"""
 the py lib is a development support library featuring
 py.test, an interactive testing tool which supports
 unit-testing with practically no boilerplate.
@@ -8,9 +8,9 @@ from initpkg import initpkg
 version = "0.9.0-beta"
 
 initpkg(__name__,
-    description = "py.test and the py lib",
-    revision = int('$LastChangedRevision: 38452 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-11 12:53:42 +0100 (Sun, 11 Feb 2007) $',
+    description = "py lib: agile development and test support library",
+    revision = int('$LastChangedRevision: 38595 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-12 17:42:53 +0100 (Mon, 12 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/%s.tar.gz" %(version,), 
