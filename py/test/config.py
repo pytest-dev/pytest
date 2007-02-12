@@ -56,7 +56,7 @@ class Config(object):
         assert not self._initialized
         self._initialized = True
         self.topdir = py.path.local(topdir)
-        self.merge_repr(repr)
+        self._mergerepr(repr)
         self._coltrails = coltrails 
 
     def getcolitems(self):
@@ -189,7 +189,7 @@ class Config(object):
         finally: 
             config_per_process = py.test.config = oldconfig 
 
-    def make_repr(self, conftestnames, optnames=None): 
+    def _makerepr(self, conftestnames, optnames=None): 
         """ return a marshallable representation 
             of conftest and cmdline options. 
             if optnames is None, all options
@@ -214,10 +214,10 @@ class Config(object):
             l.append(path.relto(self.topdir)) 
         return l, conftestdict, cmdlineopts
 
-    def merge_repr(self, repr): 
+    def _mergerepr(self, repr): 
         """ merge in the conftest and cmdline option values
             found in the given representation (produced
-            by make_repr above).  
+            by _makerepr above).  
 
             The repr-contained conftest values are
             stored on the default conftest module (last

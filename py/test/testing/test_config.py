@@ -128,7 +128,7 @@ def test_config_init_direct():
     tmp.ensure("conftest.py").write("x=1 ; y=2")
     hello = tmp.ensure("test_hello.py")
     config = py.test.config._reparse([hello])
-    repr = config.make_repr(conftestnames=['x', 'y'])
+    repr = config._makerepr(conftestnames=['x', 'y'])
     config2 = py.test.config._reparse([tmp.dirpath()])
     config2._initialized = False # we have to do that from tests
     config2.initdirect(topdir=tmp.dirpath(), repr=repr)
@@ -148,19 +148,19 @@ def test_config_init_direct():
     assert col.parent.name == tmp.basename 
     assert col.parent.parent is None 
 
-def test_config_make_and_merge_repr():
+def test_config_make_and__mergerepr():
     tmp = py.test.ensuretemp("reprconfig1")
     tmp.ensure("__init__.py")
     tmp.ensure("conftest.py").write("x=1")
     config = py.test.config._reparse([tmp])
-    repr = config.make_repr(conftestnames=['x'])
+    repr = config._makerepr(conftestnames=['x'])
     config.option.verbose = 42
-    repr2 = config.make_repr(conftestnames=[], optnames=['verbose'])
+    repr2 = config._makerepr(conftestnames=[], optnames=['verbose'])
     config = py.test.config._reparse([tmp.dirpath()])
     py.test.raises(KeyError, "config.getvalue('x')")
-    config.merge_repr(repr)
+    config._mergerepr(repr)
     assert config.getvalue('x') == 1
-    config.merge_repr(repr2) 
+    config._mergerepr(repr2) 
     assert config.option.verbose == 42
 
 def test_config_marshability():
@@ -168,11 +168,11 @@ def test_config_marshability():
     tmp.ensure("__init__.py")
     tmp.ensure("conftest.py").write("a = object()")
     config = py.test.config._reparse([tmp])
-    py.test.raises(ValueError, "config.make_repr(conftestnames=['a'])")
+    py.test.raises(ValueError, "config._makerepr(conftestnames=['a'])")
 
     config.option.hello = lambda x: None
-    py.test.raises(ValueError, "config.make_repr(conftestnames=[])")
-    config.make_repr(conftestnames=[], optnames=[])
+    py.test.raises(ValueError, "config._makerepr(conftestnames=[])")
+    config._makerepr(conftestnames=[], optnames=[])
 
 def test_config_rconfig():
     tmp = py.test.ensuretemp("rconfigopt")
@@ -186,10 +186,10 @@ def test_config_rconfig():
     """))
     config = py.test.config._reparse([tmp, "-G", "11"])
     assert config.option.gdest == 11
-    repr = config.make_repr(conftestnames=[])
+    repr = config._makerepr(conftestnames=[])
     config = py.test.config._reparse([tmp.dirpath()])
     py.test.raises(AttributeError, "config.option.gdest")
-    config.merge_repr(repr) 
+    config._mergerepr(repr) 
     assert config.option.gdest == 11
 
 class TestSessionAndOptions: 

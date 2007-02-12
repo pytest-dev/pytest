@@ -70,7 +70,7 @@ def slave_main(receive, send, path, config):
 defaultconftestnames = ['dist_nicelevel']
 def setup_slave(host, config): 
     channel = host.gw.remote_exec(str(py.code.Source(setup, "setup()")))
-    configrepr = config.make_repr(defaultconftestnames)
+    configrepr = config._makerepr(defaultconftestnames)
     #print "sending configrepr", configrepr
     topdir = host.gw_remotepath 
     if topdir is None:

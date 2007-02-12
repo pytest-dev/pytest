@@ -104,7 +104,7 @@ class RemoteTerminalSession(Session):
         """, stdout=self.out, stderr=self.out) 
         try:
             print "MASTER: initiated slave terminal session ->"
-            repr = self.config.make_repr(conftestnames=[])
+            repr = self.config._makerepr(conftestnames=[])
             channel.send((str(topdir), repr, failures))
             print "MASTER: send start info, topdir=%s" % (topdir,)
             try:
