@@ -88,7 +88,7 @@ local, subversion and subversion "working copy" filesystems. Today
 the according code is scattered through path-handling code. 
 
 On a related note, Armin Rigo has hacked `pylufs`_ and more recently has
-written `pyfuse`_ which allows to 
+written `pyfuse`_ which allow to 
 implement kernel-level linux filesystems with pure python. Now 
 the idea is that the mentioned filesystem implementations would 
 be directly usable for such linux-filesystem glue code. 
