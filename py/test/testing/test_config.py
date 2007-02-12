@@ -397,7 +397,8 @@ class TestConfigColitems:
         assert trail[0] == a.relto(config.topdir)
         assert trail[1] == ('trail.py',)
         col2 = config._getcollector(trail)
-        assert col2.listchain() == col.listchain()
+        assert [i.name for i in col2.listchain()] == \
+               [i.name for i in col.listchain()]
        
     def test_get_collector_trail_topdir_and_beyond(self):
         config = py.test.config._reparse([self.tmpdir])

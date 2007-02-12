@@ -65,10 +65,11 @@ class Collector(object):
         return "<%s %r>" %(self.__class__.__name__, self.name) 
 
     def __eq__(self, other): 
-        try: 
-            return self.name == other.name and self.parent == other.parent 
-        except AttributeError: 
-            return False 
+        #try: 
+        #    return self.name == other.name and self.parent == other.parent 
+        #except AttributeError: 
+        #    return False
+        return self is other
     
     def __hash__(self):
         return hash((self.name, self.parent))
@@ -347,7 +348,7 @@ class PyCollectorMixin(object):
         return self._name2items.get(name, None) 
 
 
-class Module(FSCollector, PyCollectorMixin): 
+class Module(FSCollector, PyCollectorMixin):
     def run(self):
         if getattr(self.obj, 'disabled', 0):
             return []
@@ -358,7 +359,7 @@ class Module(FSCollector, PyCollectorMixin):
         if res is None:
             attr = getattr(self.obj, name, None)
             if attr is not None:
-                res = self.makeitem(name, attr, usefilters=False)
+                return self.makeitem(name, attr, usefilters=False)
         return res
     
     def startcapture(self): 
@@ -403,9 +404,9 @@ class Class(PyCollectorMixin, Collector):
             return []
         return ["()"]
 
-    def join(self, name): 
-        assert name == '()' 
-        return self.Instance(name, self) 
+    def join(self, name):
+        assert name == '()'
+        return self.Instance(name, self)
 
     def setup(self): 
         setup_class = getattr(self.obj, 'setup_class', None)
