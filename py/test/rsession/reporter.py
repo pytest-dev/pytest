@@ -119,7 +119,10 @@ class AbstractReporter(object):
             self.hangs()
         self.summary()
         return len(self.failed_tests_outcome) > 0
-    
+
+    report_InterruptedExecution = report_TestFinished
+    report_CrashedExecution = report_TestFinished
+
     def hangs(self):
         h = []
         if self.config.option.exitfirst:

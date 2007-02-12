@@ -137,7 +137,9 @@ class PongReceived(ReportEvent):
         self.result = result
 
 class InterruptedExecution(ReportEvent):
-    pass
+    def __init__(self):
+        self.timeend = time.time()
 
 class CrashedExecution(ReportEvent):
-    pass
+    def __init__(self):
+        self.timeend = time.time()
