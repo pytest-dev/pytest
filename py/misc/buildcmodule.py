@@ -28,7 +28,7 @@ def make_module_from_c(cfile):
         if filetype == imp.C_EXTENSION:
             break
     else:
-        raise ValueError, "cannot find the file name suffix of C ext modules"
+        raise ImportError, "cannot find the file name suffix of C ext modules"
     lib = dirpath.join(modname+ext)
 
     # argl! we need better "build"-locations alltogether!
