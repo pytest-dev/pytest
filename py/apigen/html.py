@@ -63,15 +63,14 @@ class H(html):
             fd = H.FunctionDef(localname, argdesc,
                                onclick=('showhideel('
                                         'document.getElementById("%s")); '
-                                        'showhideel('
-                                        'document.getElementById("%s")); '
-                                        'this.scrollIntoView()' % (
-                                         infoid, docstringid)))
-            ds = H.Docstring(docstring or '*no docstring available*',
-                             id=docstringid)
-            fi = H.FunctionInfo(valuedesc, csource, callstack,
-                                id=infoid, style="display: none")
-            super(H.FunctionDescription, self).__init__(fd, ds, fi)
+                                         % (infoid,)))
+            infodiv = H.div(
+                H.Docstring(docstring or '*no docstring available*',
+                            id=docstringid),
+                H.FunctionInfo(valuedesc, csource, callstack,
+                               id=infoid, style="display: none"),
+                class_='funcdocinfo')
+            super(H.FunctionDescription, self).__init__(fd, infodiv)
 
     class FunctionDef(html.h2):
         style = html.Style(cursor='pointer')

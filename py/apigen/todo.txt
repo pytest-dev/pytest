@@ -3,9 +3,13 @@
 
     py/apigen sources [rev XXX]
 
+    DONE
+
 * and "namespace" pages: 
 
     builtin namespace index [rev XXX]
+
+    DONE, except they're now called 'index of <dotted_name> [rev. XXX]'
 
 * get konqueror to display indents in source code better? 
   (currently it doesn't look like more than a single space)
@@ -28,6 +32,8 @@
  
   XXX it's nice but can you keep the docstring visible when
   more information is displayed/toggled? 
+
+  DONE too
 
 * allow for flexibility regarding linking from 
   py/doc/*.txt documents to apigen with respect

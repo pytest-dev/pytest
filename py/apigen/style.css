@@ -48,6 +48,10 @@ h2.funcdef {
   color: blue;
 }
 
+h2.funcdef:hover {
+  text-decoration: underline;
+}
+
 .code a {
   color: blue;
   font-weight: bold;
@@ -91,7 +95,7 @@ h2.funcdef {
   color: green;
 }
 
-.funcinfo {
+.funcdocinfo {
   border: 1px solid black;
   color: black;
   padding: 1em;
