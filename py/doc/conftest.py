@@ -15,7 +15,8 @@ option = py.test.config.addoptions("documentation check options",
         Option('', '--apigenrelpath',
                action="store", dest="apigen_relpath", default="../../apigen", 
                type="string",
-               help="force generation of html files even if they appear up-to-date"
+               help=("specify the relative path to apigen (used for link "
+                     "generation)")
         )
 ) 
 
