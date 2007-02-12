@@ -51,7 +51,7 @@ def make_distfiles(tmpdir):
     distdir = tmpdir.ensure('dist', dir=1)
     oldir = rootdir.chdir()
     try: 
-        from py.__.misc.dist import setup 
+        from py.__.misc._dist import setup 
         trace("invoking sdist, generating into %s" % (distdir,)) 
         setup(py, script_name="setup.py", 
               script_args=('-q', 'sdist', '--no-prune', 
@@ -81,7 +81,7 @@ def unpackremotetar(tmpdir, strurl):
     f = urllib.urlopen(strurl)
     basename = strurl.split('/')[-1]
     target = tmpdir.join(basename)
-    trace("downloading to %s" %(target,))
+    trace("downloading %r to %s" %(strurl, target,))
     target.write(f.read())
 
     trace("extracting to %s" %(target,))
