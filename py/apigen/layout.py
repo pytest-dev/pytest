@@ -31,12 +31,15 @@ class LayoutPage(confrest.PyPage):
         self.body.insert(0, self.nav)
 
     def update_menubar_links(self, node):
+        docrelpath = py.std.os.environ.get('APIGEN_DOCRELPATH', '../py/doc')
+        if not docrelpath.endswith('/'):
+            docrelpath += '/'
         for item in node:
             if not isinstance(item, py.xml.Tag):
                 continue
             if (item.__class__.__name__ == 'a' and hasattr(item.attr, 'href')
                     and not item.attr.href.startswith('http://')):
-                item.attr.href = self.relpath + '../py/doc/' + item.attr.href
+                item.attr.href = self.relpath + docrelpath + item.attr.href
 
     def setup_scripts_styles(self, copyto=None):
         for path, name in self.stylesheets:
