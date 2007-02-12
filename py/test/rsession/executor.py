@@ -1,7 +1,7 @@
 """ Remote executor
 """
 
-import py, os
+import py, os, sys
 
 from py.__.test.rsession.outcome import Outcome, ReprOutcome
 from py.__.test.rsession.box import Box
@@ -39,11 +39,15 @@ class RunExecutor(object):
         except (SystemExit, KeyboardInterrupt):
             raise
         except:
-            excinfo = py.code.ExceptionInfo()
-            if isinstance(self.item, py.test.Function): 
-                fun = self.item.obj # hope this is stable 
-                code = py.code.Code(fun)
-                excinfo.traceback = excinfo.traceback.cut(
+            e = sys.exc_info()[1]
+            if isinstance(e, Failed):
+                excinfo = e.excinfo
+            else:
+                excinfo = py.code.ExceptionInfo()
+                if isinstance(self.item, py.test.Function): 
+                    fun = self.item.obj # hope this is stable 
+                    code = py.code.Code(fun)
+                    excinfo.traceback = excinfo.traceback.cut(
                         path=code.path, firstlineno=code.firstlineno)
             outcome = Outcome(excinfo=excinfo, setupfailure=False)
             if self.usepdb:
