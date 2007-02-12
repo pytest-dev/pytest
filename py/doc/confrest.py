@@ -33,8 +33,7 @@ class Page(object):
                               media="screen", rel="stylesheet", 
                               type="text/css"))
         self.menubar = html.div(
-            html.a("home", href="home.html", class_="menu"), " ",
-            html.a("doc", href="index.html", class_="menu"), " ",
+            html.a("index", href="index.html", class_="menu"), " ",
             html.a("api", href=apigen_relpath + "api/index.html", class_="menu"),
             " ",
             html.a("source", href=apigen_relpath + "source/index.html",

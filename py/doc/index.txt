@@ -1,6 +1,10 @@
 py lib documentation 
 =================================================
 
+    The py lib aims at supporting a decent development process 
+    addressing deployment, versioning, testing and documentation 
+    perspectives. 
+
 `Download and Installation`_ 
 
 Main tools and API 

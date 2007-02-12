@@ -1,6 +1,0 @@
-
-    The py lib aims at supporting a decent development process 
-    addressing important deployment, versioning, testing and 
-    documentation issues - seen primarily from the perspective 
-    of a FOSS (Free and Open Source) developer.   
-
