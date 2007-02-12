@@ -110,20 +110,22 @@ def test_js_ignore():
     assert len(l+l2) == 3
 
 def test_resolve_linkrole():
+    from py.__.doc.conftest import get_apigen_relpath
+    apigen_relpath = get_apigen_relpath()
     from py.__.doc.conftest import resolve_linkrole
     assert resolve_linkrole('api', 'py.foo.bar', False) == (
-        'py.foo.bar', '../../apigen/api/foo.bar.html')
+        'py.foo.bar', apigen_relpath + 'api/foo.bar.html')
     assert resolve_linkrole('api', 'py.foo.bar()', False) == (
-        'py.foo.bar()', '../../apigen/api/foo.bar.html')
+        'py.foo.bar()', apigen_relpath + 'api/foo.bar.html')
     assert resolve_linkrole('api', 'py', False) == (
-        'py', '../../apigen/api/index.html')
+        'py', apigen_relpath + 'api/index.html')
     py.test.raises(AssertionError, 'resolve_linkrole("api", "foo.bar")')
     assert resolve_linkrole('source', 'py/foo/bar.py', False) == (
-        'py/foo/bar.py', '../../apigen/source/foo/bar.py.html')
+        'py/foo/bar.py', apigen_relpath + 'source/foo/bar.py.html')
     assert resolve_linkrole('source', 'py/foo/', False) == (
-        'py/foo/', '../../apigen/source/foo/index.html')
+        'py/foo/', apigen_relpath + 'source/foo/index.html')
     assert resolve_linkrole('source', 'py/', False) == (
-        'py/', '../../apigen/source/index.html')
+        'py/', apigen_relpath + 'source/index.html')
     py.test.raises(AssertionError, 'resolve_linkrole("source", "/foo/bar/")')
 
 def test_resolve_linkrole_check_api():

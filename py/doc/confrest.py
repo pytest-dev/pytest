@@ -1,6 +1,7 @@
 import py
 from py.__.misc.rest import convert_rest_html, strip_html_header 
 from py.__.misc.difftime import worded_time 
+from py.__.doc.conftest import get_apigen_relpath
 
 mydir = py.magic.autopath().dirpath()
 html = py.xml.html 
@@ -22,6 +23,7 @@ class Page(object):
         self.fill() 
 
     def fill(self): 
+        apigen_relpath = get_apigen_relpath()
         content_type = "%s;charset=%s" %(self.type, self.encoding) 
         self.head.append(html.title(self.title)) 
         self.head.append(html.meta(name="Content-Type", content=content_type))
@@ -33,12 +35,12 @@ class Page(object):
         self.menubar = html.div(
             html.a("home", href="home.html", class_="menu"), " ",
             html.a("doc", href="index.html", class_="menu"), " ",
-            html.a("api", href="../../apigen/api/index.html", class_="menu"),
+            html.a("api", href=apigen_relpath + "api/index.html", class_="menu"),
             " ",
-            html.a("source", href="../../apigen/source/index.html",
+            html.a("source", href=apigen_relpath + "source/index.html",
                    class_="menu"), " ",
             html.a("contact", href="contact.html", class_="menu"), " ", 
-            html.a("getting-started", href="getting-started.html", class_="menu"), " ",
+            html.a("download", href="download.html", class_="menu"), " ",
             id="menubar", 
         )
         self.metaspace = html.div(

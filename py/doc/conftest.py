@@ -11,8 +11,16 @@ option = py.test.config.addoptions("documentation check options",
         Option('', '--forcegen',
                action="store_true", dest="forcegen", default=False,
                help="force generation of html files even if they appear up-to-date"
+        ),
+        Option('', '--apigenrelpath',
+               action="store", dest="apigen_relpath", default="../../apigen", 
+               type="string",
+               help="force generation of html files even if they appear up-to-date"
         )
 ) 
+
+def get_apigen_relpath():
+    return py.test.config.option.apigen_relpath + "/"
 
 def deindent(s, sep='\n'):
     leastspaces = -1
@@ -254,9 +262,10 @@ class DocDirectory(py.test.collect.Directory):
 Directory = DocDirectory
 
 def resolve_linkrole(name, text, check=True):
+    apigen_relpath = get_apigen_relpath()
     if name == 'api':
         if text == 'py':
-            return ('py', '../../apigen/api/index.html')
+            return ('py', apigen_relpath + 'api/index.html')
         else:
             assert text.startswith('py.'), (
                 'api link "%s" does not point to the py package') % (text,)
@@ -275,7 +284,7 @@ def resolve_linkrole(name, text, check=True):
                         raise AssertionError(
                             'problem with linkrole :api:`%s`: can not resolve '
                             'dotted name %s' % (text, dotted_name,))
-            return (text, '../../apigen/api/%s.html' % (dotted_name,))
+            return (text, apigen_relpath + 'api/%s.html' % (dotted_name,))
     elif name == 'source':
         assert text.startswith('py/'), ('source link "%s" does not point '
                                         'to the py package') % (text,)
@@ -290,5 +299,5 @@ def resolve_linkrole(name, text, check=True):
             relpath += 'index.html'
         else:
             relpath += '.html'
-        return (text, '../../apigen/source/%s' % (relpath,))
+        return (text, apigen_relpath + 'source/%s' % (relpath,))
 
