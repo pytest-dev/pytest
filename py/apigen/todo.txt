@@ -3,17 +3,17 @@
 
     py/apigen sources [rev XXX]
 
-    DONE
+    DONE (XXX: i don't see it as done, are you sure? 
 
 * and "namespace" pages: 
 
     builtin namespace index [rev XXX]
 
     DONE, except they're now called 'index of <dotted_name> [rev. XXX]'
+    (XXX: strange, i also don't see this, am i doing something wrong?)
 
 * get konqueror to display indents in source code better? 
   (currently it doesn't look like more than a single space)
-
 
 * function view: 
 
@@ -35,9 +35,12 @@
 
   DONE too
 
-* allow for flexibility regarding linking from 
-  py/doc/*.txt documents to apigen with respect
-  to where apigen/ docs are located. 
+* linking from docs to apigen and back: 
 
-  LATER, as discussed
+  XXX holger thinks that apigen needs a doc_relpath
+      (symettric to py/doc/conftest needing a apigen_relpath)
+      if you can't find a way to provide this as a command line param,
+      then we probably need to hardcode it. 
+      note that both relpath's are related to how we map docs and 
+      apigen into the URL namespace. 
 
