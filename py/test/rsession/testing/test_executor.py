@@ -6,6 +6,7 @@ from py.__.test.rsession.executor import RunExecutor, BoxExecutor,\
     AsyncExecutor, ApigenExecutor
 from py.__.test.rsession.outcome import ReprOutcome
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
+from py.__.test.outcome import Failed
 
 def setup_module(mod):
     if py.std.sys.platform == "win32":
@@ -31,6 +32,10 @@ class ItemTestSkipping(Item):
 class ItemTestPrinting(Item):
     def run(self):
         print "hello"
+
+class ItemTestFailingExplicit(Item):
+    def run(self):
+        raise Failed(excinfo="3")
 
 class TestExecutor(BasicRsessionTest):
     def test_run_executor(self):
@@ -145,3 +150,11 @@ class TestExecutor(BasicRsessionTest):
         assert out1.passed
         assert out2.passed
         assert not out3.passed
+
+    def test_executor_explicit_Failed(self):
+        ex = RunExecutor(ItemTestFailingExplicit("failex", self.config),
+                         config=self.config)
+        
+        outcome = ex.execute()
+        assert not outcome.passed
+        assert outcome.excinfo == "3"
