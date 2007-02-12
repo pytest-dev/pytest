@@ -181,7 +181,7 @@ in 2006 and 2007 major parts of the py lib.
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`test environment`: test.html 
 .. _`PyPy`: http://codespeak.net/pypy
-.. _future: future/future.html
+.. _future: future.html
 .. _`py.test tool and library`: test.html
 .. _merlinux: http://merlinux.de
 

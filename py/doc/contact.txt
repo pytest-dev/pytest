@@ -53,7 +53,7 @@ adopted in similar ways.
 
 .. _`zope3`: http://zope3.zwiki.org/
 .. _twisted: http://www.twistedmatrix.org 
-.. _future: future/future.html 
+.. _future: future.html 
 
 .. _`get an account`:  
 

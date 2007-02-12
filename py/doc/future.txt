@@ -50,7 +50,7 @@ both of which can be independently transported
 across the network.  The programs who "own" 
 these endpoints remain connected. 
 
-.. _`py.execnet`: ../execnet.html
+.. _`py.execnet`: execnet.html
 
 Benchmarking and persistent storage 
 =========================================
@@ -72,7 +72,7 @@ decreased considerably.
 .. _`future book`: future.html 
 .. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
 .. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
-.. _`py.test`: ../test.html
+.. _`py.test`: test.html
 
 
 .. _`general-path`: 

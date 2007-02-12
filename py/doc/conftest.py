@@ -21,7 +21,7 @@ option = py.test.config.addoptions("documentation check options",
 ) 
 
 def get_apigen_relpath():
-    return py.test.config.option.apigen_relpath + "/"
+    return py.test.config.option.apigen_relpath.rstrip('\/') + "/"
 
 def deindent(s, sep='\n'):
     leastspaces = -1

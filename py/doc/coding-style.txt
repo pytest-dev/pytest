@@ -70,4 +70,4 @@ Miscellaneous
 
 .. _`PEP 8 Style Guide for Python Code`: http://www.python.org/peps/pep-0008.html
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
-.. _`future`: future/future.html
+.. _`future`: future.html

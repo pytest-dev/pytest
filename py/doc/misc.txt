@@ -142,10 +142,10 @@ interested to hear about them. If you are running a Python older than 2.4 you
 will have to install the `pywin32 package`_.
 
 
-.. _`future book`: future/future.html 
+.. _`future book`: future.html 
 .. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
 .. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
-.. _`a more general view on path objects`: future/future.html#general-path
+.. _`a more general view on path objects`: future.html#general-path
 .. _`pywin32 package`: http://pywin32.sourceforge.net/
 
 finding an executable local path

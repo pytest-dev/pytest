@@ -55,6 +55,6 @@ Background and Motivation information
 .. _`py lib scripts`: bin.html
 .. _`py.xml`: xml.html 
 .. _`Why What how py?`: why_py.html 
-.. _`future`: future/future.html 
+.. _`future`: future.html 
 .. _`miscellaneous features`: misc.html 
 
