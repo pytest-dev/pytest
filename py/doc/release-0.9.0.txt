@@ -25,8 +25,8 @@ and here is the main entry point into the documentation:
 
     http://codespeak.net/py/XXX # figure out exact scheme
 
-The work on the py lib has been partially funded by the 
-European Union and merlinux within the PyPy project. 
+Work on the py lib has been partially funded by the 
+European Union and merlinux.eu within the PyPy project. 
 
 best, have fun and let us know what you think!
 
