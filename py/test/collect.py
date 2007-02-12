@@ -65,10 +65,8 @@ class Collector(object):
         return "<%s %r>" %(self.__class__.__name__, self.name) 
 
     def __eq__(self, other): 
-        #try: 
-        #    return self.name == other.name and self.parent == other.parent 
-        #except AttributeError: 
-        #    return False
+        # XXX a rather strict check for now to not confuse
+        #     the SetupState.prepare() logic
         return self is other
     
     def __hash__(self):
@@ -359,7 +357,7 @@ class Module(FSCollector, PyCollectorMixin):
         if res is None:
             attr = getattr(self.obj, name, None)
             if attr is not None:
-                return self.makeitem(name, attr, usefilters=False)
+                res = self.makeitem(name, attr, usefilters=False)
         return res
     
     def startcapture(self): 
