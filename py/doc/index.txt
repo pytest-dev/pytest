@@ -38,7 +38,7 @@ Background and Motivation information
 
 `why what how py?`_, describing motivation and background of the py lib 
   
-.. _`download and installation`: download.txt
+.. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`py.execnet`: execnet.html 
 .. _`py.magic.greenlet`: greenlet.html 
