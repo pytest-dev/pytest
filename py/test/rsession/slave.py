@@ -90,7 +90,7 @@ def setup():
     import py
     config = py.test.config
     assert not config._initialized 
-    config.initdirect(basedir, config_repr)
+    config._initdirect(basedir, config_repr)
     if hasattr(os, 'nice'):
         nice_level = config.getvalue('dist_nicelevel')
         os.nice(nice_level) 

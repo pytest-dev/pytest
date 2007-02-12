@@ -52,7 +52,7 @@ class Config(object):
         self.topdir = gettopdir(args)
         self.args = args 
 
-    def initdirect(self, topdir, repr, coltrails=None):
+    def _initdirect(self, topdir, repr, coltrails=None):
         assert not self._initialized
         self._initialized = True
         self.topdir = py.path.local(topdir)

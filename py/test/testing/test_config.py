@@ -123,7 +123,7 @@ def test_gettopdir_pypkg():
 
 
 def test_config_init_direct():
-    tmp = py.test.ensuretemp("initdirect")
+    tmp = py.test.ensuretemp("_initdirect")
     tmp.ensure("__init__.py")
     tmp.ensure("conftest.py").write("x=1 ; y=2")
     hello = tmp.ensure("test_hello.py")
@@ -131,13 +131,13 @@ def test_config_init_direct():
     repr = config._makerepr(conftestnames=['x', 'y'])
     config2 = py.test.config._reparse([tmp.dirpath()])
     config2._initialized = False # we have to do that from tests
-    config2.initdirect(topdir=tmp.dirpath(), repr=repr)
+    config2._initdirect(topdir=tmp.dirpath(), repr=repr)
     for col1, col2 in zip(config.getcolitems(), config2.getcolitems()):
         assert col1.fspath == col2.fspath
-    py.test.raises(AssertionError, "config2.initdirect(None, None)")
+    py.test.raises(AssertionError, "config2._initdirect(None, None)")
     from py.__.test.config import Config
     config3 = Config()
-    config3.initdirect(topdir=tmp.dirpath(), repr=repr,
+    config3._initdirect(topdir=tmp.dirpath(), repr=repr,
         coltrails=[(tmp.basename, (hello.basename,))])
     assert config3.getvalue('x') == 1
     assert config3.getvalue('y') == 2

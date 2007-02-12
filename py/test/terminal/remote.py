@@ -124,7 +124,7 @@ def slaverun_TerminalSession(channel):
     topdir, repr, failures = channel.receive()
     print "SLAVE: received configuration, using topdir:", topdir
     config = py.test.config 
-    config.initdirect(topdir, repr, failures)
+    config._initdirect(topdir, repr, failures)
     config.option.session = None
     config.option.looponfailing = False 
     config.option.usepdb = False 
