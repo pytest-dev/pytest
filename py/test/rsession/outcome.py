@@ -29,10 +29,17 @@ class Outcome(object):
         tb_info = [self.traceback_entry_repr(x, tbstyle)
                    for x in excinfo.traceback]
         rec_index = excinfo.traceback.recursionindex()
-        etype = excinfo.type
-        if hasattr(etype, '__name__'):
-            etype = etype.__name__
-        return (etype, str(excinfo.value), (tb_info, rec_index))
+        if hasattr(excinfo, 'type'):
+            etype = excinfo.type
+            if hasattr(etype, '__name__'):
+                etype = etype.__name__
+        else:
+            etype = excinfo.typename
+        val = getattr(excinfo, 'value', None)
+        if not val:
+            val = exinfo.exconly()
+        val = str(val)
+        return (etype, val, (tb_info, rec_index))
     
     def traceback_entry_repr(self, tb_entry, tb_style):
         lineno = tb_entry.lineno
@@ -46,7 +53,7 @@ class Outcome(object):
                 source = str(tb_entry.getsource()).split("\n")[relline]
         except py.error.ENOENT:
             source = "[cannot get source]"
-        name = tb_entry.frame.code.raw.co_name
+        name = str(tb_entry.frame.code.name)
         # XXX: Bare except. What can getsource() raise anyway?
         # SyntaxError, AttributeError, IndentationError for sure, check it
         #except:
