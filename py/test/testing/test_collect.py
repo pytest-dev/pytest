@@ -109,7 +109,7 @@ class Testsomeclass:
 
 
 #class TestWithCustomItem:
-#    class Item(py.test.Item):
+#    class Item(py.test.collect.Item):
 #        flag = []
 #        def execute(self, target, *args):
 #            self.flag.append(42)
@@ -146,8 +146,8 @@ def test_generative_simple():
     l2 = generator.run() 
     assert len(l2) == 2 
     l2 = generator.multijoin(l2) 
-    assert isinstance(l2[0], py.test.Function)
-    assert isinstance(l2[1], py.test.Function)
+    assert isinstance(l2[0], py.test.collect.Function)
+    assert isinstance(l2[1], py.test.collect.Function)
     assert l2[0].name == '[0]'
     assert l2[1].name == '[1]'
 
@@ -162,8 +162,8 @@ def test_generative_simple():
     l2 = generator.run() 
     assert len(l2) == 2 
     l2 = generator.multijoin(l2) 
-    assert isinstance(l2[0], py.test.Function)
-    assert isinstance(l2[1], py.test.Function)
+    assert isinstance(l2[0], py.test.collect.Function)
+    assert isinstance(l2[1], py.test.collect.Function)
     assert l2[0].name == '[0]'
     assert l2[1].name == '[1]'
    
@@ -171,7 +171,7 @@ def test_custom_python_collection_from_conftest():
     o = tmpdir.ensure('customconfigtest', dir=1)
     o.ensure('conftest.py').write("""if 1:
         import py
-        class MyFunction(py.test.Function):
+        class MyFunction(py.test.collect.Function):
             pass
         class Directory(py.test.collect.Directory):
             def filefilter(self, fspath):
@@ -200,7 +200,7 @@ def test_custom_python_collection_from_conftest():
         config = py.test.config._reparse([x])
         #print "checking that %s returns custom items" % (x,) 
         col = config._getcollector(x)
-        assert len(list(col._tryiter(py.test.Item))) == 2 
+        assert len(list(col._tryiter(py.test.collect.Item))) == 2 
         #assert items[1].__class__.__name__ == 'MyFunction'
 
     # test that running a session works from the directories
@@ -227,7 +227,7 @@ def test_custom_NONpython_collection_from_conftest():
     o = tmpdir.ensure('customconfigtest_nonpython', dir=1)
     o.ensure('conftest.py').write("""if 1:
         import py
-        class CustomItem(py.test.Item): 
+        class CustomItem(py.test.collect.Item): 
             def run(self):
                 pass
 
@@ -247,7 +247,7 @@ def test_custom_NONpython_collection_from_conftest():
         print "checking that %s returns custom items" % (x,) 
         config = py.test.config._reparse([x])
         col = config._getcollector(x)
-        assert len(list(col._tryiter(py.test.Item))) == 1
+        assert len(list(col._tryiter(py.test.collect.Item))) == 1
         #assert items[1].__class__.__name__ == 'MyFunction'
 
     # test that running a session works from the directories
@@ -337,7 +337,7 @@ def test_documentation_virtual_collector_interaction():
     try:
         conf.option.forcegen = 1
         col = py.test.collect.Directory(rootdir)
-        x = list(col._tryiter(yieldtype=py.test.Function))
+        x = list(col._tryiter(yieldtype=py.test.collect.Function))
     finally:
         conf.option.forcegen = old
     

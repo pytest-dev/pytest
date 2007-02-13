@@ -49,7 +49,7 @@ class NonWorkingChannel(object):
     def _getremoteerror(self):
         return "blah"
 
-class Item(py.test.Item):
+class Item(py.test.collect.Item):
     def _get_collector_trail(self):
         return (self.name,)
 

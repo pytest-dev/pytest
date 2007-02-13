@@ -11,7 +11,7 @@ def basic_report(msg_type, message):
 #    pass
 
 ##def report_error(excinfo):
-##    if isinstance(excinfo, py.test.Item.Skipped):
+##    if isinstance(excinfo, py.test.collect.Item.Skipped):
 ##        # we need to dispatch this info
 ##        report(Skipped(excinfo))
 ##    else:

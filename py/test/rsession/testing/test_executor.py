@@ -12,7 +12,7 @@ def setup_module(mod):
     if py.std.sys.platform == "win32":
         py.test.skip("skipping executor tests (some require os.fork)")
 
-class Item(py.test.Item):
+class Item(py.test.collect.Item):
     def __init__(self, name, config):
         super(Item, self).__init__(name)
         self._config = config

@@ -192,7 +192,7 @@ class TestTerminalSession:
         """))
         conftest = o.join('conftest.py').write(py.code.Source("""
             import py
-            class Function(py.test.Function): 
+            class Function(py.test.collect.Function): 
                 def startcapture(self): 
                     self._mycapture = None
                     

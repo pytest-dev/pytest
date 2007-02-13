@@ -254,7 +254,7 @@ serve some immediate purposes like paramtrized tests.
 The other extension possibility goes deeper into the machinery 
 and allows you to specify a custom test ``Item`` class which 
 is responsible for setting up and executing an underlying 
-test.  [XXX not working: You can integrate your custom ``py.test.Item`` subclass 
+test.  [XXX not working: You can integrate your custom ``py.test.collect.Item`` subclass 
 by binding an ``Item`` name to a test class.]  Or you can 
 extend the collection process for a whole directory tree 
 by putting Items in a ``conftest.py`` configuration file. 

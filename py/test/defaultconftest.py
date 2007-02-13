@@ -5,7 +5,7 @@ DoctestFile = py.test.collect.DoctestFile
 Directory = py.test.collect.Directory
 Class = py.test.collect.Class
 Generator = py.test.collect.Generator
-Function = py.test.Function
+Function = py.test.collect.Function
 Instance = py.test.collect.Instance
 
 conf_iocapture = "fd" # overridable from conftest.py 

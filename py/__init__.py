@@ -9,8 +9,8 @@ version = "0.9.0-beta"
 
 initpkg(__name__,
     description = "py lib: agile development and test support library",
-    revision = int('$LastChangedRevision: 38598 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-12 17:57:45 +0100 (Mon, 12 Feb 2007) $',
+    revision = int('$LastChangedRevision: 38747 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-13 20:21:53 +0100 (Tue, 13 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
@@ -43,8 +43,8 @@ initpkg(__name__,
     'test.collect.Class'     : ('./test/collect.py', 'Class'),
     'test.collect.Instance'  : ('./test/collect.py', 'Instance'),
     'test.collect.Generator' : ('./test/collect.py', 'Generator'),
-    'test.Item'              : ('./test/item.py', 'Item'),
-    'test.Function'          : ('./test/item.py', 'Function'),
+    'test.collect.Item'      : ('./test/item.py', 'Item'),
+    'test.collect.Function'  : ('./test/item.py', 'Function'),
 
     # thread related API (still in early design phase)
     '_thread.WorkerPool'      : ('./thread/pool.py', 'WorkerPool'),

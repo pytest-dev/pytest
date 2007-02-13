@@ -75,7 +75,7 @@ class TerminalSession(Session):
 
     def start_Item(self, colitem): 
         if self.config.option.verbose >= 1: 
-            if isinstance(colitem, py.test.Item): 
+            if isinstance(colitem, py.test.collect.Item): 
                 realpath, lineno = colitem._getpathlineno()
                 location = "%s:%d" % (realpath.basename, lineno+1)
                 self.out.write("%-20s %s " % (location, colitem._getmodpath()))
@@ -100,7 +100,7 @@ class TerminalSession(Session):
             resultstring = self.repr_progress_module_result(colitem, outcome)
             if resultstring:
                 self.out.line(" - " + resultstring)
-        if isinstance(colitem, py.test.Item): 
+        if isinstance(colitem, py.test.collect.Item): 
             if self.config.option.verbose >= 1: 
                 resultstring = self.repr_progress_long_result(colitem, outcome)
                 resultstring += " (%.2f)" % (colitem.elapsedtime,)

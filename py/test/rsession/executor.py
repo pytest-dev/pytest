@@ -44,7 +44,7 @@ class RunExecutor(object):
                 excinfo = e.excinfo
             else:
                 excinfo = py.code.ExceptionInfo()
-                if isinstance(self.item, py.test.Function): 
+                if isinstance(self.item, py.test.collect.Function): 
                     fun = self.item.obj # hope this is stable 
                     code = py.code.Code(fun)
                     excinfo.traceback = excinfo.traceback.cut(
@@ -82,7 +82,7 @@ class ApigenExecutor(RunExecutor):
         """ We want to trace *only* function objects here. Unsure
         what to do with custom collectors at all
         """
-        if hasattr(self.item, 'obj') and type(self.item) is py.test.Function:
+        if hasattr(self.item, 'obj') and type(self.item) is py.test.collect.Function:
             self.item.execute = self.wrap_underlaying
         self.item.run()
 

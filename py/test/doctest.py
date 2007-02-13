@@ -1,6 +1,6 @@
 import py
 
-class DoctestText(py.test.Item):
+class DoctestText(py.test.collect.Item):
 
     def _setcontent(self, content):
         self._content = content 

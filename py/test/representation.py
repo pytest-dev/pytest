@@ -40,7 +40,7 @@ class Presenter(object):
             self.out.line(prefix + source[i])
 
     def repr_item_info(self, item):
-        """ This method represents py.test.Item info (path and module)
+        """ This method represents py.test.collect.Item info (path and module)
         """
         root = item.fspath 
         modpath = item._getmodpath() 

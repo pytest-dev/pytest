@@ -20,7 +20,7 @@ class Session(object):
 
     def footer(self, colitems):
         """ teardown any resources after a test run. """ 
-        py.test.Function._state.teardown_all()
+        py.test.collect.Function._state.teardown_all()
         if not self.config.option.nomagic:
             py.magic.revoke(assertion=1)
 
@@ -99,9 +99,9 @@ class Session(object):
             colitem.finishcapture()
 
     def run(self, colitem): 
-        if self.config.option.collectonly and isinstance(colitem, py.test.Item): 
+        if self.config.option.collectonly and isinstance(colitem, py.test.collect.Item): 
             return 
-        if isinstance(colitem, py.test.Item): 
+        if isinstance(colitem, py.test.collect.Item): 
             colitem._skipbykeyword(self.config.option.keyword)
         res = colitem.run() 
         if res is None: 

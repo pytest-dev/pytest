@@ -87,13 +87,13 @@ def _checkskip(lpath):
                 py.test.skip("html file is up to date, use --forcegen to regenerate")
                 #return [] # no need to rebuild 
 
-class ReSTSyntaxTest(py.test.Item): 
+class ReSTSyntaxTest(py.test.collect.Item): 
     def run(self):
         mypath = self.fspath 
         _checkskip(mypath)
         restcheck(py.path.svnwc(mypath))
 
-class DoctestText(py.test.Item): 
+class DoctestText(py.test.collect.Item): 
     def run(self): 
         # XXX quite nasty... but it works (fixes win32 issues)
         s = self._normalize_linesep()
@@ -141,7 +141,7 @@ class LinkCheckerMaker(py.test.collect.Collector):
             if tryfn == name: 
                 return CheckLink(name, parent=self, args=(tryfn, path, lineno), obj=call)
       
-class CheckLink(py.test.Function): 
+class CheckLink(py.test.collect.Function): 
     def setup(self): 
         pass 
     def teardown(self): 

@@ -198,7 +198,7 @@ class Collector(object):
             cases. 
         """ 
         if yieldtype is None: 
-            yieldtype = py.test.Item 
+            yieldtype = py.test.collect.Item 
         if isinstance(self, yieldtype):
             try:
                 self._skipbykeyword(keyword)
@@ -208,7 +208,7 @@ class Collector(object):
                     excinfo = py.code.ExceptionInfo()
                     reporterror((excinfo, self))
         else:
-            if not isinstance(self, py.test.Item):
+            if not isinstance(self, py.test.collect.Item):
                 try:
                     if reporterror is not None:
                         reporterror((None, self))
@@ -431,7 +431,7 @@ class Class(PyCollectorMixin, Collector):
         except IOError:
             pass
         # fall back...
-        for x in self._tryiter((py.test.collect.Generator, py.test.Item)):
+        for x in self._tryiter((py.test.collect.Generator, py.test.collect.Item)):
             return x._getsortvalue()
 
 class Instance(PyCollectorMixin, Collector): 

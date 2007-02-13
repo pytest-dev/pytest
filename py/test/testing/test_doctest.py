@@ -37,7 +37,7 @@ def test_collect_doctest_files_with_test_prefix():
         #print "checking that %s returns custom items" % (x,) 
         config = py.test.config._reparse([x])
         col = config._getcollector(x)
-        items = list(col._tryiter(py.test.Item))
+        items = list(col._tryiter(py.test.collect.Item))
         assert len(items) == 1
         assert isinstance(items[0], DoctestText)
    
