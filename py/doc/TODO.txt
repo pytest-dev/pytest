@@ -1,46 +1,8 @@
 Things to do for 0.9.0 
 ========================= 
 
-
-
-py/bin
------------
-
-* review py/bin scripts abit
-  py.test 
-  py.rest 
-  py.lookup  
-  py.cleanup  
-  py.countloc  
-
-review all py lib documentation
--------------------------------------
-
-* (hpk, in-progress) rename py/documentation to py/doc
-  (check web page and pypy usage of it)
-
-streamline exported API 
--------------------------------------
-
-* (DONE) move not-to-be-exported Gateway() methods to _ - methods. 
-
-* docstrings  for all exported API
-
-* (DONE) remove: test.compat.TestCAse 
-
-* check and likely remove already deprecated API
- 
-* remove from public namespace: 
-  XXX consider py.magic. invoke/revoke/patch/revert 
-  (DONE) remove py.path.extpy 
- 
-* make "_" namespace:  
-  py.log -> py._log (pypy!) 
-
-* (done mostly) review py.io and write py.io.dupfile docstring
-
-* re-consider what to do with read and write methods of py.path classes (since
-  there are places that check for file-ness by doing hasattr(... 'write'))
+* (XXX not done, but the documentation is marked accordingly)
+  make "_" namespace:  py.log -> py._log (pypy!) 
 
 packaging
 -------------------------------------
@@ -65,43 +27,10 @@ packaging
 APIGEN / source viewer
 -------------------------------------
 
-* (DONE) make py.test --apigen=PATH_TO_SCRIPT 
-  collect tracing information and call the apigen 
-  script to produce api and source code documentation
-
-* deploy the above "py.test --apigen" run on codespeak 
-  regularly, determine directory locations and URL namespace design. 
-
 * (DONE, XXX functions/methods?) integrate rest directive into 
   py/documentation/conftest.py 
   with help code from py.__.rest.directive.... 
   make sure that the txt files in py/documentation/ use it
-
-* (DONE) private py.test not-meant-to-be-public API: 
-  here is a rough list what we want public on collectors: 
-
-  py.test.collect.Collector.
-        startcapture()
-        finishcapture()
-        setup()
-        teardown()
-        listchain()
-        listnames()
-        run()
-        join()
-        multijoin()
-        name, parent, fspath
-        * all collector class properties *
-
-  and on py.test.Function|Item (which also has the collector interface):
-        execute()
-
-  DONE move all Outcome (Skipped/Passed/...) classes to
-  a global place (outcome.py?) 
-
-  DONE all other attributes of collectors shall become private
-
-* after the above API cleanup there might be more :) 
 
 testing
 -----------
@@ -115,50 +44,10 @@ testing
   (guido tested all on win32, everything works except --dist (requires
   os.fork to work))
 
-* (DONE) see why startcapture() used to not use FD-based 
-  "py.io.StdCaptureFD" to isolate standard output. 
-  use that check if all py and PyPy tests pass
-  as good as they do without. 
-
-* (DONE, except py.path.svn) make --box run on the trunk.
-  This requires having some sort of
-  is_boxed() function, while having it on config object seems
-  to be not that smart idea.
-
-* (DONE more or less) try to be as 2.2 compatible as possible 
-  (use e.g. py.builtin.enumerate instead of "enumerate" directly) 
-
-* (DONE) have all sessions check their options via
-  Session.fixoptions() and have session-particular tests and checks
-  accordingly. 
-
 distributed testing / RSession
 ------------------------------------
 
-* (DONE, except apigen) cleanup initialisation of config / get rid of pkgdir
 * (optional) see if more of py/test/session.py's Session can be reused 
-* (DONE, but slightly different way)
-  have dist_rsyncroots be relative to the conftest.py file
-  so that projects can define it for themselves, e.g. 
-  pypy/conftest.py would contain::
-  
-      dist_rsyncroots = ['../pypy', '../py']
-
-  for this there probably needs to be a::
-
-     config.getvalue_and_conftestpath()
-
-  method with tests and documentation, and with providing
-  the right example. 
-
-  way it's done:
-
-  dist_rsyncroots refer *only* to a directory where it's placed.
-  This avoids tons of confusion, like what to do if different conftests
-  point to the same place. So by now pypy rootdir should contain
-  conftest.py with::
-
-    dist_rsyncroots = ['pypy', 'pylib', 'lib-python']
 
 code quality
 -----------------
@@ -177,7 +66,7 @@ py.test
 * (needs review) adjust py.test documentation to reflect new
   collector/session architecture 
 
-* (in-progress) document py.test's conftest.py approach
+* (in-progress, NOT DONE) document py.test's conftest.py approach
 
 * (postponed, likely) py.test fails to parse strangely formatted code after assertion failure
 

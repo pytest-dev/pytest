@@ -17,16 +17,12 @@ All these features and their API have extensive documentation,
 generated with the new "apigen", which we intend to make accessible
 for other python projects as well.  
 
-Here is the entry point for installing the py lib: 
-
-    http://codespeak.net/py/XXX # figure out exact scheme
-
-and here is the main entry point into the documentation: 
-
-    http://codespeak.net/py/XXX # figure out exact scheme
+Download/Install:   http://codespeak.net/py/0.9.0/download.html
+Documentation/API:  http://codespeak.net/py/0.9.0/index.html
 
 Work on the py lib has been partially funded by the 
-European Union and http://merlinux.de within the PyPy project. 
+European Union IST programme and by http://merlinux.de 
+within the PyPy project. 
 
 best, have fun and let us know what you think!
 
