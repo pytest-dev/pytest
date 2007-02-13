@@ -260,6 +260,19 @@ class TestHostManager(DirSetup):
             assert not host.relpath 
         assert events
 
+    def XXXtest_ssh_rsync_samehost_twice(self):
+        XXX we have no easy way to have a temp directory remotely!
+        option = py.test.config.option
+        if option.sshtarget is None: 
+            py.test.skip("no known ssh target, use -S to set one")
+        host1 = HostInfo("%s" % (option.sshtarget, ))
+        host2 = HostInfo("%s" % (option.sshtarget, ))
+        hm = HostManager(config, hosts=[host1, host2])
+        events = []
+        hm.init_rsync(events.append)
+        print events
+        assert 0
+
 def test_getpath_relto_home():
     x = getpath_relto_home("hello")
     assert x == py.path.local._gethomedir().join("hello")
