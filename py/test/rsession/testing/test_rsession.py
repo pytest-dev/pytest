@@ -62,7 +62,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
     def test_distribution_rsync_roots_example(self):
         destdir = py.test.ensuretemp("example_dist_destdir")
         subdir = "sub_example_dist"
-        tmpdir = py.test.ensuretemp("example_distribution")
+        tmpdir = self.source
         tmpdir.ensure(subdir, "conftest.py").write(py.code.Source("""
             dist_hosts = ["localhost:%s"]
             dist_rsync_roots = ["%s", "../py"]
@@ -118,7 +118,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         hosts = [HostInfo('localhost:%s' % self.dest)]
         setup_events = []
         teardown_events = []
-        tmpdir = py.test.ensuretemp("emptyconftest") 
+        tmpdir = self.source
         config = py.test.config._reparse([tmpdir])
         hm = HostManager(config, hosts)
         nodes = hm.setup_hosts(setup_events.append)
