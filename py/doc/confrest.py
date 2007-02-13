@@ -25,9 +25,9 @@ class Page(object):
     def a_docref(self, name, relhtmlpath):
         return html.a(name, class_="menu", href=relhtmlpath)
 
-    def a_apigenref(self, name, relhtml):
+    def a_apigenref(self, name, relhtmlpath):
         apigen_relpath = get_apigen_relpath()
-        path = apigen_relpath.rstrip("/") + "/" + relhtml
+        path = apigen_relpath.rstrip("/") + "/" + relhtmlpath
         return html.a(name, href=path, class_="menu")
         
     def fill_menubar(self):
