@@ -39,12 +39,13 @@ by a py.test run.
 Consider APIGEN and pdb integration
 ===================================
 
-Apigen is a source of a great information about functions,
-methods and objects. Pdb is a nice tool for debugging.
-While not get them together? Imagine the world where you can
-ask "info function\_name" and you'll get all the information
-regarding types coming, types getting out, possible exceptions,
-field types and call sites.
+The information provided by APIGEN can be used in many
+different ways. An example of this could be to write
+an extension to pdb which makes it available.
+Imagine you could issue a pdb command 
+"info <function name>" and get information
+regarding incoming, and outgoing types, possible
+exceptions, field types and call sites.
 
 Distribute channels/programs across networks
 ================================================
