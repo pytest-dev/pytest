@@ -178,9 +178,8 @@ class ExportedMethods(BasicExternal):
         self._sesslock.acquire()
         try:
             while 1:
-                chars = list(py.std.string.lowercase)
-                py.std.random.shuffle(chars)
-                sessid = ''.join(chars[:8])
+                sessid = ''.join(py.std.random.sample(
+                                 py.std.string.lowercase, 8))
                 if sessid not in self._sessids:
                     self._sessids.append(sessid)
                     break
