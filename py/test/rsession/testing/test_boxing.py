@@ -11,7 +11,8 @@ from py.__.test.rsession.box import Box
 from py.__.test.rsession.testing import example2
 
 def setup_module(mod):
-    mod.config = py.test.config._reparse([])
+    tmpdir = py.test.ensuretemp("boxtests")
+    mod.config = py.test.config._reparse([tmpdir])
 
 def test_basic_boxing():
     # XXX: because we do not have option transfer
