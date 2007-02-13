@@ -261,7 +261,7 @@ class TestHostManager(DirSetup):
         assert events
 
     def XXXtest_ssh_rsync_samehost_twice(self):
-        XXX we have no easy way to have a temp directory remotely!
+        #XXX we have no easy way to have a temp directory remotely!
         option = py.test.config.option
         if option.sshtarget is None: 
             py.test.skip("no known ssh target, use -S to set one")
