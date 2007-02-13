@@ -187,21 +187,18 @@ properties in an :api:`py.path.svnwc` instance::
   >>> len(wc.status().prop_modified)
   0
 
-XXX more examples (look at API)
-+++++++++++++++++++++++++++++++++++++++
-
-XXX
 
 Known problems / limitations
 ===================================
 
-There are some known issues, most importantly 
-that using the Subversion Paths requires the
-command line `svn` binary and parsing its output
-is a bit fragile across versions and locales
-(it basically only works with an english locale!).  
+* The SVN path objects require the "svn" command line,
+  there is currently no support for python bindings. 
+  Parsing the svn output can lead to problems, particularly
+  regarding if you have a non-english "locales" setting. 
 
-XXX note more here
+* While the path objects basically work on windows, 
+  there is no attention yet on making unicode paths
+  work or deal with the famous "8.3" filename issues. 
 
 Future plans
 ============
