@@ -119,6 +119,15 @@ is a can of subsequent worms).
 .. _`reiserfs v4 features`: http://www.namesys.com/v4/v4.html
 
 
+Integrate interactive completion 
+==================================
+
+It'd be nice to integrate the bash-like
+rlcompleter2_ python command line completer
+into the py lib, and making it work remotely
+and with pdb. 
+
+.. _rlcompleter2: http://codespeak.net/rlcompleter2/
 
 Consider more features
 ==================================
