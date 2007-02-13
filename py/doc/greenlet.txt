@@ -22,13 +22,12 @@ useful on their own as a way to make advanced control flow structures.
 For example, we can recreate generators; the difference with Python's own
 generators is that our generators can call nested functions and the nested
 functions can yield values too.  (Additionally, you don't need a "yield"
-keyword.  See the example in `test_generator.py`_).
+keyword.  See the example in :source:`py/c-extension/greenlet/test_generator.py`). 
 
 Greenlets are provided as a C extension module for the regular unmodified
 interpreter.
 
 .. _`Stackless`: http://www.stackless.com
-.. _`test_generator.py`: http://codespeak.net/svn/user/arigo/greenlet/test_generator.py
 
 Example
 -------

@@ -282,7 +282,3 @@ Questions, remarks, etc.
 
 For more information, questions, remarks, etc. see http://codespeak.net/py.
 This website also contains links to mailing list and IRC channel.
-
-.. _`initpkg`: http://codespeak.net/svn/py/dist/py/initpkg.py
-.. _`py.test documentation`: http://codespeak.net/svn/py/dist/py/documentation/test.txt
-
