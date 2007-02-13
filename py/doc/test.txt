@@ -571,11 +571,7 @@ Development Notes
 Changing the behavior of the web based reporter requires `pypy`_ since the
 javascript is actually generated fom rpython source.
 
-There exists as well `L/Rsession document`_ which discusses in more details
-unique features and developement notes.
-
 .. _`pypy`: http://codespeak.net/pypy
-.. _`L/Rsession document`: test-distributed.html
 
 Future/Planned Features of py.test 
 ==================================

@@ -134,7 +134,18 @@ Customizing the testing process
 writing conftest.py files
 -----------------------------------
 
-XXX
+You may put conftest.py files containing project-specific
+configuration in your project's root directory, it's usually
+best to put it just into the same directory level as your 
+topmost ``__init__.py``.  In fact, ``py.test`` performs
+an "upwards" search starting from the directory that you specify 
+to be tested and will lookup configuration values right-to-left. 
+You may have options that reside e.g. in your home directory 
+but note that project specific settings will be considered
+first.  There is a flag that helps you debugging your
+conftest.py configurations::
+    
+    py.test --traceconfig
 
 adding custom options
 +++++++++++++++++++++++
