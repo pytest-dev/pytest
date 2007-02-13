@@ -22,8 +22,28 @@ class Page(object):
         self._root = html.html(self.head, self.body) 
         self.fill() 
 
-    def fill(self): 
+    def a_docref(self, name, relhtmlpath):
+        return html.a(name, class_="menu", href=relhtmlpath)
+
+    def a_apigenref(self, name, relhtml):
         apigen_relpath = get_apigen_relpath()
+        path = apigen_relpath.rstrip("/") + "/" + relhtml
+        return html.a(name, href=path, class_="menu")
+        
+    def fill_menubar(self):
+        self.menubar = html.div(
+            self.a_docref("index", "index.html"), " ",
+            self.a_apigenref("api", "api/index.html"), " ",
+            self.a_apigenref("source", "source/index.html"), " ",
+            self.a_docref("contact", "contact.html"), " ", 
+            self.a_docref("download", "download.html"), " ",
+            html.a("contact", href="contact.html", class_="menu"), " ", 
+            html.a("download", href="download.html", class_="menu"), " ",
+            id="menubar", 
+        )
+
+
+    def fill(self): 
         content_type = "%s;charset=%s" %(self.type, self.encoding) 
         self.head.append(html.title(self.title)) 
         self.head.append(html.meta(name="Content-Type", content=content_type))
@@ -32,16 +52,8 @@ class Page(object):
                     html.link(href=self.stylesheeturl, 
                               media="screen", rel="stylesheet", 
                               type="text/css"))
-        self.menubar = html.div(
-            html.a("index", href="index.html", class_="menu"), " ",
-            html.a("api", href=apigen_relpath + "api/index.html", class_="menu"),
-            " ",
-            html.a("source", href=apigen_relpath + "source/index.html",
-                   class_="menu"), " ",
-            html.a("contact", href="contact.html", class_="menu"), " ", 
-            html.a("download", href="download.html", class_="menu"), " ",
-            id="menubar", 
-        )
+        self.fill_menubar()
+
         self.metaspace = html.div(
                 html.div(self.title, class_="project_title"), 
                 self.menubar,
