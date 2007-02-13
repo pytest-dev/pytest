@@ -27,19 +27,24 @@ class LayoutPage(confrest.PyPage):
 
     def fill(self):
         super(LayoutPage, self).fill()
-        self.update_menubar_links(self.menubar)
         self.body.insert(0, self.nav)
 
-    def update_menubar_links(self, node):
-        docrelpath = py.std.os.environ.get('APIGEN_DOCRELPATH', '../py/doc')
-        if not docrelpath.endswith('/'):
-            docrelpath += '/'
-        for item in node:
-            if not isinstance(item, py.xml.Tag):
-                continue
-            if (item.__class__.__name__ == 'a' and hasattr(item.attr, 'href')
-                    and not item.attr.href.startswith('http://')):
-                item.attr.href = self.relpath + docrelpath + item.attr.href
+    def _getdocrelpath(self, default="../py/doc"):
+        docrel = py.std.os.environ.get("APIGEN_DOCRELPATH", default)
+        return docrel.rstrip("/") + "/"
+        
+    def a_docref(self, name, relhtmlpath):
+        docrelpath = self._getdocrelpath()
+        relnew = self.relpath + docrelpath + relhtmlpath
+        return super(LayoutPage, self).a_docref(name, relnew)
+
+    def a_apigenref(self, name, relhtmlpath):
+        # XXX the path construction is probably rather too complicated
+        #     but i reused the same logic that was there
+        #     before. 
+        docrelpath = self._getdocrelpath()
+        relnew = self.relpath + docrelpath + relhtmlpath
+        return super(LayoutPage, self).a_apigenref(name, relnew)
 
     def setup_scripts_styles(self, copyto=None):
         for path, name in self.stylesheets:
