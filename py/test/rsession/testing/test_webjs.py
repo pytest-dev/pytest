@@ -43,6 +43,7 @@ def test_html_loaded():
     assert str(body.childNodes[1].nodeName) == 'A'
 
 def test_set_msgbox():
+    py.test.skip
     msgbox = dom.window.document.getElementById('messagebox')
     assert len(msgbox.childNodes) == 0
     webjs.set_msgbox('foo', 'bar')

@@ -249,7 +249,7 @@ def set_msgbox(item_name, data):
     txt = create_text_elem(item_name + "\n" + data)
     pre.appendChild(txt)
     msgbox.appendChild(pre)
-    dom.document.location = "#message"
+    dom.window.location.assign("#message")
     glob.data_empty = False
 
 def show_traceback(item_name="aa"):
