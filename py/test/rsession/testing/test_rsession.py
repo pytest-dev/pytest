@@ -182,7 +182,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         """
         allevents = []
         hosts = [HostInfo('localhost:%s' % self.dest)]
-        tmpdir = py.test.ensuretemp("nice")
+        tmpdir = self.source
         tmpdir.ensure("__init__.py")
         tmpdir.ensure("conftest.py").write(py.code.Source("""
         dist_hosts = ['localhost:%s']
