@@ -73,9 +73,10 @@ h2.funcdef:hover {
 }
 
 .lineno {
-  line-height: 1.4em;
   height: 1.4em;
   text-align: right;
+  padding: 0px;
+  margin: 0px;
   color: #555;
   width: 3em;
   padding-right: 1em;
@@ -84,14 +85,14 @@ h2.funcdef:hover {
 }
 
 .codecell {
-  line-height: 1.4em;
   height: 1.4em;
+  padding: 0px;
+  margin: 0px;
   padding-left: 1em;
 }
 
 pre.code {
   line-height: 1.3em;
-  height: 1.3em;
   background-color: white;
   margin: 0px;
   padding: 0px;
