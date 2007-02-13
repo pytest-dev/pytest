@@ -21,16 +21,15 @@ def run_tests(path, envvars='', args=''):
 
 def build_apigen_docs(targetpath, testargs=''):
     run_tests(pypath,
-              'APIGEN_TARGET="%s/apigen" APIGEN_DOCRELPATH="../doc/"' % (
+              'APIGEN_TARGET="%s/apigen" APIGEN_DOCRELPATH="../"' % (
                targetpath,),
               testargs + ' --apigen="%s/apigen/apigen.py"' % (pypath,))
 
 def build_docs(targetpath, testargs):
     docpath = pypath.join('doc')
     run_tests(docpath, '',
-              testargs + ' --forcegen --apigenrelpath="../apigen/"')
-    topath = targetpath.ensure('doc', dir=True)
-    docpath.copy(topath)
+              testargs + ' --forcegen --apigenrelpath="apigen/"')
+    docpath.copy(targetpath)
 
 def build_nav(targetpath, docs=True, api=True):
     pass
