@@ -31,17 +31,21 @@ class Page(object):
         return html.a(name, href=path, class_="menu")
         
     def fill_menubar(self):
-        self.menubar = html.div(
-            self.a_docref("index", "index.html"), " ",
-            self.a_apigenref("api", "api/index.html"), " ",
-            self.a_apigenref("source", "source/index.html"), " ",
-            self.a_docref("contact", "contact.html"), " ", 
-            self.a_docref("download", "download.html"), " ",
-            html.a("contact", href="contact.html", class_="menu"), " ", 
-            html.a("download", href="download.html", class_="menu"), " ",
-            id="menubar", 
-        )
-
+        items = [
+            self.a_docref("index", "index.html"), 
+            self.a_apigenref("api", "api/index.html"), 
+            self.a_apigenref("source", "source/index.html"), 
+            self.a_docref("contact", "contact.html"), 
+            self.a_docref("download", "download.html"), 
+            html.a("contact", href="contact.html", class_="menu"), 
+            html.a("download", href="download.html", class_="menu"), 
+        ]
+        items2 = [items.pop(0)]
+        sep = " "
+        for item in items:
+            items2.append(sep)
+            items2.append(item)
+        self.menubar = html.div(id="menubar", *items2)
 
     def fill(self): 
         content_type = "%s;charset=%s" %(self.type, self.encoding) 
