@@ -119,10 +119,9 @@ def create_namespace_tree(dotted_names):
                 ret[ns].append(itempath)
     return ret
 
-def wrap_page(project, title, contentel, navel, relbase, basepath,
+def wrap_page(project, title, targetpath, contentel, navel, basepath,
               pageclass):
-    page = pageclass(project, title, nav=navel, encoding='UTF-8',
-                      relpath=relbase)
+    page = pageclass(project, title, targetpath, nav=navel, encoding='UTF-8')
     page.set_content(contentel)
     page.setup_scripts_styles(basepath)
     return page
@@ -180,7 +179,7 @@ class AbstractPageBuilder(object):
         targetpath = self.base.join(reltargetpath)
         relbase= relpath('%s%s' % (targetpath.dirpath(), targetpath.sep),
                          self.base.strpath + '/')
-        page = wrap_page(self.project, title, tag, nav, relbase, self.base,
+        page = wrap_page(self.project, title, targetpath, tag, nav, self.base,
                          self.pageclass)
         # we write the page with _temporary_ hrefs here, need to be replaced
         # from the TempLinker later

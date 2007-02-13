@@ -1,7 +1,8 @@
 import py
 from py.__.misc.rest import convert_rest_html, strip_html_header 
 from py.__.misc.difftime import worded_time 
-from py.__.doc.conftest import get_apigen_relpath
+from py.__.doc.conftest import get_apigenpath, get_docpath
+from py.__.apigen.linker import relpath
 
 mydir = py.magic.autopath().dirpath()
 html = py.xml.html 
@@ -10,9 +11,11 @@ class Page(object):
     doctype = ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"'
                ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
 
-    def __init__(self, project, title, stylesheeturl=None, type="text/html", encoding="ISO-8859-1"): 
+    def __init__(self, project, title, targetpath, stylesheeturl=None,
+                 type="text/html", encoding="ISO-8859-1"): 
         self.project = project 
         self.title = project.prefix_title + title 
+        self.targetpath = targetpath
         self.stylesheeturl = stylesheeturl 
         self.type = type 
         self.encoding = encoding 
@@ -23,22 +26,26 @@ class Page(object):
         self.fill() 
 
     def a_docref(self, name, relhtmlpath):
-        return html.a(name, class_="menu", href=relhtmlpath)
+        docpath = get_docpath()
+        return html.a(name, class_="menu",
+                      href=relpath(self.targetpath.strpath,
+                                   docpath.join(relhtmlpath).strpath))
 
     def a_apigenref(self, name, relhtmlpath):
-        apigen_relpath = get_apigen_relpath()
-        path = apigen_relpath.rstrip("/") + "/" + relhtmlpath
-        return html.a(name, href=path, class_="menu")
+        apipath = get_apigenpath()
+        return html.a(name, class_="menu",
+                      href=relpath(self.targetpath.strpath,
+                                   apipath.join(relhtmlpath).strpath))
         
     def fill_menubar(self):
         items = [
-            self.a_docref("index", "index.html"), 
-            self.a_apigenref("api", "api/index.html"), 
-            self.a_apigenref("source", "source/index.html"), 
-            self.a_docref("contact", "contact.html"), 
-            self.a_docref("download", "download.html"), 
-            html.a("contact", href="contact.html", class_="menu"), 
-            html.a("download", href="download.html", class_="menu"), 
+            self.a_docref("index", "index.html"),
+            self.a_apigenref("api", "api/index.html"),
+            self.a_apigenref("source", "source/index.html"),
+            self.a_docref("contact", "contact.html"),
+            self.a_docref("download", "download.html"),
+            html.a("contact", href="contact.html", class_="menu"),
+            html.a("download", href="download.html", class_="menu"),
         ]
         items2 = [items.pop(0)]
         sep = " "
@@ -47,26 +54,26 @@ class Page(object):
             items2.append(item)
         self.menubar = html.div(id="menubar", *items2)
 
-    def fill(self): 
-        content_type = "%s;charset=%s" %(self.type, self.encoding) 
-        self.head.append(html.title(self.title)) 
+    def fill(self):
+        content_type = "%s;charset=%s" %(self.type, self.encoding)
+        self.head.append(html.title(self.title))
         self.head.append(html.meta(name="Content-Type", content=content_type))
-        if self.stylesheeturl: 
+        if self.stylesheeturl:
             self.head.append(
-                    html.link(href=self.stylesheeturl, 
-                              media="screen", rel="stylesheet", 
+                    html.link(href=self.stylesheeturl,
+                              media="screen", rel="stylesheet",
                               type="text/css"))
         self.fill_menubar()
 
         self.metaspace = html.div(
-                html.div(self.title, class_="project_title"), 
+                html.div(self.title, class_="project_title"),
                 self.menubar,
                 id='metaspace')
 
-        self.body.append(self.project.logo) 
-        self.body.append(self.metaspace) 
+        self.body.append(self.project.logo)
+        self.body.append(self.metaspace)
         self.contentspace = html.div(id="contentspace")
-        self.body.append(self.contentspace) 
+        self.body.append(self.contentspace)
 
     def unicode(self, doctype=True): 
         page = self._root.unicode() 
@@ -76,12 +83,14 @@ class Page(object):
             return page 
 
 class PyPage(Page): 
-    def fill(self): 
-        super(PyPage, self).fill() 
+    def get_menubar(self):
+        menubar = super(PyPage, self).get_menubar()
         # base layout 
-        self.menubar.append(
-            html.a("issue", href="https://codespeak.net/issue/py-dev/", class_="menu"), 
-        ) 
+        menubar.append(
+            html.a("issue", href="https://codespeak.net/issue/py-dev/",
+                   class_="menu"),
+        )
+        return menubar
                             
 
 def getrealname(username):
@@ -99,8 +108,9 @@ def getrealname(username):
         return username
     
 
-class Project: 
-    stylesheet = 'style.css'
+class Project:
+    # string for url, path for local file
+    stylesheet = mydir.join('style.css')
     title = "py lib"
     prefix_title = ""  # we have a logo already containing "py lib"
     encoding = 'latin1' 
@@ -118,15 +128,23 @@ class Project:
     def process(self, txtpath): 
         encoding = self.encoding
         content = self.get_content(txtpath, encoding)
-        stylesheet = self.stylesheet 
-        if not stylesheet.startswith('http') and \
-           not txtpath.dirpath(stylesheet).check(): 
-            stylesheet = None 
+        docpath = get_docpath()
+        reloutputpath = txtpath.new(ext='.html').relto(mydir)
+        outputpath = docpath.join(reloutputpath)
 
-        content = convert_rest_html(content, txtpath, stylesheet=stylesheet, encoding=encoding) 
+        stylesheet = self.stylesheet
+        if isinstance(self.stylesheet, py.path.local):
+            if not docpath.join(stylesheet.basename).check():
+                stylesheet.copy(docpath)
+            stylesheet = relpath(outputpath.strpath,
+                                 docpath.join(stylesheet.basename).strpath)
+
+        content = convert_rest_html(content, txtpath,
+                                    stylesheet=stylesheet, encoding=encoding)
         content = strip_html_header(content, encoding=encoding)
 
-        page = self.Page(self, "[%s] " % txtpath.purebasename, stylesheeturl=stylesheet)
+        page = self.Page(self, "[%s] " % txtpath.purebasename,
+                         outputpath, stylesheeturl=stylesheet)
 
         try:
             svninfo = txtpath.info() 
@@ -142,6 +160,5 @@ class Project:
                      id = 'docinfoline'))
 
         page.contentspace.append(py.xml.raw(content))
-        htmlpath = txtpath.new(ext='.html') 
-        htmlpath.write(page.unicode().encode(encoding)) 
+        outputpath.ensure().write(page.unicode().encode(encoding)) 
 

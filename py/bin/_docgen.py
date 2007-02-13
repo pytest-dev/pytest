@@ -23,7 +23,7 @@ def build_apigen_docs(targetpath, testargs=''):
     run_tests(pypath,
               'APIGEN_TARGET="%s/apigen" APIGEN_DOCRELPATH="../"' % (
                targetpath,),
-              testargs + ' --apigen="%s/apigen/apigen.py"' % (pypath,))
+              '%s --apigen="%s/apigen/apigen.py"' % (testargs, pypath))
 
 def build_docs(targetpath, testargs):
     docpath = pypath.join('doc')

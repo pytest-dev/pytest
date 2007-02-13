@@ -1,6 +1,10 @@
 from __future__ import generators
 import py
 from py.__.misc import rest 
+from py.__.apigen.linker import relpath
+import os
+
+mypath = py.magic.autopath().dirpath()
 
 Option = py.test.config.Option 
 option = py.test.config.addoptions("documentation check options", 
@@ -12,16 +16,24 @@ option = py.test.config.addoptions("documentation check options",
                action="store_true", dest="forcegen", default=False,
                help="force generation of html files even if they appear up-to-date"
         ),
-        Option('', '--apigenrelpath',
-               action="store", dest="apigen_relpath", default="../../apigen", 
-               type="string",
-               help=("specify the relative path to apigen (used for link "
-                     "generation)")
-        )
 ) 
 
+def get_apigenpath():
+    from py.__.conftest import option
+    path = os.environ.get('APIGENPATH')
+    if path is None:
+        path = option.apigenpath
+    return py.path.local(path)
+
+def get_docpath():
+    from py.__.conftest import option
+    path = os.environ.get('DOCPATH')
+    if path is None:
+        path = option.docpath
+    return py.path.local(path)
+
 def get_apigen_relpath():
-    return py.test.config.option.apigen_relpath.rstrip('\/') + "/"
+    return relpath(get_apigenpath().strpath, get_docpath().strpath)
 
 def deindent(s, sep='\n'):
     leastspaces = -1
@@ -82,7 +94,7 @@ def restcheck(path):
 def _checkskip(lpath):
     if not option.forcegen:
         if lpath.ext == '.txt': 
-            htmlpath = lpath.new(ext='.html')
+            htmlpath = get_docpath().join(lpath.new(ext='.html').relto(mypath))
             if htmlpath.check(file=1) and htmlpath.mtime() >= lpath.mtime(): 
                 py.test.skip("html file is up to date, use --forcegen to regenerate")
                 #return [] # no need to rebuild 

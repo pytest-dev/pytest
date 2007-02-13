@@ -125,10 +125,10 @@ def test_apigen_functional():
     pydir = py.magic.autopath().dirpath().dirpath().dirpath()
     pakdir = fs_root.join('pak')
     if py.std.sys.platform == 'win32':
-        cmd = ('set APIGEN_TARGET=%s && set PYTHONPATH=%s && '
+        cmd = ('set APIGENPATH=%s && set PYTHONPATH=%s && '
                'python "%s/bin/py.test"') % (tempdir, fs_root, pydir)
     else:
-        cmd = ('APIGEN_TARGET="%s" PYTHONPATH="%s" '
+        cmd = ('APIGENPATH="%s" PYTHONPATH="%s" '
                'python "%s/bin/py.test"') % (tempdir, fs_root, pydir)
     try:
         output = py.process.cmdexec('%s --apigen="%s/apigen.py" "%s"' % (

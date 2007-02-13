@@ -5,6 +5,7 @@ from py.__.apigen.linker import TempLinker
 from py.__.apigen.htmlgen import *
 from py.__.apigen.tracer.docstorage import DocStorage, DocStorageAccessor
 from py.__.apigen.tracer.tracer import Tracer
+from py.__.apigen.layout import LayoutPage
 from py.__.apigen.project import Project
 from py.__.test.web import webcheck
 from py.__.apigen.conftest import option
@@ -94,6 +95,10 @@ def _checkhtmlsnippet(htmlstring):
     #"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n""" + unicode(h)
     #_checkhtml(newstring)
 
+class LayoutTestPage(LayoutPage):
+    def get_relpath(self):
+        return '../'
+
 class AbstractBuilderTest(object):
     def setup_class(cls):
         temp = py.test.ensuretemp('apigen_example')
@@ -121,6 +126,7 @@ class AbstractBuilderTest(object):
         self.spb = SourcePageBuilder(base, linker,
                                      self.fs_root.join(self.pkg_name),
                                      self.project)
+        self.apb.pageclass = self.spb.pageclass = LayoutTestPage
 
 class TestApiPageBuilder(AbstractBuilderTest):
     def test_build_callable_view(self):
@@ -396,7 +402,7 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         html = funcsource.read()
         print html
         run_string_sequence_test(html, [
-            'href="../../style.css"',
+            'href="../style.css"',
             '<a href="index.html">pkg</a>',
             '<a href="someclass.py.html">someclass.py</a>',
             '<a href="somesubclass.py.html">somesubclass.py</a>',
@@ -410,7 +416,7 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         html = pkgindex.read()
         print html
         run_string_sequence_test(html, [
-            'href="../../style.css"',
+            'href="../style.css"',
             '<a href="index.html">pkg</a>',
             '<a href="func.py.html">func.py</a>',
             '<a href="someclass.py.html">someclass.py</a>',

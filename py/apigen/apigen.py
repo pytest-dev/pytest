@@ -1,7 +1,4 @@
 """ run 'py.test --apigen=<this script>' to get documentation exported
-
-    exports to /tmp/output by default, set the environment variable
-    'APIGEN_TARGET' to override
 """
 
 import os
@@ -11,6 +8,7 @@ from py.__.apigen import htmlgen
 from py.__.apigen import linker
 from py.__.apigen import project
 from py.__.apigen.tracer.docstorage import pkg_to_dict
+from py.__.doc.conftest import get_apigenpath
 
 from layout import LayoutPage
 
@@ -41,10 +39,8 @@ def build(pkgdir, dsa, capture):
     proj = project.Project()
 
     # output dir
-    if 'APIGEN_TARGET' in os.environ:
-        targetdir = py.path.local(os.environ['APIGEN_TARGET'])
-    else:
-        targetdir = pkgdir.dirpath().join('apigen')
+    from py.__.conftest import option
+    targetdir = get_apigenpath()
     targetdir.ensure(dir=True)
 
     # find out what to build

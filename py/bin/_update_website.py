@@ -22,32 +22,32 @@ def rsync(pkgpath, apidocspath, gateway, remotepath):
     rs.add_target(gateway, remotepath, delete=True)
     rs.send()
 
-def run_tests(pkgpath, args='', captureouterr=False):
+def run_tests(pkgpath, apigenpath, args='', captureouterr=False):
     """ run the unit tests and build the docs """
     pypath = py.__package__.getpath()
     pytestpath = pypath.join('bin/py.test')
     # XXX this would need a Windows specific version if we want to allow
     # running this script on that platform, but currently --apigen doesn't
     # work there anyway...
-    apigenpath = pkgpath.join('apigen/apigen.py') # XXX be more general here?
-    if not apigenpath.check(file=True):
-        apigenpath = pypath.join('apigen/apigen.py')
-    cmd = 'PYTHONPATH="%s:%s" python "%s" %s --apigen="%s" "%s"' % (
-                                                             pypath.dirpath(),
-                                                             pkgpath.dirpath(),
-                                                             pytestpath,
-                                                             args,
-                                                             apigenpath,
-                                                             pkgpath,
-                                                             )
+    apigenscript = pkgpath.join('apigen/apigen.py') # XXX be more general here?
+    if not apigenscript.check(file=True):
+        apigenscript = pypath.join('apigen/apigen.py')
+    cmd = ('APIGENPATH="%s" PYTHONPATH="%s:%s" python '
+           '"%s" %s --apigen="%s" "%s"' % (apigenpath, pypath.dirpath(),
+                                           pkgpath.dirpath(), pytestpath,
+                                           args, apigenscript,
+                                           pkgpath))
     if captureouterr:
         cmd += ' > /dev/null 2>&1'
-    status = py.std.os.system(cmd)
-    return status
+    try:
+        output = py.process.cmdexec(cmd)
+    except py.error.Error, e:
+        return e.err or str(e)
+    return None
 
 def main(pkgpath, apidocspath, rhost, rpath, args='', ignorefail=False):
     print 'running tests'
-    errors = run_tests(pkgpath, args)
+    errors = run_tests(pkgpath, apidocspath, args)
     if errors:
         print >>sys.stderr, \
               'Errors while running the unit tests: %s' % (errors,)
