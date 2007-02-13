@@ -11,7 +11,7 @@ Main API/Tool Features:
 * py.magic.greenlet: micro-threads on standard CPython ("stackless-light")
 * py.path: path abstractions over local and subversion files 
 * rich documentation of py's exported API 
-* tested against Win32, Linux and OSX 
+* tested against Win32, Linux and OSX, python 2.3-2.5
 
 All these features and their API have extensive documentation,
 generated with the new "apigen", which we intend to make accessible
