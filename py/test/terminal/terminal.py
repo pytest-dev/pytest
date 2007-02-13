@@ -138,7 +138,7 @@ class TerminalSession(Session):
             for x in colitems: 
                 self.out.line("test target:  %s" %(x.fspath,))
 
-            conftestmodules = self.config.conftest.getconftestmodules(None)
+            conftestmodules = self.config._conftest.getconftestmodules(None)
             for i,x in py.builtin.enumerate(conftestmodules):
                 self.out.line("initial conf %d: %s" %(i, x.__file__)) 
 

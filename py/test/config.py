@@ -32,7 +32,7 @@ class Config(object):
         self.option = CmdOptions()
         self._parser = optparse.OptionParser(
             usage="usage: %prog [options] [query] [filenames of tests]")
-        self.conftest = Conftest()
+        self._conftest = Conftest()
         self._initialized = False
 
     def parse(self, args): 
@@ -43,7 +43,7 @@ class Config(object):
                 "can only parse cmdline args once per Config object")
         self._initialized = True
         adddefaultoptions(self)
-        self.conftest.setinitial(args) 
+        self._conftest.setinitial(args) 
         args = [str(x) for x in args]
         cmdlineoption, args = self._parser.parse_args(args) 
         self.option.__dict__.update(vars(cmdlineoption))
@@ -80,7 +80,7 @@ class Config(object):
         pkgpath = path.pypkgpath()
         if pkgpath is None:
             pkgpath = path.check(file=1) and path.dirpath() or path
-        col = self.conftest.rget("Directory", pkgpath)(pkgpath)
+        col = self._conftest.rget("Directory", pkgpath)(pkgpath)
         col._config = self
         return col 
 
@@ -94,7 +94,7 @@ class Config(object):
             return getattr(self.option, name)
         except AttributeError:
             try:
-                mod, relroots = self.conftest.rget_with_confmod(name, path)
+                mod, relroots = self._conftest.rget_with_confmod(name, path)
             except KeyError:
                 return None
             modpath = py.path.local(mod.__file__).dirpath()
@@ -132,7 +132,7 @@ class Config(object):
         try:
             return getattr(self.option, name)
         except AttributeError:
-            return self.conftest.rget(name, path)
+            return self._conftest.rget(name, path)
 
     def initsession(self):
         """ return an initialized session object. """
@@ -146,11 +146,11 @@ class Config(object):
             and looked up in initial config modules. 
         """
         if self.option.session is not None:
-            return self.conftest.rget(self.option.session)
+            return self._conftest.rget(self.option.session)
         else:
             name = self._getsessionname()
             try:
-                return self.conftest.rget(name)
+                return self._conftest.rget(name)
             except KeyError:
                 pass
             importpath = globals()[name]
@@ -229,8 +229,8 @@ class Config(object):
                 self.__file__ = "<options from remote>"
         args, conftestdict, cmdlineopts = repr
         self.args = [self.topdir.join(x) for x in args]
-        self.conftest.setinitial(self.args)
-        self.conftest._path2confmods[None].append(override(conftestdict))
+        self._conftest.setinitial(self.args)
+        self._conftest._path2confmods[None].append(override(conftestdict))
         for name, val in cmdlineopts.items(): 
             setattr(self.option, name, val) 
 
