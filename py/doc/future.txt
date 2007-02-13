@@ -36,6 +36,16 @@ We'd like to evolve to a `py.apigen` tool
 that can make use of information provided
 by a py.test run. 
 
+Consider APIGEN and pdb integration
+===================================
+
+Apigen is a source of a great information about functions,
+methods and objects. Pdb is a nice tool for debugging.
+While not get them together? Imagine the world where you can
+ask "info function\_name" and you'll get all the information
+regarding types coming, types getting out, possible exceptions,
+field types and call sites.
+
 Distribute channels/programs across networks
 ================================================
 
