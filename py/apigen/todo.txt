@@ -15,6 +15,12 @@
 * get konqueror to display indents in source code better? 
   (currently it doesn't look like more than a single space)
 
+  Hrmph, fonts look just fine to me :( what machine is this (new laptop btw?)?
+  you seem to have a font problem... If you really want me to fix it for your
+  machine, please give me access...
+
+  I also made sure IE looks (somewhat) good...
+
 * function view: 
 
      def __init__(self, rawcode):
@@ -43,4 +49,13 @@
       then we probably need to hardcode it. 
       note that both relpath's are related to how we map docs and 
       apigen into the URL namespace. 
+
+  Currently handled by using an env var (APIGEN_DOCRELPATH), since
+  to make it possible to run py.test --apigen on the full py lib _and_
+  set the option, it would have to be global (yuck), and apigen used
+  an env var already anyway... Of course it can easily be changed to an
+  option if you like that better...
+
+  There's now also a script bin/_docgen.py that runs all the tests
+  and builds the py lib docs + api ones in one go.
 

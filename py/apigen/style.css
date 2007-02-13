@@ -12,16 +12,25 @@ div.sidebar {
   font-size: 0.9em;
   width: 155px;
   vertical-align: top;
-  margin-top: 0.5em;
   position: absolute;
-  position: fixed;
   top: 130px;
   left: 4px;
   bottom: 4px;
   overflow: auto;
 }
 
-div.sidebar .selected a {
+/* trick to not make IE ignore something (>) */
+body > .sidebar {
+  position: fixed;
+}
+
+div.sidebar a, div.sidebar a:visited, div.sidebar a:hover {
+  color: blue;
+  text-decoration: none;
+}
+
+div.sidebar .selected a, div.sidebar .selected a:visited,
+div.sidebar .selected a:hover {
   color: white;
   background-color: #3ba6ec; 
 }
@@ -52,6 +61,11 @@ h2.funcdef:hover {
   text-decoration: underline;
 }
 
+.codeblock {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 .code a {
   color: blue;
   font-weight: bold;
@@ -69,14 +83,20 @@ h2.funcdef:hover {
   border-right-width: 1px;
 }
 
-.code {
+.codecell {
   line-height: 1.4em;
   height: 1.4em;
   padding-left: 1em;
-  white-space: pre;
+}
+
+pre.code {
+  line-height: 1.3em;
+  height: 1.3em;
+  background-color: white;
+  margin: 0px;
+  padding: 0px;
+  border: 0px;
   font-family: monospace, Monaco;
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
 }
 
 .comment {

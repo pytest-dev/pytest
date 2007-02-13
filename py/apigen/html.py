@@ -134,22 +134,32 @@ class H(html):
             super(H.PythonSource, self).__init__(
                 H.div(*sourceels))
 
-    class SourceBlock(html.div):
-        style = html.Style(margin_top='1em', margin_bottom='1em')
+    class SourceBlock(html.table):
         def __init__(self):
-            self.linenotable = lntable = H.table(style='float: left')
+            tbody = H.tbody()
+            row = H.tr()
+            tbody.append(row)
+            linenocell = H.td(style='width: 1%')
+            row.append(linenocell)
+            linecell = H.td()
+            row.append(linecell)
+            
+            self.linenotable = lntable = H.table()
             self.linenotbody = lntbody = H.tbody()
             lntable.append(lntbody)
+            linenocell.append(lntable)
 
             self.linetable = ltable = H.table()
             self.linetbody = ltbody = H.tbody()
             ltable.append(ltbody)
-            
-            super(H.SourceBlock, self).__init__(lntable, ltable)
+            linecell.append(ltable)
+
+            super(H.SourceBlock, self).__init__(tbody, class_='codeblock')
 
         def add_line(self, lineno, els):
             self.linenotbody.append(H.tr(H.td(lineno, class_='lineno')))
-            self.linetbody.append(H.tr(H.td(class_='code', *els)))
+            self.linetbody.append(H.tr(H.td(H.pre(class_='code', *els),
+                                            class_='codecell')))
 
     class NonPythonSource(Content):
         def __init__(self, *args):

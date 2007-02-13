@@ -247,7 +247,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         enc = source_html.get_module_encoding(fspath.strpath)
         source = fspath.read()
         sep = get_linesep(source)
-        colored = enumerate_and_color(source.split(sep), 0, enc)
+        colored = [enumerate_and_color(source.split(sep), 0, enc)]
         tag = H.PythonSource(colored)
         nav = self.build_navigation(fspath)
         return tag, nav

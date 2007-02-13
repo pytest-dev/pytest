@@ -65,25 +65,39 @@ def test_deindent():
 def test_enumerate_and_color():
     colored = htmlgen.enumerate_and_color(['def foo():', '  print "bar"'], 0,
                                           'ascii')
-    div = py.xml.html.div(*colored).unicode(indent=0)
+    div = py.xml.html.div(colored).unicode(indent=0)
     print repr(div)
-    assert_eq_string(div, 
+    assert_eq_string(div,
                     u'<div>'
-                    '<table style="float: left">'
+                    '<table class="codeblock">'
+                    '<tbody>'
+                    '<tr>'
+                    '<td style="width: 1%">'
+                    '<table>'
                     '<tbody>'
                     '<tr><td class="lineno">1</td></tr>'
                     '<tr><td class="lineno">2</td></tr>'
                     '</tbody>'
                     '</table>'
+                    '</td>'
+                    '<td>'
                     '<table>'
                     '<tbody>'
-                    '<tr><td class="code">'
+                    '<tr><td class="codecell">'
+                    '<pre class="code">'
                     '<span class="alt_keyword">def</span> foo():'
+                    '</pre>'
                     '</td></tr>'
-                    '<tr><td class="code">'
+                    '<tr><td class="codecell">'
+                    '<pre class="code">'
                     '  <span class="alt_keyword">print</span>'
                     ' <span class="string">&quot;bar&quot;</span>'
+                    '</pre>'
                     '</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '</td>'
+                    '</tr>'
                     '</tbody>'
                     '</table>'
                     '</div>')
@@ -91,28 +105,44 @@ def test_enumerate_and_color():
 def test_enumerate_and_color_multiline():
     colored = htmlgen.enumerate_and_color(['code = """\\', 'foo bar', '"""'],
                                           0, 'ascii')
-    div = py.xml.html.div(*colored).unicode(indent=0)
+    div = py.xml.html.div(colored).unicode(indent=0)
     print repr(div)
-    assert_eq_string (div, 
+    assert_eq_string (div,
                     u'<div>'
-                    '<table style="float: left">'
+                    '<table class="codeblock">'
+                    '<tbody>'
+                    '<tr>'
+                    '<td style="width: 1%">'
+                    '<table>'
                     '<tbody>'
                     '<tr><td class="lineno">1</td></tr>'
                     '<tr><td class="lineno">2</td></tr>'
                     '<tr><td class="lineno">3</td></tr>'
                     '</tbody>'
                     '</table>'
+                    '</td>'
+                    '<td>'
                     '<table>'
                     '<tbody>'
-                    '<tr><td class="code">'
+                    '<tr><td class="codecell">'
+                    '<pre class="code">'
                     'code = <span class="string">&quot;&quot;&quot;\\</span>'
+                    '</pre>'
                     '</td></tr>'
-                    '<tr><td class="code">'
+                    '<tr><td class="codecell">'
+                    '<pre class="code">'
                     '<span class="string">foo bar</span>'
+                    '</pre>'
                     '</td></tr>'
-                    '<tr><td class="code">'
+                    '<tr><td class="codecell">'
+                    '<pre class="code">'
                     '<span class="string">&quot;&quot;&quot;</span>'
+                    '</pre>'
                     '</td></tr>'
+                    '</tbody>'
+                    '</table>'
+                    '</td>'
+                    '</tr>'
                     '</tbody>'
                     '</table>'
                     '</div>')
