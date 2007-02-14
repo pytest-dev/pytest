@@ -98,6 +98,9 @@ def restcheck(path):
 
 def _checkskip(lpath, htmlpath=None):
     if not option.forcegen:
+        lpath = py.path.local(lpath)
+        if htmlpath is not None:
+            htmlpath = py.path.local(htmlpath)
         if lpath.ext == '.txt': 
             htmlpath = htmlpath or lpath.new(ext='.html')
             if htmlpath.check(file=1) and htmlpath.mtime() >= lpath.mtime(): 
