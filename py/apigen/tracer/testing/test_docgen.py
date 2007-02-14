@@ -13,13 +13,10 @@ from py.__.apigen.tracer.testing.runtest import cut_pyc
 from py.__.apigen.tracer.description import FunctionDesc
 from py.__.apigen.tracer import model
 from py.__.apigen.tracer.permastore import PermaDocStorage
-#    from pypy.annotation import model
-#except ImportError, s:
-#    py.test.skip("Cannot import: %s" % str(s))
 
-#def setup_module(mod):
-#    data_path = py.path.local(mod.__file__).dirpath().join("data")
-#    sys.path.insert(0, str(data_path))
+def setup_module(mod):
+    if py.std.sys.platform == "win32":
+        py.test.skip("tracing on win32 not supported") 
 
 # XXX: Perma doc storage disabled a bit
 
