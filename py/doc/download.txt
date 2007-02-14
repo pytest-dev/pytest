@@ -11,15 +11,16 @@ The latest public release:
 
     `download py-0.9.0.tar.gz`_ 
     `download py-0.9.0.zip`_ 
-    `download py-0.9.0.exe`_ 
 
 .. _`download py-0.9.0.tar.gz`: http://codespeak.net/download/py/py-0.9.0.tar.gz
 .. _`download py-0.9.0.zip`: http://codespeak.net/download/py/py-0.9.0.zip 
-.. _`download py-0.9.0.exe`: http://codespeak.net/download/py/py-0.9.0.zip 
 
 The py lib can be `globally installed via setup.py`_ 
-or `used locally`_. 
+or `used locally`_.  
 
+WARNING: win32 there is no pre-packaged c-extension
+module (greenlet) yet and thus greenlets will not work
+out of the box.  
 
 Getting (and updating) via subversion 
 --------------------------------------------
