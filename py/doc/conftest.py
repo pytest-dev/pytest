@@ -35,7 +35,8 @@ def get_docpath():
     return pypkgdir.join(path, abs=True)
 
 def get_apigen_relpath():
-    return relpath(get_apigenpath().strpath, get_docpath().strpath)
+    return relpath(get_docpath().strpath + '/',
+                   get_apigenpath().strpath + '/')
 
 def deindent(s, sep='\n'):
     leastspaces = -1
