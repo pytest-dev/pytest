@@ -31,38 +31,42 @@ def make_module_from_c(cfile):
         raise ImportError, "cannot find the file name suffix of C ext modules"
     lib = dirpath.join(modname+ext)
 
-    # argl! we need better "build"-locations alltogether!
+    # XXX argl! we need better "build"-locations alltogether!
     if lib.check():
-        lib.remove()
-
-    c = py.io.StdCaptureFD()
-    try:
         try:
-            saved_environ = os.environ.items()
+            lib.remove()
+        except EnvironmentError:
+            pass # XXX we just use the existing version, bah
+
+    if not lib.check():
+        c = py.io.StdCaptureFD()
+        try:
             try:
-                lastdir = dirpath.chdir()
+                saved_environ = os.environ.items()
                 try:
-                    setup(
-                      name = "pylibmodules",
-                      ext_modules=[
-                            Extension(modname, [str(cfile)])
-                      ],
-                      script_name = 'setup.py',
-                      script_args = ['-q', 'build_ext', '--inplace']
-                      #script_args = ['build_ext', '--inplace']
-                    )
+                    lastdir = dirpath.chdir()
+                    try:
+                        setup(
+                          name = "pylibmodules",
+                          ext_modules=[
+                                Extension(modname, [str(cfile)])
+                          ],
+                          script_name = 'setup.py',
+                          script_args = ['-q', 'build_ext', '--inplace']
+                          #script_args = ['build_ext', '--inplace']
+                        )
+                    finally:
+                        lastdir.chdir()
                 finally:
-                    lastdir.chdir()
+                    for key, value in saved_environ:
+                        if os.environ.get(key) != value:
+                            os.environ[key] = value
             finally:
-                for key, value in saved_environ:
-                    if os.environ.get(key) != value:
-                        os.environ[key] = value
-        finally:
-            foutput, foutput = c.done()
-    except KeyboardInterrupt:
-        raise
-    except SystemExit, e:
-        raise RuntimeError("cannot compile %s: %s\n%s" % (cfile, e,
+                foutput, foutput = c.done()
+        except KeyboardInterrupt:
+            raise
+        except SystemExit, e:
+            raise RuntimeError("cannot compile %s: %s\n%s" % (cfile, e,
                                                           foutput.read()))
     # XXX do we need to do some check on fout/ferr?
     # XXX not a nice way to import a module
