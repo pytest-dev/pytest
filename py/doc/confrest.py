@@ -135,8 +135,7 @@ class Project:
         stylesheet = self.stylesheet
         if isinstance(self.stylesheet, py.path.local):
             if not docpath.join(stylesheet.basename).check():
-                if not docpath.check(dir=True):
-                    docpath.ensure(dir=True)
+                docpath.ensure(dir=True)
                 stylesheet.copy(docpath)
             stylesheet = relpath(outputpath.strpath,
                                  docpath.join(stylesheet.basename).strpath)
