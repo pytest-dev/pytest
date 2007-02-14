@@ -10,9 +10,9 @@ py lib documentation
 Main tools and API 
 ----------------------
 
-`py.test`_ introduces to the **py.test** testing utility
+`py.test`_ introduces to the **py.test** testing utility.
 
-`py.execnet`_ distribute programs across the net 
+`py.execnet`_ distributes programs across the net. 
 
 `py.magic.greenlet`_: micro-threads (lightweight in-process concurrent programming)
 
@@ -29,18 +29,18 @@ support functionality
 
 `py.xml`_ for generating in-memory xml/html object trees 
 
-`py.io`_ Helper Classes for Capturing of Input/Output 
+`py.io`_: Helper Classes for Capturing of Input/Output 
 
-`py.log`_ an alpha document about the ad-hoc logging facilities 
+`py.log`_: an alpha document about the ad-hoc logging facilities 
 
-`miscellaneous features`_ describes some small but nice py lib features 
+`miscellaneous features`_ describes some small but nice py lib features.
 
 Background and Motivation information 
 -------------------------------------------
 
 `future`_ handles development visions and plans for the near future. 
 
-`why what how py?`_, describing motivation and background of the py lib 
+`why what how py?`_, describing motivation and background of the py lib. 
   
 .. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
