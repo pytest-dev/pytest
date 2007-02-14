@@ -170,6 +170,16 @@ def get_rel_sourcepath(projpath, filename, default=None):
         return default
     return relpath
 
+_rev = -1
+def get_package_revision(packageroot):
+    global _rev
+    if _rev == -1:
+        _rev = None
+        wc = py.path.svnwc(packageroot)
+        if wc.check(versioned=True):
+            _rev = py.path.svnwc(packageroot).info().rev
+    return _rev
+
 # the PageBuilder classes take care of producing the docs (using the stuff
 # above)
 class AbstractPageBuilder(object):
@@ -319,6 +329,7 @@ class SourcePageBuilder(AbstractPageBuilder):
     
     _revcache = {}
     def get_revision(self, path):
+        return get_package_revision(self.projroot)
         strpath = path.strpath
         if strpath in self._revcache:
             return self._revcache[strpath]
@@ -729,6 +740,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         return rev
 
     def get_revision(self, dotted_name):
+        return get_package_revision(self.projroot)
         if dotted_name in self._revcache:
             return self._revcache[dotted_name]
         obj = get_obj(self.dsa, self.pkg, dotted_name)
