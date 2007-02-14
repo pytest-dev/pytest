@@ -4,7 +4,6 @@ from py.__.misc.difftime import worded_time
 from py.__.doc.conftest import get_apigenpath, get_docpath
 from py.__.apigen.linker import relpath
 
-mydir = py.magic.autopath().dirpath()
 html = py.xml.html 
 
 class Page(object): 
@@ -107,6 +106,7 @@ def getrealname(username):
     
 
 class Project:
+    mydir = py.magic.autopath().dirpath()
     # string for url, path for local file
     stylesheet = mydir.join('style.css')
     title = "py lib"
@@ -123,11 +123,14 @@ class Project:
     def get_content(self, txtpath, encoding):
         return unicode(txtpath.read(), encoding)
 
+    def get_docpath(self):
+        return get_docpath()
+
     def process(self, txtpath): 
         encoding = self.encoding
         content = self.get_content(txtpath, encoding)
-        docpath = get_docpath()
-        reloutputpath = txtpath.new(ext='.html').relto(mydir)
+        docpath = self.get_docpath()
+        reloutputpath = txtpath.new(ext='.html').relto(self.mydir)
         outputpath = docpath.join(reloutputpath)
 
         stylesheet = self.stylesheet
