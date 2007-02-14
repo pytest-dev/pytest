@@ -135,11 +135,12 @@ def set_registry_value(reg, key, value_name, value):
 def setup(pkg, **kw): 
     """ invoke distutils on a given package. 
     """
-    print "precompiling greenlet module" 
-    try:
-        x = py.magic.greenlet()
-    except (RuntimeError, ImportError):
-        print "could not precompile greenlet module, skipping"
+    if 'install' in sys.argv[1:]:
+        print "precompiling greenlet module" 
+        try:
+            x = py.magic.greenlet()
+        except (RuntimeError, ImportError):
+            print "could not precompile greenlet module, skipping"
 
     params = Params(pkg)
     #dump(params)
