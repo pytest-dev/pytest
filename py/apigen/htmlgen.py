@@ -170,15 +170,18 @@ def get_rel_sourcepath(projpath, filename, default=None):
         return default
     return relpath
 
-_rev = -1
-def get_package_revision(packageroot):
-    global _rev
-    if _rev == -1:
-        _rev = None
+def get_package_revision(packageroot, _revcache={}):
+    try:
+        rev = _revcache[packageroot]
+    except KeyError:
         wc = py.path.svnwc(packageroot)
+        rev = None
         if wc.check(versioned=True):
-            _rev = py.path.svnwc(packageroot).info().rev
-    return _rev
+            rev = py.path.svnwc(packageroot).info().rev
+        _revcache[packageroot] = rev
+    if packageroot.basename == "py": 
+        assert rev is not None
+    return rev
 
 # the PageBuilder classes take care of producing the docs (using the stuff
 # above)
