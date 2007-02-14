@@ -1,16 +1,16 @@
 """
-the py lib is a development support library featuring
-py.test, an interactive testing tool which supports
-unit-testing with practically no boilerplate.
+    the py lib is a development support library featuring
+    py.test, ad-hoc distributed execution, micro-threads
+    and svn abstractions. 
 """
 from initpkg import initpkg
 
-version = "0.9.0-beta"
+version = "0.9.0"
 
 initpkg(__name__,
     description = "py lib: agile development and test support library",
-    revision = int('$LastChangedRevision: 38747 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-13 20:21:53 +0100 (Tue, 13 Feb 2007) $',
+    revision = int('$LastChangedRevision: 38799 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-02-14 12:10:40 +0100 (Wed, 14 Feb 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
