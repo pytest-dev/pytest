@@ -41,7 +41,8 @@ def build(pkgdir, dsa, capture):
     # output dir
     from py.__.conftest import option
     targetdir = get_apigenpath()
-    targetdir.ensure(dir=True)
+    if not targetdir.check(dir=True):
+        targetdir.ensure(dir=True)
 
     # find out what to build
     all_names = dsa._get_names(filter=lambda x, y: True)
