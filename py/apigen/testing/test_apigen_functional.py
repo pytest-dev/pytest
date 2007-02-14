@@ -6,6 +6,9 @@
 import py
 from py.__.apigen import apigen
 
+def setup_module(mod):
+    if py.std.sys.platform == "win32":
+        py.test.skip("not supported with win32 yet")
 
 def setup_fs_project(name):
     temp = py.test.ensuretemp(name)
