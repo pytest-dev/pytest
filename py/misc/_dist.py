@@ -138,7 +138,7 @@ def setup(pkg, **kw):
     print "precompiling greenlet module" 
     try:
         x = py.magic.greenlet()
-    except ImportError:
+    except (RuntimeError, ImportError):
         print "could not precompile greenlet module, skipping"
 
     params = Params(pkg)
