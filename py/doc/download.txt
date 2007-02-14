@@ -98,7 +98,7 @@ integrating the development version:
 
 or the next one for following the e.g. the 0.9 release branch
 
-    http://codespeak.net/svn/py/release/py-0.9.x
+    http://codespeak.net/svn/py/release/0.9.x
 
 
 py subversion directory structure
@@ -108,9 +108,6 @@ The directory release layout of the repository is
 going to follow this scheme:: 
 
     http://codespeak.net/
-        svn/py/dist             # latest stable (may or may not be a release) 
-        svn/py/release/X.Y.Z    # release tags and branches
-        svn/py/trunk            # head development / merge point
-
-
-
+        svn/py/dist         # latest stable (may or may not be a release) 
+        svn/py/release      # release tags and branches
+        svn/py/trunk        # head development / merge point
