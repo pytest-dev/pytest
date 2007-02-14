@@ -7,6 +7,8 @@ py lib documentation
 
 `Download and Installation`_ 
 
+`0.9.0 release announcement`_ 
+
 Main tools and API 
 ----------------------
 
@@ -57,4 +59,4 @@ Background and Motivation information
 .. _`Why What how py?`: why_py.html 
 .. _`future`: future.html 
 .. _`miscellaneous features`: misc.html 
-
+.. _`0.9.0 release announcement`: release-0.9.0.html
