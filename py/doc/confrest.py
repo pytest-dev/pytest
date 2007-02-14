@@ -25,7 +25,7 @@ class Page(object):
         self.fill() 
 
     def a_docref(self, name, relhtmlpath):
-        docpath = get_docpath()
+        docpath = self.project.get_docpath()
         return html.a(name, class_="menu",
                       href=relpath(self.targetpath.strpath,
                                    docpath.join(relhtmlpath).strpath))
