@@ -4,6 +4,8 @@ from py.__.misc import rest
 from py.__.apigen.linker import relpath
 import os
 
+pypkgdir = py.path.local(py.__file__).dirpath()
+
 mypath = py.magic.autopath().dirpath()
 
 Option = py.test.config.Option 
@@ -23,14 +25,14 @@ def get_apigenpath():
     path = os.environ.get('APIGENPATH')
     if path is None:
         path = option.apigenpath
-    return py.path.local(path)
+    return pypkgdir.join(path, abs=True)
 
 def get_docpath():
     from py.__.conftest import option
     path = os.environ.get('DOCPATH')
     if path is None:
         path = option.docpath
-    return py.path.local(path)
+    return pypkgdir.join(path, abs=True)
 
 def get_apigen_relpath():
     return relpath(get_apigenpath().strpath, get_docpath().strpath)

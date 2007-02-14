@@ -19,8 +19,6 @@ nomagic = False
 import py
 Option = py.test.config.Option
 
-here = py.magic.autopath().dirpath()
-
 option = py.test.config.addoptions("execnet options",
         Option('-S', '',
                action="store", dest="sshtarget", default=None,
@@ -28,13 +26,13 @@ option = py.test.config.addoptions("execnet options",
                      "user@codespeak.net")),
         Option('', '--apigenpath',
                action="store", dest="apigenpath",
-               default=here.join("../apigen").strpath,
+               default="../apigen", 
                type="string",
-               help="absolute path to where apigen docs are built"),
+               help="relative path to apigen doc output location (relative from py/)"), 
         Option('', '--docpath',
                action='store', dest='docpath',
-               default=here.join('doc').strpath, type='string',
-               help='absolute path to where the docs are built'),
+               default="doc", type='string',
+               help="relative path to doc output location (relative from py/)"), 
     )
 
 dist_rsync_roots = ['.']
