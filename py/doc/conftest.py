@@ -73,7 +73,6 @@ def restcheck(path):
     localpath = path
     if hasattr(path, 'localpath'):
         localpath = path.localpath
-    _checkskip(localpath)
     checkdocutils() 
     import docutils.utils
 
@@ -82,11 +81,14 @@ def restcheck(path):
         for x in cur.parts(reverse=True):
             confrest = x.dirpath('confrest.py')
             if confrest.check(file=1): 
-                confrest = confrest.pyimport() 
-                confrest.Project().process(path) 
+                confrest = confrest.pyimport()
+                project = confrest.Project()
+                _checkskip(path, project.get_htmloutputpath(path))
+                project.process(path) 
                 break
         else: 
             # defer to default processor 
+            _checkskip(path)
             rest.process(path) 
     except KeyboardInterrupt: 
         raise 
@@ -94,10 +96,10 @@ def restcheck(path):
         # we assume docutils printed info on stdout 
         py.test.fail("docutils processing failed, see captured stderr") 
 
-def _checkskip(lpath):
+def _checkskip(lpath, htmlpath=None):
     if not option.forcegen:
         if lpath.ext == '.txt': 
-            htmlpath = get_docpath().join(lpath.new(ext='.html').relto(mypath))
+            htmlpath = htmlpath or lpath.new(ext='.html')
             if htmlpath.check(file=1) and htmlpath.mtime() >= lpath.mtime(): 
                 py.test.skip("html file is up to date, use --forcegen to regenerate")
                 #return [] # no need to rebuild 
@@ -105,7 +107,6 @@ def _checkskip(lpath):
 class ReSTSyntaxTest(py.test.collect.Item): 
     def run(self):
         mypath = self.fspath 
-        _checkskip(mypath)
         restcheck(py.path.svnwc(mypath))
 
 class DoctestText(py.test.collect.Item): 

@@ -126,12 +126,16 @@ class Project:
     def get_docpath(self):
         return get_docpath()
 
+    def get_htmloutputpath(self, txtpath):
+        docpath = self.get_docpath()
+        reloutputpath = txtpath.new(ext='.html').relto(self.mydir)
+        return docpath.join(reloutputpath)
+
     def process(self, txtpath): 
         encoding = self.encoding
         content = self.get_content(txtpath, encoding)
         docpath = self.get_docpath()
-        reloutputpath = txtpath.new(ext='.html').relto(self.mydir)
-        outputpath = docpath.join(reloutputpath)
+        outputpath = self.get_htmloutputpath(txtpath)
 
         stylesheet = self.stylesheet
         if isinstance(self.stylesheet, py.path.local):
