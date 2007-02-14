@@ -47,7 +47,7 @@ committing
 - bug fixes should be encoded in a test before being fixed. 
 
 - write telling log messages because several people
-  will read your diffs, an we will have a search facility 
+  will read your diffs, and we plan to have a search facility 
   over the py lib's subversion repository. 
 
 - if you add ``.txt`` or ``.py`` files to the repository then 
