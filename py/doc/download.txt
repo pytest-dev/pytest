@@ -9,11 +9,13 @@ Downloading a tar/zip file and installing it
 
 The latest public release: 
 
-    `download py-0.9.0-beta.tar.gz`_ 
-    `download py-0.9.0-beta.zip`_ 
+    `download py-0.9.0.tar.gz`_ 
+    `download py-0.9.0.zip`_ 
+    `download py-0.9.0.exe`_ 
 
-.. _`download py-0.9.0-beta.tar.gz`: http://codespeak.net/download/py/py-0.9.0-beta.tar.gz
-.. _`download py-0.9.0-beta.zip`: http://codespeak.net/download/py/py-0.9.0-beta.zip 
+.. _`download py-0.9.0.tar.gz`: http://codespeak.net/download/py/py-0.9.0.tar.gz
+.. _`download py-0.9.0.zip`: http://codespeak.net/download/py/py-0.9.0.zip 
+.. _`download py-0.9.0.exe`: http://codespeak.net/download/py/py-0.9.0.zip 
 
 The py lib can be `globally installed via setup.py`_ 
 or `used locally`_. 
