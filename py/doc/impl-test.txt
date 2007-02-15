@@ -180,7 +180,7 @@ and modules the default collectors will produce
 custom Collectors and Items if they are found 
 in a local ``conftest.py`` file.  
 
-example: perform additional ReST checs 
+example: perform additional ReST checks 
 ++++++++++++++++++++++++++++++++++++++
 
 With your custom collectors or items you can completely 
