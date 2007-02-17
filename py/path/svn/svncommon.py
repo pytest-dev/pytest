@@ -5,7 +5,7 @@ import os, sys, time, re, string
 import py
 from py.__.path import common
 
-ALLOWED_CHARS = "_ -/\\=$.~" #add characters as necessary when tested
+ALLOWED_CHARS = "_ -/\\=$.~+" #add characters as necessary when tested
 if sys.platform == "win32":
     ALLOWED_CHARS += ":"
 ALLOWED_CHARS_HOST = ALLOWED_CHARS + '@:'
