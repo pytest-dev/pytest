@@ -37,6 +37,10 @@ class ItemTestFailingExplicit(Item):
     def run(self):
         raise Failed(excinfo="3")
 
+class ItemTestFailingExplicitEmpty(Item):
+    def run(self):
+        py.test.raises(ValueError, lambda : 123)
+
 class TestExecutor(BasicRsessionTest):
     def test_run_executor(self):
         ex = RunExecutor(ItemTestPassing("pass", self.config), config=self.config)
@@ -158,3 +162,10 @@ class TestExecutor(BasicRsessionTest):
         outcome = ex.execute()
         assert not outcome.passed
         assert outcome.excinfo == "3"
+
+    def test_executor_explicit_Faile_no_excinfo(self):
+        ex = RunExecutor(ItemTestFailingExplicitEmpty("failexx", self.config),
+                         config=self.config)
+        outcome = ex.execute()
+        assert not outcome.passed
+

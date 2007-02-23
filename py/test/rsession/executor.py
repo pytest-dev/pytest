@@ -40,7 +40,7 @@ class RunExecutor(object):
             raise
         except:
             e = sys.exc_info()[1]
-            if isinstance(e, Failed):
+            if isinstance(e, Failed) and e.excinfo:
                 excinfo = e.excinfo
             else:
                 excinfo = py.code.ExceptionInfo()
