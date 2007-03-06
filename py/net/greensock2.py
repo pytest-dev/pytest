@@ -1,3 +1,10 @@
+
+""" This is a base implementation of thread-like network programming
+on top of greenlets. From API available here it's quite unlikely
+that you would like to use anything except wait(). Higher level interface
+is available in pipe directory
+"""
+
 import os, sys
 try:
     from stackless import greenlet

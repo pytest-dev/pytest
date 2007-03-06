@@ -1,3 +1,17 @@
+
+""" This is an implementation of an execnet protocol on top
+of a transport layer provided by the greensock2 interface.
+
+It has the same semantics, but does not use threads at all
+(which makes it suitable for specific enviroments, like pypy-c).
+
+There are some features lacking, most notable:
+- callback support for channels
+- socket gateway
+- bootstrapping (there is assumption of pylib being available
+  on remote side, which is not always true)
+"""
+
 import sys, os, py, inspect
 from py.__.net import greensock2
 from py.__.net.msgstruct import message, decodemessage
