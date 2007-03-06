@@ -8,6 +8,7 @@
   information and other various fixes.
 
 * Improve distributed testing by:
+
   - sharing even more code with normal testing
   - using greenexecnet wherever possible (falling back to normal
     execnet)
