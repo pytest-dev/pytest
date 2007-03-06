@@ -111,9 +111,12 @@ class Gateway(object):
                     self._traceex(exc_info())
                     break 
         finally:
-            self._outgoing.put(None)
+            self._send(None)
             self._channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
+
+    def _send(self, msg):
+        self._outgoing.put(msg)
 
     def _thread_sender(self):
         """ thread to send Messages over the wire. """
@@ -219,8 +222,8 @@ class Gateway(object):
         channel = self.newchannel() 
         outid = self._newredirectchannelid(stdout) 
         errid = self._newredirectchannelid(stderr) 
-        self._outgoing.put(Message.CHANNEL_OPEN(channel.id, 
-                               (source, outid, errid)))
+        self._send(Message.CHANNEL_OPEN(
+                    channel.id, (source, outid, errid)))
         return channel 
 
     def _remote_redirect(self, stdout=None, stderr=None): 
@@ -260,7 +263,7 @@ class Gateway(object):
         except KeyError:
             pass
         else:
-            self._outgoing.put(None)
+            self._send(None)
 
     def join(self, joinexec=True):
         """ Wait for all IO (and by default all execution activity) 

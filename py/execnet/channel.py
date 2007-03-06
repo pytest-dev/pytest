@@ -85,7 +85,7 @@ class Channel(object):
                 Msg = Message.CHANNEL_LAST_MESSAGE
             else:
                 Msg = Message.CHANNEL_CLOSE
-            self.gateway._outgoing.put(Msg(self.id))
+            self.gateway._send(Msg(self.id))
 
     def _getremoteerror(self):
         try:
@@ -117,7 +117,7 @@ class Channel(object):
             # state transition "opened/sendonly" --> "closed"
             # threads warning: the channel might be closed under our feet,
             # but it's never damaging to send too many CHANNEL_CLOSE messages
-            put = self.gateway._outgoing.put
+            put = self.gateway._send 
             if error is not None:
                 put(Message.CHANNEL_CLOSE_ERROR(self.id, str(error)))
             else:
@@ -157,7 +157,7 @@ class Channel(object):
             data = Message.CHANNEL_NEW(self.id, item.id)
         else:
             data = Message.CHANNEL_DATA(self.id, item)
-        self.gateway._outgoing.put(data)
+        self.gateway._send(data)
 
     def receive(self):
         """receives an item that was sent from the other side,
