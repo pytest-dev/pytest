@@ -1,6 +1,14 @@
-import greensock2
-from pypeers.tool import log
+from py.__.net import greensock2
 
+VERBOSE = True
+
+
+if VERBOSE:
+    def log(msg, *args):
+        print '*', msg % args
+else:
+    def log(msg, *args):
+        pass
 
 class BufferedInput(object):
     in_buf = ''

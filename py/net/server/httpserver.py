@@ -1,6 +1,6 @@
 import BaseHTTPServer
-from pypeers import greensock2
-from pypeers.pipe.gsocket import GreenSocket
+from py.__.net import greensock2
+from py.__.net.pipe.gsocket import GreenSocket
 
 
 class GreenMixIn:

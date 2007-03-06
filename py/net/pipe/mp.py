@@ -1,4 +1,4 @@
-from pypeers.stream.common import BufferedInput
+from py.__.net.pipe.common import BufferedInput
 
 
 class MeetingPointInput(BufferedInput):
