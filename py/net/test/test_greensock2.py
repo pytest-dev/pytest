@@ -60,8 +60,7 @@ def test_producer():
         except Interrupted:
             lst.append(8)
 
-    g = autogreenlet(cons)
-    wait(g)
+    oneof(cons)
     assert lst == [4, 5, 1, 145, 6, 2, 87, 7, 3, 8]
 
 
@@ -69,24 +68,33 @@ def test_timer():
     lst = []
 
     def g1():
-        sleep(0.1, g_1)
+        sleep(0.1)
         lst.append(1)
-        sleep(0.2, g_1)
+        sleep(0.2)
         lst.append(3)
 
     def g2():
         lst.append(0)
-        sleep(0.2, g_2)
+        sleep(0.2)
         lst.append(2)
-        sleep(0.2, g_2)
+        sleep(0.2)
         lst.append(4)
 
-    g_1 = autogreenlet(g1)
-    g_2 = autogreenlet(g2)
-    wait(g_1)
-    wait(g_2)
-    assert lst == [0, 1, 2, 3, 4]
+    oneof(g1, g2)
+    assert lst == [0, 1, 2, 3]
 
+def test_kill_other():
+
+    def g1():
+        sleep(.1)
+        return 1
+
+    def g2():
+        sleep(.2)
+        return 2
+
+    res = oneof(g1, g2)
+    assert res == 1
 
 def test_socket():
     s1 = socket(AF_INET, SOCK_DGRAM)
@@ -105,6 +113,7 @@ def test_socket():
         lst.append(3)
         sendall(s1, 'world')
         lst.append(4)
+        return 1
 
     def g2():
         lst.append(1)
@@ -113,13 +122,12 @@ def test_socket():
         y = recv(s2, 5)
         assert y == 'world'
         lst.append(5)
+        return 2
 
-    g_1 = autogreenlet(g1)
-    g_2 = autogreenlet(g2)
-    wait(g_1)
-    wait(g_2)
+    one, two = allof(g1, g2)
     assert lst == [0, 1, 2, 3, 4, 5]
-
+    assert one == 1
+    assert two == 2
 
 ##def test_Queue():
 

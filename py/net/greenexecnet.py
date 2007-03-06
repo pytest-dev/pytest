@@ -189,7 +189,7 @@ class PopenCmdGateway(Gateway):
         os.dup2(fd, 0)
         os.dup2(fd, 1)
         os.close(fd)
-        greensock2.wait(gw.greenlet)
+        greensock2._suspend_forever()
     run_server = staticmethod(run_server)
 
 class PopenGateway(PopenCmdGateway):
