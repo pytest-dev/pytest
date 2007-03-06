@@ -1,0 +1,15 @@
+
+* Persistant storage layer for storing py.test output, sharing such stuff
+  and presenting (Presenting mostly means combining tones of hacks here
+  and there). We need to store test results, revisions and additional
+  metadata like apigen output
+
+* Having some kind of pdbplus, which will combine rlcompleter, apigen
+  information and other various fixes.
+
+* Improve distributed testing by:
+  - sharing even more code with normal testing
+  - using greenexecnet wherever possible (falling back to normal
+    execnet)
+  - make test redistribution somehow (in a clean way!)
+  - C-c support
