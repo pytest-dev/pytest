@@ -1,3 +1,5 @@
+
+# -*- coding: utf-8 -*-
 """
     the py lib is a development support library featuring
     py.test, ad-hoc distributed execution, micro-threads
@@ -9,8 +11,8 @@ version = "0.9.0"
 
 initpkg(__name__,
     description = "py lib: agile development and test support library",
-    revision = int('$LastChangedRevision: 38799 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-02-14 12:10:40 +0100 (Wed, 14 Feb 2007) $',
+    revision = int('$LastChangedRevision: 40001 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-03-06 22:11:12 +0100 (Tue, 06 Mar 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
