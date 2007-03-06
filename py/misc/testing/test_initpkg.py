@@ -253,7 +253,7 @@ class TestRealModule:
 #    #assert False
 
 def test_url_of_version():
-    py.test.skip("FAILING! - provide a proper URL or upload pylib tgz")
+    #py.test.skip("FAILING! - provide a proper URL or upload pylib tgz")
     from urllib import URLopener
     URLopener().open(py.__package__.download_url)
 
