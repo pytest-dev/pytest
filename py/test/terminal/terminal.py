@@ -42,11 +42,15 @@ class TerminalSession(Session):
             cls = getattr(colitem, '__class__', None)
             if cls is None:
                 return
-            for typ in py.std.inspect.getmro(cls):
-                meth = getattr(self, 'start_%s' % typ.__name__, None)
-                if meth:
-                    meth(colitem)
-                    break 
+            if issubclass(cls, py.test.collect.Module):
+                self.start_Module(colitem)
+            elif issubclass(cls, py.test.collect.Item):
+                self.start_Item(colitem)
+            #for typ in py.std.inspect.getmro(cls):
+            #    meth = getattr(self, 'start_%s' % typ.__name__, None)
+            #    if meth:
+            #        meth(colitem)
+            #        break 
             colitem.start = py.std.time.time() 
 
     def start_Module(self, colitem): 
