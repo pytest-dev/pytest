@@ -36,7 +36,6 @@ class GreenSocket(object):
                 s, addr = self._s.accept()
                 break
             except error, e:
-                import pdb;pdb.set_trace()
                 if e.args[0] not in (errno.EAGAIN, errno.EWOULDBLOCK):
                     raise
             self.wait_input()
