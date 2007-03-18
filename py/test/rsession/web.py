@@ -286,6 +286,11 @@ class ExportedMethods(BasicExternal):
     def report_ReceivedItemOutcome(self, event):
         self.all += 1
         self.pending_events.put(event)
+
+    def report_FailedTryiter(self, event):
+        fullitemname = "/".join(event.item.listnames())
+        self.fail_reasons[fullitemname] = ''
+        self.pending_events.put(event)
     
     def report_ItemStart(self, event):
         if isinstance(event.item, py.test.collect.Module):
