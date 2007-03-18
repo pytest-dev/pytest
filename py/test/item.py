@@ -37,38 +37,15 @@ class Item(py.test.collect.Collector):
     def finishcapture(self): 
         self._config._finishcapture(self)
 
-class Function(Item): 
-    """ a Function Item is responsible for setting up  
-        and executing a Python callable test object.
+class FunctionMixin(object):
+    """ mixin for the code common to Function and Generator.
     """
-    _state = SetupState()
-    def __init__(self, name, parent, args=(), obj=_dummy, sort_value = None):
-        super(Function, self).__init__(name, parent) 
-        self._args = args
-        if obj is not _dummy: 
-            self._obj = obj 
-        self._sort_value = sort_value
-        
-    def __repr__(self): 
-        return "<%s %r>" %(self.__class__.__name__, self.name)
-
     def _getpathlineno(self):
         code = py.code.Code(self.obj) 
         return code.path, code.firstlineno 
 
     def _getsortvalue(self):  
-        if self._sort_value is None:
-            return self._getpathlineno()
-        return self._sort_value
-
-    def run(self):
-        """ setup and execute the underlying test function. """
-        self._state.prepare(self) 
-        self.execute(self.obj, *self._args)
-
-    def execute(self, target, *args):
-        """ execute the given test function. """
-        target(*args)
+        return self._getpathlineno() 
 
     def setup(self): 
         """ perform setup for this test function. """
@@ -91,6 +68,35 @@ class Function(Item):
         meth = getattr(obj, name, None)
         if meth is not None: 
             return meth(self.obj) 
+
+class Function(FunctionMixin, Item): 
+    """ a Function Item is responsible for setting up  
+        and executing a Python callable test object.
+    """
+    _state = SetupState()
+    def __init__(self, name, parent, args=(), obj=_dummy, sort_value = None):
+        super(Function, self).__init__(name, parent) 
+        self._args = args
+        if obj is not _dummy: 
+            self._obj = obj 
+        self._sort_value = sort_value
+        
+    def __repr__(self): 
+        return "<%s %r>" %(self.__class__.__name__, self.name)
+
+    def _getsortvalue(self):  
+        if self._sort_value is None:
+            return self._getpathlineno()
+        return self._sort_value
+
+    def run(self):
+        """ setup and execute the underlying test function. """
+        self._state.prepare(self) 
+        self.execute(self.obj, *self._args)
+
+    def execute(self, target, *args):
+        """ execute the given test function. """
+        target(*args)
 
 #
 # triggering specific outcomes while executing Items

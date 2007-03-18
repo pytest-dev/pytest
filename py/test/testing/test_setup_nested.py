@@ -42,14 +42,23 @@ class TestInheritedClassSetupStillWorks(TestSimpleClassSetup):
 
 class TestSetupTeardownOnInstance(TestSimpleClassSetup):
     def setup_method(self, method):
-        self.clslevel.append(17)
+        self.clslevel.append(method.__name__)
 
     def teardown_method(self, method):
         x = self.clslevel.pop()
-        assert x == 17
+        assert x == method.__name__
 
     def test_setup(self):
-        assert self.clslevel[-1] == 17
+        assert self.clslevel[-1] == 'test_setup'
+
+    def test_generate(self):
+        assert self.clslevel[-1] == 'test_generate'
+        yield self.generated, 5
+        assert self.clslevel[-1] == 'test_generate'
+
+    def generated(self, value):
+        assert value == 5
+        assert self.clslevel[-1] == 'test_generate'
 
 def test_teardown_method_worked(): 
     assert not TestSetupTeardownOnInstance.clslevel 

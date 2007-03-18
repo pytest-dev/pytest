@@ -442,7 +442,9 @@ class Instance(PyCollectorMixin, Collector):
                        Collector.Function.__get__(self)) # XXX for python 2.2 
     Function = property(Function)
 
-class Generator(PyCollectorMixin, Collector): 
+from py.__.test.item import FunctionMixin    # XXX import order issues :-(
+
+class Generator(FunctionMixin, PyCollectorMixin, Collector): 
     def run(self): 
         self._prepare()
         itemlist = self._name2items
@@ -467,13 +469,6 @@ class Generator(PyCollectorMixin, Collector):
         else:
             call, args = obj, ()
         return call, args 
-
-    def _getpathlineno(self): 
-        code = py.code.Code(self.obj) 
-        return code.path, code.firstlineno 
-
-    def _getsortvalue(self):  
-        return self._getpathlineno() 
 
 class DoctestFile(PyCollectorMixin, FSCollector): 
     def run(self):
