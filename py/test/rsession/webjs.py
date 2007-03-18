@@ -212,10 +212,16 @@ def process(msg):
             return True
         tr = create_elem("tr")
         td = create_elem("td")
+        a = create_elem("a")
+        a.setAttribute("href", "javascript:show_traceback('%s')" % (
+                        msg['fullitemname'],))
         txt = create_text_elem("- FAILED TO LOAD MODULE")
-        td.appendChild(txt)
+        a.appendChild(txt)
+        td.appendChild(a)
         tr.appendChild(td)
         module_part.appendChild(tr)
+        item_name = msg['fullitemname']
+        exported_methods.show_fail(item_name, fail_come_back)
     elif msg['type'] == 'SkippedTryiter':
         module_part = get_elem(msg['fullitemname'])
         if not module_part:

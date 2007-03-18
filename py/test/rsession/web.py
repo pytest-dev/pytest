@@ -276,7 +276,7 @@ class ExportedMethods(BasicExternal):
     
     def repr_source(self, relline, source):
         lines = []
-        for num, line in enumerate(source.split("\n")):
+        for num, line in enumerate(str(source).split("\n")):
             if num == relline:
                 lines.append(">>>>" + line)
             else:
@@ -289,7 +289,10 @@ class ExportedMethods(BasicExternal):
 
     def report_FailedTryiter(self, event):
         fullitemname = "/".join(event.item.listnames())
-        self.fail_reasons[fullitemname] = ''
+        self.fail_reasons[fullitemname] = self.repr_failure_tblong(
+            event.item, event.excinfo, event.excinfo.traceback)
+        self.stdout[fullitemname] = ''
+        self.stderr[fullitemname] = ''
         self.pending_events.put(event)
     
     def report_ItemStart(self, event):
