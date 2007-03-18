@@ -280,6 +280,8 @@ class RemoteReporter(AbstractReporter):
     def report_FailedTryiter(self, event):
         self.out.line("FAILED TO LOAD MODULE: %s\n" % "/".join(event.item.listnames()))
         self.failed_tests_outcome.append(event)
+        # argh! bad hack, need to fix it
+        self.failed[self.hosts[0]] += 1
     
     def report_SkippedTryiter(self, event):
         self.out.line("Skipped (%s) %s\n" % (str(event.excinfo.value), "/".
@@ -301,6 +303,7 @@ class LocalReporter(AbstractReporter):
         #self.show_item(event.item, False)
         self.out.write("- FAILED TO LOAD MODULE")
         self.failed_tests_outcome.append(event)
+        self.failed[self.hosts[0]] += 1
     
     def report_ReceivedItemOutcome(self, event):
         host = self.hosts[0]

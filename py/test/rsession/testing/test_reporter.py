@@ -135,11 +135,13 @@ class AbstractTestReporter(BasicRsessionTest):
             r.report(repevent.RsyncFinished())
             list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
             r.report(repevent.TestFinished())
+            return r
         
         cap = py.io.StdCaptureFD()
-        boxfun()
+        r = boxfun()
         out, err = cap.reset()
         assert not err
+        assert out.find("1 failed in") != -1
         assert out.find("NameError: name 'sadsadsa' is not defined") != -1
 
     def _test_still_to_go(self):
@@ -187,7 +189,7 @@ class TestLocalReporter(AbstractTestReporter):
 repmod/test_one.py[1] 
 repmod/test_three.py[0] - FAILED TO LOAD MODULE
 repmod/test_two.py[0] - skipped (reason)"""
-        assert received.find(expected) != -1 
+        assert received.find(expected) != -1
 
 class TestRemoteReporter(AbstractTestReporter):
     reporter = RemoteReporter
