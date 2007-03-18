@@ -1,5 +1,5 @@
 import py
-from py.__.net.greenexecnet import *
+from py.__.green.greenexecnet import *
 
 def test_simple():
     gw = PopenGateway()

@@ -1,4 +1,4 @@
-from py.__.net.pipe.common import BufferedInput
+from py.__.green.pipe.common import BufferedInput
 
 
 class MeetingPointInput(BufferedInput):

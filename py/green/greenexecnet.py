@@ -13,8 +13,8 @@ There are some features lacking, most notable:
 """
 
 import sys, os, py, inspect
-from py.__.net import greensock2
-from py.__.net.msgstruct import message, decodemessage
+from py.__.green import greensock2
+from py.__.green.msgstruct import message, decodemessage
 
 MSG_REMOTE_EXEC = 'r'
 MSG_OBJECT      = 'o'
@@ -163,7 +163,7 @@ class PopenCmdGateway(Gateway):
     action = "exec input()"
 
     def __init__(self, cmdline):
-        from py.__.net.pipe.fd import FDInput, FDOutput
+        from py.__.green.pipe.fd import FDInput, FDOutput
         child_in, child_out = os.popen2(cmdline, 't', 0)
         fdin  = FDInput(child_out.fileno(), child_out.close)
         fdout = FDOutput(child_in.fileno(), child_in.close)
@@ -173,14 +173,14 @@ class PopenCmdGateway(Gateway):
     def get_bootstrap_code():
         # XXX assumes that the py lib is installed on the remote side
         src = []
-        src.append('from py.__.net import greenexecnet')
+        src.append('from py.__.green import greenexecnet')
         src.append('greenexecnet.PopenCmdGateway.run_server()')
         src.append('')
         return '%r\n' % ('\n'.join(src),)
     get_bootstrap_code = staticmethod(get_bootstrap_code)
 
     def run_server():
-        from py.__.net.pipe.fd import FDInput, FDOutput
+        from py.__.green.pipe.fd import FDInput, FDOutput
         gw = Gateway(input = FDInput(os.dup(0)),
                      output = FDOutput(os.dup(1)),
                      is_remote = True)
