@@ -16,7 +16,7 @@ from select import select as _select
 from time import time as _time
 from heapq import heappush, heappop, heapify
 
-TRACE = True
+TRACE = False
 
 def meetingpoint():
     senders = deque()    # list of senders, or [None] if Giver closed
