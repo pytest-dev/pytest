@@ -25,7 +25,7 @@ counters = {}
 max_items = {}
 short_item_names = {}
 
-MAX_COUNTER = 50 # Maximal size of one-line table
+MAX_COUNTER = 30 # Maximal size of one-line table
 
 class Globals(object):
     def __init__(self):
