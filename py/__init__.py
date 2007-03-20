@@ -7,17 +7,17 @@
 """
 from initpkg import initpkg
 
-version = "0.9.0"
+version = "0.9.1-alpha"
 
 initpkg(__name__,
     description = "py lib: agile development and test support library",
-    revision = int('$LastChangedRevision: 40001 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-03-06 22:11:12 +0100 (Tue, 06 Mar 2007) $',
+    revision = int('$LastChangedRevision: 40831 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2007-03-20 13:10:56 +0100 (Tue, 20 Mar 2007) $',
     version = version, 
     url = "http://codespeak.net/py",
-    download_url = "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
+    download_url = "xxx" # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
     license = "MIT license",
-    platforms = ['unix', 'linux', 'cygwin'],
+    platforms = ['unix', 'linux', 'cygwin', 'win32'],
     author = "holger krekel, Carl Friedrich Bolz, Guido Wesdorp, Maciej Fijalkowski, Armin Rigo & others",
     author_email = "py-dev@codespeak.net",
     long_description = globals()['__doc__'],
