@@ -255,5 +255,10 @@ class TestRealModule:
 def test_url_of_version():
     #py.test.skip("FAILING! - provide a proper URL or upload pylib tgz")
     from urllib import URLopener
-    URLopener().open(py.__package__.download_url)
+    url = py.__package__.download_url
+    if url.lower() == "xxx":
+        assert py.__package__.version.find("alpha") != -1
+    else:
+        URLopener().open(url) 
+    
 
