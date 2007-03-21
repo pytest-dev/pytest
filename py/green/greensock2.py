@@ -448,6 +448,7 @@ def dispatcher_mainloop():
                 if s in g_owtd:
                     d = g_owtd[s]
                     #print 'owtd:', d[0]
+                    # XXX: Check if d is non-empty
                     g = d.popleft()
                     if not d:
                         try:
@@ -461,6 +462,7 @@ def dispatcher_mainloop():
                 if s in g_iwtd:
                     d = g_iwtd[s]
                     #print 'iwtd:', d[0]
+                    # XXX: Check if d is non-empty
                     g = d.popleft()
                     if not d:
                         try:
