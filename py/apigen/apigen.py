@@ -31,6 +31,11 @@ def get_documentable_items(pkgdir):
     Channel.__apigen_hide_from_nav__ = True
     return pkgname, pkgdict
 
+def sourcedirfilter(p):
+    return ('.svn' not in str(p).split(p.sep) and
+            not p.basename.startswith('.') and
+            str(p).find('c-extension%sgreenlet%sbuild' % (p.sep, p.sep)) == -1)
+
 def build(pkgdir, dsa, capture):
     # create a linker (link database) for cross-linking
     l = linker.TempLinker()
@@ -51,7 +56,7 @@ def build(pkgdir, dsa, capture):
     apb = htmlgen.ApiPageBuilder(targetdir, l, dsa, pkgdir, namespace_tree,
                                  proj, capture, LayoutPage)
     spb = htmlgen.SourcePageBuilder(targetdir, l, pkgdir, proj, capture,
-                                    LayoutPage)
+                                    LayoutPage, dirfilter=sourcedirfilter)
 
     apb.build_namespace_pages()
     class_names = dsa.get_class_names()

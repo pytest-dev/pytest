@@ -81,7 +81,7 @@ def get_param_htmldesc(linker, func):
     return inspect.formatargspec(*inspect.getargspec(func))
 
 # some helper functionality
-def source_dirs_files(fspath):
+def source_dirs_files(fspath, fil=None):
     """ returns a tuple (dirs, files) for fspath
 
         dirs are all the subdirs, files are the files which are interesting
@@ -93,7 +93,7 @@ def source_dirs_files(fspath):
     """
     dirs = []
     files = []
-    for child in fspath.listdir():
+    for child in fspath.listdir(fil=fil):
         if child.basename.startswith('.'):
             continue
         if child.check(dir=True):
@@ -203,13 +203,14 @@ class AbstractPageBuilder(object):
 class SourcePageBuilder(AbstractPageBuilder):
     """ builds the html for a source docs page """
     def __init__(self, base, linker, projroot, project, capture=None,
-                 pageclass=LayoutPage):
+                 pageclass=LayoutPage, dirfilter=None):
         self.base = base
         self.linker = linker
         self.projroot = projroot
         self.project = project
         self.capture = capture
         self.pageclass = pageclass
+        self.dirfilter = dirfilter
     
     def build_navigation(self, fspath):
         nav = H.Navigation(class_='sidebar')
@@ -240,7 +241,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         else:
             # we're a file, build our parent's children only
             dirpath = fspath.dirpath()
-        diritems, fileitems = source_dirs_files(dirpath)
+        diritems, fileitems = source_dirs_files(dirpath, self.dirfilter)
         for dir in diritems:
             nav.append(H.NavigationItem(self.linker, dir.strpath, dir.basename,
                                         indent, False))
@@ -265,7 +266,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         return tag, nav
 
     def build_dir_page(self, fspath):
-        dirs, files = source_dirs_files(fspath)
+        dirs, files = source_dirs_files(fspath, self.dirfilter)
         dirs = [(p.basename, self.linker.get_lazyhref(str(p))) for p in dirs]
         files = [(p.basename, self.linker.get_lazyhref(str(p))) for p in files]
         tag = H.DirList(dirs, files)
@@ -281,7 +282,15 @@ class SourcePageBuilder(AbstractPageBuilder):
         return tag, nav
 
     def build_pages(self, base):
-        for fspath in [base] + list(base.visit()):
+        def visit(p):
+            dirs, files = source_dirs_files(p, self.dirfilter)
+            for d in dirs:
+                yield d
+                for sp in visit(d):
+                    yield sp
+            for f in files:
+                yield f
+        for fspath in [base] + list(visit(base)):
             if fspath.ext in ['.pyc', '.pyo']:
                 continue
             if self.capture:
