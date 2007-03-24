@@ -281,3 +281,15 @@ def test_deindent():
     """
     lines = deindent(source.splitlines())
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
+
+def test_write_read():
+    py.test.skip("Failing")
+    tmpdir = py.test.ensuretemp("source_write_read")
+    source = py.code.Source('''
+    class A(object):
+        def method(self):
+            x = 1
+    ''')
+    tmpdir.ensure("a.py").write(source)
+    s2 = py.code.Source(tmpdir.join("a.py").pyimport().A)
+    assert source == s2
