@@ -2,6 +2,7 @@ import py
 
 from inspect import isclass, ismodule
 from py.__.test.outcome import Skipped, Failed, Passed
+from py.__.test.collect import FunctionMixin
 
 _dummy = object()
 
@@ -36,38 +37,6 @@ class Item(py.test.collect.Collector):
 
     def finishcapture(self): 
         self._config._finishcapture(self)
-
-class FunctionMixin(object):
-    """ mixin for the code common to Function and Generator.
-    """
-    def _getpathlineno(self):
-        code = py.code.Code(self.obj) 
-        return code.path, code.firstlineno 
-
-    def _getsortvalue(self):  
-        return self._getpathlineno() 
-
-    def setup(self): 
-        """ perform setup for this test function. """
-        if getattr(self.obj, 'im_self', None): 
-            name = 'setup_method' 
-        else: 
-            name = 'setup_function' 
-        obj = self.parent.obj 
-        meth = getattr(obj, name, None)
-        if meth is not None: 
-            return meth(self.obj) 
-
-    def teardown(self): 
-        """ perform teardown for this test function. """
-        if getattr(self.obj, 'im_self', None): 
-            name = 'teardown_method' 
-        else: 
-            name = 'teardown_function' 
-        obj = self.parent.obj 
-        meth = getattr(obj, name, None)
-        if meth is not None: 
-            return meth(self.obj) 
 
 class Function(FunctionMixin, Item): 
     """ a Function Item is responsible for setting up  

@@ -442,7 +442,38 @@ class Instance(PyCollectorMixin, Collector):
                        Collector.Function.__get__(self)) # XXX for python 2.2 
     Function = property(Function)
 
-from py.__.test.item import FunctionMixin    # XXX import order issues :-(
+
+class FunctionMixin(object):
+    """ mixin for the code common to Function and Generator.
+    """
+    def _getpathlineno(self):
+        code = py.code.Code(self.obj) 
+        return code.path, code.firstlineno 
+
+    def _getsortvalue(self):  
+        return self._getpathlineno() 
+
+    def setup(self): 
+        """ perform setup for this test function. """
+        if getattr(self.obj, 'im_self', None): 
+            name = 'setup_method' 
+        else: 
+            name = 'setup_function' 
+        obj = self.parent.obj 
+        meth = getattr(obj, name, None)
+        if meth is not None: 
+            return meth(self.obj) 
+
+    def teardown(self): 
+        """ perform teardown for this test function. """
+        if getattr(self.obj, 'im_self', None): 
+            name = 'teardown_method' 
+        else: 
+            name = 'teardown_function' 
+        obj = self.parent.obj 
+        meth = getattr(obj, name, None)
+        if meth is not None: 
+            return meth(self.obj) 
 
 class Generator(FunctionMixin, PyCollectorMixin, Collector): 
     def run(self): 
