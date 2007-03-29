@@ -56,8 +56,8 @@ class H(html):
         pass
 
     class FunctionDescription(Description):
-        def __init__(self, localname, argdesc, docstring, valuedesc, csource,
-                     callstack):
+        def __init__(self, localname, argdesc, docstring, valuedesc, excdesc,
+                     csource, callstack):
             infoid = 'info_%s' % (localname.replace('.', '_dot_'),)
             docstringid = 'docstring_%s' % (localname.replace('.', '_dot_'),)
             fd = H.FunctionDef(localname, argdesc,
@@ -68,7 +68,7 @@ class H(html):
             infodiv = H.div(
                 H.Docstring(docstring or '*no docstring available*',
                             id=docstringid),
-                H.FunctionInfo(valuedesc, csource, callstack,
+                H.FunctionInfo(valuedesc, excdesc, csource, callstack,
                                id=infoid, style="display: none"),
                 class_='funcdocinfo')
             super(H.FunctionDescription, self).__init__(fd, infodiv)
@@ -81,8 +81,9 @@ class H(html):
                                                 class_=class_, **kwargs)
 
     class FunctionInfo(html.div):
-        def __init__(self, valuedesc, csource, callstack, **kwargs):
-            super(H.FunctionInfo, self).__init__(valuedesc, H.br(), csource,
+        def __init__(self, valuedesc, excdesc, csource, callstack, **kwargs):
+            super(H.FunctionInfo, self).__init__(valuedesc, H.br(), excdesc,
+                                                 H.br(), csource,
                                                  callstack, class_='funcinfo',
                                                  **kwargs)
     
@@ -182,6 +183,13 @@ class H(html):
     class ValueDescList(html.ul):
         def __init__(self, *args, **kwargs):
             super(H.ValueDescList, self).__init__(*args, **kwargs)
+
+    class ExceptionDescList(html.ul):
+        def __init__(self, *args, **kwargs):
+            super(H.ExceptionDescList, self).__init__(*args, **kwargs)
+
+        def append(self, t):
+            super(H.ExceptionDescList, self).append(html.li(t))
 
     class ValueDescItem(html.li):
         pass

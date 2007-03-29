@@ -412,6 +412,7 @@ class ApiPageBuilder(AbstractPageBuilder):
             docstring = deindent(docstring)
         localname = func.__name__
         argdesc = get_param_htmldesc(self.linker, func)
+        excdesc = self.build_exception_description(dotted_name)
         valuedesc = self.build_callable_signature_description(dotted_name)
 
         sourcefile = inspect.getsourcefile(func)
@@ -423,11 +424,9 @@ class ApiPageBuilder(AbstractPageBuilder):
         colored = []
         if sourcefile and callable_source:
             enc = source_html.get_module_encoding(sourcefile)
-            tokenizer = source_color.Tokenizer(source_color.PythonSchema)
-            firstlineno = func.func_code.co_firstlineno
             sep = get_linesep(callable_source)
-            org = callable_source.split(sep)
-            colored = [enumerate_and_color(org, firstlineno, enc)]
+            colored = [enumerate_and_color(callable_source.split(sep),
+                                           func.func_code.co_firstlineno, enc)]
             relpath = get_rel_sourcepath(self.projroot, sourcefile, sourcefile)
             text = 'source: %s' % (relpath,)
             if is_in_pkg:
@@ -436,7 +435,7 @@ class ApiPageBuilder(AbstractPageBuilder):
         csource = H.SourceSnippet(text, href, colored)
         cslinks = self.build_callsites(dotted_name)
         snippet = H.FunctionDescription(localname, argdesc, docstring,
-                                        valuedesc, csource, cslinks)
+                                        valuedesc, excdesc, csource, cslinks)
         return snippet
 
     def build_class_view(self, dotted_name):
@@ -696,6 +695,14 @@ class ApiPageBuilder(AbstractPageBuilder):
             # we should provide here some way of linking to sourcegen directly
             lst.append(name)
         return lst
+
+    def build_exception_description(self, dotted_name):
+        excs = self.dsa.get_function_exceptions(dotted_name)
+        excdesc = H.ExceptionDescList()
+        for exc in excs:
+            excdesc.append(exc)
+        ret = H.div(H.div('possible exceptions:'), excdesc)
+        return ret
 
     def is_in_pkg(self, sourcefile):
         return py.path.local(sourcefile).relto(self.projpath)
