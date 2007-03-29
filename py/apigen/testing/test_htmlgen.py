@@ -165,3 +165,30 @@ def test_get_rel_sourcepath():
     assert (htmlgen.get_rel_sourcepath(projpath, py.path.local('<string>')) is
             None)
 
+def test_find_method_origin():
+    class Foo(object):
+        def foo(self):
+            pass
+    class Bar(Foo):
+        def bar(self):
+            pass
+    class Baz(Bar):
+        pass
+    assert htmlgen.find_method_origin(Baz.bar) is Bar
+    assert htmlgen.find_method_origin(Baz.foo) is Foo
+    assert htmlgen.find_method_origin(Bar.bar) is Bar
+    assert htmlgen.find_method_origin(Baz.__init__) is None
+
+def test_find_method_origin_old_style():
+    class Foo:
+        def foo(self):
+            pass
+    class Bar(Foo):
+        def bar(self):
+            pass
+    class Baz(Bar):
+        pass
+    assert htmlgen.find_method_origin(Baz.bar) is Bar
+    assert htmlgen.find_method_origin(Baz.foo) is Foo
+    assert htmlgen.find_method_origin(Bar.bar) is Bar
+

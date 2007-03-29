@@ -198,12 +198,10 @@ class TestApiPageBuilder(AbstractBuilderTest):
         self.apb.build_class_pages(['main.SomeSubClass',
                                     'main.SomeClass'])
         self.apb.build_namespace_pages()
-        # fake some stuff that would be built from other methods
         self.linker.replace_dirpath(self.base, False)
         clsfile = self.base.join('api/main.SomeClass.html')
         assert clsfile.check()
         html = clsfile.read()
-        print html
         run_string_sequence_test(html, [
             'href="../style.css"',
             'href="../apigen_style.css"',
@@ -237,7 +235,8 @@ class TestApiPageBuilder(AbstractBuilderTest):
         self.spb.build_pages(self.fs_root)
         self.linker.replace_dirpath(self.base, False)
         funchtml = self.base.join('api/main.SomeClass.html').read()
-        assert funchtml.find('href="../source/pkg/someclass.py.html"') > -1
+        print funchtml
+        assert funchtml.find('href="../source/pkg/someclass.py.html#SomeClass"') > -1
         _checkhtml(funchtml)
 
     def test_build_namespace_pages(self):
@@ -433,7 +432,8 @@ class TestSourcePageBuilder(AbstractBuilderTest):
         assert funcsource.check(file=True)
         html = funcsource.read()
         print html
-        assert ('<span class="alt_keyword">def</span> func(arg1)') in html
+        assert ('<span class="alt_keyword">def</span> '
+                '<a href="#func" name="func">func</a>(arg1)') in html
 
     def test_build_navigation_root(self):
         self.spb.build_pages(self.fs_root)

@@ -47,6 +47,13 @@ class TestTempLinker(object):
         l.replace_dirpath(temp)
         assert bar.read() == '<a href="baz.html">baz</a>'
 
+    def test_with_anchor(self):
+        linker = TempLinker()
+        temphref = linker.get_lazyhref('py.path.local', 'LocalPath.join')
+        linker.set_link('py.path.local', 'py/path/local.html')
+        relpath = linker.get_target(temphref)
+        assert relpath == 'py/path/local.html#LocalPath.join'
+
 def gen_check(frompath, topath, sep, expected):
     result = relpath(frompath, topath, sep=sep)
     assert result == expected

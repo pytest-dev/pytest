@@ -18,6 +18,25 @@ raw = py.xml.raw
 
 REDUCE_CALLSITES = True
 
+def find_method_origin(meth):
+    cls = getattr(meth, 'im_class', None)
+    if cls is None:
+        return None # XXX unknown origin (built-in function or method or sth)
+    name = meth.im_func.func_name
+    origin = cls
+    # XXX old-style classes support required? :|
+    mro = inspect.getmro(cls)
+    for base in mro:
+        m = getattr(base, name, None)
+        if m is None:
+            continue
+        if not hasattr(m, 'im_func'):
+            # builtin
+            return None
+        if m.im_func is meth.im_func:
+            origin = base
+    return origin
+
 def is_navigateable(name):
     return (not is_private(name) and name != '__doc__')
 
@@ -135,8 +154,15 @@ def enumerate_and_color(codelines, firstlineno, enc):
                              source_html.prepare_line([line], tokenizer, enc))
         except py.error.ENOENT:
             # error reading source code, giving up
-            snippet = org
+            snippet = codelines
             break
+    return snippet
+
+def enumerate_and_color_module(path, enc):
+    snippet = H.SourceBlock()
+    tokenizer = source_color.Tokenizer(source_color.PythonSchema)
+    for i, text in enumerate(source_html.prepare_module(path, tokenizer, enc)):
+        snippet.add_line(i + 1, text)
     return snippet
 
 _get_obj_cache = {}
@@ -258,9 +284,16 @@ class SourcePageBuilder(AbstractPageBuilder):
         # XXX two reads of the same file here... not very bad (disk caches
         # and such) but also not very nice...
         enc = source_html.get_module_encoding(fspath.strpath)
-        source = fspath.read()
-        sep = get_linesep(source)
-        colored = [enumerate_and_color(source.split(sep), 0, enc)]
+        try:
+            colored = [enumerate_and_color_module(fspath, enc)]
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception, e:
+            #self.capture.err.writeorg('\ncompilation exception: %s\n' % (e,))
+            # problem building HTML with anchors; let's try without...
+            source = fspath.read()
+            sep = get_linesep(source)
+            colored = [enumerate_and_color(source.split(sep), 0, enc)]
         tag = H.PythonSource(colored)
         nav = self.build_navigation(fspath)
         return tag, nav
@@ -316,7 +349,7 @@ class SourcePageBuilder(AbstractPageBuilder):
         if fspath.check(ext='.py'):
             try:
                 tag, nav = self.build_python_page(fspath)
-            except (KeyboardInterrupt, SystemError):
+            except (KeyboardInterrupt, SystemExit):
                 raise
             except: # XXX strange stuff going wrong at times... need to fix
                 raise
@@ -398,8 +431,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             relpath = get_rel_sourcepath(self.projroot, sourcefile, sourcefile)
             text = 'source: %s' % (relpath,)
             if is_in_pkg:
-                href = self.linker.get_lazyhref(sourcefile)
-
+                href = self.linker.get_lazyhref(sourcefile,
+                                                self.get_anchor(func))
         csource = H.SourceSnippet(text, href, colored)
         cslinks = self.build_callsites(dotted_name)
         snippet = H.FunctionDescription(localname, argdesc, docstring,
@@ -432,7 +465,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             if sourcefile[-1] in ['o', 'c']:
                 sourcefile = sourcefile[:-1]
             sourcelink = H.div(H.a('view source',
-                href=self.linker.get_lazyhref(sourcefile)))
+                href=self.linker.get_lazyhref(sourcefile,
+                                              self.get_anchor(cls))))
 
         snippet = H.ClassDescription(
             # XXX bases HTML
@@ -651,6 +685,10 @@ class ApiPageBuilder(AbstractPageBuilder):
             return lst
         name, _desc_type, is_degenerated = data
         if not is_degenerated:
+            try:
+                obj = self.dsa.get_obj(name)
+            except KeyError:
+                obj = None
             linktarget = self.linker.get_lazyhref(name)
             lst.append(H.a(str(_type), href=linktarget))
         else:
@@ -695,6 +733,7 @@ class ApiPageBuilder(AbstractPageBuilder):
     _reg_source = py.std.re.compile(r'([^>]*)<(.*)>')
     def gen_traceback(self, dotted_name, call_site):
         tbtag = H.CallStackDescription()
+        obj = self.dsa.get_obj(dotted_name)
         for frame in call_site:
             lineno = frame.lineno - frame.firstlineno
             source = frame.source
@@ -771,4 +810,21 @@ class ApiPageBuilder(AbstractPageBuilder):
         rev = rev or self.get_proj_revision()
         self._revcache[dotted_name] = rev
         return rev
+
+    def get_anchor(self, obj):
+        # XXX may not always return the right results...
+        anchor = None
+        if hasattr(obj, 'im_func'):
+            # method
+            origin = find_method_origin(obj)
+            if origin:
+                anchor = '%s.%s' % (origin.__name__,
+                                    obj.im_func.func_name)
+        elif hasattr(obj, 'func_name'):
+            anchor = obj.func_name
+        elif hasattr(obj, '__name__'):
+            anchor = obj.__name__
+        elif hasattr(obj, '__class__'):
+            anchor = obj.__class__.__name__
+        return anchor
 

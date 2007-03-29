@@ -61,6 +61,7 @@ class H(html):
             infoid = 'info_%s' % (localname.replace('.', '_dot_'),)
             docstringid = 'docstring_%s' % (localname.replace('.', '_dot_'),)
             fd = H.FunctionDef(localname, argdesc,
+                               title='click to view details',
                                onclick=('showhideel('
                                         'document.getElementById("%s")); '
                                          % (infoid,)))

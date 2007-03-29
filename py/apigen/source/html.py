@@ -7,6 +7,10 @@ from py.xml import html, raw
 from compiler import ast
 import time
 from py.__.apigen.source.color import Tokenizer, PythonSchema
+from py.__.apigen.source.browser import parse_path
+
+class CompilationException(Exception):
+    """ raised when something goes wrong while importing a module """
 
 class HtmlEnchanter(object):
     def __init__(self, mod):
@@ -57,6 +61,30 @@ def prepare_line(text, tokenizer, encoding):
                     ret.append(data)
         else:
             ret.append(item)
+    return ret
+
+def prepare_module(path, tokenizer, encoding):
+    path = py.path.local(path)
+    try:
+        mod = parse_path(path)
+    except:
+        # XXX don't try to catch SystemExit: it's actually raised by one
+        # of the modules in the py lib on import :(
+        exc, e, tb = py.std.sys.exc_info()
+        del tb
+        raise CompilationException('while compiling %s: %s - %s' % (
+                                    path, e.__class__.__name__, e))
+    lines = [unicode(l, encoding) for l in path.readlines()]
+    
+    enchanter = HtmlEnchanter(mod)
+    ret = []
+    for i, line in enumerate(lines):
+        text = enchanter.enchant_row(i + 1, line)
+        if text == ['']:
+            text = [raw('&#xa0;')]
+        else:
+            text = prepare_line(text, tokenizer, encoding)
+        ret.append(text)
     return ret
 
 class HTMLDocument(object):
