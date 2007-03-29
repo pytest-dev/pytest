@@ -449,13 +449,17 @@ def dispatcher_mainloop():
                     d = g_owtd[s]
                     #print 'owtd:', d[0]
                     # XXX: Check if d is non-empty
-                    g = d.popleft()
+                    try:
+                        g = d.popleft()
+                    except IndexError:
+                        g = None
                     if not d:
                         try:
                             del g_owtd[s]
                         except KeyError:
                             pass
-                    g.switch(g_owtd)
+                    if g:
+                        g.switch(g_owtd)
 #                    if g.dead:
 #                        check_waiters(g)
             for s in iwtd:
@@ -463,13 +467,17 @@ def dispatcher_mainloop():
                     d = g_iwtd[s]
                     #print 'iwtd:', d[0]
                     # XXX: Check if d is non-empty
-                    g = d.popleft()
+                    try:
+                        g = d.popleft()
+                    except IndexError:
+                        g = None
                     if not d:
                         try:
                             del g_iwtd[s]
                         except KeyError:
                             pass
-                    g.switch(g_iwtd)
+                    if g:
+                        g.switch(g_iwtd)
 #                    if g.dead:
 #                        check_waiters(g)
         except GreenletExit:
