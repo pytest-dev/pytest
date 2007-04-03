@@ -12,7 +12,6 @@ implied_options = {
 conflict_options = ('--looponfailing --pdb',
                     '--dist --pdb', 
                     '--exec=%s --pdb' % py.std.sys.executable,
-                    '-k xxx -q xxx',
                    )
 
 def test_conflict_options():
@@ -100,7 +99,7 @@ class TestKeywordSelection:
 
     def test_select_starton(self):
         config = py.test.config._reparse([datadir/'testmore.py', 
-                                          '-q', "test_two"])
+                                          '-j', '-k', "test_two"])
         session = config._getsessionclass()(config, py.std.sys.stdout)
         session.main()
         l = session.getitemoutcomepairs(Passed)

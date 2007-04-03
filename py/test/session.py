@@ -9,12 +9,7 @@ class Session(object):
     def __init__(self, config): 
         self._memo = []
         self.config = config
-        if config.option.start_on:
-            self.keyword = config.option.start_on
-        elif config.option.keyword:
-            self.keyword = config.option.keyword
-        else:
-            self.keyword = None
+        self._keyword = config.option.keyword
 
     def shouldclose(self): 
         return False 
@@ -45,8 +40,8 @@ class Session(object):
         if option.executable and option.usepdb:
             raise ValueError, "--exec together with --pdb not supported."
 
-        if option.keyword and option.start_on:
-            raise ValueError, "--start-on and --keyword not supported"
+        if option.keyword_oneshot and not option.keyword:
+            raise ValueError, "--keyword-oneshot makes sense only when --keyword is supplied"
 
     def start(self, colitem): 
         """ hook invoked before each colitem.run() invocation. """ 
@@ -111,9 +106,9 @@ class Session(object):
         if self.config.option.collectonly and isinstance(colitem, py.test.collect.Item): 
             return
         if isinstance(colitem, py.test.collect.Item):
-            colitem._skipbykeyword(self.keyword)
-            if self.config.option.start_on:
-                self.keyword = ""
+            colitem._skipbykeyword(self._keyword)
+            if self.config.option.keyword_oneshot:
+                self._keyword = ""
         res = colitem.run() 
         if res is None:
             return Passed() 

@@ -43,9 +43,9 @@ def adddefaultoptions(config):
                action="store", dest="keyword", default='',
                help="only run test items matching the given (google-style) "
                     "keyword expression."),
-        Option('-q', '--start-on',
-               action='store', dest='start_on', default='',
-               help="start from first test matching given keyword expression"),
+        Option('-j', '--keyword-oneshot',
+               action='store_true', dest='keyword_oneshot', default=False,
+               help="combined with -k, runs all tests after first hit"),
         Option('-l', '--showlocals',
                action="store_true", dest="showlocals", default=False,
                help="show locals in tracebacks (disabled by default)."),
