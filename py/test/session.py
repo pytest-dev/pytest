@@ -8,7 +8,13 @@ class Session(object):
     """
     def __init__(self, config): 
         self._memo = []
-        self.config = config 
+        self.config = config
+        if config.option.start_on:
+            self.keyword = config.option.start_on
+        elif config.option.keyword:
+            self.keyword = config.option.keyword
+        else:
+            self.keyword = None
 
     def shouldclose(self): 
         return False 
@@ -38,6 +44,9 @@ class Session(object):
             raise ValueError, "--looponfailing together with --dist not supported."
         if option.executable and option.usepdb:
             raise ValueError, "--exec together with --pdb not supported."
+
+        if option.keyword and option.start_on:
+            raise ValueError, "--start-on and --keyword not supported"
 
     def start(self, colitem): 
         """ hook invoked before each colitem.run() invocation. """ 
@@ -100,11 +109,13 @@ class Session(object):
 
     def run(self, colitem): 
         if self.config.option.collectonly and isinstance(colitem, py.test.collect.Item): 
-            return 
-        if isinstance(colitem, py.test.collect.Item): 
-            colitem._skipbykeyword(self.config.option.keyword)
+            return
+        if isinstance(colitem, py.test.collect.Item):
+            colitem._skipbykeyword(self.keyword)
+            if self.config.option.start_on:
+                self.keyword = ""
         res = colitem.run() 
-        if res is None: 
+        if res is None:
             return Passed() 
         elif not isinstance(res, (list, tuple)): 
             raise TypeError("%r.run() returned neither "

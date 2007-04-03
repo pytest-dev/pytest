@@ -81,6 +81,16 @@ namecontent = [
                 assert 42 == 43 
 
     ''')),
+    ('testmore.py', py.code.Source('''
+        def test_one():
+            assert 1
+
+        def test_two():
+            assert 1
+
+        def test_three():
+            assert 1
+    ''')),
 
     ('testspecial_importerror.py', py.code.Source('''
 
