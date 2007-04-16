@@ -45,6 +45,8 @@ features
 
 - consider features of py.apigen (recheck closed "M1016")
 
+- integrate rlcompleter2 (make it remotely workable) 
+  and maybe integrate with "pdb" / pdbplus (M975) 
 
 
 packaging
