@@ -14,6 +14,9 @@ ld (review and shift to above)
 refactorings
 ------------------
 
+- merge py.execnet-lessthreads branch (it's working relatively
+  nicely, already)  (M995)
+
 - session / collection unification (particularly tryiter and buildname2items) 
 
 - refine doctests usage (particularly skips of doctests if
@@ -25,6 +28,23 @@ refactorings
   testing and dist-testing and other usages of py.execnet all 
   use a common syntax for specifiying connection methods and 
   be able to instantiate gateways/connections through it. 
+
+- unification of "gateway"/host setup and teardown, including
+  rsyncing, i.e. cross-platform and dist-testing. 
+
+- py.apigen tool -> separate runtime-data collection and 
+  web page generation.  (see M750), provide "py.apigen" tool
+  for generating API documentation 
+
+features 
+--------------
+
+- have a py.test scan/run database for results and test names
+  etc. (to allow quicker selection of tests and post-run 
+  information on failures etc.)  (M760) 
+
+- consider features of py.apigen (recheck closed "M1016")
+
 
 
 packaging
