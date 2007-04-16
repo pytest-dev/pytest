@@ -1,8 +1,31 @@
-Things to do for 0.9.0 
+Things to do for 1.0.0 
 ========================= 
 
-* (XXX not done, but the documentation is marked accordingly)
-  make "_" namespace:  py.log -> py._log (pypy!) 
+
+
+
+
+
+
+
+ld (review and shift to above)
+=================================
+
+refactorings
+------------------
+
+- session / collection unification (particularly tryiter and buildname2items) 
+
+- refine doctests usage (particularly skips of doctests if
+  some imports/conditions are not satisfied) 
+
+- generalization of "host specifications" for execnet and
+  py.test --dist usages in particular (see also revision 37500 which 
+  contained a draft for that).  The goal is to have cross-platform 
+  testing and dist-testing and other usages of py.execnet all 
+  use a common syntax for specifiying connection methods and 
+  be able to instantiate gateways/connections through it. 
+
 
 packaging
 -------------------------------------
@@ -35,7 +58,7 @@ APIGEN / source viewer
 testing
 -----------
 
-* these should all work on 0.9 and on the py lib and pypy:
+* these should all work on 1.0 and on the py lib and pypy:
     - running "py.test -s" 
     - running "py.test --pdb" 
     - running "py.test --looponfailing" 
@@ -57,7 +80,7 @@ code quality
 * no lines longer than 80 characters 
 
 * review the pylib issue tracker
-  (cfbolz: done: what has a 0.8.0 or a 0.9.0 tag should be looked at again)
+  (cfbolz: done: what has a 1.0.0 tag (or lower) should be looked at again)
 
 
 py.test
