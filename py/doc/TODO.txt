@@ -1,75 +1,8 @@
-Things to do for 1.0.0 
+Things to do for 0.9.0 
 ========================= 
 
-
-
-
-
-
-
-
-ld (review and shift to above)
-=================================
-
-refactorings
-------------------
-
-- merge py.execnet-lessthreads branch (it's working relatively
-  nicely, already)  (M995)
-
-- session / collection unification (particularly tryiter and buildname2items) 
-
-- reporting unification, i.e. use dist-testing Reporter class
-  also for "normal" session, consider introduction of tkinter 
-  session (M978)
-
-- refine doctests usage (particularly skips of doctests if
-  some imports/conditions are not satisfied) 
-
-- generalization of "host specifications" for execnet and
-  py.test --dist usages in particular (see also revision 37500 which 
-  contained a draft for that).  The goal is to have cross-platform 
-  testing and dist-testing and other usages of py.execnet all 
-  use a common syntax for specifiying connection methods and 
-  be able to instantiate gateways/connections through it. 
-
-- unification of "gateway"/host setup and teardown, including
-  rsyncing, i.e. cross-platform and dist-testing. 
-
-- py.apigen tool -> separate runtime-data collection and 
-  web page generation.  (see M750), provide "py.apigen" tool
-  for generating API documentation 
-
-- py.log: unify API, possibly deprecate duplicate ones, 
-  base things on a Config object  (hte latter almost a feature though) 
-  (M988)
-
-- consider setup/teardown for generative tests (M826)
-
-features 
---------------
-
-- have a py.test scan/run database for results and test names
-  etc. (to allow quicker selection of tests and post-run 
-  information on failures etc.)  (M760) 
-
-- consider features of py.apigen (recheck closed "M1016")
-
-- integrate rlcompleter2 (make it remotely workable) 
-  and maybe integrate with "pdb" / pdbplus (M975) 
-
-- integrate native collecting of unittest.py tests from py.test 
-  (along the PyPy lib-python tests)  (M987) 
-
-- provide an automated conversion script helper for converting
-  unittest.py based tests to py.test ones. (M987)
-
-- references from ReST docs to modules, functions and classes
-  of apigen generated html docs (M960)
-
-- review svn-testing (and escape characters), consider
-  svn-bindings (M634)
-
+* (XXX not done, but the documentation is marked accordingly)
+  make "_" namespace:  py.log -> py._log (pypy!) 
 
 packaging
 -------------------------------------
@@ -102,7 +35,7 @@ APIGEN / source viewer
 testing
 -----------
 
-* these should all work on 1.0 and on the py lib and pypy:
+* these should all work on 0.9 and on the py lib and pypy:
     - running "py.test -s" 
     - running "py.test --pdb" 
     - running "py.test --looponfailing" 
@@ -124,7 +57,7 @@ code quality
 * no lines longer than 80 characters 
 
 * review the pylib issue tracker
-  (cfbolz: done: what has a 1.0.0 tag (or lower) should be looked at again)
+  (cfbolz: done: what has a 0.8.0 or a 0.9.0 tag should be looked at again)
 
 
 py.test
@@ -136,6 +69,10 @@ py.test
 * (in-progress, NOT DONE) document py.test's conftest.py approach
 
 * (postponed, likely) py.test fails to parse strangely formatted code after assertion failure
+
+* teardown happens a bit late to do proper I/O and error catching.
+
+* generators need to be rethinked a bit (my POV http://codespeak.net/pipermail/py-dev/2007q1/000789.html)
 
 Missing docstrings
 ------------------
