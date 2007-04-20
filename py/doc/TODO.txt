@@ -46,6 +46,9 @@ refactorings
 
 - consider setup/teardown for generative tests (M826)
 
+- fix teardown problems regarding when teardown is done (should be done
+  after test run, not before the next one)
+
 features 
 --------------
 
