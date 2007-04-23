@@ -1,0 +1,35 @@
+
+Proposed apigen refactorings
+=============================
+
+First of all we would like to have some kind of a persistent storage
+for apigen, so we could use it for different purposes (hint! hint! pdb)
+than only web pages. This will resolve the issue of having separated
+apigen "data" generation and web page generation.
+
+Apigen is very usefull feature, but we don't use it in general. Which
+is bad. One of the reasons is above and the other one is that API of
+apigen is not that well defined which makes it harder to use. So what
+I think would be:
+
+* **py.apigen** tool, which will take tests and initpkg (or whatever
+  means of collecting data) and will try to store it somewhere
+  (not sure, plain text log as a first step?). Than next step
+  would be to have tools for generating webpages out of it
+  (py.webapi or so) and other tools which will integrate it to pdb,
+  emacs (pick your random IDE here) or whatever.
+
+* Another option is to have py.test generate those data and have another
+  tools using it.
+
+* Data storage. Text with a log comes in mind, but it's not very handy.
+  Using any sort of SQL doesn't really counts, cause it makes pylib
+  less standalone, especially that I wouldn't like to have write all
+  those SQL myself, but rather use some kind of sql object relational
+  mapper. Another format might be some kind of structured text
+  (xml anyone?) or pickled stuff. Pickle has problems on his own,
+  so I don't have any best solution at hand.
+
+* Accessing. These are all strings and simple types built on top of it.
+  Probably would be good not to store all data in memory, because it might
+  be huge in case we would like to have all past informations there.
