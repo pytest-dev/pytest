@@ -20,6 +20,10 @@
         z-index: 2;
       }
 
+      div.main {
+        margin-right: 170px;
+      }
+
       .error {
         color: #F00;
         font-weight: bold;
@@ -32,6 +36,7 @@
         background-color: #ffd;
         border: 1px solid #003;
         z-index: 1;
+        width: 160px;
       }
 
       #navbar tr, #navbar td {
@@ -106,13 +111,15 @@
         </tr>
       </tbody>
     </table>
-    <table id="main_table">
-    </table>
+    <div class="main">
+      <table id="main_table">
+      </table>
     <fieldset id="messagebox_fieldset">
       <legend><b>Data [<a href="javascript:hide_messagebox()">hide</a>]:</b></legend>
       <a name="message"> </a>
       <div id="messagebox"></div>
     </fieldset>
+    </div>
     <a name="aftermessage"> </a>
     <div id="testmain"></div>
   </body>

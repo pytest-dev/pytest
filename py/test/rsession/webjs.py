@@ -156,7 +156,7 @@ def add_received_item_outcome(msg, module_part):
         td.appendChild(link)
         exported_methods.show_fail(item_name, fail_come_back)
         
-    if counters[msg['fullmodulename']] % MAX_COUNTER == 0:
+    if counters[msg['fullmodulename']] == 0:
         tr = create_elem("tr")
         module_part.appendChild(tr)
 
