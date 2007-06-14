@@ -156,6 +156,15 @@ class TestWCSvnCommandPath(CommonSvnTests):
         finally:
             notexisting.remove()
 
+    def test_nonversioned_remove(self):
+        assert self.root.check(versioned=1)
+        somefile = self.root.join('nonversioned/somefile')
+        nonwc = py.path.local(somefile)
+        nonwc.ensure()
+        assert somefile.check()
+        assert not somefile.check(versioned=True)
+        somefile.remove() # this used to fail because it tried to 'svn rm'
+
     def test_properties(self):
         try:
             self.root.propset('gaga', 'this')

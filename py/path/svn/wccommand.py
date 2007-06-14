@@ -180,6 +180,10 @@ class SvnWCCommandPath(common.FSPathBase):
             underlying svn semantics.
         """
         assert rec, "svn cannot remove non-recursively"
+        if not self.check(versioned=True):
+            # not added to svn (anymore?), just remove
+            py.path.local(self).remove()
+            return
         flags = []
         if force:
             flags.append('--force')
