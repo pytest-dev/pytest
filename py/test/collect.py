@@ -350,7 +350,7 @@ class Module(FSCollector, PyCollectorMixin):
     def run(self):
         if getattr(self.obj, 'disabled', 0):
             return []
-        return PyCollectorMixin.run(self) 
+        return super(Module, self).run()
 
     def join(self, name):
         res = super(Module, self).join(name)
