@@ -289,7 +289,7 @@ class Directory(FSCollector):
             name2items[name] = res 
         return res
 
-class PyCollectorMixin(object): 
+class PyCollectorMixin(Collector): 
     def funcnamefilter(self, name): 
         return name.startswith('test') 
     def classnamefilter(self, name): 
