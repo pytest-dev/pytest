@@ -24,11 +24,10 @@ FUNCTION_LIST = ["main", "show_skip", "show_traceback", "show_info", "hide_info"
     "show_host", "hide_host", "hide_messagebox", "opt_scroll"]
 
 try:
-    from pypy.rpython.ootypesystem.bltregistry import MethodDesc, BasicExternal,\
-                                                      described
+    from pypy.rpython.ootypesystem.bltregistry import MethodDesc, BasicExternal
     from pypy.translator.js.main import rpython2javascript
     from pypy.translator.js import commproxy
-    from pypy.rpython.extfunc import _callable
+    from pypy.translator.js.lib.support import callback
 
     commproxy.USE_MOCHIKIT = False
     IMPORTED_PYPY = True
@@ -36,13 +35,10 @@ except (ImportError, NameError):
     class BasicExternal(object):
         pass
 
-    def described(*args, **kwargs):
+    def callback(*args, **kwargs):
         def decorator(func):
             return func
         return decorator
-
-    def _callable(*args, **kwargs):
-        pass
 
     IMPORTED_PYPY = False
 
@@ -153,22 +149,19 @@ class ExportedMethods(BasicExternal):
         for host in self.hosts:
             to_send[host.hostid] = host.hostname
         return to_send
-    show_hosts = described(retval={str:str}, args=[('callback',
-            _callable([{str:str}]))])(show_hosts)
+    show_hosts = callback(retval={str:str})(show_hosts)
     
     def show_skip(self, item_name="aa"):
         return {'item_name': item_name,
                            'reason': self.skip_reasons[item_name]}
-    show_skip = described(retval={str:str}, args=[('item_name',str),('callback',
-            _callable([{str:str}]))])(show_skip)
+    show_skip = callback(retval={str:str})(show_skip)
     
     def show_fail(self, item_name="aa"):
         return {'item_name':item_name,
                            'traceback':str(self.fail_reasons[item_name]),
                            'stdout':self.stdout[item_name],
                            'stderr':self.stderr[item_name]}
-    show_fail = described(retval={str:str}, args=[('item_name',str),('callback',
-            _callable([{str:str}]))])(show_fail)
+    show_fail = callback(retval={str:str})(show_fail)
     
     _sessids = None
     _sesslock = py.std.thread.allocate_lock()
@@ -186,8 +179,7 @@ class ExportedMethods(BasicExternal):
         finally:
             self._sesslock.release()
         return sessid
-    show_sessid = described(retval=str, args=[('callback',
-            _callable([str]))])(show_sessid)
+    show_sessid = callback(retval=str)(show_sessid)
     
     def failed(self, **kwargs):
         if not 'sessid' in kwargs:
@@ -201,14 +193,13 @@ class ExportedMethods(BasicExternal):
             del self._sessids[to_del]
         self.pending_events._del(kwargs['sessid'])
     
-    def show_all_statuses(self, sessid=-1):
+    def show_all_statuses(self, sessid='xx'):
         retlist = [self.show_status_change(sessid)]
         while not self.pending_events.empty_queue(sessid):
             retlist.append(self.show_status_change(sessid))
         retval = retlist
         return retval
-    show_all_statuses = described(retval=[{str:str}],args=
-         [('sessid',str), ('callback',_callable([[{str:str}]]))])(show_all_statuses)
+    show_all_statuses = callback(retval=[{str:str}])(show_all_statuses)
         
     def show_status_change(self, sessid):
         event = self.pending_events.get(sessid)
@@ -408,7 +399,8 @@ class TestHandler(BaseHTTPRequestHandler):
     def run_jssource(self):
         js_name = py.path.local(__file__).dirpath("webdata").join("source.js")
         web_name = py.path.local(__file__).dirpath().join("webjs.py")
-        if IMPORTED_PYPY and web_name.mtime() > js_name.mtime():
+        if IMPORTED_PYPY and web_name.mtime() > js_name.mtime() or \
+            (not js_name.check()) or 1:
             from py.__.test.rsession import webjs
 
             javascript_source = rpython2javascript(webjs,

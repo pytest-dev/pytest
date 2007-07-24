@@ -24,7 +24,7 @@ def test_js_generate():
     from py.__.test.rsession import webjs
     from py.__.test.rsession.web import FUNCTION_LIST, IMPORTED_PYPY
     
-    source = rpython2javascript(webjs, FUNCTION_LIST)
+    source = rpython2javascript(webjs, FUNCTION_LIST, use_pdb=False)
     assert source
 
 def test_parse_args():
