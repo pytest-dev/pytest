@@ -19,6 +19,9 @@ class ExceptionInfo(object):
         self._excinfo = tup
         self.type, self.value, tb = self._excinfo
         self.typename = str(self.type)
+        if issubclass(self.type, object):
+            # cpy 2.5
+            self.typename = self.typename[7:-2]
         self.traceback = py.code.Traceback(tb) 
 
     def exconly(self, tryshort=False): 
