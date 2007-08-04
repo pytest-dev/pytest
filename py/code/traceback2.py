@@ -1,5 +1,6 @@
 from __future__ import generators 
-import py 
+import py
+import sys
 
 class TracebackEntry(object):
     """ a single entry in a traceback """
@@ -9,6 +10,9 @@ class TracebackEntry(object):
     def __init__(self, rawentry):
         self._rawentry = rawentry
         self.frame = py.code.Frame(rawentry.tb_frame)
+        # Ugh. 2.4 and 2.5 differs here when encountering
+        # multi-line statements. Not sure about the solution, but
+        # should be portable
         self.lineno = rawentry.tb_lineno - 1
         self.relline = self.lineno - self.frame.code.firstlineno
 
