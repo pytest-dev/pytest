@@ -42,8 +42,11 @@ if __name__ == '__main__':
     string = args[0]
     if options.ignorecase:
         string = string.lower()
-    for x in curdir.visit('*.py', rec): 
-        s = x.read()
+    for x in curdir.visit('*.py', rec):
+        try:
+            s = x.read()
+        except py.error.ENOENT:
+            pass # whatever, probably broken link (ie emacs lock)
         searchs = s
         if options.ignorecase:
             searchs = s.lower()
