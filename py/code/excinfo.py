@@ -18,10 +18,7 @@ class ExceptionInfo(object):
                     self._striptext = 'AssertionError: '
         self._excinfo = tup
         self.type, self.value, tb = self._excinfo
-        self.typename = str(self.type)
-        if issubclass(self.type, object):
-            # cpy 2.5
-            self.typename = self.typename[7:-2]
+        self.typename = self.type.__module__ + '.' + self.type.__name__
         self.traceback = py.code.Traceback(tb) 
 
     def exconly(self, tryshort=False): 
