@@ -24,13 +24,14 @@ if 'ThreadOut' not in globals():
     ThreadOut = py._thread.ThreadOut 
 
 import os
-debug = open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
+debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
 
 sysex = (KeyboardInterrupt, SystemExit)
 class StopExecLoop(Exception):
     pass
 
 class Gateway(object):
+    _StopExecLoop = StopExecLoop
     _ThreadOut = ThreadOut 
     remoteaddress = ""
     _requestqueue = None
@@ -165,7 +166,7 @@ class Gateway(object):
                     break
                 try:
                     self._executetask(item)
-                except StopExecLoop:
+                except self._StopExecLoop:
                     break
         finally:
             self._trace("_servemain finished") 
@@ -189,7 +190,7 @@ class Gateway(object):
                     gw._stopsend()
                     execpool.shutdown()
                     execpool.join()
-                    raise StopExecLoop
+                    raise gw._StopExecLoop
                 execpool.dispatch(gw._executetask, task)
         """ % num)
         self._remotechannelthread = self.remote_exec(source)
@@ -211,7 +212,7 @@ class Gateway(object):
                 self._trace("execution finished:", repr(source)[:50])
         except (KeyboardInterrupt, SystemExit):
             pass 
-        except StopExecLoop:
+        except self._StopExecLoop:
             channel.close()
             raise
         except:
