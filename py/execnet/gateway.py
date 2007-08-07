@@ -22,33 +22,38 @@ if 'ThreadOut' not in globals():
     from py.__.execnet.channel import ChannelFactory, Channel
     from py.__.execnet.message import Message
     ThreadOut = py._thread.ThreadOut 
-    WorkerPool = py._thread.WorkerPool 
-    NamedThreadPool = py._thread.NamedThreadPool 
 
 import os
-debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
+debug = open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
 
 sysex = (KeyboardInterrupt, SystemExit)
+class StopExecLoop(Exception):
+    pass
 
 class Gateway(object):
     _ThreadOut = ThreadOut 
     remoteaddress = ""
-    def __init__(self, io, execthreads=None, _startcount=2): 
+    _requestqueue = None
+
+    def __init__(self, io, _startcount=2): 
         """ initialize core gateway, using the given 
-            inputoutput object and 'execthreads' execution
-            threads. 
+            inputoutput object. 
         """
-        global registered_cleanup
-        self._execpool = WorkerPool(maxthreads=execthreads)
+        global registered_cleanup, _activegateways
         self._io = io
-        self._outgoing = Queue.Queue()
         self._channelfactory = ChannelFactory(self, _startcount)
         if not registered_cleanup:
             atexit.register(cleanup_atexit)
             registered_cleanup = True
-        _active_sendqueues[self._outgoing] = True
-        self._pool = NamedThreadPool(receiver = self._thread_receiver, 
-                                     sender = self._thread_sender)
+        _activegateways[self] = True
+
+    def _initreceive(self, requestqueue=False):
+        if requestqueue: 
+            self._requestqueue = Queue.Queue()
+        self._receiverthread = threading.Thread(name="receiver", 
+                                 target=self._thread_receiver)
+        self._receiverthread.setDaemon(0)
+        self._receiverthread.start() 
 
     def __repr__(self):
         """ return string representing gateway type and status. """
@@ -58,19 +63,15 @@ class Gateway(object):
         else:
             addr = ''
         try:
-            r = (len(self._pool.getstarted('receiver'))
-                 and "receiving" or "not receiving")
-            s = (len(self._pool.getstarted('sender')) 
-                 and "sending" or "not sending")
+            r = (self._receiverthread.isAlive() and "receiving" or 
+                 "not receiving")
+            s = "sending" # XXX
             i = len(self._channelfactory.channels())
         except AttributeError:
             r = s = "uninitialized"
             i = "no"
         return "<%s%s %s/%s (%s active channels)>" %(
                 self.__class__.__name__, addr, r, s, i)
-
-##    def _local_trystopexec(self):
-##        self._execpool.shutdown() 
 
     def _trace(self, *args):
         if debug:
@@ -111,35 +112,25 @@ class Gateway(object):
                     self._traceex(exc_info())
                     break 
         finally:
-            self._send(None)
+            self._stopexec()
+            self._stopsend()
             self._channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
 
     def _send(self, msg):
-        self._outgoing.put(msg)
-
-    def _thread_sender(self):
-        """ thread to send Messages over the wire. """
-        try:
-            from sys import exc_info
-            while 1:
-                msg = self._outgoing.get()
-                try:
-                    if msg is None:
-                        self._io.close_write()
-                        break
-                    msg.writeto(self._io)
-                except:
-                    excinfo = exc_info()
-                    self._traceex(excinfo)
-                    if msg is not None:
-                        msg.post_sent(self, excinfo)
-                    break
-                else:
-                    self._trace('sent -> %r' % msg)
-                    msg.post_sent(self)
-        finally:
-            self._trace('leaving %r' % threading.currentThread())
+        from sys import exc_info
+        if msg is None:
+            self._io.close_write()
+        else:
+            try:
+                msg.writeto(self._io) 
+            except: 
+                excinfo = exc_info()
+                self._traceex(excinfo)
+                msg.post_sent(self, excinfo)
+            else:
+                msg.post_sent(self)
+                self._trace('sent -> %r' % msg)
 
     def _local_redirect_thread_output(self, outid, errid): 
         l = []
@@ -155,9 +146,58 @@ class Gateway(object):
                 channel.close() 
         return close 
 
-    def _thread_executor(self, channel, (source, outid, errid)):
-        """ worker thread to execute source objects from the execution queue. """
+    def _local_schedulexec(self, channel, sourcetask):
+        if self._requestqueue is not None:
+            self._requestqueue.put((channel, sourcetask)) 
+        else:
+            # we will not execute, let's send back an error
+            # to inform the other side
+            channel.close("execution disallowed")
+
+    def _servemain(self, joining=True):
         from sys import exc_info
+        self._initreceive(requestqueue=True)
+        try:
+            while 1:
+                item = self._requestqueue.get()
+                if item is None:
+                    self._stopsend()
+                    break
+                try:
+                    self._executetask(item)
+                except StopExecLoop:
+                    break
+        finally:
+            self._trace("_servemain finished") 
+        if self.joining:
+            self.join()
+
+    def remote_init_threads(self, num=None):
+        """ start up to 'num' threads for subsequent 
+            remote_exec() invocations to allow concurrent
+            execution. 
+        """
+        if hasattr(self, '_remotechannelthread'):
+            raise IOError("remote threads already running")
+        from py.__.thread import pool
+        source = py.code.Source(pool, """
+            execpool = WorkerPool(maxthreads=%r)
+            gw = channel.gateway
+            while 1:
+                task = gw._requestqueue.get()
+                if task is None:
+                    gw._stopsend()
+                    execpool.shutdown()
+                    execpool.join()
+                    raise StopExecLoop
+                execpool.dispatch(gw._executetask, task)
+        """ % num)
+        self._remotechannelthread = self.remote_exec(source)
+
+    def _executetask(self, item):
+        """ execute channel/source items. """
+        from sys import exc_info
+        channel, (source, outid, errid) = item 
         try:
             loc = { 'channel' : channel }
             self._trace("execution starts:", repr(source)[:50])
@@ -171,6 +211,9 @@ class Gateway(object):
                 self._trace("execution finished:", repr(source)[:50])
         except (KeyboardInterrupt, SystemExit):
             pass 
+        except StopExecLoop:
+            channel.close()
+            raise
         except:
             excinfo = exc_info()
             l = traceback.format_exception(*excinfo)
@@ -179,10 +222,6 @@ class Gateway(object):
             self._trace(errortext)
         else:
             channel.close()
-
-    def _local_schedulexec(self, channel, sourcetask): 
-        self._trace("dispatching exec")
-        self._execpool.dispatch(self._thread_executor, channel, sourcetask) 
 
     def _newredirectchannelid(self, callback): 
         if callback is None: 
@@ -257,27 +296,25 @@ class Gateway(object):
         return Handle()
 
     def exit(self):
-        """ Try to stop all IO activity. """
-        try:
-            del _active_sendqueues[self._outgoing]
-        except KeyError:
-            pass
-        else:
-            self._send(None)
+        """ Try to stop all exec and IO activity. """
+        self._stopexec()
+        self._stopsend()
+
+    def _stopsend(self):
+        self._send(None)
+
+    def _stopexec(self):
+        if self._requestqueue is not None:
+            self._requestqueue.put(None)
 
     def join(self, joinexec=True):
         """ Wait for all IO (and by default all execution activity) 
-            to stop. 
+            to stop. the joinexec parameter is obsolete. 
         """
         current = threading.currentThread()
-        for x in self._pool.getstarted(): 
-            if x != current: 
-                self._trace("joining %s" % x)
-                x.join()
-        self._trace("joining sender/reciver threads finished, current %r" % current) 
-        if joinexec: 
-            self._execpool.join()
-            self._trace("joining execution threads finished, current %r" % current) 
+        if self._receiverthread.isAlive():
+            self._trace("joining receiver thread")
+            self._receiverthread.join()
 
 def getid(gw, cache={}):
     name = gw.__class__.__name__
@@ -288,14 +325,12 @@ def getid(gw, cache={}):
         return x
 
 registered_cleanup = False
-_active_sendqueues = weakref.WeakKeyDictionary()
+_activegateways = weakref.WeakKeyDictionary()
 def cleanup_atexit():
     if debug:
         print >>debug, "="*20 + "cleaning up" + "=" * 20
         debug.flush()
-    while True:
-        try:
-            queue, ignored = _active_sendqueues.popitem()
-        except KeyError:
-            break
-        queue.put(None)
+    while _activegateways:
+        gw, ignored = _activegateways.popitem()
+        gw.exit()
+        #gw.join() should work as well

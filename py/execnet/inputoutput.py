@@ -43,11 +43,17 @@ import sys
 
     def close_read(self):
         if self.readable:
-            self.sock.shutdown(0)
+            try:
+                self.sock.shutdown(0)
+            except socket.error:
+                pass
             self.readable = None
     def close_write(self):
         if self.writeable:
-            self.sock.shutdown(1)
+            try:
+                self.sock.shutdown(1)
+            except socket.error:
+                pass
             self.writeable = None
 
 class Popen2IO:

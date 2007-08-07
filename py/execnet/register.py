@@ -11,7 +11,6 @@ import py
 
 startup_modules = [
     'py.__.thread.io', 
-    'py.__.thread.pool', 
     'py.__.execnet.inputoutput', 
     'py.__.execnet.gateway', 
     'py.__.execnet.message', 
@@ -29,6 +28,8 @@ class InstallableGateway(gateway.Gateway):
     def __init__(self, io):
         self._remote_bootstrap_gateway(io)
         super(InstallableGateway, self).__init__(io=io, _startcount=1) 
+        # XXX we dissallow execution form the other side
+        self._initreceive(requestqueue=False) 
 
     def _remote_bootstrap_gateway(self, io, extra=''):
         """ return Gateway with a asynchronously remotely
@@ -41,7 +42,7 @@ class InstallableGateway(gateway.Gateway):
         bootstrap = [extra]
         bootstrap += [getsource(x) for x in startup_modules]
         bootstrap += [io.server_stmt, 
-                      "Gateway(io=io, _startcount=2).join(joinexec=False)",
+                      "Gateway(io=io, _startcount=2)._servemain()", 
                      ]
         source = "\n".join(bootstrap)
         self._trace("sending gateway bootstrap code")

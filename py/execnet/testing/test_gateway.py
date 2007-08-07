@@ -83,8 +83,7 @@ class PopenGatewayTestSetup:
 
 class BasicRemoteExecution:
     def test_correct_setup(self):
-        for x in 'sender', 'receiver':  
-            assert self.gw._pool.getstarted(x) 
+        assert self.gw._receiverthread.isAlive()
 
     def test_repr_doesnt_crash(self):
         assert isinstance(repr(self), str)
@@ -373,6 +372,18 @@ class BasicRemoteExecution:
         res = channel.receive()
         assert res == 42
 
+    def test_non_reverse_execution(self):
+        gw = self.gw
+        c1 = gw.remote_exec("""
+            c = channel.gateway.remote_exec("pass")
+            try:
+                c.waitclose()
+            except c.RemoteError, e: 
+                channel.send(str(e))
+        """)
+        text = c1.receive()
+        assert text.find("execution disallowed") != -1 
+    
 #class TestBlockingIssues: 
 #    def test_join_blocked_execution_gateway(self): 
 #        gateway = py.execnet.PopenGateway() 
@@ -486,3 +497,23 @@ class TestSshGateway(BasicRemoteExecution):
             # now it did
             py.test.raises(IOError, gw.remote_exec, "...")
 
+def test_threads():
+    gw = py.execnet.PopenGateway()
+    gw.remote_init_threads(3)
+    c1 = gw.remote_exec("channel.send(channel.receive())")
+    c2 = gw.remote_exec("channel.send(channel.receive())")
+    c2.send(1)
+    res = c2.receive()
+    assert res == 1
+    c1.send(42)
+    res = c1.receive()
+    assert res == 42
+    gw.exit()
+
+def test_threads_twice():
+    gw = py.execnet.PopenGateway()
+    gw.remote_init_threads(3)
+    py.test.raises(IOError, gw.remote_init_threads, 3)
+    gw.exit() 
+    
+    
