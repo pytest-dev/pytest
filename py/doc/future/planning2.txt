@@ -1,4 +1,4 @@
-What I miss in py.test (personally):
+Missing features/bugs in pylib:
 ====================================
 
 * new skip method, so web interface would show skips which
@@ -21,8 +21,8 @@ What I miss in py.test (personally):
 * once session integration is done, it would be cool to have nightly
   testing done in a systematic manner (instead of bunch of hacks, which
   is how it looks like right now), so for example codespeak would be able
-  to store information (ie via svn) and when I woke up I can type py.test show
-  and see the information of all nightly test runs which I like.
+  to store information (ie via svn) and when one woke up he can type py.test
+  show and see the information of all nightly test runs which he likes.
 
 * py.test.pdb - there is my hack for a while now, which integrates
   rlcompleter2 with pdb. First of all it requires some strange changes
