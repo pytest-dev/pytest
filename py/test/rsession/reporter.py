@@ -28,28 +28,23 @@ class AbstractReporter(object):
         self.skipped = dict([(host, 0) for host in hosts])
         self.passed = dict([(host, 0) for host in hosts])
         self.to_rsync = {}
-        self.lock = thread.allocate_lock()
 
     def get_item_name(self, event, colitem):
         return "/".join(colitem.listnames())
     
     def report(self, what):
+        repfun = getattr(self, "report_" + what.__class__.__name__, 
+                         self.report_unknown)
         try:
-            self.lock.acquire()
-            repfun = getattr(self, "report_" + what.__class__.__name__, 
-                             self.report_unknown)
-            try:
-                return repfun(what)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
-                print "Internal reporting problem"
-                excinfo = py.code.ExceptionInfo()
-                for i in excinfo.traceback:
-                    print str(i)[2:-1]
-                print excinfo
-        finally:
-            self.lock.release()
+            return repfun(what)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            print "Internal reporting problem"
+            excinfo = py.code.ExceptionInfo()
+            for i in excinfo.traceback:
+                print str(i)[2:-1]
+            print excinfo
     
     def report_unknown(self, what):
         if self.config.option.verbose: 
