@@ -27,11 +27,9 @@ import os
 debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
 
 sysex = (KeyboardInterrupt, SystemExit)
-class StopExecLoop(Exception):
-    pass
 
 class Gateway(object):
-    _StopExecLoop = StopExecLoop
+    class _StopExecLoop(Exception): pass
     _ThreadOut = ThreadOut 
     remoteaddress = ""
     _requestqueue = None
