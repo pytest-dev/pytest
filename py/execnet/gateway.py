@@ -50,7 +50,7 @@ class GatewayCleanup:
             debug.flush()
         for gw in self._activegateways.keys():
             gw.exit()
-            gw.join() # should work as well
+            #gw.join() # should work as well
 
 # ----------------------------------------------------------
 # Base Gateway (used for both remote and local side) 
@@ -141,15 +141,15 @@ class Gateway(object):
             self._channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
 
+    from sys import exc_info
     def _send(self, msg):
-        from sys import exc_info
         if msg is None:
             self._io.close_write()
         else:
             try:
                 msg.writeto(self._io) 
             except: 
-                excinfo = exc_info()
+                excinfo = self.exc_info()
                 self._traceex(excinfo)
                 msg.post_sent(self, excinfo)
             else:
@@ -193,7 +193,7 @@ class Gateway(object):
                     break
         finally:
             self._trace("_servemain finished") 
-        if self.joining:
+        if joining:
             self.join()
 
     def remote_init_threads(self, num=None):
