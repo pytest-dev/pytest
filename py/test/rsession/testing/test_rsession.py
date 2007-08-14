@@ -29,7 +29,7 @@ def test_example_tryiter():
     rootcol = py.test.collect.Directory(tmpdir)
     data = list(rootcol._tryiter(reporterror=events.append))
     assert len(events) == 2
-    assert str(events[1][0].value) == "Reason"
+    assert str(events[1][0].value).find("Reason") != -1
 
 class TestRSessionRemote(DirSetup, BasicRsessionTest): 
     def test_example_distribution_minus_x(self):

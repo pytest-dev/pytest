@@ -18,7 +18,6 @@ etc.
 
 
 import py, os
-#py.test.skip("in progress")
 from py.__.test.rsession.rsession import LocalReporter, AbstractSession,\
     RemoteReporter
 from py.__.test.rsession import repevent
@@ -173,23 +172,19 @@ class TestLocalReporter(AbstractTestReporter):
     reporter = LocalReporter
     
     def test_report_received_item_outcome(self):
-        #py.test.skip("XXX rewrite test to not rely on exact formatting")
         assert self.report_received_item_outcome() == 'FsF.'
 
     def test_module(self):
-        #py.test.skip("XXX rewrite test to not rely on exact formatting")
         output = self._test_module()
         assert output.find("test_one") != -1
         assert output.endswith("FsF."), output
     
     def test_full_module(self):
-        #py.test.skip("XXX rewrite test to not rely on exact formatting")
         received = self._test_full_module()
-        expected = """
-repmod/test_one.py[1] 
-repmod/test_three.py[0] - FAILED TO LOAD MODULE
-repmod/test_two.py[0] - skipped (reason)"""
-        assert received.find(expected) != -1
+        expected_lst = ["repmod/test_one.py", "FAILED TO LOAD MODULE",
+                        "skipped", "reason"]
+        for i in expected_lst:
+            assert received.find(i) != -1
 
 class TestRemoteReporter(AbstractTestReporter):
     reporter = RemoteReporter
@@ -198,28 +193,24 @@ class TestRemoteReporter(AbstractTestReporter):
         self._test_still_to_go()
 
     def test_report_received_item_outcome(self):
-        py.test.skip("XXX rewrite test to not rely on exact formatting")
         val = self.report_received_item_outcome()
-        expected = """ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
- localhost: SKIPPED py.test.rsession.testing.test_slave.py funcpass
- localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
- localhost: PASSED  py.test.rsession.testing.test_slave.py funcpass
-"""
-        assert val.find(expected) != -1
+        expected_lst = ["localhost", "FAILED",
+                        "funcpass", "test_one",
+                        "SKIPPED",
+                        "PASSED"]
+        for expected in expected_lst:
+            assert val.find(expected) != -1
     
     def test_module(self):
-        py.test.skip("XXX rewrite test to not rely on exact formatting")
         val = self._test_module()
-        print val
-        expected = """ localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
- localhost: SKIPPED py.test.rsession.testing.test_slave.py funcpass
- localhost: FAILED  py.test.rsession.testing.test_slave.py funcpass
- localhost: PASSED  py.test.rsession.testing.test_slave.py funcpass
-"""
-        assert val.find(expected) != -1
+        expected_lst = ["localhost", "FAILED",
+                        "funcpass", "test_one",
+                        "SKIPPED",
+                        "PASSED"]
+        for expected in expected_lst:
+            assert val.find(expected) != -1
     
     def test_full_module(self):
-        #py.test.skip("XXX rewrite test to not rely on exact formatting")
         val = self._test_full_module()
-        assert val.find('FAILED TO LOAD MODULE: repmod/test_three.py\n'\
-        '\nSkipped (reason) repmod/test_two.py') != -1
+        assert val.find("FAILED TO LOAD MODULE: repmod/test_three.py\n"\
+        "\nSkipped ('reason') repmod/test_two.py") != -1
