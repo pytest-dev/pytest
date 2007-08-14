@@ -9,7 +9,7 @@ class Outcome:
 
     def __repr__(self):
         if self.msg: 
-            return self.msg 
+            return repr(self.msg) 
         return "<%s instance>" %(self.__class__.__name__,)
     __str__ = __repr__
 
