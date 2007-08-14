@@ -46,9 +46,6 @@ class Collector(object):
         self.name = name 
         self.parent = parent
         self._config = getattr(parent, '_config', py.test.config)
-        if parent is not None:
-            if hasattr(parent, 'config'):
-                py.test.pdb()
         self.fspath = getattr(parent, 'fspath', None) 
 
     Module = configproperty('Module')
@@ -333,7 +330,7 @@ class PyCollectorMixin(Collector):
                 raise 
             except:
                 self._name2items_exception = py.std.sys.exc_info()
-                raise 
+                raise
 
     def run(self): 
         self._prepare()
