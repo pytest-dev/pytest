@@ -70,7 +70,25 @@ class Function(FunctionMixin, Item):
 #
 # triggering specific outcomes while executing Items
 #
-def skip(msg="unknown reason"):
+class BaseReason(object):
+    def __init__(self, msg="unknown reason", **kwds):
+        self.msg = msg
+        self.__dict__.update(kwds)
+
+    def __repr__(self):
+        return self.msg
+
+class Broken(BaseReason):
+    def __repr__(self):
+        return "Broken: %s" % (self.msg,)
+
+class _NotImplemented(BaseReason):
+    def __repr__(self):
+        return "Not implemented: %s" % (self.msg,)
+
+# whatever comes here....
+
+def skip(msg=BaseReason()):
     """ skip with the given Message. """
     __tracebackhide__ = True
     raise Skipped(msg=msg) 

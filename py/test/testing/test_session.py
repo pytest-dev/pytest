@@ -325,3 +325,24 @@ class TestTerminalSession:
         expected_output = '\nE   ' + line_to_report + '\n'
         print 'Looking for:', expected_output
         assert expected_output in out
+
+        
+def test_skip_reasons():
+    tmp = py.test.ensuretemp("check_skip_reasons")
+    tmp.ensure("test_one.py").write(py.code.Source("""
+        import py
+        def test_1():
+            py.test.skip(py.test.broken('stuff'))
+        
+        def test_2():
+            py.test.skip(py.test.notimplemented('stuff'))
+    """))
+    tmp.ensure("__init__.py")
+    config = py.test.config._reparse([tmp])
+    session = config.initsession()
+    session.main()
+    skips = session.getitemoutcomepairs(Skipped)
+    assert len(skips) == 2
+    assert repr(skips[0][1]) == 'Broken: stuff'
+    assert repr(skips[1][1]) == 'Not implemented: stuff'
+    
