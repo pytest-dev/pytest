@@ -68,9 +68,8 @@ class LocalPath(common.FSPathBase, PlatformMixin):
         elif isinstance(path, str):
             self.strpath = os.path.abspath(os.path.normpath(str(path)))
         else:
-            raise ValueError(
-                "can only pass None, Path instances "
-                "or non-empty strings to LocalPath")
+            raise ValueError("can only pass None, Path instances "
+                             "or non-empty strings to LocalPath")
         assert isinstance(self.strpath, str)
         return self
 
