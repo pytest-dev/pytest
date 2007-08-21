@@ -2,6 +2,7 @@
 import os
 import sys
 import py
+import tempfile
 
 class FDCapture: 
     """ Capture IO to/from a given os-level filedescriptor. """
@@ -41,7 +42,7 @@ class FDCapture:
     def maketmpfile(self): 
         """ create a temporary file
         """
-        f = os.tmpfile()
+        f = tempfile.TemporaryFile()
         newf = py.io.dupfile(f) 
         f.close()
         return newf 
@@ -49,7 +50,7 @@ class FDCapture:
     def writeorg(self, str):
         """ write a string to the original file descriptor
         """
-        tempfp = os.tmpfile()
+        tempfp = tempfile.TemporaryFile()
         try:
             os.dup2(self._savefd, tempfp.fileno())
             tempfp.write(str)
