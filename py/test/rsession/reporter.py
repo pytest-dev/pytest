@@ -254,13 +254,13 @@ class AbstractReporter(object):
         else:
             self.failed[host] += 1
             self.failed_tests_outcome.append(event)
-            sys.stdout.write("%15s: " % hostrepr) 
+            sys.stdout.write("%15s: " % hostrepr)
             ansi_print("FAILED", esc=(31,1), newline=False, file=sys.stdout)
             sys.stdout.write("  ")
         # we should have printed 20 characters to this point
         itempath = ".".join(event.item.listnames()[1:-1])
         funname = event.item.listnames()[-1]
-        lgt = get_terminal_width() - 20
+        lgt = get_terminal_width() - 25
         # mark the function name, to be sure
         to_display = len(itempath) + len(funname) + 1
         if to_display > lgt:
