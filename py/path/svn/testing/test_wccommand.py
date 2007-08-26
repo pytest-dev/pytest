@@ -226,6 +226,50 @@ class TestWCSvnCommandPath(CommonSvnTests):
             p.remove(rec=1)
             f.remove()
 
+    def test_lock_unlock(self):
+        root = self.root
+        somefile = root.join('somefile')
+        somefile.ensure(file=True)
+        # not yet added to repo
+        py.test.raises(py.process.cmdexec.Error, 'somefile.lock()')
+        somefile.write('foo')
+        somefile.commit('test')
+        assert somefile.check(versioned=True)
+        somefile.lock()
+        try:
+            locked = root.status().locked
+            assert len(locked) == 1
+            assert str(locked[0]) == str(somefile)
+            #assert somefile.locked()
+            py.test.raises(Exception, 'somefile.lock()')
+        finally:
+            somefile.unlock()
+        #assert not somefile.locked()
+        locked = root.status().locked
+        assert locked == []
+        py.test.raises(Exception, 'somefile,unlock()')
+        somefile.remove()
+
+    def test_commit_nonrecursive(self):
+        root = self.root
+        somedir = root.join('sampledir')
+        somefile = somedir.join('otherfile')
+        somefile.write('foo')
+        somedir.propset('foo', 'bar')
+        status = somedir.status()
+        assert len(status.prop_modified) == 1
+        assert len(status.modified) == 1
+
+        somedir.commit('non-recursive commit', rec=0)
+        status = somedir.status()
+        assert len(status.prop_modified) == 0
+        assert len(status.modified) == 1
+
+        somedir.commit('recursive commit')
+        status = somedir.status()
+        assert len(status.prop_modified) == 0
+        assert len(status.modified) == 0
+
     #def test_log(self):
     #   l = self.root.log()
     #   assert len(l) == 3  # might need to be upped if more tests are added

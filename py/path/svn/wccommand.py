@@ -199,6 +199,28 @@ class SvnWCCommandPath(common.FSPathBase):
 
     _rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(\S+)\s+(.*)')
 
+    def lock(self):
+        """ set a lock (exclusive) on the resource """
+        out = self._svn('lock').strip()
+        if not out:
+            # warning or error, raise exception
+            raise Exception(out[4:])
+    
+    def unlock(self):
+        """ unset a previously set lock """
+        out = self._svn('unlock').strip()
+        if out.startswith('svn:'):
+            # warning or error, raise exception
+            raise Exception(out[4:])
+
+    def cleanup(self):
+        """ remove any locks from the resource """
+        # XXX should be fixed properly!!!
+        try:
+            self.unlock()
+        except:
+            pass
+
     def status(self, updates=0, rec=0, externals=0):
         """ return (collective) Status object for this file. """
         # http://svnbook.red-bean.com/book.html#svn-ch-3-sect-4.3.1
@@ -234,7 +256,7 @@ class SvnWCCommandPath(common.FSPathBase):
             #print "processing %r" % line
             flags, rest = line[:8], line[8:]
             # first column
-            c0,c1,c2,c3,c4,x5,x6,c7 = flags
+            c0,c1,c2,c3,c4,c5,x6,c7 = flags
             #if '*' in line:
             #    print "flags", repr(flags), "rest", repr(rest)
 
@@ -291,7 +313,8 @@ class SvnWCCommandPath(common.FSPathBase):
 
             if c1 == 'M':
                 rootstatus.prop_modified.append(wcpath)
-            if c2 == 'L':
+            # XXX do we cover all client versions here?
+            if c2 == 'L' or c5 == 'K':
                 rootstatus.locked.append(wcpath)
             if c7 == '*':
                 rootstatus.update_available.append(wcpath)
@@ -333,11 +356,14 @@ class SvnWCCommandPath(common.FSPathBase):
         return result
 
     _rex_commit = re.compile(r'.*Committed revision (\d+)\.$', re.DOTALL)
-    def commit(self, message=""): 
-        """commit() returns None if there was nothing to commit
-           and the revision number of the commit otherwise.
-        """
-        out = self._svn('commit -m "%s"' % message)
+    def commit(self, msg='', rec=1):
+        """ commit with support for non-recursive commits """
+        from py.__.path.svn import cache
+        # XXX i guess escaping should be done better here?!?
+        cmd = 'commit -m "%s" --force-log' % (msg.replace('"', '\\"'),)
+        if not rec:
+            cmd += ' -N'
+        out = self._svn(cmd)
         try:
             del cache.info[self]
         except KeyError:
@@ -540,7 +566,7 @@ if verbose is True, then the LogEntry instances also know which files changed.
 class WCStatus:
     attrnames = ('modified','added', 'conflict', 'unchanged', 'external',
                 'deleted', 'prop_modified', 'unknown', 'update_available',
-                'incomplete', 'kindmismatch', 'ignored'
+                'incomplete', 'kindmismatch', 'ignored', 'locked'
                 )
 
     def __init__(self, wcpath, rev=None, modrev=None, author=None):
