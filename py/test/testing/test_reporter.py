@@ -18,13 +18,14 @@ etc.
 
 
 import py, os
-from py.__.test.rsession.rsession import LocalReporter, AbstractSession,\
-    RemoteReporter
-from py.__.test.rsession import repevent
-from py.__.test.rsession.outcome import ReprOutcome, Outcome
+from py.__.test.session import AbstractSession
+from py.__.test.reporter import RemoteReporter, LocalReporter, choose_reporter 
+from py.__.test import repevent
+from py.__.test.outcome import ReprOutcome, SerializableOutcome
 from py.__.test.rsession.hostmanage import HostInfo
 from py.__.test.rsession.box import Box
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
+from py.__.test.rsession.master import itemgen
 import sys
 from StringIO import StringIO
 
@@ -44,10 +45,10 @@ class AbstractTestReporter(BasicRsessionTest):
         except:
             exc = py.code.ExceptionInfo()
         
-        outcomes = [Outcome(()), 
-            Outcome(skipped=True),
-            Outcome(excinfo=exc),
-            Outcome()]
+        outcomes = [SerializableOutcome(()), 
+            SerializableOutcome(skipped=True),
+            SerializableOutcome(excinfo=exc),
+            SerializableOutcome()]
         
         outcomes = [ReprOutcome(outcome.make_repr()) for outcome in outcomes]
         outcomes[3].signal = 11
@@ -111,7 +112,7 @@ class AbstractTestReporter(BasicRsessionTest):
             rootcol = py.test.collect.Directory(tmpdir)
             hosts = [HostInfo('localhost')]
             r = self.reporter(config, hosts)
-            list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
+            list(itemgen([rootcol], r.report))
 
         cap = py.io.StdCaptureFD()
         boxfun()
@@ -132,7 +133,7 @@ class AbstractTestReporter(BasicRsessionTest):
             r = self.reporter(config, [host])
             r.report(repevent.TestStarted([host], config.topdir, ["a"]))
             r.report(repevent.RsyncFinished())
-            list(rootcol._tryiter(reporterror=lambda x : AbstractSession.reporterror(r.report, x)))
+            list(itemgen([rootcol], r.report))
             r.report(repevent.TestFinished())
             return r
         
@@ -149,6 +150,8 @@ class AbstractTestReporter(BasicRsessionTest):
         cap = py.io.StdCaptureFD()
         config = py.test.config._reparse([str(tmpdir)])
         hosts = [HostInfo(i) for i in ["host1", "host2", "host3"]]
+        for host in hosts:
+            host.gw_remotepath = ''
         r = self.reporter(config, hosts)
         r.report(repevent.TestStarted(hosts, config.topdir, ["a", "b", "c"]))
         for host in hosts:
@@ -214,3 +217,17 @@ class TestRemoteReporter(AbstractTestReporter):
         val = self._test_full_module()
         assert val.find("FAILED TO LOAD MODULE: repmod/test_three.py\n"\
         "\nSkipped ('reason') repmod/test_two.py") != -1
+
+def test_reporter_choice():
+    from py.__.test.rsession.web import WebReporter
+    from py.__.test.rsession.rest import RestReporter
+    choices = [
+        (['-d'], RemoteReporter),
+        (['-d', '--rest'], RestReporter),
+        ([], LocalReporter),
+        (['-w'], WebReporter),
+        (['-r'], WebReporter)]
+    for opts, reporter in choices:
+        config = py.test.config._reparse(['xxx'] + opts)
+        assert choose_reporter(config) is reporter
+

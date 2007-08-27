@@ -1,33 +1,23 @@
 import py
 from py.__.test.outcome import Outcome, Failed, Passed, Skipped
+from py.__.test.reporter import choose_reporter, TestReporter
 
-class Session(object):
-    """
-        A Session gets test Items from Collectors, # executes the
-        Items and sends the Outcome to the Reporter.
+class AbstractSession(object): 
+    """ An abstract session executes collectors/items through a runner. 
     """
     def __init__(self, config): 
         self._memo = []
         self.config = config
         self._keyword = config.option.keyword
 
-    def shouldclose(self): 
-        return False 
-
-    def header(self, colitems):
-        """ setup any neccessary resources ahead of the test run. """
-        if not self.config.option.nomagic:
-            py.magic.invoke(assertion=1)
-
-    def footer(self, colitems):
-        """ teardown any resources after a test run. """ 
-        py.test.collect.Function._state.teardown_all()
-        if not self.config.option.nomagic:
-            py.magic.revoke(assertion=1)
-
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
-        option = self.config.option
+        option = self.config.option 
+        if option.runbrowser and not option.startserver:
+            #print "--runbrowser implies --startserver"
+            option.startserver = True
+        if self.config.getvalue("dist_boxed") and option.dist:
+            option.boxed = True
         # implied options
         if option.usepdb:
             if not option.nocapture:
@@ -42,6 +32,34 @@ class Session(object):
 
         if option.keyword_oneshot and not option.keyword:
             raise ValueError, "--keyword-oneshot makes sense only when --keyword is supplied"
+
+    def init_reporter(self, reporter, config, hosts):
+        if reporter is None:
+            reporter = choose_reporter(config)(config, hosts)
+        else:
+            reporter = TestReporter(reporter)
+        checkfun = lambda : self.config.option.exitfirst and \
+                            reporter.was_failure()
+        return reporter, checkfun
+
+class Session(AbstractSession):
+    """
+        A Session gets test Items from Collectors, # executes the
+        Items and sends the Outcome to the Reporter.
+    """
+    def shouldclose(self): 
+        return False
+
+    def header(self, colitems):
+        """ setup any neccessary resources ahead of the test run. """
+        if not self.config.option.nomagic:
+            py.magic.invoke(assertion=1)
+
+    def footer(self, colitems):
+        """ teardown any resources after a test run. """ 
+        py.test.collect.Function._state.teardown_all()
+        if not self.config.option.nomagic:
+            py.magic.revoke(assertion=1)
 
     def start(self, colitem): 
         """ hook invoked before each colitem.run() invocation. """ 

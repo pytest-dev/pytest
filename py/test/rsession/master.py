@@ -2,8 +2,9 @@
 Node code for Master. 
 """
 import py
-from py.__.test.rsession.outcome import ReprOutcome
-from py.__.test.rsession import repevent
+from py.__.test.outcome import ReprOutcome
+from py.__.test import repevent
+from py.__.test.outcome import Skipped
 
 class MasterNode(object):
     def __init__(self, channel, reporter):
@@ -39,12 +40,30 @@ class MasterNode(object):
             #      of hanging nodes and such
             raise
 
-def itemgen(colitems, reporter, keyword, reporterror):
-    def rep(x):
-        reporterror(reporter, x)
-    for x in colitems:
-        for y in x._tryiter(reporterror=rep, keyword=keyword):
-            yield y
+def itemgen(colitems, reporter, keyword=None):
+    stopitems = py.test.collect.Item # XXX should be generator here as well
+    for next in colitems:
+        if isinstance(next, stopitems):
+            try:
+                next._skipbykeyword(keyword)
+                yield next
+            except Skipped:
+                excinfo = py.code.ExceptionInfo()
+                reporter(repevent.SkippedTryiter(excinfo, next))
+        else:
+            reporter(repevent.ItemStart(next))
+            try:
+                for x in itemgen([next.join(x) for x in next.run()], reporter,
+                                 keyword):
+                    yield x
+            except (KeyboardInterrupt, SystemExit, GeneratorExit):
+                raise
+            except:
+                excinfo = py.code.ExceptionInfo()
+                if excinfo.type is Skipped:
+                    reporter(repevent.SkippedTryiter(excinfo, next))
+                else:
+                    reporter(repevent.FailedTryiter(excinfo, next))
 
 def dispatch_loop(masternodes, itemgenerator, shouldstop, 
                   waiter = lambda: py.std.time.sleep(0.1),

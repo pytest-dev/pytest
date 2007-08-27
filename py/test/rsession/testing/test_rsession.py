@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 from py.__.test.rsession.rsession import RSession 
 from py.__.test.rsession.hostmanage import HostManager, HostInfo
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
@@ -13,23 +13,6 @@ def setup_module(mod):
     mod.pkgdir = py.path.local(py.__file__).dirpath()
     if py.std.sys.platform == "win32":
         py.test.skip("rsession tests disabled for win32")
-
-def test_example_tryiter():
-    events = []
-    tmpdir = py.test.ensuretemp("tryitertest")
-    tmpdir.ensure("a", "__init__.py")
-    tmpdir.ensure("conftest.py").write(py.code.Source("""
-        import py
-        py.test.skip("Reason")
-    """))
-    tmpdir.ensure("a", "test_empty.py").write(py.code.Source("""
-        def test_empty():
-            pass
-    """))
-    rootcol = py.test.collect.Directory(tmpdir)
-    data = list(rootcol._tryiter(reporterror=events.append))
-    assert len(events) == 2
-    assert str(events[1][0].value).find("Reason") != -1
 
 class TestRSessionRemote(DirSetup, BasicRsessionTest): 
     def test_example_distribution_minus_x(self):
@@ -57,7 +40,6 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 3
-        assert rsession.checkfun()
 
     def test_distribution_rsync_roots_example(self):
         destdir = py.test.ensuretemp("example_dist_destdir")

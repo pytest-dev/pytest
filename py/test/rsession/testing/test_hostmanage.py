@@ -5,7 +5,7 @@
 import py
 from py.__.test.rsession.hostmanage import HostRSync, HostInfo, HostManager
 from py.__.test.rsession.hostmanage import sethomedir, gethomedir, getpath_relto_home
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 
 class DirSetup:
     def setup_method(self, method):

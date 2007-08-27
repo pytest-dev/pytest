@@ -3,13 +3,13 @@
 """
 
 import py
-from py.__.test.rsession.testing.test_reporter import AbstractTestReporter,\
+from py.__.test.testing.test_reporter import AbstractTestReporter,\
      DummyChannel
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 from py.__.test.rsession.rest import RestReporter, NoLinkWriter
 from py.__.rest.rst import *
 from py.__.test.rsession.hostmanage import HostInfo
-from py.__.test.rsession.outcome import Outcome
+from py.__.test.outcome import SerializableOutcome
 
 class Container(object):
     def __init__(self, **args):
@@ -109,7 +109,7 @@ Testing module foo/bar.py (2 items)
 """
 
     def test_ReceivedItemOutcome_PASSED(self):
-        outcome = Outcome()
+        outcome = SerializableOutcome()
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
@@ -117,7 +117,7 @@ Testing module foo/bar.py (2 items)
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_SKIPPED(self):
-        outcome = Outcome(skipped="reason")
+        outcome = SerializableOutcome(skipped="reason")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
@@ -125,7 +125,7 @@ Testing module foo/bar.py (2 items)
                                      'foo.py/bar()/baz\n\n')
 
     def test_ReceivedItemOutcome_FAILED(self):
-        outcome = Outcome(excinfo="xxx")
+        outcome = SerializableOutcome(excinfo="xxx")
         item = Container(listnames=lambda: ['', 'foo.py', 'bar', '()', 'baz'])
         event = repevent.ReceivedItemOutcome(channel=ch, outcome=outcome, item=item)
         reporter.report(event)
@@ -153,7 +153,7 @@ Testing module foo/bar.py (2 items)
                 ),
             ]
         )
-        outcome = Outcome(excinfo=excinfo)
+        outcome = SerializableOutcome(excinfo=excinfo)
         outcome.stdout = '<printed>'
         outcome.stderr = ''
         parent = Container(parent=None, fspath=py.path.local('.'))
@@ -336,18 +336,15 @@ class TestRestReporter(AbstractTestReporter):
         py.test.skip("Not implemented")
     
     def test_report_received_item_outcome(self):
-        py.test.skip("Relying on exact output matching")
         val = self.report_received_item_outcome()
-        expected = """\
-* localhost\: **FAILED** `traceback0`_\n  py/test/rsession/testing/test\_slave.py/funcpass
+        expected_list = [
+            "**FAILED**",
+            "**SKIPPED**",
+            "**PASSED**",
+            "* localhost\:",
+            "`traceback0`_ test\_one.py/funcpass",
+            "test\_one.py/funcpass"]
+        for expected in expected_list:
+            assert val.find(expected) != -1
 
-* localhost\: **SKIPPED** py/test/rsession/testing/test\_slave.py/funcpass
-
-* localhost\: **FAILED** `traceback1`_\n  py/test/rsession/testing/test\_slave.py/funcpass
-
-* localhost\: **PASSED** py/test/rsession/testing/test\_slave.py/funcpass
-
-"""
-        print val
-        assert val == expected
 

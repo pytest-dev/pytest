@@ -5,7 +5,7 @@ import thread, threading
 from py.__.test.rsession.master import MasterNode
 from py.__.test.rsession.slave import setup_slave
 
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 
 class HostInfo(object):
     """ Class trying to store all necessary attributes

@@ -4,7 +4,7 @@ import example1
 
 from py.__.test.rsession.executor import RunExecutor, BoxExecutor,\
     AsyncExecutor, ApigenExecutor
-from py.__.test.rsession.outcome import ReprOutcome
+from py.__.test.outcome import ReprOutcome
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
 from py.__.test.outcome import Failed
 

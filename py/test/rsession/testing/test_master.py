@@ -11,8 +11,8 @@ if sys.platform == 'win32':
 
 from py.__.test.rsession.master import dispatch_loop, MasterNode
 from py.__.test.rsession.slave import setup_slave 
-from py.__.test.rsession.outcome import ReprOutcome, Outcome 
-from py.__.test.rsession import repevent
+from py.__.test.outcome import ReprOutcome, SerializableOutcome 
+from py.__.test import repevent
 from py.__.test.rsession.hostmanage import HostInfo
 
 def setup_module(mod):
@@ -64,8 +64,8 @@ def test_masternode():
     mnode = MasterNode(ch, reportlist.append)
     mnode.send(Item("ok"))
     mnode.send(Item("notok"))
-    ch.callback(Outcome().make_repr())
-    ch.callback(Outcome(excinfo=excinfo).make_repr())
+    ch.callback(SerializableOutcome().make_repr())
+    ch.callback(SerializableOutcome(excinfo=excinfo).make_repr())
     assert len(reportlist) == 4
     received = [i for i in reportlist 
         if isinstance(i, repevent.ReceivedItemOutcome)]
@@ -91,12 +91,12 @@ def test_sending_two_noes():
     mnode = MasterNode(ch, reportlist.append)
     mnode.send(Item("ok"))
     mnode.send(Item("ok"))
-    ch.callback(Outcome().make_repr())
-    ch.callback(Outcome().make_repr())
+    ch.callback(SerializableOutcome().make_repr())
+    ch.callback(SerializableOutcome().make_repr())
     assert len(reportlist) == 4
 
 def test_outcome_repr():
-    out = ReprOutcome(Outcome(skipped=True).make_repr())
+    out = ReprOutcome(SerializableOutcome(skipped=True).make_repr())
     s = repr(out)
     assert s.lower().find("skip") != -1
 

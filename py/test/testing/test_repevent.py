@@ -1,7 +1,7 @@
 """ test reporting functionality. """
 
 import py
-from py.__.test.rsession import repevent 
+from py.__.test import repevent 
 
 def test_wrapcall_ok():
     l = []
@@ -27,10 +27,27 @@ def test_wrapcall_exception():
 def test_reporter_methods_sanity():
     """ Checks if all the methods of reporter are sane
     """
-    from py.__.test.rsession.rsession import RemoteReporter
-    from py.__.test.rsession import repevent
+    from py.__.test.reporter import RemoteReporter
     
     for method in dir(RemoteReporter):
         
         if method.startswith("report_") and method != "report_unknown":
             assert method[len('report_'):] in repevent.__dict__
+
+def test_repevent_failures():
+    from py.__.test.outcome import SerializableOutcome, ReprOutcome
+    
+    assert not repevent.ReportEvent().is_failure()
+    assert not repevent.CallEvent(None, None, None).is_failure()
+    assert repevent.FailedTryiter(None, None).is_failure()
+    out = ReprOutcome(SerializableOutcome().make_repr())
+    assert not repevent.ReceivedItemOutcome(None, None, out).is_failure()
+    out = ReprOutcome(SerializableOutcome(skipped=True).make_repr())
+    assert not repevent.ReceivedItemOutcome(None, None, out).is_failure()
+    try:
+        1/0
+    except:
+        exc = py.code.ExceptionInfo()
+    out = ReprOutcome(SerializableOutcome(excinfo=exc).make_repr())
+    assert repevent.ReceivedItemOutcome(None, None, out).is_failure()
+    

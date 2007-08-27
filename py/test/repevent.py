@@ -38,6 +38,9 @@ class ReportEvent(object):
            for key, value in self.__dict__.items()]
         return "<%s %s>" %(self.__class__.__name__, " ".join(l),)
 
+    def is_failure(self):
+        return False
+
 class SendItem(ReportEvent):
     def __init__(self, channel, item):
         self.item = item
@@ -52,6 +55,9 @@ class ReceivedItemOutcome(ReportEvent):
             self.host = channel.gateway.host
         self.item = item
         self.outcome = outcome
+
+    def is_failure(self):
+        return not (self.outcome.passed or self.outcome.skipped)
 
 class CallEvent(ReportEvent):
     def __init__(self, func, args, kwargs):
@@ -114,6 +120,9 @@ class FailedTryiter(ReportEvent):
     def __init__(self, excinfo, item):
         self.excinfo = excinfo
         self.item = item
+
+    def is_failure(self):
+        return True
 
 class ItemStart(ReportEvent):
     """ This class shows most of the start stuff, like directory, module, class

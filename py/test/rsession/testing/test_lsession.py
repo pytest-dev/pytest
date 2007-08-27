@@ -4,7 +4,7 @@
 
 import py
 from py.__.test.rsession.rsession import LSession
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
 
 def setup_module(mod): 

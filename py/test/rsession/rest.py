@@ -5,8 +5,8 @@
 import py
 import sys
 from StringIO import StringIO
-from py.__.test.rsession.reporter import AbstractReporter
-from py.__.test.rsession import repevent
+from py.__.test.reporter import AbstractReporter
+from py.__.test import repevent
 from py.__.rest.rst import *
 
 class RestReporter(AbstractReporter):

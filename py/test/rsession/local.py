@@ -5,8 +5,8 @@
 import py
 from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
      ApigenExecutor
-from py.__.test.rsession import repevent
-from py.__.test.rsession.outcome import ReprOutcome
+from py.__.test import repevent
+from py.__.test.outcome import ReprOutcome
 
 # XXX copied from session.py
 def startcapture(session):

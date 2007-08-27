@@ -1,7 +1,7 @@
 
 """ Testing the slave side node code (in a local way). """
 from py.__.test.rsession.slave import SlaveNode, slave_main, setup
-from py.__.test.rsession.outcome import ReprOutcome
+from py.__.test.outcome import ReprOutcome
 import py, sys
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
 

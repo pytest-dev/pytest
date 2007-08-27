@@ -189,7 +189,7 @@ class Collector(object):
                 return True 
         return False
 
-    def _tryiter(self, yieldtype=None, reporterror=None, keyword=None):
+    def _tryiter(self, yieldtype=None):
         """ yield stop item instances from flattening the collector. 
             XXX deprecated: this way of iteration is not safe in all
             cases. 
@@ -197,28 +197,17 @@ class Collector(object):
         if yieldtype is None: 
             yieldtype = py.test.collect.Item 
         if isinstance(self, yieldtype):
-            try:
-                self._skipbykeyword(keyword)
-                yield self
-            except Skipped:
-                if reporterror is not None:
-                    excinfo = py.code.ExceptionInfo()
-                    reporterror((excinfo, self))
+            yield self
         else:
             if not isinstance(self, py.test.collect.Item):
                 try:
-                    if reporterror is not None:
-                        reporterror((None, self))
                     for x in self.run(): 
-                        for y in self.join(x)._tryiter(yieldtype, 
-                                            reporterror, keyword): 
+                        for y in self.join(x)._tryiter(yieldtype):
                             yield y
                 except KeyboardInterrupt:
                     raise
-                except: 
-                    if reporterror is not None: 
-                        excinfo = py.code.ExceptionInfo()
-                        reporterror((excinfo, self)) 
+                except:
+                    pass
 
     def _getsortvalue(self): 
         return self.name 

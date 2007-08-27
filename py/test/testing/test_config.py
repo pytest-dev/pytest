@@ -2,7 +2,6 @@ from __future__ import generators
 import py
 
 from py.__.test.config import gettopdir
-from py.__.test.testing.test_collect import skipboxed
 
 def test_tmpdir():
     d1 = py.test.ensuretemp('hello') 

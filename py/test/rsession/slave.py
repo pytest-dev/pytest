@@ -4,7 +4,7 @@ Node code for slaves.
 
 import py
 from py.__.test.rsession.executor import RunExecutor, BoxExecutor, AsyncExecutor
-from py.__.test.rsession.outcome import Outcome
+from py.__.test.outcome import SerializableOutcome
 from py.__.test.outcome import Skipped
 import thread
 import os
@@ -53,10 +53,10 @@ def slave_main(receive, send, path, config):
             node = getnode(nextitem)
             res = node.run(nextitem)
         except Skipped, s:
-            send(Outcome(skipped=str(s)).make_repr())
+            send(SerializableOutcome(skipped=str(s)).make_repr())
         except:
             excinfo = py.code.ExceptionInfo()
-            send(Outcome(excinfo=excinfo, is_critical=True).make_repr())
+            send(SerializableOutcome(excinfo=excinfo, is_critical=True).make_repr())
         else:
             if not res[0] and not res[3] and config.option.exitfirst:
                 # we're finished, but need to eat what we can

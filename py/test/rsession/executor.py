@@ -3,9 +3,9 @@
 
 import py, os, sys
 
-from py.__.test.rsession.outcome import Outcome, ReprOutcome
+from py.__.test.outcome import SerializableOutcome, ReprOutcome
 from py.__.test.rsession.box import Box
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 from py.__.test.outcome import Skipped, Failed
 
 class RunExecutor(object):
@@ -33,9 +33,9 @@ class RunExecutor(object):
     def execute(self, capture=True):
         try:
             self.run(capture)
-            outcome = Outcome()
+            outcome = SerializableOutcome()
         except Skipped, e: 
-            outcome = Outcome(skipped=str(e))
+            outcome = SerializableOutcome(skipped=str(e))
         except (SystemExit, KeyboardInterrupt):
             raise
         except:
@@ -49,7 +49,7 @@ class RunExecutor(object):
                     code = py.code.Code(fun)
                     excinfo.traceback = excinfo.traceback.cut(
                         path=code.path, firstlineno=code.firstlineno)
-            outcome = Outcome(excinfo=excinfo, setupfailure=False)
+            outcome = SerializableOutcome(excinfo=excinfo, setupfailure=False)
             if self.usepdb:
                 if self.reporter is not None:
                     self.reporter(repevent.ImmediateFailure(self.item,

@@ -7,10 +7,6 @@ def setup_module(mod):
     mod.datadir = setupdatadir()
     mod.tmpdir = py.test.ensuretemp('test_collect') 
 
-def skipboxed():
-    if py.test.config.option.boxed: 
-        py.test.skip("test does not work with boxed tests")
-
 def test_failing_import_execfile():
     dest = datadir / 'failingimport.py'
     col = py.test.collect.Module(dest) 
@@ -375,10 +371,6 @@ def test__tryiter_ignores_failing_collectors():
         py.test.fail("should not have raised: %s"  %(exc,))
 
     l = []
-    list(col._tryiter(reporterror=l.append))
-    assert len(l) == 2
-    excinfo, item = l[-1]
-    assert isinstance(excinfo, py.code.ExceptionInfo)
 
 def test_tryiter_handles_keyboardinterrupt(): 
     tmp = py.test.ensuretemp("tryiterkeyboard")
@@ -416,9 +408,25 @@ def test_check_generator_collect_problems():
     """))
     tmp.ensure("__init__.py")
     col = py.test.collect.Module(tmp.join("test_one.py"))
-    errors = []
-    l = list(col._tryiter(reporterror=errors.append))
-    assert len(errors) == 2
+    assert len(col.join('test_one').run()) == 3
+
+def test_generator_setup_invoked_twice():
+    py.test.skip("Test for generators not invoking setup, needs thinking")
+    tmp = py.test.ensuretemp("generator_setup_invoke")
+    tmp.ensure("test_one.py").write(py.code.Source("""
+        def setup_module(mod):
+            mod.x = []
+        
+        def setup_function(fun):
+            x.append(1)
+        
+        def test_one():
+            yield lambda: None
+    """))
+    tmp.ensure("__init__.py")
+    col = py.test.collect.Module(tmp.join("test_one.py"))
+    l = list(col._tryiter())
+    assert not hasattr(col.obj, 'x')
 
 def test_check_collect_hashes():
     tmp = py.test.ensuretemp("check_collect_hashes")

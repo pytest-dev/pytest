@@ -15,7 +15,7 @@ import socket
 
 import py
 from py.__.test.rsession.rsession import RSession
-from py.__.test.rsession import repevent
+from py.__.test import repevent
 from py.__.test import collect
 from py.__.test.rsession.webdata import json
 
@@ -305,9 +305,8 @@ class ExportedMethods(BasicExternal):
         if not self.to_rsync[item.host]:
             self._host_ready(item)
 
-    
     def report_TestStarted(self, event):
-        # XXX: It overrides out self.hosts
+        # XXX: It overrides our self.hosts
         self.hosts = {}
         self.ready_hosts = {}
         for host in event.hosts:
@@ -315,6 +314,13 @@ class ExportedMethods(BasicExternal):
             self.ready_hosts[host] = False
         self.start_event.set()
         self.pending_events.put(event)
+
+    def report_TestFinished(self, event):
+        self.pending_events.put(event)
+        kill_server()
+
+    report_InterruptedExecution = report_TestFinished
+    report_CrashedExecution = report_TestFinished
     
     def report(self, what):
         repfun = getattr(self, "report_" + what.__class__.__name__,
@@ -329,13 +335,6 @@ class ExportedMethods(BasicExternal):
             for i in excinfo.traceback:
                 print str(i)[2:-1]
             print excinfo
-
-##        try:
-##            self.wait_flag.acquire()
-##            self.pending_events.insert(0, event)
-##            self.wait_flag.notify()
-##        finally:
-##            self.wait_flag.release()
 
 exported_methods = ExportedMethods()
 
@@ -400,7 +399,7 @@ class TestHandler(BaseHTTPRequestHandler):
         js_name = py.path.local(__file__).dirpath("webdata").join("source.js")
         web_name = py.path.local(__file__).dirpath().join("webjs.py")
         if IMPORTED_PYPY and web_name.mtime() > js_name.mtime() or \
-            (not js_name.check()) or 1:
+            (not js_name.check()):
             from py.__.test.rsession import webjs
 
             javascript_source = rpython2javascript(webjs,
@@ -417,6 +416,34 @@ class TestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-length", len(data))
         self.end_headers()
         self.wfile.write(data)
+
+class WebReporter(object):
+    """ A simple wrapper, this file needs ton of refactoring
+    anyway, so this is just to satisfy things below
+    (and start to create saner interface as well)
+    """
+    def __init__(self, config, hosts):
+        start_server_from_config(config)
+
+    # rebind
+    report = exported_methods.report
+    __call__ = report
+
+def start_server_from_config(config):
+    if config.option.runbrowser:
+        port = socket.INADDR_ANY
+    else:
+        port = 8000
+
+    httpd = start_server(server_address = ('', port))
+    port = httpd.server_port
+    if config.option.runbrowser:
+        import webbrowser, thread
+        # webbrowser.open() may block until the browser finishes or not
+        url = "http://localhost:%d" % (port,)
+        thread.start_new_thread(webbrowser.open, (url,))
+
+    return exported_methods.report
 
 def start_server(server_address = ('', 8000), handler=TestHandler, start_new=True):
     httpd = HTTPServer(server_address, handler)

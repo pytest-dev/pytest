@@ -8,13 +8,45 @@
 import py
 
 from py.__.test.terminal.out import getout
-from py.__.test.rsession import repevent
-from py.__.test.rsession import outcome
+from py.__.test import repevent
+from py.__.test import outcome
 from py.__.misc.terminal_helper import ansi_print, get_terminal_width
 from py.__.test.representation import Presenter
 
 import sys
-import thread
+
+def choose_reporter(config):
+    option = config.option
+    if option.startserver or option.runbrowser:
+        from py.__.test.rsession.web import WebReporter
+        return WebReporter
+    if option.restreport:
+        from py.__.test.rsession.rest import RestReporter
+        return RestReporter
+    else:
+        if option.dist:
+            return RemoteReporter
+        else:
+            return LocalReporter
+
+class TestReporter(object):
+    """ Simple test reporter which tracks failures
+    and also calls arbitrary provided function,
+    useful for tests
+    """
+    def __init__(self, reportfun):
+        self.reportfun = reportfun
+        self.flag = False
+
+    def report(self, event):
+        if event.is_failure():
+            self.flag = True
+        self.reportfun(event)
+
+    __call__ = report
+
+    def was_failure(self):
+        return self.flag
 
 class AbstractReporter(object):
     def __init__(self, config, hosts):
@@ -45,6 +77,11 @@ class AbstractReporter(object):
             for i in excinfo.traceback:
                 print str(i)[2:-1]
             print excinfo
+            # XXX reenable test before removing below line and
+            # run it with raise
+            #raise
+
+    __call__ = report
     
     def report_unknown(self, what):
         if self.config.option.verbose: 
@@ -152,7 +189,7 @@ class AbstractReporter(object):
                     self.repr_failure(event.item, event.outcome)
             else:
                 self.out.sep('_', " ".join(event.item.listnames()))
-                out = outcome.Outcome(excinfo=event.excinfo)
+                out = outcome.SerializableOutcome(excinfo=event.excinfo)
                 self.repr_failure(event.item, outcome.ReprOutcome(out.make_repr()))
 
     def gethost(self, event):
@@ -254,13 +291,13 @@ class AbstractReporter(object):
         else:
             self.failed[host] += 1
             self.failed_tests_outcome.append(event)
-            sys.stdout.write("%15s: " % hostrepr)
+            sys.stdout.write("%15s: " % hostrepr) 
             ansi_print("FAILED", esc=(31,1), newline=False, file=sys.stdout)
             sys.stdout.write("  ")
         # we should have printed 20 characters to this point
         itempath = ".".join(event.item.listnames()[1:-1])
         funname = event.item.listnames()[-1]
-        lgt = get_terminal_width() - 25
+        lgt = get_terminal_width() - 20
         # mark the function name, to be sure
         to_display = len(itempath) + len(funname) + 1
         if to_display > lgt:
@@ -272,6 +309,9 @@ class AbstractReporter(object):
     
     def report_Nodes(self, event):
         self.nodes = event.nodes
+
+    def was_failure(self):
+        return len(self.failed) > 0
 
 class RemoteReporter(AbstractReporter):    
     def get_item_name(self, event, colitem):

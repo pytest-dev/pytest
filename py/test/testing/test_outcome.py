@@ -1,11 +1,11 @@
 
 import py
-from py.__.test.rsession.outcome import Outcome, ReprOutcome, ExcInfoRepr
+from py.__.test.outcome import SerializableOutcome, ReprOutcome, ExcInfoRepr
 
 import marshal
 
 def test_critical_debugging_flag():
-    outcome = Outcome(is_critical=True)
+    outcome = SerializableOutcome(is_critical=True)
     r = ReprOutcome(outcome.make_repr())
     assert r.is_critical 
     
@@ -26,7 +26,7 @@ def test_exception_info_repr():
     try:
         f3()
     except:
-        outcome = Outcome(excinfo=py.code.ExceptionInfo())
+        outcome = SerializableOutcome(excinfo=py.code.ExceptionInfo())
         
     repr = outcome.make_excinfo_repr("long")
     assert marshal.dumps(repr)
