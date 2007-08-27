@@ -3,7 +3,7 @@
   across process or computer barriers.
 """
 
-import socket, os, sys
+import socket, os, sys, thread
 
 class SocketIO:
     server_stmt = """
@@ -76,6 +76,7 @@ sys.stdout = sys.stderr = StringIO.StringIO()
             msvcrt.setmode(outfile.fileno(), os.O_BINARY)
         self.outfile, self.infile = infile, outfile
         self.readable = self.writeable = True
+        self.lock = thread.allocate_lock()
 
     def read(self, numbytes):
         """Read exactly 'bytes' bytes from the pipe. """
@@ -99,6 +100,10 @@ sys.stdout = sys.stderr = StringIO.StringIO()
             self.infile.close()
             self.readable = None
     def close_write(self):
-        if self.writeable:
-            self.outfile.close()
-            self.writeable = None
+        self.lock.acquire()
+        try:
+            if self.writeable:
+                self.outfile.close()
+                self.writeable = None
+        finally:
+            self.lock.release()
