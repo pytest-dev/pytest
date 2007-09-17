@@ -59,6 +59,44 @@ class TestSvnURLCommandPath(CommonCommandAndBindingTests):
             py.test.skip('XXX fixme win32')
         py.test.raises(ValueError, 'py.path.svnurl("http://host.com/foo:bar")')
 
+    def test_export(self):
+        repo, wc = getrepowc('test_export_repo', 'test_export_wc')
+        foo = wc.join('foo').ensure(dir=True)
+        bar = foo.join('bar').ensure(file=True)
+        bar.write('bar\n')
+        foo.commit('testing something')
+        exportpath = py.test.ensuretemp('test_export_exportdir')
+        url = py.path.svnurl(repo + '/foo')
+        foo = url.export(exportpath.join('foo'))
+        assert foo == exportpath.join('foo')
+        assert isinstance(foo, py.path.local)
+        assert foo.join('bar').check()
+        assert not foo.join('.svn').check()
+
+    def test_export_rev(self):
+        repo, wc = getrepowc('test_export_rev_repo', 'test_export_rev_wc')
+        foo = wc.join('foo').ensure(dir=True)
+        bar = foo.join('bar').ensure(file=True)
+        bar.write('bar\n')
+        rev1 = foo.commit('testing something')
+        print 'rev1:', rev1
+        baz = foo.join('baz').ensure(file=True)
+        baz.write('baz\n')
+        rev2 = foo.commit('testing more')
+        
+        exportpath = py.test.ensuretemp('test_export_rev_exportdir')
+        url = py.path.svnurl(repo + '/foo', rev=rev1)
+        foo1 = url.export(exportpath.join('foo1'))
+        assert foo1.check()
+        assert foo1.join('bar').check()
+        assert not foo1.join('baz').check()
+
+        url = py.path.svnurl(repo + '/foo', rev=rev2)
+        foo2 = url.export(exportpath.join('foo2'))
+        assert foo2.check()
+        assert foo2.join('bar').check()
+        assert foo2.join('baz').check()
+
 class TestSvnInfoCommand:
 
     def test_svn_1_2(self):

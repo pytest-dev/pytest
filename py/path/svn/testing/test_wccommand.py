@@ -270,6 +270,19 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert len(status.prop_modified) == 0
         assert len(status.modified) == 0
 
+    def test_commit_return_value(self):
+        root = self.root
+        testfile = root.join('test.txt').ensure(file=True)
+        testfile.write('test')
+        rev = root.commit('testing')
+        assert type(rev) == int
+
+        anotherfile = root.join('another.txt').ensure(file=True)
+        anotherfile.write('test')
+        rev2 = root.commit('testing more')
+        assert type(rev2) == int
+        assert rev2 == rev + 1
+
     #def test_log(self):
     #   l = self.root.log()
     #   assert len(l) == 3  # might need to be upped if more tests are added

@@ -132,6 +132,20 @@ checkin message msg."""
         process.cmdexec('svn rm -m "%s" "%s"' %(msg, self._escape(self)))
         self._lsnorevcache.delentry(self.dirpath().strpath)
 
+    def export(self, topath):
+        """ export to a local path
+
+            topath should not exist prior to calling this, returns a
+            py.path.local instance
+        """
+        topath = py.path.local(topath)
+        args = ['"%s"' % (self._escape(self),),
+                '"%s"' % (self._escape(topath),)]
+        if self.rev is not None:
+            args = ['-r', str(self.rev)] + args
+        process.cmdexec('svn export %s' % (' '.join(args),))
+        return topath
+
     def ensure(self, *args, **kwargs):
         """ ensure that an args-joined path exists (by default as
             a file). If you specify a keyword argument 'dir=True'
