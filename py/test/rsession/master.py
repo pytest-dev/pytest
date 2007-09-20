@@ -5,6 +5,7 @@ import py
 from py.__.test.outcome import ReprOutcome
 from py.__.test import repevent
 from py.__.test.outcome import Skipped
+from py.builtin import GeneratorExit
 
 class MasterNode(object):
     def __init__(self, channel, reporter):

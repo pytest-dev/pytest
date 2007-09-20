@@ -11,3 +11,8 @@ def test_BaseException():
 
     assert py.builtin.BaseException.__module__ == 'exceptions'
     assert Exception.__name__ == 'Exception'
+
+
+def test_GeneratorExit():
+    assert py.builtin.GeneratorExit.__module__ == 'exceptions'
+    assert issubclass(py.builtin.GeneratorExit, Exception)
