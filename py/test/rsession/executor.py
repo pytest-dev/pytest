@@ -7,6 +7,7 @@ from py.__.test.outcome import SerializableOutcome, ReprOutcome
 from py.__.test.rsession.box import Box
 from py.__.test import repevent
 from py.__.test.outcome import Skipped, Failed
+import py.__.test.custompdb
 
 class RunExecutor(object):
     """ Same as in executor, but just running run
@@ -55,8 +56,7 @@ class RunExecutor(object):
                     self.reporter(repevent.ImmediateFailure(self.item,
                         ReprOutcome(outcome.make_repr
                                     (self.config.option.tbstyle))))
-                import pdb
-                pdb.post_mortem(excinfo._excinfo[2])
+                py.__.test.custompdb.post_mortem(excinfo._excinfo[2])
                 # XXX hmm, we probably will not like to continue from that
                 #     point
                 raise SystemExit()

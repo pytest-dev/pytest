@@ -4,6 +4,7 @@ from time import time as now
 from py.__.test.terminal.out import getout 
 from py.__.test.representation import Presenter
 from py.__.test.outcome import Skipped, Passed, Failed
+import py.__.test.custompdb
 
 def getrelpath(source, dest): 
     base = source.common(dest)
@@ -97,9 +98,8 @@ class TerminalSession(Session):
             if isinstance(outcome, Failed): 
                 print "dispatching to ppdb", colitem
                 self.repr_failure(colitem, outcome) 
-                import pdb
                 self.out.write('\n%s\n' % (outcome.excinfo.exconly(),))
-                pdb.post_mortem(outcome.excinfo._excinfo[2])
+                py.__.test.custompdb.post_mortem(excinfo._excinfo[2])
         if isinstance(colitem, py.test.collect.Module):
             resultstring = self.repr_progress_module_result(colitem, outcome)
             if resultstring:

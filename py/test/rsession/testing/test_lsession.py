@@ -6,6 +6,7 @@ import py
 from py.__.test.rsession.rsession import LSession
 from py.__.test import repevent
 from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
+import py.__.test.custompdb
 
 def setup_module(mod): 
     mod.tmp = py.test.ensuretemp("lsession_module") 
@@ -78,14 +79,13 @@ class TestLSession(object):
             def test_1(): 
                 assert 0
         """))
-        import pdb
         l = []
         def some_fun(*args):
             l.append(args)
 
         try:
-            post_mortem = pdb.post_mortem
-            pdb.post_mortem = some_fun
+            post_mortem = py.__.test.custompdb.post_mortem
+            py.__.test.custompdb.post_mortem = some_fun
             args = [str(tmpdir.join(subdir)), '--pdb']
             config = py.test.config._reparse(args)
             lsession = LSession(config)
@@ -101,7 +101,7 @@ class TestLSession(object):
             assert len(failure_events) == 1
             assert len(l) == 1
         finally:
-            pdb.post_mortem = post_mortem
+            py.__.test.custompdb.post_mortem = post_mortem
 
     def test_minus_x(self):
         if not hasattr(py.std.os, 'fork'):
