@@ -99,7 +99,7 @@ class TerminalSession(Session):
                 print "dispatching to ppdb", colitem
                 self.repr_failure(colitem, outcome) 
                 self.out.write('\n%s\n' % (outcome.excinfo.exconly(),))
-                py.__.test.custompdb.post_mortem(excinfo._excinfo[2])
+                py.__.test.custompdb.post_mortem(outcome.excinfo._excinfo[2])
         if isinstance(colitem, py.test.collect.Module):
             resultstring = self.repr_progress_module_result(colitem, outcome)
             if resultstring:

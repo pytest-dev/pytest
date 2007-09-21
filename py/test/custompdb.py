@@ -58,7 +58,6 @@ class Pdb(pdb.Pdb):
 
 def post_mortem(t):
     # again, a copy of the version in pdb.py
-    t = outcome.excinfo._excinfo[2]
     p = Pdb()
     p.reset()
     while t.tb_next is not None:
