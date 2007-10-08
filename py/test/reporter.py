@@ -311,7 +311,7 @@ class AbstractReporter(object):
         self.nodes = event.nodes
 
     def was_failure(self):
-        return len(self.failed) > 0
+        return sum(self.failed.values()) > 0
 
 class RemoteReporter(AbstractReporter):    
     def get_item_name(self, event, colitem):
