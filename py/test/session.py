@@ -44,7 +44,7 @@ class AbstractSession(object):
 
 class Session(AbstractSession):
     """
-        A Session gets test Items from Collectors, # executes the
+        A Session gets test Items from Collectors, executes the
         Items and sends the Outcome to the Reporter.
     """
     def shouldclose(self): 

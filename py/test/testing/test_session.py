@@ -55,20 +55,24 @@ def test_is_not_boxed_by_default():
     assert not config.option.boxed
 
 class TestKeywordSelection: 
-    def test_select_simple(self): 
-        for keyword in ['test_one', 'est_on']:
+    def test_select_simple(self):
+        def check(keyword, name):
             config = py.test.config._reparse([datadir/'filetest.py', 
-                                                   '-k', keyword])
+                                                   '-s', '-k', keyword])
             session = config._getsessionclass()(config, py.std.sys.stdout)
             session.main()
             l = session.getitemoutcomepairs(Failed)
             assert len(l) == 1 
             item = l[0][0]
-            assert item.name == 'test_one'
+            assert item.name == name
             l = session.getitemoutcomepairs(Skipped)
-            assert len(l) == 1 
+            assert len(l) == 1
 
-    def test_select_extra_keywords(self): 
+        for keyword in ['test_one', 'est_on']:
+            check(keyword, 'test_one')
+        check('TestClass.test', 'test_method_one')
+
+    def test_select_extra_keywords(self):
         o = tmpdir.ensure('selecttest', dir=1)
         tfile = o.join('test_select.py').write(py.code.Source("""
             def test_1():
@@ -80,14 +84,13 @@ class TestKeywordSelection:
         conftest = o.join('conftest.py').write(py.code.Source("""
             import py
             class Class(py.test.collect.Class): 
-                def _haskeyword(self, keyword): 
-                    return keyword == 'xxx' or \
-                           super(Class, self)._haskeyword(keyword) 
+                def _keywords(self):
+                    return ['xxx', self.name]
         """))
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1', 
                         'TestClass test_2', 'xxx TestClass test_2',): 
             f = py.std.StringIO.StringIO()
-            config = py.test.config._reparse([o, '-k', keyword]) 
+            config = py.test.config._reparse([o, '-s', '-k', keyword]) 
             session = config._getsessionclass()(config, f) 
             session.main()
             print "keyword", repr(keyword)

@@ -150,8 +150,8 @@ class Collector(object):
                 cur = next
         return cur
 
-    def _haskeyword(self, keyword): 
-        return keyword in self.name
+    def _keywords(self):
+        return [self.name]
 
     def _getmodpath(self):
         """ return dotted module path (relative to the containing). """ 
@@ -176,17 +176,30 @@ class Collector(object):
         if not keyword:
             return
         chain = self.listchain()
-        for key in filter(None, keyword.split()): 
+        for key in filter(None, keyword.split()):
             eor = key[:1] == '-'
             if eor:
                 key = key[1:]
             if not (eor ^ self._matchonekeyword(key, chain)):
                 py.test.skip("test not selected by keyword %r" %(keyword,))
 
-    def _matchonekeyword(self, key, chain): 
-        for subitem in chain:
-            if subitem._haskeyword(key): 
-                return True 
+    def _matchonekeyword(self, key, chain):
+        elems = key.split(".")
+        # XXX O(n^2), anyone cares?
+        chain = [item._keywords() for item in chain if item._keywords()]
+        for start, _ in enumerate(chain):
+            if start + len(elems) > len(chain):
+                return False
+            for num, elem in enumerate(elems):
+                for keyword in chain[num + start]:
+                    ok = False
+                    if elem in keyword:
+                        ok = True
+                        break
+                if not ok:
+                    break
+            if num == len(elems) - 1 and ok:
+                return True
         return False
 
     def _tryiter(self, yieldtype=None):
@@ -425,7 +438,9 @@ class Instance(PyCollectorMixin, Collector):
         return self.parent.obj()  
     def Function(self): 
         return getattr(self.obj, 'Function', 
-                       Collector.Function.__get__(self)) # XXX for python 2.2 
+                       Collector.Function.__get__(self)) # XXX for python 2.2
+    def _keywords(self):
+        return []
     Function = property(Function)
 
 
