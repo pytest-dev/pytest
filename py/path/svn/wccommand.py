@@ -306,6 +306,8 @@ class SvnWCCommandPath(common.FSPathBase):
                 rootstatus.kindmismatch.append(wcpath)
             elif c0 == '!':
                 rootstatus.incomplete.append(wcpath)
+            elif c0 == 'R':
+                rootstatus.replaced.append(wcpath)
             elif not c0.strip():
                 rootstatus.unchanged.append(wcpath)
             else:
@@ -566,7 +568,7 @@ if verbose is True, then the LogEntry instances also know which files changed.
 class WCStatus:
     attrnames = ('modified','added', 'conflict', 'unchanged', 'external',
                 'deleted', 'prop_modified', 'unknown', 'update_available',
-                'incomplete', 'kindmismatch', 'ignored', 'locked'
+                'incomplete', 'kindmismatch', 'ignored', 'locked', 'replaced'
                 )
 
     def __init__(self, wcpath, rev=None, modrev=None, author=None):

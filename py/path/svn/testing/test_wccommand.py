@@ -33,6 +33,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert not s.prop_modified
             assert not s.added
             assert not s.deleted
+            assert not s.replaced
 
         dpath = self.root.join('sampledir')
         assert_nochange(self.root.join('sampledir'))
@@ -47,6 +48,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert s.added
             assert not s.modified
             assert not s.prop_modified
+            assert not s.replaced
         finally:
             nf.revert()
 
@@ -58,6 +60,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert not s.added
             assert s.modified
             assert not s.prop_modified
+            assert not s.replaced
         finally:
             nf.revert()
 
@@ -112,6 +115,17 @@ class TestWCSvnCommandPath(CommonSvnTests):
             #assert len(s.update_available) == 1
         finally:
             r.update()
+
+    def test_status_replaced(self):
+        p = self.root.join("samplefile")
+        p.remove()
+        p.ensure(dir=0)
+        p.add()
+        try:
+            s = self.root.status()
+            assert p.basename in [item.basename for item in s.replaced]
+        finally:
+            self.root.revert(rec=1)
 
     def test_diff(self):
         p = self.root / 'anotherfile'
