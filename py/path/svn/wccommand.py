@@ -118,7 +118,7 @@ class SvnWCCommandPath(common.FSPathBase):
             if svncommon._getsvnversion() == '1.3':
                 url += "@%d" % rev
             else:
-                args.append('-r', str(rev))
+                args.append('-r' + str(rev))
         self._svn('co', url, *args)
 
     def update(self, rev = 'HEAD'):
