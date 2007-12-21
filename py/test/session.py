@@ -89,6 +89,7 @@ class Session(AbstractSession):
                 self.footer(colitems) 
         except Exit, ex:
             pass
+        return self.getitemoutcomepairs(Failed)
 
     def runtraced(self, colitem):
         if self.shouldclose(): 
