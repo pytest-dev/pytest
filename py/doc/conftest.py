@@ -240,8 +240,9 @@ def localrefcheck(tryfn, path, lineno):
     fn = ishtml and fn.new(ext='.txt') or fn
     print "filename is", fn 
     if not fn.check(): # not ishtml or not fn.check(): 
-        py.test.fail("reference error %r in %s:%d" %(
-                      tryfn, path.basename, lineno+1))
+        if not py.path.local(tryfn).check(): # the html could be there 
+            py.test.fail("reference error %r in %s:%d" %(
+                          tryfn, path.basename, lineno+1))
     if anchor: 
         source = unicode(fn.read(), 'latin1')
         source = source.lower().replace('-', ' ') # aehem
