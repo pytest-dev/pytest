@@ -225,7 +225,7 @@ if __name__ == '__main__':
 
     if not args:
         s = ''
-        for block in blocksplitter(sys.stdin.read()):
+        for block in blocksplitter(sys.stdin):
             s += rewrite_utest(block)
         sys.stdout.write(s)
 
