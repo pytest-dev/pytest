@@ -109,7 +109,7 @@ class Source(object):
         for start in range(lineno, -1, -1):
             trylines = self.lines[start:lineno+1]
             # quick hack to indent the source and get it as a string in one go
-            trylines.insert(0, 'if 0:')
+            trylines.insert(0, 'def xxx():')
             trysource = '\n '.join(trylines)
             #              ^ space here
             try:
