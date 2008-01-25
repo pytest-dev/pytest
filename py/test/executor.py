@@ -4,7 +4,7 @@
 import py, os, sys
 
 from py.__.test.outcome import SerializableOutcome, ReprOutcome
-from py.__.test.rsession.box import Box
+from py.__.test.box import Box
 from py.__.test import repevent
 from py.__.test.outcome import Skipped, Failed
 import py.__.test.custompdb
@@ -35,8 +35,11 @@ class RunExecutor(object):
         try:
             self.run(capture)
             outcome = SerializableOutcome()
-        except Skipped, e: 
-            outcome = SerializableOutcome(skipped=str(e))
+            outcome.stdout, outcome.stderr = self.item._getouterr()
+        except Skipped:
+            e = py.code.ExceptionInfo()
+            outcome = SerializableOutcome(skipped=e)
+            outcome.stdout, outcome.stderr = self.item._getouterr()
         except (SystemExit, KeyboardInterrupt):
             raise
         except:
@@ -51,6 +54,7 @@ class RunExecutor(object):
                     excinfo.traceback = excinfo.traceback.cut(
                         path=code.path, firstlineno=code.firstlineno)
             outcome = SerializableOutcome(excinfo=excinfo, setupfailure=False)
+            outcome.stdout, outcome.stderr = self.item._getouterr()
             if self.usepdb:
                 if self.reporter is not None:
                     self.reporter(repevent.ImmediateFailure(self.item,
@@ -60,7 +64,6 @@ class RunExecutor(object):
                 # XXX hmm, we probably will not like to continue from that
                 #     point
                 raise SystemExit()
-        outcome.stdout, outcome.stderr = self.item._getouterr()
         return outcome
 
 class ApigenExecutor(RunExecutor):
@@ -104,7 +107,7 @@ class BoxExecutor(RunExecutor):
             return (passed, setupfailure, excinfo, skipped, critical, 0,
                 b.stdoutrepr, b.stderrrepr)
         else:
-            return (False, False, None, False, False, b.signal,
+            return (False, False, None, None, False, b.signal,
                     b.stdoutrepr, b.stderrrepr)
 
 class AsyncExecutor(RunExecutor):

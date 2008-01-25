@@ -8,6 +8,17 @@ to allow further use outside the pylib
 import py
 from py.__.code import safe_repr
 
+def getrelpath(source, dest): 
+    base = source.common(dest)
+    if not base: 
+        return None 
+    # with posix local paths '/' is always a common base
+    relsource = source.relto(base)
+    reldest = dest.relto(base)
+    n = relsource.count(source.sep)
+    target = dest.sep.join(('..', )*n + (reldest, ))
+    return target 
+
 class Presenter(object):
     """ Class used for presentation of various objects,
     sharing common output style
@@ -128,7 +139,7 @@ class Presenter(object):
                 if index == recursionindex:
                     self.out.line("Recursion detected (same locals & position)")
                     self.out.sep("!")
-                    break 
+                    break
 
     def repr_failure_tbshort(self, item, excinfo, traceback, out_err_reporter):
         # print a Python-style short traceback
@@ -176,3 +187,11 @@ class Presenter(object):
 
     # the following is only used by the combination '--pdb --tb=no'
     repr_failure_tbno = repr_failure_tbshort
+
+
+def repr_pythonversion():
+    v = py.std.sys.version_info
+    try:
+        return "%s.%s.%s-%s-%s" % v
+    except ValueError:
+        return str(v)

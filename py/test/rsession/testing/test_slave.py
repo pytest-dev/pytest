@@ -13,7 +13,7 @@ if sys.platform == 'win32':
 
 # ----------------------------------------------------------------------
 
-from py.__.test.rsession.executor import RunExecutor
+from py.__.test.executor import RunExecutor
 
 class TestSlave(BasicRsessionTest):
     def gettestnode(self):
@@ -69,7 +69,5 @@ class TestSlave(BasicRsessionTest):
         assert outcome.excinfo
 
     def test_slave_run_different_stuff(self):
-        py.test.skip("XXX not this way")
         node = self.gettestnode()
-        node.run(self.rootcol._getitembynames("py doc log.txt".split()).
-                 _get_collector_trail())
+        node.run(self.getdocexample())

@@ -45,10 +45,9 @@ class SerializableOutcome(object):
         self.stderr = ""
         assert bool(self.passed) + bool(excinfo) + bool(skipped) == 1
     
-    def make_excinfo_repr(self, tbstyle):
-        if self.excinfo is None:
-            return None
-        excinfo = self.excinfo
+    def make_excinfo_repr(self, excinfo, tbstyle):
+        if excinfo is None or isinstance(excinfo, basestring):
+            return excinfo
         tb_info = [self.traceback_entry_repr(x, tbstyle)
                    for x in excinfo.traceback]
         rec_index = excinfo.traceback.recursionindex()
@@ -85,8 +84,9 @@ class SerializableOutcome(object):
         
     def make_repr(self, tbstyle="long"):
         return (self.passed, self.setupfailure, 
-                self.make_excinfo_repr(tbstyle), 
-                self.skipped, self.is_critical, 0, self.stdout, self.stderr)
+                self.make_excinfo_repr(self.excinfo, tbstyle),
+                self.make_excinfo_repr(self.skipped, tbstyle),
+                self.is_critical, 0, self.stdout, self.stderr)
 
 class TracebackEntryRepr(object):
     def __init__(self, tbentry):
@@ -136,12 +136,15 @@ class ExcInfoRepr(object):
 
 class ReprOutcome(object):
     def __init__(self, repr_tuple):
-        (self.passed, self.setupfailure, excinfo, self.skipped,
+        (self.passed, self.setupfailure, excinfo, skipped,
          self.is_critical, self.signal, self.stdout, self.stderr) = repr_tuple
-        if excinfo is None:
-            self.excinfo = None
-        else:
-            self.excinfo = ExcInfoRepr(excinfo)
+        self.excinfo = self.unpack(excinfo)
+        self.skipped = self.unpack(skipped)
+
+    def unpack(self, what):
+        if what is None or isinstance(what, basestring):
+            return what
+        return ExcInfoRepr(what)
 
     def __repr__(self):
         l = ["%s=%s" %(x, getattr(self, x))

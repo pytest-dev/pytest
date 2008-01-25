@@ -11,8 +11,8 @@ version = "0.9.1-alpha"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 46771 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2007-09-20 17:20:45 +0200 (Thu, 20 Sep 2007) $',
+    revision = int('$LastChangedRevision: 51034 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-01-25 16:54:04 +0100 (Fri, 25 Jan 2008) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "XXX", # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
@@ -33,6 +33,7 @@ initpkg(__name__,
     'test.exit'              : ('./test/session.py', 'exit'),
     'test.broken'            : ('./test/item.py', 'Broken'),
     'test.notimplemented'    : ('./test/item.py', '_NotImplemented'),
+    'test.pdb'               : ('./test/custompdb.py', 'set_trace'),
 
     # configuration/initialization related test api
     'test.config'            : ('./test/config.py', 'config_per_process'),

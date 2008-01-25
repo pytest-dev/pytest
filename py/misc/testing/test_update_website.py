@@ -57,6 +57,7 @@ def test_run_tests():
                                       captureouterr=True)
     print errors
     assert not errors
+    py.test.skip("Apigen turned off")
     assert pkgpath.join('../apigen').check(dir=True)
     assert pkgpath.join('../apigen/api/sub.foo.html').check(file=True)
 
@@ -65,6 +66,7 @@ def test_run_tests_failure():
         py.test.skip("update_website is not supposed to be run from win32")
     pkgpath = setup_pkg('update_website_run_tests_failure')
     assert not pkgpath.join('../apigen').check(dir=True)
+    py.test.skip("Apigen turned off")
     pkgpath.ensure('../apigen', file=True)
     errors = update_website.run_tests(pkgpath,
                                       pkgpath.dirpath().join('apigen'),

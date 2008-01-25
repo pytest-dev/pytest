@@ -3,7 +3,7 @@ Node code for slaves.
 """
 
 import py
-from py.__.test.rsession.executor import RunExecutor, BoxExecutor, AsyncExecutor
+from py.__.test.executor import RunExecutor, BoxExecutor, AsyncExecutor
 from py.__.test.outcome import SerializableOutcome
 from py.__.test.outcome import Skipped
 import thread

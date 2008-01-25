@@ -135,7 +135,6 @@ def slaverun_TerminalSession(channel):
     session = config.initsession()
     session.shouldclose = channel.isclosed 
     print "SLAVE: starting session.main()"
-    session.main()
-    failures = session.getitemoutcomepairs(Failed)
+    failures = session.main()
     failures = [config.get_collector_trail(item) for item,_ in failures]
     channel.send(failures)

@@ -159,22 +159,14 @@ class Config(object):
 
     def _getsessionname(self):
         """ return default session name as determined from options. """
-        name = 'TerminalSession'
+        name = 'Session'
         if self.option.dist:
             name = 'RSession'
+        elif self.option.collectonly:
+            name = 'CollectSession'
         else:
-            optnames = 'startserver runbrowser apigen restreport boxed'.split()
-            for opt in optnames:
-                if getattr(self.option, opt, False):
-                    name = 'LSession'
-                    break
-            else:
-                if self.getvalue('dist_boxed'):
-                    name = 'LSession'
-                if self.option.looponfailing:
-                    name = 'RemoteTerminalSession'
-                elif self.option.executable:
-                    name = 'RemoteTerminalSession'
+            if self.option.looponfailing or self.option.executable:
+                name = 'RemoteTerminalSession'
         return name
 
     def _reparse(self, args):
@@ -273,10 +265,11 @@ config_per_process = Config()
 
 # default import paths for sessions 
 
-TerminalSession = 'py.__.test.terminal.terminal'
+Session = 'py.__.test.session'
 RemoteTerminalSession = 'py.__.test.terminal.remote'
 RSession = 'py.__.test.rsession.rsession'
 LSession = 'py.__.test.rsession.rsession'
+CollectSession = 'py.__.test.collectonly'
 
 #
 # helpers

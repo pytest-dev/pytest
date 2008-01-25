@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.rsession.executor import BoxExecutor, RunExecutor,\
+from py.__.test.executor import BoxExecutor, RunExecutor,\
      ApigenExecutor
 from py.__.test import repevent
 from py.__.test.outcome import ReprOutcome

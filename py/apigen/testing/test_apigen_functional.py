@@ -5,6 +5,7 @@
 
 import py
 from py.__.apigen import apigen
+py.test.skip("Apigen functionality temporarily disabled")
 
 def setup_module(mod):
     if py.std.sys.platform == "win32":

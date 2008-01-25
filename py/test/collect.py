@@ -379,7 +379,7 @@ class Module(FSCollector, PyCollectorMixin):
                 self._obj = obj = self.fspath.pyimport() 
             except KeyboardInterrupt: 
                 raise
-            except: 
+            except:
                 self._stickyfailure = py.std.sys.exc_info()
                 raise 
             return obj 

@@ -1,12 +1,64 @@
 import py
+import sys
 from py.__.test.outcome import Outcome, Failed, Passed, Skipped
 from py.__.test.reporter import choose_reporter, TestReporter
+from py.__.test import repevent
+from py.__.test.outcome import SerializableOutcome, ReprOutcome
+from py.__.test.reporter import LocalReporter
+from py.__.test.executor import RunExecutor, BoxExecutor
+
+""" The session implementation - reporter version:
+
+* itemgen is responsible for iterating and telling reporter
+  about skipped and failed iterations (this is for collectors only),
+  this should be probably moved to session (for uniformity)
+* session gets items which needs to be executed one after another
+  and tells reporter about that
+"""
+
+try:
+    GeneratorExit
+except NameError:
+    GeneratorExit = StopIteration # I think
+
+def itemgen(session, colitems, reporter, keyword=None):
+    stopitems = py.test.collect.Item # XXX should be generator here as well
+    while 1:
+        if not colitems:
+            break
+        next = colitems.pop(0)
+        if reporter: 
+            reporter(repevent.ItemStart(next))
+
+        if isinstance(next, stopitems):
+            try:
+                next._skipbykeyword(keyword)
+                yield next
+            except Skipped:
+                if session.config.option.keyword_oneshot:
+                    keyword = None
+                excinfo = py.code.ExceptionInfo()
+                reporter(repevent.SkippedTryiter(excinfo, next))
+        else:
+            try:
+                cols = [next.join(x) for x in next.run()]
+                for x in itemgen(session, cols, reporter, keyword):
+                    yield x
+            except (KeyboardInterrupt, SystemExit, GeneratorExit):
+                raise
+            except:
+                excinfo = py.code.ExceptionInfo()
+                if excinfo.type is Skipped:
+                    reporter(repevent.SkippedTryiter(excinfo, next))
+                else:
+                    reporter(repevent.FailedTryiter(excinfo, next))
+        if reporter: 
+            reporter(repevent.ItemFinish(next))
 
 class AbstractSession(object): 
     """ An abstract session executes collectors/items through a runner. 
     """
-    def __init__(self, config): 
-        self._memo = []
+    def __init__(self, config):
         self.config = config
         self._keyword = config.option.keyword
 
@@ -18,10 +70,6 @@ class AbstractSession(object):
             option.startserver = True
         if self.config.getvalue("dist_boxed") and option.dist:
             option.boxed = True
-        # implied options
-        if option.usepdb:
-            if not option.nocapture:
-                option.nocapture = True
         # conflicting options
         if option.looponfailing and option.usepdb:
             raise ValueError, "--looponfailing together with --pdb not supported."
@@ -35,7 +83,8 @@ class AbstractSession(object):
 
     def init_reporter(self, reporter, config, hosts):
         if reporter is None:
-            reporter = choose_reporter(config)(config, hosts)
+            reporter = choose_reporter(self.reporterclass, config)\
+                       (config, hosts)
         else:
             reporter = TestReporter(reporter)
         checkfun = lambda : self.config.option.exitfirst and \
@@ -47,11 +96,15 @@ class Session(AbstractSession):
         A Session gets test Items from Collectors, executes the
         Items and sends the Outcome to the Reporter.
     """
+    reporterclass = LocalReporter
+    
     def shouldclose(self): 
         return False
 
     def header(self, colitems):
         """ setup any neccessary resources ahead of the test run. """
+        self.reporter(repevent.TestStarted(None, self.config,
+                                            None))
         if not self.config.option.nomagic:
             py.magic.invoke(assertion=1)
 
@@ -60,91 +113,46 @@ class Session(AbstractSession):
         py.test.collect.Function._state.teardown_all()
         if not self.config.option.nomagic:
             py.magic.revoke(assertion=1)
-
-    def start(self, colitem): 
-        """ hook invoked before each colitem.run() invocation. """ 
-
-    def finish(self, colitem, outcome): 
-        """ hook invoked after each colitem.run() invocation. """ 
-        self._memo.append((colitem, outcome))
-
-    def startiteration(self, colitem, subitems): 
-        pass 
-
-    def getitemoutcomepairs(self, cls): 
-        return [x for x in self._memo if isinstance(x[1], cls)]
-
-    def main(self): 
+        self.reporter(repevent.TestFinished())
+    
+    def main(self, reporter=None):
         """ main loop for running tests. """
+        config = self.config
+        self.reporter, shouldstop = self.init_reporter(reporter, config, None)
+
         colitems = self.config.getcolitems()
+        self.header(colitems)
+        keyword = self.config.option.keyword
+        reporter = self.reporter
+        itemgenerator = itemgen(self, colitems, reporter, keyword)
+        failures = []
         try:
-            self.header(colitems) 
-            try:
+            while 1:
                 try:
-                    for colitem in colitems: 
-                        self.runtraced(colitem)
-                except KeyboardInterrupt: 
-                    raise 
-            finally: 
-                self.footer(colitems) 
-        except Exit, ex:
-            pass
+                    item = itemgenerator.next()
+                    if shouldstop():
+                        return
+                    outcome = self.run(item)
+                    if outcome is not None: 
+                        if not outcome.passed and not outcome.skipped: 
+                            failures.append((item, outcome))
+                    reporter(repevent.ReceivedItemOutcome(None, item, outcome))
+                except StopIteration:
+                    break
+        finally:
+            self.footer(colitems)
+        return failures 
         return self.getitemoutcomepairs(Failed)
 
-    def runtraced(self, colitem):
-        if self.shouldclose(): 
-            raise Exit, "received external close signal" 
-
-        outcome = None 
-        colitem.startcapture() 
-        try: 
-            self.start(colitem)
-            try: 
-                try:
-                    if colitem._stickyfailure: 
-                        raise colitem._stickyfailure 
-                    outcome = self.run(colitem) 
-                except (KeyboardInterrupt, Exit): 
-                    raise 
-                except Outcome, outcome: 
-                    if outcome.excinfo is None: 
-                        outcome.excinfo = py.code.ExceptionInfo() 
-                except: 
-                    excinfo = py.code.ExceptionInfo() 
-                    outcome = Failed(excinfo=excinfo) 
-                assert (outcome is None or 
-                        isinstance(outcome, (list, Outcome)))
-            finally: 
-                self.finish(colitem, outcome) 
-            if isinstance(outcome, Failed) and self.config.option.exitfirst:
-                py.test.exit("exit on first problem configured.", item=colitem)
-        finally: 
-            colitem.finishcapture()
-
-    def run(self, colitem): 
-        if self.config.option.collectonly and isinstance(colitem, py.test.collect.Item): 
-            return
-        if isinstance(colitem, py.test.collect.Item):
-            colitem._skipbykeyword(self._keyword)
-            if self.config.option.keyword_oneshot:
-                self._keyword = ""
-        res = colitem.run() 
-        if res is None:
-            return Passed() 
-        elif not isinstance(res, (list, tuple)): 
-            raise TypeError("%r.run() returned neither "
-                            "list, tuple nor None: %r" % (colitem, res))
-        else: 
-            finish = self.startiteration(colitem, res)
-            try: 
-                for name in res: 
-                    obj = colitem.join(name) 
-                    assert obj is not None 
-                    self.runtraced(obj) 
-            finally: 
-                if finish: 
-                    finish() 
-        return res 
+    def run(self, item):
+        if not self.config.option.boxed:
+            executor = RunExecutor(item, self.config.option.usepdb,
+                                   self.reporter, self.config)
+            return ReprOutcome(executor.execute().make_repr())
+        else:
+            executor = BoxExecutor(item, self.config.option.usepdb,
+                                   self.reporter, self.config)
+            return ReprOutcome(executor.execute())
 
 class Exit(Exception):
     """ for immediate program exits without tracebacks and reporter/summary. """

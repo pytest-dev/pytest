@@ -2,7 +2,7 @@
 import py
 import example1
 
-from py.__.test.rsession.executor import RunExecutor, BoxExecutor,\
+from py.__.test.executor import RunExecutor, BoxExecutor,\
     AsyncExecutor, ApigenExecutor
 from py.__.test.outcome import ReprOutcome
 from py.__.test.rsession.testing.basetest import BasicRsessionTest

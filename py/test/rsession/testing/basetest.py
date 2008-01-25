@@ -38,12 +38,20 @@ class BasicRsessionTest(object):
         testonepath.write(source)
         cls.config = py.test.config._reparse([tmpdir])
         cls.collector_test_one = cls.config._getcollector(testonepath)
+        cls.doctest = tmpdir.ensure("xxx.txt").write(py.code.Source("""
+        Aha!!!!!!
+        =========
+
+        """))
 
     def getexample(self, name):
         funcname = "func" + name
         col = self.collector_test_one.join(funcname)
         assert col is not None, funcname
-        return col 
+        return col
+
+    def getdocexample(self):
+        return self.doctest
 
     def getmod(self):
         return self.collector_test_one

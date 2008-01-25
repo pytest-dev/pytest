@@ -332,6 +332,9 @@ FooError
 class TestRestReporter(AbstractTestReporter):
     reporter = RestReporter
 
+    def get_hosts(self):
+        return [HostInfo('localhost')]
+
     def test_failed_to_load(self):
         py.test.skip("Not implemented")
     

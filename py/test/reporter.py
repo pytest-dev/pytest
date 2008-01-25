@@ -11,11 +11,14 @@ from py.__.test.terminal.out import getout
 from py.__.test import repevent
 from py.__.test import outcome
 from py.__.misc.terminal_helper import ansi_print, get_terminal_width
-from py.__.test.representation import Presenter
+from py.__.test.representation import Presenter, repr_pythonversion,\
+     getrelpath
 
 import sys
 
-def choose_reporter(config):
+from time import time as now
+
+def choose_reporter(reporterclass, config):
     option = config.option
     if option.startserver or option.runbrowser:
         from py.__.test.rsession.web import WebReporter
@@ -24,10 +27,7 @@ def choose_reporter(config):
         from py.__.test.rsession.rest import RestReporter
         return RestReporter
     else:
-        if option.dist:
-            return RemoteReporter
-        else:
-            return LocalReporter
+        return reporterclass
 
 class TestReporter(object):
     """ Simple test reporter which tracks failures
@@ -56,9 +56,6 @@ class AbstractReporter(object):
         self.skipped_tests_outcome = []
         self.out = getout(py.std.sys.stdout)
         self.presenter = Presenter(self.out, config)
-        self.failed = dict([(host, 0) for host in hosts])
-        self.skipped = dict([(host, 0) for host in hosts])
-        self.passed = dict([(host, 0) for host in hosts])
         self.to_rsync = {}
 
     def get_item_name(self, event, colitem):
@@ -79,7 +76,7 @@ class AbstractReporter(object):
             print excinfo
             # XXX reenable test before removing below line and
             # run it with raise
-            #raise
+            raise
 
     __call__ = report
     
@@ -130,12 +127,13 @@ class AbstractReporter(object):
             print "%15s: READY" % hostrepr 
     
     def report_TestStarted(self, item):
+        topdir = item.config.topdir
         hostreprs = [self._hostrepr(host) for host in item.hosts]
         txt = " Test started, hosts: %s " % ", ".join(hostreprs)
         self.hosts_to_rsync = len(item.hosts)
         self.out.sep("=", txt)
         self.timestart = item.timestart
-        self.out.write("local top directory: %s\n" % item.topdir)
+        self.out.write("local top directory: %s\n" % topdir)
         for i, root in py.builtin.enumerate(item.roots):
             outof = "%d/%d" %(i+1, len(item.roots))
             self.out.write("local RSync root [%s]: %s\n" % 
@@ -145,6 +143,7 @@ class AbstractReporter(object):
         self.timersync = item.time
     
     def report_ImmediateFailure(self, event):
+        self.out.line()
         self.repr_failure(event.item, event.outcome)
     
     def report_TestFinished(self, item):
@@ -227,8 +226,8 @@ class AbstractReporter(object):
             colitem = event.item
             if isinstance(event, repevent.ReceivedItemOutcome):
                 outcome = event.outcome
-                text = outcome.skipped
-                itemname = self.get_item_name(event, colitem)
+                text = outcome.skipped.value
+                itemname = repr(outcome.skipped.traceback[-2]).split("\n")[0]
             elif isinstance(event, repevent.SkippedTryiter):
                 text = str(event.excinfo.value)
                 itemname = "/".join(colitem.listnames())
@@ -243,10 +242,14 @@ class AbstractReporter(object):
             for text, items in texts.items():
                 for item in items:
                     self.out.line('Skipped in %s' % item)
-                self.out.line("reason: %s" % text)
+                self.out.line("reason: %s" % text[1:-1])
+                self.out.line()
     
     def summary(self):
         def gather(dic):
+            # XXX hack to handle dicts & ints here, get rid of it
+            if isinstance(dic, int):
+                return dic
             total = 0
             for key, val in dic.iteritems():
                 total += val
@@ -263,6 +266,7 @@ class AbstractReporter(object):
         total = total_passed + total_failed + total_skipped
         skipped_str = create_str("skipped", total_skipped)
         failed_str = create_str("failed", total_failed)
+        self.out.line()
         self.print_summary(total, skipped_str, failed_str)
     
     def print_summary(self, total, skipped_str, failed_str):
@@ -313,7 +317,13 @@ class AbstractReporter(object):
     def was_failure(self):
         return sum(self.failed.values()) > 0
 
-class RemoteReporter(AbstractReporter):    
+class RemoteReporter(AbstractReporter):
+    def __init__(self, config, hosts):
+        super(RemoteReporter, self).__init__(config, hosts)
+        self.failed = dict([(host, 0) for host in hosts])
+        self.skipped = dict([(host, 0) for host in hosts])
+        self.passed = dict([(host, 0) for host in hosts])
+    
     def get_item_name(self, event, colitem):
         return event.host.hostname + ":" + \
             "/".join(colitem.listnames())
@@ -329,9 +339,40 @@ class RemoteReporter(AbstractReporter):
             join(event.item.listnames())))
 
 class LocalReporter(AbstractReporter):
+    def __init__(self, config, hosts=None):
+        assert not hosts
+        super(LocalReporter, self).__init__(config, hosts)
+        self.failed = 0
+        self.skipped = 0
+        self.passed = 0
+
+    def report_TestStarted(self, item):
+        colitems = item.config.getcolitems()
+        txt = " test process starts "
+        self.out.sep("=", txt)
+        self.timestart = item.timestart
+        self.out.line("executable:   %s  (%s)" %
+                      (py.std.sys.executable, repr_pythonversion()))
+        rev = py.__package__.getrev()
+        self.out.line("using py lib: %s <rev %s>" % (
+                       py.path.local(py.__file__).dirpath(), rev))
+        config = item.config
+        if config.option.traceconfig or config.option.verbose: 
+            
+            for x in colitems: 
+                self.out.line("test target:  %s" %(x.fspath,))
+
+            conftestmodules = config._conftest.getconftestmodules(None)
+            for i,x in py.builtin.enumerate(conftestmodules):
+                self.out.line("initial conf %d: %s" %(i, x.__file__)) 
+
     def get_item_name(self, event, colitem):
         return "/".join(colitem.listnames())
-    
+
+    def print_summary(self, total, skipped_str, failed_str):
+        self.out.sep("=", " %d test run%s%s in %.2fs" % 
+            (total, skipped_str, failed_str, self.timeend - self.timestart))
+
     def report_SkippedTryiter(self, event):
         #self.show_item(event.item, False)
         if isinstance(event.item, py.test.collect.Module):
@@ -344,44 +385,52 @@ class LocalReporter(AbstractReporter):
         #self.show_item(event.item, False)
         self.out.write("- FAILED TO LOAD MODULE")
         self.failed_tests_outcome.append(event)
-        self.failed[self.hosts[0]] += 1
+        self.failed += 1
     
     def report_ReceivedItemOutcome(self, event):
-        host = self.hosts[0]
         if event.outcome.passed:
-            self.passed[host] += 1
+            self.passed += 1
             self.out.write(".")
         elif event.outcome.skipped:
             self.skipped_tests_outcome.append(event)
-            self.skipped[host] += 1
+            self.skipped += 1
             self.out.write("s")
         else:
-            self.failed[host] += 1
+            self.failed += 1
             self.failed_tests_outcome.append(event)
             self.out.write("F")
     
     def report_ItemStart(self, event):
+        # XXX
+        event.item.start = now()
         self.show_item(event.item)
     
     def show_item(self, item, count_elems = True):
         if isinstance(item, py.test.collect.Module):
-            # XXX This is a terrible hack, I don't like it
-            #     and will rewrite it at some point
-            #self.count = 0
-            lgt = len(list(item._tryiter()))
-            #self.lgt = lgt
-            # print names relative to current workdir
-            name = "/".join(item.listnames())
-            local = str(py.path.local())
-            d = str(self.config.topdir)
-            if local.startswith(d):
-                local = local[len(d) + 1:]
-            if local and name.startswith(local):
-                name = name[len(local) + 1:]
-            self.out.write("\n%s[%d] " % (name, lgt))
+            self.show_Module(item)
+        if self.config.option.verbose > 0 and\
+           isinstance(item, py.test.collect.Item):
+            self.show_ItemVerbose(item)
+
+    def show_ItemVerbose(self, item):
+        realpath, lineno = item._getpathlineno()
+        location = "%s:%d" % (realpath.basename, lineno+1)
+        self.out.write("%-20s %s " % (location, item._getmodpath()))
+
+    def show_Module(self, mod):
+        lgt = len(list(mod._tryiter()))
+        if self.config.option.verbose == 0:
+            base = getrelpath(py.path.local(), mod.fspath)
+            self.out.write("\n%s[%d] " % (base, lgt))
+        else:
+            self.out.line()
+            self.out.line('+ testmodule: %s[%d]' % (mod.fspath, lgt))
 
     def gethost(self, event):
         return 'localhost'
     
     def hangs(self):
         pass
+
+    def was_failure(self):
+        return self.failed > 0

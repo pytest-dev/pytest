@@ -218,7 +218,10 @@ class ExportedMethods(BasicExternal):
             args['fullmodulename'] = str(mod_fullname)
             fullitemname = args['fullitemname']
             if outcome.skipped:
-                self.skip_reasons[fullitemname] = outcome.skipped
+                self.skip_reasons[fullitemname] = self.repr_failure_tblong(
+                    event.item,
+                    outcome.skipped,
+                    outcome.skipped.traceback)
             elif outcome.excinfo:
                 self.fail_reasons[fullitemname] = self.repr_failure_tblong(
                     event.item, outcome.excinfo, outcome.excinfo.traceback)
@@ -309,9 +312,12 @@ class ExportedMethods(BasicExternal):
         # XXX: It overrides our self.hosts
         self.hosts = {}
         self.ready_hosts = {}
-        for host in event.hosts:
-            self.hosts[host] = host
-            self.ready_hosts[host] = False
+        if not event.hosts:
+            self.hosts = []
+        else:
+            for host in event.hosts:
+                self.hosts[host] = host
+                self.ready_hosts[host] = False
         self.start_event.set()
         self.pending_events.put(event)
 
@@ -424,6 +430,9 @@ class WebReporter(object):
     """
     def __init__(self, config, hosts):
         start_server_from_config(config)
+
+    def was_failure(self):
+        return sum(exported_methods.fail_reasons.values()) > 0
 
     # rebind
     report = exported_methods.report

@@ -16,14 +16,15 @@ class TestRemote:
         cls = config._getsessionclass() 
         out = []  # out = py.std.Queue.Queue() 
         session = cls(config, out.append) 
-        session.main()
+        failures = session.main()
         for s in out: 
             if s.find('1 failed') != -1: 
                 break 
         else: 
-            py.test.fail("did not see test_1 failure") 
+            py.test.fail("did not see test_1 failure in output") 
+        assert failures 
 
-    def test_looponfailing(self): 
+    def test_looponfailing(self):
         o = tmpdir.ensure('looponfailing', dir=1) 
         tfile = o.join('test_looponfailing.py')
         tfile.write(py.code.Source("""

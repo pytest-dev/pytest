@@ -56,7 +56,7 @@ def test_repr_local():
     for key in locals().keys():
         assert s.getvalue().find(key) != -1
 
-def test_repr_traceback_long():
+def XXXtest_repr_traceback_long():
     py.test.skip("unfinished")
     config = py.test.config._reparse([])
     s = StringIO()

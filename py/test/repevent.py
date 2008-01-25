@@ -97,11 +97,11 @@ class HostRSyncRootReady(ReportEvent):
         self.root = root
 
 class TestStarted(ReportEvent):
-    def __init__(self, hosts, topdir, roots):
+    def __init__(self, hosts, config, roots):
         self.hosts = hosts
-        self.topdir = topdir
         self.roots = roots
         self.timestart = time.time()
+        self.config = config
 
 class TestFinished(ReportEvent):
     def __init__(self):
@@ -125,6 +125,13 @@ class FailedTryiter(ReportEvent):
         return True
 
 class ItemStart(ReportEvent):
+    """ This class shows most of the start stuff, like directory, module, class
+    can be used for containers
+    """
+    def __init__(self, item):
+        self.item = item
+
+class ItemFinish(ReportEvent):
     """ This class shows most of the start stuff, like directory, module, class
     can be used for containers
     """

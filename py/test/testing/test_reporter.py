@@ -18,16 +18,25 @@ etc.
 
 
 import py, os
-from py.__.test.session import AbstractSession
+from py.__.test.session import AbstractSession, itemgen
 from py.__.test.reporter import RemoteReporter, LocalReporter, choose_reporter 
 from py.__.test import repevent
 from py.__.test.outcome import ReprOutcome, SerializableOutcome
 from py.__.test.rsession.hostmanage import HostInfo
-from py.__.test.rsession.box import Box
+from py.__.test.box import Box
 from py.__.test.rsession.testing.basetest import BasicRsessionTest
-from py.__.test.rsession.master import itemgen
 import sys
 from StringIO import StringIO
+
+class MockSession(object):
+    def __init__(self, reporter):
+        self.reporter = reporter
+    
+    def start(self, item):
+        self.reporter(repevent.ItemStart(item))
+
+    def finish(self, item):
+        pass
 
 class DummyGateway(object):
     def __init__(self, host):
@@ -44,9 +53,14 @@ class AbstractTestReporter(BasicRsessionTest):
             1/0
         except:
             exc = py.code.ExceptionInfo()
+
+        try:
+            py.test.skip("xxx")
+        except:
+            skipexc = py.code.ExceptionInfo()
         
         outcomes = [SerializableOutcome(()), 
-            SerializableOutcome(skipped=True),
+            SerializableOutcome(skipped=skipexc),
             SerializableOutcome(excinfo=exc),
             SerializableOutcome()]
         
@@ -61,9 +75,12 @@ class AbstractTestReporter(BasicRsessionTest):
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, outcomes):
-            hosts = [HostInfo("localhost")]
+            hosts = self.get_hosts()
             r = self.reporter(config, hosts)
-            ch = DummyChannel(hosts[0])
+            if hosts:
+                ch = DummyChannel(hosts[0])
+            else:
+                ch = None
             for outcome in outcomes:
                 r.report(repevent.ReceivedItemOutcome(ch, item, outcome))
         
@@ -79,10 +96,13 @@ class AbstractTestReporter(BasicRsessionTest):
         outcomes = self.prepare_outcomes()
         
         def boxfun(config, item, funcitem, outcomes):
-            hosts = [HostInfo('localhost')]
+            hosts = self.get_hosts()
             r = self.reporter(config, hosts)
             r.report(repevent.ItemStart(item))
-            ch = DummyChannel(hosts[0])
+            if hosts:
+                ch = DummyChannel(hosts[0])
+            else:
+                ch = None
             for outcome in outcomes:
                 r.report(repevent.ReceivedItemOutcome(ch, funcitem, outcome))
         
@@ -110,9 +130,9 @@ class AbstractTestReporter(BasicRsessionTest):
         def boxfun():
             config = py.test.config._reparse([str(tmpdir)])
             rootcol = py.test.collect.Directory(tmpdir)
-            hosts = [HostInfo('localhost')]
+            hosts = self.get_hosts()
             r = self.reporter(config, hosts)
-            list(itemgen([rootcol], r.report))
+            list(itemgen(MockSession(r), [rootcol], r.report))
 
         cap = py.io.StdCaptureFD()
         boxfun()
@@ -129,11 +149,11 @@ class AbstractTestReporter(BasicRsessionTest):
         def boxfun():
             config = py.test.config._reparse([str(tmpdir)])
             rootcol = py.test.collect.Directory(tmpdir)
-            host = HostInfo('localhost')
-            r = self.reporter(config, [host])
-            r.report(repevent.TestStarted([host], config.topdir, ["a"]))
+            hosts = self.get_hosts()
+            r = self.reporter(config, hosts)
+            r.report(repevent.TestStarted(hosts, config, ["a"]))
             r.report(repevent.RsyncFinished())
-            list(itemgen([rootcol], r.report))
+            list(itemgen(MockSession(r), [rootcol], r.report))
             r.report(repevent.TestFinished())
             return r
         
@@ -144,6 +164,24 @@ class AbstractTestReporter(BasicRsessionTest):
         assert out.find("1 failed in") != -1
         assert out.find("NameError: name 'sadsadsa' is not defined") != -1
 
+    def _test_verbose(self):
+        tmpdir = py.test.ensuretemp("reporterverbose")
+        tmpdir.ensure("__init__.py")
+        tmpdir.ensure("test_one.py").write("def test_x(): pass")
+        cap = py.io.StdCaptureFD()
+        config = py.test.config._reparse([str(tmpdir), '-v'])
+        hosts = self.get_hosts()
+        r = self.reporter(config, hosts)
+        r.report(repevent.TestStarted(hosts, config, []))
+        r.report(repevent.RsyncFinished())
+        rootcol = py.test.collect.Directory(tmpdir)
+        list(itemgen(MockSession(r), [rootcol], r.report))
+        r.report(repevent.TestFinished())
+        out, err = cap.reset()
+        assert not err
+        for i in ['+ testmodule:', 'test_one.py[1]']: # XXX finish
+            assert i in out
+        
     def _test_still_to_go(self):
         tmpdir = py.test.ensuretemp("stilltogo")
         tmpdir.ensure("__init__.py")
@@ -153,7 +191,7 @@ class AbstractTestReporter(BasicRsessionTest):
         for host in hosts:
             host.gw_remotepath = ''
         r = self.reporter(config, hosts)
-        r.report(repevent.TestStarted(hosts, config.topdir, ["a", "b", "c"]))
+        r.report(repevent.TestStarted(hosts, config, ["a", "b", "c"]))
         for host in hosts:
             r.report(repevent.HostGatewayReady(host, ["a", "b", "c"]))
         for host in hosts:
@@ -173,9 +211,15 @@ class AbstractTestReporter(BasicRsessionTest):
 
 class TestLocalReporter(AbstractTestReporter):
     reporter = LocalReporter
+
+    def get_hosts(self):
+        return None
     
     def test_report_received_item_outcome(self):
         assert self.report_received_item_outcome() == 'FsF.'
+
+    def test_verbose(self):
+        self._test_verbose()
 
     def test_module(self):
         output = self._test_module()
@@ -192,12 +236,15 @@ class TestLocalReporter(AbstractTestReporter):
 class TestRemoteReporter(AbstractTestReporter):
     reporter = RemoteReporter
 
+    def get_hosts(self):
+        return [HostInfo("host")]
+
     def test_still_to_go(self):
         self._test_still_to_go()
 
     def test_report_received_item_outcome(self):
         val = self.report_received_item_outcome()
-        expected_lst = ["localhost", "FAILED",
+        expected_lst = ["host", "FAILED",
                         "funcpass", "test_one",
                         "SKIPPED",
                         "PASSED"]
@@ -206,7 +253,7 @@ class TestRemoteReporter(AbstractTestReporter):
     
     def test_module(self):
         val = self._test_module()
-        expected_lst = ["localhost", "FAILED",
+        expected_lst = ["host", "FAILED",
                         "funcpass", "test_one",
                         "SKIPPED",
                         "PASSED"]
@@ -222,12 +269,10 @@ def test_reporter_choice():
     from py.__.test.rsession.web import WebReporter
     from py.__.test.rsession.rest import RestReporter
     choices = [
-        (['-d'], RemoteReporter),
         (['-d', '--rest'], RestReporter),
-        ([], LocalReporter),
         (['-w'], WebReporter),
         (['-r'], WebReporter)]
     for opts, reporter in choices:
         config = py.test.config._reparse(['xxx'] + opts)
-        assert choose_reporter(config) is reporter
+        assert choose_reporter(None, config) is reporter
 

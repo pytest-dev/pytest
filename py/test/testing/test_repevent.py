@@ -42,7 +42,7 @@ def test_repevent_failures():
     assert repevent.FailedTryiter(None, None).is_failure()
     out = ReprOutcome(SerializableOutcome().make_repr())
     assert not repevent.ReceivedItemOutcome(None, None, out).is_failure()
-    out = ReprOutcome(SerializableOutcome(skipped=True).make_repr())
+    out = ReprOutcome(SerializableOutcome(skipped="xxx").make_repr())
     assert not repevent.ReceivedItemOutcome(None, None, out).is_failure()
     try:
         1/0

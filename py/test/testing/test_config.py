@@ -200,35 +200,37 @@ class TestSessionAndOptions:
 
     def test_sessionname_default(self):
         config = py.test.config._reparse([self.tmpdir])
-        assert config._getsessionname() == 'TerminalSession'
+        assert config._getsessionname() == 'Session'
 
     def test_sessionname_dist(self):
         config = py.test.config._reparse([self.tmpdir, '--dist'])
         assert config._getsessionname() == 'RSession'
 
     def test_implied_lsession(self):
-        optnames = 'startserver runbrowser apigen=x rest boxed'.split()
-        for x in optnames:
-            config = py.test.config._reparse([self.tmpdir, '--%s' % x])
-            assert config._getsessionname() == 'LSession'
+        #optnames = 'startserver runbrowser apigen=x rest boxed'.split()
+        #for x in optnames:
+        #    config = py.test.config._reparse([self.tmpdir, '--%s' % x])
+        #    assert config._getsessionname() == 'LSession'
 
         for x in 'startserver runbrowser rest'.split():
             config = py.test.config._reparse([self.tmpdir, '--dist', '--%s' % x])
             assert config._getsessionname() == 'RSession'
 
-    def test_implied_remote_terminal_session(self):
+    def test_implied_different_sessions(self):
         config = py.test.config._reparse([self.tmpdir, '--looponfailing'])
         assert config._getsessionname() == 'RemoteTerminalSession'
         config = py.test.config._reparse([self.tmpdir, '--exec=x'])
         assert config._getsessionname() == 'RemoteTerminalSession'
         config = py.test.config._reparse([self.tmpdir, '--dist', '--exec=x'])
         assert config._getsessionname() == 'RSession'
+        config = py.test.config._reparse([self.tmpdir, '--collectonly'])
+        assert config._getsessionname() == 'CollectSession'
 
     def test_sessionname_lookup_custom(self):
         self.tmpdir.join("conftest.py").write(py.code.Source("""
             from py.__.test.session import Session
             class MySession(Session):
-                def __init__(self, config):
+                def __init__(self, config, reporter=None):
                     self.config = config 
         """)) 
         config = py.test.config._reparse(["--session=MySession", self.tmpdir])

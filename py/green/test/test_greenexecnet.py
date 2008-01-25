@@ -1,6 +1,8 @@
 import py
 from py.__.green.greenexecnet import *
 
+py.test.skip("Does not work with globally installed pylib")
+
 def test_simple():
     gw = PopenGateway()
     channel = gw.remote_exec("x = channel.receive(); channel.send(x * 6)")

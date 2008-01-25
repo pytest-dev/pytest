@@ -12,10 +12,13 @@ from py.__.rest.rst import *
 class RestReporter(AbstractReporter):
     linkwriter = None
 
-    def __init__(self, *args, **kwargs):
-        super(RestReporter, self).__init__(*args, **kwargs)
+    def __init__(self, config, hosts):
+        super(RestReporter, self).__init__(config, hosts)
         self.rest = Rest()
         self.traceback_num = 0
+        self.failed = dict([(host, 0) for host in hosts])
+        self.skipped = dict([(host, 0) for host in hosts])
+        self.passed = dict([(host, 0) for host in hosts])
     
     def get_linkwriter(self):
         if self.linkwriter is None:

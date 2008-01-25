@@ -3,21 +3,21 @@
 """
 
 import py
-from py.__.test.rsession.rsession import LSession
 from py.__.test import repevent
-from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
+#from py.__.test.rsession.local import box_runner, plain_runner, apigen_runner
 import py.__.test.custompdb
+from py.__.test.session import Session
 
-def setup_module(mod): 
+def setup_module(mod):
     mod.tmp = py.test.ensuretemp("lsession_module") 
 
-class TestLSession(object):
+class TestSession(object):
     # XXX: Some tests of that should be run as well on RSession, while
     #      some not at all
-    def example_distribution(self, runner):
+    def example_distribution(self, boxed=False):
         # XXX find a better way for the below 
         tmpdir = tmp
-        dirname = "sub_lsession"+runner.func_name
+        dirname = "sub_lsession"#+runner.func_name
         tmpdir.ensure(dirname, "__init__.py")
         tmpdir.ensure(dirname, "test_one.py").write(py.code.Source("""
             def test_1(): 
@@ -33,10 +33,12 @@ class TestLSession(object):
             #    os.kill(os.getpid(), 11)
         """))
         args = [str(tmpdir.join(dirname))]
+        if boxed:
+            args.append('--boxed')
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
-        lsession.main(reporter=allevents.append, runner=runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
@@ -62,13 +64,35 @@ class TestLSession(object):
         assert str(tb[0].path).find("executor") != -1
         assert str(tb[0].source).find("execute") != -1
 
-    def test_normal(self):
+    def test_boxed(self):
         if not hasattr(py.std.os, 'fork'):
             py.test.skip('operating system not supported')
-        self.example_distribution(box_runner)
+        self.example_distribution(True)
+
+    def test_box_exploding(self):
+        if not hasattr(py.std.os, 'fork'):
+            py.test.skip('operating system not supported')
+        tmpdir = tmp
+        dirname = "boxtest"
+        tmpdir.ensure(dirname, "__init__.py")
+        tmpdir.ensure(dirname, "test_one.py").write(py.code.Source("""
+            def test_5():
+                import os
+                os.kill(os.getpid(), 11)
+        """))
+        args = [str(tmpdir.join(dirname))]
+        args.append('--boxed')
+        config = py.test.config._reparse(args)
+        lsession = Session(config)
+        allevents = []
+        lsession.main(reporter=allevents.append)
+        testevents = [x for x in allevents 
+                        if isinstance(x, repevent.ReceivedItemOutcome)]
+        assert len(testevents)
+        assert testevents[0].outcome.signal
     
     def test_plain(self):
-        self.example_distribution(plain_runner)
+        self.example_distribution(False)
 
     def test_pdb_run(self):
         # we make sure that pdb is engaged
@@ -88,14 +112,14 @@ class TestLSession(object):
             py.__.test.custompdb.post_mortem = some_fun
             args = [str(tmpdir.join(subdir)), '--pdb']
             config = py.test.config._reparse(args)
-            lsession = LSession(config)
+            lsession = Session(config)
             allevents = []
-            try:
-                lsession.main(reporter=allevents.append, runner=plain_runner)
-            except SystemExit:
-                pass
-            else:
-                py.test.fail("Didn't raise system exit")
+            #try:
+            lsession.main(reporter=allevents.append)
+            #except SystemExit:
+            #    pass
+            #else:
+            #    py.test.fail("Didn't raise system exit")
             failure_events = [event for event in allevents if isinstance(event,
                                                      repevent.ImmediateFailure)]
             assert len(failure_events) == 1
@@ -122,10 +146,10 @@ class TestLSession(object):
         args = [str(tmpdir.join(subdir)), '-x']
         config = py.test.config._reparse(args)
         assert config.option.exitfirst
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
         
-        lsession.main(reporter=allevents.append, runner=box_runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
@@ -151,10 +175,10 @@ class TestLSession(object):
         """))
         args = [str(tmpdir.join("sub3")), '-k', 'test_one']
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
         
-        lsession.main(reporter=allevents.append, runner=box_runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
@@ -179,22 +203,17 @@ class TestLSession(object):
         
         args = [str(tmpdir.join("sub4"))]
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
         allruns = []
-        def dummy_runner(item, config, reporter):
-            allruns.append(item)
-            item.passed = True
-            return item
-        lsession.main(reporter=allevents.append, runner=dummy_runner)
+        lsession.main(reporter=allevents.append)
         
-        assert len(allruns) == 4
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 4
         lst = ['test_one', 'test_one_one', 'test_other', 'test_two']
         for num, i in enumerate(testevents):
-            assert i.item == i.outcome
+            #assert i.item == i.outcome
             assert i.item.name == lst[num]
         
     def test_module_raising(self):
@@ -210,9 +229,9 @@ class TestLSession(object):
         
         args = [str(tmpdir.join("sub5"))]
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
-        lsession.main(reporter=allevents.append, runner=box_runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 0
@@ -236,9 +255,9 @@ class TestLSession(object):
         """))
         args = [str(tmpdir.join("sub6"))]
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
-        lsession.main(reporter=allevents.append, runner=box_runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         failevents = [i for i in testevents if i.outcome.excinfo]
@@ -257,40 +276,12 @@ class TestLSession(object):
         """))
         args = [str(tmpdir.join("sub7"))]
         config = py.test.config._reparse(args)
-        lsession = LSession(config)
+        lsession = Session(config)
         allevents = []
-        lsession.main(reporter=allevents.append, runner=plain_runner)
+        lsession.main(reporter=allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 1
         assert testevents[0].outcome.passed
         assert testevents[0].outcome.stderr == ""
         assert testevents[0].outcome.stdout == "1\n2\n3\n"
-
-    def test_runner_selection(self):
-        tmpdir = py.test.ensuretemp("lsession_runner_selection")
-        tmpdir.ensure("apigen.py").write(py.code.Source("""
-        def get_documentable_items(*args):
-            return 'foo', {}
-        """))
-        opt_mapping = {
-            '': plain_runner,
-            '--box': box_runner,
-            '--apigen=%s/apigen.py' % str(tmpdir): apigen_runner,
-        }
-        pkgdir = tmpdir.dirpath()
-        for opt in opt_mapping.keys():
-            if opt:
-                all = opt + " " + str(tmpdir)
-            else:
-                all = str(tmpdir)
-            config = py.test.config._reparse(all.split(" "))
-            lsession = LSession(config)
-            assert lsession.init_runner() is opt_mapping[opt]
-        #tmpdir.dirpath().ensure("conftest.py").write(py.code.Source("""
-        #dist_boxing=True
-        #"""))
-        #config = py.test.config._reparse([str(tmpdir)])
-        #lsession = LSession(config)
-        #assert lsession.init_runner(pkgdir) is box_runner
-        # XXX check why it fails

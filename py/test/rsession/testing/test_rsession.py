@@ -34,9 +34,9 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
                 pass
         """))
         config = py.test.config._reparse([self.source.join("sub"), '-x'])
-        rsession = RSession(config)
         allevents = []
-        rsession.main(reporter=allevents.append)
+        rsession = RSession(config)
+        rsession.main(allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents) == 3
@@ -69,9 +69,9 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         config = py.test.config._reparse([tmpdir.join(subdir)])
         assert config.topdir == tmpdir
         assert not tmpdir.join("__init__.py").check()
-        rsession = RSession(config)
         allevents = []
-        rsession.main(reporter=allevents.append) 
+        rsession = RSession(config)
+        rsession.main(allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         assert len(testevents)
@@ -129,7 +129,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         hm = HostManager(self.config, hosts=hosts)
         nodes = hm.setup_hosts(allevents.append)
         
-        from py.__.test.rsession.testing.test_executor \
+        from py.__.test.testing.test_executor \
             import ItemTestPassing, ItemTestFailing, ItemTestSkipping
         
         itempass = self.getexample("pass")
@@ -177,8 +177,7 @@ class TestRSessionRemote(DirSetup, BasicRsessionTest):
         
         config = py.test.config._reparse([tmpdir])
         rsession = RSession(config)
-        allevents = []
-        rsession.main(reporter=allevents.append) 
+        rsession.main(allevents.append)
         testevents = [x for x in allevents 
                         if isinstance(x, repevent.ReceivedItemOutcome)]
         passevents = [x for x in testevents if x.outcome.passed]

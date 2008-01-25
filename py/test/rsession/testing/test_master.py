@@ -96,7 +96,7 @@ def test_sending_two_noes():
     assert len(reportlist) == 4
 
 def test_outcome_repr():
-    out = ReprOutcome(SerializableOutcome(skipped=True).make_repr())
+    out = ReprOutcome(SerializableOutcome(skipped="xxx").make_repr())
     s = repr(out)
     assert s.lower().find("skip") != -1
 
@@ -136,21 +136,6 @@ class TestSlave:
         item = self.rootcol._getitembynames(names)
         return self.config.get_collector_trail(item) 
         
-    def test_slave_setup(self):
-        py.test.skip("Doesn't work anymore")
-        pkgname = self.pkgpath.basename
-        host = HostInfo("localhost:%s" %(self.tmpdir,))
-        host.initgateway()
-        channel = setup_slave(host, self.config)
-        spec = self._gettrail(pkgname, "test_something.py", "funcpass")
-        print "sending", spec
-        channel.send(spec)
-        output = ReprOutcome(channel.receive())
-        assert output.passed
-        channel.send(42)
-        channel.waitclose(10)
-        host.gw.exit()
-
     def test_slave_running(self):
         py.test.skip("XXX test broken, needs refactoring")
         def simple_report(event):
@@ -164,15 +149,17 @@ class TestSlave:
         
         def open_gw():
             gw = py.execnet.PopenGateway()
-            gw.host = HostInfo("localhost")
-            gw.host.gw = gw
+            host = HostInfo("localhost")
+            host.gw_remotepath = ''
+            host.gw = gw
+            #gw.host.gw = gw
             config = py.test.config._reparse([tmpdir])
-            channel = setup_slave(gw.host, config)
-            mn = MasterNode(channel, simple_report, {})
+            channel = setup_slave(host, config)
+            mn = MasterNode(channel, simple_report)
             return mn
         
         master_nodes = [open_gw(), open_gw(), open_gw()]
-        funcpass_item = rootcol._getitembynames(funcpass_spec)
+        funcpass_item = self.xxx
         funcfail_item = rootcol._getitembynames(funcfail_spec)
         itemgenerator = iter([funcfail_item] + 
                              [funcpass_item] * 5 + [funcfail_item] * 5)

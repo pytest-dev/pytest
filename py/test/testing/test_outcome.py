@@ -3,6 +3,7 @@ import py
 from py.__.test.outcome import SerializableOutcome, ReprOutcome, ExcInfoRepr
 
 import marshal
+import py
 
 def test_critical_debugging_flag():
     outcome = SerializableOutcome(is_critical=True)
@@ -22,13 +23,16 @@ def f2():
 def f3():
     f2()
 
+def f4():
+    py.test.skip("argh!")
+
 def test_exception_info_repr():
     try:
         f3()
     except:
         outcome = SerializableOutcome(excinfo=py.code.ExceptionInfo())
         
-    repr = outcome.make_excinfo_repr("long")
+    repr = outcome.make_excinfo_repr(outcome.excinfo, "long")
     assert marshal.dumps(repr)
     excinfo = ExcInfoRepr(repr)
     
@@ -45,6 +49,16 @@ def test_exception_info_repr():
     assert excinfo.traceback[1].path == myfile
     assert excinfo.traceback[1].lineno == f3.func_code.co_firstlineno
     assert excinfo.traceback[1].relline == 1
+
+def test_packed_skipped():
+    try:
+        f4()
+    except:
+        outcome = SerializableOutcome(skipped=py.code.ExceptionInfo())
+    repr = outcome.make_excinfo_repr(outcome.skipped, "long")
+    assert marshal.dumps(repr)
+    skipped = ExcInfoRepr(repr)
+    assert skipped.value == "'argh!'"
 
 #def test_f3():
 #    f3()

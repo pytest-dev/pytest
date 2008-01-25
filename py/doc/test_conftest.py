@@ -1,9 +1,25 @@
 
 import py
-from py.__.test.outcome import Skipped, Failed, Passed
+from py.__.test import repevent 
 
 def setup_module(mod): 
     mod.tmpdir = py.test.ensuretemp('docdoctest')
+
+def countoutcomes(session):
+    l = []
+    session.main(l.append) 
+    passed = failed = skipped = 0
+    for event in l: 
+        if isinstance(event, repevent.ReceivedItemOutcome):
+            if event.outcome.passed: 
+                passed += 1
+            elif event.outcome.skipped: 
+                skipped += 1
+            else: 
+                failed += 1
+        elif isinstance(event, repevent.FailedTryiter):
+            failed += 1
+    return failed, passed, skipped 
 
 def test_doctest_extra_exec(): 
     # XXX get rid of the next line: 
@@ -16,9 +32,8 @@ def test_doctest_extra_exec():
     """))
     config = py.test.config._reparse([xtxt]) 
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Failed) 
-    assert len(l) == 1
+    failed, passed, skipped = countoutcomes(session) 
+    assert failed == 1
 
 def test_doctest_basic(): 
     # XXX get rid of the next line: 
@@ -45,12 +60,9 @@ def test_doctest_basic():
     """))
     config = py.test.config._reparse([xtxt]) 
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Failed)
-    assert len(l) == 0 
-    l = session.getitemoutcomepairs(Passed)
-    l2 = session.getitemoutcomepairs(Skipped)
-    assert len(l+l2) == 2
+    failed, passed, skipped = countoutcomes(session) 
+    assert failed == 0 
+    assert passed + skipped == 2
 
 def test_deindent():
     from py.__.doc.conftest import deindent
@@ -69,12 +81,9 @@ def test_doctest_eol():
     ytxt.write(py.code.Source(".. >>> 1 + 1\r\n   2\r\n\r\n"))
     config = py.test.config._reparse([ytxt]) 
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Failed)
-    assert len(l) == 0 
-    l = session.getitemoutcomepairs(Passed)
-    l2 = session.getitemoutcomepairs(Skipped)
-    assert len(l+l2) == 2
+    failed, passed, skipped = countoutcomes(session)
+    assert failed == 0 
+    assert passed + skipped == 2
 
 def test_doctest_indentation():
     # XXX get rid of the next line: 
@@ -84,12 +93,9 @@ def test_doctest_indentation():
     txt.write('..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
     config = py.test.config._reparse([txt])
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Failed)
-    assert len(l) == 0
-    l = session.getitemoutcomepairs(Passed)
-    l2 = session.getitemoutcomepairs(Skipped)
-    assert len(l+l2) == 2
+    failed, passed, skipped = countoutcomes(session) 
+    assert failed == 0
+    assert skipped + passed == 2 
 
 def test_js_ignore():
     py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
@@ -102,12 +108,10 @@ def test_js_ignore():
     """))
     config = py.test.config._reparse([xtxt]) 
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Failed)
-    assert len(l) == 0 
-    l = session.getitemoutcomepairs(Passed)
-    l2 = session.getitemoutcomepairs(Skipped)
-    assert len(l+l2) == 3
+    
+    failed, passed, skipped = countoutcomes(session) 
+    assert failed == 0
+    assert skipped + passed == 3 
 
 def test_resolve_linkrole():
     from py.__.doc.conftest import get_apigen_relpath

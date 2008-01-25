@@ -7,8 +7,8 @@ import py, sys, os
 if sys.platform == 'win32':
     py.test.skip("rsession is unsupported on Windows.")
 
-from py.__.test.rsession.box import Box
-from py.__.test.rsession.testing import example2
+from py.__.test.box import Box
+from py.__.test.testing import example2
 
 def setup_module(mod):
     tmpdir = py.test.ensuretemp("boxtests")

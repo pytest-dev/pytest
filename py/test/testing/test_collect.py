@@ -2,6 +2,13 @@ from __future__ import generators
 import py
 from setupdata import setupdatadir
 from py.__.test.outcome import Skipped, Failed, Passed, Outcome
+from py.__.test.terminal.out import getout
+from py.__.test.repevent import ReceivedItemOutcome
+
+def getpassed(all):
+    outcomes = [i.outcome for i in all if isinstance(i, ReceivedItemOutcome)]
+    l = [i for i in outcomes if i.passed]
+    return l
 
 def setup_module(mod):
     mod.datadir = setupdatadir()
@@ -203,20 +210,20 @@ def test_custom_python_collection_from_conftest():
     old = o.chdir() 
     try: 
         config = py.test.config._reparse([]) 
-        out = py.std.cStringIO.StringIO()
-        session = config._getsessionclass()(config, out) 
-        session.main() 
-        l = session.getitemoutcomepairs(Passed) 
+        all = []
+        session = config._getsessionclass()(config)
+        session.main(all.append)
+        l = getpassed(all)
         assert len(l) == 2
     finally: 
         old.chdir() 
 
     # test that running the file directly works 
     config = py.test.config._reparse([str(checkfile)]) 
-    out = py.std.cStringIO.StringIO()
-    session = config._getsessionclass()(config, out) 
-    session.main() 
-    l = session.getitemoutcomepairs(Passed) 
+    all = []
+    session = config._getsessionclass()(config)
+    session.main(all.append)
+    l = getpassed(all)
     assert len(l) == 2
 
 def test_custom_NONpython_collection_from_conftest():
@@ -250,20 +257,20 @@ def test_custom_NONpython_collection_from_conftest():
     old = o.chdir() 
     try: 
         config = py.test.config._reparse([]) 
-        out = py.std.cStringIO.StringIO()
-        session = config._getsessionclass()(config, out) 
-        session.main() 
-        l = session.getitemoutcomepairs(Passed) 
+        all = []
+        session = config._getsessionclass()(config)
+        session.main(all.append)
+        l = getpassed(all)
         assert len(l) == 1
     finally: 
         old.chdir() 
 
     # test that running the file directly works 
     config = py.test.config._reparse([str(checkfile)]) 
-    out = py.std.cStringIO.StringIO()
-    session = config._getsessionclass()(config, out) 
-    session.main() 
-    l = session.getitemoutcomepairs(Passed) 
+    all = []
+    session = config._getsessionclass()(config)
+    session.main(all.append)
+    l = getpassed(all)
     assert len(l) == 1
 
 def test_order_of_execution_generator_same_codeline():
@@ -286,9 +293,10 @@ def test_order_of_execution_generator_same_codeline():
         yield assert_order_of_execution
     """))
     config = py.test.config._reparse([o])
+    all = []
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Passed) 
+    session.main(all.append)
+    l = getpassed(all)
     assert len(l) == 7
 
 def test_order_of_execution_generator_different_codeline():
@@ -318,9 +326,10 @@ def test_order_of_execution_generator_different_codeline():
         yield assert_order_of_execution   
     """))
     config = py.test.config._reparse([o])
+    all = []
     session = config.initsession()
-    session.main()
-    l = session.getitemoutcomepairs(Passed) 
+    session.main(all.append)
+    l = getpassed(all)
     assert len(l) == 4
     
 
