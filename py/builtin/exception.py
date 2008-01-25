@@ -11,3 +11,4 @@ except NameError:
         write code compatible with CPython 2.5 even in lower CPython
         versions."""
         pass
+    GeneratorExit.__module__ = 'exceptions'
