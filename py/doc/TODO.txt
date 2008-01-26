@@ -1,11 +1,44 @@
 Things to do for 1.0.0 
 ========================= 
 
+py.test 
+--------------
 
+- review and refactor architecture of py.test with particular
+  respect to: 
+  - writing (stacked) extensions / plugins (compared to Nose) 
+  - event naming and processing 
+  - porting existing extensions (htmlconftest / buildbot /
+    PyPy's conftest's ...) 
+  - fast and stable distributed testing 
+  - reliable cross-platform testing 
 
+- fix reporting/usage degradation after reporter-merge merge: 
+  - collapse skips with same reason and lineno into one line 
+ 
+- fix and investigate win32 failures 
 
+- (needs review) adjust py.test documentation to reflect new
+  collector/session architecture 
 
+- document py.test's conftest.py approach
 
+py.execnet
+--------------
+
+- cross-python version (2.2/2.3-2.5/6) and cross-platform testing of 
+  setup/teardown semantics
+
+- optimize general setup and rsync timing? 
+
+py.apigen 
+----------------
+
+- refactor to produce intermediate data/files capturing 
+  info of test runs 
+
+- refactor html renderer to work on intermediate 
+  data/files rather than on the live data
 
 
 ld (review and shift to above)
@@ -13,9 +46,6 @@ ld (review and shift to above)
 
 refactorings
 ------------------
-
-- merge py.execnet-lessthreads branch (it's working relatively
-  nicely, already)  (M995)
 
 - session / collection unification (particularly tryiter and buildname2items) 
 
@@ -114,11 +144,6 @@ testing
   (guido tested all on win32, everything works except --dist (requires
   os.fork to work))
 
-distributed testing / RSession
-------------------------------------
-
-* (optional) see if more of py/test/session.py's Session can be reused 
-
 code quality
 -----------------
 
@@ -129,14 +154,8 @@ code quality
 * review the pylib issue tracker
   (cfbolz: done: what has a 1.0.0 tag (or lower) should be looked at again)
 
-
 py.test
 -------
-
-* (needs review) adjust py.test documentation to reflect new
-  collector/session architecture 
-
-* (in-progress, NOT DONE) document py.test's conftest.py approach
 
 * (postponed, likely) py.test fails to parse strangely formatted code after assertion failure
 
