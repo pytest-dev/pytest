@@ -7,12 +7,12 @@
 """
 from initpkg import initpkg
 
-version = "0.9.1-alpha"
+version = "1.0-pre-alpha"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 51034 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-01-25 16:54:04 +0100 (Fri, 25 Jan 2008) $',
+    revision = int('$LastChangedRevision: 51077 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-01-27 12:55:27 +0100 (Sun, 27 Jan 2008) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "XXX", # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
