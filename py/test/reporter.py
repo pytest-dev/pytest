@@ -221,6 +221,9 @@ class AbstractReporter(object):
         return host.hostid
     
     def skips(self):
+        # XXX review and test below, fix too many lines of 
+        #     skips that happen in the same file/lineno
+        #     (this is correct in py-dist) 
         texts = {}
         for event in self.skipped_tests_outcome:
             colitem = event.item
