@@ -22,6 +22,10 @@ py.test
 
 - document py.test's conftest.py approach
 
+- review and optimize skip-handling (it can be quite slow in
+  certain situations because e.g. setup/teardown is fully performed 
+  although we have "skip by keyword" and could detect this early)
+
 py.execnet
 --------------
 
