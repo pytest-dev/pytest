@@ -28,7 +28,7 @@ def build_apigen_docs(targetpath, testargs=''):
 def build_docs(targetpath, testargs):
     docpath = pypath.join('doc')
     run_tests(docpath, '',
-              testargs + ' --forcegen --apigenrelpath="apigen/"')
+              testargs + ' --forcegen --apigen="%s/apigen/apigen.py"' % (pypath,))
     docpath.copy(targetpath)
 
 def build_nav(targetpath, docs=True, api=True):
