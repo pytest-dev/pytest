@@ -71,8 +71,11 @@ class Presenter(object):
             s = str(source.getstatement(len(source)-1))
         except KeyboardInterrupt: 
             raise 
-        except: 
-            s = str(source[-1])
+        except:
+            try:
+                s = str(source[-1])
+            except IndexError:
+                s = "<Cannot get source>"
         indent = " " * (4 + (len(s) - len(s.lstrip())))
         # get the real exception information out 
         lines = excinfo.exconly(tryshort=True).split('\n')
