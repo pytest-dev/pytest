@@ -10,7 +10,7 @@
 
 from _findpy import py
 import py
-pypath = py.__package__.getpath()
+pypath = py.__pkg__.getpath()
 
 def run_tests(path, envvars='', args=''):
     pytestpath = pypath.join('bin/py.test')

@@ -16,7 +16,7 @@ from py.__.apigen.tracer import model
 sorted = py.builtin.sorted
 
 def pkg_to_dict(module):
-    defs = module.__package__.exportdefs
+    defs = module.__pkg__.exportdefs
     d = {}
     for key, value in defs.iteritems():
         chain = key.split('.')
@@ -33,7 +33,7 @@ def get_star_import_tree(module, modname):
     """ deal with '*' entries in an initpkg situation """
     ret = {}
     modpath = py.path.local(inspect.getsourcefile(module))
-    pkgpath = module.__package__.getpath()
+    pkgpath = module.__pkg__.getpath()
     for objname in dir(module):
         if objname.startswith('_'):
             continue # also skip __*__ attributes
@@ -281,8 +281,8 @@ class DocStorageAccessor(AbstractDocStorageAccessor):
             return "Lack of module info"
         try:
             retval = module.__doc__ or "*undocumented*"
-            retval = module.__package__.description
-            retval = module.__package__.long_description
+            retval = module.__pkg__.description
+            retval = module.__pkg__.long_description
         except AttributeError:
             pass
         return retval

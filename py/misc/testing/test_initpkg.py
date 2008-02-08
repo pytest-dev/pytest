@@ -33,7 +33,7 @@ def test_early__dict__access():
     
 def test_resolve_attrerror(): 
     extpyish = "./initpkg.py", "hello"
-    excinfo = py.test.raises(AttributeError, "py.__package__._resolve(extpyish)")
+    excinfo = py.test.raises(AttributeError, "py.__pkg__._resolve(extpyish)")
     s = str(excinfo.value)
     assert s.find(extpyish[0]) != -1
     assert s.find(extpyish[1]) != -1
@@ -83,16 +83,16 @@ def check_import(modpath):
     assert __import__(modpath) 
 
 def test_shahexdigest():
-    hex = py.__package__.shahexdigest()
+    hex = py.__pkg__.shahexdigest()
     assert len(hex) == 40
 
 def test_getzipdata():
-    s = py.__package__.getzipdata()
+    s = py.__pkg__.getzipdata()
 
 def test_getrev():
     if not py.path.local(py.__file__).dirpath('.svn').check():
         py.test.skip("py package is not a svn checkout") 
-    d = py.__package__.getrev()
+    d = py.__pkg__.getrev()
     svnversion = py.path.local.sysfind('svnversion')
     if svnversion is None:
         py.test.skip("cannot test svnversion, 'svnversion' binary not found")
@@ -255,9 +255,9 @@ class TestRealModule:
 def test_url_of_version():
     #py.test.skip("FAILING! - provide a proper URL or upload pylib tgz")
     from urllib import URLopener
-    url = py.__package__.download_url
+    url = py.__pkg__.download_url
     if url.lower() == "xxx":
-        assert py.__package__.version.find("alpha") != -1
+        assert py.__pkg__.version.find("alpha") != -1
     else:
         URLopener().open(url) 
     

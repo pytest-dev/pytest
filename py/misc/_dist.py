@@ -144,7 +144,7 @@ def setup(pkg, **kw):
 
     params = Params(pkg)
     #dump(params)
-    source = getattr(pkg, '__package__', pkg)
+    source = getattr(pkg, '__pkg__', pkg)
     namelist = list(core.setup_keywords)
     namelist.extend(['packages', 'scripts', 'data_files'])
     for name in namelist: 

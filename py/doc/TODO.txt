@@ -39,9 +39,11 @@ py.apigen
 
 - refactor to produce intermediate data/files capturing 
   info of test runs 
-
 - refactor html renderer to work on intermediate 
   data/files rather than on the live data
+
+- check out CodeInvestigator 
+  http://codeinvestigator.googlepages.com/main
 
 
 ld (review and shift to above)

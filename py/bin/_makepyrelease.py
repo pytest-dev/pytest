@@ -147,9 +147,9 @@ def pytest_remote(address, url):
 if __name__ == '__main__': 
     py.magic.invoke(assertion=True) 
     version = py.std.sys.argv[1]
-    assert py.__package__.version == version, (
+    assert py.__pkg__.version == version, (
             "py package has version %s\nlocation: %s" % 
-            (py.__package__.version, pydir))
+            (py.__pkg__.version, pydir))
 
     tmpdir = py.path.local.get_temproot().join('makepyrelease-%s' % version) 
     if tmpdir.check(): 
@@ -171,14 +171,14 @@ if __name__ == '__main__':
     py.process.cmdexec("rsync -avz %(source)s/ %(remotedir)s" % locals())
 
     ddir = tmpdir.ensure('download', dir=1)
-    URL = py.__package__.download_url # 'http://codespeak.net/download/py/' 
+    URL = py.__pkg__.download_url # 'http://codespeak.net/download/py/' 
     unpacked = unpackremotetar(ddir, URL)
     assert unpacked == ddir.join("py-%s" % (version,))
 
     #checksvnworks(unpacked) 
     #pytest(unpacked)
 
-    pytest_remote('test@codespeak.net', py.__package__.download_url)
+    pytest_remote('test@codespeak.net', py.__pkg__.download_url)
 
 
 

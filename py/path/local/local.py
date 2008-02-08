@@ -400,8 +400,8 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                     self._prependsyspath(pkgpath.dirpath())
                 pkg = __import__(pkgpath.basename, None, None, [])
                 
-                if hasattr(pkg, '__package__'):
-                    modname = pkg.__package__.getimportname(self)
+                if hasattr(pkg, '__pkg__'):
+                    modname = pkg.__pkg__.getimportname(self)
                     assert modname is not None, "package %s doesn't know %s" % (
                                                 pkg.__name__, self)
                 

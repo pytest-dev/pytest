@@ -24,7 +24,7 @@ def rsync(pkgpath, apidocspath, gateway, remotepath):
 
 def run_tests(pkgpath, apigenpath, args='', captureouterr=False):
     """ run the unit tests and build the docs """
-    pypath = py.__package__.getpath()
+    pypath = py.__pkg__.getpath()
     pytestpath = pypath.join('bin/py.test')
     # XXX this would need a Windows specific version if we want to allow
     # running this script on that platform, but currently --apigen doesn't
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         args.remove('--ignorefail')
         ignorefail = True
     args = ' '.join(sys.argv[1:])
-    pkgpath = py.__package__.getpath()
+    pkgpath = py.__pkg__.getpath()
     apidocspath = pkgpath.dirpath().join('apigen')
     main(pkgpath, apidocspath, 'codespeak.net',
          '/home/guido/rsynctests', args, ignorefail)

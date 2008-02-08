@@ -311,7 +311,7 @@ def resolve_linkrole(name, text, check=True):
                                         'to the py package') % (text,)
         relpath = '/'.join(text.split('/')[1:])
         if check:
-            pkgroot = py.__package__.getpath()
+            pkgroot = py.__pkg__.getpath()
             abspath = pkgroot.join(relpath)
             assert pkgroot.join(relpath).check(), (
                     'problem with linkrole :source:`%s`: '

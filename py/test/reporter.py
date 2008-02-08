@@ -356,7 +356,7 @@ class LocalReporter(AbstractReporter):
         self.timestart = item.timestart
         self.out.line("executable:   %s  (%s)" %
                       (py.std.sys.executable, repr_pythonversion()))
-        rev = py.__package__.getrev()
+        rev = py.__pkg__.getrev()
         self.out.line("using py lib: %s <rev %s>" % (
                        py.path.local(py.__file__).dirpath(), rev))
         config = item.config

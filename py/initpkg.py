@@ -38,9 +38,9 @@ class Package(object):
         self.name = name
         self.exportdefs = exportdefs
         self.module = pkgmodule
-        assert not hasattr(pkgmodule, '__package__'), \
+        assert not hasattr(pkgmodule, '__pkg__'), \
                    "unsupported reinitialization of %r" % pkgmodule
-        pkgmodule.__package__ = self
+        pkgmodule.__pkg__ = self
 
         # make available pkgname.__
         implname = name + '.' + '__'
@@ -134,7 +134,7 @@ class Package(object):
             from cStringIO import StringIO
         except ImportError:
             from StringIO import StringIO
-        base = py.__package__.getpath().dirpath()
+        base = py.__pkg__.getpath().dirpath()
         outf = StringIO()
         f = zipfile.ZipFile(outf, 'w', compression=zipfile.ZIP_DEFLATED)
         try:
@@ -164,14 +164,14 @@ def setmodule(modpath, module):
 
 class Module(ModuleType):
     def __init__(self, pkg, name):
-        self.__package__ = pkg
+        self.__pkg__ = pkg
         self.__name__ = name
         self.__map__ = {}
 
     def __getattr__(self, name):
         if '*' in self.__map__: 
             extpy = self.__map__['*'][0], name 
-            result = self.__package__._resolve(extpy) 
+            result = self.__pkg__._resolve(extpy) 
         else: 
             try:
                 extpy = self.__map__[name]
@@ -179,7 +179,7 @@ class Module(ModuleType):
                 __tracebackhide__ = True
                 raise AttributeError(name)
             else: 
-                result = self.__package__._resolve(extpy) 
+                result = self.__pkg__._resolve(extpy) 
                 del self.__map__[name]
         setattr(self, name, result)
         #self._fixinspection(result, name) 
@@ -216,7 +216,7 @@ class Module(ModuleType):
                 assert not self.__map__, "%r not empty" % self.__map__
             else: 
                 fsname = self.__map__['*'][0] 
-                dict.update(self.__package__._loadimpl(fsname[:-3]).__dict__)
+                dict.update(self.__pkg__._loadimpl(fsname[:-3]).__dict__)
         return dict
 
     __dict__ = property(getdict)
