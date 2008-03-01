@@ -187,6 +187,23 @@ properties in an :api:`py.path.svnwc` instance::
   >>> len(wc.status().prop_modified)
   0
 
+SVN authentication
+++++++++++++++++++++++
+
+Some uncommon functionality can also be provided as extensions, such as SVN
+authentication::
+
+  >>> auth = py.path.SvnAuth('anonymous', 'user', cache_auth=False,
+  ...             interactive=False)
+  >>> wc.auth = auth
+  >>> wc.update() # this should work
+  >>> path = wc.ensure('thisshouldnotexist.txt')
+  >>> try:
+  ...     path.commit('testing')
+  ... except py.process.cmdexec.Error, e:
+  ...     pass
+  >>> 'authorization failed' in str(e)
+  True
 
 Known problems / limitations
 ===================================
