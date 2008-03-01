@@ -65,6 +65,7 @@ class SvnPathBase(common.FSPathBase):
         """
         obj = object.__new__(self.__class__)
         obj.rev = kw.get('rev', self.rev)
+        obj.auth = kw.get('auth', self.auth)
         dirname, basename, purebasename, ext = self._getbyspec(
              "dirname,basename,purebasename,ext")
         if 'basename' in kw:
@@ -138,7 +139,7 @@ class SvnPathBase(common.FSPathBase):
 
         args = tuple([arg.strip(self.sep) for arg in args])
         parts = (self.strpath, ) + args
-        newpath = self.__class__(self.sep.join(parts), self.rev)
+        newpath = self.__class__(self.sep.join(parts), self.rev, self.auth)
         return newpath
 
     def propget(self, name):
@@ -330,3 +331,27 @@ def url_from_path(path):
         fspath = '%s@HEAD' % (fspath,)
     return 'file://%s' % (fspath,)
 
+class SvnAuth(object):
+    """ container for auth information for Subversion """
+    def __init__(self, username, password, cache_auth=True, interactive=True):
+        self.username = username
+        self.password = password
+        self.cache_auth = cache_auth
+        self.interactive = interactive
+
+    def makecmdoptions(self):
+        uname = self.username.replace('"', '\\"')
+        passwd = self.password.replace('"', '\\"')
+        ret = []
+        if uname:
+            ret.append('--username="%s"' % (uname,))
+        if passwd:
+            ret.append('--password="%s"' % (passwd,))
+        if not self.cache_auth:
+            ret.append('--no-auth-cache')
+        if not self.interactive:
+            ret.append('--non-interactive')
+        return ' '.join(ret)
+
+    def __str__(self):
+        return "<SvnAuth username=%s ...>" %(self.username,)

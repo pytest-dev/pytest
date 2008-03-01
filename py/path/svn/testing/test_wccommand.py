@@ -1,13 +1,27 @@
 import py
+import sys
 from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc
 from py.__.path.svn.wccommand import InfoSvnWCCommand
 from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
 
-
 if py.path.local.sysfind('svn') is None:
     py.test.skip("cannot test py.path.svn, 'svn' binary not found")
 
+if sys.platform != 'win32':
+    def normpath(p):
+        return p
+else:
+    try:
+        import win32api
+    except ImportError:
+        def normpath(p):
+            py.test.skip('this test requires win32api to run on windows')
+    else:
+        import os
+        def normpath(p):
+            p = win32api.GetShortPathName(p)
+            return os.path.normpath(os.path.normcase(p))
 
 class TestWCSvnCommandPath(CommonSvnTests):
 
@@ -253,7 +267,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         try:
             locked = root.status().locked
             assert len(locked) == 1
-            assert str(locked[0]) == str(somefile)
+            assert normpath(str(locked[0])) == normpath(str(somefile))
             #assert somefile.locked()
             py.test.raises(Exception, 'somefile.lock()')
         finally:

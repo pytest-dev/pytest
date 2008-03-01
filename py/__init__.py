@@ -11,8 +11,8 @@ version = "1.0-pre-alpha"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 51077 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-01-27 12:55:27 +0100 (Sun, 27 Jan 2008) $',
+    revision = int('$LastChangedRevision: 52000 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-03-01 14:43:33 +0100 (Sat, 01 Mar 2008) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "XXX", # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
@@ -67,6 +67,7 @@ initpkg(__name__,
     'path.svnwc'             : ('./path/svn/wccommand.py', 'SvnWCCommandPath'),
     'path.svnurl'            : ('./path/svn/urlcommand.py', 'SvnCommandPath'),
     'path.local'             : ('./path/local/local.py', 'LocalPath'),
+    'path.SvnAuth'           : ('./path/svn/svncommon.py', 'SvnAuth'),
 
     # some nice slightly magic APIs
     'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),

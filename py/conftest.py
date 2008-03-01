@@ -33,6 +33,9 @@ option = py.test.config.addoptions("execnet options",
                action='store', dest='docpath',
                default="doc", type='string',
                help="relative path to doc output location (relative from py/)"), 
+        Option('', '--runslowtests',
+               action="store_true", dest="runslowtests", default=False,
+               help="run slow tests)"),
     )
 
 dist_rsync_roots = ['.']

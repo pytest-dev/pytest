@@ -4,6 +4,10 @@ import py, sys
 from py.__.misc.killproc import killproc
 
 def test_win_killsubprocess():
+    if sys.platform == 'win32' and not py.path.local.sysfind('taskkill'):
+        py.test.skip("you\'re using an older version of windows, which "
+                     "doesn\'t support 'taskkill' - py.misc.killproc is not "
+                     "available")
     tmp = py.test.ensuretemp("test_win_killsubprocess")
     t = tmp.join("t.py")
     t.write("import time ; time.sleep(100)")

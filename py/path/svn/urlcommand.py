@@ -21,10 +21,11 @@ class SvnCommandPath(svncommon.SvnPathBase):
     _lsrevcache = BuildcostAccessCache(maxentries=128)
     _lsnorevcache = AgingCache(maxentries=1000, maxseconds=60.0)
 
-    def __new__(cls, path, rev=None):
+    def __new__(cls, path, rev=None, auth=None):
         self = object.__new__(cls)
         if isinstance(path, cls): 
             rev = path.rev 
+            auth = path.auth
             path = path.strpath 
         proto, uri = path.split("://", 1)
         host, uripath = uri.split('/', 1)
@@ -36,6 +37,7 @@ class SvnCommandPath(svncommon.SvnPathBase):
         path = path.rstrip('/')
         self.strpath = path
         self.rev = rev
+        self.auth = auth
         return self
 
     def __repr__(self):
@@ -44,7 +46,8 @@ class SvnCommandPath(svncommon.SvnPathBase):
         else:
             return 'svnurl(%r, %r)' % (self.strpath, self.rev)
 
-    def _svn(self, cmd, *args):
+    def _svnwithrev(self, cmd, *args):
+        """ execute an svn command, append our own url and revision """
         if self.rev is None:
             return self._svnwrite(cmd, *args)
         else:
@@ -52,16 +55,28 @@ class SvnCommandPath(svncommon.SvnPathBase):
             return self._svnwrite(cmd, *args)
 
     def _svnwrite(self, cmd, *args):
+        """ execute an svn command, append our own url """
         l = ['svn %s' % cmd]
         args = ['"%s"' % self._escape(item) for item in args]
         l.extend(args)
         l.append('"%s"' % self._encodedurl())
         # fixing the locale because we can't otherwise parse
-        string = svncommon.fixlocale() + " ".join(l)
+        string = " ".join(l)
         if DEBUG:
             print "execing", string
+        out = self._svncmdexecauth(string)
+        return out
+
+    def _svncmdexecauth(self, cmd):
+        """ execute an svn command 'as is' """
+        cmd = svncommon.fixlocale() + cmd
+        if self.auth is not None:
+            cmd += ' ' + self.auth.makecmdoptions()
+        return self._cmdexec(cmd)
+
+    def _cmdexec(self, cmd):
         try:
-            out = process.cmdexec(string)
+            out = process.cmdexec(cmd)
         except py.process.cmdexec.Error, e:
             if (e.err.find('File Exists') != -1 or
                             e.err.find('File already exists') != -1):
@@ -69,21 +84,33 @@ class SvnCommandPath(svncommon.SvnPathBase):
             raise
         return out
 
+    def _svnpopenauth(self, cmd):
+        """ execute an svn command, return a pipe for reading stdin """
+        cmd = svncommon.fixlocale() + cmd
+        if self.auth is not None:
+            cmd += ' ' + self.auth.makecmdoptions()
+        return self._popen(cmd)
+
+    def _popen(self, cmd):
+        return os.popen(cmd)
+
     def _encodedurl(self):
         return self._escape(self.strpath)
+
+    def _norev_delentry(self, path):
+        auth = self.auth and self.auth.makecmdoptions() or None
+        self._lsnorevcache.delentry((str(path), auth))
 
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
         assert 'w' not in mode and 'a' not in mode, "XXX not implemented for svn cmdline"
         assert self.check(file=1) # svn cat returns an empty file otherwise
-        def popen(cmd):
-            return os.popen(cmd)
         if self.rev is None:
-            return popen(svncommon.fixlocale() +
-                            'svn cat "%s"' % (self._escape(self.strpath), ))
+            return self._svnpopenauth('svn cat "%s"' % (
+                                      self._escape(self.strpath), ))
         else:
-            return popen(svncommon.fixlocale() +
-                            'svn cat -r %s "%s"' % (self.rev, self._escape(self.strpath)))
+            return self._svnpopenauth('svn cat -r %s "%s"' % (
+                                      self.rev, self._escape(self.strpath)))
 
     def dirpath(self, *args, **kwargs):
         """ return the directory path of the current path joined
@@ -104,33 +131,33 @@ a checkin message by giving a keyword argument 'msg'"""
         commit_msg=kwargs.get('msg', "mkdir by py lib invocation")
         createpath = self.join(*args)
         createpath._svnwrite('mkdir', '-m', commit_msg)
-        self._lsnorevcache.delentry(createpath.dirpath().strpath)
+        self._norev_delentry(createpath.dirpath())
         return createpath
 
     def copy(self, target, msg='copied by py lib invocation'):
         """ copy path to target with checkin message msg."""
         if getattr(target, 'rev', None) is not None:
             raise py.error.EINVAL(target, "revisions are immutable")
-        process.cmdexec('svn copy -m "%s" "%s" "%s"' %(msg, 
-                                                self._escape(self), self._escape(target)))
-        self._lsnorevcache.delentry(target.dirpath().strpath)
+        self._svncmdexecauth('svn copy -m "%s" "%s" "%s"' %(msg,
+                             self._escape(self), self._escape(target)))
+        self._norev_delentry(target.dirpath())
 
     def rename(self, target, msg="renamed by py lib invocation"):
         """ rename this path to target with checkin message msg. """
         if getattr(self, 'rev', None) is not None:
             raise py.error.EINVAL(self, "revisions are immutable")
-        py.process.cmdexec('svn move -m "%s" --force "%s" "%s"' %(
-                           msg, self._escape(self), self._escape(target)))
-        self._lsnorevcache.delentry(self.dirpath().strpath)
-        self._lsnorevcache.delentry(self.strpath)
+        self._svncmdexecauth('svn move -m "%s" --force "%s" "%s"' %(
+                             msg, self._escape(self), self._escape(target)))
+        self._norev_delentry(self.dirpath())
+        self._norev_delentry(self)
 
     def remove(self, rec=1, msg='removed by py lib invocation'):
         """ remove a file or directory (or a directory tree if rec=1) with
 checkin message msg."""
         if self.rev is not None:
             raise py.error.EINVAL(self, "revisions are immutable")
-        process.cmdexec('svn rm -m "%s" "%s"' %(msg, self._escape(self)))
-        self._lsnorevcache.delentry(self.dirpath().strpath)
+        self._svncmdexecauth('svn rm -m "%s" "%s"' %(msg, self._escape(self)))
+        self._norev_delentry(self.dirpath())
 
     def export(self, topath):
         """ export to a local path
@@ -143,7 +170,7 @@ checkin message msg."""
                 '"%s"' % (self._escape(topath),)]
         if self.rev is not None:
             args = ['-r', str(self.rev)] + args
-        process.cmdexec('svn export %s' % (' '.join(args),))
+        self._svncmdexecauth('svn export %s' % (' '.join(args),))
         return topath
 
     def ensure(self, *args, **kwargs):
@@ -173,19 +200,19 @@ checkin message msg."""
                     "ensure %s" % self._escape(tocreate), 
                     self._escape(tempdir.join(basename)), 
                     x.join(basename)._encodedurl())
-            process.cmdexec(cmd) 
-            self._lsnorevcache.delentry(x.strpath)  # !!! 
+            self._svncmdexecauth(cmd) 
+            self._norev_delentry(x)
         finally:    
             tempdir.remove() 
         return target
 
     # end of modifying methods
     def _propget(self, name):
-        res = self._svn('propget', name)
+        res = self._svnwithrev('propget', name)
         return res[:-1] # strip trailing newline
 
     def _proplist(self):
-        res = self._svn('proplist')
+        res = self._svnwithrev('proplist')
         lines = res.split('\n')
         lines = map(str.strip, lines[1:])
         return svncommon.PropListDict(self, lines)
@@ -194,7 +221,7 @@ checkin message msg."""
         """ return sequence of name-info directory entries of self """
         def builder():
             try:
-                res = self._svn('ls', '-v')
+                res = self._svnwithrev('ls', '-v')
             except process.cmdexec.Error, e:
                 if e.err.find('non-existent in that revision') != -1:
                     raise py.error.ENOENT(self, e.err)
@@ -214,10 +241,13 @@ checkin message msg."""
                     info = InfoSvnCommand(lsline)
                     nameinfo_seq.append((info._name, info))
             return nameinfo_seq
+        auth = self.auth and self.auth.makecmdoptions() or None
         if self.rev is not None:
-            return self._lsrevcache.getorbuild((self.strpath, self.rev), builder)
+            return self._lsrevcache.getorbuild((self.strpath, self.rev, auth),
+                                               builder)
         else:
-            return self._lsnorevcache.getorbuild(self.strpath, builder)
+            return self._lsnorevcache.getorbuild((self.strpath, auth),
+                                                 builder)
 
     def log(self, rev_start=None, rev_end=1, verbose=False):
         """ return a list of LogEntry instances for this path.
@@ -234,9 +264,8 @@ if verbose is True, then the LogEntry instances also know which files changed.
         else:
             rev_opt = "-r %s:%s" % (rev_start, rev_end)
         verbose_opt = verbose and "-v" or ""
-        xmlpipe =  os.popen(svncommon.fixlocale() +
-                      'svn log --xml %s %s "%s"' %
-                      (rev_opt, verbose_opt, self.strpath))
+        xmlpipe =  self._svnpopenauth('svn log --xml %s %s "%s"' %
+                                      (rev_opt, verbose_opt, self.strpath))
         from xml.dom import minidom
         tree = minidom.parse(xmlpipe)
         result = []
@@ -254,7 +283,7 @@ class InfoSvnCommand:
     # the '0?' part in the middle is an indication of whether the resource is
     # locked, see 'svn help ls'
     lspattern = re.compile(
-        r'^ *(?P<rev>\d+) +(?P<author>\S+) +(0? *(?P<size>\d+))? '
+        r'^ *(?P<rev>\d+) +(?P<author>.+?) +(0? *(?P<size>\d+))? '
             '*(?P<date>\w+ +\d{2} +[\d:]+) +(?P<file>.*)$')
     def __init__(self, line):
         # this is a typical line from 'svn ls http://...'

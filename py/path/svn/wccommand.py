@@ -25,7 +25,7 @@ class SvnWCCommandPath(common.FSPathBase):
     """
     sep = os.sep
 
-    def __new__(cls, wcpath=None):
+    def __new__(cls, wcpath=None, auth=None):
         self = object.__new__(cls)
         if isinstance(wcpath, cls):
             if wcpath.__class__ == cls:
@@ -35,6 +35,7 @@ class SvnWCCommandPath(common.FSPathBase):
                                           svncommon.ALLOWED_CHARS):
             raise ValueError("bad char in wcpath %s" % (wcpath, ))
         self.localpath = py.path.local(wcpath)
+        self.auth = auth
         return self
 
     strpath = property(lambda x: str(x.localpath), None, None, "string path")
@@ -63,13 +64,22 @@ class SvnWCCommandPath(common.FSPathBase):
         info = self.info()
         return py.path.svnurl(info.url)
 
-
     def __repr__(self):
         return "svnwc(%r)" % (self.strpath) # , self._url)
 
     def __str__(self):
         return str(self.localpath)
 
+    def _makeauthoptions(self):
+        if self.auth is None:
+            return ''
+        return self.auth.makecmdoptions()
+
+    def _authsvn(self, cmd, args=None):
+        args = args and list(args) or []
+        args.append(self._makeauthoptions())
+        return self._svn(cmd, *args)
+        
     def _svn(self, cmd, *args):
         l = ['svn %s' % cmd]
         args = [self._escape(item) for item in args]
@@ -101,9 +111,9 @@ class SvnWCCommandPath(common.FSPathBase):
             raise
         return out
 
-    def switch(self, url): 
+    def switch(self, url):
         """ switch to given URL. """
-        self._svn('switch', url)
+        self._authsvn('switch', [url])
 
     def checkout(self, url=None, rev=None):
         """ checkout from url to local wcpath. """
@@ -119,11 +129,12 @@ class SvnWCCommandPath(common.FSPathBase):
                 url += "@%d" % rev
             else:
                 args.append('-r' + str(rev))
-        self._svn('co', url, *args)
+        args.append(url)
+        self._authsvn('co', args)
 
     def update(self, rev = 'HEAD'):
         """ update working copy item to given revision. (None -> HEAD). """
-        self._svn('up -r %s' % rev)
+        self._authsvn('up', ['-r', rev])
 
     def write(self, content, mode='wb'):
         """ write content into local filesystem wc. """
@@ -131,7 +142,7 @@ class SvnWCCommandPath(common.FSPathBase):
 
     def dirpath(self, *args):
         """ return the directory Path of the current Path. """
-        return self.__class__(self.localpath.dirpath(*args))
+        return self.__class__(self.localpath.dirpath(*args), auth=self.auth)
 
     def _ensuredirs(self):
         parent = self.dirpath()
@@ -197,18 +208,21 @@ class SvnWCCommandPath(common.FSPathBase):
         """ rename this path to target. """
         py.process.cmdexec("svn move --force %s %s" %(str(self), str(target)))
 
-    _rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(\S+)\s+(.*)')
+    # XXX a bit scary to assume there's always 2 spaces between username and
+    # path, however with win32 allowing spaces in user names there doesn't
+    # seem to be a more solid approach :(
+    _rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(.+?)\s{2,}(.*)')
 
     def lock(self):
         """ set a lock (exclusive) on the resource """
-        out = self._svn('lock').strip()
+        out = self._authsvn('lock').strip()
         if not out:
             # warning or error, raise exception
             raise Exception(out[4:])
     
     def unlock(self):
         """ unset a previously set lock """
-        out = self._svn('unlock').strip()
+        out = self._authsvn('unlock').strip()
         if out.startswith('svn:'):
             # warning or error, raise exception
             raise Exception(out[4:])
@@ -248,7 +262,8 @@ class SvnWCCommandPath(common.FSPathBase):
 
         update_rev = None
 
-        out = self._svn('status -v %s %s %s' % (updates, rec, externals))
+        cmd = 'status -v %s %s %s' % (updates, rec, externals)
+        out = self._authsvn(cmd)
         rootstatus = WCStatus(self)
         for line in out.split('\n'):
             if not line.strip():
@@ -266,7 +281,8 @@ class SvnWCCommandPath(common.FSPathBase):
                     wcpath = self.join(fn, abs=1)
                     rootstatus.unknown.append(wcpath)
                 elif c0 == 'X':
-                    wcpath = self.__class__(self.localpath.join(fn, abs=1))
+                    wcpath = self.__class__(self.localpath.join(fn, abs=1),
+                                            auth=self.auth)
                     rootstatus.external.append(wcpath)
                 elif c0 == 'I':
                     wcpath = self.join(fn, abs=1)
@@ -334,10 +350,10 @@ class SvnWCCommandPath(common.FSPathBase):
         """ return a diff of the current path against revision rev (defaulting
             to the last one).
         """
-        if rev is None:
-            out = self._svn('diff')
-        else:
-            out = self._svn('diff -r %d' % rev)
+        args = []
+        if rev is not None:
+            args.append("-r %d" % rev)
+        out = self._authsvn('diff', args)
         return out
 
     def blame(self):
@@ -365,7 +381,7 @@ class SvnWCCommandPath(common.FSPathBase):
         cmd = 'commit -m "%s" --force-log' % (msg.replace('"', '\\"'),)
         if not rec:
             cmd += ' -N'
-        out = self._svn(cmd)
+        out = self._authsvn(cmd)
         try:
             del cache.info[self]
         except KeyError:
@@ -431,7 +447,7 @@ recursively. """
             localpath = self.localpath.new(**kw)
         else:
             localpath = self.localpath
-        return self.__class__(localpath)
+        return self.__class__(localpath, auth=self.auth)
 
     def join(self, *args, **kwargs):
         """ return a new Path (with the same revision) which is composed
@@ -440,7 +456,7 @@ recursively. """
         if not args:
             return self
         localpath = self.localpath.join(*args, **kwargs)
-        return self.__class__(localpath)
+        return self.__class__(localpath, auth=self.auth)
 
     def info(self, usecache=1):
         """ return an Info structure with svn-provided information. """
@@ -483,7 +499,7 @@ recursively. """
 
         paths = []
         for localpath in self.localpath.listdir(notsvn):
-            p = self.__class__(localpath)
+            p = self.__class__(localpath, auth=self.auth)
             paths.append(p)
 
         if fil or sort:
@@ -534,11 +550,13 @@ if verbose is True, then the LogEntry instances also know which files changed.
         else:
             rev_opt = "-r %s:%s" % (rev_start, rev_end)
         verbose_opt = verbose and "-v" or ""
-        s = svncommon.fixlocale()
+        locale_env = svncommon.fixlocale()
         # some blather on stderr
-        stdin, stdout, stderr  = os.popen3(s + 'svn log --xml %s %s "%s"' % (
-                                           rev_opt, verbose_opt,
-                                           self.strpath))
+        auth_opt = self._makeauthoptions()
+        stdin, stdout, stderr  = os.popen3(locale_env +
+                                           'svn log --xml %s %s %s "%s"' % (
+                                            rev_opt, verbose_opt, auth_opt,
+                                            self.strpath))
         from xml.dom import minidom
         from xml.parsers.expat import ExpatError
         try:
@@ -562,7 +580,7 @@ if verbose is True, then the LogEntry instances also know which files changed.
         return self.info().mtime
 
     def __hash__(self):
-        return hash((self.strpath, self.__class__))
+        return hash((self.strpath, self.__class__, self.auth))
 
 
 class WCStatus:
