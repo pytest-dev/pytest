@@ -5,7 +5,7 @@
 
 import py
 from py.__.apigen import apigen
-py.test.skip("Apigen functionality temporarily disabled")
+#py.test.skip("Apigen functionality temporarily disabled")
 
 def setup_module(mod):
     if py.std.sys.platform == "win32":
@@ -117,7 +117,9 @@ def test_get_documentable_items():
     pkgname, documentable = apigen.get_documentable_items_pkgdir(
                                                fs_root.join(package_name))
     assert pkgname == 'pak'
-    assert sorted(documentable.keys()) ==  [
+    keys = documentable.keys()
+    keys.sort()
+    assert keys ==  [
         'main.SomeTestClass', 'main.SomeTestSubClass', 'main.func',
         'main.sub.func', 'somenamespace.baz', 'somenamespace.foo']
 
