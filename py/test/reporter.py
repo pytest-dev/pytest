@@ -49,12 +49,15 @@ class TestReporter(object):
         return self.flag
 
 class AbstractReporter(object):
-    def __init__(self, config, hosts):
+    def __init__(self, config, hosts, out=None):
         self.config = config
         self.hosts = hosts
         self.failed_tests_outcome = []
         self.skipped_tests_outcome = []
-        self.out = getout(py.std.sys.stdout)
+        if out is None:
+            self.out = getout(py.std.sys.stdout)
+        else:
+            self.out = out
         self.presenter = Presenter(self.out, config)
         self.to_rsync = {}
 
