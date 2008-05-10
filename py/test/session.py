@@ -33,10 +33,10 @@ def itemgen(session, colitems, reporter, keyword=None):
         if isinstance(next, stopitems):
             try:
                 next._skipbykeyword(keyword)
-                yield next
-            except Skipped:
                 if session.config.option.keyword_oneshot:
                     keyword = None
+                yield next
+            except Skipped:
                 excinfo = py.code.ExceptionInfo()
                 reporter(repevent.SkippedTryiter(excinfo, next))
         else:
