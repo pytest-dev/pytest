@@ -33,7 +33,7 @@ def itemgen(session, colitems, reporter, keyword=None):
         if isinstance(next, stopitems):
             try:
                 next._skipbykeyword(keyword)
-                if session.config.option.keyword_oneshot:
+                if session and session.config.option.keyword_oneshot:
                     keyword = None
                 yield next
             except Skipped:

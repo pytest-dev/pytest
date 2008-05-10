@@ -118,13 +118,13 @@ class TestKeywordSelection:
             assert l[0].item.name == 'test_1'
 
     def test_select_starton(self):
-        config = py.test.config._reparse([datadir/'testmore.py', 
-                                          '-j', '-k', "test_two"])
+        config = py.test.config._reparse([datadir/'testevenmore.py', 
+                                          '-j', '-k', "test_three"])
         all = []
         session = config._getsessionclass()(config)
         session.main(all.append)
         assert len(getpassed(all)) == 2
-        assert len(getskipped(all)) == 1
+        assert len(getskipped(all)) == 2
         
    
 class TestTerminalSession:

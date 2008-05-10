@@ -91,6 +91,19 @@ namecontent = [
         def test_three():
             assert 1
     ''')),
+    ('testevenmore.py', py.code.Source('''
+        def test_one():
+            assert 1
+
+        def test_two():
+            assert 1
+
+        def test_three():
+            assert 1
+
+        def test_four():
+            assert 1
+            ''')),
 
     ('testspecial_importerror.py', py.code.Source('''
 
