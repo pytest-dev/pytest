@@ -52,6 +52,8 @@ def itemgen(session, colitems, reporter, keyword=None):
                     reporter(repevent.SkippedTryiter(excinfo, next))
                 else:
                     reporter(repevent.FailedTryiter(excinfo, next))
+                    if session.config.option.usepdb: 
+                        py.__.test.custompdb.post_mortem(excinfo._excinfo[2])
         if reporter: 
             reporter(repevent.ItemFinish(next))
 
