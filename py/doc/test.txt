@@ -501,7 +501,7 @@ requirements for remote machines:
 
 * ssh daemon running
 * ssh keys setup to allow login without a password
-* python (2.3 or 2.4 should work)
+* python 
 * unix like machine (reliance on ``os.fork``)
 
 How to use it
