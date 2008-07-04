@@ -282,10 +282,10 @@ def test_skip_reasons():
     tmp.ensure("test_one.py").write(py.code.Source("""
         import py
         def test_1():
-            py.test.skip(py.test.broken('stuff'))
+            py.test.skip("Broken: stuff") 
         
         def test_2():
-            py.test.skip(py.test.notimplemented('stuff'))
+            py.test.skip("Not implemented: stuff") 
     """))
     tmp.ensure("__init__.py")
     config = py.test.config._reparse([tmp])
@@ -294,6 +294,6 @@ def test_skip_reasons():
     session.main(all.append)
     skips = getskipped(all)
     assert len(skips) == 2
-    assert str(skips[0].skipped.value) == 'Broken: stuff'
-    assert str(skips[1].skipped.value) == 'Not implemented: stuff'
+    assert str(skips[0].skipped.value).find('Broken: stuff') != -1
+    assert str(skips[1].skipped.value).find('Not implemented: stuff') != -1
     
