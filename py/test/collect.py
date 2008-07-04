@@ -502,13 +502,17 @@ class Generator(FunctionMixin, PyCollectorMixin, Collector):
             call, args = obj, ()
         return call, args 
 
-class DoctestFile(PyCollectorMixin, FSCollector): 
+class DoctestFile(Module):
+    # XXX fix py.test reporting 
+    #     we subclass Module here in order to get py.test's reporting 
+    #     show the ".txt" filename in the test run much like a
+    #     python module shows up.  instead py.test needs to
+    #     support more direct means of influencing reporting. 
     def run(self):
         return [self.fspath.basename]
 
     def join(self, name):
-        from py.__.test.doctest import DoctestText
-        if name == self.fspath.basename: 
-            item = DoctestText(self.fspath.basename, parent=self)
-            item._content = self.fspath.read()
-            return item
+        if name == self.fspath.basename:
+            from py.__.test.doctest import DoctestFileContent
+            return DoctestFileContent(name, self)
+

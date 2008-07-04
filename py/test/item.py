@@ -78,14 +78,6 @@ class BaseReason(object):
     def __repr__(self):
         return self.msg
 
-class Broken(BaseReason):
-    def __repr__(self):
-        return "Broken: %s" % (self.msg,)
-
-class _NotImplemented(BaseReason):
-    def __repr__(self):
-        return "Not implemented: %s" % (self.msg,)
-
 # whatever comes here....
 
 def skip(msg=BaseReason()):

@@ -1,25 +1,30 @@
 
 import py
-from py.__.test.doctest import DoctestText
 from py.__.test.outcome import Skipped, Failed, Passed, Outcome
 
+
+def setup_module(mod):
+    mod.tmp = py.test.ensuretemp(__name__) 
+
 def test_simple_docteststring():
-    testitem = DoctestText(name="dummy", parent=None)
-    testitem._setcontent("""
-    >>> i = 0
-    >>> i + 1
-    1
-    """)
+    p = tmp.join("test_simple_docteststring") 
+    p.write(py.code.Source("""
+        >>> i = 0
+        >>> i + 1
+        1
+    """))
+    testitem = py.test.collect.DoctestFile(p).join(p.basename) 
     res = testitem.run()
     assert res is None
     
 def test_simple_docteststring_failing():
-    testitem = DoctestText(name="dummy2", parent=None)
-    testitem._setcontent("""
-    >>> i = 0
-    >>> i + 1
-    2
-    """)
+    p = tmp.join("test_simple_docteststring_failing")
+    p.write(py.code.Source("""
+        >>> i = 0
+        >>> i + 1
+        2
+    """))
+    testitem = py.test.collect.DoctestFile(p).join(p.basename)
     py.test.raises(Failed, "testitem.run()")
    
 
@@ -39,6 +44,6 @@ def test_collect_doctest_files_with_test_prefix():
         col = config._getcollector(x)
         items = list(col._tryiter(py.test.collect.Item))
         assert len(items) == 1
-        assert isinstance(items[0], DoctestText)
+        assert isinstance(items[0].parent, py.test.collect.DoctestFile)
    
      
