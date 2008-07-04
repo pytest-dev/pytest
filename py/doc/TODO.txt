@@ -4,8 +4,11 @@ Things to do for 1.0.0
 py.test 
 --------------
 
+- BUG: write test/fix --showlocals (not showing anything)  
+
 - review and refactor architecture of py.test with particular
   respect to: 
+  - allow custom reporting 
   - writing (stacked) extensions / plugins (compared to Nose) 
   - event naming and processing 
   - porting existing extensions (htmlconftest / buildbot / PyPy's conftest's ...) 
