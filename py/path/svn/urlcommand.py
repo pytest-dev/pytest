@@ -1,7 +1,8 @@
 """
 
 module defining a subversion path object based on the external
-command 'svn'.
+command 'svn'. This modules aims to work with svn 1.3 and higher
+but might also interact well with earlier versions. 
 
 """
 
