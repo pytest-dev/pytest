@@ -99,7 +99,6 @@ class CommonSvnTests(CommonFSTests):
         assert res.size > len("samplefile") and res.created_rev >= 0
 
     def test_log_simple(self):
-        py.test.skip("XXX: does not work at least on svn below 1.3")
         url = self.root.join("samplefile")
         logentries = url.log()
         for logentry in logentries:
