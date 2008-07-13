@@ -239,7 +239,9 @@ checkin message msg."""
             for lsline in lines:
                 if lsline:
                     info = InfoSvnCommand(lsline)
-                    nameinfo_seq.append((info._name, info))
+                    if info._name != '.':  # svn 1.5 produces '.' dirs, 
+                        nameinfo_seq.append((info._name, info))
+                    
             return nameinfo_seq
         auth = self.auth and self.auth.makecmdoptions() or None
         if self.rev is not None:
