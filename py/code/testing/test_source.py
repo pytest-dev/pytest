@@ -282,14 +282,17 @@ def test_deindent():
     lines = deindent(source.splitlines())
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
-def test_write_read():
-    py.test.skip("Failing")
+def test_source_of_class_at_eof_without_newline():
+    py.test.skip("circumvent CPython's buggy inspect.getsource?")
+    # this test fails because the implicit inspect.getsource(A) below 
+    # does not return the "x = 1" last line. 
     tmpdir = py.test.ensuretemp("source_write_read")
     source = py.code.Source('''
-    class A(object):
-        def method(self):
-            x = 1
+        class A(object):
+            def method(self):
+                x = 1
     ''')
-    tmpdir.ensure("a.py").write(source)
+    path = tmpdir.join("a.py")
+    path.write(source)
     s2 = py.code.Source(tmpdir.join("a.py").pyimport().A)
-    assert source == s2
+    assert str(source).strip() == str(s2).strip()
