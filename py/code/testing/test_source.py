@@ -283,7 +283,7 @@ def test_deindent():
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
 def test_source_of_class_at_eof_without_newline():
-    py.test.skip("circumvent CPython's buggy inspect.getsource?")
+    py.test.skip("CPython's inspect.getsource is buggy")
     # this test fails because the implicit inspect.getsource(A) below 
     # does not return the "x = 1" last line. 
     tmpdir = py.test.ensuretemp("source_write_read")
