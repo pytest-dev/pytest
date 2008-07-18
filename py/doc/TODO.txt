@@ -44,6 +44,15 @@ py.test
   certain situations because e.g. setup/teardown is fully performed 
   although we have "skip by keyword" and could detect this early)
 
+- reduce ambiguity/confusion of collection/running of tests: 
+  - introduce "gentest" naming for generative tests and
+    deprecate test_* generators? 
+  - collectors have collect() method 
+    items have runtest() method 
+    deprecate run() 
+  - review source code and rename some internal methods to
+    help with un-confusing things
+
 py.execnet
 --------------
 
