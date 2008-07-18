@@ -6,19 +6,34 @@ py.test
 
 - BUG: write test/fix --showlocals (not showing anything)  
 
-- review and refactor architecture of py.test with particular
+- extend conftest mechanism to allow to check for: 
+
+    conftest_*.py 
+
+  and maybe also for
+
+    conftest/ 
+
+  directories.  
+
+- twisted support: checkout and integrate Samuele's twisted support files 
+  also look at Ralf Schmitt's way of going over greenlets 
+
+- (ongoing) review and refactor architecture of py.test with particular
   respect to: 
   - allow custom reporting 
   - writing (stacked) extensions / plugins (compared to Nose) 
   - event naming and processing 
-  - porting existing extensions (htmlconftest / buildbot / PyPy's conftest's ...) 
   - fast and stable distributed testing 
   - reliable cross-platform testing 
+
+  - porting existing extensions (htmlconftest / PyPy's conftest's ...) 
+
 
 - fix reporting/usage degradation after reporter-merge merge: 
   - collapse skips with same reason and lineno into one line 
  
-- fix and investigate win32 failures 
+- fix and investigate win32 failures
 
 - (needs review) adjust py.test documentation to reflect new
   collector/session architecture 
@@ -31,6 +46,8 @@ py.test
 
 py.execnet
 --------------
+
+- thoroughly test on win32 (also in conjunction with py.test) 
 
 - cross-python version (2.2/2.3-2.5/6) and cross-platform testing of 
   setup/teardown semantics
