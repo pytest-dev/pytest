@@ -1,0 +1,9 @@
+
+changes from 0.9.1 to 1.0
+
+py.test:
+
+- collector.run() deprecated, implement/use listdir() instead 
+
+
+

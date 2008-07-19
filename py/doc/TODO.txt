@@ -1,6 +1,24 @@
 Things to do for 1.0.0 
 ========================= 
 
+packaging
+-------------------------------------
+
+* setup automatical dist snapshots from trunk 
+  when tests pass (at best for all of windows, 
+  linux and osx). 
+
+* ensure compatibility with Python 2.3 - 2.6
+
+* package c-extensions (greenlet) for windows 
+
+* support installation from svn, setup.py and via easy_install 
+
+* debian and TAR/zip packages for py lib, 
+  particularly look into C module issues (greenlet most importantly) 
+
+* (partly DONE) refine and implement releasescheme/download
+
 py.test 
 --------------
 
@@ -30,7 +48,7 @@ py.test
   - porting existing extensions (htmlconftest / PyPy's conftest's ...) 
 
 
-- fix reporting/usage degradation after reporter-merge merge: 
+- fix reporting/usage regression after reporter-merge merge: 
   - collapse skips with same reason and lineno into one line 
  
 - fix and investigate win32 failures
@@ -52,6 +70,7 @@ py.test
     deprecate run() 
   - review source code and rename some internal methods to
     help with un-confusing things
+
 
 py.execnet
 --------------
@@ -75,15 +94,20 @@ py.apigen
   http://codeinvestigator.googlepages.com/main
 
 
+py.io
+--------------------
+
+- write documentation about it 
+- deprecate py.process.cmdexec, move it to py.io.cmdexec()
+  merge exceptions/handling of py.io.cmdexec, py.io.forkedfunc 
+
 ld (review and shift to above)
 =================================
 
 refactorings
 ------------------
 
-- session / collection unification (particularly tryiter and buildname2items) 
-
-- reporting unification, i.e. use dist-testing Reporter class
+- (ongoing) reporting unification, i.e. use dist-testing Reporter class
   also for "normal" session, consider introduction of tkinter 
   session (M978)
 
@@ -137,25 +161,6 @@ features
 - review svn-testing (and escape characters), consider
   svn-bindings (M634)
 
-
-packaging
--------------------------------------
-
-* debian and TAR/zip packages for py lib, 
-  particularly look into C module issues (greenlet most importantly) 
-
-* do something about c-extensions both on unix-ish 
-  versus win32 systems 
-
-* ensure compatibility with Python 2.3 - 2.5, 
-  see what is missing for 2.2 
-
-* optional: support setuptools (eggs?) installs, and instally
-  from pypi (and register pylib there) 
-
-* (DONE/c-modules don't) see if things work on Win32 (partially done) 
-
-* (partly DONE) refine and implement releasescheme/download
 
 
 APIGEN / source viewer
