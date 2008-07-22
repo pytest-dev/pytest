@@ -51,6 +51,10 @@ class InstallableGateway(gateway.Gateway):
 class PopenCmdGateway(InstallableGateway):
     def __init__(self, cmd):
         infile, outfile = os.popen2(cmd)
+        if sys.platform == 'win32':
+            import msvcrt
+            msvcrt.setmode(infile.fileno(), os.O_BINARY)
+            msvcrt.setmode(outfile.fileno(), os.O_BINARY)
         io = inputoutput.Popen2IO(infile, outfile)
         super(PopenCmdGateway, self).__init__(io=io)
 

@@ -58,7 +58,11 @@ import sys
 
 class Popen2IO:
     server_stmt = """
-import sys, StringIO
+import os, sys, StringIO
+if sys.platform == "win32":
+    import msvcrt
+    msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
+    msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 io = Popen2IO(sys.stdout, sys.stdin)
 sys.stdout = sys.stderr = StringIO.StringIO() 
 #try:
@@ -70,10 +74,6 @@ sys.stdout = sys.stderr = StringIO.StringIO()
     error = (IOError, OSError, EOFError)
 
     def __init__(self, infile, outfile):
-        if sys.platform == 'win32':
-            import msvcrt
-            msvcrt.setmode(infile.fileno(), os.O_BINARY)
-            msvcrt.setmode(outfile.fileno(), os.O_BINARY)
         self.outfile, self.infile = infile, outfile
         self.readable = self.writeable = True
         self.lock = thread.allocate_lock()
