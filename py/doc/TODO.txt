@@ -24,6 +24,14 @@ py.test
 
 - BUG: write test/fix --showlocals (not showing anything)  
 
+- implement a summary at the end of a test run
+    FILENO:LINENO EXCONLY 
+    FILENO:LINENO EXCONLY 
+    ...
+  that should be easily parseable for editors like scits, vim. 
+
+- implement "py.test --version"
+
 - extend conftest mechanism to allow to check for: 
 
     conftest_*.py 
@@ -37,6 +45,9 @@ py.test
 - twisted support: checkout and integrate Samuele's twisted support files 
   also look at Ralf Schmitt's way of going over greenlets 
 
+- ensure that a full "py.test --boxed" passes - probably needs 
+  a bit of temp directory handling enhancements
+
 - (ongoing) review and refactor architecture of py.test with particular
   respect to: 
   - allow custom reporting 
@@ -47,6 +58,8 @@ py.test
 
   - porting existing extensions (htmlconftest / PyPy's conftest's ...) 
 
+- remove "-j" "starton" option, maybe introduce keyword
+  expression syntax for the same purposes 
 
 - fix reporting/usage regression after reporter-merge merge: 
   - collapse skips with same reason and lineno into one line 
