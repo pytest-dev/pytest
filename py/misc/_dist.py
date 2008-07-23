@@ -97,14 +97,48 @@ def addbindir2path():
     
     # Add py/bin to PATH environment variable
     bindir = os.path.join(sysconfig.get_python_lib(), "py", "bin", "win32")
+    
+    # check for the user path
+    ureg = _winreg.ConnectRegistry(None, _winreg.HKEY_CURRENT_USER)
+    ukey = r"Environment"
+    
+    # not every user has his own path on windows
+    try:
+        upath = get_registry_value(ureg, ukey, "PATH")
+    except WindowsError:
+        upath=""
+    # if bindir allready in userpath -> do nothing
+    if bindir in upath: 
+        return
+    
     reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     key = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
     path = get_registry_value(reg, key, "Path")
+    # if bindir allready in systempath -> do nothing
     if bindir in path:
         return 
     path += ";" + bindir
     print "Setting PATH to:", path
-    set_registry_value(reg, key, "Path", path)
+    
+    pathset=False
+    try:
+        set_registry_value(reg, key, "PATH", path)
+        pathset=True
+    except WindowsError:
+        print "cannot set systempath, falling back to userpath"
+        pass
+    
+    if not pathset:
+        try:
+            if len(upath)>0: #if no user path present
+                upath += ";" 
+            upath+=bindir
+            set_registry_value(ureg, ukey, "Path", upath)
+            pathset=True
+        except WindowsError:
+            print "cannot set userpath, please add %s to your path" % (bindir,)
+            return
+            
     #print "Current PATH is:", get_registry_value(reg, key, "Path")
 
     # Propagate changes throughout the system
