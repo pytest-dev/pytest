@@ -100,6 +100,8 @@ def addbindir2path():
     reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
     key = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
     path = get_registry_value(reg, key, "Path")
+    if bindir in path:
+        return 
     path += ";" + bindir
     print "Setting PATH to:", path
     set_registry_value(reg, key, "Path", path)
