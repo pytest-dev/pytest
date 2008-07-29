@@ -177,6 +177,19 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         assert l3.strpath == wc.strpath
         assert not hasattr(l3, 'commit')
 
+    def test_long_filenames(self):
+        tmpdir = self.tmpdir
+        # testing paths > 260 chars (which is Windows' limitation, but
+        # depending on how the paths are used), but > 4096 (which is the
+        # Linux' limitation) - the behaviour of paths with names > 4096 chars
+        # is undetermined
+        newfilename = '/test' * 60
+        l = tmpdir.join(newfilename)
+        l.ensure(file=True)
+        l.write('foo')
+        l2 = tmpdir.join(newfilename)
+        assert l2.read() == 'foo'
+
 class TestExecutionOnWindows(LocalSetup):
     disabled = py.std.sys.platform != 'win32'
 
