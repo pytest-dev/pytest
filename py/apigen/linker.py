@@ -30,7 +30,7 @@ class Linker(object):
         return LazyHref(self, linkid)
 
     def set_link(self, linkid, target):
-        assert (linkid not in self._linkid2target,
+        assert linkid not in self._linkid2target, (
                 'linkid %r already used' % (linkid,))
         self._linkid2target[linkid] = target
 
@@ -63,11 +63,8 @@ class TempLinker(object):
     def __init__(self):
         self._linkid2target = {}
 
-    def get_lazyhref(self, linkid, anchor=None):
-        href = '%s://%s' % (TEMPLINK_PROTO, linkid)
-        if anchor:
-            href += '#' + anchor
-        return href
+    def get_lazyhref(self, linkid):
+        return '%s://%s' % (TEMPLINK_PROTO, linkid)
 
     def set_link(self, linkid, target):
         assert linkid not in self._linkid2target
@@ -75,18 +72,13 @@ class TempLinker(object):
 
     def get_target(self, tempurl, fromlocation=None):
         assert tempurl.startswith('%s://' % (TEMPLINK_PROTO,))
-        anchor = None
-        if '#' in tempurl:
-            tempurl, anchor = tempurl.split('#', 1)
-        linkid = tempurl.split('://', 1)[1]
+        linkid = '://'.join(tempurl.split('://')[1:])
         linktarget = self._linkid2target[linkid]
         if fromlocation is not None:
             linktarget = relpath(fromlocation, linktarget)
-        if anchor is not None:
-            linktarget += '#' + anchor
         return linktarget
 
-    _reg_tempurl = py.std.re.compile('(["\'])(%s:\/\/[^"\'\s#]*)(["\'#])' % (
+    _reg_tempurl = py.std.re.compile('["\'](%s:\/\/[^"\s]*)["\']' % (
                                       TEMPLINK_PROTO,))
     def replace_dirpath(self, dirpath, stoponerrors=True):
         """ replace temporary links in all html files in dirpath and below """
@@ -96,19 +88,16 @@ class TempLinker(object):
                 match = self._reg_tempurl.search(html)
                 if not match:
                     break
-                tempurl = match.group(2)
-                pre = match.group(1)
-                post = match.group(3)
+                tempurl = match.group(1)
                 try:
-                    html = html.replace(match.group(0), pre +
-                                        self.get_target(tempurl,
-                                              fpath.relto(dirpath)) + post)
+                    html = html.replace('"' + tempurl + '"',
+                                        '"' + self.get_target(tempurl,
+                                                fpath.relto(dirpath)) + '"')
                 except KeyError:
                     if stoponerrors:
                         raise
-                    html = html.replace(match.group(0), pre +
-                                        'apigen.notfound://%s' % (tempurl,) +
-                                        post)
+                    html = html.replace('"' + tempurl + '"',
+                                        '"apigen.notfound://%s"' % (tempurl,))
             fpath.write(html)
             
 
