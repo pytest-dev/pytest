@@ -657,7 +657,9 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                         pass   # assume that it means that there is no 'lf'
                     try:
                         path.remove(rec=1)
-                    except py.error.Error:
+                    except KeyboardInterrupt:
+                        raise
+                    except: # this might be py.error.Error, WindowsError ...
                         pass
         
         # make link...
