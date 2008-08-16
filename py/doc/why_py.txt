@@ -1,0 +1,185 @@
+==============================================
+Why, who, what and how do you do *the py lib*? 
+==============================================
+
+.. contents::
+.. sectnum::
+
+
+Why did we start the py lib? 
+============================
+
+Among the main motivation for the py lib and its flagship
+py.test tool were: 
+
+- to test applications with a testing tool that provides 
+  advanced features out of the box, yet allows full customization 
+  per-project. 
+
+- distribute applications in an ad-hoc way both for testing
+  and for application integration purposes. 
+
+- help with neutralizing platform and python version differences 
+
+- offer a uniform way to access local and remote file resources
+
+- offer some unique features like micro-threads (greenlets) 
+
+
+What is the py libs current focus? 
+==================================
+
+testing testing testing
+----------------------- 
+
+Currently, the main focus of the py lib is to get a decent
+`test environment`_, indeed to produce the best one out there.  
+Writing, distributing and deploying tests should become
+a snap ... and fun! 
+
+On a side note: automated tests fit very well to the dynamism
+of Python.  Automated tests ease development and allow fast
+refactoring cycles.  Automated tests are a means of
+communication as well. 
+
+
+ad-hoc distribution of programs
+------------------------------------
+
+The py lib through its `py.execnet`_ namespaces offers
+support for ad-hoc distributing programs across
+a network and subprocesses.  We'd like to generalize
+this approach further to instantiate and let whole
+ad-hoc networks communicate with each other while
+keeping to a simple programming model. 
+
+.. _`py.execnet`: execnet.html
+
+
+allowing maximum refactoring in the future ... 
+---------------------------------------------- 
+
+explicit name export control 
+............................
+
+In order to allow a fast development pace across versions of
+the py lib there is **explicit name export control**.  You
+should only see names which make sense to use from the outside
+and which the py lib developers want to guarantee across versions. 
+However, you don't need to treat the ``py`` lib as
+anything special.  You can simply use the usual ``import`` 
+statement and will not notice much of a difference - except that 
+the namespaces you'll see from the ``py`` lib are relatively
+clean and have no clutter. 
+
+Release policy & API maintenance
+........................................ 
+
+We'll talk about major, minor and micro numbers as the three 
+numbers in "1.2.3" respectively.  These are the 
+the rough release policies: 
+
+- Micro-releases are bug fix releases and should not introduce 
+  new names to the public API. They may add tests and thus
+  further define the behaviour of the py lib. They may
+  completly change the implementation but the public API 
+  tests should continue to run (unless they needed to 
+  get fixed themselves). 
+
+- No **tested feature** of the exported py API shall vanish
+  across minor releases until it is marked deprecated.  
+
+  For example, pure API tests of a future version 1.0 are to
+  continue to fully run on 1.1 and so on.  If an API gets
+  deprecated with a minor release it goes with the next minor
+  release.  Thus if you don't use deprecated APIs you should 
+  be able to use the next two minor releases.  However, if 
+  you relied on some untested implementation behaviour, 
+  you may still get screwed.  Solution: add API tests to the
+  py lib :-)  It's really the tests that make the difference. 
+
+- Pure API tests are not allowed to access any implementation
+  level details.  For example, accessing names starting with 
+  a single leading '_' is generally seen as an implementation 
+  level detail. 
+
+- major releases *should*, but are not required to, pass 
+  all API tests of the previous latest major released 
+  version. 
+
+
+the need to find the right *paths* ...
+--------------------------------------
+
+Another focus are well tested so called *path* implementations
+that allow you to seemlessly work with different backends,
+currently a local filesystem, subversion working copies and
+subversion remote URLs.  
+
+How does py development work? 
+=============================
+
+Communication and coding style 
+------------------------------ 
+
+We are discussing things on our `py-dev mailing list`_ 
+and collaborate via the codespeak subversion repository. 
+
+We follow a `coding style`_ which strongly builds on `PEP 8`_,
+the basic python coding style document.  
+
+It's easy to get commit rights especially if you are an
+experienced python developer and share some of the
+frustrations described above. 
+
+Licensing
+-----------------
+
+The Py lib is released under the MIT license and all
+contributors need to release their contributions 
+under this license as well. 
+
+connections with PyPy_ 
+---------------------------------
+
+A major motivation for writing the py lib stems from needs
+during PyPy_ development, most importantly testing and 
+file system access issues.  PyPy puts a lot of pressure 
+on a testing environment and thus is a good **reality test**. 
+
+Who is "we"? 
+============================= 
+
+Some initial code was written from *Jens-Uwe Mager* and *Holger
+Krekel*, after which Holger continued on a previous
+incarnations of the py.test tool (known first as 'utest', then
+as 'std.utest', now for some 2 years 'py.test'). 
+
+Helpful discussions took place with *Martijn Faassen*, *Stephan
+Schwarzer*, *Brian Dorsey*, *Grigh Gheorghiu* and then 
+*Armin Rigo* who contributed important parts.
+He and Holger came up with a couple of iterations of the
+testing-code that reduced the API to basically nothing: just the
+plain assert statement and a ``py.test.raises`` method to 
+check for occuring exceptions within tests. 
+
+Currently (as of 2007), there are more people involved 
+and also have worked funded through merlinux_ and the
+PyPy EU project, Carl Friedrich Bolz, Guido Wesdorp
+and Maciej Fijalkowski who contributed particularly
+in 2006 and 2007 major parts of the py lib. 
+
+.. _`talk at EP2004`: http://codespeak.net/svn/user/hpk/talks/std-talk.txt 
+.. _`coding style`: coding-style.html 
+.. _`PEP 8`: http://www.python.org/peps/pep-0008.html
+.. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
+.. _`test environment`: test.html 
+.. _`PyPy`: http://codespeak.net/pypy
+.. _future: future.html
+.. _`py.test tool and library`: test.html
+.. _merlinux: http://merlinux.de
+
+-- 
+
+.. [#] FOSS is an evolving acronym for Free and Open Source Software
+

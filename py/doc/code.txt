@@ -1,0 +1,141 @@
+==============
+:api:`py.code`
+==============
+
+The :api:`py.code` part of the 'py lib' contains some functionality to help
+dealing with Python code objects. Even though working with Python's internal
+code objects (as found on frames and callables) can be very powerful, it's
+usually also quite cumbersome, because the API provided by core Python is
+relatively low level and not very accessible.
+
+The :api:`py.code` library tries to simplify accessing the code objects as well
+as creating them. There is a small set of interfaces a user needs to deal with,
+all nicely bundled together, and with a rich set of 'Pythonic' functionality.
+
+source: :source:`py/code/`
+
+Contents of the library
+=======================
+
+Every object in the :api:`py.code` library wraps a code Python object related
+to code objects, source code, frames and tracebacks: the :api:`py.code.Code`
+class wraps code objects, :api:`py.code.Source` source snippets,
+:api:`py.code.Traceback` exception tracebacks, :api:`py.code.Frame` frame 
+objects (as found in e.g. tracebacks) and :api:`py.code.ExceptionInfo` the
+tuple provided by sys.exc_info() (containing exception and traceback
+information when an exception occurs). Also in the library is a helper function
+:api:`py.code.compile()` that provides the same functionality as Python's
+built-in 'compile()' function, but returns a wrapped code object.
+
+The wrappers
+============
+
+:api:`py.code.Code`
+-------------------
+
+Code objects are instantiated with a code object or a callable as argument,
+and provide functionality to compare themselves with other Code objects, get to
+the source file or its contents, create new Code objects from scratch, etc.
+
+A quick example::
+
+  >>> import py
+  >>> c = py.code.Code(py.path.local.read)
+  >>> c.path.basename
+  'common.py'
+  >>> isinstance(c.source(), py.code.Source)
+  True
+  >>> str(c.source()).split('\n')[0]
+  "def read(self, mode='rb'):"
+
+source: :source:`py/code/code.py`
+
+:api:`py.code.Source`
+---------------------
+
+Source objects wrap snippets of Python source code, providing a simple yet
+powerful interface to read, deindent, slice, compare, compile and manipulate
+them, things that are not so easy in core Python.
+
+Example::
+
+  >>> s = py.code.Source("""\
+  ...   def foo():
+  ...     print "foo"
+  ... """)
+  >>> str(s).startswith('def') # automatic de-indentation!
+  True
+  >>> s.isparseable()
+  True
+  >>> sub = s.getstatement(1) # get the statement starting at line 1
+  >>> str(sub).strip() # XXX why is the strip() required?!?
+  'print "foo"'
+
+source: :source:`py/code/source.py`
+
+:api:`py.code.Traceback`
+------------------------
+
+Tracebacks are usually not very easy to examine, you need to access certain
+somewhat hidden attributes of the traceback's items (resulting in expressions
+such as 'fname = tb.tb_next.tb_frame.f_code.co_filename'). The Traceback
+interface (and its TracebackItem children) tries to improve this.
+
+Example::
+
+  >>> import sys
+  >>> try:
+  ...   py.path.local(100) # illegal argument
+  ... except:
+  ...   exc, e, tb = sys.exc_info()
+  >>> t = py.code.Traceback(tb)
+  >>> first = t[1] # get the second entry (first is in this doc)
+  >>> first.path.basename # second is in py/path/local.py
+  'local.py'
+  >>> isinstance(first.statement, py.code.Source)
+  True
+  >>> str(first.statement).strip().startswith('raise ValueError')
+  True
+
+source: :source:`py/code/traceback2.py`
+
+:api:`py.code.Frame`
+--------------------
+
+Frame wrappers are used in :api:`py.code.Traceback` items, and will usually not
+directly be instantiated. They provide some nice methods to evaluate code
+'inside' the frame (using the frame's local variables), get to the underlying
+code (frames have a code attribute that points to a :api:`py.code.Code` object)
+and examine the arguments.
+
+Example (using the 'first' TracebackItem instance created above)::
+
+  >>> frame = first.frame
+  >>> isinstance(frame.code, py.code.Code)
+  True
+  >>> isinstance(frame.eval('self'), py.__.path.local.local.LocalPath)
+  True
+  >>> [namevalue[0] for namevalue in frame.getargs()]
+  ['cls', 'path']
+
+:api:`py.code.ExceptionInfo`
+----------------------------
+
+A wrapper around the tuple returned by sys.exc_info() (will call sys.exc_info()
+itself if the tuple is not provided as an argument), provides some handy
+attributes to easily access the traceback and exception string.
+
+Example::
+
+  >>> import sys
+  >>> try:
+  ...   foobar()
+  ... except:
+  ...   excinfo = py.code.ExceptionInfo()
+  >>> excinfo.typename
+  'NameError'
+  >>> isinstance(excinfo.traceback, py.code.Traceback)
+  True
+  >>> excinfo.exconly()
+  "NameError: name 'foobar' is not defined"
+

@@ -1,0 +1,37 @@
+Here I'm trying to list all problems regarding pypy-c <-> pylib interaction
+===========================================================================
+
+* in test/terminal/terminal.py lines around 141::
+   rev = py.__package__.getrev()
+   self.out.line("using py lib: %s <rev %s>" % (
+   py.path.local(py.__file__).dirpath(), rev)) 
+
+* py.code issues::
+   def __init__(self, rawcode):
+         rawcode = getattr(rawcode, 'im_func', rawcode)
+         rawcode = getattr(rawcode, 'func_code', rawcode)
+         self.raw = rawcode 
+         self.filename = rawcode.co_filename
+         AttributeError: 'internal-code' object has no attribute 'co_filename'
+
+* types.BuiltinFunctionType == types.MethodType which confuses apigen
+
+* compiler module problems - some bogus IndentationError
+  communicates by inspect.getsource()
+
+* execnet just hangs
+
+* lack of tmpfile
+
+* assertion error magic is not working
+
+* sha counting hangs (misc/testing/test\_initpkg)
+
+* extpy does not work, because it does not support loops in modules
+  (while pypy __builtins__ module has a loop), funny :-)
+
+* py.compat.subprocess hangs for obscure reasons
+  (possibly the same stuff as execnet - some threading issues and
+  select.select)
+
+  Armin says: "haha, select.select probably does not release the GIL"

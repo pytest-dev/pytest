@@ -1,0 +1,81 @@
+py lib contact and communication 
+===================================
+
+.. contents::
+.. sectnum::
+
+IRC Channel #pylib on irc.freenode.net 
+--------------------------------------------
+
+The #pylib channel on freenode displays all commits to the py lib
+and you are welcome to lurk or to ask questions there! 
+
+`py-dev`_ developers mailing list
+----------------------------------- 
+
+If you see bugs and/or can provide patches, please
+subscribe to the `py-dev developers list`_. 
+As of Febrary 2007 it has medium to low traffic. 
+
+
+`py-svn`_ commit mailing list
+----------------------------------- 
+
+If you'd like to see ongoing development commits,
+please subscribe to: 
+
+    `py-svn general commit mailing list`_ 
+
+This list (as of February 2007) has medium to high traffic. 
+
+
+`development bug/feature tracker`_ 
+---------------------------------------------
+
+This (somewhat old) roundup instance still serves 
+to file bugs and track issues.  However, we also 
+keep a list of "TODOs" in various directories. 
+
+
+Coding and communication 
+------------------------
+
+We are practicing what could be called documentation, 
+vision, discussion and automated-test driven development. 
+In the `future`_ book we try to layout visions and ideas for
+the near coding feature to give a means for preliminary
+feedback before code hits the ground. 
+
+With our `coding style`_ we are mostly following 
+cpython guidance with some additional restrictions
+some of which projects like twisted_ or zope3_ have 
+adopted in similar ways. 
+
+.. _`zope3`: http://zope3.zwiki.org/
+.. _twisted: http://www.twistedmatrix.org 
+.. _future: future.html 
+
+.. _`get an account`:  
+
+
+get an account on codespeak  
+--------------------------- 
+
+codespeak_ is employing a liberal committing scheme.  If you know 
+someone who is active on codespeak already or you are otherwise known in 
+the community then you will most probably just get access.  But even if 
+you are new to the python developer community you may still get one if 
+you want to improve things and can be expected to honour the 
+style of coding and communication. 
+
+.. _`coding style`: coding-style.html 
+.. _us: http://codespeak.net/mailman/listinfo/py-dev
+.. _codespeak: http://codespeak.net/
+.. _`py-dev`: 
+.. _`development mailing list`: 
+.. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev 
+.. _`subversion commit mailing list`: 
+.. _`py-svn`: 
+.. _`py-svn general commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn 
+.. _`development bug/feature tracker`: https://codespeak.net/issue/py-dev/ 
+

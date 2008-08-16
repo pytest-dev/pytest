@@ -1,0 +1,224 @@
+The py.execnet library 
+======================
+
+.. contents::
+.. sectnum::
+
+A new view on distributed execution
+----------------------------------- 
+
+``py.execnet`` supports ad-hoc distribution of parts of
+a program across process and network barriers.  *Ad-hoc*
+means that the client side may completely control 
+
+* which parts of a program execute remotely and 
+
+* which data protocols are used between them 
+
+without requiring any prior manual installation 
+of user program code on the remote side.  In fact,
+not even a prior installation of any server code
+is required, provided there is a way to get 
+an input/output connection to a python interpreter
+(for example via "ssh" and a "python" executable). 
+
+By comparison, traditional Remote Method Based (RMI) 
+require prior installation and manual rather
+heavy processes of setup, distribution and 
+communication between program parts.  
+
+
+What about Security? Are you completely nuts? 
+---------------------------------------------
+
+We'll talk about that later :-) 
+
+Basic Features
+==============
+
+With ''py.execnet'' you get the means 
+
+- to navigate through the network with Process, Thread, SSH
+  and Socket- gateways that allow you ... 
+
+- to distribute your program across a network and define 
+  communication protocols from the client side, making 
+  server maintenance superflous.  In fact, there is no such 
+  thing as a server. It's just another computer ... if it 
+  doesn't run in a kernel-level jail [#]_ in which case 
+  even that is virtualized. 
+
+
+Available Gateways/Connection methods
+-----------------------------------------
+
+You may use one of the following connection methods:
+
+* :api:`py.execnet.PopenGateway` a subprocess on the local 
+  machine.  Useful for jailing certain parts of a program
+  or for making use of multiple processors. 
+
+* :api:`py.execnet.SshGateway` a way to connect to 
+  a remote ssh server and distribute execution to it. 
+
+* :api:`py.execnet.SocketGateway` a way to connect to 
+  a remote Socket based server. *Note* that this method
+  requires a manually started 
+  :source:py/execnet/script/socketserver.py
+  script.  You can run this "server script" without 
+  having the py lib installed on that remote system. 
+
+Remote execution approach 
+-------------------------------------
+
+All gateways offer one main high level function: 
+
+    def remote_exec(source): 
+        """return channel object for communicating with the asynchronously 
+        executing 'source' code which will have a corresponding 'channel' 
+        object in its executing namespace."""
+
+With `remote_exec` you send source code to the other
+side and get both a local and a remote Channel_ object,
+which you can use to have the local and remote site
+communicate data in a structured way.   Here is 
+an example: 
+
+  >>> import py 
+  >>> gw = py.execnet.PopenGateway()
+  >>> channel = gw.remote_exec("""
+  ...     import os
+  ...     channel.send(os.getpid())
+  ... """)
+  >>> remote_pid = channel.receive()
+  >>> remote_pid != py.std.os.getpid()
+  True
+
+`remote_exec` implements the idea to ``determine
+protocol and remote code from the client/local side``. 
+This makes distributing a program run in an ad-hoc
+manner (using e.g. :api:`py.execnet.SshGateway`) very easy. 
+
+You should not need to maintain software on the other sides 
+you are running your code at, other than the Python 
+executable itself. 
+
+.. _`Channel`: 
+.. _`channel-api`: 
+.. _`exchange data`: 
+
+The **Channel** interface for exchanging data across gateways
+-------------------------------------------------------------
+
+While executing custom strings on "the other side" is simple enough
+it is often tricky to deal with.  Therefore we want a way
+to send data items to and fro between the distributedly running
+program.  The idea is to inject a Channel object for each
+execution of source code. This Channel object allows two 
+program parts to send data to each other. 
+Here is the current interface:: 
+
+    #
+    # API for sending and receiving anonymous values
+    #
+    channel.send(item): 
+        sends the given item to the other side of the channel, 
+        possibly blocking if the sender queue is full. 
+        Note that items need to be marshallable (all basic 
+        python types are):
+
+    channel.receive():
+        receives an item that was sent from the other side, 
+        possibly blocking if there is none. 
+        Note that exceptions from the other side will be 
+        reraised as gateway.RemoteError exceptions containing 
+        a textual representation of the remote traceback. 
+
+    channel.waitclose(timeout=None): 
+        wait until this channel is closed.  Note that a closed
+        channel may still hold items that will be received or 
+        send. Note that exceptions from the other side will be 
+        reraised as gateway.RemoteError exceptions containing 
+        a textual representation of the remote traceback. 
+
+    channel.close(): 
+        close this channel on both the local and the remote side. 
+        A remote side blocking on receive() on this channel 
+        will get woken up and see an EOFError exception. 
+
+
+The complete Fileserver example 
+........................................ 
+
+problem: retrieving contents of remote files::
+
+    import py
+    contentserverbootstrap = py.code.Source( 
+            """
+            for fn in channel:
+                f = open(fn, 'rb')
+                try:
+                    channel.send(f.read())
+                finally:
+                    f.close()
+            """) 
+    # open a gateway to a fresh child process 
+    contentgateway = py.execnet.SshGateway('codespeak.net') 
+    channel = contentgateway.remote_exec(contentserverbootstrap)
+
+    for fn in somefilelist: 
+        channel.send(fn) 
+        content = channel.receive()
+        # process content 
+     
+    # later you can exit / close down the gateway
+    contentgateway.exit()
+
+
+A more complicated "nested" Gateway Example 
+........................................... 
+
+The following example opens a PopenGateway, i.e. a python
+child process, starts a socket server within that process and
+then opens a SocketGateway to the freshly started
+socketserver.  Thus it forms a "triangle":: 
+
+
+    CLIENT < ... >  PopenGateway() 
+        <             .
+         .            .
+          .          .
+           .        .
+            > SocketGateway() 
+            
+The below "socketserver" mentioned script is a small script that 
+basically listens and accepts socket connections, receives one 
+liners and executes them. 
+
+Here are 20 lines of code making the above triangle happen::
+
+    import py 
+    port = 7770
+    socketserverbootstrap = py.code.Source(
+        mypath.dirpath().dirpath('bin', 'socketserver.py').read(),
+        """
+        import socket
+        sock = bind_and_listen(("localhost", %r)) 
+        channel.send("ok") 
+        startserver(sock)
+    """ % port) 
+    # open a gateway to a fresh child process
+    proxygw = py.execnet.PopenGateway()
+
+    # execute asynchronously the above socketserverbootstrap on the other
+    channel = proxygw.remote_exec(socketserverbootstrap)
+
+    # the other side should start the socket server now 
+    assert channel.receive() == "ok" 
+    gw = py.execnet.SocketGateway('localhost', cls.port)
+    print "initialized socket gateway to port", cls.port
+
+.. [#] There is an interesting emerging `Jail`_ linux technology 
+       as well as a host of others, of course. 
+
+.. _`Jail`: http://books.rsbac.org/unstable/x2223.html

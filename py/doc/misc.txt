@@ -1,0 +1,220 @@
+====================================
+Miscellaneous features of the py lib 
+====================================
+
+.. contents::
+.. sectnum::
+
+Mapping the standard python library into py 
+===========================================
+
+    Warning: This feature is very young and thus experimental.
+    Be prepared to adapt your code later if you use it. 
+
+After you have worked with the py lib a bit, you might enjoy
+the lazy importing, i.e. you only have to do ``import py`` and
+work your way to your desired object.  Using the full path 
+also ensures that there remains a focus on getting short paths 
+to objects. 
+
+The :api:`py.std` hook
+----------------------
+
+Of course, no matter what, everybody will continue to use the
+python standard library because it is a very usable code base.
+However, to properly support lazyness the py lib offers a way
+to get to many standard modules without requiring "import"
+statements.  For example, to get to the print-exception
+functionality of the standard library you can write:: 
+
+    py.std.traceback.print_exc()
+
+without having to do anything else than the usual ``import py`` 
+at the beginning.  Note that not having imports for the 
+`python standard library` obviously gets rid of the *unused 
+import* problem. Modules only get imported when you actually
+need them. 
+
+Moreover, this approach resolves some of the issues stated in
+`the relative/absolute import PEP-328`_, as with the above
+approach you never have ambiguity problems.  The above
+traceback-usage is an absolute path that will not be
+accidentally get confused with local names.  (Well, never put
+a file ``py.py`` in an importable path, btw, mind you :-) 
+
+Automagically accessing sub packages doesn't work (yet?) 
+--------------------------------------------------------
+
+If you use the :api:`py.std` hook you currently cannot magically
+import nested packages which otherwise need explicit imports of
+their sub-packages.  For example, the suversion bindings
+require you to do something like:: 
+
+    import svn.client 
+
+If you just do the naive thing with the py lib, i.e. write
+``py.std.svn.client`` it will not work unless you previously
+imported it already.  The py lib currently doesn't try to
+magically make this work.  The :api:`py.std` hook really is
+intended for Python standard modules which very seldomly (if
+at all) provide such nested packages. 
+
+**Note that you may never rely** on module identity, i.e. 
+that ``X is py.std.X`` for any ``X``. This is to allow
+us later to lazyly import nested packages. Yes, lazyness
+is hard to resist :-) 
+
+Note: you get an AttributeError, not an ImportError
+---------------------------------------------------
+
+If you say ``py.std.XYZ`` and importing ``XYZ`` produces an
+``ImportError`` , it will actually show up as an
+``AttributeError``. It is deemed more important to adhere to
+the standard ``__getattr__`` protocol than to let the
+``ImportError`` pass through.  For example, you might want to
+do::
+
+    getattr(py.std.cStringIO, 'StringIO', py.std.StringIO.StringIO) 
+
+and you would expect that it works. It does work although it will 
+take away some lazyness because ``py.std.StringIO.StringIO`` will
+be imported in any case. 
+
+.. _`the relative/absolute import PEP-328`: http://www.python.org/peps/pep-0328.html
+
+Support for interaction with system utilities/binaries
+======================================================
+
+sources:
+
+  * :source:`py/process/`
+  * :source:`py/path/local/`
+
+Currently, the py lib offers two ways to interact with
+system executables. :api:`py.process.cmdexec()` invokes
+the shell in order to execute a string.  The other
+one, :api:`py.path.local`'s 'sysexec()' method lets you 
+directly execute a binary. 
+
+Both approaches will raise an exception in case of a return-
+code other than 0 and otherwise return the stdout-output 
+of the child process.
+
+The shell based approach 
+------------------------
+
+You can execute a command via your system shell 
+by doing something like:: 
+
+    out = py.process.cmdexec('ls -v')
+
+However, the ``cmdexec`` approach has a few shortcomings: 
+
+- it relies on the underlying system shell
+- it neccessitates shell-escaping for expressing arguments
+- it does not easily allow to "fix" the binary you want to run.  
+- it only allows to execute executables from the local 
+  filesystem 
+
+.. _sysexec: 
+
+local paths have ``sysexec``
+---------------------------- 
+
+The py lib currently offers a stripped down functionality of what
+the new `PEP-324 subprocess module`_ offers.  The main functionality 
+of synchronously executing a system executable has a straightforward API:: 
+
+    binsvn.sysexec('ls', 'http://codespeak.net/svn') 
+
+where ``binsvn`` is a path that points to the ``svn`` commandline
+binary. Note that this function would not offer any shell-escaping
+so you really have to pass in separated arguments.  This idea
+fits nicely into `a more general view on path objects`_. 
+
+For a first go, we are just reusing the existing `subprocess
+implementation`_ but don't expose any of its API apart
+from the above ``sysexec()`` method. 
+
+Note, however, that currently the support for the ``sysexec`` interface on
+win32 is not thoroughly tested. If you run into problems with it, we are
+interested to hear about them. If you are running a Python older than 2.4 you
+will have to install the `pywin32 package`_.
+
+
+.. _`future book`: future.html 
+.. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
+.. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
+.. _`a more general view on path objects`: future.html#general-path
+.. _`pywin32 package`: http://pywin32.sourceforge.net/
+
+finding an executable local path
+--------------------------------
+
+Finding an executable is quite different on multiple platforms. 
+Currently, the ``PATH`` environment variable based search on
+unix platforms is supported:: 
+
+    py.path.local.sysfind('svn')
+
+which returns the first path whose ``basename`` matches ``svn``. 
+In principle, `sysfind` deploys platform specific algorithms
+to perform the search.  On Windows, for example, it may look
+at the registry (XXX). 
+
+To make the story complete, we allow to pass in a second ``checker`` 
+argument that is called for each found executable.  For example, if 
+you have multiple binaries available you may want to select the
+right version:: 
+
+    def mysvn(p):
+        """ check that the given svn binary has version 1.1. """
+        line = p.execute('--version'').readlines()[0]
+        if line.find('version 1.1'): 
+            return p 
+    binsvn = py.path.local.sysfind('svn', checker=mysvn) 
+
+
+
+Cross-Python Version compatibility helpers
+=============================================
+
+sources: 
+
+  * :source:`py/compat/`
+  * :source:`py/builtin/`
+
+The py-lib contains some helpers that make writing scripts that work on various
+Python versions easier.
+
+:api:`py.compat`
+----------------
+
+:api:`py.compat` provides fixed versions (currently from Python 2.4.4) of
+various newer modules to be able to use them in various Python versions.
+Currently these are:
+
+ * doctest
+ * optparse
+ * subprocess
+ * textwrap
+
+They are used by replacing the normal ``import ...`` byr
+``from py.compat import ...``.
+
+:api:`py.builtin`
+-----------------
+
+:api:`py.builtin` provides various builtins that were added in later Python
+versions. If the used Python version used does not provide these builtins, they
+are pure-Python reimplementations. These currently are:
+
+ * enumerate
+ * reversed
+ * sorted
+ * BaseException
+ * set and frozenset (using either the builtin, if available, or the sets
+   module)
+
+:api:`py.builtin.BaseException` is just ``Exception`` before Python 2.5.
+

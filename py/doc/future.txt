@@ -1,0 +1,137 @@
+=======================================================
+Visions and ideas for further development of the py lib
+=======================================================
+
+.. contents::
+.. sectnum::
+
+This document tries to describe directions and guiding ideas
+for the near-future development of the py lib.  *Note that all
+statements within this document - even if they sound factual -
+mostly just express thoughts and ideas. They not always refer to 
+real code so read with some caution.*  
+
+
+Distribute tests ad-hoc across multiple platforms
+======================================================
+
+After some more refactoring and unification of
+the current testing and distribution support code
+we'd like to be able to run tests on multiple
+platforms simultanously and allow for interaction
+and introspection into the (remote) failures. 
+
+
+Make APIGEN useful for more projects
+================================================
+
+The new APIGEN tool offers rich information 
+derived from running tests against an application: 
+argument types and callsites, i.e. it shows
+the places where a particular API is used. 
+In its first incarnation, there are still
+some specialties that likely prevent it
+from documenting APIs for other projects. 
+We'd like to evolve to a `py.apigen` tool
+that can make use of information provided
+by a py.test run. 
+
+Consider APIGEN and pdb integration
+===================================
+
+The information provided by APIGEN can be used in many
+different ways. An example of this could be to write
+an extension to pdb which makes it available.
+Imagine you could issue a pdb command 
+"info <function name>" and get information
+regarding incoming, and outgoing types, possible
+exceptions, field types and call sites.
+
+Distribute channels/programs across networks
+================================================
+
+Apart from stabilizing setup/teardown procedures
+for `py.execnet`_, we'd like to generalize its
+implementation to allow connecting two programs
+across multiple hosts, i.e. we'd like to arbitrarily
+send "channels" across the network. Likely this
+will be done by using the "pipe" model, i.e. 
+that each channel is actually a pair of endpoints,
+both of which can be independently transported 
+across the network.  The programs who "own" 
+these endpoints remain connected. 
+
+.. _`py.execnet`: execnet.html
+
+Benchmarking and persistent storage 
+=========================================
+
+For storing test results, but also benchmarking
+and other information, we need a solid way 
+to store all kinds of information from test runs. 
+We'd like to generate statistics or html-overview 
+out of it, but also use such information to determine when
+a certain test broke, or when its performance
+decreased considerably. 
+
+.. _`restructured text`: http://docutils.sourceforge.net/docs/user/rst/quickref.html
+.. _`python standard library`: http://www.python.org/doc/2.3.4/lib/lib.html
+.. _`xpython EuroPython 2004 talk`: http://codespeak.net/svn/user/hpk/talks/xpython-talk.txt
+.. _`under the xpy tree`: http://codespeak.net/svn/user/hpk/xpy/xml.py
+.. _`future book`: future.html 
+.. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
+.. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
+.. _`py.test`: test.html
+
+
+.. _`general-path`: 
+.. _`a more general view on path objects`:
+
+Refactor path implementations to use a Filesystem Abstraction 
+============================================================= 
+
+It seems like a good idea to refactor all python implementations to
+use an internal Filesystem abstraction.  The current code base
+would be transformed to have Filesystem implementations for e.g. 
+local, subversion and subversion "working copy" filesystems. Today 
+the according code is scattered through path-handling code. 
+
+On a related note, Armin Rigo has hacked `pylufs`_ and more recently has
+written `pyfuse`_ which allow to 
+implement kernel-level linux filesystems with pure python. Now 
+the idea is that the mentioned filesystem implementations would 
+be directly usable for such linux-filesystem glue code. 
+
+In other words, implementing a `memoryfs`_ or a `dictfs`_ would 
+give you two things for free: a filesystem mountable at kernel level
+as well as a uniform "path" object allowing you to access your
+filesystem in convenient ways.  (At some point it might
+even become interesting to think about interfacing to  
+`reiserfs v4 features`_ at the Filesystem level but that
+is a can of subsequent worms).  
+
+.. _`memoryfs`: http://codespeak.net/svn/user/arigo/hack/pyfuse/memoryfs.py
+.. _`dictfs`: http://codespeak.net/pipermail/py-dev/2005-January/000191.html 
+.. _`pylufs`: http://codespeak.net/svn/user/arigo/hack/pylufs/
+.. _`pyfuse`: http://codespeak.net/svn/user/arigo/hack/pyfuse/
+.. _`reiserfs v4 features`: http://www.namesys.com/v4/v4.html
+
+
+Integrate interactive completion 
+==================================
+
+It'd be nice to integrate the bash-like
+rlcompleter2_ python command line completer
+into the py lib, and making it work remotely
+and with pdb. 
+
+.. _rlcompleter2: http://codespeak.net/rlcompleter2/
+
+Consider more features
+==================================
+
+There are many more features and useful classes 
+that might be nice to integrate.  For example, we might put 
+Armin's `lazy list`_ implementation into the py lib. 
+
+.. _`lazy list`: http://codespeak.net/svn/user/arigo/hack/misc/collect.py

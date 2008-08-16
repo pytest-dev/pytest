@@ -1,0 +1,113 @@
+Download and Installation of the py lib 
+===============================================
+
+.. contents::
+.. sectnum::
+
+Downloading a tar/zip file and installing it
+===================================================
+
+The latest public release: 
+
+    `download py-0.9.0.tar.gz`_ 
+    `download py-0.9.0.zip`_ 
+
+.. _`download py-0.9.0.tar.gz`: http://codespeak.net/download/py/py-0.9.0.tar.gz
+.. _`download py-0.9.0.zip`: http://codespeak.net/download/py/py-0.9.0.zip 
+
+The py lib can be `globally installed via setup.py`_ 
+or `used locally`_.  
+
+WARNING: win32 there is no pre-packaged c-extension
+module (greenlet) yet and thus greenlets will not work
+out of the box.  
+
+Getting (and updating) via subversion 
+--------------------------------------------
+
+Use Subversion to checkout the latest 0.9.x stable release: 
+
+    svn co http://codespeak.net/svn/py/release/0.9.x py-0.9.x
+
+to obtain the complete code and documentation source. 
+
+If you experience problems with the subversion checkout e.g. 
+because you have a http-proxy in between that doesn't proxy 
+DAV requests you can try to use "codespeak.net:8080" instead 
+of just "codespeak.net".  Alternatively, you may tweak 
+your local subversion installation. 
+
+If you want to follow stable snapshots 
+then you may use the equivalent of this invocation: 
+
+    svn co http://codespeak.net/svn/py/dist py-dist 
+
+
+.. _`globally installed via setup.py`:
+
+Installation via setup.py 
+------------------------------
+
+Go to your unpacked/checked out directory
+and issue: 
+
+    python setup.py install
+
+
+.. _`used locally`:
+
+Local Installation/Usage
+------------------------------
+
+You need to put the checkout-directory into your ``PYTHONPATH``
+and you want to have the ``py-dist/py/bin/py.test`` script in 
+your (unixish) system path, which lets you execute test files 
+and directories.  
+
+There is a convenient way for Bash/Shell based systems
+to setup the ``PYTHONPATH`` as well as the shell ``PATH``, insert:: 
+
+    eval `python ~/path/to/py-dist/py/env.py`
+
+into your ``.bash_profile``.  Of course, you need to
+specify your own checkout-directory. 
+
+
+.. _`svn-external scenario`: 
+
+The py lib as an svn external
+-------------------------------------------------------
+
+Add the py lib as an external to your project `DIRECTORY` 
+which contains your svn-controlled root package::
+
+    svn propedit 'svn:externals' DIRECTORY 
+
+which will open an editor where you can add 
+the following line: 
+
+    py http://codespeak.net/svn/py/dist 
+
+This will make your projcet automatically use the 
+most recent stable snapshot of the py lib.  
+
+Alternatively you may use this url for
+integrating the development version:
+
+    http://codespeak.net/svn/py/trunk 
+
+or the next one for following the e.g. the 0.9 release branch
+
+    http://codespeak.net/svn/py/release/0.9.x
+
+
+py subversion directory structure
+=================================
+
+The directory release layout of the repository is
+going to follow this scheme:: 
+
+    http://codespeak.net/
+        svn/py/dist         # latest stable (may or may not be a release) 
+        svn/py/release      # release tags and branches
+        svn/py/trunk        # head development / merge point

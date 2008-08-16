@@ -1,0 +1,200 @@
+.. include:: <s5defs.txt>
+
+=================================================
+py.test - flexible and powerful automated testing 
+=================================================
+
+:Authors: Holger Krekel, merlinux GmbH
+:Date: 13th March 2006 
+
+Intro: Benefits of Automated Testing 
+======================================
+
+- prove that code changes actually fix a certain issue
+- minimizing Time to Feedback for developers
+- reducing overall Time to Market 
+- document usage of plugins 
+- tests as a means of communication
+- easing entry for newcomers 
+
+py.test Purposes & Goals
+===============================
+
+- automated cross-project open source testing tool 
+- flexible per-project customization 
+- reusing test methods/reporting across projects 
+- various iterative test collection methods 
+- support for distributed testing 
+- py lib is a development support library
+
+What is Python? 
+===============================
+
+- easy-to-learn flexible OO high level language
+- glue-language for connecting C++, Java and scripting
+- used e.g. by Google for deployment/testing/implementation
+- used by BIND (mainstream DNS internet server) for testing
+- Jython provides Python for JVM 
+- IronPython provides Python for .NET 
+- CPython is mainstream C-based platform
+- PyPy - Python in Python implementation 
+
+Main drivers of py.test development
+======================================
+
+- PyPy project testing needs (part of EU project)
+- needs by individual (freely contributing) projects
+- at least 20 projects using py.test and py lib
+- higher level innovation plans by merlinux & experts 
+- commercial needs
+- almost three years of (non-fulltime) development 
+
+Authors & copyrights
+==============================================
+
+- initial: Holger Krekel, Armin Rigo 
+- major contributors: Jan Balster, Brian Dorsey, Grig
+  Gheorghiu
+- many others with small patches
+- MIT license 
+
+who is merlinux?
+===============================
+
+- small company founded in 2004 by Holger Krekel and Laura
+  Creighton 
+
+- purpose: research and development / open source technologies 
+
+- 7 employees (no win32 experts!), 6 freelancers
+
+- three larger projects: 
+
+  - PyPy - next generation Python implementation 
+  - mailwitness - digital invoicing/signatures 
+  - provider of development servers 
+
+- technologies: virtualization, deployment and testing 
+
+Main Features of py.test 
+===============================
+
+- simplest possible ``assert`` approach 
+- clean setup/teardown semantics
+- stdout/stderr capturing per test
+- per-project/directory cmdline options (many predefined)
+- test selection support 
+- customizable auto-collection of tests
+- `more features`_ ...
+
+.. _`more features`: ../test.html#features
+
+Main User-Level entry points 
+===============================
+
+- ``py.test.raises(Exc, func, *args, **kwargs)``
+- ``py.test.fail(msg)`` -> fail a test
+- ``py.test.skip(msg)`` -> skip a test 
+- ``py.test.ensuretemp(prefix)`` -> per-test session temporary directory 
+- ``conftest.py`` can modify almost arbitrary testing aspects
+  (but it's a bit involved) 
+
+some py lib components 
+===============================
+
+- ``py.execnet`` provides ad-hoc means to distribute programs 
+- ``py.path`` objects abstract local and svn files 
+- ``py.log`` offers (preliminary) logging support 
+- ``py.xml.html`` for programmatic html generation 
+- lazy import ...``import py`` is enough
+
+py.test Implementation
+===============================
+
+- `basic picture`_
+- Session objects (Terminal and Tcl-GUI)
+- reporting hooks are on session objects
+- Collector hierarchy yield iteratively tests
+- uses py lib extensively (py.path/py.execnet) 
+- "conftest.py" per-directory configuration mechanism 
+
+.. _`basic picture`: ../test.html
+
+Session objects 
+===============================
+
+- responsible for driving the testing process
+- make use of iterative Collector hierarchies 
+- responsible for reporting (XXX)
+- can be split to a Frontend and BackendSession 
+  for distributed testing (GUI frontend uses it) 
+
+Collector objects 
+===============================
+
+- Collectors / Test Items form a tree
+- the tree is build iteratively (driven from Sessions)
+- collector tree can be viewed with ``--collectonly``
+- ``run()`` returns list of (test) names or runs the test
+- ``join(name)`` returns a sub collector/item 
+- various helper methods to e.g. determine file/location
+
+Extensions: ReST documentation checking
+=========================================
+
+- `py/documentation/conftest.py`_ provides test 
+  items for checking documentation and link integrity
+
+- uses its own collector/testitem hierarchy 
+
+- invokes ``docutils`` processing, reports errors 
+
+.. _`py/documentation/conftest.py`: ../conftest.py 
+
+Extensions: Distributed Testing
+==============================================
+
+- using py.execnet to dispatch on different python versions
+- using py.execnet to dispatch tests on other hosts/platforms
+- currently: Popen, SSH and Socket gateways 
+- missing support pushing tests to "the other side" 
+- missing for deployment on multiple machines 
+- but it's already possible ... 
+
+Example using pywinauto from linux 
+==============================================
+
+- start socketserver.py on windows 
+- connect a SocketGateway e.g. from linux 
+- send tests, execute and report tracebacks through the
+  gateway
+- remotely use pywinauto to automate testing of GUI work flow 
+- interactive example ... 
+
+Status of py lib 
+===============================
+
+- mostly developed on linux/OSX
+- basically all tests pass on win32 as well
+- but missing some win32 convenience 
+- some support for generation of html/ReST/PDFs reports
+- py.execnet works rather reliably (pending deeper win32 testing) 
+- flexible configuration but sometimes non-obvious/documented 
+  (requires understanding of internals) 
+
+Next Steps py lib / py.test 
+===============================
+
+- refined py.execnet distribution of programs 
+- more configurable and customizable reporting 
+- implement support for testing distribution 
+- explore refined win32 support 
+- automated collection of unittest.py based tests
+- make spawning processes/gateways more robust 
+- doctest support 
+- unify logging approaches (py.log.*)
+- ... 
+
+
+.. |bullet| unicode:: U+02022
+.. footer:: Holger Krekel (merlinux) |bullet| |bullet| 13th March 2006 

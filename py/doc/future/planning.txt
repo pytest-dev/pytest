@@ -1,0 +1,64 @@
+Release
+=======
+
+currently working configurations
+--------------------------------
+
+2.3 - 2.4.2 work
+
+with setuptools: 2.3 - 2.4.2 as 'develop'
+
+regular installation: works mostly, strange test-failures
+
+to be tested: 2.2, windows
+
+absolutely necessary steps:
+----------------------------
+
+ * documentation
+ 
+    * improving getting started, describe install methods
+    * describe the rest stuff?
+    * py.log
+    * py.path is mostly undocumented, API documentation
+
+ * basic windows testing, maybe disabling execnet?, what about the scripts in windows?
+
+ * are all c extensions compiled when installing globally?
+
+ * refactoring py.log
+
+ * write/read methods on py.path should be renamed/deprecated: setcontent, getcontent instead?
+
+ * what about _subprocess.c?
+
+ * warning for docutils
+
+ * don't expose _extpy
+
+ * py/bin should be nicefied, get optparse interface
+ 
+    * _findpy.py
+    * py.cleanup:
+    * py.lookup: add -i option
+    * pytest.cmd 
+    * rst2pdf.py: merge with py.rest, add warnings when missing tex
+    * _makepyrelease.py: move somewhere
+    * py.countloc
+    * py.test
+    * py.rest
+    * win32
+
+  * skip tests if dependencies are not installed
+
+nice to have
+------------
+
+ * sets.py, subprocess.py in compat
+ * fix -k option to py.test
+ * add --report=(text|terminal|session|rest|tkinter|rest) to py.test
+ * put Armin's collect class into py.__builtin__ (not done) 
+ * try get rid of Collect.tryiter() in favour of (not done)
+   using Armin's collect class 
+
+

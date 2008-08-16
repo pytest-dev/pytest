@@ -1,0 +1,39 @@
+Missing features/bugs in pylib:
+====================================
+
+* new skip method, so web interface would show skips which
+  are broken (say py.test.skip("stuff", reason=py.test.BORKEN)),
+  proposed by me and xoraxax
+
+* integration of session classes - needed for developement
+
+* more robust failure recovery from execnet - not sure how to perform
+  it, but select() approach sounds like a plan (instead of threads)
+  (unsure what than)
+
+* provide a bit more patchy approach to green stuff, ie you import it and
+  all (known) operations on sockets are performed via the green interface,
+  this should allow using arbitrary applications (well, not using C-level
+  I/O) to mix with green threads.
+
+* integrate green execnet a bit more (?)
+
+* once session integration is done, it would be cool to have nightly
+  testing done in a systematic manner (instead of bunch of hacks, which
+  is how it looks like right now), so for example codespeak would be able
+  to store information (ie via svn) and when one woke up he can type py.test
+  show and see the information of all nightly test runs which he likes.
+
+* py.test.pdb - there is my hack for a while now, which integrates
+  rlcompleter2 with pdb. First of all it requires some strange changes
+  to rlcompleter itself, which has no tests. Long-term plan would be
+  to have pyrepl+rlcompleter2+pdb fixes integrated into pylib and
+  have it tested. This requires work though.
+
+* add a link to pylib in pypy/lib? Since pylib features mostly work on top
+  of pypy-c, it would be nice to have it (as we do have it in svn anyway)
+
+* fix generative tests.
+  - they should be distributed atomically (for various reasons)
+  - fix setup/teardown logic (ie setup_generator/teardown_generator)
+  - XXX there was sth else

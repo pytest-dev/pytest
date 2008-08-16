@@ -19,7 +19,7 @@ def searchpy(current):
                 #    if p == current:
                 #        return True
                 if current != sys.path[0]:  # if we are already first, then ok
-                    print >>sys.stderr, "inserting into sys.path:", current
+                    #print >>sys.stderr, "inserting into sys.path:", current
                     sys.path.insert(0, current)
                 return True
         current = opd(current)

@@ -1,0 +1,45 @@
+=======
+py.io
+=======
+
+.. contents::
+.. sectnum::
+
+The 'py' lib provides helper classes for capturing IO during
+execution of a program. 
+
+IO Capturing examples
+===============================================
+
+:api:`py.io.StdCapture`
+---------------------------
+
+Basic Example: 
+
+  >>> import py
+  >>> capture = py.io.StdCapture()
+  >>> print "hello"
+  >>> out,err = capture.reset()
+  >>> out.strip() == "hello"
+  True
+
+For calling functions you may use a shortcut: 
+
+  >>> import py
+  >>> def f(): print "hello"
+  >>> res, out, err = py.io.StdCapture.call(f)
+  >>> out.strip() == "hello"
+  True
+
+:api:`py.io.StdCaptureFD`
+---------------------------
+
+If you also want to capture writes to the stdout/stderr
+filedescriptors you may invoke: 
+
+  >>> import py, sys
+  >>> capture = py.io.StdCaptureFD()
+  >>> sys.stderr.write("world")
+  >>> out,err = capture.reset()
+  >>> err
+  'world'

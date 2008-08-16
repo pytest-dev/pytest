@@ -1,0 +1,284 @@
+===========================================
+apigen - API documentation generation tool
+===========================================
+
+What is it?
+===========
+
+Apigen is a tool for automatically generating API reference documentation for
+Python projects. It works by examining code at runtime rather than at compile
+time. This way it is capable of displaying information about the code base
+after initialization. A drawback is that you cannot easily document source code
+that automatically starts server processes or has some other irreversible
+effects upon getting imported. 
+
+The apigen functionality is normally triggered from :api:`py.test`, and while
+running the tests it gathers information such as code paths, arguments and
+return values of callables, and exceptions that can be raised while the code
+runs (XXX not yet!) to include in the documentation. It's also possible to
+run the tracer (which collects the data) in other code if your project
+does not use :api:`py.test` but still wants to collect the runtime information
+and build the docs.
+
+Apigen is written for the :api:`py` lib, but can be used to build documentation
+for any project: there are hooks in py.test to, by providing a simple script,
+build api documentation for the tested project when running py.test. Of course
+this does imply :api:`py.test` is actually used: if little or no tests are
+actually ran, the additional information (code paths, arguments and return
+values and exceptions) can not be gathered and thus there will be less of an
+advantage of apigen compared to other solutions.
+
+Features
+========
+
+Some features were mentioned above already, but here's a complete list of all
+the niceties apigen has to offer:
+
+  * source documents
+
+    Apigen not only builds the API documentation, but also a tree of
+    syntax-colored source files, with links from the API docs to the source
+    files.
+
+  * abundance of information
+
+    compared to other documentation generation tools, apigen produces an
+    abundant amount of information: it provides syntax-colored code snippets,
+    code path traces, etc.
+
+  * linking
+
+    besides links to the source files, apigen provides links all across the
+    documentation: callable arguments and return values link to their
+    definition (if part of the documented code), class definition to their
+    base classes (again, if they're part of the documented code), and
+    everywhere are links to the source files (including in traces)
+
+  * (hopefully) improves testing
+
+    because the documentation is built partially from test results, developers
+    may (especially if they're using the documentation themselves) be more
+    aware of untested parts of the code, or parts can use more tests or need
+    attention
+
+Using apigen
+============
+
+To trigger apigen, all you need to do is run the :source:`py/bin/py.test` tool
+with an --apigen argument, as such::
+
+  $ py.test --apigen=<path>
+
+where <path> is a path to a script containing some special hooks to build
+the documents (see below). The script to build the documents for the :api:`py`
+lib can be found in :source:`py/apigen/apigen.py`, so building those documents
+can be done by cd'ing to the 'py' directory, and executing::
+
+  $ py.test --apigen=apigen/apigen.py
+
+The documents will by default be built in the *parent directory* of the
+*package dir* (in this case the 'py' directory). Be careful that you don't
+overwrite anything!
+
+Other projects
+==============
+
+To use apigen from another project, there are three things that you need to do:
+
+Use :api:`py.test` for unit tests
+---------------------------------
+
+This is a good idea anyway... ;) The more tests, the more tracing information
+and such can be built, so it makes sense to have good test coverage when using
+this tool.
+    
+Provide :api:`py.test` hooks
+----------------------------
+
+To hook into the unit testing framework, you will need to write a script with
+two functions. The first should be called 'get_documentable_items', gets a
+package dir (the root of the project) as argument, and should return a tuple
+with the package name as first element, and a dict as second. The dict should
+contain, for all the to-be-documented items, a dotted name as key and a
+reference to the item as value.
+
+The second function should be called 'build', and gets also the package dir as
+argument, but also a reference to a DocStorageAcessor, which  contains
+information gathered by the tracer, and a reference to a
+:api:`py.io.StdCaptureFD` instance that is used to capture stdout and stderr,
+and allows writing to them, when the docs are built.
+
+This 'build' function is responsible for actually building the documentation,
+and, depending on your needs, can be used to control each aspect of it. In most
+situations you will just copy the code from :source:`py/apigen/apigen.py`'s
+build() function, but if you want you can choose to build entirely different
+output formats by directly accessing the DocStorageAccessor class.
+
+Provide layout
+--------------
+
+For the :api:`py` lib tests, the 'LayoutPage' class found in
+:source:`py/apigen/layout.py` is used, which produces HTML specific for that
+particular library (with a menubar, etc.). To customize this, you will need to
+provide a similar class, most probably using the Page base class from
+:source:`py/doc/confrest.py`. Note that this step depends on how heavy the
+customization in the previous step is done: if you decide to directly use the
+DocStorageAccessor rather than let the code in :source:`py/apigen/htmlgen.py`
+build HTML for you, this can be skipped.
+
+Using apigen from code
+======================
+
+If you want to avoid using :api:`py.test`, or have an other idea of how to best
+collect information while running code, the apigen functionality can be
+directly accessed. The most important classes are the Tracer class found in
+:source:`py/apigen/tracer/tracer.py`, which holds the information gathered
+during the tests, and the DocStorage and DocStorageAccessor classes from
+:source:`py/apigen/tracer/docstorage.py`, which (respectively) store the data,
+and make it accessible.
+
+Gathering information
+---------------------
+
+To gather information about documentation, you will first need to tell the tool
+what objects it should investigate. Only information for registered objects
+will be stored. An example::
+
+  >>> import py
+  >>> from py.__.apigen.tracer.docstorage import DocStorage, DocStorageAccessor
+  >>> from py.__.apigen.tracer.tracer import Tracer
+  >>> toregister = {'py.path.local': py.path.local,
+  ...               'py.path.svnwc': py.path.svnwc}
+  >>> ds = DocStorage().from_dict(toregister)
+  >>> t = Tracer(ds)
+  >>> t.start_tracing()
+  >>> p = py.path.local('.')
+  >>> p.check(dir=True)
+  True
+  >>> t.end_tracing()
+
+Now the 'ds' variable should contain all kinds of information about both the
+:api:`py.path.local` and the :api:`py.path.svnwc` classes, and things like call
+stacks, possible argument types, etc. as additional information about
+:api:`py.path.local.check()` (since it was called from the traced code).
+
+Using the information
+---------------------
+
+To use the information, we need to get a DocStorageAccessor instance to
+provide access to the data stored in the DocStorage object::
+
+  >>> dsa = DocStorageAccessor(ds)
+
+Currently there is no API reference available for this object, so you'll have
+to read the source (:source:`py/apigen/tracer/docstorage.py`) to see what
+functionality it offers.
+
+Comparison with other documentation generation tools
+====================================================
+
+Apigen is of course not the only documentation generation tool available for
+Python. Although we knew in advance that our tool had certain features the
+others do not offer, we decided to investigate a bit so that we could do a
+proper comparison.
+
+Tools examined
+--------------
+
+After some 'googling around', it turned out that the amount of documentation
+generation tools available was surprisingly low. There were only 5 packages
+I could find, of which 1 (called 'HappyDoc') seems dead (last release 2001),
+one (called 'Pudge') not yet born (perhaps DOA even? most of the links on the
+website are dead), and one (called 'Endo') specific to the Enthought suite.
+The remaining two were Epydoc, which is widely used [1]_, and PyDoctor, which is
+used only by (and written for) the Twisted project, but can be used seperately.
+
+Epydoc
+~~~~~~
+
+http://epydoc.sourceforge.net/
+
+Epydoc is the best known, and most widely used, documentation generation tool
+for Python. It builds a documentation tree by inspecting imported modules and
+using Python's introspection features. This way it can display information like
+containment, inheritance, and docstrings.
+
+The tool is relatively sophisticated, with support for generating HTML and PDF,
+choosing different styles (CSS), generating graphs using Graphviz, etc. Also
+it allows using markup (which can be ReST, JavaDoc, or their own 'epytext'
+format) inside docstrings for displaying rich text in the result.
+
+Quick overview:
+
+  * builds docs from object tree
+  * displays relatively little information, just inheritance trees, API and
+    docstrings
+  * supports some markup (ReST, 'epytext', JavaDoc) in docstrings
+
+PyDoctor
+~~~~~~~~
+
+http://codespeak.net/~mwh/pydoctor/
+
+This tool is written by Michael Hudson for the Twisted project. The major
+difference between this and Epydoc is that it browses the AST (Abstract Syntax
+Tree) instead of using 'live' objects, which means that code that uses special
+import mechanisms, or depends on other code that is not available can still be
+inspected. On the other hand, code that, for example, puts bound methods into a
+module namespace is not documented.
+
+The tool is relatively simple and doesn't support the more advanced features
+that Epydoc offers. It was written for Twisted and there are no current plans to
+promote its use for unrelated projects.
+
+Quick overview:
+
+  * inspects AST rather than object tree
+  * again not a lot of information, the usual API docstrings, class inheritance
+    and module structure, but that's it
+  * rather heavy dependencies (depends on Twisted/Nevow (trunk version))
+  * written for Twisted, but quite nice output with other applications
+
+Quick overview lists of the other tools
+---------------------------------------
+
+HappyDoc
+~~~~~~~~
+
+http://happydoc.sourceforge.net/
+
+  * dead
+  * inspects AST
+  * quite flexible, different output formats (HTML, XML, SGML, PDF)
+  * pluggable docstring parsers
+
+Pudge
+~~~~~
+
+http://pudge.lesscode.org/
+
+  * immature, dead?
+  * builds docs from live object tree (I think?)
+  * supports ReST
+  * uses Kid templates
+
+Endo
+~~~~
+
+https://svn.enthought.com/enthought/wiki/EndoHowTo
+
+  * inspects object tree (I think?)
+  * 'traits' aware (see https://svn.enthought.com/enthought/wiki/Traits)
+  * customizable HTML output with custom templating engine
+  * little documentation, seems like it's written for Enthought's own use
+    mostly
+  * heavy dependencies
+
+.. [1] Epydoc doesn't seem to be developed anymore, either, but it's so
+       widely used it can not be ignored...
+
+Questions, remarks, etc.
+========================
+
+For more information, questions, remarks, etc. see http://codespeak.net/py.
+This website also contains links to mailing list and IRC channel.

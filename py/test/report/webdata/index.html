@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <title>Py.test</title>
+    <script type="text/javascript" src="/jssource"></script>
+    <style type="text/css">
+
+      body, td, div {
+        font-family: Andale mono;
+        background-color: #ffd;
+        color: #003;
+      }
+
+      #info {
+        visibility: hidden;
+        position: fixed;
+        left: 0px;
+        top: 0px;
+        text-align: center;
+        width: 100%;
+        z-index: 2;
+      }
+
+      div.main {
+        margin-right: 170px;
+      }
+
+      .error {
+        color: #F00;
+        font-weight: bold;
+      }
+
+      #navbar {
+        position: fixed;
+        right: 1em;
+        top: 1em;
+        background-color: #ffd;
+        border: 1px solid #003;
+        z-index: 1;
+        width: 160px;
+      }
+
+      #navbar tr, #navbar td {
+        border: 0px;
+      }
+
+      #navbar a {
+        color: #003;
+        text-decoration: none;
+      }
+
+      #navbar .title {
+        font-weight: bold;
+      }
+
+      #jobs {
+        position: absolute;
+        visibility: hidden;
+        right: 2px;
+      }
+
+      #jobs, #jobs td {
+        background-color: #ffd;
+        border: 1px solid #003;
+      }
+
+      #jobs tr, #jobs td {
+        border: 0px;
+      }
+
+    </style>
+  </head>
+  <body onload="main()">
+    <a name="beginning">
+      <h3 id="Tests">Tests</h3>
+    </a>
+    <div id="info">
+      &#xa0;
+    </div>
+    <table id="navbar">
+      <tbody>
+        <tr>
+          <td class="title">Hosts status</td>
+        </tr>
+        <tr>
+          <td>
+            <table id="hosts">
+              <tbody id="hostsbody">
+              </tbody>
+            </table>
+            <table id="jobs">
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td class="title">Navigation</td>
+        </tr>
+        <tr>
+          <td><a href="#beginning">Top</a></td>
+        </tr>
+        <tr>
+          <td><a href="#message">Traceback info</a></td>
+        </tr>
+        <tr>
+          <td><a href="#aftermessage">End of Traceback</a></td>
+        </tr>
+        <tr>
+          <td class="title">Options</td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="opt_scroll" onchange="javascript:opt_scroll()"/><u>S</u>croll with tests arriving</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="main">
+      <table id="main_table">
+      </table>
+    <fieldset id="messagebox_fieldset">
+      <legend><b>Data [<a href="javascript:hide_messagebox()">hide</a>]:</b></legend>
+      <a name="message"> </a>
+      <div id="messagebox"></div>
+    </fieldset>
+    </div>
+    <a name="aftermessage"> </a>
+    <div id="testmain"></div>
+  </body>
+</html>

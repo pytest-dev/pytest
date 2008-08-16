@@ -1,0 +1,73 @@
+=====================================================
+Coding Style for the Py lib and friendly applications 
+=====================================================
+
+.. contents::
+.. sectnum::
+
+Honour PEP 8: Style Guide for Python Code
+----------------------------------------- 
+
+First of all, if you haven't already read it, read the `PEP 8
+Style Guide for Python Code`_ which, if in doubt, serves as
+the default coding-style for the py lib. 
+
+Documentation and Testing 
+-------------------------
+
+- generally we want to drive and interweave coding of
+  documentation, tests and real code as much as possible. 
+  Without good documentation others may never know about
+  your latest and greatest feature. 
+
+naming 
+------
+
+- directories, modules and namespaces are always **lowercase**
+
+- classes and especially Exceptions are most often **CamelCase**
+
+- types, i.e. very widely usable classes like the ``py.path`` 
+  family are all lower case. 
+
+- never use plural names in directory and file names
+
+- functions/methods are lowercase and ``_`` - separated if
+  you really need to separate at all
+
+- it's appreciated if you manage to name files in a directory
+  so that tab-completion on the shell level is as easy as possible. 
+
+
+committing
+----------
+
+- adding features requires adding appropriate tests. 
+
+- bug fixes should be encoded in a test before being fixed. 
+
+- write telling log messages because several people
+  will read your diffs, and we plan to have a search facility 
+  over the py lib's subversion repository. 
+
+- if you add ``.txt`` or ``.py`` files to the repository then 
+  please make sure you have ``svn:eol-style`` set to native. 
+  which allows checkin/checkout in native line-ending format.
+
+Miscellaneous 
+-------------
+
+- Tests are the insurance that your code will be maintained 
+  further and survives major releases. 
+
+- Try to put the tests close to the tested code, don't
+  overload directories with names. 
+
+- If you think of exporting new py lib APIs, discuss it first on the 
+  `py-dev mailing list`_ and possibly write a chapter in our
+  `future_` book. Communication is considered a key here to make 
+  sure that the py lib develops in a consistent way. 
+
+.. _`PEP 8 Style Guide for Python Code`: http://www.python.org/peps/pep-0008.html
+.. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
+.. _`future`: future.html
