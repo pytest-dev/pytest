@@ -30,8 +30,9 @@ class TestGraphviz(object):
         png.remove()
         
     def _graphviz_pdf(self):
-        if not py.path.local.sysfind("dot") or not py.path.local.sysfind("latex"):
-            py.test.skip("graphviz and latex needed")
+        for exe in 'dot latex epstopdf'.split():
+            if  not py.path.local.sysfind(exe):
+                py.test.skip("%r needed" %(exe,))
 
         directive.set_backend_and_register_directives("latex")
         txt = py.path.local(datadir.join("graphviz.txt"))

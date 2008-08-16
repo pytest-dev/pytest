@@ -4,10 +4,10 @@ from py.__.rest.convert import convert_dot, latexformula2png
 datadir = py.magic.autopath().dirpath().join("data")
 
 def setup_module(mod):
-    if not py.path.local.sysfind("gs") or \
-           not py.path.local.sysfind("dot") or \
-           not py.path.local.sysfind("latex"):
-        py.test.skip("ghostscript, graphviz and latex needed")
+    required = 'gs', 'dot', 'latex', 'epstopdf', 
+    for exe in required:
+        if not py.path.local.sysfind(exe):
+            py.test.skip("%r not found, required: %r" %(exe, required))
 
 def test_convert_dot():
     # XXX not really clear that the result is valid pdf/eps
