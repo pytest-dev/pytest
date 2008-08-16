@@ -1,3 +1,0 @@
-"""
-Just a dummy module
-"""
