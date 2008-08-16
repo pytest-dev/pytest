@@ -11,8 +11,8 @@ version = "1.0-pre-alpha"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57321 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-16 17:26:59 +0200 (Sat, 16 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57324 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-16 17:47:26 +0200 (Sat, 16 Aug 2008) $',
     version = version, 
     url = "http://codespeak.net/py",
     download_url = "XXX", # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
@@ -93,7 +93,6 @@ initpkg(__name__,
     'builtin.sorted'         : ('./builtin/sorted.py',    'sorted'),
     'builtin.BaseException'  : ('./builtin/exception.py', 'BaseException'),
     'builtin.GeneratorExit'  : ('./builtin/exception.py', 'GeneratorExit'),
-    'builtin.sysex'          : ('./builtin/exception.py', 'sysex'),
     'builtin.set'            : ('./builtin/set.py',       'set'),
     'builtin.frozenset'      : ('./builtin/set.py',       'frozenset'),
 
