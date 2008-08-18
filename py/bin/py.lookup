@@ -10,7 +10,10 @@ prepended."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from _findpy import py
-from py.__.io.terminalwriter import ansi_print, terminal_width
+try:
+    from py.__.io.terminalwriter import ansi_print, terminal_width
+except ImportError:
+    from py.__.misc.terminal_helper import ansi_print, terminal_width
 import re
 
 curdir = py.path.local()
