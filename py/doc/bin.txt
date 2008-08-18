@@ -52,7 +52,9 @@ prepended.
 Usage: ``py.rest [PATHS] [options]``
 
 Loot recursively for .txt files starting from ``PATHS`` and convert them to
-html using docutils (or to pdf files, if the --pdf option is used).
+html using docutils or to pdf files, if the ``--pdf`` option is used. For
+conversion to PDF you will need several command line tools, on Ubuntu Linux
+this is **texlive** and **texlive-extra-utils**. 
 
 ``py.rest`` has some extra features over rst2html (which is shipped with
 docutils). Most of these are still experimental, the one which is most likely

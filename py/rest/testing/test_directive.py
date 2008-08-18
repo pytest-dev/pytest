@@ -7,9 +7,11 @@ except ImportError:
 from py.__.rest import directive
 from py.__.misc import rest
 from py.__.rest.latex import process_rest_file
+from py.__.rest.testing.setup import getdata
 
-datadir = py.magic.autopath().dirpath().join("data")
-testdir = py.test.ensuretemp("rest")
+def setup_module(mod):
+    mod.datadir = getdata()
+    mod.testdir = py.test.ensuretemp("rest")
 
 class TestGraphviz(object):
     def _graphviz_html(self):

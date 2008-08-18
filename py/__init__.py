@@ -1,9 +1,9 @@
 
 # -*- coding: utf-8 -*-
 """
-    the py lib is a development support library featuring
-    py.test, ad-hoc distributed execution, micro-threads
-    and svn abstractions. 
+the py lib is a development support library featuring
+py.test, ad-hoc distributed execution, micro-threads
+and svn abstractions. 
 """
 from initpkg import initpkg
 
@@ -11,16 +11,30 @@ version = "1.0-pre-alpha"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57324 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-16 17:47:26 +0200 (Sat, 16 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57429 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-18 17:08:39 +0200 (Mon, 18 Aug 2008) $',
     version = version, 
-    url = "http://codespeak.net/py",
-    download_url = "XXX", # "http://codespeak.net/download/py/py-%s.tar.gz" %(version,), 
+    url = "http://pylib.org", 
+    download_url = "http://pypi.python.org/pypi?:action=display&name=py",
     license = "MIT license",
-    platforms = ['unix', 'linux', 'cygwin', 'win32'],
-    author = "holger krekel, Carl Friedrich Bolz, Guido Wesdorp, Maciej Fijalkowski, Armin Rigo & others",
-    author_email = "py-dev@codespeak.net",
+    platforms = ['unix', 'linux', 'osx', 'cygwin', 'win32'],
+    author = "holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others",
+    author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
+    classifiers = [
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers", 
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: POSIX",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS :: MacOS X",
+        "Topic :: Software Development :: Testing", 
+        "Topic :: Software Development :: Libraries",
+        "Topic :: System :: Distributed Computing",
+        "Topic :: Utilities",
+        "Programming Language :: Python",
+    ],
+
 
     # EXPORTED API 
     exportdefs = {

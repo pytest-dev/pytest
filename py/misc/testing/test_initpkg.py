@@ -255,13 +255,3 @@ class TestRealModule:
 #    help(std.path)
 #    #assert False
 
-def test_url_of_version():
-    #py.test.skip("FAILING! - provide a proper URL or upload pylib tgz")
-    from urllib import URLopener
-    url = py.__pkg__.download_url
-    if url.lower() == "xxx":
-        assert py.__pkg__.version.find("alpha") != -1
-    else:
-        URLopener().open(url) 
-    
-

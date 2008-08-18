@@ -2,6 +2,8 @@ from __future__ import generators
 
 import py
 from py.__.rest.latex import process_configfile, process_rest_file
+from py.__.rest.testing.setup import getdata
+
 try:
     import docutils
 except ImportError:
@@ -13,22 +15,20 @@ def setup_module(mod):
            not py.path.local.sysfind("dot") or \
            not py.path.local.sysfind("latex"):
         py.test.skip("ghostscript, graphviz and latex needed")
-    mod.data = py.magic.autopath().dirpath().join("data")
+    mod.datadir = getdata()
 
 class TestRst2Pdf(object):
     def _process_rest_file(self):
-        data = py.magic.autopath().dirpath().join("data")
-        part2 = data.join("part1.txt")
+        part2 = datadir.join("part1.txt")
         pdf = part2.new(ext="pdf")
         process_rest_file(part2)
         assert pdf.check()
         pdf.remove()
 
     def _process_configfile(self):
-        data = py.magic.autopath().dirpath().join("data")
-        config = data.join("example.rst2pdfconfig")
+        config = datadir.join("example.rst2pdfconfig")
         pdf = config.new(ext="pdf")
-        tex = data.join('example.tex')
+        tex = datadir.join('example.tex')
         process_configfile(config, debug=True)
         assert pdf.check()
         assert tex.check()
@@ -45,9 +45,9 @@ class TestRst2Pdf(object):
         def rec(p):
             return p.check(dotfile=0)
 
-        for x in data.visit("*.rst2pdfconfig", rec=rec):
+        for x in datadir.visit("*.rst2pdfconfig", rec=rec):
             process_configfile(x)
-        for x in data.visit("*.txt", rec=rec):
+        for x in datadir.visit("*.txt", rec=rec):
             process_rest_file(x)
 
     def test_rst2pdf(self):

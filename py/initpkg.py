@@ -32,7 +32,7 @@ from types import ModuleType
 # ---------------------------------------------------
 
 class Package(object):
-    def __init__(self, name, exportdefs):
+    def __init__(self, name, exportdefs, metainfo):
         pkgmodule = sys.modules[name]
         assert pkgmodule.__name__ == name
         self.name = name
@@ -53,6 +53,13 @@ class Package(object):
         setmodule(implname, self.implmodule)
         # inhibit further direct filesystem imports through the package module
         del pkgmodule.__path__
+
+        # set metainfo 
+        for name, value in metainfo.items(): 
+            setattr(self, name, value) 
+        version = metainfo.get('version', None)
+        if version:
+            pkgmodule.__version__ = version
 
     def _resolve(self, extpyish):
         """ resolve a combined filesystem/python extpy-ish path. """
@@ -229,9 +236,7 @@ class Module(ModuleType):
 def initpkg(pkgname, exportdefs, **kw):
     #print "initializing package", pkgname
     # bootstrap Package object
-    pkg = Package(pkgname, exportdefs)
-    for name, value in kw.items(): 
-        setattr(pkg, name, value) 
+    pkg = Package(pkgname, exportdefs, kw)
     seen = { pkgname : pkg.module }
     deferred_imports = []
 

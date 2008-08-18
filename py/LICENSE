@@ -1,25 +1,28 @@
-py lib Copyright holders, 2003-2005 
+py lib Copyright holders, 2003-2008 
 =======================================
 
 Except when otherwise stated (look for LICENSE files or information at
 the beginning of each file) the files in the 'py' directory are
-copyrighted by one or more of the following people and organizations:    
+copyrighted by one or more of the following people and organizations:
 
-    Holger Krekel <hpk@trillke.net>
-    merlinux GmbH, Germany <office@merlinux.de>
-    Armin Rigo <arigo@tunes.org>
-    Carl Friedrich Bolz <cfbolz@merlinux.de>
-    Maciek Fijalkowski <fijal@genesilico.pl>
-    Guido Wesdorp <guido@merlinux.de>
-    Jan Balster <jan@balster.info>
+    Holger Krekel, holger at merlinux eu
+    Guido Wesdorp, johnny at johnnydebris net 
+    Carl Friedrich Bolz, cfbolz at gmx de
+    Armin Rigo, arigo at tunes org 
+    Maciek Fijalkowski, fijal at genesilico.pl
+    Briand Dorsey, briandorsey at gmail com 
+    merlinux GmbH, Germany, office at merlinux eu
 
 Contributors include:: 
 
-    Ian Bicking <ianb@colorstudy.com>
-    Grig Gheorghiu <grig@gheorghiu.net>
-    Bob Ippolito <bob@redivi.com>
-    Christian Tismer <tismer@stackless.com>
-    Samuele Pedroni <pedronis@strakt.com> 
+    Samuele Pedroni 
+    Harald Armin Massa
+    Ralf Schmitt
+    Ian Bicking 
+    Jan Balster
+    Grig Gheorghiu
+    Bob Ippolito
+    Christian Tismer
 
 Except when otherwise stated (look for LICENSE files or information at
 the beginning of each file) all files in the 'py' directory are

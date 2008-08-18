@@ -32,7 +32,7 @@ def make_module_from_c(cfile):
     lib = dirpath.join(modname+ext)
 
     # XXX argl! we need better "build"-locations alltogether!
-    if lib.check():
+    if lib.check() and lib.stat().mtime < cfile.stat().mtime:
         try:
             lib.remove()
         except EnvironmentError:

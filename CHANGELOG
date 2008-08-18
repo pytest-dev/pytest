@@ -1,0 +1,79 @@
+$Id: CHANGELOG 57429 2008-08-18 15:08:39Z hpk $
+
+Changes between 0.9.1 and 0.9.2
+===============================
+
+* refined installation and metadata, created new setup.py, 
+  now based on setuptools/ez_setup (by flipping a bit you 
+  can use distutils). 
+
+* improved the way of making py.* scripts available in 
+  windows environments, they are now added to the 
+  Scripts directory as ".cmd" files. 
+
+* improved py.execnet bootstrapping on windows
+
+* py.test's traceback is better parseable from editors 
+  (follows the filenames:LINENO: MSG convention)
+
+* fix to javascript-generation, "py.test --runbrowser" 
+  should work more reliably now
+
+* removed previously accidentally added 
+  py.test.broken and py.test.notimplemented helpers. 
+
+* there now is a py.__version__ attribute
+
+Changes between 0.9.0 and 0.9.1
+===============================
+
+This is a fairly complete list of changes between 0.9 and 0.9.1, which can
+serve as a reference for developers.
+
+* allowing + signs in py.path.svn urls [39106]
+* fixed support for Failed exceptions without excinfo in py.test [39340]
+* added support for killing processes for Windows (as well as platforms that
+  support os.kill) in py.misc.killproc [39655]
+* added setup/teardown for generative tests to py.test [40702]
+* added detection of FAILED TO LOAD MODULE to py.test [40703, 40738, 40739]
+* fixed problem with calling .remove() on wcpaths of non-versioned files in
+  py.path [44248]
+* fixed some import and inheritance issues in py.test [41480, 44648, 44655]
+* fail to run greenlet tests when pypy is available, but without stackless
+  [45294]
+* small fixes in rsession tests [45295]
+* fixed issue with 2.5 type representations in py.test [45483, 45484]
+* made that internal reporting issues displaying is done atomically in py.test
+  [45518]
+* made that non-existing files are igored by the py.lookup script [45519]
+* improved exception name creation in py.test [45535]
+* made that less threads are used in execnet [merge in 45539]
+* removed lock required for atomical reporting issue displaying in py.test
+  [45545]
+* removed globals from execnet [45541, 45547]
+* refactored cleanup mechanics, made that setDaemon is set to 1 to make atexit
+  get called in 2.5 (py.execnet) [45548]
+* fixed bug in joining threads in py.execnet's servemain [45549]
+* refactored py.test.rsession tests to not rely on exact output format anymore
+  [45646]
+* using repr() on test outcome [45647]
+* added 'Reason' classes for py.test.skip() [45648, 45649]
+* killed some unnecessary sanity check in py.test.collect [45655]
+* avoid using os.tmpfile() in py.io.fdcapture because on Windows it's only
+  usable by Administrators [45901]
+* added support for locking and non-recursive commits to py.path.svnwc [45994]
+* locking files in py.execnet to prevent CPython from segfaulting [46010]
+* added export() method to py.path.svnurl
+* fixed -d -x in py.test [47277]
+* fixed argument concatenation problem in py.path.svnwc [49423]
+* restore py.test behaviour that it exits with code 1 when there are failures
+  [49974]
+* don't fail on html files that don't have an accompanying .txt file [50606]
+* fixed 'utestconvert.py < input' [50645]
+* small fix for code indentation in py.code.source [50755]
+* fix _docgen.py documentation building [51285]
+* improved checks for source representation of code blocks in py.test [51292]
+* added support for passing authentication to py.path.svn* objects [52000,
+  52001]
+* removed sorted() call for py.apigen tests in favour of [].sort() to support
+  Python 2.3 [52481]

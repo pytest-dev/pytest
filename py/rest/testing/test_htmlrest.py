@@ -2,6 +2,7 @@ from __future__ import generators
 
 import py
 from py.__.misc import rest
+from py.__.rest.testing.setup import getdata
 
 def setup_module(mod):
     if not py.path.local.sysfind("gs") or \
@@ -13,12 +14,12 @@ def setup_module(mod):
     except ImportError:
         py.test.skip("docutils not present")
 
-data = py.magic.autopath().dirpath().join("data")
+    mod.datadir = getdata()
 
 def test_process_simple():
     # fallback test: only checks that no exception is raised
     def rec(p):
         return p.check(dotfile=0)
-    for x in data.visit("*.txt", rec=rec):
+    for x in datadir.visit("*.txt", rec=rec):
         yield rest.process, x
 
