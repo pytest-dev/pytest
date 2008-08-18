@@ -9,6 +9,8 @@ svn-Command based Implementation of a Subversion WorkingCopy Path.
 """
 
 import os, sys, time, re, calendar
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 import py
 from py.__.path import common
 from py.__.path.svn import cache
@@ -255,9 +257,17 @@ class SvnWCCommandPath(common.FSPathBase):
         else:
             updates = ''
 
-        cmd = 'status -v %s %s %s' % (updates, rec, externals)
-        out = self._authsvn(cmd)
-        rootstatus = WCStatus(self).fromstring(out, self)
+        try:
+            cmd = 'status -v --xml --no-ignore %s %s %s' % (
+                    updates, rec, externals)
+            out = self._authsvn(cmd)
+        except py.process.cmdexec.Error:
+            cmd = 'status -v --no-ignore %s %s %s' % (
+                    updates, rec, externals)
+            out = self._authsvn(cmd)
+            rootstatus = WCStatus(self).fromstring(out, self)
+        else:
+            rootstatus = XMLWCStatus(self).fromstring(out, self)
         return rootstatus
 
     def diff(self, rev=None):
@@ -528,7 +538,6 @@ class WCStatus:
     # seem to be a more solid approach :(
     _rex_status = re.compile(r'\s+(\d+|-)\s+(\S+)\s+(.+?)\s{2,}(.*)')
 
-    @staticmethod
     def fromstring(data, rootwcpath, rev=None, modrev=None, author=None):
         """ return a new WCStatus object from data 's'
         """
@@ -573,6 +582,13 @@ class WCStatus:
                 if line.lower().find('against revision:')!=-1:
                     update_rev = int(rest.split(':')[1].strip())
                     continue
+                if line.lower().find('status on external') > -1:
+                    # XXX not sure what to do here... perhaps we want to
+                    # store some state instead of just continuing, as right
+                    # now it makes the top-level external get added twice
+                    # (once as external, once as 'normal' unchanged item)
+                    # because of the way SVN presents external items
+                    continue
                 # keep trying
                 raise ValueError, "could not parse line %r" % line
             else:
@@ -615,6 +631,106 @@ class WCStatus:
                     rootstatus.update_rev = update_rev
                 continue
         return rootstatus
+    fromstring = staticmethod(fromstring)
+
+class XMLWCStatus(WCStatus):
+    def fromstring(data, rootwcpath, rev=None, modrev=None, author=None):
+        """ parse 'data' (XML string as outputted by svn st) into a status obj
+        """
+        # XXX for externals, the path is shown twice: once
+        # with external information, and once with full info as if
+        # the item was a normal non-external... the current way of
+        # dealing with this issue is by ignoring it - this does make
+        # externals appear as external items as well as 'normal',
+        # unchanged ones in the status object so this is far from ideal
+        rootstatus = WCStatus(rootwcpath, rev, modrev, author)
+        update_rev = None
+        try:
+            doc = minidom.parseString(data)
+        except ExpatError, e:
+            raise ValueError(str(e))
+        urevels = doc.getElementsByTagName('against')
+        if urevels:
+            rootstatus.update_rev = urevels[-1].getAttribute('revision')
+        for entryel in doc.getElementsByTagName('entry'):
+            path = entryel.getAttribute('path')
+            statusel = entryel.getElementsByTagName('wc-status')[0]
+            itemstatus = statusel.getAttribute('item')
+
+            if itemstatus == 'unversioned':
+                wcpath = rootwcpath.join(path, abs=1)
+                rootstatus.unknown.append(wcpath)
+                continue
+            elif itemstatus == 'external':
+                wcpath = rootwcpath.__class__(
+                    rootwcpath.localpath.join(path, abs=1),
+                    auth=rootwcpath.auth)
+                rootstatus.external.append(wcpath)
+                continue
+            elif itemstatus == 'ignored':
+                wcpath = rootwcpath.join(path, abs=1)
+                rootstatus.ignored.append(wcpath)
+                continue
+
+            rev = statusel.getAttribute('revision')
+            if itemstatus == 'added' or itemstatus == 'none':
+                rev = '0'
+                modrev = '?'
+                author = '?'
+                date = ''
+            else:
+                print entryel.toxml()
+                commitel = entryel.getElementsByTagName('commit')[0]
+                if commitel:
+                    modrev = commitel.getAttribute('revision')
+                    author = ''
+                    for c in commitel.getElementsByTagName('author')[0]\
+                            .childNodes:
+                        author += c.nodeValue
+                    date = ''
+                    for c in commitel.getElementsByTagName('date')[0]\
+                            .childNodes:
+                        date += c.nodeValue
+
+            wcpath = rootwcpath.join(path, abs=1)
+
+            assert itemstatus != 'modified' or wcpath.check(file=1), (
+                'did\'t expect a directory with changed content here')
+
+            itemattrname = {
+                'normal': 'unchanged',
+                'unversioned': 'unknown',
+                'conflicted': 'conflict',
+                'none': 'added',
+            }.get(itemstatus, itemstatus)
+
+            attr = getattr(rootstatus, itemattrname)
+            attr.append(wcpath)
+
+            propsstatus = statusel.getAttribute('props')
+            if propsstatus not in ('none', 'normal'):
+                rootstatus.prop_modified.append(wcpath)
+
+            if wcpath == rootwcpath:
+                rootstatus.rev = rev
+                rootstatus.modrev = modrev
+                rootstatus.author = author
+                rootstatus.date = date
+
+            # handle repos-status element (remote info)
+            rstatusels = entryel.getElementsByTagName('repos-status')
+            if rstatusels:
+                rstatusel = rstatusels[0]
+                ritemstatus = rstatusel.getAttribute('item')
+                if ritemstatus in ('added', 'modified'):
+                    rootstatus.update_available.append(wcpath)
+
+            lockels = entryel.getElementsByTagName('lock')
+            if len(lockels):
+                rootstatus.locked.append(wcpath)
+
+        return rootstatus
+    fromstring = staticmethod(fromstring)
 
 class InfoSvnWCCommand:
     def __init__(self, output):

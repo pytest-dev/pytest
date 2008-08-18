@@ -4,6 +4,7 @@ from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc
 from py.__.path.svn.wccommand import InfoSvnWCCommand
 from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
+from py.__.conftest import option
 
 if py.path.local.sysfind('svn') is None:
     py.test.skip("cannot test py.path.svn, 'svn' binary not found")
@@ -140,6 +141,78 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert p.basename in [item.basename for item in s.replaced]
         finally:
             self.root.revert(rec=1)
+
+    def test_status_ignored(self):
+        try:
+            d = self.root.join('sampledir')
+            p = py.path.local(d).join('ignoredfile')
+            p.ensure(file=True)
+            s = d.status()
+            assert [x.basename for x in s.unknown] == ['ignoredfile']
+            assert [x.basename for x in s.ignored] == []
+            d.propset('svn:ignore', 'ignoredfile')
+            s = d.status()
+            assert [x.basename for x in s.unknown] == []
+            assert [x.basename for x in s.ignored] == ['ignoredfile']
+        finally:
+            self.root.revert(rec=1)
+
+    def test_status_conflict(self):
+        if not option.runslowtests:
+            py.test.skip('skipping slow unit tests - use --runslowtests '
+                         'to override')
+        wc = self.root
+        wccopy = py.path.svnwc(
+            py.test.ensuretemp('test_status_conflict_wccopy'))
+        wccopy.checkout(wc.url)
+        p = wc.ensure('conflictsamplefile', file=1)
+        p.write('foo')
+        wc.commit('added conflictsamplefile')
+        wccopy.update()
+        assert wccopy.join('conflictsamplefile').check()
+        p.write('bar')
+        wc.commit('wrote some data')
+        wccopy.join('conflictsamplefile').write('baz')
+        wccopy.update()
+        s = wccopy.status()
+        assert [x.basename for x in s.conflict] == ['conflictsamplefile']
+
+    def test_status_external(self):
+        if not option.runslowtests:
+            py.test.skip('skipping slow unit tests - use --runslowtests '
+                         'to override')
+        otherrepo, otherwc = getrepowc('externalrepo', 'externalwc')
+        d = self.root.ensure('sampledir', dir=1)
+        try:
+            d.remove()
+            d.add()
+            d.update()
+            d.propset('svn:externals', 'otherwc %s' % (otherwc.url,))
+            d.update()
+            s = d.status()
+            assert [x.basename for x in s.external] == ['otherwc']
+            assert 'otherwc' not in [x.basename for x in s.unchanged]
+            s = d.status(rec=1)
+            assert [x.basename for x in s.external] == ['otherwc']
+            assert 'otherwc' in [x.basename for x in s.unchanged]
+        finally:
+            self.root.revert(rec=1)
+
+    def test_status_deleted(self):
+        d = self.root.ensure('sampledir', dir=1)
+        d.remove()
+        d.add()
+        self.root.commit()
+        d.ensure('deletefile', dir=0)
+        d.commit()
+        s = d.status()
+        assert 'deletefile' in [x.basename for x in s.unchanged]
+        assert not s.deleted
+        p = d.join('deletefile')
+        p.remove()
+        s = d.status()
+        assert 'deletefile' not in s.unchanged
+        assert [x.basename for x in s.deleted] == ['deletefile']
 
     def test_diff(self):
         p = self.root / 'anotherfile'

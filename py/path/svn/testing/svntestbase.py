@@ -73,7 +73,7 @@ class CommonSvnTests(CommonFSTests):
 
     def setup_method(self, meth):
         bn = meth.func_name
-        for x in 'test_remove', 'test_move':
+        for x in 'test_remove', 'test_move', 'test_status_deleted':
             if bn.startswith(x):
                 self._savedrepowc = save_repowc() 
 
