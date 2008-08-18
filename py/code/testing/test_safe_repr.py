@@ -24,7 +24,12 @@ def test_broken_exception():
     assert 'Exception' in safe_repr._repr(BrokenRepr(BrokenReprException("really broken")))
 
 def test_string_exception():
-    assert 'unknown' in safe_repr._repr(BrokenRepr("string"))
+    if py.std.sys.version_info < (2,6):
+        assert 'unknown' in safe_repr._repr(BrokenRepr("string"))
+    else:
+        assert 'TypeError' in safe_repr._repr(BrokenRepr("string"))
+        
+
 
 def test_big_repr():
     assert len(safe_repr._repr(range(1000))) <= \

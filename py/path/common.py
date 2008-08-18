@@ -431,7 +431,7 @@ def relativeimport(p, name, parent=None):
 
 old_import_hook = None
 
-def custom_import_hook(name, glob=None, loc=None, fromlist=None):
+def custom_import_hook(name, glob=None, loc=None, fromlist=None, extra=None, level=None):
     __tracebackhide__ = False 
     __file__ = glob and glob.get('__file__')
     if isinstance(__file__, PathStr):
@@ -457,5 +457,9 @@ def custom_import_hook(name, glob=None, loc=None, fromlist=None):
                 return modules[0]   # outermost package
     # fall-back
     __tracebackhide__ = True 
-    return old_import_hook(name, glob, loc, fromlist)
+    try:
+        return old_import_hook(name, glob, loc, fromlist, level)
+    except TypeError:
+        return old_import_hook(name, glob, loc, fromlist)
+        
 

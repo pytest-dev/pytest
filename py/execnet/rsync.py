@@ -1,6 +1,9 @@
-import py, os, stat, md5
+import py, os, stat
 from Queue import Queue
-
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 
 class RSync(object):
     """ This class allows to send a directory structure (recursively)

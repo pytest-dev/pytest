@@ -187,7 +187,8 @@ class SessionTests(suptest.InlineCollection):
         out = failed[0].outcome.longrepr.reprcrash.message
         assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
         out = failed[1].outcome.longrepr.reprcrash.message
-        assert out.find("[unknown exception raised in repr()]") != -1
+        assert (out.find("[unknown exception raised in repr()]") != -1  or
+                out.find("TypeError") != -1)
 
 class TestNewSession(SessionTests):
     def test_pdb_run(self):
