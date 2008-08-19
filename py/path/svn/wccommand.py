@@ -679,7 +679,7 @@ class XMLWCStatus(WCStatus):
                 author = '?'
                 date = ''
             else:
-                print entryel.toxml()
+                #print entryel.toxml()
                 commitel = entryel.getElementsByTagName('commit')[0]
                 if commitel:
                     modrev = commitel.getAttribute('revision')
