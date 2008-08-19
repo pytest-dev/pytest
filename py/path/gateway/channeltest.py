@@ -25,7 +25,7 @@ class PathServer:
 
     def command_GET(self, id, spec):
         path = self.C2P[id]
-        self.channel.send(path.get(spec))
+        self.channel.send(path._getbyspec(spec))
 
     def command_READ(self, id):
         path = self.C2P[id]
