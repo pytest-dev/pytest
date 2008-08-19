@@ -53,7 +53,7 @@ class PathServer:
 if __name__ == '__main__':
     import py
     gw = py.execnet.PopenGateway()
-    channel = gw.channelfactory.new()
+    channel = gw._channelfactory.new()
     srv = PathServer(channel)
     c = gw.remote_exec("""
         import remotepath
