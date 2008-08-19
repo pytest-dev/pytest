@@ -66,7 +66,8 @@ class TestPyTest(AcceptBase):
                     pass
         """)
         result = self.runpytest("--collectonly", p)
-        assert not "".join(result.errlines) 
+        err = "".join(result.errlines)
+        assert err.strip().startswith("inserting into sys.path")
         assert result.ret == 0
         extra = assert_lines_contain_lines(result.outlines, py.code.Source("""
             <Module 'test_one.py'>
