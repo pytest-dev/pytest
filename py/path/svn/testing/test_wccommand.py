@@ -1,7 +1,7 @@
 import py
 import sys
 from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc
-from py.__.path.svn.wccommand import InfoSvnWCCommand
+from py.__.path.svn.wccommand import InfoSvnWCCommand, XMLWCStatus
 from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
 from py.__.conftest import option
@@ -213,6 +213,19 @@ class TestWCSvnCommandPath(CommonSvnTests):
         s = d.status()
         assert 'deletefile' not in s.unchanged
         assert [x.basename for x in s.deleted] == ['deletefile']
+
+    def test_status_noauthor(self):
+        # testing for XML without author - this used to raise an exception
+        xml = '''\
+        <entry path="/tmp/pytest-23/wc">
+        <wc-status item="normal" props="none" revision="0">
+        <commit revision="0">
+        <date>2008-08-19T16:50:53.400198Z</date>
+        </commit>
+        </wc-status>
+        </entry>
+        '''
+        XMLWCStatus.fromstring(xml, self.root)
 
     def test_diff(self):
         p = self.root / 'anotherfile'

@@ -684,9 +684,10 @@ class XMLWCStatus(WCStatus):
                 if commitel:
                     modrev = commitel.getAttribute('revision')
                     author = ''
-                    for c in commitel.getElementsByTagName('author')[0]\
-                            .childNodes:
-                        author += c.nodeValue
+                    author_els = commitel.getElementsByTagName('author')
+                    if author_els:
+                        for c in author_els[0].childNodes:
+                            author += c.nodeValue
                     date = ''
                     for c in commitel.getElementsByTagName('date')[0]\
                             .childNodes:
