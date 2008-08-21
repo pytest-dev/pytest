@@ -2,7 +2,6 @@ CHANGELOG
 LICENSE
 MANIFEST
 README.txt
-_findpy.py
 ez_setup.py
 py/LICENSE
 py/__init__.py
@@ -75,6 +74,7 @@ py/bin/win32/py.countloc.cmd
 py/bin/win32/py.lookup.cmd
 py/bin/win32/py.rest.cmd
 py/bin/win32/py.test.cmd
+py/bin/win32/py.which.cmd
 py/builtin/__init__.py
 py/builtin/enumerate.py
 py/builtin/exception.py
@@ -113,6 +113,7 @@ py/cmdline/pycountloc.py
 py/cmdline/pylookup.py
 py/cmdline/pyrest.py
 py/cmdline/pytest.py
+py/cmdline/pywhich.py
 py/cmdline/testing/__init__.py
 py/cmdline/testing/test_generic.py
 py/code/__init__.py
@@ -226,13 +227,11 @@ py/initpkg.py
 py/io/__init__.py
 py/io/dupfile.py
 py/io/fdcapture.py
-py/io/forkedfunc.py
 py/io/stdcapture.py
 py/io/terminalwriter.py
 py/io/testing/__init__.py
 py/io/testing/test_dupfile.py
 py/io/testing/test_fdcapture.py
-py/io/testing/test_forkedfunc.py
 py/io/testing/test_stdcapture.py
 py/io/testing/test_terminalwriter.py
 py/log/__init__.py
@@ -318,8 +317,10 @@ py/path/testing/fscommon.py
 py/path/testing/test_api.py
 py/process/__init__.py
 py/process/cmdexec.py
+py/process/forkedfunc.py
 py/process/testing/__init__.py
 py/process/testing/test_cmdexec.py
+py/process/testing/test_forkedfunc.py
 py/rest/__init__.py
 py/rest/convert.py
 py/rest/directive.py
@@ -434,5 +435,4 @@ py/xmlobj/testing/test_html.py
 py/xmlobj/testing/test_xml.py
 py/xmlobj/visit.py
 py/xmlobj/xml.py
-setup.cfg
 setup.py
