@@ -15,14 +15,12 @@ class Result:
         self.errlines = errlines
 
 class AcceptBase(FileCreation):
-    def popen(self, cmdargs, stdout, stderr):
+    def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")
-        return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr)
+        return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
-    def runpytest(self, *args):
-        pytestcmd = py.path.local(py.__file__).dirpath("bin", "py.test")
-        cmdargs = [py.std.sys.executable, pytestcmd] + list(args)
+    def run(self, *cmdargs):
         cmdargs = map(str, cmdargs)
         p1 = py.path.local("stdout")
         p2 = py.path.local("stderr")
@@ -34,6 +32,18 @@ class AcceptBase(FileCreation):
             for line in err: 
                 print >>py.std.sys.stderr, line
         return Result(ret, out, err)
+
+    def runpybin(self, scriptname, *args):
+        bindir = py.path.local(py.__file__).dirpath("bin")
+        if py.std.sys.platform == "win32":
+            script = bindir.join("win32", scriptname + ".cmd")
+        else:
+            script = bindir.join(scriptname)
+        assert script.check()
+        return self.run(script, *args)
+
+    def runpytest(self, *args):
+        return self.runpybin("py.test", *args)
 
     def setup_method(self, method):
         super(AcceptBase, self).setup_method(method)
