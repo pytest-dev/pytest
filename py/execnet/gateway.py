@@ -136,8 +136,14 @@ class Gateway(object):
                     self._traceex(exc_info())
                     break 
         finally:
+            # XXX we need to signal fatal error states to
+            #     channels/callbacks, particularly ones 
+            #     where the other side just died. 
             self._stopexec()
-            self._stopsend()
+            try:
+                self._stopsend()
+            except IOError: 
+                self._trace('IOError on _stopsend()')
             self._channelfactory._finished_receiving()
             self._trace('leaving %r' % threading.currentThread())
 
