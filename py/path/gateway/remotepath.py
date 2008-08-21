@@ -33,7 +33,7 @@ class RemotePath(common.FSPathBase):
         self._channel.send(('JOIN', self._id, id) + args)
         return RemotePath(self._channel, id)
 
-    def get(self, spec):
+    def _getbyspec(self, spec):
         parts = spec.split(',')
         ask = [x for x in parts  if x not in self._specs]
         if ask:

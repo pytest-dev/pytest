@@ -13,8 +13,9 @@ channel.send(srv.p2c(py.path.local("/tmp")))
 
 #gw = py.execnet.SshGateway('codespeak.net')
 gw = py.execnet.PopenGateway()
-c = gw.remote_exec(SRC)
-subchannel = gw.channelfactory.new()
+gw.remote_init_threads(5)
+c = gw.remote_exec(SRC, stdout=py.std.sys.stdout, stderr=py.std.sys.stderr)
+subchannel = gw._channelfactory.new()
 c.send(subchannel)
 
 p = RemotePath(subchannel, c.receive())
