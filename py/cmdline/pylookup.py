@@ -41,6 +41,13 @@ def main():
     if options.ignorecase:
         string = string.lower()
     for x in curdir.visit('*.py', rec):
+        # match filename directly
+        s = x.relto(curdir)
+        if options.ignorecase:
+            s = s.lower()
+        if s.find(string) != -1:
+           print >>sys.stdout, "%s: filename matches %r" %(x, string)
+
         try:
             s = x.read()
         except py.error.ENOENT:
