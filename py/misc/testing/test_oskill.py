@@ -8,6 +8,10 @@ def test_win_killsubprocess():
         py.test.skip("you\'re using an older version of windows, which "
                      "doesn\'t support 'taskkill' - py.misc.killproc is not "
                      "available")
+    try:
+        import subprocess
+    except ImportError:
+        py.test.skip("no subprocess module")
     tmp = py.test.ensuretemp("test_win_killsubprocess")
     t = tmp.join("t.py")
     t.write("import time ; time.sleep(100)")

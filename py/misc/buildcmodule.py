@@ -3,6 +3,9 @@ A utility to build a Python extension module from C, wrapping distutils.
 """
 import py
 
+# set to true for automatic re-compilation of extensions
+AUTOREGEN = True
+
 #  XXX we should distutils in a subprocess, because it messes up the
 #      environment and who knows what else.  Currently we just save
 #      and restore os.environ.
@@ -32,7 +35,7 @@ def make_module_from_c(cfile):
     lib = dirpath.join(modname+ext)
 
     # XXX argl! we need better "build"-locations alltogether!
-    if lib.check() and lib.stat().mtime < cfile.stat().mtime:
+    if lib.check() and AUTOREGEN and lib.stat().mtime < cfile.stat().mtime:
         try:
             lib.remove()
         except EnvironmentError:

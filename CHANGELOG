@@ -1,20 +1,29 @@
-$Id: CHANGELOG 57429 2008-08-18 15:08:39Z hpk $
+$Id: CHANGELOG 57540 2008-08-21 10:18:58Z hpk $
 
 Changes between 0.9.1 and 0.9.2
 ===============================
 
 * refined installation and metadata, created new setup.py, 
-  now based on setuptools/ez_setup (by flipping a bit you 
-  can use distutils). 
+  now based on setuptools/ez_setup (thanks to Ralf Schmitt 
+  for his support).
 
 * improved the way of making py.* scripts available in 
   windows environments, they are now added to the 
   Scripts directory as ".cmd" files. 
 
-* improved py.execnet bootstrapping on windows
+* py.path.svnwc.status() now is more complete and 
+  uses xml output from the 'svn' command if available
+  (Guido Wesdorp)
+
+* fix for py.path.svn* to work with svn 1.5
+  (Chris Lamb)
+
+* fix path.relto(otherpath) method on windows to 
+  use normcase for checking if a path is relative.
 
 * py.test's traceback is better parseable from editors 
   (follows the filenames:LINENO: MSG convention)
+  (thanks to Osmo Salomaa)
 
 * fix to javascript-generation, "py.test --runbrowser" 
   should work more reliably now

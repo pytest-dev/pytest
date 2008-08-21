@@ -2,8 +2,12 @@
 import os, inspect, socket
 import sys
 from py.magic import autopath ; mypath = autopath()
-
 import py
+if sys.platform == "win32":
+    win32 = True
+    import msvcrt
+else:
+    win32 = False
 
 # the list of modules that must be send to the other side 
 # for bootstrapping gateways
@@ -51,12 +55,9 @@ class InstallableGateway(gateway.Gateway):
 class PopenCmdGateway(InstallableGateway):
     def __init__(self, cmd):
         infile, outfile = os.popen2(cmd)
-        if sys.platform == 'win32':
-            import msvcrt
-            msvcrt.setmode(infile.fileno(), os.O_BINARY)
-            msvcrt.setmode(outfile.fileno(), os.O_BINARY)
         io = inputoutput.Popen2IO(infile, outfile)
         super(PopenCmdGateway, self).__init__(io=io)
+
 
 class PopenGateway(PopenCmdGateway):
     """ This Gateway provides interaction with a newly started

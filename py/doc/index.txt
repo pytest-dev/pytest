@@ -1,13 +1,15 @@
 py lib documentation 
 =================================================
 
-    The py lib aims at supporting a decent development process 
-    addressing deployment, versioning, testing and documentation 
-    perspectives. 
+    The py lib is a development support library featuring
+    py.test, ad-hoc distributed execution, micro-threads
+    (greenlets) and uniform local path and svn abstractions.  
+    Works on Linux, Windows and OSX, Python versions 
+    2.3, 2.4, 2.5 and 2.6. 
 
 `Download and Installation`_ 
 
-`0.9.0 release announcement`_ 
+`0.9.2 release announcement`_ 
 
 Main tools and API 
 ----------------------
@@ -20,14 +22,14 @@ Main tools and API
 
 `py.path`_: local and subversion Path and Filesystem access
 
+`py.code`_: High-level access/manipulation of Python code and traceback objects. 
+
 `py lib scripts`_ describe the scripts contained in the ``py/bin`` directory. 
 
 `apigen`_: a new way to generate rich Python API documentation
 
 support functionality 
 ---------------------------------
-
-`py.code`_: High-level access/manipulation of Python code and traceback objects. 
 
 `py.xml`_ for generating in-memory xml/html object trees 
 
@@ -59,4 +61,4 @@ Background and Motivation information
 .. _`Why What how py?`: why_py.html 
 .. _`future`: future.html 
 .. _`miscellaneous features`: misc.html 
-.. _`0.9.0 release announcement`: release-0.9.0.html
+.. _`0.9.2 release announcement`: release-0.9.2.html

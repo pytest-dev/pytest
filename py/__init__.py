@@ -1,9 +1,24 @@
 
 # -*- coding: utf-8 -*-
 """
-the py lib is a development support library featuring
-py.test, ad-hoc distributed execution, micro-threads
-and svn abstractions. 
+The py lib is a development support library featuring these tools and APIs:
+
+- `py.test`_: cross-project testing tool with many advanced features
+- `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
+- `py.magic.greenlet`_: micro-threads on standard CPython ("stackless-light") and PyPy
+- `py.path`_: path abstractions over local and subversion files 
+- `py.code`_: dynamic code compile and traceback printing support
+
+The py lib and its tools should work well on Linux, Win32, 
+OSX, Python versions 2.3-2.6.  For questions please go to
+http://pylib.org/contact.html
+
+.. _`py.test`: http://pylib.org/test.html
+.. _`py.execnet`: http://pylib.org/execnet.html
+.. _`py.magic.greenlet`: http://pylib.org/greenlet.html
+.. _`py.path`: http://pylib.org/path.html
+.. _`py.code`: http://pylib.org/code.html
+ 
 """
 from initpkg import initpkg
 
@@ -11,18 +26,18 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57529 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-21 09:48:44 +0200 (Thu, 21 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57540 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-21 12:18:58 +0200 (Thu, 21 Aug 2008) $',
     version = version, 
     url = "http://pylib.org", 
-    download_url = "http://pypi.python.org/pypi?:action=display&name=py",
+    download_url = "http://codespeak.net/py/0.9.2/download.html",
     license = "MIT license",
     platforms = ['unix', 'linux', 'osx', 'cygwin', 'win32'],
     author = "holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others",
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",
@@ -38,6 +53,13 @@ initpkg(__name__,
 
     # EXPORTED API 
     exportdefs = {
+    # py lib cmdline tools 
+    'cmdline.pytest'         : ('./cmdline/pytest.py', 'main',),
+    'cmdline.pyrest'         : ('./cmdline/pyrest.py', 'main',),
+    'cmdline.pylookup'       : ('./cmdline/pylookup.py', 'main',),
+    'cmdline.pycountloc'     : ('./cmdline/pycountloc.py', 'main',),
+    'cmdline.pycleanup'      : ('./cmdline/pycleanup.py', 'main',),
+
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
     'test.raises'            : ('./test/outcome.py', 'raises'),

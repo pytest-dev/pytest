@@ -21,8 +21,21 @@ def pkg_to_dict(module):
     for key, value in defs.iteritems():
         chain = key.split('.')
         base = module
-        for elem in chain:
-            base = getattr(base, elem)
+        # XXX generalize this:
+        # a bit of special casing for greenlets which are
+        # not available on all the platforms that python/py
+        # lib runs
+        try:
+            for elem in chain:
+                base = getattr(base, elem)
+        except RuntimeError, exc:
+            if elem == "greenlet":
+                print exc.__class__.__name__, exc
+                print "Greenlets not supported on this platform. Skipping apigen doc for this module"
+                continue
+            else:
+                raise
+
         if value[1] == '*':
             d.update(get_star_import_tree(base, key))
         else:

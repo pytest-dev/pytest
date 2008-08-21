@@ -5,8 +5,6 @@ Implementation and Customization of ``py.test``
 .. contents::
 .. sectnum::
 
-
-
 .. _`basicpicture`:
 
 
@@ -71,6 +69,12 @@ By default all directories not starting with a dot are traversed,
 looking for ``test_*.py`` and ``*_test.py`` files.  Those files 
 are imported under their `package name`_. 
 
+The Module collector looks for test functions 
+and test classes and methods. Test functions and methods
+are prefixed ``test`` by default.  Test classes must 
+start with a capitalized ``Test`` prefix. 
+
+
 .. _`collector API`: 
 
 test items are collectors as well
@@ -84,48 +88,28 @@ it, otherwise we consider the "test" as passed.
 
 .. _`package name`: 
 
-constructing the package name for modules
------------------------------------------ 
+constructing the package name for test modules
+-------------------------------------------------
 
 Test modules are imported under their fully qualified 
-name.  Given a module ``path`` the fully qualified package 
-name is constructed as follows:
+name.  Given a filesystem ``fspath`` it is constructed as follows:
 
-* determine the last "upward" directory from ``path`` that 
-  contains an ``__init__.py`` file.  Going upwards 
-  means repeatedly calling the ``dirpath()`` method 
-  on a path object (which returns the parent directory
-  as a path object). 
+* walk the directories up to the last one that contains 
+  an ``__init__.py`` file.  
 
-* insert this base directory into the sys.path list 
-  as its first element 
+* perform ``sys.path.insert(0, basedir)``.
 
-* import the root package 
+* import the root package as ``root``
 
-* determine the fully qualified name for the module located 
-  at ``path`` ... 
+* determine the fully qualified name for ``fspath`` by either:
 
-  * if the imported root package has a __package__ object  
-    then call ``__package__.getimportname(path)`` 
+  * calling ``root.__pkg__.getimportname(fspath)`` if the
+    ``__pkg__`` exists.` or 
 
   * otherwise use the relative path of the module path to
     the base dir and turn slashes into dots and strike
     the trailing ``.py``. 
 
-The Module collector will eventually trigger 
-``__import__(mod_fqdnname, ...)`` to finally get to 
-the live module object.  
-
-Side note: this whole logic is performed by local path 
-object's ``pyimport()`` method. 
-
-Module Collector 
------------------ 
-
-The default Module collector looks for test functions 
-and test classes and methods. Test functions and methods
-are prefixed ``test`` by default.  Test classes must 
-start with a capitalized ``Test`` prefix. 
 
 
 Customizing the testing process 
@@ -256,32 +240,27 @@ Customizing the collection process in a module
 If you have a module where you want to take responsibility for
 collecting your own test Items and possibly even for executing
 a test then you can provide `generative tests`_ that yield 
-callables and possibly arguments as a tuple.   This should 
-serve some immediate purposes like paramtrized tests. 
+callables and possibly arguments as a tuple.   This is especially
+useful for calling application test machinery with different
+parameter sets but counting each of the calls as a separate
+tests. 
 
 .. _`generative tests`: test.html#generative-tests
 
-The other extension possibility goes deeper into the machinery 
-and allows you to specify a custom test ``Item`` class which 
+The other extension possibility is about 
+specifying a custom test ``Item`` class which 
 is responsible for setting up and executing an underlying 
-test.  [XXX not working: You can integrate your custom ``py.test.collect.Item`` subclass 
-by binding an ``Item`` name to a test class.]  Or you can 
-extend the collection process for a whole directory tree 
-by putting Items in a ``conftest.py`` configuration file. 
-The collection process constantly looks at according names 
-in the *chain of conftest.py* modules to determine collectors
-and items at ``Directory``, ``Module``, ``Class``, ``Function`` 
-or ``Generator`` level.  Note that, right now, except for ``Function`` 
-items all classes are pure collectors, i.e. will return a list 
-of names (possibly empty). 
-
-XXX implement doctests as alternatives to ``Function`` items. 
+test.  Or you can extend the collection process for a whole 
+directory tree by putting Items in a ``conftest.py`` configuration file. 
+The collection process dynamically consults the *chain of conftest.py* 
+modules to determine collectors and items at ``Directory``, ``Module``, 
+``Class``, ``Function`` or ``Generator`` level respectively.  
 
 Customizing execution of Functions 
 ---------------------------------- 
 
-- Function test items allow total control of executing their 
-  contained test method.  ``function.run()`` will get called by the
+- ``py.test.collect.Function`` test items control execution 
+  of a test function.  ``function.run()`` will get called by the
   session in order to actually run a test.  The method is responsible
   for performing proper setup/teardown ("Test Fixtures") for a 
   Function test. 
@@ -289,6 +268,5 @@ Customizing execution of Functions
 - ``Function.execute(target, *args)`` methods are invoked by
   the default ``Function.run()`` to actually execute a python 
   function with the given (usually empty set of) arguments. 
-
 
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 

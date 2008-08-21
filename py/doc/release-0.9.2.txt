@@ -5,7 +5,7 @@ Welcome to the 0.9.2 py lib and py.test release -
 mainly fixing Windows issues, providing better
 packaging and integration with setuptools. 
 
-Summary of main feature of the py lib:
+Here is a quick summary of what it provides: 
 
 * py.test: cross-project testing tool with many advanced features
 * py.execnet: ad-hoc code distribution to SSH, Socket and local sub processes
@@ -17,6 +17,7 @@ Summary of main feature of the py lib:
 See here for more information:
 
 Download/Install:   http://codespeak.net/py/0.9.2/download.html
+
 Documentation/API:  http://codespeak.net/py/0.9.2/index.html
 
 best and have fun,
