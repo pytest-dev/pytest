@@ -142,7 +142,11 @@ class PathBase(object):
         #assert strrelpath[-1] == self.sep
         #assert strrelpath[-2] != self.sep
         strself = str(self)
-        if strself.startswith(strrelpath):
+        if sys.platform == "win32":
+            if os.path.normcase(strself).startswith(
+               os.path.normcase(strrelpath)):
+                return strself[len(strrelpath):]        
+        elif strself.startswith(strrelpath):
             return strself[len(strrelpath):]
         return ""
 

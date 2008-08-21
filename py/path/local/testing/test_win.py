@@ -29,6 +29,11 @@ class TestWINLocalPath:
         t2 = self.root.join("A_path")
         assert t1 == t1
         assert t1 == t2
+        
+    def test_relto_with_mixed_case(self):
+        t1 = self.root.join("a_path", "fiLe")
+        t2 = self.root.join("A_path")
+        assert t1.relto(t2) == "fiLe"
 
     def test_allow_unix_style_paths(self):
         t1 = self.root.join('a_path')

@@ -1,4 +1,5 @@
 import py
+import sys
 from py.path import local
 from py.__.path.common import checker
 from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
@@ -178,6 +179,10 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         assert not hasattr(l3, 'commit')
 
     def test_long_filenames(self):
+        if sys.platform == "win32":
+            py.test.skip("win32: work around needed for path length limit")
+        # see http://codespeak.net/pipermail/py-dev/2008q2/000922.html
+        
         tmpdir = self.tmpdir
         # testing paths > 260 chars (which is Windows' limitation, but
         # depending on how the paths are used), but > 4096 (which is the

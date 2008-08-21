@@ -390,10 +390,6 @@ class LocalPath(common.FSPathBase, PlatformMixin):
         #print "trying to import", self
         pkgpath = None
         if modname is None:
-            #try:
-            #    return self._module
-            #except AttributeError:
-            #    pass
             pkgpath = self.pypkgpath()
             if pkgpath is not None:
                 if ensuresyspath:
