@@ -201,13 +201,28 @@ class TestSessionAndOptions:
         s = eventlog.read()
         assert s.find("TestrunStart") != -1
 
-    def test_tracedir(self):
+    def test_tracedir_tracer(self):
         tracedir = self.tmpdir.mkdir("tracedir")
         config = py.test.config._reparse([self.tmpdir, 
                                           '--tracedir=%s' % tracedir])
         assert config.gettracedir() == tracedir
+
+        trace = config.maketrace("trace1.log", flush=True)
+        trace("hello", "world")
+        class A: pass 
+        trace(A())
+        p = tracedir.join("trace1.log")
+        lines = p.readlines(cr=0)
+        assert lines[0] == "hello world"
+        assert lines[1].find("A") != -1
+        trace.close()
+
+    def test_trace_null(self):
         config = py.test.config._reparse([self.tmpdir])
         assert config.gettracedir() is None
+        trace = config.maketrace("hello", flush=True)
+        trace("hello", "world")
+        trace.close()
 
     def test_implied_dsession(self):
         for x in 'startserver runbrowser rest'.split():
