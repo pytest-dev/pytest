@@ -8,7 +8,14 @@ class AssertionError(BuiltinAssertionError):
     def __init__(self, *args):
         BuiltinAssertionError.__init__(self, *args)
         if args: 
-            self.msg = str(args[0])
+            try:
+                self.msg = str(args[0])
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                self.msg = "<[broken __repr__] %s at %0xd>" %(
+                    args[0].__class__, id(args[0]))
+            
         else: 
             f = sys._getframe(1)
             try:

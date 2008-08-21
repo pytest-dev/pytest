@@ -96,3 +96,11 @@ def test_assert_implicit_multiline():
     except AssertionError, e:
         assert e.msg.find('assert [1, 2, 3] !=') != -1
 
+
+def test_assert_with_brokenrepr_arg():
+    class BrokenRepr:
+        def __repr__(self): 0 / 0
+    e = AssertionError(BrokenRepr())
+    if e.msg.find("broken __repr__") == -1:
+        py.test.fail("broken __repr__ not handle correctly")
+
