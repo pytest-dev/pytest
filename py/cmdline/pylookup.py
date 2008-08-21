@@ -9,7 +9,7 @@ prepended."""
 
 import sys, os
 import py
-from py.__.misc.terminal_helper import ansi_print, terminal_width
+from py.__.io.terminalwriter
 import re
 
 curdir = py.path.local()

@@ -127,7 +127,7 @@ def forked_run_report(item, pdb=None):
             os._exit(EXITSTATUS_TESTEXIT)
         return ipickle.dumps(testrep)
 
-    ff = py.io.ForkedFunc(runforked)
+    ff = py.process.ForkedFunc(runforked)
     result = ff.waitfinish()
     if result.retval is not None:
         return ipickle.loads(result.retval)

@@ -1,4 +1,14 @@
-$Id: CHANGELOG 57540 2008-08-21 10:18:58Z hpk $
+$Id: CHANGELOG 57548 2008-08-21 12:12:20Z hpk $
+
+Changes between 0.9.2 and 1.0 (UNRELEASED)
+=============================================
+
+* revised internal py.test architecture
+* new py.process.ForkedFunc object allowing to 
+  fork execution of a function to a sub process
+  and getting a result back. 
+
+XXX lots of things missing here XXX
 
 Changes between 0.9.1 and 0.9.2
 ===============================

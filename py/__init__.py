@@ -26,8 +26,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57540 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-21 12:18:58 +0200 (Thu, 21 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57548 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-21 14:12:20 +0200 (Thu, 21 Aug 2008) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -95,6 +95,7 @@ initpkg(__name__,
 
     'process.__doc__'        : ('./process/__init__.py', '__doc__'),
     'process.cmdexec'        : ('./process/cmdexec.py', 'cmdexec'),
+    'process.ForkedFunc'     : ('./process/forkedfunc.py', 'ForkedFunc'), 
 
     # path implementation
     'path.__doc__'           : ('./path/__init__.py', '__doc__'),
@@ -148,7 +149,6 @@ initpkg(__name__,
     'io.StdCapture'          : ('./io/stdcapture.py', 'StdCapture'), 
     'io.StdCaptureFD'        : ('./io/stdcapture.py', 'StdCaptureFD'), 
     'io.TerminalWriter'      : ('./io/terminalwriter.py', 'TerminalWriter'), 
-    'io.ForkedFunc'          : ('./io/forkedfunc.py', 'ForkedFunc'), 
 
     # error module, defining all errno's as Classes
     'error'                  : ('./misc/error.py', 'error'),
