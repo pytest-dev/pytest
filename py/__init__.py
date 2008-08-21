@@ -7,12 +7,12 @@ and svn abstractions.
 """
 from initpkg import initpkg
 
-version = "1.0-pre-alpha"
+version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57429 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-18 17:08:39 +0200 (Mon, 18 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57529 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-21 09:48:44 +0200 (Thu, 21 Aug 2008) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://pypi.python.org/pypi?:action=display&name=py",
