@@ -25,8 +25,9 @@ def checkprocess(script):
         else:
             cmd = "%s" %(script, )
 
-        if script.basename.startswith("py.lookup"):
-            cmd += " hello"
+        if script.basename.startswith("py.lookup") or \
+           script.basename.startswith("py.which"):
+            cmd += " sys"
         print "executing", script
         try:
             py.process.cmdexec(cmd)

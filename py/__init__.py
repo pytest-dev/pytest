@@ -26,8 +26,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57548 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-21 14:12:20 +0200 (Thu, 21 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57551 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-08-21 15:25:29 +0200 (Thu, 21 Aug 2008) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -59,6 +59,7 @@ initpkg(__name__,
     'cmdline.pylookup'       : ('./cmdline/pylookup.py', 'main',),
     'cmdline.pycountloc'     : ('./cmdline/pycountloc.py', 'main',),
     'cmdline.pycleanup'      : ('./cmdline/pycleanup.py', 'main',),
+    'cmdline.pywhich'        : ('./cmdline/pywhich.py', 'main',),
 
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
