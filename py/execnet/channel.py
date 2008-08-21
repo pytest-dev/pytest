@@ -103,13 +103,16 @@ class Channel(object):
         return self._closed
 
     def makefile(self, mode='w', proxyclose=False):
-        """ return a file-like object.  Only supported mode right
-            now is 'w' for binary writes.  If you want to have
-            a subsequent file.close() mean to close the channel
-            as well, then pass proxyclose=True. 
+        """ return a file-like object.  
+            mode: 'w' for binary writes, 'r' for binary reads 
+            proxyclose: set to true if you want to have a 
+            subsequent file.close() automatically close the channel. 
         """ 
-        assert mode == 'w', "mode %r not availabe" %(mode,)
-        return ChannelFile(channel=self, proxyclose=proxyclose)
+        if mode == "w":
+            return ChannelFileWrite(channel=self, proxyclose=proxyclose)
+        elif mode == "r":
+            return ChannelFileRead(channel=self, proxyclose=proxyclose)
+        raise ValueError("mode %r not availabe" %(mode,))
 
     def close(self, error=None):
         """ close down this channel on both sides. """
@@ -299,17 +302,10 @@ class ChannelFactory(object):
         for id in self._callbacks.keys():
             self._close_callback(id)
 
-
-class ChannelFile:
+class ChannelFile(object):
     def __init__(self, channel, proxyclose=True):
         self.channel = channel
         self._proxyclose = proxyclose 
-
-    def write(self, out):
-        self.channel.send(out)
-
-    def flush(self):
-        pass
 
     def close(self):
         if self._proxyclose: 
@@ -319,3 +315,38 @@ class ChannelFile:
         state = self.channel.isclosed() and 'closed' or 'open'
         return '<ChannelFile %d %s>' %(self.channel.id, state) 
 
+class ChannelFileWrite(ChannelFile):
+    def write(self, out):
+        self.channel.send(out)
+
+    def flush(self):
+        pass
+
+class ChannelFileRead(ChannelFile):
+    def __init__(self, channel, proxyclose=True):
+        super(ChannelFileRead, self).__init__(channel, proxyclose)
+        self._buffer = ""
+
+    def read(self, n):
+        while len(self._buffer) < n:
+            try:
+                self._buffer += self.channel.receive()
+            except EOFError:
+                self.close() 
+                break
+        ret = self._buffer[:n]
+        self._buffer = self._buffer[n:]
+        return ret 
+
+    def readline(self):
+        i = self._buffer.find("\n")
+        if i != -1:
+            return self.read(i+1)
+        line = self.read(len(self._buffer)+1)
+        while line and line[-1] != "\n":
+            c = self.read(1)
+            if not c:
+                break
+            line += c
+        return line
+         
