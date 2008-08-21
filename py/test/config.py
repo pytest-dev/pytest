@@ -220,6 +220,12 @@ class Config(object):
         else:
             raise ValueError("unknown io capturing: " + iocapture)
 
+    
+    def gettracedir(self):
+        """ return a tracedirectory or None, depending on --tracedir. """
+        if self.option.tracedir is not None:
+            return py.path.local(self.option.tracedir)
+
 # this is the one per-process instance of py.test configuration 
 config_per_process = Config()
 

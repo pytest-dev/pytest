@@ -201,6 +201,14 @@ class TestSessionAndOptions:
         s = eventlog.read()
         assert s.find("TestrunStart") != -1
 
+    def test_tracedir(self):
+        tracedir = self.tmpdir.mkdir("tracedir")
+        config = py.test.config._reparse([self.tmpdir, 
+                                          '--tracedir=%s' % tracedir])
+        assert config.gettracedir() == tracedir
+        config = py.test.config._reparse([self.tmpdir])
+        assert config.gettracedir() is None
+
     def test_implied_dsession(self):
         for x in 'startserver runbrowser rest'.split():
             config = py.test.config._reparse([self.tmpdir, '--dist', '--%s' % x])
