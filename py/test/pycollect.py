@@ -334,9 +334,6 @@ class Function(FunctionMixin, Item):
     def __ne__(self, other):
         return not self == other
 
-    def __repr__(self):
-        return "<Function %r at %0x>"%(self.name, id(self))
-
 class DoctestFile(FSCollector): 
     def listdir(self):
         return [self.fspath.basename]
