@@ -35,5 +35,14 @@ def test_big_repr():
     assert len(safe_repr._repr(range(1000))) <= \
            len('[' + safe_repr.SafeRepr().maxlist * "1000" + ']')
 
+def test_repr_on_newstyle():
+    class Function(object):
+        def __repr__(self):
+            return "<%s>" %(self.name)
+    try:
+        s = safe_repr._repr(Function())
+    except Exception, e:
+        py.test.fail("saferepr failed for newstyle class")
+    
         
     

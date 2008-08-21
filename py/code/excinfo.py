@@ -153,7 +153,7 @@ class FormattedExcinfo(object):
                 else:
                     # This formatting could all be handled by the _repr() function, which is 
                     # only repr.Repr in disguise, so is very configurable.
-                    str_repr = safe_repr._repr(value)
+                    str_repr = self._saferepr(value)
                     #if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
                     lines.append("%-10s = %s" %(name, str_repr))

@@ -30,10 +30,17 @@ class SafeRepr(repr.Repr):
         # Do we need a commandline switch for this?
         self.maxstring = 240 # 3 * 80 chars
         self.maxother = 160    # 2 * 80 chars
+
+    def repr(self, x):
+        return self._callhelper(repr.Repr.repr, self, x)
+
     def repr_instance(self, x, level):
+        return self._callhelper(__builtin__.repr, x)
+        
+    def _callhelper(self, call, x, *args):
         try:
             # Try the vanilla repr and make sure that the result is a string
-            s = str(__builtin__.repr(x))
+            s = call(x, *args)
         except (KeyboardInterrupt, MemoryError, SystemExit):
             raise
         except Exception ,e:
@@ -59,5 +66,6 @@ class SafeRepr(repr.Repr):
             j = max(0, self.maxstring-3-i)
             s = s[:i] + '...' + s[len(s)-j:]
         return s
+
 
 _repr = SafeRepr().repr
