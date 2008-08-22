@@ -213,7 +213,7 @@ class TestSessionAndOptions:
         trace(A())
         p = tracedir.join("trace1.log")
         lines = p.readlines(cr=0)
-        assert lines[0] == "hello world"
+        assert lines[0].endswith("hello world")
         assert lines[1].find("A") != -1
         trace.close()
 
