@@ -33,7 +33,7 @@ class Host(object):
 
     def _getuniqueid(self, hostname):
         l = self._hostname2list.setdefault(hostname, [])
-        hostid = hostname + "[%d]" % len(l)
+        hostid = hostname + "-%d" % len(l)
         l.append(hostid)
         return hostid
 

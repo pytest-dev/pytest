@@ -241,7 +241,8 @@ class Tracer(object):
         self.flush = flush
        
     def __call__(self, *args):
-        print >>self.file, " ".join(map(str, args))
+        time = round(py.std.time.time(), 3)
+        print >>self.file, time, " ".join(map(str, args))
         if self.flush:
             self.file.flush()
 

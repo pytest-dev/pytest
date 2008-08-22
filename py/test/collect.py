@@ -114,12 +114,18 @@ class Node(object):
         return (self.name, self.parent)
     def __setstate__(self, (name, parent)):
         newnode = parent.join(name)
-        assert newnode is not None, (self, name, parent)
+        if newnode is None:
+            raise AssertionError(self, name, parent, parent.__dict__)
         self.__dict__.update(newnode.__dict__)
         #self.__init__(name=name, parent=parent)
 
     def __repr__(self): 
-        return "<%s %r>" %(self.__class__.__name__, getattr(self, 'name', None))
+        if self._config.option.debug:
+            return "<%s %r %0x>" %(self.__class__.__name__, 
+                getattr(self, 'name', None), id(self))
+        else:
+            return "<%s %r>" %(self.__class__.__name__, 
+                getattr(self, 'name', None))
 
     # methods for ordering nodes
 

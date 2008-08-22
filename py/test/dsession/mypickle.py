@@ -23,6 +23,9 @@ class MyPickler(Pickler):
     """ Pickler with a custom memoize()
         to take care of unique ID creation. 
         See the usage in ImmutablePickler
+        XXX we could probably extend Pickler 
+            and Unpickler classes to directly
+            update the other'S memos. 
     """
     def __init__(self, file, protocol, uneven):
         Pickler.__init__(self, file, protocol)
@@ -82,9 +85,8 @@ class ImmutablePickler:
         return res
 
     def _updatepicklememo(self):
-        self._picklememo.update(dict(
-            [(id(obj), (int(x), obj))
-                  for x, obj in self._unpicklememo.items()]))
+        for x, obj in self._unpicklememo.items():
+            self._picklememo[id(obj)] = (int(x), obj)
 
     def _updateunpicklememo(self):
         for key,obj in self._picklememo.values():

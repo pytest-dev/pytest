@@ -78,7 +78,8 @@ def install_slave(host, config):
         channel = PickleChannel(channel)
         from py.__.test.dsession import masterslave
         config = masterslave.receive_and_send_pickled_config(channel)
-        masterslave.setup_at_slave_side(channel, config)
+        slavenode = masterslave.SlaveNode(channel, config)
+        slavenode.run()
     """)
     channel = PickleChannel(channel)
     remote_topdir = host.gw_remotepath 
@@ -89,28 +90,53 @@ def install_slave(host, config):
     channel.send(host)
     return channel
 
-def setup_at_slave_side(channel, config):
-    # our current dir is the topdir
-    # XXX what about neccessary PYTHONPATHs? 
-    import os
-    if hasattr(os, 'nice'):
-        nice_level = config.getvalue('dist_nicelevel')
-        os.nice(nice_level) 
-    from py.__.test.dsession.hostmanage import makehostup
-    host = channel.receive()
-    channel.send(makehostup(host))
-    while 1:
-        task = channel.receive()
-        if task is None: # shutdown
-            channel.send(None)
-            break
-        if isinstance(task, list):
-            for item in task:
-                runtest(channel, item)
-        else:
-            runtest(channel, task)
+class SlaveNode(object):
+    def __init__(self, channel, config):
+        self.channel = channel
+        self.config = config
+        import os
+        if hasattr(os, 'nice'):
+            nice_level = config.getvalue('dist_nicelevel')
+            os.nice(nice_level) 
 
-def runtest(channel, item):
-    runner = item._getrunner()
-    testrep = runner(item)
-    channel.send(testrep)
+    def __repr__(self):
+        host = getattr(self, 'host', '<uninitialized>')
+        return "<%s host=%s>" %(self.__class__.__name__, host.hostid)
+
+    def run(self):
+        from py.__.test.dsession.hostmanage import makehostup
+        channel = self.channel
+        self.host = host = channel.receive()
+        channel.send(makehostup(host))
+        self.trace = self.config.maketrace(host.hostid)
+        self.trace("initialized")
+
+        try:
+            while 1:
+                task = channel.receive()
+                self.trace("received", task)
+
+                if task is None: # shutdown
+                    channel.send(None)
+                    self.trace("shutting down, send None to", channel)
+                    break
+                if isinstance(task, list):
+                    for item in task:
+                        self.runtest(item)
+                else:
+                    self.runtest(task)
+        except KeyboardInterrupt:
+            raise
+        except:
+            rep = event.InternalException()
+            self.trace("sending back internal exception report, breaking loop")
+            channel.send(rep)
+            raise
+        else:
+            self.trace("normal shutdown")
+
+    def runtest(self, item):
+        runner = item._getrunner()
+        testrep = runner(item)
+        self.channel.send(testrep)
+        self.trace("sent back testreport", testrep)

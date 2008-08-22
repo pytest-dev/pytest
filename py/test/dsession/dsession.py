@@ -15,7 +15,6 @@ from py.__.test.session import Session
 from py.__.test.runner import OutcomeRepr
 from py.__.test import outcome 
 
-
 import Queue 
 
 class LoopState(object):
@@ -34,7 +33,7 @@ class DSession(Session):
         Session drives the collection and running of tests
         and generates test events for reporters. 
     """ 
-    MAXITEMSPERHOST = 10
+    MAXITEMSPERHOST = 15
     
     def __init__(self, config):
         super(DSession, self).__init__(config=config)
@@ -43,6 +42,7 @@ class DSession(Session):
         self.host2pending = {}
         self.item2host = {}
         self._testsfailed = False
+        self.trace = config.maketrace("dsession.log")
 
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
@@ -173,6 +173,7 @@ class DSession(Session):
         pending = self.host2pending.pop(host)
         for item in pending:
             del self.item2host[item]
+        self.trace("removehost %s, pending=%r" %(host.hostid, pending))
         return pending
 
     def triggertesting(self, colitems):
@@ -195,6 +196,7 @@ class DSession(Session):
             if room > 0:
                 sending = tosend[:room]
                 host.node.sendlist(sending)
+                self.trace("sent to host %s: %r" %(host.hostid, sending))
                 for item in sending:
                     #assert item not in self.item2host, (
                     #    "sending same item %r to multiple hosts "
@@ -210,8 +212,11 @@ class DSession(Session):
             self.queue.put(event.RescheduleItems(tosend))
 
     def removeitem(self, item):
+        if item not in self.item2host:
+            raise AssertionError(item, self.item2host)
         host = self.item2host.pop(item)
         self.host2pending[host].remove(item)
+        self.trace("removed %r, host=%r" %(item,host.hostid))
 
     def handle_crashitem(self, item, host):
         longrepr = "%r CRASHED THE HOST %r" %(item, host)
@@ -228,3 +233,15 @@ class DSession(Session):
         """ teardown any resources after a test run. """ 
         for host in self.host2pending:
             host.gw.exit()
+
+
+# debugging function
+def dump_picklestate(item):
+    l = []
+    while 1:
+        state = item.__getstate__()
+        l.append(state)
+        item = state[-1]
+        if len(state) != 2:
+            break
+    return l
