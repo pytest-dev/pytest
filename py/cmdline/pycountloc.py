@@ -11,7 +11,6 @@ starting from a list of paths given on the command line (starting from the
 current working directory). Distinguish between test files and normal ones and
 report them separately.
 """
-from _findpy import py 
 import py
 from py.compat import optparse
 from py.__.misc.cmdline.countloc import countloc 

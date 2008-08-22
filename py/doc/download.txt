@@ -24,7 +24,7 @@ code automatically during the above install).
 Downloading a tar/zip archive and installing that
 ===================================================
 
-Go to the project pages and download a tar or zip file:
+Go to the python package index (pypi) and download a tar or zip file:
 
     http://pypi.python.org/pypi/py/
 
@@ -48,33 +48,46 @@ and documentation source::
 
     svn co http://codespeak.net/svn/py/release/0.9.x py-0.9.x
 
-You should then be able to issue::
+You can then issue::
 
     python setup.py develop 
 
-and work with the local version.  
+in order to work with your checkout version. 
 
-If this doesn't work for you then you can also 
-source (linux) or execute (windows) some scripts
-that set environment variables for using your checkout. 
-You can execute: 
-
-    python ~/path/to/checkout/py/env.py 
-
-or on windows:  
-
-    \\path\\to\\checkout\\py\\env.cmd
-
-to get settings for PYTHONPATH and PATH.
-
-
-py subversion directory structure
-=================================
-
-The directory release layout of the repository is
-going to follow this scheme:: 
+other interesting svn checkout points::
 
     http://codespeak.net/
-        svn/py/dist         # latest stable (may or may not be a release) 
         svn/py/release      # release tags and branches
+        svn/py/dist         # latest stable (may or may not be a release) 
         svn/py/trunk        # head development / merge point
+
+
+Working with multiple py lib versions / svn externals
+=======================================================
+
+If you happen to have multiple versions of the py lib 
+around or you ship the py lib as an svn-external to 
+then you might want to use py lib scripts more directly.
+For example if you have a project layout like this::
+
+    mypkg/
+        subpkg1/
+            tests/
+        tests/
+    py/ # as svn-external, could be specific tag/version
+
+then you want to make sure that the actual local py lib is used
+and not another system-wide version.  For this you need to add
+``py/bin`` or ``py\bin\win32`` respectively to your system's PATH settings. 
+
+You can do this by executing (on windows) a script to set the environment::
+
+    c:\\path\to\checkout\py\env.cmd
+
+or on linux/osx you can add something like this to your shell
+initialization::
+
+    eval `python ~/path/to/checkout/py/env.py`
+
+to get good settings for PYTHONPATH and PATH.
+

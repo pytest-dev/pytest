@@ -63,6 +63,7 @@ py/apigen/tracer/tracer.py
 py/bin/_docgen.py
 py/bin/_findpy.py
 py/bin/_genscripts.py
+py/bin/gendoc.py
 py/bin/py.cleanup
 py/bin/py.countloc
 py/bin/py.lookup
@@ -115,6 +116,7 @@ py/cmdline/pyrest.py
 py/cmdline/pytest.py
 py/cmdline/pywhich.py
 py/cmdline/testing/__init__.py
+py/cmdline/testing/test_cmdline.py
 py/cmdline/testing/test_generic.py
 py/code/__init__.py
 py/code/code.py

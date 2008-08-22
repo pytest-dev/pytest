@@ -4,7 +4,7 @@ py lib documentation
     The py lib is a development support library featuring
     py.test, ad-hoc distributed execution, micro-threads
     (greenlets) and uniform local path and svn abstractions.  
-    Works on Linux, Windows and OSX, Python versions 
+    It works on Linux, Windows and OSX, Python versions 
     2.3, 2.4, 2.5 and 2.6. 
 
 `Download and Installation`_ 
