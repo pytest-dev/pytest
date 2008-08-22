@@ -226,16 +226,17 @@ class Config(object):
         if self.option.tracedir is not None:
             return py.path.local(self.option.tracedir)
 
-    def maketrace(self, name, flush=False):
+    def maketrace(self, name, flush=True):
         """ return a tracedirectory or None, depending on --tracedir. """
         tracedir = self.gettracedir()
         if tracedir is None:
             return NullTracer()
+        tracedir.ensure(dir=1)
         return Tracer(tracedir.join(name), flush=flush)
 
 class Tracer(object):
     file = None
-    def __init__(self, path, flush=False):
+    def __init__(self, path, flush=True):
         self.file = path.open(mode='w')
         self.flush = flush
        

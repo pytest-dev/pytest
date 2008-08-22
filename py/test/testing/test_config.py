@@ -202,12 +202,12 @@ class TestSessionAndOptions:
         assert s.find("TestrunStart") != -1
 
     def test_tracedir_tracer(self):
-        tracedir = self.tmpdir.mkdir("tracedir")
+        tracedir = self.tmpdir.join("tracedir")
         config = py.test.config._reparse([self.tmpdir, 
                                           '--tracedir=%s' % tracedir])
         assert config.gettracedir() == tracedir
 
-        trace = config.maketrace("trace1.log", flush=True)
+        trace = config.maketrace("trace1.log") # flush=True by default
         trace("hello", "world")
         class A: pass 
         trace(A())
