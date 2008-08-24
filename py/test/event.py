@@ -127,9 +127,9 @@ class HostDown(BaseEvent):
         self.host = host 
         self.error = error
 
-# 
-# events related to rsyncing
-# 
+# ---------------------------------------------------------------------
+# Events related to rsyncing
+# ---------------------------------------------------------------------
 
 class HostRSyncing(BaseEvent):
     def __init__(self, host, root, remotepath, synced):
