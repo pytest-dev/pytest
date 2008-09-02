@@ -215,7 +215,7 @@ def test_excinfo_no_sourcecode():
     except ValueError: 
         excinfo = py.code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
-    assert s == "  File '<string>':1 in <module>\n  ???\n"
+    assert s == "  File '<string>':1 in ?\n  ???\n"
 
 def test_entrysource_Queue_example():
     import Queue
