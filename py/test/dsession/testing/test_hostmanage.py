@@ -3,12 +3,18 @@
 """
 
 import py
-from basetest import DirSetup 
+from py.__.test.testing import suptest
 from py.__.test.dsession.hostmanage import HostRSync, Host, HostManager, gethosts
 from py.__.test.dsession.hostmanage import sethomedir, gethomedir, getpath_relto_home
 from py.__.test import event
 
-class TestHost(DirSetup):
+class TmpWithSourceDest(suptest.FileCreation):
+    def setup_method(self, method):
+        super(TmpWithSourceDest, self).setup_method(method)
+        self.source = self.tmpdir.mkdir("source")
+        self.dest = self.tmpdir.mkdir("dest")
+
+class TestHost(suptest.FileCreation):
     def _gethostinfo(self, relpath=""):
         exampledir = self.tmpdir.join("gethostinfo")
         if relpath:
@@ -119,7 +125,7 @@ class TestHost(DirSetup):
         res = channel.receive()
         assert res == host.gw_remotepath
 
-class TestSyncing(DirSetup): 
+class TestSyncing(TmpWithSourceDest):
     def _gethostinfo(self):
         hostinfo = Host("localhost:%s" % self.dest)
         return hostinfo 
@@ -181,7 +187,7 @@ class TestSyncing(DirSetup):
         res2 = rsync.add_target_host(h2)
         assert not res2
 
-class TestHostManager(DirSetup):
+class TestHostManager(TmpWithSourceDest):
     def gethostmanager(self, dist_hosts, dist_rsync_roots=None):
         l = ["dist_hosts = %r" % dist_hosts]
         if dist_rsync_roots:

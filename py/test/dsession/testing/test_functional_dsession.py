@@ -6,7 +6,6 @@ import py
 from py.__.test import event
 from py.__.test.dsession.dsession import DSession
 from py.__.test.dsession.hostmanage import HostManager, Host
-from basetest import BasicRsessionTest, DirSetup
 from py.__.test.testing import suptest
 import os
 
