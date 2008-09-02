@@ -1,7 +1,7 @@
 The py lib is a Python development support library featuring 
 the following tools and modules:
 
-* py.test: popular python testing tool 
+* py.test: automated testing tool
 * py.execnet: ad-hoc distributed execution
 * py.magic.greenlet: micro-threads
 * py.path:  uniform local and svn path objects 
@@ -17,4 +17,4 @@ have fun,
 
 holger krekel, holger at merlinux eu
 
-$Id: README.txt 57429 2008-08-18 15:08:39Z hpk $
+$Id: README.txt 57755 2008-09-02 12:26:22Z hpk $

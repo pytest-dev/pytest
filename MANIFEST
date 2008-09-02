@@ -60,7 +60,6 @@ py/apigen/tracer/testing/test_docgen.py
 py/apigen/tracer/testing/test_model.py
 py/apigen/tracer/testing/test_package.py
 py/apigen/tracer/tracer.py
-py/bin/_docgen.py
 py/bin/_findpy.py
 py/bin/_genscripts.py
 py/bin/gendoc.py
@@ -166,11 +165,6 @@ py/doc/example/pytest/test_failures.py
 py/doc/example/pytest/test_setup_flow_example.py
 py/doc/execnet.txt
 py/doc/future.txt
-py/doc/future/code_template.txt
-py/doc/future/planning.txt
-py/doc/future/planning2.txt
-py/doc/future/pylib_pypy.txt
-py/doc/future/rsession_todo.txt
 py/doc/greenlet.txt
 py/doc/impl-test.txt
 py/doc/index.txt
@@ -408,6 +402,7 @@ py/test/testing/test_collect.py
 py/test/testing/test_compat.py
 py/test/testing/test_config.py
 py/test/testing/test_conftesthandle.py
+py/test/testing/test_deprecated_api.py
 py/test/testing/test_doctest.py
 py/test/testing/test_event.py
 py/test/testing/test_outcome.py
