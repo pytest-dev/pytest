@@ -179,6 +179,9 @@ class FileCreation(object):
             if ret is None:
                 ret = p
         return ret 
+
+    def parseconfig(self, *args):
+        return py.test.config._reparse(list(args))
  
 class InlineCollection(FileCreation):
     """ helps to collect and run test functions inlining other test functions. """
@@ -191,9 +194,6 @@ class InlineCollection(FileCreation):
         if withsession:
             self.session = self.config.initsession()
         return self.config.getfsnode(path)
-
-    def parseconfig(self, *args):
-        return py.test.config._reparse(list(args))
 
     def getitems(self, source):
         modulecol = self.getmodulecol(source)
