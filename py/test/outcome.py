@@ -118,7 +118,7 @@ def deprecated_call(func, *args, **kwargs):
         warningmodule.warn_explicit = warn_explicit
         warningmodule.warn = warn
     if not l:
-        print warningmodule
+        #print warningmodule
         raise AssertionError("%r did not produce DeprecationWarning" %(func,))
     return ret
 

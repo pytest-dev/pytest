@@ -192,7 +192,7 @@ class InlineCollection(FileCreation):
 
     def getmodulecol(self, source, configargs=(), withsession=False):
         self.tmpdir.ensure("__init__.py")
-        kw = {self.tmpdir.basename: py.code.Source(source).strip()}
+        kw = {"test_" + self.tmpdir.basename: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         self.config = self.parseconfig(path, *configargs)
         if withsession:
@@ -204,7 +204,7 @@ class InlineCollection(FileCreation):
 
     def getitems(self, source):
         modulecol = self.getmodulecol(source)
-        return [modulecol.join(x) for x in modulecol.listdir()]
+        return modulecol.collect()
 
     def getitem(self, source, funcname="test_func"):
         modulecol = self.getmodulecol(source)

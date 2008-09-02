@@ -15,7 +15,7 @@ class DirSetup(object):
 
 class BasicRsessionTest(object):
     def setup_class(cls):
-        path = getexamplefile("funcexamples.py")
+        path = getexamplefile("test_funcexamples.py")
         cls.config = py.test.config._reparse([path.dirpath()])
         cls.modulecol = cls.config.getfsnode(path)
 
@@ -23,7 +23,7 @@ class BasicRsessionTest(object):
         self.session = self.config.initsession()
         
     def getfunc(self, name):
-        funcname = "func" + name
+        funcname = "test_func" + name
         col = self.modulecol.join(funcname) 
         assert col is not None, funcname
         return col

@@ -74,32 +74,6 @@ def test_config_getvalue_honours_conftest():
     py.test.raises(KeyError, 'config.getvalue("y", o)')
 
 
-def test_siblingconftest_fails_maybe():
-    from py.__.test import config
-    cfg = config.Config()
-    o = py.test.ensuretemp('siblingconftest')
-    o.ensure("__init__.py")
-    o.ensure("sister1", "__init__.py")
-    o.ensure("sister1", "conftest.py").write(py.code.Source("""
-        x = 2
-    """))
-        
-    o.ensure("sister2", "__init__.py")
-    o.ensure("sister2", "conftest.py").write(py.code.Source("""
-        raise SyntaxError
-    """))
-
-    assert cfg.getvalue(path=o.join('sister1'), name='x') == 2
-    old = o.chdir()
-    try:
-        pytestpath = py.magic.autopath().dirpath().dirpath().dirpath().join(
-                        'bin/py.test')
-        print py.process.cmdexec('python "%s" sister1' % (pytestpath,))
-        o.join('sister1').chdir()
-        print py.process.cmdexec('python "%s"' % (pytestpath,))
-    finally:
-        old.chdir()
-
 def test_config_overwrite():
     o = py.test.ensuretemp('testconfigget') 
     o.ensure("conftest.py").write("x=1")
@@ -338,7 +312,7 @@ class TestSessionAndOptions:
     def test_conflict_options(self):
         def check_conflict_option(opts):
             print "testing if options conflict:", " ".join(opts)
-            path = setupdata.getexamplefile("filetest.py")
+            path = setupdata.getexamplefile("file_test.py")
             config = py.test.config._reparse(opts + [path])
             py.test.raises((ValueError, SystemExit), """
                 config.initsession()
@@ -355,7 +329,7 @@ class TestSessionAndOptions:
     
     def test_implied_options(self):
         def check_implied_option(opts, expr):
-            path = setupdata.getexamplefile("filetest.py")
+            path = setupdata.getexamplefile("file_test.py")
             config = py.test.config._reparse(opts + [path])
             session = config.initsession()
             assert eval(expr, session.config.option.__dict__)
@@ -374,14 +348,14 @@ class TestSessionAndOptions:
             passed, skipped, failed = sorter.countoutcomes()
             assert failed == 2 
             assert skipped == passed == 0
-        path = setupdata.getexamplefile("filetest.py")
+        path = setupdata.getexamplefile("file_test.py")
         for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
                      ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
                      ['--traceconfig'], ['-v'], ['-v', '-v']):
             yield runfiletest, opts + [path]
 
     def test_is_not_boxed_by_default(self):
-        path = setupdata.getexamplefile("filetest.py")
+        path = setupdata.getexamplefile("file_test.py")
         config = py.test.config._reparse([path])
         assert not config.option.boxed
 

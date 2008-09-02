@@ -6,7 +6,7 @@ class TestCaseUnit(Function):
     """ compatibility Unit executor for TestCase methods
         honouring setUp and tearDown semantics.
     """
-    def execute(self, _deprecated=None):
+    def runtest(self, _deprecated=None):
         boundmethod = self.obj 
         instance = boundmethod.im_self 
         instance.setUp()

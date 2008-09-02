@@ -8,7 +8,7 @@ def setup_module(mod):
 class TestKeywordSelection: 
     def test_select_simple(self):
         def check(keyword, name):
-            sorter = suptest.events_run_example("filetest.py", 
+            sorter = suptest.events_run_example("file_test.py", 
                 '-s', '-k', keyword)
             passed, skipped, failed = sorter.listoutcomes()
             assert len(failed) == 1
@@ -189,6 +189,21 @@ class SessionTests(suptest.InlineCollection):
         out = failed[1].outcome.longrepr.reprcrash.message
         assert (out.find("[unknown exception raised in repr()]") != -1  or
                 out.find("TypeError") != -1)
+
+    def test_skip_by_conftest_directory(self):
+        from py.__.test import outcome
+        self.makepyfile(conftest="""
+            import py
+            class Directory(py.test.collect.Directory):
+                def collect(self):
+                    py.test.skip("intentional")
+        """, test_file="""
+            def test_one(): pass
+        """)
+        sorter = self.events_from_cmdline()
+        skips = sorter.get(event.CollectionReport)
+        assert len(skips) == 1
+        assert skips[0].skipped 
 
 class TestNewSession(SessionTests):
     def test_pdb_run(self):

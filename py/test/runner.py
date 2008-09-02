@@ -68,7 +68,7 @@ class ItemRunner(RobustRun):
     def teardown(self):
         self.colitem._setupstate.teardown_exact(self.colitem)
     def execute(self):
-        self.colitem.execute()
+        self.colitem.runtest()
     def makereport(self, res, when, excinfo, outerr):
         if excinfo: 
             kw = self.getkw(when, excinfo, outerr)
@@ -84,7 +84,7 @@ class CollectorRunner(RobustRun):
     def teardown(self):
         pass
     def execute(self):
-        return [self.colitem.join(x) for x in self.colitem.listdir()]
+        return self.colitem._memocollect()
     def makereport(self, res, when, excinfo, outerr):
         if excinfo: 
             kw = self.getkw(when, excinfo, outerr)

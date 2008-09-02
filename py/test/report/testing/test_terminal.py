@@ -70,7 +70,7 @@ class TestTerminal(InlineCollection):
         stringio = py.std.cStringIO.StringIO()
         rep = TerminalReporter(modcol._config, file=stringio)
         rep.processevent(event.TestrunStart())
-        items = [modcol.join(x) for x in modcol.listdir()]
+        items = modcol.collect()
         for item in items:
             rep.processevent(event.ItemStart(item))
             s = stringio.getvalue().strip()
@@ -153,8 +153,7 @@ class TestTerminal(InlineCollection):
         """)
         stringio = py.std.cStringIO.StringIO()
         rep = TerminalReporter(modcol._config, file=stringio)
-        reports = [basic_run_report(modcol.join(x))
-                         for x in modcol.listdir()]
+        reports = [basic_run_report(x) for x in modcol.collect()]
         rep.processevent(event.LooponfailingInfo(reports, [modcol._config.topdir]))
         assert_stringio_contains_lines(stringio, [
             "*test_looponfailingreport.py:2: assert 0",

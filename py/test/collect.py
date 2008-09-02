@@ -120,7 +120,7 @@ class Node(object):
         #self.__init__(name=name, parent=parent)
 
     def __repr__(self): 
-        if self._config.option.debug:
+        if getattr(self._config.option, 'debug', False):
             return "<%s %r %0x>" %(self.__class__.__name__, 
                 getattr(self, 'name', None), id(self))
         else:
@@ -153,6 +153,24 @@ class Node(object):
     def teardown(self): 
         pass
 
+    def _memoizedcall(self, attrname, function):
+        exattrname = "_ex_" + attrname 
+        failure = getattr(self, exattrname, None)
+        if failure is not None:
+            raise failure[0], failure[1], failure[2]
+        if hasattr(self, attrname):
+            return getattr(self, attrname)
+        try:
+            res = function()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            failure = py.std.sys.exc_info()
+            setattr(self, exattrname, failure)
+            raise
+        setattr(self, attrname, res)
+        return res 
+
     def listchain(self): 
         """ return list of all parent collectors up to self. """ 
         l = [self]
@@ -173,7 +191,7 @@ class Node(object):
             if name:
                 next = cur.join(name)
                 if next is None: 
-                    existingnames = cur.listdir()
+                    existingnames = [x.name for x in self._memocollect()]
                     msg = ("Collector %r does not have name %r "
                            "existing names are: %s" %
                            (cur, name, existingnames))
@@ -262,9 +280,8 @@ class Node(object):
 
 class Collector(Node):
     """ 
-        Collector instances generate children through 
-        their listdir() and join() methods and thus 
-        form a tree.  attributes::
+        Collector instances create children through collect()
+        and thus iteratively build a tree.  attributes::
 
         parent: attribute pointing to the parent collector
                 (or None if this is the root collector)
@@ -274,30 +291,59 @@ class Collector(Node):
     Module = configproperty('Module')
     DoctestFile = configproperty('DoctestFile')
 
-    def run(self):
-        """ deprecated: use listdir(). """
-        py.std.warnings.warn("deprecated: use listdir()", category=DeprecationWarning)
-        return self.listdir()
-
-    def multijoin(self, namelist): 
-        """ return a list of colitems for the given namelist. """ 
-        return [self.join(name) for name in namelist]
-
-    def listdir(self):
-        """ returns a list of names available from this collector.
-            You can return an empty list.  Callers of this method
-            must take care to catch exceptions properly.  
-        """
-        raise NotImplementedError("abstract")
-
-    def join(self, name):
-        """  return a child collector or item for the given name.  
-             If the return value is None there is no such child. 
+    def collect(self):
+        """ returns a list of children (items and collectors) 
+            for this collection node. 
         """
         raise NotImplementedError("abstract")
 
     def repr_failure(self, excinfo, outerr):
+        """ represent a failure. """
         return self._repr_failure_py(excinfo, outerr)
+
+    def _memocollect(self):
+        """ internal helper method to cache results of calling collect(). """
+        return self._memoizedcall('_collected', self.collect)
+
+    # **********************************************************************
+    # DEPRECATED METHODS 
+    # **********************************************************************
+    
+    def _deprecated_collect(self):
+        # avoid recursion:
+        # collect -> _deprecated_collect -> custom run() ->
+        # super().run() -> collect
+        attrname = '_depcollectentered'
+        if hasattr(self, attrname):
+            return
+        setattr(self, attrname, True)
+        method = getattr(self.__class__, 'run', None)
+        if method is not None and method != Collector.run:
+            warnoldcollect()
+            names = self.run()
+            return filter(None, [self.join(name) for name in names])
+
+    def run(self):
+        """ DEPRECATED: returns a list of names available from this collector.
+            You can return an empty list.  Callers of this method
+            must take care to catch exceptions properly.  
+        """
+        warnoldcollect()
+        return [colitem.name for colitem in self._memocollect()]
+
+    def join(self, name): 
+        """  DEPRECATED: return a child collector or item for the given name.  
+             If the return value is None there is no such child. 
+        """
+        warnoldcollect()
+        for colitem in self._memocollect():
+            if colitem.name == name:
+                return colitem
+
+    def multijoin(self, namelist): 
+        """ DEPRECATED: return a list of colitems for the given namelist. """ 
+        warnoldcollect()
+        return [self.join(name) for name in namelist]
 
 class FSCollector(Collector): 
     def __init__(self, fspath, parent=None, config=None): 
@@ -336,49 +382,53 @@ class FSCollector(Collector):
 
 
 class Directory(FSCollector): 
-    def filefilter(self, path): 
-        if path.check(file=1):
-            b = path.purebasename 
-            ext = path.ext
-            return (b.startswith('test_') or 
-                    b.endswith('_test')) and ext in ('.txt', '.py')
-    
     def recfilter(self, path): 
         if path.check(dir=1, dotfile=0):
             return path.basename not in ('CVS', '_darcs', '{arch}')
 
-    def listdir(self):
-        files = []
-        dirs = []
-        for p in self.fspath.listdir():
-            if self.filefilter(p):
-                files.append(p.basename)
-            elif self.recfilter(p):
-                dirs.append(p.basename) 
-        files.sort()
-        dirs.sort()
-        return files + dirs
+    def collect(self):
+        l = self._deprecated_collect() 
+        if l is not None:
+            return l 
+        l = []
+        for path in self.fspath.listdir(): # listdir() returns sorted order
+            res = self.consider(path, usefilters=True)
+            if res is not None:
+                l.append(res)
+        return l
+
+    def consider(self, path, usefilters=True):
+        print "checking", path
+        if path.check(file=1):
+            return self.consider_file(path, usefilters=usefilters)
+        elif path.check(dir=1):
+            return self.consider_dir(path, usefilters=usefilters)
+
+    def consider_file(self, path, usefilters=True):
+        ext = path.ext 
+        pb = path.purebasename
+        if not usefilters or pb.startswith("test_") or pb.endswith("_test"):
+            if ext == ".py":
+                return self.Module(path, parent=self) 
+            elif ext == ".txt":
+                return self.DoctestFile(path, parent=self)
+
+    def consider_dir(self, path, usefilters=True):
+        if not usefilters or self.recfilter(path):
+            # not use self.Directory here as 
+            # dir/conftest.py shall be able to 
+            # define Directory(dir) already 
+            Directory = self._config.getvalue('Directory', path) 
+            return Directory(path, parent=self) 
+
+    # **********************************************************************
+    # DEPRECATED METHODS 
+    # **********************************************************************
 
     def join(self, name):
-        name2items = self.__dict__.setdefault('_name2items', {})
-        try:
-            res = name2items[name]
-        except KeyError:
-            p = self.fspath.join(name)
-            res = None
-            if p.check(file=1): 
-                if p.ext == '.py':
-                    res = self.Module(p, parent=self) 
-                elif p.ext == '.txt':
-                    res = self.DoctestFile(p, parent=self)
-            elif p.check(dir=1): 
-                # not use self.Directory here as 
-                # dir/conftest.py shall be able to 
-                # define Directory(dir) already 
-                Directory = self._config.getvalue('Directory', p) 
-                res = Directory(p, parent=self) 
-            name2items[name] = res 
-        return res
+        """ get a child collector or item without using filters. """
+        p = self.fspath.join(name)
+        return self.consider(p, usefilters=False)
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 
@@ -388,6 +438,24 @@ class Item(Node):
             return forked_run_report
         return basic_run_report
 
+    def _deprecated_testexecution(self):
+        if self.__class__.run != Item.run:
+            warnoldtestrun()
+            self.run()
+            return True
+        elif self.__class__.execute != Item.execute:
+            warnoldtestrun()
+            self.execute(self.obj, *self._args)
+            return True
+
+    def run(self):
+        warnoldtestrun()
+        return self.execute(self.obj, *self._args)
+
+    def execute(self, obj, *args):
+        warnoldtestrun()
+        return obj(*args)
+
     def repr_metainfo(self):
         try:
             return self.ReprMetaInfo(self.fspath, modpath=self.__class__.__name__)
@@ -395,7 +463,7 @@ class Item(Node):
             code = py.code.Code(self.execute)
             return self.ReprMetaInfo(code.path, code.firstlineno)
       
-    def execute(self):
+    def runtest(self):
         """ execute this test item."""
         
         
@@ -417,3 +485,13 @@ def getrelpath(curdir, dest):
         return target 
     except AttributeError:
         return dest
+
+
+def depwarn(msg):
+    py.std.warnings.warn(msg, DeprecationWarning)
+
+def warnoldcollect():
+    return depwarn("implement collector.collect() instead of collector.run() and collector.join()")
+
+def warnoldtestrun():
+    return depwarn("implement item.runtest() instead of item.run() and item.execute()")

@@ -86,10 +86,10 @@ def test_getmodpath_cases():
         assert getmodpath(fcol) == expected 
 
     for names in (
-        'mod.py test_f1           mod.test_f1', 
-        'mod.py TestA () test_m1  mod.TestA().test_m1', 
-        'mod.py test_g1           mod.test_g1', 
-        'mod.py test_g1 [0]       mod.test_g1[0]', 
+        'test_mod.py test_f1           test_mod.test_f1', 
+        'test_mod.py TestA () test_m1  test_mod.TestA().test_m1', 
+        'test_mod.py test_g1           test_mod.test_g1', 
+        'test_mod.py test_g1 [0]       test_mod.test_g1[0]', 
     ):
         names = names.split()
         expected = names.pop()

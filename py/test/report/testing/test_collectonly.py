@@ -15,7 +15,7 @@ class TestCollectonly(InlineCollection):
         indent = rep.indent
         rep.processevent(event.CollectionStart(modcol))
         s = popvalue(stringio)
-        assert s == "<Module 'TestCollectonly_test_collectonly_basic.py'>"
+        assert s == "<Module 'test_TestCollectonly_test_collectonly_basic.py'>"
 
         item = modcol.join("test_func")
         rep.processevent(event.ItemStart(item))
@@ -34,7 +34,7 @@ class TestCollectonly(InlineCollection):
         cols = list(self.session.genitems([modcol]))
         assert len(cols) == 0
         assert_stringio_contains_lines(stringio, """
-            <Module 'TestCollectonly_test_collectonly_skipped_module.py'>
+            <Module 'test_TestCollectonly_test_collectonly_skipped_module.py'>
               !!! Skipped: 'nomod' !!!
         """)
 
@@ -47,7 +47,7 @@ class TestCollectonly(InlineCollection):
         cols = list(self.session.genitems([modcol]))
         assert len(cols) == 0
         assert_stringio_contains_lines(stringio, """
-            <Module 'TestCollectonly_test_collectonly_failed_module.py'>
+            <Module 'test_TestCollectonly_test_collectonly_failed_module.py'>
               !!! ValueError: 0 !!!
         """)
 

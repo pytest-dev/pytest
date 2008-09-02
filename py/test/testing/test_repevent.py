@@ -8,7 +8,7 @@ from py.__.code.testing.test_excinfo import TWMock
 class TestItemTestReport(object):
 
     def test_toterminal(self):
-        sorter = suptest.events_run_example("filetest.py")
+        sorter = suptest.events_run_example("file_test.py")
         reports = sorter.get(event.ItemTestReport)
         ev = reports[0] 
         assert ev.failed 
@@ -24,7 +24,7 @@ class TestItemTestReport(object):
         ##assert ev.repr_run.find("AssertionError") != -1
         filepath = ev.colitem.fspath
         #filepath , modpath = ev.itemrepr_path
-        assert str(filepath).endswith("filetest.py")
-        #assert modpath.endswith("filetest.test_one")
+        assert str(filepath).endswith("file_test.py")
+        #assert modpath.endswith("file_test.test_one")
         
 

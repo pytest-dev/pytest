@@ -18,6 +18,7 @@ a tree of collectors and test items that this modules provides::
 """ 
 import py
 from py.__.test.collect import Collector, FSCollector, Item, configproperty
+from py.__.test.collect import warnoldcollect
 
 class PyobjMixin(object):
     def obj(): 
@@ -96,6 +97,15 @@ class PyCollectorMixin(PyobjMixin, Collector):
     def classnamefilter(self, name): 
         return name.startswith('Test')
 
+    def collect(self):
+        l = self._deprecated_collect()
+        if l is not None:
+            return l
+        name2items = self._buildname2items()
+        colitems = name2items.values()
+        colitems.sort()
+        return colitems
+
     def _buildname2items(self): 
         # NB. we avoid random getattrs and peek in the __dict__ instead
         d = {}
@@ -113,67 +123,37 @@ class PyCollectorMixin(PyobjMixin, Collector):
                     d[name] = res 
         return d
 
+    def _deprecated_join(self, name):
+        if self.__class__.join != py.test.collect.Collector.join:
+            warnoldcollect()
+            return self.join(name)
+
     def makeitem(self, name, obj, usefilters=True):
         if (not usefilters or self.classnamefilter(name)) and \
             py.std.inspect.isclass(obj):
+            res = self._deprecated_join(name)
+            if res is not None:
+                return res 
             return self.Class(name, parent=self)
         elif (not usefilters or self.funcnamefilter(name)) and callable(obj): 
+            res = self._deprecated_join(name)
+            if res is not None:
+                return res 
             if obj.func_code.co_flags & 32: # generator function 
                 return self.Generator(name, parent=self)
             else: 
                 return self.Function(name, parent=self)
 
-    def _prepare(self): 
-        if not hasattr(self, '_name2items'): 
-            ex = getattr(self, '_name2items_exception', None)
-            if ex is not None: 
-                raise ex[0], ex[1], ex[2]
-            try: 
-                self._name2items = self._buildname2items()
-            except (SystemExit, KeyboardInterrupt): 
-                raise 
-            except:
-                self._name2items_exception = py.std.sys.exc_info()
-                raise
-
-    def listdir(self): 
-        self._prepare()
-        itemlist = self._name2items.values()
-        itemlist.sort()
-        return [x.name for x in itemlist]
-
-    def join(self, name): 
-        self._prepare()
-        return self._name2items.get(name, None) 
-
 class Module(FSCollector, PyCollectorMixin):
     _stickyfailure = None
 
-    def listdir(self):
+    def collect(self):
         if getattr(self.obj, 'disabled', 0):
             return []
-        return super(Module, self).listdir()
+        return super(Module, self).collect()
 
-    def join(self, name):
-        res = super(Module, self).join(name)
-        if res is None:
-            attr = getattr(self.obj, name, None)
-            if attr is not None:
-                res = self.makeitem(name, attr, usefilters=False)
-        return res
-    
     def _getobj(self):
-        failure = self._stickyfailure
-        if failure is not None: 
-            raise failure[0], failure[1], failure[2]
-        try: 
-            self._obj = obj = self.fspath.pyimport() 
-        except KeyboardInterrupt: 
-            raise
-        except:
-            self._stickyfailure = py.std.sys.exc_info()
-            raise 
-        return self._obj 
+        return self._memoizedcall('_obj', self.fspath.pyimport)
 
     def setup(self): 
         if not self._config.option.nomagic:
@@ -191,14 +171,13 @@ class Module(FSCollector, PyCollectorMixin):
 
 class Class(PyCollectorMixin, Collector): 
 
-    def listdir(self): 
+    def collect(self):
         if getattr(self.obj, 'disabled', 0):
             return []
-        return ["()"]
-
-    def join(self, name):
-        assert name == '()'
-        return self.Instance(name, self)
+        l = self._deprecated_collect()
+        if l is not None:
+            return l
+        return [self.Instance(name="()", parent=self)]
 
     def setup(self): 
         setup_class = getattr(self.obj, 'setup_class', None)
@@ -215,7 +194,6 @@ class Class(PyCollectorMixin, Collector):
     def _getsortvalue(self):  
         return self.getfslineno()
 
-
 class Instance(PyCollectorMixin, Collector): 
     def _getobj(self): 
         return self.parent.obj()  
@@ -225,6 +203,10 @@ class Instance(PyCollectorMixin, Collector):
     def _keywords(self):
         return []
     Function = property(Function)
+
+    #def __repr__(self):
+    #    return "<%s of '%s'>" %(self.__class__.__name__, 
+    #                         self.parent.obj.__name__)
 
     def newinstance(self):  
         self.obj = self._getobj()
@@ -278,24 +260,19 @@ class FunctionMixin(PyobjMixin):
     shortfailurerepr = "F"
 
 class Generator(FunctionMixin, PyCollectorMixin, Collector): 
-    def listdir(self): 
-        self._prepare()
-        itemlist = self._name2items
-        return [itemlist["[%d]" % num].name for num in xrange(len(itemlist))]
-    
-    def _buildname2items(self):
-        d = {} 
-        # XXX test generators are collectors yet participate in 
-        # the test-item setup and teardown protocol 
-        # if not for this we could probably avoid global setupstate
+    def collect(self):
+        # test generators are collectors yet participate in 
+        # the test-item setup and teardown protocol. 
+        # otherwise we could avoid global setupstate
         self._setupstate.prepare(self) 
+        l = []
         for i, x in py.builtin.enumerate(self.obj()): 
             call, args = self.getcallargs(x)
             if not callable(call): 
                 raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
             name = "[%d]" % i  
-            d[name] = self.Function(name, self, args=args, callobj=call)
-        return d
+            l.append(self.Function(name, self, args=args, callobj=call))
+        return l
         
     def getcallargs(self, obj):
         if isinstance(obj, (tuple, list)):
@@ -318,9 +295,10 @@ class Function(FunctionMixin, Item):
         if callobj is not _dummy: 
             self._obj = callobj 
 
-    def execute(self):
+    def runtest(self):
         """ execute the given test function. """
-        self.obj(*self._args)
+        if not self._deprecated_testexecution():
+            self.obj(*self._args)
 
     def __eq__(self, other):
         try:
@@ -335,12 +313,9 @@ class Function(FunctionMixin, Item):
         return not self == other
 
 class DoctestFile(FSCollector): 
-    def listdir(self):
-        return [self.fspath.basename]
-
-    def join(self, name):
-        if name == self.fspath.basename: 
-            return DoctestFileContent(name, self)
+   
+    def collect(self):
+        return [DoctestFileContent(self.fspath.basename, parent=self)]
 
 from py.__.code.excinfo import Repr, ReprFileLocation
 
@@ -378,8 +353,9 @@ class DoctestFileContent(Item):
         else: 
             return super(DoctestFileContent, self).repr_failure(excinfo, outerr)
             
-    def execute(self):
-        failed, tot = py.compat.doctest.testfile(
-            str(self.fspath), module_relative=False, 
-            raise_on_error=True, verbose=0)
+    def runtest(self):
+        if not self._deprecated_testexecution():
+            failed, tot = py.compat.doctest.testfile(
+                str(self.fspath), module_relative=False, 
+                raise_on_error=True, verbose=0)
 

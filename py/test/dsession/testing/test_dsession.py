@@ -157,7 +157,7 @@ class TestDSession(InlineCollection):
             def test_fail(): 
                 x
         """)
-        item1, item2 = [modcol.join(x) for x in modcol.listdir()]
+        item1, item2 = modcol.collect()
 
         # setup a session with two hosts 
         session = DSession(item1._config)
@@ -295,7 +295,7 @@ class TestDSession(InlineCollection):
         modcol._config.option.keyword = "nothing"
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
-        items = [modcol.join(x) for x in modcol.listdir()]
+        items = modcol.collect()
         events = [] ; session.bus.subscribe(events.append)
         remaining = session.filteritems(items)
         assert remaining == []

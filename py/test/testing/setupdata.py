@@ -81,7 +81,7 @@ namecontent = {
 
     'failingimport.py': "import gruetzelmuetzel\n", 
 
-    'mod.py': """
+    'test_mod.py': """
         class TestA:
             def test_m1(self):
                 pass
@@ -91,7 +91,7 @@ namecontent = {
             yield lambda x: None, 42
     """,
 
-    'filetest.py': """
+    'file_test.py': """
         def test_one(): 
             assert 42 == 43
 
@@ -125,60 +125,45 @@ namecontent = {
                 pass
     """,
 
-    'funcexamples.py': """
+    'test_funcexamples.py': """
         import py
         import time
-        def funcpassed(): 
+        def test_funcpassed(): 
             pass
 
-        def funcfailed():
+        def test_funcfailed():
             raise AssertionError("hello world")
 
-        def funcskipped():
+        def test_funcskipped():
             py.test.skip("skipped")
 
-        def funcprint():
+        def test_funcprint():
             print "samfing"
 
-        def funcprinterr():
+        def test_funcprinterr():
             print >>py.std.sys.stderr, "samfing"
 
-        def funcprintfail():
+        def test_funcprintfail():
             print "samfing elz"
             asddsa
 
-        def funcexplicitfail():
+        def test_funcexplicitfail():
             py.test.fail("3")
 
-        def funcraisesfails():
+        def test_funcraisesfails():
             py.test.raises(ValueError, lambda: 123) 
 
-        def funcoptioncustom():
+        def test_funcoptioncustom():
             assert py.test.config.getvalue("custom")
 
-        def funchang():
+        def test_funchang():
             import time
             time.sleep(1000)
 
-        def funckill15():
+        def test_funckill15():
             import os
             os.kill(os.getpid(), 15)
     """,
-    
-    'test_generative.py': """ 
-        from __future__ import generators # python2.2!
-        def func1(arg, arg2): 
-            assert arg == arg2 
-
-        def test_gen(): 
-            yield func1, 17, 3*5
-            yield func1, 42, 6*7
-
-        class TestGenMethods: 
-            def test_gen(self): 
-                yield func1, 17, 3*5
-                yield func1, 42, 6*7
-    """, 
 
     'docexample.txt': """ 
         Aha!!!!!!
@@ -186,56 +171,3 @@ namecontent = {
      """,
 
 } 
-
-def setup_customconfigtest(tmpdir):
-    o = tmpdir.ensure('customconfigtest', dir=1)
-    o.ensure('conftest.py').write("""if 1:
-        import py
-        class MyFunction(py.test.collect.Function):
-            pass
-        class Directory(py.test.collect.Directory):
-            def filefilter(self, fspath):
-                return fspath.check(basestarts='check_', ext='.py')
-        class myfuncmixin: 
-            Function = MyFunction
-            def funcnamefilter(self, name): 
-                return name.startswith('check_') 
-
-        class Module(myfuncmixin, py.test.collect.Module):
-            def classnamefilter(self, name): 
-                return name.startswith('CustomTestClass') 
-        class Instance(myfuncmixin, py.test.collect.Instance):
-            pass 
-        """)
-    checkfile = o.ensure('somedir', 'check_something.py')
-    checkfile.write("""if 1:
-        def check_func():
-            assert 42 == 42
-        class CustomTestClass:
-            def check_method(self):
-                assert 23 == 23
-        """)
-    return checkfile 
-
-def setup_non_python_dir(tmpdir): 
-    o = tmpdir.ensure('customconfigtest_nonpython', dir=1)
-    o.ensure('conftest.py').write("""if 1:
-        import py
-        class CustomItem(py.test.collect.Item): 
-            def run(self):
-                pass
-
-        class Directory(py.test.collect.Directory):
-            def filefilter(self, fspath):
-                return fspath.check(basestarts='check_', ext='.txt')
-            def join(self, name):
-                if not name.endswith('.txt'): 
-                    return super(Directory, self).join(name) 
-                p = self.fspath.join(name) 
-                if p.check(file=1): 
-                    return CustomItem(p, parent=self)
-        """)
-    checkfile = o.ensure('somedir', 'moredir', 'check_something.txt')
-    return checkfile 
-
-    

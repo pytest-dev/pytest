@@ -211,7 +211,7 @@ class TestPyTest(AcceptBase):
         """)
         result = self.runpytest(p1)
         assert_lines_contain_lines(result.outlines, [
-            "test_fail.py F", 
+            ".*test_fail.py F", 
             "====* FAILURES *====",
             "____*____", 
             "",
@@ -242,7 +242,7 @@ class TestPyTest(AcceptBase):
         """)
         result = self.runpytest(p1)
         assert_lines_contain_lines(result.outlines, [
-            "test_one.py .F", 
+            ".*test_one.py .F", 
             "====* FAILURES *====",
             "____*____", 
             "*test_one.py:8: ValueError",

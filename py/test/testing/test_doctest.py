@@ -16,7 +16,7 @@ class TestDoctests(InlineCollection):
         config = self.parseconfig(txtfile)
         col = config.getfsnode(txtfile)
         testitem = col.join(txtfile.basename) 
-        res = testitem.execute()
+        res = testitem.runtest()
         assert res is None
         
 
@@ -29,6 +29,6 @@ class TestDoctests(InlineCollection):
             2
         """))
         testitem = py.test.collect.DoctestFile(p).join(p.basename)
-        excinfo = py.test.raises(Failed, "testitem.execute()")
+        excinfo = py.test.raises(Failed, "testitem.runtest()")
         repr = testitem.repr_failure(excinfo, ("", ""))
         assert repr.reprlocation 

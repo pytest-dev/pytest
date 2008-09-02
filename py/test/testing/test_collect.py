@@ -22,79 +22,9 @@ def setup_module(mod):
     mod.dummyconfig = DummyConfig()
 
 def test_collect_versus_item():
-    path = setupdata.getexamplefile("filetest.py")
-    col = py.test.collect.Module(path, config=dummyconfig) 
-    assert not isinstance(col, py.test.collect.Item)
-    item = col.join("test_one") 
-    assert not hasattr(item, "join") 
-    assert not isinstance(item, py.test.collect.Collector) 
-
-def test_collector_deprecated_run_method():
-    path = setupdata.getexamplefile("filetest.py")
-    col = py.test.collect.Module(path, config=dummyconfig)
-    res1 = py.test.deprecated_call(col.run)
-    res2 = col.listdir()
-    assert res1 == res2
-
-def test_module_assertion_setup():
-    path = setupdata.getexamplefile("filetest.py")
-    col = py.test.collect.Module(path, config=dummyconfig) 
-    from py.__.magic import assertion
-    l = []
-    py.magic.patch(assertion, "invoke", lambda: l.append(None))
-    try:
-        col.setup()
-    finally:
-        py.magic.revert(assertion, "invoke")
-    x = l.pop()
-    assert x is None
-    py.magic.patch(assertion, "revoke", lambda: l.append(None))
-    try:
-        col.teardown()
-    finally:
-        py.magic.revert(assertion, "revoke")
-    x = l.pop()
-    assert x is None
-    
-
-def test_failing_import_execfile():
-    dest = setupdata.getexamplefile('failingimport.py')
-    col = py.test.collect.Module(dest, config=dummyconfig) 
-    py.test.raises(ImportError, col.listdir)
-    py.test.raises(ImportError, col.listdir)
-
-def test_collect_listnames_and_back():
-    path = setupdata.getexamplefile("filetest.py")
-    col1 = py.test.collect.Directory(path.dirpath().dirpath(), 
-                                      config=dummyconfig)
-    col2 = col1.join(path.dirpath().basename) 
-    col3 = col2.join(path.basename) 
-    l = col3.listnames()
-    assert len(l) == 3
-    x = col1._getitembynames(l[1:])
-    assert x.name == "filetest.py"
-    l2 = x.listnames()
-    assert len(l2) == 3
-
-def test_finds_tests(): 
-    fn = setupdata.getexamplefile('filetest.py') 
-    col = py.test.collect.Module(fn, config=dummyconfig) 
-    l = col.listdir() 
-    assert len(l) == 2 
-    assert l[0] == 'test_one' 
-    assert l[1] == 'TestClass' 
-
-def test_found_certain_testfiles(): 
-    tmp = py.test.ensuretemp("found_certain_testfiles")
-    tmp.ensure('test_found.py')
-    tmp.ensure('found_test.py')
-
-    col = py.test.collect.Directory(tmp, config=dummyconfig) 
-    items = [col.join(x) for x in col.listdir()]
-
-    assert len(items) == 2
-    assert items[1].name == 'test_found.py'
-    assert items[0].name == 'found_test.py'
+    from py.__.test.collect import Collector, Item
+    assert not issubclass(Collector, Item)
+    assert not issubclass(Item, Collector)
 
 def test_ignored_certain_directories(): 
     tmp = py.test.ensuretemp("ignore_certain_directories")
@@ -107,80 +37,248 @@ def test_ignored_certain_directories():
     tmp.ensure('test_found.py')
 
     col = py.test.collect.Directory(tmp, config=dummyconfig) 
-    items = col.listdir()
+    items = col.collect()
+    names = [x.name for x in items]
     assert len(items) == 2
-    assert 'normal' in items 
-    assert 'test_found.py' in items 
+    assert 'normal' in names
+    assert 'test_found.py' in names
 
-def test_failing_import_directory():
-    class MyDirectory(py.test.collect.Directory):
-        def filefilter(self, p):
-            return p.check(fnmatch='testspecial*.py')
-    filetest = setupdata.getexamplefile("testspecial_importerror.py")
-    mydir = MyDirectory(filetest.dirpath(), config=dummyconfig)
-    l = mydir.listdir() 
-    assert len(l) == 1
-    col = mydir.join(l[0])
-    assert isinstance(col, py.test.collect.Module)
-    py.test.raises(ImportError, col.listdir)
+class TestCollect(suptest.InlineCollection):
+    def test_failing_import(self):
+        modcol = self.getmodulecol("import alksdjalskdjalkjals")
+        py.test.raises(ImportError, modcol.collect)
+        py.test.raises(ImportError, modcol.collect)
+        py.test.raises(ImportError, modcol.run)
+
+    def test_syntax_error_in_module(self):
+        modcol = self.getmodulecol("this is a syntax error") 
+        py.test.raises(SyntaxError, modcol.collect)
+        py.test.raises(SyntaxError, modcol.collect)
+        py.test.raises(SyntaxError, modcol.run)
+
+    def test_listnames_and__getitembynames(self):
+        modcol = self.getmodulecol("pass")
+        names = modcol.listnames()
+        dircol = py.test.collect.Directory(modcol._config.topdir, config=modcol._config)  
+        x = dircol._getitembynames(names)
+        assert modcol.name == x.name 
+        assert modcol.name == x.name 
+
+    def test_found_certain_testfiles(self): 
+        p1 = self.makepyfile(test_found = "pass", found_test="pass")
+        col = py.test.collect.Directory(p1.dirpath(), config=dummyconfig) 
+        items = col.collect()
+        assert len(items) == 2
+        assert items[1].name == 'test_found.py'
+        assert items[0].name == 'found_test.py'
+
+    def test_disabled_class(self):
+        modcol = self.getmodulecol("""
+            class TestClass:
+                disabled = True
+                def test_method(self):
+                    pass
+        """)
+        l = modcol.collect()
+        assert len(l) == 1
+        modcol = l[0]
+        assert isinstance(modcol, py.test.collect.Class)
+        assert not modcol.collect() 
+
+    def test_disabled_module(self):
+        modcol = self.getmodulecol("""
+            disabled = True
+            def setup_module(mod):
+                raise ValueError
+        """)
+        assert not modcol.collect() 
+        assert not modcol.run() 
+
+    def test_generative_functions(self): 
+        modcol = self.getmodulecol("""
+            def func1(arg, arg2): 
+                assert arg == arg2 
+
+            def test_gen(): 
+                yield func1, 17, 3*5
+                yield func1, 42, 6*7
+        """)
+        colitems = modcol.collect()
+        assert len(colitems) == 1
+        gencol = colitems[0]
+        assert isinstance(gencol, py.test.collect.Generator)
+        gencolitems = gencol.collect()
+        assert len(gencolitems) == 2
+        assert isinstance(gencolitems[0], py.test.collect.Function)
+        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert gencolitems[0].name == '[0]'
+        assert gencolitems[0].obj.func_name == 'func1'
+
+    def test_generative_methods(self): 
+        modcol = self.getmodulecol("""
+            def func1(arg, arg2): 
+                assert arg == arg2 
+            class TestGenMethods: 
+                def test_gen(self): 
+                    yield func1, 17, 3*5
+                    yield func1, 42, 6*7
+        """)
+        gencol = modcol.collect()[0].collect()[0].collect()[0]
+        assert isinstance(gencol, py.test.collect.Generator)
+        gencolitems = gencol.collect()
+        assert len(gencolitems) == 2
+        assert isinstance(gencolitems[0], py.test.collect.Function)
+        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert gencolitems[0].name == '[0]'
+        assert gencolitems[0].obj.func_name == 'func1'
+
+    def test_module_assertion_setup(self):
+        modcol = self.getmodulecol("pass")
+        from py.__.magic import assertion
+        l = []
+        py.magic.patch(assertion, "invoke", lambda: l.append(None))
+        try:
+            modcol.setup()
+        finally:
+            py.magic.revert(assertion, "invoke")
+        x = l.pop()
+        assert x is None
+        py.magic.patch(assertion, "revoke", lambda: l.append(None))
+        try:
+            modcol.teardown()
+        finally:
+            py.magic.revert(assertion, "revoke")
+        x = l.pop()
+        assert x is None
+
+    def test_check_equality_and_cmp_basic(self):
+        modcol = self.getmodulecol("""
+            def test_pass(): pass
+            def test_fail(): assert 0
+        """)
+        fn1 = modcol.join("test_pass")
+        assert isinstance(fn1, py.test.collect.Function)
+        fn2 = modcol.join("test_pass")
+        assert isinstance(fn2, py.test.collect.Function)
+
+        assert fn1 == fn2
+        assert fn1 != modcol 
+        assert cmp(fn1, fn2) == 0
+        assert hash(fn1) == hash(fn2) 
+
+        fn3 = modcol.join("test_fail")
+        assert isinstance(fn3, py.test.collect.Function)
+        assert not (fn1 == fn3) 
+        assert fn1 != fn3
+        assert cmp(fn1, fn3) == -1
+
+        assert cmp(fn1, 10) == -1 
+        assert cmp(fn2, 10) == -1 
+        assert cmp(fn3, 10) == -1 
+        for fn in fn1,fn2,fn3:
+            assert fn != 3
+            assert fn != modcol
+            assert fn != [1,2,3]
+            assert [1,2,3] != fn
+            assert modcol != fn
+
+    def test_directory_file_sorting(self):
+        p1 = self.makepyfile(test_one="hello")
+        p1.dirpath().mkdir("x")
+        p1.dirpath().mkdir("dir1")
+        self.makepyfile(test_two="hello")
+        p1.dirpath().mkdir("dir2")
+        config = self.parseconfig()
+        col = config.getfsnode(p1.dirpath())
+        names = [x.name for x in col.collect()]
+        assert names == ["dir1", "dir2", "test_one.py", "test_two.py", "x"]
+
+    def test_collector_deprecated_run_method(self):
+        modcol = self.getmodulecol("pass")
+        res1 = py.test.deprecated_call(modcol.run)
+        res2 = modcol.collect()
+        assert res1 == [x.name for x in res2]
+
+class TestCustomConftests(suptest.InlineCollection):
+    def test_extra_python_files_and_functions(self):
+        self.makepyfile(conftest="""
+            import py
+            class MyFunction(py.test.collect.Function):
+                pass
+            class Directory(py.test.collect.Directory):
+                def consider_file(self, path, usefilters=True):
+                    if path.check(fnmatch="check_*.py"):
+                        return self.Module(path, parent=self)
+                    return super(Directory, self).consider_file(path, usefilters=usefilters)
+            class myfuncmixin: 
+                Function = MyFunction
+                def funcnamefilter(self, name): 
+                    return name.startswith('check_') 
+            class Module(myfuncmixin, py.test.collect.Module):
+                def classnamefilter(self, name): 
+                    return name.startswith('CustomTestClass') 
+            class Instance(myfuncmixin, py.test.collect.Instance):
+                pass 
+        """)
+        checkfile = self.makepyfile(check_file="""
+            def check_func():
+                assert 42 == 42
+            class CustomTestClass:
+                def check_method(self):
+                    assert 23 == 23
+        """)
+        # check that directory collects "check_" files 
+        config = self.parseconfig()
+        col = config.getfsnode(checkfile.dirpath())
+        colitems = col.collect()
+        assert len(colitems) == 1
+        assert isinstance(colitems[0], py.test.collect.Module)
+
+        # check that module collects "check_" functions and methods
+        config = self.parseconfig(checkfile)
+        col = config.getfsnode(checkfile)
+        assert isinstance(col, py.test.collect.Module)
+        colitems = col.collect()
+        assert len(colitems) == 2
+        funccol = colitems[0]
+        assert isinstance(funccol, py.test.collect.Function)
+        assert funccol.name == "check_func"
+        clscol = colitems[1]
+        assert isinstance(clscol, py.test.collect.Class)
+        colitems = clscol.collect()[0].collect()
+        assert len(colitems) == 1
+        assert colitems[0].name == "check_method"
+
+    def test_non_python_files(self):
+        self.makepyfile(conftest="""
+            import py
+            class CustomItem(py.test.collect.Item): 
+                def run(self):
+                    pass
+            class Directory(py.test.collect.Directory):
+                def consider_file(self, fspath, usefilters=True):
+                    if fspath.ext == ".xxx":
+                        return CustomItem(fspath.basename, parent=self)
+        """)
+        checkfile = self._makefile(ext="xxx", hello="world")
+        self.makepyfile(x="")
+        self.maketxtfile(x="")
+        config = self.parseconfig()
+        dircol = config.getfsnode(checkfile.dirpath())
+        colitems = dircol.collect()
+        assert len(colitems) == 1
+        assert colitems[0].name == "hello.xxx"
+        assert colitems[0].__class__.__name__ == "CustomItem"
+
+        item = config.getfsnode(checkfile)
+        assert item.name == "hello.xxx"
+        assert item.__class__.__name__ == "CustomItem"
+
 
 def test_module_file_not_found():
     fn = tmpdir.join('nada','no')
     col = py.test.collect.Module(fn, config=dummyconfig) 
-    py.test.raises(py.error.ENOENT, col.listdir) 
-
-def test_syntax_error_in_module():
-    modpath = setupdata.getexamplefile("syntax_error.py")
-    col = py.test.collect.Module(modpath, config=dummyconfig) 
-    py.test.raises(SyntaxError, col.listdir)
-
-def test_disabled_class():
-    p = setupdata.getexamplefile('disabled.py')
-    col = py.test.collect.Module(p, config=dummyconfig) 
-    l = col.listdir() 
-    assert len(l) == 1
-    col = col.join(l[0])
-    assert isinstance(col, py.test.collect.Class)
-    assert not col.listdir() 
-
-def test_disabled_module():
-    p = setupdata.getexamplefile("disabled_module.py")
-    col = py.test.collect.Module(p, config=dummyconfig) 
-    l = col.listdir() 
-    assert len(l) == 0
-
-def test_generative_simple(): 
-    tfile = setupdata.getexamplefile('test_generative.py')
-    col = py.test.collect.Module(tfile, config=dummyconfig) 
-    l = col.listdir() 
-    assert len(l) == 2 
-    l = col.multijoin(l) 
-
-    generator = l[0]
-    assert isinstance(generator, py.test.collect.Generator)
-    l2 = generator.listdir() 
-    assert len(l2) == 2 
-    l2 = generator.multijoin(l2) 
-    assert isinstance(l2[0], py.test.collect.Function)
-    assert isinstance(l2[1], py.test.collect.Function)
-    assert l2[0].name == '[0]'
-    assert l2[1].name == '[1]'
-
-    assert l2[0].obj.func_name == 'func1' 
- 
-    classlist = l[1].listdir() 
-    assert len(classlist) == 1
-    classlist = l[1].multijoin(classlist) 
-    cls = classlist[0]
-    generator = cls.join(cls.listdir()[0])
-    assert isinstance(generator, py.test.collect.Generator)
-    l2 = generator.listdir() 
-    assert len(l2) == 2 
-    l2 = generator.multijoin(l2) 
-    assert isinstance(l2[0], py.test.collect.Function)
-    assert isinstance(l2[1], py.test.collect.Function)
-    assert l2[0].name == '[0]'
-    assert l2[1].name == '[1]'
+    py.test.raises(py.error.ENOENT, col.collect) 
 
 
 def test_order_of_execution_generator_same_codeline():
@@ -237,52 +335,6 @@ def test_order_of_execution_generator_different_codeline():
     passed, skipped, failed = sorter.countoutcomes() 
     assert passed == 4
     assert not skipped and not failed 
-
-def test_check_directory_ordered():
-    tmpdir = py.test.ensuretemp("test_check_directory_ordered")
-    fnames = []
-    for i in range(9, -1, -1):
-        x = tmpdir.ensure("xdir%d" %(i, ), dir=1)
-        fnames.append(x.basename)
-    for i in range(9, -1, -1):
-        x = tmpdir.ensure("test_file%d.py" % (i,))
-        fnames.append(x.basename)
-    fnames.sort()
-    tmpdir.ensure('adir', dir=1)
-    fnames.insert(10, 'adir')
-    col = py.test.collect.Directory(tmpdir, config=dummyconfig)
-    names = col.listdir()
-    assert names == fnames 
-
-def test_check_equality_and_cmp_basic():
-    path = setupdata.getexamplefile("funcexamples.py")
-    col = py.test.collect.Module(path, config=dummyconfig)
-    fn1 = col.join("funcpassed")
-    assert isinstance(fn1, py.test.collect.Function)
-    fn2 = col.join("funcpassed") 
-    assert isinstance(fn2, py.test.collect.Function)
-
-    assert fn1 == fn2
-    assert fn1 != col 
-    assert cmp(fn1, fn2) == 0
-    assert hash(fn1) == hash(fn2) 
-
-    fn3 = col.join("funcfailed")
-    assert isinstance(fn3, py.test.collect.Function)
-    assert not (fn1 == fn3) 
-    assert fn1 != fn3
-    assert cmp(fn1, fn3) == -1
-
-    assert cmp(fn1, 10) == -1 
-    assert cmp(fn2, 10) == -1 
-    assert cmp(fn3, 10) == -1 
-    for fn in fn1,fn2,fn3:
-        assert fn != 3
-        assert fn != col
-        assert fn != [1,2,3]
-        assert [1,2,3] != fn
-        assert col != fn
-
 
 def test_function_equality():
     config = py.test.config._reparse([tmpdir])
@@ -341,22 +393,6 @@ class Testgenitems:
                     assert hash(i) != hash(j)
                     assert i != j
        
-    def test_skip_by_conftest_directory(self):
-        from py.__.test import outcome
-        self.tmp.ensure("subdir", "conftest.py").write(py.code.Source("""
-            import py
-            class Directory(py.test.collect.Directory):
-                def listdir(self):
-                    py.test.skip("intentional")
-        """))
-        items, events = self._genitems()
-        assert len(items) == 0
-        skips = [x for x in events
-                    if isinstance(x, event.CollectionReport)
-                       and x.colitem.name == 'subdir']
-        assert len(skips) == 1
-        assert skips[0].skipped 
-
     def test_root_conftest_syntax_error(self): 
         # do we want to unify behaviour with
         # test_subdir_conftest_error? 
@@ -406,57 +442,6 @@ class Testgenitems:
         assert items[0].name == 'test_one'
         assert items[1].name == 'test_method_one'
         assert items[2].name == 'test_method_one'
-
-    def test_custom_python_collection_from_conftest(self):
-        checkfile = setupdata.setup_customconfigtest(self.tmp) 
-        for x in (self.tmp, checkfile, checkfile.dirpath()): 
-            items, events = self._genitems(x)
-            assert len(items) == 2
-            #assert items[1].__class__.__name__ == 'MyFunction'
-
-        return None # XXX shift below to session test? 
-        # test that running a session works from the directories
-        old = o.chdir() 
-        try: 
-            sorter = suptest.events_from_cmdline([])
-            passed, skipped, failed = sorter.countoutcomes()
-            assert passed == 2
-            assert skipped == failed == 0 
-        finally: 
-            old.chdir() 
-
-        # test that running the file directly works 
-        sorter = suptest.events_from_cmdline([str(checkfile)])
-        passed, skipped, failed = sorter.countoutcomes()
-        assert passed == 2
-        assert skipped == failed == 0 
-
-    def test_custom_NONpython_collection_from_conftest(self):
-        checkfile = setupdata.setup_non_python_dir(self.tmp)
-       
-        for x in (self.tmp, checkfile, checkfile.dirpath()): 
-            print "checking that %s returns custom items" % (x,) 
-            items, events = self._genitems(x)
-            assert len(items) == 1
-            assert items[0].__class__.__name__ == 'CustomItem'
-
-        return None # XXX shift below to session tests? 
-
-        # test that running a session works from the directories
-        old = self.tmp.chdir() 
-        try: 
-            sorter = suptest.events_from_cmdline([])
-            passed, skipped, failed = sorter.countoutcomes()
-            assert passed == 1
-            assert skipped == failed == 0 
-        finally:
-            old.chdir() 
-
-        # test that running the file directly works 
-        sorter = suptest.events_from_cmdline([str(checkfile)])
-        passed, skipped, failed = sorter.countoutcomes()
-        assert passed == 1
-        assert skipped == failed == 0 
 
     def test_collect_doctest_files_with_test_prefix(self):
         self.tmp.ensure("whatever.txt")
@@ -548,7 +533,7 @@ class TestCollectorReprs(suptest.InlineCollection):
         assert info.lineno == 1
         assert info.modpath == "test_gen"
 
-        genitem = gencol.join(gencol.listdir()[0])
+        genitem = gencol.collect()[0]
         info = genitem.repr_metainfo()
         assert info.fspath == modcol.fspath
         assert info.lineno == 2
