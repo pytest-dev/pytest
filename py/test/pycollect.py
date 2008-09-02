@@ -2,7 +2,7 @@
 Python related collection nodes.  Here is an example of 
 a tree of collectors and test items that this modules provides:: 
 
-        Module                  # FSCollector
+        Module                  # File
             Class 
                 Instance   
                     Function  
@@ -12,13 +12,12 @@ a tree of collectors and test items that this modules provides::
             Generator 
                 Function 
 
-        DoctestFile              # FSCollector 
+        DoctestFile              # File
             DoctestFileContent   # acts as Item 
 
 """ 
 import py
-from py.__.test.collect import Collector, FSCollector, Item, configproperty
-from py.__.test.collect import warnoldcollect
+from py.__.test.collect import configproperty, warnoldcollect
 
 class PyobjMixin(object):
     def obj(): 
@@ -86,7 +85,7 @@ class PyobjMixin(object):
         )
 
 
-class PyCollectorMixin(PyobjMixin, Collector): 
+class PyCollectorMixin(PyobjMixin, py.test.collect.Collector): 
     Class = configproperty('Class')
     Instance = configproperty('Instance')
     Function = configproperty('Function')
@@ -144,9 +143,7 @@ class PyCollectorMixin(PyobjMixin, Collector):
             else: 
                 return self.Function(name, parent=self)
 
-class Module(FSCollector, PyCollectorMixin):
-    _stickyfailure = None
-
+class Module(py.test.collect.File, PyCollectorMixin):
     def collect(self):
         if getattr(self.obj, 'disabled', 0):
             return []
@@ -169,7 +166,7 @@ class Module(FSCollector, PyCollectorMixin):
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
 
-class Class(PyCollectorMixin, Collector): 
+class Class(PyCollectorMixin, py.test.collect.Collector): 
 
     def collect(self):
         if getattr(self.obj, 'disabled', 0):
@@ -194,7 +191,7 @@ class Class(PyCollectorMixin, Collector):
     def _getsortvalue(self):  
         return self.getfslineno()
 
-class Instance(PyCollectorMixin, Collector): 
+class Instance(PyCollectorMixin, py.test.collect.Collector): 
     def _getobj(self): 
         return self.parent.obj()  
     def Function(self): 
@@ -259,7 +256,7 @@ class FunctionMixin(PyobjMixin):
 
     shortfailurerepr = "F"
 
-class Generator(FunctionMixin, PyCollectorMixin, Collector): 
+class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector): 
     def collect(self):
         # test generators are collectors yet participate in 
         # the test-item setup and teardown protocol. 
@@ -285,7 +282,7 @@ class Generator(FunctionMixin, PyCollectorMixin, Collector):
 #  Test Items 
 #
 _dummy = object()
-class Function(FunctionMixin, Item): 
+class Function(FunctionMixin, py.test.collect.Item): 
     """ a Function Item is responsible for setting up  
         and executing a Python callable test object.
     """
@@ -312,7 +309,7 @@ class Function(FunctionMixin, Item):
     def __ne__(self, other):
         return not self == other
 
-class DoctestFile(FSCollector): 
+class DoctestFile(py.test.collect.File): 
    
     def collect(self):
         return [DoctestFileContent(self.fspath.basename, parent=self)]
@@ -328,7 +325,7 @@ class ReprFailDoctest(Repr):
             tw.line(line)
         self.reprlocation.toterminal(tw)
              
-class DoctestFileContent(Item):
+class DoctestFileContent(py.test.collect.Item):
     def repr_failure(self, excinfo, outerr):
         if excinfo.errisinstance(py.compat.doctest.DocTestFailure):
             doctestfailure = excinfo.value

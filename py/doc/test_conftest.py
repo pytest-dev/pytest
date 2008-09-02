@@ -1,74 +1,80 @@
 
 import py
 from py.__.test import event
+from py.__.test.testing import suptest
+from py.__.doc import conftest as doc_conftest
 
-def setup_module(mod): 
-    mod.tmpdir = py.test.ensuretemp('docdoctest')
 
-def countoutcomes(session):
-    l = []
-    session.bus.subscribe(l.append)
-    session.main()
-    session.bus.unsubscribe(l.append)
-    passed = failed = skipped = 0
-    for ev in l: 
-        if isinstance(ev, event.ItemTestReport):
-            if ev.passed: 
-                passed += 1
-            elif ev.skipped: 
-                skipped += 1
-            else: 
-                failed += 1
-        elif isinstance(ev, event.CollectionReport):
-            if ev.failed: 
-                failed += 1 
-    return failed, passed, skipped 
+class TestDoctest(suptest.InlineCollection):
+    def setup_method(self, method):
+        super(TestDoctest, self).setup_method(method)
+        p = py.path.local(doc_conftest.__file__)  
+        if p.ext == ".pyc": 
+            p = p.new(ext=".py")
+        p.copy(self.tmpdir.join("conftest.py"))
+    
+    def test_doctest_extra_exec(self): 
+        xtxt = self.maketxtfile(x="""
+            hello::
+                .. >>> raise ValueError 
+                   >>> None
+        """)
+        sorter = suptest.events_from_cmdline([xtxt])
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 1
 
-def test_doctest_extra_exec(): 
-    # XXX get rid of the next line: 
-    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
-    xtxt = tmpdir.join('y.txt')
-    xtxt.write(py.code.Source("""
-        hello::
-            .. >>> raise ValueError 
-               >>> None
-    """))
-    config = py.test.config._reparse([xtxt]) 
-    session = config.initsession()
-    failed, passed, skipped = countoutcomes(session) 
-    assert failed == 1
+    def test_doctest_basic(self): 
+        xtxt = self.maketxtfile(x="""
+            .. 
+               >>> from os.path import abspath 
 
-def test_doctest_basic(): 
-    # XXX get rid of the next line: 
-    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
+            hello world 
 
-    xtxt = tmpdir.join('x.txt')
-    xtxt.write(py.code.Source("""
-        .. 
-           >>> from os.path import abspath 
+               >>> assert abspath 
+               >>> i=3
+               >>> print i
+               3
 
-        hello world 
+            yes yes
 
-           >>> assert abspath 
-           >>> i=3
-           >>> print i
-           3
+                >>> i
+                3
 
-        yes yes
+            end
+        """)
+        sorter = suptest.events_from_cmdline([xtxt])
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 0 
+        assert passed + skipped == 2
 
-            >>> i
-            3
+    def test_doctest_eol(self): 
+        ytxt = self.maketxtfile(y=".. >>> 1 + 1\r\n   2\r\n\r\n")
+        sorter = suptest.events_from_cmdline([ytxt])
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 0 
+        assert passed + skipped == 2
 
-        end
-    """))
-    config = py.test.config._reparse([xtxt]) 
-    session = config.initsession()
-    failed, passed, skipped = countoutcomes(session) 
-    assert failed == 0 
-    assert passed + skipped == 2
+    def test_doctest_indentation(self):
+        footxt = self.maketxtfile(foo=
+            '..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
+        sorter = suptest.events_from_cmdline([footxt])
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 0
+        assert skipped + passed == 2 
+
+    def test_js_ignore(self):
+        xtxt = self.maketxtfile(xtxt="""
+            `blah`_
+
+            .. _`blah`: javascript:some_function()
+        """)
+        sorter = suptest.events_from_cmdline([xtxt])
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 0
+        assert skipped + passed == 3 
 
 def test_deindent():
-    from py.__.doc.conftest import deindent
+    deindent = doc_conftest.deindent
     assert deindent('foo') == 'foo'
     assert deindent('foo\n  bar') == 'foo\n  bar'
     assert deindent('  foo\n  bar\n') == 'foo\nbar\n'
@@ -76,45 +82,6 @@ def test_deindent():
     assert deindent(' foo\n  bar\n') == 'foo\n bar\n'
     assert deindent('  foo\n bar\n') == ' foo\nbar\n'
 
-def test_doctest_eol(): 
-    # XXX get rid of the next line: 
-    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
-
-    ytxt = tmpdir.join('y.txt')
-    ytxt.write(py.code.Source(".. >>> 1 + 1\r\n   2\r\n\r\n"))
-    config = py.test.config._reparse([ytxt]) 
-    session = config.initsession()
-    failed, passed, skipped = countoutcomes(session)
-    assert failed == 0 
-    assert passed + skipped == 2
-
-def test_doctest_indentation():
-    # XXX get rid of the next line: 
-    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
-
-    txt = tmpdir.join('foo.txt')
-    txt.write('..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
-    config = py.test.config._reparse([txt])
-    session = config.initsession()
-    failed, passed, skipped = countoutcomes(session) 
-    assert failed == 0
-    assert skipped + passed == 2 
-
-def test_js_ignore():
-    py.magic.autopath().dirpath('conftest.py').copy(tmpdir.join('conftest.py'))
-    tmpdir.ensure('__init__.py')
-    xtxt = tmpdir.join('x.txt')
-    xtxt.write(py.code.Source("""
-    `blah`_
-
-    .. _`blah`: javascript:some_function()
-    """))
-    config = py.test.config._reparse([xtxt]) 
-    session = config.initsession()
-    
-    failed, passed, skipped = countoutcomes(session) 
-    assert failed == 0
-    assert skipped + passed == 3 
 
 def test_resolve_linkrole():
     from py.__.doc.conftest import get_apigen_relpath

@@ -43,15 +43,13 @@ py.apigen
 
 - make it work again 
 
-- py.apigen tool -> separate runtime-data collection and 
-  web page generation.  (see M750), provide "py.apigen" tool
-
-- refactor html renderer to work on intermediate 
-  data/files rather than on the live data
+see apigen_refactorings.txt
 
 - check out CodeInvestigator 
   http://codeinvestigator.googlepages.com/main
 
+  or other code that collects data from running a program 
+  (in our case running the tests)
 
 ld (review and shift to above)
 =================================

@@ -110,12 +110,12 @@ def _checkskip(lpath, htmlpath=None):
                 #return [] # no need to rebuild 
 
 class ReSTSyntaxTest(py.test.collect.Item): 
-    def execute(self):
+    def runtest(self):
         mypath = self.fspath 
         restcheck(py.path.svnwc(mypath))
 
 class DoctestText(py.test.collect.Item): 
-    def execute(self): 
+    def runtest(self): 
         s = self._normalize_linesep()
         l = []
         prefix = '.. >>> '
@@ -158,20 +158,15 @@ class DoctestText(py.test.collect.Item):
         return s
         
 class LinkCheckerMaker(py.test.collect.Collector): 
-    def listdir(self): 
-        l = []
+    def collect(self):
+        l = [] 
         for call, tryfn, path, lineno in genlinkchecks(self.fspath): 
-            l.append("%s:%d" %(tryfn, lineno))
+            name = "%s:%d" %(tryfn, lineno)
+            l.append(
+                CheckLink(name, parent=self, args=(tryfn, path, lineno), callobj=call)
+            )
         return l
         
-    def join(self, name): 
-        i = name.rfind(':')
-        assert i != -1
-        jname, jlineno = name[:i], int(name[i+1:])
-        for call, tryfn, path, lineno in genlinkchecks(self.fspath): 
-            if tryfn == jname and lineno == jlineno:
-                return CheckLink(name, parent=self, args=(tryfn, path, lineno), callobj=call)
-      
 class CheckLink(py.test.collect.Function): 
     def repr_metainfo(self):
         return self.ReprMetaInfo(fspath=self.fspath, lineno=self._args[2],
@@ -181,26 +176,17 @@ class CheckLink(py.test.collect.Function):
     def teardown(self): 
         pass 
 
-class ReSTChecker(py.test.collect.Module):
+class DocfileTests(py.test.collect.File):
     DoctestText = DoctestText
     ReSTSyntaxTest = ReSTSyntaxTest
+    LinkCheckerMaker = LinkCheckerMaker
     
-    def __repr__(self): 
-        return py.test.collect.Collector.__repr__(self) 
-
-    def setup(self): 
-        pass 
-    def teardown(self): 
-        pass 
-    def listdir(self):
-        return [self.fspath.basename, 'checklinks', 'doctest']
-    def join(self, name): 
-        if name == self.fspath.basename: 
-            return self.ReSTSyntaxTest(name, parent=self) 
-        elif name == 'checklinks': 
-            return LinkCheckerMaker(name, self) 
-        elif name == 'doctest': 
-            return self.DoctestText(name, self) 
+    def collect(self):
+        return [
+            self.ReSTSyntaxTest(self.fspath.basename, parent=self),
+            self.LinkCheckerMaker("checklinks", self),
+            self.DoctestText("doctest", self),
+        ]
 
 # generating functions + args as single tests 
 def genlinkchecks(path): 
@@ -286,20 +272,13 @@ def localrefcheck(tryfn, path, lineno):
 # hooking into py.test Directory collector's chain ... 
 
 class DocDirectory(py.test.collect.Directory): 
-    ReSTChecker = ReSTChecker 
-
-    def listdir(self): 
-        results = super(DocDirectory, self).listdir() 
+    DocfileTests = DocfileTests
+    def collect(self):
+        results = super(DocDirectory, self).collect() 
         for x in self.fspath.listdir('*.txt', sort=True): 
-            results.append(x.basename) 
+            results.append(self.DocfileTests(x, parent=self))
         return results 
 
-    def join(self, name): 
-        if not name.endswith('.txt'): 
-            return super(DocDirectory, self).join(name) 
-        p = self.fspath.join(name) 
-        if p.check(file=1): 
-            return self.ReSTChecker(p, parent=self) 
 Directory = DocDirectory
 
 def resolve_linkrole(name, text, check=True):

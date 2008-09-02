@@ -59,10 +59,30 @@ class TestCollect(suptest.InlineCollection):
     def test_listnames_and__getitembynames(self):
         modcol = self.getmodulecol("pass")
         names = modcol.listnames()
-        dircol = py.test.collect.Directory(modcol._config.topdir, config=modcol._config)  
+        dircol = modcol._config.getfsnode(modcol._config.topdir)
         x = dircol._getitembynames(names)
         assert modcol.name == x.name 
         assert modcol.name == x.name 
+
+    def test_listnames_getitembynames_custom(self):
+        hello = self._makefile(".xxx", hello="world")
+        self.makepyfile(conftest="""
+            import py
+            class CustomFile(py.test.collect.File):
+                pass
+            class MyDirectory(py.test.collect.Directory):
+                def collect(self):
+                    return [CustomFile(self.fspath.join("hello.xxx"), parent=self)]
+            Directory = MyDirectory
+        """)
+        config = self.parseconfig(hello)
+        node = config.getfsnode(hello)
+        assert isinstance(node, py.test.collect.File)
+        assert node.name == "hello.xxx"
+        names = node.listnames()[1:]
+        dircol = config.getfsnode(config.topdir) 
+        node = dircol._getitembynames(names)
+        assert isinstance(node, py.test.collect.File)
 
     def test_found_certain_testfiles(self): 
         p1 = self.makepyfile(test_found = "pass", found_test="pass")
@@ -156,9 +176,9 @@ class TestCollect(suptest.InlineCollection):
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        fn1 = modcol.join("test_pass")
+        fn1 = modcol.collect_by_name("test_pass")
         assert isinstance(fn1, py.test.collect.Function)
-        fn2 = modcol.join("test_pass")
+        fn2 = modcol.collect_by_name("test_pass")
         assert isinstance(fn2, py.test.collect.Function)
 
         assert fn1 == fn2
@@ -166,7 +186,7 @@ class TestCollect(suptest.InlineCollection):
         assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2) 
 
-        fn3 = modcol.join("test_fail")
+        fn3 = modcol.collect_by_name("test_fail")
         assert isinstance(fn3, py.test.collect.Function)
         assert not (fn1 == fn3) 
         assert fn1 != fn3
@@ -273,7 +293,6 @@ class TestCustomConftests(suptest.InlineCollection):
         item = config.getfsnode(checkfile)
         assert item.name == "hello.xxx"
         assert item.__class__.__name__ == "CustomItem"
-
 
 def test_module_file_not_found():
     fn = tmpdir.join('nada','no')
@@ -513,7 +532,7 @@ class TestCollectorReprs(suptest.InlineCollection):
             class TestClass:
                 def test_hello(self): pass
         """)
-        classcol = modcol.join("TestClass")
+        classcol = modcol.collect_by_name("TestClass")
         info = classcol.repr_metainfo()
         assert info.fspath == modcol.fspath 
         assert info.lineno == 1
@@ -527,7 +546,7 @@ class TestCollectorReprs(suptest.InlineCollection):
                     assert x
                 yield check, 3
         """)
-        gencol = modcol.join("test_gen")
+        gencol = modcol.collect_by_name("test_gen")
         info = gencol.repr_metainfo()
         assert info.fspath == modcol.fspath
         assert info.lineno == 1
@@ -595,7 +614,7 @@ class TestPickling(suptest.InlineCollection):
     def test_pickle_func(self):
         modcol1 = self.getmodulecol("def test_one(): pass")
         self.unifyconfig(modcol1._config) 
-        item = modcol1.join("test_one")
+        item = modcol1.collect_by_name("test_one")
         item2a = self.p1_to_p2(item)
         assert item is not item2a # of course
         assert item2a.name == item.name

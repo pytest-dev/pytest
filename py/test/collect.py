@@ -189,7 +189,7 @@ class Node(object):
         cur = self
         for name in namelist:
             if name:
-                next = cur.join(name)
+                next = cur.collect_by_name(name)
                 if next is None: 
                     existingnames = [x.name for x in self._memocollect()]
                     msg = ("Collector %r does not have name %r "
@@ -297,6 +297,12 @@ class Collector(Node):
         """
         raise NotImplementedError("abstract")
 
+    def collect_by_name(self, name):
+        """ return a child matching the given name, else None. """
+        for colitem in self._memocollect():
+            if colitem.name == name:
+                return colitem
+
     def repr_failure(self, excinfo, outerr):
         """ represent a failure. """
         return self._repr_failure_py(excinfo, outerr)
@@ -336,12 +342,10 @@ class Collector(Node):
              If the return value is None there is no such child. 
         """
         warnoldcollect()
-        for colitem in self._memocollect():
-            if colitem.name == name:
-                return colitem
+        return self.collect_by_name(name)
 
     def multijoin(self, namelist): 
-        """ DEPRECATED: return a list of colitems for the given namelist. """ 
+        """ DEPRECATED: return a list of child items matching the given namelist. """ 
         warnoldcollect()
         return [self.join(name) for name in namelist]
 
@@ -380,6 +384,8 @@ class FSCollector(Collector):
             name, parent = picklestate
             self.__init__(parent.fspath.join(name), parent=parent)
 
+class File(FSCollector):
+    """ base class for collecting tests from a file. """
 
 class Directory(FSCollector): 
     def recfilter(self, path): 
@@ -398,7 +404,6 @@ class Directory(FSCollector):
         return l
 
     def consider(self, path, usefilters=True):
-        print "checking", path
         if path.check(file=1):
             return self.consider_file(path, usefilters=usefilters)
         elif path.check(dir=1):
@@ -421,14 +426,13 @@ class Directory(FSCollector):
             Directory = self._config.getvalue('Directory', path) 
             return Directory(path, parent=self) 
 
-    # **********************************************************************
-    # DEPRECATED METHODS 
-    # **********************************************************************
-
-    def join(self, name):
-        """ get a child collector or item without using filters. """
-        p = self.fspath.join(name)
-        return self.consider(p, usefilters=False)
+    def collect_by_name(self, name):
+        """ get a child with the given name. """ 
+        res = super(Directory, self).collect_by_name(name)
+        if res is None:
+            p = self.fspath.join(name)
+            res = self.consider(p, usefilters=False)
+        return res
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 

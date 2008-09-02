@@ -26,8 +26,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 57551 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-08-21 15:25:29 +0200 (Thu, 21 Aug 2008) $',
+    revision = int('$LastChangedRevision: 57754 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-09-02 14:24:15 +0200 (Tue, 02 Sep 2008) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -78,12 +78,13 @@ initpkg(__name__,
     # for customization of collecting/running tests
     'test.collect.Collector' : ('./test/collect.py', 'Collector'),
     'test.collect.Directory' : ('./test/collect.py', 'Directory'),
+    'test.collect.File'      : ('./test/collect.py', 'File'),
+    'test.collect.Item'      : ('./test/collect.py', 'Item'),
     'test.collect.Module'    : ('./test/pycollect.py', 'Module'),
     'test.collect.DoctestFile' : ('./test/pycollect.py', 'DoctestFile'),
     'test.collect.Class'     : ('./test/pycollect.py', 'Class'),
     'test.collect.Instance'  : ('./test/pycollect.py', 'Instance'),
     'test.collect.Generator' : ('./test/pycollect.py', 'Generator'),
-    'test.collect.Item'      : ('./test/collect.py', 'Item'),
     'test.collect.Function'  : ('./test/pycollect.py', 'Function'),
 
     # thread related API (still in early design phase)
