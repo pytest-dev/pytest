@@ -1,7 +1,12 @@
 import py
-from py.__.green.greenexecnet import *
+from pygreen.greenexecnet import *
+import pygreen
 
-py.test.skip("Does not work with globally installed pylib")
+def setup_module(mod):
+    os.environ["PYTHONPATH"] = "%s:%s" %(
+            py.path.local(pygreen.__file__).dirpath().dirpath(), os.environ['PYTHONPATH'])
+    #py.test.skip("need to fix PYTHONPATH/sys.path handling for sub processes so "
+    #             "that they find the pygreen package.")
 
 def test_simple():
     gw = PopenGateway()

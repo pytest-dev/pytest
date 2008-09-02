@@ -1,5 +1,5 @@
 import os
-from py.__.green import greensock2
+from pygreen import greensock2
 
 
 class FDInput(object):

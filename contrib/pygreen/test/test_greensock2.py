@@ -1,6 +1,6 @@
 import py
 from socket import *
-from py.__.green.greensock2 import *
+from pygreen.greensock2 import *
 
 def test_meetingpoint():
     giv1, acc1 = meetingpoint()

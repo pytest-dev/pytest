@@ -1,5 +1,5 @@
 import os, random
-from py.__.green.pipelayer import PipeLayer, pipe_over_udp, PipeOverUdp
+from pygreen.pipelayer import PipeLayer, pipe_over_udp, PipeOverUdp
 
 def test_simple():
     data1 = os.urandom(1000)

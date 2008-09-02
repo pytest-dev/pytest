@@ -5,4 +5,4 @@ class Directory(py.test.collect.Directory):
         if os.name == 'nt':
             py.test.skip("Cannot test green layer on windows")
         else:
-            return super(Directory, self).run()
+            return super(Directory, self).collect()

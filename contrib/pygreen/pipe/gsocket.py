@@ -1,4 +1,4 @@
-from py.__.green import greensock2
+from pygreen import greensock2
 import socket, errno, os
 
 error = socket.error
