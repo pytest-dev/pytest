@@ -2,7 +2,7 @@ import py
 import sys
 from py.__.test import event
 from py.__.test.report.base import BaseReporter
-from py.__.test.report.base import getrelpath, repr_pythonversion, getmodpath
+from py.__.test.report.base import getrelpath, repr_pythonversion
 
 class TerminalReporter(BaseReporter):
     def __init__(self, config, file=None, bus=None):

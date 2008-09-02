@@ -1,7 +1,7 @@
 from __future__ import generators
 import py
 from py.__.test import event, outcome 
-import setupdata, suptest
+from py.__.test.testing import suptest
 from py.__.test.conftesthandle import Conftest
 from py.__.test.collect import SetupState
 from test_config import getcolitems
@@ -376,7 +376,6 @@ def test_function_equality():
     assert f1 == f1_b
     assert not f1 != f1_b
     
-    
 class Testgenitems: 
     def setup_class(cls):
         cls.classtemp = py.test.ensuretemp(cls.__name__)
@@ -461,6 +460,15 @@ class Testgenitems:
         assert items[0].name == 'test_one'
         assert items[1].name == 'test_method_one'
         assert items[2].name == 'test_method_one'
+
+        # let's also test getmodpath here
+        assert items[0].getmodpath() == "test_one"
+        assert items[1].getmodpath() == "TestX.test_method_one"
+        assert items[2].getmodpath() == "TestY.test_method_one"
+
+        s = items[0].getmodpath(stopatmodule=False)
+        assert s == "test_example_items1.test_example.test_one"
+        print s
 
     def test_collect_doctest_files_with_test_prefix(self):
         self.tmp.ensure("whatever.txt")

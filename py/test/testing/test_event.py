@@ -36,9 +36,12 @@ class TestEventBus:
         assert l == [1]
 
 
-class TestItemTestReport(object):
+class TestItemTestReport(suptest.InlineCollection):
     def test_toterminal(self):
-        sorter = suptest.events_run_example("file_test.py")
+        sorter = suptest.events_from_runsource("""
+            def test_one(): 
+                assert 42 == 43
+        """)
         reports = sorter.get(event.ItemTestReport)
         ev = reports[0] 
         assert ev.failed 
@@ -54,5 +57,5 @@ class TestItemTestReport(object):
         ##assert ev.repr_run.find("AssertionError") != -1
         filepath = ev.colitem.fspath
         #filepath , modpath = ev.itemrepr_path
-        assert str(filepath).endswith("file_test.py")
+        assert str(filepath).endswith(".py")
         #assert modpath.endswith("file_test.test_one")

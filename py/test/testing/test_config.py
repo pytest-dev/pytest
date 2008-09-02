@@ -2,7 +2,7 @@ from __future__ import generators
 import py
 
 from py.__.test.config import gettopdir
-import suptest, setupdata
+from py.__.test.testing import suptest
 from py.__.test import event
 
 def getcolitems(config):
@@ -38,6 +38,8 @@ def test_config_cmdline_options():
 
 def test_config_cmdline_options_only_lowercase(): 
     o = py.test.ensuretemp('test_config_cmdline_options_only_lowercase')
+    o = o.mkdir("onemore") # neccessary because collection of o.dirpath()
+                           # could see our conftest.py
     o.ensure("conftest.py").write(py.code.Source(""" 
         import py
         Option = py.test.config.Option
@@ -159,12 +161,16 @@ def test_config_rconfig():
     assert config.option.gdest == 11
     assert option.gdest == 11
 
-class TestSessionAndOptions: 
-    def setup_class(cls):
-        cls.tmproot = py.test.ensuretemp(cls.__name__)
+class TestSessionAndOptions(suptest.FileCreation): 
+    def exampletestfile(self):
+        return self.makepyfile(file_test="""
+            def test_one(): 
+                assert 42 == 43
 
-    def setup_method(self, method):
-        self.tmpdir = self.tmproot.ensure(method.__name__, dir=1) 
+            class TestClass(object): 
+                def test_method_one(self): 
+                    assert 42 == 43 
+        """)
 
     def test_session_eventlog(self):
         eventlog = self.tmpdir.join("test_session_eventlog")
@@ -312,7 +318,7 @@ class TestSessionAndOptions:
     def test_conflict_options(self):
         def check_conflict_option(opts):
             print "testing if options conflict:", " ".join(opts)
-            path = setupdata.getexamplefile("file_test.py")
+            path = self.exampletestfile()
             config = py.test.config._reparse(opts + [path])
             py.test.raises((ValueError, SystemExit), """
                 config.initsession()
@@ -329,7 +335,7 @@ class TestSessionAndOptions:
     
     def test_implied_options(self):
         def check_implied_option(opts, expr):
-            path = setupdata.getexamplefile("file_test.py")
+            path = self.exampletestfile()
             config = py.test.config._reparse(opts + [path])
             session = config.initsession()
             assert eval(expr, session.config.option.__dict__)
@@ -348,19 +354,19 @@ class TestSessionAndOptions:
             passed, skipped, failed = sorter.countoutcomes()
             assert failed == 2 
             assert skipped == passed == 0
-        path = setupdata.getexamplefile("file_test.py")
+        path = self.exampletestfile()
         for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
                      ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
                      ['--traceconfig'], ['-v'], ['-v', '-v']):
             yield runfiletest, opts + [path]
 
     def test_is_not_boxed_by_default(self):
-        path = setupdata.getexamplefile("file_test.py")
+        path = self.exampletestfile()
         config = py.test.config._reparse([path])
         assert not config.option.boxed
 
 
-class TestConfigColitems:
+class TestConfigColitems(suptest.FileCreation):
     def setup_class(cls):
         cls.tmproot = py.test.ensuretemp(cls.__name__)
 

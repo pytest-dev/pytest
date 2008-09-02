@@ -6,8 +6,6 @@
     for analyzing events an EventSorter instance is returned for both of: 
     * events_from_cmdline(args): inprocess-run of cmdline invocation
     * events_from_session(session): inprocess-run of given session
-    * events_run_example(examplename, *args):in-process-run of
-      given example test file 
     
     eventappender(config): for getting all events in a list: 
 """
@@ -48,11 +46,6 @@ def events_from_session(session):
     sorter = EventSorter(session.config, session)
     session.main(getcolitems(session.config))
     return sorter 
-
-def events_run_example(examplename, *args):
-    from setupdata import getexamplefile
-    p = getexamplefile(examplename) 
-    return events_from_cmdline([p] + list(args))
 
 class EventSorter(object):
     def __init__(self, config, session=None):
@@ -217,6 +210,13 @@ class InlineCollection(FileCreation):
         runner = self.getrunner()
         return runner(item, **runnerargs)
 
+class InlineSession(InlineCollection):
+    def parse_and_run(self, *args):
+        config = self.parseconfig(*args)
+        session = config.initsession()
+        sorter = EventSorter(config, session)
+        session.main()
+        return sorter
 
 def popvalue(stringio):
     value = stringio.getvalue().rstrip()

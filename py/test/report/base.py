@@ -64,22 +64,6 @@ class BaseReporter(object):
             l.append((len(events),) + key)
         return l 
 
-
-def getmodpath(pycolitem): 
-    """ return dotted module path for the given colitem. """ 
-    colitems = pycolitem.listchain()
-    while colitems: 
-        colitem = colitems.pop(0)
-        if isinstance(colitem, colitem.Module):
-            parts = [colitem.obj.__name__]
-            for colitem in colitems: 
-                if colitem.name[0] in '([':
-                    parts[-1] += colitem.name 
-                else:
-                    parts.append(colitem.name) 
-            return ".".join(parts)
-    return colitem.name  
-
 def repr_pythonversion(v=None):
     if v is None:
         v = sys.version_info

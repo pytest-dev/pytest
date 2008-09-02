@@ -3,8 +3,7 @@ from py.__.test.report.base import BaseReporter
 from py.__.test.event import EventBus
 from py.__.test import event
 from py.__.test.runner import OutcomeRepr
-from py.__.test.report.base import getrelpath, getmodpath, repr_pythonversion
-from py.__.test.testing import setupdata
+from py.__.test.report.base import getrelpath, repr_pythonversion
 import sys
 
 class TestBaseReporter:
@@ -72,29 +71,6 @@ class TestBaseReporter:
         assert fspath == longrepr.path
         assert lineno == longrepr.lineno
         assert reason == longrepr.message
-
-def test_getmodpath_cases():
-    tmpdir = py.test.ensuretemp("test_getmodpath_cases") 
-    pkgdir = tmpdir.join("test_getmodpath") 
-    pkgdir.ensure("__init__.py") 
-    nopkgdir = tmpdir.ensure("nopkg", dir=1) 
-    def checkpkg(names, expected):
-        fcol = setupdata.getexamplecollector(names, tmpdir=pkgdir)
-        assert getmodpath(fcol) == pkgdir.basename + "." + expected 
-    def checknopkg(names, expected):
-        fcol = setupdata.getexamplecollector(names, tmpdir=nopkgdir)
-        assert getmodpath(fcol) == expected 
-
-    for names in (
-        'test_mod.py test_f1           test_mod.test_f1', 
-        'test_mod.py TestA () test_m1  test_mod.TestA().test_m1', 
-        'test_mod.py test_g1           test_mod.test_g1', 
-        'test_mod.py test_g1 [0]       test_mod.test_g1[0]', 
-    ):
-        names = names.split()
-        expected = names.pop()
-        yield checkpkg, names, expected 
-        yield checknopkg, names, expected 
 
 def test_repr_python_version():
     py.magic.patch(sys, 'version_info', (2, 5, 1, 'final', 0))

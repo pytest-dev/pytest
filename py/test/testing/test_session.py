@@ -1,15 +1,20 @@
 import py
 from py.__.test import event 
-import suptest, setupdata
+from py.__.test.testing import suptest
 
 def setup_module(mod):
     mod.tmpdir = py.test.ensuretemp(mod.__name__) 
 
-class TestKeywordSelection: 
+class TestKeywordSelection(suptest.InlineSession):
     def test_select_simple(self):
+        file_test = self.makepyfile(file_test="""
+            def test_one(): assert 0
+            class TestClass(object): 
+                def test_method_one(self): 
+                    assert 42 == 43 
+        """)
         def check(keyword, name):
-            sorter = suptest.events_run_example("file_test.py", 
-                '-s', '-k', keyword)
+            sorter = self.parse_and_run("-s", "-k", keyword, file_test)
             passed, skipped, failed = sorter.listoutcomes()
             assert len(failed) == 1
             assert failed[0].colitem.name == name 
@@ -20,7 +25,7 @@ class TestKeywordSelection:
         yield check, 'TestClass.test', 'test_method_one'
 
     def test_select_extra_keywords(self):
-        o = tmpdir.ensure('test_select_extra_keywords', dir=1) 
+        o = self.tmpdir
         tfile = o.join('test_select.py').write(py.code.Source("""
             def test_1():
                 pass 
@@ -46,8 +51,12 @@ class TestKeywordSelection:
             assert dlist[0].items[0].name == 'test_1'
 
     def test_select_starton(self):
-        sorter = suptest.events_run_example("test_threepass.py", 
-                '-k', "test_two:")
+        threepass = self.makepyfile(test_threepass="""
+            def test_one(): assert 1
+            def test_two(): assert 1
+            def test_three(): assert 1
+        """)
+        sorter = self.parse_and_run("-k", "test_two:", threepass)
         passed, skipped, failed = sorter.listoutcomes()
         assert len(passed) == 2
         assert not failed 

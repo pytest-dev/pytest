@@ -43,9 +43,13 @@ class PyobjMixin(object):
         for node in chain:
             if isinstance(node, Instance):
                 continue
-            if stopatmodule and isinstance(node, Module):
-                break
-            parts.append(node.name)
+            name = node.name 
+            if isinstance(node, Module):
+                if stopatmodule:
+                    break
+                assert name.endswith(".py")
+                name = name[:-3]
+            parts.append(name)
         parts.reverse()
         s = ".".join(parts)
         return s.replace(".[", "[")
