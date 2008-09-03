@@ -243,9 +243,10 @@ class ReprTraceback(Repr):
     def toterminal(self, tw):
         sepok = False 
         for entry in self.reprentries:
-            if sepok and self.style == "long":
-                tw.sep(self.entrysep)
-            tw.line("")
+            if self.style == "long":
+                if sepok:
+                    tw.sep(self.entrysep)
+                tw.line("")
             sepok = True
             entry.toterminal(tw)
         if self.extraline:

@@ -156,7 +156,7 @@ class TerminalReporter(BaseReporter):
     #
 
     def summary_failures(self):
-        if self._failed:
+        if self._failed and self.config.option.tbstyle != "no":
             self.write_sep("=", "FAILURES")
             for ev in self._failed:
                 self.write_sep("_")

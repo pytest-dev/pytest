@@ -161,3 +161,34 @@ class TestTerminal(InlineCollection):
             "*waiting*", 
             "*%s*" % (modcol._config.topdir),
         ])
+
+    def test_tb_option(self):
+        for tbopt in ["no", "short", "long"]:
+            print 'testing --tb=%s...' % tbopt
+            modcol = self.getmodulecol("""
+                import py
+                def g():
+                    raise IndexError
+                def test_func():
+                    print 6*7
+                    g()  # --calling--
+            """, configargs=("--tb=%s" % tbopt,), withsession=True)
+            stringio = py.std.cStringIO.StringIO()
+            rep = TerminalReporter(modcol._config, file=stringio)
+            rep.processevent(event.TestrunStart())
+            for item in self.session.genitems([modcol]):
+                ev = basic_run_report(item) 
+                rep.processevent(ev)
+            rep.processevent(event.TestrunFinish())
+            s = popvalue(stringio)
+            if tbopt == "long":
+                assert 'print 6*7' in s
+            else:
+                assert 'print 6*7' not in s
+            if tbopt != "no":
+                assert '--calling--' in s
+                assert 'IndexError' in s
+            else:
+                assert 'FAILURES' not in s
+                assert '--calling--' not in s
+                assert 'IndexError' not in s

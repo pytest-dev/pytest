@@ -268,7 +268,8 @@ class Node(object):
     def _repr_failure_py(self, excinfo, outerr):
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
         repr = excinfo.getrepr(funcargs=True, 
-                               showlocals=self._config.option.showlocals)
+                               showlocals=self._config.option.showlocals,
+                               style=self._config.option.tbstyle)
         for secname, content in zip(["out", "err"], outerr):
             if content:
                 repr.addsection("Captured std%s" % secname, content.rstrip())
