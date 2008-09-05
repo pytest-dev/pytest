@@ -149,7 +149,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
 
 class Module(py.test.collect.File, PyCollectorMixin):
     def collect(self):
-        if getattr(self.obj, 'disabled', 0):
+        if self.fspath.ext == ".py" and getattr(self.obj, 'disabled', 0):
             return []
         return super(Module, self).collect()
 

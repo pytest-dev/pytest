@@ -135,3 +135,20 @@ class TestCollectDeprecated(suptest.InlineCollection):
         modcol = self.getmodulecol("def test_some(): pass")
         colitems = py.test.deprecated_call(modcol.collect)
         funcitem = colitems[0]
+
+    def test_conftest_subclasses_Module_with_non_pyfile(self):
+        self.makepyfile(conftest="""
+            import py
+            class Module(py.test.collect.Module):
+                def run(self):
+                    return []
+            class Directory(py.test.collect.Directory):
+                def consider_file(self, path, usefilters=True):
+                    if path.basename == "testme.xxx":
+                        return Module(path, parent=self)
+                    return super(Directory, self).consider_file(path, usefilters=usefilters)
+        """)
+        testme = self._makefile('xxx', testme="hello")
+        config = self.parseconfig(testme)
+        col = config.getfsnode(testme)
+        assert col.collect() == []
