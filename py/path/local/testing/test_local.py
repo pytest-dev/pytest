@@ -1,7 +1,6 @@
 import py
 import sys
 from py.path import local
-from py.__.path.common import checker
 from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
 
 class LocalSetup:
@@ -343,7 +342,6 @@ class TestExecution(LocalSetup):
 
 def test_pypkgdir():
     datadir = py.test.ensuretemp("pypkgdir")
-
     pkg = datadir.ensure('pkg1', dir=1)
     pkg.ensure("__init__.py")
     pkg.ensure("subdir/__init__.py")
@@ -354,12 +352,3 @@ def test_homedir():
     homedir = py.path.local._gethomedir()
     assert homedir.check(dir=1)
 
-#class XTestLocalPath(TestLocalPath):
-#    def __init__(self):
-#        TestLocalPath.__init__(self)
-#        self.root = local(self.root)
-#
-#class XXTestLocalPath(TestLocalPath):
-#    def __init__(self):
-#        TestLocalPath.__init__(self)
-#        self.root = local(self.root)

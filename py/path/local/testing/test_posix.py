@@ -1,7 +1,6 @@
 import py
 
 class TestPOSIXLocalPath:
-    #root = local(TestLocalPath.root)
     disabled = py.std.sys.platform == 'win32'
 
     def setup_class(cls):
@@ -103,16 +102,17 @@ class TestPOSIXLocalPath:
         assert gid == stat.gid 
         assert group == stat.group 
 
-    def XXXtest_atime(self):
-        # XXX disabled. this test is just not platform independent enough
-        #     because acesstime resolution is very different through
-        #     filesystems even on one platform.
+    def test_atime(self):
         import time
-        path = self.root.join('samplefile')
-        atime = path.atime()
-        time.sleep(1)
-        path.read(1)
-        assert path.atime() != atime
+        path = self.root.ensure('samplefile')
+        now = time.time()
+        atime1 = path.atime()
+        # we could wait here but timer resolution is very
+        # system dependent 
+        path.read()
+        atime2 = path.atime()
+        duration = time.time() - now
+        assert (atime2-atime1) <= duration
 
     def test_commondir(self):
         # XXX This is here in local until we find a way to implement this

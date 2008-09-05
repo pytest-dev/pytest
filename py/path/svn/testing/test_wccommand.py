@@ -6,9 +6,6 @@ from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
 from py.__.conftest import option
 
-if py.path.local.sysfind('svn') is None:
-    py.test.skip("cannot test py.path.svn, 'svn' binary not found")
-
 if sys.platform != 'win32':
     def normpath(p):
         return p
@@ -24,8 +21,11 @@ else:
             p = win32api.GetShortPathName(p)
             return os.path.normpath(os.path.normcase(p))
 
-class TestWCSvnCommandPath(CommonSvnTests):
+def setup_module(mod):
+    if py.path.local.sysfind('svn') is None:
+        py.test.skip("cannot test py.path.svn, 'svn' binary not found")
 
+class TestWCSvnCommandPath(CommonSvnTests):
     def setup_class(cls): 
         repo, cls.root = getrepowc()
 
