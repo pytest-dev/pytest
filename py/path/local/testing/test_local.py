@@ -10,10 +10,7 @@ class LocalSetup:
         setuptestfs(cls.root)
 
     def setup_method(self, method):
-        self.tmpdir = self.root.ensure('tmpdir', dir=1)
-
-    def teardown_method(self, method):
-        self.tmpdir.remove(rec=1)
+        self.tmpdir = self.root.mkdir(method.__name__)
 
 class TestLocalPath(LocalSetup, CommonFSTests):
 
