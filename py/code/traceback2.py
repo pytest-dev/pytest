@@ -50,8 +50,11 @@ class TracebackEntry(object):
         return self.frame.code.firstlineno
 
     def getsource(self): 
-        """ return failing source code. """ 
-        source = self.frame.code.fullsource
+        """ return failing source code. """
+        try:
+            source = self.frame.code.fullsource
+        except (IOError, py.error.ENOENT):
+            return None
         if source is None:
             try:
                 sourcelines, lineno = py.std.inspect.findsource(self.frame.code.raw)

@@ -96,10 +96,10 @@ class FormattedExcinfo(object):
 
     def _getentrysource(self, entry):
         source = entry.getsource()
-        if source is None:
-            source = py.code.Source("???")
-        return source.deindent()
-
+        if source is not None:
+            source = source.deindent()
+        return source
+    
     def _saferepr(self, obj):
         return safe_repr._repr(obj)
 
@@ -166,7 +166,11 @@ class FormattedExcinfo(object):
     def repr_traceback_entry(self, entry, excinfo=None):
         # excinfo is not None if this is the last tb entry 
         source = self._getentrysource(entry)
-        line_index = entry.lineno - entry.getfirstlinesource()
+        if source is None:
+            source = py.code.Source("???")
+            line_index = 0
+        else:
+            line_index = entry.lineno - entry.getfirstlinesource()
 
         lines = []
         if self.style == "long":

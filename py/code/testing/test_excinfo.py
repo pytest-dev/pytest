@@ -305,6 +305,65 @@ class TestFormattedExcinfo:
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
 
+    def test_repr_many_line_source_not_existing(self):
+        pr = FormattedExcinfo()
+        co = compile("""
+a = 1        
+raise ValueError()
+""", "", "exec")
+        try:
+            exec co 
+        except ValueError:
+            excinfo = py.code.ExceptionInfo()
+        repr = pr.repr_excinfo(excinfo)
+        assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
+
+    def test_repr_source_failing_fullsource(self):
+        pr = FormattedExcinfo()
+
+        class FakeCode(object):
+            path = '?'
+            firstlineno = 5
+
+            @property
+            def fullsource(self):
+                raise fail
+
+        class FakeFrame(object):
+            code = FakeCode()
+            f_locals = {}
+
+        class FakeTracebackEntry(py.code.Traceback.Entry):
+            def __init__(self, tb):
+                self.frame = FakeFrame()
+                self.lineno = 5+3
+
+        class Traceback(py.code.Traceback):
+            Entry = FakeTracebackEntry
+
+        class FakeExcinfo(py.code.ExceptionInfo):
+            typename = "Foo"
+            def __init__(self):
+                pass
+            
+            def exconly(self, tryshort):
+                return "EXC"
+
+        excinfo = FakeExcinfo()
+        class FakeRawTB(object):
+            tb_next = None
+        tb = FakeRawTB()
+        excinfo.traceback = Traceback(tb)
+
+        fail = IOError()
+        repr = pr.repr_excinfo(excinfo)
+        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
+
+        fail = py.error.ENOENT
+        repr = pr.repr_excinfo(excinfo)
+        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"        
+        
+
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)
         loc = {'y': 5, 'z': 7, 'x': 3, '__builtins__': __builtins__}
@@ -581,4 +640,3 @@ class TestFormattedExcinfo:
                               'tbfilter': tbfilter
                         }
                         yield kw
-            
