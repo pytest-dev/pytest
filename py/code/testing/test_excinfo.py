@@ -325,9 +325,9 @@ raise ValueError()
             path = '?'
             firstlineno = 5
 
-            @property
             def fullsource(self):
                 raise fail
+            fullsource = property(fullsource)
 
         class FakeFrame(object):
             code = FakeCode()
