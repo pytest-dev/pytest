@@ -398,7 +398,7 @@ class Directory(FSCollector):
         if l is not None:
             return l 
         l = []
-        for path in self.fspath.listdir(): # listdir() returns sorted order
+        for path in self.fspath.listdir(sort=True): 
             res = self.consider(path, usefilters=True)
             if res is not None:
                 l.append(res)

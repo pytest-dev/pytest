@@ -87,7 +87,7 @@ class TestCollect(suptest.InlineCollection):
     def test_found_certain_testfiles(self): 
         p1 = self.makepyfile(test_found = "pass", found_test="pass")
         col = py.test.collect.Directory(p1.dirpath(), config=dummyconfig) 
-        items = col.collect()
+        items = col.collect() # Directory collect returns files sorted by name
         assert len(items) == 2
         assert items[1].name == 'test_found.py'
         assert items[0].name == 'found_test.py'
