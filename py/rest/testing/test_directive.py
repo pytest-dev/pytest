@@ -32,7 +32,7 @@ class TestGraphviz(object):
         png.remove()
         
     def _graphviz_pdf(self):
-        for exe in 'dot latex epstopdf'.split():
+        for exe in 'dot latex epstopdf ps2eps'.split():
             if  not py.path.local.sysfind(exe):
                 py.test.skip("%r needed" %(exe,))
 

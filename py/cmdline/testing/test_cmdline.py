@@ -11,7 +11,7 @@ class TestPyLookup(AcceptBase):
 
     def test_search_in_filename(self):
         p = self.makepyfile(hello="def x(): pass")
-        result = self.run("py.lookup", "hello")
+        result = self.runpybin("py.lookup", "hello")
         suptest.assert_lines_contain_lines(result.outlines, 
             ['*%s:*' %(p.basename)]
         )
