@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.web import exported_methods
+from py.__.test.report.web import exported_methods
 try:
     from pypy.translator.js.modules import dom
     from pypy.translator.js.helper import __show_traceback

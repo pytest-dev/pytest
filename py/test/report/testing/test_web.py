@@ -15,14 +15,14 @@ def setup_module(mod):
     mod.commproxy.USE_MOCHIKIT = False
     mod.rpython2javascript = rpython2javascript
     mod.commproxy = mod.commproxy
-    from py.__.test.dsession.web import TestHandler as _TestHandler
-    from py.__.test.dsession.web import MultiQueue
+    from py.__.test.report.web import TestHandler as _TestHandler
+    from py.__.test.report.web import MultiQueue
     mod._TestHandler = _TestHandler
     mod.MultiQueue = MultiQueue
 
 def test_js_generate():
-    from py.__.test.dsession import webjs
-    from py.__.test.dsession.web import FUNCTION_LIST, IMPORTED_PYPY
+    from py.__.test.report import webjs
+    from py.__.test.report.web import FUNCTION_LIST, IMPORTED_PYPY
     
     source = rpython2javascript(webjs, FUNCTION_LIST, use_pdb=False)
     assert source

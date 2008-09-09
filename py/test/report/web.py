@@ -14,10 +14,8 @@ import sys
 import socket
 
 import py
-from py.__.test.dsession.dsession import RSession
-from py.__.test import event
-from py.__.test import collect
-from py.__.test.dsession.webdata import json
+from py.test import collect 
+from py.__.test.report.webdata import json
 
 DATADIR = py.path.local(__file__).dirpath("webdata")
 FUNCTION_LIST = ["main", "show_skip", "show_traceback", "show_info", "hide_info",

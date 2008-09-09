@@ -12,8 +12,8 @@ def check(mod):
     mod.dom = dom
     mod.schedule_callbacks = schedule_callbacks
 
-    from py.__.test.dsession import webjs
-    from py.__.test.dsession.web import exported_methods
+    from py.__.test.report import webjs
+    from py.__.test.report.web import exported_methods
     mod.webjs = webjs
     mod.exported_methods = exported_methods
     mod.here = py.magic.autopath().dirpath()
@@ -28,8 +28,8 @@ def setup_module(mod):
     mod.dom = dom
     dom.window = dom.Window(html)
     dom.document = dom.window.document
-    from py.__.test.dsession import webjs
-    from py.__.test.dsession.web import exported_methods
+    from py.__.test.report import webjs
+    from py.__.test.report.web import exported_methods
     mod.webjs = webjs
     mod.exported_methods = exported_methods
 
