@@ -404,13 +404,14 @@ class TestInteractive(AcceptBase):
        
         child = spawn("%s %s --pdb test_one.py" % (py.std.sys.executable, 
                       pytestpath))
-        child.expect("(Pdb)", timeout=EXPECTTIMEOUT)
+        child.timeout = EXPECTTIMEOUT
+        child.expect("(Pdb)")
         child.sendline("l")
-        child.expect(".*def test_1.*", timeout=EXPECTTIMEOUT)
+        child.expect(".*def test_1.*")
         child.sendeof()
-        child.expect("failures: 1", timeout=EXPECTTIMEOUT)
-        child.wait()
-
+        child.expect("failures: 1")
+        if child.isalive(): 
+            child.wait()
 
     def test_simple_looponfailing_interaction(self):
         spawn = self.getspawn()
