@@ -389,17 +389,20 @@ class TestInteractive(AcceptBase):
     def getspawn(self):
         try:
             import pexpect
-            ver = tuple(map(int, pexpect.__version__.split(".")))
-            if ver < (2,3): # because sendeof() fails on sys.stdin.fileno() otherwise 
-                            # because we are running captured  
-                raise AttributeError
-        except (ImportError, AttributeError):
-            py.test.skip("need pexpect version >= 2.3")
+        except ImportError:
+            py.test.skip("cannot import pexpect")
         def spawn(cmd):
             return pexpect.spawn(cmd, logfile=self.tmpdir.join("spawn.out").open("w"))
         return spawn
+
+    def requirespexpect(self, version_needed):
+        import pexpect
+        ver = tuple(map(int, pexpect.__version__.split(".")))
+        if ver < version_needed:
+            py.test.skip("pexpect version %s needed" %(".".join(map(str, version_needed))))
        
     def test_pdb_interaction(self):
+        self.requirespexpect((2,3))
         spawn = self.getspawn()
         self.makepyfile(test_one="""
             def test_1():
