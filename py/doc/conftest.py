@@ -321,3 +321,5 @@ def resolve_linkrole(name, text, check=True):
             relpath += '.html'
         return (text, apigen_relpath + 'source/%s' % (relpath,))
 
+# legacy
+ReSTChecker = DocfileTests
