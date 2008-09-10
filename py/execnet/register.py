@@ -2,6 +2,8 @@
 import os, inspect, socket
 import sys
 from py.magic import autopath ; mypath = autopath()
+from py.__.misc.warn import APIWARN
+
 import py
 if sys.platform == "win32":
     win32 = True
@@ -55,6 +57,7 @@ class InstallableGateway(gateway.Gateway):
 class PopenCmdGateway(InstallableGateway):
     def __init__(self, cmd):
         infile, outfile = os.popen2(cmd)
+        self._cmd = cmd
         io = inputoutput.Popen2IO(infile, outfile)
         super(PopenCmdGateway, self).__init__(io=io)
 
@@ -130,14 +133,16 @@ class SocketGateway(InstallableGateway):
 
     
 class SshGateway(PopenCmdGateway):
-    """ This Gateway provides interaction with a remote process,
+    """ This Gateway provides interaction with a remote Python process,
         established via the 'ssh' command line binary.  
         The remote side needs to have a Python interpreter executable. 
     """
-    def __init__(self, sshaddress, remotepython='python', identity=None): 
+    def __init__(self, sshaddress, remotepython='python', 
+        identity=None, ssh_config=None): 
         """ instantiate a remote ssh process with the 
             given 'sshaddress' and remotepython version.
-            you may specify an 'identity' filepath. 
+            you may specify an ssh_config file. 
+            DEPRECATED: you may specify an 'identity' filepath. 
         """
         self.remoteaddress = sshaddress
         remotecmd = '%s -u -c "exec input()"' % (remotepython,)
@@ -147,9 +152,13 @@ class SshGateway(PopenCmdGateway):
             cmdline[i] = "'" + cmdline[i].replace("'", "'\\''") + "'"
         cmd = 'ssh -C'
         if identity is not None: 
+            APIWARN("1.0", "pass in 'ssh_config' file instead of identity")
             cmd += ' -i %s' % (identity,)
+        if ssh_config is not None:
+            cmd += ' -F %s' % (ssh_config)
         cmdline.insert(0, cmd) 
-        super(SshGateway, self).__init__(' '.join(cmdline))
+        cmd = ' '.join(cmdline)
+        super(SshGateway, self).__init__(cmd)
        
     def _remote_bootstrap_gateway(self, io, s=""): 
         extra = "\n".join([

@@ -439,6 +439,9 @@ class BasicRemoteExecution:
         text = c1.receive()
         assert text.find("execution disallowed") != -1 
 
+class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
+    def test_cmdattr(self):
+        assert hasattr(self.gw, '_cmd')
 
 def test_channel_endmarker_remote_killterm():
     gw = py.execnet.PopenGateway()
@@ -571,20 +574,31 @@ class TestSshGateway(BasicRemoteExecution):
             py.test.skip("no known ssh target, use -S to set one")
         cls.gw = py.execnet.SshGateway(option.sshtarget) 
 
+    def test_sshconfig_functional(self):
+        tmpdir = py.test.ensuretemp("test_sshconfig")
+        ssh_config = tmpdir.join("ssh_config") 
+        ssh_config.write(
+            "Host alias123\n"
+            "   HostName %s\n" % (option.sshtarget,))
+        gw = py.execnet.SshGateway("alias123", ssh_config=ssh_config)
+        assert gw._cmd.find("-F") != -1
+        assert gw._cmd.find(str(ssh_config)) != -1
+        pid = gw.remote_exec("import os ; channel.send(os.getpid())").receive()
+        gw.exit()
+
     def test_sshaddress(self):
         assert self.gw.remoteaddress == option.sshtarget
 
-    def test_failed_connexion(self):
-        gw = py.execnet.SshGateway('nowhere.codespeak.net')
-        try:
-            channel = gw.remote_exec("...")
-        except IOError:
-            pass      # connexion failed already
-        else:
-            # connexion did not fail yet
-            py.test.raises(EOFError, channel.receive)
-            # now it did
-            py.test.raises(IOError, gw.remote_exec, "...")
+    def test_connexion_failes_on_non_existing_hosts(self):
+        py.test.raises(IOError, 
+            "py.execnet.SshGateway('nowhere.codespeak.net')")
+
+    def test_deprecated_identity(self):
+        py.test.deprecated_call(
+            py.test.raises, IOError, 
+                py.execnet.SshGateway,
+                    'nowhere.codespeak.net', identity='qwe')
+
 
 def test_threads():
     gw = py.execnet.PopenGateway()
