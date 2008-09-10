@@ -19,6 +19,7 @@ The is a schematic example of a tree of collectors and test items::
 
 """ 
 import py
+from py.__.misc.warn import APIWARN
 
 def configproperty(name):
     def fget(self):
@@ -493,10 +494,16 @@ def getrelpath(curdir, dest):
 
 
 def depwarn(msg):
-    py.std.warnings.warn(msg, DeprecationWarning)
+    APIWARN("1.0", msg, stacklevel=2)
 
 def warnoldcollect():
-    return depwarn("implement collector.collect() instead of collector.run() and collector.join()")
+    APIWARN("1.0", 
+        "implement collector.collect() instead of "
+        "collector.run() and collector.join()",
+        stacklevel=2)
 
 def warnoldtestrun():
-    return depwarn("implement item.runtest() instead of item.run() and item.execute()")
+    APIWARN("1.0", 
+        "implement item.runtest() instead of "
+        "item.run() and item.execute()",
+        stacklevel=2)

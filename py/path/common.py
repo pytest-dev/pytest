@@ -5,6 +5,7 @@ module with base functionality for std.path package
 from __future__ import generators
 import os, sys
 import py
+from py.__.misc.warn import APIWARN
 
 def checktype(pathinstance, kw):
     names = ('local', 'svnwc', 'svnurl', 'py', )
@@ -21,9 +22,10 @@ class checker:
         kwargs-specified specification. 
     """
     def __init__(self, **kwargs):
-        py.std.warnings.warn("py.path.checker is deprecated, construct "
-                             "calls to pathobj.check() instead", 
-                             DeprecationWarning, stacklevel=2)
+        APIWARN("0.9.0", 
+            "py.path.checker is deprecated, construct "
+            "calls to pathobj.check() instead", 
+        )
         self.kwargs = kwargs
     def __call__(self, p):
         return p.check(**self.kwargs)
