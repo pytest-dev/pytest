@@ -268,9 +268,16 @@ class Node(object):
 
     def _repr_failure_py(self, excinfo, outerr):
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
+        # XXX temporary hack: getrepr() should not take a 'style' argument
+        # at all; it should record all data in all cases, and the style
+        # should be parametrized in toterminal().
+        if self._config.option.tbstyle == "short":
+            style = "short"
+        else:
+            style = "long"
         repr = excinfo.getrepr(funcargs=True, 
                                showlocals=self._config.option.showlocals,
-                               style=self._config.option.tbstyle)
+                               style=style)
         for secname, content in zip(["out", "err"], outerr):
             if content:
                 repr.addsection("Captured std%s" % secname, content.rstrip())
