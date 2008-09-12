@@ -192,3 +192,17 @@ class TestTerminal(InlineCollection):
                 assert 'FAILURES' not in s
                 assert '--calling--' not in s
                 assert 'IndexError' not in s
+
+    def test_show_path_before_running_test(self):
+        modcol = self.getmodulecol("""
+            def test_foobar():
+                pass
+        """, withsession=True)
+        stringio = py.std.cStringIO.StringIO()
+        rep = TerminalReporter(modcol._config, bus=self.session.bus, file=stringio)
+        l = list(self.session.genitems([modcol]))
+        assert len(l) == 1
+        rep.processevent(event.ItemStart(l[0]))
+        s = popvalue(stringio) 
+        print s
+        assert s.find("test_show_path_before_running_test.py") != -1

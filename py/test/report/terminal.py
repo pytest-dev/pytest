@@ -93,6 +93,11 @@ class TerminalReporter(BaseReporter):
             if ev.host:
                 extra = "-> " + ev.host.hostid
             self.write_ensure_prefix(line, extra)
+        else:
+            # ensure that the path is printed before the 1st test of
+            # a module starts running
+            fspath = ev.item.fspath 
+            self.write_fspath_result(fspath, "")
 
     def rep_RescheduleItems(self, ev):
         if self.config.option.debug:
