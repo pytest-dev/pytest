@@ -103,9 +103,10 @@ class Session(object):
             if self.config.option.exitfirst: 
                 self.shouldstop = True 
 
-    def sessionfinishes(self, exitstatus=0):
+    def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
-        self.bus.notify(event.TestrunFinish(exitstatus=exitstatus))
+        self.bus.notify(event.TestrunFinish(exitstatus=exitstatus,
+                                            excinfo=excinfo))
         self.bus.unsubscribe(self._processfailures)
         #self.reporter.deactivate()
         return self._failurelist 
@@ -123,6 +124,7 @@ class Session(object):
         self.sessionstarts()
         self.bus.notify(makehostup())
         exitstatus = outcome.EXIT_OK
+        captured_excinfo = None
         try:
             for item in self.collect(colitems): 
                 if self.shouldstop: 
@@ -131,13 +133,14 @@ class Session(object):
                     self.runtest(item)
             py.test.collect.Item._setupstate.teardown_all()
         except KeyboardInterrupt:
+            captured_excinfo = py.code.ExceptionInfo()
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             self.bus.notify(event.InternalException())
             exitstatus = outcome.EXIT_INTERNALERROR
         if self._failurelist and exitstatus == 0:
             exitstatus = outcome.EXIT_TESTSFAILED
-        self.sessionfinishes(exitstatus=exitstatus)
+        self.sessionfinishes(exitstatus=exitstatus, excinfo=captured_excinfo)
         return exitstatus
 
     def runpdb(self, excinfo):

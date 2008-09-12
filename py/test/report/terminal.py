@@ -132,6 +132,8 @@ class TerminalReporter(BaseReporter):
         if ev.exitstatus in (0, 1, 2):
             self.summary_failures()
             self.summary_skips()
+        if ev.excrepr is not None:
+            self.summary_final_exc(ev.excrepr)
         if ev.exitstatus == 2:
             self.write_sep("!", "KEYBOARD INTERRUPT")
         self.summary_deselected()
@@ -200,6 +202,13 @@ class TerminalReporter(BaseReporter):
                 self.write_sep("_", "skipped test summary")
                 for num, fspath, lineno, reason in folded_skips:
                     self._tw.line("%s:%d: [%d] %s" %(fspath, lineno, num, reason))
+
+    def summary_final_exc(self, excrepr):
+        self.write_sep("!")
+        if self.config.option.verbose:
+            excrepr.toterminal(self._tw)
+        else:
+            excrepr.reprcrash.toterminal(self._tw)
 
     def out_hostinfo(self):
         self._tw.line("host 0: %s %s - Python %s" %

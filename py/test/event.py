@@ -45,8 +45,12 @@ class TestrunStart(BaseEvent):
         self.timestart = time.time()
 
 class TestrunFinish(BaseEvent):
-    def __init__(self, exitstatus=0):
+    def __init__(self, exitstatus=0, excinfo=None):
         self.exitstatus = exitstatus
+        if excinfo is None:
+            self.excrepr = None
+        else:
+            self.excrepr = excinfo.getrepr()
         self.timeend = time.time()
 
 class InternalException(BaseEvent):

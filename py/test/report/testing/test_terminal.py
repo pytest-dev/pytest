@@ -207,25 +207,41 @@ class TestTerminal(InlineCollection):
         print s
         assert s.find("test_show_path_before_running_test.py") != -1
 
-    def test_keyboard_interrupt(self):
+    def test_keyboard_interrupt(self, verbose=False):
         modcol = self.getmodulecol("""
             def test_foobar():
                 assert 0
             def test_spamegg():
                 import py; py.test.skip('skip me please!')
-        """, configargs=("--showskipsummary",), withsession=True)
+            def test_interrupt_me():
+                raise KeyboardInterrupt   # simulating the user
+        """, configargs=("--showskipsummary",) + ("-v",)*verbose,
+             withsession=True)
         stringio = py.std.cStringIO.StringIO()
         rep = TerminalReporter(modcol._config, bus=self.session.bus, file=stringio)
         rep.processevent(event.TestrunStart())
-        for item in self.session.genitems([modcol]):
-            ev = basic_run_report(item) 
-            rep.processevent(ev)
+        try:
+            for item in self.session.genitems([modcol]):
+                ev = basic_run_report(item) 
+                rep.processevent(ev)
+        except KeyboardInterrupt:
+            excinfo = py.code.ExceptionInfo()
+        else:
+            py.test.fail("no KeyboardInterrupt??")
         s = popvalue(stringio)
-        assert s.find("test_keyboard_interrupt.py Fs") != -1
-        rep.processevent(event.TestrunFinish(exitstatus=2))
+        if not verbose:
+            assert s.find("_keyboard_interrupt.py Fs") != -1
+        rep.processevent(event.TestrunFinish(exitstatus=2, excinfo=excinfo))
         assert_stringio_contains_lines(stringio, [
             "    def test_foobar():",
             ">       assert 0",
             "E       assert 0",
         ])
-        assert "Skipped: 'skip me please!'" in stringio.getvalue()
+        text = stringio.getvalue()
+        assert "Skipped: 'skip me please!'" in text
+        assert "_keyboard_interrupt.py:6: KeyboardInterrupt" in text
+        see_details = "raise KeyboardInterrupt   # simulating the user" in text
+        assert see_details == verbose
+
+    def test_verbose_keyboard_interrupt(self):
+        self.test_keyboard_interrupt(verbose=True)
