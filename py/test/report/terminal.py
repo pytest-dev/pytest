@@ -48,11 +48,20 @@ class TerminalReporter(BaseReporter):
         self.ensure_newline()
         self._tw.sep(sep, title, **markup)
 
+    def getoutcomeletter(self, item):
+        return item.outcome.shortrepr
+
     def getoutcomeword(self, item):
         if item.passed: return self._tw.markup("PASS", green=True)
         elif item.failed: return self._tw.markup("FAIL", red=True)
         elif item.skipped: return "SKIP"
         else: return self._tw.markup("???", red=True)
+
+    def getcollectoutcome(self, item):
+        if item.skipped:
+            return str(item.outcome.longrepr.message)
+        else:
+            return str(item.outcome.longrepr.reprcrash.message)
 
     def rep_InternalException(self, ev):
         for line in str(ev.repr).split("\n"):
@@ -93,7 +102,7 @@ class TerminalReporter(BaseReporter):
         super(TerminalReporter, self).rep_ItemTestReport(ev)
         fspath = ev.colitem.fspath 
         if not self.config.option.verbose:
-            self.write_fspath_result(fspath, ev.outcome.shortrepr)
+            self.write_fspath_result(fspath, self.getoutcomeletter(ev))
         else:
             info = ev.colitem.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
@@ -104,11 +113,8 @@ class TerminalReporter(BaseReporter):
         super(TerminalReporter, self).rep_CollectionReport(ev)
         fspath = ev.colitem.fspath 
         if ev.failed or ev.skipped:
-            if ev.skipped:
-                msg = ev.outcome.longrepr.message
-            else:
-                msg = ev.outcome.longrepr.reprcrash.message
-            self.write_fspath_result(fspath, "- " + str(msg))
+            msg = self.getcollectoutcome(ev)
+            self.write_fspath_result(fspath, "- " + msg)
 
     def rep_TestrunStart(self, ev):
         super(TerminalReporter, self).rep_TestrunStart(ev)
