@@ -129,10 +129,9 @@ class TerminalReporter(BaseReporter):
 
     def rep_TestrunFinish(self, ev):
         self._tw.line("")
-        if ev.exitstatus == 0 or ev.exitstatus == 1:
-            self.summary_failures()
-            self.summary_skips()
-        elif ev.exitstatus == 2:
+        self.summary_failures()
+        self.summary_skips()
+        if ev.exitstatus == 2:
             self.write_sep("!", "KEYBOARD INTERRUPT")
         self.summary_deselected()
         self.summary_stats()

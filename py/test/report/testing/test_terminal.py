@@ -206,3 +206,26 @@ class TestTerminal(InlineCollection):
         s = popvalue(stringio) 
         print s
         assert s.find("test_show_path_before_running_test.py") != -1
+
+    def test_keyboard_interrupt(self):
+        modcol = self.getmodulecol("""
+            def test_foobar():
+                assert 0
+            def test_spamegg():
+                import py; py.test.skip('skip me please!')
+        """, configargs=("--showskipsummary",), withsession=True)
+        stringio = py.std.cStringIO.StringIO()
+        rep = TerminalReporter(modcol._config, bus=self.session.bus, file=stringio)
+        rep.processevent(event.TestrunStart())
+        for item in self.session.genitems([modcol]):
+            ev = basic_run_report(item) 
+            rep.processevent(ev)
+        s = popvalue(stringio)
+        assert s.find("test_keyboard_interrupt.py Fs") != -1
+        rep.processevent(event.TestrunFinish(exitstatus=2))
+        assert_stringio_contains_lines(stringio, [
+            "    def test_foobar():",
+            ">       assert 0",
+            "E       assert 0",
+        ])
+        assert "Skipped: 'skip me please!'" in stringio.getvalue()
