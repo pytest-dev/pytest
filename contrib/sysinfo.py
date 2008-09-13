@@ -65,18 +65,26 @@ class RemoteInfo:
 
     def getcpuinfo(self):
         if self.islinux():
-            return self.exreceive(""" 
-                numcpus = 0
-                model = None
-                for line in open("/proc/cpuinfo"):
-                    if not line.strip(): 
-                        continue
-                    key, value = line.split(":")
-                    key = key.strip()
-                    if key == "processor":
-                        numcpus += 1
-                    elif key == "model name":
-                        model = value.strip()
+            return self.exreceive("""
+                # a hyperthreaded cpu core only counts as 1, although it
+                # is present as 2 in /proc/cpuinfo.  Counting it as 2 is
+                # misleading because it is *by far* not as efficient as
+                # two independent cores.
+                cpus = {}
+                cpuinfo = {}
+                f = open("/proc/cpuinfo")
+                lines = f.readlines()
+                f.close()
+                for line in lines + ['']:
+                    if line.strip():
+                        key, value = line.split(":", 1)
+                        cpuinfo[key.strip()] = value.strip()
+                    else:
+                        corekey = (cpuinfo.get("physical id"),
+                                   cpuinfo.get("core id"))
+                        cpus[corekey] = 1
+                numcpus = len(cpus)
+                model = cpuinfo.get("model name")
                 channel.send((numcpus, model))
             """)
 
