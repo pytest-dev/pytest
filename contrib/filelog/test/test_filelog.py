@@ -3,7 +3,7 @@ import py
 try:
     from filelog import session
 except ImportError:
-    # convenience, make these tests runnable where fielog lives under pypy
+    # convenience, make these tests runnable where filelog lives under pypy
     from pypy.tool.pytest.filelog import session
     
 import os, StringIO
