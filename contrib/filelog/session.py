@@ -1,6 +1,14 @@
+import py
 from py.__.test.session import Session
 from py.__.test import event
 
+def add_filelog_option():
+    py.test.config.addoptions("filelog session options "
+                              "(use --session=FileLogSession)",
+        py.test.config.Option('--filelog', action="store",
+                              default=None, dest="filelog",
+                              help="path for filelog session logging"))
+                              
 
 def generic_path(item):
     chain = item.listchain()
