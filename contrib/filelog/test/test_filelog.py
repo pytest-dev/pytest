@@ -1,7 +1,11 @@
 import py
 
-from filelog import session
-
+try:
+    from filelog import session
+except ImportError:
+    # convenience, make these tests runnable where fielog lives under pypy
+    from pypy.tool.pytest.filelog import session
+    
 import os, StringIO
 
 from py.__.test.collect import Node, Item, FSCollector
