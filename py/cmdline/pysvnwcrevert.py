@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 """\
-py.svnwcrevert WCPATH
+py.svnwcrevert WCPATH [precious...]
 
 Running this script and then 'svn up' puts the working copy WCPATH in a state
 as clean as a fresh check-out.
@@ -14,6 +14,9 @@ or that svn doesn't explicitly know about, including svn:ignored files
 The goal of this script is to leave the working copy with some files and
 directories possibly missing, but - most importantly - in a state where
 the following 'svn up' won't just crash.
+
+Optionally filenames that should be left untouched can be passed as arguments
+too.
 """
 
 import py
@@ -22,7 +25,7 @@ def kill(p, root):
     print '<    %s' % (p.relto(root),)
     p.remove(rec=1)
 
-def svnwcrevert(path, root=None):
+def svnwcrevert(path, root=None, precious=[]):
     if root is None:
         root = path
     wcpath = py.path.svnwc(path)
@@ -32,7 +35,7 @@ def svnwcrevert(path, root=None):
         kill(path, root)
         return
     for p in path.listdir():
-        if p.basename == '.svn':
+        if p.basename == '.svn' or p.basename in precious:
             continue
         wcp = py.path.svnwc(p)
         if wcp not in st.unchanged and wcp not in st.external:
@@ -43,7 +46,7 @@ def svnwcrevert(path, root=None):
 
 def main():
     import sys
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print __doc__
         sys.exit(2)
-    svnwcrevert(py.path.local(sys.argv[1]))
+    svnwcrevert(py.path.local(sys.argv[1]), precious=sys.argv[1:])
