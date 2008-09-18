@@ -4,8 +4,6 @@ import inspect, tokenize
 import py
 cpy_compile = compile 
 
-# DON'T IMPORT PY HERE
-
 class Source(object):
     """ a mutable object holding a source code fragment,
         possibly deindenting it.
