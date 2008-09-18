@@ -1,7 +1,6 @@
 
 import py
 import marshal
-import py
 
 class TestRaises:
     def test_raises(self):
