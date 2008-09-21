@@ -1,7 +1,23 @@
+"""
+
+    collect and run traditional "unittest.py" style tests. 
+
+    drop this conftest.py into your project directory so that
+    all testing directories are below it. 
+
+    you can mix unittest TestCase subclasses and 
+    py.test style tests (discovery based on name). 
+
+    user-extensions such as a custom test_suite() 
+    will not be considered (see XXX). 
+
+$Id: conftest.py 58285 2008-09-21 07:17:00Z hpk $
+"""
 import py
 import unittest
 import sys
-unittest.failureException = AssertionError
+
+__version__ = "$Rev: 58285 $".split()[1]
 
 def configproperty(name):
     def fget(self):
