@@ -4,8 +4,6 @@ Things to do for 1.0.0
 py.test 
 --------------
 
-- simplify collect API
-
 - get APIGEN back to work 
 
 - get web reporter back to work 
@@ -13,6 +11,18 @@ py.test
 - introduce decorator "shouldfail" or "xfail" 
   as to mark a test as "expected to fail", 
   report specially if it surprisingly passes 
+
+- introduce extended skipping, for example:
+
+  py.test.skip(ifexecerror='''
+    import docutils
+    assert docutils.__version__.startswith("0.4")
+  ''')
+
+- introduce setuptools-style version checking, at least
+  for py lib itself, maybe also for other packages: 
+
+     py.checkversion("py>=1.0")
 
 - nightly test runs on multiple platforms 
 

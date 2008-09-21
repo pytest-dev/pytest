@@ -1,5 +1,5 @@
 """
-collect and run traditional "unittest.py" style tests. 
+automatically collect and run traditional "unittest.py" style tests. 
 
 drop this conftest.py into your project directory so that
 all testing directories are below it. 
@@ -11,13 +11,13 @@ user-extensions such as a custom test_suite()
 will not be considered (see XXX). 
 
 $HeadURL: https://codespeak.net/svn/py/trunk/contrib/py_unittest/conftest.py $
-$Id: conftest.py 58286 2008-09-21 07:18:39Z hpk $
+$Id: conftest.py 58288 2008-09-21 08:17:11Z hpk $
 """
 import py
 import unittest
 import sys
 
-__version__ = "$Rev: 58286 $".split()[1]
+__version__ = "$Rev: 58288 $".split()[1]
 
 def configproperty(name):
     def fget(self):
