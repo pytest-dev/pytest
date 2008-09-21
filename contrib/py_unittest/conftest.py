@@ -1,23 +1,23 @@
 """
+collect and run traditional "unittest.py" style tests. 
 
-    collect and run traditional "unittest.py" style tests. 
+drop this conftest.py into your project directory so that
+all testing directories are below it. 
 
-    drop this conftest.py into your project directory so that
-    all testing directories are below it. 
+you can mix unittest TestCase subclasses and 
+py.test style tests (discovery based on name). 
 
-    you can mix unittest TestCase subclasses and 
-    py.test style tests (discovery based on name). 
+user-extensions such as a custom test_suite() 
+will not be considered (see XXX). 
 
-    user-extensions such as a custom test_suite() 
-    will not be considered (see XXX). 
-
-$Id: conftest.py 58285 2008-09-21 07:17:00Z hpk $
+$HeadURL: https://codespeak.net/svn/py/trunk/contrib/py_unittest/conftest.py $
+$Id: conftest.py 58286 2008-09-21 07:18:39Z hpk $
 """
 import py
 import unittest
 import sys
 
-__version__ = "$Rev: 58285 $".split()[1]
+__version__ = "$Rev: 58286 $".split()[1]
 
 def configproperty(name):
     def fget(self):
