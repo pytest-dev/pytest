@@ -1,7 +1,6 @@
 import py
 import unittest
 import sys
-from py.__.test.collect import configproperty as _configproperty
 unittest.failureException = AssertionError
 
 def configproperty(name):
@@ -13,7 +12,7 @@ def configproperty(name):
 class Module(py.test.collect.Module):
     UnitTestCase = configproperty('UnitTestCase')
     def makeitem(self, name, obj, usefilters=True):
-        # XXX add test_suite() support(?)
+        # XXX add generic test_suite() support(?)
         if py.std.inspect.isclass(obj) and issubclass(obj, unittest.TestCase):
             return self.UnitTestCase(name, parent=self)
         elif callable(obj) and getattr(obj, 'func_name', '') == 'test_suite':

@@ -13,11 +13,11 @@ class TestTestCaseInstance(suptest.InlineSession):
         test_one = self.makepyfile(test_one="""
             import unittest
             class MyTestCase(unittest.TestCase):
-                def test_passing(self):
+                def testpassing(self):
                     self.assertEquals('foo', 'foo')
         """)
         sorter = self.parse_and_run(test_one)
-        rep = sorter.getreport("test_passing")
+        rep = sorter.getreport("testpassing")
         assert rep.passed
 
     def test_simple_failing(self):
