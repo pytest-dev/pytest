@@ -1,13 +1,10 @@
 import py
-try:
-    import docutils
-except ImportError:
-    py.test.skip("docutils not present")
 
+from py.__.rest.testing.setup import getdata
+docutils = py.test.importorskip("docutils")
 from py.__.rest import directive
 from py.__.misc import rest
 from py.__.rest.latex import process_rest_file
-from py.__.rest.testing.setup import getdata
 
 def setup_module(mod):
     mod.datadir = getdata()

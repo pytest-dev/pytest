@@ -1,12 +1,10 @@
 import py
-from py.__.path.svn.testing.svntestbase import make_test_repo
+from py.__.path.svn.testing.svntestbase import make_test_repo, getsvnbin
 
-
-if py.path.local.sysfind('svn') is None:
-    py.test.skip("cannot test py.path.svn, 'svn' binary not found")
 
 class TestMakeRepo(object):
     def setup_class(cls):
+        getsvnbin()
         cls.repo = make_test_repo()
         cls.wc = py.path.svnwc(py.test.ensuretemp("test-wc").join("wc"))
 

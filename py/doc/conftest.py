@@ -61,10 +61,7 @@ def deindent(s, sep='\n'):
 _initialized = False
 def checkdocutils():
     global _initialized
-    try:
-        import docutils
-    except ImportError:
-        py.test.skip("docutils not importable")
+    py.test.importorskip("docutils")
     if not _initialized:
         from py.__.rest import directive
         directive.register_linkrole('api', resolve_linkrole)

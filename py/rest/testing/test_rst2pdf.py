@@ -4,11 +4,7 @@ import py
 from py.__.rest.latex import process_configfile, process_rest_file
 from py.__.rest.testing.setup import getdata
 
-try:
-    import docutils
-except ImportError:
-    py.test.skip("docutils not present")
-
+docutils = py.test.importorskip("docutils")
 
 def setup_module(mod):
     if not py.path.local.sysfind("gs") or \

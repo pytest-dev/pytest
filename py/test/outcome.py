@@ -49,30 +49,29 @@ def exit(msg):
     __tracebackhide__ = True
     raise Exit(msg)
 
-def skip(msg="", ifraises=None, ns=None):
-    """ (conditionally) skip this test/module/conftest. 
-       
-    msg: use this message when skipping. 
-    ifraises: 
-        if "exec ifraises in {'py': py}" raises an exception 
-        skip this test. 
-    ns: use this namespace when executing ifraises
-    """
+def skip(msg=""):
+    """ skip with the given message. """
     __tracebackhide__ = True
-    if ifraises is not None:
-        ifraises = py.code.Source(ifraises).compile()
-        if ns is None:
-            ns = {}
-        try:
-            exec ifraises in ns
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except Exception, e:
-            if not msg:
-                msg = repr(e)
-        else:
-            return    
     raise Skipped(msg=msg) 
+
+def importorskip(modname, minversion=None):
+    """ return imported module or skip() """
+    compile(modname, '', 'eval') # to catch syntaxerrors
+    try:
+        mod = __import__(modname)
+    except ImportError:
+        py.test.skip("could not import %r" %(modname,))
+    if minversion is None:
+        return mod
+    verattr = getattr(mod, '__version__', None)
+    if isinstance(minversion, str):
+        minver = minversion.split(".")
+    else:
+        minver = list(minversion)
+    if verattr is None or verattr.split(".") < minver:
+        py.test.skip("module %r has __version__ %r, required is: %r" %(
+                     modname, verattr, minversion))
+    return mod
 
 def fail(msg="unknown failure"):
     """ fail with the given Message. """

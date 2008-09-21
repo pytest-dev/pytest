@@ -59,33 +59,25 @@ def test_deprecated_explicit_call():
     py.test.deprecated_call(dep_explicit, 0)
     py.test.deprecated_call(dep_explicit, 0)
 
-
-
 def test_skip_simple():
     excinfo = py.test.raises(Skipped, 'py.test.skip("xxx")')
     assert excinfo.traceback[-1].frame.code.name == "skip"
     assert excinfo.traceback[-1].ishidden()
 
-def test_skip_ifraises():
-    excinfo = py.test.raises(Skipped, '''
-        py.test.skip(ifraises="""
-            import lky
-        """)
-    ''')
-    assert excinfo.traceback[-1].frame.code.name == "skip"
-    assert excinfo.traceback[-1].ishidden()
-    assert excinfo.value.msg.startswith("ImportError")
-
-def test_skip_ifraises_ns():
-    d = {}
-    py.test.skip(ns=d, ifraises="import py")
-    assert d['py'] == py
-
-def test_skip_ifraises_syntaxerror():
+def test_importorskip():
     try:
-        excinfo = py.test.raises(SyntaxError, '''
-            py.test.skip(ifraises="x y z")''')
+        sys = py.test.importorskip("sys")
+        assert sys == py.std.sys
+        #path = py.test.importorskip("os.path")
+        #assert path == py.std.os.path
+        py.test.raises(Skipped, "py.test.importorskip('alskdj')")
+        py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
+        py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
+        path = py.test.importorskip("py", minversion=".".join(py.__version__))
+        py.test.raises(Skipped, """
+            py.test.importorskip("py", minversion="5.0")
+        """)
     except Skipped:
-        py.test.fail("should not skip")
-    assert not excinfo.traceback[-1].ishidden()
+        print py.code.ExceptionInfo()
+        py.test.fail("spurious skip")
 

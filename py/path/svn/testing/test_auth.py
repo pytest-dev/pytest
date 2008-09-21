@@ -95,6 +95,7 @@ class svnwc_no_svn(py.path.svnwc):
 class TestSvnWCAuth(object):
     def setup_method(self, meth):
         self.auth = SvnAuth('user', 'pass', cache_auth=False)
+        svntestbase.getsvnbin()
 
     def test_checkout(self):
         wc = svnwc_no_svn('foo', auth=self.auth)
@@ -250,6 +251,7 @@ class TestSvnURLAuth(object):
 
 class SvnAuthFunctionalTestBase(object):
     def setup_class(cls):
+        svntestbase.getsvnbin()
         if not option.runslowtests:
             py.test.skip('skipping slow functional tests - use --runslowtests '
                          'to override')

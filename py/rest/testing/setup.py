@@ -8,3 +8,4 @@ def getdata():
     tmpdir = py.test.ensuretemp(rel.replace(pydir.sep, '_'))
     mydatadir.copy(tmpdir)
     return tmpdir
+

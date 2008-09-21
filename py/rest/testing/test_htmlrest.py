@@ -4,16 +4,13 @@ import py
 from py.__.misc import rest
 from py.__.rest.testing.setup import getdata
 
+
 def setup_module(mod):
+    py.test.importorskip("docutils")
     if not py.path.local.sysfind("gs") or \
            not py.path.local.sysfind("dot") or \
            not py.path.local.sysfind("latex"):
         py.test.skip("ghostscript, graphviz and latex needed")
-    try:
-        import docutils
-    except ImportError:
-        py.test.skip("docutils not present")
-
     mod.datadir = getdata()
 
 def test_process_simple():

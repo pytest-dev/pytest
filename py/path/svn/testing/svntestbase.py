@@ -7,6 +7,13 @@ from py.__.path.svn import cache, svncommon
 mypath = py.magic.autopath()
 repodump = mypath.dirpath('repotest.dump')
 
+def getsvnbin():
+    svnbin = py.path.local.sysfind('svn')
+    if svnbin is None:
+        py.test.skip("svn binary not found")
+    return svnbin
+    
+
 # make a wc directory out of a given root url
 # cache previously obtained wcs!
 #

@@ -387,7 +387,7 @@ class TestPyTest(AcceptBase):
 
 class TestInteractive(AcceptBase):
     def getspawn(self):
-        py.test.skip(ifraises="import pexpect", ns=globals())
+        pexpect = py.test.importorskip("pexpect")
         def spawn(cmd):
             return pexpect.spawn(cmd, logfile=self.tmpdir.join("spawn.out").open("w"))
         return spawn

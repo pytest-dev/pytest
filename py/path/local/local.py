@@ -181,7 +181,7 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                     break
         for arg in strargs:
             arg = arg.strip(sep)
-            if py.std.sys.platform == 'win32':
+            if iswin32:
                 # allow unix style paths even on windows.
                 arg = arg.strip('/')
                 arg = arg.replace('/', sep)
@@ -512,7 +512,7 @@ class LocalPath(common.FSPathBase, PlatformMixin):
             if p.check(file=1):
                 return p
         else:
-            if py.std.sys.platform == 'win32':
+            if iswin32:
                 paths = py.std.os.environ['Path'].split(';')
                 try:
                     systemroot = os.environ['SYSTEMROOT']

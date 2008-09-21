@@ -90,20 +90,17 @@ Skipping tests
 ----------------------------------------
 
 If you want to skip tests you can use ``py.test.skip`` within
-test or setup functions.  Examples::
+test or setup functions.  Example::
 
     py.test.skip("message")
-    py.test.skip(ifraises="import docutils")
-    py.test.skip(ifraises="""
-        import somepkg
-        assert somepkg.__version__.startswith("2")
-    """)
 
-The first skip will cause unconditional skipping
-The second skip will only cause skipping if 
-``docutils`` is not importable.  
-The third form will cause skipping if ``somepkg``
-is not importable or is not at least version "2". 
+You can also use a helper to skip on a failing import::
+
+    docutils = py.test.importorskip("docutils")
+
+or to skip if the library does not have the right version::
+
+    docutils = py.test.importorskip("docutils", minversion="0.3")
 
 automatic collection of tests on all levels
 -------------------------------------------

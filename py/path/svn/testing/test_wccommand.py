@@ -1,6 +1,6 @@
 import py
 import sys
-from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc
+from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc, getsvnbin
 from py.__.path.svn.wccommand import InfoSvnWCCommand, XMLWCStatus
 from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
@@ -22,8 +22,7 @@ else:
             return os.path.normpath(os.path.normcase(p))
 
 def setup_module(mod):
-    if py.path.local.sysfind('svn') is None:
-        py.test.skip("cannot test py.path.svn, 'svn' binary not found")
+    getsvnbin()
 
 class TestWCSvnCommandPath(CommonSvnTests):
     def setup_class(cls): 

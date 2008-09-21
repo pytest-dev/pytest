@@ -1,13 +1,12 @@
 import py
 from py.__.path.svn.urlcommand import InfoSvnCommand
 from py.__.path.svn.testing.svntestbase import CommonCommandAndBindingTests, \
-                                               getrepowc
+                                               getrepowc, getsvnbin
 import datetime
 import time
 
 def setup_module(mod):
-    if py.path.local.sysfind('svn') is None:
-        py.test.skip("cannot test py.path.svn, 'svn' binary not found")
+    getsvnbin()
 
 class TestSvnURLCommandPath(CommonCommandAndBindingTests):
     def setup_class(cls): 
