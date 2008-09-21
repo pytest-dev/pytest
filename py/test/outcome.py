@@ -49,19 +49,22 @@ def exit(msg):
     __tracebackhide__ = True
     raise Exit(msg)
 
-def skip(msg="", ifraises=None):
+def skip(msg="", ifraises=None, ns=None):
     """ (conditionally) skip this test/module/conftest. 
        
+    msg: use this message when skipping. 
     ifraises: 
         if "exec ifraises in {'py': py}" raises an exception 
         skip this test. 
-    msg: use this message when skipping. 
+    ns: use this namespace when executing ifraises
     """
     __tracebackhide__ = True
     if ifraises is not None:
         ifraises = py.code.Source(ifraises).compile()
+        if ns is None:
+            ns = {}
         try:
-            exec ifraises in {'py': py}
+            exec ifraises in ns
         except (KeyboardInterrupt, SystemExit):
             raise
         except Exception, e:

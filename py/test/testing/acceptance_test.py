@@ -387,10 +387,7 @@ class TestPyTest(AcceptBase):
 
 class TestInteractive(AcceptBase):
     def getspawn(self):
-        try:
-            import pexpect
-        except ImportError:
-            py.test.skip("cannot import pexpect")
+        py.test.skip(ifraises="import pexpect", ns=globals())
         def spawn(cmd):
             return pexpect.spawn(cmd, logfile=self.tmpdir.join("spawn.out").open("w"))
         return spawn

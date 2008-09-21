@@ -76,6 +76,11 @@ def test_skip_ifraises():
     assert excinfo.traceback[-1].ishidden()
     assert excinfo.value.msg.startswith("ImportError")
 
+def test_skip_ifraises_ns():
+    d = {}
+    py.test.skip(ns=d, ifraises="import py")
+    assert d['py'] == py
+
 def test_skip_ifraises_syntaxerror():
     try:
         excinfo = py.test.raises(SyntaxError, '''
