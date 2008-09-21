@@ -500,9 +500,6 @@ def getrelpath(curdir, dest):
         return dest
 
 
-def depwarn(msg):
-    APIWARN("1.0", msg, stacklevel=2)
-
 def warnoldcollect():
     APIWARN("1.0", 
         "implement collector.collect() instead of "
