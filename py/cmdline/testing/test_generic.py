@@ -47,10 +47,10 @@ def test_cmdline_namespace():
        
 def test_script_invocation():
     if iswin32:
-        for script in binwinpath.listdir("py.*"):
-            assert script.ext == ".cmd"
-            yield checkprocess, script 
+        scripts = binwinpath.listdir("py.*")
     else:
-        for script in binpath.listdir("py.*"):
-            yield checkprocess, script 
-
+        scripts = binpath.listdir("py.*")
+    scripts = [x for x in scripts 
+                if not x.basename.startswith("py.svnwcrevert")]
+    for script in scripts:
+        yield checkprocess, script 

@@ -44,6 +44,8 @@ def svnwcrevert(path, root=None, precious=[]):
             svnwcrevert(p, root)
 
 
+# XXX use optparse, and add a functional test 
+
 def main():
     import sys
     if len(sys.argv) < 2:
