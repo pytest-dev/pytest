@@ -86,6 +86,24 @@ asserts that the given ``Exception`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 
+Skipping tests 
+----------------------------------------
+
+If you want to skip tests you can use ``py.test.skip`` within
+test or setup functions.  Examples::
+
+    py.test.skip("message")
+    py.test.skip(ifraises="import docutils")
+    py.test.skip(ifraises="""
+        import somepkg
+        assert somepkg.__version__.startswith("2")
+    """)
+
+The first skip will cause unconditional skipping
+The second skip will only cause skipping if 
+``docutils`` is not importable.  
+The third form will cause skipping if ``somepkg``
+is not importable or is not at least version "2". 
 
 automatic collection of tests on all levels
 -------------------------------------------

@@ -1,6 +1,7 @@
 
 import py
 import marshal
+from py.__.test.outcome import Skipped
 
 class TestRaises:
     def test_raises(self):
@@ -57,4 +58,29 @@ def test_deprecated_explicit_call_raises():
 def test_deprecated_explicit_call():
     py.test.deprecated_call(dep_explicit, 0)
     py.test.deprecated_call(dep_explicit, 0)
+
+
+
+def test_skip_simple():
+    excinfo = py.test.raises(Skipped, 'py.test.skip("xxx")')
+    assert excinfo.traceback[-1].frame.code.name == "skip"
+    assert excinfo.traceback[-1].ishidden()
+
+def test_skip_ifraises():
+    excinfo = py.test.raises(Skipped, '''
+        py.test.skip(ifraises="""
+            import lky
+        """)
+    ''')
+    assert excinfo.traceback[-1].frame.code.name == "skip"
+    assert excinfo.traceback[-1].ishidden()
+    assert excinfo.value.msg.startswith("ImportError")
+
+def test_skip_ifraises_syntaxerror():
+    try:
+        excinfo = py.test.raises(SyntaxError, '''
+            py.test.skip(ifraises="x y z")''')
+    except Skipped:
+        py.test.fail("should not skip")
+    assert not excinfo.traceback[-1].ishidden()
 

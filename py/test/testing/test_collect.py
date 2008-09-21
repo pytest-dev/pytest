@@ -427,29 +427,13 @@ class Testgenitems:
         ev = failures[0] 
         assert ev.outcome.longrepr.reprcrash.message.startswith("SyntaxError")
 
-    def test_skip_at_module_level(self):
-        self.tmp.ensure("test_module.py").write(py.code.Source("""
-            import py
-            py.test.skip('xxx')
-        """))
-        items, events = self._genitems()
-        funcs = [x for x in items if isinstance(x, event.ItemStart)]
-        assert not funcs 
-        assert not items 
-        l = [x for x in events 
-                if isinstance(x, event.CollectionReport)
-                   and x.colitem.name == 'test_module.py']
-        assert len(l) == 1
-        ev = l[0]
-        assert ev.skipped 
-
     def test_example_items1(self):
         self.tmp.ensure("test_example.py").write(py.code.Source('''
-            def test_one():
+            def testone():
                 pass
 
             class TestX:
-                def test_method_one(self):
+                def testmethod_one(self):
                     pass
 
             class TestY(TestX):
@@ -457,17 +441,17 @@ class Testgenitems:
         '''))
         items, events = self._genitems()
         assert len(items) == 3
-        assert items[0].name == 'test_one'
-        assert items[1].name == 'test_method_one'
-        assert items[2].name == 'test_method_one'
+        assert items[0].name == 'testone'
+        assert items[1].name == 'testmethod_one'
+        assert items[2].name == 'testmethod_one'
 
         # let's also test getmodpath here
-        assert items[0].getmodpath() == "test_one"
-        assert items[1].getmodpath() == "TestX.test_method_one"
-        assert items[2].getmodpath() == "TestY.test_method_one"
+        assert items[0].getmodpath() == "testone"
+        assert items[1].getmodpath() == "TestX.testmethod_one"
+        assert items[2].getmodpath() == "TestY.testmethod_one"
 
         s = items[0].getmodpath(stopatmodule=False)
-        assert s == "test_example_items1.test_example.test_one"
+        assert s == "test_example_items1.test_example.testone"
         print s
 
     def test_collect_doctest_files_with_test_prefix(self):

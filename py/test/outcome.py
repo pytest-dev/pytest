@@ -49,9 +49,26 @@ def exit(msg):
     __tracebackhide__ = True
     raise Exit(msg)
 
-def skip(msg=""):
-    """ skip with the given Message. """
+def skip(msg="", ifraises=None):
+    """ (conditionally) skip this test/module/conftest. 
+       
+    ifraises: 
+        if "exec ifraises in {'py': py}" raises an exception 
+        skip this test. 
+    msg: use this message when skipping. 
+    """
     __tracebackhide__ = True
+    if ifraises is not None:
+        ifraises = py.code.Source(ifraises).compile()
+        try:
+            exec ifraises in {'py': py}
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception, e:
+            if not msg:
+                msg = repr(e)
+        else:
+            return    
     raise Skipped(msg=msg) 
 
 def fail(msg="unknown failure"):
@@ -66,16 +83,15 @@ def raises(ExpectedException, *args, **kwargs):
     __tracebackhide__ = True 
     assert args
     if isinstance(args[0], str):
-        expr, = args
-        assert isinstance(expr, str)
+        code, = args
+        assert isinstance(code, str)
         frame = sys._getframe(1)
         loc = frame.f_locals.copy()
         loc.update(kwargs)
         #print "raises frame scope: %r" % frame.f_locals
-        source = py.code.Source(expr)
         try:
-            exec source.compile() in frame.f_globals, loc
-            #del __traceback__
+            code = py.code.Source(code).compile()
+            exec code in frame.f_globals, loc
             # XXX didn'T mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except ExpectedException:
@@ -85,7 +101,6 @@ def raises(ExpectedException, *args, **kwargs):
         assert callable
         try:
             func(*args[1:], **kwargs)
-            #del __traceback__
         except ExpectedException:
             return py.code.ExceptionInfo()
         k = ", ".join(["%s=%r" % x for x in kwargs.items()])

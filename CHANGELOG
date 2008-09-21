@@ -1,9 +1,14 @@
-$Id: CHANGELOG 57548 2008-08-21 12:12:20Z hpk $
+$Id: CHANGELOG 58297 2008-09-21 12:50:56Z hpk $
 
 Changes between 0.9.2 and 1.0 (UNRELEASED)
 =============================================
 
+* py.test.skip(ifraises=execstring) allows to 
+  conditionally skip, e.g. ifraises="import docutils"
+  will skip if there is no docutils installed. 
+
 * revised internal py.test architecture
+
 * new py.process.ForkedFunc object allowing to 
   fork execution of a function to a sub process
   and getting a result back. 
