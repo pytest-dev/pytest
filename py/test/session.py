@@ -9,6 +9,7 @@ import py
 from py.__.test import event, outcome
 from py.__.test.event import EventBus
 import py.__.test.custompdb
+from py.__.test.resultlog import ResultLog
 
 # used for genitems()
 from py.__.test.outcome import Exit
@@ -34,6 +35,10 @@ class Session(object):
                 print >>f, ev
                 f.flush()
             self.bus.subscribe(eventwrite)
+        resultlog = self.config.option.resultlog
+        if resultlog:
+            f = py.path.local(resultlog).open('w')
+            self.resultlog = ResultLog(self.bus, f)
 
     def fixoptions(self):
         """ check, fix and determine conflicting options. """

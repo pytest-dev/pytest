@@ -181,6 +181,27 @@ class TestSessionAndOptions(suptest.FileCreation):
         s = eventlog.read()
         assert s.find("TestrunStart") != -1
 
+    def test_session_resultlog(self):
+        from py.__.test.collect import Item
+        from py.__.test.runner import OutcomeRepr
+
+        resultlog = self.tmpdir.join("test_session_resultlog")
+        config = py.test.config._reparse([self.tmpdir, 
+                                          '--resultlog=%s' % resultlog])
+
+        session = config.initsession()
+
+        item = Item("a", config=config)
+        outcome = OutcomeRepr('execute', '.', '')
+        rep_ev = event.ItemTestReport(item, passed=outcome)
+      
+        session.bus.notify(rep_ev)
+
+        session.resultlog.logfile.flush()
+        
+        s = resultlog.read()
+        assert s.find(". a") != -1        
+
     def test_tracedir_tracer(self):
         tracedir = self.tmpdir.join("tracedir")
         config = py.test.config._reparse([self.tmpdir, 

@@ -112,5 +112,8 @@ def adddefaultoptions(config):
                "argument pointing to a script)."),
         Option('', '--session',
                action="store", dest="session", default=None,
-               help="lookup given sessioname in conftest.py files and use it."), 
+               help="lookup given sessioname in conftest.py files and use it."),
+        Option('--resultlog', action="store",
+               default=None, dest="resultlog",
+               help="path for machine-readable result log")        
     )
