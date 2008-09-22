@@ -112,3 +112,30 @@ class TestLooponFailing(suptest.InlineCollection):
 
         session.loop_once(loopstate)
         assert len(loopstate.colitems) == 1
+
+    def test_looponfailing_removed_test(self):
+        modcol = self.getmodulecol("""
+            def test_one():
+                assert 0
+            def test_two():
+                assert 0
+        """)
+        session = LooponfailingSession(modcol._config)
+        loopstate = LoopState()
+        session.remotecontrol.setup()
+        loopstate.colitems = []
+        session.loop_once(loopstate)
+        assert len(loopstate.colitems) == 2
+
+        modcol.fspath.write(py.code.Source("""
+            def test_xxx(): # renamed test
+                assert 0 
+            def test_two():
+                assert 1 # pass now
+        """))
+        assert session.statrecorder.check()
+        session.loop_once(loopstate)
+        assert len(loopstate.colitems) == 0
+
+        session.loop_once(loopstate)
+        assert len(loopstate.colitems) == 1

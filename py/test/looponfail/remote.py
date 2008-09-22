@@ -137,8 +137,14 @@ def slave_runsession(channel, config, width, hasmarkup):
     session.reporter._tw.hasmarkup = hasmarkup
     session.reporter._tw.fullwidth = width
     if trails:
-        colitems = [py.test.collect.Collector._fromtrail(x, config)
-                        for x in trails]
+        colitems = []
+        for trail in trails:
+            try:
+                colitem = py.test.collect.Collector._fromtrail(trail, config)
+            except AssertionError, e:  
+                #XXX session.bus.notify of "test disappeared"
+                continue 
+            colitems.append(colitem)
     else:
         colitems = None
     session.shouldclose = channel.isclosed 
