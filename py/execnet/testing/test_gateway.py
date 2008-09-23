@@ -516,8 +516,6 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
             
     def test_waitclose_on_remote_killed(self):
         py.test.skip("fix needed: dying remote process does not cause waitclose() to fail")
-        if not hasattr(py.std.os, 'kill'):
-            py.test.skip("no os.kill")
         gw = py.execnet.PopenGateway()
         channel = gw.remote_exec("""
             import os
@@ -527,7 +525,7 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
                 channel.send("#" * 100)
         """)
         remotepid = channel.receive()
-        os.kill(remotepid, 9)
+        py.process.kill(remotepid)
         py.test.raises(channel.RemoteError, "channel.waitclose(TESTTIMEOUT)")
         py.test.raises(EOFError, channel.send, None)
         py.test.raises(EOFError, channel.receive)

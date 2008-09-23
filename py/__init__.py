@@ -26,8 +26,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 58308 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-09-21 17:15:28 +0200 (Sun, 21 Sep 2008) $',
+    revision = int('$LastChangedRevision: 58385 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2008-09-23 16:28:13 +0200 (Tue, 23 Sep 2008) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -99,6 +99,7 @@ initpkg(__name__,
 
     'process.__doc__'        : ('./process/__init__.py', '__doc__'),
     'process.cmdexec'        : ('./process/cmdexec.py', 'cmdexec'),
+    'process.kill'           : ('./process/killproc.py', 'kill'),
     'process.ForkedFunc'     : ('./process/forkedfunc.py', 'ForkedFunc'), 
 
     # path implementation

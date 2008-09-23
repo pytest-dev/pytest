@@ -3,7 +3,6 @@ from py.path import SvnAuth
 import svntestbase
 from threading import Thread
 import time
-from py.__.misc.killproc import killproc
 from py.__.conftest import option
 
 def make_repo_auth(repo, userdata):
@@ -269,6 +268,10 @@ class SvnAuthFunctionalTestBase(object):
                                            func_name))
         self.auth = py.path.SvnAuth('johnny', 'foo', cache_auth=False,
                                     interactive=False)
+        self.port, self.pid = self._start_svnserve()
+
+    def teardown_method(self, method):
+        py.process.kill(self.pid)
 
     def _start_svnserve(self):
         make_repo_auth(self.repopath, {'johnny': ('foo', 'rw')})
@@ -279,203 +282,168 @@ class SvnAuthFunctionalTestBase(object):
 
 class TestSvnWCAuthFunctional(SvnAuthFunctionalTestBase):
     def test_checkout_constructor_arg(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, auth=self.auth)
-            wc.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename))
-            assert wc.join('.svn').check()
-        finally:
-            # XXX can we do this in a teardown_method too? not sure if that's
-            # guaranteed to get called...
-            killproc(pid)
+        port = self.port
+        wc = py.path.svnwc(self.temppath, auth=self.auth)
+        wc.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename))
+        assert wc.join('.svn').check()
 
     def test_checkout_function_arg(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, auth=self.auth)
-            wc.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename))
-            assert wc.join('.svn').check()
-        finally:
-            killproc(pid)
+        port = self.port
+        wc = py.path.svnwc(self.temppath, auth=self.auth)
+        wc.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename))
+        assert wc.join('.svn').check()
 
     def test_checkout_failing_non_interactive(self):
-        port, pid = self._start_svnserve()
-        try:
-            auth = py.path.SvnAuth('johnny', 'bar', cache_auth=False,
-                                   interactive=False)
-            wc = py.path.svnwc(self.temppath, auth)
-            py.test.raises(Exception,
-                ("wc.checkout('svn://localhost:%s/%s' % "
-                 "(port, self.repopath.basename))"))
-        finally:
-            killproc(pid)
+        port = self.port
+        auth = py.path.SvnAuth('johnny', 'bar', cache_auth=False,
+                               interactive=False)
+        wc = py.path.svnwc(self.temppath, auth)
+        py.test.raises(Exception,
+            ("wc.checkout('svn://localhost:%s/%s' % "
+             "(port, self.repopath.basename))"))
 
     def test_log(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, self.auth)
-            wc.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename))
-            foo = wc.ensure('foo.txt')
-            wc.commit('added foo.txt')
-            log = foo.log()
-            assert len(log) == 1
-            assert log[0].msg == 'added foo.txt'
-        finally:
-            killproc(pid)
+        port = self.port
+        wc = py.path.svnwc(self.temppath, self.auth)
+        wc.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename))
+        foo = wc.ensure('foo.txt')
+        wc.commit('added foo.txt')
+        log = foo.log()
+        assert len(log) == 1
+        assert log[0].msg == 'added foo.txt'
 
     def test_switch(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, auth=self.auth)
-            svnurl = 'svn://localhost:%s/%s' % (port, self.repopath.basename)
-            wc.checkout(svnurl)
-            wc.ensure('foo', dir=True).ensure('foo.txt').write('foo')
-            wc.commit('added foo dir with foo.txt file')
-            wc.ensure('bar', dir=True)
-            wc.commit('added bar dir')
-            bar = wc.join('bar')
-            bar.switch(svnurl + '/foo')
-            assert bar.join('foo.txt')
-        finally:
-            killproc(pid)
+        port = self.port
+        wc = py.path.svnwc(self.temppath, auth=self.auth)
+        svnurl = 'svn://localhost:%s/%s' % (port, self.repopath.basename)
+        wc.checkout(svnurl)
+        wc.ensure('foo', dir=True).ensure('foo.txt').write('foo')
+        wc.commit('added foo dir with foo.txt file')
+        wc.ensure('bar', dir=True)
+        wc.commit('added bar dir')
+        bar = wc.join('bar')
+        bar.switch(svnurl + '/foo')
+        assert bar.join('foo.txt')
 
     def test_update(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc1 = py.path.svnwc(self.temppath.ensure('wc1', dir=True),
-                                auth=self.auth)
-            wc2 = py.path.svnwc(self.temppath.ensure('wc2', dir=True),
-                                auth=self.auth)
-            wc1.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename))
-            wc2.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename))
-            wc1.ensure('foo', dir=True)
-            wc1.commit('added foo dir')
-            wc2.update()
-            assert wc2.join('foo').check()
+        port = self.port
+        wc1 = py.path.svnwc(self.temppath.ensure('wc1', dir=True),
+                            auth=self.auth)
+        wc2 = py.path.svnwc(self.temppath.ensure('wc2', dir=True),
+                            auth=self.auth)
+        wc1.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename))
+        wc2.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename))
+        wc1.ensure('foo', dir=True)
+        wc1.commit('added foo dir')
+        wc2.update()
+        assert wc2.join('foo').check()
 
-            auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
-            wc2.auth = auth
-            py.test.raises(Exception, 'wc2.update()')
-        finally:
-            killproc(pid)
+        auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
+        wc2.auth = auth
+        py.test.raises(Exception, 'wc2.update()')
 
     def test_lock_unlock_status(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, auth=self.auth)
-            wc.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename,))
-            wc.ensure('foo', file=True)
-            wc.commit('added foo file')
-            foo = wc.join('foo')
-            foo.lock()
-            status = foo.status()
-            assert status.locked
-            foo.unlock()
-            status = foo.status()
-            assert not status.locked
+        port = self.port
+        wc = py.path.svnwc(self.temppath, auth=self.auth)
+        wc.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename,))
+        wc.ensure('foo', file=True)
+        wc.commit('added foo file')
+        foo = wc.join('foo')
+        foo.lock()
+        status = foo.status()
+        assert status.locked
+        foo.unlock()
+        status = foo.status()
+        assert not status.locked
 
-            auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
-            foo.auth = auth
-            py.test.raises(Exception, 'foo.lock()')
-            py.test.raises(Exception, 'foo.unlock()')
-        finally:
-            killproc(pid)
+        auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
+        foo.auth = auth
+        py.test.raises(Exception, 'foo.lock()')
+        py.test.raises(Exception, 'foo.unlock()')
 
     def test_diff(self):
-        port, pid = self._start_svnserve()
-        try:
-            wc = py.path.svnwc(self.temppath, auth=self.auth)
-            wc.checkout(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename,))
-            wc.ensure('foo', file=True)
-            wc.commit('added foo file')
-            wc.update()
-            rev = int(wc.status().rev)
-            foo = wc.join('foo')
-            foo.write('bar')
-            diff = foo.diff()
-            assert '\n+bar\n' in diff
-            foo.commit('added some content')
-            diff = foo.diff()
-            assert not diff
-            diff = foo.diff(rev=rev)
-            assert '\n+bar\n' in diff
+        port = self.port
+        wc = py.path.svnwc(self.temppath, auth=self.auth)
+        wc.checkout(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename,))
+        wc.ensure('foo', file=True)
+        wc.commit('added foo file')
+        wc.update()
+        rev = int(wc.status().rev)
+        foo = wc.join('foo')
+        foo.write('bar')
+        diff = foo.diff()
+        assert '\n+bar\n' in diff
+        foo.commit('added some content')
+        diff = foo.diff()
+        assert not diff
+        diff = foo.diff(rev=rev)
+        assert '\n+bar\n' in diff
 
-            auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
-            foo.auth = auth
-            py.test.raises(Exception, 'foo.diff(rev=rev)')
-        finally:
-            killproc(pid)
+        auth = py.path.SvnAuth('unknown', 'unknown', interactive=False)
+        foo.auth = auth
+        py.test.raises(Exception, 'foo.diff(rev=rev)')
 
 class TestSvnURLAuthFunctional(SvnAuthFunctionalTestBase):
     def test_listdir(self):
-        port, pid = self._start_svnserve()
-        try:
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=self.auth)
-            u.ensure('foo')
-            paths = u.listdir()
-            assert len(paths) == 1
-            assert paths[0].auth is self.auth
+        port = self.port
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=self.auth)
+        u.ensure('foo')
+        paths = u.listdir()
+        assert len(paths) == 1
+        assert paths[0].auth is self.auth
 
-            auth = SvnAuth('foo', 'bar', interactive=False)
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=auth)
-            py.test.raises(Exception, 'u.listdir()')
-        finally:
-            killproc(pid)
+        auth = SvnAuth('foo', 'bar', interactive=False)
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=auth)
+        py.test.raises(Exception, 'u.listdir()')
 
     def test_copy(self):
-        port, pid = self._start_svnserve()
-        try:
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=self.auth)
-            foo = u.ensure('foo')
-            bar = u.join('bar')
-            foo.copy(bar)
-            assert bar.check()
-            assert bar.auth is self.auth
+        port = self.port
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=self.auth)
+        foo = u.ensure('foo')
+        bar = u.join('bar')
+        foo.copy(bar)
+        assert bar.check()
+        assert bar.auth is self.auth
 
-            auth = SvnAuth('foo', 'bar', interactive=False)
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=auth)
-            foo = u.join('foo')
-            bar = u.join('bar')
-            py.test.raises(Exception, 'foo.copy(bar)')
-        finally:
-            killproc(pid)
+        auth = SvnAuth('foo', 'bar', interactive=False)
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=auth)
+        foo = u.join('foo')
+        bar = u.join('bar')
+        py.test.raises(Exception, 'foo.copy(bar)')
 
     def test_write_read(self):
-        port, pid = self._start_svnserve()
+        port = self.port
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=self.auth)
+        foo = u.ensure('foo')
+        fp = foo.open()
         try:
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=self.auth)
-            foo = u.ensure('foo')
-            fp = foo.open()
-            try:
-                data = fp.read()
-            finally:
-                fp.close()
-            assert data == ''
-
-            auth = SvnAuth('foo', 'bar', interactive=False)
-            u = py.path.svnurl(
-                'svn://localhost:%s/%s' % (port, self.repopath.basename),
-                auth=auth)
-            foo = u.join('foo')
-            py.test.raises(Exception, 'foo.open()')
+            data = fp.read()
         finally:
-            killproc(pid)
+            fp.close()
+        assert data == ''
+
+        auth = SvnAuth('foo', 'bar', interactive=False)
+        u = py.path.svnurl(
+            'svn://localhost:%s/%s' % (port, self.repopath.basename),
+            auth=auth)
+        foo = u.join('foo')
+        py.test.raises(Exception, 'foo.open()')
 
     # XXX rinse, repeat... :|
