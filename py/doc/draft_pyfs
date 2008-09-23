@@ -1,0 +1,79 @@
+
+Let's do a walk through a memory filesystem. 
+
+.. >>> import py
+
+
+working with directories
+---------------------------------
+
+Let's create some directories and list them from memory::
+
+>>> fs = py.fs.MemoryFS()
+>>> fs.mkdir("x")
+>>> fs.mkdir("y")
+>>> fs.listdir()
+['x', 'y']
+
+
+Creating, removing and reading files
+---------------------------------------------
+
+>>> f = fs.open('x/file', 'w')
+>>> f.write("hello world")
+>>> f.close()
+>>> fs.listdir("x")
+['file']
+>>> f = fs.open("x/file", 'r')
+>>> f.readlines()
+['hello world']
+>>> f.seek(6)
+>>> f.read(3)
+"wor"
+>>> f.read()
+"ld"
+>>> f.close()
+>>> fs.remove("y")
+>>> fs.listdir()
+['x']
+>>> fs.remove("non-existent")
+py.error.ENOENT 
+
+stat / checking for meta information 
+---------------------------------------
+
+>>> stat = memory.stat("x")
+>>> stat.isdir()
+True
+>>> stat.isfile()
+False
+>>> stat.exists()
+True
+>>> stat.islink()
+False
+
+Linking to other objects 
+--------------------------------------------------------
+
+First an example how to link internally, i.e. within the 
+filesystem. 
+
+>>> fs.link("newitem", "x")
+>>> fs.stat("newitem").islink()
+True
+>>> fs.stat("newitem").isfile()
+True
+>>> fs.remove("newitem")  # only deletes the link itself
+>>> fs.stat("x").exists()
+
+cross-filesystem references 
+---------------------------------
+
+>>> otherfs = py.fs.MemoryFS()
+
+XXX 
+
+>>> fs.setproxy("newitem", otherfs, "otheritem")
+>>> fs.stat("newitem").exists()
+False
+>>> otherfs.mkdir("otheritem")

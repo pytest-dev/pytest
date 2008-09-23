@@ -90,7 +90,7 @@ decreased considerably.
 Refactor path implementations to use a Filesystem Abstraction 
 ============================================================= 
 
-It seems like a good idea to refactor all python implementations to
+It seems like a good idea to refactor all `py.path`_ Path implementations to
 use an internal Filesystem abstraction.  The current code base
 would be transformed to have Filesystem implementations for e.g. 
 local, subversion and subversion "working copy" filesystems. Today 
@@ -110,6 +110,20 @@ even become interesting to think about interfacing to
 `reiserfs v4 features`_ at the Filesystem level but that
 is a can of subsequent worms).  
 
+Also interesting to check out is Will McGugan's work on 
+his `fs package`_.  
+
+I think the main question is what the very fundamental 
+filesystem API should look like.  Here are some doctests
+on how a `draft py.fs`_ could look like.  There also 
+is Matthew Scotts `dictproxy patch`_ which adds 
+``py.path.dict`` and ``py.path.proxy``. 
+
+
+.. _`dictproxy patch`: http://codespeak.net/pipermail/py-dev/attachments/20050128/d9595512/virtual1-0001.bin
+.. _`draft py.fs`: draft_pyfs
+.. _`py.path`: http://codespeak.net/py/dist/path.html
+.. _`fs package`: http://www.willmcgugan.com/2008/09/21/announcing-fs-010-a-python-file-system/#comment-60276
 .. _`memoryfs`: http://codespeak.net/svn/user/arigo/hack/pyfuse/memoryfs.py
 .. _`dictfs`: http://codespeak.net/pipermail/py-dev/2005-January/000191.html 
 .. _`pylufs`: http://codespeak.net/svn/user/arigo/hack/pylufs/
