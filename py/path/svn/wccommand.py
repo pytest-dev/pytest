@@ -9,8 +9,6 @@ svn-Command based Implementation of a Subversion WorkingCopy Path.
 """
 
 import os, sys, time, re, calendar
-from xml.dom import minidom
-from xml.parsers.expat import ExpatError
 import py
 from py.__.path import common
 from py.__.path.svn import cache
@@ -481,13 +479,10 @@ if verbose is True, then the LogEntry instances also know which files changed.
                                            'svn log --xml %s %s %s "%s"' % (
                                             rev_opt, verbose_opt, auth_opt,
                                             self.strpath))
-        from xml.dom import minidom
-        from xml.parsers.expat import ExpatError
+        minidom,ExpatError = importxml()
         try:
             tree = minidom.parse(stdout)
         except ExpatError:
-            # XXX not entirely sure about this exception... shouldn't it be
-            # some py.error.* something?
             raise ValueError('no such revision')
         result = []
         for logentry in filter(None, tree.firstChild.childNodes):
@@ -645,6 +640,7 @@ class XMLWCStatus(WCStatus):
         # unchanged ones in the status object so this is far from ideal
         rootstatus = WCStatus(rootwcpath, rev, modrev, author)
         update_rev = None
+        minidom, ExpatError = importxml()
         try:
             doc = minidom.parseString(data)
         except ExpatError, e:
@@ -809,3 +805,10 @@ def make_recursive_propdict(wcroot,
 def error_enhance((cls, error, tb)):
     raise cls, error, tb
 
+def importxml(cache=[]):
+    if cache:
+        return cache
+    from xml.dom import minidom
+    from xml.parsers.expat import ExpatError
+    cache.extend([minidom, ExpatError])
+    return cache
