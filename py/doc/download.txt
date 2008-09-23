@@ -12,8 +12,9 @@ will trigger an upgrade if you already have an older version installed.
 The py lib and its tools are expected to work well on Linux,
 Windows and OSX, Python versions 2.3, 2.4, 2.5 and 2.6.
 
-Note that we provide binary eggs for Windows machines - on
-non-Windows systems you need a working C-compiler in order to
+We provide binary eggs for Windows machines. 
+
+On other systems you need a working C-compiler in order to
 install the full py lib.  If you don't have a compiler available 
 you can still install the py lib but without greenlets - look 
 below for the ``install_lib`` target. 
@@ -25,7 +26,20 @@ This will check that no previous files are getting in the way.
 (Unfortunately we don't know about a way to execute this 
 code automatically during the above install). 
 
+Installing on Debian or Fedora 
+===================================
+
+On Debian systems look for ``python-codespeak-lib``.
+*This package is probably outdated - if somebody 
+can help with bringing this up to date, 
+that would be very much appreciated.*
+
+Dwayne Bailey has thankfully put together a Fedora `RPM`_. 
+
+.. _`RPM`: http://translate.sourceforge.net/releases/testing/fedora/pylib-0.9.2-1.fc9.noarch.rpm
+
 .. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
+
 
 Downloading a tar/zip archive and installing that
 ===================================================
