@@ -199,7 +199,7 @@ Currently these are:
  * subprocess
  * textwrap
 
-They are used by replacing the normal ``import ...`` byr
+They are used by replacing the normal ``import ...`` by
 ``from py.compat import ...``.
 
 :api:`py.builtin`
