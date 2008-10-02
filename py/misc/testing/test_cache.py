@@ -27,6 +27,12 @@ class TestBuildcostAccess(BasicCacheAPITest):
 
     def test_cache_works_somewhat_simple(self):
         cache = BuildcostAccessCache()
+        # the default ._time() call used by
+        # BuildcostAccessCache.build can 
+        # result into time()-time() == 0 which makes the below
+        # test fail randomly.  Let's rather use incrementing
+        # numbers instead. 
+        cache._time = py.std.itertools.count().next
         for x in range(cache.maxentries):
             y = cache.getorbuild(x, lambda: x)
             assert x == y

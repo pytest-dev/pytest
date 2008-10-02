@@ -107,9 +107,6 @@ class BuildcostAccessCache(BasicCache):
     # time function to use for measuring build-times
     _time = gettime
 
-    def __init__(self, maxentries=64):
-        super(BuildcostAccessCache, self).__init__(maxentries)
-
     def build(self, key, builder, *args, **kwargs):
         start = self._time()
         val = builder(*args, **kwargs)
