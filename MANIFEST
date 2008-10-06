@@ -2,6 +2,7 @@ CHANGELOG
 LICENSE
 MANIFEST
 README.txt
+TODO.txt
 ez_setup.py
 py/LICENSE
 py/__init__.py
@@ -67,12 +68,14 @@ py/bin/py.cleanup
 py/bin/py.countloc
 py/bin/py.lookup
 py/bin/py.rest
+py/bin/py.svnwcrevert
 py/bin/py.test
 py/bin/py.which
 py/bin/win32/py.cleanup.cmd
 py/bin/win32/py.countloc.cmd
 py/bin/win32/py.lookup.cmd
 py/bin/win32/py.rest.cmd
+py/bin/win32/py.svnwcrevert.cmd
 py/bin/win32/py.test.cmd
 py/bin/win32/py.which.cmd
 py/builtin/__init__.py
@@ -112,6 +115,7 @@ py/cmdline/pycleanup.py
 py/cmdline/pycountloc.py
 py/cmdline/pylookup.py
 py/cmdline/pyrest.py
+py/cmdline/pysvnwcrevert.py
 py/cmdline/pytest.py
 py/cmdline/pywhich.py
 py/cmdline/testing/__init__.py
@@ -146,7 +150,6 @@ py/compat/testing/test_subprocess.py
 py/compat/testing/test_textwrap.py
 py/compat/textwrap.py
 py/conftest.py
-py/doc/TODO.txt
 py/doc/__init__.py
 py/doc/apigen.txt
 py/doc/apigen_refactorings.txt
@@ -246,7 +249,6 @@ py/misc/difftime.py
 py/misc/dynpkg.py
 py/misc/error.py
 py/misc/findmissingdocstrings.py
-py/misc/killproc.py
 py/misc/rest.py
 py/misc/std.py
 py/misc/svnlook.py
@@ -257,10 +259,11 @@ py/misc/testing/test_api.py
 py/misc/testing/test_cache.py
 py/misc/testing/test_error.py
 py/misc/testing/test_initpkg.py
-py/misc/testing/test_oskill.py
 py/misc/testing/test_std.py
 py/misc/testing/test_svnlook.py
 py/misc/testing/test_terminal.py
+py/misc/testing/test_warn.py
+py/misc/warn.py
 py/path/__init__.py
 py/path/common.py
 py/path/gateway/TODO.txt
@@ -297,9 +300,11 @@ py/path/testing/test_api.py
 py/process/__init__.py
 py/process/cmdexec.py
 py/process/forkedfunc.py
+py/process/killproc.py
 py/process/testing/__init__.py
 py/process/testing/test_cmdexec.py
 py/process/testing/test_forkedfunc.py
+py/process/testing/test_killproc.py
 py/rest/__init__.py
 py/rest/convert.py
 py/rest/directive.py
@@ -369,6 +374,7 @@ py/test/report/webdata/index.html
 py/test/report/webdata/json.py
 py/test/report/webdata/source.js
 py/test/report/webjs.py
+py/test/resultlog.py
 py/test/runner.py
 py/test/session.py
 py/test/testing/__init__.py
@@ -387,9 +393,15 @@ py/test/testing/test_deprecated_api.py
 py/test/testing/test_doctest.py
 py/test/testing/test_event.py
 py/test/testing/test_outcome.py
+py/test/testing/test_recording.py
+py/test/testing/test_resultlog.py
 py/test/testing/test_runner_functional.py
 py/test/testing/test_session.py
 py/test/testing/test_setup_nested.py
+py/test/web/__init__.py
+py/test/web/exception.py
+py/test/web/post_multipart.py
+py/test/web/webcheck.py
 py/thread/__init__.py
 py/thread/io.py
 py/thread/pool.py

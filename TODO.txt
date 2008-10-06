@@ -4,6 +4,11 @@ Things to do for 1.0.0
 py.test 
 --------------
 
+- compatilibity: honour item.run() method of test items (so far
+  probably only execute() is warned about)
+
+- turn deprecation / apiwarnings into events, report them at the end? 
+
 - get APIGEN back to work 
 
 - get web reporter back to work 

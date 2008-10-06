@@ -1,8 +1,11 @@
-$Id: CHANGELOG 58308 2008-09-21 15:15:28Z hpk $
+$Id: CHANGELOG 58690 2008-10-06 19:50:35Z hpk $
 
 Changes between 0.9.2 and 1.0 (UNRELEASED)
 =============================================
 
+* teardown_method is now guaranteed to get 
+  called after a test method has run. 
+ 
 * new method: py.test.importorskip(mod,minversion)
   will either import or call py.test.skip()
 
