@@ -351,6 +351,8 @@ raise ValueError()
             
             def exconly(self, tryshort):
                 return "EXC"
+            def errisinstance(self, cls):
+                return False 
 
         excinfo = FakeExcinfo()
         class FakeRawTB(object):

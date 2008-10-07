@@ -194,7 +194,9 @@ class FormattedExcinfo(object):
         traceback = excinfo.traceback 
         if self.tbfilter:
             traceback = traceback.filter()
-        recursionindex = traceback.recursionindex()
+        recursionindex = None
+        if excinfo.errisinstance(RuntimeError):
+            recursionindex = traceback.recursionindex()
         last = traceback[-1]
         entries = []
         extraline = None
