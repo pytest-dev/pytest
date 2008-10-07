@@ -403,15 +403,16 @@ class TestInteractive(AcceptBase):
         spawn = self.getspawn()
         self.makepyfile(test_one="""
             def test_1():
+                #hello
                 assert 1 == 0 
         """)
        
         child = spawn("%s %s --pdb test_one.py" % (py.std.sys.executable, 
                       pytestpath))
         child.timeout = EXPECTTIMEOUT
-        child.expect("(Pdb)")
-        child.sendline("l")
         child.expect(".*def test_1.*")
+        child.expect(".*hello.*")
+        child.expect("(Pdb)")
         child.sendeof()
         child.expect("failures: 1")
         if child.isalive(): 

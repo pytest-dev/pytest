@@ -72,11 +72,14 @@ class ItemRunner(RobustRun):
     def makereport(self, res, when, excinfo, outerr):
         if excinfo: 
             kw = self.getkw(when, excinfo, outerr)
-            if self.pdb and kw.get('failed', 0):
-                self.pdb(excinfo)
         else:
             kw = {'passed': OutcomeRepr(when, '.', "")}
-        return event.ItemTestReport(self.colitem, **kw)
+        testrep = event.ItemTestReport(self.colitem, **kw)
+        if self.pdb and testrep.failed:
+            tw = py.io.TerminalWriter()
+            testrep.toterminal(tw)
+            self.pdb(excinfo)
+        return testrep
 
 class CollectorRunner(RobustRun):
     def setup(self):
