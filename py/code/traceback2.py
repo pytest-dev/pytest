@@ -58,7 +58,9 @@ class TracebackEntry(object):
         if source is None:
             try:
                 sourcelines, lineno = py.std.inspect.findsource(self.frame.code.raw)
-            except IOError:
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
                 return None
             source = py.code.Source()
             source.lines = map(str.rstrip, sourcelines)
