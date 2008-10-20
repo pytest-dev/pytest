@@ -56,13 +56,19 @@ class Pdb(pdb.Pdb):
                 return None
         return linecache.getline(filename, lineno)
 
+    def get_stack(self, f, t):
+        # Modified from bdb.py to be able to walk the stack beyond generators,
+        # which does not work in the normal pdb :-(
+        stack, i = pdb.Pdb.get_stack(self, f, t)
+        if f is None:
+            i = max(0, len(stack) - 1)
+        return stack, i
+
 def post_mortem(t):
-    # again, a copy of the version in pdb.py
+    # modified from pdb.py for the new get_stack() implementation
     p = Pdb()
     p.reset()
-    while t.tb_next is not None:
-        t = t.tb_next
-    p.interaction(t.tb_frame, t)
+    p.interaction(None, t)
 
 def set_trace():
     # again, a copy of the version in pdb.py
