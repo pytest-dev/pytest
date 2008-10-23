@@ -4,8 +4,29 @@ Things to do for 1.0.0
 py.test 
 --------------
 
-- compatilibity: honour item.run() method of test items (so far
-  probably only execute() is warned about)
+- compatilibity: honour/warn item.run() method of test items (so far
+  probably only execute() is warned about or the other way round)
+
+- introduce plugin arch, port to plugins:
+  - importorskip 
+  - filelog 
+  - chtmpdir per method 
+  - apigen 
+  - xfail 
+  - acceptance/assertlines 
+  - dist-testing? 
+
+- introduce setuptools-style version checking, at least
+  for py lib itself, maybe also for other packages: 
+
+     py.checkversion("py>=1.0")
+
+- generative tests: it is somewhat misleading for 
+  the classical htmlviews that generated tests are identified 
+  by numbers rather than by its parameters.  unclear how
+  to fix this because we may not always be able to assume
+  that we can identify a generated tests by using its parameters
+  (it might not be hashable, doesn't have a sensical repr ...?)
 
 - turn deprecation / apiwarnings into events, report them at the end? 
 
@@ -16,11 +37,6 @@ py.test
 - introduce decorator "shouldfail" or "xfail" 
   as to mark a test as "expected to fail", 
   report specially if it surprisingly passes 
-
-- introduce setuptools-style version checking, at least
-  for py lib itself, maybe also for other packages: 
-
-     py.checkversion("py>=1.0")
 
 - nightly test runs on multiple platforms 
 
