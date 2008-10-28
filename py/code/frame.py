@@ -50,6 +50,9 @@ class Frame(object):
         """
         retval = []
         for arg in self.code.getargs():
-            retval.append((arg, self.f_locals[arg]))
+            try:
+                retval.append((arg, self.f_locals[arg]))
+            except KeyError:
+                pass     # this can occur when using Psyco
         return retval
 
