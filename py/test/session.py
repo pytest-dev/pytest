@@ -37,7 +37,7 @@ class Session(object):
             self.bus.subscribe(eventwrite)
         resultlog = self.config.option.resultlog
         if resultlog:
-            f = py.path.local(resultlog).open('w')
+            f = open(resultlog, 'w', 1) # line buffered
             self.resultlog = ResultLog(self.bus, f)
 
     def fixoptions(self):

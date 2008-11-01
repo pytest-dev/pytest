@@ -196,8 +196,6 @@ class TestSessionAndOptions(suptest.FileCreation):
         rep_ev = event.ItemTestReport(item, passed=outcome)
       
         session.bus.notify(rep_ev)
-
-        session.resultlog.logfile.flush()
         
         s = resultlog.read()
         assert s.find(". a") != -1        

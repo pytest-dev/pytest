@@ -28,7 +28,7 @@ class ResultLog(object):
 
     def __init__(self, bus, logfile):
         bus.subscribe(self.log_event_to_file)
-        self.logfile = logfile #open(logpath, 'w') # line buffering ?
+        self.logfile = logfile # preferably line buffered
 
     def write_log_entry(self, shortrepr, name, longrepr):
         print >>self.logfile, "%s %s" % (shortrepr, name)
