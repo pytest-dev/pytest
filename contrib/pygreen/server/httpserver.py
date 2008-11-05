@@ -1,6 +1,6 @@
 import BaseHTTPServer
-from py.__.green import greensock2
-from py.__.green.pipe.gsocket import GreenSocket
+from pygreen import greensock2
+from pygreen.pipe.gsocket import GreenSocket
 
 
 class GreenMixIn:
