@@ -91,7 +91,10 @@ class FormattedExcinfo(object):
         except KeyboardInterrupt: 
             raise 
         except:
-            s = str(source[-1])
+            try:
+                s = str(source[-1])
+            except:
+                return 0
         return 4 + (len(s) - len(s.lstrip()))
 
     def _getentrysource(self, entry):
