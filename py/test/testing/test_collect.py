@@ -152,6 +152,48 @@ class TestCollect(suptest.InlineCollection):
         assert gencolitems[0].name == '[0]'
         assert gencolitems[0].obj.func_name == 'func1'
 
+    def test_generative_functions_with_explicit_names(self):
+        modcol = self.getmodulecol("""
+            def func1(arg, arg2): 
+                assert arg == arg2 
+
+            def test_gen(): 
+                yield "one", func1, 17, 3*5
+                yield "two", func1, 42, 6*7
+        """)
+        colitems = modcol.collect()
+        assert len(colitems) == 1
+        gencol = colitems[0]
+        assert isinstance(gencol, py.test.collect.Generator)
+        gencolitems = gencol.collect()
+        assert len(gencolitems) == 2
+        assert isinstance(gencolitems[0], py.test.collect.Function)
+        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert gencolitems[0].name == "['one']"
+        assert gencolitems[0].obj.func_name == 'func1'
+        assert gencolitems[1].name == "['two']"
+        assert gencolitems[1].obj.func_name == 'func1'        
+
+    def test_generative_methods_with_explicit_names(self): 
+        modcol = self.getmodulecol("""
+            def func1(arg, arg2): 
+                assert arg == arg2 
+            class TestGenMethods: 
+                def test_gen(self): 
+                    yield "m1", func1, 17, 3*5
+                    yield "m2", func1, 42, 6*7
+        """)
+        gencol = modcol.collect()[0].collect()[0].collect()[0]
+        assert isinstance(gencol, py.test.collect.Generator)
+        gencolitems = gencol.collect()
+        assert len(gencolitems) == 2
+        assert isinstance(gencolitems[0], py.test.collect.Function)
+        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert gencolitems[0].name == "['m1']"
+        assert gencolitems[0].obj.func_name == 'func1'
+        assert gencolitems[1].name == "['m2']"
+        assert gencolitems[1].obj.func_name == 'func1'        
+
     def test_module_assertion_setup(self):
         modcol = self.getmodulecol("pass")
         from py.__.magic import assertion

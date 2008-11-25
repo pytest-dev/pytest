@@ -268,19 +268,27 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         self._setupstate.prepare(self) 
         l = []
         for i, x in py.builtin.enumerate(self.obj()): 
-            call, args = self.getcallargs(x)
+            name, call, args = self.getcallargs(x)
             if not callable(call): 
                 raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
-            name = "[%d]" % i  
+            if name is None:
+                name = "[%d]" % i
+            else:
+                name = "['%s']" % name
             l.append(self.Function(name, self, args=args, callobj=call))
         return l
         
     def getcallargs(self, obj):
-        if isinstance(obj, (tuple, list)):
-            call, args = obj[0], obj[1:]
+        if not isinstance(obj, (tuple, list)):
+            obj = (obj,)
+        # explict naming
+        if isinstance(obj[0], basestring):
+            name = obj[0]
+            obj = obj[1:]
         else:
-            call, args = obj, ()
-        return call, args 
+            name = None
+        call, args = obj[0], obj[1:]
+        return name, call, args 
 
 #
 #  Test Items 

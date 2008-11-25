@@ -136,6 +136,13 @@ Note that ``test_generative()`` will cause three tests
 to get run, notably ``check(42)``, ``check(17)`` and ``check(49)``
 of which the middle one will obviously fail. 
 
+To make it easier to distinguish the generated tests it is possible to specify an explicit name for them, like for example::
+
+    def test_generative(): 
+        for x in (42,17,49): 
+            yield "case %d" % x, check, x 
+
+
 .. _`selection by keyword`: 
 
 selecting tests by keyword 
