@@ -1,4 +1,5 @@
 import py
+from py.__.code import source
 
 class Code(object):
     """ wrapper around Python code objects """
@@ -75,14 +76,8 @@ class Code(object):
     def fullsource(self):
         """ return a py.code.Source object for the full source file of the code
         """
-        fn = self.raw.co_filename
-        try:
-            return fn.__source__
-        except AttributeError:
-            path = self.path
-            if not isinstance(path, py.path.local):
-                return None
-            return py.code.Source(self.path.read(mode="rU"))
+        full, _ = source.findsource(self.raw)
+        return full
     fullsource = property(fullsource, None, None,
                           "full source containing this code object")
     

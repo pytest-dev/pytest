@@ -314,3 +314,43 @@ def test_source_of_class_at_eof_without_newline():
     path.write(source)
     s2 = py.code.Source(tmpdir.join("a.py").pyimport().A)
     assert str(source).strip() == str(s2).strip()
+
+if True:
+    def x():
+        pass
+
+def test_getsource_fallback():
+    from py.__.code.source import getsource
+    expected = """def x():
+    pass"""
+    src = getsource(x)
+    assert src == expected
+
+def test_getsource___source__():
+    from py.__.code.source import getsource
+    x = py.code.compile("""if 1:
+    def x():
+        pass
+""")
+
+    expected = """def x():
+    pass"""
+    src = getsource(x)
+    assert src == expected
+
+def test_findsource_fallback():
+    from py.__.code.source import findsource
+    src, lineno = findsource(x)
+    assert 'test_findsource_simple' in str(src)
+    assert src[lineno] == '    def x():'
+
+def test_findsource___source__():
+    from py.__.code.source import findsource
+    x = py.code.compile("""if 1:
+    def x():
+        pass
+""")
+        
+    src, lineno = findsource(x)
+    assert 'if 1:' in str(src)
+    assert src[lineno] == '    def x():'

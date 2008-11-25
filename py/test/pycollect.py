@@ -18,6 +18,7 @@ a tree of collectors and test items that this modules provides::
 """ 
 import py
 from py.__.test.collect import configproperty, warnoldcollect
+from py.__.code.source import findsource
 
 class PyobjMixin(object):
     def obj(): 
@@ -68,7 +69,7 @@ class PyobjMixin(object):
             fspath = fn and py.path.local(fn) or None
             if fspath:
                 try:
-                    lines, lineno = py.std.inspect.findsource(self.obj)
+                    _, lineno = findsource(self.obj)
                 except IOError:
                     lineno = None
             else:

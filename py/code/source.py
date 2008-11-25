@@ -223,6 +223,28 @@ def compile_(source, filename=None, mode='exec', flags=
 class MyStr(str):
     """ custom string which allows to add attributes. """
 
+def findsource(obj):
+    if hasattr(obj, 'func_code'):
+        obj = obj.func_code
+    elif hasattr(obj, 'f_code'):
+        obj = obj.f_code
+    try:
+        fullsource = obj.co_filename.__source__
+    except AttributeError:
+        try:
+            sourcelines, lineno = py.std.inspect.findsource(obj)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            return None, None
+        source = Source()
+        source.lines = map(str.rstrip, sourcelines)
+        return source, lineno
+    else:
+        lineno = obj.co_firstlineno - 1        
+        return fullsource, lineno
+
+
 def getsource(obj, **kwargs):
     if hasattr(obj, 'func_code'):
         obj = obj.func_code
@@ -240,7 +262,7 @@ def getsource(obj, **kwargs):
     else:
         lineno = obj.co_firstlineno - 1
         end = fullsource.getblockend(lineno)
-        return fullsource[lineno:end+1]
+        return Source(fullsource[lineno:end+1], deident=True)
 
 
 def deindent(lines, offset=None):

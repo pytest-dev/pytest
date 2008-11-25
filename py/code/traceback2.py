@@ -51,19 +51,9 @@ class TracebackEntry(object):
 
     def getsource(self): 
         """ return failing source code. """
-        try:
-            source = self.frame.code.fullsource
-        except (IOError, py.error.ENOENT):
-            return None
+        source = self.frame.code.fullsource
         if source is None:
-            try:
-                sourcelines, lineno = py.std.inspect.findsource(self.frame.code.raw)
-            except (KeyboardInterrupt, SystemExit):
-                raise
-            except:
-                return None
-            source = py.code.Source()
-            source.lines = map(str.rstrip, sourcelines)
+            return None
         start = self.getfirstlinesource()
         end = self.lineno
         try:

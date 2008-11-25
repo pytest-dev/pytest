@@ -329,7 +329,7 @@ raise ValueError()
             firstlineno = 5
 
             def fullsource(self):
-                raise fail
+                return None
             fullsource = property(fullsource)
 
         class FakeFrame(object):
