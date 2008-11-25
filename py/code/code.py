@@ -90,8 +90,7 @@ class Code(object):
         """ return a py.code.Source object for the code object's source only
         """
         # return source only for that part of code
-        import inspect
-        return py.code.Source(inspect.getsource(self.raw))
+        return py.code.Source(self.raw)
 
     def getargs(self):
         """ return a tuple with the argument names for the code object
