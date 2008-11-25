@@ -83,3 +83,19 @@ def test_code_with_class():
     class A:
         pass
     py.test.raises(TypeError, "py.code.Code(A)")
+
+if True:
+    def x():
+        pass
+
+def test_code_fullsource():
+    code = py.code.Code(x)
+    full = code.fullsource
+    assert 'test_code_fullsource()' in str(full)
+
+def test_code_source():
+    code = py.code.Code(x)
+    src = code.source()
+    expected = """def x():
+    pass"""
+    assert str(src) == expected
