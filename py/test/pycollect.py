@@ -60,16 +60,20 @@ class PyobjMixin(object):
             return self._fslineno
         except AttributeError:
             pass
+        obj = self.obj
+        # let decorators etc specify a sane ordering
+        if hasattr(obj, 'place_as'):
+            obj = obj.place_as
         try:
-            code = py.code.Code(self.obj)
+            code = py.code.Code(obj)
         except TypeError:
             # fallback to 
-            fn = (py.std.inspect.getsourcefile(self.obj) or
-                  py.std.inspect.getfile(self.obj))
+            fn = (py.std.inspect.getsourcefile(obj) or
+                  py.std.inspect.getfile(obj))
             fspath = fn and py.path.local(fn) or None
             if fspath:
                 try:
-                    _, lineno = findsource(self.obj)
+                    _, lineno = findsource(obj)
                 except IOError:
                     lineno = None
             else:

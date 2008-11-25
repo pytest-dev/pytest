@@ -158,8 +158,8 @@ class TestCollect(suptest.InlineCollection):
                 assert arg == arg2 
 
             def test_gen(): 
-                yield "one", func1, 17, 3*5
-                yield "two", func1, 42, 6*7
+                yield "seventeen", func1, 17, 3*5
+                yield "fortytwo", func1, 42, 6*7
         """)
         colitems = modcol.collect()
         assert len(colitems) == 1
@@ -169,9 +169,9 @@ class TestCollect(suptest.InlineCollection):
         assert len(gencolitems) == 2
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
-        assert gencolitems[0].name == "['one']"
+        assert gencolitems[0].name == "['seventeen']"
         assert gencolitems[0].obj.func_name == 'func1'
-        assert gencolitems[1].name == "['two']"
+        assert gencolitems[1].name == "['fortytwo']"
         assert gencolitems[1].obj.func_name == 'func1'        
 
     def test_generative_methods_with_explicit_names(self): 
@@ -260,6 +260,28 @@ class TestCollect(suptest.InlineCollection):
         res1 = py.test.deprecated_call(modcol.run)
         res2 = modcol.collect()
         assert res1 == [x.name for x in res2]
+
+    def test_allow_sane_sorting_for_decorators(self):
+        modcol = self.getmodulecol("""
+    def dec(f):
+        g = lambda: f(2)
+        g.place_as = f
+        return g
+
+
+    def test_a(y):
+        pass
+    test_a = dec(test_a)
+
+    def test_b(y):
+        pass
+    test_b = dec(test_b)
+    """)
+        colitems = modcol.collect()
+        assert len(colitems) == 2
+        f1, f2 = colitems
+        assert cmp(f2, f1) > 0
+
 
 class TestCustomConftests(suptest.InlineCollection):
     def test_extra_python_files_and_functions(self):
