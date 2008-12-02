@@ -389,6 +389,8 @@ recursively. """
             except py.process.cmdexec.Error, e:
                 if e.err.find('Path is not a working copy directory') != -1:
                     raise py.error.ENOENT(self, e.err)
+                elif e.err.find("is not under version control") != -1:
+                    raise py.error.ENOENT(self, e.err)
                 raise
             # XXX SVN 1.3 has output on stderr instead of stdout (while it does
             # return 0!), so a bit nasty, but we assume no output is output

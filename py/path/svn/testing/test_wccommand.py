@@ -366,22 +366,21 @@ class TestWCSvnCommandPath(CommonSvnTests):
     def test_commit_nonrecursive(self):
         root = self.root
         somedir = root.join('sampledir')
-        somefile = somedir.join('otherfile')
-        somefile.write('foo')
+        somedir.mkdir("subsubdir")
         somedir.propset('foo', 'bar')
         status = somedir.status()
         assert len(status.prop_modified) == 1
-        assert len(status.modified) == 1
+        assert len(status.added) == 1
 
         somedir.commit('non-recursive commit', rec=0)
         status = somedir.status()
         assert len(status.prop_modified) == 0
-        assert len(status.modified) == 1
+        assert len(status.added) == 1
 
         somedir.commit('recursive commit')
         status = somedir.status()
         assert len(status.prop_modified) == 0
-        assert len(status.modified) == 0
+        assert len(status.added) == 0
 
     def test_commit_return_value(self):
         root = self.root
