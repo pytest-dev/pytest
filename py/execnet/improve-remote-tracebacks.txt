@@ -1,0 +1,31 @@
+Goal: "remote" tracebacks have file/lineno references to local source code
+
+Current Problem: 
+    tracebacks have file/lineno references that point to one
+    large file (consisting of all source code of all modules that
+    we sent as a bootstrap). Makes debugging execnet harder. 
+
+solution variant 0: minimal change to source code 
+    at master side: send name/source pairs 
+    at slave side: put each module into own file, re-using basename of source file 
+
+solution variant 1: aimed at simplicity 
+    pack and send zip of py lib containing py.__.execnet, py.__.thread, etc 
+    put this into some file-location at the other side, add it to sys.path 
+    (or experiment with zipfile-imports over RAM and sys.meta_hooks/path_hooks) 
+
+solution variant 2: aimed at minimizing bandwidth usage
+
+    initiating side                     receiving side 
+    -------------------------------------------------------------
+                                 loop:
+    send [dottedname1: hash1] 
+    serve_hash_requests
+                                        if not lookup(hash1):
+                                            send(dottedname1: hash1)
+                                            content =  receive(hash1) 
+                                        else:
+                                            content = get(hash1) 
+
+
+
