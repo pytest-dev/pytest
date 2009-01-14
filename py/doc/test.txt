@@ -65,12 +65,6 @@ to state that your object has a certain ``attribute``. In case this
 assertion fails the test ``reporter`` will provide you with a very
 helpful analysis and a clean traceback.
 
-Note that in order to display helpful analysis of a failing
-``assert`` statement some magic takes place behind the
-scenes.  For now, you only need to know that if something
-looks strange or you suspect a bug in that
-*behind-the-scenes-magic* you may turn off the magic by 
-providing the ``--nomagic`` option. 
 
 how to write assertions about exceptions 
 ----------------------------------------
@@ -223,17 +217,16 @@ to see a variety of 17 tracebacks, each tailored to a different
 failure situation.
 
 ``py.test`` uses the same order for presenting tracebacks as Python
-itself: the outer function is shown first, and the most recent call is
-shown last. Similarly, a ``py.test`` reported traceback starts with your
-failing test function and then works its way downwards. If the maximum
-recursion depth has been exceeded during the running of a test, for
-instance because of infinite recursion, ``py.test`` will indicate
-where in the code the recursion was taking place.  You can  
-inhibit traceback "cutting" magic by supplying ``--fulltrace``. 
+itself: the oldest function call is shown first, and the most recent call is
+shown last. A ``py.test`` reported traceback starts with your
+failing test function.  If the maximum recursion depth has been
+exceeded during the running of a test, for instance because of
+infinite recursion, ``py.test`` will indicate where in the
+code the recursion was taking place.  You can  inhibit
+traceback "cutting" magic by supplying ``--fulltrace``. 
 
-There is also the possibility of usind ``--tb=short`` to get the regular Python
-tracebacks (which can sometimes be useful when they are extremely long). Or you
-can use ``--tb=no`` to not show any tracebacks at all.
+There is also the possibility of using ``--tb=short`` to get regular CPython
+tracebacks. Or you can use ``--tb=no`` to not show any tracebacks at all.
 
 no inheritance requirement 
 --------------------------
