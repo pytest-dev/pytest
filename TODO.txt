@@ -1,13 +1,24 @@
 Things to do for 1.0.0 
 ========================= 
 
+- ease building of py lib, only depend on python interp 
+  - separate py.magic.greenlet into its own project, and remove c-extension
+
+- scale down "magic" impressions & improve py.test: 
+  - documentation entry points for users 
+  - documentation entry points for extenders
+  - advertise plugins instead of conftest!
+  - new config system
+  - small things: --nomagic -> --no-reassert
+  - deprecate py.magic 
+
 py.test 
 --------------
 
 - compatilibity: honour/warn item.run() method of test items (so far
   probably only execute() is warned about or the other way round)
 
-- introduce plugin arch, port to plugins:
+- introduce plugin arch, port existing things to plugins:
   - importorskip 
   - filelog 
   - chtmpdir per method 
@@ -83,6 +94,8 @@ refactorings
 
 - refine doctests usage (particularly skips of doctests if
   some imports/conditions are not satisfied) 
+  - check if it works on win32 
+  - refine error reporting (don't show python tracebacks) 
 
 - generalization of "host specifications" for execnet and
   py.test --dist usages in particular (see also revision 37500 which 
@@ -110,6 +123,14 @@ features
   information on failures etc.)  (M760) 
 
 - have config options from environment, command line or conftest's
+
+  have py/doc/config/"OPTNAME".txt for each option pypy-style 
+
+  py.test --showconfig  shows current configuration according
+     to envvars, cmdlineopts and conftests considered for your dir location. 
+        
+  py.test --help-conftest lists all possible environment envs 
+  py.test --help-env lists all possible environment envs 
 
 - consider features of py.apigen (recheck closed "M1016")
 
