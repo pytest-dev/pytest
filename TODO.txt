@@ -86,6 +86,39 @@ see apigen_refactorings.txt
   or other code that collects data from running a program 
   (in our case running the tests)
 
+Criticism and solutions 
+--------------------------------
+"too big": 
+    - too much code, you need entire py lib, hard to include into app 
+      + have a small pytest boostrap that loads pylib.zip from net
+      + provide smaller script ala simpy 
+    - lots of cmdline options, possibilities, documentation
+      rather unsorted 
+
+"needless differences between py.test and nosetests":
+    - py.test.skip 
+    - raises  
+
+"tutorial structure missing", e.g.:
+    - "how to get started" in a minimal way, also how to use
+      existing conftests/plugins 
+    - how to configure py.test 
+    - how to write plugins/extensions 
+
+"too much magic"
+   - re-execution of assert expressions 
+     + rename "--nomagic" to something that turns off "superassertions" 
+     + hint at --tb=... 
+   - get rid of py/magic directory 
+
+has a good ui but could be better
+    - support developer communication, e.g. py.test
+      --sendfailures=freenode-pypy 
+      --sendfailures=pocoo # prints out paste.pocoo.url with traceback 
+    - graphical interface, probably QT 
+    - generally store test results and use them for subsequent calls 
+
+
 ld (review and shift to above)
 =================================
 
@@ -256,4 +289,6 @@ Traceback (most recent call last):
   File "/home/hpk/py/branch/event/py/execnet/inputoutput.py", line 106, in close_write
     self.outfile.close()
 IOError: [Errno 32] Broken pipe
+
+
 
