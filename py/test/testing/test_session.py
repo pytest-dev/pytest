@@ -292,6 +292,20 @@ class TestNewSession(SessionTests):
         assert len(colfail) == 1
         assert len(colskipped) == 1
 
+    def test_minus_x_import_error(self):
+        py.test.skip("fails")
+        o = self.tmpdir
+        tfile = o.join('test_one.py').write(py.code.Source("""
+        xxxx
+        """))
+        tfile2 = o.join('test_two.py').write(py.code.Source("""
+        yyyyy
+        """))
+        sorter = self.events_from_cmdline('-x')
+        finished = sorter.get(event.CollectionReport)
+        colfail = [x for x in finished if x.failed]
+        assert len(colfail) == 1
+
 class TestNewSessionDSession(SessionTests):
     def parseconfig(self, *args):
         args = ('-n1',) + args
