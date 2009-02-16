@@ -1,5 +1,6 @@
 import py
 import sys, os, re
+import subprocess
 from distutils import sysconfig
 from distutils import core 
 
@@ -147,7 +148,8 @@ def addbindir2path():
         win32con.SMTO_ABORTIFHUNG, 5000)
 
     # Propagate changes to current command prompt
-    os.system("set PATH=%s" % path)
+    p = subprocess.Popen("set PATH=%s" % path, shell=True)
+    os.waitpid(p.pid, 0)
     
 def get_registry_value(reg, key, value_name):
     k = _winreg.OpenKey(reg, key)

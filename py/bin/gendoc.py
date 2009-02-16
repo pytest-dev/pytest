@@ -15,11 +15,12 @@ import sys
 sys.path.insert(0, '.')
 
 import py
-import os
+import os, subprocess
 
 def sysexec(cmd):
     print "executing", cmd
-    os.system(cmd)
+    p = subprocess.Popen(cmd, shell=True)
+    os.waitpid(p.pid, 0)
 
 if __name__ == '__main__':
     pydir = py.path.local().join("py")

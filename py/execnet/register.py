@@ -1,5 +1,6 @@
 
 import os, inspect, socket
+from subprocess import Popen, PIPE
 import sys
 from py.magic import autopath ; mypath = autopath()
 from py.__.misc.warn import APIWARN
@@ -56,7 +57,8 @@ class InstallableGateway(gateway.Gateway):
 
 class PopenCmdGateway(InstallableGateway):
     def __init__(self, cmd):
-        infile, outfile = os.popen2(cmd)
+        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+        infile, outfile = p.stdin, p.stdout
         self._cmd = cmd
         io = inputoutput.Popen2IO(infile, outfile)
         super(PopenCmdGateway, self).__init__(io=io)

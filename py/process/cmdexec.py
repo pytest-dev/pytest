@@ -24,13 +24,13 @@ def posix_exec_cmd(cmd):
     the error-output from the command.
     """
     __tracebackhide__ = True
-    import popen2
+    from subprocess import Popen, PIPE
     import errno
 
     #print "execing", cmd
-    child = popen2.Popen3(cmd, 1)
-    stdin, stdout, stderr = child.tochild, child.fromchild, child.childerr
-    stdin.close()
+    child = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+                                                                close_fds=True)
+    stdin, stdout, stderr = child.stdin, child.stdout, child.stderr
 
     # XXX sometimes we get a blocked r.read() call (see below)
     #     although select told us there is something to read.
