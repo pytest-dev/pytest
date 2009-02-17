@@ -15,7 +15,11 @@ import sys
 sys.path.insert(0, '.')
 
 import py
-import os, subprocess
+import os
+try:
+    import subprocess
+except ImportError:
+    from py.__.compat import subprocess
 
 def sysexec(cmd):
     print "executing", cmd

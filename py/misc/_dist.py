@@ -1,8 +1,11 @@
 import py
 import sys, os, re
-import subprocess
 from distutils import sysconfig
 from distutils import core 
+try:
+    import subprocess
+except ImportError:
+    from py.__.compat import subprocess
 
 winextensions = 1
 if sys.platform == 'win32':

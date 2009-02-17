@@ -24,7 +24,11 @@ def posix_exec_cmd(cmd):
     the error-output from the command.
     """
     __tracebackhide__ = True
-    from subprocess import Popen, PIPE
+    try:
+        from subprocess import Popen, PIPE
+    except ImportError:
+        from py.__.compat.subprocess import Popen, PIPE
+
     import errno
 
     #print "execing", cmd

@@ -1,9 +1,13 @@
 
 import os, inspect, socket
-from subprocess import Popen, PIPE
 import sys
 from py.magic import autopath ; mypath = autopath()
 from py.__.misc.warn import APIWARN
+
+try:
+    from subprocess import Popen, PIPE
+except ImportError:
+    from py.__.compat.subprocess import Popen, PIPE
 
 import py
 if sys.platform == "win32":
