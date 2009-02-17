@@ -42,7 +42,9 @@ def adddefaultoptions(config):
         Option('-k',
                action="store", dest="keyword", default='',
                help="only run test items matching the given "
-                    "keyword expression."),
+                    "comma separated keywords.  precede keyword with '-' to negate. "
+                    "Terminate with ':' to treat a match as a signal to run all subsequent tests. "
+         ),
         Option('-l', '--showlocals',
                action="store_true", dest="showlocals", default=False,
                help="show locals in tracebacks (disabled by default)."),

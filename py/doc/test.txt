@@ -139,8 +139,8 @@ To make it easier to distinguish the generated tests it is possible to specify a
 
 .. _`selection by keyword`: 
 
-selecting tests by keyword 
---------------------------
+selecting/unselecting tests by keyword 
+---------------------------------------------
 
 You can selectively run tests by specifiying a keyword 
 on the command line. Example:: 
@@ -151,10 +151,20 @@ will run all tests that are found from the current directory
 and where the word "test_simple" equals the start of one part of the 
 path  leading up to the test item.  Directory and file basenames as well 
 as function, class and function/method names each form a possibly
-matching name. 
+matching name.   You can also unselect tests by preceding a keyword 
+with a dash:: 
 
-    Note that the exact semantics are still experimental but 
-    should always remain intuitive.   
+    py.test. -k "-test_simple"
+
+will run all tests except where the word "test_simple" matches a tests keyword. 
+Note that you need to quote the keyword if the shell recognizes "-" as an intro
+to a cmdline option.  Lastly, you may use 
+
+    py.test. -k "test_simple:"
+
+which will run all tests after the expression has *matched once*, i.e. 
+all tests that are seen after a test that matches the "test_simple" 
+keyword. 
 
 testing with multiple python versions / executables 
 ---------------------------------------------------
