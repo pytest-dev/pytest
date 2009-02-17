@@ -42,8 +42,8 @@ def adddefaultoptions(config):
         Option('-k',
                action="store", dest="keyword", default='',
                help="only run test items matching the given "
-                    "comma separated keywords.  precede keyword with '-' to negate. "
-                    "Terminate with ':' to treat a match as a signal to run all subsequent tests. "
+                    "space separated keywords.  precede a keyword with '-' to negate. "
+                    "Terminate the expression with ':' to treat a match as a signal to run all subsequent tests. "
          ),
         Option('-l', '--showlocals',
                action="store_true", dest="showlocals", default=False,
