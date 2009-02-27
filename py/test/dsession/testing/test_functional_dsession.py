@@ -11,10 +11,6 @@ import os
 
 
 class TestAsyncFunctional:
-    def test_dist_no_disthost(self, testdir):
-        config = testdir.parseconfig(testdir.tmpdir, '-d')
-        py.test.raises(SystemExit, "config.initsession()")
-
     def test_conftest_options(self, testdir):
         testdir.makepyfile(conftest="""
             print "importing conftest"

@@ -1,3 +1,5 @@
+import py
+
 class DefaultPlugin:
     """ Plugin implementing defaults and general options. """ 
 
@@ -72,12 +74,40 @@ class DefaultPlugin:
                    action="store_true", dest="runbrowser", default=False,
                    help="run browser (implies --startserver)."
                    ),
-        group._addoption('', '--boxed',
+        group._addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process"), 
-        group._addoption('', '--rest',
+        group._addoption('--rest',
                    action='store_true', dest="restreport", default=False,
                    help="restructured text output reporting."),
-        group._addoption('', '--session',
-                   action="store", dest="session", default=None,
-                   help="lookup given sessioname in conftest.py files and use it."),
+
+    def pytest_configure(self, config):
+        self.setsession(config)
+
+    def setsession(self, config):
+        val = config.getvalue
+        if val("collectonly"):
+            from py.__.test.session import Session
+            config.setsessionclass(Session)
+        elif val("looponfailing"):
+            from py.__.test.looponfail.remote import LooponfailingSession
+            config.setsessionclass(LooponfailingSession)
+        elif val("numprocesses") or val("dist") or val("executable"):
+            from py.__.test.dsession.dsession import  DSession
+            config.setsessionclass(DSession)
+
+def test_implied_different_sessions(tmpdir):
+    def x(*args):
+        config = py.test.config._reparse([tmpdir] + list(args))
+        try:
+            config.pytestplugins.configure(config)
+        except ValueError:
+            return Exception
+        return getattr(config._sessionclass, '__name__', None)
+    assert x() == None
+    assert x('--dist') == 'DSession'
+    assert x('-n3') == 'DSession'
+    assert x('-f') == 'LooponfailingSession'
+    assert x('--exec=x') == 'DSession'
+    assert x('-f', '--exec=x') == 'LooponfailingSession'
+    assert x('--dist', '--exec=x', '--collectonly') == 'Session'

@@ -1,20 +1,6 @@
 import py
 
-pytest_plugins = 'pytest_iocapture'
-
 class TestConfigCmdlineParsing:
-    @py.test.mark(xfail="commit parser")
-    def test_config_addoption(self, stdcapture):
-        from py.__.test.config import Config
-        config = Config()
-        config.addoption("cat1", "--option1", action="store_true")
-        config.addoption("cat1", "--option2", action="store_true")
-        config.parse(["-h"])
-        out, err = stdcapture.reset()
-        assert out.count("cat1") == 1
-        assert out.find("option1") != -1 
-        assert out.find("option2") != -1 
-        
     def test_config_cmdline_options(self, testdir):
         testdir.makepyfile(conftest="""
             import py
@@ -71,9 +57,8 @@ class TestConfigCmdlineParsing:
             opts = spec.split()
             yield check_conflict_option, opts
 
-
 class TestConfigAPI: 
-    @py.test.mark(issue="ensuretemp should call config.maketemp(basename)")
+    @py.test.mark.issue("ensuretemp should call config.maketemp(basename)")
     def test_tmpdir(self):
         d1 = py.test.ensuretemp('hello') 
         d2 = py.test.ensuretemp('hello') 
@@ -119,6 +104,20 @@ class TestConfigAPI:
         config.option.mypathlist = [py.path.local()]
         pl = config.getvalue_pathlist('mypathlist')
         assert pl == [py.path.local()]
+
+    def test_setsessionclass_and_initsession(self, testdir):
+        from py.__.test.config import Config 
+        config = Config()
+        class Session1: 
+            def __init__(self, config):
+                self.config = config 
+        config.setsessionclass(Session1)
+        session = config.initsession()
+        assert isinstance(session, Session1)
+        assert session.config is config
+        py.test.raises(ValueError, "config.setsessionclass(Session1)")
+
+
 
 class TestConfigApi_getcolitems:
     def test_getcolitems_onedir(self, tmpdir):
@@ -395,63 +394,21 @@ class TestConfigPickling:
         assert newcol2.fspath.basename == dir1.basename
         assert newcol2.fspath.relto(topdir)
 
-class TestSessionAndOptions:
-    def test_implied_dsession(self, testdir):
-        for x in 'startserver runbrowser rest'.split():
-            config = testdir.parseconfig(testdir.tmpdir, '--dist', '--%s' % x)
-            assert config._getsessionname() == 'DSession'
+def test_options_on_small_file_do_not_blow_up(testdir):
+    def runfiletest(opts):
+        sorter = testdir.inline_run(*opts)
+        passed, skipped, failed = sorter.countoutcomes()
+        assert failed == 2 
+        assert skipped == passed == 0
+    path = testdir.makepyfile("""
+        def test_f1(): assert 0
+        def test_f2(): assert 0
+    """)
 
-    def test_implied_different_sessions(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
-        assert config._getsessionname() == 'Session'
-        config = py.test.config._reparse([tmpdir, '--dist'])
-        assert config._getsessionname() == 'DSession'
-        config = py.test.config._reparse([tmpdir, '-n3'])
-        assert config._getsessionname() == 'DSession'
-        config = py.test.config._reparse([tmpdir, '--looponfailing'])
-        assert config._getsessionname() == 'LooponfailingSession'
-        config = py.test.config._reparse([tmpdir, '--exec=x'])
-        assert config._getsessionname() == 'DSession'
-        config = py.test.config._reparse([tmpdir, '--dist', '--exec=x'])
-        assert config._getsessionname() == 'DSession'
-        config = py.test.config._reparse([tmpdir, '-f', 
-                                          '--dist', '--exec=x'])
-        assert config._getsessionname() == 'LooponfailingSession'
-        config = py.test.config._reparse([tmpdir, '-f', '-n3',
-                                          '--dist', '--exec=x', 
-                                          '--collectonly'])
-        assert config._getsessionname() == 'Session'
-
-    def test_sessionname_lookup_custom(self, testdir):
-        testdir.makepyfile(conftest="""
-            from py.__.test.session import Session
-            class MySession(Session):
-                pass
-        """) 
-        config = testdir.parseconfig("--session=MySession", testdir.tmpdir)
-        session = config.initsession()
-        assert session.__class__.__name__ == 'MySession'
-
-    def test_initsession(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
-        session = config.initsession()
-        assert session.config is config 
-    
-    def test_default_session_options(self, testdir):
-        def runfiletest(opts):
-            sorter = testdir.inline_run(*opts)
-            passed, skipped, failed = sorter.countoutcomes()
-            assert failed == 2 
-            assert skipped == passed == 0
-        path = testdir.makepyfile("""
-            def test_f1(): assert 0
-            def test_f2(): assert 0
-        """)
-    
-        for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
-                     ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
-                     ['--traceconfig'], ['-v'], ['-v', '-v']):
-            runfiletest(opts + [path])
+    for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
+                 ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
+                 ['--traceconfig'], ['-v'], ['-v', '-v']):
+        runfiletest(opts + [path])
 
 def test_default_bus():
     assert py.test.config.bus is py._com.pyplugins

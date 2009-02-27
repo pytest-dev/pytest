@@ -26,6 +26,7 @@ class Config(object):
     """ central bus for dealing with configuration/initialization data. """ 
     Option = py.compat.optparse.Option # deprecated
     _initialized = False
+    _sessionclass = None
 
     def __init__(self, pytestplugins=None): 
         self.option = CmdOptions()
@@ -79,7 +80,6 @@ class Config(object):
         self.topdir = py.path.local(topdir)
         self._mergerepr(self._repr)
         del self._repr 
-        self.pytestplugins.configure(config=self)
 
     def _makerepr(self):
         l = []
@@ -155,40 +155,19 @@ class Config(object):
         except AttributeError:
             return self._conftest.rget(name, path)
 
+    def setsessionclass(self, cls):
+        if self._sessionclass is not None:
+            raise ValueError("sessionclass already set to: %r" %(
+                self._sessionclass))
+        self._sessionclass = cls
+
     def initsession(self):
         """ return an initialized session object. """
-        cls = self._getsessionclass()
-        session = cls(self)
-        session.fixoptions()
-        return session
-
-    def _getsessionclass(self): 
-        """ return Session class determined from cmdline options
-            and looked up in initial config modules. 
-        """
-        if self.option.session is not None:
-            return self._conftest.rget(self.option.session)
-        else:
-            name = self._getsessionname()
-            try:
-                return self._conftest.rget(name)
-            except KeyError:
-                pass
-            importpath = globals()[name]
-            mod = __import__(importpath, None, None, '__doc__')
-            return getattr(mod, name)
-
-    def _getsessionname(self):
-        """ return default session name as determined from options. """
-        if self.option.collectonly:
-            name = 'Session'
-        elif self.option.looponfailing:
-            name = 'LooponfailingSession'
-        elif self.option.numprocesses or self.option.dist or self.option.executable: 
-            name = 'DSession'
-        else:
-            name = 'Session'
-        return name
+        cls = self._sessionclass 
+        if cls is None:
+            from py.__.test.session import Session
+            cls = Session
+        return cls(self)
 
     def _reparse(self, args):
         """ this is used from tests that want to re-invoke parse(). """
@@ -221,12 +200,6 @@ class Config(object):
 config_per_process = Config(
     pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
 )
-
-# default import paths for sessions 
-
-Session = 'py.__.test.session'
-LooponfailingSession = 'py.__.test.looponfail.remote'
-DSession = 'py.__.test.dsession.dsession'
 
 #
 # helpers

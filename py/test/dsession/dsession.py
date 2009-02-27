@@ -41,6 +41,9 @@ class DSession(Session):
         self.host2pending = {}
         self.item2host = {}
         self._testsfailed = False
+        if self.config.getvalue("executable") and \
+           not self.config.getvalue("numprocesses"):
+            self.config.option.numprocesses = 1
 
     def fixoptions(self):
         """ check, fix and determine conflicting options. """

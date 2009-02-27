@@ -129,7 +129,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     config.option.usepdb = False 
     config.option.executable = None
     trails = channel.receive()
-        
+    config.pytestplugins.configure(config)
     DEBUG("SLAVE: initsession()")
     session = config.initsession()
     # XXX configure the reporter object's terminal writer more directly

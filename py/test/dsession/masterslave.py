@@ -113,6 +113,7 @@ class SlaveNode(object):
         self.channel.send((eventname, args, kwargs))
 
     def run(self):
+        self.config.pytestplugins.configure(self.config)
         from py.__.test.dsession.hostmanage import makehostup
         channel = self.channel
         self.host = host = channel.receive()

@@ -1,6 +1,11 @@
 import py
 
 class SessionTests:
+    def test_initsession(self, tmpdir):
+        config = py.test.config._reparse([tmpdir])
+        session = config.initsession()
+        assert session.config is config 
+    
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
             def test_one(): 
