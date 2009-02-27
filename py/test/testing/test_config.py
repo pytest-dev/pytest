@@ -399,28 +399,28 @@ class TestSessionAndOptions:
     def test_implied_dsession(self, testdir):
         for x in 'startserver runbrowser rest'.split():
             config = testdir.parseconfig(testdir.tmpdir, '--dist', '--%s' % x)
-            assert config._getestdirname() == 'DSession'
+            assert config._getsessionname() == 'DSession'
 
     def test_implied_different_sessions(self, tmpdir):
         config = py.test.config._reparse([tmpdir])
-        assert config._getestdirname() == 'Session'
+        assert config._getsessionname() == 'Session'
         config = py.test.config._reparse([tmpdir, '--dist'])
-        assert config._getestdirname() == 'DSession'
+        assert config._getsessionname() == 'DSession'
         config = py.test.config._reparse([tmpdir, '-n3'])
-        assert config._getestdirname() == 'DSession'
+        assert config._getsessionname() == 'DSession'
         config = py.test.config._reparse([tmpdir, '--looponfailing'])
-        assert config._getestdirname() == 'LooponfailingSession'
+        assert config._getsessionname() == 'LooponfailingSession'
         config = py.test.config._reparse([tmpdir, '--exec=x'])
-        assert config._getestdirname() == 'DSession'
+        assert config._getsessionname() == 'DSession'
         config = py.test.config._reparse([tmpdir, '--dist', '--exec=x'])
-        assert config._getestdirname() == 'DSession'
+        assert config._getsessionname() == 'DSession'
         config = py.test.config._reparse([tmpdir, '-f', 
                                           '--dist', '--exec=x'])
-        assert config._getestdirname() == 'LooponfailingSession'
+        assert config._getsessionname() == 'LooponfailingSession'
         config = py.test.config._reparse([tmpdir, '-f', '-n3',
                                           '--dist', '--exec=x', 
                                           '--collectonly'])
-        assert config._getestdirname() == 'Session'
+        assert config._getsessionname() == 'Session'
 
     def test_sessionname_lookup_custom(self, testdir):
         testdir.makepyfile(conftest="""
