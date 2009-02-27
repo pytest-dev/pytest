@@ -31,11 +31,10 @@ class LooponfailingSession(Session):
             while 1:
                 self.loop_once(loopstate)
                 if not loopstate.colitems and loopstate.wasfailing:
-                    continue # rerun immediately
+                    continue # the last failures passed, let's rerun all
                 self.statrecorder.waitonchange(checkinterval=2.0) 
         except KeyboardInterrupt:
             print
-            pass
 
     def loop_once(self, loopstate):
         colitems = loopstate.colitems

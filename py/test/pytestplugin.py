@@ -120,4 +120,4 @@ def importplugin(importspec):
         try:
             return __import__("py.__.test.plugin.%s" %(importspec), None, None, '__doc__')
         except ImportError:
-            raise ImportError(importspec)
+            return __import__(importspec)  # show the original exception

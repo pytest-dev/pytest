@@ -1,5 +1,3 @@
-from __future__ import generators
-
 import py
 from conftesthandle import Conftest
 
@@ -159,19 +157,19 @@ class Config(object):
 
     def initsession(self):
         """ return an initialized session object. """
-        cls = self._getestdirclass()
+        cls = self._getsessionclass()
         session = cls(self)
         session.fixoptions()
         return session
 
-    def _getestdirclass(self): 
+    def _getsessionclass(self): 
         """ return Session class determined from cmdline options
             and looked up in initial config modules. 
         """
         if self.option.session is not None:
             return self._conftest.rget(self.option.session)
         else:
-            name = self._getestdirname()
+            name = self._getsessionname()
             try:
                 return self._conftest.rget(name)
             except KeyError:
@@ -180,7 +178,7 @@ class Config(object):
             mod = __import__(importpath, None, None, '__doc__')
             return getattr(mod, name)
 
-    def _getestdirname(self):
+    def _getsessionname(self):
         """ return default session name as determined from options. """
         if self.option.collectonly:
             name = 'Session'
