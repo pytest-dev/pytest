@@ -3,7 +3,7 @@ import py
 pytest_plugins = 'pytest_iocapture'
 
 class TestConfigCmdlineParsing:
-    @py.test.keywords(xfail="commit parser")
+    @py.test.mark(xfail="commit parser")
     def test_config_addoption(self, stdcapture):
         from py.__.test.config import Config
         config = Config()
@@ -73,7 +73,7 @@ class TestConfigCmdlineParsing:
 
 
 class TestConfigAPI: 
-    @py.test.keywords(issue="ensuretemp should call config.maketemp(basename)")
+    @py.test.mark(issue="ensuretemp should call config.maketemp(basename)")
     def test_tmpdir(self):
         d1 = py.test.ensuretemp('hello') 
         d2 = py.test.ensuretemp('hello') 
@@ -263,7 +263,7 @@ class TestConfig_gettopdir:
         assert gettopdir([c, Z]) == tmp 
 
 class TestConfigPickling:
-    @py.test.keywords(xfail=True, issue="config's pytestplugins/bus initialization")
+    @py.test.mark(xfail=True, issue="config's pytestplugins/bus initialization")
     def test_config_initafterpickle_plugin(self, testdir):
         testdir.makepyfile(__init__="", conftest="x=1; y=2")
         hello = testdir.makepyfile(hello="")

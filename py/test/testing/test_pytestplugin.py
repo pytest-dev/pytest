@@ -248,7 +248,7 @@ class TestPytestPluginInteractions:
         assert not plugins.listattr("hello")
         assert plugins.listattr("x") == [42]
 
-    @py.test.keywords(xfail="implement setupcall")
+    @py.test.mark(xfail="implement setupcall")
     def test_call_setup_participants(self, testdir):
         testdir.makepyfile(
             conftest="""

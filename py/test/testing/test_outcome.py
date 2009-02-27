@@ -81,3 +81,22 @@ def test_importorskip():
         print py.code.ExceptionInfo()
         py.test.fail("spurious skip")
 
+
+def test_pytest_mark():
+    from py.__.test.outcome import mark
+    def f(): pass
+    mark(x=3)(f)
+    assert f.x == 3
+    def g(): pass
+    mark(g)
+    assert not g.func_dict
+
+    mark.hello(f)
+    assert f.hello == True
+
+    mark.hello("test")(f)
+    assert f.hello == "test"
+
+    mark("x1")(f)
+    assert f.mark == "x1"
+

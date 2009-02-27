@@ -1,6 +1,6 @@
 """
 for marking and reporting "expected to fail" tests. 
-    @py.test.keywords(xfail="needs refactoring")
+    @py.test.mark(xfail="needs refactoring")
     def test_hello():
         ...
         assert 0
@@ -51,7 +51,7 @@ def test_xfail(plugintester, linecomp):
     p = testdir.makepyfile(test_one="""
         import py
         pytest_plugins="pytest_xfail",
-        @py.test.keywords(xfail=True)
+        @py.test.mark.xfail
         def test_this():
             assert 0
     """)

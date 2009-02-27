@@ -7,7 +7,7 @@ class BaseTests:
     def test_funcattr(self, testdir):
         ev = testdir.runitem("""
             import py
-            @py.test.keywords(xfail="needs refactoring")
+            @py.test.mark(xfail="needs refactoring")
             def test_func():
                 raise Exit()
         """)
