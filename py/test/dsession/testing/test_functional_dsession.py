@@ -3,74 +3,48 @@
 """
 
 import py
-from py.__.test import event
 from py.__.test.dsession.dsession import DSession
 from py.__.test.dsession.hostmanage import HostManager, Host
-from py.__.test.testing import suptest
+from test_masterslave import EventQueue
+
 import os
 
-def eventreader(session):
-    queue = py.std.Queue.Queue()
-    session.bus.subscribe(queue.put)
-    def readevent(eventtype=event.ItemTestReport, timeout=2.0):
-        events = []
-        while 1:
-            try:
-                ev = queue.get(timeout=timeout)
-            except py.std.Queue.Empty:
-                print "seen events", events
-                raise IOError("did not see %r events" % (eventtype))
-            else:
-                if isinstance(ev, eventtype):
-                    #print "other events seen", events
-                    return ev
-                events.append(ev)
-    return readevent
 
-class TestAsyncFunctional(suptest.InlineCollection):
-    def test_dist_no_disthost(self):
-        config = self.parseconfig(self.tmpdir, '-d')
+class TestAsyncFunctional:
+    def test_dist_no_disthost(self, testdir):
+        config = testdir.parseconfig(testdir.tmpdir, '-d')
         py.test.raises(SystemExit, "config.initsession()")
 
-    def test_session_eventlog_dist(self):
-        self.makepyfile(conftest="dist_hosts=['localhost']\n")
-        eventlog = self.tmpdir.join("mylog")
-        config = self.parseconfig(self.tmpdir, '-d', '--eventlog=%s' % eventlog)
-        session = config.initsession()
-        session.bus.notify(event.TestrunStart())
-        s = eventlog.read()
-        assert s.find("TestrunStart") != -1
-
-    def test_conftest_options(self):
-        self.makepyfile(conftest="""
+    def test_conftest_options(self, testdir):
+        testdir.makepyfile(conftest="""
             print "importing conftest"
             import py
             Option = py.test.config.Option 
             option = py.test.config.addoptions("someopt", 
-                Option('', '--forcegen', action="store_true", dest="forcegen", default=False))
-        """)
-        self.makepyfile(__init__="#")
-        p1 = self.makepyfile(test_one="""
+                Option('--someopt', action="store_true", dest="someopt", default=False))
+        """, 
+        )
+        p1 = testdir.makepyfile("""
             def test_1(): 
                 import py, conftest
-                print "test_1: py.test.config.option.forcegen", py.test.config.option.forcegen
+                print "test_1: py.test.config.option.someopt", py.test.config.option.someopt
                 print "test_1: conftest", conftest
-                print "test_1: conftest.option.forcegen", conftest.option.forcegen
-                assert conftest.option.forcegen 
-        """)
+                print "test_1: conftest.option.someopt", conftest.option.someopt
+                assert conftest.option.someopt 
+        """, __init__="#")
         print p1
-        config = self.parseconfig('-n1', p1, '--forcegen')
+        config = py.test.config._reparse(['-n1', p1, '--someopt'])
         dsession = DSession(config)
-        readevent = eventreader(dsession)
+        eq = EventQueue(config.bus)
         dsession.main()
-        ev = readevent(event.ItemTestReport)
+        ev, = eq.geteventargs("itemtestreport")
         if not ev.passed:
-            print ev.outcome.longrepr
+            print ev
             assert 0
 
-    def test_dist_some_tests(self):
-        self.makepyfile(conftest="dist_hosts=['localhost']\n")
-        p1 = self.makepyfile(test_one="""
+    def test_dist_some_tests(self, testdir):
+        testdir.makepyfile(conftest="dist_hosts=['localhost']\n")
+        p1 = testdir.makepyfile(test_one="""
             def test_1(): 
                 pass
             def test_x():
@@ -79,22 +53,22 @@ class TestAsyncFunctional(suptest.InlineCollection):
             def test_fail():
                 assert 0
         """)
-        config = self.parseconfig('-d', p1)
+        config = testdir.parseconfig('-d', p1)
         dsession = DSession(config)
-        readevent = eventreader(dsession)
+        eq = EventQueue(config.bus)
         dsession.main([config.getfsnode(p1)])
-        ev = readevent(event.ItemTestReport)
+        ev, = eq.geteventargs("itemtestreport")
         assert ev.passed
-        ev = readevent(event.ItemTestReport)
+        ev, = eq.geteventargs("itemtestreport")
         assert ev.skipped
-        ev = readevent(event.ItemTestReport)
+        ev, = eq.geteventargs("itemtestreport")
         assert ev.failed
         # see that the host is really down 
-        ev = readevent(event.HostDown)
+        ev, = eq.geteventargs("hostdown")
         assert ev.host.hostname == "localhost"
-        ev = readevent(event.TestrunFinish)
+        ev, = eq.geteventargs("testrunfinish")
 
-    def test_distribution_rsync_roots_example(self):
+    def test_distribution_rsync_roots_example(self, testdir):
         py.test.skip("testing for root rsync needs rework")
         destdir = py.test.ensuretemp("example_dist_destdir")
         subdir = "sub_example_dist"
@@ -124,28 +98,26 @@ class TestAsyncFunctional(suptest.InlineCollection):
         assert config.topdir == tmpdir
         assert not tmpdir.join("__init__.py").check()
         dist = DSession(config)
-        sorter = suptest.events_from_session(dist)
-        testevents = sorter.get(event.ItemTestReport)
+        sorter = testdir.inline_runsession(dist)
+        testevents = sorter.getnamed('itemtestreport')
         assert len([x for x in testevents if x.passed]) == 2
         assert len([x for x in testevents if x.failed]) == 3
         assert len([x for x in testevents if x.skipped]) == 0
 
-    def test_nice_level(self):
+    def test_nice_level(self, testdir):
         """ Tests if nice level behaviour is ok """
         if not hasattr(os, 'nice'):
             py.test.skip("no os.nice() available")
-        self.makepyfile(conftest="""
+        testdir.makepyfile(conftest="""
                 dist_hosts=['localhost']
                 dist_nicelevel = 10
         """)
-        p1 = self.makepyfile(test_nice="""
+        p1 = testdir.makepyfile("""
             def test_nice():
                 import os
                 assert os.nice(0) == 10
         """)
-        config = self.parseconfig('-d', p1)
-        session = config.initsession()
-        events = suptest.events_from_session(session)
-        ev = events.getreport('test_nice')
+        evrec = testdir.inline_run('-d', p1)
+        ev = evrec.getreport('test_nice')
         assert ev.passed
 

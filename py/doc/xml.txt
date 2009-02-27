@@ -168,5 +168,4 @@ complete the probably request-specific serialization of
 your Tags.  Hum, it's probably harder to explain this than to
 actually code it :-) 
 
-.. _Nevow: http://www.divmod.org/projects/nevow
 .. _`py.test`: test.html

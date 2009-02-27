@@ -9,12 +9,14 @@
 import py, os, sys
 
 from py.__.test import event
-from py.__.test.outcome import Skipped, Exit
+from py.__.test.outcome import Exit
 from py.__.test.dsession.mypickle import ImmutablePickler
 import py.__.test.custompdb
 
 class RobustRun(object):
-    """ a robust setup/execute/teardown protocol. """
+    """ a robust setup/execute/teardown protocol used both for test collectors 
+        and test items. 
+    """
     def __init__(self, colitem, pdb=None):
         self.colitem = colitem 
         self.getcapture = colitem._config._getcapture 
@@ -46,35 +48,18 @@ class RobustRun(object):
             excinfo = py.code.ExceptionInfo()
         return self.makereport(res, when, excinfo, outerr)
 
-    def getkw(self, when, excinfo, outerr):
-        if excinfo.errisinstance(Skipped):
-            outcome = "skipped"
-            shortrepr = "s"
-            longrepr = excinfo._getreprcrash()
-        else:
-            outcome = "failed"
-            if when == "execute":
-                longrepr = self.colitem.repr_failure(excinfo, outerr)
-                shortrepr = self.colitem.shortfailurerepr
-            else:
-                longrepr = self.colitem._repr_failure_py(excinfo, outerr)
-                shortrepr = self.colitem.shortfailurerepr.lower()
-        kw = { outcome: OutcomeRepr(when, shortrepr, longrepr)}
-        return kw
-
 class ItemRunner(RobustRun):
     def setup(self):
         self.colitem._setupstate.prepare(self.colitem)
     def teardown(self):
         self.colitem._setupstate.teardown_exact(self.colitem)
     def execute(self):
+        #self.colitem.config.pytestplugins.pre_execute(self.colitem)
         self.colitem.runtest()
+        #self.colitem.config.pytestplugins.post_execute(self.colitem)
+
     def makereport(self, res, when, excinfo, outerr):
-        if excinfo: 
-            kw = self.getkw(when, excinfo, outerr)
-        else:
-            kw = {'passed': OutcomeRepr(when, '.', "")}
-        testrep = event.ItemTestReport(self.colitem, **kw)
+        testrep = event.ItemTestReport(self.colitem, excinfo, when, outerr)
         if self.pdb and testrep.failed:
             tw = py.io.TerminalWriter()
             testrep.toterminal(tw)
@@ -89,25 +74,12 @@ class CollectorRunner(RobustRun):
     def execute(self):
         return self.colitem._memocollect()
     def makereport(self, res, when, excinfo, outerr):
-        if excinfo: 
-            kw = self.getkw(when, excinfo, outerr)
-        else:
-            kw = {'passed': OutcomeRepr(when, '', "")}
-        return event.CollectionReport(self.colitem, res, **kw)
-
+        return event.CollectionReport(self.colitem, res, excinfo, when, outerr)
+   
 NORESULT = object()
 # 
 # public entrypoints / objects 
 #
-
-class OutcomeRepr(object):
-    def __init__(self, when, shortrepr, longrepr):
-        self.when = when
-        self.shortrepr = shortrepr 
-        self.longrepr = longrepr 
-    def __str__(self):
-        return "<OutcomeRepr when=%r, shortrepr=%r, len-longrepr=%s" %(
-            self.when, self.shortrepr, len(str(self.longrepr)))
 
 def basic_collect_report(item):
     return CollectorRunner(item).run()
@@ -137,13 +109,12 @@ def forked_run_report(item, pdb=None):
     else:
         if result.exitstatus == EXITSTATUS_TESTEXIT:
             raise Exit("forked test item %s raised Exit" %(item,))
-        return report_crash(item, result)
+        return report_process_crash(item, result)
 
-def report_crash(item, result):
+def report_process_crash(item, result):
     path, lineno = item.getfslineno()
     longrepr = [
         ("X", "CRASHED"), 
         ("%s:%s: CRASHED with signal %d" %(path, lineno, result.signal)),
     ]
-    outcomerepr = OutcomeRepr(when="???", shortrepr="X", longrepr=longrepr)
-    return event.ItemTestReport(item, failed=outcomerepr)
+    return event.ItemTestReport(item, excinfo=longrepr, when="???")

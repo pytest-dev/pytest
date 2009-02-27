@@ -1,18 +1,18 @@
-from py.__.test.testing import suptest
-from py.__.test.testing.acceptance_test import AcceptBase
 
-class TestPyLookup(AcceptBase):
-    def test_basic(self):
-        p = self.makepyfile(hello="def x(): pass")
-        result = self.runpybin("py.lookup", "pass")
-        suptest.assert_lines_contain_lines(result.outlines, 
+pytest_plugins = "pytest_pytester"
+
+class TestPyLookup:
+    def test_basic(self, testdir):
+        p = testdir.makepyfile(hello="def x(): pass")
+        result = testdir.runpybin("py.lookup", "pass")
+        result.stdout.fnmatch_lines(
             ['%s:*def x(): pass' %(p.basename)]
         )
 
-    def test_search_in_filename(self):
-        p = self.makepyfile(hello="def x(): pass")
-        result = self.runpybin("py.lookup", "hello")
-        suptest.assert_lines_contain_lines(result.outlines, 
+    def test_search_in_filename(self, testdir):
+        p = testdir.makepyfile(hello="def x(): pass")
+        result = testdir.runpybin("py.lookup", "hello")
+        result.stdout.fnmatch_lines(
             ['*%s:*' %(p.basename)]
         )
         

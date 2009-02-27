@@ -13,7 +13,6 @@ import py
 from py.__.test.session import Session
 from py.__.test.outcome import Failed, Passed, Skipped
 from py.__.test.dsession.mypickle import PickleChannel
-from py.__.test.report.terminal import TerminalReporter
 from py.__.test import event
 from py.__.test.looponfail import util
 
@@ -83,8 +82,8 @@ class RemoteControl(object):
             from py.__.test.looponfail.remote import slave_runsession
             from py.__.test.dsession import masterslave
             config = masterslave.receive_and_send_pickled_config(channel)
-            width, hasmarkup = channel.receive()
-            slave_runsession(channel, config, width, hasmarkup) 
+            fullwidth, hasmarkup = channel.receive()
+            slave_runsession(channel, config, fullwidth, hasmarkup) 
         """, stdout=out, stderr=out)
         channel = PickleChannel(channel)
         masterslave.send_and_receive_pickled_config(
@@ -117,7 +116,7 @@ class RemoteControl(object):
         finally:
             self.ensure_teardown()
 
-def slave_runsession(channel, config, width, hasmarkup):
+def slave_runsession(channel, config, fullwidth, hasmarkup):
     """ we run this on the other side. """
     if config.option.debug:
         def DEBUG(*args): 
@@ -134,8 +133,10 @@ def slave_runsession(channel, config, width, hasmarkup):
         
     DEBUG("SLAVE: initsession()")
     session = config.initsession()
-    session.reporter._tw.hasmarkup = hasmarkup
-    session.reporter._tw.fullwidth = width
+    # XXX configure the reporter object's terminal writer more directly
+    # XXX and write a test for this remote-terminal setting logic 
+    config.pytest_terminal_hasmarkup = hasmarkup
+    config.pytest_terminal_fullwidth = fullwidth
     if trails:
         colitems = []
         for trail in trails:
@@ -148,19 +149,18 @@ def slave_runsession(channel, config, width, hasmarkup):
     else:
         colitems = None
     session.shouldclose = channel.isclosed 
-    #def sendevent(ev):
-    #    channel.send(ev)
-    #session.bus.subscribe(sendevent)
-    failreports = []
-    def recordfailures(ev):
-        if isinstance(ev, event.BaseReport): 
+   
+    class Failures(list):
+        def pyevent_itemtestreport(self, ev):
             if ev.failed:
-                failreports.append(ev)
-    session.bus.subscribe(recordfailures)
+                self.append(ev)
+        pyevent_collectionreport = pyevent_itemtestreport
+        
+    failreports = Failures()
+    session.bus.register(failreports)
 
     DEBUG("SLAVE: starting session.main()")
     session.main(colitems)
-    session.bus.unsubscribe(recordfailures)
-    ev = event.LooponfailingInfo(failreports, [config.topdir])
-    session.bus.notify(ev)
+    ev = event.LooponfailingInfo(list(failreports), [config.topdir])
+    session.bus.notify("looponfailinginfo", ev)
     channel.send([x.colitem._totrail() for x in failreports if x.failed])

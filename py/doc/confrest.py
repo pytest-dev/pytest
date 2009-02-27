@@ -1,7 +1,6 @@
 import py
 from py.__.misc.rest import convert_rest_html, strip_html_header 
 from py.__.misc.difftime import worded_time 
-from py.__.doc.conftest import get_apigenpath, get_docpath
 from py.__.apigen.linker import relpath
 
 html = py.xml.html 
@@ -25,13 +24,13 @@ class Page(object):
         self.fill() 
 
     def a_docref(self, name, relhtmlpath):
-        docpath = self.project.get_docpath()
+        docpath = self.project.docpath
         return html.a(name, class_="menu",
                       href=relpath(self.targetpath.strpath,
                                    docpath.join(relhtmlpath).strpath))
 
     def a_apigenref(self, name, relhtmlpath):
-        apipath = get_apigenpath()
+        apipath = self.project.apigenpath
         return html.a(name, class_="menu",
                       href=relpath(self.targetpath.strpath,
                                    apipath.join(relhtmlpath).strpath))
@@ -107,8 +106,6 @@ def getrealname(username):
 
 class Project:
     mydir = py.magic.autopath().dirpath()
-    # string for url, path for local file
-    stylesheet = mydir.join('style.css')
     title = "py lib"
     prefix_title = ""  # we have a logo already containing "py lib"
     encoding = 'latin1' 
@@ -119,31 +116,53 @@ class Project:
                             href="http://codespeak.net"))
     Page = PyPage 
 
+    def __init__(self, sourcepath=None):
+        if sourcepath is None:
+            sourcepath = self.mydir
+        self.setpath(sourcepath)
+
+    def setpath(self, sourcepath, docpath=None, 
+                apigenpath=None, stylesheet=None):
+        self.sourcepath = sourcepath
+        if docpath is None:
+            docpath = sourcepath
+        self.docpath = docpath
+        if apigenpath is None:
+            apigenpath = docpath
+        self.apigenpath = apigenpath
+        if stylesheet is None:
+            p = sourcepath.join("style.css")
+            if p.check():
+                self.stylesheet = p
+            else:
+                self.stylesheet = None
+        else:
+            p = py.path.local(stylesheet)
+            if p.check():
+                stylesheet = p
+            self.stylesheet = stylesheet
+        self.apigen_relpath = relpath(
+            self.docpath.strpath + '/', self.apigenpath.strpath + '/')
 
     def get_content(self, txtpath, encoding):
         return unicode(txtpath.read(), encoding)
 
-    def get_docpath(self):
-        return get_docpath()
-
     def get_htmloutputpath(self, txtpath):
-        docpath = self.get_docpath()
-        reloutputpath = txtpath.new(ext='.html').relto(self.mydir)
-        return docpath.join(reloutputpath)
+        reloutputpath = txtpath.new(ext='.html').relto(self.sourcepath)
+        return self.docpath.join(reloutputpath)
 
     def process(self, txtpath): 
         encoding = self.encoding
         content = self.get_content(txtpath, encoding)
-        docpath = self.get_docpath()
         outputpath = self.get_htmloutputpath(txtpath)
 
         stylesheet = self.stylesheet
-        if isinstance(self.stylesheet, py.path.local):
-            if not docpath.join(stylesheet.basename).check():
+        if isinstance(stylesheet, py.path.local):
+            if not self.docpath.join(stylesheet.basename).check():
                 docpath.ensure(dir=True)
                 stylesheet.copy(docpath)
             stylesheet = relpath(outputpath.strpath,
-                                 docpath.join(stylesheet.basename).strpath)
+                                 self.docpath.join(stylesheet.basename).strpath)
 
         content = convert_rest_html(content, txtpath,
                                     stylesheet=stylesheet, encoding=encoding)

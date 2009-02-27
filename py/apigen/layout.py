@@ -6,7 +6,6 @@
 import py
 from py.__.doc import confrest
 from py.__.apigen import linker
-from py.__.doc.conftest import get_apigenpath, get_docpath
 
 here = py.magic.autopath().dirpath()
 
@@ -25,7 +24,7 @@ class LayoutPage(confrest.PyPage):
 
     def get_relpath(self):
         return linker.relpath(self.targetpath.strpath,
-                              get_apigenpath().strpath) + '/'
+                              self.project.apigenpath.strpath) + '/'
 
     def set_content(self, contentel):
         self.contentspace.append(contentel)

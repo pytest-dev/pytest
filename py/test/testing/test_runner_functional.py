@@ -1,34 +1,42 @@
 import py
-from py.__.test.testing.suptest import InlineCollection
 from py.__.test.runner import basic_run_report, forked_run_report, basic_collect_report
 from py.__.test.runner import RobustRun
 from py.__.code.excinfo import ReprExceptionInfo
 
-class BaseTests(InlineCollection):
-    def test_passfunction(self):
-        ev = self.runitem("""
+class BaseTests:
+    def test_funcattr(self, testdir):
+        ev = testdir.runitem("""
+            import py
+            @py.test.keywords(xfail="needs refactoring")
+            def test_func():
+                raise Exit()
+        """)
+        assert ev.keywords['xfail'] == "needs refactoring" 
+
+    def test_passfunction(self, testdir):
+        ev = testdir.runitem("""
             def test_func():
                 pass
         """)
         assert ev.passed 
         assert not ev.failed
-        assert ev.outcome.shortrepr == "."
-        assert not ev.outcome.longrepr
+        assert ev.shortrepr == "."
+        assert not hasattr(ev, 'longrepr')
                 
-    def test_failfunction(self):
-        ev = self.runitem("""
+    def test_failfunction(self, testdir):
+        ev = testdir.runitem("""
             def test_func():
                 assert 0
         """)
         assert not ev.passed 
         assert not ev.skipped 
         assert ev.failed 
-        assert ev.outcome.when == "execute"
-        assert isinstance(ev.outcome.longrepr, ReprExceptionInfo)
-        assert str(ev.outcome.shortrepr) == "F"
+        assert ev.when == "execute"
+        assert isinstance(ev.longrepr, ReprExceptionInfo)
+        assert str(ev.shortrepr) == "F"
 
-    def test_skipfunction(self):
-        ev = self.runitem("""
+    def test_skipfunction(self, testdir):
+        ev = testdir.runitem("""
             import py
             def test_func():
                 py.test.skip("hello")
@@ -43,8 +51,8 @@ class BaseTests(InlineCollection):
         #assert ev.skipped.location.path
         #assert not ev.skipped.failurerepr 
 
-    def test_skip_in_setup_function(self):
-        ev = self.runitem("""
+    def test_skip_in_setup_function(self, testdir):
+        ev = testdir.runitem("""
             import py
             def setup_function(func):
                 py.test.skip("hello")
@@ -59,8 +67,8 @@ class BaseTests(InlineCollection):
         #assert ev.skipped.location.lineno == 3
         #assert ev.skipped.location.lineno == 3
 
-    def test_failure_in_setup_function(self):
-        ev = self.runitem("""
+    def test_failure_in_setup_function(self, testdir):
+        ev = testdir.runitem("""
             import py
             def setup_function(func):
                 raise ValueError(42)
@@ -71,10 +79,10 @@ class BaseTests(InlineCollection):
         assert not ev.skipped 
         assert not ev.passed 
         assert ev.failed 
-        assert ev.outcome.when == "setup"
+        assert ev.when == "setup"
 
-    def test_failure_in_teardown_function(self):
-        ev = self.runitem("""
+    def test_failure_in_teardown_function(self, testdir):
+        ev = testdir.runitem("""
             import py
             def teardown_function(func):
                 raise ValueError(42)
@@ -85,18 +93,18 @@ class BaseTests(InlineCollection):
         assert not ev.skipped 
         assert not ev.passed 
         assert ev.failed 
-        #assert ev.outcome.when == "teardown" 
-        #assert ev.outcome.where.lineno == 3
-        #assert ev.outcome.entries 
+        assert ev.when == "teardown" 
+        assert ev.longrepr.reprcrash.lineno == 3
+        assert ev.longrepr.reprtraceback.reprentries 
 
-    def test_custom_failure_repr(self):
-        self.makepyfile(conftest="""
+    def test_custom_failure_repr(self, testdir):
+        testdir.makepyfile(conftest="""
             import py
             class Function(py.test.collect.Function):
                 def repr_failure(self, excinfo, outerr):
                     return "hello" 
         """)
-        ev = self.runitem("""
+        ev = testdir.runitem("""
             import py
             def test_func():
                 assert 0
@@ -109,14 +117,14 @@ class BaseTests(InlineCollection):
         #assert ev.failed.where.path.basename == "test_func.py" 
         #assert ev.failed.failurerepr == "hello"
 
-    def test_failure_in_setup_function_ignores_custom_failure_repr(self):
-        self.makepyfile(conftest="""
+    def test_failure_in_setup_function_ignores_custom_failure_repr(self, testdir):
+        testdir.makepyfile(conftest="""
             import py
             class Function(py.test.collect.Function):
                 def repr_failure(self, excinfo):
                     assert 0
         """)
-        ev = self.runitem("""
+        ev = testdir.runitem("""
             import py
             def setup_function(func):
                 raise ValueError(42)
@@ -132,8 +140,8 @@ class BaseTests(InlineCollection):
         #assert ev.outcome.where.path.basename == "test_func.py" 
         #assert instanace(ev.failed.failurerepr, PythonFailureRepr)
 
-    def test_capture_in_func(self):
-        ev = self.runitem("""
+    def test_capture_in_func(self, testdir):
+        ev = testdir.runitem("""
             import py
             def setup_function(func):
                 print >>py.std.sys.stderr, "in setup"
@@ -148,21 +156,21 @@ class BaseTests(InlineCollection):
         # assert out == ['in function\nin teardown\n']
         # assert err == ['in setup\n']
         
-    def test_systemexit_does_not_bail_out(self):
+    def test_systemexit_does_not_bail_out(self, testdir):
         try:
-            ev = self.runitem("""
+            ev = testdir.runitem("""
                 def test_func():
                     raise SystemExit(42)
             """)
         except SystemExit:
             py.test.fail("runner did not catch SystemExit")
         assert ev.failed
-        assert ev.outcome.when == "execute"
+        assert ev.when == "execute"
 
-    def test_exit_propagates(self):
+    def test_exit_propagates(self, testdir):
         from py.__.test.outcome import Exit
         try:
-            self.runitem("""
+            testdir.runitem("""
                 from py.__.test.outcome import Exit
                 def test_func():
                     raise Exit()
@@ -172,14 +180,15 @@ class BaseTests(InlineCollection):
         else: 
             py.test.fail("did not raise")
 
+
 class TestExecutionNonForked(BaseTests):
     def getrunner(self):
         return basic_run_report 
 
-    def test_keyboardinterrupt_propagates(self):
+    def test_keyboardinterrupt_propagates(self, testdir):
         from py.__.test.outcome import Exit
         try:
-            self.runitem("""
+            testdir.runitem("""
                 def test_func():
                     raise KeyboardInterrupt("fake")
             """)
@@ -188,19 +197,19 @@ class TestExecutionNonForked(BaseTests):
         else: 
             py.test.fail("did not raise")
 
-    def test_pdb_on_fail(self):
+    def test_pdb_on_fail(self, testdir):
         l = []
-        ev = self.runitem("""
+        ev = testdir.runitem("""
             def test_func():
                 assert 0
         """, pdb=l.append)
         assert ev.failed
-        assert ev.outcome.when == "execute"
+        assert ev.when == "execute"
         assert len(l) == 1
 
-    def test_pdb_on_skip(self):
+    def test_pdb_on_skip(self, testdir):
         l = []
-        ev = self.runitem("""
+        ev = testdir.runitem("""
             import py
             def test_func():
                 py.test.skip("hello")
@@ -214,18 +223,18 @@ class TestExecutionForked(BaseTests):
             py.test.skip("no os.fork available")
         return forked_run_report
 
-    def test_suicide(self):
-        ev = self.runitem("""
+    def test_suicide(self, testdir):
+        ev = testdir.runitem("""
             def test_func():
                 import os
                 os.kill(os.getpid(), 15)
         """)
         assert ev.failed
-        assert ev.outcome.when == "???"
+        assert ev.when == "???"
 
-class TestCollectionEvent(InlineCollection):
-    def test_collect_result(self):
-        col = self.getmodulecol("""
+class TestCollectionEvent:
+    def test_collect_result(self, testdir):
+        col = testdir.getmodulecol("""
             def test_func1():
                 pass
             class TestClass:
@@ -240,8 +249,8 @@ class TestCollectionEvent(InlineCollection):
         assert res[0].name == "test_func1" 
         assert res[1].name == "TestClass" 
 
-    def test_skip_at_module_scope(self):
-        col = self.getmodulecol("""
+    def test_skip_at_module_scope(self, testdir):
+        col = testdir.getmodulecol("""
             import py
             py.test.skip("hello")
             def test_func():
@@ -253,9 +262,9 @@ class TestCollectionEvent(InlineCollection):
         assert ev.skipped 
 
 
-class TestRunnerRepr(InlineCollection):
-    def test_runner_repr(self):
-        item = self.getitem("def test_func(): pass")
+class TestRunnerRepr:
+    def test_runner_repr(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
         robustrun = RobustRun(item)
         r = repr(robustrun)
         assert r

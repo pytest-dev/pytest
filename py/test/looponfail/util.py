@@ -52,19 +52,3 @@ class StatRecorder:
         self.statcache = newstat
         return changed
 
-
-class EventRecorder(object):
-    def __init__(self, bus):
-        self.events = []
-        self.bus = bus
-        self.bus.subscribe(self.events.append)
-
-    def getfailures(self):
-        return [ev for ev in self.events 
-                    if isinstance(ev, event.BaseReport) and \
-                       ev.failed]
-    def clear(self):
-        self.events[:] = []
-
-    def unsubscribe(self):
-        self.bus.unsubscribe(self.events.append)

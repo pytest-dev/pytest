@@ -3,7 +3,6 @@ from py.path import SvnAuth
 import svntestbase
 from threading import Thread
 import time
-from py.__.conftest import option
 
 def make_repo_auth(repo, userdata):
     """ write config to repo
@@ -251,7 +250,7 @@ class TestSvnURLAuth(object):
 class SvnAuthFunctionalTestBase(object):
     def setup_class(cls):
         svntestbase.getsvnbin()
-        if not option.runslowtests:
+        if not py.test.config.option.runslowtests:
             py.test.skip('skipping slow functional tests - use --runslowtests '
                          'to override')
 

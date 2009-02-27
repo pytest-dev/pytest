@@ -71,3 +71,11 @@ def strip_html_header(string, encoding='utf8'):
             break 
         uni = match.group(1) 
     return uni 
+
+class Project: # used for confrest.py files 
+    def __init__(self, sourcepath):
+        self.sourcepath = sourcepath
+    def process(self, path):
+        return process(path)
+    def get_htmloutputpath(self, path):
+        return path.new(ext='html')

@@ -6,24 +6,6 @@ import py
 import time
 from py.__.test.outcome import Skipped
 
-class EventBus(object): 
-    """ General Event Bus for distributing events. """ 
-    def __init__(self):
-        self._subscribers = []
-    
-    def subscribe(self, callback):
-        """ subscribe given callback to bus events. """ 
-        self._subscribers.append(callback) 
-
-    def unsubscribe(self, callback):
-        """ unsubscribe given callback from bus events. """ 
-        self._subscribers.remove(callback) 
-    
-    def notify(self, event):
-        for subscriber in self._subscribers:
-            subscriber(event) 
-
-
 class BaseEvent(object):
     def __repr__(self):
         l = ["%s=%s" %(key, value)
@@ -75,33 +57,73 @@ class Deselected(BaseEvent):
         
 
 class BaseReport(BaseEvent):
-    failed = passed = skipped = None
-    def __init__(self, colitem, **kwargs):
-        self.colitem = colitem 
-        assert len(kwargs) == 1, kwargs
-        name, value = kwargs.items()[0]
-        setattr(self, name, True)
-        self.outcome = value
-
     def toterminal(self, out):
-        longrepr = self.outcome.longrepr 
+        longrepr = self.longrepr 
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
             out.line(str(longrepr))
-    
+   
 class ItemTestReport(BaseReport):
     """ Test Execution Report. """
+    failed = passed = skipped = False
 
+    def __init__(self, colitem, excinfo=None, when=None, outerr=None):
+        self.colitem = colitem 
+        self.keywords = colitem and colitem.readkeywords()
+        if not excinfo:
+            self.passed = True
+            self.shortrepr = "." 
+        else:
+            self.when = when 
+            if not isinstance(excinfo, py.code.ExceptionInfo):
+                self.failed = True
+                shortrepr = "?"
+                longrepr = excinfo 
+            elif excinfo.errisinstance(Skipped):
+                self.skipped = True 
+                shortrepr = "s"
+                longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+            else:
+                self.failed = True
+                shortrepr = self.colitem.shortfailurerepr
+                if self.when == "execute":
+                    longrepr = self.colitem.repr_failure(excinfo, outerr)
+                else: # exception in setup or teardown 
+                    longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+                    shortrepr = shortrepr.lower()
+            self.shortrepr = shortrepr 
+            self.longrepr = longrepr 
+            
 class CollectionStart(BaseEvent):
     def __init__(self, collector):
         self.collector = collector 
 
 class CollectionReport(BaseReport):
     """ Collection Report. """
-    def __init__(self, colitem, result, **kwargs):
-        super(CollectionReport, self).__init__(colitem, **kwargs)
-        self.result = result
+    skipped = failed = passed = False 
+
+    def __init__(self, colitem, result, excinfo=None, when=None, outerr=None):
+        self.colitem = colitem 
+        if not excinfo:
+            self.passed = True
+            self.result = result 
+        else:
+            self.when = when 
+            self.outerr = outerr
+            self.longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+            if excinfo.errisinstance(Skipped):
+                self.skipped = True
+                self.reason = str(excinfo.value)
+            else:
+                self.failed = True
+
+    def toterminal(self, out):
+        longrepr = self.longrepr 
+        if hasattr(longrepr, 'toterminal'):
+            longrepr.toterminal(out)
+        else:
+            out.line(str(longrepr))
 
 class LooponfailingInfo(BaseEvent):
     def __init__(self, failreports, rootdirs):
@@ -151,3 +173,12 @@ class HostRSyncRootReady(BaseEvent):
         self.host = host
         self.root = root
 
+
+# make all eventclasses available on BaseEvent so that
+# consumers of events can easily filter by 
+# 'isinstance(event, event.Name)' checks
+
+for name, cls in vars().items():
+    if hasattr(cls, '__bases__') and issubclass(cls, BaseEvent):
+        setattr(BaseEvent, name, cls)
+#

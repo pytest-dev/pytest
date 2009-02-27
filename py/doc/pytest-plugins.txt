@@ -1,0 +1,67 @@
+
+pytest plugins
+==================
+
+specifying plugins for directories or test modules 
+---------------------------------------------------------
+
+py.test loads and configures plugins at tool startup and whenever 
+it encounters new confest or test modules which 
+contain a ``pytest_plugins`` definition.  At tool 
+startup the ``PYTEST_PLUGINS`` environment variable 
+is considered as well. 
+
+Example
+++++++++++
+
+If you create a ``conftest.py`` file with the following content:: 
+
+    pytest_plugins = "pytest_plugin1", MyLocalPluginClass
+
+then test execution within that directory can make use 
+of the according instantiated plugins:
+
+* the module ``pytest_plugin1`` will be imported and 
+  and its contained `Plugin1`` class instantiated. 
+  A plugin module can put its dependencies into 
+  a "pytest_plugins" attribute at module level as well. 
+
+* the ``MyLocalPluginClass`` will be instantiated 
+  and added to the pluginmanager. 
+
+
+Plugin methods 
+----------------------------------
+
+A Plugin class may implement the following attributes and methods: 
+
+* pytest_cmdlineoptions: a list of optparse-style py.test.config.Option objects 
+* pytest_configure(self, config): called after command line options have been parsed 
+* pytest_unconfigure(self, config): called before the test process quits 
+* pytest_event(self, event): called for each `pytest event`_ 
+
+XXX reference APIcheck'ed full documentation
+
+_`pytest event`: 
+
+Pytest Events 
+-------------------
+
+XXX Various reporting events. 
+
+Example plugins
+-----------------------
+
+XXX here are a few existing plugins: 
+
+* adding reporting facilities, e.g. 
+  pytest_terminal: default reporter for writing info to terminals 
+  pytest_resultlog: log test results in machine-readable form to a file 
+  pytest_eventlog: log all internal pytest events to a file 
+  pytest_xfail: "expected to fail" test marker 
+  pytest_tmpdir: provide temporary directories to test functions 
+  pytest_plugintester: generic apichecks, support for functional plugin tests 
+  pytest_pytester: support for testing py.test runs
+
+* extending test execution, e.g. 
+  pytest_apigen: tracing values of function/method calls when running tests

@@ -52,7 +52,7 @@ class TestBuildcostAccess(BasicCacheAPITest):
 
 
 class TestAging(BasicCacheAPITest):
-    maxsecs = 0.02
+    maxsecs = 0.10
     cache = AgingCache(maxentries=128, maxseconds=maxsecs)
 
     def test_cache_eviction(self):

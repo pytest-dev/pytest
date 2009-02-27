@@ -105,10 +105,7 @@ be directly usable for such linux-filesystem glue code.
 In other words, implementing a `memoryfs`_ or a `dictfs`_ would 
 give you two things for free: a filesystem mountable at kernel level
 as well as a uniform "path" object allowing you to access your
-filesystem in convenient ways.  (At some point it might
-even become interesting to think about interfacing to  
-`reiserfs v4 features`_ at the Filesystem level but that
-is a can of subsequent worms).  
+filesystem in convenient ways.  
 
 Also interesting to check out is Will McGugan's work on 
 his `fs package`_.  
@@ -128,7 +125,6 @@ is Matthew Scotts `dictproxy patch`_ which adds
 .. _`dictfs`: http://codespeak.net/pipermail/py-dev/2005-January/000191.html 
 .. _`pylufs`: http://codespeak.net/svn/user/arigo/hack/pylufs/
 .. _`pyfuse`: http://codespeak.net/svn/user/arigo/hack/pyfuse/
-.. _`reiserfs v4 features`: http://www.namesys.com/v4/v4.html
 
 
 Integrate interactive completion 

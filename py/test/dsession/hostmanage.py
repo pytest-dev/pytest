@@ -148,7 +148,7 @@ class HostManager(object):
     def prepare_gateways(self):
         for host in self.hosts:
             host.initgateway()
-            self.session.bus.notify(event.HostGatewayReady(host, self.roots))
+            self.session.bus.notify("hostgatewayready", event.HostGatewayReady(host, self.roots))
 
     def init_rsync(self):
         self.prepare_gateways()
@@ -164,16 +164,14 @@ class HostManager(object):
             for host in self.hosts:
                 rsync.add_target_host(host, destrelpath)
             rsync.send(raises=False)
-        self.session.bus.notify(event.RsyncFinished())
+        self.session.bus.notify("rsyncfinished", event.RsyncFinished())
 
-    def setup_hosts(self, notify=None):
-        if notify is None:
-            notify = self.session.bus.notify
+    def setup_hosts(self, putevent):
         self.init_rsync()
         for host in self.hosts:
             host.node = MasterNode(host, 
                                    self.session.config, 
-                                   notify)
+                                   putevent)
 
 #
 # helpers 

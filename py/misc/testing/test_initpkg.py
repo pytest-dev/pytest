@@ -12,20 +12,20 @@ def checksubpackage(name):
         assert getattr(obj, '__map__')  == {}
 
 def test_dir():
-    from py.__.initpkg import Module
+    from py.__.initpkg import ApiModule
     for name in dir(py):
         if name == 'magic': # greenlets don't work everywhere, we don't care here
             continue
         if not name.startswith('_'):
             yield checksubpackage, name
 
-from py.initpkg import Module 
+from py.initpkg import ApiModule 
 glob = []
-class MyModule(Module):
+class MyModule(ApiModule):
     def __init__(self, *args):
         glob.append(self.__dict__) 
         assert isinstance(glob[-1], (dict, type(None)))
-        Module.__init__(self, *args)
+        ApiModule.__init__(self, *args)
 
 def test_early__dict__access():
     mymod = MyModule("whatever", "myname")
@@ -68,7 +68,10 @@ def test_importall():
         base.join('execnet', 'script'),
         base.join('compat', 'testing'),
     )
-    for p in base.visit('*.py', lambda x: x.check(dotfile=0)): 
+    def recurse(p):
+        return p.check(dotfile=0) and p.basename != "attic"
+
+    for p in base.visit('*.py', recurse):
         if p.basename == '__init__.py':
             continue
         relpath = p.new(ext='').relto(base)
@@ -255,3 +258,8 @@ class TestRealModule:
 #    help(std.path)
 #    #assert False
 
+
+def test_autoimport():
+    from py.initpkg import autoimport
+    py.std.os.environ['AUTOTEST_AUTOIMPORT'] = "nonexistmodule"
+    py.test.raises(ImportError, "autoimport('autotest')")

@@ -9,9 +9,11 @@ def main(args=None):
     if args is None:
         args = py.std.sys.argv[1:]
     config = py.test.config
-    config.parse(args)
+    config.parse(args) 
+    config.pytestplugins.configure(config)
     session = config.initsession()
     exitstatus = session.main()
+    config.pytestplugins.unconfigure(config)
     raise SystemExit(exitstatus)
 
 def warn_about_missing_assertion():

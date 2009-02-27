@@ -50,7 +50,7 @@ if __name__ == '__main__':
     if apigendir.check():
         print apigendir, "exists, not re-generating - remove to trigger regeneration"
     else:
-        sysexec('%(env)s %(pytest)s --apigen=%(pypath)s/apigen/apigen.py py' % locals())
+        sysexec('%(env)s %(pytest)s py' % locals())
     print 
     print "*" * 30, "static generation", "*" * 30
     sysexec('%(env)s %(pytest)s --forcegen %(pypath)s/doc' % locals())

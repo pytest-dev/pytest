@@ -139,6 +139,13 @@ def deprecated_call(func, *args, **kwargs):
         raise AssertionError("%r did not produce DeprecationWarning" %(func,))
     return ret
 
+class keywords:
+    """ decorator for setting function attributes. """
+    def __init__(self, **kw):
+        self.kw = kw
+    def __call__(self, func):
+        func.func_dict.update(self.kw)
+        return func 
 
 # exitcodes for the command line
 EXIT_OK = 0

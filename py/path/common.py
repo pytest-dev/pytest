@@ -152,6 +152,30 @@ class PathBase(object):
             return strself[len(strrelpath):]
         return ""
 
+    def bestrelpath(self, dest): 
+        """ return relative path from self to dest
+            such that self.join(bestrelpath) == dest. 
+            if not such path can be determined return dest. 
+        """ 
+        try:
+            base = self.common(dest)
+            if not base:  # can be the case on windows
+                return dest
+            self2base = self.relto(base)
+            reldest = dest.relto(base)
+            if self2base:
+                n = self2base.count(self.sep) + 1
+            else:
+                n = 0
+            l = ['..'] * n
+            if reldest:
+                l.append(reldest)     
+            target = dest.sep.join(l)
+            return target 
+        except AttributeError:
+            return dest
+
+
     def parts(self, reverse=False):
         """ return a root-first list of all ancestor directories
             plus the path itself.

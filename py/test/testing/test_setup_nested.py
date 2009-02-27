@@ -2,11 +2,8 @@
 # test correct setup/teardowns at
 # module, class, and instance level
 
-import py
-import suptest 
-
-def test_module_and_function_setup():
-    sorter = suptest.events_from_runsource(""" 
+def test_module_and_function_setup(testdir):
+    sorter = testdir.inline_runsource(""" 
         modlevel = []
         def setup_module(module):
             assert not modlevel
@@ -35,8 +32,8 @@ def test_module_and_function_setup():
     rep = sorter.getreport("test_module") 
     assert rep.passed 
 
-def test_class_setup():
-    sorter = suptest.events_from_runsource("""
+def test_class_setup(testdir):
+    sorter = testdir.inline_runsource("""
         class TestSimpleClassSetup:
             clslevel = []
             def setup_class(cls):
@@ -58,8 +55,8 @@ def test_class_setup():
     """)
     sorter.assertoutcome(passed=1+2+1)
 
-def test_method_setup():
-    sorter = suptest.events_from_runsource("""
+def test_method_setup(testdir):
+    sorter = testdir.inline_runsource("""
         class TestSetupMethod:
             def setup_method(self, meth):
                 self.methsetup = meth 
@@ -74,8 +71,8 @@ def test_method_setup():
     """)
     sorter.assertoutcome(passed=2)
        
-def test_method_generator_setup():
-    sorter = suptest.events_from_runsource("""
+def test_method_generator_setup(testdir):
+    sorter = testdir.inline_runsource("""
         class TestSetupTeardownOnInstance: 
             def setup_class(cls):
                 cls.classsetup = True 
@@ -96,8 +93,8 @@ def test_method_generator_setup():
     """)
     sorter.assertoutcome(passed=1, failed=1)
 
-def test_func_generator_setup():
-    sorter = suptest.events_from_runsource(""" 
+def test_func_generator_setup(testdir):
+    sorter = testdir.inline_runsource(""" 
         import sys
 
         def setup_module(mod):
@@ -124,8 +121,8 @@ def test_func_generator_setup():
     rep = sorter.getreport("test_one") 
     assert rep.passed 
         
-def test_method_setup_uses_fresh_instances():
-    sorter = suptest.events_from_runsource("""
+def test_method_setup_uses_fresh_instances(testdir):
+    sorter = testdir.inline_runsource("""
         class TestSelfState1: 
             def __init__(self):
                 self.hello = 42

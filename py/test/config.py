@@ -2,9 +2,9 @@ from __future__ import generators
 
 import py
 from conftesthandle import Conftest
-from py.__.test.defaultconftest import adddefaultoptions
 
-optparse = py.compat.optparse
+from py.__.test import parseopt
+from py.__.misc.warn import APIWARN
 
 # XXX move to Config class
 basetemp = None
@@ -26,14 +26,26 @@ class CmdOptions(object):
 
 class Config(object): 
     """ central bus for dealing with configuration/initialization data. """ 
-    Option = optparse.Option
+    Option = py.compat.optparse.Option # deprecated
     _initialized = False
 
-    def __init__(self): 
+    def __init__(self, pytestplugins=None): 
         self.option = CmdOptions()
-        self._parser = optparse.OptionParser(
-            usage="usage: %prog [options] [query] [filenames of tests]")
-        self._conftest = Conftest()
+        self._parser = parseopt.Parser(
+            usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
+            processopt=self._processopt,
+        )
+        if pytestplugins is None:
+            pytestplugins = py.test._PytestPlugins()
+        assert isinstance(pytestplugins, py.test._PytestPlugins)
+        self.bus = pytestplugins.pyplugins
+        self.pytestplugins = pytestplugins
+        self._conftest = Conftest(onimport=self.pytestplugins.consider_conftest)
+
+    def _processopt(self, opt):
+        if hasattr(opt, 'default') and opt.dest:
+            if not hasattr(self.option, opt.dest):
+                setattr(self.option, opt.dest, opt.default)
 
     def parse(self, args): 
         """ parse cmdline arguments into this config object. 
@@ -42,15 +54,14 @@ class Config(object):
         assert not self._initialized, (
                 "can only parse cmdline args at most once per Config object")
         self._initialized = True
-        adddefaultoptions(self)
         self._conftest.setinitial(args) 
-        args = [str(x) for x in args]
-        cmdlineoption, args = self._parser.parse_args(args) 
-        self.option.__dict__.update(vars(cmdlineoption))
+        self.pytestplugins.consider_env()
+        self.pytestplugins.do_addoption(self._parser)
+        args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())
         self.topdir = gettopdir(args)
-        self.args = args 
+        self.args = [py.path.local(x) for x in args]
 
     # config objects are usually pickled across system
     # barriers but they contain filesystem paths. 
@@ -62,11 +73,15 @@ class Config(object):
         self._repr = repr
 
     def _initafterpickle(self, topdir):
-        self.__init__()
+        self.__init__(
+            #issue1
+            #pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
+        )
         self._initialized = True
         self.topdir = py.path.local(topdir)
         self._mergerepr(self._repr)
         del self._repr 
+        self.pytestplugins.configure(config=self)
 
     def _makerepr(self):
         l = []
@@ -87,6 +102,9 @@ class Config(object):
         self.option = cmdlineopts
         self._conftest.setinitial(self.args)
 
+    def getcolitems(self):
+        return [self.getfsnode(arg) for arg in self.args]
+
     def getfsnode(self, path):
         path = py.path.local(path)
         assert path.check(), "%s: path does not exist" %(path,)
@@ -96,8 +114,7 @@ class Config(object):
             pkgpath = path.check(file=1) and path.dirpath() or path
         Dir = self._conftest.rget("Directory", pkgpath)
         col = Dir(pkgpath, config=self)
-        names = path.relto(col.fspath).split(path.sep)
-        return col._getitembynames(names)
+        return col._getfsnode(path)
 
     def getvalue_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence
@@ -119,24 +136,14 @@ class Config(object):
         """ add a named group of options to the current testing session. 
             This function gets invoked during testing session initialization. 
         """ 
-        for spec in specs:
-            for shortopt in spec._short_opts:
-                if not shortopt.isupper(): 
-                    raise ValueError(
-                        "custom options must be capital letter "
-                        "got %r" %(spec,)
-                    )
-        return self._addoptions(groupname, *specs)
+        APIWARN("1.0", "define plugins to add options", stacklevel=2)
+        group = self._parser.addgroup(groupname)
+        for opt in specs:
+            group._addoption_instance(opt)
+        return self.option 
 
-    def _addoptions(self, groupname, *specs):
-        optgroup = optparse.OptionGroup(self._parser, groupname) 
-        optgroup.add_options(specs) 
-        self._parser.add_option_group(optgroup)
-        for opt in specs: 
-            if hasattr(opt, 'default') and opt.dest:
-                if not hasattr(self.option, opt.dest):
-                    setattr(self.option, opt.dest, opt.default) 
-        return self.option
+    def addoption(self, *optnames, **attrs):
+        return self._parser.addoption(*optnames, **attrs)
 
     def getvalue(self, name, path=None): 
         """ return 'name' value looked up from the 'options'
@@ -150,30 +157,21 @@ class Config(object):
         except AttributeError:
             return self._conftest.rget(name, path)
 
-    def initreporter(self, bus):
-        if self.option.collectonly:
-            from py.__.test.report.collectonly import Reporter
-        else:
-            from py.__.test.report.terminal import Reporter 
-        rep = Reporter(self, bus=bus)
-        return rep
-
     def initsession(self):
         """ return an initialized session object. """
-        cls = self._getsessionclass()
+        cls = self._getestdirclass()
         session = cls(self)
         session.fixoptions()
-        session.reporter = self.initreporter(session.bus)
         return session
 
-    def _getsessionclass(self): 
+    def _getestdirclass(self): 
         """ return Session class determined from cmdline options
             and looked up in initial config modules. 
         """
         if self.option.session is not None:
             return self._conftest.rget(self.option.session)
         else:
-            name = self._getsessionname()
+            name = self._getestdirname()
             try:
                 return self._conftest.rget(name)
             except KeyError:
@@ -182,7 +180,7 @@ class Config(object):
             mod = __import__(importpath, None, None, '__doc__')
             return getattr(mod, name)
 
-    def _getsessionname(self):
+    def _getestdirname(self):
         """ return default session name as determined from options. """
         if self.option.collectonly:
             name = 'Session'
@@ -221,42 +219,10 @@ class Config(object):
             raise ValueError("unknown io capturing: " + iocapture)
 
     
-    def gettracedir(self):
-        """ return a tracedirectory or None, depending on --tracedir. """
-        if self.option.tracedir is not None:
-            return py.path.local(self.option.tracedir)
-
-    def maketrace(self, name, flush=True):
-        """ return a tracedirectory or None, depending on --tracedir. """
-        tracedir = self.gettracedir()
-        if tracedir is None:
-            return NullTracer()
-        tracedir.ensure(dir=1)
-        return Tracer(tracedir.join(name), flush=flush)
-
-class Tracer(object):
-    file = None
-    def __init__(self, path, flush=True):
-        self.file = path.open(mode='w')
-        self.flush = flush
-       
-    def __call__(self, *args):
-        time = round(py.std.time.time(), 3)
-        print >>self.file, time, " ".join(map(str, args))
-        if self.flush:
-            self.file.flush()
-
-    def close(self):
-        self.file.close()
-
-class NullTracer:
-    def __call__(self, *args):
-        pass
-    def close(self):
-        pass
-    
 # this is the one per-process instance of py.test configuration 
-config_per_process = Config()
+config_per_process = Config(
+    pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
+)
 
 # default import paths for sessions 
 

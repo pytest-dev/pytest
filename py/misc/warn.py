@@ -1,5 +1,4 @@
 import py, sys
-from py.__.test.event import EventBus
 
 class Warning(py.std.exceptions.DeprecationWarning):
     def __init__(self, msg, path, lineno):
@@ -11,19 +10,16 @@ class Warning(py.std.exceptions.DeprecationWarning):
     def __str__(self):
         return self.msg 
 
-class WarningBus(object):
-    def __init__(self):
-        self._eventbus = EventBus()
+# XXX probably only apiwarn() + py._com.pyplugins forwarding
+# warn_explicit is actually needed 
 
-    def subscribe(self, callable):
-        self._eventbus.subscribe(callable)
-
-    def unsubscribe(self, callable):
-        self._eventbus.unsubscribe(callable)
-
-    def _setforwarding(self):
-        self._eventbus.subscribe(self._forward)
-    def _forward(self, warning):
+class WarningPlugin(object):
+    def __init__(self, bus):
+        self.bus = bus
+        bus.register(self)
+        
+    def pyevent_WARNING(self, warning):
+        # forward to python warning system 
         py.std.warnings.warn_explicit(warning, category=Warning, 
             filename=str(warning.path), 
             lineno=warning.lineno,
@@ -66,9 +62,8 @@ class WarningBus(object):
                 filename = module
         path = py.path.local(filename)
         warning = Warning(msg, path, lineno)
-        self._eventbus.notify(warning)
+        self.bus.notify("WARNING", warning)
 
 # singleton api warner for py lib 
-apiwarner = WarningBus()
-apiwarner._setforwarding()
+apiwarner = WarningPlugin(py._com.pyplugins)
 APIWARN = apiwarner.apiwarn

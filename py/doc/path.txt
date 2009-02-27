@@ -52,7 +52,7 @@ solutions.
 Some example usage of :api:`py.path.svnurl`::
 
   .. >>> import py
-  .. >>> if not py.test.config.option.checkremote: raise ValueError('skipchunk')
+  .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> url = py.path.svnurl('http://codespeak.net/svn/py')
   >>> info = url.info()
   >>> info.kind
@@ -64,7 +64,7 @@ Some example usage of :api:`py.path.svnurl`::
 
 Example usage of :api:`py.path.svnwc`::
 
-  .. >>> if not py.test.config.option.checkremote: raise ValueError('skipchunk')
+  .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> temp = py.test.ensuretemp('py.path_documentation')
   >>> wc = py.path.svnwc(temp.join('svnwc'))
   >>> wc.checkout('http://codespeak.net/svn/py/dist/py/path/local')
@@ -132,6 +132,10 @@ don't have to exist, either)::
   >>> sep = py.path.local.sep
   >>> p2.relto(p1).replace(sep, '/') # os-specific path sep in the string
   'baz/qux'
+  >>> p2.bestrelpath(p1)
+  '../..'
+  >>> p2.join(p2.bestrelpath(p1)) == p1 
+  True
   >>> p3 = p1 / 'baz/qux' # the / operator allows joining, too
   >>> p2 == p3
   True
@@ -178,7 +182,7 @@ Setting svn-properties
 As an example of 'uncommon' methods, we'll show how to read and write
 properties in an :api:`py.path.svnwc` instance::
 
-  .. >>> if not py.test.config.option.checkremote: raise ValueError('skipchunk')
+  .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> wc.propget('foo')
   ''
   >>> wc.propset('foo', 'bar')
@@ -196,7 +200,7 @@ SVN authentication
 Some uncommon functionality can also be provided as extensions, such as SVN
 authentication::
 
-  .. >>> if not py.test.config.option.checkremote: raise ValueError('skipchunk')
+  .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> auth = py.path.SvnAuth('anonymous', 'user', cache_auth=False,
   ...             interactive=False)
   >>> wc.auth = auth

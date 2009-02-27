@@ -53,7 +53,6 @@ class SetupState(object):
             col = self.stack.pop() 
             col.teardown()
         for col in needed_collectors[len(self.stack):]: 
-            #print "setting up", col
             col.setup() 
             self.stack.append(col) 
 
@@ -67,7 +66,7 @@ class ReprMetaInfo(object):
         params = self.__dict__.copy()
         if self.fspath:
             if basedir is not None:
-                params['fspath'] = getrelpath(basedir, self.fspath)
+                params['fspath'] = basedir.bestrelpath(self.fspath)
         if self.lineno is not None:
             params['lineno'] = self.lineno + 1
 
@@ -107,6 +106,7 @@ class Node(object):
             config = getattr(parent, '_config')
         self._config = config 
         self.fspath = getattr(parent, 'fspath', None) 
+
 
     # 
     # note to myself: Pickling is uh.
@@ -172,15 +172,17 @@ class Node(object):
         setattr(self, attrname, res)
         return res 
 
-    def listchain(self): 
-        """ return list of all parent collectors up to self. """ 
+    def listchain(self, rootfirst=False):
+        """ return list of all parent collectors up to self, 
+            starting form root of collection tree. """ 
         l = [self]
         while 1: 
             x = l[-1]
             if x.parent is not None: 
                 l.append(x.parent) 
             else: 
-                l.reverse() 
+                if not rootfirst:
+                    l.reverse() 
                 return l 
 
     def listnames(self): 
@@ -199,6 +201,53 @@ class Node(object):
                     raise AssertionError(msg) 
                 cur = next
         return cur
+
+    
+    def _getfsnode(self, path):
+        # this method is usually called from
+        # config.getfsnode() which returns a colitem 
+        # from filename arguments
+        #
+        # pytest's collector tree does not neccessarily 
+        # follow the filesystem and we thus need to do 
+        # some special matching code here because
+        # _getitembynames() works by colitem names, not
+        # basenames. 
+        if path == self.fspath:
+            return self 
+        basenames = path.relto(self.fspath).split(path.sep)
+        cur = self
+        while basenames:
+            basename = basenames.pop(0)
+            assert basename
+            fspath = cur.fspath.join(basename)
+            colitems = cur._memocollect()
+            l = []
+            for colitem in colitems:
+                if colitem.fspath == fspath or colitem.name == basename:
+                    l.append(colitem)
+            if not l:
+                msg = ("Collector %r does not provide %r colitem "
+                       "existing colitems are: %s" %
+                       (cur, fspath, colitems))
+                raise AssertionError(msg) 
+            if basenames:
+                if len(l) > 1:
+                    msg = ("Collector %r has more than one %r colitem "
+                           "existing colitems are: %s" %
+                           (cur, fspath, colitems))
+                    raise AssertionError(msg) 
+                cur = l[0]
+            else:
+                if len(l) > 1:
+                    cur = l
+                else:
+                    cur = l[0]
+                break
+        return cur 
+
+    def readkeywords(self):
+        return dict([(x, True) for x in self._keywords()])
 
     def _keywords(self):
         return [self.name]
@@ -284,7 +333,6 @@ class Node(object):
         return repr 
 
     repr_failure = _repr_failure_py
-
     shortfailurerepr = "F"
 
 class Collector(Node):
@@ -298,7 +346,7 @@ class Collector(Node):
     """
     Directory = configproperty('Directory')
     Module = configproperty('Module')
-    DoctestFile = configproperty('DoctestFile')
+    #DoctestFile = configproperty('DoctestFile')
 
     def collect(self):
         """ returns a list of children (items and collectors) 
@@ -407,41 +455,45 @@ class Directory(FSCollector):
             return l 
         l = []
         for path in self.fspath.listdir(sort=True): 
-            res = self.consider(path, usefilters=True)
+            res = self.consider(path)
             if res is not None:
-                l.append(res)
+                if isinstance(res, (list, tuple)):
+                    l.extend(res)
+                else:
+                    l.append(res)
         return l
 
-    def consider(self, path, usefilters=True):
+    def consider(self, path):
         if path.check(file=1):
-            return self.consider_file(path, usefilters=usefilters)
+            return self.consider_file(path)
         elif path.check(dir=1):
-            return self.consider_dir(path, usefilters=usefilters)
+            return self.consider_dir(path)
 
-    def consider_file(self, path, usefilters=True):
-        ext = path.ext 
-        pb = path.purebasename
-        if not usefilters or pb.startswith("test_") or pb.endswith("_test"):
-            if ext == ".py":
-                return self.Module(path, parent=self) 
-            elif ext == ".txt":
-                return self.DoctestFile(path, parent=self)
+    def consider_file(self, path):
+        res = self._config.pytestplugins.call_each(
+            'pytest_collect_file', path=path, parent=self)
+        l = []
+        # throw out identical modules
+        for x in res:
+            if x not in l:
+                l.append(x)
+        return l
 
-    def consider_dir(self, path, usefilters=True):
-        if not usefilters or self.recfilter(path):
-            # not use self.Directory here as 
-            # dir/conftest.py shall be able to 
-            # define Directory(dir) already 
-            Directory = self._config.getvalue('Directory', path) 
-            return Directory(path, parent=self) 
-
-    def collect_by_name(self, name):
-        """ get a child with the given name. """ 
-        res = super(Directory, self).collect_by_name(name)
-        if res is None:
-            p = self.fspath.join(name)
-            res = self.consider(p, usefilters=False)
-        return res
+    def consider_dir(self, path, usefilters=None):
+        if usefilters is not None:
+            APIWARN("0.99", "usefilters argument not needed")
+        if not self.recfilter(path):
+            # check if cmdline specified this dir or a subdir
+            for arg in self._config.args:
+                if path == arg or arg.relto(path):
+                    break
+            else:
+                return
+        # not use self.Directory here as 
+        # dir/conftest.py shall be able to 
+        # define Directory(dir) already 
+        Directory = self._config.getvalue('Directory', path) 
+        return Directory(path, parent=self) 
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 
@@ -479,27 +531,6 @@ class Item(Node):
     def runtest(self):
         """ execute this test item."""
         
-        
-def getrelpath(curdir, dest): 
-    try:
-        base = curdir.common(dest)
-        if not base:  # can be the case on windows
-            return dest
-        curdir2base = curdir.relto(base)
-        reldest = dest.relto(base)
-        if curdir2base:
-            n = curdir2base.count(curdir.sep) + 1
-        else:
-            n = 0
-        l = ['..'] * n
-        if reldest:
-            l.append(reldest)     
-        target = dest.sep.join(l)
-        return target 
-    except AttributeError:
-        return dest
-
-
 def warnoldcollect():
     APIWARN("1.0", 
         "implement collector.collect() instead of "

@@ -8,7 +8,6 @@ from py.__.apigen import htmlgen
 from py.__.apigen import linker
 from py.__.apigen import project
 from py.__.apigen.tracer.docstorage import pkg_to_dict
-from py.__.doc.conftest import get_apigenpath
 
 from layout import LayoutPage
 
@@ -26,9 +25,9 @@ def get_documentable_items_pkgdir(pkgdir):
 
 def get_documentable_items(pkgdir):
     pkgname, pkgdict = get_documentable_items_pkgdir(pkgdir)
-    from py.__.execnet.channel import Channel
-    pkgdict['execnet.Channel'] = Channel
-    Channel.__apigen_hide_from_nav__ = True
+    #from py.__.execnet.channel import Channel
+    #pkgdict['execnet.Channel'] = Channel
+    #Channel.__apigen_hide_from_nav__ = True
     return pkgname, pkgdict
 
 def sourcedirfilter(p):
@@ -36,7 +35,7 @@ def sourcedirfilter(p):
             not p.basename.startswith('.') and
             str(p).find('c-extension%sgreenlet%sbuild' % (p.sep, p.sep)) == -1)
 
-def build(pkgdir, dsa, capture):
+def build(config, pkgdir, dsa, capture):
     # create a linker (link database) for cross-linking
     l = linker.TempLinker()
 
@@ -44,8 +43,7 @@ def build(pkgdir, dsa, capture):
     proj = project.Project()
 
     # output dir
-    from py.__.conftest import option
-    targetdir = get_apigenpath()
+    targetdir = proj.apigenpath
     targetdir.ensure(dir=True)
 
     # find out what to build

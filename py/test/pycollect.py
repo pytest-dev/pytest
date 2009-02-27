@@ -36,7 +36,7 @@ class PyobjMixin(object):
     def _getobj(self):
         return getattr(self.parent.obj, self.name)
 
-    def getmodpath(self, stopatmodule=True):
+    def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
         chain = self.listchain()
         chain.reverse()
@@ -46,10 +46,12 @@ class PyobjMixin(object):
                 continue
             name = node.name 
             if isinstance(node, Module):
-                if stopatmodule:
-                    break
                 assert name.endswith(".py")
                 name = name[:-3]
+                if stopatmodule:
+                    if includemodule:
+                        parts.append(name)
+                    break
             parts.append(name)
         parts.reverse()
         s = ".".join(parts)
@@ -136,14 +138,18 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             warnoldcollect()
             return self.join(name)
 
-    def makeitem(self, name, obj, usefilters=True):
-        if (not usefilters or self.classnamefilter(name)) and \
+    def makeitem(self, name, obj):
+        res = self._config.pytestplugins.call_firstresult(
+            "pytest_pymodule_makeitem", modcol=self, name=name, obj=obj)
+        if res:
+            return res
+        if (self.classnamefilter(name)) and \
             py.std.inspect.isclass(obj):
             res = self._deprecated_join(name)
             if res is not None:
                 return res 
             return self.Class(name, parent=self)
-        elif (not usefilters or self.funcnamefilter(name)) and callable(obj): 
+        elif self.funcnamefilter(name) and callable(obj): 
             res = self._deprecated_join(name)
             if res is not None:
                 return res 
@@ -159,14 +165,23 @@ class Module(py.test.collect.File, PyCollectorMixin):
         return super(Module, self).collect()
 
     def _getobj(self):
-        return self._memoizedcall('_obj', self.fspath.pyimport)
+        return self._memoizedcall('_obj', self._importtestmodule)
+
+    def _importtestmodule(self):
+        # we assume we are only called once per module 
+        mod = self.fspath.pyimport()
+        #print "imported test module", mod
+        self._config.pytestplugins.consider_module(mod)
+        return mod
 
     def setup(self): 
         if not self._config.option.nomagic:
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
-        if hasattr(self.obj, 'setup_module'): 
-            self.obj.setup_module(self.obj) 
+        mod = self.obj
+        self._config.pytestplugins.register(mod)
+        if hasattr(mod, 'setup_module'): 
+            self.obj.setup_module(mod)
 
     def teardown(self): 
         if hasattr(self.obj, 'teardown_module'): 
@@ -174,6 +189,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
         if not self._config.option.nomagic:
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
+        self._config.pytestplugins.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
@@ -305,14 +321,57 @@ class Function(FunctionMixin, py.test.collect.Item):
     """
     def __init__(self, name, parent=None, config=None, args=(), callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
+        self._finalizers = []
         self._args = args
         if callobj is not _dummy: 
             self._obj = callobj 
 
+    def addfinalizer(self, func):
+        self._finalizers.append(func)
+        
+    def teardown(self):
+        finalizers = self._finalizers
+        while finalizers:
+            call = finalizers.pop()
+            call()
+        super(Function, self).teardown()
+
+    def readkeywords(self):
+        d = super(Function, self).readkeywords()
+        d.update(self.obj.func_dict)
+        return d
+
     def runtest(self):
         """ execute the given test function. """
         if not self._deprecated_testexecution():
-            self.obj(*self._args)
+            kw = self.lookup_allargs()
+            pytest_pyfunc_call = self._config.pytestplugins.getfirst("pytest_pyfunc_call")
+            if pytest_pyfunc_call is not None:
+                if pytest_pyfunc_call(pyfuncitem=self, args=self._args, kwargs=kw):
+                    return
+            self.obj(*self._args, **kw)
+
+    def lookup_allargs(self):
+        kwargs = {}
+        if not self._args:  
+            # standard Python Test function/method case  
+            funcobj = self.obj 
+            startindex = getattr(funcobj, 'im_self', None) and 1 or 0 
+            for argname in py.std.inspect.getargs(self.obj.func_code)[0][startindex:]:
+                kwargs[argname] = self.lookup_onearg(argname)
+        else:
+            pass # XXX lookup of arguments for yielded/generated tests as well 
+        return kwargs
+
+    def lookup_onearg(self, argname):
+        value = self._config.pytestplugins.call_firstresult(
+            "pytest_pyfuncarg_" + argname, pyfuncitem=self)
+        if value is not None:
+            return value
+        else:
+            metainfo = self.repr_metainfo()
+            #self._config.bus.notify("pyfuncarg_lookuperror", argname)
+            raise LookupError("funcargument %r not found for: %s" %(argname,metainfo.verboseline()))
 
     def __eq__(self, other):
         try:
@@ -326,50 +385,6 @@ class Function(FunctionMixin, py.test.collect.Item):
     def __ne__(self, other):
         return not self == other
 
-class DoctestFile(py.test.collect.File): 
-   
-    def collect(self):
-        return [DoctestFileContent(self.fspath.basename, parent=self)]
 
-from py.__.code.excinfo import Repr, ReprFileLocation
-
-class ReprFailDoctest(Repr):
-    def __init__(self, reprlocation, lines):
-        self.reprlocation = reprlocation
-        self.lines = lines
-    def toterminal(self, tw):
-        for line in self.lines:
-            tw.line(line)
-        self.reprlocation.toterminal(tw)
-             
-class DoctestFileContent(py.test.collect.Item):
-    def repr_failure(self, excinfo, outerr):
-        if excinfo.errisinstance(py.compat.doctest.DocTestFailure):
-            doctestfailure = excinfo.value
-            example = doctestfailure.example
-            test = doctestfailure.test
-            filename = test.filename 
-            lineno = example.lineno + 1
-            message = excinfo.type.__name__
-            reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = py.compat.doctest.OutputChecker() 
-            REPORT_UDIFF = py.compat.doctest.REPORT_UDIFF
-            filelines = py.path.local(filename).readlines(cr=0)
-            i = max(0, lineno - 10)
-            lines = []
-            for line in filelines[i:lineno]:
-                lines.append("%03d %s" % (i+1, line))
-                i += 1
-            lines += checker.output_difference(example, 
-                    doctestfailure.got, REPORT_UDIFF).split("\n")
-            return ReprFailDoctest(reprlocation, lines)
-        #elif excinfo.errisinstance(py.compat.doctest.UnexpectedException):
-        else: 
-            return super(DoctestFileContent, self).repr_failure(excinfo, outerr)
-            
-    def runtest(self):
-        if not self._deprecated_testexecution():
-            failed, tot = py.compat.doctest.testfile(
-                str(self.fspath), module_relative=False, 
-                raise_on_error=True, verbose=0)
-
+# DEPRECATED
+#from py.__.test.plugin.pytest_doctest import DoctestFile 

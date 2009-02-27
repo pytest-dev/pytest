@@ -430,8 +430,9 @@ class ApiPageBuilder(AbstractPageBuilder):
             relpath = get_rel_sourcepath(self.projroot, sourcefile, sourcefile)
             text = 'source: %s' % (relpath,)
             if is_in_pkg:
-                href = self.linker.get_lazyhref(sourcefile,
-                                                self.get_anchor(func))
+                #href = self.linker.get_lazyhref(sourcefile,
+                #                                self.get_anchor(func))
+                href = self.linker.get_lazyhref(sourcefile) # 
         csource = H.SourceSnippet(text, href, colored)
         cslinks = self.build_callsites(dotted_name)
         snippet = H.FunctionDescription(localname, argdesc, docstring,
@@ -464,8 +465,8 @@ class ApiPageBuilder(AbstractPageBuilder):
             if sourcefile[-1] in ['o', 'c']:
                 sourcefile = sourcefile[:-1]
             sourcelink = H.div(H.a('view source',
-                href=self.linker.get_lazyhref(sourcefile,
-                                              self.get_anchor(cls))))
+                href=self.linker.get_lazyhref(sourcefile) #, self.get_anchor(cls)
+            ))
 
         snippet = H.ClassDescription(
             # XXX bases HTML

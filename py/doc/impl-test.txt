@@ -270,3 +270,5 @@ Customizing execution of Functions
   function with the given (usually empty set of) arguments. 
 
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
+
+

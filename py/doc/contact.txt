@@ -16,8 +16,6 @@ py lib contact and communication
 
 .. _`merlinux.eu`: http://merlinux.eu
 
-.. _`zope3`: http://zope3.zwiki.org/
-.. _twisted: http://www.twistedmatrix.org 
 .. _future: future.html 
 
 .. _`get an account`:  

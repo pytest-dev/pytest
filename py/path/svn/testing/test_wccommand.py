@@ -4,7 +4,6 @@ from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc, getsvn
 from py.__.path.svn.wccommand import InfoSvnWCCommand, XMLWCStatus
 from py.__.path.svn.wccommand import parse_wcinfotime
 from py.__.path.svn import svncommon
-from py.__.conftest import option
 
 if sys.platform != 'win32':
     def normpath(p):
@@ -157,7 +156,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             self.root.revert(rec=1)
 
     def test_status_conflict(self):
-        if not option.runslowtests:
+        if not py.test.config.option.runslowtests:
             py.test.skip('skipping slow unit tests - use --runslowtests '
                          'to override')
         wc = self.root
@@ -177,7 +176,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert [x.basename for x in s.conflict] == ['conflictsamplefile']
 
     def test_status_external(self):
-        if not option.runslowtests:
+        if not py.test.config.option.runslowtests:
             py.test.skip('skipping slow unit tests - use --runslowtests '
                          'to override')
         otherrepo, otherwc = getrepowc('externalrepo', 'externalwc')

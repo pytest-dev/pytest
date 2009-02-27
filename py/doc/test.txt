@@ -142,29 +142,33 @@ To make it easier to distinguish the generated tests it is possible to specify a
 selecting/unselecting tests by keyword 
 ---------------------------------------------
 
+Pytest's keyword mechanism provides a powerful way to 
+group and selectively run tests in your test code base. 
 You can selectively run tests by specifiying a keyword 
-on the command line. Example:: 
+on the command line.  Examples:
 
-    py.test -k test_simple 
+    py.test -k test_simple   
+    py.test -k "-test_simple"
 
-will run all tests that are found from the current directory 
-and where the word "test_simple" equals the start of one part of the 
-path  leading up to the test item.  Directory and file basenames as well 
-as function, class and function/method names each form a possibly
-matching name.   You can also unselect tests by preceding a keyword 
-with a dash:: 
-
-    py.test. -k "-test_simple"
-
-will run all tests except where the word "test_simple" matches a tests keyword. 
-Note that you need to quote the keyword if the shell recognizes "-" as an intro
-to a cmdline option.  Lastly, you may use 
+will run all tests matching (or not matching) the
+"test_simple" keyword.  Note that you need to quote 
+the keyword if "-" is recognized as an indicator 
+for a commandline option.  Lastly, you may use 
 
     py.test. -k "test_simple:"
 
 which will run all tests after the expression has *matched once*, i.e. 
 all tests that are seen after a test that matches the "test_simple" 
 keyword. 
+
+By default, all filename parts and
+class/function names of a test function are put into the set
+of keywords for a given test.  You may specify additional 
+kewords like this::
+
+    @py.test.keywords("webtest")
+    def test_send_http():
+        ... 
 
 testing with multiple python versions / executables 
 ---------------------------------------------------

@@ -9,8 +9,9 @@ class Conftest(object):
         conftest.py files may result in added cmdline options. 
         XXX
     """ 
-    def __init__(self, path=None):
+    def __init__(self, path=None, onimport=None):
         self._path2confmods = {}
+        self._onimport = onimport
         if path is not None:
             self.setinitial([path])
 
@@ -37,11 +38,11 @@ class Conftest(object):
         except KeyError:
             dp = path.dirpath()
             if dp == path: 
-                return [importconfig(defaultconftestpath)]
+                return [self.importconftest(defaultconftestpath)]
             clist = self.getconftestmodules(dp)
             conftestpath = path.join("conftest.py")
             if conftestpath.check(file=1):
-                clist.append(importconfig(conftestpath))
+                clist.append(self.importconftest(conftestpath))
             self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
         # affect us by always returning a copy of the actual list 
@@ -61,15 +62,17 @@ class Conftest(object):
                 continue
         raise KeyError, name
 
-def importconfig(configpath):
-    # We could have used caching here, but it's redundant since
-    # they're cached on path anyway, so we use it only when doing rget_path
-    assert configpath.check(), configpath
-    if not configpath.dirpath('__init__.py').check(file=1): 
-        # HACK: we don't want any "globally" imported conftest.py, 
-        #       prone to conflicts and subtle problems 
-        modname = str(configpath).replace('.', configpath.sep)
-        mod = configpath.pyimport(modname=modname)
-    else:
-        mod = configpath.pyimport()
-    return mod
+    def importconftest(self, conftestpath):
+        # Using caching here looks redundant since ultimately
+        # sys.modules caches already 
+        assert conftestpath.check(), conftestpath
+        if not conftestpath.dirpath('__init__.py').check(file=1): 
+            # HACK: we don't want any "globally" imported conftest.py, 
+            #       prone to conflicts and subtle problems 
+            modname = str(conftestpath).replace('.', conftestpath.sep)
+            mod = conftestpath.pyimport(modname=modname)
+        else:
+            mod = conftestpath.pyimport()
+        if self._onimport:
+            self._onimport(mod)
+        return mod

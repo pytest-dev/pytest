@@ -1,9 +1,8 @@
 import py
-from py.__.test.looponfail.util import StatRecorder, EventRecorder
-from py.__.test import event
+from py.__.test.looponfail.util import StatRecorder
 
-def test_filechange():
-    tmp = py.test.ensuretemp("test_filechange")
+def test_filechange(tmpdir):
+    tmp = tmpdir
     hello = tmp.ensure("hello.py")
     sd = StatRecorder([tmp])
     changed = sd.check()
@@ -35,8 +34,8 @@ def test_filechange():
     changed = sd.check()
     assert changed
 
-def test_pycremoval():
-    tmp = py.test.ensuretemp("test_pycremoval")
+def test_pycremoval(tmpdir):
+    tmp = tmpdir
     hello = tmp.ensure("hello.py")
     sd = StatRecorder([tmp])
     changed = sd.check()
@@ -52,8 +51,8 @@ def test_pycremoval():
     assert not pycfile.check()
     
 
-def test_waitonchange():
-    tmp = py.test.ensuretemp("test_waitonchange")
+def test_waitonchange(tmpdir):
+    tmp = tmpdir
     sd = StatRecorder([tmp])
 
     wp = py._thread.WorkerPool(1)
@@ -62,29 +61,4 @@ def test_waitonchange():
     tmp.ensure("newfile.py")
     reply.get(timeout=0.5)
     wp.shutdown()
-    
-def test_eventrecorder():
-    bus = event.EventBus()
-    recorder = EventRecorder(bus)
-    bus.notify(event.NOP())
-    assert recorder.events 
-    assert not recorder.getfailures()
-    rep = event.ItemTestReport(None, failed=True)
-    bus.notify(rep)
-    failures = recorder.getfailures()
-    assert failures == [rep]
-    recorder.clear() 
-    assert not recorder.events
-    assert not recorder.getfailures()
-    recorder.unsubscribe()
-    bus.notify(rep)
-    assert not recorder.events 
-    assert not recorder.getfailures()
-    
-    
-        
-    
-    
-    
-    
-
+   

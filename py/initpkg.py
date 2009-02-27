@@ -64,12 +64,6 @@ class Package(object):
     def _resolve(self, extpyish):
         """ resolve a combined filesystem/python extpy-ish path. """
         fspath, modpath = extpyish
-        if not fspath.endswith('.py'):
-            import py
-            e = py.path.local(self.implmodule.__file__)
-            e = e.dirpath(fspath, abs=True)
-            e = py.path.extpy(e, modpath)
-            return e.resolve()
         assert fspath.startswith('./'), \
                "%r is not an implementation path (XXX)" % (extpyish,)
         implmodule = self._loadimpl(fspath[:-3])
@@ -166,14 +160,17 @@ def setmodule(modpath, module):
     sys.modules[modpath] = module
 
 # ---------------------------------------------------
-# Virtual Module Object
+# API Module Object
 # ---------------------------------------------------
 
-class Module(ModuleType):
+class ApiModule(ModuleType):
     def __init__(self, pkg, name):
         self.__pkg__ = pkg
         self.__name__ = name
         self.__map__ = {}
+
+    def __repr__(self):
+        return '<ApiModule %r>' % (self.__name__,)
 
     def __getattr__(self, name):
         if '*' in self.__map__: 
@@ -208,9 +205,6 @@ class Module(ModuleType):
                 setattr(result, '__name__', name)
             except (AttributeError, TypeError):
                 pass
-
-    def __repr__(self):
-        return '<Module %r>' % (self.__name__, )
 
     def getdict(self):
         # force all the content of the module to be loaded when __dict__ is read
@@ -254,7 +248,7 @@ def initpkg(pkgname, exportdefs, **kw):
             previous = current
             current += '.' + name
             if current not in seen:
-                seen[current] = mod = Module(pkg, current)
+                seen[current] = mod = ApiModule(pkg, current)
                 setattr(seen[previous], name, mod)
                 setmodule(current, mod)
 
@@ -272,3 +266,12 @@ def initpkg(pkgname, exportdefs, **kw):
     for mod, pypart, extpy in deferred_imports: 
         setattr(mod, pypart, pkg._resolve(extpy))
 
+    autoimport(pkgname)
+
+def autoimport(pkgname):
+    import py
+    ENVKEY = pkgname.upper() + "_AUTOIMPORT"
+    if ENVKEY in os.environ:
+        for impname in os.environ[ENVKEY].split(","):
+            py._com.pyplugins.notify("autoimport", impname)
+            __import__(impname) 

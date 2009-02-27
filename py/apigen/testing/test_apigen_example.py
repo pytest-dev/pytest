@@ -8,10 +8,7 @@ from py.__.apigen.tracer.tracer import Tracer
 from py.__.apigen.layout import LayoutPage
 from py.__.apigen.project import Project
 from py.__.test.web import webcheck
-from py.__.apigen.conftest import option
 from py.__.path.svn.testing.svntestbase import make_test_repo
-
-py.test.skip("apigen needs work on py.test to work again")
 
 def run_string_sequence_test(data, seq):
     currpos = -1
@@ -84,7 +81,7 @@ def _checkhtml(htmlstring):
     if isinstance(htmlstring, unicode):
         htmlstring = htmlstring.encode('UTF-8', 'replace')
     assert isinstance(htmlstring, str)
-    if option.webcheck:
+    if py.test.config.option.webcheck:
         webcheck.check_html(htmlstring)
     else:
         py.test.skip("pass --webcheck to validate html produced in tests "
@@ -238,7 +235,8 @@ class TestApiPageBuilder(AbstractBuilderTest):
         self.linker.replace_dirpath(self.base, False)
         funchtml = self.base.join('api/main.SomeClass.html').read()
         print funchtml
-        assert funchtml.find('href="../source/pkg/someclass.py.html#SomeClass"') > -1
+        #assert funchtml.find('href="../source/pkg/someclass.py.html#SomeClass"') > -1
+        assert funchtml.find('href="../source/pkg/someclass.py.html"') > -1
         _checkhtml(funchtml)
 
     def test_build_namespace_pages(self):

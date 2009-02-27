@@ -8,16 +8,19 @@ from py.__.test.dsession.mypickle import PickleChannel
 class MasterNode(object):
     ENDMARK = -1
 
-    def __init__(self, host, config, notify):
+    def __init__(self, host, config, putevent):
         self.host = host 
         self.config = config 
-        self.notify = notify 
+        self.putevent = putevent 
         self.channel = install_slave(host, config)
         self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
         self._down = False
+
+    def notify(self, eventname, *args, **kwargs):
+        self.putevent((eventname, args, kwargs))
       
-    def callback(self, ev):
-        """ this gets called for each item we receive from 
+    def callback(self, eventcall):
+        """ this gets called for each object we receive from 
             the other side and if the channel closes. 
 
             Note that the callback runs in the receiver
@@ -25,24 +28,27 @@ class MasterNode(object):
             avoid raising exceptions or doing heavy work.
         """
         try:
-            if ev == self.ENDMARK:
+            if eventcall == self.ENDMARK:
                 err = self.channel._getremoteerror()
                 if not self._down:
                     if not err:
                         err = "TERMINATED"
-                    self.notify(event.HostDown(self.host, err))
+                    self.notify("hostdown", event.HostDown(self.host, err))
                 return
-            if ev is None:
+            elif eventcall is None:
                 self._down = True
-                self.notify(event.HostDown(self.host, None))
+                self.notify("hostdown", event.HostDown(self.host, None))
                 return 
         except KeyboardInterrupt:
             raise 
         except:
             excinfo = py.code.ExceptionInfo()
             print "!" * 20, excinfo
-            ev = event.InternalException(excinfo)
-        self.notify(ev) 
+            self.notify("internalerror", event.InternalException(excinfo))
+        else:
+            # XXX we need to have the proper event name 
+            eventname, args, kwargs = eventcall 
+            self.notify(eventname, *args, **kwargs)
 
     def send(self, item):
         assert item is not None
@@ -101,24 +107,22 @@ class SlaveNode(object):
 
     def __repr__(self):
         host = getattr(self, 'host', '<uninitialized>')
-        return "<%s host=%s>" %(self.__class__.__name__, host.hostid)
+        return "<%s host=%s>" %(self.__class__.__name__, host)
+
+    def sendevent(self, eventname, *args, **kwargs):
+        self.channel.send((eventname, args, kwargs))
 
     def run(self):
         from py.__.test.dsession.hostmanage import makehostup
         channel = self.channel
         self.host = host = channel.receive()
-        channel.send(makehostup(host))
-        self.trace = self.config.maketrace(host.hostid)
-        self.trace("initialized")
-
+        self.sendevent("hostup", makehostup(host))
         try:
             while 1:
                 task = channel.receive()
-                self.trace("received", task)
-
+                self.config.bus.notify("masterslave_receivedtask", task)
                 if task is None: # shutdown
-                    channel.send(None)
-                    self.trace("shutting down, send None to", channel)
+                    self.channel.send(None)
                     break
                 if isinstance(task, list):
                     for item in task:
@@ -128,15 +132,10 @@ class SlaveNode(object):
         except KeyboardInterrupt:
             raise
         except:
-            rep = event.InternalException()
-            self.trace("sending back internal exception report, breaking loop")
-            channel.send(rep)
+            self.sendevent("internalerror", event.InternalException())
             raise
-        else:
-            self.trace("normal shutdown")
 
     def runtest(self, item):
         runner = item._getrunner()
         testrep = runner(item)
-        self.channel.send(testrep)
-        self.trace("sent back testreport", testrep)
+        self.sendevent("itemtestreport", testrep)

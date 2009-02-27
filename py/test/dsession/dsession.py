@@ -8,11 +8,10 @@ import py
 from py.__.test import event
 import py.__.test.custompdb
 from py.__.test.dsession.hostmanage import HostManager
-Item = (py.test.collect.Item, py.test.collect.Item)
-Collector = (py.test.collect.Collector, py.test.collect.Collector)
+Item = py.test.collect.Item
+Collector = py.test.collect.Collector
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
-from py.__.test.runner import OutcomeRepr
 from py.__.test import outcome 
 
 import Queue 
@@ -42,7 +41,6 @@ class DSession(Session):
         self.host2pending = {}
         self.item2host = {}
         self._testsfailed = False
-        self.trace = config.maketrace("dsession.log")
 
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
@@ -79,11 +77,13 @@ class DSession(Session):
 
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
-        self.bus.notify(event.TestrunStart())
+        #self.bus.notify(event.TestrunStart())
+        self.sessionstarts()
         self.setup_hosts()
         exitstatus = self.loop(colitems)
-        self.bus.notify(event.TestrunFinish(exitstatus=exitstatus))
+        #self.bus.notify(event.TestrunFinish(exitstatus=exitstatus))
         self.teardown_hosts()
+        self.sessionfinishes() 
         return exitstatus
 
     def loop_once(self, loopstate):
@@ -96,28 +96,34 @@ class DSession(Session):
         # we use a timeout here so that control-C gets through 
         while 1:
             try:
-                ev = self.queue.get(timeout=2.0)
+                eventcall = self.queue.get(timeout=2.0)
                 break
             except Queue.Empty:
                 continue
         loopstate.dowork = True 
-        self.bus.notify(ev)
-        if isinstance(ev, event.ItemTestReport):
+           
+        eventname, args, kwargs = eventcall
+        self.bus.notify(eventname, *args, **kwargs)
+        if args:
+            ev, = args 
+        else:
+            ev = None
+        if eventname == "itemtestreport":
             self.removeitem(ev.colitem)
             if ev.failed:
                 loopstate.testsfailed = True
-        elif isinstance(ev, event.CollectionReport):
+        elif eventname == "collectionreport":
             if ev.passed:
                 colitems.extend(ev.result)
-        elif isinstance(ev, event.HostUp):
+        elif eventname == "hostup":
             self.addhost(ev.host)
-        elif isinstance(ev, event.HostDown):
+        elif eventname == "hostdown":
             pending = self.removehost(ev.host)
             if pending:
                 crashitem = pending.pop(0)
                 self.handle_crashitem(crashitem, ev.host)
                 colitems.extend(pending)
-        elif isinstance(ev, event.RescheduleItems):
+        elif eventname == "rescheduleitems":
             colitems.extend(ev.items)
             loopstate.dowork = False # avoid busywait
 
@@ -132,9 +138,10 @@ class DSession(Session):
     def loop_once_shutdown(self, loopstate):
         # once we are in shutdown mode we dont send 
         # events other than HostDown upstream 
-        ev = self.queue.get()
-        if isinstance(ev, event.HostDown):
-            self.bus.notify(ev)
+        eventname, args, kwargs = self.queue.get()
+        if eventname == "hostdown":
+            ev, = args
+            self.bus.notify("hostdown", ev)
             self.removehost(ev.host)
         if not self.host2pending:
             # finished
@@ -155,7 +162,7 @@ class DSession(Session):
         except KeyboardInterrupt:
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
-            self.bus.notify(event.InternalException())
+            self.bus.notify("internalerror", event.InternalException())
             exitstatus = outcome.EXIT_INTERNALERROR
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
@@ -173,7 +180,6 @@ class DSession(Session):
         pending = self.host2pending.pop(host)
         for item in pending:
             del self.item2host[item]
-        self.trace("removehost %s, pending=%r" %(host.hostid, pending))
         return pending
 
     def triggertesting(self, colitems):
@@ -183,10 +189,12 @@ class DSession(Session):
             if isinstance(next, Item):
                 senditems.append(next)
             else:
-                ev = basic_collect_report(next)
-                self.bus.notify(event.CollectionStart(next))
-                self.queue.put(ev)
+                self.bus.notify("collectionstart", event.CollectionStart(next))
+                self.queueevent("collectionreport", basic_collect_report(next))
         self.senditems(senditems)
+
+    def queueevent(self, eventname, *args, **kwargs):
+        self.queue.put((eventname, args, kwargs)) 
 
     def senditems(self, tosend):
         if not tosend:
@@ -196,38 +204,36 @@ class DSession(Session):
             if room > 0:
                 sending = tosend[:room]
                 host.node.sendlist(sending)
-                self.trace("sent to host %s: %r" %(host.hostid, sending))
                 for item in sending:
                     #assert item not in self.item2host, (
                     #    "sending same item %r to multiple hosts "
                     #    "not implemented" %(item,))
                     self.item2host[item] = host
-                    self.bus.notify(event.ItemStart(item, host))
+                    self.bus.notify("itemstart", event.ItemStart(item, host))
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:
                     break
         if tosend:
             # we have some left, give it to the main loop
-            self.queue.put(event.RescheduleItems(tosend))
+            self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
 
     def removeitem(self, item):
         if item not in self.item2host:
             raise AssertionError(item, self.item2host)
         host = self.item2host.pop(item)
         self.host2pending[host].remove(item)
-        self.trace("removed %r, host=%r" %(item,host.hostid))
+        #self.config.bus.notify("removeitem", item, host.hostid)
 
     def handle_crashitem(self, item, host):
-        longrepr = "%r CRASHED THE HOST %r" %(item, host)
-        outcome = OutcomeRepr(when="execute", shortrepr="c", longrepr=longrepr)
-        rep = event.ItemTestReport(item, failed=outcome)
-        self.bus.notify(rep)
+        longrepr = "!!! Host %r crashed during running of test %r" %(host, item)
+        rep = event.ItemTestReport(item, when="???", excinfo=longrepr)
+        self.bus.notify("itemtestreport", rep)
 
     def setup_hosts(self):
         """ setup any neccessary resources ahead of the test run. """
         self.hm = HostManager(self)
-        self.hm.setup_hosts(notify=self.queue.put)
+        self.hm.setup_hosts(putevent=self.queue.put)
 
     def teardown_hosts(self):
         """ teardown any resources after a test run. """ 

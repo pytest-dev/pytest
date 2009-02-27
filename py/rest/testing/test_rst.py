@@ -3,7 +3,7 @@
 """
 
 from py.__.rest.rst import *
-from py.__.doc.conftest import restcheck
+from py.__.misc.rest import process as restcheck
 import traceback
 
 tempdir = py.test.ensuretemp('rest')

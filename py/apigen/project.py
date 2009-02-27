@@ -8,14 +8,18 @@
 import py
 from layout import LayoutPage
 
-class Project(py.__.doc.confrest.Project):
+# XXX don't import from an internal py lib class
+from py.__.doc import confrest
+
+class Project(confrest.Project):
     """ a full project
 
         this takes care of storing information on the first pass, and building
         pages + indexes on the second
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        confrest.Project.__init__(self, *args, **kwargs)
         self.content_items = {}
     
     def add_item(self, path, content):

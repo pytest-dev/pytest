@@ -1,7 +1,8 @@
 
 # -*- coding: utf-8 -*-
 """
-The py lib is a development support library featuring these tools and APIs:
+The py lib is an extensible library for testing, distributed processing and 
+interacting with filesystems. 
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
@@ -26,8 +27,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 58385 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2008-09-23 16:28:13 +0200 (Tue, 23 Sep 2008) $',
+    revision = int('$LastChangedRevision: 62211 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-02-27 11:18:27 +0100 (Fri, 27 Feb 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -37,7 +38,7 @@ initpkg(__name__,
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",
@@ -53,6 +54,12 @@ initpkg(__name__,
 
     # EXPORTED API 
     exportdefs = {
+
+    # py lib events and plugins 
+    '_com.PyPlugins'         : ('./_com.py', 'PyPlugins'), 
+    '_com.MultiCall'         : ('./_com.py', 'MultiCall'), 
+    '_com.pyplugins'         : ('./_com.py', 'pyplugins'), 
+
     # py lib cmdline tools 
     'cmdline.pytest'         : ('./cmdline/pytest.py', 'main',),
     'cmdline.pyrest'         : ('./cmdline/pyrest.py', 'main',),
@@ -64,7 +71,9 @@ initpkg(__name__,
 
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
+    'test._PytestPlugins'    : ('./test/pytestplugin.py', 'PytestPlugins'),
     'test.raises'            : ('./test/outcome.py', 'raises'),
+    'test.keywords'          : ('./test/outcome.py', 'keywords',),
     'test.deprecated_call'   : ('./test/outcome.py', 'deprecated_call'), 
     'test.skip'              : ('./test/outcome.py', 'skip'),
     'test.importorskip'      : ('./test/outcome.py', 'importorskip'),
@@ -83,7 +92,6 @@ initpkg(__name__,
     'test.collect.File'      : ('./test/collect.py', 'File'),
     'test.collect.Item'      : ('./test/collect.py', 'Item'),
     'test.collect.Module'    : ('./test/pycollect.py', 'Module'),
-    'test.collect.DoctestFile' : ('./test/pycollect.py', 'DoctestFile'),
     'test.collect.Class'     : ('./test/pycollect.py', 'Class'),
     'test.collect.Instance'  : ('./test/pycollect.py', 'Instance'),
     'test.collect.Generator' : ('./test/pycollect.py', 'Generator'),
@@ -186,4 +194,8 @@ initpkg(__name__,
     'compat.textwrap'        : ('./compat/textwrap.py', '*'),
     'compat.subprocess'      : ('./compat/subprocess.py', '*'),
 })
+
+import py
+py._com.pyplugins.consider_env()
+
 

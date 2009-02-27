@@ -1,12 +1,9 @@
 import py,sys
 py.test.skip("implementation missing: recording")
 
-from py.__.test.testing import suptest
-from py.__.test.acceptance_test import AcceptBase
-
-class TestRecordingAccept(AcceptBase):
-    def test_recording_and_back(self):
-        p = self.makepyfile(test_one="""
+class TestRecordingAccept:
+    def test_recording_and_back(self, testdir):
+        p = testdir.makepyfile("""
             import py
             def test_fail():
                 assert x

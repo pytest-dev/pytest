@@ -16,6 +16,15 @@ class TestConftestValueAccessGlobal:
         conftest.setinitial([self.basedir.join("adir")])
         assert conftest.rget("a") == 1
 
+    def test_onimport(self):
+        l = []
+        conftest = Conftest(onimport=l.append)
+        conftest.setinitial([self.basedir.join("adir")])
+        assert len(l) == 2 # default + the one 
+        assert conftest.rget("a") == 1
+        assert conftest.rget("b", self.basedir.join("adir", "b")) == 2
+        assert len(l) == 3
+
     def test_immediate_initialiation_and_incremental_are_the_same(self):
         conftest = Conftest()
         snap0 = len(conftest._path2confmods)

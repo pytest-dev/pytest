@@ -2,7 +2,6 @@ from __future__ import generators
 import os, sys, time, signal
 import py
 from py.__.execnet import gateway
-from py.__.conftest import option 
 mypath = py.magic.autopath()
 
 from StringIO import StringIO
@@ -247,7 +246,10 @@ class BasicRemoteExecution:
         channel.waitclose(TESTTIMEOUT) 
         assert l == [42]
 
-    def test_channel_callback_stays_active(self, earlyfree=True):
+    def test_channel_callback_stays_active(self):
+        self.check_channel_callback_stays_active(earlyfree=True)
+
+    def check_channel_callback_stays_active(self, earlyfree=True):
         # with 'earlyfree==True', this tests the "sendonly" channel state.
         l = []
         channel = self.gw.remote_exec(source='''
@@ -278,7 +280,7 @@ class BasicRemoteExecution:
         return subchannel
 
     def test_channel_callback_remote_freed(self):
-        channel = self.test_channel_callback_stays_active(False)
+        channel = self.check_channel_callback_stays_active(earlyfree=False)
         channel.waitclose(TESTTIMEOUT) # freed automatically at the end of producer()
 
     def test_channel_endmarker_callback(self):
@@ -568,16 +570,16 @@ class TestSocketGateway(SocketGatewaySetup, BasicRemoteExecution):
 
 class TestSshGateway(BasicRemoteExecution):
     def setup_class(cls): 
-        if option.sshtarget is None: 
-            py.test.skip("no known ssh target, use -S to set one")
-        cls.gw = py.execnet.SshGateway(option.sshtarget) 
+        if py.test.config.option.sshhost is None: 
+            py.test.skip("no known ssh target, use --sshhost to set one")
+        cls.gw = py.execnet.SshGateway(py.test.config.option.sshhost) 
 
     def test_sshconfig_functional(self):
         tmpdir = py.test.ensuretemp("test_sshconfig")
         ssh_config = tmpdir.join("ssh_config") 
         ssh_config.write(
             "Host alias123\n"
-            "   HostName %s\n" % (option.sshtarget,))
+            "   HostName %s\n" % (py.test.config.option.sshhost,))
         gw = py.execnet.SshGateway("alias123", ssh_config=ssh_config)
         assert gw._cmd.find("-F") != -1
         assert gw._cmd.find(str(ssh_config)) != -1
@@ -585,7 +587,7 @@ class TestSshGateway(BasicRemoteExecution):
         gw.exit()
 
     def test_sshaddress(self):
-        assert self.gw.remoteaddress == option.sshtarget
+        assert self.gw.remoteaddress == py.test.config.option.sshhost
 
     def test_connexion_failes_on_non_existing_hosts(self):
         py.test.raises(IOError, 

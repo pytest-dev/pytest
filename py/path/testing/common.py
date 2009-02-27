@@ -120,6 +120,18 @@ class CommonPathTests(object):
         assert self.root.check(notrelto=l)
         assert not self.root.check(relto=l)
 
+    def test_bestrelpath(self):
+        curdir = self.root
+        sep = curdir.sep
+        s = curdir.bestrelpath(curdir.join("hello", "world"))
+        assert s == "hello" + sep + "world"
+
+        s = curdir.bestrelpath(curdir.dirpath().join("sister"))
+        assert s == ".." + sep + "sister"
+        assert curdir.bestrelpath(curdir.dirpath()) == ".."
+        
+        assert curdir.bestrelpath("hello") == "hello"
+
     def test_relto_not_relative(self):
         l1=self.root.join("bcde")
         l2=self.root.join("b")
