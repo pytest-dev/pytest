@@ -28,8 +28,9 @@ class Config(object):
     _initialized = False
     _sessionclass = None
 
-    def __init__(self, pytestplugins=None): 
+    def __init__(self, pytestplugins=None, topdir=None): 
         self.option = CmdOptions()
+        self.topdir = topdir
         self._parser = parseopt.Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
@@ -46,6 +47,11 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
+    def _preparse(self, args):
+        self._conftest.setinitial(args) 
+        self.pytestplugins.consider_env()
+        self.pytestplugins.do_addoption(self._parser)
+
     def parse(self, args): 
         """ parse cmdline arguments into this config object. 
             Note that this can only be called once per testing process. 
@@ -53,9 +59,7 @@ class Config(object):
         assert not self._initialized, (
                 "can only parse cmdline args at most once per Config object")
         self._initialized = True
-        self._conftest.setinitial(args) 
-        self.pytestplugins.consider_env()
-        self.pytestplugins.do_addoption(self._parser)
+        self._preparse(args)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())
@@ -74,11 +78,11 @@ class Config(object):
     def _initafterpickle(self, topdir):
         self.__init__(
             #issue1
-            #pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
+            #pytestplugins=py.test._PytestPlugins(py._com.pyplugins),
+            topdir=topdir,
         )
-        self._initialized = True
-        self.topdir = py.path.local(topdir)
         self._mergerepr(self._repr)
+        self._initialized = True
         del self._repr 
 
     def _makerepr(self):
@@ -98,7 +102,7 @@ class Config(object):
         args, cmdlineopts = repr 
         self.args = [self.topdir.join(x) for x in args]
         self.option = cmdlineopts
-        self._conftest.setinitial(self.args)
+        self._preparse(self.args)
 
     def getcolitems(self):
         return [self.getfsnode(arg) for arg in self.args]

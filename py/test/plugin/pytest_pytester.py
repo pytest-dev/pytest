@@ -4,6 +4,7 @@ pytes plugin for easing testing of pytest runs themselves.
 
 import py
 from py.__.test import event
+from py.__.test.config import Config as pytestConfig
 
 class PytesterPlugin:
     def pytest_pyfuncarg_linecomp(self, pyfuncitem):
@@ -49,8 +50,11 @@ class TmpTestdir:
         self.tmpdir = tmpdir.mkdir(name)
         self.plugins = []
         self._syspathremove = []
-        from py.__.test.config import Config
-        self.Config = Config
+
+    def Config(self, pyplugins=None, topdir=None):
+        if topdir is None:
+            topdir = self.tmpdir.dirpath()
+        return pytestConfig(pyplugins, topdir=topdir)
 
     def finalize(self):
         for p in self._syspathremove:

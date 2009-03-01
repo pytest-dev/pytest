@@ -285,10 +285,10 @@ class TestConfigPickling:
         tmp.ensure("conftest.py").write("x=1 ; y=2")
         hello = tmp.ensure("test_hello.py")
         config = py.test.config._reparse([hello])
-        config2 = py.test.config._reparse([tmp.dirpath()])
+        config2 = testdir.Config() 
         config2._initialized = False # we have to do that from tests
         config2._repr = config._makerepr()
-        config2._initafterpickle(topdir=tmp.dirpath())
+        config2._initafterpickle(tmp.dirpath())
 
         for col1, col2 in zip(config.getcolitems(), config2.getcolitems()):
             assert col1.fspath == col2.fspath
@@ -305,12 +305,21 @@ class TestConfigPickling:
         tmp.ensure("conftest.py").write("x=1")
         config = py.test.config._reparse([tmp])
         repr = config._makerepr()
+
         config.option.verbose = 42
         repr2 = config._makerepr()
-        config = py.test.config._reparse([tmp.dirpath()])
-        py.test.raises(KeyError, "config.getvalue('x')")
+
+        print "hello"
+        config = testdir.Config()
         config._mergerepr(repr)
+        print config._conftest.getconftestmodules(None)
         assert config.getvalue('x') == 1
+
+        config = testdir.Config()
+        config._preparse([])
+        py.test.raises(KeyError, "config.getvalue('x')")
+
+        config = testdir.Config()
         config._mergerepr(repr2) 
         assert config.option.verbose == 42
         
@@ -327,13 +336,16 @@ class TestConfigPickling:
         config = py.test.config._reparse([tmp, "-G", "11"])
         assert config.option.gdest == 11
         repr = config._makerepr()
-        config = py.test.config._reparse([tmp.dirpath()])
+
+        config = testdir.Config()
         py.test.raises(AttributeError, "config.option.gdest")
-        config._mergerepr(repr) 
-        option = config.addoptions("testing group", 
-                config.Option('-G', '--glong', action="store", default=42,
+
+        config2 = testdir.Config()
+        config2._mergerepr(repr) 
+        option = config2.addoptions("testing group", 
+                config2.Option('-G', '--glong', action="store", default=42,
                        type="int", dest="gdest", help="g value."))
-        assert config.option.gdest == 11
+        assert config2.option.gdest == 11
         assert option.gdest == 11
 
     def test_config_picklability(self, tmpdir):
