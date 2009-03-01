@@ -162,7 +162,6 @@ class TestPyPlugins:
         assert l == ["hellospecific", "helloanonymous"]
 
     def test_consider_env(self, monkeypatch):
-        # XXX write a helper for preserving os.environ 
         plugins = PyPlugins()
         monkeypatch.setitem(os.environ, 'PYLIB', "unknownconsider_env")
         py.test.raises(ImportError, "plugins.consider_env()")
@@ -185,25 +184,18 @@ class TestPyPlugins:
 def test_api_and_defaults():
     assert isinstance(py._com.pyplugins, PyPlugins)
 
-def test_subprocess_env():
-    # XXX write a helper for preserving os.environ 
+def test_subprocess_env(testdir, monkeypatch):
     plugins = PyPlugins()
-    KEY = "PYLIB"
-    old = os.environ.get(KEY, None)
-    olddir = py.path.local(py.__file__).dirpath().dirpath().chdir()
+    old = py.path.local(py.__file__).dirpath().dirpath().chdir()
     try:
-        os.environ[KEY] = "unknownconsider_env"
+        monkeypatch.setitem(os.environ, "PYLIB", 'unknownconsider')
         excinfo = py.test.raises(py.process.cmdexec.Error, """
             py.process.cmdexec("python -c 'import py'")
         """)
         assert str(excinfo.value).find("ImportError") != -1
         assert str(excinfo.value).find("unknownconsider") != -1
     finally:
-        olddir.chdir()
-        if old is None: 
-            del os.environ[KEY]
-        else:
-            os.environ[KEY] = old 
+        old.chdir()
 
 class TestPyPluginsEvents:
     def test_pyevent_named_dispatch(self):
