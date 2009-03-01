@@ -3,7 +3,8 @@ import py
 class DoctestPlugin:
     def pytest_addoption(self, parser):
         parser.addoption("--doctest-modules", 
-            action="store_true", dest="doctestmodules")
+            action="store_true", default=False,
+            dest="doctestmodules")
     
     def pytest_collect_file(self, path, parent):
         if path.ext == ".py":

@@ -42,4 +42,5 @@ def test_pyfuncarg(testdir):
     plugin.pytest_configure(item._config)
     p = plugin.pytest_pyfuncarg_tmpdir(item)
     assert p.check()
-    assert p.basename.endswith("test_func")
+    bn = p.basename.strip("0123456789")
+    assert bn.endswith("test_func")

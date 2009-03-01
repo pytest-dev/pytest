@@ -108,6 +108,15 @@ class TestTraceback_f_g_h:
         newtraceback = traceback.cut(path=path, lineno=firstlineno+2)
         assert len(newtraceback) == 1
 
+    def test_traceback_cut_excludepath(self, testdir):
+        p = testdir.makepyfile("def f(): raise ValueError")
+        excinfo = py.test.raises(ValueError, "p.pyimport().f()")
+        print excinfo.traceback
+        pydir = py.path.local(py.__file__).dirpath()
+        newtraceback = excinfo.traceback.cut(excludepath=pydir)
+        assert len(newtraceback) == 1
+        assert newtraceback[0].frame.code.path == p
+
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
         ntraceback = traceback.filter()

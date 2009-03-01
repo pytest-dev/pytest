@@ -1,7 +1,6 @@
 
 import py
 import marshal
-from py.__.test.outcome import Skipped
 
 class TestRaises:
     def test_raises(self):
@@ -59,12 +58,8 @@ def test_deprecated_explicit_call():
     py.test.deprecated_call(dep_explicit, 0)
     py.test.deprecated_call(dep_explicit, 0)
 
-def test_skip_simple():
-    excinfo = py.test.raises(Skipped, 'py.test.skip("xxx")')
-    assert excinfo.traceback[-1].frame.code.name == "skip"
-    assert excinfo.traceback[-1].ishidden()
-
 def test_importorskip():
+    from py.__.test.outcome import Skipped
     try:
         sys = py.test.importorskip("sys")
         assert sys == py.std.sys

@@ -118,7 +118,7 @@ class Traceback(list):
         else:
             list.__init__(self, tb)
 
-    def cut(self, path=None, lineno=None, firstlineno=None):
+    def cut(self, path=None, lineno=None, firstlineno=None, excludepath=None):
         """ return a Traceback instance wrapping part of this Traceback
 
             by provding any combination of path, lineno and firstlineno, the
@@ -129,7 +129,11 @@ class Traceback(list):
             with handling of the exception/traceback)
         """
         for x in self:
-            if ((path is None or x.frame.code.path == path) and
+            code = x.frame.code
+            codepath = code.path
+            if ((path is None or codepath == path) and
+                (excludepath is None or (hasattr(codepath, 'relto') and
+                 not codepath.relto(excludepath))) and 
                 (lineno is None or x.lineno == lineno) and
                 (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
                 return Traceback(x._rawentry)

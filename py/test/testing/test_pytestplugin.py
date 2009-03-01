@@ -271,3 +271,4 @@ class TestPytestPluginInteractions:
         assert len(call.methods) == 3
         results = call.execute()
         assert results == [1,2,2]
+

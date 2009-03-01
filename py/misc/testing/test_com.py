@@ -49,6 +49,7 @@ class TestMultiCall:
         call = MultiCall([n, m])
         res = call.execute(firstresult=True)
         assert res == 2
+                
 
 class TestPyPlugins:
     def test_MultiCall(self):

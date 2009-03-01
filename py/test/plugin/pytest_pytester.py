@@ -371,10 +371,10 @@ def test_eventrecorder():
     assert numskipped == 1
     assert numfailed == 2
 
+    recorder.unregister()
     recorder.clear() 
     assert not recorder.events
     assert not recorder.getfailures()
-    recorder.unregister()
     bus.notify("itemtestreport", rep)
     assert not recorder.events 
     assert not recorder.getfailures()
