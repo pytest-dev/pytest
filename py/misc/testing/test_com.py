@@ -72,10 +72,7 @@ class TestPyPlugins:
         assert not plugins.isregistered(my)
         assert plugins.getplugins() == [my2]
 
-    #@py.test.mark.xfail
     def test_onregister(self):
-        py.test.skip("implement exitfirst plugin and "
-                     "modify xfail plugin to override exitfirst behaviour?")
         plugins = PyPlugins()
         l = []
         class MyApi:

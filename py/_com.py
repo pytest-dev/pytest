@@ -105,8 +105,8 @@ class PyPlugins:
         self.notify("plugin_registered", plugin)
 
     def unregister(self, plugin):
-        self._plugins.remove(plugin)
         self.notify("plugin_unregistered", plugin)
+        self._plugins.remove(plugin)
 
     def getplugins(self):
         return list(self._plugins)
