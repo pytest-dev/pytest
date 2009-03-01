@@ -30,12 +30,16 @@ class Conftest(object):
             if anchor.check(): # we found some file object 
                 self._path2confmods[None] = self.getconftestmodules(anchor)
                 break
+        else:
+            assert 0, "no root of filesystem?"
 
     def getconftestmodules(self, path):
         """ return a list of imported conftest modules for the given path.  """ 
         try:
             clist = self._path2confmods[path]
         except KeyError:
+            if path is None:
+                raise ValueError("missing default conftest.")
             dp = path.dirpath()
             if dp == path: 
                 return [self.importconftest(defaultconftestpath)]
