@@ -134,28 +134,28 @@ class TmpTestdir:
 
     def inline_runsession(self, session):
         config = session.config
-        config.pytestplugins.configure(config)
+        config.pytestplugins.do_configure(config)
         sorter = EventRecorder(config.bus)
         session.main()
-        config.pytestplugins.unconfigure(config)
+        config.pytestplugins.do_unconfigure(config)
         return sorter
 
     def inline_run(self, *args):
         config = self.parseconfig(*args)
-        config.pytestplugins.configure(config)
+        config.pytestplugins.do_configure(config)
         session = config.initsession()
         sorter = EventRecorder(config.bus)
         session.main()
-        config.pytestplugins.unconfigure(config)
+        config.pytestplugins.do_unconfigure(config)
         return sorter
 
     def inline_run_with_plugins(self, *args):
         config = self.parseconfig(*args)
-        config.pytestplugins.configure(config)
+        config.pytestplugins.do_configure(config)
         session = config.initsession()
         sorter = EventRecorder(config.bus)
         session.main()
-        config.pytestplugins.unconfigure(config)
+        config.pytestplugins.do_unconfigure(config)
         return sorter
 
     def config_preparse(self):

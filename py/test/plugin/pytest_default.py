@@ -100,7 +100,7 @@ def test_implied_different_sessions(tmpdir):
     def x(*args):
         config = py.test.config._reparse([tmpdir] + list(args))
         try:
-            config.pytestplugins.configure(config)
+            config.pytestplugins.do_configure(config)
         except ValueError:
             return Exception
         return getattr(config._sessionclass, '__name__', None)

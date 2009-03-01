@@ -158,7 +158,7 @@ class TestPytestPluginInteractions:
         from py.__.test.config import Config 
         config = Config() 
         config.parse([])
-        config.pytestplugins.configure(config=config)
+        config.pytestplugins.do_configure(config=config)
         assert not hasattr(config.option, 'test123')
         p = testdir.makepyfile("""
             class ConftestPlugin:
@@ -181,7 +181,7 @@ class TestPytestPluginInteractions:
                 
         config.bus.register(A())
         assert len(l) == 0
-        config.pytestplugins.configure(config=config)
+        config.pytestplugins.do_configure(config=config)
         assert len(l) == 1
         config.bus.register(A())  # this should lead to a configured() plugin
         assert len(l) == 2
@@ -191,7 +191,7 @@ class TestPytestPluginInteractions:
         assert len(events) == 2
         assert events == [42,42]
 
-        config.pytestplugins.unconfigure(config=config)
+        config.pytestplugins.do_unconfigure(config=config)
         config.bus.register(A())
         assert len(l) == 2
 

@@ -85,13 +85,13 @@ class PytestPlugins(object):
             self.pyplugins.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
             self.pyplugins.call_plugin(plugin, "pytest_configure", config=self._config)
 
-    def configure(self, config):
+    def do_configure(self, config):
         assert not hasattr(self, '_config')
         config.bus.register(self)
         self._config = config
         self.pyplugins.call_each("pytest_configure", config=self._config)
 
-    def unconfigure(self, config):
+    def do_unconfigure(self, config):
         config = self._config 
         del self._config 
         self.pyplugins.call_each("pytest_unconfigure", config=config)
