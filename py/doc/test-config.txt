@@ -1,0 +1,15 @@
+
+Test configuration
+========================
+
+test option values 
+-----------------------------
+
+py.test will lookup the value of an option "NAME" in this order: 
+
+* option value supplied at command line 
+* content of environment variable ``PYTEST_OPTION_NAME=...``
+* ``name = ...`` setting in the nearest ``conftest.py`` file.
+
+This means that you can specify default options per-run, 
+per shell session or per project directory. 

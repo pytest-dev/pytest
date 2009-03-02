@@ -1,4 +1,4 @@
-import py
+import py, os
 from conftesthandle import Conftest
 
 from py.__.test import parseopt
@@ -44,6 +44,17 @@ class Config(object):
 
     def _processopt(self, opt):
         if hasattr(opt, 'default') and opt.dest:
+            val = os.environ.get("PYTEST_OPTION_" + opt.dest.upper(), None)
+            if val is not None:
+                if opt.type == "int":
+                    val = int(val)
+                elif opt.type == "long":
+                    val = long(val)
+                elif opt.type == "float":
+                    val = float(val)
+                elif not opt.type and opt.action in ("store_true", "store_false"):
+                    val = eval(val)
+                opt.default = val 
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
@@ -146,6 +157,16 @@ class Config(object):
 
     def addoption(self, *optnames, **attrs):
         return self._parser.addoption(*optnames, **attrs)
+
+    def getvalueorskip(self, name, path=None): 
+        """ return getvalue() or call py.test.skip if no value exists. """
+        try:
+            val = self.getvalue(name, path)
+            if val is None:
+                raise KeyError(name)
+            return val
+        except KeyError:
+            py.test.skip("no %r value found" %(name,))
 
     def getvalue(self, name, path=None): 
         """ return 'name' value looked up from the 'options'

@@ -19,6 +19,26 @@ class TestConfigCmdlineParsing:
         config = py.test.config._reparse(['-G', '17'])
         assert config.option.gdest == 17 
 
+    def test_parser_addoption_default_env(self, testdir, monkeypatch):
+        import os
+        config = testdir.Config()
+        group = config._parser.addgroup("hello")
+
+        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION1', 'True')
+        group.addoption("--option1", action="store_true")
+        assert group.options[0].default == True
+
+        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION2', 'abc')
+        group.addoption("--option2", action="store", default="x")
+        assert group.options[1].default == "abc"
+
+        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION3', '32')
+        group.addoption("--option3", action="store", type="int")
+        assert group.options[2].default == 32
+
+        group.addoption("--option4", action="store", type="int")
+        assert group.options[3].default == ("NO", "DEFAULT")
+
     def test_config_cmdline_options_only_lowercase(self, testdir): 
         testdir.makepyfile(conftest="""
             import py
@@ -78,6 +98,15 @@ class TestConfigAPI:
         assert config.getvalue("y") == 3
         assert config.getvalue("x", o) == 1
         py.test.raises(KeyError, 'config.getvalue("y", o)')
+
+    def test_config_getvalueorskip(self, testdir):
+        from py.__.test.outcome import Skipped
+        config = testdir.parseconfig()
+        py.test.raises(Skipped, "config.getvalueorskip('hello')")
+        verbose = config.getvalueorskip("verbose")
+        assert verbose == config.option.verbose
+        config.option.hello = None
+        py.test.raises(Skipped, "config.getvalueorskip('hello')")
 
     def test_config_overwrite(self, testdir):
         o = testdir.tmpdir
