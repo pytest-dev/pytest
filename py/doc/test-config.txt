@@ -1,6 +1,19 @@
-
 Test configuration
 ========================
+
+specifying plugins
+---------------------------
+
+you can instruct py.test to use additional plugins by:
+
+* setting the PYTEST_PLUGINS environment variable
+  to a comma-separated list of plugins
+* XXX supplying "--plugins=NAME1,NAME2,..." at the command line 
+* setting "pytest_plugins='name1', 'name2'" in 
+  ``conftest.py`` files or in python test modules. 
+
+py.test will load all plugins along with their dependencies
+(plugins may specify "pytest_plugins" as well). 
 
 test option values 
 -----------------------------
