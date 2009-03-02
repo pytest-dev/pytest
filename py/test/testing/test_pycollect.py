@@ -229,8 +229,29 @@ class TestFunction:
         assert not f1 != f1_b
 
     def test_pyfuncarg_lookupfails(self, testdir):
-        item = testdir.getitem("def test_func(some, other): pass")
+        item = testdir.getitem("def test_func(some): pass")
         kw = py.test.raises(LookupError, "item.lookup_allargs()")
+
+    def test_pyfuncarg_lookup_default(self, testdir):
+        item = testdir.getitem("def test_func(some, other=42): pass")
+        class Provider:
+            def pytest_pyfuncarg_some(self, pyfuncitem):
+                return pyfuncitem.name 
+        item._config.pytestplugins.register(Provider())
+        kw = item.lookup_allargs()
+        assert len(kw) == 1
+
+    def test_pyfuncarg_lookup_default_gets_overriden(self, testdir):
+        item = testdir.getitem("def test_func(some=42, other=13): pass")
+        class Provider:
+            def pytest_pyfuncarg_other(self, pyfuncitem):
+                return pyfuncitem.name 
+        item._config.pytestplugins.register(Provider())
+        kw = item.lookup_allargs()
+        assert len(kw) == 1
+        name, value = kw.popitem()
+        assert name == "other"
+        assert value == item.name 
 
     def test_pyfuncarg_basic(self, testdir):
         item = testdir.getitem("def test_func(some, other): pass")

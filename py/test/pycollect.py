@@ -360,8 +360,18 @@ class Function(FunctionMixin, py.test.collect.Item):
             # standard Python Test function/method case  
             funcobj = self.obj 
             startindex = getattr(funcobj, 'im_self', None) and 1 or 0 
-            for argname in py.std.inspect.getargs(self.obj.func_code)[0][startindex:]:
-                kwargs[argname] = self.lookup_onearg(argname)
+            argnames = py.std.inspect.getargs(self.obj.func_code)[0]
+            for i, argname in py.builtin.enumerate(argnames):
+                if i < startindex:
+                    continue 
+                try:
+                    kwargs[argname] = self.lookup_onearg(argname)
+                except LookupError, e:
+                    numdefaults = len(funcobj.func_defaults or ()) 
+                    if i + numdefaults >= len(argnames):
+                        continue # continue # seems that our args have defaults 
+                    else:
+                        raise
         else:
             pass # XXX lookup of arguments for yielded/generated tests as well 
         return kwargs
