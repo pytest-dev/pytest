@@ -1,7 +1,6 @@
 import py
 from py.__.misc.rest import convert_rest_html, strip_html_header 
 from py.__.misc.difftime import worded_time 
-from py.__.apigen.linker import relpath
 
 html = py.xml.html 
 
@@ -186,4 +185,60 @@ class Project:
 
         page.contentspace.append(py.xml.raw(content))
         outputpath.ensure().write(page.unicode().encode(encoding)) 
+
+# XXX this function comes from apigen/linker.py, put it
+# somewhere in py lib 
+import os
+def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
+    """ create a relative path from p1 to p2
+
+        sep is the seperator used for input and (depending
+        on the setting of 'normalize', see below) output
+
+        back is the string used to indicate the parent directory
+
+        when 'normalize' is True, any backslashes (\) in the path
+        will be replaced with forward slashes, resulting in a consistent
+        output on Windows and the rest of the world
+
+        paths to directories must end on a / (URL style)
+    """
+    if normalize:
+        p1 = p1.replace(sep, '/')
+        p2 = p2.replace(sep, '/')
+        sep = '/'
+        # XXX would be cool to be able to do long filename
+        # expansion and drive
+        # letter fixes here, and such... iow: windows sucks :(
+    if (p1.startswith(sep) ^ p2.startswith(sep)):
+        raise ValueError("mixed absolute relative path: %r -> %r" %(p1, p2))
+    fromlist = p1.split(sep)
+    tolist = p2.split(sep)
+
+    # AA
+    # AA BB     -> AA/BB
+    #
+    # AA BB
+    # AA CC     -> CC
+    #
+    # AA BB 
+    # AA      -> ../AA
+
+    diffindex = 0
+    for x1, x2 in zip(fromlist, tolist):
+        if x1 != x2:
+            break
+        diffindex += 1
+    commonindex = diffindex - 1
+
+    fromlist_diff = fromlist[diffindex:]
+    tolist_diff = tolist[diffindex:]
+
+    if not fromlist_diff:
+        return sep.join(tolist[commonindex:])
+    backcount = len(fromlist_diff)
+    if tolist_diff:
+        return sep.join([back,]*(backcount-1) + tolist_diff)
+    return sep.join([back,]*(backcount) + tolist[commonindex:])
+
 

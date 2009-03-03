@@ -26,7 +26,6 @@ Main tools and API
 
 `py lib scripts`_ describe the scripts contained in the ``py/bin`` directory. 
 
-`apigen`_: a new way to generate rich Python API documentation
 
 support functionality 
 ---------------------------------
@@ -50,7 +49,6 @@ Background and Motivation information
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`py.execnet`: execnet.html 
 .. _`py.magic.greenlet`: greenlet.html 
-.. _`apigen`: apigen.html 
 .. _`py.log`: log.html
 .. _`py.io`: io.html
 .. _`py.path`: path.html
