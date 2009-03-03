@@ -204,6 +204,8 @@ class TmpTestdir:
         p = self.tmpdir.join("conftest.py") 
         if not p.check():
             plugins = [x for x in self.plugins if isinstance(x, str)]
+            if not plugins:
+                return
             p.write("import py ; pytest_plugins = %r" % plugins)
         else:
             if self.plugins:

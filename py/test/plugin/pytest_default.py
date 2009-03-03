@@ -3,6 +3,10 @@ import py
 class DefaultPlugin:
     """ Plugin implementing defaults and general options. """ 
 
+    def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
+        pyfuncitem.obj(*args, **kwargs)
+        return 
+
     def pytest_collect_file(self, path, parent):
         ext = path.ext 
         pb = path.purebasename

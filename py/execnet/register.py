@@ -72,10 +72,12 @@ class PopenGateway(PopenCmdGateway):
     """ This Gateway provides interaction with a newly started
         python subprocess. 
     """
-    def __init__(self, python=sys.executable):
+    def __init__(self, python=None):
         """ instantiate a gateway to a subprocess 
             started with the given 'python' executable. 
         """
+        if python is None:
+            python = sys.executable
         cmd = '%s -u -c "exec input()"' % python
         super(PopenGateway, self).__init__(cmd)
 
@@ -143,7 +145,7 @@ class SshGateway(PopenCmdGateway):
         established via the 'ssh' command line binary.  
         The remote side needs to have a Python interpreter executable. 
     """
-    def __init__(self, sshaddress, remotepython='python', 
+    def __init__(self, sshaddress, remotepython=None, 
         identity=None, ssh_config=None): 
         """ instantiate a remote ssh process with the 
             given 'sshaddress' and remotepython version.
@@ -151,6 +153,8 @@ class SshGateway(PopenCmdGateway):
             DEPRECATED: you may specify an 'identity' filepath. 
         """
         self.remoteaddress = sshaddress
+        if remotepython is None:
+            remotepython = "python"
         remotecmd = '%s -u -c "exec input()"' % (remotepython,)
         cmdline = [sshaddress, remotecmd]
         # XXX Unix style quoting

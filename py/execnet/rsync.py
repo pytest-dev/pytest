@@ -73,10 +73,11 @@ class RSync(object):
         if channel not in self._to_send:
             self._to_send[channel] = []
         self._to_send[channel].append(modified_rel_path)
+        #print "sending", modified_rel_path, data and len(data) or 0, checksum
 
         if data is not None:
             f.close()
-            if checksum is not None and checksum == md5.md5(data).digest():
+            if checksum is not None and checksum == md5(data).digest():
                 data = None     # not really modified
             else:
                 # ! there is a reason for the interning:

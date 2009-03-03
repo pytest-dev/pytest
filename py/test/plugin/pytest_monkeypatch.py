@@ -24,6 +24,8 @@ class MonkeyPatch:
         for obj, name, value in self._setattr:
             if value is not notset:
                 setattr(obj, name, value)
+            else:
+                delattr(obj, name)
         for dictionary, name, value in self._setitem:
             if value is notset:
                 del dictionary[name]
@@ -41,6 +43,12 @@ def test_setattr():
     assert A.x == 3
     monkeypatch.finalize()
     assert A.x == 1
+
+    monkeypatch.setattr(A, 'y', 3)
+    assert A.y == 3
+    monkeypatch.finalize()
+    assert not hasattr(A, 'y')
+     
 
 def test_setitem():
     d = {'x': 1}

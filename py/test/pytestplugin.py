@@ -117,7 +117,11 @@ def importplugin(importspec):
     try:
         return __import__(importspec) 
     except ImportError, e:
+        if str(e).find(importspec) == -1:
+            raise
         try:
             return __import__("py.__.test.plugin.%s" %(importspec), None, None, '__doc__')
-        except ImportError:
+        except ImportError, e:
+            if str(e).find(importspec) == -1:
+                raise
             return __import__(importspec)  # show the original exception

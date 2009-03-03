@@ -25,7 +25,6 @@ class CmdOptions(object):
 class Config(object): 
     """ central bus for dealing with configuration/initialization data. """ 
     Option = py.compat.optparse.Option # deprecated
-    _initialized = False
     _sessionclass = None
 
     def __init__(self, pytestplugins=None, topdir=None): 
@@ -67,9 +66,8 @@ class Config(object):
         """ parse cmdline arguments into this config object. 
             Note that this can only be called once per testing process. 
         """ 
-        assert not self._initialized, (
+        assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
-        self._initialized = True
         self._preparse(args)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
@@ -80,40 +78,31 @@ class Config(object):
     # config objects are usually pickled across system
     # barriers but they contain filesystem paths. 
     # upon getstate/setstate we take care to do everything
-    # relative to our "topdir". 
+    # relative to "topdir". 
     def __getstate__(self):
-        return self._makerepr()
-    def __setstate__(self, repr):
-        self._repr = repr
-
-    def _initafterpickle(self, topdir):
-        self.__init__(
-            #issue1
-            #pytestplugins=py.test._PytestPlugins(py._com.pyplugins),
-            topdir=topdir,
-        )
-        self._mergerepr(self._repr)
-        self._initialized = True
-        del self._repr 
-
-    def _makerepr(self):
         l = []
         for path in self.args:
             path = py.path.local(path)
             l.append(path.relto(self.topdir)) 
         return l, self.option
 
-    def _mergerepr(self, repr): 
-        # before any conftests are loaded we 
-        # need to set the per-process singleton 
-        # (also seens py.test.config) to have consistent
-        # option handling 
-        global config_per_process
-        config_per_process = self  
+    def __setstate__(self, repr):
+        # warning global side effects:
+        # * registering to py lib plugins 
+        # * setting py.test.config 
+        self.__init__(
+            pytestplugins=py.test._PytestPlugins(py._com.pyplugins),
+            topdir=py.path.local(),
+        )
+        # we have to set py.test.config because preparse()
+        # might load conftest files which have
+        # py.test.config.addoptions() lines in them 
+        py.test.config = self 
         args, cmdlineopts = repr 
-        self.args = [self.topdir.join(x) for x in args]
+        args = [self.topdir.join(x) for x in args]
         self.option = cmdlineopts
-        self._preparse(self.args)
+        self._preparse(args)
+        self.args = args 
 
     def getcolitems(self):
         return [self.getfsnode(arg) for arg in self.args]

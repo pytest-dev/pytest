@@ -103,9 +103,9 @@ class TerminalReporter:
 
     def pyevent_hostup(self, event):
         d = event.platinfo.copy()
-        d['hostid'] = event.host.hostid
+        d['host'] = event.host.address
         d['version'] = repr_pythonversion(d['sys.version_info'])
-        self.write_line("HOSTUP: %(hostid)s %(sys.platform)s "
+        self.write_line("HOSTUP: %(host)s %(sys.platform)s "
                       "%(sys.executable)s - Python %(version)s" %
                       d)
 
@@ -113,7 +113,7 @@ class TerminalReporter:
         host = event.host
         error = event.error
         if error:
-            self.write_line("HostDown %s: %s" %(host.hostid, error))
+            self.write_line("HostDown %s: %s" %(host, error))
 
     def pyevent_itemstart(self, event):
         if self.config.option.verbose:
@@ -311,16 +311,16 @@ def repr_pythonversion(v=None):
 
 from py.__.test import event
 from py.__.test.runner import basic_run_report
-from py.__.test.dsession.hostmanage import Host, makehostup
+from py.__.test.dsession.masterslave import makehostup
 
 class TestTerminal:
     def test_hostup(self, testdir, linecomp):
+        from py.__.execnet.gwmanage import GatewaySpec
         item = testdir.getitem("def test_func(): pass")
         rep = TerminalReporter(item._config, linecomp.stringio)
-        host = Host("localhost")
-        rep.pyevent_hostup(makehostup(host))
+        rep.pyevent_hostup(makehostup())
         linecomp.assert_contains_lines([
-            "*%s %s %s - Python %s" %(host.hostid, sys.platform, 
+            "*localhost %s %s - Python %s" %(sys.platform, 
             sys.executable, repr_pythonversion(sys.version_info))
         ])
 
@@ -409,11 +409,12 @@ class TestTerminal:
         ])
 
     def test_hostready_crash(self, testdir, linecomp):
+        from py.__.execnet.gwmanage import GatewaySpec
         modcol = testdir.getmodulecol("""
             def test_one():
                 pass
         """, configargs=("-v",))
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         rep = TerminalReporter(modcol._config, file=linecomp.stringio)
         rep.pyevent_hostgatewayready(event.HostGatewayReady(host1, None))
         linecomp.assert_contains_lines([

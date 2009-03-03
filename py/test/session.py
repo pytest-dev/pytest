@@ -12,7 +12,7 @@ from py.__.test import event, outcome
 Item = py.test.collect.Item
 Collector = py.test.collect.Collector
 from runner import basic_collect_report
-from py.__.test.dsession.hostmanage import makehostup
+from py.__.test.dsession.masterslave import makehostup
 
 class Session(object): 
     """ 

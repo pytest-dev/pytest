@@ -30,7 +30,7 @@ class TestRSync(DirSetup):
         dest2 = self.dest2
         source = self.source
 
-        for s in ('content1', 'content2-a-bit-longer'): 
+        for s in ('content1', 'content2', 'content2-a-bit-longer'): 
             source.ensure('subdir', 'file1').write(s) 
             rsync = RSync(self.source)
             rsync.add_target(gw, dest)
@@ -42,6 +42,9 @@ class TestRSync(DirSetup):
             assert dest2.join('subdir').check(dir=1)
             assert dest2.join('subdir', 'file1').check(file=1)
             assert dest2.join('subdir', 'file1').read() == s 
+            for x in dest, dest2:
+                fn = x.join("subdir", "file1")
+                fn.setmtime(0)
         
         source.join('subdir').remove('file1')
         rsync = RSync(source)

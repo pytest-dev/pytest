@@ -1,5 +1,6 @@
 from py.__.test.dsession.dsession import DSession, LoopState
-from py.__.test.dsession.hostmanage import Host, makehostup
+from py.__.test.dsession.masterslave import makehostup
+from py.__.execnet.gwmanage import GatewaySpec
 from py.__.test.runner import basic_collect_report 
 from py.__.test import event
 from py.__.test import outcome
@@ -37,7 +38,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item._config)
-        host = Host("localhost")
+        host = GatewaySpec("localhost")
         host.node = MockNode()
         assert not session.host2pending
         session.addhost(host)
@@ -52,7 +53,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item._config)
-        host = Host("localhost")
+        host = GatewaySpec("localhost")
         host.node = MockNode()
         session.addhost(host)
         session.senditems([item])  
@@ -77,9 +78,9 @@ class TestDSession:
     def test_triggertesting_item(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
-        host2 = Host("localhost")
+        host2 = GatewaySpec("localhost")
         host2.node = MockNode()
         session.addhost(host1)
         session.addhost(host2)
@@ -114,7 +115,7 @@ class TestDSession:
     def test_rescheduleevent(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
         ev = event.RescheduleItems([item])
@@ -138,7 +139,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         # setup a session with one host
         session = DSession(item._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
        
@@ -163,10 +164,10 @@ class TestDSession:
 
         # setup a session with two hosts 
         session = DSession(item1._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
-        host2 = Host("localhost")
+        host2 = GatewaySpec("localhost")
         host2.node = MockNode()
         session.addhost(host2)
       
@@ -184,13 +185,13 @@ class TestDSession:
         assert testrep.failed
         assert testrep.colitem == item1
         assert str(testrep.longrepr).find("crashed") != -1
-        assert str(testrep.longrepr).find(host.hostname) != -1
+        assert str(testrep.longrepr).find(host.address) != -1
 
     def test_hostup_adds_to_available(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         # setup a session with two hosts 
         session = DSession(item._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         hostup = makehostup(host1)
         session.queueevent("hostup", hostup)
         loopstate = LoopState([item])
@@ -210,7 +211,7 @@ class TestDSession:
 
     def runthrough(self, item):
         session = DSession(item._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
         loopstate = LoopState([item])
@@ -247,7 +248,7 @@ class TestDSession:
         """)
         modcol._config.option.exitfirst = True
         session = DSession(modcol._config)
-        host1 = Host("localhost")
+        host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
         items = basic_collect_report(modcol).result
@@ -269,7 +270,7 @@ class TestDSession:
     def test_shuttingdown_filters_events(self, testdir, EventRecorder):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item._config)
-        host = Host("localhost")
+        host = GatewaySpec("localhost")
         session.addhost(host)
         loopstate = LoopState([])
         loopstate.shuttingdown = True
@@ -315,7 +316,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item._config)
 
-        host = Host("localhost")
+        host = GatewaySpec("localhost")
         host.node = MockNode()
         session.addhost(host)
         session.senditems([item])
@@ -337,7 +338,7 @@ class TestDSession:
                 pass
         """)
         session = DSession(modcol._config)
-        host = Host("localhost")
+        host = GatewaySpec("localhost")
         host.node = MockNode()
         session.addhost(host)
 

@@ -6,10 +6,6 @@
 
 import py
 from py.__.test import event
-import py.__.test.custompdb
-from py.__.test.dsession.hostmanage import HostManager
-Item = py.test.collect.Item
-Collector = py.test.collect.Collector
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
 from py.__.test import outcome 
@@ -80,11 +76,9 @@ class DSession(Session):
 
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
-        #self.bus.notify(event.TestrunStart())
         self.sessionstarts()
         self.setup_hosts()
         exitstatus = self.loop(colitems)
-        #self.bus.notify(event.TestrunFinish(exitstatus=exitstatus))
         self.teardown_hosts()
         self.sessionfinishes() 
         return exitstatus
@@ -189,7 +183,7 @@ class DSession(Session):
         colitems = self.filteritems(colitems)
         senditems = []
         for next in colitems:
-            if isinstance(next, Item):
+            if isinstance(next, py.test.collect.Item):
                 senditems.append(next)
             else:
                 self.bus.notify("collectionstart", event.CollectionStart(next))
@@ -235,14 +229,13 @@ class DSession(Session):
 
     def setup_hosts(self):
         """ setup any neccessary resources ahead of the test run. """
-        self.hm = HostManager(self)
+        from py.__.test.dsession.hostmanage import HostManager
+        self.hm = HostManager(self.config)
         self.hm.setup_hosts(putevent=self.queue.put)
 
     def teardown_hosts(self):
         """ teardown any resources after a test run. """ 
-        for host in self.host2pending:
-            host.gw.exit()
-
+        self.hm.teardown_hosts()
 
 # debugging function
 def dump_picklestate(item):

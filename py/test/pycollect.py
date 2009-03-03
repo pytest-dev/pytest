@@ -348,11 +348,8 @@ class Function(FunctionMixin, py.test.collect.Item):
         """ execute the given test function. """
         if not self._deprecated_testexecution():
             kw = self.lookup_allargs()
-            pytest_pyfunc_call = self._config.pytestplugins.getfirst("pytest_pyfunc_call")
-            if pytest_pyfunc_call is not None:
-                if pytest_pyfunc_call(pyfuncitem=self, args=self._args, kwargs=kw):
-                    return
-            self.obj(*self._args, **kw)
+            ret = self._config.pytestplugins.call_firstresult(
+                "pytest_pyfunc_call", pyfuncitem=self, args=self._args, kwargs=kw)
 
     def lookup_allargs(self):
         kwargs = {}

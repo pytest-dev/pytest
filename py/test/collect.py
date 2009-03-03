@@ -431,9 +431,6 @@ class FSCollector(Collector):
         if len(picklestate) == 3:
             # root node
             name, config, relpath = picklestate
-            if not config._initialized:
-                raise ValueError("incomplete unpickling of "
-                  "config object, need call to _initafterpickle()?")
             fspath = config.topdir.join(relpath)
             fsnode = config.getfsnode(fspath)
             self.__dict__.update(fsnode.__dict__)

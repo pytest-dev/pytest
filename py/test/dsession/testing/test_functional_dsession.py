@@ -4,39 +4,39 @@
 
 import py
 from py.__.test.dsession.dsession import DSession
-from py.__.test.dsession.hostmanage import HostManager, Host
 from test_masterslave import EventQueue
-
 import os
 
 
 class TestAsyncFunctional:
     def test_conftest_options(self, testdir):
-        testdir.makepyfile(conftest="""
-            print "importing conftest"
+        p1 = testdir.tmpdir.ensure("dir", 'p1.py')
+        p1.dirpath("__init__.py").write("")
+        p1.dirpath("conftest.py").write(py.code.Source("""
+            print "importing conftest", __file__
             import py
             Option = py.test.config.Option 
             option = py.test.config.addoptions("someopt", 
                 Option('--someopt', action="store_true", dest="someopt", default=False))
-        """, 
-        )
-        p1 = testdir.makepyfile("""
+            dist_rsync_roots = ['../dir']
+            print "added options", option
+            print "config file seen from conftest", py.test.config
+        """))
+        p1.write(py.code.Source("""
+            import py, conftest
             def test_1(): 
-                import py, conftest
+                print "config from test_1", py.test.config
+                print "conftest from test_1", conftest.__file__
                 print "test_1: py.test.config.option.someopt", py.test.config.option.someopt
                 print "test_1: conftest", conftest
                 print "test_1: conftest.option.someopt", conftest.option.someopt
                 assert conftest.option.someopt 
-        """, __init__="#")
-        print p1
-        config = py.test.config._reparse(['-n1', p1, '--someopt'])
-        dsession = DSession(config)
-        eq = EventQueue(config.bus)
-        dsession.main()
-        ev, = eq.geteventargs("itemtestreport")
-        if not ev.passed:
-            print ev
-            assert 0
+        """))
+        result = testdir.runpytest('-n1', p1, '--someopt')
+        assert result.ret == 0
+        extra = result.stdout.fnmatch_lines([
+            "*1 passed*", 
+        ])
 
     def test_dist_some_tests(self, testdir):
         testdir.makepyfile(conftest="dist_hosts=['localhost']\n")
@@ -61,7 +61,7 @@ class TestAsyncFunctional:
         assert ev.failed
         # see that the host is really down 
         ev, = eq.geteventargs("hostdown")
-        assert ev.host.hostname == "localhost"
+        assert ev.host.address == "localhost"
         ev, = eq.geteventargs("testrunfinish")
 
     def test_distribution_rsync_roots_example(self, testdir):

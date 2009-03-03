@@ -11,7 +11,6 @@
 from __future__ import generators
 import py
 from py.__.test.session import Session
-from py.__.test.outcome import Failed, Passed, Skipped
 from py.__.test.dsession.mypickle import PickleChannel
 from py.__.test import event
 from py.__.test.looponfail import util
@@ -67,27 +66,29 @@ class RemoteControl(object):
             msg = " ".join([str(x) for x in args])
             print "RemoteControl:", msg 
 
+    def initgateway(self):
+        return py.execnet.PopenGateway(self.executable)
+
     def setup(self, out=None):
-        if hasattr(self, 'gateway'):
-            raise ValueError("already have gateway %r" % self.gateway)
         if out is None:
             out = py.io.TerminalWriter()
-        from py.__.test.dsession import masterslave
+        if hasattr(self, 'gateway'):
+            raise ValueError("already have gateway %r" % self.gateway)
         self.trace("setting up slave session")
-        self.gateway = py.execnet.PopenGateway(self.executable)
+        old = self.config.topdir.chdir()
+        try:
+            self.gateway = self.initgateway()
+        finally:
+            old.chdir()
         channel = self.gateway.remote_exec(source="""
             from py.__.test.dsession.mypickle import PickleChannel
-            channel = PickleChannel(channel)
             from py.__.test.looponfail.remote import slave_runsession
-            from py.__.test.dsession import masterslave
-            config = masterslave.receive_and_send_pickled_config(channel)
-            fullwidth, hasmarkup = channel.receive()
+            channel = PickleChannel(channel)
+            config, fullwidth, hasmarkup = channel.receive()
             slave_runsession(channel, config, fullwidth, hasmarkup) 
         """, stdout=out, stderr=out)
         channel = PickleChannel(channel)
-        masterslave.send_and_receive_pickled_config(
-            channel, self.config, remote_topdir=self.config.topdir)
-        channel.send((out.fullwidth, out.hasmarkup))
+        channel.send((self.config, out.fullwidth, out.hasmarkup))
         self.trace("set up of slave session complete")
         self.channel = channel
 

@@ -1,7 +1,7 @@
 
 import py
 from py.__.test.dsession.masterslave import MasterNode
-from py.__.test.dsession.hostmanage import Host
+from py.__.execnet.gwmanage import GatewaySpec
 
 class EventQueue:
     def __init__(self, bus, queue=None):
@@ -43,21 +43,27 @@ class MySetup:
             config = py.test.config._reparse([])
         self.config = config
         self.queue = py.std.Queue.Queue()
-        self.host = Host("localhost") 
-        self.host.initgateway()
-        self.node = MasterNode(self.host, self.config, putevent=self.queue.put)
+        self.host = GatewaySpec("localhost") 
+        self.gateway = self.host.makegateway()
+        self.node = MasterNode(self.host, self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()
         return self.node 
 
     def finalize(self):
         if hasattr(self, 'host'):
-            print "exiting:", self.host.gw
-            self.host.gw.exit()
+            print "exiting:", self.gateway
+            self.gateway.exit()
 
 def pytest_pyfuncarg_mysetup(pyfuncitem):
     mysetup = MySetup(pyfuncitem)
     pyfuncitem.addfinalizer(mysetup.finalize)
     return mysetup
+
+def pytest_pyfuncarg_testdir(__call__, pyfuncitem):
+    # decorate to make us always change to testdir
+    testdir = __call__.execute(firstresult=True)
+    testdir.chdir()
+    return testdir 
 
 class TestMasterSlaveConnection:
 
