@@ -121,7 +121,7 @@ class TerminalReporter:
             line = info.verboseline(basedir=self.curdir) + " "
             extra = ""
             if event.host:
-                extra = "-> " + event.host.hostid
+                extra = "-> " + str(event.host)
             self.write_ensure_prefix(line, extra)
         else:
             # ensure that the path is printed before the 1st test of
