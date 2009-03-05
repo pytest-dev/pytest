@@ -123,8 +123,16 @@ class PytestPluginHooks:
     def pytest_collect_file(self, path, parent):
         """ return Collection node or None. """
 
+    def pytest_collect_recurse(self, path, parent):
+        """ return True/False to cause/prevent recursion into given directory. 
+            return None if you do not want to make the decision. 
+        """ 
+
+    def pytest_collect_directory(self, path, parent):
+        """ return Collection node or None. """
+
     def pytest_pymodule_makeitem(self, modcol, name, obj):
-        """ return custom item/collector or None.  """
+        """ return custom item/collector for a python object in a module, or None.  """
 
     # from pytest_terminal plugin
     def pytest_report_teststatus(self, event):

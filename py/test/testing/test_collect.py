@@ -197,6 +197,22 @@ class TestCustomConftests:
         assert item.name == "hello.xxx"
         assert item.__class__.__name__ == "CustomItem"
 
+    def test_avoid_directory_on_option(self, testdir):
+        testdir.makeconftest("""
+            class ConftestPlugin:
+                def pytest_addoption(self, parser):
+                    parser.addoption("--XX", action="store_true", default=False)
+                def pytest_collect_recurse(self, path, parent):
+                    return parent._config.getvalue("XX")
+        """)
+        testdir.mkdir("hello")
+        evrec = testdir.inline_run(testdir.tmpdir)
+        names = [rep.colitem.name for rep in evrec.getnamed("collectionreport")]
+        assert 'hello' not in names 
+        evrec = testdir.inline_run(testdir.tmpdir, "--XX")
+        names = [rep.colitem.name for rep in evrec.getnamed("collectionreport")]
+        assert 'hello' in names 
+
 class TestCollectorReprs:
     def test_repr_metainfo_basic_item(self, testdir):
         modcol = testdir.getmodulecol("")

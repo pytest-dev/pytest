@@ -448,8 +448,11 @@ class Directory(FSCollector):
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             APIWARN("0.99", "usefilters argument not needed")
-        return self._config.pytestplugins.call_each(
-            'pytest_collect_directory', path=path, parent=self)
+        res = self._config.pytestplugins.call_firstresult(
+            'pytest_collect_recurse', path=path, parent=self)
+        if res is None or res:
+            return self._config.pytestplugins.call_each(
+                'pytest_collect_directory', path=path, parent=self)
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 
