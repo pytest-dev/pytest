@@ -124,7 +124,7 @@ class Session(object):
                 if not self.config.option.collectonly: 
                     self.runtest(item)
 
-            py.test.collect.Item._setupstate.teardown_all()
+            self.config._setupstate.teardown_all()
         except KeyboardInterrupt:
             captured_excinfo = py.code.ExceptionInfo()
             exitstatus = outcome.EXIT_INTERRUPTED

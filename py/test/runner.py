@@ -50,9 +50,9 @@ class RobustRun(object):
 
 class ItemRunner(RobustRun):
     def setup(self):
-        self.colitem._setupstate.prepare(self.colitem)
+        self.colitem._config._setupstate.prepare(self.colitem)
     def teardown(self):
-        self.colitem._setupstate.teardown_exact(self.colitem)
+        self.colitem._config._setupstate.teardown_exact(self.colitem)
     def execute(self):
         #self.colitem.config.pytestplugins.pre_execute(self.colitem)
         self.colitem.runtest()

@@ -289,7 +289,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         # test generators are collectors yet participate in 
         # the test-item setup and teardown protocol. 
         # otherwise we could avoid global setupstate
-        self._setupstate.prepare(self) 
+        self._config._setupstate.prepare(self) 
         l = []
         for i, x in py.builtin.enumerate(self.obj()): 
             name, call, args = self.getcallargs(x)

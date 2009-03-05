@@ -40,6 +40,7 @@ class Config(object):
         self.bus = pytestplugins.pyplugins
         self.pytestplugins = pytestplugins
         self._conftest = Conftest(onimport=self.pytestplugins.consider_conftest)
+        self._setupstate = SetupState() 
 
     def _processopt(self, opt):
         if hasattr(opt, 'default') and opt.dest:
@@ -210,11 +211,6 @@ class Config(object):
             raise ValueError("unknown io capturing: " + iocapture)
 
     
-# this is the one per-process instance of py.test configuration 
-config_per_process = Config(
-    pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
-)
-
 #
 # helpers
 #
@@ -240,3 +236,38 @@ def gettopdir(args):
         return p
     else:
         return pkgdir.dirpath()
+
+class SetupState(object):
+    """ shared state for setting up/tearing down test items or collectors. """
+    def __init__(self):
+        self.stack = []
+
+    def teardown_all(self): 
+        while self.stack: 
+            col = self.stack.pop() 
+            col.teardown() 
+
+    def teardown_exact(self, item):
+        if self.stack and self.stack[-1] == item:
+            col = self.stack.pop()
+            col.teardown()
+     
+    def prepare(self, colitem): 
+        """ setup objects along the collector chain to the test-method
+            Teardown any unneccessary previously setup objects."""
+
+        needed_collectors = colitem.listchain() 
+        while self.stack: 
+            if self.stack == needed_collectors[:len(self.stack)]: 
+                break 
+            col = self.stack.pop() 
+            col.teardown()
+        for col in needed_collectors[len(self.stack):]: 
+            col.setup() 
+            self.stack.append(col) 
+
+# this is the one per-process instance of py.test configuration 
+config_per_process = Config(
+    pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
+)
+

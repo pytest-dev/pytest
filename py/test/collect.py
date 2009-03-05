@@ -27,35 +27,6 @@ def configproperty(name):
         return self._config.getvalue(name, self.fspath) 
     return property(fget)
 
-class SetupState(object):
-    """ shared state for setting up/tearing down test items or collectors. """
-    def __init__(self):
-        self.stack = []
-
-    def teardown_all(self): 
-        while self.stack: 
-            col = self.stack.pop() 
-            col.teardown() 
-
-    def teardown_exact(self, item):
-        if self.stack and self.stack[-1] == item:
-            col = self.stack.pop()
-            col.teardown()
-     
-    def prepare(self, colitem): 
-        """ setup objects along the collector chain to the test-method
-            Teardown any unneccessary previously setup objects."""
-
-        needed_collectors = colitem.listchain() 
-        while self.stack: 
-            if self.stack == needed_collectors[:len(self.stack)]: 
-                break 
-            col = self.stack.pop() 
-            col.teardown()
-        for col in needed_collectors[len(self.stack):]: 
-            col.setup() 
-            self.stack.append(col) 
-
 class ReprMetaInfo(object):
     def __init__(self, fspath=None, lineno=None, modpath=None):
         self.fspath = fspath
@@ -95,10 +66,6 @@ class Node(object):
           stdout/stderr capturing and execution of test items 
     """
     ReprMetaInfo = ReprMetaInfo
-    # XXX we keep global SetupState here because 
-    #     pycollect's Generators participate 
-    #     in setup/teardown procedures during collect. 
-    _setupstate = SetupState() 
     def __init__(self, name, parent=None, config=None):
         self.name = name 
         self.parent = parent
