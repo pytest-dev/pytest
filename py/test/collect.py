@@ -429,35 +429,27 @@ class Directory(FSCollector):
 
     def consider(self, path):
         if path.check(file=1):
-            return self.consider_file(path)
+            res = self.consider_file(path)
         elif path.check(dir=1):
-            return self.consider_dir(path)
+            res = self.consider_dir(path)
+        if isinstance(res, list):
+            # throw out identical modules
+            l = []
+            for x in res:
+                if x not in l:
+                    l.append(x)
+            res = l 
+        return res
 
     def consider_file(self, path):
-        res = self._config.pytestplugins.call_each(
+        return self._config.pytestplugins.call_each(
             'pytest_collect_file', path=path, parent=self)
-        l = []
-        # throw out identical modules
-        for x in res:
-            if x not in l:
-                l.append(x)
-        return l
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             APIWARN("0.99", "usefilters argument not needed")
-        if not self.recfilter(path):
-            # check if cmdline specified this dir or a subdir
-            for arg in self._config.args:
-                if path == arg or arg.relto(path):
-                    break
-            else:
-                return
-        # not use self.Directory here as 
-        # dir/conftest.py shall be able to 
-        # define Directory(dir) already 
-        Directory = self._config.getvalue('Directory', path) 
-        return Directory(path, parent=self) 
+        return self._config.pytestplugins.call_each(
+            'pytest_collect_directory', path=path, parent=self)
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 

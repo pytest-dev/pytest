@@ -153,6 +153,24 @@ class TestCollectPluginHooks:
         assert len(wascalled) == 1
         assert wascalled[0].ext == '.abc'
 
+    def test_pytest_collect_directory(self, testdir):
+        tmpdir = testdir.tmpdir
+        wascalled = []
+        class Plugin:
+            def pytest_collect_directory(self, path, parent):
+                wascalled.append(path.basename)
+                return parent.Directory(path, parent)
+        testdir.plugins.append(Plugin())
+        testdir.mkdir("hello")
+        testdir.mkdir("world")
+        evrec = testdir.inline_run()
+        assert "hello" in wascalled
+        assert "world" in wascalled
+        # make sure the directories do not get double-appended 
+        colreports = evrec.getnamed("collectionreport")
+        names = [rep.colitem.name for rep in colreports]
+        assert names.count("hello") == 1
+
 class TestCustomConftests:
     def test_non_python_files(self, testdir):
         testdir.makepyfile(conftest="""
