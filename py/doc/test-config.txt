@@ -1,8 +1,8 @@
 Test configuration
 ========================
 
-specifying plugins
----------------------------
+using / specifying plugins
+-------------------------------
 
 you can instruct py.test to use additional plugins by:
 
