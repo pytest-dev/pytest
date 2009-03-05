@@ -49,6 +49,22 @@ class TestMultiCall:
         call = MultiCall([n, m])
         res = call.execute(firstresult=True)
         assert res == 2
+
+    def test_call_exclude_other_results(self):
+        def m(__call__):
+            __call__.exclude_other_results()
+            return 10
+
+        def n():
+            return 1
+
+        call = MultiCall([n, n, m, n])
+        res = call.execute()
+        assert res == [10]
+        # doesn't really make sense for firstresult-mode - because
+        # we might not have had a chance to run at all. 
+        #res = call.execute(firstresult=True)
+        #assert res == 10
                 
 
 class TestPyPlugins:

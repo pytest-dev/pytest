@@ -52,6 +52,9 @@ class MultiCall:
                 res = self.currentmethod(self, *self.args, **self.kwargs)
             else:
                 res = self.currentmethod(*self.args, **self.kwargs)
+            if hasattr(self, '_ex1'):
+                self.results = [res]
+                break
             if res is not None:
                 if res is self.NONEASRESULT:
                     res = None
@@ -62,6 +65,9 @@ class MultiCall:
             return self.results 
         if self.results:
             return self.results[-1] 
+
+    def exclude_other_results(self):
+        self._ex1 = True
 
 class PyPlugins:
     """
