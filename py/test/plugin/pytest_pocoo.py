@@ -8,15 +8,16 @@ class url:
     xmlrpc = base + "/xmlrpc/"
     show = base + "/show/"
 
-class PocooPlugin(object):
+class PocooPlugin:
     """ report URLs from sending test failures to the pocoo paste service. """
 
     def pytest_addoption(self, parser):
-        parser.addoption('--pocoo-sendfailures', 
+        parser.addoption('-P', '--pocoo-sendfailures', 
             action='store_true', dest="pocoo_sendfailures", 
             help="send failures to %s" %(url.base,))
 
     def getproxy(self):
+        assert 0
         return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
 
     def pytest_terminal_summary(self, terminalreporter):
@@ -25,6 +26,8 @@ class PocooPlugin(object):
             if 'failed' in tr.stats and tr.config.option.tbstyle != "no":
                 terminalreporter.write_sep("=", "Sending failures to %s" %(url.base,))
                 terminalreporter.write_line("xmlrpcurl: %s" %(url.xmlrpc,))
+                print self.__class__.getproxy
+                print self.__class__, id(self.__class__)
                 serverproxy = self.getproxy()
                 for ev in terminalreporter.stats.get('failed'):
                     tw = py.io.TerminalWriter(stringio=True)
@@ -33,17 +36,22 @@ class PocooPlugin(object):
                     # XXX add failure summary 
                     assert len(s)
                     terminalreporter.write_line("newpaste() ...")
-                    id = serverproxy.newPaste("python", s)
-                    terminalreporter.write_line("%s%s\n" % (url.show, id))
+                    proxyid = serverproxy.newPaste("python", s)
+                    terminalreporter.write_line("%s%s\n" % (url.show, proxyid))
                     break
 
 
 def test_apicheck(plugintester):
     plugintester.apicheck(PocooPlugin)
 
-pytest_plugins = 'pytest_monkeypatch', 
 def test_toproxy(testdir, monkeypatch):
-    testdir.makepyfile(conftest="pytest_plugins='pytest_pocoo',")
+    l = []
+    class MockProxy:
+        def newPaste(self, language, code):
+            l.append((language, code))
+    monkeypatch.setattr(PocooPlugin, 'getproxy', MockProxy) 
+    testdir.plugins.insert(0, PocooPlugin())
+    testdir.chdir()
     testpath = testdir.makepyfile("""
         import py
         def test_pass():
@@ -53,10 +61,10 @@ def test_toproxy(testdir, monkeypatch):
         def test_skip():
             py.test.skip("")
     """)
-    l = []
-    class MockProxy:
-        def newPaste(self, language, code):
-            l.append((language, code))
-          
-    monkeypatch.setattr(PocooPlugin, 'getproxy', MockProxy) 
-    result = testdir.inline_run(testpath, "--pocoo-sendfailures")
+    evrec = testdir.inline_run(testpath, "-P")
+    assert len(l) == 1
+    assert l[0][0] == "python"
+    s = l[0][1]
+    assert s.find("def test_fail") != -1
+    assert evrec.countoutcomes() == [1,1,1]
+     

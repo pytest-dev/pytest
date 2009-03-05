@@ -107,7 +107,7 @@ class TestDoctests:
             >>> x == 1
             False
         """)
-        events = testdir.inline_run_with_plugins(p)
+        events = testdir.inline_run(p)
         ev, = events.getnamed("itemtestreport")
         assert ev.failed 
 
@@ -143,7 +143,7 @@ class TestDoctests:
 
             '''
         """)
-        events = testdir.inline_run_with_plugins(p, "--doctest-modules")
+        events = testdir.inline_run(p, "--doctest-modules")
         ev, = events.getnamed("itemtestreport")
         assert ev.failed 
 

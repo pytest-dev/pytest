@@ -5,6 +5,7 @@ pytes plugin for easing testing of pytest runs themselves.
 import py
 from py.__.test import event
 from py.__.test.config import Config as pytestConfig
+from py.__.test.collect import Node, SetupState
 
 class PytesterPlugin:
     def pytest_pyfuncarg_linecomp(self, pyfuncitem):
@@ -132,31 +133,21 @@ class TmpTestdir:
         l = list(cmdlineargs) + [p]
         return self.inline_run(*l)
 
-    def inline_runsession(self, session):
-        config = session.config
-        config.pytestplugins.do_configure(config)
-        sorter = EventRecorder(config.bus)
-        session.main()
-        config.pytestplugins.do_unconfigure(config)
-        return sorter
-
     def inline_run(self, *args):
-        config = self.parseconfig(*args)
-        config.pytestplugins.do_configure(config)
-        session = config.initsession()
-        sorter = EventRecorder(config.bus)
-        session.main()
-        config.pytestplugins.do_unconfigure(config)
-        return sorter
-
-    def inline_run_with_plugins(self, *args):
-        config = self.parseconfig(*args)
-        config.pytestplugins.do_configure(config)
-        session = config.initsession()
-        sorter = EventRecorder(config.bus)
-        session.main()
-        config.pytestplugins.do_unconfigure(config)
-        return sorter
+        # for the inlined test session we should not modify 
+        # our caller's test state 
+        oldstate = Node._setupstate
+        Node._setupstate = SetupState()
+        try: 
+            config = self.parseconfig(*args)
+            config.pytestplugins.do_configure(config)
+            session = config.initsession()
+            sorter = EventRecorder(config.bus)
+            session.main()
+            config.pytestplugins.do_unconfigure(config)
+            return sorter
+        finally:
+            Node._setupstate = oldstate 
 
     def config_preparse(self):
         config = self.Config()

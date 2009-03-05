@@ -90,11 +90,8 @@ class TestAsyncFunctional:
             #    assert py.__file__ != '%s'
         """ % (tmpdir.join(subdir), py.__file__)))
         destdir.join("py").mksymlinkto(py.path.local(py.__file__).dirpath())
-        config = py.test.config._reparse([tmpdir.join(subdir)])
-        assert config.topdir == tmpdir
-        assert not tmpdir.join("__init__.py").check()
-        dist = DSession(config)
-        sorter = testdir.inline_runsession(dist)
+
+        sorter = testdir.inline_run(tmpdir.join(subdir))
         testevents = sorter.getnamed('itemtestreport')
         assert len([x for x in testevents if x.passed]) == 2
         assert len([x for x in testevents if x.failed]) == 3
