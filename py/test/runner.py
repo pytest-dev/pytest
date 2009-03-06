@@ -59,7 +59,9 @@ class ItemRunner(RobustRun):
         #self.colitem.config.pytestplugins.post_execute(self.colitem)
 
     def makereport(self, res, when, excinfo, outerr):
-        testrep = event.ItemTestReport(self.colitem, excinfo, when, outerr)
+        testrep = self.colitem._config.pytestplugins.call_firstresult(
+            "pytest_item_makereport", item=self.colitem, 
+            excinfo=excinfo, when=when, outerr=outerr)
         if self.pdb and testrep.failed:
             tw = py.io.TerminalWriter()
             testrep.toterminal(tw)

@@ -9,12 +9,25 @@ import py
 
 class XfailPlugin(object):
     """ mark and report specially about "expected to fail" tests. """
+
+    def pytest_item_makereport(self, __call__, item, excinfo, when, outerr):
+        if hasattr(item, 'obj') and hasattr(item.obj, 'func_dict'):
+            if 'xfail' in item.obj.func_dict:
+                res = __call__.execute(firstresult=True)
+                if excinfo:
+                    res.skipped = True
+                    res.failed = res.passed = False
+                else:
+                    res.skipped = res.passed = False
+                    res.failed = True
+                return res 
+
     def pytest_report_teststatus(self, event):
         """ return shortletter and verbose word. """
         if 'xfail' in event.keywords: 
-            if event.failed:
+            if event.skipped:
                 return "xfailed", "x", "xfail"
-            else:
+            elif event.failed:
                 return "xpassed", "P", "xpass" 
 
     # a hook implemented called by the terminalreporter instance/plugin
@@ -22,7 +35,7 @@ class XfailPlugin(object):
         tr = terminalreporter
         xfailed = tr.stats.get("xfailed")
         if xfailed:
-            tr.write_sep("_", "EXPECTED XFAILURES")
+            tr.write_sep("_", "expected failures")
             for event in xfailed:
                 entry = event.longrepr.reprcrash 
                 key = entry.path, entry.lineno, entry.message
@@ -33,7 +46,7 @@ class XfailPlugin(object):
 
         xpassed = terminalreporter.stats.get("xpassed")
         if xpassed:
-            tr.write_sep("_", "UNEXPECTEDLY PASSING")
+            tr.write_sep("_", "UNEXPECTEDLY PASSING TESTS")
             for event in xpassed:
                 tr._tw.line("%s: xpassed" %(event.colitem,))
 
@@ -54,10 +67,16 @@ def test_xfail(plugintester, linecomp):
         @py.test.mark.xfail
         def test_this():
             assert 0
+
+        @py.test.mark.xfail
+        def test_that():
+            assert 1
     """)
     result = testdir.runpytest(p)
     extra = result.stdout.fnmatch_lines([
-        "*XFAILURES*",
+        "*expected failures*",
         "*test_one.test_this*test_one.py:5*",
+        "*UNEXPECTEDLY PASSING*",
+        "*test_that*",
     ])
     assert result.ret == 1

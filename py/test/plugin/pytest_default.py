@@ -114,6 +114,10 @@ class DefaultPlugin:
             from py.__.test.dsession.dsession import  DSession
             config.setsessionclass(DSession)
 
+    def pytest_item_makereport(self, item, excinfo, when, outerr):
+        from py.__.test import event
+        return event.ItemTestReport(item, excinfo, when, outerr)
+
 def test_implied_different_sessions(tmpdir):
     def x(*args):
         config = py.test.config._reparse([tmpdir] + list(args))

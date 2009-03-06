@@ -60,6 +60,8 @@ class PluginTester(Support):
                 if not hasattr(hook, 'func_code'):
                     continue # XXX do some checks on attributes as well? 
                 method_args = getargs(method.func_code) 
+                if '__call__' in method_args[0]:
+                    method_args[0].remove('__call__')
                 hookargs = getargs(hook.func_code)
                 for arg, hookarg in zip(method_args[0], hookargs[0]):
                     if arg != hookarg: 
@@ -119,6 +121,9 @@ class PytestPluginHooks:
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
 
+    def pytest_item_makereport(self, item, excinfo, when, outerr):
+        """ return ItemTestReport event for the given test outcome. """
+
     # collection hooks
     def pytest_collect_file(self, path, parent):
         """ return Collection node or None. """
@@ -133,6 +138,11 @@ class PytestPluginHooks:
 
     def pytest_pymodule_makeitem(self, modcol, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
+
+
+    # from pytest_terminal plugin
+    def pytest_report_teststatus(self, event):
+        """ return shortletter and verbose word. """
 
     # from pytest_terminal plugin
     def pytest_report_teststatus(self, event):
