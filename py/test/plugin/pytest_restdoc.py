@@ -24,7 +24,7 @@ def getproject(path):
         confrest = parent.join("confrest.py")
         if confrest.check():
             Project = confrest.pyimport().Project
-            return Project(parent.dirpath())
+            return Project(parent)
 
 class ReSTFile(py.test.collect.File):
     def __init__(self, fspath, parent, project=None):

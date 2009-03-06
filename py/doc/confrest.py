@@ -136,10 +136,11 @@ class Project:
             else:
                 self.stylesheet = None
         else:
-            p = py.path.local(stylesheet)
+            p = sourcepath.join(stylesheet)
             if p.check():
                 stylesheet = p
             self.stylesheet = stylesheet
+        #assert self.stylesheet
         self.apigen_relpath = relpath(
             self.docpath.strpath + '/', self.apigenpath.strpath + '/')
 
