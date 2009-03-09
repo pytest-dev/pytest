@@ -15,8 +15,8 @@ def check_html(string):
     is_valid = get_validation_result_from_w3_html(ret)
     return is_valid
 
-reg_validation_result = re.compile('<td[^>]*class="(in)?valid"[^>]*>([^<]*)<',
-                                    re.M | re.S)
+reg_validation_result = re.compile(
+    '<(h2|td)[^>]*class="(in)?valid"[^>]*>([^<]*)<', re.M | re.S)
 def get_validation_result_from_w3_html(html):
     match = reg_validation_result.search(html)
     valid = match.group(1) is None
