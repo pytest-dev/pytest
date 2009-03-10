@@ -432,6 +432,8 @@ class Directory(FSCollector):
             res = self.consider_file(path)
         elif path.check(dir=1):
             res = self.consider_dir(path)
+        else:
+            res = None            
         if isinstance(res, list):
             # throw out identical modules
             l = []
