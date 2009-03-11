@@ -40,7 +40,6 @@ class BaseTests:
         tw.sep("-", fullwidth=60) 
         l = self.getlines()
         assert len(l) == 1
-        skip_win32()
         assert l[0] == "-" * 60 + "\n"
 
     def test_sep_with_title(self):
@@ -48,7 +47,6 @@ class BaseTests:
         tw.sep("-", "hello", fullwidth=60) 
         l = self.getlines()
         assert len(l) == 1
-        skip_win32()
         assert l[0] == "-" * 26 + " hello " + "-" * 27 + "\n"
 
     def test__escaped(self):

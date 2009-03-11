@@ -63,7 +63,9 @@ if sys.platform == 'win32':
         info = CONSOLE_SCREEN_BUFFER_INFO()
         ctypes.windll.kernel32.GetConsoleScreenBufferInfo(
             handle, ctypes.byref(info))
-        return info.dwSize.Y, info.dwSize.X
+        # Substract one from the width, otherwise the cursor wraps
+        # and the ending \n causes an empty line to display.
+        return info.dwSize.Y, info.dwSize.X - 1
 
 def get_terminal_width():
     try:
@@ -218,9 +220,6 @@ class Win32ConsoleWriter(object):
     def sep(self, sepchar, title=None, fullwidth=None, **kw):
         if fullwidth is None:
             fullwidth = self.fullwidth
-        # On a Windows console, writing in the last column
-        # causes a line feed.
-        fullwidth -= 1
         # the goal is to have the line be as long as possible
         # under the condition that len(line) <= fullwidth
         if title is not None:
