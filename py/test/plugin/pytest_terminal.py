@@ -40,13 +40,13 @@ class TerminalReporter:
             self.currentfspath = fspath
         self._tw.write(res)
 
-    def write_ensure_prefix(self, prefix, extra=""):
+    def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
             self._tw.line()
             self.currentfspath = prefix 
             self._tw.write(prefix)
         if extra:
-            self._tw.write(extra)
+            self._tw.write(extra, **kwargs)
             self.currentfspath = -2
 
     def ensure_newline(self):
@@ -77,13 +77,13 @@ class TerminalReporter:
 
     def getoutcomeword(self, event):
         if event.passed: 
-            return self._tw.markup("PASS", green=True)
+            return "PASS", dict(green=True)
         elif event.failed: 
-            return self._tw.markup("FAIL", red=True)
+            return "FAIL", dict(red=True)
         elif event.skipped: 
             return "SKIP"
         else: 
-            return self._tw.markup("???", red=True)
+            return "???", dict(red=True)
 
     def pyevent_internalerror(self, event):
         for line in str(event.repr).split("\n"):
@@ -139,13 +139,17 @@ class TerminalReporter:
     def pyevent_itemtestreport(self, event):
         fspath = event.colitem.fspath 
         cat, letter, word = self.getcategoryletterword(event)
+        if isinstance(word, tuple):
+            word, markup = word
+        else:
+            markup = {}
         self.stats.setdefault(cat, []).append(event)
         if not self.config.option.verbose:
             self.write_fspath_result(fspath, letter)
         else:
             info = event.colitem.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
-            self.write_ensure_prefix(line, word)
+            self.write_ensure_prefix(line, word, **markup)
 
     def pyevent_collectionreport(self, event):
         if not event.passed:

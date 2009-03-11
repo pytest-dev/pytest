@@ -275,7 +275,7 @@ class ReprEntry(Repr):
             self.reprfuncargs.toterminal(tw)
         for line in self.lines:
             red = line.startswith("E   ") 
-            tw.line(tw.markup(bold=True, red=red, text=line))
+            tw.line(line, bold=True, red=red)
         if self.reprlocals:
             #tw.sep(self.localssep, "Locals")
             tw.line("")

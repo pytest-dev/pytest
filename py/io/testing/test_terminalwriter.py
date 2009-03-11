@@ -1,6 +1,10 @@
 import py
-import os
+import os, sys
 from py.__.io import terminalwriter 
+
+def skip_win32():
+    if sys.platform == 'win32':
+        py.test.skip('Not relevant on win32')
 
 def test_terminalwriter_computes_width():
     py.magic.patch(terminalwriter, 'get_terminal_width', lambda: 42)
@@ -36,6 +40,7 @@ class BaseTests:
         tw.sep("-", fullwidth=60) 
         l = self.getlines()
         assert len(l) == 1
+        skip_win32()
         assert l[0] == "-" * 60 + "\n"
 
     def test_sep_with_title(self):
@@ -43,14 +48,17 @@ class BaseTests:
         tw.sep("-", "hello", fullwidth=60) 
         l = self.getlines()
         assert len(l) == 1
+        skip_win32()
         assert l[0] == "-" * 26 + " hello " + "-" * 27 + "\n"
 
     def test__escaped(self):
+        skip_win32()
         tw = self.getwriter()
         text2 = tw._escaped("hello", (31))
         assert text2.find("hello") != -1
 
     def test_markup(self):
+        skip_win32()
         tw = self.getwriter()
         for bold in (True, False):
             for color in ("red", "green"):
@@ -65,6 +73,7 @@ class BaseTests:
         tw.line("x", bold=True)
         tw.write("x\n", red=True)
         l = self.getlines()
+        skip_win32()
         assert len(l[0]) > 2, l
         assert len(l[1]) > 2, l
 
