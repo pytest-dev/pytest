@@ -161,6 +161,8 @@ class KeywordDecorator:
         return func 
 
     def __getattr__(self, name):
+        if name[0] == "_":
+            raise AttributeError(name)
         kw = self._keywords.copy()
         kw[name] = True
         return self.__class__(kw, lastname=name)

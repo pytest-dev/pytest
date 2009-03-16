@@ -76,8 +76,20 @@ def test_importorskip():
         print py.code.ExceptionInfo()
         py.test.fail("spurious skip")
 
+def test_pytest_mark_getattr():
+    from py.__.test.outcome import mark
+    def f(): pass
 
-def test_pytest_mark():
+    mark.hello(f)
+    assert f.hello == True
+
+    mark.hello("test")(f)
+    assert f.hello == "test"
+
+    py.test.raises(AttributeError, "mark._hello")
+    py.test.raises(AttributeError, "mark.__str__")
+
+def test_pytest_mark_call():
     from py.__.test.outcome import mark
     def f(): pass
     mark(x=3)(f)
