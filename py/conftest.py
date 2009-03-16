@@ -1,6 +1,6 @@
 dist_rsync_roots = ['.'] # XXX
 
-pytest_plugins = 'pytest_doctest', 'pytest_pytester', 'pytest_restdoc', 'pytest_apigen'
+pytest_plugins = 'pytest_doctest', 'pytest_pytester', 'pytest_restdoc'
 
 import py
 class PylibTestPlugin:
