@@ -6,7 +6,7 @@ class TWMock:
         self.lines = []
     def sep(self, sep, line=None):
         self.lines.append((sep, line))
-    def line(self, line):
+    def line(self, line, **kw):
         self.lines.append(line)
     def markup(self, text, **kw):
         return text
