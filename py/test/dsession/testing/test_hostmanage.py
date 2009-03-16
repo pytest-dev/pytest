@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.hostmanage import HostManager, getconfighosts
+from py.__.test.dsession.hostmanage import HostManager, getconfighosts, getconfigroots
 from py.__.execnet.gwmanage import GatewaySpec as Host
 
 from py.__.test import event
@@ -15,12 +15,14 @@ def pytest_pyfuncarg_dest(pyfuncitem):
     return dest 
 
 class TestHostManager:
-    def gethostmanager(self, source, dist_hosts, dist_rsync_roots=None):
-        l = ["dist_hosts = %r" % dist_hosts]
-        if dist_rsync_roots:
-            l.append("dist_rsync_roots = %r" % dist_rsync_roots)
-        source.join("conftest.py").write("\n".join(l))
-        config = py.test.config._reparse([source])
+    def gethostmanager(self, source, hosts, rsyncdirs=None):
+        def opt(optname, l):
+            return '%s=%s' % (optname, ",".join(map(str, l)))
+        args = [opt('--hosts', hosts)]
+        if rsyncdirs:
+            args.append(opt('--rsyncdir', [source.join(x, abs=True) for x in rsyncdirs]))
+        args.append(source)
+        config = py.test.config._reparse(args)
         assert config.topdir == source
         hm = HostManager(config)
         assert hm.gwmanager.spec2gateway
@@ -34,7 +36,7 @@ class TestHostManager:
     def test_hostmanager_rsync_roots_no_roots(self, source, dest):
         source.ensure("dir1", "file1").write("hello")
         config = py.test.config._reparse([source])
-        hm = HostManager(config, hosts=["localhost:%s" % dest])
+        hm = HostManager(config, hosts=["popen:%s" % dest])
         assert hm.config.topdir == source == config.topdir
         hm.rsync_roots()
         p, = hm.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive()
@@ -48,8 +50,8 @@ class TestHostManager:
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         hm = self.gethostmanager(source, 
-            dist_hosts = ["localhost:%s" % dest],
-            dist_rsync_roots = ['dir1']
+            hosts = ["popen:%s" % dest],
+            rsyncdirs = ['dir1']
         )
         assert hm.config.topdir == source
         hm.rsync_roots() 
@@ -61,8 +63,8 @@ class TestHostManager:
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         hm = self.gethostmanager(source, 
-            dist_hosts = ["localhost:%s" % dest],
-            dist_rsync_roots = [str(source)]
+            hosts = ["popen:%s" % dest],
+            rsyncdirs = [str(source)]
         )
         assert hm.config.topdir == source
         hm.rsync_roots()
@@ -77,37 +79,37 @@ class TestHostManager:
         dir2.ensure("hello")
         source.ensure("bogusdir", "file")
         source.join("conftest.py").write(py.code.Source("""
-            dist_rsync_roots = ['dir1/dir2']
+            rsyncdirs = ['dir1/dir2']
         """))
         session = py.test.config._reparse([source]).initsession()
         hm = HostManager(session.config, 
-                         hosts=["localhost:" + str(dest)])
+                         hosts=["popen:" + str(dest)])
         hm.rsync_roots()
         assert dest.join("dir2").check()
         assert not dest.join("dir1").check()
         assert not dest.join("bogus").check()
 
-    def test_hostmanager_rsync_ignore(self, source, dest):
+    def test_hostmanager_rsyncignore(self, source, dest):
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir5 = source.ensure("dir5", "dir6", "bogus")
         dirf = source.ensure("dir5", "file")
         dir2.ensure("hello")
         source.join("conftest.py").write(py.code.Source("""
-            dist_rsync_ignore = ['dir1/dir2', 'dir5/dir6']
-            dist_rsync_roots = ['dir1', 'dir5']
+            rsyncdirs = ['dir1', 'dir5']
+            rsyncignore = ['dir1/dir2', 'dir5/dir6']
         """))
         session = py.test.config._reparse([source]).initsession()
         hm = HostManager(session.config,
-                         hosts=["localhost:" + str(dest)])
+                         hosts=["popen:" + str(dest)])
         hm.rsync_roots()
         assert dest.join("dir1").check()
         assert not dest.join("dir1", "dir2").check()
         assert dest.join("dir5","file").check()
         assert not dest.join("dir6").check()
 
-    def test_hostmanage_optimise_localhost(self, source, dest):
-        hosts = ["localhost"] * 3
-        source.join("conftest.py").write("dist_rsync_roots = ['a']")
+    def test_hostmanage_optimise_popen(self, source, dest):
+        hosts = ["popen"] * 3
+        source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
         config = py.test.config._reparse([source])
         hm = HostManager(config, hosts=hosts)
@@ -116,31 +118,35 @@ class TestHostManager:
             assert gwspec.inplacelocal()
             assert not gwspec.joinpath 
 
-    def test_hostmanage_setup_hosts(self, source):
-        hosts = ["localhost"] * 3
-        source.join("conftest.py").write("dist_rsync_roots = ['a']")
+    def test_hostmanage_setup_hosts_DEBUG(self, source, EventRecorder):
+        hosts = ["popen"] * 2
+        source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
-        config = py.test.config._reparse([source])
+        config = py.test.config._reparse([source, '--debug'])
+        assert config.option.debug
         hm = HostManager(config, hosts=hosts)
-        queue = py.std.Queue.Queue()
-        hm.setup_hosts(putevent=queue.put)
+        evrec = EventRecorder(config.bus, debug=True)
+        hm.setup_hosts(putevent=[].append)
         for host in hm.gwmanager.spec2gateway:
-            eventcall = queue.get(timeout=2.0)
-            name, args, kwargs = eventcall
-            assert name == "hostup"
-        for host in hm.gwmanager.spec2gateway:
-            host.node.shutdown()
-        for host in hm.gwmanager.spec2gateway:
-            eventcall = queue.get(timeout=2.0)
-            name, args, kwargs = eventcall
-            print name, args, kwargs
-            assert name == "hostdown"
+            l = evrec.getnamed("trace")
+            print evrec.events
+            assert l 
+        hm.teardown_hosts()
 
-    def XXXtest_ssh_rsync_samehost_twice(self):
-        #XXX we have no easy way to have a temp directory remotely!
+    def test_hostmanage_simple_ssh_test(self, testdir):
+        rp = testdir.mkdir('xyz123')
+        rp.ensure("__init__.py")
+        p = testdir.makepyfile("def test_123(): import xyz123")
+        result = testdir.runpytest(p, '-d', "--hosts=popen", '--rsyncdirs=' + str(rp))
+        assert result.ret == 0
+        assert result.stdout.str().find("1 passed") != -1
+
+    @py.test.mark.xfail("implement double-rsync test")
+    def test_ssh_rsync_samehost_twice(self):
         option = py.test.config.option
         if option.sshhost is None: 
             py.test.skip("no known ssh target, use -S to set one")
+        
         host1 = Host("%s" % (option.sshhost, ))
         host2 = Host("%s" % (option.sshhost, ))
         hm = HostManager(config, hosts=[host1, host2])
@@ -150,8 +156,35 @@ class TestHostManager:
         assert 0
 
 
-def test_getconfighosts():
+def test_getconfighosts_numprocesses():
     config = py.test.config._reparse(['-n3'])
     hosts = getconfighosts(config)
     assert len(hosts) == 3
+
+def test_getconfighosts_disthosts():
+    config = py.test.config._reparse(['--hosts=a,b,c'])
+    hosts = getconfighosts(config)
+    assert len(hosts) == 3
+    assert hosts == ['a', 'b', 'c']
+
+def test_getconfigroots(testdir):
+    config = testdir.parseconfig('--rsyncdirs=' + str(testdir.tmpdir))
+    roots = getconfigroots(config)
+    assert len(roots) == 1
+    assert roots == [testdir.tmpdir]
+
+def test_getconfigroots_with_conftest(testdir):
+    testdir.chdir()
+    p = py.path.local()
+    for bn in 'x y z'.split():
+        p.mkdir(bn)
+    testdir.makeconftest("""
+        rsyncdirs= 'x', 
+    """)
+    config = testdir.parseconfig(testdir.tmpdir, '--rsyncdirs=y,z')
+    roots = getconfigroots(config)
+    assert len(roots) == 3
+    assert py.path.local('y') in roots 
+    assert py.path.local('z') in roots 
+    assert testdir.tmpdir.join('x') in roots 
 

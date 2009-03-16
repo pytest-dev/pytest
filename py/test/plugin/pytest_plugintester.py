@@ -155,6 +155,9 @@ class PytestPluginHooks:
     def pyevent(self, eventname, *args, **kwargs):
         """ called for each testing event. """
 
+    def pyevent_trace(self, category, msg):
+        """ called for tracing events events. """
+
     def pyevent_internalerror(self, event):
         """ called for internal errors. """
 

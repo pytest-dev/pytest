@@ -39,7 +39,6 @@ class TestAsyncFunctional:
         ])
 
     def test_dist_some_tests(self, testdir):
-        testdir.makepyfile(conftest="dist_hosts=['localhost']\n")
         p1 = testdir.makepyfile(test_one="""
             def test_1(): 
                 pass
@@ -49,7 +48,7 @@ class TestAsyncFunctional:
             def test_fail():
                 assert 0
         """)
-        config = testdir.parseconfig('-d', p1)
+        config = testdir.parseconfig('-d', p1, '--hosts=popen')
         dsession = DSession(config)
         eq = EventQueue(config.bus)
         dsession.main([config.getfsnode(p1)])
@@ -61,7 +60,7 @@ class TestAsyncFunctional:
         assert ev.failed
         # see that the host is really down 
         ev, = eq.geteventargs("hostdown")
-        assert ev.host.address == "localhost"
+        assert ev.host.address == "popen"
         ev, = eq.geteventargs("testrunfinish")
 
     def test_distribution_rsync_roots_example(self, testdir):
@@ -70,8 +69,8 @@ class TestAsyncFunctional:
         subdir = "sub_example_dist"
         sourcedir = self.tmpdir.mkdir("source")
         sourcedir.ensure(subdir, "conftest.py").write(py.code.Source("""
-            dist_hosts = ["localhost:%s"]
-            dist_rsync_roots = ["%s", "../py"]
+            hosts = ["popen:%s"]
+            rsyncdirs = ["%s", "../py"]
         """ % (destdir, tmpdir.join(subdir), )))
         tmpdir.ensure(subdir, "__init__.py")
         tmpdir.ensure(subdir, "test_one.py").write(py.code.Source("""
@@ -102,7 +101,6 @@ class TestAsyncFunctional:
         if not hasattr(os, 'nice'):
             py.test.skip("no os.nice() available")
         testdir.makepyfile(conftest="""
-                dist_hosts=['localhost']
                 dist_nicelevel = 10
         """)
         p1 = testdir.makepyfile("""
@@ -110,7 +108,7 @@ class TestAsyncFunctional:
                 import os
                 assert os.nice(0) == 10
         """)
-        evrec = testdir.inline_run('-d', p1)
+        evrec = testdir.inline_run('-d', p1, '--hosts=popen')
         ev = evrec.getreport('test_nice')
         assert ev.passed
 

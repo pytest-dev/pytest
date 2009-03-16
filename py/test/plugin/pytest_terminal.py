@@ -3,11 +3,6 @@ import sys
 
 class TerminalPlugin(object):
     """ Report a test run to a terminal. """
-    def pytest_addoption(self, parser):
-        parser.addoption('--collectonly',
-            action="store_true", dest="collectonly",
-            help="only collect tests, don't execute them."),
-
     def pytest_configure(self, config):
         if config.option.collectonly:
             self.reporter = CollectonlyReporter(config)
@@ -115,6 +110,11 @@ class TerminalReporter:
         if error:
             self.write_line("HostDown %s: %s" %(host, error))
 
+    def pyevent_trace(self, category, msg):
+        if self.config.option.debug or \
+           self.config.option.traceconfig and category.find("config") != -1:
+            self.write_line("[%s] %s" %(category, msg))
+
     def pyevent_itemstart(self, event):
         if self.config.option.verbose:
             info = event.item.repr_metainfo()
@@ -167,14 +167,15 @@ class TerminalReporter:
         rev = py.__pkg__.getrev()
         self.write_line("using py lib: %s <rev %s>" % (
                        py.path.local(py.__file__).dirpath(), rev))
-        plugins = []
-        for x in self.config.pytestplugins._plugins:
-            if isinstance(x, str) and x.startswith("pytest_"):
-                plugins.append(x[7:])
-            else:
-                plugins.append(str(x)) # XXX display conftest plugins more nicely 
-        plugins = ", ".join(plugins) 
-        self.write_line("active plugins: %s" %(plugins,))
+        if self.config.option.traceconfig:
+            plugins = []
+            for x in self.config.pytestplugins._plugins:
+                if isinstance(x, str) and x.startswith("pytest_"):
+                    plugins.append(x[7:])
+                else:
+                    plugins.append(str(x)) # XXX display conftest plugins more nicely 
+            plugins = ", ".join(plugins) 
+            self.write_line("active plugins: %s" %(plugins,))
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 

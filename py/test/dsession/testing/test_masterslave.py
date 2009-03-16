@@ -43,7 +43,7 @@ class MySetup:
             config = py.test.config._reparse([])
         self.config = config
         self.queue = py.std.Queue.Queue()
-        self.host = GatewaySpec("localhost") 
+        self.host = GatewaySpec("popen") 
         self.gateway = self.host.makegateway()
         self.node = MasterNode(self.host, self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()

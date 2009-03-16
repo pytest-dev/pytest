@@ -44,9 +44,9 @@ class DSession(Session):
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
         option = self.config.option 
-        if option.runbrowser and not option.startserver:
-            #print "--runbrowser implies --startserver"
-            option.startserver = True
+        #if option.runbrowser and not option.startserver:
+        #    #print "--runbrowser implies --startserver"
+        #    option.startserver = True
         if self.config.getvalue("dist_boxed") and option.dist:
             option.boxed = True
         # conflicting options

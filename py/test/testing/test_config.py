@@ -1,5 +1,6 @@
 import py
 
+
 class TestConfigCmdlineParsing:
     def test_config_cmdline_options(self, testdir):
         testdir.makepyfile(conftest="""
@@ -118,21 +119,17 @@ class TestConfigAPI:
         config = py.test.config._reparse([str(o)])
         assert config.getvalue('x') == 1
 
-    def test_getvalue_pathlist(self, tmpdir):
+    def test_getconftest_pathlist(self, tmpdir):
         somepath = tmpdir.join("x", "y", "z")
         p = tmpdir.join("conftest.py")
         p.write("pathlist = ['.', %r]" % str(somepath))
         config = py.test.config._reparse([p])
-        assert config.getvalue_pathlist('notexist') is None
-        pl = config.getvalue_pathlist('pathlist')
+        assert config.getconftest_pathlist('notexist') is None
+        pl = config.getconftest_pathlist('pathlist')
         print pl
         assert len(pl) == 2
         assert pl[0] == tmpdir
         assert pl[1] == somepath
-
-        config.option.mypathlist = [py.path.local()]
-        pl = config.getvalue_pathlist('mypathlist')
-        assert pl == [py.path.local()]
 
     def test_setsessionclass_and_initsession(self, testdir):
         from py.__.test.config import Config 

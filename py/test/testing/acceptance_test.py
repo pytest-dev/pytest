@@ -241,13 +241,11 @@ class TestPyTest:
                 def test_skip():
                     py.test.skip("hello")
             """, 
-            conftest="""
-                dist_hosts = ['localhost'] * 3
-            """
         )
-        result = testdir.runpytest(p1, '-d')
+        #result = testdir.runpytest(p1, '-d')
+        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen,popen')
         result.stdout.fnmatch_lines([
-            "HOSTUP: localhost*Python*",
+            "HOSTUP: popen*Python*",
             #"HOSTUP: localhost*Python*",
             #"HOSTUP: localhost*Python*",
             "*2 failed, 1 passed, 1 skipped*",
@@ -273,17 +271,14 @@ class TestPyTest:
                     import os
                     time.sleep(0.5)
                     os.kill(os.getpid(), 15)
-            """, 
-            conftest="""
-                dist_hosts = ['localhost'] * 3
             """
         )
-        result = testdir.runpytest(p1, '-d')
+        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen,popen')
         result.stdout.fnmatch_lines([
-            "*localhost*Python*",
-            "*localhost*Python*",
-            "*localhost*Python*",
-            "HostDown*localhost*TERMINATED*",
+            "*popen*Python*",
+            "*popen*Python*",
+            "*popen*Python*",
+            "HostDown*TERMINATED*",
             "*3 failed, 1 passed, 1 skipped*"
         ])
         assert result.ret == 1

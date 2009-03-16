@@ -29,9 +29,9 @@ class Session(object):
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
         option = self.config.option 
-        if option.runbrowser and not option.startserver:
-            #print "--runbrowser implies --startserver"
-            option.startserver = True
+        #if option.runbrowser and not option.startserver:
+        #    #print "--runbrowser implies --startserver"
+        #    option.startserver = True
         # conflicting options
         if option.looponfailing and option.usepdb:
             raise ValueError, "--looponfailing together with --pdb not supported."

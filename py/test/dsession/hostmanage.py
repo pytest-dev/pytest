@@ -8,19 +8,34 @@ def getconfighosts(config):
     if config.option.numprocesses:
         hosts = ['localhost'] * config.option.numprocesses
     else:
-        hosts = config.getvalue("dist_hosts")
-        assert hosts is not None
+        hosts = config.option.hosts
+        if not hosts:
+            hosts = config.getvalue("hosts")
+        else:
+            hosts = hosts.split(",")
+    assert hosts is not None
     return hosts
+
+def getconfigroots(config):
+    roots = config.option.rsyncdirs
+    if roots:
+        roots = [py.path.local(x) for x in roots.split(',')]
+    else:
+        roots = []
+    conftestroots = config.getconftest_pathlist("rsyncdirs")
+    if conftestroots:
+        roots.extend(conftestroots)
+    for root in roots:
+        if not root.check():
+            raise ValueError("rsyncdir doesn't exist: %r" %(root,))
+    return roots 
     
 class HostManager(object):
     def __init__(self, config, hosts=None):
         self.config = config 
-        roots = self.config.getvalue_pathlist("rsyncroots")
-        if not roots:
-            roots = self.config.getvalue_pathlist("dist_rsync_roots")
-        self.roots = roots
         if hosts is None:
             hosts = getconfighosts(self.config)
+        self.roots = getconfigroots(config)
         self.gwmanager = GatewayManager(hosts)
 
     def makegateways(self):
@@ -29,6 +44,19 @@ class HostManager(object):
             self.gwmanager.makegateways()
         finally:
             old.chdir()
+        self.trace_hoststatus()
+
+    def trace_hoststatus(self):
+        if self.config.option.debug:
+            for ch, result in self.gwmanager.multi_exec("""
+                import sys, os
+                channel.send((sys.executable, os.getcwd(), sys.path))
+            """).receive_items():
+                self.trace("spec %r, execuable %r, cwd %r, syspath %r" %(
+                    ch.gateway.spec, result[0], result[1], result[2]))
+
+    def config_getignores(self):
+        return self.config.getconftest_pathlist("rsyncignore")
 
     def rsync_roots(self):
         """ make sure that all remote gateways
@@ -42,19 +70,22 @@ class HostManager(object):
         # (for other gateways this chdir is irrelevant)
         self.makegateways()
         options = {
-            'ignores': self.config.getvalue_pathlist("dist_rsync_ignore"),
-            'verbose': self.config.option.verbose
+            'ignores': self.config_getignores(), 
+            'verbose': 1, # self.config.option.verbose
         }
         if self.roots:
             # send each rsync root
             for root in self.roots:
                 self.gwmanager.rsync(root, **options)
         else: 
-            # we transfer our topdir as the root 
-            # but need to be careful regarding 
+            # we transfer our topdir as the root
             self.gwmanager.rsync(self.config.topdir, **options)
+            # and cd into it 
             self.gwmanager.multi_chdir(self.config.topdir.basename, inplacelocal=False)
         self.config.bus.notify("rsyncfinished", event.RsyncFinished())
+
+    def trace(self, msg):
+        self.config.bus.notify("trace", "testhostmanage", msg)
 
     def setup_hosts(self, putevent):
         self.rsync_roots()
@@ -64,8 +95,10 @@ class HostManager(object):
                 import os
                 if hasattr(os, 'nice'): 
                     os.nice(%r)
-            """ % nice).wait()
-            
+            """ % nice).waitclose()
+
+        self.trace_hoststatus()
+
         for host, gateway in self.gwmanager.spec2gateway.items():
             host.node = MasterNode(host, 
                                    gateway,

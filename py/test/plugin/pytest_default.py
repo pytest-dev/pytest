@@ -36,9 +36,6 @@ class DefaultPlugin:
         group._addoption('-x', '--exitfirst',
                    action="store_true", dest="exitfirst", default=False,
                    help="exit instantly on first error or failed test."),
-        group._addoption('-s', '--nocapture',
-                   action="store_true", dest="nocapture", default=False,
-                   help="disable catching of sys.stdout/stderr output."),
         group._addoption('-k',
             action="store", dest="keyword", default='',
             help="only run test items matching the given "
@@ -47,57 +44,70 @@ class DefaultPlugin:
                  "to run all subsequent tests. ")
         group._addoption('-l', '--showlocals',
                    action="store_true", dest="showlocals", default=False,
-                   help="show locals in tracebacks (disabled by default)."),
+                   help="show locals in tracebacks (disabled by default).")
         group._addoption('--showskipsummary',
                    action="store_true", dest="showskipsummary", default=False,
-                   help="always show summary of skipped tests"), 
-        group._addoption('', '--pdb',
+                   help="always show summary of skipped tests") 
+        group._addoption('--pdb',
                    action="store_true", dest="usepdb", default=False,
-                   help="start pdb (the Python debugger) on errors."),
-        group._addoption('', '--tb',
+                   help="start pdb (the Python debugger) on errors.")
+        group._addoption('--tb',
                    action="store", dest="tbstyle", default='long',
                    type="choice", choices=['long', 'short', 'no'],
-                   help="traceback verboseness (long/short/no)."),
-        group._addoption('', '--fulltrace',
+                   help="traceback verboseness (long/short/no).")
+        group._addoption('--fulltrace',
                    action="store_true", dest="fulltrace", default=False,
-                   help="don't cut any tracebacks (default is to cut)."),
-        group._addoption('', '--nomagic',
-                   action="store_true", dest="nomagic", default=False,
-                   help="refrain from using magic as much as possible."),
-        group._addoption('', '--traceconfig',
-                   action="store_true", dest="traceconfig", default=False,
-                   help="trace considerations of conftest.py files."),
-        group._addoption('-f', '--looponfailing',
-                   action="store_true", dest="looponfailing", default=False,
-                   help="loop on failing test set."),
-        group._addoption('', '--exec',
-                   action="store", dest="executable", default=None,
-                   help="python executable to run the tests with."),
-        group._addoption('-n', '--numprocesses', dest="numprocesses", default=0, 
-                   action="store", type="int", 
-                   help="number of local test processes."),
-        group._addoption('', '--debug',
-                   action="store_true", dest="debug", default=False,
-                   help="turn on debugging information."),
-
-        group = parser.addgroup("experimental", "experimental options")
-        group._addoption('-d', '--dist',
-                   action="store_true", dest="dist", default=False,
-                   help="ad-hoc distribute tests across machines (requires conftest settings)"), 
-        group._addoption('-w', '--startserver',
-                   action="store_true", dest="startserver", default=False,
-                   help="starts local web server for displaying test progress.", 
-                   ),
-        group._addoption('-r', '--runbrowser',
-                   action="store_true", dest="runbrowser", default=False,
-                   help="run browser (implies --startserver)."
-                   ),
+                   help="don't cut any tracebacks (default is to cut).")
+        group._addoption('-s', '--nocapture',
+                   action="store_true", dest="nocapture", default=False,
+                   help="disable catching of sys.stdout/stderr output."),
         group._addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process"), 
-        group._addoption('--rest',
-                   action='store_true', dest="restreport", default=False,
-                   help="restructured text output reporting."),
+        group._addoption('-f', '--looponfailing',
+                   action="store_true", dest="looponfailing", default=False,
+                   help="loop on failing test set.")
+
+        group = parser.addgroup("test process debugging")
+        group.addoption('--collectonly',
+            action="store_true", dest="collectonly",
+            help="only collect tests, don't execute them."),
+        group.addoption('--traceconfig',
+                   action="store_true", dest="traceconfig", default=False,
+                   help="trace considerations of conftest.py files."),
+        group._addoption('--nomagic',
+                   action="store_true", dest="nomagic", default=False,
+                   help="don't use assert reinterpretation and python traceback cutting. ")
+        group.addoption('--debug',
+                   action="store_true", dest="debug", default=False,
+                   help="generate and show debugging information.")
+
+        group = parser.addgroup("xplatform", "distributed/cross platform testing")
+        group._addoption('-d', '--dist',
+                   action="store_true", dest="dist", default=False,
+                   help="ad-hoc distribute tests across machines (requires conftest settings)") 
+        group._addoption('-n', '--numprocesses', dest="numprocesses", default=0, metavar="num", 
+                   action="store", type="int", 
+                   help="number of local test processes. conflicts with --dist.")
+        group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
+                   help="comma-separated list of directories to rsync. All those roots will be rsynced "
+                        "into a corresponding subdir on the remote sides. ")
+        group.addoption('--hosts', dest="hosts", default=None, metavar="host1,host2,...", 
+                   help="comma-separated list of host specs to send tests to.")
+        group._addoption('--exec',
+                   action="store", dest="executable", default=None,
+                   help="python executable to run the tests with.")
+        #group._addoption('-w', '--startserver',
+        #           action="store_true", dest="startserver", default=False,
+        #           help="starts local web server for displaying test progress.", 
+        #           ),
+        #group._addoption('-r', '--runbrowser',
+        #           action="store_true", dest="runbrowser", default=False,
+        #           help="run browser (implies --startserver)."
+        #           ),
+        #group._addoption('--rest',
+        #           action='store_true', dest="restreport", default=False,
+        #           help="restructured text output reporting."),
 
     def pytest_configure(self, config):
         self.setsession(config)

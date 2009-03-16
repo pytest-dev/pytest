@@ -100,7 +100,7 @@ class TestBootstrapping:
 
     def test_config_sets_conftesthandle_onimport(self, testdir):
         config = testdir.parseconfig([])
-        assert config._conftest._onimport == config.pytestplugins.consider_conftest 
+        assert config._conftest._onimport == config._onimportconftest
 
     def test_consider_conftest_deps(self, testdir):
         mod = testdir.makepyfile("pytest_plugins='xyz'").pyimport()

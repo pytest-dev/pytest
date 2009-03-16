@@ -248,10 +248,8 @@ class EventRecorder(object):
         if name == "plugin_registered" and args == (self,):
             return
         if self.debug:
-            print "[event] %s: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
-        if len(args) == 1:
-            event, = args
-            self.events.append((name, event))
+            print "[event: %s]: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
+        self.events.append((name,) + tuple(args))
 
     def get(self, cls):
         l = []

@@ -155,7 +155,11 @@ class TestGatewayManagerPopen:
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive()
+        l = [x[1] for x in hm.multi_exec(
+                      "import os ; channel.send(os.getcwd())"
+                  ).receive_items()
+            ]
+        paths = [x[1] for x in l]
         assert l == [str(hellopath)] * 2
         py.test.raises(Exception, 'hm.multi_chdir("world", inplacelocal=False)')
         worldpath = hellopath.mkdir("world")
@@ -188,22 +192,25 @@ class TestGatewayManagerPopen:
 
 from py.__.execnet.gwmanage import MultiChannel
 class TestMultiChannel:
-    def test_multichannel_receive(self):
+    def test_multichannel_receive_items(self):
         class pseudochannel:
             def receive(self):
                 return 12
-        multichannel = MultiChannel([pseudochannel(), pseudochannel()])
-        l = multichannel.receive()
-        assert len(l) == 2
-        assert l == [12, 12]
 
-    def test_multichannel_wait(self):
+        pc1 = pseudochannel()
+        pc2 = pseudochannel()
+        multichannel = MultiChannel([pc1, pc2])
+        l = multichannel.receive_items()
+        assert len(l) == 2
+        assert l == [(pc1, 12), (pc2, 12)]
+
+    def test_multichannel_waitclose(self):
         l = []
         class pseudochannel:
             def waitclose(self):
                 l.append(0)
         multichannel = MultiChannel([pseudochannel(), pseudochannel()])
-        multichannel.wait()
+        multichannel.waitclose()
         assert len(l) == 2
 
 

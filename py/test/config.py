@@ -39,8 +39,16 @@ class Config(object):
         assert isinstance(pytestplugins, py.test._PytestPlugins)
         self.bus = pytestplugins.pyplugins
         self.pytestplugins = pytestplugins
-        self._conftest = Conftest(onimport=self.pytestplugins.consider_conftest)
+        self._conftest = Conftest(onimport=self._onimportconftest)
         self._setupstate = SetupState() 
+
+    def _onimportconftest(self, conftestmodule):
+        self.trace("loaded conftestmodule %r" %(conftestmodule,))
+        self.pytestplugins.consider_conftest(conftestmodule)
+
+    def trace(self, msg):
+        if getattr(self.option, 'traceconfig', None):
+            self.bus.notify("trace", "config", msg) 
 
     def _processopt(self, opt):
         if hasattr(opt, 'default') and opt.dest:
@@ -119,21 +127,18 @@ class Config(object):
         col = Dir(pkgpath, config=self)
         return col._getfsnode(path)
 
-    def getvalue_pathlist(self, name, path=None):
+    def getconftest_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence
             of filenames that will be returned as a list of Path
             objects (they can be relative to the location 
             where they were found).
         """
         try:
-            return getattr(self.option, name)
-        except AttributeError:
-            try:
-                mod, relroots = self._conftest.rget_with_confmod(name, path)
-            except KeyError:
-                return None
-            modpath = py.path.local(mod.__file__).dirpath()
-            return [modpath.join(x, abs=True) for x in relroots]
+            mod, relroots = self._conftest.rget_with_confmod(name, path)
+        except KeyError:
+            return None
+        modpath = py.path.local(mod.__file__).dirpath()
+        return [modpath.join(x, abs=True) for x in relroots]
              
     def addoptions(self, groupname, *specs): 
         """ add a named group of options to the current testing session. 

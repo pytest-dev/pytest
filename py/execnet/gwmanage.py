@@ -22,7 +22,6 @@ from py.__.test import event
 
 
 class GatewaySpec(object):
-    type = "ssh"
     def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
         if spec == "popen" or spec.startswith("popen:"):
             self.address = "popen"
@@ -42,6 +41,7 @@ class GatewaySpec(object):
             parts = spec.split(":", 1)
             self.address = parts.pop(0)
             self.joinpath = parts and parts.pop(0) or ""
+            self.type = "ssh"
         if not self.joinpath and not self.inplacelocal():
             self.joinpath = defaultjoinpath
 
@@ -60,8 +60,15 @@ class GatewaySpec(object):
         elif self.type == "ssh":
             gw = py.execnet.SshGateway(self.address, remotepython=python)
         if self.joinpath:
-            channel = gw.remote_exec("import os ; os.chdir(channel.receive())")
-            channel.send(self.joinpath)
+            channel = gw.remote_exec("""
+                import os 
+                path = %r
+                try:
+                    os.chdir(path)
+                except OSError:
+                    os.mkdir(path)
+                    os.chdir(path)
+            """ % self.joinpath)
             if waitclose:
                 channel.waitclose()
         else:
@@ -74,13 +81,16 @@ class MultiChannel:
     def __init__(self, channels):
         self._channels = channels
 
-    def receive(self):
-        values = []
+    def receive_items(self):
+        items = []
         for ch in self._channels:
-            values.append(ch.receive())
-        return values
+            items.append((ch, ch.receive()))
+        return items
 
-    def wait(self):
+    def receive(self):
+        return [x[1] for x in self.receive_items()]
+
+    def waitclose(self):
         for ch in self._channels:
             ch.waitclose()
 
@@ -91,8 +101,7 @@ class GatewayManager:
             self.spec2gateway[GatewaySpec(spec)] = None
 
     def trace(self, msg):
-        py._com.pyplugins.notify("trace_gatewaymanage", msg)
-        #print "trace", msg
+        py._com.pyplugins.notify("trace", "gatewaymanage", msg)
 
     def makegateways(self):
         for spec, value in self.spec2gateway.items():
@@ -101,6 +110,9 @@ class GatewayManager:
             self.spec2gateway[spec] = spec.makegateway()
 
     def multi_exec(self, source, inplacelocal=True):
+        """ remote execute code on all gateways. 
+            @param inplacelocal=False: don't send code to inplacelocal hosts. 
+        """
         source = py.code.Source(source)
         channels = []
         for spec, gw in self.spec2gateway.items():
@@ -109,10 +121,15 @@ class GatewayManager:
         return MultiChannel(channels)
 
     def multi_chdir(self, basename, inplacelocal=True):
+        """ perform a remote chdir to the given path, may be relative. 
+            @param inplacelocal=False: don't send code to inplacelocal hosts. 
+        """ 
         self.multi_exec("import os ; os.chdir(%r)" % basename, 
-                        inplacelocal=inplacelocal).wait()
+                        inplacelocal=inplacelocal).waitclose()
 
     def rsync(self, source, notify=None, verbose=False, ignores=None):
+        """ perform rsync to all remote hosts. 
+        """ 
         rsync = HostRSync(source, verbose=verbose, ignores=ignores)
         added = False
         for spec, gateway in self.spec2gateway.items():
