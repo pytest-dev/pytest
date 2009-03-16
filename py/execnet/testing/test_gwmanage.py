@@ -13,17 +13,17 @@ from py.__.execnet.gwmanage import HostRSync
 class TestGatewaySpec:
     """
     socket:hostname:port:path SocketGateway
-    localhost[:path]          PopenGateway
+    popen[-executable][:path] PopenGateway
     [ssh:]spec:path           SshGateway
     * [SshGateway]
     """
-    def test_localhost_nopath(self):
+    def test_popen_nopath(self):
         for joinpath in ('', ':abc', ':ab:cd', ':/x/y'):
-            spec = GatewaySpec("localhost" + joinpath)
-            assert spec.address == "localhost"
+            spec = GatewaySpec("popen" + joinpath)
+            assert spec.address == "popen"
             assert spec.joinpath == joinpath[1:]
             assert spec.type == "popen"
-            spec2 = GatewaySpec("localhost" + joinpath)
+            spec2 = GatewaySpec("popen" + joinpath)
             self._equality(spec, spec2)
             if joinpath == "":
                 assert spec.inplacelocal()
@@ -37,19 +37,25 @@ class TestGatewaySpec:
                     specstring = prefix + hostpart + joinpath
                     spec = GatewaySpec(specstring)
                     assert spec.address == hostpart 
-                    assert spec.joinpath == joinpath[1:]
+                    if joinpath[1:]:
+                        assert spec.joinpath == joinpath[1:]
+                    else:
+                        assert spec.joinpath == "pyexecnetcache"
                     assert spec.type == "ssh"
                     spec2 = GatewaySpec(specstring)
                     self._equality(spec, spec2) 
                     assert not spec.inplacelocal()
-
+    
     def test_socket(self):
-        for hostpart in ('x.y', 'x', 'localhost'):
+        for hostpart in ('x.y', 'x', 'popen'):
             for port in ":80", ":1000":
                 for joinpath in ('', ':abc', ':abc:de'):
                     spec = GatewaySpec("socket:" + hostpart + port + joinpath)
                     assert spec.address == (hostpart, int(port[1:]))
-                    assert spec.joinpath == joinpath[1:]
+                    if joinpath[1:]:
+                        assert spec.joinpath == joinpath[1:]
+                    else:
+                        assert spec.joinpath == "pyexecnetcache"
                     assert spec.type == "socket"
                     spec2 = GatewaySpec("socket:" + hostpart + port + joinpath)
                     self._equality(spec, spec2) 
@@ -62,23 +68,23 @@ class TestGatewaySpec:
 
 
 class TestGatewaySpecAPI:
-    def test_localhost_nopath_makegateway(self, testdir):
-        spec = GatewaySpec("localhost")
+    def test_popen_nopath_makegateway(self, testdir):
+        spec = GatewaySpec("popen")
         gw = spec.makegateway()
         p = gw.remote_exec("import os; channel.send(os.getcwd())").receive()
         curdir = py.std.os.getcwd()
         assert curdir == p
         gw.exit()
 
-    def test_localhost_makegateway(self, testdir):
-        spec = GatewaySpec("localhost:" + str(testdir.tmpdir))
+    def test_popen_makegateway(self, testdir):
+        spec = GatewaySpec("popen:" + str(testdir.tmpdir))
         gw = spec.makegateway()
         p = gw.remote_exec("import os; channel.send(os.getcwd())").receive()
         assert spec.joinpath == p
         gw.exit()
 
-    def test_localhost_makegateway_python(self, testdir):
-        spec = GatewaySpec("localhost")
+    def test_popen_makegateway_python(self, testdir):
+        spec = GatewaySpec("popen")
         gw = spec.makegateway(python=py.std.sys.executable)
         res = gw.remote_exec("import sys ; channel.send(sys.executable)").receive()
         assert py.std.sys.executable == res
@@ -96,16 +102,16 @@ class TestGatewaySpecAPI:
         gw = py.execnet.PopenGateway()
         spec = GatewaySpec("ssh:" + sshhost)
 
-class TestGatewayManagerLocalhost:
-    def test_hostmanager_localhosts_makegateway(self):
-        hm = GatewayManager(["localhost"] * 2)
+class TestGatewayManagerPopen:
+    def test_hostmanager_popen_makegateway(self):
+        hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         assert len(hm.spec2gateway) == 2
         hm.exit()
         assert not len(hm.spec2gateway) 
 
-    def test_hostmanager_localhosts_rsync(self, source):
-        hm = GatewayManager(["localhost"] * 2)
+    def test_hostmanager_popens_rsync(self, source):
+        hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         assert len(hm.spec2gateway) == 2
         for gw in hm.spec2gateway.values():
@@ -116,8 +122,8 @@ class TestGatewayManagerLocalhost:
         hm.exit()
         assert not len(hm.spec2gateway) 
 
-    def test_hostmanager_rsync_localhost_with_path(self, source, dest):
-        hm = GatewayManager(["localhost:%s" %dest] * 1)
+    def test_hostmanager_rsync_popen_with_path(self, source, dest):
+        hm = GatewayManager(["popen:%s" %dest] * 1)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         l = []
@@ -143,9 +149,9 @@ class TestGatewayManagerLocalhost:
         print events
         assert 0
 
-    def test_multi_chdir_localhost_with_path(self, testdir):
+    def test_multi_chdir_popen_with_path(self, testdir):
         import os
-        hm = GatewayManager(["localhost:hello"] * 2)
+        hm = GatewayManager(["popen:hello"] * 2)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
@@ -161,9 +167,9 @@ class TestGatewayManagerLocalhost:
         assert l[0].startswith(curwd)
         assert l[0].endswith("world")
 
-    def test_multi_chdir_localhost(self, testdir):
+    def test_multi_chdir_popen(self, testdir):
         import os
-        hm = GatewayManager(["localhost"] * 2)
+        hm = GatewayManager(["popen"] * 2)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
@@ -222,7 +228,7 @@ class TestHRSync:
         assert 'somedir' in basenames
 
     def test_hrsync_one_host(self, source, dest):
-        spec = GatewaySpec("localhost:%s" % dest)
+        spec = GatewaySpec("popen:%s" % dest)
         gw = spec.makegateway()
         finished = []
         rsync = HostRSync(source)

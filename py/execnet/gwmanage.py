@@ -4,7 +4,7 @@
 Host specification strings and implied gateways:
 
     socket:hostname:port:path SocketGateway
-    localhost[:path]          PopenGateway
+    popen[-executable][:path]          PopenGateway
     [ssh:]spec:path           SshGateway
     * [SshGateway]
 
@@ -23,9 +23,9 @@ from py.__.test import event
 
 class GatewaySpec(object):
     type = "ssh"
-    def __init__(self, spec):
-        if spec == "localhost" or spec.startswith("localhost:"):
-            self.address = "localhost"
+    def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
+        if spec == "popen" or spec.startswith("popen:"):
+            self.address = "popen"
             self.joinpath = spec[len(self.address)+1:]
             self.type = "popen"
         elif spec.startswith("socket:"):
@@ -42,6 +42,8 @@ class GatewaySpec(object):
             parts = spec.split(":", 1)
             self.address = parts.pop(0)
             self.joinpath = parts and parts.pop(0) or ""
+        if not self.joinpath and not self.inplacelocal():
+            self.joinpath = defaultjoinpath
 
     def inplacelocal(self):
         return bool(self.type == "popen" and not self.joinpath)
