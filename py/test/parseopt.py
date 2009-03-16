@@ -52,7 +52,8 @@ class Parser:
         optparser = optparse.OptionParser(usage=self._usage)
         for group in self._groups:
             if group.options:
-                optgroup = optparse.OptionGroup(optparser, group.name)
+                desc = group.description or group.name 
+                optgroup = optparse.OptionGroup(optparser, desc)
                 optgroup.add_options(group.options)
                 optparser.add_option_group(optgroup)
         return optparser.parse_args([str(x) for x in args])
