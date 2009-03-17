@@ -5,6 +5,18 @@ pytestpath = pydir.join("bin", "py.test")
 EXPECTTIMEOUT=10.0
 
 class TestPyTest:
+    def test_config_error(self, testdir):
+        testdir.makeconftest("""
+            class ConftestPlugin:
+                def pytest_configure(self, config):
+                    raise config.Error("hello")
+        """)
+        result = testdir.runpytest(testdir.tmpdir)
+        assert result.ret != 0
+        assert result.stderr.fnmatch_lines([
+            'config ERROR: hello'
+        ])
+                
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile("""
             def test_this():
@@ -17,7 +29,7 @@ class TestPyTest:
             "E       assert 0",
         ])
         assert result.ret == 1
-   
+
     def test_collectonly_simple(self, testdir):
         p = testdir.makepyfile("""
             def test_func1():

@@ -22,9 +22,13 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
+class Error(Exception):
+    """ Test Configuration Error. """
+
 class Config(object): 
     """ central bus for dealing with configuration/initialization data. """ 
     Option = py.compat.optparse.Option # deprecated
+    Error = Error
     _sessionclass = None
 
     def __init__(self, pytestplugins=None, topdir=None): 
@@ -124,7 +128,8 @@ class Config(object):
 
     def getfsnode(self, path):
         path = py.path.local(path)
-        assert path.check(), "%s: path does not exist" %(path,)
+        if not path.check():
+            raise self.Error("file not found: %s" %(path,))
         # we want our possibly custom collection tree to start at pkgroot 
         pkgpath = path.pypkgpath()
         if pkgpath is None:
