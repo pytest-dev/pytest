@@ -215,8 +215,8 @@ class TestMultiChannel:
             channel.send(os.getpid())
         """)
         queue = mc.make_receive_queue()
-        ch, item = queue.get(timeout=0.5)
-        ch2, item2 = queue.get(timeout=0.5)
+        ch, item = queue.get(timeout=10)
+        ch2, item2 = queue.get(timeout=10)
         assert ch != ch2
         assert ch.gateway != ch2.gateway
         assert item != item2

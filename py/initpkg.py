@@ -165,9 +165,9 @@ def setmodule(modpath, module):
 
 class ApiModule(ModuleType):
     def __init__(self, pkg, name):
+        self.__map__ = {}
         self.__pkg__ = pkg
         self.__name__ = name
-        self.__map__ = {}
 
     def __repr__(self):
         return '<ApiModule %r>' % (self.__name__,)
@@ -178,16 +178,23 @@ class ApiModule(ModuleType):
             result = self.__pkg__._resolve(extpy) 
         else: 
             try:
-                extpy = self.__map__[name]
+                extpy = self.__map__.pop(name)
             except KeyError:
                 __tracebackhide__ = True
                 raise AttributeError(name)
             else: 
                 result = self.__pkg__._resolve(extpy) 
-                del self.__map__[name]
+
         setattr(self, name, result)
         #self._fixinspection(result, name) 
         return result
+
+    def __setattr__(self, name, value):
+        super(ApiModule, self).__setattr__(name, value)
+        try:
+            del self.__map__[name]
+        except KeyError:
+            pass
 
     def _deprecated_fixinspection(self, result, name): 
         # modify some attrs to make a class appear at export level 
