@@ -170,7 +170,11 @@ class DSession(Session):
         self.host2pending[host] = []
 
     def removehost(self, host):
-        pending = self.host2pending.pop(host)
+        try:
+            pending = self.host2pending.pop(host)
+        except KeyError:
+            # this happens if we didn't receive a hostup event yet
+            return []
         for item in pending:
             del self.item2host[item]
         return pending

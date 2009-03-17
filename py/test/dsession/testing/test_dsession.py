@@ -47,7 +47,8 @@ class TestDSession:
         pending = session.removehost(host)
         assert pending == [item]
         assert item not in session.item2host
-        py.test.raises(Exception, "session.removehost(host)")
+        l = session.removehost(host)
+        assert not l 
 
     def test_senditems_removeitems(self, testdir):
         item = testdir.getitem("def test_func(): pass")
