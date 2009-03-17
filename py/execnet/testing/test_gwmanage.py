@@ -1,7 +1,8 @@
 """ 
     tests for 
-    - host specifications
-    - managing hosts 
+    - gateway specifications
+    - multi channels and multi gateways 
+    - gateway management 
     - manage rsyncing of hosts 
 
 """
@@ -25,10 +26,6 @@ class TestGatewaySpec:
             assert spec.type == "popen"
             spec2 = GatewaySpec("popen" + joinpath)
             self._equality(spec, spec2)
-            if joinpath == "":
-                assert spec.inplacelocal()
-            else:
-                assert not spec.inplacelocal()
 
     def test_ssh(self):
         for prefix in ('ssh:', ''): # ssh is default
@@ -44,7 +41,6 @@ class TestGatewaySpec:
                     assert spec.type == "ssh"
                     spec2 = GatewaySpec(specstring)
                     self._equality(spec, spec2) 
-                    assert not spec.inplacelocal()
     
     def test_socket(self):
         for hostpart in ('x.y', 'x', 'popen'):
@@ -59,7 +55,6 @@ class TestGatewaySpec:
                     assert spec.type == "socket"
                     spec2 = GatewaySpec("socket:" + hostpart + port + joinpath)
                     self._equality(spec, spec2) 
-                    assert not spec.inplacelocal()
 
     def _equality(self, spec1, spec2):
         assert spec1 != spec2
@@ -155,16 +150,13 @@ class TestGatewayManagerPopen:
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
-        l = [x[1] for x in hm.multi_exec(
-                      "import os ; channel.send(os.getcwd())"
-                  ).receive_items()
-            ]
+        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         paths = [x[1] for x in l]
         assert l == [str(hellopath)] * 2
-        py.test.raises(Exception, 'hm.multi_chdir("world", inplacelocal=False)')
+        py.test.raises(hm.RemoteError, 'hm.multi_chdir("world", inplacelocal=False)')
         worldpath = hellopath.mkdir("world")
         hm.multi_chdir("world", inplacelocal=False)
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive()
+        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
         assert l[0] == l[1]
         curwd = os.getcwd()
@@ -178,12 +170,12 @@ class TestGatewayManagerPopen:
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
         hm.multi_chdir("hello", inplacelocal=False)
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive()
+        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
         assert l == [os.getcwd()] * 2
 
         hm.multi_chdir("hello")
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive()
+        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
         assert l[0] == l[1]
         curwd = os.getcwd()
@@ -192,7 +184,7 @@ class TestGatewayManagerPopen:
 
 from py.__.execnet.gwmanage import MultiChannel
 class TestMultiChannel:
-    def test_multichannel_receive_items(self):
+    def test_multichannel_receive_each(self):
         class pseudochannel:
             def receive(self):
                 return 12
@@ -200,9 +192,35 @@ class TestMultiChannel:
         pc1 = pseudochannel()
         pc2 = pseudochannel()
         multichannel = MultiChannel([pc1, pc2])
-        l = multichannel.receive_items()
+        l = multichannel.receive_each(withchannel=True)
         assert len(l) == 2
         assert l == [(pc1, 12), (pc2, 12)]
+        l = multichannel.receive_each(withchannel=False)
+        assert l == [12,12]
+
+    def test_multichannel_send_each(self):
+        gm = GatewayManager(['popen'] * 2)
+        mc = gm.multi_exec("""
+            import os
+            channel.send(channel.receive() + 1)
+        """)
+        mc.send_each(41)
+        l = mc.receive_each() 
+        assert l == [42,42]
+       
+    def test_multichannel_receive_queue(self):
+        gm = GatewayManager(['popen'] * 2)
+        mc = gm.multi_exec("""
+            import os
+            channel.send(os.getpid())
+        """)
+        queue = mc.make_receive_queue()
+        ch, item = queue.get(timeout=0.5)
+        ch2, item2 = queue.get(timeout=0.5)
+        assert ch != ch2
+        assert ch.gateway != ch2.gateway
+        assert item != item2
+        mc.waitclose()
 
     def test_multichannel_waitclose(self):
         l = []

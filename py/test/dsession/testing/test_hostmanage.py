@@ -39,7 +39,7 @@ class TestHostManager:
         hm = HostManager(config, hosts=["popen:%s" % dest])
         assert hm.config.topdir == source == config.topdir
         hm.rsync_roots()
-        p, = hm.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive()
+        p, = hm.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         p = py.path.local(p)
         print "remote curdir", p
         assert p == dest.join(config.topdir.basename)

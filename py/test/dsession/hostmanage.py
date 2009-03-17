@@ -51,7 +51,7 @@ class HostManager(object):
             for ch, result in self.gwmanager.multi_exec("""
                 import sys, os
                 channel.send((sys.executable, os.getcwd(), sys.path))
-            """).receive_items():
+            """).receive_each(withchannel=True):
                 self.trace("spec %r, execuable %r, cwd %r, syspath %r" %(
                     ch.gateway.spec, result[0], result[1], result[2]))
 

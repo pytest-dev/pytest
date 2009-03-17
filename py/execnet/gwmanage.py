@@ -19,7 +19,9 @@ import py
 import sys, os
 from py.__.test.dsession.masterslave import MasterNode
 from py.__.test import event
+from py.__.execnet.channel import RemoteError
 
+NO_ENDMARKER_WANTED = object()
 
 class GatewaySpec(object):
     def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
@@ -81,20 +83,49 @@ class MultiChannel:
     def __init__(self, channels):
         self._channels = channels
 
-    def receive_items(self):
-        items = []
+    def send_each(self, item):
         for ch in self._channels:
-            items.append((ch, ch.receive()))
-        return items
+            ch.send(item)
 
-    def receive(self):
-        return [x[1] for x in self.receive_items()]
+    def receive_each(self, withchannel=False):
+        assert not hasattr(self, '_queue')
+        l = []
+        for ch in self._channels:
+            obj = ch.receive()
+            if withchannel:
+                l.append((ch, obj))
+            else:
+                l.append(obj)
+        return l 
+
+    def make_receive_queue(self, endmarker=NO_ENDMARKER_WANTED):
+        try:
+            return self._queue
+        except AttributeError:
+            self._queue = py.std.Queue.Queue()
+            for ch in self._channels:
+                def putreceived(obj, channel=ch):
+                    self._queue.put((channel, obj))
+                if endmarker is NO_ENDMARKER_WANTED:
+                    ch.setcallback(putreceived)
+                else:
+                    ch.setcallback(putreceived, endmarker=endmarker)
+            return self._queue
+
 
     def waitclose(self):
+        first = None
         for ch in self._channels:
-            ch.waitclose()
+            try:
+                ch.waitclose()
+            except ch.RemoteError:
+                if first is None:
+                    first = py.std.sys.exc_info()
+        if first:
+            raise first[0], first[1], first[2]
 
 class MultiGateway:
+    RemoteError = RemoteError
     def __init__(self, gateways):
         self.gateways = gateways
     def remote_exec(self, source):
@@ -104,6 +135,8 @@ class MultiGateway:
         return MultiChannel(channels)
 
 class GatewayManager:
+    RemoteError = RemoteError
+
     def __init__(self, specs):
         self.specs = [GatewaySpec(spec) for spec in specs]
         self.gateways = []
@@ -118,6 +151,8 @@ class GatewayManager:
             self.gateways.append(spec.makegateway())
 
     def getgateways(self, remote=True, inplacelocal=True):
+        if not self.gateways and self.specs:
+            self.makegateways()
         l = []
         for gw in self.gateways:
             if gw.spec.inplacelocal():
