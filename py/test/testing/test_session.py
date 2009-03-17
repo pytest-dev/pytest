@@ -213,17 +213,10 @@ class TestNewSession(SessionTests):
         assert len(colfail) == 1
         assert len(colskipped) == 1
 
-    def test_minus_x_import_error(self):
-        py.test.skip("fails")
-        o = self.tmpdir
-        tfile = o.join('test_one.py').write(py.code.Source("""
-        xxxx
-        """))
-        tfile2 = o.join('test_two.py').write(py.code.Source("""
-        yyyyy
-        """))
-        sorter = self.events_from_cmdline('-x')
-        finished = sorter.get(event.CollectionReport)
+    def test_minus_x_import_error(self, testdir):
+        testdir.makepyfile(test_one="xxxx", test_two="yyyy")
+        sorter = testdir.inline_run("-x", testdir.tmpdir)
+        finished = sorter.getnamed("collectionreport")
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 

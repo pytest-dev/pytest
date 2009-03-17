@@ -60,6 +60,8 @@ class Session(object):
                     for x in self.genitems(ev.result, keywordexpr):
                         yield x 
                 notify("collectionreport", ev)
+            if self.shouldstop:
+                break
 
     def filteritems(self, colitems):
         """ return items to process (some may be deselected)"""
