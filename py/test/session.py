@@ -25,6 +25,7 @@ class Session(object):
         self.bus.register(self)
         self._testsfailed = False
         self._nomatch = False
+        self.shouldstop = False
 
     def fixoptions(self):
         """ check, fix and determine conflicting options. """
