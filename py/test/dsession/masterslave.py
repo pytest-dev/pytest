@@ -70,7 +70,13 @@ def install_slave(host, gateway, config):
         slavenode.run()
     """)
     channel = PickleChannel(channel)
-    channel.send((host, config))
+    basetemp = None
+    if host.type == "popen":
+        popenbase = config.ensuretemp("popen")
+        basetemp = py.path.local.make_numbered_dir(prefix="slave-", 
+            keep=0, rootdir=popenbase)
+        basetemp = str(basetemp)
+    channel.send((host, config, basetemp))
     return channel
 
 class SlaveNode(object):
@@ -85,7 +91,9 @@ class SlaveNode(object):
 
     def run(self):
         channel = self.channel
-        host, self.config = channel.receive()
+        host, self.config, basetemp = channel.receive()
+        if basetemp:
+            self.config.basetemp = py.path.local(basetemp)
         self.config.pytestplugins.do_configure(self.config)
         self.sendevent("hostup", makehostup(host))
         try:

@@ -154,7 +154,8 @@ class TmpTestdir:
         if not args:
             args = (self.tmpdir,)
         config = self.config_preparse()
-        config.parse(list(args))
+        args = list(args) + ["--basetemp=%s" % self.tmpdir.dirpath('basetemp')]
+        config.parse(args)
         return config 
 
     def getitem(self,  source, funcname="test_func"):
