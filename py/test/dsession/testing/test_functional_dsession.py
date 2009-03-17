@@ -1,12 +1,6 @@
-
-""" Tests various aspects of dist, like ssh hosts setup/teardown
-"""
-
 import py
 from py.__.test.dsession.dsession import DSession
 from test_masterslave import EventQueue
-import os
-
 
 class TestAsyncFunctional:
     def test_conftest_options(self, testdir):
@@ -80,6 +74,7 @@ class TestAsyncFunctional:
 
     def test_nice_level(self, testdir):
         """ Tests if nice level behaviour is ok """
+        import os
         if not hasattr(os, 'nice'):
             py.test.skip("no os.nice() available")
         testdir.makepyfile(conftest="""

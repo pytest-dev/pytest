@@ -140,7 +140,7 @@ class Config(object):
             return basetemp.mkdir(basename)
         else:
             return py.path.local.make_numbered_dir(prefix=basename + "-", 
-                keep=0, rootdir=basetemp)
+                keep=0, rootdir=basetemp, lock_timeout=None)
 
     def getcolitems(self):
         return [self.getfsnode(arg) for arg in self.args]

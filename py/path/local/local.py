@@ -618,25 +618,26 @@ class LocalPath(common.FSPathBase, PlatformMixin):
 
         # put a .lock file in the new directory that will be removed at
         # process exit
-        lockfile = udir.join('.lock')
-        mypid = os.getpid()
-        if hasattr(lockfile, 'mksymlinkto'):
-            lockfile.mksymlinkto(str(mypid))
-        else:
-            lockfile.write(str(mypid))
-        def try_remove_lockfile():
-            # in a fork() situation, only the last process should
-            # remove the .lock, otherwise the other processes run the
-            # risk of seeing their temporary dir disappear.  For now
-            # we remove the .lock in the parent only (i.e. we assume
-            # that the children finish before the parent).
-            if os.getpid() != mypid:
-                return
-            try:
-                lockfile.remove()
-            except py.error.Error:
-                pass
-        atexit.register(try_remove_lockfile)
+        if lock_timeout:
+            lockfile = udir.join('.lock')
+            mypid = os.getpid()
+            if hasattr(lockfile, 'mksymlinkto'):
+                lockfile.mksymlinkto(str(mypid))
+            else:
+                lockfile.write(str(mypid))
+            def try_remove_lockfile():
+                # in a fork() situation, only the last process should
+                # remove the .lock, otherwise the other processes run the
+                # risk of seeing their temporary dir disappear.  For now
+                # we remove the .lock in the parent only (i.e. we assume
+                # that the children finish before the parent).
+                if os.getpid() != mypid:
+                    return
+                try:
+                    lockfile.remove()
+                except py.error.Error:
+                    pass
+            atexit.register(try_remove_lockfile)
 
         # prune old directories
         if keep:
@@ -647,7 +648,7 @@ class LocalPath(common.FSPathBase, PlatformMixin):
                     try:
                         t1 = lf.lstat().mtime
                         t2 = lockfile.lstat().mtime
-                        if abs(t2-t1) < lock_timeout:
+                        if not lock_timeout or abs(t2-t1) < lock_timeout:
                             continue   # skip directories still locked
                     except py.error.Error:
                         pass   # assume that it means that there is no 'lf'
