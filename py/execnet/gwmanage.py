@@ -94,31 +94,46 @@ class MultiChannel:
         for ch in self._channels:
             ch.waitclose()
 
+class MultiGateway:
+    def __init__(self, gateways):
+        self.gateways = gateways
+    def remote_exec(self, source):
+        channels = []
+        for gw in self.gateways:
+            channels.append(gw.remote_exec(source))
+        return MultiChannel(channels)
+
 class GatewayManager:
     def __init__(self, specs):
-        self.spec2gateway = {}
-        for spec in specs:
-            self.spec2gateway[GatewaySpec(spec)] = None
+        self.specs = [GatewaySpec(spec) for spec in specs]
+        self.gateways = []
 
     def trace(self, msg):
         py._com.pyplugins.notify("trace", "gatewaymanage", msg)
 
     def makegateways(self):
-        for spec, value in self.spec2gateway.items():
-            assert value is None
+        assert not self.gateways
+        for spec in self.specs:
             self.trace("makegateway %s" %(spec))
-            self.spec2gateway[spec] = spec.makegateway()
+            self.gateways.append(spec.makegateway())
+
+    def getgateways(self, remote=True, inplacelocal=True):
+        l = []
+        for gw in self.gateways:
+            if gw.spec.inplacelocal():
+                if inplacelocal:
+                    l.append(gw)
+            else:
+                if remote:
+                    l.append(gw)
+        return MultiGateway(gateways=l)
 
     def multi_exec(self, source, inplacelocal=True):
         """ remote execute code on all gateways. 
             @param inplacelocal=False: don't send code to inplacelocal hosts. 
         """
-        source = py.code.Source(source)
-        channels = []
-        for spec, gw in self.spec2gateway.items():
-            if inplacelocal or not spec.inplacelocal():
-                channels.append(gw.remote_exec(source))
-        return MultiChannel(channels)
+        multigw = self.getgateways(inplacelocal=inplacelocal)
+        return multigw.remote_exec(source)
 
     def multi_chdir(self, basename, inplacelocal=True):
         """ perform a remote chdir to the given path, may be relative. 
@@ -132,7 +147,8 @@ class GatewayManager:
         """ 
         rsync = HostRSync(source, verbose=verbose, ignores=ignores)
         added = False
-        for spec, gateway in self.spec2gateway.items():
+        for gateway in self.gateways:
+            spec = gateway.spec
             if not spec.inplacelocal():
                 self.trace("add_target_host %r" %(gateway,))
                 def finished():
@@ -148,8 +164,8 @@ class GatewayManager:
             self.trace("rsync: nothing to do.")
 
     def exit(self):
-        while self.spec2gateway:
-            spec, gw = self.spec2gateway.popitem()
+        while self.gateways:
+            gw = self.gateways.pop()
             self.trace("exiting gateway %s" % gw)
             gw.exit()
 

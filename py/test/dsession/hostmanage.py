@@ -99,7 +99,8 @@ class HostManager(object):
 
         self.trace_hoststatus()
 
-        for host, gateway in self.gwmanager.spec2gateway.items():
+        for gateway in self.gwmanager.gateways:
+            host = gateway.spec 
             host.node = MasterNode(host, 
                                    gateway,
                                    self.config, 

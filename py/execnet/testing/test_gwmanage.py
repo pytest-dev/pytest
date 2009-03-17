@@ -106,21 +106,21 @@ class TestGatewayManagerPopen:
     def test_hostmanager_popen_makegateway(self):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
-        assert len(hm.spec2gateway) == 2
+        assert len(hm.gateways) == 2
         hm.exit()
-        assert not len(hm.spec2gateway) 
+        assert not len(hm.gateways) 
 
     def test_hostmanager_popens_rsync(self, source):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
-        assert len(hm.spec2gateway) == 2
-        for gw in hm.spec2gateway.values():
+        assert len(hm.gateways) == 2
+        for gw in hm.gateways:
             gw.remote_exec = None
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert not l
         hm.exit()
-        assert not len(hm.spec2gateway) 
+        assert not len(hm.gateways) 
 
     def test_hostmanager_rsync_popen_with_path(self, source, dest):
         hm = GatewayManager(["popen:%s" %dest] * 1)
@@ -129,7 +129,7 @@ class TestGatewayManagerPopen:
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert len(l) == 1
-        assert l[0] == ("rsyncrootready", hm.spec2gateway.keys()[0], source)
+        assert l[0] == ("rsyncrootready", hm.gateways[0].spec, source)
         hm.exit()
         dest = dest.join(source.basename)
         assert dest.join("dir1").check()

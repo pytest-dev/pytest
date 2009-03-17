@@ -25,7 +25,7 @@ class TestHostManager:
         config = py.test.config._reparse(args)
         assert config.topdir == source
         hm = HostManager(config)
-        assert hm.gwmanager.spec2gateway
+        assert hm.gwmanager.specs
         return hm
         
     def xxtest_hostmanager_custom_hosts(self, source, dest):
@@ -114,7 +114,7 @@ class TestHostManager:
         config = py.test.config._reparse([source])
         hm = HostManager(config, hosts=hosts)
         hm.rsync_roots()
-        for gwspec in hm.gwmanager.spec2gateway:
+        for gwspec in hm.gwmanager.specs:
             assert gwspec.inplacelocal()
             assert not gwspec.joinpath 
 
@@ -127,19 +127,11 @@ class TestHostManager:
         hm = HostManager(config, hosts=hosts)
         evrec = EventRecorder(config.bus, debug=True)
         hm.setup_hosts(putevent=[].append)
-        for host in hm.gwmanager.spec2gateway:
+        for host in hm.gwmanager.specs:
             l = evrec.getnamed("trace")
             print evrec.events
             assert l 
         hm.teardown_hosts()
-
-    def test_hostmanage_simple_ssh_test(self, testdir):
-        rp = testdir.mkdir('xyz123')
-        rp.ensure("__init__.py")
-        p = testdir.makepyfile("def test_123(): import xyz123")
-        result = testdir.runpytest(p, '-d', "--hosts=popen", '--rsyncdirs=' + str(rp))
-        assert result.ret == 0
-        assert result.stdout.str().find("1 passed") != -1
 
     @py.test.mark.xfail("implement double-rsync test")
     def test_ssh_rsync_samehost_twice(self):

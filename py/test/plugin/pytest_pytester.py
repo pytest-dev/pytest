@@ -36,7 +36,7 @@ class TmpTestdir:
     def __init__(self, pyfuncitem):
         self.pyfuncitem = pyfuncitem
         # XXX remove duplication with tmpdir plugin 
-        basetmp = py.test.ensuretemp("testdir")
+        basetmp = pyfuncitem._config.ensuretemp("testdir")
         name = pyfuncitem.name
         for i in range(100):
             try:
