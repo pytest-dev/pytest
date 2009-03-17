@@ -180,7 +180,7 @@ class TestConfigApi_getcolitems:
         col = colitems[0]
         assert isinstance(col, py.test.collect.Directory)
         for col in col.listchain():
-            assert col._config is config 
+            assert col.config is config 
 
     def test_getcolitems_twodirs(self, tmpdir):
         config = py.test.config._reparse([tmpdir, tmpdir])
@@ -200,7 +200,7 @@ class TestConfigApi_getcolitems:
         assert col2.name == 'a'
         for col in colitems:
             for subcol in col.listchain():
-                assert col._config is config 
+                assert col.config is config 
 
     def test__getcol_global_file(self, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -211,7 +211,7 @@ class TestConfigApi_getcolitems:
         assert col.parent.name == tmpdir.basename 
         assert col.parent.parent is None
         for col in col.listchain():
-            assert col._config is config 
+            assert col.config is config 
 
     def test__getcol_global_dir(self, tmpdir):
         x = tmpdir.ensure("a", dir=1)
@@ -221,7 +221,7 @@ class TestConfigApi_getcolitems:
         print col.listchain()
         assert col.name == 'a'
         assert col.parent is None
-        assert col._config is config 
+        assert col.config is config 
 
     def test__getcol_pkgfile(self, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -233,7 +233,7 @@ class TestConfigApi_getcolitems:
         assert col.parent.name == x.dirpath().basename 
         assert col.parent.parent is None
         for col in col.listchain():
-            assert col._config is config 
+            assert col.config is config 
 
 
 

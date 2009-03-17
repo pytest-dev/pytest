@@ -37,7 +37,7 @@ class TestDSession:
     def test_add_remove_host(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
-        session = DSession(item._config)
+        session = DSession(item.config)
         host = GatewaySpec("localhost")
         host.node = MockNode()
         assert not session.host2pending
@@ -53,7 +53,7 @@ class TestDSession:
     def test_senditems_removeitems(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
-        session = DSession(item._config)
+        session = DSession(item.config)
         host = GatewaySpec("localhost")
         host.node = MockNode()
         session.addhost(host)
@@ -69,7 +69,7 @@ class TestDSession:
             def test_func():
                 pass
         """)
-        session = DSession(modcol._config)
+        session = DSession(modcol.config)
         session.triggertesting([modcol])
         name, args, kwargs = session.queue.get(block=False)
         assert name == 'collectionreport'
@@ -78,7 +78,7 @@ class TestDSession:
 
     def test_triggertesting_item(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         host2 = GatewaySpec("localhost")
@@ -99,7 +99,7 @@ class TestDSession:
 
     def test_keyboardinterrupt(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
         def raise_(timeout=None): raise KeyboardInterrupt()
         session.queue.get = raise_
         exitstatus = session.loop([])
@@ -107,7 +107,7 @@ class TestDSession:
 
     def test_internalerror(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
         def raise_(): raise ValueError()
         session.queue.get = raise_
         exitstatus = session.loop([])
@@ -115,7 +115,7 @@ class TestDSession:
 
     def test_rescheduleevent(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
@@ -139,7 +139,7 @@ class TestDSession:
     def test_no_hosts_remaining_for_tests(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         # setup a session with one host
-        session = DSession(item._config)
+        session = DSession(item.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
@@ -164,7 +164,7 @@ class TestDSession:
         item1, item2 = modcol.collect()
 
         # setup a session with two hosts 
-        session = DSession(item1._config)
+        session = DSession(item1.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
@@ -191,7 +191,7 @@ class TestDSession:
     def test_hostup_adds_to_available(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         # setup a session with two hosts 
-        session = DSession(item._config)
+        session = DSession(item.config)
         host1 = GatewaySpec("localhost")
         hostup = makehostup(host1)
         session.queueevent("hostup", hostup)
@@ -203,7 +203,7 @@ class TestDSession:
 
     def test_event_propagation(self, testdir, EventRecorder):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
       
         evrec = EventRecorder(session.bus)
         session.queueevent("NOPevent", 42)
@@ -211,7 +211,7 @@ class TestDSession:
         assert evrec.getfirstnamed('NOPevent')
 
     def runthrough(self, item):
-        session = DSession(item._config)
+        session = DSession(item.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
@@ -247,8 +247,8 @@ class TestDSession:
             def test_pass(): 
                 pass
         """)
-        modcol._config.option.exitfirst = True
-        session = DSession(modcol._config)
+        modcol.config.option.exitfirst = True
+        session = DSession(modcol.config)
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
@@ -270,7 +270,7 @@ class TestDSession:
 
     def test_shuttingdown_filters_events(self, testdir, EventRecorder):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
         host = GatewaySpec("localhost")
         session.addhost(host)
         loopstate = LoopState([])
@@ -291,9 +291,9 @@ class TestDSession:
             def test_pass(): 
                 pass
         """)
-        session = DSession(modcol._config)
+        session = DSession(modcol.config)
 
-        modcol._config.option.keyword = "nothing"
+        modcol.config.option.keyword = "nothing"
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
         items = modcol.collect()
@@ -305,7 +305,7 @@ class TestDSession:
         assert event.name == "deselected"
         assert event.args[0].items == items 
 
-        modcol._config.option.keyword = "test_fail"
+        modcol.config.option.keyword = "test_fail"
         remaining = session.filteritems(items)
         assert remaining == [items[0]]
 
@@ -315,7 +315,7 @@ class TestDSession:
 
     def test_hostdown_shutdown_after_completion(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        session = DSession(item._config)
+        session = DSession(item.config)
 
         host = GatewaySpec("localhost")
         host.node = MockNode()
@@ -338,7 +338,7 @@ class TestDSession:
             def test_pass(): 
                 pass
         """)
-        session = DSession(modcol._config)
+        session = DSession(modcol.config)
         host = GatewaySpec("localhost")
         host.node = MockNode()
         session.addhost(host)

@@ -19,7 +19,7 @@ class RobustRun(object):
     """
     def __init__(self, colitem, pdb=None):
         self.colitem = colitem 
-        self.getcapture = colitem._config._getcapture 
+        self.getcapture = colitem.config._getcapture 
         self.pdb = pdb 
 
     def __repr__(self):
@@ -50,16 +50,16 @@ class RobustRun(object):
 
 class ItemRunner(RobustRun):
     def setup(self):
-        self.colitem._config._setupstate.prepare(self.colitem)
+        self.colitem.config._setupstate.prepare(self.colitem)
     def teardown(self):
-        self.colitem._config._setupstate.teardown_exact(self.colitem)
+        self.colitem.config._setupstate.teardown_exact(self.colitem)
     def execute(self):
         #self.colitem.config.pytestplugins.pre_execute(self.colitem)
         self.colitem.runtest()
         #self.colitem.config.pytestplugins.post_execute(self.colitem)
 
     def makereport(self, res, when, excinfo, outerr):
-        testrep = self.colitem._config.pytestplugins.call_firstresult(
+        testrep = self.colitem.config.pytestplugins.call_firstresult(
             "pytest_item_makereport", item=self.colitem, 
             excinfo=excinfo, when=when, outerr=outerr)
         if self.pdb and testrep.failed:
@@ -96,7 +96,7 @@ def forked_run_report(item, pdb=None):
     EXITSTATUS_TESTEXIT = 4
 
     ipickle = ImmutablePickler(uneven=0)
-    ipickle.selfmemoize(item._config)
+    ipickle.selfmemoize(item.config)
     def runforked():
         try:
             testrep = basic_run_report(item)

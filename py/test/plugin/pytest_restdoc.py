@@ -127,7 +127,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
             return (text, apigen_relpath + 'source/%s' % (relpath,))
 
     def _checkskip(self, lpath, htmlpath=None):
-        if not self._config.getvalue("forcegen"):
+        if not self.config.getvalue("forcegen"):
             lpath = py.path.local(lpath)
             if htmlpath is not None:
                 htmlpath = py.path.local(htmlpath)
@@ -140,7 +140,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
 class DoctestText(py.test.collect.Item): 
     def runtest(self): 
         content = self._normalize_linesep()
-        newcontent = self._config.pytestplugins.call_firstresult(
+        newcontent = self.config.pytestplugins.call_firstresult(
             'pytest_doctest_prepare_content', content=content)
         if newcontent is not None:
             content = newcontent 
@@ -192,7 +192,7 @@ class LinkCheckerMaker(py.test.collect.Collector):
     def genlinkchecks(self):
         path = self.fspath
         # generating functions + args as single tests 
-        timeout = self._config.getvalue("urlcheck_timeout")
+        timeout = self.config.getvalue("urlcheck_timeout")
         for lineno, line in py.builtin.enumerate(path.readlines()): 
             line = line.strip()
             if line.startswith('.. _'): 
@@ -206,7 +206,7 @@ class LinkCheckerMaker(py.test.collect.Collector):
                 tryfn = l[1].strip() 
                 name = "%s:%d" %(tryfn, lineno)
                 if tryfn.startswith('http:') or tryfn.startswith('https'): 
-                    if self._config.getvalue("urlcheck"):
+                    if self.config.getvalue("urlcheck"):
                         yield CheckLink(name, parent=self, 
                             args=(tryfn, path, lineno, timeout), callobj=urlcheck)
                 elif tryfn.startswith('webcal:'):

@@ -267,7 +267,7 @@ class TestPytestPluginInteractions:
                 return x+0 
         """)
         l = []
-        call = modcol._config.pytestplugins.setupcall(modcol, "pytest_method", 1)
+        call = modcol.config.pytestplugins.setupcall(modcol, "pytest_method", 1)
         assert len(call.methods) == 3
         results = call.execute()
         assert results == [1,2,2]

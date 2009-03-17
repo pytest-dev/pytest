@@ -82,7 +82,7 @@ class TestMasterSlaveConnection:
                 import os
                 os.kill(os.getpid(), 15)
         """)
-        node = mysetup.makenode(item._config)
+        node = mysetup.makenode(item.config)
         node.send(item) 
         ev, = mysetup.geteventargs("hostdown")
         assert ev.host == mysetup.host
@@ -100,7 +100,7 @@ class TestMasterSlaveConnection:
 
     def test_send_on_closed_channel(self, testdir, mysetup):
         item = testdir.getitem("def test_func(): pass")
-        node = mysetup.makenode(item._config)
+        node = mysetup.makenode(item.config)
         node.channel.close()
         py.test.raises(IOError, "node.send(item)")
         #ev = self.geteventargs(event.InternalException)
@@ -108,7 +108,7 @@ class TestMasterSlaveConnection:
 
     def test_send_one(self, testdir, mysetup):
         item = testdir.getitem("def test_func(): pass")
-        node = mysetup.makenode(item._config)
+        node = mysetup.makenode(item.config)
         node.send(item)
         ev, = mysetup.geteventargs("itemtestreport")
         assert ev.passed 
@@ -126,7 +126,7 @@ class TestMasterSlaveConnection:
                 import py
                 py.test.skip("x")
         """)
-        node = mysetup.makenode(items[0]._config)
+        node = mysetup.makenode(items[0].config)
         for item in items:
             node.send(item)
         for outcome in "passed failed skipped".split():

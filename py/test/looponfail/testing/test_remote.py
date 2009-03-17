@@ -4,14 +4,14 @@ from py.__.test.looponfail.remote import LooponfailingSession, LoopState, Remote
 class TestRemoteControl:
     def test_nofailures(self, testdir):
         item = testdir.getitem("def test_func(): pass\n")
-        control = RemoteControl(item._config)
+        control = RemoteControl(item.config)
         control.setup()
         failures = control.runsession()
         assert not failures
 
     def test_failures_somewhere(self, testdir):
         item = testdir.getitem("def test_func(): assert 0\n")
-        control = RemoteControl(item._config)
+        control = RemoteControl(item.config)
         control.setup()
         failures = control.runsession()
         assert failures 
@@ -26,7 +26,7 @@ class TestRemoteControl:
             def test_func(): 
                 assert 0
         """)
-        control = RemoteControl(modcol._config)
+        control = RemoteControl(modcol.config)
         control.setup()
         failures = control.runsession()
         assert failures 
@@ -54,7 +54,7 @@ class TestLooponFailing:
             def test_two():
                 assert 1
         """)
-        session = LooponfailingSession(modcol._config)
+        session = LooponfailingSession(modcol.config)
         loopstate = LoopState()
         session.remotecontrol.setup()
         session.loop_once(loopstate)
@@ -76,7 +76,7 @@ class TestLooponFailing:
             def test_one():
                 assert 0
         """)
-        session = LooponfailingSession(modcol._config)
+        session = LooponfailingSession(modcol.config)
         loopstate = LoopState()
         session.remotecontrol.setup()
         loopstate.colitems = []
@@ -103,7 +103,7 @@ class TestLooponFailing:
             def test_two():
                 assert 0
         """)
-        session = LooponfailingSession(modcol._config)
+        session = LooponfailingSession(modcol.config)
         loopstate = LoopState()
         session.remotecontrol.setup()
         loopstate.colitems = []

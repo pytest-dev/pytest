@@ -46,7 +46,7 @@ class Session(object):
             if isinstance(next, (tuple, list)):
                 colitems[:] = list(next) + colitems 
                 continue
-            assert self.bus is next._config.bus
+            assert self.bus is next.config.bus
             notify = self.bus.notify 
             if isinstance(next, Item):
                 remaining = self.filteritems([next])

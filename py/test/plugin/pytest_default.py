@@ -11,14 +11,14 @@ class DefaultPlugin:
         ext = path.ext 
         pb = path.purebasename
         if pb.startswith("test_") or pb.endswith("_test") or \
-           path in parent._config.args:
+           path in parent.config.args:
             if ext == ".py":
                 return parent.Module(path, parent=parent) 
       
     def pytest_collect_directory(self, path, parent):
         if not parent.recfilter(path):
             # check if cmdline specified this dir or a subdir
-            for arg in parent._config.args:
+            for arg in parent.config.args:
                 if path == arg or arg.relto(path):
                     break
             else:
@@ -26,7 +26,7 @@ class DefaultPlugin:
         # not use parent.Directory here as we want
         # dir/conftest.py to be able to 
         # define Directory(dir) already 
-        Directory = parent._config.getvalue('Directory', path) 
+        Directory = parent.config.getvalue('Directory', path) 
         return Directory(path, parent=parent)
 
     def pytest_addoption(self, parser):

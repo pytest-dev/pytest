@@ -24,7 +24,7 @@ from py.__.misc.warn import APIWARN
 def configproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
-        return self._config.getvalue(name, self.fspath) 
+        return self.config.getvalue(name, self.fspath) 
     return property(fget)
 
 class ReprMetaInfo(object):
@@ -70,8 +70,8 @@ class Node(object):
         self.name = name 
         self.parent = parent
         if config is None:
-            config = getattr(parent, '_config')
-        self._config = config 
+            config = parent.config
+        self.config = config 
         self.fspath = getattr(parent, 'fspath', None) 
 
 
@@ -88,7 +88,7 @@ class Node(object):
         #self.__init__(name=name, parent=parent)
 
     def __repr__(self): 
-        if getattr(self._config.option, 'debug', False):
+        if getattr(self.config.option, 'debug', False):
             return "<%s %r %0x>" %(self.__class__.__name__, 
                 getattr(self, 'name', None), id(self))
         else:
@@ -265,7 +265,7 @@ class Node(object):
             starting from a different topdir). 
         """ 
         chain = self.listchain()
-        topdir = self._config.topdir 
+        topdir = self.config.topdir 
         relpath = chain[0].fspath.relto(topdir)
         if not relpath:
             if chain[0].fspath == topdir:
@@ -287,12 +287,12 @@ class Node(object):
         # XXX temporary hack: getrepr() should not take a 'style' argument
         # at all; it should record all data in all cases, and the style
         # should be parametrized in toterminal().
-        if self._config.option.tbstyle == "short":
+        if self.config.option.tbstyle == "short":
             style = "short"
         else:
             style = "long"
         repr = excinfo.getrepr(funcargs=True, 
-                               showlocals=self._config.option.showlocals,
+                               showlocals=self.config.option.showlocals,
                                style=style)
         for secname, content in zip(["out", "err"], outerr):
             if content:
@@ -382,7 +382,7 @@ class FSCollector(Collector):
     def __getstate__(self):
         if self.parent is None:
             # the root node needs to pickle more context info 
-            topdir = self._config.topdir
+            topdir = self.config.topdir
             relpath = self.fspath.relto(topdir)
             if not relpath:
                 if self.fspath == topdir:
@@ -390,7 +390,7 @@ class FSCollector(Collector):
                 else:
                     raise ValueError("%r not relative to topdir %s" 
                             %(self.fspath, topdir))
-            return (self.name, self._config, relpath)
+            return (self.name, self.config, relpath)
         else:
             return (self.name, self.parent)
 
@@ -444,23 +444,23 @@ class Directory(FSCollector):
         return res
 
     def consider_file(self, path):
-        return self._config.pytestplugins.call_each(
+        return self.config.pytestplugins.call_each(
             'pytest_collect_file', path=path, parent=self)
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             APIWARN("0.99", "usefilters argument not needed")
-        res = self._config.pytestplugins.call_firstresult(
+        res = self.config.pytestplugins.call_firstresult(
             'pytest_collect_recurse', path=path, parent=self)
         if res is None or res:
-            return self._config.pytestplugins.call_each(
+            return self.config.pytestplugins.call_each(
                 'pytest_collect_directory', path=path, parent=self)
 
 from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 
     """ a basic test item. """
     def _getrunner(self):
-        if self._config.option.boxed:
+        if self.config.option.boxed:
             return forked_run_report
         return basic_run_report
 

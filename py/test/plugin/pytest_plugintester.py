@@ -26,7 +26,7 @@ class Support(object):
 class PluginTester(Support):
     def testdir(self):
         # XXX import differently, eg. 
-        #     FSTester = self.pyfuncitem._config.pytestplugins.getpluginattr("pytester", "FSTester")
+        #     FSTester = self.pyfuncitem.config.pytestplugins.getpluginattr("pytester", "FSTester")
         from pytest_pytester import TmpTestdir
         crunner = TmpTestdir(self.pyfuncitem)
         # 

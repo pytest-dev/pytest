@@ -322,7 +322,7 @@ class TestTerminal:
     def test_hostup(self, testdir, linecomp):
         from py.__.execnet.gwmanage import GatewaySpec
         item = testdir.getitem("def test_func(): pass")
-        rep = TerminalReporter(item._config, linecomp.stringio)
+        rep = TerminalReporter(item.config, linecomp.stringio)
         rep.pyevent_hostup(makehostup())
         linecomp.assert_contains_lines([
             "*localhost %s %s - Python %s" %(sys.platform, 
@@ -339,7 +339,7 @@ class TestTerminal:
             def test_func():
                 assert 0
         """)
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
         rep.config.bus.notify("testrunstart", event.TestrunStart())
         
@@ -366,7 +366,7 @@ class TestTerminal:
             def test_func():
                 assert 0
         """, configargs=("-v",))
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
         rep.config.bus.notify("testrunstart", event.TestrunStart())
         items = modcol.collect()
@@ -390,7 +390,7 @@ class TestTerminal:
 
     def test_collect_fail(self, testdir, linecomp):
         modcol = testdir.getmodulecol("import xyz")
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
         rep.config.bus.notify("testrunstart", event.TestrunStart())
         l = list(testdir.genitems([modcol]))
@@ -406,7 +406,7 @@ class TestTerminal:
 
     def test_internalerror(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
         rep.pyevent_internalerror(event.InternalException(excinfo))
         linecomp.assert_contains_lines([
@@ -420,7 +420,7 @@ class TestTerminal:
                 pass
         """, configargs=("-v",))
         host1 = GatewaySpec("localhost")
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.pyevent_hostgatewayready(event.HostGatewayReady(host1, None))
         linecomp.assert_contains_lines([
             "*HostGatewayReady*"
@@ -433,7 +433,7 @@ class TestTerminal:
     def test_writeline(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         stringio = py.std.cStringIO.StringIO()
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.write_fspath_result(py.path.local("xy.py"), '.')
         rep.write_line("hello world")
         lines = linecomp.stringio.getvalue().split('\n')
@@ -448,14 +448,14 @@ class TestTerminal:
             def test_fail2():
                 raise ValueError()
         """)
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [basic_run_report(x) for x in modcol.collect()]
-        rep.pyevent_looponfailinginfo(event.LooponfailingInfo(reports, [modcol._config.topdir]))
+        rep.pyevent_looponfailinginfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
         linecomp.assert_contains_lines([
             "*test_looponfailingreport.py:2: assert 0",
             "*test_looponfailingreport.py:4: ValueError*",
             "*waiting*", 
-            "*%s*" % (modcol._config.topdir),
+            "*%s*" % (modcol.config.topdir),
         ])
 
     def test_tb_option(self, testdir, linecomp):
@@ -470,7 +470,7 @@ class TestTerminal:
                     print 6*7
                     g()  # --calling--
             """, configargs=("--tb=%s" % tbopt,))
-            rep = TerminalReporter(modcol._config, file=linecomp.stringio)
+            rep = TerminalReporter(modcol.config, file=linecomp.stringio)
             rep.config.bus.register(rep)
             rep.config.bus.notify("testrunstart", event.TestrunStart())
             rep.config.bus.notify("testrunstart", event.TestrunStart())
@@ -497,8 +497,8 @@ class TestTerminal:
             def test_foobar():
                 pass
         """)
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
-        modcol._config.bus.register(rep)
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
+        modcol.config.bus.register(rep)
         l = list(testdir.genitems([modcol]))
         assert len(l) == 1
         rep.config.bus.notify("itemstart", event.ItemStart(l[0]))
@@ -515,9 +515,9 @@ class TestTerminal:
             def test_interrupt_me():
                 raise KeyboardInterrupt   # simulating the user
         """, configargs=("--showskipsummary",) + ("-v",)*verbose)
-        rep = TerminalReporter(modcol._config, file=linecomp.stringio)
-        modcol._config.bus.register(rep)
-        bus = modcol._config.bus
+        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
+        modcol.config.bus.register(rep)
+        bus = modcol.config.bus
         bus.notify("testrunstart", event.TestrunStart())
         try:
             for item in testdir.genitems([modcol]):
@@ -576,8 +576,8 @@ class TestCollectonly:
             def test_func():
                 pass
         """)
-        rep = CollectonlyReporter(modcol._config, out=linecomp.stringio)
-        modcol._config.bus.register(rep)
+        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
+        modcol.config.bus.register(rep)
         indent = rep.indent
         rep.config.bus.notify("collectionstart", event.CollectionStart(modcol))
         linecomp.assert_contains_lines([
@@ -597,8 +597,8 @@ class TestCollectonly:
             import py
             py.test.skip("nomod")
         """)
-        rep = CollectonlyReporter(modcol._config, out=linecomp.stringio)
-        modcol._config.bus.register(rep)
+        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
+        modcol.config.bus.register(rep)
         cols = list(testdir.genitems([modcol]))
         assert len(cols) == 0
         linecomp.assert_contains_lines("""
@@ -610,8 +610,8 @@ class TestCollectonly:
         modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
             raise ValueError(0)
         """)
-        rep = CollectonlyReporter(modcol._config, out=linecomp.stringio)
-        modcol._config.bus.register(rep)
+        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
+        modcol.config.bus.register(rep)
         cols = list(testdir.genitems([modcol]))
         assert len(cols) == 0
         linecomp.assert_contains_lines("""

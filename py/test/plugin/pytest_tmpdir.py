@@ -15,7 +15,7 @@ class TmpdirPlugin:
 
     def pytest_pyfuncarg_tmpdir(self, pyfuncitem):
         name = pyfuncitem.name
-        return pyfuncitem._config.mktemp(name, numbered=True)
+        return pyfuncitem.config.mktemp(name, numbered=True)
 
 # ===============================================================================
 #

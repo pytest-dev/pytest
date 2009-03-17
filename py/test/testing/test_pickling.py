@@ -158,9 +158,9 @@ class TestConfigPickling:
             newcol = unpickler.load()
             newcol2 = unpickler.load()
             newcol3 = unpickler.load()
-            assert newcol2._config is newcol._config
+            assert newcol2.config is newcol.config
             assert newcol2.parent == newcol 
-            assert newcol2._config.topdir == topdir
+            assert newcol2.config.topdir == topdir
             assert newcol.fspath == topdir 
             assert newcol2.fspath.basename == dir1.basename
             assert newcol2.fspath.relto(topdir)

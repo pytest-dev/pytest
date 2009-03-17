@@ -50,9 +50,9 @@ class TestModule:
     def test_module_participates_as_plugin(self, testdir):
         modcol = testdir.getmodulecol("")
         modcol.setup()
-        assert modcol._config.pytestplugins.isregistered(modcol.obj)
+        assert modcol.config.pytestplugins.isregistered(modcol.obj)
         modcol.teardown()
-        assert not modcol._config.pytestplugins.isregistered(modcol.obj)
+        assert not modcol.config.pytestplugins.isregistered(modcol.obj)
 
     def test_module_considers_pytestplugins_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
@@ -237,7 +237,7 @@ class TestFunction:
         class Provider:
             def pytest_pyfuncarg_some(self, pyfuncitem):
                 return pyfuncitem.name 
-        item._config.pytestplugins.register(Provider())
+        item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
         assert len(kw) == 1
 
@@ -246,7 +246,7 @@ class TestFunction:
         class Provider:
             def pytest_pyfuncarg_other(self, pyfuncitem):
                 return pyfuncitem.name 
-        item._config.pytestplugins.register(Provider())
+        item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
         assert len(kw) == 1
         name, value = kw.popitem()
@@ -260,7 +260,7 @@ class TestFunction:
                 return pyfuncitem.name 
             def pytest_pyfuncarg_other(self, pyfuncitem):
                 return 42
-        item._config.pytestplugins.register(Provider())
+        item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
         assert len(kw) == 2
         assert kw['some'] == "test_func"
@@ -273,7 +273,7 @@ class TestFunction:
             def pytest_pyfuncarg_some(self, pyfuncitem):
                 pyfuncitem.addfinalizer(lambda: l.append(42))
                 return 3
-        item._config.pytestplugins.register(Provider())
+        item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
         assert len(kw) == 1
         assert kw['some'] == 3
@@ -295,13 +295,13 @@ class TestFunction:
         """)
         item1, item2 = testdir.genitems([modcol])
         modcol.setup()
-        assert modcol._config.pytestplugins.isregistered(modcol.obj)
+        assert modcol.config.pytestplugins.isregistered(modcol.obj)
         kwargs = item1.lookup_allargs()
         assert kwargs['something'] ==  "test_method"
         kwargs = item2.lookup_allargs()
         assert kwargs['something'] ==  "test_func"
         modcol.teardown()
-        assert not modcol._config.pytestplugins.isregistered(modcol.obj)
+        assert not modcol.config.pytestplugins.isregistered(modcol.obj)
 
 class TestSorting:
     def test_check_equality_and_cmp_basic(self, testdir):

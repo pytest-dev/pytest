@@ -140,7 +140,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self._config.pytestplugins.call_firstresult(
+        res = self.config.pytestplugins.call_firstresult(
             "pytest_pymodule_makeitem", modcol=self, name=name, obj=obj)
         if res:
             return res
@@ -172,25 +172,25 @@ class Module(py.test.collect.File, PyCollectorMixin):
         # we assume we are only called once per module 
         mod = self.fspath.pyimport()
         #print "imported test module", mod
-        self._config.pytestplugins.consider_module(mod)
+        self.config.pytestplugins.consider_module(mod)
         return mod
 
     def setup(self): 
-        if not self._config.option.nomagic:
+        if not self.config.option.nomagic:
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
         mod = self.obj
-        self._config.pytestplugins.register(mod)
+        self.config.pytestplugins.register(mod)
         if hasattr(mod, 'setup_module'): 
             self.obj.setup_module(mod)
 
     def teardown(self): 
         if hasattr(self.obj, 'teardown_module'): 
             self.obj.teardown_module(self.obj) 
-        if not self._config.option.nomagic:
+        if not self.config.option.nomagic:
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
-        self._config.pytestplugins.unregister(self.obj)
+        self.config.pytestplugins.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
@@ -268,7 +268,7 @@ class FunctionMixin(PyobjMixin):
             teardown_func_or_meth(self.obj) 
 
     def _prunetraceback(self, traceback):
-        if not self._config.option.fulltrace: 
+        if not self.config.option.fulltrace: 
             code = py.code.Code(self.obj) 
             path, firstlineno = code.path, code.firstlineno 
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)
@@ -289,7 +289,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         # test generators are collectors yet participate in 
         # the test-item setup and teardown protocol. 
         # otherwise we could avoid global setupstate
-        self._config._setupstate.prepare(self) 
+        self.config._setupstate.prepare(self) 
         l = []
         for i, x in py.builtin.enumerate(self.obj()): 
             name, call, args = self.getcallargs(x)
@@ -348,7 +348,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         """ execute the given test function. """
         if not self._deprecated_testexecution():
             kw = self.lookup_allargs()
-            ret = self._config.pytestplugins.call_firstresult(
+            ret = self.config.pytestplugins.call_firstresult(
                 "pytest_pyfunc_call", pyfuncitem=self, args=self._args, kwargs=kw)
 
     def lookup_allargs(self):
@@ -374,13 +374,13 @@ class Function(FunctionMixin, py.test.collect.Item):
         return kwargs
 
     def lookup_onearg(self, argname):
-        value = self._config.pytestplugins.call_firstresult(
+        value = self.config.pytestplugins.call_firstresult(
             "pytest_pyfuncarg_" + argname, pyfuncitem=self)
         if value is not None:
             return value
         else:
             metainfo = self.repr_metainfo()
-            #self._config.bus.notify("pyfuncarg_lookuperror", argname)
+            #self.config.bus.notify("pyfuncarg_lookuperror", argname)
             raise LookupError("funcargument %r not found for: %s" %(argname,metainfo.verboseline()))
 
     def __eq__(self, other):

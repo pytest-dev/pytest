@@ -36,7 +36,7 @@ class TmpTestdir:
     def __init__(self, pyfuncitem):
         self.pyfuncitem = pyfuncitem
         # XXX remove duplication with tmpdir plugin 
-        basetmp = pyfuncitem._config.ensuretemp("testdir")
+        basetmp = pyfuncitem.config.ensuretemp("testdir")
         name = pyfuncitem.name
         for i in range(100):
             try:
@@ -166,7 +166,7 @@ class TmpTestdir:
 
     def getitems(self,  source):
         modcol = self.getmodulecol(source)
-        return list(modcol._config.initsession().genitems([modcol]))
+        return list(modcol.config.initsession().genitems([modcol]))
         #assert item is not None, "%r item not found in module:\n%s" %(funcname, source)
         #return item 
 

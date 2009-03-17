@@ -67,10 +67,10 @@ class TestCollector:
 
     def test_listnames_and__getitembynames(self, testdir):
         modcol = testdir.getmodulecol("pass", withinit=True)
-        print modcol._config.pytestplugins.getplugins()
+        print modcol.config.pytestplugins.getplugins()
         names = modcol.listnames()
         print names
-        dircol = modcol._config.getfsnode(modcol._config.topdir)
+        dircol = modcol.config.getfsnode(modcol.config.topdir)
         x = dircol._getitembynames(names)
         assert modcol.name == x.name 
 
@@ -203,7 +203,7 @@ class TestCustomConftests:
                 def pytest_addoption(self, parser):
                     parser.addoption("--XX", action="store_true", default=False)
                 def pytest_collect_recurse(self, path, parent):
-                    return parent._config.getvalue("XX")
+                    return parent.config.getvalue("XX")
         """)
         testdir.mkdir("hello")
         evrec = testdir.inline_run(testdir.tmpdir)

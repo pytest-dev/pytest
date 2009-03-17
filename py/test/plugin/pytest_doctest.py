@@ -8,7 +8,7 @@ class DoctestPlugin:
     
     def pytest_collect_file(self, path, parent):
         if path.ext == ".py":
-            if parent._config.getvalue("doctestmodules"):
+            if parent.config.getvalue("doctestmodules"):
                 return DoctestModule(path, parent)
         if path.check(fnmatch="test_*.txt"):
             return DoctestTextfile(path, parent)
