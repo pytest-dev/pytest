@@ -60,16 +60,12 @@ class DSession(Session):
         if config.option.numprocesses:
             return
         try:
-            config.getvalue('dist_hosts')
+            config.getvalue('hosts')
         except KeyError:
-            print "Don't know where to distribute tests to.  You may want"
-            print "to specify either a number of local processes to start"
-            print "with '--numprocesses=NUM' or specify 'dist_hosts' in a local"
-            print "conftest.py file, for example:"
-            print
-            print "  dist_hosts = ['localhost'] * 4 # for 3 processors"
-            print "  dist_hosts = ['you@remote.com', '...'] # for testing on ssh accounts"
-            print "   # with your remote ssh accounts"
+            print "Please specify hosts for distribution of tests:"
+            print "cmdline: --hosts=host1,host2,..."
+            print "conftest.py: pytest_option_hosts=['host1','host2',]"
+            print "environment: PYTEST_OPTION_HOSTS=host1,host2,host3"
             print 
             print "see also: http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
             raise SystemExit

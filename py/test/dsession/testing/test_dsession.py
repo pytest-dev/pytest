@@ -300,17 +300,17 @@ class TestDSession:
         remaining = session.filteritems(items)
         assert remaining == []
         
-        evname, ev = evrec.events[-1]
-        assert evname == "deselected"
-        assert ev.items == items 
+        event = evrec.events[-1]
+        assert event.name == "deselected"
+        assert event.args[0].items == items 
 
         modcol._config.option.keyword = "test_fail"
         remaining = session.filteritems(items)
         assert remaining == [items[0]]
 
-        evname, ev = evrec.events[-1]
-        assert evname == "deselected"
-        assert ev.items == [items[1]]
+        event = evrec.events[-1]
+        assert event.name == "deselected"
+        assert event.args[0].items == [items[1]]
 
     def test_hostdown_shutdown_after_completion(self, testdir):
         item = testdir.getitem("def test_func(): pass")

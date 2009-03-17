@@ -40,6 +40,12 @@ class TestConfigCmdlineParsing:
         group.addoption("--option4", action="store", type="int")
         assert group.options[3].default == ("NO", "DEFAULT")
 
+    def test_parser_addoption_default_conftest(self, testdir, monkeypatch):
+        import os
+        testdir.makeconftest("pytest_option_verbose=True")
+        config = testdir.parseconfig()
+        assert config.option.verbose 
+
     def test_config_cmdline_options_only_lowercase(self, testdir): 
         testdir.makepyfile(conftest="""
             import py

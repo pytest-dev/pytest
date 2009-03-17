@@ -236,6 +236,11 @@ class TmpTestdir:
     def runpytest(self, *args):
         return self.runpybin("py.test", *args)
 
+class Event:
+    def __init__(self, name, args, kwargs):
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
 
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
@@ -249,26 +254,27 @@ class EventRecorder(object):
             return
         if self.debug:
             print "[event: %s]: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
-        self.events.append((name,) + tuple(args))
+        self.events.append(Event(name, args, kwargs))
 
     def get(self, cls):
         l = []
-        for name, value in self.events:
+        for event in self.events:
+            value = event.args[0]
             if isinstance(value, cls):
                 l.append(value)
         return l 
 
     def getnamed(self, *names):
         l = []
-        for evname, event in self.events:
-            if evname in names:
-                l.append(event)
+        for event in self.events:
+            if event.name in names:
+                l.append(event.args[0])
         return l 
 
     def getfirstnamed(self, name):
-        for evname, event in self.events:
-            if evname == name:
-                return event
+        for event in self.events:
+            if event.name == name:
+                return event.args[0]
 
     def getfailures(self, names='itemtestreport collectionreport'):
         l = []

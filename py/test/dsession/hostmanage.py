@@ -6,7 +6,7 @@ from py.__.test import event
 
 def getconfighosts(config):
     if config.option.numprocesses:
-        hosts = ['localhost'] * config.option.numprocesses
+        hosts = ['popen'] * config.option.numprocesses
     else:
         hosts = config.option.hosts
         if not hosts:

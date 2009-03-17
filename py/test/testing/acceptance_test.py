@@ -252,6 +252,31 @@ class TestPyTest:
         ])
         assert result.ret == 1
 
+    def test_dist_testing_conftest_specified(self, testdir):
+        p1 = testdir.makepyfile("""
+                import py
+                def test_fail0():
+                    assert 0
+                def test_fail1():
+                    raise ValueError()
+                def test_ok():
+                    pass
+                def test_skip():
+                    py.test.skip("hello")
+            """, 
+        )
+        testdir.makeconftest("""
+            pytest_option_hosts='popen,popen,popen'
+        """)
+        result = testdir.runpytest(p1, '-d')
+        result.stdout.fnmatch_lines([
+            "HOSTUP: popen*Python*",
+            #"HOSTUP: localhost*Python*",
+            #"HOSTUP: localhost*Python*",
+            "*2 failed, 1 passed, 1 skipped*",
+        ])
+        assert result.ret == 1
+
     def test_dist_tests_with_crash(self, testdir):
         if not hasattr(py.std.os, 'kill'):
             py.test.skip("no os.kill")

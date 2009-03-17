@@ -63,6 +63,12 @@ class Config(object):
                 elif not opt.type and opt.action in ("store_true", "store_false"):
                     val = eval(val)
                 opt.default = val 
+            else:
+                name = "pytest_option_" + opt.dest
+                try:
+                    opt.default = self._conftest.rget(name)
+                except (ValueError, KeyError):
+                    pass
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
