@@ -373,7 +373,9 @@ class TestPyTest:
 class TestInteractive:
     def getspawn(self, tmpdir):
         pexpect = py.test.importorskip("pexpect")
+        basetemp = tmpdir.mkdir("basetemp")
         def spawn(cmd):
+            cmd = cmd + " --basetemp=" + str(basetemp)
             return pexpect.spawn(cmd, logfile=tmpdir.join("spawn.out").open("w"))
         return spawn
 
@@ -391,7 +393,6 @@ class TestInteractive:
                 i = 0
                 assert i == 1
         """)
-       
         child = spawn("%s %s --pdb %s" % (py.std.sys.executable, pytestpath, p1))
         child.timeout = EXPECTTIMEOUT
         #child.expect(".*def test_1.*")
