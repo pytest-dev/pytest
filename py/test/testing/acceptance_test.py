@@ -265,8 +265,7 @@ class TestPyTest:
                     py.test.skip("hello")
             """, 
         )
-        #result = testdir.runpytest(p1, '-d')
-        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen,popen')
+        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen')
         result.stdout.fnmatch_lines([
             "HOSTUP: popen*Python*",
             #"HOSTUP: localhost*Python*",
@@ -423,4 +422,23 @@ class TestInteractive:
         child.expect("MODIFIED.*test_simple_looponfailing_interaction.py", timeout=4.0)
         child.expect("1 passed", timeout=5.0)
         child.kill(15)
- 
+
+    @py.test.mark.xfail("need new cmdline option")
+    def test_dist_each(self, testdir):
+        for name in ("python2.4", "python2.5"):
+            if not py.path.local.sysfind(name):
+                py.test.skip("%s not found" % name)
+        testdir.makepyfile(__init__="", test_one="""
+            import sys
+            def test_hello():
+                print sys.version_info[:2]
+                assert 0
+        """)
+        result = testdir.runpytest("--dist-each", "--gateways=popen-python2.5,popen-python2.4")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*popen-python2.5*FAIL*", 
+            "*popen-python2.4*FAIL*",
+            "*2 failed*"
+        ])
+        
