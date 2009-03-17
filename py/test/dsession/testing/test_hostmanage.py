@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.hostmanage import HostManager, getconfighosts, getconfigroots
+from py.__.test.dsession.hostmanage import HostManager, getconfiggwspecs, getconfigroots
 from py.__.execnet.gwmanage import GatewaySpec as Host
 
 from py.__.test import event
@@ -18,7 +18,7 @@ class TestHostManager:
     def gethostmanager(self, source, hosts, rsyncdirs=None):
         def opt(optname, l):
             return '%s=%s' % (optname, ",".join(map(str, l)))
-        args = [opt('--hosts', hosts)]
+        args = [opt('--gateways', hosts)]
         if rsyncdirs:
             args.append(opt('--rsyncdir', [source.join(x, abs=True) for x in rsyncdirs]))
         args.append(source)
@@ -148,14 +148,14 @@ class TestHostManager:
         assert 0
 
 
-def test_getconfighosts_numprocesses():
+def test_getconfiggwspecs_numprocesses():
     config = py.test.config._reparse(['-n3'])
-    hosts = getconfighosts(config)
+    hosts = getconfiggwspecs(config)
     assert len(hosts) == 3
 
-def test_getconfighosts_disthosts():
-    config = py.test.config._reparse(['--hosts=a,b,c'])
-    hosts = getconfighosts(config)
+def test_getconfiggwspecs_disthosts():
+    config = py.test.config._reparse(['--gateways=a,b,c'])
+    hosts = getconfiggwspecs(config)
     assert len(hosts) == 3
     assert hosts == ['a', 'b', 'c']
 

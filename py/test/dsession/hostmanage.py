@@ -4,17 +4,17 @@ from py.__.test.dsession.masterslave import MasterNode
 from py.__.execnet.gwmanage import GatewayManager
 from py.__.test import event
 
-def getconfighosts(config):
+def getconfiggwspecs(config):
     if config.option.numprocesses:
-        hosts = ['popen'] * config.option.numprocesses
+        gwspecs = ['popen'] * config.option.numprocesses
     else:
-        hosts = config.option.hosts
-        if not hosts:
-            hosts = config.getvalue("hosts")
+        gwspecs = config.option.gateways
+        if not gwspecs:
+            gwspecs = config.getvalue("gateways")
         else:
-            hosts = hosts.split(",")
-    assert hosts is not None
-    return hosts
+            gwspecs = gwspecs.split(",")
+    assert gwspecs is not None
+    return gwspecs
 
 def getconfigroots(config):
     roots = config.option.rsyncdirs
@@ -34,7 +34,7 @@ class HostManager(object):
     def __init__(self, config, hosts=None):
         self.config = config 
         if hosts is None:
-            hosts = getconfighosts(self.config)
+            hosts = getconfiggwspecs(self.config)
         self.roots = getconfigroots(config)
         self.gwmanager = GatewayManager(hosts)
 

@@ -265,7 +265,7 @@ class TestPyTest:
                     py.test.skip("hello")
             """, 
         )
-        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen')
+        result = testdir.runpytest(p1, '-d', '--gateways=popen,popen')
         result.stdout.fnmatch_lines([
             "HOSTUP: popen*Python*",
             #"HOSTUP: localhost*Python*",
@@ -288,7 +288,7 @@ class TestPyTest:
             """, 
         )
         testdir.makeconftest("""
-            pytest_option_hosts='popen,popen,popen'
+            pytest_option_gateways='popen,popen,popen'
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([
@@ -320,7 +320,7 @@ class TestPyTest:
                     os.kill(os.getpid(), 15)
             """
         )
-        result = testdir.runpytest(p1, '-d', '--hosts=popen,popen,popen')
+        result = testdir.runpytest(p1, '-d', '--gateways=popen,popen,popen')
         result.stdout.fnmatch_lines([
             "*popen*Python*",
             "*popen*Python*",

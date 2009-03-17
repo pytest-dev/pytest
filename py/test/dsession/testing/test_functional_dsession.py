@@ -42,7 +42,7 @@ class TestAsyncFunctional:
             def test_fail():
                 assert 0
         """)
-        config = testdir.parseconfig('-d', p1, '--hosts=popen')
+        config = testdir.parseconfig('-d', p1, '--gateways=popen')
         dsession = DSession(config)
         eq = EventQueue(config.bus)
         dsession.main([config.getfsnode(p1)])
@@ -65,7 +65,7 @@ class TestAsyncFunctional:
         p = subdir.join("test_one.py")
         p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
         result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
-                                   "--hosts=popen:%(dest)s" % locals(), p)
+                                   "--gateways=popen:%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 passed*"
@@ -85,7 +85,7 @@ class TestAsyncFunctional:
                 import os
                 assert os.nice(0) == 10
         """)
-        evrec = testdir.inline_run('-d', p1, '--hosts=popen')
+        evrec = testdir.inline_run('-d', p1, '--gateways=popen')
         ev = evrec.getreport('test_nice')
         assert ev.passed
 

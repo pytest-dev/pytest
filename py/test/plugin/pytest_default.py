@@ -94,8 +94,8 @@ class DefaultPlugin:
         group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
                    help="comma-separated list of directories to rsync. All those roots will be rsynced "
                         "into a corresponding subdir on the remote sides. ")
-        group.addoption('--hosts', dest="hosts", default=None, metavar="host1,host2,...", 
-                   help="comma-separated list of host specs to send tests to.")
+        group.addoption('--gateways', dest="gateways", default=None, metavar="spec1,spec2,...", 
+                   help="comma-separated list of gateway specs, used by test distribution modes")
         group._addoption('--exec',
                    action="store", dest="executable", default=None,
                    help="python executable to run the tests with.")

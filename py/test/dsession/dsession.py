@@ -63,7 +63,7 @@ class DSession(Session):
             config.getvalue('hosts')
         except KeyError:
             print "Please specify hosts for distribution of tests:"
-            print "cmdline: --hosts=host1,host2,..."
+            print "cmdline: --gateways=host1,host2,..."
             print "conftest.py: pytest_option_hosts=['host1','host2',]"
             print "environment: PYTEST_OPTION_HOSTS=host1,host2,host3"
             print 
