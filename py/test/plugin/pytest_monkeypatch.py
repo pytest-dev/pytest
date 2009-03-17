@@ -1,3 +1,5 @@
+import os
+
 class MonkeypatchPlugin:
     """ setattr-monkeypatching with automatical reversal after test. """
     def pytest_pyfuncarg_monkeypatch(self, pyfuncitem):
@@ -19,6 +21,9 @@ class MonkeyPatch:
     def setitem(self, dictionary, name, value):
         self._setitem.insert(0, (dictionary, name, dictionary.get(name, notset)))
         dictionary[name] = value
+
+    def setenv(self, name, value):
+        self.setitem(os.environ, name, str(value))        
 
     def finalize(self):
         for obj, name, value in self._setattr:
@@ -62,6 +67,14 @@ def test_setitem():
     monkeypatch.finalize()
     assert d['x'] == 1
     assert 'y' not in d
+
+def test_setenv():
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv('XYZ123', 2)
+    import os
+    assert os.environ['XYZ123'] == "2"
+    monkeypatch.finalize()
+    assert 'XYZ123' not in os.environ
 
 def test_monkeypatch_plugin(testdir):
     sorter = testdir.inline_runsource("""
