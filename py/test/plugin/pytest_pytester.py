@@ -234,6 +234,9 @@ class TmpTestdir:
         return self.run(script, *args)
 
     def runpytest(self, *args):
+        p = py.path.local.make_numbered_dir(prefix="runpytest-", 
+            keep=None, rootdir=self.tmpdir)
+        args = ('--basetemp=%s' % p, ) + args 
         return self.runpybin("py.test", *args)
 
 class Event:

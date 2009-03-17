@@ -16,6 +16,17 @@ class TestPyTest:
         assert result.stderr.fnmatch_lines([
             'config ERROR: hello'
         ])
+
+    def test_basetemp(self, testdir):
+        mytemp = testdir.tmpdir.mkdir("mytemp")
+        p = testdir.makepyfile("""
+            import py
+            def test_1(): 
+                py.test.ensuretemp('xyz')
+        """)
+        result = testdir.runpytest(p, '--basetemp=%s' %mytemp)
+        assert result.ret == 0
+        assert mytemp.join('xyz').check(dir=1)
                 
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile("""

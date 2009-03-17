@@ -85,8 +85,9 @@ class TestConfigCmdlineParsing:
             yield check_conflict_option, opts
 
 class TestConfigAPI: 
+
     @py.test.mark.issue("ensuretemp should call config.maketemp(basename)")
-    def test_tmpdir(self):
+    def test_ensuretemp(self):
         d1 = py.test.ensuretemp('hello') 
         d2 = py.test.ensuretemp('hello') 
         assert d1 == d2

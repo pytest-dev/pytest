@@ -214,6 +214,7 @@ class TestNewSession(SessionTests):
         assert len(colskipped) == 1
 
     def test_minus_x_import_error(self, testdir):
+        testdir.makepyfile(__init__="")
         testdir.makepyfile(test_one="xxxx", test_two="yyyy")
         sorter = testdir.inline_run("-x", testdir.tmpdir)
         finished = sorter.getnamed("collectionreport")

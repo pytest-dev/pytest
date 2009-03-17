@@ -63,38 +63,21 @@ class TestAsyncFunctional:
         assert ev.host.address == "popen"
         ev, = eq.geteventargs("testrunfinish")
 
-    def test_distribution_rsync_roots_example(self, testdir):
-        py.test.skip("testing for root rsync needs rework")
-        destdir = py.test.ensuretemp("example_dist_destdir")
-        subdir = "sub_example_dist"
-        sourcedir = self.tmpdir.mkdir("source")
-        sourcedir.ensure(subdir, "conftest.py").write(py.code.Source("""
-            hosts = ["popen:%s"]
-            rsyncdirs = ["%s", "../py"]
-        """ % (destdir, tmpdir.join(subdir), )))
-        tmpdir.ensure(subdir, "__init__.py")
-        tmpdir.ensure(subdir, "test_one.py").write(py.code.Source("""
-            def test_1(): 
-                pass
-            def test_2():
-                assert 0
-            def test_3():
-                raise ValueError(23)
-            def test_4(someargs):
-                pass
-            def test_5():
-                assert __file__ != '%s'
-            #def test_6():
-            #    import py
-            #    assert py.__file__ != '%s'
-        """ % (tmpdir.join(subdir), py.__file__)))
-        destdir.join("py").mksymlinkto(py.path.local(py.__file__).dirpath())
-
-        sorter = testdir.inline_run(tmpdir.join(subdir))
-        testevents = sorter.getnamed('itemtestreport')
-        assert len([x for x in testevents if x.passed]) == 2
-        assert len([x for x in testevents if x.failed]) == 3
-        assert len([x for x in testevents if x.skipped]) == 0
+    @py.test.mark.xfail("XXX")
+    def test_distribution_rsyncdirs_example(self, testdir):
+        source = testdir.mkdir("source")
+        dest = testdir.mkdir("dest")
+        subdir = source.mkdir("example_pkg")
+        subdir.ensure("__init__.py")
+        p = subdir.join("test_one.py")
+        p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
+        result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
+                                   "--hosts=popen:%(dest)s" % locals())
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+        assert dest.join(subdir.basename).check(dir=1)
 
     def test_nice_level(self, testdir):
         """ Tests if nice level behaviour is ok """

@@ -4,16 +4,11 @@ from conftesthandle import Conftest
 from py.__.test import parseopt
 from py.__.misc.warn import APIWARN
 
-# XXX move to Config class
-basetemp = None
 def ensuretemp(string, dir=1): 
     """ return temporary directory path with
         the given string as the trailing part. 
     """ 
-    global basetemp
-    if basetemp is None: 
-        basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
-    return basetemp.ensure(string, dir=dir) 
+    return py.test.config.ensuretemp(string, dir=dir)
   
 class CmdOptions(object):
     """ pure container instance for holding cmdline options 
@@ -29,6 +24,7 @@ class Config(object):
     """ central bus for dealing with configuration/initialization data. """ 
     Option = py.compat.optparse.Option # deprecated
     Error = Error
+    basetemp = None
     _sessionclass = None
 
     def __init__(self, pytestplugins=None, topdir=None): 
@@ -122,6 +118,18 @@ class Config(object):
         self.option = cmdlineopts
         self._preparse(args)
         self.args = args 
+
+    def ensuretemp(self, string, dir=True):
+        if self.basetemp is None: 
+            basetemp = self.option.basetemp 
+            if basetemp:
+                basetemp = py.path.local(basetemp)
+                if not basetemp.check(dir=1):
+                    basetemp.mkdir()
+            else:
+                basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
+            self.basetemp = basetemp 
+        return self.basetemp.ensure(string, dir=dir) 
 
     def getcolitems(self):
         return [self.getfsnode(arg) for arg in self.args]

@@ -61,7 +61,9 @@ class DefaultPlugin:
         group._addoption('-s', '--nocapture',
                    action="store_true", dest="nocapture", default=False,
                    help="disable catching of sys.stdout/stderr output."),
-        group._addoption('--boxed',
+        group.addoption('--basetemp', dest="basetemp", default=None, 
+                   help="directory to use for this test run.")
+        group.addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process"), 
         group._addoption('-f', '--looponfailing',
