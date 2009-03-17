@@ -63,7 +63,6 @@ class TestAsyncFunctional:
         assert ev.host.address == "popen"
         ev, = eq.geteventargs("testrunfinish")
 
-    @py.test.mark.xfail("XXX")
     def test_distribution_rsyncdirs_example(self, testdir):
         source = testdir.mkdir("source")
         dest = testdir.mkdir("dest")
@@ -72,7 +71,7 @@ class TestAsyncFunctional:
         p = subdir.join("test_one.py")
         p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
         result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
-                                   "--hosts=popen:%(dest)s" % locals())
+                                   "--hosts=popen:%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 passed*"
