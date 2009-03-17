@@ -120,7 +120,10 @@ class Config(object):
         self.args = args 
 
     def ensuretemp(self, string, dir=True):
-        if self.basetemp is None: 
+        return self.getbasetemp().ensure(string, dir=dir) 
+
+    def getbasetemp(self):
+        if self.basetemp is None:
             basetemp = self.option.basetemp 
             if basetemp:
                 basetemp = py.path.local(basetemp)
@@ -128,8 +131,16 @@ class Config(object):
                     basetemp.mkdir()
             else:
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
-            self.basetemp = basetemp 
-        return self.basetemp.ensure(string, dir=dir) 
+            self.basetemp = basetemp
+        return self.basetemp 
+
+    def mktemp(self, basename, numbered=False):
+        basetemp = self.getbasetemp()
+        if not numbered:
+            return basetemp.mkdir(basename)
+        else:
+            return py.path.local.make_numbered_dir(prefix=basename + "-", 
+                keep=0, rootdir=basetemp)
 
     def getcolitems(self):
         return [self.getfsnode(arg) for arg in self.args]
@@ -215,6 +226,7 @@ class Config(object):
         oldconfig = py.test.config
         try:
             config_per_process = py.test.config = Config()
+            config_per_process.basetemp = self.mktemp("reparse", numbered=True)
             config_per_process.parse(args) 
             return config_per_process
         finally: 

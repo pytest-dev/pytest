@@ -84,14 +84,34 @@ class TestConfigCmdlineParsing:
             opts = spec.split()
             yield check_conflict_option, opts
 
+class TestConfigTmpdir:
+    def test_getbasetemp(self, testdir):
+        config = testdir.Config()
+        config.basetemp = "hello"
+        config.getbasetemp() == "hello"
+
+    def test_mktemp(self, testdir):
+        config = testdir.Config()
+        config.basetemp = testdir.mkdir("hello")
+        tmp = config.mktemp("world")
+        assert tmp.relto(config.basetemp) == "world"
+        tmp = config.mktemp("this", numbered=True)
+        assert tmp.relto(config.basetemp).startswith("this")
+        tmp2 = config.mktemp("this", numbered=True)
+        assert tmp2.relto(config.basetemp).startswith("this")
+        assert tmp2 != tmp
+
+    def test_reparse(self, testdir):
+        config = testdir.Config()
+        config.basetemp = testdir.mkdir("my")
+        config2 = config._reparse([])
+        assert config2.getbasetemp().relto(config.basetemp)
+        config3 = config._reparse([])
+        assert config3.getbasetemp().relto(config.basetemp)
+        assert config2.basetemp != config3.basetemp
+
 class TestConfigAPI: 
 
-    @py.test.mark.issue("ensuretemp should call config.maketemp(basename)")
-    def test_ensuretemp(self):
-        d1 = py.test.ensuretemp('hello') 
-        d2 = py.test.ensuretemp('hello') 
-        assert d1 == d2
-        assert d1.check(dir=1) 
 
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")
@@ -313,4 +333,10 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 
 def test_default_bus():
     assert py.test.config.bus is py._com.pyplugins
-    
+   
+@py.test.mark.todo("test for deprecation")
+def test_ensuretemp():
+    d1 = py.test.ensuretemp('hello') 
+    d2 = py.test.ensuretemp('hello') 
+    assert d1 == d2
+    assert d1.check(dir=1) 
