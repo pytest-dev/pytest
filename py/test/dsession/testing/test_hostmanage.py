@@ -37,7 +37,7 @@ class TestHostManager:
     def test_hostmanager_rsync_roots_no_roots(self, source, dest):
         source.ensure("dir1", "file1").write("hello")
         config = py.test.config._reparse([source])
-        hm = HostManager(config, hosts=["popen:%s" % dest])
+        hm = HostManager(config, hosts=["popen::%s" % dest])
         assert hm.config.topdir == source == config.topdir
         hm.rsync_roots()
         p, = hm.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
@@ -51,7 +51,7 @@ class TestHostManager:
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         hm = self.gethostmanager(source, 
-            hosts = ["popen:%s" % dest],
+            hosts = ["popen::%s" % dest],
             rsyncdirs = ['dir1']
         )
         assert hm.config.topdir == source
@@ -64,7 +64,7 @@ class TestHostManager:
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir2.ensure("hello")
         hm = self.gethostmanager(source, 
-            hosts = ["popen:%s" % dest],
+            hosts = ["popen::%s" % dest],
             rsyncdirs = [str(source)]
         )
         assert hm.config.topdir == source
@@ -84,7 +84,7 @@ class TestHostManager:
         """))
         session = py.test.config._reparse([source]).initsession()
         hm = HostManager(session.config, 
-                         hosts=["popen:" + str(dest)])
+                         hosts=["popen::" + str(dest)])
         hm.rsync_roots()
         assert dest.join("dir2").check()
         assert not dest.join("dir1").check()
@@ -101,7 +101,7 @@ class TestHostManager:
         """))
         session = py.test.config._reparse([source]).initsession()
         hm = HostManager(session.config,
-                         hosts=["popen:" + str(dest)])
+                         hosts=["popen::" + str(dest)])
         hm.rsync_roots()
         assert dest.join("dir1").check()
         assert not dest.join("dir1", "dir2").check()

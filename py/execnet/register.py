@@ -76,7 +76,7 @@ class PopenGateway(PopenCmdGateway):
         """ instantiate a gateway to a subprocess 
             started with the given 'python' executable. 
         """
-        if python is None:
+        if not python:
             python = sys.executable
         cmd = '%s -u -c "exec input()"' % python
         super(PopenGateway, self).__init__(cmd)

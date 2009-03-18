@@ -24,11 +24,17 @@ from py.__.execnet.channel import RemoteError
 NO_ENDMARKER_WANTED = object()
 
 class GatewaySpec(object):
+    python = "python" 
     def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
         if spec == "popen" or spec.startswith("popen:"):
-            self.address = "popen"
-            self.joinpath = spec[len(self.address)+1:]
-            self.type = "popen"
+            parts = spec.split(":", 2)
+            self.type = self.address = parts.pop(0)
+            if parts:
+                self.python = parts.pop(0)
+            if parts:
+                self.joinpath = parts.pop(0)
+            else:
+                self.joinpath = ""
         elif spec.startswith("socket:"):
             parts = spec[7:].split(":", 2)
             self.address = parts.pop(0)
@@ -40,8 +46,9 @@ class GatewaySpec(object):
         else:
             if spec.startswith("ssh:"):
                 spec = spec[4:]
-            parts = spec.split(":", 1)
+            parts = spec.split(":", 2)
             self.address = parts.pop(0)
+            self.python = parts and parts.pop(0) or "python"
             self.joinpath = parts and parts.pop(0) or ""
             self.type = "ssh"
         if not self.joinpath and not self.inplacelocal():
@@ -54,13 +61,13 @@ class GatewaySpec(object):
         return "<GatewaySpec %s:%s>" % (self.address, self.joinpath)
     __repr__ = __str__
 
-    def makegateway(self, python=None, waitclose=True):
+    def makegateway(self, waitclose=True):
         if self.type == "popen":
-            gw = py.execnet.PopenGateway(python=python)
+            gw = py.execnet.PopenGateway(python=self.python)
         elif self.type == "socket":
             gw = py.execnet.SocketGateway(*self.address)
         elif self.type == "ssh":
-            gw = py.execnet.SshGateway(self.address, remotepython=python)
+            gw = py.execnet.SshGateway(self.address, remotepython=self.python)
         if self.joinpath:
             channel = gw.remote_exec("""
                 import os 

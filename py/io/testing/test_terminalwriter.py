@@ -18,7 +18,7 @@ def test_terminalwriter_defaultwidth_80():
     py.magic.patch(terminalwriter, '_getdimensions', lambda: 0/0)
     try:
         tw = py.io.TerminalWriter()  
-        assert tw.fullwidth == os.environ.get('COLUMNS', 80)-1
+        assert tw.fullwidth == int(os.environ.get('COLUMNS', 80)) -1
     finally:         
         py.magic.revert(terminalwriter, '_getdimensions')
         

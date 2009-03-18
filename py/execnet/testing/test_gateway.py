@@ -570,9 +570,8 @@ class TestSocketGateway(SocketGatewaySetup, BasicRemoteExecution):
 
 class TestSshGateway(BasicRemoteExecution):
     def setup_class(cls): 
-        if py.test.config.option.sshhost is None: 
-            py.test.skip("no known ssh target, use --sshhost to set one")
-        cls.gw = py.execnet.SshGateway(py.test.config.option.sshhost) 
+        sshhost = py.test.config.getvalueorskip("sshhost")
+        cls.gw = py.execnet.SshGateway(sshhost)
 
     def test_sshconfig_functional(self):
         tmpdir = py.test.ensuretemp("test_sshconfig")

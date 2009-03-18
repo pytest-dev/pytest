@@ -18,29 +18,38 @@ class TestGatewaySpec:
     [ssh:]spec:path           SshGateway
     * [SshGateway]
     """
-    def test_popen_nopath(self):
-        for joinpath in ('', ':abc', ':ab:cd', ':/x/y'):
-            spec = GatewaySpec("popen" + joinpath)
-            assert spec.address == "popen"
-            assert spec.joinpath == joinpath[1:]
-            assert spec.type == "popen"
-            spec2 = GatewaySpec("popen" + joinpath)
-            self._equality(spec, spec2)
+    def test_popen(self):
+        for python in ('', 'python2.4'):
+            for joinpath in ('', 'abc', 'ab:cd', '/x/y'):
+                s = ":".join(["popen", python, joinpath])
+                print s
+                spec = GatewaySpec(s)
+                assert spec.address == "popen"
+                assert spec.python == python 
+                assert spec.joinpath == joinpath
+                assert spec.type == "popen"
+                spec2 = GatewaySpec("popen" + joinpath)
+                self._equality(spec, spec2)
 
     def test_ssh(self):
-        for prefix in ('ssh:', ''): # ssh is default
+        for prefix in ('ssh', ''): # ssh is default
             for hostpart in ('x.y', 'xyz@x.y'):
-                for joinpath in ('', ':abc', ':ab:cd', ':/tmp'):
-                    specstring = prefix + hostpart + joinpath
-                    spec = GatewaySpec(specstring)
-                    assert spec.address == hostpart 
-                    if joinpath[1:]:
-                        assert spec.joinpath == joinpath[1:]
-                    else:
-                        assert spec.joinpath == "pyexecnetcache"
-                    assert spec.type == "ssh"
-                    spec2 = GatewaySpec(specstring)
-                    self._equality(spec, spec2) 
+                for python in ('python', 'python2.5'):
+                    for joinpath in ('', 'abc', 'ab:cd', '/tmp'):
+                        specstring = ":".join([prefix, hostpart, python, joinpath])
+                        if specstring[0] == ":":
+                            specstring = specstring[1:]
+                        print specstring
+                        spec = GatewaySpec(specstring)
+                        assert spec.address == hostpart 
+                        assert spec.python == python
+                        if joinpath:
+                            assert spec.joinpath == joinpath
+                        else:
+                            assert spec.joinpath == "pyexecnetcache"
+                        assert spec.type == "ssh"
+                        spec2 = GatewaySpec(specstring)
+                        self._equality(spec, spec2) 
     
     def test_socket(self):
         for hostpart in ('x.y', 'x', 'popen'):
@@ -72,17 +81,17 @@ class TestGatewaySpecAPI:
         gw.exit()
 
     def test_popen_makegateway(self, testdir):
-        spec = GatewaySpec("popen:" + str(testdir.tmpdir))
+        spec = GatewaySpec("popen::" + str(testdir.tmpdir))
         gw = spec.makegateway()
         p = gw.remote_exec("import os; channel.send(os.getcwd())").receive()
         assert spec.joinpath == p
         gw.exit()
 
     def test_popen_makegateway_python(self, testdir):
-        spec = GatewaySpec("popen")
-        gw = spec.makegateway(python=py.std.sys.executable)
+        spec = GatewaySpec("popen:%s" % py.std.sys.executable)
+        gw = spec.makegateway()
         res = gw.remote_exec("import sys ; channel.send(sys.executable)").receive()
-        assert py.std.sys.executable == res
+        assert py.std.sys.executable == py.std.sys.executable
         gw.exit()
 
     def test_ssh(self):
@@ -118,7 +127,7 @@ class TestGatewayManagerPopen:
         assert not len(hm.gateways) 
 
     def test_hostmanager_rsync_popen_with_path(self, source, dest):
-        hm = GatewayManager(["popen:%s" %dest] * 1)
+        hm = GatewayManager(["popen::%s" %dest] * 1)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         l = []
@@ -146,7 +155,7 @@ class TestGatewayManagerPopen:
 
     def test_multi_chdir_popen_with_path(self, testdir):
         import os
-        hm = GatewayManager(["popen:hello"] * 2)
+        hm = GatewayManager(["popen::hello"] * 2)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
@@ -253,7 +262,7 @@ class TestHRSync:
         assert 'somedir' in basenames
 
     def test_hrsync_one_host(self, source, dest):
-        spec = GatewaySpec("popen:%s" % dest)
+        spec = GatewaySpec("popen::%s" % dest)
         gw = spec.makegateway()
         finished = []
         rsync = HostRSync(source)
