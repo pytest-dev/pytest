@@ -207,8 +207,8 @@ def test_subprocess_env(testdir, monkeypatch):
     try:
         monkeypatch.setitem(os.environ, "PYLIB", 'unknownconsider')
         excinfo = py.test.raises(py.process.cmdexec.Error, """
-            py.process.cmdexec("python -c 'import py'")
-        """)
+            py.process.cmdexec('%s -c "import py"')
+        """ % py.std.sys.executable)
         assert str(excinfo.value).find("ImportError") != -1
         assert str(excinfo.value).find("unknownconsider") != -1
     finally:

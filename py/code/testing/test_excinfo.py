@@ -212,7 +212,7 @@ def test_excinfo_str():
     print s
     assert s.startswith(__file__[:-1]) # pyc file 
     assert s.endswith("ValueError")
-    assert len(s.split(":")) == 3
+    assert len(s.split(":")) >= 3 # on windows it's 4
 
 def test_excinfo_errisinstance():
     excinfo = py.test.raises(ValueError, h)
