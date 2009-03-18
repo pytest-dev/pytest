@@ -140,6 +140,9 @@ class MultiGateway:
         for gw in self.gateways:
             channels.append(gw.remote_exec(source))
         return MultiChannel(channels)
+    def exit(self):
+        for gw in self.gateways:
+            gw.exit()
 
 class GatewayManager:
     RemoteError = RemoteError

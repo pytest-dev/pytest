@@ -8,103 +8,7 @@
 """
 
 import py
-from py.__.execnet.gwmanage import GatewaySpec, GatewayManager
-from py.__.execnet.gwmanage import HostRSync
-
-class TestGatewaySpec:
-    """
-    socket:hostname:port:path SocketGateway
-    popen[-executable][:path] PopenGateway
-    [ssh:]spec:path           SshGateway
-    * [SshGateway]
-    """
-    def test_popen(self):
-        for python in ('', 'python2.4'):
-            for joinpath in ('', 'abc', 'ab:cd', '/x/y'):
-                s = ":".join(["popen", python, joinpath])
-                print s
-                spec = GatewaySpec(s)
-                assert spec.address == "popen"
-                assert spec.python == python 
-                assert spec.joinpath == joinpath
-                assert spec.type == "popen"
-                spec2 = GatewaySpec("popen" + joinpath)
-                self._equality(spec, spec2)
-
-    def test_ssh(self):
-        for prefix in ('ssh', ''): # ssh is default
-            for hostpart in ('x.y', 'xyz@x.y'):
-                for python in ('python', 'python2.5'):
-                    for joinpath in ('', 'abc', 'ab:cd', '/tmp'):
-                        specstring = ":".join([prefix, hostpart, python, joinpath])
-                        if specstring[0] == ":":
-                            specstring = specstring[1:]
-                        print specstring
-                        spec = GatewaySpec(specstring)
-                        assert spec.address == hostpart 
-                        assert spec.python == python
-                        if joinpath:
-                            assert spec.joinpath == joinpath
-                        else:
-                            assert spec.joinpath == "pyexecnetcache"
-                        assert spec.type == "ssh"
-                        spec2 = GatewaySpec(specstring)
-                        self._equality(spec, spec2) 
-    
-    def test_socket(self):
-        for hostpart in ('x.y', 'x', 'popen'):
-            for port in ":80", ":1000":
-                for joinpath in ('', ':abc', ':abc:de'):
-                    spec = GatewaySpec("socket:" + hostpart + port + joinpath)
-                    assert spec.address == (hostpart, int(port[1:]))
-                    if joinpath[1:]:
-                        assert spec.joinpath == joinpath[1:]
-                    else:
-                        assert spec.joinpath == "pyexecnetcache"
-                    assert spec.type == "socket"
-                    spec2 = GatewaySpec("socket:" + hostpart + port + joinpath)
-                    self._equality(spec, spec2) 
-
-    def _equality(self, spec1, spec2):
-        assert spec1 != spec2
-        assert hash(spec1) != hash(spec2)
-        assert not (spec1 == spec2)
-
-
-class TestGatewaySpecAPI:
-    def test_popen_nopath_makegateway(self, testdir):
-        spec = GatewaySpec("popen")
-        gw = spec.makegateway()
-        p = gw.remote_exec("import os; channel.send(os.getcwd())").receive()
-        curdir = py.std.os.getcwd()
-        assert curdir == p
-        gw.exit()
-
-    def test_popen_makegateway(self, testdir):
-        spec = GatewaySpec("popen::" + str(testdir.tmpdir))
-        gw = spec.makegateway()
-        p = gw.remote_exec("import os; channel.send(os.getcwd())").receive()
-        assert spec.joinpath == p
-        gw.exit()
-
-    def test_popen_makegateway_python(self, testdir):
-        spec = GatewaySpec("popen:%s" % py.std.sys.executable)
-        gw = spec.makegateway()
-        res = gw.remote_exec("import sys ; channel.send(sys.executable)").receive()
-        assert py.std.sys.executable == py.std.sys.executable
-        gw.exit()
-
-    def test_ssh(self):
-        sshhost = py.test.config.getvalueorskip("sshhost")
-        spec = GatewaySpec("ssh:" + sshhost)
-        gw = spec.makegateway()
-        p = gw.remote_exec("import os ; channel.send(os.getcwd())").receive()
-        gw.exit()
-
-    @py.test.mark.xfail("implement socketserver test scenario")
-    def test_socketgateway(self):
-        gw = py.execnet.PopenGateway()
-        spec = GatewaySpec("ssh:" + sshhost)
+from py.__.execnet.gwmanage import GatewayManager, HostRSync
 
 class TestGatewayManagerPopen:
     def test_hostmanager_popen_makegateway(self):
@@ -191,56 +95,6 @@ class TestGatewayManagerPopen:
         assert l[0].startswith(curwd)
         assert l[0].endswith("hello")
 
-from py.__.execnet.gwmanage import MultiChannel
-class TestMultiChannel:
-    def test_multichannel_receive_each(self):
-        class pseudochannel:
-            def receive(self):
-                return 12
-
-        pc1 = pseudochannel()
-        pc2 = pseudochannel()
-        multichannel = MultiChannel([pc1, pc2])
-        l = multichannel.receive_each(withchannel=True)
-        assert len(l) == 2
-        assert l == [(pc1, 12), (pc2, 12)]
-        l = multichannel.receive_each(withchannel=False)
-        assert l == [12,12]
-
-    def test_multichannel_send_each(self):
-        gm = GatewayManager(['popen'] * 2)
-        mc = gm.multi_exec("""
-            import os
-            channel.send(channel.receive() + 1)
-        """)
-        mc.send_each(41)
-        l = mc.receive_each() 
-        assert l == [42,42]
-       
-    def test_multichannel_receive_queue(self):
-        gm = GatewayManager(['popen'] * 2)
-        mc = gm.multi_exec("""
-            import os
-            channel.send(os.getpid())
-        """)
-        queue = mc.make_receive_queue()
-        ch, item = queue.get(timeout=10)
-        ch2, item2 = queue.get(timeout=10)
-        assert ch != ch2
-        assert ch.gateway != ch2.gateway
-        assert item != item2
-        mc.waitclose()
-
-    def test_multichannel_waitclose(self):
-        l = []
-        class pseudochannel:
-            def waitclose(self):
-                l.append(0)
-        multichannel = MultiChannel([pseudochannel(), pseudochannel()])
-        multichannel.waitclose()
-        assert len(l) == 2
-
-
 def pytest_pyfuncarg_source(pyfuncitem):
     return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("source")
 def pytest_pyfuncarg_dest(pyfuncitem):
@@ -262,7 +116,7 @@ class TestHRSync:
         assert 'somedir' in basenames
 
     def test_hrsync_one_host(self, source, dest):
-        spec = GatewaySpec("popen::%s" % dest)
+        spec = py.execnet.GatewaySpec("popen::%s" % dest)
         gw = spec.makegateway()
         finished = []
         rsync = HostRSync(source)
