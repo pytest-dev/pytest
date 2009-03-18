@@ -30,7 +30,11 @@ def checkprocess(script):
             cmd += " sys"
         print "executing", script
         try:
-            py.process.cmdexec(cmd)
+            old = script.dirpath().chdir()
+            try:
+                py.process.cmdexec(cmd)
+            finally:
+                old.chdir()
         except py.process.cmdexec.Error, e:
             if cmd.find("py.rest") != -1 and \
                e.out.find("module named") != -1:

@@ -1,7 +1,8 @@
 
 """ rst generation tests
 """
-
+import py
+py.test.importorskip("docutils")
 from py.__.rest.rst import *
 from py.__.misc.rest import process as restcheck
 import traceback
