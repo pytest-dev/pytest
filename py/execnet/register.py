@@ -61,7 +61,9 @@ class InstallableGateway(gateway.Gateway):
 
 class PopenCmdGateway(InstallableGateway):
     def __init__(self, cmd):
-        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+        # on win close_fds=True does not work, not sure it'd needed
+        #p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE) 
         infile, outfile = p.stdin, p.stdout
         self._cmd = cmd
         io = inputoutput.Popen2IO(infile, outfile)
