@@ -5,6 +5,7 @@
 import py
 from py.__.test.dsession.hostmanage import HostManager, getconfiggwspecs, getconfigroots
 from py.__.execnet.gwmanage import GatewaySpec as Host
+from py.__.execnet.testing.test_gateway import getsshhost
 
 from py.__.test import event
 
@@ -135,7 +136,7 @@ class TestHostManager:
         hm.teardown_hosts()
 
     def test_hostmanage_ssh_setup_hosts(self, testdir):
-        sshhost = py.test.config.getvalueorskip("sshhost")
+        sshhost = getsshhost()
         testdir.makepyfile(__init__="", test_x="""
             def test_one():
                 pass
@@ -148,12 +149,9 @@ class TestHostManager:
 
     @py.test.mark.xfail("implement double-rsync test")
     def test_ssh_rsync_samehost_twice(self):
-        option = py.test.config.option
-        if option.sshhost is None: 
-            py.test.skip("no known ssh target, use -S to set one")
-        
-        host1 = Host("%s" % (option.sshhost, ))
-        host2 = Host("%s" % (option.sshhost, ))
+        sshhost = getsshhost()
+        host1 = Host("%s" % (sshhost, ))
+        host2 = Host("%s" % (sshhost, ))
         hm = HostManager(config, hosts=[host1, host2])
         events = []
         hm.init_rsync(events.append)

@@ -23,14 +23,15 @@ class TestBootstrapping:
         assert l2 == l3
 
     def test_pytestplugin_ENV_startup(self, testdir, monkeypatch):
-        testdir.makepyfile(pytest_x500="class X500Plugin: pass")
+        x500 = testdir.makepyfile(pytest_x500="class X500Plugin: pass")
         p = testdir.makepyfile("""
             import py
             def test_hello():
                 plugin = py.test.config.pytestplugins.getplugin('x500')
                 assert plugin is not None
         """)
-        testdir.syspathinsert()
+        new = str(x500.dirpath()) # "%s:%s" %(x500.dirpath(), os.environ.get('PYTHONPATH', ''))
+        monkeypatch.setitem(os.environ, 'PYTHONPATH', new)
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'pytest_x500')
         result = testdir.runpytest(p)
         assert result.ret == 0

@@ -92,7 +92,7 @@ class Node(object):
             self.name = name 
             self.parent = parent 
             self.config = parent.config
-            self._obj = "could not unpickle" 
+            #self._obj = "could not unpickle" 
         else:
             for colitem in colitems:
                 if colitem.name == name:

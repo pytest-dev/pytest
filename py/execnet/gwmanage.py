@@ -30,7 +30,12 @@ class GatewaySpec(object):
             parts = spec.split(":", 2)
             self.type = self.address = parts.pop(0)
             if parts:
-                self.python = parts.pop(0)
+                python = parts.pop(0)
+                # XXX XXX XXX do better GWSPEC that can deal
+                # with "C:" 
+                if py.std.sys.platform == "win32" and len(python) == 1:
+                    python = "%s:%s" %(python, parts.pop(0))
+                self.python = python
             if parts:
                 self.joinpath = parts.pop(0)
             else:

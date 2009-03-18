@@ -132,7 +132,7 @@ don't have to exist, either)::
   >>> sep = py.path.local.sep
   >>> p2.relto(p1).replace(sep, '/') # os-specific path sep in the string
   'baz/qux'
-  >>> p2.bestrelpath(p1)
+  >>> p2.bestrelpath(p1).replace(sep, '/')
   '../..'
   >>> p2.join(p2.bestrelpath(p1)) == p1 
   True

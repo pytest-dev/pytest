@@ -10,4 +10,8 @@ def test_kill():
     assert proc.poll() is None # no return value yet
     py.process.kill(proc.pid)
     ret = proc.wait()
+    if sys.platform == "win32" and ret == 0:
+        py.test.skip("XXX on win32, subprocess.Popen().wait() on a killed "
+                     "process does not yield return value != 0")
+        
     assert ret != 0

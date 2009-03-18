@@ -125,4 +125,6 @@ def importplugin(importspec):
         except ImportError, e:
             if str(e).find(importspec) == -1:
                 raise
+            #print "syspath:", py.std.sys.path
+            #print "curdir:", py.std.os.getcwd()
             return __import__(importspec)  # show the original exception

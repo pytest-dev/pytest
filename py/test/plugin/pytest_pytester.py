@@ -232,14 +232,9 @@ class TmpTestdir:
 
     def runpybin(self, scriptname, *args):
         bindir = py.path.local(py.__file__).dirpath("bin")
-        if py.std.sys.platform == "win32":
-            script = bindir.join("win32", scriptname + ".cmd")
-            assert script.check()
-            return self.run(script, *args)
-        else:
-            script = bindir.join(scriptname)
-            assert script.check()
-            return self.run(py.std.sys.executable, script, *args)
+        script = bindir.join(scriptname)
+        assert script.check()
+        return self.run(py.std.sys.executable, script, *args)
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 

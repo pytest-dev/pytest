@@ -11,7 +11,7 @@ if sys.platform == "win32":
         def dokill(pid):
             PROCESS_TERMINATE = 1
             handle = ctypes.windll.kernel32.OpenProcess(
-                        PROCESS_TERMINATE, False, process.pid)
+                        PROCESS_TERMINATE, False, pid)
             ctypes.windll.kernel32.TerminateProcess(handle, -1)
             ctypes.windll.kernel32.CloseHandle(handle)
 else:
