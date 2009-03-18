@@ -140,7 +140,7 @@ To specify Gateways with a String::
     >>> gwspec = py.execnet.GatewaySpec("popen")
     >>> gw = gwspec.makegateway()
     >>> ex = gw.remote_exec("import sys ; channel.send(sys.executable)").receive()
-    >>> assert ex == py.std.sys.executable
+    >>> assert ex == py.std.sys.executable, (ex, py.std.sys.executable)
     >>>
 
 current gateway types and specifications

@@ -120,11 +120,8 @@ class SlaveNode(object):
         self.sendevent("itemtestreport", testrep)
 
 
-def makehostup(host=None):
-    from py.__.execnet.gwmanage import GatewaySpec
+def makehostup(host="INPROCESS"):
     import sys
-    if host is None:
-        host = GatewaySpec("localhost")
     platinfo = {}
     for name in 'platform', 'executable', 'version_info':
         platinfo["sys."+name] = getattr(sys, name)

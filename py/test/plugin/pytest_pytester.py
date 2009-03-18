@@ -232,7 +232,7 @@ class TmpTestdir:
         else:
             script = bindir.join(scriptname)
         assert script.check()
-        return self.run(script, *args)
+        return self.run(py.std.sys.executable, script, *args)
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 

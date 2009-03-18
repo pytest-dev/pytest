@@ -98,7 +98,7 @@ class TerminalReporter:
 
     def pyevent_hostup(self, event):
         d = event.platinfo.copy()
-        d['host'] = event.host.address
+        d['host'] = getattr(event.host, 'address', event.host)
         d['version'] = repr_pythonversion(d['sys.version_info'])
         self.write_line("HOSTUP: %(host)s %(sys.platform)s "
                       "%(sys.executable)s - Python %(version)s" %
@@ -325,7 +325,7 @@ class TestTerminal:
         rep = TerminalReporter(item.config, linecomp.stringio)
         rep.pyevent_hostup(makehostup())
         linecomp.assert_contains_lines([
-            "*localhost %s %s - Python %s" %(sys.platform, 
+            "*inline %s %s - Python %s" %(sys.platform, 
             sys.executable, repr_pythonversion(sys.version_info))
         ])
 

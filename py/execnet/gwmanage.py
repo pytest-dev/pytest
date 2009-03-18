@@ -24,7 +24,7 @@ from py.__.execnet.channel import RemoteError
 NO_ENDMARKER_WANTED = object()
 
 class GatewaySpec(object):
-    python = "python" 
+    python = None
     def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
         if spec == "popen" or spec.startswith("popen:"):
             parts = spec.split(":", 2)
@@ -35,6 +35,9 @@ class GatewaySpec(object):
                 self.joinpath = parts.pop(0)
             else:
                 self.joinpath = ""
+            if not self.python:
+                self.python = py.std.sys.executable
+
         elif spec.startswith("socket:"):
             parts = spec[7:].split(":", 2)
             self.address = parts.pop(0)

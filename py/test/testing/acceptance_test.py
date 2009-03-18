@@ -179,7 +179,7 @@ class TestPyTest:
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
         extra = result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
-            "*localhost* %s %s - Python %s*" %(
+            "HOSTUP*INPROCESS* %s %s - Python %s*" %(
                     py.std.sys.platform, py.std.sys.executable, verinfo),
             "*test_header_trailer_info.py .",
             "=* 1 passed in *.[0-9][0-9] seconds *=", 
@@ -379,7 +379,7 @@ class TestInteractive:
         return spawn
 
     def requirespexpect(self, version_needed):
-        import pexpect
+        pexpect = py.test.importorskip("pexpect")
         ver = tuple(map(int, pexpect.__version__.split(".")))
         if ver < version_needed:
             py.test.skip("pexpect version %s needed" %(".".join(map(str, version_needed))))

@@ -6,7 +6,11 @@ from py.__.test import event
 
 def getconfiggwspecs(config):
     if config.option.numprocesses:
-        gwspecs = ['popen'] * config.option.numprocesses
+        if config.option.executable:
+            s = 'popen:%s' % config.option.executable
+        else:
+            s = 'popen'
+        gwspecs = [s] * config.option.numprocesses
     else:
         gwspecs = config.option.gateways
         if not gwspecs:
