@@ -571,6 +571,9 @@ class TestSocketGateway(SocketGatewaySetup, BasicRemoteExecution):
 class TestSshGateway(BasicRemoteExecution):
     def setup_class(cls): 
         sshhost = py.test.config.getvalueorskip("sshhost")
+        if sshhost.find(":") != -1:
+            sshhost = sshhost.split(":")[0]
+        cls.sshhost = sshhost
         cls.gw = py.execnet.SshGateway(sshhost)
 
     def test_sshconfig_functional(self):
@@ -578,7 +581,7 @@ class TestSshGateway(BasicRemoteExecution):
         ssh_config = tmpdir.join("ssh_config") 
         ssh_config.write(
             "Host alias123\n"
-            "   HostName %s\n" % (py.test.config.option.sshhost,))
+            "   HostName %s\n" % self.sshhost)
         gw = py.execnet.SshGateway("alias123", ssh_config=ssh_config)
         assert gw._cmd.find("-F") != -1
         assert gw._cmd.find(str(ssh_config)) != -1
@@ -586,7 +589,7 @@ class TestSshGateway(BasicRemoteExecution):
         gw.exit()
 
     def test_sshaddress(self):
-        assert self.gw.remoteaddress == py.test.config.option.sshhost
+        assert self.gw.remoteaddress == self.sshhost
 
     @py.test.mark.xfail("XXX ssh-gateway error handling")
     def test_connexion_failes_on_non_existing_hosts(self):

@@ -21,6 +21,11 @@ class PytesterPlugin:
     def pytest_pyfuncarg_EventRecorder(self, pyfuncitem):
         return EventRecorder
 
+    def pytest_pyfuncarg_eventrecorder(self, pyfuncitem):
+        evrec = EventRecorder(py._com.pyplugins)
+        pyfuncitem.addfinalizer(lambda: evrec.pyplugins.unregister(evrec))
+        return evrec
+
 def test_generic(plugintester):
     plugintester.apicheck(PytesterPlugin)
 
@@ -245,6 +250,8 @@ class Event:
         self.name = name
         self.args = args
         self.kwargs = kwargs
+    def __repr__(self):
+        return "<Event %r %r>" %(self.name, self.args)
 
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
@@ -259,6 +266,13 @@ class EventRecorder(object):
         if self.debug:
             print "[event: %s]: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
         self.events.append(Event(name, args, kwargs))
+
+    def popevent(self, name):
+        for i, event in py.builtin.enumerate(self.events):
+            if event.name == name:
+                del self.events[i]
+                return event
+        raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
     def get(self, cls):
         l = []

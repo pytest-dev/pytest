@@ -330,6 +330,7 @@ class Gateway(object):
         self._cleanup.unregister(self)
         self._stopexec()
         self._stopsend()
+        py._com.pyplugins.notify("gateway_exit", self)
 
     def _stopsend(self):
         self._send(None)

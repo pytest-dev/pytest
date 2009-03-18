@@ -155,8 +155,14 @@ class PytestPluginHooks:
     def pyevent(self, eventname, *args, **kwargs):
         """ called for each testing event. """
 
+    def pyevent_gateway_init(self, gateway):
+        """ called a gateway has been initialized. """
+
+    def pyevent_gateway_exit(self, gateway):
+        """ called when gateway is being exited. """
+
     def pyevent_trace(self, category, msg):
-        """ called for tracing events events. """
+        """ called for tracing events. """
 
     def pyevent_internalerror(self, event):
         """ called for internal errors. """

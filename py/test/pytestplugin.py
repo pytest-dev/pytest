@@ -95,6 +95,7 @@ class PytestPlugins(object):
         config = self._config 
         del self._config 
         self.pyplugins.call_each("pytest_unconfigure", config=config)
+        config.bus.unregister(self)
 
 # 
 #  XXX old code to automatically load classes
