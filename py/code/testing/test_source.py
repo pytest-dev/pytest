@@ -326,16 +326,11 @@ def test_getsource_fallback():
     src = getsource(x)
     assert src == expected
 
-def test_getsource___source__():
+def test_idem_compile_and_getsource():
     from py.__.code.source import getsource
-    x = py.code.compile("""if 1:
-    def x():
-        pass
-""")
-
-    expected = """def x():
-    pass"""
-    src = getsource(x)
+    expected = "def x(): pass"
+    co = py.code.compile(expected)
+    src = getsource(co)
     assert src == expected
 
 def test_findsource_fallback():
@@ -346,11 +341,17 @@ def test_findsource_fallback():
 
 def test_findsource___source__():
     from py.__.code.source import findsource
-    x = py.code.compile("""if 1:
+    co = py.code.compile("""if 1:
     def x():
         pass
 """)
         
-    src, lineno = findsource(x)
+    src, lineno = findsource(co)
     assert 'if 1:' in str(src)
-    assert src[lineno] == '    def x():'
+
+    d = {}
+    eval(co, d)
+    src, lineno = findsource(d['x'])
+    assert 'if 1:' in str(src)
+    assert src[lineno] == "    def x():"
+    

@@ -18,7 +18,7 @@ class TestGatewaySpec:
                 print s
                 spec = py.execnet.GatewaySpec(s)
                 assert spec.address == "popen"
-                assert spec.python == python 
+                assert spec.python == (python or py.std.sys.executable)
                 assert spec.joinpath == joinpath
                 assert spec.type == "popen"
                 spec2 = py.execnet.GatewaySpec("popen" + joinpath)

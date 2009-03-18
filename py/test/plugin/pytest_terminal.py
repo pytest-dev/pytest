@@ -325,7 +325,7 @@ class TestTerminal:
         rep = TerminalReporter(item.config, linecomp.stringio)
         rep.pyevent_hostup(makehostup())
         linecomp.assert_contains_lines([
-            "*inline %s %s - Python %s" %(sys.platform, 
+            "*INPROCESS* %s %s - Python %s" %(sys.platform, 
             sys.executable, repr_pythonversion(sys.version_info))
         ])
 
