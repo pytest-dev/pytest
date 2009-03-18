@@ -89,6 +89,7 @@ class HostManager(object):
             for root in self.roots:
                 self.gwmanager.rsync(root, **options)
         else: 
+            XXX # do we want to care for situations without explicit rsyncdirs? 
             # we transfer our topdir as the root
             self.gwmanager.rsync(self.config.topdir, **options)
             # and cd into it 

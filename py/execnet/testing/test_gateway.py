@@ -564,17 +564,23 @@ class SocketGatewaySetup:
 ##    def teardown_class(cls):
 ##        cls.gw.exit()
 ##        cls.proxygw.exit()
+       
+def getsshhost():
+    sshhost = py.test.config.getvalueorskip("sshhost")
+    if sshhost.find(":") != -1:
+        sshhost = sshhost.split(":")[0]
+    ssh = py.path.local.sysfind("ssh")
+    if not ssh:
+        py.test.skip("command not found: ssh")
+    return sshhost
 
 class TestSocketGateway(SocketGatewaySetup, BasicRemoteExecution):
     pass
 
 class TestSshGateway(BasicRemoteExecution):
     def setup_class(cls): 
-        sshhost = py.test.config.getvalueorskip("sshhost")
-        if sshhost.find(":") != -1:
-            sshhost = sshhost.split(":")[0]
-        cls.sshhost = sshhost
-        cls.gw = py.execnet.SshGateway(sshhost)
+        cls.sshhost = getsshhost()
+        cls.gw = py.execnet.SshGateway(cls.sshhost)
 
     def test_sshconfig_functional(self):
         tmpdir = py.test.ensuretemp("test_sshconfig")

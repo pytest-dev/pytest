@@ -160,11 +160,6 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 return self.Function(name, parent=self)
 
 class Module(py.test.collect.File, PyCollectorMixin):
-    def collect(self):
-        if self.fspath.ext == ".py" and getattr(self.obj, 'disabled', 0):
-            return []
-        return super(Module, self).collect()
-
     def _getobj(self):
         return self._memoizedcall('_obj', self._importtestmodule)
 
@@ -176,6 +171,8 @@ class Module(py.test.collect.File, PyCollectorMixin):
         return mod
 
     def setup(self): 
+        if getattr(self.obj, 'disabled', 0):
+            py.test.skip("%r is disabled" %(self.obj,))
         if not self.config.option.nomagic:
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
@@ -195,14 +192,14 @@ class Module(py.test.collect.File, PyCollectorMixin):
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
     def collect(self):
-        if getattr(self.obj, 'disabled', 0):
-            return []
         l = self._deprecated_collect()
         if l is not None:
             return l
         return [self.Instance(name="()", parent=self)]
 
     def setup(self): 
+        if getattr(self.obj, 'disabled', 0):
+            py.test.skip("%r is disabled" %(self.obj,))
         setup_class = getattr(self.obj, 'setup_class', None)
         if setup_class is not None: 
             setup_class = getattr(setup_class, 'im_func', setup_class) 

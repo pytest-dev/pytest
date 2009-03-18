@@ -1,5 +1,7 @@
 import py
 
+from py.__.test.outcome import Skipped
+
 class TestModule:
     def test_module_file_not_found(self, testdir):
         tmpdir = testdir.tmpdir
@@ -38,15 +40,6 @@ class TestModule:
         x = l.pop()
         assert x is None
 
-    def test_disabled_module(self, testdir):
-        modcol = testdir.getmodulecol("""
-            disabled = True
-            def setup_module(mod):
-                raise ValueError
-        """)
-        assert not modcol.collect() 
-        assert not modcol.run() 
-
     def test_module_participates_as_plugin(self, testdir):
         modcol = testdir.getmodulecol("")
         modcol.setup()
@@ -57,6 +50,18 @@ class TestModule:
     def test_module_considers_pytestplugins_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")
+
+    def test_disabled_module(self, testdir):
+        modcol = testdir.getmodulecol("""
+            disabled = True
+            def setup_module(mod):
+                raise ValueError
+            def test_method():
+                pass
+        """)
+        l = modcol.collect() 
+        assert len(l) == 1
+        py.test.raises(Skipped, "modcol.setup()")
 
 class TestClass:
     def test_disabled_class(self, testdir):
@@ -70,7 +75,9 @@ class TestClass:
         assert len(l) == 1
         modcol = l[0]
         assert isinstance(modcol, py.test.collect.Class)
-        assert not modcol.collect() 
+        l = modcol.collect() 
+        assert len(l) == 1
+        py.test.raises(Skipped, "modcol.setup()")
 
 class TestGenerator:
     def test_generative_functions(self, testdir): 

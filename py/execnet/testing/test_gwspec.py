@@ -3,6 +3,7 @@
 """
 
 import py
+from test_gateway import getsshhost
 
 class TestGatewaySpec:
     """
@@ -88,7 +89,7 @@ class TestGatewaySpecAPI:
         gw.exit()
 
     def test_ssh(self):
-        sshhost = py.test.config.getvalueorskip("sshhost")
+        sshhost = getsshhost()
         spec = py.execnet.GatewaySpec("ssh:" + sshhost)
         gw = spec.makegateway()
         p = gw.remote_exec("import os ; channel.send(os.getcwd())").receive()

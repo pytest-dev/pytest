@@ -31,8 +31,8 @@ class ExecnetcleanupPlugin:
         for gw in self._gateways:
             gw.exit()
             l.append(gw)
-        for gw in l:
-            gw.join()
+        #for gw in l:
+        #    gw.join()
    
 def test_generic(plugintester):
     plugintester.apicheck(ExecnetcleanupPlugin)
