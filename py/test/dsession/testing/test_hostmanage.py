@@ -33,6 +33,7 @@ class TestHostManager:
         hm = HostManager(session.config, hosts=[1,2,3])
         assert hm.hosts == [1,2,3]
 
+    @py.test.mark.xfail("consider / forbid implicit rsyncdirs?")
     def test_hostmanager_rsync_roots_no_roots(self, source, dest):
         source.ensure("dir1", "file1").write("hello")
         config = py.test.config._reparse([source])
@@ -133,6 +134,18 @@ class TestHostManager:
             assert l 
         hm.teardown_hosts()
 
+    def test_hostmanage_ssh_setup_hosts(self, testdir):
+        sshhost = py.test.config.getvalueorskip("sshhost")
+        testdir.makepyfile(__init__="", test_x="""
+            def test_one():
+                pass
+        """)
+
+        sorter = testdir.inline_run("-d", "--rsyncdirs=%s" % testdir.tmpdir, 
+                "--gateways=%s" % sshhost, testdir.tmpdir)
+        ev = sorter.getfirstnamed("itemtestreport")
+        assert ev.passed 
+
     @py.test.mark.xfail("implement double-rsync test")
     def test_ssh_rsync_samehost_twice(self):
         option = py.test.config.option
@@ -162,8 +175,8 @@ def test_getconfiggwspecs_disthosts():
 def test_getconfigroots(testdir):
     config = testdir.parseconfig('--rsyncdirs=' + str(testdir.tmpdir))
     roots = getconfigroots(config)
-    assert len(roots) == 1
-    assert roots == [testdir.tmpdir]
+    assert len(roots) == 1 + 1 
+    assert testdir.tmpdir in roots
 
 def test_getconfigroots_with_conftest(testdir):
     testdir.chdir()
@@ -175,7 +188,7 @@ def test_getconfigroots_with_conftest(testdir):
     """)
     config = testdir.parseconfig(testdir.tmpdir, '--rsyncdirs=y,z')
     roots = getconfigroots(config)
-    assert len(roots) == 3
+    assert len(roots) == 3 + 1 
     assert py.path.local('y') in roots 
     assert py.path.local('z') in roots 
     assert testdir.tmpdir.join('x') in roots 

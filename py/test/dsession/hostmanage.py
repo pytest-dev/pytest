@@ -25,9 +25,16 @@ def getconfigroots(config):
     conftestroots = config.getconftest_pathlist("rsyncdirs")
     if conftestroots:
         roots.extend(conftestroots)
+    pydir = py.path.local(py.__file__).dirpath()
     for root in roots:
         if not root.check():
             raise ValueError("rsyncdir doesn't exist: %r" %(root,))
+        if pydir is not None and root.basename == "py":
+            if root != pydir:
+                raise ValueError("root %r conflicts with current %r" %(root, pydir))
+            pydir = None
+    if pydir is not None:
+        roots.append(pydir)
     return roots 
     
 class HostManager(object):
@@ -98,6 +105,11 @@ class HostManager(object):
             """ % nice).waitclose()
 
         self.trace_hoststatus()
+        multigw = self.gwmanager.getgateways(inplacelocal=False, remote=True)
+        multigw.remote_exec("""
+            import os, sys
+            sys.path.insert(0, os.getcwd())
+        """).waitclose()
 
         for gateway in self.gwmanager.gateways:
             host = gateway.spec 

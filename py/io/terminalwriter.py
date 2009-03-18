@@ -96,7 +96,7 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
     if esc and sys.platform == "win32" and file.isatty():
         if 1 in esc:
             bold = True
-            esc = tuple(x for x in esc if x != 1)
+            esc = tuple([x for x in esc if x != 1])
         else:
             bold = False
         esctable = {()   : FOREGROUND_WHITE,                 # normal
