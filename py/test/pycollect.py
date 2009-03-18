@@ -265,7 +265,7 @@ class FunctionMixin(PyobjMixin):
             teardown_func_or_meth(self.obj) 
 
     def _prunetraceback(self, traceback):
-        if not self.config.option.fulltrace: 
+        if hasattr(self, '_obj') and not self.config.option.fulltrace: 
             code = py.code.Code(self.obj) 
             path, firstlineno = code.path, code.firstlineno 
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)

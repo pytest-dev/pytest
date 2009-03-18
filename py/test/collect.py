@@ -20,6 +20,7 @@ The is a schematic example of a tree of collectors and test items::
 """ 
 import py
 from py.__.misc.warn import APIWARN
+from py.__.test.outcome import Skipped
 
 def configproperty(name):
     def fget(self):
@@ -81,11 +82,24 @@ class Node(object):
     def __getstate__(self):
         return (self.name, self.parent)
     def __setstate__(self, (name, parent)):
-        newnode = parent.join(name)
-        if newnode is None:
-            raise AssertionError(self, name, parent, parent.__dict__)
-        self.__dict__.update(newnode.__dict__)
-        #self.__init__(name=name, parent=parent)
+        try:
+            colitems = parent._memocollect()
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            # seems our parent can't collect us 
+            # so let's be somewhat operable 
+            self.name = name 
+            self.parent = parent 
+            self.config = parent.config
+            self._obj = "could not unpickle" 
+        else:
+            for colitem in colitems:
+                if colitem.name == name:
+                    # we are a copy that will not be returned
+                    # by our parent 
+                    self.__dict__ = colitem.__dict__
+                    break
 
     def __repr__(self): 
         if getattr(self.config.option, 'debug', False):
@@ -367,11 +381,6 @@ class Collector(Node):
         """
         warnoldcollect()
         return self.collect_by_name(name)
-
-    def multijoin(self, namelist): 
-        """ DEPRECATED: return a list of child items matching the given namelist. """ 
-        warnoldcollect()
-        return [self.join(name) for name in namelist]
 
 class FSCollector(Collector): 
     def __init__(self, fspath, parent=None, config=None): 

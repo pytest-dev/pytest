@@ -70,7 +70,15 @@ class ItemTestReport(BaseReport):
 
     def __init__(self, colitem, excinfo=None, when=None, outerr=None):
         self.colitem = colitem 
-        self.keywords = colitem and colitem.readkeywords()
+        if colitem and when != "setup":
+            self.keywords = colitem.readkeywords() 
+        else:
+            # if we fail during setup it might mean 
+            # we are not able to access the underlying object
+            # this might e.g. happen if we are unpickled 
+            # and our parent collector did not collect us 
+            # (because it e.g. skipped for platform reasons)
+            self.keywords = {}  
         if not excinfo:
             self.passed = True
             self.shortrepr = "." 
