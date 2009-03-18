@@ -168,7 +168,11 @@ class Config(object):
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
-        return [modpath.join(x, abs=True) for x in relroots]
+        l = []
+        for relroot in relroots:
+            relroot = relroot.replace("/", py.path.local.sep)
+            l.append(modpath.join(relroot, abs=True))
+        return l 
              
     def addoptions(self, groupname, *specs): 
         """ add a named group of options to the current testing session. 
