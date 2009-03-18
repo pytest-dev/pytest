@@ -16,15 +16,18 @@ class DefaultPlugin:
                 return parent.Module(path, parent=parent) 
       
     def pytest_collect_directory(self, path, parent):
+        #excludelist = parent._config.getvalue_pathlist('dir_exclude', path)
+        #if excludelist and path in excludelist:
+        #    return 
         if not parent.recfilter(path):
-            # check if cmdline specified this dir or a subdir
+            # check if cmdline specified this dir or a subdir directly
             for arg in parent.config.args:
                 if path == arg or arg.relto(path):
                     break
             else:
                 return 
-        # not use parent.Directory here as we want
-        # dir/conftest.py to be able to 
+        # not use parent.Directory here as we generally 
+        # want dir/conftest.py to be able to 
         # define Directory(dir) already 
         Directory = parent.config.getvalue('Directory', path) 
         return Directory(path, parent=parent)
