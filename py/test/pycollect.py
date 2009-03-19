@@ -288,6 +288,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         # otherwise we could avoid global setupstate
         self.config._setupstate.prepare(self) 
         l = []
+        seen = {}
         for i, x in py.builtin.enumerate(self.obj()): 
             name, call, args = self.getcallargs(x)
             if not callable(call): 
@@ -296,6 +297,9 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
                 name = "[%d]" % i
             else:
                 name = "['%s']" % name
+            if name in seen:
+                raise ValueError("%r generated tests with non-unique name %r" %(self, name))
+            seen[name] = True
             l.append(self.Function(name, self, args=args, callobj=call))
         return l
         

@@ -140,6 +140,20 @@ class TestGenerator:
         assert gencolitems[1].name == "['fortytwo']"
         assert gencolitems[1].obj.func_name == 'func1'        
 
+    def test_generative_functions_unique_explicit_names(self, testdir):
+        # generative 
+        modcol = testdir.getmodulecol("""
+            def func(): pass 
+            def test_gen(): 
+                yield "name", func
+                yield "name", func
+        """)
+        colitems = modcol.collect()
+        assert len(colitems) == 1
+        gencol = colitems[0]
+        assert isinstance(gencol, py.test.collect.Generator)
+        py.test.raises(ValueError, "gencol.collect()")
+
     def test_generative_methods_with_explicit_names(self, testdir): 
         modcol = testdir.getmodulecol("""
             def func1(arg, arg2): 
