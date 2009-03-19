@@ -1,7 +1,5 @@
 """ 
     tests for 
-    - gateway specifications
-    - multi channels and multi gateways 
     - gateway management 
     - manage rsyncing of hosts 
 
@@ -10,10 +8,18 @@
 import py
 from py.__.execnet.gwmanage import GatewayManager, HostRSync
 
+pytest_plugins = "pytest_pytester"
+
 class TestGatewayManagerPopen:
-    def test_hostmanager_popen_makegateway(self):
+    def test_hostmanager_popen_makegateway(self, eventrecorder):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
+        event = eventrecorder.popevent("gwmanage_newgateway")
+        gw = event.args[0]
+        assert gw.id == "[1]" 
+        event = eventrecorder.popevent("gwmanage_newgateway")
+        gw = event.args[0]
+        assert gw.id == "[2]" 
         assert len(hm.gateways) == 2
         hm.exit()
         assert not len(hm.gateways) 

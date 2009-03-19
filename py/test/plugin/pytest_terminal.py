@@ -84,6 +84,9 @@ class TerminalReporter:
         for line in str(event.repr).split("\n"):
             self.write_line("InternalException: " + line)
 
+    def pyevent_gwmanage_newgateway(self, gateway):
+        self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
+
     def pyevent_hostgatewayready(self, event):
         if self.config.option.verbose:
             self.write_line("HostGatewayReady: %s" %(event.host,))

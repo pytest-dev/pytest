@@ -26,6 +26,7 @@ NO_ENDMARKER_WANTED = object()
 class GatewaySpec(object):
     python = None
     def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
+        self._spec = spec
         if spec == "popen" or spec.startswith("popen:"):
             parts = spec.split(":", 2)
             self.type = self.address = parts.pop(0)
@@ -66,7 +67,7 @@ class GatewaySpec(object):
         return bool(self.type == "popen" and not self.joinpath)
 
     def __str__(self):
-        return "<GatewaySpec %s:%s>" % (self.address, self.joinpath)
+        return "<GatewaySpec %s>" % self._spec
     __repr__ = __str__
 
     def makegateway(self, waitclose=True):
@@ -102,13 +103,18 @@ class GatewayManager:
         self.gateways = []
 
     def trace(self, msg):
-        py._com.pyplugins.notify("trace", "gatewaymanage", msg)
+        self.notify("trace", "gatewaymanage", msg)
+
+    def notify(self, eventname, *args, **kwargs):
+        py._com.pyplugins.notify(eventname, *args, **kwargs)
 
     def makegateways(self):
         assert not self.gateways
         for spec in self.specs:
-            self.trace("makegateway %s" %(spec))
-            self.gateways.append(spec.makegateway())
+            gw = spec.makegateway()
+            self.gateways.append(gw)
+            gw.id = "[%s]" % len(self.gateways)
+            self.notify("gwmanage_newgateway", gw)
 
     def getgateways(self, remote=True, inplacelocal=True):
         if not self.gateways and self.specs:

@@ -50,6 +50,11 @@ class HostManager(object):
         self.gwmanager = GatewayManager(hosts)
 
     def makegateways(self):
+        # we change to the topdir sot that 
+        # PopenGateways will have their cwd 
+        # such that unpickling configs will 
+        # pick it up as the right topdir 
+        # (for other gateways this chdir is irrelevant)
         old = self.config.topdir.chdir()  
         try:
             self.gwmanager.makegateways()
@@ -74,11 +79,6 @@ class HostManager(object):
             have the same set of roots in their
             current directory. 
         """
-        # we change to the topdir sot that 
-        # PopenGateways will have their cwd 
-        # such that unpickling configs will 
-        # pick it up as the right topdir 
-        # (for other gateways this chdir is irrelevant)
         self.makegateways()
         options = {
             'ignores': self.config_getignores(), 

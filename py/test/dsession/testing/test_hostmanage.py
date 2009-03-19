@@ -136,7 +136,7 @@ class TestHostManager:
         hm.teardown_hosts()
 
     def test_hostmanage_ssh_setup_hosts(self, testdir):
-        sshhost = getsshhost()
+        sshhost = getsshhost(withpython=True)
         testdir.makepyfile(__init__="", test_x="""
             def test_one():
                 pass
@@ -149,7 +149,7 @@ class TestHostManager:
 
     @py.test.mark.xfail("implement double-rsync test")
     def test_ssh_rsync_samehost_twice(self):
-        sshhost = getsshhost()
+        sshhost = getsshhost(withpython=True)
         host1 = Host("%s" % (sshhost, ))
         host2 = Host("%s" % (sshhost, ))
         hm = HostManager(config, hosts=[host1, host2])

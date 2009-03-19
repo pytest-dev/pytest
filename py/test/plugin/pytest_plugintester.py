@@ -186,7 +186,13 @@ class PytestPluginHooks:
         """ whole test run starts. """
 
     def pyevent_testrunfinish(self, event):
-        """ whole test run starts. """
+        """ whole test run finishes. """
+
+    def pyevent_gwmanage_newgateway(self, gateway):
+        """ execnet gateway manager has instantiated a gateway. 
+            The gateway will have an 'id' attribute that is unique 
+            within the gateway manager context. 
+        """
 
     def pyevent_hostup(self, event):
         """ Host is up. """

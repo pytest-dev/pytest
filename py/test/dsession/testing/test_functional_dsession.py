@@ -65,9 +65,12 @@ class TestAsyncFunctional:
         p = subdir.join("test_one.py")
         p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
         result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
-                                   "--gateways=popen::%(dest)s" % locals(), p)
+            "--gateways=popen::%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
+            "*1* instantiated gateway *popen*",
+            #"RSyncStart: [G1]",
+            #"RSyncFinished: [G1]",
             "*1 passed*"
         ])
         assert dest.join(subdir.basename).check(dir=1)

@@ -565,9 +565,9 @@ class SocketGatewaySetup:
 ##        cls.gw.exit()
 ##        cls.proxygw.exit()
        
-def getsshhost():
+def getsshhost(withpython=False):
     sshhost = py.test.config.getvalueorskip("sshhost")
-    if sshhost.find(":") != -1:
+    if not withpython and sshhost.find(":") != -1:
         sshhost = sshhost.split(":")[0]
     ssh = py.path.local.sysfind("ssh")
     if not ssh:
