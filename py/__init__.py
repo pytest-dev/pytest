@@ -27,8 +27,8 @@ version = "1.0.0a1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63027 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-03-18 12:18:39 +0100 (Wed, 18 Mar 2009) $',
+    revision = int('$LastChangedRevision: 63089 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-03-19 18:05:41 +0100 (Thu, 19 Mar 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/0.9.2/download.html",
@@ -152,8 +152,8 @@ initpkg(__name__,
     'execnet.PopenGateway'   : ('./execnet/register.py', 'PopenGateway'),
     'execnet.SshGateway'     : ('./execnet/register.py', 'SshGateway'),
     'execnet.GatewaySpec'    : ('./execnet/gwmanage.py', 'GatewaySpec'),
-    'execnet.MultiGateway'   : ('./execnet/gwmanage.py', 'MultiGateway'),
-    'execnet.MultiChannel'   : ('./execnet/gwmanage.py', 'MultiChannel'),
+    'execnet.MultiGateway'   : ('./execnet/multi.py', 'MultiGateway'),
+    'execnet.MultiChannel'   : ('./execnet/multi.py', 'MultiChannel'),
 
     # execnet scripts
     'execnet.RSync'          : ('./execnet/rsync.py', 'RSync'),
