@@ -14,6 +14,11 @@ class LocalSetup:
 
 class TestLocalPath(LocalSetup, CommonFSTests):
 
+    def test_samefile(self):
+        assert self.tmpdir.samefile(self.tmpdir)
+        p = self.tmpdir.ensure("hello")
+        assert p.samefile(p) 
+
     def test_join_normpath(self):
         assert self.tmpdir.join(".") == self.tmpdir
         p = self.tmpdir.join("../%s" % self.tmpdir.basename)
