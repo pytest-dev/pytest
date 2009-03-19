@@ -330,7 +330,12 @@ class Gateway(object):
         self._cleanup.unregister(self)
         self._stopexec()
         self._stopsend()
-        py._com.pyplugins.notify("gateway_exit", self)
+        try:
+            py._com.pyplugins.notify("gateway_exit", self)
+        except NameError: 
+            # on the remote side 'py' is not imported 
+            # and so we can't notify (XXX: make execnet synchronous) 
+            pass
 
     def _stopsend(self):
         self._send(None)
