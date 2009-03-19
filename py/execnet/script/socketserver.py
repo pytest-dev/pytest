@@ -68,8 +68,12 @@ def startserver(serversock, loop=False):
             except (KeyboardInterrupt, SystemExit): 
                 raise 
             except: 
-                import traceback
-                traceback.print_exc()
+                if debug:
+                    import traceback
+                    traceback.print_exc()
+                else:
+                    excinfo = sys.exc_info()
+                    print "got exception", excinfo[1]
             if not loop: 
                 break 
     finally:
