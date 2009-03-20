@@ -50,18 +50,18 @@ class TestGatewayManagerPopen:
         assert dest.join("dir1", "dir2").check()
         assert dest.join("dir1", "dir2", 'hello').check()
 
-    def XXXtest_ssh_rsync_samehost_twice(self):
-        #XXX we have no easy way to have a temp directory remotely!
-        option = py.test.config.option
-        if option.sshhost is None: 
-            py.test.skip("no known ssh target, use -S to set one")
-        host1 = Host("%s" % (option.sshhost, ))
-        host2 = Host("%s" % (option.sshhost, ))
-        hm = HostManager(config, hosts=[host1, host2])
-        events = []
-        hm.init_rsync(events.append)
-        print events
-        assert 0
+    def test_hostmanage_rsync_same_popen_twice(self, source, dest, eventrecorder):
+        hm = GatewayManager(["popen::%s" %dest] * 2)
+        hm.makegateways()
+        source.ensure("dir1", "dir2", "hello")
+        hm.rsync(source)
+        event = eventrecorder.popevent("gwmanage_rsyncstart") 
+        source2 = event.kwargs['source'] 
+        gws = event.kwargs['gateways'] 
+        assert source2 == source 
+        assert len(gws) == 1
+        assert hm.gateways[0] == gws[0]
+        event = eventrecorder.popevent("gwmanage_rsyncfinish") 
 
     def test_multi_chdir_popen_with_path(self, testdir):
         import os
@@ -132,4 +132,3 @@ class TestHRSync:
         gw.exit()
         assert dest.join(source.basename, "hello.py").check()
         assert len(finished) == 1
-

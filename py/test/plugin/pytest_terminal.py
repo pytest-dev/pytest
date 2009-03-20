@@ -87,9 +87,13 @@ class TerminalReporter:
     def pyevent_gwmanage_newgateway(self, gateway):
         self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
 
-    def pyevent_hostgatewayready(self, event):
-        if self.config.option.verbose:
-            self.write_line("HostGatewayReady: %s" %(event.host,))
+    def pyevent_gwmanage_rsyncstart(self, source, gateways):
+        targets = ", ".join([gw.id for gw in gateways])
+        self.write_line("rsyncstart: %s -> %s" %(source, targets))
+
+    def pyevent_gwmanage_rsyncfinish(self, source, gateways):
+        targets = ", ".join([gw.id for gw in gateways])
+        self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
     def pyevent_plugin_registered(self, plugin):
         if self.config.option.traceconfig: 
@@ -323,7 +327,6 @@ from py.__.test.dsession.masterslave import makehostup
 
 class TestTerminal:
     def test_hostup(self, testdir, linecomp):
-        from py.__.execnet.gwmanage import GatewaySpec
         item = testdir.getitem("def test_func(): pass")
         rep = TerminalReporter(item.config, linecomp.stringio)
         rep.pyevent_hostup(makehostup())
@@ -416,21 +419,31 @@ class TestTerminal:
             "InternalException: >*raise ValueError*"
         ])
 
-    def test_hostready_crash(self, testdir, linecomp):
-        from py.__.execnet.gwmanage import GatewaySpec
+    def test_gwmanage_events(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""
             def test_one():
                 pass
         """, configargs=("-v",))
-        host1 = GatewaySpec("localhost")
+
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.pyevent_hostgatewayready(event.HostGatewayReady(host1, None))
+        class gw1:
+            id = "X1"
+            spec = py.execnet.GatewaySpec("popen")
+        class gw2:
+            id = "X2"
+            spec = py.execnet.GatewaySpec("popen")
+        rep.pyevent_gwmanage_newgateway(gateway=gw1)
         linecomp.assert_contains_lines([
-            "*HostGatewayReady*"
+            "X1 instantiated gateway from spec*", 
         ])
-        rep.pyevent_hostdown(event.HostDown(host1, "myerror"))
+
+        rep.pyevent_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
-            "*HostDown*myerror*", 
+            "rsyncstart: hello -> X1, X2"
+        ])
+        rep.pyevent_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
+        linecomp.assert_contains_lines([
+            "rsyncfinish: hello -> X1, X2"
         ])
 
     def test_writeline(self, testdir, linecomp):

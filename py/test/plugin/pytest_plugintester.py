@@ -161,6 +161,12 @@ class PytestPluginHooks:
     def pyevent_gateway_exit(self, gateway):
         """ called when gateway is being exited. """
 
+    def pyevent_gwmanage_rsyncstart(self, source, gateways):
+        """ called before rsyncing a directory to remote gateways takes place. """
+
+    def pyevent_gwmanage_rsyncfinish(self, source, gateways):
+        """ called after rsyncing a directory to remote gateways takes place. """
+
     def pyevent_trace(self, category, msg):
         """ called for tracing events. """
 

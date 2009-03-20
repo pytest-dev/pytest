@@ -147,9 +147,7 @@ class TestHostManager:
         ev = sorter.getfirstnamed("itemtestreport")
         assert ev.passed 
 
-    @py.test.mark.xfail("implement double-rsync test")
-    def test_ssh_rsync_samehost_twice(self):
-        sshhost = getsshhost(withpython=True)
+    def test_rsync_samehost_twice(self):
         host1 = Host("%s" % (sshhost, ))
         host2 = Host("%s" % (sshhost, ))
         hm = HostManager(config, hosts=[host1, host2])

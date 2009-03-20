@@ -44,7 +44,7 @@ class TestImmutablePickling:
         assert config1.topdir == testdir.tmpdir
         testdir.chdir()
         p2config = pickletransport.p1_to_p2(config1)
-        assert p2config.topdir == config1.topdir
+        assert p2config.topdir.realpath() == config1.topdir.realpath()
         config_back = pickletransport.p2_to_p1(p2config)
         assert config_back is config1
 
@@ -160,10 +160,10 @@ class TestConfigPickling:
             newcol3 = unpickler.load()
             assert newcol2.config is newcol.config
             assert newcol2.parent == newcol 
-            assert newcol2.config.topdir == topdir
-            assert newcol.fspath == topdir 
+            assert newcol2.config.topdir.realpath() == topdir.realpath()
+            assert newcol.fspath.realpath() == topdir.realpath()
             assert newcol2.fspath.basename == dir1.basename
-            assert newcol2.fspath.relto(topdir)
+            assert newcol2.fspath.relto(newcol2.config.topdir)
         finally:
             old.chdir() 
 

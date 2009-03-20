@@ -147,20 +147,22 @@ class GatewayManager:
         """ perform rsync to all remote hosts. 
         """ 
         rsync = HostRSync(source, verbose=verbose, ignores=ignores)
-        added = False
+        seen = {}
         for gateway in self.gateways:
             spec = gateway.spec
             if not spec.inplacelocal():
-                self.trace("add_target_host %r" %(gateway,))
+                key = spec.type, spec.address, spec.joinpath
+                if key in seen:
+                    continue 
                 def finished():
                     if notify:
                         notify("rsyncrootready", spec, source)
                 rsync.add_target_host(gateway, finished=finished)
-                added = True
-        if added:
-            self.trace("rsyncing %r" % source)
+                seen[key] = gateway
+        if seen:
+            self.notify("gwmanage_rsyncstart", source=source, gateways=seen.values())
             rsync.send()
-            self.trace("rsyncing %r finished" % source)
+            self.notify("gwmanage_rsyncfinish", source=source, gateways=seen.values())
         else:
             self.trace("rsync: nothing to do.")
 
