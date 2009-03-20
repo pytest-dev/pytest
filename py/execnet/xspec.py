@@ -31,5 +31,11 @@ def makegateway(spec):
         spec = XSpec(spec)
     if spec.popen:
         gw = py.execnet.PopenGateway(python=spec.python)
+    elif spec.ssh:
+        gw = py.execnet.SshGateway(spec.ssh, remotepython=spec.python)
+    elif spec.socket:
+        assert not spec.python, "socket: specifying python executables not supported"
+        hostport = spec.socket.split(":")
+        gw = py.execnet.SocketGateway(*hostport)
     gw.spec = spec 
     return gw

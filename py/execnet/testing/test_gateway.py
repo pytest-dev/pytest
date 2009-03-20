@@ -542,8 +542,8 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
             ret = channel.receive()
             assert ret == 42
             
+    @py.test.mark.xfail("fix needed: dying remote process does not cause waitclose() to fail")
     def test_waitclose_on_remote_killed(self):
-        py.test.skip("fix needed: dying remote process does not cause waitclose() to fail")
         gw = py.execnet.PopenGateway()
         channel = gw.remote_exec("""
             import os
@@ -591,21 +591,13 @@ class SocketGatewaySetup:
 ##        cls.gw.exit()
 ##        cls.proxygw.exit()
        
-def getsshhost(withpython=False):
-    sshhost = py.test.config.getvalueorskip("sshhost")
-    if not withpython and sshhost.find(":") != -1:
-        sshhost = sshhost.split(":")[0]
-    ssh = py.path.local.sysfind("ssh")
-    if not ssh:
-        py.test.skip("command not found: ssh")
-    return sshhost
-
 class TestSocketGateway(SocketGatewaySetup, BasicRemoteExecution):
     pass
 
 class TestSshGateway(BasicRemoteExecution):
     def setup_class(cls): 
-        cls.sshhost = getsshhost()
+        from py.__.conftest import getspecssh
+        cls.sshhost = getspecssh().ssh
         cls.gw = py.execnet.SshGateway(cls.sshhost)
 
     def test_sshconfig_functional(self):

@@ -72,3 +72,27 @@ class TestMakegateway:
         assert rinfo.executable == cpython26
         assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info[:2] == (2,6)
+
+    def test_ssh(self, specssh):
+        sshhost = specssh.ssh
+        gw = py.execnet.makegateway("ssh=%s" % sshhost)
+        rinfo = gw._rinfo()
+        gw2 = py.execnet.SshGateway(sshhost)
+        rinfo2 = gw2._rinfo()
+        assert rinfo.executable == rinfo2.executable
+        assert rinfo.cwd == rinfo2.cwd
+        assert rinfo.version_info == rinfo2.version_info
+
+    def test_socket(self, specsocket):
+        gw = py.execnet.makegateway("socket=%s" % specsocket.socket)
+        rinfo = gw._rinfo()
+        assert rinfo.executable 
+        assert rinfo.cwd 
+        assert rinfo.version_info 
+        # we cannot instantiate a second gateway
+
+        #gw2 = py.execnet.SocketGateway(*specsocket.socket.split(":"))
+        #rinfo2 = gw2._rinfo()
+        #assert rinfo.executable == rinfo2.executable
+        #assert rinfo.cwd == rinfo2.cwd
+        #assert rinfo.version_info == rinfo2.version_info
