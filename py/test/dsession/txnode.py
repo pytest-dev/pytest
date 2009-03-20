@@ -67,7 +67,7 @@ class MasterNode(object):
 def install_slave(gateway, config):
     channel = gateway.remote_exec(source="""
         from py.__.test.dsession.mypickle import PickleChannel
-        from py.__.test.dsession.masterslave import SlaveNode
+        from py.__.test.dsession.txnode import SlaveNode
         channel = PickleChannel(channel)
         slavenode = SlaveNode(channel)
         slavenode.run()

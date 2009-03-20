@@ -1,6 +1,6 @@
 
 import py
-from py.__.test.dsession.masterslave import MasterNode
+from py.__.test.dsession.txnode import MasterNode
 
 class EventQueue:
     def __init__(self, bus, queue=None):

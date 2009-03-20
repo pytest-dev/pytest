@@ -1,8 +1,7 @@
 import py
 import sys, os
-from py.__.test.dsession.masterslave import MasterNode
+from py.__.test.dsession.txnode import MasterNode
 from py.__.execnet.gwmanage import GatewayManager
-from py.__.test import event
 
     
 class NodeManager(object):
