@@ -207,7 +207,7 @@ class PytestPluginHooks:
         """ Node is down. """
 
     def pyevent_rescheduleitems(self, event):
-        """ Items from a host that went down. """
+        """ Items from a node that went down. """
 
     def pyevent_looponfailinginfo(self, event):
         """ info for repeating failing tests. """

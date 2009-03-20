@@ -14,17 +14,11 @@ conf_iocapture = "fd" # overridable from conftest.py
 pytest_plugins = "default terminal xfail tmpdir execnetcleanup resultlog monkeypatch".split()
 
 # ===================================================
-# Distributed testing specific options 
+# settings in conftest only (for now) - for distribution
 
-#dist_hosts: needs to be provided by user
-#dist_rsync_roots: might be provided by user, if not present or None,
-#                  whole pkgdir will be rsynced
-
-dist_taskspernode = 15
 dist_boxed = False
 if hasattr(py.std.os, 'nice'):
     dist_nicelevel = py.std.os.nice(0) # nice py.test works
 else:
     dist_nicelevel = 0
-dist_rsync_ignore = []
 
