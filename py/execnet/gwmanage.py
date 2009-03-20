@@ -12,9 +12,15 @@ NO_ENDMARKER_WANTED = object()
 class GatewayManager:
     RemoteError = RemoteError
 
-    def __init__(self, specs):
-        self.specs = [py.execnet.XSpec(spec) for spec in specs]
+    def __init__(self, specs, defaultchdir="pyexecnetcache"):
         self.gateways = []
+        self.specs = []
+        for spec in specs:
+            if not isinstance(spec, py.execnet.XSpec):
+                spec = py.execnet.XSpec(spec)
+            if not spec.chdir and not spec.popen:
+                spec.chdir = defaultchdir
+            self.specs.append(spec)
 
     def trace(self, msg):
         self.notify("trace", "gatewaymanage", msg)

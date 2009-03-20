@@ -11,6 +11,17 @@ from py.__.execnet.gwmanage import GatewayManager, HostRSync
 pytest_plugins = "pytest_pytester"
 
 class TestGatewayManagerPopen:
+    def test_popen_no_default_chdir(self):
+        gm = GatewayManager(["popen"])
+        assert gm.specs[0].chdir is None
+
+    def test_default_chdir(self):
+        l = ["ssh=noco", "socket=xyz"]
+        for spec in GatewayManager(l).specs:
+            assert spec.chdir == "pyexecnetcache"
+        for spec in GatewayManager(l, defaultchdir="abc").specs:
+            assert spec.chdir == "abc"
+        
     def test_hostmanager_popen_makegateway(self, eventrecorder):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
