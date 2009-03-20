@@ -22,8 +22,11 @@ class XSpec:
                 key, value = keyvalue[:i], keyvalue[i+1:]
             # XXX be restrictive for now
             if key not in XSpec.__dict__:
-                raise AttributeError("%r not a valid attribute" % key)
+                raise AttributeError("%r not a valid XSpec key" % key)
             setattr(self, key, value)
+
+    def __repr__(self):
+        return "<XSpec %r>" %(self._spec,)
 
     def __hash__(self):
         return hash(self._spec)

@@ -34,6 +34,10 @@ class TestXSpec:
         for x in ("popen", "popen//python=this"):
             assert XSpec(x)._spec == x
 
+    def test_repr(self):
+        for x in ("popen", "popen//python=this"):
+            assert repr(XSpec(x)).find("popen") != -1
+
     def test_hash_equality(self):
         assert XSpec("popen") == XSpec("popen")
         assert hash(XSpec("popen")) == hash(XSpec("popen"))
