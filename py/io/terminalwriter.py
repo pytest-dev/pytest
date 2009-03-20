@@ -27,7 +27,7 @@ if sys.platform == 'win32':
     BACKGROUND_BLUE      = 0x0010 # background color contains blue.
     BACKGROUND_GREEN     = 0x0020 # background color contains green.
     BACKGROUND_RED       = 0x0040 # background color contains red.
-    BACKGROUND_WHITE     = 0x0007
+    BACKGROUND_WHITE     = 0x0070
     BACKGROUND_INTENSITY = 0x0080 # background color is intensified.
 
     def GetStdHandle(kind):
