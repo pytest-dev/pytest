@@ -157,15 +157,10 @@ class HostRSyncing(BaseEvent):
         self.remotepath = remotepath
         self.synced = synced
 
-class RsyncFinished(BaseEvent):
-    def __init__(self):
-        self.time = timestamp()
-
 class HostRSyncRootReady(BaseEvent):
     def __init__(self, host, root):
         self.host = host
         self.root = root
-
 
 # make all eventclasses available on BaseEvent so that
 # consumers of events can easily filter by 

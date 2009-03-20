@@ -89,6 +89,6 @@ class TestAsyncFunctional:
                 assert os.nice(0) == 10
         """)
         evrec = testdir.inline_run('-d', p1, '--tx=popen')
-        ev = evrec.getreport('test_nice')
+        ev = evrec.getfirstnamed('itemtestreport')
         assert ev.passed
 

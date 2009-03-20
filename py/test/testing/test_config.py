@@ -240,7 +240,6 @@ class TestConfigApi_getcolitems:
 
 class TestOptionEffects:
     def test_boxed_option_default(self, testdir):
-        testdir.makepyfile(conftest="dist_hosts=[]")
         tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
         config = py.test.config._reparse([tmpdir])
         config.initsession()
@@ -254,10 +253,8 @@ class TestOptionEffects:
         assert not config.option.boxed
 
     def test_boxed_option_from_conftest(self, testdir):
-        testdir.makepyfile(conftest="dist_hosts=[]")
         tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
         tmpdir.join("conftest.py").write(py.code.Source("""
-            dist_hosts = []
             dist_boxed = True
         """))
         config = py.test.config._reparse(['--dist', tmpdir])

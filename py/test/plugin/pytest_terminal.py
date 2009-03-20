@@ -258,11 +258,6 @@ class TerminalReporter:
         else:
             excrepr.reprcrash.toterminal(self._tw)
 
-    def out_hostinfo(self):
-        self._tw.line("host 0: %s %s - Python %s" %
-                       (py.std.sys.platform, 
-                        py.std.sys.executable, 
-                        repr_pythonversion()))
 
 class CollectonlyReporter:
     INDENT = "  "

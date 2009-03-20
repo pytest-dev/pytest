@@ -4,41 +4,6 @@ from py.__.test.dsession.masterslave import MasterNode
 from py.__.execnet.gwmanage import GatewayManager
 from py.__.test import event
 
-def getxspecs(config):
-    if config.option.numprocesses:
-        if config.option.executable:
-            s = 'popen//python=%s' % config.option.executable
-        else:
-            s = 'popen'
-        xspecs = [s] * config.option.numprocesses
-    else:
-        xspecs = config.option.xspecs
-        if not xspecs:
-            xspecs = config.getvalue("xspecs")
-    assert xspecs is not None
-    #print "option value for xspecs", xspecs
-    return [py.execnet.XSpec(x) for x in xspecs]
-
-def getconfigroots(config):
-    roots = config.option.rsyncdirs
-    if roots:
-        roots = [py.path.local(x) for x in roots.split(',')]
-    else:
-        roots = []
-    conftestroots = config.getconftest_pathlist("rsyncdirs")
-    if conftestroots:
-        roots.extend(conftestroots)
-    pydir = py.path.local(py.__file__).dirpath()
-    for root in roots:
-        if not root.check():
-            raise ValueError("rsyncdir doesn't exist: %r" %(root,))
-        if pydir is not None and root.basename == "py":
-            if root != pydir:
-                raise ValueError("root %r conflicts with current %r" %(root, pydir))
-            pydir = None
-    if pydir is not None:
-        roots.append(pydir)
-    return roots 
     
 class NodeManager(object):
     def __init__(self, config, specs=None):
@@ -94,7 +59,7 @@ class NodeManager(object):
             self.gwmanager.rsync(self.config.topdir, **options)
             # and cd into it 
             self.gwmanager.multi_chdir(self.config.topdir.basename, inplacelocal=False)
-        self.config.bus.notify("rsyncfinished", event.RsyncFinished())
+        self.config.bus.notify("rsyncfinished")
 
     def trace(self, msg):
         self.config.bus.notify("trace", "nodemanage", msg)
@@ -123,3 +88,39 @@ class NodeManager(object):
     def teardown_nodes(self):
         # XXX teardown nodes? 
         self.gwmanager.exit()
+
+def getxspecs(config):
+    if config.option.numprocesses:
+        if config.option.executable:
+            s = 'popen//python=%s' % config.option.executable
+        else:
+            s = 'popen'
+        xspecs = [s] * config.option.numprocesses
+    else:
+        xspecs = config.option.xspecs
+        if not xspecs:
+            xspecs = config.getvalue("xspecs")
+    assert xspecs is not None
+    #print "option value for xspecs", xspecs
+    return [py.execnet.XSpec(x) for x in xspecs]
+
+def getconfigroots(config):
+    roots = config.option.rsyncdirs
+    if roots:
+        roots = [py.path.local(x) for x in roots.split(',')]
+    else:
+        roots = []
+    conftestroots = config.getconftest_pathlist("rsyncdirs")
+    if conftestroots:
+        roots.extend(conftestroots)
+    pydir = py.path.local(py.__file__).dirpath()
+    for root in roots:
+        if not root.check():
+            raise ValueError("rsyncdir doesn't exist: %r" %(root,))
+        if pydir is not None and root.basename == "py":
+            if root != pydir:
+                raise ValueError("root %r conflicts with current %r" %(root, pydir))
+            pydir = None
+    if pydir is not None:
+        roots.append(pydir)
+    return roots 
