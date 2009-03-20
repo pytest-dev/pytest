@@ -14,18 +14,8 @@ class NodeManager(object):
         self.gwmanager = GatewayManager(specs)
         self.nodes = []
 
-    def makegateways(self):
-        # we change to the topdir sot that 
-        # PopenGateways will have their cwd 
-        # such that unpickling configs will 
-        # pick it up as the right topdir 
-        # (for other gateways this chdir is irrelevant)
-        old = self.config.topdir.chdir()  
-        try:
-            self.gwmanager.makegateways()
-        finally:
-            old.chdir()
-        self.trace_nodestatus()
+    def trace(self, msg):
+        self.config.bus.notify("trace", "nodemanage", msg)
 
     def trace_nodestatus(self):
         if self.config.option.debug:
@@ -60,8 +50,19 @@ class NodeManager(object):
             # and cd into it 
             self.gwmanager.multi_chdir(self.config.topdir.basename, inplacelocal=False)
 
-    def trace(self, msg):
-        self.config.bus.notify("trace", "nodemanage", msg)
+    def makegateways(self):
+        # we change to the topdir sot that 
+        # PopenGateways will have their cwd 
+        # such that unpickling configs will 
+        # pick it up as the right topdir 
+        # (for other gateways this chdir is irrelevant)
+        old = self.config.topdir.chdir()  
+        try:
+            self.gwmanager.makegateways()
+        finally:
+            old.chdir()
+        self.trace_nodestatus()
+
 
     def setup_nodes(self, putevent):
         self.rsync_roots()
