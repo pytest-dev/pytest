@@ -203,9 +203,6 @@ class PytestPluginHooks:
     def pyevent_hostup(self, event):
         """ Host is up. """
 
-    def pyevent_hostgatewayready(self, event):
-        """ Connection to Host is ready. """
-
     def pyevent_hostdown(self, event):
         """ Host is down. """
 
