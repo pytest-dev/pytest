@@ -1,7 +1,6 @@
 
 import py
 from py.__.test.dsession.masterslave import MasterNode
-from py.__.execnet.gwmanage import GatewaySpec
 
 class EventQueue:
     def __init__(self, bus, queue=None):
@@ -43,8 +42,8 @@ class MySetup:
             config = py.test.config._reparse([])
         self.config = config
         self.queue = py.std.Queue.Queue()
-        self.host = GatewaySpec("popen") 
-        self.gateway = self.host.makegateway()
+        self.host = py.execnet.XSpec("popen")
+        self.gateway = py.execnet.makegateway(self.host)
         self.node = MasterNode(self.host, self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()
         return self.node 

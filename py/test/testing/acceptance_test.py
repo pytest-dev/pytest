@@ -265,7 +265,7 @@ class TestPyTest:
                     py.test.skip("hello")
             """, 
         )
-        result = testdir.runpytest(p1, '-d', '--gateways=popen,popen')
+        result = testdir.runpytest(p1, '-d', '--tx popen --tx popen')
         result.stdout.fnmatch_lines([
             "HOSTUP: popen*Python*",
             #"HOSTUP: localhost*Python*",
@@ -288,7 +288,7 @@ class TestPyTest:
             """, 
         )
         testdir.makeconftest("""
-            pytest_option_gateways='popen,popen,popen'
+            pytest_option_tx = 'popen popen popen'.split()
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([
@@ -320,7 +320,7 @@ class TestPyTest:
                     os.kill(os.getpid(), 15)
             """
         )
-        result = testdir.runpytest(p1, '-d', '--gateways=popen,popen,popen')
+        result = testdir.runpytest(p1, '-d', '-n 3')
         result.stdout.fnmatch_lines([
             "*popen*Python*",
             "*popen*Python*",
@@ -434,7 +434,10 @@ class TestInteractive:
                 print sys.version_info[:2]
                 assert 0
         """)
-        result = testdir.runpytest("--dist-each", "--gateways=popen-python2.5,popen-python2.4")
+        result = testdir.runpytest("--dist-each", 
+            "--tx=popen//python2.4", 
+            "--tx=popen//python2.5", 
+        )
         assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*popen-python2.5*FAIL*", 

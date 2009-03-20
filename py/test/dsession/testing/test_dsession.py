@@ -1,6 +1,5 @@
 from py.__.test.dsession.dsession import DSession
 from py.__.test.dsession.masterslave import maketestnodeready
-from py.__.execnet.gwmanage import GatewaySpec
 from py.__.test.runner import basic_collect_report 
 from py.__.test import event
 from py.__.test import outcome
@@ -38,7 +37,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item.config)
-        host = GatewaySpec("localhost")
+        host = py.execnet.XSpec("popen")
         host.node = MockNode()
         assert not session.host2pending
         session.addhost(host)
@@ -54,7 +53,7 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item.config)
-        host = GatewaySpec("localhost")
+        host = py.execnet.XSpec("popen")
         host.node = MockNode()
         session.addhost(host)
         session.senditems([item])  
@@ -79,9 +78,9 @@ class TestDSession:
     def test_triggertesting_item(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
-        host1 = GatewaySpec("localhost")
+        host1 = py.execnet.XSpec("popen")
         host1.node = MockNode()
-        host2 = GatewaySpec("localhost")
+        host2 = py.execnet.XSpec("popen")
         host2.node = MockNode()
         session.addhost(host1)
         session.addhost(host2)

@@ -86,12 +86,12 @@ class DSession(Session):
         try:
             config.getvalue('hosts')
         except KeyError:
-            print "Please specify hosts for distribution of tests:"
-            print "cmdline: --gateways=host1,host2,..."
-            print "conftest.py: pytest_option_hosts=['host1','host2',]"
-            print "environment: PYTEST_OPTION_HOSTS=host1,host2,host3"
+            print "Please specify test environments for distribution of tests:"
+            print "py.test --tx ssh=user@somehost --tx popen//python=python2.5"
+            print "conftest.py: pytest_option_tx=['ssh=user@somehost','popen']"
+            print "environment: PYTEST_OPTION_TX=ssh=@somehost,popen"
             print 
-            print "see also: http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
+            #print "see also: http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
             raise SystemExit
 
     def main(self, colitems=None):

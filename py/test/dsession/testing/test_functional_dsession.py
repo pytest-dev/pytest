@@ -42,7 +42,7 @@ class TestAsyncFunctional:
             def test_fail():
                 assert 0
         """)
-        config = testdir.parseconfig('-d', p1, '--gateways=popen')
+        config = testdir.parseconfig('-d', p1, '--tx=popen')
         dsession = DSession(config)
         eq = EventQueue(config.bus)
         dsession.main([config.getfsnode(p1)])
@@ -54,7 +54,7 @@ class TestAsyncFunctional:
         assert ev.failed
         # see that the host is really down 
         ev, = eq.geteventargs("testnodedown")
-        assert ev.host.address == "popen"
+        assert ev.host.popen 
         ev, = eq.geteventargs("testrunfinish")
 
     def test_distribution_rsyncdirs_example(self, testdir):
@@ -65,7 +65,7 @@ class TestAsyncFunctional:
         p = subdir.join("test_one.py")
         p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
         result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
-            "--gateways=popen::%(dest)s" % locals(), p)
+            "--tx=popen//chdir=%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1* instantiated gateway *popen*",
@@ -88,7 +88,7 @@ class TestAsyncFunctional:
                 import os
                 assert os.nice(0) == 10
         """)
-        evrec = testdir.inline_run('-d', p1, '--gateways=popen')
+        evrec = testdir.inline_run('-d', p1, '--tx=popen')
         ev = evrec.getreport('test_nice')
         assert ev.passed
 
