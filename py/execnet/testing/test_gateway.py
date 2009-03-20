@@ -441,6 +441,13 @@ class BasicRemoteExecution:
         text = c1.receive()
         assert text.find("execution disallowed") != -1 
 
+    def test__rinfo(self):
+        rinfo = self.gw._rinfo()
+        assert rinfo.executable 
+        assert rinfo.curdir 
+        assert rinfo.version_info 
+        
+
 class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
     def test_cmdattr(self):
         assert hasattr(self.gw, '_cmd')
@@ -480,7 +487,12 @@ def test_channel_endmarker_remote_killterm():
 #        assert x == 17 
 
 class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
-    #disabled = True
+    def test_remote_info_popen(self):
+        rinfo = self.gw._rinfo()
+        assert rinfo.executable == py.std.sys.executable 
+        assert rinfo.curdir == py.std.os.getcwd()
+        assert rinfo.version_info == py.std.sys.version_info
+
     def test_chdir_separation(self):
         old = py.test.ensuretemp('chdirtest').chdir()
         try:

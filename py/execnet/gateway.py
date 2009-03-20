@@ -241,6 +241,17 @@ class Gateway(object):
         chan.setcallback(callback)
         return chan.id 
 
+    def _rinfo(self):
+        """ return some sys/env information from remote. """
+        return RInfo(**self.remote_exec("""
+            import sys, os
+            channel.send(dict(
+                executable = sys.executable, 
+                version_info = sys.version_info, 
+                curdir = os.getcwd(),
+            ))
+        """).receive())
+
     # _____________________________________________________________________
     #
     # High Level Interface
@@ -354,6 +365,9 @@ class Gateway(object):
         if self._requestqueue is not None:
             self._requestqueue.put(None)
 
+class RInfo:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 def getid(gw, cache={}):
     name = gw.__class__.__name__
