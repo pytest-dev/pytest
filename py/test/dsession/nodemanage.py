@@ -59,7 +59,6 @@ class NodeManager(object):
             self.gwmanager.rsync(self.config.topdir, **options)
             # and cd into it 
             self.gwmanager.multi_chdir(self.config.topdir.basename, inplacelocal=False)
-        self.config.bus.notify("rsyncfinished")
 
     def trace(self, msg):
         self.config.bus.notify("trace", "nodemanage", msg)
@@ -100,7 +99,8 @@ def getxspecs(config):
         xspecs = config.option.xspecs
         if not xspecs:
             xspecs = config.getvalue("xspecs")
-    assert xspecs is not None
+    if xspecs is None:
+        raise config.Error("MISSING test execution (tx) nodes: please specify --tx")
     #print "option value for xspecs", xspecs
     return [py.execnet.XSpec(x) for x in xspecs]
 

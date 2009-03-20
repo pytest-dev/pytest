@@ -89,7 +89,10 @@ class TerminalReporter:
 
     def pyevent_gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
-        self.write_line("rsyncstart: %s -> %s" %(source, targets))
+        msg = "rsyncstart: %s -> %s" %(source, targets)
+        if not self.config.option.verbose:
+            msg += " # use --verbose to see rsync progress"
+        self.write_line(msg)
 
     def pyevent_gwmanage_rsyncfinish(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])

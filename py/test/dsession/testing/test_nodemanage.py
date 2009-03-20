@@ -46,6 +46,7 @@ class TestNodeManager:
             assert dest.join("dir1").check()
             assert dest.join("dir1", "dir2").check()
             assert dest.join("dir1", "dir2", 'hello').check()
+            nodemanager.gwmanager.exit()
 
     def test_init_rsync_roots(self, source, dest):
         dir2 = source.ensure("dir1", "dir2", dir=1)
