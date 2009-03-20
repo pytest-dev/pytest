@@ -10,6 +10,11 @@ class TestPOSIXLocalPath:
         name = method.im_func.func_name
         self.tmpdir = self.root.ensure(name, dir=1) 
 
+    def test_samefile(self):
+        assert self.tmpdir.samefile(self.tmpdir)
+        p = self.tmpdir.ensure("hello")
+        assert p.samefile(p) 
+
     def test_hardlink(self):
         tmpdir = self.tmpdir 
         linkpath = tmpdir.join('test')

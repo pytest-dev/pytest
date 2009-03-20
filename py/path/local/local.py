@@ -201,10 +201,6 @@ class LocalPath(common.FSPathBase, PlatformMixin):
             s2 = s2.lower()
         return s1 == s2
 
-    def samefile(self, other):
-        """ return True if other refers to the same stat object as self. """
-        return py.std.os.path.samefile(str(self), str(other))
-
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
         return self._callex(open, self.strpath, mode)

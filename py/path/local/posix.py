@@ -110,6 +110,9 @@ class PosixMixin(object):
         else:
             self._callex(os.remove, self.strpath)
 
+    def samefile(self, other):
+        """ return True if other refers to the same stat object as self. """
+        return py.std.os.path.samefile(str(self), str(other))
 
 def getuserid(user):
     import pwd
