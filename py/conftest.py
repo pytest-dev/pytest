@@ -37,9 +37,11 @@ def getspecssh(config=None):
             if not py.path.local.sysfind("ssh"):
                 py.test.skip("command not found: ssh")
             return spec
+    py.test.skip("need '--gx ssh=...'")
 
 def getsocketspec(config=None):
     xspecs = getgspecs(config)
     for spec in xspecs:
         if spec.socket:
             return spec
+    py.test.skip("need '--gx socket=...'")

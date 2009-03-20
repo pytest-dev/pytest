@@ -4,23 +4,23 @@ XSpec = py.execnet.XSpec
 
 class TestXSpec:
     def test_attributes(self):
-        spec = XSpec("socket=192.168.102.2:8888//python=c:/this/python2.5//path=d:\hello")
+        spec = XSpec("socket=192.168.102.2:8888//python=c:/this/python2.5//chdir=d:\hello")
         assert spec.socket == "192.168.102.2:8888"
         assert spec.python == "c:/this/python2.5" 
-        assert spec.path == "d:\hello"
-        assert spec.xyz is None
+        assert spec.chdir == "d:\hello"
+        assert not hasattr(spec, 'xyz')
 
         py.test.raises(AttributeError, "spec._hello")
 
         spec = XSpec("socket=192.168.102.2:8888//python=python2.5")
         assert spec.socket == "192.168.102.2:8888"
         assert spec.python == "python2.5"
-        assert spec.path is None
+        assert spec.chdir is None
 
-        spec = XSpec("ssh=user@host//path=/hello/this//python=/usr/bin/python2.5")
+        spec = XSpec("ssh=user@host//chdir=/hello/this//python=/usr/bin/python2.5")
         assert spec.ssh == "user@host"
         assert spec.python == "/usr/bin/python2.5"
-        assert spec.path == "/hello/this"
+        assert spec.chdir == "/hello/this"
 
         spec = XSpec("popen")
         assert spec.popen == True
@@ -28,7 +28,17 @@ class TestXSpec:
     def test__samefilesystem(self):
         assert XSpec("popen")._samefilesystem()
         assert XSpec("popen//python=123")._samefilesystem()
-        assert not XSpec("popen//path=hello")._samefilesystem()
+        assert not XSpec("popen//chdir=hello")._samefilesystem()
+
+    def test__spec_spec(self):
+        for x in ("popen", "popen//python=this"):
+            assert XSpec(x)._spec == x
+
+    def test_hash_equality(self):
+        assert XSpec("popen") == XSpec("popen")
+        assert hash(XSpec("popen")) == hash(XSpec("popen"))
+        assert XSpec("popen//python=123") != XSpec("popen")
+        assert hash(XSpec("socket=hello:8080")) != hash(XSpec("popen"))
 
 class TestMakegateway:
     def test_popen(self):

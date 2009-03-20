@@ -37,7 +37,7 @@ class TestGatewayManagerPopen:
         assert not len(hm.gateways) 
 
     def test_hostmanager_rsync_popen_with_path(self, source, dest):
-        hm = GatewayManager(["popen::%s" %dest] * 1)
+        hm = GatewayManager(["popen//chdir=%s" %dest] * 1)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         l = []
@@ -51,7 +51,7 @@ class TestGatewayManagerPopen:
         assert dest.join("dir1", "dir2", 'hello').check()
 
     def test_hostmanage_rsync_same_popen_twice(self, source, dest, eventrecorder):
-        hm = GatewayManager(["popen::%s" %dest] * 2)
+        hm = GatewayManager(["popen//chdir=%s" %dest] * 2)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         hm.rsync(source)
@@ -65,7 +65,7 @@ class TestGatewayManagerPopen:
 
     def test_multi_chdir_popen_with_path(self, testdir):
         import os
-        hm = GatewayManager(["popen::hello"] * 2)
+        hm = GatewayManager(["popen//chdir=hello"] * 2)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()
@@ -122,8 +122,7 @@ class TestHRSync:
         assert 'somedir' in basenames
 
     def test_hrsync_one_host(self, source, dest):
-        spec = py.execnet.GatewaySpec("popen::%s" % dest)
-        gw = spec.makegateway()
+        gw = py.execnet.makegateway("popen//chdir=%s" % dest)
         finished = []
         rsync = HostRSync(source)
         rsync.add_target_host(gw, finished=lambda: finished.append(1))

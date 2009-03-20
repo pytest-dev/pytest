@@ -1,105 +1,19 @@
 """
     instantiating, managing and rsyncing to hosts
 
-Host specification strings and implied gateways:
-
-    socket:hostname:port:path SocketGateway
-    popen[-executable][:path]          PopenGateway
-    [ssh:]spec:path           SshGateway
-    * [SshGateway]
-
-on hostspec.makeconnection() a Host object
-will be created which has an instantiated gateway. 
-the remote side will be chdir()ed to the specified path. 
-if no path was specified, do no chdir() at all. 
-
-
 """
+
 import py
 import sys, os
-from py.__.test.dsession.masterslave import MasterNode
-from py.__.test import event
 from py.__.execnet.channel import RemoteError
 
 NO_ENDMARKER_WANTED = object()
-
-class GatewaySpec(object):
-    python = None
-    def __init__(self, spec, defaultjoinpath="pyexecnetcache"):
-        self._spec = spec
-        if spec == "popen" or spec.startswith("popen:"):
-            parts = spec.split(":", 2)
-            self.type = self.address = parts.pop(0)
-            if parts:
-                python = parts.pop(0)
-                # XXX XXX XXX do better GWSPEC that can deal
-                # with "C:" 
-                if py.std.sys.platform == "win32" and len(python) == 1:
-                    python = "%s:%s" %(python, parts.pop(0))
-                self.python = python
-            if parts:
-                self.joinpath = parts.pop(0)
-            else:
-                self.joinpath = ""
-            if not self.python:
-                self.python = py.std.sys.executable
-
-        elif spec.startswith("socket:"):
-            parts = spec[7:].split(":", 2)
-            self.address = parts.pop(0)
-            if parts:
-                port = int(parts.pop(0))
-                self.address = self.address, port
-            self.joinpath = parts and parts.pop(0) or ""
-            self.type = "socket"
-        else:
-            if spec.startswith("ssh:"):
-                spec = spec[4:]
-            parts = spec.split(":", 2)
-            self.address = parts.pop(0)
-            self.python = parts and parts.pop(0) or "python"
-            self.joinpath = parts and parts.pop(0) or ""
-            self.type = "ssh"
-        if not self.joinpath and not self.inplacelocal():
-            self.joinpath = defaultjoinpath
-
-    def inplacelocal(self):
-        return bool(self.type == "popen" and not self.joinpath)
-
-    def __str__(self):
-        return "<GatewaySpec %s>" % self._spec
-    __repr__ = __str__
-
-    def makegateway(self, waitclose=True):
-        if self.type == "popen":
-            gw = py.execnet.PopenGateway(python=self.python)
-        elif self.type == "socket":
-            gw = py.execnet.SocketGateway(*self.address)
-        elif self.type == "ssh":
-            gw = py.execnet.SshGateway(self.address, remotepython=self.python)
-        if self.joinpath:
-            channel = gw.remote_exec("""
-                import os 
-                path = %r
-                try:
-                    os.chdir(path)
-                except OSError:
-                    os.mkdir(path)
-                    os.chdir(path)
-            """ % self.joinpath)
-            if waitclose:
-                channel.waitclose()
-        else:
-            if waitclose:
-                gw.remote_exec("").waitclose()
-        gw.spec = self
-        return gw 
 
 class GatewayManager:
     RemoteError = RemoteError
 
     def __init__(self, specs):
-        self.specs = [GatewaySpec(spec) for spec in specs]
+        self.specs = [py.execnet.XSpec(spec) for spec in specs]
         self.gateways = []
 
     def trace(self, msg):
@@ -111,7 +25,7 @@ class GatewayManager:
     def makegateways(self):
         assert not self.gateways
         for spec in self.specs:
-            gw = spec.makegateway()
+            gw = py.execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
             self.notify("gwmanage_newgateway", gw)
@@ -121,7 +35,7 @@ class GatewayManager:
             self.makegateways()
         l = []
         for gw in self.gateways:
-            if gw.spec.inplacelocal():
+            if gw.spec._samefilesystem():
                 if inplacelocal:
                     l.append(gw)
             else:
@@ -150,15 +64,14 @@ class GatewayManager:
         seen = {}
         for gateway in self.gateways:
             spec = gateway.spec
-            if not spec.inplacelocal():
-                key = spec.type, spec.address, spec.joinpath
-                if key in seen:
+            if not spec._samefilesystem():
+                if spec in seen:
                     continue 
                 def finished():
                     if notify:
                         notify("rsyncrootready", spec, source)
                 rsync.add_target_host(gateway, finished=finished)
-                seen[key] = gateway
+                seen[spec] = gateway
         if seen:
             self.notify("gwmanage_rsyncstart", source=source, gateways=seen.values())
             rsync.send()
@@ -203,5 +116,5 @@ class HostRSync(py.execnet.RSync):
     def _report_send_file(self, gateway, modified_rel_path):
         if self._verbose:
             path = os.path.basename(self._sourcedir) + "/" + modified_rel_path
-            remotepath = gateway.spec.joinpath
+            remotepath = gateway.spec.chdir
             print '%s:%s <= %s' % (gateway.remoteaddress, remotepath, path)
