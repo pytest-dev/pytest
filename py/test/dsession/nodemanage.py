@@ -40,13 +40,13 @@ def getconfigroots(config):
         roots.append(pydir)
     return roots 
     
-class HostManager(object):
-    def __init__(self, config, hosts=None):
+class NodeManager(object):
+    def __init__(self, config, specs=None):
         self.config = config 
-        if hosts is None:
-            hosts = getxspecs(self.config)
+        if specs is None:
+            specs = getxspecs(self.config)
         self.roots = getconfigroots(config)
-        self.gwmanager = GatewayManager(hosts)
+        self.gwmanager = GatewayManager(specs)
         self.nodes = []
 
     def makegateways(self):
@@ -60,9 +60,9 @@ class HostManager(object):
             self.gwmanager.makegateways()
         finally:
             old.chdir()
-        self.trace_hoststatus()
+        self.trace_nodestatus()
 
-    def trace_hoststatus(self):
+    def trace_nodestatus(self):
         if self.config.option.debug:
             for ch, result in self.gwmanager.multi_exec("""
                 import sys, os
@@ -97,9 +97,9 @@ class HostManager(object):
         self.config.bus.notify("rsyncfinished", event.RsyncFinished())
 
     def trace(self, msg):
-        self.config.bus.notify("trace", "testhostmanage", msg)
+        self.config.bus.notify("trace", "nodemanage", msg)
 
-    def setup_hosts(self, putevent):
+    def setup_nodes(self, putevent):
         self.rsync_roots()
         nice = self.config.getvalue("dist_nicelevel")
         if nice != 0:
@@ -109,7 +109,7 @@ class HostManager(object):
                     os.nice(%r)
             """ % nice).waitclose()
 
-        self.trace_hoststatus()
+        self.trace_nodestatus()
         multigw = self.gwmanager.getgateways(inplacelocal=False, remote=True)
         multigw.remote_exec("""
             import os, sys
@@ -120,6 +120,6 @@ class HostManager(object):
             node = MasterNode(gateway, self.config, putevent)
             self.nodes.append(node) 
 
-    def teardown_hosts(self):
+    def teardown_nodes(self):
         # XXX teardown nodes? 
         self.gwmanager.exit()

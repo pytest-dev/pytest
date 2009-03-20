@@ -49,9 +49,10 @@ class MySetup:
         return self.node 
 
     def finalize(self):
-        if hasattr(self, 'host'):
-            print "exiting:", self.gateway
-            self.gateway.exit()
+        if hasattr(self, 'node'):
+            gw = self.node.gateway
+            print "exiting:", gw
+            gw.exit()
 
 def pytest_pyfuncarg_mysetup(pyfuncitem):
     mysetup = MySetup(pyfuncitem)

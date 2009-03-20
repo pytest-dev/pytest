@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.hostmanage import HostManager, getxspecs, getconfigroots
+from py.__.test.dsession.nodemanage import NodeManager, getxspecs, getconfigroots
 
 from py.__.test import event
 
@@ -13,15 +13,15 @@ def pytest_pyfuncarg_dest(pyfuncitem):
     dest = py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("dest")
     return dest 
 
-class TestHostManager:
+class TestNodeManager:
     @py.test.mark.xfail("consider / forbid implicit rsyncdirs?")
-    def test_hostmanager_rsync_roots_no_roots(self, source, dest):
+    def test_rsync_roots_no_roots(self, source, dest):
         source.ensure("dir1", "file1").write("hello")
         config = py.test.config._reparse([source])
-        hm = HostManager(config, hosts=["popen::%s" % dest])
-        assert hm.config.topdir == source == config.topdir
-        hm.rsync_roots()
-        p, = hm.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
+        nodemanager = NodeManager(config, ["popen//chdir=%s" % dest])
+        assert nodemanager.config.topdir == source == config.topdir
+        nodemanager.rsync_roots()
+        p, = nodemanager.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         p = py.path.local(p)
         print "remote curdir", p
         assert p == dest.join(config.topdir.basename)
@@ -34,13 +34,13 @@ class TestHostManager:
         dir2.ensure("hello")
         for rsyncroot in (dir1, source):
             dest.remove()
-            hm = HostManager(testdir.parseconfig(
+            nodemanager = NodeManager(testdir.parseconfig(
                 "--tx", "popen//chdir=%s" % dest,
                 "--rsyncdirs", rsyncroot,
                 source, 
             ))
-            assert hm.config.topdir == source
-            hm.rsync_roots() 
+            assert nodemanager.config.topdir == source
+            nodemanager.rsync_roots() 
             if rsyncroot == source:
                 dest = dest.join("source")
             assert dest.join("dir1").check()
@@ -56,9 +56,8 @@ class TestHostManager:
             rsyncdirs = ['dir1/dir2']
         """))
         session = py.test.config._reparse([source]).initsession()
-        hm = HostManager(session.config, 
-                         hosts=["popen//chdir=%s" % dest])
-        hm.rsync_roots()
+        nodemanager = NodeManager(session.config, ["popen//chdir=%s" % dest])
+        nodemanager.rsync_roots()
         assert dest.join("dir2").check()
         assert not dest.join("dir1").check()
         assert not dest.join("bogus").check()
@@ -73,41 +72,41 @@ class TestHostManager:
             rsyncignore = ['dir1/dir2', 'dir5/dir6']
         """))
         session = py.test.config._reparse([source]).initsession()
-        hm = HostManager(session.config,
-                         hosts=["popen//chdir=%s" % dest])
-        hm.rsync_roots()
+        nodemanager = NodeManager(session.config,
+                         ["popen//chdir=%s" % dest])
+        nodemanager.rsync_roots()
         assert dest.join("dir1").check()
         assert not dest.join("dir1", "dir2").check()
         assert dest.join("dir5","file").check()
         assert not dest.join("dir6").check()
 
     def test_optimise_popen(self, source, dest):
-        hosts = ["popen"] * 3
+        specs = ["popen"] * 3
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
         config = py.test.config._reparse([source])
-        hm = HostManager(config, hosts=hosts)
-        hm.rsync_roots()
-        for gwspec in hm.gwmanager.specs:
+        nodemanager = NodeManager(config, specs)
+        nodemanager.rsync_roots()
+        for gwspec in nodemanager.gwmanager.specs:
             assert gwspec._samefilesystem()
             assert not gwspec.chdir
 
-    def test_setup_hosts_DEBUG(self, source, EventRecorder):
-        hosts = ["popen"] * 2
+    def test_setup_DEBUG(self, source, EventRecorder):
+        specs = ["popen"] * 2
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
-        hm = HostManager(config, hosts=hosts)
+        nodemanager = NodeManager(config, specs)
         evrec = EventRecorder(config.bus, debug=True)
-        hm.setup_hosts(putevent=[].append)
-        for host in hm.gwmanager.specs:
+        nodemanager.setup_nodes(putevent=[].append)
+        for spec in nodemanager.gwmanager.specs:
             l = evrec.getnamed("trace")
             print evrec.events
             assert l 
-        hm.teardown_hosts()
+        nodemanager.teardown_nodes()
 
-    def test_ssh_setup_hosts(self, specssh, testdir):
+    def test_ssh_setup_nodes(self, specssh, testdir):
         testdir.makepyfile(__init__="", test_x="""
             def test_one():
                 pass

@@ -9,6 +9,7 @@ from py.__.test import event
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
 from py.__.test import outcome 
+from py.__.test.dsession.nodemanage import NodeManager
 
 import Queue 
 
@@ -97,9 +98,9 @@ class DSession(Session):
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
         self.sessionstarts()
-        self.setup_nodes()
+        self.setup()
         exitstatus = self.loop(colitems)
-        self.teardown_nodes()
+        self.teardown()
         self.sessionfinishes() 
         return exitstatus
 
@@ -235,15 +236,14 @@ class DSession(Session):
         rep = event.ItemTestReport(item, when="???", excinfo=longrepr)
         self.bus.notify("itemtestreport", rep)
 
-    def setup_nodes(self):
+    def setup(self):
         """ setup any neccessary resources ahead of the test run. """
-        from py.__.test.dsession.hostmanage import HostManager
-        self.hm = HostManager(self.config)
-        self.hm.setup_hosts(putevent=self.queue.put)
+        self.nodemanager = NodeManager(self.config)
+        self.nodemanager.setup_nodes(putevent=self.queue.put)
 
-    def teardown_nodes(self):
+    def teardown(self):
         """ teardown any resources after a test run. """ 
-        self.hm.teardown_hosts()
+        self.nodemanager.teardown_nodes()
 
 # debugging function
 def dump_picklestate(item):
