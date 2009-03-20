@@ -38,4 +38,15 @@ def makegateway(spec):
         hostport = spec.socket.split(":")
         gw = py.execnet.SocketGateway(*hostport)
     gw.spec = spec 
+    # XXX events
+    if spec.chdir:
+        gw.remote_exec("""
+            import os
+            path = %r 
+            try:
+                os.chdir(path)
+            except OSError:
+                os.mkdir(path)
+                os.chdir(path)
+        """ % spec.chdir).waitclose()
     return gw

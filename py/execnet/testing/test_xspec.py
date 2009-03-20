@@ -73,6 +73,17 @@ class TestMakegateway:
         assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info[:2] == (2,6)
 
+    def test_popen_chdir_absolute(self, testdir):
+        gw = py.execnet.makegateway("popen//chdir=%s" % testdir.tmpdir)
+        rinfo = gw._rinfo()
+        assert rinfo.cwd == str(testdir.tmpdir)
+
+    def test_popen_chdir_newsub(self, testdir):
+        testdir.chdir()
+        gw = py.execnet.makegateway("popen//chdir=hello")
+        rinfo = gw._rinfo()
+        assert rinfo.cwd == str(testdir.tmpdir.join("hello"))
+
     def test_ssh(self, specssh):
         sshhost = specssh.ssh
         gw = py.execnet.makegateway("ssh=%s" % sshhost)
