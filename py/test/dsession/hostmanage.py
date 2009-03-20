@@ -4,21 +4,20 @@ from py.__.test.dsession.masterslave import MasterNode
 from py.__.execnet.gwmanage import GatewayManager
 from py.__.test import event
 
-def getconfiggwspecs(config):
+def getxspecs(config):
     if config.option.numprocesses:
         if config.option.executable:
-            s = 'popen:%s' % config.option.executable
+            s = 'popen//python=%s' % config.option.executable
         else:
             s = 'popen'
-        gwspecs = [s] * config.option.numprocesses
+        xspecs = [s] * config.option.numprocesses
     else:
-        gwspecs = config.option.gateways
-        if not gwspecs:
-            gwspecs = config.getvalue("gateways")
-        else:
-            gwspecs = gwspecs.split(",")
-    assert gwspecs is not None
-    return gwspecs
+        xspecs = config.option.xspecs
+        if not xspecs:
+            xspecs = config.getvalue("xspecs")
+    assert xspecs is not None
+    #print "option value for xspecs", xspecs
+    return [py.execnet.XSpec(x) for x in xspecs]
 
 def getconfigroots(config):
     roots = config.option.rsyncdirs
@@ -45,7 +44,7 @@ class HostManager(object):
     def __init__(self, config, hosts=None):
         self.config = config 
         if hosts is None:
-            hosts = getconfiggwspecs(self.config)
+            hosts = getxspecs(self.config)
         self.roots = getconfigroots(config)
         self.gwmanager = GatewayManager(hosts)
 
@@ -82,7 +81,7 @@ class HostManager(object):
         self.makegateways()
         options = {
             'ignores': self.config_getignores(), 
-            'verbose': 1, # self.config.option.verbose
+            'verbose': self.config.option.verbose,
         }
         if self.roots:
             # send each rsync root

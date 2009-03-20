@@ -64,8 +64,8 @@ class DefaultPlugin:
         group._addoption('-s', '--nocapture',
                    action="store_true", dest="nocapture", default=False,
                    help="disable catching of sys.stdout/stderr output."),
-        group.addoption('--basetemp', dest="basetemp", default=None, 
-                   help="directory to use for this test run.")
+        group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
+                   help="temporary directory for this test run.")
         group.addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process"), 
@@ -97,8 +97,9 @@ class DefaultPlugin:
         group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
                    help="comma-separated list of directories to rsync. All those roots will be rsynced "
                         "into a corresponding subdir on the remote sides. ")
-        group.addoption('--gateways', dest="gateways", default=None, metavar="spec1,spec2,...", 
-                   help="comma-separated list of gateway specs, used by test distribution modes")
+        group.addoption('--tx', dest="xspecs", action="append", 
+                   help=("add a test environment, specified in XSpec syntax. examples: "
+                         "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
         group._addoption('--exec',
                    action="store", dest="executable", default=None,
                    help="python executable to run the tests with.")

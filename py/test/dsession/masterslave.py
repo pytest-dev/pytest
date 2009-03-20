@@ -71,7 +71,7 @@ def install_slave(host, gateway, config):
     """)
     channel = PickleChannel(channel)
     basetemp = None
-    if host.type == "popen":
+    if host.popen:
         popenbase = config.ensuretemp("popen")
         basetemp = py.path.local.make_numbered_dir(prefix="slave-", 
             keep=0, rootdir=popenbase)
