@@ -146,20 +146,10 @@ class RescheduleItems(BaseEvent):
     def __init__(self, items):
         self.items = items
  
-class HostGatewayReady(BaseEvent):
-    def __init__(self, host, roots):
-        self.host = host
-        self.roots = roots
-
-class HostUp(BaseEvent):
-    def __init__(self, host, platinfo):
-        self.host = host 
-        self.platinfo = platinfo
-
-class HostDown(BaseEvent):
-    def __init__(self, host, error=None):
-        self.host = host 
-        self.error = error
+#class HostGatewayReady(BaseEvent):
+#    def __init__(self, host, roots):
+#        self.host = host
+#        self.roots = roots
 
 # ---------------------------------------------------------------------
 # Events related to rsyncing

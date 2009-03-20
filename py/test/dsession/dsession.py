@@ -25,7 +25,7 @@ class LoopState(object):
         self.testsfailed = False
 
     def pyevent_itemtestreport(self, event):
-        if event.colitem in self.dsession.item2host:
+        if event.colitem in self.dsession.item2node:
             self.dsession.removeitem(event.colitem)
         if event.failed:
             self.testsfailed = True
@@ -34,14 +34,14 @@ class LoopState(object):
         if event.passed:
             self.colitems.extend(event.result)
 
-    def pyevent_testnodeready(self, event):
-        self.dsession.addhost(event.host)
+    def pyevent_testnodeready(self, node):
+        self.dsession.addnode(node)
 
-    def pyevent_testnodedown(self, event):
-        pending = self.dsession.removehost(event.host)
+    def pyevent_testnodedown(self, node, error=None):
+        pending = self.dsession.removenode(node)
         if pending:
             crashitem = pending[0]
-            self.dsession.handle_crashitem(crashitem, event.host)
+            self.dsession.handle_crashitem(crashitem, node)
             self.colitems.extend(pending[1:])
 
     def pyevent_rescheduleitems(self, event):
@@ -59,8 +59,8 @@ class DSession(Session):
         super(DSession, self).__init__(config=config)
         
         self.queue = Queue.Queue()
-        self.host2pending = {}
-        self.item2host = {}
+        self.node2pending = {}
+        self.item2node = {}
         if self.config.getvalue("executable") and \
            not self.config.getvalue("numprocesses"):
             self.config.option.numprocesses = 1
@@ -84,7 +84,7 @@ class DSession(Session):
         if config.option.numprocesses:
             return
         try:
-            config.getvalue('hosts')
+            config.getvalue('xspecs')
         except KeyError:
             print "Please specify test environments for distribution of tests:"
             print "py.test --tx ssh=user@somehost --tx popen//python=python2.5"
@@ -97,9 +97,9 @@ class DSession(Session):
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
         self.sessionstarts()
-        self.setup_hosts()
+        self.setup_nodes()
         exitstatus = self.loop(colitems)
-        self.teardown_hosts()
+        self.teardown_nodes()
         self.sessionfinishes() 
         return exitstatus
 
@@ -124,10 +124,10 @@ class DSession(Session):
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
-            (not self.item2host and not colitems and not self.queue.qsize())):
+            (not self.item2node and not colitems and not self.queue.qsize())):
             self.triggershutdown()
             loopstate.shuttingdown = True
-        elif not self.host2pending:
+        elif not self.node2pending:
             loopstate.exitstatus = outcome.EXIT_NOHOSTS
            
     def loop_once_shutdown(self, loopstate):
@@ -135,10 +135,10 @@ class DSession(Session):
         # events other than HostDown upstream 
         eventname, args, kwargs = self.queue.get()
         if eventname == "testnodedown":
-            ev, = args
-            self.bus.notify("testnodedown", ev)
-            self.removehost(ev.host)
-        if not self.host2pending:
+            node, error = args[0], args[1]
+            self.bus.notify("testnodedown", node, error)
+            self.removenode(node)
+        if not self.node2pending:
             # finished
             if loopstate.testsfailed:
                 loopstate.exitstatus = outcome.EXIT_TESTSFAILED
@@ -170,21 +170,21 @@ class DSession(Session):
         return exitstatus
 
     def triggershutdown(self):
-        for host in self.host2pending:
-            host.node.shutdown()
+        for node in self.node2pending:
+            node.shutdown()
 
-    def addhost(self, host):
-        assert host not in self.host2pending
-        self.host2pending[host] = []
+    def addnode(self, node):
+        assert node not in self.node2pending
+        self.node2pending[node] = []
 
-    def removehost(self, host):
+    def removenode(self, node):
         try:
-            pending = self.host2pending.pop(host)
+            pending = self.node2pending.pop(node)
         except KeyError:
             # this happens if we didn't receive a testnodeready event yet
             return []
         for item in pending:
-            del self.item2host[item]
+            del self.item2node[item]
         return pending
 
     def triggertesting(self, colitems):
@@ -204,17 +204,17 @@ class DSession(Session):
     def senditems(self, tosend):
         if not tosend:
             return 
-        for host, pending in self.host2pending.items():
+        for node, pending in self.node2pending.items():
             room = self.MAXITEMSPERHOST - len(pending)
             if room > 0:
                 sending = tosend[:room]
-                host.node.sendlist(sending)
+                node.sendlist(sending)
                 for item in sending:
-                    #assert item not in self.item2host, (
-                    #    "sending same item %r to multiple hosts "
+                    #assert item not in self.item2node, (
+                    #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
-                    self.item2host[item] = host
-                    self.bus.notify("itemstart", event.ItemStart(item, host))
+                    self.item2node[item] = node
+                    self.bus.notify("itemstart", event.ItemStart(item, node))
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:
@@ -224,24 +224,24 @@ class DSession(Session):
             self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
 
     def removeitem(self, item):
-        if item not in self.item2host:
-            raise AssertionError(item, self.item2host)
-        host = self.item2host.pop(item)
-        self.host2pending[host].remove(item)
+        if item not in self.item2node:
+            raise AssertionError(item, self.item2node)
+        node = self.item2node.pop(item)
+        self.node2pending[node].remove(item)
         #self.config.bus.notify("removeitem", item, host.hostid)
 
-    def handle_crashitem(self, item, host):
-        longrepr = "!!! Host %r crashed during running of test %r" %(host, item)
+    def handle_crashitem(self, item, node):
+        longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = event.ItemTestReport(item, when="???", excinfo=longrepr)
         self.bus.notify("itemtestreport", rep)
 
-    def setup_hosts(self):
+    def setup_nodes(self):
         """ setup any neccessary resources ahead of the test run. """
         from py.__.test.dsession.hostmanage import HostManager
         self.hm = HostManager(self.config)
         self.hm.setup_hosts(putevent=self.queue.put)
 
-    def teardown_hosts(self):
+    def teardown_nodes(self):
         """ teardown any resources after a test run. """ 
         self.hm.teardown_hosts()
 

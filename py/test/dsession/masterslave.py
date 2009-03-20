@@ -6,13 +6,14 @@ from py.__.test import event
 from py.__.test.dsession.mypickle import PickleChannel
 
 class MasterNode(object):
+    """ Install slave code, manage sending test tasks & receiving results """
     ENDMARK = -1
 
-    def __init__(self, host, gateway, config, putevent):
-        self.host = host 
+    def __init__(self, gateway, config, putevent):
         self.config = config 
         self.putevent = putevent 
-        self.channel = install_slave(host, gateway, config)
+        self.gateway = gateway
+        self.channel = install_slave(gateway, config)
         self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
         self._down = False
 
@@ -32,23 +33,25 @@ class MasterNode(object):
                 err = self.channel._getremoteerror()
                 if not self._down:
                     if not err:
-                        err = "TERMINATED"
-                    self.notify("testnodedown", event.HostDown(self.host, err))
+                        err = "Not properly terminated"
+                    self.notify("testnodedown", self, err)
+                    self._down = True
                 return
-            elif eventcall is None:
+            eventname, args, kwargs = eventcall 
+            if eventname == "slaveready":
+                self.notify("testnodeready", self)
+            elif eventname == "slavefinished":
                 self._down = True
-                self.notify("testnodedown", event.HostDown(self.host, None))
-                return 
-        except KeyboardInterrupt:
+                self.notify("testnodedown", self, None)
+            else:
+                self.notify(eventname, *args, **kwargs)
+        except KeyboardInterrupt: 
+            # should not land in receiver-thread
             raise 
         except:
             excinfo = py.code.ExceptionInfo()
             print "!" * 20, excinfo
             self.notify("internalerror", event.InternalException(excinfo))
-        else:
-            # XXX we need to have the proper event name 
-            eventname, args, kwargs = eventcall 
-            self.notify(eventname, *args, **kwargs)
 
     def send(self, item):
         assert item is not None
@@ -61,7 +64,7 @@ class MasterNode(object):
         self.channel.send(None)
 
 # setting up slave code 
-def install_slave(host, gateway, config):
+def install_slave(gateway, config):
     channel = gateway.remote_exec(source="""
         from py.__.test.dsession.mypickle import PickleChannel
         from py.__.test.dsession.masterslave import SlaveNode
@@ -71,12 +74,12 @@ def install_slave(host, gateway, config):
     """)
     channel = PickleChannel(channel)
     basetemp = None
-    if host.popen:
+    if gateway.spec.popen:
         popenbase = config.ensuretemp("popen")
         basetemp = py.path.local.make_numbered_dir(prefix="slave-", 
             keep=0, rootdir=popenbase)
         basetemp = str(basetemp)
-    channel.send((host, config, basetemp))
+    channel.send((config, basetemp))
     return channel
 
 class SlaveNode(object):
@@ -91,17 +94,16 @@ class SlaveNode(object):
 
     def run(self):
         channel = self.channel
-        host, self.config, basetemp = channel.receive()
+        self.config, basetemp = channel.receive()
         if basetemp:
             self.config.basetemp = py.path.local(basetemp)
         self.config.pytestplugins.do_configure(self.config)
-        self.sendevent("testnodeready", maketestnodeready(host))
+        self.sendevent("slaveready")
         try:
             while 1:
                 task = channel.receive()
-                self.config.bus.notify("masterslave_receivedtask", task)
-                if task is None: # shutdown
-                    self.channel.send(None)
+                if task is None: 
+                    self.sendevent("slavefinished")
                     break
                 if isinstance(task, list):
                     for item in task:
@@ -119,10 +121,3 @@ class SlaveNode(object):
         testrep = runner(item)
         self.sendevent("itemtestreport", testrep)
 
-
-def maketestnodeready(host="INPROCESS"):
-    import sys
-    platinfo = {}
-    for name in 'platform', 'executable', 'version_info':
-        platinfo["sys."+name] = getattr(sys, name)
-    return event.HostUp(host, platinfo)

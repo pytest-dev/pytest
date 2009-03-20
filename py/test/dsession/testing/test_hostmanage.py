@@ -47,7 +47,7 @@ class TestHostManager:
             assert dest.join("dir1", "dir2").check()
             assert dest.join("dir1", "dir2", 'hello').check()
 
-    def test_hostmanager_init_rsync_roots(self, source, dest):
+    def test_init_rsync_roots(self, source, dest):
         dir2 = source.ensure("dir1", "dir2", dir=1)
         source.ensure("dir1", "somefile", dir=1)
         dir2.ensure("hello")
@@ -63,7 +63,7 @@ class TestHostManager:
         assert not dest.join("dir1").check()
         assert not dest.join("bogus").check()
 
-    def test_hostmanager_rsyncignore(self, source, dest):
+    def test_rsyncignore(self, source, dest):
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir5 = source.ensure("dir5", "dir6", "bogus")
         dirf = source.ensure("dir5", "file")
@@ -81,7 +81,7 @@ class TestHostManager:
         assert dest.join("dir5","file").check()
         assert not dest.join("dir6").check()
 
-    def test_hostmanage_optimise_popen(self, source, dest):
+    def test_optimise_popen(self, source, dest):
         hosts = ["popen"] * 3
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
@@ -92,7 +92,7 @@ class TestHostManager:
             assert gwspec._samefilesystem()
             assert not gwspec.chdir
 
-    def test_hostmanage_setup_hosts_DEBUG(self, source, EventRecorder):
+    def test_setup_hosts_DEBUG(self, source, EventRecorder):
         hosts = ["popen"] * 2
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
@@ -107,7 +107,7 @@ class TestHostManager:
             assert l 
         hm.teardown_hosts()
 
-    def test_hostmanage_ssh_setup_hosts(self, specssh, testdir):
+    def test_ssh_setup_hosts(self, specssh, testdir):
         testdir.makepyfile(__init__="", test_x="""
             def test_one():
                 pass

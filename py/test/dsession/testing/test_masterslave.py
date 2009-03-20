@@ -42,9 +42,9 @@ class MySetup:
             config = py.test.config._reparse([])
         self.config = config
         self.queue = py.std.Queue.Queue()
-        self.host = py.execnet.XSpec("popen")
-        self.gateway = py.execnet.makegateway(self.host)
-        self.node = MasterNode(self.host, self.gateway, self.config, putevent=self.queue.put)
+        self.xspec = py.execnet.XSpec("popen")
+        self.gateway = py.execnet.makegateway(self.xspec)
+        self.node = MasterNode(self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()
         return self.node 
 
@@ -64,14 +64,20 @@ def pytest_pyfuncarg_testdir(__call__, pyfuncitem):
     testdir.chdir()
     return testdir 
 
-class TestMasterSlaveConnection:
+def test_node_hash_equality(mysetup):
+    node = mysetup.makenode()
+    node2 = mysetup.makenode()
+    assert node != node2
+    assert node == node
+    assert not (node != node)
 
+class TestMasterSlaveConnection:
     def test_crash_invalid_item(self, mysetup):
         node = mysetup.makenode()
         node.send(123) # invalid item 
-        ev, = mysetup.geteventargs("testnodedown")
-        assert ev.host == mysetup.host
-        assert str(ev.error).find("AttributeError") != -1
+        n, error = mysetup.geteventargs("testnodedown")
+        assert n is node 
+        assert str(error).find("AttributeError") != -1
 
     def test_crash_killed(self, testdir, mysetup):
         if not hasattr(py.std.os, 'kill'):
@@ -83,16 +89,16 @@ class TestMasterSlaveConnection:
         """)
         node = mysetup.makenode(item.config)
         node.send(item) 
-        ev, = mysetup.geteventargs("testnodedown")
-        assert ev.host == mysetup.host
-        assert str(ev.error).find("TERMINATED") != -1
+        n, error = mysetup.geteventargs("testnodedown")
+        assert n is node 
+        assert str(error).find("Not properly terminated") != -1
 
     def test_node_down(self, mysetup):
         node = mysetup.makenode()
         node.shutdown()
-        ev, = mysetup.geteventargs("testnodedown")
-        assert ev.host == mysetup.host 
-        assert not ev.error
+        n, error = mysetup.geteventargs("testnodedown")
+        assert n is node 
+        assert not error
         node.callback(node.ENDMARK)
         excinfo = py.test.raises(IOError, 
             "mysetup.geteventargs('testnodedown', timeout=0.01)")

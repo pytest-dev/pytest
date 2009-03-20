@@ -47,6 +47,7 @@ class HostManager(object):
             hosts = getxspecs(self.config)
         self.roots = getconfigroots(config)
         self.gwmanager = GatewayManager(hosts)
+        self.nodes = []
 
     def makegateways(self):
         # we change to the topdir sot that 
@@ -116,11 +117,9 @@ class HostManager(object):
         """).waitclose()
 
         for gateway in self.gwmanager.gateways:
-            host = gateway.spec 
-            host.node = MasterNode(host, 
-                                   gateway,
-                                   self.config, 
-                                   putevent)
+            node = MasterNode(gateway, self.config, putevent)
+            self.nodes.append(node) 
 
     def teardown_hosts(self):
+        # XXX teardown nodes? 
         self.gwmanager.exit()

@@ -200,11 +200,11 @@ class PytestPluginHooks:
             within the gateway manager context. 
         """
 
-    def pyevent_testnodeready(self, event):
-        """ Host is up. """
+    def pyevent_testnodeready(self, node):
+        """ Node is ready to operate. """
 
-    def pyevent_testnodedown(self, event):
-        """ Host is down. """
+    def pyevent_testnodedown(self, node, error):
+        """ Node is down. """
 
     def pyevent_rescheduleitems(self, event):
         """ Items from a host that went down. """

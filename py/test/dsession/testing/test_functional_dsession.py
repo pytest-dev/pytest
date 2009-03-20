@@ -52,10 +52,10 @@ class TestAsyncFunctional:
         assert ev.skipped
         ev, = eq.geteventargs("itemtestreport")
         assert ev.failed
-        # see that the host is really down 
-        ev, = eq.geteventargs("testnodedown")
-        assert ev.host.popen 
-        ev, = eq.geteventargs("testrunfinish")
+        # see that the node is really down 
+        node, error = eq.geteventargs("testnodedown")
+        assert node.gateway.spec.popen
+        eq.geteventargs("testrunfinish")
 
     def test_distribution_rsyncdirs_example(self, testdir):
         source = testdir.mkdir("source")

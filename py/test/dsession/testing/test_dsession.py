@@ -1,9 +1,10 @@
 from py.__.test.dsession.dsession import DSession
-from py.__.test.dsession.masterslave import maketestnodeready
 from py.__.test.runner import basic_collect_report 
 from py.__.test import event
 from py.__.test import outcome
 import py
+
+XSpec = py.execnet.XSpec
 
 def run(item):
     runner = item._getrunner()
@@ -33,35 +34,33 @@ class TestDSession:
         config.initsession().fixoptions()
         assert config.option.numprocesses == 3
 
-    def test_add_remove_host(self, testdir):
+    def test_add_remove_node(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item.config)
-        host = py.execnet.XSpec("popen")
-        host.node = MockNode()
-        assert not session.host2pending
-        session.addhost(host)
-        assert len(session.host2pending) == 1
+        node = MockNode()
+        assert not session.node2pending
+        session.addnode(node)
+        assert len(session.node2pending) == 1
         session.senditems([item])
-        pending = session.removehost(host)
+        pending = session.removenode(node)
         assert pending == [item]
-        assert item not in session.item2host
-        l = session.removehost(host)
+        assert item not in session.item2node
+        l = session.removenode(node)
         assert not l 
 
     def test_senditems_removeitems(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
         session = DSession(item.config)
-        host = py.execnet.XSpec("popen")
-        host.node = MockNode()
-        session.addhost(host)
+        node = MockNode()
+        session.addnode(node)
         session.senditems([item])  
-        assert session.host2pending[host] == [item]
-        assert session.item2host[item] == host
+        assert session.node2pending[node] == [item]
+        assert session.item2node[item] == node
         session.removeitem(item)
-        assert not session.host2pending[host] 
-        assert not session.item2host
+        assert not session.node2pending[node] 
+        assert not session.item2node
 
     def test_triggertesting_collect(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -78,19 +77,17 @@ class TestDSession:
     def test_triggertesting_item(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
-        host1 = py.execnet.XSpec("popen")
-        host1.node = MockNode()
-        host2 = py.execnet.XSpec("popen")
-        host2.node = MockNode()
-        session.addhost(host1)
-        session.addhost(host2)
+        node1 = MockNode()
+        node2 = MockNode()
+        session.addnode(node1)
+        session.addnode(node2)
         session.triggertesting([item] * (session.MAXITEMSPERHOST*2 + 1))
-        host1_sent = host1.node.sent[0]
-        host2_sent = host2.node.sent[0]
-        assert host1_sent == [item] * session.MAXITEMSPERHOST
-        assert host2_sent == [item] * session.MAXITEMSPERHOST
-        assert session.host2pending[host1] == host1_sent
-        assert session.host2pending[host2] == host2_sent
+        sent1 = node1.sent[0]
+        sent2 = node2.sent[0]
+        assert sent1 == [item] * session.MAXITEMSPERHOST
+        assert sent2 == [item] * session.MAXITEMSPERHOST
+        assert session.node2pending[node1] == sent1
+        assert session.node2pending[node2] == sent2
         name, args, kwargs = session.queue.get(block=False)
         assert name == "rescheduleitems"
         ev, = args 
@@ -115,37 +112,34 @@ class TestDSession:
     def test_rescheduleevent(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
-        host1 = GatewaySpec("localhost")
-        host1.node = MockNode()
-        session.addhost(host1)
+        node = MockNode()
+        session.addnode(node)
         ev = event.RescheduleItems([item])
         loopstate = session._initloopstate([])
         session.queueevent("rescheduleitems", ev)
         session.loop_once(loopstate)
         # check that RescheduleEvents are not immediately
-        # rescheduled if there are no hosts 
+        # rescheduled if there are no nodes
         assert loopstate.dowork == False 
         session.queueevent("anonymous", event.NOP())
         session.loop_once(loopstate)
         session.queueevent("anonymous", event.NOP())
         session.loop_once(loopstate)
-        assert host1.node.sent == [[item]]
+        assert node.sent == [[item]]
         session.queueevent("itemtestreport", run(item))
         session.loop_once(loopstate)
         assert loopstate.shuttingdown 
         assert not loopstate.testsfailed 
 
-    def test_no_hosts_remaining_for_tests(self, testdir):
+    def test_no_node_remaining_for_tests(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        # setup a session with one host
+        # setup a session with one node
         session = DSession(item.config)
-        host1 = GatewaySpec("localhost")
-        host1.node = MockNode()
-        session.addhost(host1)
+        node = MockNode()
+        session.addnode(node)
        
         # setup a HostDown event
-        ev = event.HostDown(host1, None)
-        session.queueevent("testnodedown", ev)
+        session.queueevent("testnodedown", node, None)
 
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
@@ -162,22 +156,18 @@ class TestDSession:
         """)
         item1, item2 = modcol.collect()
 
-        # setup a session with two hosts 
+        # setup a session with two nodes
         session = DSession(item1.config)
-        host1 = GatewaySpec("localhost")
-        host1.node = MockNode()
-        session.addhost(host1)
-        host2 = GatewaySpec("localhost")
-        host2.node = MockNode()
-        session.addhost(host2)
+        node1, node2 = MockNode(), MockNode()
+        session.addnode(node1)
+        session.addnode(node2)
       
-        # have one test pending for a host that goes down 
+        # have one test pending for a node that goes down 
         session.senditems([item1, item2])
-        host = session.item2host[item1]
-        ev = event.HostDown(host, None)
-        session.queueevent("testnodedown", ev)
+        node = session.item2node[item1]
+        session.queueevent("testnodedown", node, None)
         evrec = EventRecorder(session.bus)
-        print session.item2host
+        print session.item2node
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
 
@@ -186,20 +176,19 @@ class TestDSession:
         assert testrep.failed
         assert testrep.colitem == item1
         assert str(testrep.longrepr).find("crashed") != -1
-        assert str(testrep.longrepr).find(host.address) != -1
+        #assert str(testrep.longrepr).find(node.gateway.spec) != -1
 
     def test_testnodeready_adds_to_available(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        # setup a session with two hosts 
+        # setup a session with two nodes
         session = DSession(item.config)
-        host1 = GatewaySpec("localhost")
-        testnodeready = maketestnodeready(host1)
-        session.queueevent("testnodeready", testnodeready)
+        node1 = MockNode()
+        session.queueevent("testnodeready", node1)
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
-        assert len(session.host2pending) == 0
+        assert len(session.node2pending) == 0
         session.loop_once(loopstate)
-        assert len(session.host2pending) == 1
+        assert len(session.node2pending) == 1
 
     def test_event_propagation(self, testdir, EventRecorder):
         item = testdir.getitem("def test_func(): pass")
@@ -212,20 +201,19 @@ class TestDSession:
 
     def runthrough(self, item):
         session = DSession(item.config)
-        host1 = GatewaySpec("localhost")
-        host1.node = MockNode()
-        session.addhost(host1)
+        node = MockNode()
+        session.addnode(node)
         loopstate = session._initloopstate([item])
 
         session.queueevent("NOP")
         session.loop_once(loopstate)
 
-        assert host1.node.sent == [[item]]
+        assert node.sent == [[item]]
         ev = run(item)
         session.queueevent("itemtestreport", ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  
-        session.queueevent("testnodedown", event.HostDown(host1, None))
+        session.queueevent("testnodedown", node, None)
         session.loop_once(loopstate)
         dumpqueue(session.queue)
         return session, loopstate.exitstatus 
@@ -249,12 +237,11 @@ class TestDSession:
         """)
         modcol.config.option.exitfirst = True
         session = DSession(modcol.config)
-        host1 = GatewaySpec("localhost")
-        host1.node = MockNode()
-        session.addhost(host1)
+        node = MockNode()
+        session.addnode(node)
         items = basic_collect_report(modcol).result
 
-        # trigger testing  - this sends tests to host1
+        # trigger testing  - this sends tests to the node
         session.triggertesting(items)
 
         # run tests ourselves and produce reports 
@@ -271,18 +258,17 @@ class TestDSession:
     def test_shuttingdown_filters_events(self, testdir, EventRecorder):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
-        host = GatewaySpec("localhost")
-        session.addhost(host)
+        node = MockNode()
+        session.addnode(node)
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
         evrec = EventRecorder(session.bus)
         session.queueevent("itemtestreport", run(item))
         session.loop_once(loopstate)
         assert not evrec.getfirstnamed("testnodedown")
-        ev = event.HostDown(host)
-        session.queueevent("testnodedown", ev)
+        session.queueevent("testnodedown", node, None)
         session.loop_once(loopstate)
-        assert evrec.getfirstnamed('testnodedown') == ev
+        assert evrec.getfirstnamed('testnodedown') == node
 
     def test_filteritems(self, testdir, EventRecorder):
         modcol = testdir.getmodulecol("""
@@ -317,17 +303,16 @@ class TestDSession:
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
 
-        host = GatewaySpec("localhost")
-        host.node = MockNode()
-        session.addhost(host)
+        node = MockNode()
+        session.addnode(node)
         session.senditems([item])
         session.queueevent("itemtestreport", run(item))
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
-        assert host.node._shutdown is True
+        assert node._shutdown is True
         assert loopstate.exitstatus is None, "loop did not wait for testnodedown"
         assert loopstate.shuttingdown 
-        session.queueevent("testnodedown", event.HostDown(host, None))
+        session.queueevent("testnodedown", node, None)
         session.loop_once(loopstate)
         assert loopstate.exitstatus == 0
 
@@ -339,15 +324,13 @@ class TestDSession:
                 pass
         """)
         session = DSession(modcol.config)
-        host = GatewaySpec("localhost")
-        host.node = MockNode()
-        session.addhost(host)
+        node = MockNode()
+        session.addnode(node)
 
         colreport = basic_collect_report(modcol)
         item1, item2 = colreport.result
         session.senditems([item1])
-        # host2pending will become empty when the loop sees
-        # the report 
+        # node2pending will become empty when the loop sees the report 
         session.queueevent("itemtestreport", run(item1)) 
 
         # but we have a collection pending
