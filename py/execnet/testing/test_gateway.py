@@ -444,9 +444,22 @@ class BasicRemoteExecution:
     def test__rinfo(self):
         rinfo = self.gw._rinfo()
         assert rinfo.executable 
-        assert rinfo.curdir 
+        assert rinfo.cwd 
         assert rinfo.version_info 
-        
+        old = self.gw.remote_exec("""
+            import os.path
+            cwd = os.getcwd()
+            channel.send(os.path.basename(cwd))
+            os.chdir('..')
+        """).receive()
+        try:
+            rinfo2 = self.gw._rinfo()
+            assert rinfo2.cwd == rinfo.cwd
+            rinfo3 = self.gw._rinfo(update=True)
+            assert rinfo3.cwd != rinfo2.cwd
+        finally:
+            self.gw._cache_rinfo = rinfo
+            self.gw.remote_exec("import os ; os.chdir(%r)" % old).waitclose()
 
 class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
     def test_cmdattr(self):
@@ -487,10 +500,11 @@ def test_channel_endmarker_remote_killterm():
 #        assert x == 17 
 
 class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
-    def test_remote_info_popen(self):
+    def test_rinfo_popen(self):
+        #rinfo = py.execnet.PopenGateway()._rinfo()
         rinfo = self.gw._rinfo()
         assert rinfo.executable == py.std.sys.executable 
-        assert rinfo.curdir == py.std.os.getcwd()
+        assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info == py.std.sys.version_info
 
     def test_chdir_separation(self):

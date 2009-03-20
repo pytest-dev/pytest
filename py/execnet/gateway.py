@@ -241,16 +241,18 @@ class Gateway(object):
         chan.setcallback(callback)
         return chan.id 
 
-    def _rinfo(self):
+    def _rinfo(self, update=False):
         """ return some sys/env information from remote. """
-        return RInfo(**self.remote_exec("""
-            import sys, os
-            channel.send(dict(
-                executable = sys.executable, 
-                version_info = sys.version_info, 
-                curdir = os.getcwd(),
-            ))
-        """).receive())
+        if update or not hasattr(self, '_cache_rinfo'):
+            self._cache_rinfo = RInfo(**self.remote_exec("""
+                import sys, os
+                channel.send(dict(
+                    executable = sys.executable, 
+                    version_info = sys.version_info, 
+                    cwd = os.getcwd(),
+                ))
+            """).receive())
+        return self._cache_rinfo
 
     # _____________________________________________________________________
     #
