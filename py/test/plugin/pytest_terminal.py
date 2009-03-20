@@ -103,7 +103,7 @@ class TerminalReporter:
             #     which garbles our output if we use self.write_line 
             self.write_line(msg)
 
-    def pyevent_hostup(self, event):
+    def pyevent_testnodeready(self, event):
         d = event.platinfo.copy()
         d['host'] = getattr(event.host, 'address', event.host)
         d['version'] = repr_pythonversion(d['sys.version_info'])
@@ -111,7 +111,7 @@ class TerminalReporter:
                       "%(sys.executable)s - Python %(version)s" %
                       d)
 
-    def pyevent_hostdown(self, event):
+    def pyevent_testnodedown(self, event):
         host = event.host
         error = event.error
         if error:
@@ -323,13 +323,13 @@ def repr_pythonversion(v=None):
 
 from py.__.test import event
 from py.__.test.runner import basic_run_report
-from py.__.test.dsession.masterslave import makehostup
+from py.__.test.dsession.masterslave import maketestnodeready
 
 class TestTerminal:
-    def test_hostup(self, testdir, linecomp):
+    def test_testnodeready(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
         rep = TerminalReporter(item.config, linecomp.stringio)
-        rep.pyevent_hostup(makehostup())
+        rep.pyevent_testnodeready(maketestnodeready())
         linecomp.assert_contains_lines([
             "*INPROCESS* %s %s - Python %s" %(sys.platform, 
             sys.executable, repr_pythonversion(sys.version_info))

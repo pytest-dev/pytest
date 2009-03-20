@@ -1,5 +1,5 @@
 from py.__.test.dsession.dsession import DSession, LoopState
-from py.__.test.dsession.masterslave import makehostup
+from py.__.test.dsession.masterslave import maketestnodeready
 from py.__.execnet.gwmanage import GatewaySpec
 from py.__.test.runner import basic_collect_report 
 from py.__.test import event
@@ -146,7 +146,7 @@ class TestDSession:
        
         # setup a HostDown event
         ev = event.HostDown(host1, None)
-        session.queueevent("hostdown", ev)
+        session.queueevent("testnodedown", ev)
 
         loopstate = LoopState([item])
         loopstate.dowork = False
@@ -154,7 +154,7 @@ class TestDSession:
         dumpqueue(session.queue)
         assert loopstate.exitstatus == outcome.EXIT_NOHOSTS
 
-    def test_hostdown_causes_reschedule_pending(self, testdir, EventRecorder):
+    def test_testnodedown_causes_reschedule_pending(self, testdir, EventRecorder):
         modcol = testdir.getmodulecol("""
             def test_crash(): 
                 assert 0
@@ -176,7 +176,7 @@ class TestDSession:
         session.senditems([item1, item2])
         host = session.item2host[item1]
         ev = event.HostDown(host, None)
-        session.queueevent("hostdown", ev)
+        session.queueevent("testnodedown", ev)
         evrec = EventRecorder(session.bus)
         loopstate = LoopState([])
         session.loop_once(loopstate)
@@ -188,13 +188,13 @@ class TestDSession:
         assert str(testrep.longrepr).find("crashed") != -1
         assert str(testrep.longrepr).find(host.address) != -1
 
-    def test_hostup_adds_to_available(self, testdir):
+    def test_testnodeready_adds_to_available(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         # setup a session with two hosts 
         session = DSession(item.config)
         host1 = GatewaySpec("localhost")
-        hostup = makehostup(host1)
-        session.queueevent("hostup", hostup)
+        testnodeready = maketestnodeready(host1)
+        session.queueevent("testnodeready", testnodeready)
         loopstate = LoopState([item])
         loopstate.dowork = False
         assert len(session.host2pending) == 0
@@ -225,7 +225,7 @@ class TestDSession:
         session.queueevent("itemtestreport", ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  
-        session.queueevent("hostdown", event.HostDown(host1, None))
+        session.queueevent("testnodedown", event.HostDown(host1, None))
         session.loop_once(loopstate)
         dumpqueue(session.queue)
         return session, loopstate.exitstatus 
@@ -278,11 +278,11 @@ class TestDSession:
         evrec = EventRecorder(session.bus)
         session.queueevent("itemtestreport", run(item))
         session.loop_once(loopstate)
-        assert not evrec.getfirstnamed("hostdown")
+        assert not evrec.getfirstnamed("testnodedown")
         ev = event.HostDown(host)
-        session.queueevent("hostdown", ev)
+        session.queueevent("testnodedown", ev)
         session.loop_once(loopstate)
-        assert evrec.getfirstnamed('hostdown') == ev
+        assert evrec.getfirstnamed('testnodedown') == ev
 
     def test_filteritems(self, testdir, EventRecorder):
         modcol = testdir.getmodulecol("""
@@ -313,7 +313,7 @@ class TestDSession:
         assert event.name == "deselected"
         assert event.args[0].items == [items[1]]
 
-    def test_hostdown_shutdown_after_completion(self, testdir):
+    def test_testnodedown_shutdown_after_completion(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
 
@@ -325,9 +325,9 @@ class TestDSession:
         loopstate = LoopState([]) 
         session.loop_once(loopstate)
         assert host.node._shutdown is True
-        assert loopstate.exitstatus is None, "loop did not wait for hostdown"
+        assert loopstate.exitstatus is None, "loop did not wait for testnodedown"
         assert loopstate.shuttingdown 
-        session.queueevent("hostdown", event.HostDown(host, None))
+        session.queueevent("testnodedown", event.HostDown(host, None))
         session.loop_once(loopstate)
         assert loopstate.exitstatus == 0
 

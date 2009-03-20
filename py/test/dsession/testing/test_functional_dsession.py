@@ -53,7 +53,7 @@ class TestAsyncFunctional:
         ev, = eq.geteventargs("itemtestreport")
         assert ev.failed
         # see that the host is really down 
-        ev, = eq.geteventargs("hostdown")
+        ev, = eq.geteventargs("testnodedown")
         assert ev.host.address == "popen"
         ev, = eq.geteventargs("testrunfinish")
 

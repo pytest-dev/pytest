@@ -33,11 +33,11 @@ class MasterNode(object):
                 if not self._down:
                     if not err:
                         err = "TERMINATED"
-                    self.notify("hostdown", event.HostDown(self.host, err))
+                    self.notify("testnodedown", event.HostDown(self.host, err))
                 return
             elif eventcall is None:
                 self._down = True
-                self.notify("hostdown", event.HostDown(self.host, None))
+                self.notify("testnodedown", event.HostDown(self.host, None))
                 return 
         except KeyboardInterrupt:
             raise 
@@ -95,7 +95,7 @@ class SlaveNode(object):
         if basetemp:
             self.config.basetemp = py.path.local(basetemp)
         self.config.pytestplugins.do_configure(self.config)
-        self.sendevent("hostup", makehostup(host))
+        self.sendevent("testnodeready", maketestnodeready(host))
         try:
             while 1:
                 task = channel.receive()
@@ -120,7 +120,7 @@ class SlaveNode(object):
         self.sendevent("itemtestreport", testrep)
 
 
-def makehostup(host="INPROCESS"):
+def maketestnodeready(host="INPROCESS"):
     import sys
     platinfo = {}
     for name in 'platform', 'executable', 'version_info':

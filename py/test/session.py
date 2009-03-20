@@ -12,7 +12,7 @@ from py.__.test import event, outcome
 Item = py.test.collect.Item
 Collector = py.test.collect.Collector
 from runner import basic_collect_report
-from py.__.test.dsession.masterslave import makehostup
+from py.__.test.dsession.masterslave import maketestnodeready
 
 class Session(object): 
     """ 
@@ -117,7 +117,7 @@ class Session(object):
         colitems = self.getinitialitems(colitems)
         self.shouldstop = False 
         self.sessionstarts()
-        self.bus.notify("hostup", makehostup())
+        self.bus.notify("testnodeready", maketestnodeready())
         exitstatus = outcome.EXIT_OK
         captured_excinfo = None
         try:

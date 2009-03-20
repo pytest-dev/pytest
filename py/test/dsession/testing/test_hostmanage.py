@@ -147,15 +147,6 @@ class TestHostManager:
         ev = sorter.getfirstnamed("itemtestreport")
         assert ev.passed 
 
-    def test_rsync_samehost_twice(self):
-        host1 = Host("%s" % (sshhost, ))
-        host2 = Host("%s" % (sshhost, ))
-        hm = HostManager(config, hosts=[host1, host2])
-        events = []
-        hm.init_rsync(events.append)
-        print events
-        assert 0
-
 
 def test_getconfiggwspecs_numprocesses():
     config = py.test.config._reparse(['-n3'])

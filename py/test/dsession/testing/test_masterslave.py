@@ -70,7 +70,7 @@ class TestMasterSlaveConnection:
     def test_crash_invalid_item(self, mysetup):
         node = mysetup.makenode()
         node.send(123) # invalid item 
-        ev, = mysetup.geteventargs("hostdown")
+        ev, = mysetup.geteventargs("testnodedown")
         assert ev.host == mysetup.host
         assert str(ev.error).find("AttributeError") != -1
 
@@ -84,19 +84,19 @@ class TestMasterSlaveConnection:
         """)
         node = mysetup.makenode(item.config)
         node.send(item) 
-        ev, = mysetup.geteventargs("hostdown")
+        ev, = mysetup.geteventargs("testnodedown")
         assert ev.host == mysetup.host
         assert str(ev.error).find("TERMINATED") != -1
 
     def test_node_down(self, mysetup):
         node = mysetup.makenode()
         node.shutdown()
-        ev, = mysetup.geteventargs("hostdown")
+        ev, = mysetup.geteventargs("testnodedown")
         assert ev.host == mysetup.host 
         assert not ev.error
         node.callback(node.ENDMARK)
         excinfo = py.test.raises(IOError, 
-            "mysetup.geteventargs('hostdown', timeout=0.01)")
+            "mysetup.geteventargs('testnodedown', timeout=0.01)")
 
     def test_send_on_closed_channel(self, testdir, mysetup):
         item = testdir.getitem("def test_func(): pass")

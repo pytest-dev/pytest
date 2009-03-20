@@ -108,9 +108,9 @@ class DSession(Session):
         elif eventname == "collectionreport":
             if ev.passed:
                 colitems.extend(ev.result)
-        elif eventname == "hostup":
+        elif eventname == "testnodeready":
             self.addhost(ev.host)
-        elif eventname == "hostdown":
+        elif eventname == "testnodedown":
             pending = self.removehost(ev.host)
             if pending:
                 crashitem = pending.pop(0)
@@ -132,9 +132,9 @@ class DSession(Session):
         # once we are in shutdown mode we dont send 
         # events other than HostDown upstream 
         eventname, args, kwargs = self.queue.get()
-        if eventname == "hostdown":
+        if eventname == "testnodedown":
             ev, = args
-            self.bus.notify("hostdown", ev)
+            self.bus.notify("testnodedown", ev)
             self.removehost(ev.host)
         if not self.host2pending:
             # finished
@@ -173,7 +173,7 @@ class DSession(Session):
         try:
             pending = self.host2pending.pop(host)
         except KeyError:
-            # this happens if we didn't receive a hostup event yet
+            # this happens if we didn't receive a testnodeready event yet
             return []
         for item in pending:
             del self.item2host[item]
