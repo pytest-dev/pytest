@@ -1,4 +1,4 @@
-from py.__.test.dsession.dsession import DSession, LoopState
+from py.__.test.dsession.dsession import DSession
 from py.__.test.dsession.masterslave import maketestnodeready
 from py.__.execnet.gwmanage import GatewaySpec
 from py.__.test.runner import basic_collect_report 
@@ -120,7 +120,7 @@ class TestDSession:
         host1.node = MockNode()
         session.addhost(host1)
         ev = event.RescheduleItems([item])
-        loopstate = LoopState([])
+        loopstate = session._initloopstate([])
         session.queueevent("rescheduleitems", ev)
         session.loop_once(loopstate)
         # check that RescheduleEvents are not immediately
@@ -148,7 +148,7 @@ class TestDSession:
         ev = event.HostDown(host1, None)
         session.queueevent("testnodedown", ev)
 
-        loopstate = LoopState([item])
+        loopstate = session._initloopstate([item])
         loopstate.dowork = False
         session.loop_once(loopstate)
         dumpqueue(session.queue)
@@ -178,7 +178,8 @@ class TestDSession:
         ev = event.HostDown(host, None)
         session.queueevent("testnodedown", ev)
         evrec = EventRecorder(session.bus)
-        loopstate = LoopState([])
+        print session.item2host
+        loopstate = session._initloopstate([])
         session.loop_once(loopstate)
 
         assert loopstate.colitems == [item2] # do not reschedule crash item
@@ -195,7 +196,7 @@ class TestDSession:
         host1 = GatewaySpec("localhost")
         testnodeready = maketestnodeready(host1)
         session.queueevent("testnodeready", testnodeready)
-        loopstate = LoopState([item])
+        loopstate = session._initloopstate([item])
         loopstate.dowork = False
         assert len(session.host2pending) == 0
         session.loop_once(loopstate)
@@ -207,7 +208,7 @@ class TestDSession:
       
         evrec = EventRecorder(session.bus)
         session.queueevent("NOPevent", 42)
-        session.loop_once(LoopState([]))
+        session.loop_once(session._initloopstate([]))
         assert evrec.getfirstnamed('NOPevent')
 
     def runthrough(self, item):
@@ -215,7 +216,7 @@ class TestDSession:
         host1 = GatewaySpec("localhost")
         host1.node = MockNode()
         session.addhost(host1)
-        loopstate = LoopState([item])
+        loopstate = session._initloopstate([item])
 
         session.queueevent("NOP")
         session.loop_once(loopstate)
@@ -263,7 +264,7 @@ class TestDSession:
         session.queueevent("itemtestreport", ev1) # a failing one
         session.queueevent("itemtestreport", ev2)
         # now call the loop
-        loopstate = LoopState(items)
+        loopstate = session._initloopstate(items)
         session.loop_once(loopstate)
         assert loopstate.testsfailed
         assert loopstate.shuttingdown
@@ -273,7 +274,7 @@ class TestDSession:
         session = DSession(item.config)
         host = GatewaySpec("localhost")
         session.addhost(host)
-        loopstate = LoopState([])
+        loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
         evrec = EventRecorder(session.bus)
         session.queueevent("itemtestreport", run(item))
@@ -322,7 +323,7 @@ class TestDSession:
         session.addhost(host)
         session.senditems([item])
         session.queueevent("itemtestreport", run(item))
-        loopstate = LoopState([]) 
+        loopstate = session._initloopstate([])
         session.loop_once(loopstate)
         assert host.node._shutdown is True
         assert loopstate.exitstatus is None, "loop did not wait for testnodedown"
@@ -353,7 +354,7 @@ class TestDSession:
         # but we have a collection pending
         session.queueevent("collectionreport", colreport) 
 
-        loopstate = LoopState([]) 
+        loopstate = session._initloopstate([])
         session.loop_once(loopstate)
         assert loopstate.exitstatus is None, "loop did not care for collection report"
         assert not loopstate.colitems 

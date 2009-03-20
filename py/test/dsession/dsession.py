@@ -13,7 +13,8 @@ from py.__.test import outcome
 import Queue 
 
 class LoopState(object):
-    def __init__(self, colitems):
+    def __init__(self, dsession, colitems):
+        self.dsession = dsession
         self.colitems = colitems
         self.exitstatus = None 
         # loopstate.dowork is False after reschedule events 
@@ -22,6 +23,30 @@ class LoopState(object):
         self.dowork = True
         self.shuttingdown = False
         self.testsfailed = False
+
+    def pyevent_itemtestreport(self, event):
+        if event.colitem in self.dsession.item2host:
+            self.dsession.removeitem(event.colitem)
+        if event.failed:
+            self.testsfailed = True
+
+    def pyevent_collectionreport(self, event):
+        if event.passed:
+            self.colitems.extend(event.result)
+
+    def pyevent_testnodeready(self, event):
+        self.dsession.addhost(event.host)
+
+    def pyevent_testnodedown(self, event):
+        pending = self.dsession.removehost(event.host)
+        if pending:
+            crashitem = pending[0]
+            self.dsession.handle_crashitem(crashitem, event.host)
+            self.colitems.extend(pending[1:])
+
+    def pyevent_rescheduleitems(self, event):
+        self.colitems.extend(event.items)
+        self.dowork = False # avoid busywait
 
 class DSession(Session):
     """ 
@@ -36,7 +61,6 @@ class DSession(Session):
         self.queue = Queue.Queue()
         self.host2pending = {}
         self.item2host = {}
-        self._testsfailed = False
         if self.config.getvalue("executable") and \
            not self.config.getvalue("numprocesses"):
             self.config.option.numprocesses = 1
@@ -83,8 +107,8 @@ class DSession(Session):
         if loopstate.shuttingdown:
             return self.loop_once_shutdown(loopstate)
         colitems = loopstate.colitems 
-        if loopstate.dowork and loopstate.colitems:
-            self.triggertesting(colitems) 
+        if loopstate.dowork and colitems:
+            self.triggertesting(loopstate.colitems) 
             colitems[:] = []
         # we use a timeout here so that control-C gets through 
         while 1:
@@ -94,31 +118,9 @@ class DSession(Session):
             except Queue.Empty:
                 continue
         loopstate.dowork = True 
-           
+          
         eventname, args, kwargs = eventcall
         self.bus.notify(eventname, *args, **kwargs)
-        if args:
-            ev, = args 
-        else:
-            ev = None
-        if eventname == "itemtestreport":
-            self.removeitem(ev.colitem)
-            if ev.failed:
-                loopstate.testsfailed = True
-        elif eventname == "collectionreport":
-            if ev.passed:
-                colitems.extend(ev.result)
-        elif eventname == "testnodeready":
-            self.addhost(ev.host)
-        elif eventname == "testnodedown":
-            pending = self.removehost(ev.host)
-            if pending:
-                crashitem = pending.pop(0)
-                self.handle_crashitem(crashitem, ev.host)
-                colitems.extend(pending)
-        elif eventname == "rescheduleitems":
-            colitems.extend(ev.items)
-            loopstate.dowork = False # avoid busywait
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
@@ -143,9 +145,14 @@ class DSession(Session):
             else:
                 loopstate.exitstatus = outcome.EXIT_OK
 
+    def _initloopstate(self, colitems):
+        loopstate = LoopState(self, colitems)
+        self.config.bus.register(loopstate)
+        return loopstate
+
     def loop(self, colitems):
         try:
-            loopstate = LoopState(colitems)
+            loopstate = self._initloopstate(colitems)
             loopstate.dowork = False # first receive at least one HostUp events
             while 1:
                 self.loop_once(loopstate)
@@ -157,6 +164,7 @@ class DSession(Session):
         except:
             self.bus.notify("internalerror", event.InternalException())
             exitstatus = outcome.EXIT_INTERNALERROR
+        self.config.bus.unregister(loopstate)
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
         return exitstatus
