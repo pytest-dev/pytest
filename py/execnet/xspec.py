@@ -23,7 +23,13 @@ class XSpec:
             raise AttributeError(name) 
         return None
 
-def makegateway(spec):
-    pass
+    def _samefilesystem(self):
+        return bool(self.popen and not self.path)
 
-    
+def makegateway(spec):
+    if not isinstance(spec, XSpec):
+        spec = XSpec(spec)
+    if spec.popen:
+        gw = py.execnet.PopenGateway(python=spec.python)
+    gw.spec = spec 
+    return gw
