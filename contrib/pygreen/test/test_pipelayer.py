@@ -1,5 +1,6 @@
 import os, random
 from pygreen.pipelayer import PipeLayer, pipe_over_udp, PipeOverUdp
+import py
 
 def test_simple():
     data1 = os.urandom(1000)
@@ -169,21 +170,28 @@ def test_pipe_over_udp():
     import thread
     s1, s2 = udpsockpair()
 
-    fd1 = os.open(__file__, os.O_RDONLY)
-    fd2 = os.open('test_pipelayer.py~copy', os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
+    tmp = py.test.ensuretemp("pipeoverudp")
+    p = py.path.local(__file__)
+    p.copy(tmp.join(p.basename))
+    old = tmp.chdir()
+    try:
+        fd1 = os.open(__file__, os.O_RDONLY)
+        fd2 = os.open('test_pipelayer.py~copy', os.O_WRONLY|os.O_CREAT|os.O_TRUNC)
 
-    thread.start_new_thread(pipe_over_udp, (s1, fd1))
-    pipe_over_udp(s2, recv_fd=fd2, inactivity_timeout=2.5)
-    os.close(fd1)
-    os.close(fd2)
-    f = open(__file__, 'rb')
-    data1 = f.read()
-    f.close()
-    f = open('test_pipelayer.py~copy', 'rb')
-    data2 = f.read()
-    f.close()
-    assert data1 == data2
-    os.unlink('test_pipelayer.py~copy')
+        thread.start_new_thread(pipe_over_udp, (s1, fd1))
+        pipe_over_udp(s2, recv_fd=fd2, inactivity_timeout=2.5)
+        os.close(fd1)
+        os.close(fd2)
+        f = open(__file__, 'rb')
+        data1 = f.read()
+        f.close()
+        f = open('test_pipelayer.py~copy', 'rb')
+        data2 = f.read()
+        f.close()
+        assert data1 == data2
+        os.unlink('test_pipelayer.py~copy')
+    finally:
+        old.chdir()
 
 def test_PipeOverUdp():
     s1, s2 = udpsockpair()
