@@ -154,14 +154,18 @@ class TestPyPlugins:
     def test_listattr(self):
         plugins = PyPlugins()
         class api1:
-            x = 42
-        class api2:
             x = 41
+        class api2:
+            x = 42
+        class api3:
+            x = 43
         plugins.register(api1())
         plugins.register(api2())
+        plugins.register(api3())
         l = list(plugins.listattr('x'))
-        l.sort()
-        assert l == [41, 42]
+        assert l == [41, 42, 43]
+        l = list(plugins.listattr('x', reverse=True))
+        assert l == [43, 42, 41]
 
     def test_notify_anonymous_ordered(self):
         plugins = PyPlugins()

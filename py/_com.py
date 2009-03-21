@@ -120,7 +120,7 @@ class PyPlugins:
     def isregistered(self, plugin):
         return plugin in self._plugins 
 
-    def listattr(self, attrname, plugins=None, extra=()):
+    def listattr(self, attrname, plugins=None, extra=(), reverse=False):
         l = []
         if plugins is None:
             plugins = self._plugins
@@ -131,6 +131,8 @@ class PyPlugins:
                 l.append(getattr(plugin, attrname))
             except AttributeError:
                 continue 
+        if reverse:
+            l.reverse()
         return l
 
     def call_each(self, methname, *args, **kwargs):
