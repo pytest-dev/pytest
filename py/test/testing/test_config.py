@@ -236,13 +236,13 @@ class TestOptionEffects:
 
     def test_config_iocapturing(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)
-        assert config.getvalue("conf_iocapture")
+        assert config.getvalue("iocapture")
         tmpdir = testdir.tmpdir.ensure("sub-with-conftest", dir=1)
         tmpdir.join("conftest.py").write(py.code.Source("""
-            conf_iocapture = "no"
+            pytest_option_iocapture = "no"
         """))
         config = py.test.config._reparse([tmpdir])
-        assert config.getvalue("conf_iocapture") == "no"
+        assert config.getvalue("iocapture") == "no"
         capture = config._getcapture()
         assert isinstance(capture, py.io.StdCapture)
         assert not capture._out
@@ -252,7 +252,7 @@ class TestOptionEffects:
         for opt, cls in (("sys", py.io.StdCapture),  
                          ("fd", py.io.StdCaptureFD), 
                         ):
-            config.option.conf_iocapture = opt
+            config.option.iocapture = opt
             capture = config._getcapture()
             assert isinstance(capture, cls) 
 

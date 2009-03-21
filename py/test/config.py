@@ -242,7 +242,7 @@ class Config(object):
         if self.option.nocapture:
             iocapture = "no" 
         else:
-            iocapture = self.getvalue("conf_iocapture", path=path)
+            iocapture = self.getvalue("iocapture", path=path)
         if iocapture == "fd": 
             return py.io.StdCaptureFD()
         elif iocapture == "sys":
@@ -250,7 +250,7 @@ class Config(object):
         elif iocapture == "no": 
             return py.io.StdCapture(out=False, err=False, in_=False)
         else:
-            raise ValueError("unknown io capturing: " + iocapture)
+            raise self.Error("unknown io capturing: " + iocapture)
 
     def getxspecs(self):
         config = self 

@@ -33,7 +33,7 @@ class DefaultPlugin:
         return Directory(path, parent=parent)
 
     def pytest_addoption(self, parser):
-        group = parser.addgroup("general", "test selection and failure debug options")
+        group = parser.addgroup("general", "general test process options")
         group._addoption('-v', '--verbose', action="count", 
                    dest="verbose", default=0, help="increase verbosity."),
         group._addoption('-x', '--exitfirst',
@@ -61,9 +61,11 @@ class DefaultPlugin:
         group._addoption('--fulltrace',
                    action="store_true", dest="fulltrace", default=False,
                    help="don't cut any tracebacks (default is to cut).")
-        group._addoption('-s', '--nocapture',
+        group._addoption('-s', 
                    action="store_true", dest="nocapture", default=False,
-                   help="disable catching of sys.stdout/stderr output."),
+                   help="disable catching of stdout/stderr during test run.")
+        group._addoption('--iocapture', action="store", default="fd", metavar="method",
+                   help="set iocapturing method: fd|sys|no.")
         group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                    help="temporary directory for this test run.")
         group.addoption('--boxed',
@@ -75,7 +77,7 @@ class DefaultPlugin:
                          "and instantiate 'HelloPlugin' from the module."))
         group._addoption('-f', '--looponfailing',
                    action="store_true", dest="looponfailing", default=False,
-                   help="loop on failing test set.")
+                   help="run tests, loop on failing test set, until all pass. repeat forever.")
 
         group = parser.addgroup("test process debugging")
         group.addoption('--collectonly',

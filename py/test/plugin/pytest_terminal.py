@@ -96,7 +96,7 @@ class TerminalReporter:
         else:
             d['extra'] = ""
         d['cwd'] = rinfo.cwd
-        self.write_line("%(id)s new %(spec)r -- platform %(platform)s, "
+        self.write_line("%(id)s %(spec)s -- platform %(platform)s, "
                         "Python %(version)s "
                         "cwd: %(cwd)s"
                         "%(extra)s" % d)
@@ -460,7 +460,7 @@ class TestTerminal:
 
         rep.pyevent_gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
-            "X1 new 'popen' *xyz*2.5*"
+            "X1*popen*xyz*2.5*"
         ])
 
         rep.pyevent_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])

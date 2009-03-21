@@ -68,7 +68,7 @@ class TestAsyncFunctional:
             "--tx=popen//chdir=%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*1* new *popen*platform*",
+            "*1* *popen*platform*",
             #"RSyncStart: [G1]",
             #"RSyncFinished: [G1]",
             "*1 passed*"
