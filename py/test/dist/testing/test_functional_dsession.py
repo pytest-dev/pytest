@@ -64,7 +64,7 @@ class TestAsyncFunctional:
         subdir.ensure("__init__.py")
         p = subdir.join("test_one.py")
         p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
-        result = testdir.runpytest("-d", "--rsyncdirs=%(subdir)s" % locals(), 
+        result = testdir.runpytest("-d", "--rsyncdir=%(subdir)s" % locals(), 
             "--tx=popen//chdir=%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([

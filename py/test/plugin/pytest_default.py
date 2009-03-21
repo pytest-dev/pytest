@@ -75,8 +75,8 @@ class DefaultPlugin:
                    help=("load the specified plugin after command line parsing. "
                          "Example: '-p hello' will trigger 'import pytest_hello' "
                          "and instantiate 'HelloPlugin' from the module."))
-        group._addoption('-f', '--looponfailing',
-                   action="store_true", dest="looponfailing", default=False,
+        group._addoption('-f', '--looponfail',
+                   action="store_true", dest="looponfail", default=False,
                    help="run tests, loop on failing test set, until all pass. repeat forever.")
 
         group = parser.addgroup("test process debugging")
@@ -116,8 +116,8 @@ class DefaultPlugin:
 
     def fixoptions(self, config):
         if config.getvalue("usepdb"):
-            if config.getvalue("looponfailing"):
-                raise config.Error("--pdb incompatible with --looponfailing.")
+            if config.getvalue("looponfail"):
+                raise config.Error("--pdb incompatible with --looponfail.")
             if config.getvalue("dist"):
                 raise config.Error("--pdb incomptaible with distributed testing.")
 
@@ -132,7 +132,7 @@ class DefaultPlugin:
             from py.__.test.session import Session
             config.setsessionclass(Session)
         else:
-            if val("looponfailing"):
+            if val("looponfail"):
                 from py.__.test.looponfail.remote import LooponfailingSession
                 config.setsessionclass(LooponfailingSession)
             elif val("numprocesses") or val("dist"):
@@ -179,7 +179,7 @@ def test_conflict_options():
         py.test.raises(config.Error, 
             "config.pytestplugins.do_configure(config)")
     conflict_options = (
-        '--looponfailing --pdb',
+        '--looponfail --pdb',
         '--dist --pdb', 
     )
     for spec in conflict_options: 

@@ -46,7 +46,7 @@ class TestRemoteControl:
         assert str(failures).find("test_new") != -1
 
 class TestLooponFailing:
-    def test_looponfailing_from_fail_to_ok(self, testdir):
+    def test_looponfail_from_fail_to_ok(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_one():
                 x = 0
@@ -71,7 +71,7 @@ class TestLooponFailing:
         session.loop_once(loopstate)
         assert not loopstate.colitems 
 
-    def test_looponfailing_from_one_to_two_tests(self, testdir):
+    def test_looponfail_from_one_to_two_tests(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_one():
                 assert 0
@@ -96,7 +96,7 @@ class TestLooponFailing:
         session.loop_once(loopstate)
         assert len(loopstate.colitems) == 1
 
-    def test_looponfailing_removed_test(self, testdir):
+    def test_looponfail_removed_test(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_one():
                 assert 0

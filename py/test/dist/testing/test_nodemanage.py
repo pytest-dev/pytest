@@ -36,7 +36,7 @@ class TestNodeManager:
             dest.remove()
             nodemanager = NodeManager(testdir.parseconfig(
                 "--tx", "popen//chdir=%s" % dest,
-                "--rsyncdirs", rsyncroot,
+                "--rsyncdir", rsyncroot,
                 source, 
             ))
             assert nodemanager.config.topdir == source
@@ -112,7 +112,7 @@ class TestNodeManager:
             def test_one():
                 pass
         """)
-        sorter = testdir.inline_run("-d", "--rsyncdirs=%s" % testdir.tmpdir, 
+        sorter = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
                 "--tx=%s" % specssh, testdir.tmpdir)
         ev = sorter.getfirstnamed("itemtestreport")
         assert ev.passed 
@@ -133,7 +133,7 @@ class TestOptionsAndConfiguration:
         assert xspecs[1].ssh == "xyz"
 
     def test_getconfigroots(self, testdir):
-        config = testdir.parseconfig('--rsyncdirs=' + str(testdir.tmpdir))
+        config = testdir.parseconfig('--rsyncdir=' + str(testdir.tmpdir))
         roots = config.getrsyncdirs()
         assert len(roots) == 1 + 1 
         assert testdir.tmpdir in roots
@@ -146,7 +146,7 @@ class TestOptionsAndConfiguration:
         testdir.makeconftest("""
             rsyncdirs= 'x', 
         """)
-        config = testdir.parseconfig(testdir.tmpdir, '--rsyncdirs=y,z')
+        config = testdir.parseconfig(testdir.tmpdir, '--rsyncdir=y', '--rsyncdir=z')
         roots = config.getrsyncdirs()
         assert len(roots) == 3 + 1 
         assert py.path.local('y') in roots 

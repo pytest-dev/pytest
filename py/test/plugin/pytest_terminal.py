@@ -223,7 +223,7 @@ class TerminalReporter:
         self.summary_deselected()
         self.summary_stats()
 
-    def pyevent_looponfailinginfo(self, event):
+    def pyevent_looponfailinfo(self, event):
         if event.failreports:
             self.write_sep("#", "LOOPONFAILING", red=True)
             for report in event.failreports:
@@ -483,7 +483,7 @@ class TestTerminal:
         assert lines[1].endswith("xy.py .")
         assert lines[2] == "hello world"
 
-    def test_looponfailingreport(self, testdir, linecomp):
+    def test_looponfailreport(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""
             def test_fail():
                 assert 0
@@ -492,10 +492,10 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [basic_run_report(x) for x in modcol.collect()]
-        rep.pyevent_looponfailinginfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
+        rep.pyevent_looponfailinfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
         linecomp.assert_contains_lines([
-            "*test_looponfailingreport.py:2: assert 0",
-            "*test_looponfailingreport.py:4: ValueError*",
+            "*test_looponfailreport.py:2: assert 0",
+            "*test_looponfailreport.py:4: ValueError*",
             "*waiting*", 
             "*%s*" % (modcol.config.topdir),
         ])

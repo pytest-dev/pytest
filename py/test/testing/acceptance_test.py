@@ -401,24 +401,24 @@ class TestInteractive:
         if child.isalive(): 
             child.wait()
 
-    def test_simple_looponfailing_interaction(self, testdir):
+    def test_simple_looponfail_interaction(self, testdir):
         spawn = self.getspawn(testdir.tmpdir)
         p1 = testdir.makepyfile("""
             def test_1():
                 assert 1 == 0 
         """)
         p1.setmtime(p1.mtime() - 50.0)  
-        child = spawn("%s %s --looponfailing %s" % (py.std.sys.executable, pytestpath, p1))
+        child = spawn("%s %s --looponfail %s" % (py.std.sys.executable, pytestpath, p1))
         child.timeout = EXPECTTIMEOUT
         child.expect("assert 1 == 0")
-        child.expect("test_simple_looponfailing_interaction.py:")
+        child.expect("test_simple_looponfail_interaction.py:")
         child.expect("1 failed")
         child.expect("waiting for changes")
         p1.write(py.code.Source("""
             def test_1():
                 assert 1 == 1
         """))
-        child.expect("MODIFIED.*test_simple_looponfailing_interaction.py", timeout=4.0)
+        child.expect("MODIFIED.*test_simple_looponfail_interaction.py", timeout=4.0)
         child.expect("1 passed", timeout=5.0)
         child.kill(15)
 
