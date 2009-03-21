@@ -135,7 +135,7 @@ class DefaultPlugin:
                 from py.__.test.looponfail.remote import LooponfailingSession
                 config.setsessionclass(LooponfailingSession)
             elif val("numprocesses") or val("dist"):
-                from py.__.test.dsession.dsession import  DSession
+                from py.__.test.dist.dsession import  DSession
                 config.setsessionclass(DSession)
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):

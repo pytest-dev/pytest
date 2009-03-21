@@ -1,6 +1,6 @@
 import py
 import sys, os
-from py.__.test.dsession.txnode import MasterNode
+from py.__.test.dist.txnode import MasterNode
 from py.__.execnet.gwmanage import GatewayManager
 
     

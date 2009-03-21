@@ -9,7 +9,7 @@ from py.__.test import event
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
 from py.__.test import outcome 
-from py.__.test.dsession.nodemanage import NodeManager
+from py.__.test.dist.nodemanage import NodeManager
 
 import Queue 
 

@@ -10,7 +10,7 @@ import py, os, sys
 
 from py.__.test import event
 from py.__.test.outcome import Exit
-from py.__.test.dsession.mypickle import ImmutablePickler
+from py.__.test.dist.mypickle import ImmutablePickler
 import py.__.test.custompdb
 
 class RobustRun(object):

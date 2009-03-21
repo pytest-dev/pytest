@@ -23,7 +23,7 @@ def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):
 
 class ImmutablePickleTransport:
     def __init__(self):
-        from py.__.test.dsession.mypickle import ImmutablePickler
+        from py.__.test.dist.mypickle import ImmutablePickler
         self.p1 = ImmutablePickler(uneven=0)
         self.p2 = ImmutablePickler(uneven=1)
 
@@ -168,11 +168,11 @@ class TestConfigPickling:
             old.chdir() 
 
 def test_config__setstate__wired_correctly_in_childprocess(testdir):
-    from py.__.test.dsession.mypickle import PickleChannel
+    from py.__.test.dist.mypickle import PickleChannel
     gw = py.execnet.PopenGateway()
     channel = gw.remote_exec("""
         import py
-        from py.__.test.dsession.mypickle import PickleChannel
+        from py.__.test.dist.mypickle import PickleChannel
         channel = PickleChannel(channel)
         config = channel.receive()
         assert py.test.config.pytestplugins.pyplugins == py._com.pyplugins, "pyplugins wrong"

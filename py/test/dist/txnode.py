@@ -3,7 +3,7 @@
 """
 import py
 from py.__.test import event
-from py.__.test.dsession.mypickle import PickleChannel
+from py.__.test.dist.mypickle import PickleChannel
 
 class MasterNode(object):
     """ Install slave code, manage sending test tasks & receiving results """
@@ -70,8 +70,8 @@ class MasterNode(object):
 # setting up slave code 
 def install_slave(gateway, config):
     channel = gateway.remote_exec(source="""
-        from py.__.test.dsession.mypickle import PickleChannel
-        from py.__.test.dsession.txnode import SlaveNode
+        from py.__.test.dist.mypickle import PickleChannel
+        from py.__.test.dist.txnode import SlaveNode
         channel = PickleChannel(channel)
         slavenode = SlaveNode(channel)
         slavenode.run()

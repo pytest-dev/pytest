@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.nodemanage import NodeManager
+from py.__.test.dist.nodemanage import NodeManager
 
 from py.__.test import event
 

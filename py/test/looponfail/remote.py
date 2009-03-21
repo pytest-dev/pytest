@@ -11,7 +11,7 @@
 from __future__ import generators
 import py
 from py.__.test.session import Session
-from py.__.test.dsession.mypickle import PickleChannel
+from py.__.test.dist.mypickle import PickleChannel
 from py.__.test import event
 from py.__.test.looponfail import util
 
@@ -70,7 +70,7 @@ class RemoteControl(object):
         finally:
             old.chdir()
         channel = self.gateway.remote_exec(source="""
-            from py.__.test.dsession.mypickle import PickleChannel
+            from py.__.test.dist.mypickle import PickleChannel
             from py.__.test.looponfail.remote import slave_runsession
             channel = PickleChannel(channel)
             config, fullwidth, hasmarkup = channel.receive()

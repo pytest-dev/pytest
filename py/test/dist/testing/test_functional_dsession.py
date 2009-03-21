@@ -1,5 +1,5 @@
 import py
-from py.__.test.dsession.dsession import DSession
+from py.__.test.dist.dsession import DSession
 from test_txnode import EventQueue
 
 class TestAsyncFunctional:
