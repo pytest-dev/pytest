@@ -33,7 +33,7 @@ class DefaultPlugin:
         return Directory(path, parent=parent)
 
     def pytest_addoption(self, parser):
-        group = parser.addgroup("general", "general test process options")
+        group = parser.addgroup("general", "test collection and failure interaction options")
         group._addoption('-v', '--verbose', action="count", 
                    dest="verbose", default=0, help="increase verbosity."),
         group._addoption('-x', '--exitfirst',
@@ -48,26 +48,19 @@ class DefaultPlugin:
         group._addoption('-l', '--showlocals',
                    action="store_true", dest="showlocals", default=False,
                    help="show locals in tracebacks (disabled by default).")
-        group._addoption('--showskipsummary',
-                   action="store_true", dest="showskipsummary", default=False,
-                   help="always show summary of skipped tests") 
+        #group._addoption('--showskipsummary',
+        #           action="store_true", dest="showskipsummary", default=False,
+        #           help="always show summary of skipped tests") 
         group._addoption('--pdb',
                    action="store_true", dest="usepdb", default=False,
                    help="start pdb (the Python debugger) on errors.")
-        group._addoption('--tb',
+        group._addoption('--tb', metavar="style", 
                    action="store", dest="tbstyle", default='long',
                    type="choice", choices=['long', 'short', 'no'],
                    help="traceback verboseness (long/short/no).")
-        group._addoption('--fulltrace',
-                   action="store_true", dest="fulltrace", default=False,
-                   help="don't cut any tracebacks (default is to cut).")
         group._addoption('-s', 
                    action="store_true", dest="nocapture", default=False,
                    help="disable catching of stdout/stderr during test run.")
-        group._addoption('--iocapture', action="store", default="fd", metavar="method",
-                   help="set iocapturing method: fd|sys|no.")
-        group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
-                   help="temporary directory for this test run.")
         group.addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process") 
@@ -89,6 +82,14 @@ class DefaultPlugin:
         group._addoption('--nomagic',
                    action="store_true", dest="nomagic", default=False,
                    help="don't reinterpret asserts, no traceback cutting. ")
+        group._addoption('--fulltrace',
+                   action="store_true", dest="fulltrace", default=False,
+                   help="don't cut any tracebacks (default is to cut).")
+        group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
+                   help="base temporary directory for this test run.")
+        group._addoption('--iocapture', action="store", default="fd", metavar="method",
+                   type="choice", choices=['fd', 'sys', 'no'],
+                   help="set iocapturing method: fd|sys|no.")
         group.addoption('--debug',
                    action="store_true", dest="debug", default=False,
                    help="generate and show debugging information.")

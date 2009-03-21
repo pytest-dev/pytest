@@ -267,7 +267,7 @@ class TerminalReporter:
 
     def summary_skips(self):
         if 'skipped' in self.stats:
-            if 'failed' not in self.stats or self.config.option.showskipsummary:
+            if 'failed' not in self.stats: #  or self.config.option.showskipsummary:
                 fskips = folded_skips(self.stats['skipped'])
                 if fskips:
                     self.write_sep("_", "skipped test summary")
@@ -557,7 +557,8 @@ class TestTerminal:
                 import py; py.test.skip('skip me please!')
             def test_interrupt_me():
                 raise KeyboardInterrupt   # simulating the user
-        """, configargs=("--showskipsummary",) + ("-v",)*verbose)
+        """, configargs=("-v",)*verbose)
+        #""", configargs=("--showskipsummary",) + ("-v",)*verbose)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         modcol.config.bus.register(rep)
         bus = modcol.config.bus
@@ -579,7 +580,7 @@ class TestTerminal:
             ">       assert 0",
             "E       assert 0",
         ])
-        assert "Skipped: 'skip me please!'" in text
+        #assert "Skipped: 'skip me please!'" in text
         assert "_keyboard_interrupt.py:6: KeyboardInterrupt" in text
         see_details = "raise KeyboardInterrupt   # simulating the user" in text
         assert see_details == verbose
