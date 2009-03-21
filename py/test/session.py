@@ -50,7 +50,7 @@ class Session(object):
             if isinstance(next, Item):
                 remaining = self.filteritems([next])
                 if remaining:
-                    notify("itemstart", event.ItemStart(next))
+                    notify("itemstart", next)
                     yield next 
             else:
                 assert isinstance(next, Collector)

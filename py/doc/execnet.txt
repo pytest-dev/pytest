@@ -137,8 +137,7 @@ Instantiating a gateway from a string-specification
 To specify Gateways with a String::
 
     >>> import py
-    >>> gwspec = py.execnet.GatewaySpec("popen")
-    >>> gw = gwspec.makegateway()
+    >>> gw = py.execnet.makegateway("popen")
     >>> ex = gw.remote_exec("import sys ; channel.send(sys.executable)").receive()
     >>> assert ex == py.std.sys.executable, (ex, py.std.sys.executable)
     >>>

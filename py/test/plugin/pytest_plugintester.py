@@ -173,7 +173,7 @@ class PytestPluginHooks:
     def pyevent_internalerror(self, event):
         """ called for internal errors. """
 
-    def pyevent_itemstart(self, event):
+    def pyevent_itemstart(self, item, node):
         """ test item gets collected. """
 
     def pyevent_itemtestreport(self, event):

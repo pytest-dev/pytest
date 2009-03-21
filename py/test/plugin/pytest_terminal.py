@@ -133,19 +133,19 @@ class TerminalReporter:
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
 
-    def pyevent_itemstart(self, event):
-        if self.config.option.verbose:
-            info = event.item.repr_metainfo()
+    def pyevent_itemstart(self, item, node=None):
+        if self.config.option.debug:
+            info = item.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
             extra = ""
-            if event.host:
-                extra = "-> " + str(event.host)
+            if node:
+                extra = "-> " + str(node.gateway.id)
             self.write_ensure_prefix(line, extra)
-        else:
-            # ensure that the path is printed before the 1st test of
-            # a module starts running
-            fspath = event.item.fspath 
-            self.write_fspath_result(fspath, "")
+        #else:
+        #    # ensure that the path is printed before the 1st test of
+        #    # a module starts running
+        #    fspath = item.fspath 
+        #    self.write_fspath_result(fspath, "")
 
     def pyevent_rescheduleitems(self, event):
         if self.config.option.debug:
@@ -167,7 +167,13 @@ class TerminalReporter:
         else:
             info = event.colitem.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
-            self.write_ensure_prefix(line, word, **markup)
+            #self.write_ensure_prefix(line, word, **markup)
+            self.ensure_newline()
+            if hasattr(event, 'node'):
+                self._tw.write("%s " % event.node.gateway.id)
+            self._tw.write(word, **markup)
+            self._tw.write(" " + line)
+            self.currentfspath = -2
 
     def pyevent_collectionreport(self, event):
         if not event.passed:
@@ -294,8 +300,8 @@ class CollectonlyReporter:
         self.outindent(event.collector)
         self.indent += self.INDENT 
     
-    def pyevent_itemstart(self, event):
-        self.outindent(event.item)
+    def pyevent_itemstart(self, item, node=None):
+        self.outindent(item)
 
     def pyevent_collectionreport(self, event):
         if not event.passed:
@@ -389,16 +395,17 @@ class TestTerminal:
         rep.config.bus.register(rep)
         rep.config.bus.notify("testrunstart", event.TestrunStart())
         items = modcol.collect()
+        rep.config.option.debug = True # 
         for item in items:
-            rep.config.bus.notify("itemstart", event.ItemStart(item))
+            rep.config.bus.notify("itemstart", item, None)
             s = linecomp.stringio.getvalue().strip()
             assert s.endswith(item.name)
             rep.config.bus.notify("itemtestreport", basic_run_report(item))
 
         linecomp.assert_contains_lines([
-            "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS",
-            "*test_pass_skip_fail_verbose.py:4: *test_skip*SKIP",
-            "*test_pass_skip_fail_verbose.py:6: *test_func*FAIL",
+            "*PASS*test_pass_skip_fail_verbose.py:2: *test_ok*",
+            "*SKIP*test_pass_skip_fail_verbose.py:4: *test_skip*",
+            "*FAIL*test_pass_skip_fail_verbose.py:6: *test_func*",
         ])
         rep.config.bus.notify("testrunfinish", event.TestrunFinish())
         linecomp.assert_contains_lines([
@@ -536,7 +543,8 @@ class TestTerminal:
         modcol.config.bus.register(rep)
         l = list(testdir.genitems([modcol]))
         assert len(l) == 1
-        rep.config.bus.notify("itemstart", event.ItemStart(l[0]))
+        modcol.config.option.debug = True
+        rep.config.bus.notify("itemstart", l[0])
         linecomp.assert_contains_lines([
             "*test_show_path_before_running_test.py*"
         ])
@@ -619,7 +627,7 @@ class TestCollectonly:
            "<Module 'test_collectonly_basic.py'>"
         ])
         item = modcol.join("test_func")
-        rep.config.bus.notify("itemstart", event.ItemStart(item))
+        rep.config.bus.notify("itemstart", item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>", 
         ])

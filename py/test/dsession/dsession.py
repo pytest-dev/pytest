@@ -212,7 +212,7 @@ class DSession(Session):
                     #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
                     self.item2node[item] = node
-                    self.bus.notify("itemstart", event.ItemStart(item, node))
+                    self.bus.notify("itemstart", item, node)
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:

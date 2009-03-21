@@ -43,6 +43,10 @@ class MasterNode(object):
             elif eventname == "slavefinished":
                 self._down = True
                 self.notify("testnodedown", self, None)
+            elif eventname == "itemtestreport":
+                rep = args[0]
+                rep.node = self
+                self.notify("itemtestreport", rep)
             else:
                 self.notify(eventname, *args, **kwargs)
         except KeyboardInterrupt: 

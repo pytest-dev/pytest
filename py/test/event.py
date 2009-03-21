@@ -45,12 +45,6 @@ class InternalException(BaseEvent):
 # Events related to collecting and executing test Items 
 # ----------------------------------------------------------------------
 
-class ItemStart(BaseEvent):
-    def __init__(self, item, host=None):
-        self.item = item
-        self.host = host
-        self.time = timestamp()
-
 class Deselected(BaseEvent):
     def __init__(self, items):
         self.items = items 

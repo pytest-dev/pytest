@@ -124,6 +124,7 @@ class TestOptionsAndConfiguration:
         assert len(xspecs) == 3
 
     def test_getxspecs(self, testdir):
+        testdir.chdir() 
         config = testdir.parseconfig("--tx=popen", "--tx", "ssh=xyz")
         xspecs = config.getxspecs()
         assert len(xspecs) == 2
