@@ -23,22 +23,22 @@ http://pylib.org/contact.html
 """
 from initpkg import initpkg
 
-version = "1.0.0a1"
+version = "1.0.0a2"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63147 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-03-20 17:28:14 +0100 (Fri, 20 Mar 2009) $',
+    revision = int('$LastChangedRevision: 63164 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-03-21 03:21:45 +0100 (Sat, 21 Mar 2009) $',
     version = version, 
     url = "http://pylib.org", 
-    download_url = "http://codespeak.net/py/0.9.2/download.html",
+    download_url = "http://codespeak.net/py/%s/download.html" % version,
     license = "MIT license",
     platforms = ['unix', 'linux', 'osx', 'cygwin', 'win32'],
     author = "holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others",
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",
