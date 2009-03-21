@@ -17,7 +17,6 @@ class PocooPlugin:
             help="send failures to %s" %(url.base,))
 
     def getproxy(self):
-        assert 0
         return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
 
     def pytest_terminal_summary(self, terminalreporter):
