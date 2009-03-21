@@ -249,6 +249,7 @@ class Gateway(object):
                 channel.send(dict(
                     executable = sys.executable, 
                     version_info = sys.version_info, 
+                    platform = sys.platform,
                     cwd = os.getcwd(),
                 ))
             """).receive())

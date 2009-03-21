@@ -36,22 +36,22 @@ class MultiCall:
 
     def execute(self, firstresult=False):
         while self.methods:
-            self.currentmethod = self.methods.pop()
+            self.currentmethod = currentmethod = self.methods.pop()
             # provide call introspection if "__call__" is the first positional argument 
-            if hasattr(self.currentmethod, 'im_self'):
-                varnames = self.currentmethod.im_func.func_code.co_varnames
+            if hasattr(currentmethod, 'im_self'):
+                varnames = currentmethod.im_func.func_code.co_varnames
                 needscall = varnames[1:2] == ('__call__',)
             else:
                 try:
-                    varnames = self.currentmethod.func_code.co_varnames
+                    varnames = currentmethod.func_code.co_varnames
                 except AttributeError:
                     # builtin function
                     varnames = ()
                 needscall = varnames[:1] == ('__call__',)
             if needscall:
-                res = self.currentmethod(self, *self.args, **self.kwargs)
+                res = currentmethod(self, *self.args, **self.kwargs)
             else:
-                res = self.currentmethod(*self.args, **self.kwargs)
+                res = currentmethod(*self.args, **self.kwargs)
             if hasattr(self, '_ex1'):
                 self.results = [res]
                 break

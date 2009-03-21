@@ -84,8 +84,22 @@ class TerminalReporter:
         for line in str(event.repr).split("\n"):
             self.write_line("InternalException: " + line)
 
-    def pyevent_gwmanage_newgateway(self, gateway):
-        self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
+    def pyevent_gwmanage_newgateway(self, gateway, rinfo):
+        #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
+        d = {}
+        d['version'] = repr_pythonversion(rinfo.version_info)
+        d['id'] = gateway.id
+        d['spec'] = gateway.spec._spec 
+        d['platform'] = rinfo.platform 
+        if self.config.option.verbose:
+            d['extra'] = "- " + rinfo.executable
+        else:
+            d['extra'] = ""
+        d['cwd'] = rinfo.cwd
+        self.write_line("%(id)s new %(spec)r -- platform %(platform)s, "
+                        "Python %(version)s "
+                        "cwd: %(cwd)s"
+                        "%(extra)s" % d)
 
     def pyevent_gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
@@ -107,19 +121,12 @@ class TerminalReporter:
             self.write_line(msg)
 
     def pyevent_testnodeready(self, node):
-        # XXX 
-        self.write_line("Node Ready: %r, spec %r" % (node,node.gateway.spec))
+        self.write_line("%s node ready to receive tests" %(node.gateway.id,))
         
-        #d = event.platinfo.copy()
-        #d['host'] = getattr(event.host, 'address', event.host)
-        #d['version'] = repr_pythonversion(d['sys.version_info'])
-        #self.write_line("HOSTUP: %(host)s %(sys.platform)s "
-        #              "%(sys.executable)s - Python %(version)s" %
-        #              d)
 
     def pyevent_testnodedown(self, node, error):
         if error:
-            self.write_line("Node Down: %r: %r" %(node, error))
+            self.write_line("%s node down, error: %s" %(node.gateway.id, error))
 
     def pyevent_trace(self, category, msg):
         if self.config.option.debug or \
@@ -175,6 +182,13 @@ class TerminalReporter:
     def pyevent_testrunstart(self, event):
         self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
+
+        verinfo = ".".join(map(str, sys.version_info[:3]))
+        msg = "python: platform %s -- Python %s" % (sys.platform, verinfo)
+        if self.config.option.verbose or self.config.option.debug:
+            msg += " -- " + str(sys.executable)
+        self.write_line(msg)
+
         rev = py.__pkg__.getrev()
         self.write_line("using py lib: %s <rev %s>" % (
                        py.path.local(py.__file__).dirpath(), rev))
@@ -431,9 +445,15 @@ class TestTerminal:
         class gw2:
             id = "X2"
             spec = py.execnet.XSpec("popen")
-        rep.pyevent_gwmanage_newgateway(gateway=gw1)
+        class rinfo:
+            version_info = (2, 5, 1, 'final', 0)
+            executable = "hello"
+            platform = "xyz"
+            cwd = "qwe"
+
+        rep.pyevent_gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
-            "X1 instantiated gateway from spec*", 
+            "X1 new 'popen' *xyz*2.5*"
         ])
 
         rep.pyevent_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])

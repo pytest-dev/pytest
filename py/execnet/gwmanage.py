@@ -34,7 +34,7 @@ class GatewayManager:
             gw = py.execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
-            self.notify("gwmanage_newgateway", gw)
+            self.notify("gwmanage_newgateway", gw, gw._rinfo())
 
     def getgateways(self, remote=True, inplacelocal=True):
         if not self.gateways and self.specs:

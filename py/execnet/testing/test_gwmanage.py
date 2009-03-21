@@ -8,8 +8,6 @@
 import py
 from py.__.execnet.gwmanage import GatewayManager, HostRSync
 
-pytest_plugins = "pytest_pytester"
-
 class TestGatewayManagerPopen:
     def test_popen_no_default_chdir(self):
         gm = GatewayManager(["popen"])
@@ -22,20 +20,21 @@ class TestGatewayManagerPopen:
         for spec in GatewayManager(l, defaultchdir="abc").specs:
             assert spec.chdir == "abc"
         
-    def test_hostmanager_popen_makegateway(self, eventrecorder):
+    def test_popen_makegateway_events(self, eventrecorder):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         event = eventrecorder.popevent("gwmanage_newgateway")
-        gw = event.args[0]
+        gw, platinfo = event.args[:2]
         assert gw.id == "[1]" 
+        platinfo.executable = gw._rinfo().executable
         event = eventrecorder.popevent("gwmanage_newgateway")
-        gw = event.args[0]
+        gw, platinfo = event.args[:2]
         assert gw.id == "[2]" 
         assert len(hm.gateways) == 2
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_hostmanager_popens_rsync(self, source):
+    def test_popens_rsync(self, source):
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         assert len(hm.gateways) == 2
@@ -47,7 +46,7 @@ class TestGatewayManagerPopen:
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_hostmanager_rsync_popen_with_path(self, source, dest):
+    def test_rsync_popen_with_path(self, source, dest):
         hm = GatewayManager(["popen//chdir=%s" %dest] * 1)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")

@@ -97,7 +97,7 @@ class DefaultPlugin:
         group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
                    help="comma-separated list of directories to rsync. All those roots will be rsynced "
                         "into a corresponding subdir on the remote sides. ")
-        group.addoption('--tx', dest="xspecs", action="append", 
+        group._addoption('--xspec', '--tx', '-t', dest="xspec", action="append", 
                    help=("add a test environment, specified in XSpec syntax. examples: "
                          "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
         group._addoption('--exec',

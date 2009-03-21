@@ -3,7 +3,7 @@
 """
 
 import py
-from py.__.test.dsession.nodemanage import NodeManager, getxspecs, getconfigroots
+from py.__.test.dsession.nodemanage import NodeManager
 
 from py.__.test import event
 
@@ -120,12 +120,12 @@ class TestNodeManager:
 class TestOptionsAndConfiguration:
     def test_getxspecs_numprocesses(self, testdir):
         config = testdir.parseconfig("-n3")
-        xspecs = getxspecs(config)
+        xspecs = config.getxspecs()
         assert len(xspecs) == 3
 
     def test_getxspecs(self, testdir):
         config = testdir.parseconfig("--tx=popen", "--tx", "ssh=xyz")
-        xspecs = getxspecs(config)
+        xspecs = config.getxspecs()
         assert len(xspecs) == 2
         print xspecs
         assert xspecs[0].popen 
@@ -133,7 +133,7 @@ class TestOptionsAndConfiguration:
 
     def test_getconfigroots(self, testdir):
         config = testdir.parseconfig('--rsyncdirs=' + str(testdir.tmpdir))
-        roots = getconfigroots(config)
+        roots = config.getrsyncdirs()
         assert len(roots) == 1 + 1 
         assert testdir.tmpdir in roots
 
@@ -146,7 +146,7 @@ class TestOptionsAndConfiguration:
             rsyncdirs= 'x', 
         """)
         config = testdir.parseconfig(testdir.tmpdir, '--rsyncdirs=y,z')
-        roots = getconfigroots(config)
+        roots = config.getrsyncdirs()
         assert len(roots) == 3 + 1 
         assert py.path.local('y') in roots 
         assert py.path.local('z') in roots 

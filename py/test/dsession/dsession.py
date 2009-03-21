@@ -9,7 +9,7 @@ from py.__.test import event
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
 from py.__.test import outcome 
-from py.__.test.dsession.nodemanage import NodeManager, getxspecs
+from py.__.test.dsession.nodemanage import NodeManager
 
 import Queue 
 
@@ -82,7 +82,7 @@ class DSession(Session):
         if option.executable and not option.dist and not option.numprocesses:
             option.numprocesses = 1
         try:
-            getxspecs(self.config)
+            self.config.getxspecs()
         except self.config.Error:
             print "Please specify test environments for distribution of tests:"
             print "py.test --tx ssh=user@somehost --tx popen//python=python2.5"

@@ -111,8 +111,6 @@ class TestConfigTmpdir:
         assert config2.basetemp != config3.basetemp
 
 class TestConfigAPI: 
-
-
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")
         testdir.mkdir("sub").join("conftest.py").write("x=2 ; y = 3")

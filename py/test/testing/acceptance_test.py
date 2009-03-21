@@ -179,8 +179,8 @@ class TestPyTest:
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
         extra = result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
-            "HOSTUP*INPROCESS* %s %s - Python %s*" %(
-                    py.std.sys.platform, py.std.sys.executable, verinfo),
+            "python: platform %s -- Python %s*" %(
+                    py.std.sys.platform, verinfo), # , py.std.sys.executable),
             "*test_header_trailer_info.py .",
             "=* 1 passed in *.[0-9][0-9] seconds *=", 
         ])
@@ -265,11 +265,10 @@ class TestPyTest:
                     py.test.skip("hello")
             """, 
         )
-        result = testdir.runpytest(p1, '-d', '--tx popen --tx popen')
+        result = testdir.runpytest(p1, '-d', '--tx=popen', '--tx=popen')
         result.stdout.fnmatch_lines([
-            "HOSTUP: popen*Python*",
-            #"HOSTUP: localhost*Python*",
-            #"HOSTUP: localhost*Python*",
+            "*1*popen*Python*",
+            "*2*popen*Python*",
             "*2 failed, 1 passed, 1 skipped*",
         ])
         assert result.ret == 1
@@ -288,13 +287,13 @@ class TestPyTest:
             """, 
         )
         testdir.makeconftest("""
-            pytest_option_tx = 'popen popen popen'.split()
+            pytest_option_xspec = 'popen popen popen'.split()
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([
-            "HOSTUP: popen*Python*",
-            #"HOSTUP: localhost*Python*",
-            #"HOSTUP: localhost*Python*",
+            "*1*popen*Python*",
+            "*2*popen*Python*",
+            "*3*popen*Python*",
             "*2 failed, 1 passed, 1 skipped*",
         ])
         assert result.ret == 1
@@ -325,7 +324,7 @@ class TestPyTest:
             "*popen*Python*",
             "*popen*Python*",
             "*popen*Python*",
-            "HostDown*TERMINATED*",
+            "*node down*",
             "*3 failed, 1 passed, 1 skipped*"
         ])
         assert result.ret == 1

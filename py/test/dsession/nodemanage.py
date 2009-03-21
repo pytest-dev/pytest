@@ -8,8 +8,8 @@ class NodeManager(object):
     def __init__(self, config, specs=None):
         self.config = config 
         if specs is None:
-            specs = getxspecs(self.config)
-        self.roots = getconfigroots(config)
+            specs = self.config.getxspecs()
+        self.roots = self.config.getrsyncdirs()
         self.gwmanager = GatewayManager(specs)
         self.nodes = []
 
@@ -88,39 +88,3 @@ class NodeManager(object):
         # XXX teardown nodes? 
         self.gwmanager.exit()
 
-def getxspecs(config):
-    if config.option.numprocesses:
-        if config.option.executable:
-            s = 'popen//python=%s' % config.option.executable
-        else:
-            s = 'popen'
-        xspecs = [s] * config.option.numprocesses
-    else:
-        xspecs = config.option.xspecs
-        if not xspecs:
-            xspecs = config.getvalue("xspecs")
-    if xspecs is None:
-        raise config.Error("MISSING test execution (tx) nodes: please specify --tx")
-    #print "option value for xspecs", xspecs
-    return [py.execnet.XSpec(x) for x in xspecs]
-
-def getconfigroots(config):
-    roots = config.option.rsyncdirs
-    if roots:
-        roots = [py.path.local(x) for x in roots.split(',')]
-    else:
-        roots = []
-    conftestroots = config.getconftest_pathlist("rsyncdirs")
-    if conftestroots:
-        roots.extend(conftestroots)
-    pydir = py.path.local(py.__file__).dirpath()
-    for root in roots:
-        if not root.check():
-            raise ValueError("rsyncdir doesn't exist: %r" %(root,))
-        if pydir is not None and root.basename == "py":
-            if root != pydir:
-                raise ValueError("root %r conflicts with current %r" %(root, pydir))
-            pydir = None
-    if pydir is not None:
-        roots.append(pydir)
-    return roots 

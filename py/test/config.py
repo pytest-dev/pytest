@@ -250,6 +250,45 @@ class Config(object):
         else:
             raise ValueError("unknown io capturing: " + iocapture)
 
+    def getxspecs(self):
+        config = self 
+        if config.option.numprocesses:
+            if config.option.executable:
+                s = 'popen//python=%s' % config.option.executable
+            else:
+                s = 'popen'
+            xspec = [s] * config.option.numprocesses
+        else:
+            xspec = config.option.xspec
+            if not xspec:
+                xspec = config.getvalue("xspec")
+        if xspec is None:
+            raise config.Error("MISSING test execution (tx) nodes: please specify --tx")
+        #print "option value for xspecs", xspec
+        return [py.execnet.XSpec(x) for x in xspec]
+
+    def getrsyncdirs(self):
+        config = self 
+        roots = config.option.rsyncdirs
+        if roots:
+            roots = [py.path.local(x) for x in roots.split(',')]
+        else:
+            roots = []
+        conftestroots = config.getconftest_pathlist("rsyncdirs")
+        if conftestroots:
+            roots.extend(conftestroots)
+        pydir = py.path.local(py.__file__).dirpath()
+        for root in roots:
+            if not root.check():
+                raise ValueError("rsyncdir doesn't exist: %r" %(root,))
+            if pydir is not None and root.basename == "py":
+                if root != pydir:
+                    raise ValueError("root %r conflicts with current %r" %(root, pydir))
+                pydir = None
+        if pydir is not None:
+            roots.append(pydir)
+        return roots 
+
     
 #
 # helpers
