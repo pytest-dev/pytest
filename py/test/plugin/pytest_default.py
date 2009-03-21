@@ -69,7 +69,7 @@ class DefaultPlugin:
         group.addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
                    help="box each test run in a separate process") 
-        group._addoption('--plugin', '-p', action="append", dest="plugin", default = [],
+        group._addoption('-p', action="append", dest="plugin", default = [],
                    help=("load the specified plugin after command line parsing. "
                          "Example: '-p hello' will trigger 'import pytest_hello' "
                          "and instantiate 'HelloPlugin' from the module."))
@@ -173,5 +173,6 @@ def test_plugin_specify(testdir):
     )
 
 def test_plugin_already_exists(testdir):
-    config = testdir.parseconfig("--plugin", "default")
+    config = testdir.parseconfig("-p", "default")
     assert config.option.plugin == ['default']
+    config.pytestplugins.do_configure(config)
