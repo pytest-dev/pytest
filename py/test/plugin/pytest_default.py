@@ -97,12 +97,11 @@ class DefaultPlugin:
         group._addoption('-d', '--dist',
                    action="store_true", dest="dist", default=False,
                    help="ad-hoc distribute tests across machines (requires conftest settings)") 
-        group._addoption('-n', '--numprocesses', dest="numprocesses", default=0, metavar="num", 
+        group._addoption('-n', dest="numprocesses", default=0, metavar="numprocesses", 
                    action="store", type="int", 
                    help="number of local test processes. conflicts with --dist.")
-        group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
-                   help="comma-separated list of directories to rsync. All those roots will be rsynced "
-                        "into a corresponding subdir on the remote sides. ")
+        group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
+                   help="add local directory for rsync to remote test nodes.")
         group._addoption('--tx', dest="xspec", action="append", 
                    help=("add a test environment, specified in XSpec syntax. examples: "
                          "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
