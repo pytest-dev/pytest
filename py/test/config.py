@@ -221,7 +221,9 @@ class Config(object):
         if cls is None:
             from py.__.test.session import Session
             cls = Session
-        return cls(self)
+        session = cls(self)
+        self.trace("instantiated session %r" % session)
+        return session
 
     def _reparse(self, args):
         """ this is used from tests that want to re-invoke parse(). """
@@ -253,11 +255,7 @@ class Config(object):
     def getxspecs(self):
         config = self 
         if config.option.numprocesses:
-            if config.option.executable:
-                s = 'popen//python=%s' % config.option.executable
-            else:
-                s = 'popen'
-            xspec = [s] * config.option.numprocesses
+            xspec = ['popen'] * config.option.numprocesses
         else:
             xspec = config.option.xspec
             if not xspec:

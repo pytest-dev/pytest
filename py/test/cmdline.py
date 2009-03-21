@@ -17,7 +17,7 @@ def main(args=None):
         config.pytestplugins.do_unconfigure(config)
         raise SystemExit(exitstatus)
     except config.Error, e:
-        py.std.sys.stderr.write("config ERROR: %s\n" %(e.args[0],))
+        py.std.sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         raise SystemExit(3)
 
 def warn_about_missing_assertion():

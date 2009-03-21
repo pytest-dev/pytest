@@ -57,30 +57,14 @@ class DSession(Session):
     MAXITEMSPERHOST = 15
     
     def __init__(self, config):
-        super(DSession, self).__init__(config=config)
-        
         self.queue = Queue.Queue()
         self.node2pending = {}
         self.item2node = {}
-        if self.config.getvalue("executable") and \
-           not self.config.getvalue("numprocesses"):
-            self.config.option.numprocesses = 1
+        super(DSession, self).__init__(config=config)
 
-    def fixoptions(self):
-        """ check, fix and determine conflicting options. """
-        option = self.config.option 
-        #if option.runbrowser and not option.startserver:
-        #    #print "--runbrowser implies --startserver"
-        #    option.startserver = True
-        if self.config.getvalue("dist_boxed") and option.dist:
-            option.boxed = True
-        # conflicting options
-        if option.looponfailing and option.usepdb:
-            raise ValueError, "--looponfailing together with --pdb not supported."
-        if option.executable and option.usepdb:
-            raise ValueError, "--exec together with --pdb not supported."
-        if option.executable and not option.dist and not option.numprocesses:
-            option.numprocesses = 1
+    def pytest_configure(self, config):
+        if self.config.getvalue("usepdb"):
+            raise self.config.Error("--pdb does not work for distributed tests (yet).")
         try:
             self.config.getxspecs()
         except self.config.Error:

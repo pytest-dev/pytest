@@ -14,7 +14,7 @@ class TestPyTest:
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret != 0
         assert result.stderr.fnmatch_lines([
-            'config ERROR: hello'
+            '*ERROR: hello'
         ])
 
     def test_basetemp(self, testdir):

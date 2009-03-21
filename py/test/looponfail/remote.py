@@ -49,17 +49,6 @@ class LoopState:
 class RemoteControl(object):
     def __init__(self, config):
         self.config = config
-        self._setexecutable()
-
-    def _setexecutable(self):
-        # XXX --exec logic should go to DSession 
-        name = self.config.option.executable
-        if name is None:
-            executable = py.std.sys.executable 
-        else:
-            executable = py.path.local.sysfind(name)
-            assert executable is not None, executable 
-        self.executable = executable 
 
     def trace(self, *args):
         if self.config.option.debug:
@@ -67,7 +56,7 @@ class RemoteControl(object):
             print "RemoteControl:", msg 
 
     def initgateway(self):
-        return py.execnet.PopenGateway(self.executable)
+        return py.execnet.PopenGateway()
 
     def setup(self, out=None):
         if out is None:
@@ -128,7 +117,6 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     #config.option.session = None
     config.option.looponfailing = False 
     config.option.usepdb = False 
-    config.option.executable = None
     trails = channel.receive()
     config.pytestplugins.do_configure(config)
     DEBUG("SLAVE: initsession()")

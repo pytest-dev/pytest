@@ -26,18 +26,6 @@ class Session(object):
         self._nomatch = False
         self.shouldstop = False
 
-    def fixoptions(self):
-        """ check, fix and determine conflicting options. """
-        option = self.config.option 
-        #if option.runbrowser and not option.startserver:
-        #    #print "--runbrowser implies --startserver"
-        #    option.startserver = True
-        # conflicting options
-        if option.looponfailing and option.usepdb:
-            raise ValueError, "--looponfailing together with --pdb not supported."
-        if option.executable and option.usepdb:
-            raise ValueError, "--exec together with --pdb not supported."
-
     def genitems(self, colitems, keywordexpr=None):
         """ yield Items from iterating over the given colitems. """
         while colitems: 

@@ -86,7 +86,7 @@ class DefaultPlugin:
                    help="trace considerations of conftest.py files."),
         group._addoption('--nomagic',
                    action="store_true", dest="nomagic", default=False,
-                   help="don't use assert reinterpretation and python traceback cutting. ")
+                   help="don't reinterpret asserts, no traceback cutting. ")
         group.addoption('--debug',
                    action="store_true", dest="debug", default=False,
                    help="generate and show debugging information.")
@@ -101,20 +101,9 @@ class DefaultPlugin:
         group.addoption('--rsyncdirs', dest="rsyncdirs", default=None, metavar="dir1,dir2,...", 
                    help="comma-separated list of directories to rsync. All those roots will be rsynced "
                         "into a corresponding subdir on the remote sides. ")
-        group._addoption('--xspec', '--tx', '-t', dest="xspec", action="append", 
+        group._addoption('--tx', dest="xspec", action="append", 
                    help=("add a test environment, specified in XSpec syntax. examples: "
                          "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
-        group._addoption('--exec',
-                   action="store", dest="executable", default=None,
-                   help="python executable to run the tests with.")
-        #group._addoption('-w', '--startserver',
-        #           action="store_true", dest="startserver", default=False,
-        #           help="starts local web server for displaying test progress.", 
-        #           ),
-        #group._addoption('-r', '--runbrowser',
-        #           action="store_true", dest="runbrowser", default=False,
-        #           help="run browser (implies --startserver)."
-        #           ),
         #group._addoption('--rest',
         #           action='store_true', dest="restreport", default=False,
         #           help="restructured text output reporting."),
@@ -122,6 +111,14 @@ class DefaultPlugin:
     def pytest_configure(self, config):
         self.setsession(config)
         self.loadplugins(config)
+        self.fixoptions(config)
+
+    def fixoptions(self, config):
+        if config.getvalue("usepdb"):
+            if config.getvalue("looponfailing"):
+                raise config.Error("--pdb incompatible with --looponfailing.")
+            if config.getvalue("dist"):
+                raise config.Error("--pdb incomptaible with distributed testing.")
 
     def loadplugins(self, config):
         for name in config.getvalue("plugin"):
@@ -133,12 +130,13 @@ class DefaultPlugin:
         if val("collectonly"):
             from py.__.test.session import Session
             config.setsessionclass(Session)
-        elif val("looponfailing"):
-            from py.__.test.looponfail.remote import LooponfailingSession
-            config.setsessionclass(LooponfailingSession)
-        elif val("numprocesses") or val("dist") or val("executable"):
-            from py.__.test.dsession.dsession import  DSession
-            config.setsessionclass(DSession)
+        else:
+            if val("looponfailing"):
+                from py.__.test.looponfail.remote import LooponfailingSession
+                config.setsessionclass(LooponfailingSession)
+            elif val("numprocesses") or val("dist"):
+                from py.__.test.dsession.dsession import  DSession
+                config.setsessionclass(DSession)
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
         from py.__.test import event
@@ -156,11 +154,7 @@ def test_implied_different_sessions(tmpdir):
     assert x('--dist') == 'DSession'
     assert x('-n3') == 'DSession'
     assert x('-f') == 'LooponfailingSession'
-    assert x('--exec=x') == 'DSession'
-    assert x('-f', '--exec=x') == 'LooponfailingSession'
-    assert x('--dist', '--exec=x', '--collectonly') == 'Session'
-
-
+    assert x('--dist', '--collectonly') == 'Session'
 
 def test_generic(plugintester):
     plugintester.apicheck(DefaultPlugin)
@@ -176,3 +170,17 @@ def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "default")
     assert config.option.plugin == ['default']
     config.pytestplugins.do_configure(config)
+
+def test_conflict_options():
+    def check_conflict_option(opts):
+        print "testing if options conflict:", " ".join(opts)
+        config = py.test.config._reparse(opts)
+        py.test.raises(config.Error, 
+            "config.pytestplugins.do_configure(config)")
+    conflict_options = (
+        '--looponfailing --pdb',
+        '--dist --pdb', 
+    )
+    for spec in conflict_options: 
+        opts = spec.split()
+        yield check_conflict_option, opts

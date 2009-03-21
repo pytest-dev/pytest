@@ -67,22 +67,6 @@ class TestConfigCmdlineParsing:
         config = py.test.config._reparse([tmpdir])
         py.test.raises(AssertionError, "config.parse([])")
 
-    def test_conflict_options(self):
-        def check_conflict_option(opts):
-            print "testing if options conflict:", " ".join(opts)
-            config = py.test.config._reparse(opts)
-            py.test.raises((ValueError, SystemExit), """
-                config.initsession()
-            """)
-        py.test.skip("check on conflict options")
-        conflict_options = (
-            '--looponfailing --pdb',
-            '--dist --pdb', 
-            '--exec=%s --pdb' % (py.std.sys.executable,),
-        )
-        for spec in conflict_options: 
-            opts = spec.split()
-            yield check_conflict_option, opts
 
 class TestConfigTmpdir:
     def test_getbasetemp(self, testdir):
@@ -249,22 +233,6 @@ class TestOptionEffects:
     def test_is_not_boxed_by_default(self, testdir):
         config = py.test.config._reparse([testdir.tmpdir])
         assert not config.option.boxed
-
-    def test_boxed_option_from_conftest(self, testdir):
-        tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
-        tmpdir.join("conftest.py").write(py.code.Source("""
-            dist_boxed = True
-        """))
-        config = py.test.config._reparse(['--dist', tmpdir])
-        config.initsession()
-        assert config.option.boxed 
-
-    def test_boxed_option_from_conftest(self, testdir):
-        testdir.makepyfile(conftest="dist_boxed=False")
-        config = py.test.config._reparse([testdir.tmpdir, '--box'])
-        assert config.option.boxed 
-        config.initsession()
-        assert config.option.boxed
 
     def test_config_iocapturing(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)

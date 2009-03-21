@@ -25,15 +25,6 @@ def dumpqueue(queue):
         print queue.get()
 
 class TestDSession:
-    def test_fixoptions(self, testdir):
-        config = testdir.parseconfig("--exec=xxx")
-        config.pytestplugins.do_configure(config)
-        config.initsession().fixoptions()
-        assert config.option.numprocesses == 1
-        config = testdir.parseconfig("--exec=xxx", '-n3')
-        config.initsession().fixoptions()
-        assert config.option.numprocesses == 3
-
     def test_add_remove_node(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         rep = run(item)
