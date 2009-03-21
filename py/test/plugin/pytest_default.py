@@ -33,7 +33,7 @@ class DefaultPlugin:
         return Directory(path, parent=parent)
 
     def pytest_addoption(self, parser):
-        group = parser.addgroup("general", "general options")
+        group = parser.addgroup("general", "test selection and failure debug options")
         group._addoption('-v', '--verbose', action="count", 
                    dest="verbose", default=0, help="increase verbosity."),
         group._addoption('-x', '--exitfirst',
@@ -68,7 +68,11 @@ class DefaultPlugin:
                    help="temporary directory for this test run.")
         group.addoption('--boxed',
                    action="store_true", dest="boxed", default=False,
-                   help="box each test run in a separate process"), 
+                   help="box each test run in a separate process") 
+        group._addoption('--plugin', '-p', action="append", dest="plugin", default = [],
+                   help=("load the specified plugin after command line parsing. "
+                         "Example: '-p hello' will trigger 'import pytest_hello' "
+                         "and instantiate 'HelloPlugin' from the module."))
         group._addoption('-f', '--looponfailing',
                    action="store_true", dest="looponfailing", default=False,
                    help="loop on failing test set.")
@@ -117,6 +121,12 @@ class DefaultPlugin:
 
     def pytest_configure(self, config):
         self.setsession(config)
+        self.loadplugins(config)
+
+    def loadplugins(self, config):
+        for name in config.getvalue("plugin"):
+            print "importing", name
+            config.pytestplugins.import_plugin(name)
 
     def setsession(self, config):
         val = config.getvalue
@@ -149,3 +159,19 @@ def test_implied_different_sessions(tmpdir):
     assert x('--exec=x') == 'DSession'
     assert x('-f', '--exec=x') == 'LooponfailingSession'
     assert x('--dist', '--exec=x', '--collectonly') == 'Session'
+
+
+
+def test_generic(plugintester):
+    plugintester.apicheck(DefaultPlugin)
+    
+def test_plugin_specify(testdir):
+    testdir.chdir()
+    config = testdir.parseconfig("-p", "nqweotexistent")
+    py.test.raises(ImportError, 
+        "config.pytestplugins.do_configure(config)"
+    )
+
+def test_plugin_already_exists(testdir):
+    config = testdir.parseconfig("--plugin", "default")
+    assert config.option.plugin == ['default']
