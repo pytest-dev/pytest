@@ -78,7 +78,9 @@ class PytestPlugins(object):
         return self.pyplugins.notify(eventname, *args, **kwargs)
 
     def do_addoption(self, parser):
-        self.pyplugins.call_each('pytest_addoption', parser=parser)
+        methods = self.pyplugins.listattr("pytest_addoption", reverse=True)
+        mc = py._com.MultiCall(methods, parser=parser)
+        mc.execute()
 
     def pyevent_plugin_registered(self, plugin):
         if hasattr(self, '_config'):

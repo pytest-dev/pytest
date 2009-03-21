@@ -10,8 +10,7 @@ Instance = py.test.collect.Instance
 
 conf_iocapture = "fd" # overridable from conftest.py 
 
-# XXX resultlog should go, pypy's nightrun depends on it
-pytest_plugins = "default terminal xfail tmpdir execnetcleanup resultlog monkeypatch".split()
+pytest_plugins = "default terminal xfail tmpdir execnetcleanup monkeypatch".split()
 
 # ===================================================
 # settings in conftest only (for now) - for distribution

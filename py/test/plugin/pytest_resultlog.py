@@ -5,8 +5,9 @@ class ResultlogPlugin:
        Useful for buildbot integration code. 
     """ 
     def pytest_addoption(self, parser):
-        parser.addoption('--resultlog', action="store", dest="resultlog", 
-               help="path for machine-readable result log")
+        group = parser.addgroup("resultlog", "resultlog plugin options")
+        group.addoption('--resultlog', action="store", dest="resultlog", metavar="path",
+               help="path for machine-readable result log.")
     
     def pytest_configure(self, config):
         resultlog = config.option.resultlog
