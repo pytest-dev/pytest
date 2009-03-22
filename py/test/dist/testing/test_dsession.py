@@ -6,9 +6,11 @@ import py
 
 XSpec = py.execnet.XSpec
 
-def run(item):
+def run(item, node):
     runner = item._getrunner()
-    return runner(item)
+    rep = runner(item)
+    rep.node = node
+    return rep
 
 class MockNode:
     def __init__(self):
@@ -27,31 +29,31 @@ def dumpqueue(queue):
 class TestDSession:
     def test_add_remove_node(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        rep = run(item)
-        session = DSession(item.config)
         node = MockNode()
+        rep = run(item, node)
+        session = DSession(item.config)
         assert not session.node2pending
         session.addnode(node)
         assert len(session.node2pending) == 1
         session.senditems([item])
         pending = session.removenode(node)
         assert pending == [item]
-        assert item not in session.item2node
+        assert item not in session.item2nodes
         l = session.removenode(node)
         assert not l 
 
     def test_senditems_removeitems(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        rep = run(item)
-        session = DSession(item.config)
         node = MockNode()
+        rep = run(item, node)
+        session = DSession(item.config)
         session.addnode(node)
         session.senditems([item])  
         assert session.node2pending[node] == [item]
-        assert session.item2node[item] == node
-        session.removeitem(item)
+        assert session.item2nodes[item] == [node]
+        session.removeitem(item, node)
         assert not session.node2pending[node] 
-        assert not session.item2node
+        assert not session.item2nodes
 
     def test_triggertesting_collect(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -117,7 +119,7 @@ class TestDSession:
         session.queueevent("anonymous", event.NOP())
         session.loop_once(loopstate)
         assert node.sent == [[item]]
-        session.queueevent("itemtestreport", run(item))
+        session.queueevent("itemtestreport", run(item, node))
         session.loop_once(loopstate)
         assert loopstate.shuttingdown 
         assert not loopstate.testsfailed 
@@ -155,10 +157,10 @@ class TestDSession:
       
         # have one test pending for a node that goes down 
         session.senditems([item1, item2])
-        node = session.item2node[item1]
+        node = session.item2nodes[item1] [0]
         session.queueevent("testnodedown", node, None)
         evrec = EventRecorder(session.bus)
-        print session.item2node
+        print session.item2nodes
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
 
@@ -200,7 +202,7 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert node.sent == [[item]]
-        ev = run(item)
+        ev = run(item, node)
         session.queueevent("itemtestreport", ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  
@@ -236,8 +238,8 @@ class TestDSession:
         session.triggertesting(items)
 
         # run tests ourselves and produce reports 
-        ev1 = run(items[0])
-        ev2 = run(items[1])
+        ev1 = run(items[0], node)
+        ev2 = run(items[1], node)
         session.queueevent("itemtestreport", ev1) # a failing one
         session.queueevent("itemtestreport", ev2)
         # now call the loop
@@ -254,7 +256,7 @@ class TestDSession:
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
         evrec = EventRecorder(session.bus)
-        session.queueevent("itemtestreport", run(item))
+        session.queueevent("itemtestreport", run(item, node))
         session.loop_once(loopstate)
         assert not evrec.getfirstnamed("testnodedown")
         session.queueevent("testnodedown", node, None)
@@ -297,7 +299,7 @@ class TestDSession:
         node = MockNode()
         session.addnode(node)
         session.senditems([item])
-        session.queueevent("itemtestreport", run(item))
+        session.queueevent("itemtestreport", run(item, node))
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
         assert node._shutdown is True
@@ -322,7 +324,9 @@ class TestDSession:
         item1, item2 = colreport.result
         session.senditems([item1])
         # node2pending will become empty when the loop sees the report 
-        session.queueevent("itemtestreport", run(item1)) 
+        rep = run(item1, node)
+
+        session.queueevent("itemtestreport", run(item1, node)) 
 
         # but we have a collection pending
         session.queueevent("collectionreport", colreport) 

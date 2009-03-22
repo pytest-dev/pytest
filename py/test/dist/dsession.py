@@ -26,8 +26,8 @@ class LoopState(object):
         self.testsfailed = False
 
     def pyevent_itemtestreport(self, event):
-        if event.colitem in self.dsession.item2node:
-            self.dsession.removeitem(event.colitem)
+        if event.colitem in self.dsession.item2nodes:
+            self.dsession.removeitem(event.colitem, event.node)
         if event.failed:
             self.testsfailed = True
 
@@ -59,7 +59,7 @@ class DSession(Session):
     def __init__(self, config):
         self.queue = Queue.Queue()
         self.node2pending = {}
-        self.item2node = {}
+        self.item2nodes = {}
         super(DSession, self).__init__(config=config)
 
     def pytest_configure(self, config):
@@ -106,7 +106,7 @@ class DSession(Session):
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
-            (not self.item2node and not colitems and not self.queue.qsize())):
+            (not self.item2nodes and not colitems and not self.queue.qsize())):
             self.triggershutdown()
             loopstate.shuttingdown = True
         elif not self.node2pending:
@@ -166,7 +166,11 @@ class DSession(Session):
             # this happens if we didn't receive a testnodeready event yet
             return []
         for item in pending:
-            del self.item2node[item]
+            l = self.item2nodes[item]
+            l.remove(node)
+            if not l:
+                del self.item2nodes[item]
+
         return pending
 
     def triggertesting(self, colitems):
@@ -195,7 +199,7 @@ class DSession(Session):
                     #assert item not in self.item2node, (
                     #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
-                    self.item2node[item] = node
+                    self.item2nodes.setdefault(item, []).append(node)
                     self.bus.notify("itemstart", item, node)
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
@@ -205,12 +209,14 @@ class DSession(Session):
             # we have some left, give it to the main loop
             self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
 
-    def removeitem(self, item):
-        if item not in self.item2node:
-            raise AssertionError(item, self.item2node)
-        node = self.item2node.pop(item)
+    def removeitem(self, item, node):
+        if item not in self.item2nodes:
+            raise AssertionError(item, self.item2nodes)
+        nodes = self.item2nodes[item]
+        nodes.remove(node)
+        if not nodes:
+            del self.item2nodes[item]
         self.node2pending[node].remove(item)
-        #self.config.bus.notify("removeitem", item, host.hostid)
 
     def handle_crashitem(self, item, node):
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
