@@ -55,6 +55,7 @@ class TmpTestdir:
         self.tmpdir = tmpdir.mkdir(name)
         self.plugins = []
         self._syspathremove = []
+        self.chdir() # always chdir
 
     def Config(self, pyplugins=None, topdir=None):
         if topdir is None:
@@ -162,6 +163,11 @@ class TmpTestdir:
         args = list(args) + ["--basetemp=%s" % self.tmpdir.dirpath('basetemp')]
         config.parse(args)
         return config 
+
+    def parseconfigure(self, *args):
+        config = self.parseconfig(*args)
+        config.pytestplugins.do_configure(config)
+        return config
 
     def getitem(self,  source, funcname="test_func"):
         modcol = self.getmodulecol(source)

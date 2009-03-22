@@ -218,57 +218,13 @@ class TestConfigApi_getcolitems:
             assert col.config is config 
 
 
-class TestOptionsAndConfiguration:
-    def test_getxspecs_numprocesses(self, testdir):
-        config = testdir.parseconfig("-n3")
-        xspecs = config.getxspecs()
-        assert len(xspecs) == 3
-
-    def test_getxspecs(self, testdir):
-        testdir.chdir() 
-        config = testdir.parseconfig("--tx=popen", "--tx", "ssh=xyz")
-        xspecs = config.getxspecs()
-        assert len(xspecs) == 2
-        print xspecs
-        assert xspecs[0].popen 
-        assert xspecs[1].ssh == "xyz"
-
-    def test_xspecs_multiplied(self, testdir):
-        testdir.chdir()
-        xspecs = testdir.parseconfig("--tx=3*popen",).getxspecs()
-        assert len(xspecs) == 3
-        assert xspecs[1].popen 
-
-    def test_getrsyncdirs(self, testdir):
-        config = testdir.parseconfig('--rsyncdir=' + str(testdir.tmpdir))
-        roots = config.getrsyncdirs()
-        assert len(roots) == 1 + 1 
-        assert testdir.tmpdir in roots
-
-    def test_getrsyncdirs_with_conftest(self, testdir):
-        testdir.chdir()
-        p = py.path.local()
-        for bn in 'x y z'.split():
-            p.mkdir(bn)
-        testdir.makeconftest("""
-            rsyncdirs= 'x', 
-        """)
-        config = testdir.parseconfig(testdir.tmpdir, '--rsyncdir=y', '--rsyncdir=z')
-        roots = config.getrsyncdirs()
-        assert len(roots) == 3 + 1 
-        assert py.path.local('y') in roots 
-        assert py.path.local('z') in roots 
-        assert testdir.tmpdir.join('x') in roots 
-
-
-
 class TestOptionEffects:
     def test_boxed_option_default(self, testdir):
         tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
         config = py.test.config._reparse([tmpdir])
         config.initsession()
         assert not config.option.boxed
-        config = py.test.config._reparse(['--dist', tmpdir])
+        config = py.test.config._reparse(['-d', tmpdir])
         config.initsession()
         assert not config.option.boxed
 

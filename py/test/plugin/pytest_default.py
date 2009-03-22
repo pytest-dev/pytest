@@ -70,7 +70,7 @@ class DefaultPlugin:
                          "and instantiate 'HelloPlugin' from the module."))
         group._addoption('-f', '--looponfail',
                    action="store_true", dest="looponfail", default=False,
-                   help="run tests, loop on failing test set, until all pass. repeat forever.")
+                   help="run tests, re-run failing test set until all pass.")
 
         group = parser.addgroup("test process debugging")
         group.addoption('--collectonly',
@@ -94,33 +94,43 @@ class DefaultPlugin:
                    action="store_true", dest="debug", default=False,
                    help="generate and show debugging information.")
 
-        group = parser.addgroup("xplatform", "distributed/cross platform testing")
-        group._addoption('-d', '--dist',
-                   action="store_true", dest="dist", default=False,
-                   help="ad-hoc distribute tests across machines (requires conftest settings)") 
-        group._addoption('-n', dest="numprocesses", default=0, metavar="numprocesses", 
+        group = parser.addgroup("dist", "distributed testing") #  see http://pytest.org/help/dist")
+        group._addoption('--dist', metavar="distmode", 
+                   action="store", choices=['load', 'each', 'no'], 
+                   type="choice", dest="dist", default="no", 
+                   help=("set mode for distributing tests to exec environments.\n\n"
+                         "each: send each test to each available environment.\n\n"
+                         "load: send each test to available environment.\n\n"
+                         "(default) no: run tests inprocess, don't distribute."))
+        group._addoption('--tx', dest="tx", action="append", default=[], metavar="xspec",
+                   help=("add a test execution environment. some examples: "
+                         "--tx popen//python=python2.5 --tx socket=192.168.1.102:8888 "
+                         "--tx ssh=user@codespeak.net//chdir=testcache"))
+        group._addoption('-d', 
+                   action="store_true", dest="distload", default=False,
+                   help="load-balance tests.  shortcut for '--dist=load'")
+        group._addoption('-n', dest="numprocesses", metavar="numprocesses", 
                    action="store", type="int", 
-                   help="number of local test processes. conflicts with --dist.")
+                   help="shortcut for '--dist=load --tx=NUM*popen'")
         group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
-                   help="add local directory for rsync to remote test nodes.")
-        group._addoption('--tx', dest="tx", action="append", default=[],
-                   help=("add a test environment, specified in XSpec syntax. examples: "
-                         "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
-        #group._addoption('--rest',
-        #           action='store_true', dest="restreport", default=False,
-        #           help="restructured text output reporting."),
+                   help="add directory for rsyncing to remote tx nodes.")
 
     def pytest_configure(self, config):
+        self.fixoptions(config)
         self.setsession(config)
         self.loadplugins(config)
-        self.fixoptions(config)
 
     def fixoptions(self, config):
+        if config.option.numprocesses:
+            config.option.dist = "load"
+            config.option.tx = ['popen'] * int(config.option.numprocesses)
+        if config.option.distload:
+            config.option.dist = "load"
         if config.getvalue("usepdb"):
             if config.getvalue("looponfail"):
                 raise config.Error("--pdb incompatible with --looponfail.")
-            if config.getvalue("dist"):
-                raise config.Error("--pdb incomptaible with distributed testing.")
+            if config.option.dist != "no":
+                raise config.Error("--pdb incomptaible with distributing tests.")
 
     def loadplugins(self, config):
         for name in config.getvalue("plugin"):
@@ -136,7 +146,7 @@ class DefaultPlugin:
             if val("looponfail"):
                 from py.__.test.looponfail.remote import LooponfailingSession
                 config.setsessionclass(LooponfailingSession)
-            elif val("numprocesses") or val("dist"):
+            elif val("dist") != "no":
                 from py.__.test.dist.dsession import  DSession
                 config.setsessionclass(DSession)
 
@@ -153,10 +163,10 @@ def test_implied_different_sessions(tmpdir):
             return Exception
         return getattr(config._sessionclass, '__name__', None)
     assert x() == None
-    assert x('--dist') == 'DSession'
+    assert x('-d') == 'DSession'
+    assert x('--dist=each') == 'DSession'
     assert x('-n3') == 'DSession'
     assert x('-f') == 'LooponfailingSession'
-    assert x('--dist', '--collectonly') == 'Session'
 
 def test_generic(plugintester):
     plugintester.apicheck(DefaultPlugin)
@@ -173,16 +183,48 @@ def test_plugin_already_exists(testdir):
     assert config.option.plugin == ['default']
     config.pytestplugins.do_configure(config)
 
-def test_conflict_options():
-    def check_conflict_option(opts):
-        print "testing if options conflict:", " ".join(opts)
-        config = py.test.config._reparse(opts)
-        py.test.raises(config.Error, 
-            "config.pytestplugins.do_configure(config)")
-    conflict_options = (
-        '--looponfail --pdb',
-        '--dist --pdb', 
-    )
-    for spec in conflict_options: 
-        opts = spec.split()
-        yield check_conflict_option, opts
+
+class TestDistOptions:
+    def test_getxspecs(self, testdir):
+        config = testdir.parseconfigure("--tx=popen", "--tx", "ssh=xyz")
+        xspecs = config.getxspecs()
+        assert len(xspecs) == 2
+        print xspecs
+        assert xspecs[0].popen 
+        assert xspecs[1].ssh == "xyz"
+
+    def test_xspecs_multiplied(self, testdir):
+        xspecs = testdir.parseconfigure("--tx=3*popen",).getxspecs()
+        assert len(xspecs) == 3
+        assert xspecs[1].popen 
+
+    def test_getrsyncdirs(self, testdir):
+        config = testdir.parseconfigure('--rsyncdir=' + str(testdir.tmpdir))
+        roots = config.getrsyncdirs()
+        assert len(roots) == 1 + 1 
+        assert testdir.tmpdir in roots
+
+    def test_getrsyncdirs_with_conftest(self, testdir):
+        p = py.path.local()
+        for bn in 'x y z'.split():
+            p.mkdir(bn)
+        testdir.makeconftest("""
+            rsyncdirs= 'x', 
+        """)
+        config = testdir.parseconfigure(testdir.tmpdir, '--rsyncdir=y', '--rsyncdir=z')
+        roots = config.getrsyncdirs()
+        assert len(roots) == 3 + 1 
+        assert py.path.local('y') in roots 
+        assert py.path.local('z') in roots 
+        assert testdir.tmpdir.join('x') in roots 
+
+def test_dist_options(testdir):
+    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '--looponfail')")
+    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '-n 3')")
+    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '-d')")
+    config = testdir.parseconfigure("-n 2")
+    assert config.option.dist == "load"
+    assert config.option.tx == ['popen'] * 2
+    
+    config = testdir.parseconfigure("-d")
+    assert config.option.dist == "load"

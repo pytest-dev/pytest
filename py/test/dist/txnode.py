@@ -70,6 +70,8 @@ class MasterNode(object):
 # setting up slave code 
 def install_slave(gateway, config):
     channel = gateway.remote_exec(source="""
+        import os, sys 
+        sys.path.insert(0, os.getcwd()) 
         from py.__.test.dist.mypickle import PickleChannel
         from py.__.test.dist.txnode import SlaveNode
         channel = PickleChannel(channel)

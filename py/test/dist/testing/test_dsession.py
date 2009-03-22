@@ -356,3 +356,30 @@ class TestDSession:
         session.loop_once(loopstate)
         assert loopstate.colitems == colreport.result
         assert loopstate.exitstatus is None, "loop did not care for colitems"
+
+    def test_dist_some_tests(self, testdir):
+        from py.__.test.dist.testing.test_txnode import EventQueue
+        p1 = testdir.makepyfile(test_one="""
+            def test_1(): 
+                pass
+            def test_x():
+                import py
+                py.test.skip("aaa")
+            def test_fail():
+                assert 0
+        """)
+        config = testdir.parseconfig('-d', p1, '--tx=popen')
+        dsession = DSession(config)
+        eq = EventQueue(config.bus)
+        dsession.main([config.getfsnode(p1)])
+        ev, = eq.geteventargs("itemtestreport")
+        assert ev.passed
+        ev, = eq.geteventargs("itemtestreport")
+        assert ev.skipped
+        ev, = eq.geteventargs("itemtestreport")
+        assert ev.failed
+        # see that the node is really down 
+        node, error = eq.geteventargs("testnodedown")
+        assert node.gateway.spec.popen
+        eq.geteventargs("testrunfinish")
+

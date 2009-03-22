@@ -62,19 +62,14 @@ class DSession(Session):
         self.item2nodes = {}
         super(DSession, self).__init__(config=config)
 
-    def pytest_configure(self, config):
-        if self.config.getvalue("usepdb"):
-            raise self.config.Error("--pdb does not work for distributed tests (yet).")
+    def pytest_configure(self, __call__, config):
+        __call__.execute()
         try:
-            self.config.getxspecs()
-        except self.config.Error:
-            print "Please specify test environments for distribution of tests:"
-            print "py.test --tx ssh=user@somehost --tx popen//python=python2.5"
-            print "conftest.py: pytest_option_tx=['ssh=user@somehost','popen']"
-            print "environment: PYTEST_OPTION_TX=ssh=@somehost,popen"
-            print 
-            #print "see also: http://codespeak.net/py/current/doc/test.html#automated-distributed-testing"
-            raise SystemExit
+            config.getxspecs()
+        except config.Error:
+            print
+            raise config.Error("dist mode %r needs test execution environments, "
+                               "none found." %(config.option.dist))
 
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
@@ -126,6 +121,7 @@ class DSession(Session):
                 loopstate.exitstatus = outcome.EXIT_TESTSFAILED
             else:
                 loopstate.exitstatus = outcome.EXIT_OK
+        #self.config.bus.unregister(loopstate)
 
     def _initloopstate(self, colitems):
         loopstate = LoopState(self, colitems)

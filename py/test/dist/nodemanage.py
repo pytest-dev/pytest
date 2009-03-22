@@ -65,26 +65,12 @@ class NodeManager(object):
 
     def setup_nodes(self, putevent):
         self.rsync_roots()
-        nice = self.config.getvalue("dist_nicelevel")
-        if nice != 0:
-            self.gwmanager.multi_exec("""
-                import os
-                if hasattr(os, 'nice'): 
-                    os.nice(%r)
-            """ % nice).waitclose()
-
         self.trace_nodestatus()
-        multigw = self.gwmanager.getgateways(inplacelocal=False, remote=True)
-        multigw.remote_exec("""
-            import os, sys
-            sys.path.insert(0, os.getcwd())
-        """).waitclose()
-
         for gateway in self.gwmanager.gateways:
             node = MasterNode(gateway, self.config, putevent)
             self.nodes.append(node) 
 
     def teardown_nodes(self):
-        # XXX teardown nodes? 
+        # XXX do teardown nodes? 
         self.gwmanager.exit()
 

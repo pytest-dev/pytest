@@ -87,9 +87,7 @@ class TestConfigPickling:
             assert getattr(config2.option, name) == value
         assert config2.getvalue("x") == 1
 
-    def test_config_rconfig(self, testdir):
-        tmp = testdir.tmpdir
-        tmp.ensure("__init__.py")
+    def test_config_pickling_customoption(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
                 def pytest_addoption(self, parser):
@@ -97,6 +95,27 @@ class TestConfigPickling:
                     group.addoption('-G', '--glong', action="store", default=42, 
                         type="int", dest="gdest", help="g value.")
         """)
+        config = testdir.parseconfig("-G", "11")
+        assert config.option.gdest == 11
+        repr = config.__getstate__()
+
+        config = testdir.Config()
+        py.test.raises(AttributeError, "config.option.gdest")
+
+        config2 = testdir.Config()
+        config2.__setstate__(repr) 
+        assert config2.option.gdest == 11
+
+    def test_config_pickling_and_conftest_deprecated(self, testdir):
+        tmp = testdir.tmpdir.ensure("w1", "w2", dir=1)
+        tmp.ensure("__init__.py")
+        tmp.join("conftest.py").write(py.code.Source("""
+            class ConftestPlugin:
+                def pytest_addoption(self, parser):
+                    group = parser.addgroup("testing group")
+                    group.addoption('-G', '--glong', action="store", default=42, 
+                        type="int", dest="gdest", help="g value.")
+        """))
         config = testdir.parseconfig(tmp, "-G", "11")
         assert config.option.gdest == 11
         repr = config.__getstate__()
@@ -106,10 +125,11 @@ class TestConfigPickling:
 
         config2 = testdir.Config()
         config2.__setstate__(repr) 
+        assert config2.option.gdest == 11
+       
         option = config2.addoptions("testing group", 
                 config2.Option('-G', '--glong', action="store", default=42,
                        type="int", dest="gdest", help="g value."))
-        assert config2.option.gdest == 11
         assert option.gdest == 11
 
     def test_config_picklability(self, testdir):

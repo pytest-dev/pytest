@@ -253,21 +253,17 @@ class Config(object):
             raise self.Error("unknown io capturing: " + iocapture)
 
     def getxspecs(self):
-        config = self 
-        if config.option.numprocesses:
-            xspeclist = ['popen'] * config.option.numprocesses
-        else:
-            xspeclist = []
-            for xspec in config.getvalue("tx"):
-                i = xspec.find("*")
-                try:
-                    num = int(xspec[:i])
-                except ValueError:
-                    xspeclist.append(xspec)
-                else:
-                    xspeclist.extend([xspec[i+1:]] * num)
+        xspeclist = []
+        for xspec in self.getvalue("tx"):
+            i = xspec.find("*")
+            try:
+                num = int(xspec[:i])
+            except ValueError:
+                xspeclist.append(xspec)
+            else:
+                xspeclist.extend([xspec[i+1:]] * num)
         if not xspeclist:
-            raise config.Error("MISSING test execution (tx) nodes: please specify --tx")
+            raise self.Error("MISSING test execution (tx) nodes: please specify --tx")
         return [py.execnet.XSpec(x) for x in xspeclist]
 
     def getrsyncdirs(self):

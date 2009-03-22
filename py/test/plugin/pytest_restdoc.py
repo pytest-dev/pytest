@@ -6,12 +6,12 @@ class RestdocPlugin:
         group.addoption('-R', '--urlcheck',
                action="store_true", dest="urlcheck", default=False, 
                help="urlopen() remote links found in ReST text files.") 
-        group.addoption('--urlcheck-timeout', action="store", 
+        group.addoption('--urltimeout', action="store", metavar="secs",
             type="int", dest="urlcheck_timeout", default=5,
-            help="timeout in seconds for urlcheck")
+            help="timeout in seconds for remote urlchecks")
         group.addoption('--forcegen',
                action="store_true", dest="forcegen", default=False,
-               help="force generation of html files even if they appear up-to-date")
+               help="force generation of html files.")
 
     def pytest_collect_file(self, path, parent):
         if path.ext == ".txt":

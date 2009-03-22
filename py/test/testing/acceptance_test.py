@@ -4,7 +4,7 @@ pydir = py.path.local(py.__file__).dirpath()
 pytestpath = pydir.join("bin", "py.test")
 EXPECTTIMEOUT=10.0
 
-class TestPyTest:
+class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
@@ -251,8 +251,61 @@ class TestPyTest:
             "y* = 'xxxxxx*"
         ])
 
+    def test_verbose_reporting(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def test_fail():
+                raise ValueError()
+            def test_pass():
+                pass
+            class TestClass:
+                def test_skip(self):
+                    py.test.skip("hello")
+            def test_gen():
+                def check(x):
+                    assert x == 1
+                yield check, 0
+        """)
+        result = testdir.runpytest(p1, '-v')
+        result.stdout.fnmatch_lines([
+            "*FAIL*test_verbose_reporting.py:2: test_fail*", 
+            "*PASS*test_verbose_reporting.py:4: test_pass*",
+            "*SKIP*test_verbose_reporting.py:7: TestClass.test_skip*",
+            "*FAIL*test_verbose_reporting.py:10: test_gen*",
+        ])
+        assert result.ret == 1
 
-    def test_dist_testing(self, testdir):
+class TestDistribution:
+    def test_dist_conftest_options(self, testdir):
+        p1 = testdir.tmpdir.ensure("dir", 'p1.py')
+        p1.dirpath("__init__.py").write("")
+        p1.dirpath("conftest.py").write(py.code.Source("""
+            print "importing conftest", __file__
+            import py
+            Option = py.test.config.Option 
+            option = py.test.config.addoptions("someopt", 
+                Option('--someopt', action="store_true", dest="someopt", default=False))
+            dist_rsync_roots = ['../dir']
+            print "added options", option
+            print "config file seen from conftest", py.test.config
+        """))
+        p1.write(py.code.Source("""
+            import py, conftest
+            def test_1(): 
+                print "config from test_1", py.test.config
+                print "conftest from test_1", conftest.__file__
+                print "test_1: py.test.config.option.someopt", py.test.config.option.someopt
+                print "test_1: conftest", conftest
+                print "test_1: conftest.option.someopt", conftest.option.someopt
+                assert conftest.option.someopt 
+        """))
+        result = testdir.runpytest('-d', '--tx=popen', p1, '--someopt')
+        assert result.ret == 0
+        extra = result.stdout.fnmatch_lines([
+            "*1 passed*", 
+        ])
+
+    def test_manytests_to_one_popen(self, testdir):
         p1 = testdir.makepyfile("""
                 import py
                 def test_fail0():
@@ -273,7 +326,7 @@ class TestPyTest:
         ])
         assert result.ret == 1
 
-    def test_dist_testing_conftest_specified(self, testdir):
+    def test_dist_conftest_specified(self, testdir):
         p1 = testdir.makepyfile("""
                 import py
                 def test_fail0():
@@ -329,44 +382,24 @@ class TestPyTest:
         ])
         assert result.ret == 1
 
-    def test_keyboard_interrupt(self, testdir):
-        p1 = testdir.makepyfile("""
-            import py
-            def test_fail():
-                raise ValueError()
-            def test_inter():
-                raise KeyboardInterrupt()
-        """)
-        result = testdir.runpytest(p1)
+    def test_distribution_rsyncdirs_example(self, testdir):
+        source = testdir.mkdir("source")
+        dest = testdir.mkdir("dest")
+        subdir = source.mkdir("example_pkg")
+        subdir.ensure("__init__.py")
+        p = subdir.join("test_one.py")
+        p.write("def test_5(): assert not __file__.startswith(%r)" % str(p))
+        result = testdir.runpytest("-d", "--rsyncdir=%(subdir)s" % locals(), 
+            "--tx=popen//chdir=%(dest)s" % locals(), p)
+        assert result.ret == 0
         result.stdout.fnmatch_lines([
-            #"*test_inter() INTERRUPTED",
-            "*KEYBOARD INTERRUPT*",
-            "*1 failed*", 
+            "*1* *popen*platform*",
+            #"RSyncStart: [G1]",
+            #"RSyncFinished: [G1]",
+            "*1 passed*"
         ])
+        assert dest.join(subdir.basename).check(dir=1)
 
-    def test_verbose_reporting(self, testdir):
-        p1 = testdir.makepyfile("""
-            import py
-            def test_fail():
-                raise ValueError()
-            def test_pass():
-                pass
-            class TestClass:
-                def test_skip(self):
-                    py.test.skip("hello")
-            def test_gen():
-                def check(x):
-                    assert x == 1
-                yield check, 0
-        """)
-        result = testdir.runpytest(p1, '-v')
-        result.stdout.fnmatch_lines([
-            "*FAIL*test_verbose_reporting.py:2: test_fail*", 
-            "*PASS*test_verbose_reporting.py:4: test_pass*",
-            "*SKIP*test_verbose_reporting.py:7: TestClass.test_skip*",
-            "*FAIL*test_verbose_reporting.py:10: test_gen*",
-        ])
-        assert result.ret == 1
 
 class TestInteractive:
     def getspawn(self, tmpdir):
@@ -443,4 +476,20 @@ class TestInteractive:
             "*popen-python2.4*FAIL*",
             "*2 failed*"
         ])
-        
+       
+class TestKeyboardInterrupt: 
+    def test_raised_in_testfunction(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def test_fail():
+                raise ValueError()
+            def test_inter():
+                raise KeyboardInterrupt()
+        """)
+        result = testdir.runpytest(p1)
+        result.stdout.fnmatch_lines([
+            #"*test_inter() INTERRUPTED",
+            "*KEYBOARD INTERRUPT*",
+            "*1 failed*", 
+        ])
+
