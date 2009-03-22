@@ -1,67 +1,56 @@
 
-pytest plugins
-==================
+Many of py.test's features are implemented as a plugin. 
 
-specifying plugins for directories or test modules 
----------------------------------------------------------
-
-py.test loads and configures plugins at tool startup and whenever 
-it encounters new confest or test modules which 
-contain a ``pytest_plugins`` definition.  At tool 
-startup the ``PYTEST_PLUGINS`` environment variable 
-is considered as well. 
-
-Example
-++++++++++
-
-If you create a ``conftest.py`` file with the following content:: 
-
-    pytest_plugins = "pytest_plugin1", MyLocalPluginClass
-
-then test execution within that directory can make use 
-of the according instantiated plugins:
-
-* the module ``pytest_plugin1`` will be imported and 
-  and its contained `Plugin1`` class instantiated. 
-  A plugin module can put its dependencies into 
-  a "pytest_plugins" attribute at module level as well. 
-
-* the ``MyLocalPluginClass`` will be instantiated 
-  and added to the pluginmanager. 
-
-
-Plugin methods 
-----------------------------------
-
-A Plugin class may implement the following attributes and methods: 
-
-* pytest_cmdlineoptions: a list of optparse-style py.test.config.Option objects 
-* pytest_configure(self, config): called after command line options have been parsed 
-* pytest_unconfigure(self, config): called before the test process quits 
-* pytest_event(self, event): called for each `pytest event`_ 
-
-XXX reference APIcheck'ed full documentation
-
-_`pytest event`: 
-
-Pytest Events 
--------------------
-
-XXX Various reporting events. 
-
-Example plugins
+Available plugins
 -----------------------
 
-XXX here are a few existing plugins: 
+py.test has a number of default plugins.  You can see which 
+ones by specifying ``--trace=config``. 
 
-* adding reporting facilities, e.g. 
+* adding reporting facilities, examples:
   pytest_terminal: default reporter for writing info to terminals 
   pytest_resultlog: log test results in machine-readable form to a file 
   pytest_eventlog: log all internal pytest events to a file 
+
+* marking and reporting test specially 
   pytest_xfail: "expected to fail" test marker 
+
+* funcargs for advanced 
   pytest_tmpdir: provide temporary directories to test functions 
   pytest_plugintester: generic apichecks, support for functional plugin tests 
   pytest_pytester: support for testing py.test runs
 
 * extending test execution, e.g. 
   pytest_apigen: tracing values of function/method calls when running tests
+
+
+Loading plugins and specifying dependencies 
+---------------------------------------------------------
+
+py.test loads and configures plugins at tool startup:
+
+* by reading the ``PYTEST_PLUGINS`` environment variable 
+  and importing the comma-separated list of plugin names. 
+
+* by loading all plugins specified via one or more ``-p name`` 
+  command line options. 
+
+* by loading all plugins specified via a ``pytest_plugins``
+  variable in ``conftest.py`` files or test modules. 
+
+example: ensure a plugin is loaded 
+++++++++++++++++++++++++++++++++++++
+
+If you create a ``conftest.py`` file with the following content:: 
+
+    pytest_plugins = "pytest_myextension",
+
+then all tests in that directory and below it will run with
+an instantiated "pytest_myextension".  Here is how instantiation
+takes place:
+
+* the module ``pytest_extension`` will be imported and 
+  and its contained `ExtensionPlugin`` class will 
+  be instantiated.  A plugin module may specify its 
+  dependencies via another ``pytest_plugins`` definition. 
+

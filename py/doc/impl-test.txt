@@ -131,28 +131,6 @@ conftest.py configurations::
     
     py.test --traceconfig
 
-adding custom options
-+++++++++++++++++++++++
-
-To register a project-specific command line option 
-you may have the following code within a ``conftest.py`` file::
-
-    import py
-    Option = py.test.config.Option
-    option = py.test.config.addoptions("pypy options",
-        Option('-V', '--view', action="store_true", dest="view", default=False,
-               help="view translation tests' flow graphs with Pygame"),
-    )
-
-and you can then access ``option.view`` like this:: 
-
-    if option.view:
-        print "view this!"
-
-The option will be available if you type ``py.test -h``
-Note that you may only register upper case short
-options.  ``py.test`` reserves all lower 
-case short options for its own cross-project usage. 
 
 customizing the collecting and running process 
 -----------------------------------------------
@@ -245,7 +223,7 @@ useful for calling application test machinery with different
 parameter sets but counting each of the calls as a separate
 tests. 
 
-.. _`generative tests`: test.html#generative-tests
+.. _`generative tests`: test-features.html#generative-tests
 
 The other extension possibility is about 
 specifying a custom test ``Item`` class which 

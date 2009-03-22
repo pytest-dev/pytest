@@ -1,0 +1,107 @@
+.. _`distribute tests across machines`:
+
+``py.test`` can ad-hoc distribute test runs to multiple CPUs or remote
+machines.  This allows to speed up development or to use special resources
+of remote machines.  Before running tests remotely, ``py.test`` efficiently 
+synchronizes your program source code to the remote place.  All test results 
+are reported back and displayed to your local test session.  You may 
+specify different Python versions and interpreters.
+
+Speed up test runs by sending tests to multiple CPUs
+----------------------------------------------------------
+
+To send tests to multiple CPUs, type::
+
+    py.test -n NUM
+
+Especially for longer running tests or tests requiring 
+a lot of IO this can lead to considerable speed ups. 
+
+Test on a different python interpreter 
+----------------------------------------------------------
+
+To send tests to a python2.4 process, you may type::
+
+    py.test --tx popen//python=python2.4
+
+This will start a subprocess which is run with the "python2.4"
+Python interpreter, found in your system binary lookup path. 
+
+.. For convenience you may prepend ``3*`` to create three sub processes.  
+
+
+Sending tests to remote SSH accounts
+------------------------------------
+
+Suppose you have a package ``mypkg`` which contains some 
+tests that you can successfully run locally. And you
+have a ssh-reachable machine ``myhost``.  Then    
+you can ad-hoc distribute your tests by typing::
+
+    py.test -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
+
+This will synchronize your ``mypkg`` package directory 
+to an remote ssh account and then locally collect tests 
+and send them to remote places for execution.  
+
+You can specify multiple ``--rsyncdir`` directories 
+to be sent to the remote side. 
+
+Sending tests to remote Socket Servers
+----------------------------------------
+
+Download the single-module `socketserver.py`_ Python program 
+and run it on the specified hosts like this::
+
+    python socketserver.py
+
+It will tell you that it starts listening.  You can now
+on your home machine specify this new socket host
+with something like this::
+
+    py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
+
+no remote installation requirements 
+++++++++++++++++++++++++++++++++++++++++++++
+
+Synchronisation and running of tests only requires
+a bare Python installation on the remote side.   No
+special software is installed - this is realized through the
+*zero installation* principle that the underlying 
+`py.execnet`_ mechanisms implements. 
+
+
+.. _`socketserver.py`: ../execnet/script/socketserver.py
+.. _`py.execnet`: execnet.html
+
+Differences from local tests
+----------------------------
+
+* Test order is rather random (instead of in file order). 
+* the test process may hang due to network problems 
+* you may not reference files outside of rsynced directory structures
+
+Specifying test exec environments in a conftest.py
+-------------------------------------------------------------
+
+Instead of specifying command line options, you can 
+put options values in a ``conftest.py`` file like this::
+
+    pytest_option_tx = ['ssh=myhost//python=python2.5', 'popen//python=python2.5']
+    pytest_option_dist = True
+
+Any commandline ``--tx`` specifictions  will add to the list of available execution
+environments. 
+
+Specifying "rsync" dirs in a conftest.py
+-------------------------------------------------------------
+
+In your ``mypkg/conftest.py`` you may specify directories to synchronise
+or to exclude::
+
+    rsyncdirs = ['.', '../plugins']
+    rsyncignore = ['_cache']
+
+These directory specifications are relative to the directory
+where the ``conftest.py`` is found.
+

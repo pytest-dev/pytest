@@ -1,6 +1,8 @@
 py lib contact and communication 
 ===================================
 
+- You may also subscribe to `tetamap`_, where Holger Krekel
+  often posts about testing and py.test related news. 
 
 - **#pylib on irc.freenode.net**: you are welcome
   to lurk or ask questions in this IRC channel, it also tracks py lib commits. 
@@ -19,6 +21,8 @@ py lib contact and communication
 .. _future: future.html 
 
 .. _`get an account`:  
+
+.. _tetamap: http://tetamap.wordpress.com
 
 
 get an account on codespeak  

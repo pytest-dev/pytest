@@ -1,28 +1,23 @@
 Test configuration
 ========================
 
-using / specifying plugins
--------------------------------
-
-you can instruct py.test to use additional plugins by:
-
-* setting the PYTEST_PLUGINS environment variable
-  to a comma-separated list of plugins
-* XXX supplying "--plugins=NAME1,NAME2,..." at the command line 
-* setting "pytest_plugins='name1', 'name2'" in 
-  ``conftest.py`` files or in python test modules. 
-
-py.test will load all plugins along with their dependencies
-(plugins may specify "pytest_plugins" as well). 
-
-test option values 
+test options and values 
 -----------------------------
 
-py.test will lookup the value of an option "NAME" in this order: 
+You can see all available command line options by running::
+
+    py.test -h 
+
+py.test will lookup values of options in this order:
 
 * option value supplied at command line 
 * content of environment variable ``PYTEST_OPTION_NAME=...``
 * ``name = ...`` setting in the nearest ``conftest.py`` file.
 
-This means that you can specify default options per-run, 
-per shell session or per project directory. 
+The name of an option usually is the one you find 
+in the longform of the option, i.e. the name 
+behind the ``--`` double-dash. 
+
+IOW, you can set default values for options per project, per
+home-directoray, per shell session or per test-run. 
+
