@@ -5,16 +5,22 @@ import py
 from py.__.test import event
 from py.__.test.dist.mypickle import PickleChannel
 
-class MasterNode(object):
-    """ Install slave code, manage sending test tasks & receiving results """
+
+class TXNode(object):
+    """ Represents a Test Execution environment in the controlling process. 
+        - sets up a slave node through an execnet gateway 
+        - manages sending of test-items and receival of results and events
+        - creates events when the remote side crashes 
+    """
     ENDMARK = -1
 
-    def __init__(self, gateway, config, putevent):
+    def __init__(self, gateway, config, putevent, slaveready=None):
         self.config = config 
         self.putevent = putevent 
         self.gateway = gateway
         self.channel = install_slave(gateway, config)
         self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
+        self._sendslaveready = slaveready
         self._down = False
 
     def notify(self, eventname, *args, **kwargs):
@@ -39,6 +45,8 @@ class MasterNode(object):
                 return
             eventname, args, kwargs = eventcall 
             if eventname == "slaveready":
+                if self._sendslaveready:
+                    self._sendslaveready(self)
                 self.notify("testnodeready", self)
             elif eventname == "slavefinished":
                 self._down = True

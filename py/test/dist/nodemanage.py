@@ -1,6 +1,6 @@
 import py
 import sys, os
-from py.__.test.dist.txnode import MasterNode
+from py.__.test.dist.txnode import TXNode
 from py.__.execnet.gwmanage import GatewayManager
 
     
@@ -12,18 +12,10 @@ class NodeManager(object):
         self.roots = self.config.getrsyncdirs()
         self.gwmanager = GatewayManager(specs)
         self.nodes = []
+        self._nodesready = py.std.threading.Event()
 
     def trace(self, msg):
         self.config.bus.notify("trace", "nodemanage", msg)
-
-    def trace_nodestatus(self):
-        if self.config.option.debug:
-            for ch, result in self.gwmanager.multi_exec("""
-                import sys, os
-                channel.send((sys.executable, os.getcwd(), sys.path))
-            """).receive_each(withchannel=True):
-                self.trace("spec %r, execuable %r, cwd %r, syspath %r" %(
-                    ch.gateway.spec, result[0], result[1], result[2]))
 
     def config_getignores(self):
         return self.config.getconftest_pathlist("rsyncignore")
@@ -55,20 +47,33 @@ class NodeManager(object):
         # such that unpickling configs will 
         # pick it up as the right topdir 
         # (for other gateways this chdir is irrelevant)
+        self.trace("making gateways")
         old = self.config.topdir.chdir()  
         try:
             self.gwmanager.makegateways()
         finally:
             old.chdir()
-        self.trace_nodestatus()
-
 
     def setup_nodes(self, putevent):
         self.rsync_roots()
-        self.trace_nodestatus()
+        self.trace("setting up nodes")
         for gateway in self.gwmanager.gateways:
-            node = MasterNode(gateway, self.config, putevent)
-            self.nodes.append(node) 
+            node = TXNode(gateway, self.config, putevent, slaveready=self._slaveready)
+            gateway.node = node  # to keep node alive 
+            self.trace("started node %r" % node)
+
+    def _slaveready(self, node):
+        #assert node.gateway == node.gateway
+        #assert node.gateway.node == node
+        self.nodes.append(node)
+        self.trace("%s slave node ready %r" % (node.gateway.id, node))
+        if len(self.nodes) == len(self.gwmanager.gateways):
+            self._nodesready.set()
+   
+    def wait_nodesready(self, timeout=None):
+        self._nodesready.wait(timeout)
+        if not self._nodesready.isSet():
+            raise IOError("nodes did not get ready for %r secs" % timeout)
 
     def teardown_nodes(self):
         # XXX do teardown nodes? 

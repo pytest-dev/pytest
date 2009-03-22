@@ -244,6 +244,9 @@ class Gateway(object):
     def _rinfo(self, update=False):
         """ return some sys/env information from remote. """
         if update or not hasattr(self, '_cache_rinfo'):
+            class RInfo:
+                def __init__(self, **kwargs):
+                    self.__dict__.update(kwargs)
             self._cache_rinfo = RInfo(**self.remote_exec("""
                 import sys, os
                 channel.send(dict(
@@ -251,6 +254,7 @@ class Gateway(object):
                     version_info = sys.version_info, 
                     platform = sys.platform,
                     cwd = os.getcwd(),
+                    pid = os.getpid(),
                 ))
             """).receive())
         return self._cache_rinfo
@@ -367,10 +371,6 @@ class Gateway(object):
     def _stopexec(self):
         if self._requestqueue is not None:
             self._requestqueue.put(None)
-
-class RInfo:
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
 
 def getid(gw, cache={}):
     name = gw.__class__.__name__

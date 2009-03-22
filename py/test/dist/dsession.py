@@ -177,8 +177,11 @@ class DSession(Session):
             else:
                 self.bus.notify("collectionstart", event.CollectionStart(next))
                 self.queueevent("collectionreport", basic_collect_report(next))
-        self.senditems(senditems)
-        #self.senditems_each(senditems)
+        if self.config.option.dist == "each":
+            self.senditems_each(senditems)
+        else:
+            # XXX assert self.config.option.dist == "load"
+            self.senditems_load(senditems)
 
     def queueevent(self, eventname, *args, **kwargs):
         self.queue.put((eventname, args, kwargs)) 
@@ -201,7 +204,7 @@ class DSession(Session):
             # we have some left, give it to the main loop
             self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
 
-    def senditems(self, tosend):
+    def senditems_load(self, tosend):
         if not tosend:
             return 
         for node, pending in self.node2pending.items():
@@ -242,6 +245,8 @@ class DSession(Session):
         """ setup any neccessary resources ahead of the test run. """
         self.nodemanager = NodeManager(self.config)
         self.nodemanager.setup_nodes(putevent=self.queue.put)
+        if self.config.option.dist == "each":
+            self.nodemanager.wait_nodesready(5.0)
 
     def teardown(self):
         """ teardown any resources after a test run. """ 

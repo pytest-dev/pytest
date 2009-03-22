@@ -10,7 +10,7 @@ class XSpec:
         * if no "=value" is given, assume a boolean True value 
     """
     # XXX for now we are very restrictive about actually allowed key-values 
-    popen = ssh = socket = python = chdir = None
+    popen = ssh = socket = python = chdir = nice = None
 
     def __init__(self, string):
         self._spec = string
@@ -56,14 +56,18 @@ def makegateway(spec):
         gw = py.execnet.SocketGateway(*hostport)
     gw.spec = spec 
     # XXX events
-    if spec.chdir:
-        gw.remote_exec("""
+    if spec.chdir or spec.nice:
+        channel = gw.remote_exec("""
             import os
-            path = %r 
-            try:
+            path, nice = channel.receive()
+            if path:
+                if not os.path.exists(path):
+                    os.mkdir(path)
                 os.chdir(path)
-            except OSError:
-                os.mkdir(path)
-                os.chdir(path)
-        """ % spec.chdir).waitclose()
+            if nice and hasattr(os, 'nice'):
+                os.nice(nice)
+        """)
+        nice = spec.nice and int(spec.nice) or 0
+        channel.send((spec.chdir, nice))
+        channel.waitclose()
     return gw

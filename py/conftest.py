@@ -12,11 +12,10 @@ class PylibTestconfigPlugin:
         group = parser.addgroup("pylib", "py lib testing options")
         group.addoption('--sshhost', 
                action="store", dest="sshhost", default=None,
-               help=("target to run tests requiring ssh, e.g. "
-                     "user@codespeak.net"))
+               help=("ssh xspec for ssh functional tests. "))
         group.addoption('--gx', 
                action="append", dest="gspecs", default=None,
-               help=("add a global test environment, XSpec-syntax. ")), 
+               help=("add a global test environment, XSpec-syntax. "))
         group.addoption('--runslowtests',
                action="store_true", dest="runslowtests", default=False,
                help=("run slow tests"))

@@ -17,10 +17,10 @@ To send tests to multiple CPUs, type::
 Especially for longer running tests or tests requiring 
 a lot of IO this can lead to considerable speed ups. 
 
-Test on a different python interpreter 
+Test on a different python version
 ----------------------------------------------------------
 
-To send tests to a python2.4 process, you may type::
+To send tests to a python2.4 interpreter process, you may type::
 
     py.test --tx popen//python=python2.4
 
@@ -64,6 +64,7 @@ on your home machine specify this new socket host
 with something like this::
 
     py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
+
 
 no remote installation requirements 
 ++++++++++++++++++++++++++++++++++++++++++++

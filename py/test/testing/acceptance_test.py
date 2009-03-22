@@ -400,6 +400,27 @@ class TestDistribution:
         ])
         assert dest.join(subdir.basename).check(dir=1)
 
+    def test_dist_each(self, testdir):
+        interpreters = []
+        for name in ("python2.4", "python2.5"):
+            interp = py.path.local.sysfind(name)
+            if interp is None:
+                py.test.skip("%s not found" % name)
+            interpreters.append(interp)
+
+        testdir.makepyfile(__init__="", test_one="""
+            import sys
+            def test_hello():
+                print "%s...%s" % sys.version_info[:2]
+                assert 0
+        """)
+        args = ["--dist=each"]
+        args += ["--tx", "popen//python=%s" % interpreters[0]]
+        args += ["--tx", "popen//python=%s" % interpreters[1]]
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines(["2...4"])
+        result.stdout.fnmatch_lines(["2...5"])
+
 
 class TestInteractive:
     def getspawn(self, tmpdir):
@@ -454,28 +475,6 @@ class TestInteractive:
         child.expect("MODIFIED.*test_simple_looponfail_interaction.py", timeout=4.0)
         child.expect("1 passed", timeout=5.0)
         child.kill(15)
-
-    @py.test.mark.xfail("need new cmdline option")
-    def test_dist_each(self, testdir):
-        for name in ("python2.4", "python2.5"):
-            if not py.path.local.sysfind(name):
-                py.test.skip("%s not found" % name)
-        testdir.makepyfile(__init__="", test_one="""
-            import sys
-            def test_hello():
-                print sys.version_info[:2]
-                assert 0
-        """)
-        result = testdir.runpytest("--dist-each", 
-            "--tx=popen//python2.4", 
-            "--tx=popen//python2.5", 
-        )
-        assert result.ret == 1
-        result.stdout.fnmatch_lines([
-            "*popen-python2.5*FAIL*", 
-            "*popen-python2.4*FAIL*",
-            "*2 failed*"
-        ])
        
 class TestKeyboardInterrupt: 
     def test_raised_in_testfunction(self, testdir):

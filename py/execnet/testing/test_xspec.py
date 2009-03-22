@@ -3,19 +3,21 @@ import py
 XSpec = py.execnet.XSpec
 
 class TestXSpec:
-    def test_attributes(self):
+    def test_norm_attributes(self):
         spec = XSpec("socket=192.168.102.2:8888//python=c:/this/python2.5//chdir=d:\hello")
         assert spec.socket == "192.168.102.2:8888"
         assert spec.python == "c:/this/python2.5" 
         assert spec.chdir == "d:\hello"
+        assert spec.nice is None
         assert not hasattr(spec, 'xyz')
 
         py.test.raises(AttributeError, "spec._hello")
 
-        spec = XSpec("socket=192.168.102.2:8888//python=python2.5")
+        spec = XSpec("socket=192.168.102.2:8888//python=python2.5//nice=3")
         assert spec.socket == "192.168.102.2:8888"
         assert spec.python == "python2.5"
         assert spec.chdir is None
+        assert spec.nice == "3"
 
         spec = XSpec("ssh=user@host//chdir=/hello/this//python=/usr/bin/python2.5")
         assert spec.ssh == "user@host"
@@ -52,6 +54,18 @@ class TestMakegateway:
         assert rinfo.executable == py.std.sys.executable 
         assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info == py.std.sys.version_info
+
+    def test_popen_nice(self):
+        gw = py.execnet.makegateway("popen//nice=5")
+        remotenice = gw.remote_exec("""
+            import os
+            if hasattr(os, 'nice'):
+                channel.send(os.nice(0))
+            else:
+                channel.send(None)
+        """).receive()
+        if remotenice is not None:
+            assert remotenice == 5
 
     def test_popen_explicit(self):
         gw = py.execnet.makegateway("popen//python=%s" % py.std.sys.executable)

@@ -26,6 +26,7 @@ class TerminalReporter:
             file = py.std.sys.stdout
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None 
+        self.gateway2info = {}
 
     def write_fspath_result(self, fspath, res):
         if fspath != self.currentfspath:
@@ -96,10 +97,12 @@ class TerminalReporter:
         else:
             d['extra'] = ""
         d['cwd'] = rinfo.cwd
-        self.write_line("%(id)s %(spec)s -- platform %(platform)s, "
+        infoline = ("%(id)s %(spec)s -- platform %(platform)s, "
                         "Python %(version)s "
                         "cwd: %(cwd)s"
                         "%(extra)s" % d)
+        self.write_line(infoline)
+        self.gateway2info[gateway] = infoline
 
     def pyevent_gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
@@ -122,7 +125,6 @@ class TerminalReporter:
 
     def pyevent_testnodeready(self, node):
         self.write_line("%s node ready to receive tests" %(node.gateway.id,))
-        
 
     def pyevent_testnodedown(self, node, error):
         if error:
@@ -244,7 +246,11 @@ class TerminalReporter:
         if 'failed' in self.stats and self.config.option.tbstyle != "no":
             self.write_sep("=", "FAILURES")
             for ev in self.stats['failed']:
-                self.write_sep("_")
+                self.write_sep("_", "FAILURES")
+                if hasattr(ev, 'node'):
+                    self.write_line(self.gateway2info.get(
+                        ev.node.gateway, "node %r (platinfo not found? strange)")
+                            [:self._tw.fullwidth-1])
                 ev.toterminal(self._tw)
 
     def summary_stats(self):
@@ -344,15 +350,6 @@ from py.__.test import event
 from py.__.test.runner import basic_run_report
 
 class TestTerminal:
-    @py.test.mark.xfail
-    def test_testnodeready(self, testdir, linecomp):
-        item = testdir.getitem("def test_func(): pass")
-        rep = TerminalReporter(item.config, linecomp.stringio)
-        XXX # rep.pyevent_testnodeready(maketestnodeready())
-        linecomp.assert_contains_lines([
-            "*INPROCESS* %s %s - Python %s" %(sys.platform, 
-            sys.executable, repr_pythonversion(sys.version_info))
-        ])
 
     def test_pass_skip_fail(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""

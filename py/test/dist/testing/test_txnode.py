@@ -1,6 +1,6 @@
 
 import py
-from py.__.test.dist.txnode import MasterNode
+from py.__.test.dist.txnode import TXNode
 
 class EventQueue:
     def __init__(self, bus, queue=None):
@@ -44,7 +44,7 @@ class MySetup:
         self.queue = py.std.Queue.Queue()
         self.xspec = py.execnet.XSpec("popen")
         self.gateway = py.execnet.makegateway(self.xspec)
-        self.node = MasterNode(self.gateway, self.config, putevent=self.queue.put)
+        self.node = TXNode(self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()
         return self.node 
 

@@ -35,14 +35,14 @@ class TestDSession:
         assert not session.node2pending
         session.addnode(node)
         assert len(session.node2pending) == 1
-        session.senditems([item])
+        session.senditems_load([item])
         pending = session.removenode(node)
         assert pending == [item]
         assert item not in session.item2nodes
         l = session.removenode(node)
         assert not l 
 
-    def test_send_remove_to_two_nodes(self, testdir):
+    def test_senditems_each_and_receive_with_two_nodes(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         node1 = MockNode()
         node2 = MockNode()
@@ -60,13 +60,13 @@ class TestDSession:
         assert not session.node2pending[node1] 
         assert not session.item2nodes
 
-    def test_senditems_removeitems(self, testdir):
+    def test_senditems_load_and_receive_one_node(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         node = MockNode()
         rep = run(item, node)
         session = DSession(item.config)
         session.addnode(node)
-        session.senditems([item])  
+        session.senditems_load([item])  
         assert session.node2pending[node] == [item]
         assert session.item2nodes[item] == [node]
         session.removeitem(item, node)
@@ -174,7 +174,7 @@ class TestDSession:
         session.addnode(node2)
       
         # have one test pending for a node that goes down 
-        session.senditems([item1, item2])
+        session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
         session.queueevent("testnodedown", node, None)
         evrec = EventRecorder(session.bus)
@@ -316,7 +316,7 @@ class TestDSession:
 
         node = MockNode()
         session.addnode(node)
-        session.senditems([item])
+        session.senditems_load([item])
         session.queueevent("itemtestreport", run(item, node))
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
@@ -340,7 +340,7 @@ class TestDSession:
 
         colreport = basic_collect_report(modcol)
         item1, item2 = colreport.result
-        session.senditems([item1])
+        session.senditems_load([item1])
         # node2pending will become empty when the loop sees the report 
         rep = run(item1, node)
 
