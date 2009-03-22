@@ -170,7 +170,6 @@ class DSession(Session):
             l.remove(node)
             if not l:
                 del self.item2nodes[item]
-
         return pending
 
     def triggertesting(self, colitems):
@@ -183,9 +182,28 @@ class DSession(Session):
                 self.bus.notify("collectionstart", event.CollectionStart(next))
                 self.queueevent("collectionreport", basic_collect_report(next))
         self.senditems(senditems)
+        #self.senditems_each(senditems)
 
     def queueevent(self, eventname, *args, **kwargs):
         self.queue.put((eventname, args, kwargs)) 
+
+    def senditems_each(self, tosend):
+        if not tosend:
+            return 
+        room = self.MAXITEMSPERHOST
+        for node, pending in self.node2pending.items():
+            room = min(self.MAXITEMSPERHOST - len(pending), room)
+        sending = tosend[:room]
+        for node, pending in self.node2pending.items():
+            node.sendlist(sending)
+            pending.extend(sending)
+            for item in sending:
+                self.item2nodes.setdefault(item, []).append(node)
+                self.bus.notify("itemstart", item, node)
+        tosend[:] = tosend[room:]  # update inplace
+        if tosend:
+            # we have some left, give it to the main loop
+            self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
 
     def senditems(self, tosend):
         if not tosend:
@@ -221,6 +239,7 @@ class DSession(Session):
     def handle_crashitem(self, item, node):
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = event.ItemTestReport(item, when="???", excinfo=longrepr)
+        rep.node = node
         self.bus.notify("itemtestreport", rep)
 
     def setup(self):

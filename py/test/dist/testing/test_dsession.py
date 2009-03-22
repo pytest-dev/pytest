@@ -42,6 +42,24 @@ class TestDSession:
         l = session.removenode(node)
         assert not l 
 
+    def test_send_remove_to_two_nodes(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        node1 = MockNode()
+        node2 = MockNode()
+        session = DSession(item.config)
+        session.addnode(node1)
+        session.addnode(node2)
+        session.senditems_each([item])
+        assert session.node2pending[node1] == [item]
+        assert session.node2pending[node2] == [item]
+        assert node1 in session.item2nodes[item]
+        assert node2 in session.item2nodes[item]
+        session.removeitem(item, node1)
+        assert session.item2nodes[item] == [node2]
+        session.removeitem(item, node2)
+        assert not session.node2pending[node1] 
+        assert not session.item2nodes
+
     def test_senditems_removeitems(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         node = MockNode()
