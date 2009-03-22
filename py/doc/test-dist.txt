@@ -27,7 +27,11 @@ To send tests to a python2.4 process, you may type::
 This will start a subprocess which is run with the "python2.4"
 Python interpreter, found in your system binary lookup path. 
 
-.. For convenience you may prepend ``3*`` to create three sub processes.  
+If you prefix the --tx option like this::
+
+    py.test --tx 3*popen//python=python2.4
+
+then three subprocesses would be created. 
 
 
 Sending tests to remote SSH accounts

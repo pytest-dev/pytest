@@ -255,15 +255,20 @@ class Config(object):
     def getxspecs(self):
         config = self 
         if config.option.numprocesses:
-            xspec = ['popen'] * config.option.numprocesses
+            xspeclist = ['popen'] * config.option.numprocesses
         else:
-            xspec = config.option.xspec
-            if not xspec:
-                xspec = config.getvalue("xspec")
-        if xspec is None:
+            xspeclist = []
+            for xspec in config.getvalue("tx"):
+                i = xspec.find("*")
+                try:
+                    num = int(xspec[:i])
+                except ValueError:
+                    xspeclist.append(xspec)
+                else:
+                    xspeclist.extend([xspec[i+1:]] * num)
+        if not xspeclist:
             raise config.Error("MISSING test execution (tx) nodes: please specify --tx")
-        #print "option value for xspecs", xspec
-        return [py.execnet.XSpec(x) for x in xspec]
+        return [py.execnet.XSpec(x) for x in xspeclist]
 
     def getrsyncdirs(self):
         config = self 

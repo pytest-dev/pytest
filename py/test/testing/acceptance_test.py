@@ -287,7 +287,7 @@ class TestPyTest:
             """, 
         )
         testdir.makeconftest("""
-            pytest_option_xspec = 'popen popen popen'.split()
+            pytest_option_tx = 'popen popen popen'.split()
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([
@@ -319,7 +319,7 @@ class TestPyTest:
                     os.kill(os.getpid(), 15)
             """
         )
-        result = testdir.runpytest(p1, '-d', '-n 3')
+        result = testdir.runpytest(p1, '-d', '--tx=3*popen')
         result.stdout.fnmatch_lines([
             "*popen*Python*",
             "*popen*Python*",

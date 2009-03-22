@@ -26,7 +26,7 @@ class TestAsyncFunctional:
                 print "test_1: conftest.option.someopt", conftest.option.someopt
                 assert conftest.option.someopt 
         """))
-        result = testdir.runpytest('-n1', p1, '--someopt')
+        result = testdir.runpytest('-d', '--tx=popen', p1, '--someopt')
         assert result.ret == 0
         extra = result.stdout.fnmatch_lines([
             "*1 passed*", 

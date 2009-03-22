@@ -103,7 +103,7 @@ class DefaultPlugin:
                    help="number of local test processes. conflicts with --dist.")
         group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
                    help="add local directory for rsync to remote test nodes.")
-        group._addoption('--tx', dest="xspec", action="append", 
+        group._addoption('--tx', dest="tx", action="append", default=[],
                    help=("add a test environment, specified in XSpec syntax. examples: "
                          "--tx popen//python=python2.5 --tx socket=192.168.1.102"))
         #group._addoption('--rest',
