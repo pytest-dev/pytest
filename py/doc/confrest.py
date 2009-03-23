@@ -37,8 +37,8 @@ class Page(object):
     def fill_menubar(self):
         items = [
             self.a_docref("index", "index.html"),
-            self.a_apigenref("api", "api/index.html"),
-            self.a_apigenref("source", "source/index.html"),
+            #self.a_apigenref("api", "api/index.html"),
+            #self.a_apigenref("source", "source/index.html"),
             self.a_docref("contact", "contact.html"),
             self.a_docref("download", "download.html"),
         ]
