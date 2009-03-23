@@ -447,7 +447,6 @@ class BasicRemoteExecution:
         assert rinfo.cwd 
         assert rinfo.version_info 
         s = repr(rinfo) 
-        assert s.find(rinfo.cwd) != -1
         old = self.gw.remote_exec("""
             import os.path
             cwd = os.getcwd()
