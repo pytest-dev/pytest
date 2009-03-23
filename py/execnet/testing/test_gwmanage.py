@@ -77,7 +77,7 @@ class TestGatewayManagerPopen:
         import os
         hm = GatewayManager(["popen//chdir=hello"] * 2)
         testdir.tmpdir.chdir()
-        hellopath = testdir.tmpdir.mkdir("hello")
+        hellopath = testdir.tmpdir.mkdir("hello").realpath()
         hm.makegateways()
         l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         paths = [x[1] for x in l]
@@ -101,13 +101,13 @@ class TestGatewayManagerPopen:
         hm.multi_chdir("hello", inplacelocal=False)
         l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
-        assert l == [os.getcwd()] * 2
+        curwd = os.path.realpath(os.getcwd())
+        assert l == [curwd] * 2
 
         hm.multi_chdir("hello")
         l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
         assert l[0] == l[1]
-        curwd = os.getcwd()
         assert l[0].startswith(curwd)
         assert l[0].endswith("hello")
 

@@ -104,13 +104,13 @@ class TestMakegateway:
     def test_popen_chdir_absolute(self, testdir):
         gw = py.execnet.makegateway("popen//chdir=%s" % testdir.tmpdir)
         rinfo = gw._rinfo()
-        assert rinfo.cwd == str(testdir.tmpdir)
+        assert rinfo.cwd == str(testdir.tmpdir.realpath())
 
     def test_popen_chdir_newsub(self, testdir):
         testdir.chdir()
         gw = py.execnet.makegateway("popen//chdir=hello")
         rinfo = gw._rinfo()
-        assert rinfo.cwd == str(testdir.tmpdir.join("hello"))
+        assert rinfo.cwd == str(testdir.tmpdir.join("hello").realpath())
 
     def test_ssh(self, specssh):
         sshhost = specssh.ssh

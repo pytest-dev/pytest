@@ -230,7 +230,8 @@ class DSession(Session):
         if item not in self.item2nodes:
             raise AssertionError(item, self.item2nodes)
         nodes = self.item2nodes[item]
-        nodes.remove(node)
+        if node in nodes: # the node might have gone down already
+            nodes.remove(node)
         if not nodes:
             del self.item2nodes[item]
         self.node2pending[node].remove(item)
