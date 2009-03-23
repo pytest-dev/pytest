@@ -204,7 +204,6 @@ py/misc/buildcmodule.py
 py/misc/cache.py
 py/misc/cmdline/__init__.py
 py/misc/cmdline/countloc.py
-py/misc/conftest-socketgatewayrun.py
 py/misc/difftime.py
 py/misc/dynpkg.py
 py/misc/error.py
