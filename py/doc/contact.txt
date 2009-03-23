@@ -1,20 +1,18 @@
 py lib contact and communication 
 ===================================
 
-- You may also subscribe to `tetamap`_, where Holger Krekel
-  often posts about testing and py.test related news. 
+- **#pylib on irc.freenode.net**: you are welcome to lurk or ask questions! 
 
-- **#pylib on irc.freenode.net**: you are welcome
-  to lurk or ask questions in this IRC channel, it also tracks py lib commits. 
+- `py-dev developers list`_ development mailing list.  
 
-- `py-dev developers list`_ development mailing list.  Good for reporting bugs, feature questions, discussing issues.  Usually sees between 1 and 10 posts per week. 
+- `tetamap`_: Holger Krekel's blog, often about testing and py.test related news. 
 
 - `py-svn general commit mailing list`_ to follow all development commits. 
 
 - `development bug/feature tracker`_ this roundup instance serves to file bugs and track issues.  
+  (soon to be substitued by a google-code or other hosted one). 
 
-- `merlinux.eu`_ offers tutorials and commercial support for
-  py.test and the py lib in general. 
+- `merlinux.eu`_ offers teaching and consulting services. 
 
 .. _`merlinux.eu`: http://merlinux.eu
 
@@ -25,14 +23,15 @@ py lib contact and communication
 .. _tetamap: http://tetamap.wordpress.com
 
 
-get an account on codespeak  
---------------------------- 
+.. 
+    get an account on codespeak  
+    --------------------------- 
 
-codespeak_ is where the subversion repository is hosted.  If you know 
-someone who is active on codespeak already or you are otherwise known in 
-the community (see also: FOAF_) you will get access.  But even if 
-you are new to the python developer community please come to the IRC 
-or the mailing list and ask questions, get involved. 
+    codespeak_ is where the subversion repository is hosted.  If you know 
+    someone who is active on codespeak already or you are otherwise known in 
+    the community (see also: FOAF_) you will get access.  But even if 
+    you are new to the python developer community please come to the IRC 
+    or the mailing list and ask questions, get involved. 
 
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
 .. _`coding style`: coding-style.html 
