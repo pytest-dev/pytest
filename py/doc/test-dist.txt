@@ -7,6 +7,11 @@ synchronizes your program source code to the remote place.  All test results
 are reported back and displayed to your local test session.  You may 
 specify different Python versions and interpreters.
 
+Synchronisation and running of tests only requires
+a bare Python installation on the remote side.   No
+special software is installed - this is realized 
+by use of the **zero installation** `py.execnet`_ mechanisms.
+
 Speed up test runs by sending tests to multiple CPUs
 ----------------------------------------------------------
 
@@ -17,25 +22,27 @@ To send tests to multiple CPUs, type::
 Especially for longer running tests or tests requiring 
 a lot of IO this can lead to considerable speed ups. 
 
-Test on a different python version
-----------------------------------------------------------
 
-To send tests to a python2.4 interpreter process, you may type::
+Running tests in a Python subprocess 
+----------------------------------------
 
-    py.test --tx popen//python=python2.4
+To instantiate a python2.4 sub process and send tests to itinterpreter process, you may type::
+
+    py.test -d --tx popen//python=python2.4
 
 This will start a subprocess which is run with the "python2.4"
 Python interpreter, found in your system binary lookup path. 
 
-If you prefix the --tx option like this::
+If you prefix the --tx option value like this::
 
-    py.test --tx 3*popen//python=python2.4
+    --tx 3*popen//python=python2.4
 
-then three subprocesses would be created. 
+then three subprocesses would be created and tests
+will be load-balanced across these three processes. 
 
 
 Sending tests to remote SSH accounts
-------------------------------------
+-----------------------------------------------
 
 Suppose you have a package ``mypkg`` which contains some 
 tests that you can successfully run locally. And you
@@ -51,40 +58,39 @@ and send them to remote places for execution.
 You can specify multiple ``--rsyncdir`` directories 
 to be sent to the remote side. 
 
+
 Sending tests to remote Socket Servers
 ----------------------------------------
 
 Download the single-module `socketserver.py`_ Python program 
-and run it on the specified hosts like this::
+and run it like this::
 
     python socketserver.py
 
-It will tell you that it starts listening.  You can now
-on your home machine specify this new socket host
-with something like this::
+It will tell you that it starts listening on the default
+port.  You can now on your home machine specify this 
+new socket host with something like this::
 
     py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
 
 
-no remote installation requirements 
-++++++++++++++++++++++++++++++++++++++++++++
+Running tests on many platforms at once 
+-------------------------------------------------------------
 
-Synchronisation and running of tests only requires
-a bare Python installation on the remote side.   No
-special software is installed - this is realized through the
-*zero installation* principle that the underlying 
-`py.execnet`_ mechanisms implements. 
+The basic command to run tests on multiple platforms is::
 
+    py.test --dist=each --tx=spec1 --tx=spec2 
+
+If you specify a windows host, an OSX host and a Linux
+environment this command will send each tests to all 
+platforms - and report back failures from all platforms
+at once.   The provided specifications strings 
+use the `xspec syntax`_. 
+
+.. _`xspec syntax`: execnet.html#xspec
 
 .. _`socketserver.py`: ../execnet/script/socketserver.py
 .. _`py.execnet`: execnet.html
-
-Differences from local tests
-----------------------------
-
-* Test order is rather random (instead of in file order). 
-* the test process may hang due to network problems 
-* you may not reference files outside of rsynced directory structures
 
 Specifying test exec environments in a conftest.py
 -------------------------------------------------------------
@@ -109,4 +115,5 @@ or to exclude::
 
 These directory specifications are relative to the directory
 where the ``conftest.py`` is found.
+
 

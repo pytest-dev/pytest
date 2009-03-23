@@ -1,7 +1,4 @@
 
-Basic Features of ``py.test`` 
-=============================
-
 automatic collection of tests on all levels
 -------------------------------------------
 
