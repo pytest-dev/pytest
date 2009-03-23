@@ -74,6 +74,8 @@ new socket host with something like this::
     py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
 
 
+.. _`atonce`:
+
 Running tests on many platforms at once 
 -------------------------------------------------------------
 
