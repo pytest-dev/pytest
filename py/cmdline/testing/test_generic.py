@@ -24,6 +24,9 @@ def checkprocess(script):
             cmd = script.basename
         else:
             cmd = "%s" %(script, )
+            # XXX distributed testing's rsync does not support
+            # syncing executable bits 
+            script.chmod(0777)
 
         if script.basename.startswith("py.lookup") or \
            script.basename.startswith("py.which"):
