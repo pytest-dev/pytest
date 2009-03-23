@@ -91,7 +91,7 @@ use the `xspec syntax`_.
 
 .. _`xspec syntax`: execnet.html#xspec
 
-.. _`socketserver.py`: ../execnet/script/socketserver.py
+.. _`socketserver.py`: http://codespeak.net/svn/py/dist/py/execnet/script/socketserver.py
 .. _`py.execnet`: execnet.html
 
 Specifying test exec environments in a conftest.py
