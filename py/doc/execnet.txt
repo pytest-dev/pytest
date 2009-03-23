@@ -173,7 +173,7 @@ Use MultiChannels for receiving multiple results from remote code::
     >>> assert 1 in l 
     >>> assert 2 in l 
    
-assynchronously receive results from two sub processes 
+asynchronously receive results from two sub processes 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Use ``MultiChannel.make_receive_queue()`` for asynchronously receiving 
