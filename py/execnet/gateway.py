@@ -247,6 +247,10 @@ class Gateway(object):
             class RInfo:
                 def __init__(self, **kwargs):
                     self.__dict__.update(kwargs)
+                def __repr__(self):
+                    info = ", ".join(["%s=%s" % item 
+                            for item in self.__dict__.items()])
+                    return "<RInfo %r>" % info
             self._cache_rinfo = RInfo(**self.remote_exec("""
                 import sys, os
                 channel.send(dict(
