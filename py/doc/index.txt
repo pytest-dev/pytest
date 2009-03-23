@@ -1,34 +1,21 @@
-py lib documentation 
-=================================================
+py lib: Main tools and APIs
+-----------------------------------
 
-    The py lib is a development support library featuring
-    py.test, ad-hoc distributed execution, micro-threads
-    (greenlets) and uniform local path and svn abstractions.  
-    It works on Linux, Windows and OSX, Python versions 
-    2.3, 2.4, 2.5 and 2.6. 
+`py.test`_ write and deploy unit- and functional tests to multiple machines. 
 
-`Download and Installation`_ 
+`py.execnet`_ rapidly deploy local or remote processes from your program. 
 
-`0.9.2 release announcement`_ 
+`py.magic.greenlet`_: instantiate thousands of micro-threads from your program. 
 
-Main tools and API 
-----------------------
+`py.path`_: use path objects to transparently access local and svn filesystems.
 
-`py.test`_ introduces to the **py.test** testing utility.
-
-`py.execnet`_ distributes programs across the net. 
-
-`py.magic.greenlet`_: micro-threads (lightweight in-process concurrent programming)
-
-`py.path`_: local and subversion Path and Filesystem access
-
-`py.code`_: High-level access/manipulation of Python code and traceback objects. 
-
-`py lib scripts`_ describe the scripts contained in the ``py/bin`` directory. 
+`py.code`_: generate python code and use advanced introspection/traceback support. 
 
 
-support functionality 
+minor support functionality 
 ---------------------------------
+
+`py lib scripts`_ to make python development easier. 
 
 `py.xml`_ for generating in-memory xml/html object trees 
 
@@ -38,12 +25,6 @@ support functionality
 
 `miscellaneous features`_ describes some small but nice py lib features.
 
-Background and Motivation information 
--------------------------------------------
-
-`future`_ handles development visions and plans for the near future. 
-
-`why what how py?`_, describing motivation and background of the py lib. 
   
 .. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
