@@ -69,7 +69,7 @@ Channels: bidirectionally exchange data between hosts
 A channel object allows to send and receive data between 
 two asynchronously running programs.  When calling
 `remote_exec` you will get a channel object back and 
-the code fragement running on the other side will 
+the code fragment running on the other side will 
 see a channel object in its global namespace. 
 
 Here is the interface of channel objects::
@@ -111,7 +111,7 @@ XSpec: string specification for gateway type and configuration
 
 ``py.execnet`` supports a simple extensible format for 
 specifying and configuring Gateways for remote execution.  
-You can use a string speficiation to make a new gateway, 
+You can use a string spefication to make a new gateway, 
 for example a new SshGateway::
 
     gateway = py.execnet.makegateway("ssh=myhost")
@@ -144,7 +144,7 @@ the following key/values are supported:
 * ``nice=value`` decrease remote nice level if platforms supports it 
   
 
-Examples fo py.execnet usage 
+Examples of py.execnet usage 
 -------------------------------------
 
 compare cwd() of Popen Gateways
