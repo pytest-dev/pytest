@@ -111,7 +111,7 @@ XSpec: string specification for gateway type and configuration
 
 ``py.execnet`` supports a simple extensible format for 
 specifying and configuring Gateways for remote execution.  
-You can use a string spefication to make a new gateway, 
+You can use a string specification to instantiate a new gateway, 
 for example a new SshGateway::
 
     gateway = py.execnet.makegateway("ssh=myhost")
