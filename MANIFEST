@@ -104,7 +104,6 @@ py/compat/testing/test_textwrap.py
 py/compat/textwrap.py
 py/conftest.py
 py/doc/__init__.py
-py/doc/apigen_refactorings.txt
 py/doc/bin.txt
 py/doc/code.txt
 py/doc/coding-style.txt
