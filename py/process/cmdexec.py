@@ -32,7 +32,7 @@ def posix_exec_cmd(cmd):
     import errno
 
     #print "execing", cmd
-    child = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+    child = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE,
                                                                 close_fds=True)
     stdin, stdout, stderr = child.stdin, child.stdout, child.stderr
 
