@@ -29,7 +29,7 @@ class MultiCall:
     NONEASRESULT = object()
 
     def __init__(self, methods, *args, **kwargs):
-        self.methods = methods
+        self.methods = methods[:]
         self.args = args 
         self.kwargs = kwargs 
         self.results = []
@@ -69,6 +69,7 @@ class MultiCall:
     def exclude_other_results(self):
         self._ex1 = True
 
+
 class PyPlugins:
     """
         Manage Plugins: Load plugins and manage calls to plugins. 
@@ -79,7 +80,6 @@ class PyPlugins:
         if plugins is None:
             plugins = []
         self._plugins = plugins
-        self._callbacks = []
 
     def import_module(self, modspec):
         # XXX allow modspec to specify version / lookup 

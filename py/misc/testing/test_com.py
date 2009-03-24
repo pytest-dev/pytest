@@ -6,6 +6,13 @@ from py._com import PyPlugins, MultiCall
 pytest_plugins = "xfail"
 
 class TestMultiCall:
+    def test_uses_copy_of_methods(self):
+        l = [lambda: 42]
+        mc = MultiCall(l)
+        l[:] = []
+        res = mc.execute()
+        return res == 42
+
     def test_call_passing(self):
         class P1:
             def m(self, __call__, x):

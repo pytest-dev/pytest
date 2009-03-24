@@ -375,14 +375,23 @@ class Function(FunctionMixin, py.test.collect.Item):
         return kwargs
 
     def lookup_onearg(self, argname):
-        value = self.config.pytestplugins.call_firstresult(
-            "pytest_pyfuncarg_" + argname, pyfuncitem=self)
+        try:
+            makerlist = self.config._getmakerlist(argname)
+        except KeyError:
+            makerlist = []
+        l = self.config.pytestplugins.listattr("pytest_pyfuncarg_" + argname)
+        makerlist.extend(l)
+        mc = py._com.MultiCall(makerlist, self)
+        #print "mc.methods", mc.methods
+        value = mc.execute(firstresult=True)
         if value is not None:
             return value
         else:
             metainfo = self.repr_metainfo()
             #self.config.bus.notify("pyfuncarg_lookuperror", argname)
-            raise LookupError("funcargument %r not found for: %s" %(argname,metainfo.verboseline()))
+            msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
+            msg += "\n list of makers: %r" %(l,)
+            raise LookupError(msg)
 
     def __eq__(self, other):
         try:

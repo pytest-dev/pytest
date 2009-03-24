@@ -41,6 +41,7 @@ class Config(object):
         self.pytestplugins = pytestplugins
         self._conftest = Conftest(onimport=self._onimportconftest)
         self._setupstate = SetupState() 
+        self._funcarg2maker = {}
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
@@ -285,7 +286,23 @@ class Config(object):
             roots.append(pydir)
         return roots 
 
-    
+    def register_funcargmaker(self, argname, maker):
+        """ register a setup method for the given argument name. """
+        self._funcarg2maker.setdefault(argname, []).append(maker)
+
+    def _makefuncarg(self, argname, pyfuncitem):
+        makerlist = self._getmakerlist(argname)
+        mcall = py._com.MultiCall(makerlist, pyfuncitem)
+        return mcall.execute(firstresult=True)
+
+    def _getmakerlist(self, argname):
+        makerlist = self._funcarg2maker.get(argname, None)
+        if makerlist is None:
+            msg = "funcarg %r not registered, available are: %s" % (
+                  argname, ", ".join(self._funcarg2maker.keys()))
+            raise KeyError(msg)
+        assert makerlist
+        return makerlist[:]
 #
 # helpers
 #
