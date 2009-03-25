@@ -23,12 +23,12 @@ http://pylib.org/contact.html
 """
 from initpkg import initpkg
 
-version = "1.0.0a6"
+version = "1.0.0a7"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63241 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-03-23 17:03:10 +0100 (Mon, 23 Mar 2009) $',
+    revision = int('$LastChangedRevision: 63319 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-03-25 12:50:57 +0100 (Wed, 25 Mar 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,

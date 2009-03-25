@@ -108,16 +108,6 @@ class PytestPluginHooks:
         """ called before test process is exited. 
         """
 
-    def pytest_event(self, event):
-        """ called for each internal py.test event.  """
-
-    #def pytest_pyfuncarg_NAME(self, pyfuncitem, argname):
-    #    """ provide (value, finalizer) for an open test function argument. 
-    #
-    #            the finalizer (if not None) will be called after the test 
-    #            function has been executed (i.e. pyfuncitem.execute() returns). 
-    #    """ 
-
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
 
@@ -139,24 +129,19 @@ class PytestPluginHooks:
     def pytest_pymodule_makeitem(self, modcol, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
 
-
-    # from pytest_terminal plugin
-    def pytest_report_teststatus(self, event):
-        """ return shortletter and verbose word. """
-
-    # from pytest_terminal plugin
+    # reporting hooks (invoked from pytest_terminal.py) 
     def pytest_report_teststatus(self, event):
         """ return shortletter and verbose word. """
 
     def pytest_terminal_summary(self, terminalreporter):
         """ add additional section in terminal summary reporting. """
 
-    # events
+    # Events 
     def pyevent(self, eventname, *args, **kwargs):
         """ called for each testing event. """
 
     def pyevent_gateway_init(self, gateway):
-        """ called a gateway has been initialized. """
+        """ called after a gateway has been initialized. """
 
     def pyevent_gateway_exit(self, gateway):
         """ called when gateway is being exited. """
@@ -199,7 +184,6 @@ class PytestPluginHooks:
             The gateway will have an 'id' attribute that is unique 
             within the gateway manager context. 
         """
-
     def pyevent_testnodeready(self, node):
         """ Node is ready to operate. """
 

@@ -268,10 +268,15 @@ class TestGeneralUsage:
         """)
         result = testdir.runpytest(p1, '-v')
         result.stdout.fnmatch_lines([
+            "*test_verbose_reporting.py:2: test_fail*FAIL*", 
+            "*test_verbose_reporting.py:4: test_pass*PASS*",
+            "*test_verbose_reporting.py:7: TestClass.test_skip*SKIP*",
+            "*test_verbose_reporting.py:10: test_gen*FAIL*",
+        ])
+        assert result.ret == 1
+        result = testdir.runpytest(p1, '-v', '-n 1')
+        result.stdout.fnmatch_lines([
             "*FAIL*test_verbose_reporting.py:2: test_fail*", 
-            "*PASS*test_verbose_reporting.py:4: test_pass*",
-            "*SKIP*test_verbose_reporting.py:7: TestClass.test_skip*",
-            "*FAIL*test_verbose_reporting.py:10: test_gen*",
         ])
         assert result.ret == 1
 

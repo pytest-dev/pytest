@@ -143,11 +143,15 @@ class TerminalReporter:
             if node:
                 extra = "-> " + str(node.gateway.id)
             self.write_ensure_prefix(line, extra)
-        #else:
-        #    # ensure that the path is printed before the 1st test of
-        #    # a module starts running
-        #    fspath = item.fspath 
-        #    self.write_fspath_result(fspath, "")
+        # in dist situations itemstart (currently only means we 
+        # queued the item for testing, doesn't tell much
+        elif self.config.option.verbose and self.config.option.dist == "no":
+            # ensure that the path is printed before the 1st test of
+            # a module starts running
+            info = item.repr_metainfo()
+            line = info.verboseline(basedir=self.curdir) + " "
+            #self.write_fspath_result(fspath, "")
+            self.write_ensure_prefix(line, "") 
 
     def pyevent_rescheduleitems(self, event):
         if self.config.option.debug:
@@ -169,13 +173,15 @@ class TerminalReporter:
         else:
             info = event.colitem.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
-            #self.write_ensure_prefix(line, word, **markup)
-            self.ensure_newline()
-            if hasattr(event, 'node'):
-                self._tw.write("%s " % event.node.gateway.id)
-            self._tw.write(word, **markup)
-            self._tw.write(" " + line)
-            self.currentfspath = -2
+            if not hasattr(event, 'node'):
+                self.write_ensure_prefix(line, word, **markup)
+            else:
+                self.ensure_newline()
+                if hasattr(event, 'node'):
+                    self._tw.write("%s " % event.node.gateway.id)
+                self._tw.write(word, **markup)
+                self._tw.write(" " + line)
+                self.currentfspath = -2
 
     def pyevent_collectionreport(self, event):
         if not event.passed:
@@ -400,9 +406,9 @@ class TestTerminal:
             rep.config.bus.notify("itemtestreport", basic_run_report(item))
 
         linecomp.assert_contains_lines([
-            "*PASS*test_pass_skip_fail_verbose.py:2: *test_ok*",
-            "*SKIP*test_pass_skip_fail_verbose.py:4: *test_skip*",
-            "*FAIL*test_pass_skip_fail_verbose.py:6: *test_func*",
+            "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
+            "*test_pass_skip_fail_verbose.py:4: *test_skip*SKIP*",
+            "*test_pass_skip_fail_verbose.py:6: *test_func*FAIL*",
         ])
         rep.config.bus.notify("testrunfinish", event.TestrunFinish())
         linecomp.assert_contains_lines([
