@@ -26,7 +26,7 @@ a lot of IO this can lead to considerable speed ups.
 Running tests in a Python subprocess 
 ----------------------------------------
 
-To instantiate a python2.4 sub process and send tests to itinterpreter process, you may type::
+To instantiate a python2.4 sub process and send tests to it, you may type::
 
     py.test -d --tx popen//python=python2.4
 
