@@ -38,7 +38,7 @@ class TestParser:
 
     def test_parser_addoption(self):
         parser = parseopt.Parser()
-        group = parser.getgroup("misc")
+        group = parser.getgroup("custom options")
         assert len(group.options) == 0
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1

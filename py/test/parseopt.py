@@ -20,7 +20,7 @@ class Parser:
     """ Parser for command line arguments. """ 
 
     def __init__(self, usage=None, processopt=None):
-        self._anonymous = OptionGroup("misc", parser=self)
+        self._anonymous = OptionGroup("custom options", parser=self)
         self._groups = [self._anonymous]
         self._processopt = processopt
         self._usage = usage 
@@ -50,7 +50,9 @@ class Parser:
 
     def parse(self, args):
         optparser = optparse.OptionParser(usage=self._usage)
-        for group in self._groups:
+        # make sure anaonymous group is at the end 
+        groups = self._groups[1:] + [self._groups[0]]
+        for group in groups:
             if group.options:
                 desc = group.description or group.name 
                 optgroup = optparse.OptionGroup(optparser, desc)
