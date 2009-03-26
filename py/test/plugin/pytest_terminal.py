@@ -124,7 +124,7 @@ class TerminalReporter:
             self.write_line(msg)
 
     def pyevent_testnodeready(self, node):
-        self.write_line("%s node ready to receive tests" %(node.gateway.id,))
+        self.write_line("%s txnode ready to receive tests" %(node.gateway.id,))
 
     def pyevent_testnodedown(self, node, error):
         if error:
