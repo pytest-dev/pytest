@@ -249,10 +249,10 @@ class TestFunction:
         assert f1 == f1_b
         assert not f1 != f1_b
 
-    def test_pyfuncarg_lookupfails(self, testdir):
+    def test_funcarg_lookupfails(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_pyfuncarg_something(self, pyfuncitem):
+                def pytest_funcarg_something(self, pyfuncitem):
                     return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
@@ -260,19 +260,19 @@ class TestFunction:
         s = str(exc.value)
         assert s.find("something") != -1
 
-    def test_pyfuncarg_lookup_default(self, testdir):
+    def test_funcarg_lookup_default(self, testdir):
         item = testdir.getitem("def test_func(some, other=42): pass")
         class Provider:
-            def pytest_pyfuncarg_some(self, pyfuncitem):
+            def pytest_funcarg_some(self, pyfuncitem):
                 return pyfuncitem.name 
         item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
         assert len(kw) == 1
 
-    def test_pyfuncarg_lookup_default_gets_overriden(self, testdir):
+    def test_funcarg_lookup_default_gets_overriden(self, testdir):
         item = testdir.getitem("def test_func(some=42, other=13): pass")
         class Provider:
-            def pytest_pyfuncarg_other(self, pyfuncitem):
+            def pytest_funcarg_other(self, pyfuncitem):
                 return pyfuncitem.name 
         item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
@@ -281,12 +281,12 @@ class TestFunction:
         assert name == "other"
         assert value == item.name 
 
-    def test_pyfuncarg_basic(self, testdir):
+    def test_funcarg_basic(self, testdir):
         item = testdir.getitem("def test_func(some, other): pass")
         class Provider:
-            def pytest_pyfuncarg_some(self, pyfuncitem):
+            def pytest_funcarg_some(self, pyfuncitem):
                 return pyfuncitem.name 
-            def pytest_pyfuncarg_other(self, pyfuncitem):
+            def pytest_funcarg_other(self, pyfuncitem):
                 return 42
         item.config.pytestplugins.register(Provider())
         kw = item.lookup_allargs()
@@ -294,11 +294,11 @@ class TestFunction:
         assert kw['some'] == "test_func"
         assert kw['other'] == 42
 
-    def test_pyfuncarg_addfinalizer(self, testdir):
+    def test_funcarg_addfinalizer(self, testdir):
         item = testdir.getitem("def test_func(some): pass")
         l = []
         class Provider:
-            def pytest_pyfuncarg_some(self, pyfuncitem):
+            def pytest_funcarg_some(self, pyfuncitem):
                 pyfuncitem.addfinalizer(lambda: l.append(42))
                 return 3
         item.config.pytestplugins.register(Provider())
@@ -310,9 +310,9 @@ class TestFunction:
         assert len(l) == 1
         assert l[0] == 42
 
-    def test_pyfuncarg_lookup_modulelevel(self, testdir):
+    def test_funcarg_lookup_modulelevel(self, testdir):
         modcol = testdir.getmodulecol("""
-            def pytest_pyfuncarg_something(pyfuncitem):
+            def pytest_funcarg_something(pyfuncitem):
                 return pyfuncitem.name
 
             class TestClass:

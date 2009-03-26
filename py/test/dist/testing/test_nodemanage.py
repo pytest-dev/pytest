@@ -7,9 +7,9 @@ from py.__.test.dist.nodemanage import NodeManager
 
 from py.__.test import event
 
-def pytest_pyfuncarg_source(pyfuncitem):
+def pytest_funcarg_source(pyfuncitem):
     return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("source")
-def pytest_pyfuncarg_dest(pyfuncitem):
+def pytest_funcarg_dest(pyfuncitem):
     dest = py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("dest")
     return dest 
 

@@ -111,9 +111,9 @@ class TestGatewayManagerPopen:
         assert l[0].startswith(curwd)
         assert l[0].endswith("hello")
 
-def pytest_pyfuncarg_source(pyfuncitem):
+def pytest_funcarg_source(pyfuncitem):
     return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("source")
-def pytest_pyfuncarg_dest(pyfuncitem):
+def pytest_funcarg_dest(pyfuncitem):
     return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("dest")
 
 class TestHRSync:

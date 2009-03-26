@@ -375,7 +375,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         return kwargs
 
     def lookup_onearg(self, argname):
-        prefix = "pytest_pyfuncarg_"
+        prefix = "pytest_funcarg_"
         try:
             makerlist = self.config._getmakerlist(argname)
         except KeyError:
@@ -390,7 +390,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         else:
             self._raisefuncargerror(argname, prefix)
 
-    def _raisefuncargerror(self, argname, prefix="pytest_pyfuncarg_"):
+    def _raisefuncargerror(self, argname, prefix="pytest_funcarg_"):
         metainfo = self.repr_metainfo()
         available = []
         plugins = self.config.pytestplugins._plugins.values()

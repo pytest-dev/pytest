@@ -328,7 +328,7 @@ class TestApigenLinkRole:
                        "resolve_linkrole('source', 'py/foo/bar.py')")
 
 
-def pytest_pyfuncarg_testdir(__call__, pyfuncitem):
+def pytest_funcarg_testdir(__call__, pyfuncitem):
     testdir = __call__.execute(firstresult=True)
     testdir.makepyfile(confrest="from py.__.misc.rest import Project")
     testdir.plugins.append(RestdocPlugin())

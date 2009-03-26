@@ -54,12 +54,12 @@ class MySetup:
             print "exiting:", gw
             gw.exit()
 
-def pytest_pyfuncarg_mysetup(pyfuncitem):
+def pytest_funcarg_mysetup(pyfuncitem):
     mysetup = MySetup(pyfuncitem)
     pyfuncitem.addfinalizer(mysetup.finalize)
     return mysetup
 
-def pytest_pyfuncarg_testdir(__call__, pyfuncitem):
+def pytest_funcarg_testdir(__call__, pyfuncitem):
     # decorate to make us always change to testdir
     testdir = __call__.execute(firstresult=True)
     testdir.chdir()

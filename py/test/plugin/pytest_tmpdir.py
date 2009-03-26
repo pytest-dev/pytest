@@ -13,7 +13,7 @@ class TmpdirPlugin:
     """ provide temporary directories to test functions and methods. 
     """ 
 
-    def pytest_pyfuncarg_tmpdir(self, pyfuncitem):
+    def pytest_funcarg_tmpdir(self, pyfuncitem):
         name = pyfuncitem.name
         return pyfuncitem.config.mktemp(name, numbered=True)
 
@@ -26,10 +26,10 @@ class TmpdirPlugin:
 def test_generic(plugintester):
     plugintester.apicheck(TmpdirPlugin)
 
-def test_pyfuncarg(testdir):
+def test_funcarg(testdir):
     item = testdir.getitem("def test_func(tmpdir): pass")
     plugin = TmpdirPlugin()
-    p = plugin.pytest_pyfuncarg_tmpdir(item)
+    p = plugin.pytest_funcarg_tmpdir(item)
     assert p.check()
     bn = p.basename.strip("0123456789-")
     assert bn.endswith("test_func")
