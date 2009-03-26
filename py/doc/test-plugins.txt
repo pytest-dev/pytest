@@ -1,28 +1,40 @@
 
 Many of py.test's features are implemented as a plugin. 
 
-Available plugins
+Default plugins
 -----------------------
 
-py.test has a number of default plugins.  You can see which 
-ones by specifying ``--trace=config``. 
+You can find the source code of all default plugins in 
+http://codespeak.net/svn/py/trunk/py/test/plugin/
 
-* adding reporting facilities, examples:
-  pytest_terminal: default reporter for writing info to terminals 
-  pytest_resultlog: log test results in machine-readable form to a file 
-  pytest_eventlog: log all internal pytest events to a file 
+plugins that add reporting asepcts
++++++++++++++++++++++++++++++++++++++++
 
-* marking and reporting test specially 
-  pytest_xfail: "expected to fail" test marker 
+pytest_terminal: default reporter for writing info to terminals 
 
-* funcargs for advanced 
-  pytest_tmpdir: provide temporary directories to test functions 
-  pytest_plugintester: generic apichecks, support for functional plugin tests 
-  pytest_pytester: support for testing py.test runs
+pytest_resultlog: log test results in machine-readable form to a file 
 
-* extending test execution, e.g. 
-  pytest_apigen: tracing values of function/method calls when running tests
+pytest_eventlog: log all internal pytest events to a file 
 
+plugins for adding new test types 
+++++++++++++++++++++++++++++++++++++++++++++++
+
+pytest_unittest: run traditional unittest TestCase instances
+
+pytest_doctest: run doctests in python modules or .txt files
+
+pytest_restdoc: provide RestructuredText syntax and link checking
+
+plugins for python test functions
+++++++++++++++++++++++++++++++++++++++++++++++
+
+pytest_xfail: provides "expected to fail" test marker 
+
+pytest_tmpdir: provide temporary directories to test functions 
+
+pytest_plugintester: generic plugin apichecks, support for functional plugin tests 
+
+pytest_apigen: tracing values of function/method calls when running tests
 
 Loading plugins and specifying dependencies 
 ---------------------------------------------------------
