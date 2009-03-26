@@ -5,12 +5,9 @@ py lib: Main tools and APIs
 
 `py.execnet`_ rapidly deploy local or remote processes from your program. 
 
-`py.magic.greenlet`_: instantiate thousands of micro-threads from your program. 
-
 `py.path`_: use path objects to transparently access local and svn filesystems.
 
 `py.code`_: generate python code and use advanced introspection/traceback support. 
-
 
 minor support functionality 
 ---------------------------------
@@ -29,7 +26,6 @@ minor support functionality
 .. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`py.execnet`: execnet.html 
-.. _`py.magic.greenlet`: greenlet.html 
 .. _`py.log`: log.html
 .. _`py.io`: io.html
 .. _`py.path`: path.html

@@ -6,7 +6,6 @@ interacting with filesystems.
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
-- `py.magic.greenlet`_: micro-threads on standard CPython ("stackless-light") and PyPy
 - `py.path`_: path abstractions over local and subversion files 
 - `py.code`_: dynamic code compile and traceback printing support
 
@@ -16,19 +15,18 @@ http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
 .. _`py.execnet`: http://pylib.org/execnet.html
-.. _`py.magic.greenlet`: http://pylib.org/greenlet.html
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
  
 """
 from initpkg import initpkg
 
-version = "1.0.0a7"
+version = "1.0.0a8"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63319 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-03-25 12:50:57 +0100 (Wed, 25 Mar 2009) $',
+    revision = int('$LastChangedRevision: 63340 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-03-26 10:33:50 +0100 (Thu, 26 Mar 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
