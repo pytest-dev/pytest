@@ -7,20 +7,21 @@ from py.__.test import event
 from py.__.test.config import Config as pytestConfig
 
 class PytesterPlugin:
-    def pytest_configure(self, config):
-        config.register_funcargmaker("linecomp", lambda x: LineComp())
-        config.register_funcargmaker("LineMatcher", lambda x: LineMatcher)
-        config.register_funcargmaker("EventRecorder", lambda x: EventRecorder)
+    def pytest_funcarg_linecomp(self, pyfuncitem):
+        return LineComp()
 
-        config.register_funcargmaker("testdir", self.maketestdir)
-        config.register_funcargmaker("eventrecorder", self.makeeventrecorder)
+    def pytest_funcarg_LineMatcher(self, pyfuncitem):
+        return LineMatcher
 
-    def maketestdir(self, pyfuncitem):
+    def pytest_funcarg_testdir(self, pyfuncitem):
         tmptestdir = TmpTestdir(pyfuncitem)
         pyfuncitem.addfinalizer(tmptestdir.finalize)
         return tmptestdir
  
-    def makeeventrecorder(self, pyfuncitem):
+    def pytest_funcarg_EventRecorder(self, pyfuncitem):
+        return EventRecorder
+
+    def pytest_funcarg_eventrecorder(self, pyfuncitem):
         evrec = EventRecorder(py._com.pyplugins)
         pyfuncitem.addfinalizer(lambda: evrec.pyplugins.unregister(evrec))
         return evrec

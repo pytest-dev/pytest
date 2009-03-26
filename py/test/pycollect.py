@@ -371,20 +371,13 @@ class Function(FunctionMixin, py.test.collect.Item):
                     else:
                         raise
         else:
-            pass # XXX lookup of arguments for yielded/generated tests as well 
+            pass # XXX lookup of arguments for yielded/generated tests as well ?
         return kwargs
 
     def lookup_onearg(self, argname):
         prefix = "pytest_funcarg_"
-        try:
-            makerlist = self.config._getmakerlist(argname)
-        except KeyError:
-            makerlist = []
-        l = self.config.pytestplugins.listattr(prefix + argname)
-        makerlist.extend(l)
-        mc = py._com.MultiCall(makerlist, self)
-        #print "mc.methods", mc.methods
-        value = mc.execute(firstresult=True)
+        #makerlist = self.config.pytestplugins.listattr(prefix + argname)
+        value = self.config.pytestplugins.call_firstresult(prefix + argname, pyfuncitem=self)
         if value is not None:
             return value
         else:

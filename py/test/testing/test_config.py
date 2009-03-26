@@ -1,33 +1,5 @@
 import py
 
-class TestFuncArgsSetup:
-    def test_register_funcarg_simple(self, testdir):
-        item = testdir.getitem("def test_func(hello): pass")
-        def maker(pyfuncitem):
-            assert item == pyfuncitem
-            return 42 
-        item.config.register_funcargmaker("hello", maker)
-        arg = item.config._makefuncarg("hello", item)
-        assert arg == 42
-
-    def test_register_funcarg_two(self, testdir):
-        item = testdir.getitem("def test_func(hello): pass")
-        def maker1(pyfuncitem):
-            assert item == pyfuncitem
-            return 1
-        def maker2(__call__, pyfuncitem):
-            assert item == pyfuncitem
-            res = __call__.execute(firstresult=True)
-            return res + 1
-        item.config.register_funcargmaker("two", maker1)
-        item.config.register_funcargmaker("two", maker2)
-        arg = item.config._makefuncarg("two", item)
-        assert arg == 2
-
-    def test_register_funcarg_error(self, testdir):
-        item = testdir.getitem("def test_func(hello): pass")
-        config = item.config
-        py.test.raises(KeyError, 'item.config._makefuncarg("notexist", item)')
 
 class TestConfigCmdlineParsing:
     def test_config_cmdline_options(self, testdir):
