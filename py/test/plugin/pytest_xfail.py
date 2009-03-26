@@ -1,6 +1,6 @@
 """
 for marking and reporting "expected to fail" tests. 
-    @py.test.mark(xfail="needs refactoring")
+    @py.test.mark.xfail("needs refactoring")
     def test_hello():
         ...
         assert 0

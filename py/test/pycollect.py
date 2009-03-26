@@ -375,11 +375,12 @@ class Function(FunctionMixin, py.test.collect.Item):
         return kwargs
 
     def lookup_onearg(self, argname):
+        prefix = "pytest_pyfuncarg_"
         try:
             makerlist = self.config._getmakerlist(argname)
         except KeyError:
             makerlist = []
-        l = self.config.pytestplugins.listattr("pytest_pyfuncarg_" + argname)
+        l = self.config.pytestplugins.listattr(prefix + argname)
         makerlist.extend(l)
         mc = py._com.MultiCall(makerlist, self)
         #print "mc.methods", mc.methods
@@ -387,11 +388,22 @@ class Function(FunctionMixin, py.test.collect.Item):
         if value is not None:
             return value
         else:
-            metainfo = self.repr_metainfo()
-            #self.config.bus.notify("pyfuncarg_lookuperror", argname)
-            msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
-            msg += "\n list of makers: %r" %(l,)
-            raise LookupError(msg)
+            self._raisefuncargerror(argname, prefix)
+
+    def _raisefuncargerror(self, argname, prefix="pytest_pyfuncarg_"):
+        metainfo = self.repr_metainfo()
+        available = []
+        plugins = self.config.pytestplugins._plugins.values()
+        plugins.extend(self.config.pytestplugins.pyplugins._plugins)
+        for plugin in plugins:
+            for name in vars(plugin.__class__):
+                if name.startswith(prefix):
+                    name = name[len(prefix):]
+                    if name not in available:
+                        available.append(name) 
+        msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        raise LookupError(msg)
 
     def __eq__(self, other):
         try:

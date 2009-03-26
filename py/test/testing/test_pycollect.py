@@ -250,8 +250,15 @@ class TestFunction:
         assert not f1 != f1_b
 
     def test_pyfuncarg_lookupfails(self, testdir):
+        testdir.makeconftest("""
+            class ConftestPlugin:
+                def pytest_pyfuncarg_something(self, pyfuncitem):
+                    return 42
+        """)
         item = testdir.getitem("def test_func(some): pass")
-        kw = py.test.raises(LookupError, "item.lookup_allargs()")
+        exc = py.test.raises(LookupError, "item.lookup_allargs()")
+        s = str(exc.value)
+        assert s.find("something") != -1
 
     def test_pyfuncarg_lookup_default(self, testdir):
         item = testdir.getitem("def test_func(some, other=42): pass")
