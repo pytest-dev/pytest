@@ -18,7 +18,6 @@ interacting with filesystems.
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
-- `py.magic.greenlet`_: micro-threads on standard CPython ("stackless-light") and PyPy
 - `py.path`_: path abstractions over local and subversion files 
 - `py.code`_: dynamic code compile and traceback printing support
 
@@ -28,7 +27,6 @@ http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
 .. _`py.execnet`: http://pylib.org/execnet.html
-.. _`py.magic.greenlet`: http://pylib.org/greenlet.html
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
 
@@ -40,9 +38,9 @@ def main():
         name='py',
         description='pylib and py.test: agile development and test support library',
         long_description = long_description, 
-        version='1.0.0a7', 
+        version='1.0.0a8', 
         url='http://pylib.org', 
-        download_url='http://codespeak.net/py/1.0.0a7/download.html', 
+        download_url='http://codespeak.net/py/1.0.0a8/download.html', 
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'], 
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
@@ -73,7 +71,6 @@ def main():
         packages=['py',
                   'py.builtin',
                   'py.builtin.testing',
-                  'py.c-extension',
                   'py.cmdline',
                   'py.cmdline.testing',
                   'py.code',
@@ -137,25 +134,6 @@ def main():
                              'bin/win32/py.svnwcrevert.cmd',
                              'bin/win32/py.test.cmd',
                              'bin/win32/py.which.cmd',
-                             'c-extension/greenlet/README.txt',
-                             'c-extension/greenlet/dummy_greenlet.py',
-                             'c-extension/greenlet/greenlet.c',
-                             'c-extension/greenlet/greenlet.h',
-                             'c-extension/greenlet/setup.py',
-                             'c-extension/greenlet/slp_platformselect.h',
-                             'c-extension/greenlet/switch_amd64_unix.h',
-                             'c-extension/greenlet/switch_mips_unix.h',
-                             'c-extension/greenlet/switch_ppc_macosx.h',
-                             'c-extension/greenlet/switch_ppc_unix.h',
-                             'c-extension/greenlet/switch_s390_unix.h',
-                             'c-extension/greenlet/switch_sparc_sun_gcc.h',
-                             'c-extension/greenlet/switch_x86_msvc.h',
-                             'c-extension/greenlet/switch_x86_unix.h',
-                             'c-extension/greenlet/test_generator.py',
-                             'c-extension/greenlet/test_generator_nested.py',
-                             'c-extension/greenlet/test_greenlet.py',
-                             'c-extension/greenlet/test_remote.py',
-                             'c-extension/greenlet/test_throw.py',
                              'compat/LICENSE',
                              'compat/testing/test_doctest.txt',
                              'compat/testing/test_doctest2.txt',
@@ -167,7 +145,6 @@ def main():
                              'doc/draft_pyfs',
                              'doc/execnet.txt',
                              'doc/future.txt',
-                             'doc/greenlet.txt',
                              'doc/impl-test.txt',
                              'doc/index.txt',
                              'doc/io.txt',
