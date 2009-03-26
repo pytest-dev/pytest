@@ -2,7 +2,7 @@ import os
 
 class MonkeypatchPlugin:
     """ setattr-monkeypatching with automatical reversal after test. """
-    def pytest_funcarg_monkeypatch(self, pyfuncitem):
+    def pytest_funcarg__monkeypatch(self, pyfuncitem):
         monkeypatch = MonkeyPatch()
         pyfuncitem.addfinalizer(monkeypatch.finalize)
         return monkeypatch

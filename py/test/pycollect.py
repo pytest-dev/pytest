@@ -375,7 +375,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         return kwargs
 
     def lookup_onearg(self, argname):
-        prefix = "pytest_funcarg_"
+        prefix = "pytest_funcarg__"
         #makerlist = self.config.pytestplugins.listattr(prefix + argname)
         value = self.config.pytestplugins.call_firstresult(prefix + argname, pyfuncitem=self)
         if value is not None:
@@ -383,7 +383,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         else:
             self._raisefuncargerror(argname, prefix)
 
-    def _raisefuncargerror(self, argname, prefix="pytest_funcarg_"):
+    def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
         metainfo = self.repr_metainfo()
         available = []
         plugins = self.config.pytestplugins._plugins.values()

@@ -5,7 +5,7 @@ import py
 
 class PlugintesterPlugin:
     """ test support code for testing pytest plugins. """
-    def pytest_funcarg_plugintester(self, pyfuncitem):
+    def pytest_funcarg__plugintester(self, pyfuncitem):
         pt = PluginTester(pyfuncitem) 
         pyfuncitem.addfinalizer(pt.finalize)
         return pt
@@ -46,7 +46,7 @@ class PluginTester(Support):
         getargs = py.std.inspect.getargs
 
         def isgenerichook(name):
-            return name.startswith("pytest_funcarg_")
+            return name.startswith("pytest_funcarg__")
 
         while methods:
             name, method = methods.popitem()

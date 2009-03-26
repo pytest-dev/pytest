@@ -1,6 +1,6 @@
 import py
 
-def pytest_funcarg_pickletransport(pyfuncitem):
+def pytest_funcarg__pickletransport(pyfuncitem):
     return ImmutablePickleTransport()
 
 def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):

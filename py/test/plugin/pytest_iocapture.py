@@ -2,12 +2,12 @@ import py
 
 class IocapturePlugin:
     """ capture sys.stdout/sys.stderr / fd1/fd2. """
-    def pytest_funcarg_stdcapture(self, pyfuncitem):
+    def pytest_funcarg__stdcapture(self, pyfuncitem):
         capture = Capture(py.io.StdCapture)
         pyfuncitem.addfinalizer(capture.finalize)
         return capture 
 
-    def pytest_funcarg_stdcapturefd(self, pyfuncitem):
+    def pytest_funcarg__stdcapturefd(self, pyfuncitem):
         capture = Capture(py.io.StdCaptureFD)
         pyfuncitem.addfinalizer(capture.finalize)
         return capture 
