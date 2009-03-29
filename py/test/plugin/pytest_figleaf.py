@@ -25,25 +25,35 @@ class FigleafPlugin:
 
     def pytest_terminal_summary(self, terminalreporter):
         if hasattr(self, 'figleaf'):
-            data_file = terminalreporter.config.getvalue('figleafdata')
-            data_file = py.path.local(data_file)
+            datafile = terminalreporter.config.getvalue('figleafdata')
+            datafile = py.path.local(datafile)
             tw = terminalreporter._tw
             tw.sep('-', 'figleaf')
-            tw.line('Writing figleaf data to %s' % (data_file))
+            tw.line('Writing figleaf data to %s' % (datafile))
             self.figleaf.stop()
-            self.figleaf.write_coverage(str(data_file))
-            data = self.figleaf.read_coverage(str(data_file))
-            d = {}
-            coverage = self.figleaf.combine_coverage(d, data)
-            # TODO exclude pylib
-            exclude = []
+            self.figleaf.write_coverage(str(datafile))
+            coverage = self.get_coverage(datafile, 
+                    terminalreporter.config.topdir)
 
             reportdir = terminalreporter.config.getvalue('figleafhtml')
             reportdir = py.path.local(reportdir)
             tw.line('Writing figleaf html to file://%s' % (reportdir))
             self.figleaf.annotate_html.prepare_reportdir(str(reportdir))
+            exclude = []
             self.figleaf.annotate_html.report_as_html(coverage, 
                     str(reportdir), exclude, {})
+
+    def get_coverage(self, datafile, topdir):
+        data = self.figleaf.read_coverage(str(datafile))
+        d = {}
+        coverage = self.figleaf.combine_coverage(d, data)
+        for path in coverage.keys():
+            if not py.path.local(path).relto(topdir):
+                del coverage[path]
+
+        return coverage
+
+
 
 def test_generic(plugintester):
     plugintester.apicheck(FigleafPlugin)
@@ -62,4 +72,3 @@ def test_functional(testdir):
         '*figleaf html*'
         ])
     print result.stdout.str()
-    assert 0
