@@ -45,4 +45,21 @@ class FigleafPlugin:
             self.figleaf.annotate_html.report_as_html(coverage, 
                     str(reportdir), exclude, {})
 
+def test_generic(plugintester):
+    plugintester.apicheck(FigleafPlugin)
 
+def test_functional(testdir):
+    testdir.plugins.append('figleaf')
+    testdir.makepyfile("""
+        def f():    
+            x = 42
+        def test_whatever():
+            pass
+        """)
+    result = testdir.runpytest('-F')
+    assert result.ret == 0
+    assert result.stdout.fnmatch_lines([
+        '*figleaf html*'
+        ])
+    print result.stdout.str()
+    assert 0
