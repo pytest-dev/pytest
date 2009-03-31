@@ -139,8 +139,6 @@ class TerminalReporter:
     def pyevent_itemstart(self, item, node=None):
         if self.config.option.debug:
             info = item.repr_metainfo()
-node
-n
             line = info.verboseline(basedir=self.curdir) + " "
             extra = ""
             if node:
