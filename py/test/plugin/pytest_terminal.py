@@ -29,6 +29,7 @@ class TerminalReporter:
         self.gateway2info = {}
 
     def write_fspath_result(self, fspath, res):
+        fspath = self.curdir.bestrelpath(fspath)
         if fspath != self.currentfspath:
             self._tw.line()
             relpath = self.curdir.bestrelpath(fspath)
@@ -138,6 +139,8 @@ class TerminalReporter:
     def pyevent_itemstart(self, item, node=None):
         if self.config.option.debug:
             info = item.repr_metainfo()
+node
+n
             line = info.verboseline(basedir=self.curdir) + " "
             extra = ""
             if node:

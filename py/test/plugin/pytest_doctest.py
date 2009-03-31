@@ -2,7 +2,8 @@ import py
 
 class DoctestPlugin:
     def pytest_addoption(self, parser):
-        parser.addoption("--doctest-modules", 
+        group = parser.addgroup("doctest options")
+        group.addoption("--doctest-modules", 
             action="store_true", default=False,
             dest="doctestmodules")
     

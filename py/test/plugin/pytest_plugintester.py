@@ -29,6 +29,7 @@ class PluginTester(Support):
         #     FSTester = self.pyfuncitem.config.pytestplugins.getpluginattr("pytester", "FSTester")
         from pytest_pytester import TmpTestdir
         crunner = TmpTestdir(self.pyfuncitem)
+        self.pyfuncitem.addfinalizer(crunner.finalize)
         # 
         for colitem in self.pyfuncitem.listchain():
             if isinstance(colitem, py.test.collect.Module) and \

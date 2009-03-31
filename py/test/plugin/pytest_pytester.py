@@ -15,7 +15,6 @@ class PytesterPlugin:
 
     def pytest_funcarg__testdir(self, pyfuncitem):
         tmptestdir = TmpTestdir(pyfuncitem)
-        pyfuncitem.addfinalizer(tmptestdir.finalize)
         return tmptestdir
  
     def pytest_funcarg__EventRecorder(self, pyfuncitem):
@@ -56,6 +55,11 @@ class TmpTestdir:
         self.plugins = []
         self._syspathremove = []
         self.chdir() # always chdir
+        assert hasattr(self, '_olddir')
+        self.pyfuncitem.addfinalizer(self.finalize)
+
+    def __repr__(self):
+        return "<TmpTestdir %r>" % (self.tmpdir,)
 
     def Config(self, pyplugins=None, topdir=None):
         if topdir is None:
@@ -69,7 +73,7 @@ class TmpTestdir:
             self._olddir.chdir()
 
     def chdir(self):
-        old = self.testdir.chdir()
+        old = self.tmpdir.chdir()
         if not hasattr(self, '_olddir'):
             self._olddir = old 
 
@@ -110,9 +114,6 @@ class TmpTestdir:
     def mkdir(self, name):
         return self.tmpdir.mkdir(name)
     
-    def chdir(self):
-        return self.tmpdir.chdir()
-
     def genitems(self, colitems):
         return list(self.session.genitems(colitems))
 

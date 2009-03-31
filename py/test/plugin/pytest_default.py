@@ -5,7 +5,6 @@ class DefaultPlugin:
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)
-        return 
 
     def pytest_collect_file(self, path, parent):
         ext = path.ext 
