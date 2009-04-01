@@ -45,6 +45,27 @@ def generic_path(item):
         fspath = newfspath
     return ''.join(gpath)
 
+def getoutcomecodes(ev):
+    if isinstance(ev, ev.CollectionReport):
+        # encode pass/fail/skip indepedent of terminal reporting semantics 
+        # XXX handle collection and item reports more uniformly 
+        assert not ev.passed
+        if ev.failed: 
+            code = "F"
+        elif ev.skipped: 
+            code = "S"
+        longrepr = str(ev.longrepr.reprcrash)
+    else:
+        assert isinstance(ev, ev.ItemTestReport)
+        code = ev.shortrepr 
+        if ev.passed:
+            longrepr = ""
+        elif ev.failed:
+            longrepr = str(ev.longrepr) 
+        elif ev.skipped:
+            longrepr = str(ev.longrepr.reprcrash.message)
+    return code, longrepr 
+        
 class ResultLog(object):
     def __init__(self, logfile):
         self.logfile = logfile # preferably line buffered
@@ -54,31 +75,10 @@ class ResultLog(object):
         for line in longrepr.splitlines():
             print >>self.logfile, " %s" % line
 
-    def getoutcomecodes(self, ev):
-        if isinstance(ev, ev.CollectionReport):
-            # encode pass/fail/skip indepedent of terminal reporting semantics 
-            # XXX handle collection and item reports more uniformly 
-            assert not ev.passed
-            if ev.failed: 
-                code = "F"
-            elif ev.skipped: 
-                code = "S"
-            longrepr = str(ev.longrepr.reprcrash)
-        else:
-            assert isinstance(ev, ev.ItemTestReport)
-            code = ev.shortrepr 
-            if ev.passed:
-                longrepr = ""
-            elif ev.failed:
-                longrepr = str(ev.longrepr) 
-            elif ev.skipped:
-                longrepr = str(ev.longrepr.reprcrash.message)
-        return code, longrepr 
-        
     def log_outcome(self, event):
         if (not event.passed or isinstance(event, event.ItemTestReport)):
             gpath = generic_path(event.colitem)
-            shortrepr, longrepr = self.getoutcomecodes(event)
+            shortrepr, longrepr = getoutcomecodes(event)
             self.write_log_entry(shortrepr, gpath, longrepr)
 
     def pyevent(self, eventname, event, *args, **kwargs):
