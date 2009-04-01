@@ -126,9 +126,9 @@ class SQLiteResultArchive(object):
     def flatten(self, item):
         return (item.get('runid', None),
                 item.get('name', None),
-                item.get('passed', None),
-                item.get('skipped', None),
-                item.get('failed', None),
+                item.get('passed', False),
+                item.get('skipped', False),
+                item.get('failed', False),
                 item.get('shortrepr', None),
                 item.get('longrepr', None),
                 item.get('fspath', None),
