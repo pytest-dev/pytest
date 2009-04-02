@@ -139,10 +139,10 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     session.shouldclose = channel.isclosed 
    
     class Failures(list):
-        def pyevent_itemtestreport(self, ev):
+        def pyevent__itemtestreport(self, ev):
             if ev.failed:
                 self.append(ev)
-        pyevent_collectionreport = pyevent_itemtestreport
+        pyevent__collectionreport = pyevent__itemtestreport
         
     failreports = Failures()
     session.bus.register(failreports)

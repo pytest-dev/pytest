@@ -18,7 +18,7 @@ class WarningPlugin(object):
         self.bus = bus
         bus.register(self)
         
-    def pyevent_WARNING(self, warning):
+    def pyevent__WARNING(self, warning):
         # forward to python warning system 
         py.std.warnings.warn_explicit(warning, category=Warning, 
             filename=str(warning.path), 

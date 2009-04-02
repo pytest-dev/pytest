@@ -25,27 +25,27 @@ class LoopState(object):
         self.shuttingdown = False
         self.testsfailed = False
 
-    def pyevent_itemtestreport(self, event):
+    def pyevent__itemtestreport(self, event):
         if event.colitem in self.dsession.item2nodes:
             self.dsession.removeitem(event.colitem, event.node)
         if event.failed:
             self.testsfailed = True
 
-    def pyevent_collectionreport(self, event):
+    def pyevent__collectionreport(self, event):
         if event.passed:
             self.colitems.extend(event.result)
 
-    def pyevent_testnodeready(self, node):
+    def pyevent__testnodeready(self, node):
         self.dsession.addnode(node)
 
-    def pyevent_testnodedown(self, node, error=None):
+    def pyevent__testnodedown(self, node, error=None):
         pending = self.dsession.removenode(node)
         if pending:
             crashitem = pending[0]
             self.dsession.handle_crashitem(crashitem, node)
             self.colitems.extend(pending[1:])
 
-    def pyevent_rescheduleitems(self, event):
+    def pyevent__rescheduleitems(self, event):
         self.colitems.extend(event.items)
         self.dowork = False # avoid busywait
 

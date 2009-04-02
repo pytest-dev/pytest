@@ -171,14 +171,14 @@ class ResultDB(object):
             shortrepr, longrepr = getoutcomecodes(event)
             self.write_log_entry(event, shortrepr, gpath, longrepr)
 
-    def pyevent_itemtestreport(self, event):
+    def pyevent__itemtestreport(self, event):
         self.log_outcome(event)
 
-    def pyevent_collectionreport(self, event):
+    def pyevent__collectionreport(self, event):
         if not event.passed:
             self.log_outcome(event)
 
-    def pyevent_internalerror(self, event):
+    def pyevent__internalerror(self, event):
         path = event.repr.reprcrash.path # fishing :(
         self.write_log_entry(event, '!', path, str(event.repr))
 

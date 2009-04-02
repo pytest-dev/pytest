@@ -9,7 +9,7 @@ class TestWarningPlugin:
         self.bus.register(self)
         self.warnings = []
 
-    def pyevent_WARNING(self, warning):
+    def pyevent__WARNING(self, warning):
         self.warnings.append(warning)
 
     def test_event_generation(self):

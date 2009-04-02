@@ -81,12 +81,12 @@ class Session(object):
         """ setup any neccessary resources ahead of the test run. """
         self.bus.notify("testrunstart", event.TestrunStart())
         
-    def pyevent_itemtestreport(self, rep):
+    def pyevent__itemtestreport(self, rep):
         if rep.failed:
             self._testsfailed = True
             if self.config.option.exitfirst:
                 self.shouldstop = True
-    pyevent_collectionreport = pyevent_itemtestreport
+    pyevent__collectionreport = pyevent__itemtestreport
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 

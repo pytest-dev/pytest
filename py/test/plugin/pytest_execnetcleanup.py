@@ -11,21 +11,21 @@ class ExecnetcleanupPlugin:
         if self._debug:
             print "[execnetcleanup %0x] %s %s" %(id(self), msg, args)
         
-    def pyevent_gateway_init(self, gateway):
+    def pyevent__gateway_init(self, gateway):
         self.trace("init", gateway)
         if self._gateways is not None:
             self._gateways.append(gateway)
         
-    def pyevent_gateway_exit(self, gateway):
+    def pyevent__gateway_exit(self, gateway):
         self.trace("exit", gateway)
         if self._gateways is not None:
             self._gateways.remove(gateway)
 
-    def pyevent_testrunstart(self, event):
+    def pyevent__testrunstart(self, event):
         self.trace("testrunstart", event)
         self._gateways = []
 
-    def pyevent_testrunfinish(self, event):
+    def pyevent__testrunfinish(self, event):
         self.trace("testrunfinish", event)
         l = []
         for gw in self._gateways:

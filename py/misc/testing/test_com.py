@@ -100,9 +100,9 @@ class TestPyPlugins:
         plugins = PyPlugins()
         l = []
         class MyApi:
-            def pyevent_plugin_registered(self, plugin):
+            def pyevent__plugin_registered(self, plugin):
                 l.append(plugin)
-            def pyevent_plugin_unregistered(self, plugin):
+            def pyevent__plugin_unregistered(self, plugin):
                 l.remove(plugin)
         myapi = MyApi()
         plugins.register(myapi)
@@ -178,7 +178,7 @@ class TestPyPlugins:
         plugins = PyPlugins()
         l = []
         class api1:
-            def pyevent_hello(self): 
+            def pyevent__hello(self): 
                 l.append("hellospecific")
         class api2:
             def pyevent(self, name, *args): 
@@ -201,7 +201,7 @@ class TestPyPlugins:
         excinfo = py.test.raises(ImportError, "plugins.consider_module(mod)")
         mod.pylib = "os"
         class Events(list):
-            def pyevent_importingmodule(self, mod):
+            def pyevent__importingmodule(self, mod):
                 self.append(mod)
         l = Events()
         plugins.register(l)
@@ -226,17 +226,17 @@ def test_subprocess_env(testdir, monkeypatch):
         old.chdir()
 
 class TestPyPluginsEvents:
-    def test_pyevent_named_dispatch(self):
+    def test_pyevent__named_dispatch(self):
         plugins = PyPlugins()
         l = []
         class A:
-            def pyevent_name(self, x): 
+            def pyevent__name(self, x): 
                 l.append(x)
         plugins.register(A())
         plugins.notify("name", 13)
         assert l == [13]
 
-    def test_pyevent_anonymous_dispatch(self):
+    def test_pyevent__anonymous_dispatch(self):
         plugins = PyPlugins()
         l = []
         class A:

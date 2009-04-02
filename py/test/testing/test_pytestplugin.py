@@ -177,7 +177,7 @@ class TestPytestPluginInteractions:
         class A:
             def pytest_configure(self, config):
                 l.append(self)
-            def pyevent_hello(self, obj):
+            def pyevent__hello(self, obj):
                 events.append(obj)
                 
         config.bus.register(A())

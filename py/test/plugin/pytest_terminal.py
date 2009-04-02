@@ -82,11 +82,11 @@ class TerminalReporter:
         else: 
             return "???", dict(red=True)
 
-    def pyevent_internalerror(self, event):
+    def pyevent__internalerror(self, event):
         for line in str(event.repr).split("\n"):
             self.write_line("InternalException: " + line)
 
-    def pyevent_gwmanage_newgateway(self, gateway, rinfo):
+    def pyevent__gwmanage_newgateway(self, gateway, rinfo):
         #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
         d = {}
         d['version'] = repr_pythonversion(rinfo.version_info)
@@ -105,18 +105,18 @@ class TerminalReporter:
         self.write_line(infoline)
         self.gateway2info[gateway] = infoline
 
-    def pyevent_gwmanage_rsyncstart(self, source, gateways):
+    def pyevent__gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         msg = "rsyncstart: %s -> %s" %(source, targets)
         if not self.config.option.verbose:
             msg += " # use --verbose to see rsync progress"
         self.write_line(msg)
 
-    def pyevent_gwmanage_rsyncfinish(self, source, gateways):
+    def pyevent__gwmanage_rsyncfinish(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
-    def pyevent_plugin_registered(self, plugin):
+    def pyevent__plugin_registered(self, plugin):
         if self.config.option.traceconfig: 
             msg = "PLUGIN registered: %s" %(plugin,)
             # XXX this event may happen during setup/teardown time 
@@ -124,19 +124,19 @@ class TerminalReporter:
             #     which garbles our output if we use self.write_line 
             self.write_line(msg)
 
-    def pyevent_testnodeready(self, node):
+    def pyevent__testnodeready(self, node):
         self.write_line("%s txnode ready to receive tests" %(node.gateway.id,))
 
-    def pyevent_testnodedown(self, node, error):
+    def pyevent__testnodedown(self, node, error):
         if error:
             self.write_line("%s node down, error: %s" %(node.gateway.id, error))
 
-    def pyevent_trace(self, category, msg):
+    def pyevent__trace(self, category, msg):
         if self.config.option.debug or \
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
 
-    def pyevent_itemstart(self, item, node=None):
+    def pyevent__itemstart(self, item, node=None):
         if self.config.option.debug:
             info = item.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
@@ -154,14 +154,14 @@ class TerminalReporter:
             #self.write_fspath_result(fspath, "")
             self.write_ensure_prefix(line, "") 
 
-    def pyevent_rescheduleitems(self, event):
+    def pyevent__rescheduleitems(self, event):
         if self.config.option.debug:
             self.write_sep("!", "RESCHEDULING %s " %(event.items,))
 
-    def pyevent_deselected(self, event):
+    def pyevent__deselected(self, event):
         self.stats.setdefault('deselected', []).append(event)
     
-    def pyevent_itemtestreport(self, event):
+    def pyevent__itemtestreport(self, event):
         fspath = event.colitem.fspath 
         cat, letter, word = self.getcategoryletterword(event)
         if isinstance(word, tuple):
@@ -184,7 +184,7 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pyevent_collectionreport(self, event):
+    def pyevent__collectionreport(self, event):
         if not event.passed:
             if event.failed:
                 self.stats.setdefault("failed", []).append(event)
@@ -194,7 +194,7 @@ class TerminalReporter:
                 self.stats.setdefault("skipped", []).append(event)
                 self.write_fspath_result(event.colitem.fspath, "S")
 
-    def pyevent_testrunstart(self, event):
+    def pyevent__testrunstart(self, event):
         self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
 
@@ -219,7 +219,7 @@ class TerminalReporter:
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
-    def pyevent_testrunfinish(self, event):
+    def pyevent__testrunfinish(self, event):
         self._tw.line("")
         if event.exitstatus in (0, 1, 2):
             self.summary_failures()
@@ -232,7 +232,7 @@ class TerminalReporter:
         self.summary_deselected()
         self.summary_stats()
 
-    def pyevent_looponfailinfo(self, event):
+    def pyevent__looponfailinfo(self, event):
         if event.failreports:
             self.write_sep("#", "LOOPONFAILING", red=True)
             for report in event.failreports:
@@ -309,20 +309,20 @@ class CollectonlyReporter:
     def outindent(self, line):
         self.out.line(self.indent + str(line))
 
-    def pyevent_collectionstart(self, event):
+    def pyevent__collectionstart(self, event):
         self.outindent(event.collector)
         self.indent += self.INDENT 
     
-    def pyevent_itemstart(self, item, node=None):
+    def pyevent__itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pyevent_collectionreport(self, event):
+    def pyevent__collectionreport(self, event):
         if not event.passed:
             self.outindent("!!! %s !!!" % event.longrepr.reprcrash.message)
             self._failed.append(event)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pyevent_testrunfinish(self, event):
+    def pyevent__testrunfinish(self, event):
         if self._failed:
             self.out.sep("!", "collection failures")
         for event in self._failed:
@@ -438,7 +438,7 @@ class TestTerminal:
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
-        rep.pyevent_internalerror(event.InternalException(excinfo))
+        rep.pyevent__internalerror(event.InternalException(excinfo))
         linecomp.assert_contains_lines([
             "InternalException: >*raise ValueError*"
         ])
@@ -462,16 +462,16 @@ class TestTerminal:
             platform = "xyz"
             cwd = "qwe"
 
-        rep.pyevent_gwmanage_newgateway(gw1, rinfo)
+        rep.pyevent__gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
             "X1*popen*xyz*2.5*"
         ])
 
-        rep.pyevent_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
+        rep.pyevent__gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncstart: hello -> X1, X2"
         ])
-        rep.pyevent_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
+        rep.pyevent__gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncfinish: hello -> X1, X2"
         ])
@@ -496,7 +496,7 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [basic_run_report(x) for x in modcol.collect()]
-        rep.pyevent_looponfailinfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
+        rep.pyevent__looponfailinfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
         linecomp.assert_contains_lines([
             "*test_looponfailreport.py:2: assert 0",
             "*test_looponfailreport.py:4: ValueError*",

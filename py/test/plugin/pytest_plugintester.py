@@ -76,7 +76,7 @@ class PluginTester(Support):
         if fail:
             py.test.fail("Plugin API error")
 
-def collectattr(obj, prefixes=("pytest_", "pyevent_")):
+def collectattr(obj, prefixes=("pytest_", "pyevent__")):
     methods = {}
     for apiname in vars(obj): 
         for prefix in prefixes:
@@ -141,63 +141,63 @@ class PytestPluginHooks:
     def pyevent(self, eventname, *args, **kwargs):
         """ called for each testing event. """
 
-    def pyevent_gateway_init(self, gateway):
+    def pyevent__gateway_init(self, gateway):
         """ called after a gateway has been initialized. """
 
-    def pyevent_gateway_exit(self, gateway):
+    def pyevent__gateway_exit(self, gateway):
         """ called when gateway is being exited. """
 
-    def pyevent_gwmanage_rsyncstart(self, source, gateways):
+    def pyevent__gwmanage_rsyncstart(self, source, gateways):
         """ called before rsyncing a directory to remote gateways takes place. """
 
-    def pyevent_gwmanage_rsyncfinish(self, source, gateways):
+    def pyevent__gwmanage_rsyncfinish(self, source, gateways):
         """ called after rsyncing a directory to remote gateways takes place. """
 
-    def pyevent_trace(self, category, msg):
+    def pyevent__trace(self, category, msg):
         """ called for tracing events. """
 
-    def pyevent_internalerror(self, event):
+    def pyevent__internalerror(self, event):
         """ called for internal errors. """
 
-    def pyevent_itemstart(self, item, node):
+    def pyevent__itemstart(self, item, node):
         """ test item gets collected. """
 
-    def pyevent_itemtestreport(self, event):
+    def pyevent__itemtestreport(self, event):
         """ test has been run. """
 
-    def pyevent_deselected(self, event):
+    def pyevent__deselected(self, event):
         """ item has been dselected. """
 
-    def pyevent_collectionstart(self, event):
+    def pyevent__collectionstart(self, event):
         """ collector starts collecting. """
 
-    def pyevent_collectionreport(self, event):
+    def pyevent__collectionreport(self, event):
         """ collector finished collecting. """
 
-    def pyevent_testrunstart(self, event):
+    def pyevent__testrunstart(self, event):
         """ whole test run starts. """
 
-    def pyevent_testrunfinish(self, event):
+    def pyevent__testrunfinish(self, event):
         """ whole test run finishes. """
 
-    def pyevent_gwmanage_newgateway(self, gateway):
+    def pyevent__gwmanage_newgateway(self, gateway):
         """ execnet gateway manager has instantiated a gateway. 
             The gateway will have an 'id' attribute that is unique 
             within the gateway manager context. 
         """
-    def pyevent_testnodeready(self, node):
+    def pyevent__testnodeready(self, node):
         """ Node is ready to operate. """
 
-    def pyevent_testnodedown(self, node, error):
+    def pyevent__testnodedown(self, node, error):
         """ Node is down. """
 
-    def pyevent_rescheduleitems(self, event):
+    def pyevent__rescheduleitems(self, event):
         """ Items from a node that went down. """
 
-    def pyevent_looponfailinfo(self, event):
+    def pyevent__looponfailinfo(self, event):
         """ info for repeating failing tests. """
 
-    def pyevent_plugin_registered(self, plugin):
+    def pyevent__plugin_registered(self, plugin):
         """ a new py lib plugin got registered. """
         
    

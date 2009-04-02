@@ -9,7 +9,7 @@ registering a plugin
 
 ::
     >>> class MyPlugin:
-    ...    def pyevent_plugin_registered(self, plugin):
+    ...    def pyevent__plugin_registered(self, plugin):
     ...       print "registering", plugin.__class__.__name__
     ... 
     >>> import py
@@ -149,7 +149,7 @@ class PyPlugins:
 
     def notify(self, eventname, *args, **kwargs):
         #print "notifying", eventname, args, kwargs
-        MultiCall(self.listattr("pyevent_" + eventname), 
+        MultiCall(self.listattr("pyevent__" + eventname), 
              *args, **kwargs).execute()
         #print "calling anonymous hooks", args, kwargs
         MultiCall(self.listattr("pyevent"), 
