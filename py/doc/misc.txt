@@ -6,11 +6,8 @@ Miscellaneous features of the py lib
 Mapping the standard python library into py 
 ===========================================
 
-    Warning: This feature is very young and thus experimental.
-    Be prepared to adapt your code later if you use it. 
-
-After you have worked with the py lib a bit, you might enjoy
-the lazy importing, i.e. you only have to do ``import py`` and
+After you have worked with the py lib a bit, you probably enjoy
+the lazy importing feature, i.e. you only have to do ``import py`` and
 work your way to your desired object.  Using the full path 
 also ensures that there remains a focus on getting short paths 
 to objects. 
