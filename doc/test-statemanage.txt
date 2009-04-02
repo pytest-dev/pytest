@@ -1,10 +1,14 @@
+=================
+Managing state
+=================
+
 funcargs: provding arguments for test functions
--------------------------------------------------------
+===========================================================
 
 XXX write docs 
 
 Managing test state across test modules, classes and methods 
-------------------------------------------------------------
+============================================================
 
 Often you want to create some files, database connections or other
 state in order to run tests in a certain environment.  With

@@ -54,8 +54,6 @@ Full Contents
    io
    log
    misc
-   why_py
-   future
    coding-style
    links
    contact
