@@ -33,11 +33,7 @@ Minor support functionality
 .. _`py.test`: test.html 
 .. _`py lib scripts`: bin.html
 .. _`py.xml`: xml.html 
-.. _`Why What how py?`: why_py.html 
-.. _`future`: future.html 
 .. _`miscellaneous features`: misc.html 
-.. _`0.9.2 release announcement`: release-0.9.2.html
-
 
 Full Contents
 ===================================
@@ -64,4 +60,3 @@ Full Contents
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

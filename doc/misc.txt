@@ -2,7 +2,6 @@
 Miscellaneous features of the py lib 
 ====================================
 
-
 Mapping the standard python library into py 
 ===========================================
 
@@ -52,32 +51,14 @@ However, the ``cmdexec`` approach has a few shortcomings:
 local paths have ``sysexec``
 ---------------------------- 
 
-The py lib currently offers a stripped down functionality of what
-the new `PEP-324 subprocess module`_ offers.  The main functionality 
-of synchronously executing a system executable has a straightforward API:: 
+In order to synchronously execute an executable file you 
+can use ``sysexec``::
 
     binsvn.sysexec('ls', 'http://codespeak.net/svn') 
 
 where ``binsvn`` is a path that points to the ``svn`` commandline
-binary. Note that this function would not offer any shell-escaping
-so you really have to pass in separated arguments.  This idea
-fits nicely into `a more general view on path objects`_. 
-
-For a first go, we are just reusing the existing `subprocess
-implementation`_ but don't expose any of its API apart
-from the above ``sysexec()`` method. 
-
-Note, however, that currently the support for the ``sysexec`` interface on
-win32 is not thoroughly tested. If you run into problems with it, we are
-interested to hear about them. If you are running a Python older than 2.4 you
-will have to install the `pywin32 package`_.
-
-
-.. _`future book`: future.html 
-.. _`PEP-324 subprocess module`: http://www.python.org/peps/pep-0324.html
-.. _`subprocess implementation`: http://www.lysator.liu.se/~astrand/popen5/
-.. _`a more general view on path objects`: future.html#general-path
-.. _`pywin32 package`: http://pywin32.sourceforge.net/
+binary. Note that this function does not offer any shell-escaping
+so you have to pass in already separated arguments.  
 
 finding an executable local path
 --------------------------------

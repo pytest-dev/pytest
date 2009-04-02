@@ -61,11 +61,5 @@ Miscellaneous
 - Try to put the tests close to the tested code, don't
   overload directories with names. 
 
-- If you think of exporting new py lib APIs, discuss it first on the 
-  `py-dev mailing list`_ and possibly write a chapter in our
-  `future_` book. Communication is considered a key here to make 
-  sure that the py lib develops in a consistent way. 
-
 .. _`PEP 8 Style Guide for Python Code`: http://www.python.org/peps/pep-0008.html
 .. _`py-dev mailing list`: http://codespeak.net/mailman/listinfo/py-dev 
-.. _`future`: future.html

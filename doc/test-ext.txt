@@ -51,9 +51,6 @@ home-directoray, per shell session or per test-run.
 Test Collection process 
 ====================================================== 
 
-.. module:: py.test.collect 
-    :synopsis: basic test collection classes
-
 The collecting process is iterative so that distribution
 and execution of tests can start as soon as the first test
 item is collected.  Collection nodes with children are 
@@ -110,22 +107,9 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
     the trailing ``.py``. 
 
 
-
-
-
-Plugin methods 
+Plugin hooks and events  
 =======================================
 
-.. module:: py.__.test.pluginapi
+See definitions at 
 
-A Plugin class may implement the following attributes and methods: 
-
-XXX
-
-_`pytest event`: 
-
-Pytest Events 
-=======================================
-
-XXX
-
+http://codespeak.net/svn/py/trunk/py/test/plugin/api.py

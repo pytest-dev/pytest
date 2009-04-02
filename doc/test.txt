@@ -24,7 +24,6 @@ extend_: writing plugins and advanced configuration.
 .. _`distributed testing`: test-dist.html
 
 
-
 Contents:
 
 .. toctree::

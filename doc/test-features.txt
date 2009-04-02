@@ -23,7 +23,7 @@ From each test module every function with a leading ``test_``
 or class with a leading ``Test`` name is collected.  
 
 .. _`generative tests`: 
-.. _`collection process`: impl-test.html#collection-process
+.. _`collection process`: test-ext.html#collection-process
 
 load-balance tests to multiple CPUs
 ===================================

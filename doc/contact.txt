@@ -16,8 +16,6 @@ Contact and communication
 
 .. _`merlinux.eu`: http://merlinux.eu
 
-.. _future: future.html 
-
 .. _`get an account`:  
 
 .. _tetamap: http://tetamap.wordpress.com
