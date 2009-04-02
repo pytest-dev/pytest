@@ -46,10 +46,77 @@ behind the ``--`` double-dash.
 IOW, you can set default values for options per project, per
 home-directoray, per shell session or per test-run. 
 
+.. _`collection process`: 
+
+Test Collection process 
+====================================================== 
+
+.. module:: py.test.collect 
+    :synopsis: basic test collection classes
+
+The collecting process is iterative so that distribution
+and execution of tests can start as soon as the first test
+item is collected.  Collection nodes with children are 
+called "Collectors" and terminal nodes are called "Items".  
+Here is an example of such a tree, generated with the 
+command ``py.test --collectonly py/xmlobj``:: 
+
+    <Directory 'xmlobj'>
+        <Directory 'testing'>
+            <Module 'test_html.py' (py.__.xmlobj.testing.test_html)>
+                <Function 'test_html_name_stickyness'>
+                <Function 'test_stylenames'>
+                <Function 'test_class_None'>
+                <Function 'test_alternating_style'>
+            <Module 'test_xml.py' (py.__.xmlobj.testing.test_xml)>
+                <Function 'test_tag_with_text'>
+                <Function 'test_class_identity'>
+                <Function 'test_tag_with_text_and_attributes'>
+                <Function 'test_tag_with_subclassed_attr_simple'>
+                <Function 'test_tag_nested'>
+                <Function 'test_tag_xmlname'>
+
+By default all directories not starting with a dot are traversed, 
+looking for ``test_*.py`` and ``*_test.py`` files.  Those Python 
+files are imported under their `package name`_. 
+
+The Module collector looks for test functions 
+and test classes and methods. Test functions and methods
+are prefixed ``test`` by default.  Test classes must 
+start with a capitalized ``Test`` prefix. 
+
+.. _`package name`: 
+
+constructing the package name for test modules
+-------------------------------------------------
+
+Test modules are imported under their fully qualified 
+name.  Given a filesystem ``fspath`` it is constructed as follows:
+
+* walk the directories up to the last one that contains 
+  an ``__init__.py`` file.  
+
+* perform ``sys.path.insert(0, basedir)``.
+
+* import the root package as ``root``
+
+* determine the fully qualified name for ``fspath`` by either:
+
+  * calling ``root.__pkg__.getimportname(fspath)`` if the
+    ``__pkg__`` exists.` or 
+
+  * otherwise use the relative path of the module path to
+    the base dir and turn slashes into dots and strike
+    the trailing ``.py``. 
+
+
+
 
 
 Plugin methods 
 =======================================
+
+.. module:: py.__.test.pluginapi
 
 A Plugin class may implement the following attributes and methods: 
 

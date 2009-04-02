@@ -1,113 +1,9 @@
 ===============================================
-Implementation and Customization of ``py.test``
+ATTIC documentation 
 ===============================================
 
 
-.. _`basicpicture`:
-
-
-Collecting and running tests / implementation remarks 
-====================================================== 
-
-In order to customize ``py.test`` it's good to understand 
-its basic architure (WARNING: these are not guaranteed 
-yet to stay the way they are now!)::
-
-     ___________________
-    |                   |
-    |    Collector      |
-    |___________________|
-           / \                
-            |                Item.run()
-            |               ^
-     receive test Items    /
-            |             /execute test Item 
-            |            /
-     ___________________/
-    |                   |      
-    |     Session       |
-    |___________________|
-                                          
-                        .............................
-                        . conftest.py configuration .
-                        . cmdline options           .
-                        .............................
-
-
-The *Session* basically receives test *Items* from a *Collector*, 
-and executes them via the ``Item.run()`` method.  It monitors 
-the outcome of the test and reports about failures and successes. 
-
-.. _`collection process`: 
-
-Collectors and the test collection process 
-------------------------------------------
-
-The collecting process is iterative, i.e. the session 
-traverses and generates a *collector tree*.  Here is an example of such
-a tree, generated with the command ``py.test --collectonly py/xmlobj``:: 
-
-    <Directory 'xmlobj'>
-        <Directory 'testing'>
-            <Module 'test_html.py' (py.__.xmlobj.testing.test_html)>
-                <Function 'test_html_name_stickyness'>
-                <Function 'test_stylenames'>
-                <Function 'test_class_None'>
-                <Function 'test_alternating_style'>
-            <Module 'test_xml.py' (py.__.xmlobj.testing.test_xml)>
-                <Function 'test_tag_with_text'>
-                <Function 'test_class_identity'>
-                <Function 'test_tag_with_text_and_attributes'>
-                <Function 'test_tag_with_subclassed_attr_simple'>
-                <Function 'test_tag_nested'>
-                <Function 'test_tag_xmlname'>
-
-
-By default all directories not starting with a dot are traversed, 
-looking for ``test_*.py`` and ``*_test.py`` files.  Those files 
-are imported under their `package name`_. 
-
-The Module collector looks for test functions 
-and test classes and methods. Test functions and methods
-are prefixed ``test`` by default.  Test classes must 
-start with a capitalized ``Test`` prefix. 
-
-
-.. _`collector API`: 
-
-test items are collectors as well
---------------------------------- 
-
-To make the reporting life simple for the session object 
-items offer a ``run()`` method as well.  In fact the session
-distinguishes "collectors" from "items" solely by interpreting 
-their return value.  If it is a list, then we recurse into 
-it, otherwise we consider the "test" as passed.  
-
-.. _`package name`: 
-
-constructing the package name for test modules
--------------------------------------------------
-
-Test modules are imported under their fully qualified 
-name.  Given a filesystem ``fspath`` it is constructed as follows:
-
-* walk the directories up to the last one that contains 
-  an ``__init__.py`` file.  
-
-* perform ``sys.path.insert(0, basedir)``.
-
-* import the root package as ``root``
-
-* determine the fully qualified name for ``fspath`` by either:
-
-  * calling ``root.__pkg__.getimportname(fspath)`` if the
-    ``__pkg__`` exists.` or 
-
-  * otherwise use the relative path of the module path to
-    the base dir and turn slashes into dots and strike
-    the trailing ``.py``. 
-
+XXX REVIEW and remove the below  XXX
 
 
 Customizing the testing process 
@@ -140,78 +36,9 @@ and modules the default collectors will produce
 custom Collectors and Items if they are found 
 in a local ``conftest.py`` file.  
 
-example: perform additional ReST checks 
-.......................................
-
-With your custom collectors or items you can completely 
-derive from the standard way of collecting and running
-tests in a localized manner.  Let's look at an example. 
-If you invoke ``py.test --collectonly py/documentation`` 
-then you get:: 
-
-    <DocDirectory 'documentation'>
-        <DocDirectory 'example'>
-            <DocDirectory 'pytest'>
-                <Module 'test_setup_flow_example.py' (test_setup_flow_example)>
-                    <Class 'TestStateFullThing'>
-                        <Instance '()'>
-                            <Function 'test_42'>
-                            <Function 'test_23'>
-        <ReSTChecker 'TODO.txt'>
-            <ReSTSyntaxTest 'TODO.txt'>
-            <LinkCheckerMaker 'checklinks'>
-        <ReSTChecker 'api.txt'>
-            <ReSTSyntaxTest 'api.txt'>
-            <LinkCheckerMaker 'checklinks'>
-                <CheckLink 'getting-started.html'>
-        ... 
-
-In ``py/documentation/conftest.py`` you find the following 
-customization:: 
-
-    class DocDirectory(py.test.collect.Directory):
-
-        def run(self):
-            results = super(DocDirectory, self).run()
-            for x in self.fspath.listdir('*.txt', sort=True):
-                    results.append(x.basename)
-            return results
-
-        def join(self, name):
-            if not name.endswith('.txt'):
-                return super(DocDirectory, self).join(name)
-            p = self.fspath.join(name)
-            if p.check(file=1):
-                return ReSTChecker(p, parent=self)
-
-    Directory = DocDirectory
-
-The existence of the 'Directory' name in the 
-``pypy/documentation/conftest.py`` module makes the collection 
-process defer to our custom "DocDirectory" collector.  We extend 
-the set of collected test items by ``ReSTChecker`` instances 
-which themselves create ``ReSTSyntaxTest`` and ``LinkCheckerMaker`` 
-items.  All of this instances (need to) follow the `collector API`_. 
-
-Customizing the reporting of Test Failures 
---------------------------------------------
-
-XXX implement Item.repr_run and Item.repr_path for your test items
-
-Writing new assertion methods 
--------------------------------------
-
-XXX  __tracebackhide__, and use "print" 
-
 
 Customizing the collection process in a module
 ---------------------------------------------- 
-
-    REPEATED WARNING: details of the collection and running process are 
-    still subject to refactorings and thus details will change.  
-    If you are customizing py.test at "Item" level then you 
-    definitely want to be subscribed to the `py-dev mailing list`_ 
-    to follow ongoing development.
 
 If you have a module where you want to take responsibility for
 collecting your own test Items and possibly even for executing
@@ -232,14 +59,13 @@ The collection process dynamically consults the *chain of conftest.py*
 modules to determine collectors and items at ``Directory``, ``Module``, 
 ``Class``, ``Function`` or ``Generator`` level respectively.  
 
-Customizing execution of Functions 
----------------------------------- 
+Customizing execution of Items and Functions 
+----------------------------------------------------
 
 - ``py.test.collect.Function`` test items control execution 
-  of a test function.  ``function.run()`` will get called by the
-  session in order to actually run a test.  The method is responsible
-  for performing proper setup/teardown ("Test Fixtures") for a 
-  Function test. 
+  of a test function through its ``function.runtest()`` method.
+  This method is responsible for performing setup and teardown 
+  ("Test Fixtures") for a test Function. 
 
 - ``Function.execute(target, *args)`` methods are invoked by
   the default ``Function.run()`` to actually execute a python 

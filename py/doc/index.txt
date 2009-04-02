@@ -44,7 +44,6 @@ Full Contents
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    test
    execnet
