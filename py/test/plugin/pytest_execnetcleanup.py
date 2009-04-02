@@ -33,6 +33,14 @@ class ExecnetcleanupPlugin:
             l.append(gw)
         #for gw in l:
         #    gw.join()
+        #
+    def pytest_pyfunc_call(self, __call__, pyfuncitem, args, kwargs):
+        if self._gateways is not None:
+            gateways = self._gateways[:]
+            res = __call__.execute(firstresult=True)
+            while len(self._gateways) > len(gateways):
+                self._gateways[-1].exit()
+            return res
    
 def test_generic(plugintester):
     plugintester.apicheck(ExecnetcleanupPlugin)
