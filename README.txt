@@ -5,7 +5,6 @@ the following tools and modules:
 * py.execnet: ad-hoc distributed execution
 * py.code: dynamic code generation and introspection
 * py.path:  uniform local and svn path objects 
-* py.magic.greenlet: micro-threads
 
 It includes code and contributions from several people, 
 listed in the LICENSE file. 
@@ -18,4 +17,4 @@ have fun,
 
 holger krekel, holger at merlinux eu
 
-$Id: README.txt 63217 2009-03-23 00:59:18Z hpk $
+$Id: README.txt 63546 2009-04-02 17:34:16Z hpk $

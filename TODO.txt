@@ -1,9 +1,6 @@
 Things to do for 1.0.0 
 ========================= 
 
-- ease building of py lib, only depend on python interp 
-  - separate py.magic.greenlet into its own project, and remove c-extension
-
 - scale down "magic" impressions & improve py.test: 
   - documentation entry points for users 
   - documentation entry points for extenders
