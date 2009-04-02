@@ -85,6 +85,18 @@ class ReSTSyntaxTest(py.test.collect.Item):
         directive.register_linkrole('api', self.resolve_linkrole)
         directive.register_linkrole('source', self.resolve_linkrole)
 
+        # XXX fake sphinx' "toctree" and refs
+        directive.register_linkrole('ref', self.resolve_linkrole)
+        
+        from docutils.parsers.rst import directives
+        def toctree_directive(name, arguments, options, content, lineno,
+                      content_offset, block_text, state, state_machine):
+            return []
+        toctree_directive.content = 1
+        toctree_directive.options = {'maxdepth': int, 'glob': directives.flag,
+                             'hidden': directives.flag}
+        directives.register_directive('toctree', toctree_directive)
+
     def resolve_linkrole(self, name, text, check=True):
         apigen_relpath = self.project.apigen_relpath
     
@@ -125,6 +137,8 @@ class ReSTSyntaxTest(py.test.collect.Item):
             else:
                 relpath += '.html'
             return (text, apigen_relpath + 'source/%s' % (relpath,))
+        elif name == 'ref':
+            return ("", "") 
 
     def _checkskip(self, lpath, htmlpath=None):
         if not self.config.getvalue("forcegen"):
