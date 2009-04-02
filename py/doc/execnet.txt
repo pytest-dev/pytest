@@ -64,7 +64,7 @@ an example for reading the PID::
 .. _`exchange data`: 
 
 Channels: bidirectionally exchange data between hosts 
-===================================================
+=======================================================
 
 A channel object allows to send and receive data between 
 two asynchronously running programs.  When calling

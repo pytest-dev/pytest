@@ -21,11 +21,6 @@ is made to import submodules.
 Support for interaction with system utilities/binaries
 ======================================================
 
-sources:
-
-  * :source:`py/process/`
-  * :source:`py/path/local/`
-
 Currently, the py lib offers two ways to interact with
 system executables. :api:`py.process.cmdexec()` invokes
 the shell in order to execute a string.  The other
