@@ -308,6 +308,7 @@ def verify_archive_item_shape(item):
 
 class TestWithFunctionIntegration:
     def getarchive(self, testdir, arg):
+        py.test.importorskip("simplejson")
         resultdb = testdir.tmpdir.join("resultdb")
         args = ["--resultdb=%s" % resultdb, "--resultdb_format=sqlite"] + [arg]
         testdir.runpytest(*args)
@@ -378,7 +379,7 @@ class TestWithFunctionIntegration:
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry  
 
-def test_generic(plugintester, LineMatcher):
+def test_generic(plugintester):
     plugintester.apicheck(ResultdbPlugin)
     testdir = plugintester.testdir()
     testdir.makepyfile("""

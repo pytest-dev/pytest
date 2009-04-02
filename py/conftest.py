@@ -1,4 +1,4 @@
-pytest_plugins = 'pytest_doctest', 'pytest_pytester', 'pytest_restdoc'
+pytest_plugins = 'pytest_doctest', 'pytest_pytester' # , 'pytest_restdoc'
 rsyncignore = ['c-extension/greenlet/build']
 
 import py

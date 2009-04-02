@@ -54,11 +54,11 @@ class FigleafPlugin:
         return coverage
 
 
-
 def test_generic(plugintester):
     plugintester.apicheck(FigleafPlugin)
 
 def test_functional(testdir):
+    py.test.importorskip("figleaf")
     testdir.plugins.append('figleaf')
     testdir.makepyfile("""
         def f():    
