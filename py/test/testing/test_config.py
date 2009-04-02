@@ -55,13 +55,9 @@ class TestConfigCmdlineParsing:
                        type="int", dest="gdest", help="g value."), 
                 )
         """)
-        old = testdir.chdir()
-        try: 
-            py.test.raises(ValueError, """
-                py.test.config._reparse(['-g', '17'])
-            """)
-        finally: 
-            old.chdir() 
+        py.test.raises(ValueError, """
+            py.test.config._reparse(['-g', '17'])
+        """)
 
     def test_parsing_again_fails(self, tmpdir):
         config = py.test.config._reparse([tmpdir])

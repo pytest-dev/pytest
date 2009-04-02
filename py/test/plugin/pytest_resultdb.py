@@ -276,6 +276,9 @@ class BaseResultArchiveTests(object):
 class TestJSONResultArchive(BaseResultArchiveTests):
     cls = JSONResultArchive
 
+    def setup_method(self, method):
+        py.test.importorskip("simplejson")
+
     
 class TestSQLiteResultArchive(BaseResultArchiveTests):
     cls = SQLiteResultArchive
