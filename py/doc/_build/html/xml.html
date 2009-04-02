@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>6. py.xml: Lightweight and flexible xml/html generation &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="next" title="7. 1   py.io" href="io.html" />
+    <link rel="prev" title="5. py/bin/ scripts" href="bin.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="io.html" title="7. 1   py.io"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="bin.html" title="5. py/bin/ scripts"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="py-xml-lightweight-and-flexible-xml-html-generation">
+<h1>6. py.xml: Lightweight and flexible xml/html generation<a class="headerlink" href="#py-xml-lightweight-and-flexible-xml-html-generation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="motivation">
+<h2>6.1. Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h2>
+<p>There are a plethora of frameworks and libraries to generate
+xml and html trees.  However, many of them are large, have a
+steep learning curve and are often hard to debug.  Not to
+speak of the fact that they are frameworks to begin with.</p>
+<p>The py lib strives to offer enough functionality to represent
+itself and especially its API in html or xml.</p>
+</div>
+<div class="section" id="a-pythonic-object-model-please">
+<h2>6.2. a pythonic object model , please<a class="headerlink" href="#a-pythonic-object-model-please" title="Permalink to this headline">¶</a></h2>
+<p>The py lib offers a pythonic way to generate xml/html, based on
+ideas from <a class="reference external" href="http://www.livinglogic.de/Python/xist/index.html">xist</a> which <a class="reference external" href="http://www.livinglogic.de/Python/xist/Howto.html">uses python class objects</a> to build
+xml trees.  However, <a class="reference external" href="http://www.livinglogic.de/Python/xist/index.html">xist</a>&#8216;s implementation is somewhat heavy
+because it has additional goals like transformations and
+supporting many namespaces.  But its basic idea is very easy.</p>
+<div class="section" id="generating-arbitrary-xml-structures">
+<h3>6.2.1. generating arbitrary xml structures<a class="headerlink" href="#generating-arbitrary-xml-structures" title="Permalink to this headline">¶</a></h3>
+<p>With <tt class="docutils literal"><span class="pre">py.xml.Namespace</span></tt> you have the basis
+to generate custom xml-fragments on the fly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">ns</span><span class="p">(</span><span class="n">py</span><span class="o">.</span><span class="n">xml</span><span class="o">.</span><span class="n">Namespace</span><span class="p">):</span>
+    <span class="s">&quot;my custom xml namespace&quot;</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">ns</span><span class="o">.</span><span class="n">books</span><span class="p">(</span>
+    <span class="n">ns</span><span class="o">.</span><span class="n">book</span><span class="p">(</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">author</span><span class="p">(</span><span class="s">&quot;May Day&quot;</span><span class="p">),</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;python for java programmers&quot;</span><span class="p">),),</span>
+    <span class="n">ns</span><span class="o">.</span><span class="n">book</span><span class="p">(</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">author</span><span class="p">(</span><span class="s">&quot;why&quot;</span><span class="p">),</span>
+        <span class="n">ns</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;Java for Python programmers&quot;</span><span class="p">),),</span>
+    <span class="n">publisher</span><span class="o">=</span><span class="s">&quot;N.N&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">print</span> <span class="n">doc</span><span class="o">.</span><span class="n">unicode</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf8&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>will give you this representation:</p>
+<div class="highlight-python"><pre>&lt;books publisher="N.N"&gt;
+  &lt;book&gt;
+    &lt;author&gt;May Day&lt;/author&gt;
+    &lt;title&gt;python for java programmers&lt;/title&gt;&lt;/book&gt;
+  &lt;book&gt;
+    &lt;author&gt;why&lt;/author&gt;
+    &lt;title&gt;Java for Python programmers&lt;/title&gt;&lt;/book&gt;&lt;/books&gt;</pre>
+</div>
+<p>In a sentence: positional arguments are child-tags and
+keyword-arguments are attributes.</p>
+<p>On a side note, you&#8217;ll see that the unicode-serializer
+supports a nice indentation style which keeps your generated
+html readable, basically through emulating python&#8217;s white
+space significance by putting closing-tags rightmost and
+almost invisible at first glance :-)</p>
+</div>
+<div class="section" id="basic-example-for-generating-html">
+<h3>6.2.2. basic example for generating html<a class="headerlink" href="#basic-example-for-generating-html" title="Permalink to this headline">¶</a></h3>
+<p>Consider this example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">py.xml</span> <span class="kn">import</span> <span class="n">html</span>  <span class="c"># html namespace</span>
+
+<span class="n">paras</span> <span class="o">=</span> <span class="s">&quot;First Para&quot;</span><span class="p">,</span> <span class="s">&quot;Second para&quot;</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">html</span><span class="p">(</span>
+   <span class="n">html</span><span class="o">.</span><span class="n">head</span><span class="p">(</span>
+        <span class="n">html</span><span class="o">.</span><span class="n">meta</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s">&quot;text/html; charset=latin1&quot;</span><span class="p">)),</span>
+   <span class="n">html</span><span class="o">.</span><span class="n">body</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">html</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paras</span><span class="p">]))</span>
+
+<span class="k">print</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;latin1&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Again, tags are objects which contain tags and have attributes.
+More exactly, Tags inherit from the list type and thus can be
+manipulated as list objects.  They additionally support a default
+way to represent themselves as a serialized unicode object.</p>
+<p>If you happen to look at the py.xml implementation you&#8217;ll
+note that the tag/namespace implementation consumes some 50 lines
+with another 50 lines for the unicode serialization code.</p>
+</div>
+<div class="section" id="css-styling-your-html-tags">
+<h3>6.2.3. CSS-styling your html Tags<a class="headerlink" href="#css-styling-your-html-tags" title="Permalink to this headline">¶</a></h3>
+<p>One aspect where many of the huge python xml/html generation
+frameworks utterly fail is a clean and convenient integration
+of CSS styling.  Often, developers are left alone with keeping
+CSS style definitions in sync with some style files
+represented as strings (often in a separate .css file).  Not
+only is this hard to debug but the missing abstractions make
+it hard to modify the styling of your tags or to choose custom
+style representations (inline, html.head or external).  Add the
+Browers usual tolerance of messyness and errors in Style
+references and welcome to hell, known as the domain of
+developing web applications :-)</p>
+<p>By contrast, consider this CSS styling example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">my</span><span class="p">(</span><span class="n">html</span><span class="p">):</span>
+    <span class="s">&quot;my initial custom style&quot;</span>
+    <span class="k">class</span> <span class="nc">body</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">body</span><span class="p">):</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">font_size</span> <span class="o">=</span> <span class="s">&quot;120%&quot;</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">h2</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">h2</span><span class="p">):</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">background</span> <span class="o">=</span> <span class="s">&quot;grey&quot;</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">p</span><span class="p">(</span><span class="n">html</span><span class="o">.</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">font_weight</span><span class="o">=</span><span class="s">&quot;bold&quot;</span><span class="p">)</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">my</span><span class="o">.</span><span class="n">html</span><span class="p">(</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">head</span><span class="p">(),</span>
+    <span class="n">my</span><span class="o">.</span><span class="n">body</span><span class="p">(</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">h2</span><span class="p">(</span><span class="s">&quot;hello world&quot;</span><span class="p">),</span>
+        <span class="n">my</span><span class="o">.</span><span class="n">p</span><span class="p">(</span><span class="s">&quot;bold as bold can&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="k">print</span> <span class="n">doc</span><span class="o">.</span><span class="n">unicode</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mf">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will give you a small&#8217;n mean self contained
+represenation by default:</p>
+<div class="highlight-python"><pre>&lt;html&gt;
+  &lt;head/&gt;
+  &lt;body style="font-size: 120%"&gt;
+    &lt;h2 style="background: grey"&gt;hello world&lt;/h2&gt;
+    &lt;p style="font-weight: bold"&gt;bold as bold can&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</pre>
+</div>
+<p>Most importantly, note that the inline-styling is just an
+implementation detail of the unicode serialization code.
+You can easily modify the serialization to put your styling into the
+<tt class="docutils literal"><span class="pre">html.head</span></tt> or in a separate file and autogenerate CSS-class
+names or ids.</p>
+<p>Hey, you could even write tests that you are using correct
+styles suitable for specific browser requirements.  Did i mention
+that the ability to easily write tests for your generated
+html and its serialization could help to develop _stable_ user
+interfaces?</p>
+</div>
+<div class="section" id="more-to-come">
+<h3>6.2.4. More to come ...<a class="headerlink" href="#more-to-come" title="Permalink to this headline">¶</a></h3>
+<p>For now, i don&#8217;t think we should strive to offer much more
+than the above.   However, it is probably not hard to offer
+<em>partial serialization</em> to allow generating maybe hundreds of
+complex html documents per second.   Basically we would allow
+putting callables both as Tag content and as values of
+attributes.  A slightly more advanced Serialization would then
+produce a list of unicode objects intermingled with callables.
+At HTTP-Request time the callables would get called to
+complete the probably request-specific serialization of
+your Tags.  Hum, it&#8217;s probably harder to explain this than to
+actually code it :-)</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">6. py.xml: Lightweight and flexible xml/html generation</a><ul>
+<li><a class="reference external" href="#motivation">6.1. Motivation</a></li>
+<li><a class="reference external" href="#a-pythonic-object-model-please">6.2. a pythonic object model , please</a><ul>
+<li><a class="reference external" href="#generating-arbitrary-xml-structures">6.2.1. generating arbitrary xml structures</a></li>
+<li><a class="reference external" href="#basic-example-for-generating-html">6.2.2. basic example for generating html</a></li>
+<li><a class="reference external" href="#css-styling-your-html-tags">6.2.3. CSS-styling your html Tags</a></li>
+<li><a class="reference external" href="#more-to-come">6.2.4. More to come ...</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="bin.html"
+                                  title="previous chapter">5. <tt class="docutils literal docutils literal"><span class="pre">py/bin/</span></tt> scripts</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="io.html"
+                                  title="next chapter">7. 1&nbsp;&nbsp;&nbsp;py.io</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/xml.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="io.html" title="7. 1   py.io"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="bin.html" title="5. py/bin/ scripts"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>5. py/bin/ scripts &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="up" title="Contents" href="contents.html" />
+    <link rel="next" title="6. 1   py.xml: Lightweight and flexible xml/html generation" href="xml.html" />
+    <link rel="prev" title="4. py.code" href="code.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="xml.html" title="6. 1   py.xml: Lightweight and flexible xml/html generation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="code.html" title="4. py.code"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" accesskey="U">Contents</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="py-bin-scripts">
+<h1>5. <tt class="docutils literal"><span class="pre">py/bin/</span></tt> scripts<a class="headerlink" href="#py-bin-scripts" title="Permalink to this headline">¶</a></h1>
+<p>The py-lib contains some scripts, most of which are
+small ones (apart from <tt class="docutils literal"><span class="pre">py.test</span></tt>) that help during
+the python development process.  If working
+from a svn-checkout of py lib you may add <tt class="docutils literal"><span class="pre">py/bin</span></tt>
+to your shell <tt class="docutils literal"><span class="pre">PATH</span></tt> which should make the scripts
+available on your command prompt.</p>
+<div class="section" id="py-test">
+<h2>5.1. <tt class="docutils literal"><span class="pre">py.test</span></tt><a class="headerlink" href="#py-test" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">py.test</span></tt> executable is the main entry point into the py-lib testing tool,
+see the <a class="reference external" href="test.html">py.test documentation</a>.</p>
+</div>
+<div class="section" id="py-cleanup">
+<h2>5.2. <tt class="docutils literal"><span class="pre">py.cleanup</span></tt><a class="headerlink" href="#py-cleanup" title="Permalink to this headline">¶</a></h2>
+<p>Usage: <tt class="docutils literal"><span class="pre">py.cleanup</span> <span class="pre">[PATH]</span></tt></p>
+<p>Delete pyc file recursively, starting from <tt class="docutils literal"><span class="pre">PATH</span></tt> (which defaults to the
+current working directory). Don&#8217;t follow links and don&#8217;t recurse into
+directories with a &#8220;.&#8221;.</p>
+</div>
+<div class="section" id="py-countloc">
+<h2>5.3. <tt class="docutils literal"><span class="pre">py.countloc</span></tt><a class="headerlink" href="#py-countloc" title="Permalink to this headline">¶</a></h2>
+<p>Usage: <tt class="docutils literal"><span class="pre">py.countloc</span> <span class="pre">[PATHS]</span></tt></p>
+<p>Count (non-empty) lines of python code and number of python files recursively
+starting from a <tt class="docutils literal"><span class="pre">PATHS</span></tt> given on the command line (starting from the current
+working directory). Distinguish between test files and normal ones and report
+them separately.</p>
+</div>
+<div class="section" id="py-lookup">
+<h2>5.4. <tt class="docutils literal"><span class="pre">py.lookup</span></tt><a class="headerlink" href="#py-lookup" title="Permalink to this headline">¶</a></h2>
+<p>Usage: <tt class="docutils literal"><span class="pre">py.lookup</span> <span class="pre">SEARCH_STRING</span> <span class="pre">[options]</span></tt></p>
+<p>Looks recursively at Python files for a <tt class="docutils literal"><span class="pre">SEARCH_STRING</span></tt>, starting from the
+present working directory. Prints the line, with the filename and line-number
+prepended.</p>
+</div>
+<div class="section" id="py-rest">
+<h2>5.5. <tt class="docutils literal"><span class="pre">py.rest</span></tt><a class="headerlink" href="#py-rest" title="Permalink to this headline">¶</a></h2>
+<p>Usage: <tt class="docutils literal"><span class="pre">py.rest</span> <span class="pre">[PATHS]</span> <span class="pre">[options]</span></tt></p>
+<p>Loot recursively for .txt files starting from <tt class="docutils literal"><span class="pre">PATHS</span></tt> and convert them to
+html using docutils or to pdf files, if the <tt class="docutils literal"><span class="pre">--pdf</span></tt> option is used. For
+conversion to PDF you will need several command line tools, on Ubuntu Linux
+this is <strong>texlive</strong> and <strong>texlive-extra-utils</strong>.</p>
+<p><tt class="docutils literal"><span class="pre">py.rest</span></tt> has some extra features over rst2html (which is shipped with
+docutils). Most of these are still experimental, the one which is most likely
+not going to change is the <a class="reference external" href="http://www.graphviz.org">graphviz</a> directive. With that you can embed .dot
+files into your document and have them be converted to png (when outputting
+html) and to eps (when outputting pdf). Otherwise the directive works mostly
+like the image directive:</p>
+<div class="highlight-python"><pre>.. graphviz:: example.dot
+   :scale: 90</pre>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">5. <tt class="docutils literal"><span class="pre">py/bin/</span></tt> scripts</a><ul>
+<li><a class="reference external" href="#py-test">5.1. <tt class="docutils literal"><span class="pre">py.test</span></tt></a></li>
+<li><a class="reference external" href="#py-cleanup">5.2. <tt class="docutils literal"><span class="pre">py.cleanup</span></tt></a></li>
+<li><a class="reference external" href="#py-countloc">5.3. <tt class="docutils literal"><span class="pre">py.countloc</span></tt></a></li>
+<li><a class="reference external" href="#py-lookup">5.4. <tt class="docutils literal"><span class="pre">py.lookup</span></tt></a></li>
+<li><a class="reference external" href="#py-rest">5.5. <tt class="docutils literal"><span class="pre">py.rest</span></tt></a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="code.html"
+                                  title="previous chapter">4. py.code</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="xml.html"
+                                  title="next chapter">6. 1&nbsp;&nbsp;&nbsp;py.xml: Lightweight and flexible xml/html generation</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/bin.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="xml.html" title="6. 1   py.xml: Lightweight and flexible xml/html generation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="code.html" title="4. py.code"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

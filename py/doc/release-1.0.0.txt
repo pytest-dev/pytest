@@ -1,0 +1,31 @@
+py lib 0.9.0: py.test, distributed execution, greenlets and more
+======================================================================
+
+Welcome to the 0.9.0 py lib release - a library aiming to 
+support agile and test-driven python development on various levels. 
+
+Main API/Tool Features: 
+
+* py.test: cross-project testing tool with many advanced features
+* py.execnet: ad-hoc code distribution to SSH, Socket and local sub processes
+* py.magic.greenlet: micro-threads on standard CPython ("stackless-light")
+* py.path: path abstractions over local and subversion files 
+* rich documentation of py's exported API 
+* tested against Linux, OSX and partly against Win32, python 2.3-2.5
+
+All these features and their API have extensive documentation,
+generated with the new "apigen", which we intend to make accessible
+for other python projects as well.  
+
+Download/Install:   http://codespeak.net/py/0.9.0/download.html
+Documentation/API:  http://codespeak.net/py/0.9.0/index.html
+
+Work on the py lib has been partially funded by the 
+European Union IST programme and by http://merlinux.de 
+within the PyPy project. 
+
+best, have fun and let us know what you think!
+
+holger krekel, Maciej Fijalkowski, 
+Guido Wesdorp, Carl Friedrich Bolz
+

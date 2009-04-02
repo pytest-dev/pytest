@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>10. Why, who, what and how do you do the py lib? &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="prev" title="9. Miscellaneous features of the py lib" href="misc.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="misc.html" title="9. Miscellaneous features of the py lib"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="why-who-what-and-how-do-you-do-the-py-lib">
+<h1>10. Why, who, what and how do you do <em>the py lib</em>?<a class="headerlink" href="#why-who-what-and-how-do-you-do-the-py-lib" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="why-did-we-start-the-py-lib">
+<h2>10.1. Why did we start the py lib?<a class="headerlink" href="#why-did-we-start-the-py-lib" title="Permalink to this headline">¶</a></h2>
+<p>Among the main motivation for the py lib and its flagship
+py.test tool were:</p>
+<ul class="simple">
+<li>to test applications with a testing tool that provides
+advanced features out of the box, yet allows full customization
+per-project.</li>
+<li>distribute applications in an ad-hoc way both for testing
+and for application integration purposes.</li>
+<li>help with neutralizing platform and python version differences</li>
+<li>offer a uniform way to access local and remote file resources</li>
+<li>offer some unique features like micro-threads (greenlets)</li>
+</ul>
+</div>
+<div class="section" id="what-is-the-py-libs-current-focus">
+<h2>10.2. What is the py libs current focus?<a class="headerlink" href="#what-is-the-py-libs-current-focus" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="testing-testing-testing">
+<h3>10.2.1. testing testing testing<a class="headerlink" href="#testing-testing-testing" title="Permalink to this headline">¶</a></h3>
+<p>Currently, the main focus of the py lib is to get a decent
+<a class="reference external" href="test.html">test environment</a>, indeed to produce the best one out there.
+Writing, distributing and deploying tests should become
+a snap ... and fun!</p>
+<p>On a side note: automated tests fit very well to the dynamism
+of Python.  Automated tests ease development and allow fast
+refactoring cycles.  Automated tests are a means of
+communication as well.</p>
+</div>
+<div class="section" id="ad-hoc-distribution-of-programs">
+<h3>10.2.2. ad-hoc distribution of programs<a class="headerlink" href="#ad-hoc-distribution-of-programs" title="Permalink to this headline">¶</a></h3>
+<p>The py lib through its <a class="reference external" href="execnet.html">py.execnet</a> namespaces offers
+support for ad-hoc distributing programs across
+a network and subprocesses.  We&#8217;d like to generalize
+this approach further to instantiate and let whole
+ad-hoc networks communicate with each other while
+keeping to a simple programming model.</p>
+</div>
+<div class="section" id="allowing-maximum-refactoring-in-the-future">
+<h3>10.2.3. allowing maximum refactoring in the future ...<a class="headerlink" href="#allowing-maximum-refactoring-in-the-future" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="explicit-name-export-control">
+<h4>10.2.3.1. explicit name export control<a class="headerlink" href="#explicit-name-export-control" title="Permalink to this headline">¶</a></h4>
+<p>In order to allow a fast development pace across versions of
+the py lib there is <strong>explicit name export control</strong>.  You
+should only see names which make sense to use from the outside
+and which the py lib developers want to guarantee across versions.
+However, you don&#8217;t need to treat the <tt class="docutils literal"><span class="pre">py</span></tt> lib as
+anything special.  You can simply use the usual <tt class="docutils literal"><span class="pre">import</span></tt>
+statement and will not notice much of a difference - except that
+the namespaces you&#8217;ll see from the <tt class="docutils literal"><span class="pre">py</span></tt> lib are relatively
+clean and have no clutter.</p>
+</div>
+<div class="section" id="release-policy-api-maintenance">
+<h4>10.2.3.2. Release policy &amp; API maintenance<a class="headerlink" href="#release-policy-api-maintenance" title="Permalink to this headline">¶</a></h4>
+<p>We&#8217;ll talk about major, minor and micro numbers as the three
+numbers in &#8220;1.2.3&#8221; respectively.  These are the
+the rough release policies:</p>
+<ul>
+<li><p class="first">Micro-releases are bug fix releases and should not introduce
+new names to the public API. They may add tests and thus
+further define the behaviour of the py lib. They may
+completly change the implementation but the public API
+tests should continue to run (unless they needed to
+get fixed themselves).</p>
+</li>
+<li><p class="first">No <strong>tested feature</strong> of the exported py API shall vanish
+across minor releases until it is marked deprecated.</p>
+<p>For example, pure API tests of a future version 1.0 are to
+continue to fully run on 1.1 and so on.  If an API gets
+deprecated with a minor release it goes with the next minor
+release.  Thus if you don&#8217;t use deprecated APIs you should
+be able to use the next two minor releases.  However, if
+you relied on some untested implementation behaviour,
+you may still get screwed.  Solution: add API tests to the
+py lib :-)  It&#8217;s really the tests that make the difference.</p>
+</li>
+<li><p class="first">Pure API tests are not allowed to access any implementation
+level details.  For example, accessing names starting with
+a single leading &#8216;_&#8217; is generally seen as an implementation
+level detail.</p>
+</li>
+<li><p class="first">major releases <em>should</em>, but are not required to, pass
+all API tests of the previous latest major released
+version.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="the-need-to-find-the-right-paths">
+<h3>10.2.4. the need to find the right <em>paths</em> ...<a class="headerlink" href="#the-need-to-find-the-right-paths" title="Permalink to this headline">¶</a></h3>
+<p>Another focus are well tested so called <em>path</em> implementations
+that allow you to seemlessly work with different backends,
+currently a local filesystem, subversion working copies and
+subversion remote URLs.</p>
+</div>
+</div>
+<div class="section" id="how-does-py-development-work">
+<h2>10.3. How does py development work?<a class="headerlink" href="#how-does-py-development-work" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="communication-and-coding-style">
+<h3>10.3.1. Communication and coding style<a class="headerlink" href="#communication-and-coding-style" title="Permalink to this headline">¶</a></h3>
+<p>We are discussing things on our <a class="reference external" href="http://codespeak.net/mailman/listinfo/py-dev">py-dev mailing list</a>
+and collaborate via the codespeak subversion repository.</p>
+<p>We follow a <a class="reference external" href="coding-style.html">coding style</a> which strongly builds on <a class="reference external" href="http://www.python.org/peps/pep-0008.html">PEP 8</a>,
+the basic python coding style document.</p>
+<p>It&#8217;s easy to get commit rights especially if you are an
+experienced python developer and share some of the
+frustrations described above.</p>
+</div>
+<div class="section" id="licensing">
+<h3>10.3.2. Licensing<a class="headerlink" href="#licensing" title="Permalink to this headline">¶</a></h3>
+<p>The Py lib is released under the MIT license and all
+contributors need to release their contributions
+under this license as well.</p>
+</div>
+<div class="section" id="connections-with-pypy">
+<h3>10.3.3. connections with <a class="reference external" href="http://codespeak.net/pypy">PyPy</a><a class="headerlink" href="#connections-with-pypy" title="Permalink to this headline">¶</a></h3>
+<p>A major motivation for writing the py lib stems from needs
+during <a class="reference external" href="http://codespeak.net/pypy">PyPy</a> development, most importantly testing and
+file system access issues.  PyPy puts a lot of pressure
+on a testing environment and thus is a good <strong>reality test</strong>.</p>
+</div>
+</div>
+<div class="section" id="who-is-we">
+<h2>10.4. Who is &#8220;we&#8221;?<a class="headerlink" href="#who-is-we" title="Permalink to this headline">¶</a></h2>
+<p>Some initial code was written from <em>Jens-Uwe Mager</em> and <em>Holger
+Krekel</em>, after which Holger continued on a previous
+incarnations of the py.test tool (known first as &#8216;utest&#8217;, then
+as &#8216;std.utest&#8217;, now for some 2 years &#8216;py.test&#8217;).</p>
+<p>Helpful discussions took place with <em>Martijn Faassen</em>, <em>Stephan
+Schwarzer</em>, <em>Brian Dorsey</em>, <em>Grigh Gheorghiu</em> and then
+<em>Armin Rigo</em> who contributed important parts.
+He and Holger came up with a couple of iterations of the
+testing-code that reduced the API to basically nothing: just the
+plain assert statement and a <tt class="docutils literal"><span class="pre">py.test.raises</span></tt> method to
+check for occuring exceptions within tests.</p>
+<p>Currently (as of 2007), there are more people involved
+and also have worked funded through <a class="reference external" href="http://merlinux.de">merlinux</a> and the
+PyPy EU project, Carl Friedrich Bolz, Guido Wesdorp
+and Maciej Fijalkowski who contributed particularly
+in 2006 and 2007 major parts of the py lib.</p>
+<p>&#8211;</p>
+<table class="docutils footnote" frame="void" id="id1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td>FOSS is an evolving acronym for Free and Open Source Software</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">10. Why, who, what and how do you do <em>the py lib</em>?</a><ul>
+<li><a class="reference external" href="#why-did-we-start-the-py-lib">10.1. Why did we start the py lib?</a></li>
+<li><a class="reference external" href="#what-is-the-py-libs-current-focus">10.2. What is the py libs current focus?</a><ul>
+<li><a class="reference external" href="#testing-testing-testing">10.2.1. testing testing testing</a></li>
+<li><a class="reference external" href="#ad-hoc-distribution-of-programs">10.2.2. ad-hoc distribution of programs</a></li>
+<li><a class="reference external" href="#allowing-maximum-refactoring-in-the-future">10.2.3. allowing maximum refactoring in the future ...</a><ul>
+<li><a class="reference external" href="#explicit-name-export-control">10.2.3.1. explicit name export control</a></li>
+<li><a class="reference external" href="#release-policy-api-maintenance">10.2.3.2. Release policy &amp; API maintenance</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#the-need-to-find-the-right-paths">10.2.4. the need to find the right <em>paths</em> ...</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#how-does-py-development-work">10.3. How does py development work?</a><ul>
+<li><a class="reference external" href="#communication-and-coding-style">10.3.1. Communication and coding style</a></li>
+<li><a class="reference external" href="#licensing">10.3.2. Licensing</a></li>
+<li><a class="reference external" href="#connections-with-pypy">10.3.3. connections with PyPy</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#who-is-we">10.4. Who is &#8220;we&#8221;?</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="misc.html"
+                                  title="previous chapter">9. Miscellaneous features of the py lib</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/why_py.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="misc.html" title="9. Miscellaneous features of the py lib"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

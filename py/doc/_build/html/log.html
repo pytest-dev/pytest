@@ -1,0 +1,298 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>8. py.log documentation and musings &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="next" title="9. 1   Miscellaneous features of the py lib" href="misc.html" />
+    <link rel="prev" title="7. py.io" href="io.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="misc.html" title="9. 1   Miscellaneous features of the py lib"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="7. py.io"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="py-log-documentation-and-musings">
+<h1>8. py.log documentation and musings<a class="headerlink" href="#py-log-documentation-and-musings" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="foreword">
+<h2>8.1. Foreword<a class="headerlink" href="#foreword" title="Permalink to this headline">¶</a></h2>
+<p>This document is an attempt to briefly state the actual specification of the
+<tt class="code docutils literal"><span class="pre">py.log</span></tt> module.  It was written by Francois Pinard and also contains
+some ideas for enhancing the py.log facilities.</p>
+<p>NOTE that <tt class="code docutils literal"><span class="pre">py.log</span></tt> is subject to refactorings, it may change with
+the next release.</p>
+<p>This document is meant to trigger or facilitate discussions.  It shamelessly
+steals from the <a class="reference external" href="http://agiletesting.blogspot.com/2005/06/keyword-based-logging-with-py-library.html">Agile Testing</a> comments, and from other sources as well,
+without really trying to sort them out.</p>
+</div>
+<div class="section" id="logging-organisation">
+<h2>8.2. Logging organisation<a class="headerlink" href="#logging-organisation" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="code docutils literal"><span class="pre">py.log</span></tt> module aims a niche comparable to the one of the
+<a class="reference external" href="http://www.python.org/doc/2.4.2/lib/module-logging.html">logging module</a> found within the standard Python distributions, yet
+with much simpler paradigms for configuration and usage.</p>
+<p>Holger Krekel, the main <tt class="code docutils literal"><span class="pre">py</span></tt> library developer, introduced
+the idea of keyword-based logging and the idea of logging <em>producers</em> and
+<em>consumers</em>.  A log producer is an object used by the application code
+to send messages to various log consumers.  When you create a log
+producer, you define a set of keywords that are then used to both route
+the logging messages to consumers, and to prefix those messages.</p>
+<p>In fact, each log producer has a few keywords associated with it for
+identification purposes.  These keywords form a tuple of strings, and
+may be used to later retrieve a particular log producer.</p>
+<p>A log producer may (or may not) be associated with a log consumer, meant
+to handle log messages in particular ways.  The log consumers can be
+<tt class="docutils literal"><span class="pre">STDOUT</span></tt>, <tt class="docutils literal"><span class="pre">STDERR</span></tt>, log files, syslog, the Windows Event Log, user
+defined functions, etc.  (Yet, logging to syslog or to the Windows Event
+Log is only future plans for now).  A log producer has never more than
+one consumer at a given time, but it is possible to dynamically switch
+a producer to use another consumer.  On the other hand, a single log
+consumer may be associated with many producers.</p>
+<p>Note that creating and associating a producer and a consumer is done
+automatically when not otherwise overriden, so using <tt class="code docutils literal"><span class="pre">py</span></tt> logging
+is quite comfortable even in the smallest programs.  More typically,
+the application programmer will likely design a hierarchy of producers,
+and will select keywords appropriately for marking the hierarchy tree.
+If a node of the hierarchical tree of producers has to be divided in
+sub-trees, all producers in the sub-trees share, as a common prefix, the
+keywords of the node being divided.  In other words, we go further down
+in the hierarchy of producers merely by adding keywords.</p>
+</div>
+<div class="section" id="using-the-py-log-library">
+<h2>8.3. Using the py.log library<a class="headerlink" href="#using-the-py-log-library" title="Permalink to this headline">¶</a></h2>
+<p>To use the <tt class="code docutils literal"><span class="pre">py.log</span></tt> library, the user must import it into a Python
+application, create at least one log producer and one log consumer, have
+producers and consumers associated, and finally call the log producers
+as needed, giving them log messages.</p>
+<div class="section" id="importing">
+<h3>8.3.1. Importing<a class="headerlink" href="#importing" title="Permalink to this headline">¶</a></h3>
+<p>Once the <tt class="code docutils literal"><span class="pre">py</span></tt> library is installed on your system, a mere:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">py</span>
+</pre></div>
+</div>
+<p>holds enough magic for lazily importing the various facilities of the
+<tt class="code docutils literal"><span class="pre">py</span></tt> library when they are first needed.  This is really how
+<tt class="code docutils literal"><span class="pre">py.log</span></tt> is made available to the application.  For example, after
+the above <tt class="docutils literal"><span class="pre">import</span> <span class="pre">py</span></tt>, one may directly write <tt class="docutils literal"><span class="pre">py.log.Producer(...)</span></tt>
+and everything should work fine, the user does not have to worry about
+specifically importing more modules.</p>
+</div>
+<div class="section" id="creating-a-producer">
+<h3>8.3.2. Creating a producer<a class="headerlink" href="#creating-a-producer" title="Permalink to this headline">¶</a></h3>
+<p>There are three ways for creating a log producer instance:</p>
+<blockquote>
+<ul class="simple">
+<li>As soon as <tt class="docutils literal"><span class="pre">py.log</span></tt> is first evaluated within an application
+program, a default log producer is created, and made available under
+the name <tt class="docutils literal"><span class="pre">py.log.default</span></tt>.  The keyword <tt class="docutils literal"><span class="pre">default</span></tt> is associated
+with that producer.</li>
+<li>The <tt class="docutils literal"><span class="pre">py.log.Producer()</span></tt> constructor may be explicitly called
+for creating a new instance of a log producer.  That constructor
+accepts, as an argument, the keywords that should be associated with
+that producer.  Keywords may be given either as a tuple of keyword
+strings, or as a single space-separated string of keywords.</li>
+<li>Whenever an attribute is <em>taken</em> out of a log producer instance,
+for the first time that attribute is taken, a new log producer is
+created.  The keywords associated with that new producer are those
+of the initial producer instance, to which is appended the name of
+the attribute being taken.</li>
+</ul>
+</blockquote>
+<p>The last point is especially useful, as it allows using log producers
+without further declarations, merely creating them <em>on-the-fly</em>.</p>
+</div>
+<div class="section" id="creating-a-consumer">
+<h3>8.3.3. Creating a consumer<a class="headerlink" href="#creating-a-consumer" title="Permalink to this headline">¶</a></h3>
+<p>There are many ways for creating or denoting a log consumer:</p>
+<blockquote>
+<ul>
+<li><p class="first">A default consumer exists within the <tt class="docutils literal"><span class="pre">py.log</span></tt> facilities, which
+has the effect of writing log messages on the Python standard output
+stream.  That consumer is associated at the very top of the producer
+hierarchy, and as such, is called whenever no other consumer is
+found.</p>
+</li>
+<li><p class="first">The notation <tt class="docutils literal"><span class="pre">py.log.STDOUT</span></tt> accesses a log consumer which writes
+log messages on the Python standard output stream.</p>
+</li>
+<li><p class="first">The notation <tt class="docutils literal"><span class="pre">py.log.STDERR</span></tt> accesses a log consumer which writes
+log messages on the Python standard error stream.</p>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">py.log.File()</span></tt> constructor accepts, as argument, either a file
+already opened in write mode or any similar file-like object, and
+creates a log consumer able to write log messages onto that file.</p>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">py.log.Path()</span></tt> constructor accepts a file name for its first
+argument, and creates a log consumer able to write log messages into
+that file.  The constructor call accepts a few keyword parameters:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">append</span></tt>, which is <tt class="xref docutils literal"><span class="pre">False</span></tt> by default, may be used for
+opening the file in append mode instead of write mode.</li>
+<li><tt class="docutils literal"><span class="pre">delayed_create</span></tt>, which is <tt class="xref docutils literal"><span class="pre">False</span></tt> by default, maybe be used
+for opening the file at the latest possible time.  Consequently,
+the file will not be created if it did not exist, and no actual
+log message gets written to it.</li>
+<li><tt class="docutils literal"><span class="pre">buffering</span></tt>, which is 1 by default, is used when opening the
+file.  Buffering can be turned off by specifying a 0 value.  The
+buffer size may also be selected through this argument.</li>
+</ul>
+</blockquote>
+</li>
+<li><p class="first">Any user defined function may be used for a log consumer.  Such a
+function should accept a single argument, which is the message to
+write, and do whatever is deemed appropriate by the programmer.
+When the need arises, this may be an especially useful and flexible
+feature.</p>
+</li>
+<li><p class="first">The special value <tt class="xref docutils literal"><span class="pre">None</span></tt> means no consumer at all.  This acts just
+like if there was a consumer which would silently discard all log
+messages sent to it.</p>
+</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="associating-producers-and-consumers">
+<h3>8.3.4. Associating producers and consumers<a class="headerlink" href="#associating-producers-and-consumers" title="Permalink to this headline">¶</a></h3>
+<p>Each log producer may have at most one log consumer associated with
+it.  A log producer gets associated with a log consumer through a
+<tt class="docutils literal"><span class="pre">py.log.set_consumer()</span></tt> call.  That function accepts two arguments,
+the first identifying a producer (a tuple of keyword strings or a single
+space-separated string of keywords), the second specifying the precise
+consumer to use for that producer.  Until this function is called for a
+producer, that producer does not have any explicit consumer associated
+with it.</p>
+<p>Now, the hierarchy of log producers establishes which consumer gets used
+whenever a producer has no explicit consumer.  When a log producer
+has no consumer explicitly associated with it, it dynamically and
+recursively inherits the consumer of its parent node, that is, that node
+being a bit closer to the root of the hierarchy.  In other words, the
+rightmost keywords of that producer are dropped until another producer
+is found which has an explicit consumer.  A nice side-effect is that,
+by explicitly associating a consumer with a producer, all consumer-less
+producers which appear under that producer, in the hierarchy tree,
+automatically <em>inherits</em> that consumer.</p>
+</div>
+<div class="section" id="writing-log-messages">
+<h3>8.3.5. Writing log messages<a class="headerlink" href="#writing-log-messages" title="Permalink to this headline">¶</a></h3>
+<p>All log producer instances are also functions, and this is by calling
+them that log messages are generated.  Each call to a producer object
+produces the text for one log entry, which in turn, is sent to the log
+consumer for that producer.</p>
+<p>The log entry displays, after a prefix identifying the log producer
+being used, all arguments given in the call, converted to strings and
+space-separated.  (This is meant by design to be fairly similar to what
+the <tt class="docutils literal"><span class="pre">print</span></tt> statement does in Python).  The prefix itself is made up
+of a colon-separated list of keywords associated with the producer, the
+whole being set within square brackets.</p>
+<p>Note that the consumer is responsible for adding the newline at the end
+of the log entry.  That final newline is not part of the text for the
+log entry.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">8. py.log documentation and musings</a><ul>
+<li><a class="reference external" href="#foreword">8.1. Foreword</a></li>
+<li><a class="reference external" href="#logging-organisation">8.2. Logging organisation</a></li>
+<li><a class="reference external" href="#using-the-py-log-library">8.3. Using the py.log library</a><ul>
+<li><a class="reference external" href="#importing">8.3.1. Importing</a></li>
+<li><a class="reference external" href="#creating-a-producer">8.3.2. Creating a producer</a></li>
+<li><a class="reference external" href="#creating-a-consumer">8.3.3. Creating a consumer</a></li>
+<li><a class="reference external" href="#associating-producers-and-consumers">8.3.4. Associating producers and consumers</a></li>
+<li><a class="reference external" href="#writing-log-messages">8.3.5. Writing log messages</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="io.html"
+                                  title="previous chapter">7. py.io</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="misc.html"
+                                  title="next chapter">9. 1&nbsp;&nbsp;&nbsp;Miscellaneous features of the py lib</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/log.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="misc.html" title="9. 1   Miscellaneous features of the py lib"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="io.html" title="7. py.io"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

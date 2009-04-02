@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>15. Downloading &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="next" title="16. Release notes" href="releases.html" />
+    <link rel="prev" title="14. Contact and communication" href="contact.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="releases.html" title="16. Release notes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="contact.html" title="14. Contact and communication"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="downloading">
+<h1>15. Downloading<a class="headerlink" href="#downloading" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="easy-install-py">
+<h2>15.1. &#8220;easy_install py&#8221;<a class="headerlink" href="#easy-install-py" title="Permalink to this headline">¶</a></h2>
+<p>With a working <a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools installation</a> you can install from the command line:</p>
+<div class="highlight-python"><pre>easy_install -U py</pre>
+</div>
+<p>to get the latest release of the py lib.  The <tt class="docutils literal"><span class="pre">-U</span></tt> switch
+will trigger an upgrade if you already have an older version installed.
+The py lib and its tools are expected to work well on Linux,
+Windows and OSX, Python versions 2.3, 2.4, 2.5 and 2.6.</p>
+<p>We provide binary eggs for Windows machines.</p>
+<p>On other systems you need a working C-compiler in order to
+install the full py lib.  If you don&#8217;t have a compiler available
+you can still install the py lib but without greenlets - look
+below for the <tt class="docutils literal"><span class="pre">install_lib</span></tt> target.</p>
+<p><strong>IMPORTANT NOTE</strong>: if you are using Windows and have previous
+installations of the py lib on your system, please download
+and execute <a class="reference external" href="http://codespeak.net/svn/py/build/winpathclean.py">http://codespeak.net/svn/py/build/winpathclean.py</a>
+This will check that no previous files are getting in the way.
+(Unfortunately we don&#8217;t know about a way to execute this
+code automatically during the above install).</p>
+</div>
+<div class="section" id="installing-on-debian-or-fedora">
+<h2>15.2. Installing on Debian or Fedora<a class="headerlink" href="#installing-on-debian-or-fedora" title="Permalink to this headline">¶</a></h2>
+<p>On Debian systems look for <tt class="docutils literal"><span class="pre">python-codespeak-lib</span></tt>.
+<em>This package is probably outdated - if somebody
+can help with bringing this up to date,
+that would be very much appreciated.</em></p>
+<p>Dwayne Bailey has thankfully put together a Fedora <a class="reference external" href="http://translate.sourceforge.net/releases/testing/fedora/pylib-0.9.2-1.fc9.noarch.rpm">RPM</a>.</p>
+</div>
+<div class="section" id="downloading-a-tar-zip-archive-and-installing-that">
+<h2>15.3. Downloading a tar/zip archive and installing that<a class="headerlink" href="#downloading-a-tar-zip-archive-and-installing-that" title="Permalink to this headline">¶</a></h2>
+<p>Go to the python package index (pypi) and download a tar or zip file:</p>
+<blockquote>
+<a class="reference external" href="http://pypi.python.org/pypi/py/">http://pypi.python.org/pypi/py/</a></blockquote>
+<p>and unpack it to a directory, where you then type:</p>
+<div class="highlight-python"><pre>python setup.py install</pre>
+</div>
+<p>If you don&#8217;t have a working C-compiler you can do:</p>
+<div class="highlight-python"><pre>python setup.py install_lib</pre>
+</div>
+<p>You will then not be able to use greenlets but otherwise
+<tt class="docutils literal"><span class="pre">py.test</span></tt> and all tools and APIs are fine to use.</p>
+</div>
+<div class="section" id="installing-from-subversion-develop-mode">
+<h2>15.4. Installing from subversion / develop mode<a class="headerlink" href="#installing-from-subversion-develop-mode" title="Permalink to this headline">¶</a></h2>
+<p>To follow development or help with fixing things
+for the next release, checkout the complete code
+and documentation source:</p>
+<div class="highlight-python"><pre>svn co http://codespeak.net/svn/py/release/0.9.x py-0.9.x</pre>
+</div>
+<p>You can then issue:</p>
+<div class="highlight-python"><pre>python setup.py develop</pre>
+</div>
+<p>in order to work with your checkout version.</p>
+<p>other interesting svn checkout points:</p>
+<div class="highlight-python"><pre>http://codespeak.net/
+    svn/py/release      # release tags and branches
+    svn/py/dist         # latest stable (may or may not be a release)
+    svn/py/trunk        # head development / merge point</pre>
+</div>
+</div>
+<div class="section" id="working-with-multiple-py-lib-versions-svn-externals">
+<h2>15.5. Working with multiple py lib versions / svn externals<a class="headerlink" href="#working-with-multiple-py-lib-versions-svn-externals" title="Permalink to this headline">¶</a></h2>
+<p>If you happen to have multiple versions of the py lib
+around or you ship the py lib as an svn-external to
+then you might want to use py lib scripts more directly.
+For example if you have a project layout like this:</p>
+<div class="highlight-python"><pre>mypkg/
+    subpkg1/
+        tests/
+    tests/
+py/ # as svn-external, could be specific tag/version</pre>
+</div>
+<p>then you want to make sure that the actual local py lib is used
+and not another system-wide version.  For this you need to add
+<tt class="docutils literal"><span class="pre">py/bin</span></tt> or <tt class="docutils literal"><span class="pre">py\bin\win32</span></tt> respectively to your system&#8217;s PATH settings.</p>
+<p>You can do this by executing (on windows) a script to set the environment:</p>
+<div class="highlight-python"><pre>c:\\path\to\checkout\py\env.cmd</pre>
+</div>
+<p>or on linux/osx you can add something like this to your shell
+initialization:</p>
+<div class="highlight-python"><pre>eval `python ~/path/to/checkout/py/env.py`</pre>
+</div>
+<p>to get good settings for PYTHONPATH and PATH.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">15. Downloading</a><ul>
+<li><a class="reference external" href="#easy-install-py">15.1. &#8220;easy_install py&#8221;</a></li>
+<li><a class="reference external" href="#installing-on-debian-or-fedora">15.2. Installing on Debian or Fedora</a></li>
+<li><a class="reference external" href="#downloading-a-tar-zip-archive-and-installing-that">15.3. Downloading a tar/zip archive and installing that</a></li>
+<li><a class="reference external" href="#installing-from-subversion-develop-mode">15.4. Installing from subversion / develop mode</a></li>
+<li><a class="reference external" href="#working-with-multiple-py-lib-versions-svn-externals">15.5. Working with multiple py lib versions / svn externals</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="contact.html"
+                                  title="previous chapter">14. Contact and communication</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="releases.html"
+                                  title="next chapter">16. Release notes</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/download.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="releases.html" title="16. Release notes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="contact.html" title="14. Contact and communication"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

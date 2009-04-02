@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.3. Included plugins &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="up" title="1. py.test" href="test.html" />
+    <link rel="next" title="1.4. Learning by examples" href="test-ext.html" />
+    <link rel="prev" title="1.2. Features" href="test-features.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="test-ext.html" title="1.4. Learning by examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test-features.html" title="1.2. Features"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" accesskey="U">1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="included-plugins">
+<h1>1.3. Included plugins<a class="headerlink" href="#included-plugins" title="Permalink to this headline">¶</a></h1>
+<p>Many of py.test&#8217;s features are implemented as a plugin.</p>
+<div class="section" id="id1">
+<h2>1.3.1. Included plugins<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>You can find the source code of all default plugins in
+<a class="reference external" href="http://codespeak.net/svn/py/trunk/py/test/plugin/">http://codespeak.net/svn/py/trunk/py/test/plugin/</a></p>
+<div class="section" id="plugins-that-add-reporting-asepcts">
+<h3>1.3.1.1. plugins that add reporting asepcts<a class="headerlink" href="#plugins-that-add-reporting-asepcts" title="Permalink to this headline">¶</a></h3>
+<p>pytest_terminal: default reporter for writing info to terminals</p>
+<p>pytest_resultlog: log test results in machine-readable form to a file</p>
+<p>pytest_eventlog: log all internal pytest events to a file</p>
+</div>
+<div class="section" id="plugins-for-adding-new-test-types">
+<h3>1.3.1.2. plugins for adding new test types<a class="headerlink" href="#plugins-for-adding-new-test-types" title="Permalink to this headline">¶</a></h3>
+<p>pytest_unittest: run traditional unittest TestCase instances</p>
+<p>pytest_doctest: run doctests in python modules or .txt files</p>
+<p>pytest_restdoc: provide RestructuredText syntax and link checking</p>
+</div>
+<div class="section" id="plugins-for-python-test-functions">
+<h3>1.3.1.3. plugins for python test functions<a class="headerlink" href="#plugins-for-python-test-functions" title="Permalink to this headline">¶</a></h3>
+<p>pytest_xfail: provides &#8220;expected to fail&#8221; test marker</p>
+<p>pytest_tmpdir: provide temporary directories to test functions</p>
+<p>pytest_plugintester: generic plugin apichecks, support for functional plugin tests</p>
+<p>pytest_apigen: tracing values of function/method calls when running tests</p>
+</div>
+</div>
+<div class="section" id="loading-plugins-and-specifying-dependencies">
+<h2>1.3.2. Loading plugins and specifying dependencies<a class="headerlink" href="#loading-plugins-and-specifying-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>py.test loads and configures plugins at tool startup:</p>
+<ul class="simple">
+<li>by reading the <tt class="docutils literal"><span class="pre">PYTEST_PLUGINS</span></tt> environment variable
+and importing the comma-separated list of plugin names.</li>
+<li>by loading all plugins specified via one or more <tt class="docutils literal"><span class="pre">-p</span> <span class="pre">name</span></tt>
+command line options.</li>
+<li>by loading all plugins specified via a <tt class="docutils literal"><span class="pre">pytest_plugins</span></tt>
+variable in <tt class="docutils literal"><span class="pre">conftest.py</span></tt> files or test modules.</li>
+</ul>
+<div class="section" id="example-ensure-a-plugin-is-loaded">
+<h3>1.3.2.1. example: ensure a plugin is loaded<a class="headerlink" href="#example-ensure-a-plugin-is-loaded" title="Permalink to this headline">¶</a></h3>
+<p>If you create a <tt class="docutils literal"><span class="pre">conftest.py</span></tt> file with the following content:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pytest_plugins</span> <span class="o">=</span> <span class="s">&quot;pytest_myextension&quot;</span><span class="p">,</span>
+</pre></div>
+</div>
+<p>then all tests in that directory and below it will run with
+an instantiated &#8220;pytest_myextension&#8221;.  Here is how instantiation
+takes place:</p>
+<ul class="simple">
+<li>the module <tt class="docutils literal"><span class="pre">pytest_extension</span></tt> will be imported and
+and its contained <cite>ExtensionPlugin`</cite> class will
+be instantiated.  A plugin module may specify its
+dependencies via another <tt class="docutils literal"><span class="pre">pytest_plugins</span></tt> definition.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">1.3. Included plugins</a><ul>
+<li><a class="reference external" href="#id1">1.3.1. Included plugins</a><ul>
+<li><a class="reference external" href="#plugins-that-add-reporting-asepcts">1.3.1.1. plugins that add reporting asepcts</a></li>
+<li><a class="reference external" href="#plugins-for-adding-new-test-types">1.3.1.2. plugins for adding new test types</a></li>
+<li><a class="reference external" href="#plugins-for-python-test-functions">1.3.1.3. plugins for python test functions</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#loading-plugins-and-specifying-dependencies">1.3.2. Loading plugins and specifying dependencies</a><ul>
+<li><a class="reference external" href="#example-ensure-a-plugin-is-loaded">1.3.2.1. example: ensure a plugin is loaded</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="test-features.html"
+                                  title="previous chapter">1.2. Features</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="test-ext.html"
+                                  title="next chapter">1.4. Learning by examples</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/test-plugins.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="test-ext.html" title="1.4. Learning by examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test-features.html" title="1.2. Features"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" >1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

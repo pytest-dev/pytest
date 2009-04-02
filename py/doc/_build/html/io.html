@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>7. py.io &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="next" title="8. 1   py.log documentation and musings" href="log.html" />
+    <link rel="prev" title="6. py.xml: Lightweight and flexible xml/html generation" href="xml.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="log.html" title="8. 1   py.log documentation and musings"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="xml.html" title="6. py.xml: Lightweight and flexible xml/html generation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="py-io">
+<h1>7. py.io<a class="headerlink" href="#py-io" title="Permalink to this headline">¶</a></h1>
+<p>The &#8216;py&#8217; lib provides helper classes for capturing IO during
+execution of a program.</p>
+<div class="section" id="io-capturing-examples">
+<h2>7.1. IO Capturing examples<a class="headerlink" href="#io-capturing-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="py-io-stdcapture">
+<h3>7.1.1. <tt class="docutils literal"><span class="pre">py.io.StdCapture</span></tt><a class="headerlink" href="#py-io-stdcapture" title="Permalink to this headline">¶</a></h3>
+<p>Basic Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">capture</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">StdCapture</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;hello&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span><span class="p">,</span><span class="n">err</span> <span class="o">=</span> <span class="n">capture</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;hello&quot;</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>For calling functions you may use a shortcut:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">():</span> <span class="k">print</span> <span class="s">&quot;hello&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">StdCapture</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&quot;hello&quot;</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="py-io-stdcapturefd">
+<h3>7.1.2. <tt class="docutils literal"><span class="pre">py.io.StdCaptureFD</span></tt><a class="headerlink" href="#py-io-stdcapturefd" title="Permalink to this headline">¶</a></h3>
+<p>If you also want to capture writes to the stdout/stderr
+filedescriptors you may invoke:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">capture</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">StdCaptureFD</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;world&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out</span><span class="p">,</span><span class="n">err</span> <span class="o">=</span> <span class="n">capture</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">err</span>
+<span class="go">&#39;world&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">7. py.io</a><ul>
+<li><a class="reference external" href="#io-capturing-examples">7.1. IO Capturing examples</a><ul>
+<li><a class="reference external" href="#py-io-stdcapture">7.1.1. <tt class="docutils literal"><span class="pre">py.io.StdCapture</span></tt></a></li>
+<li><a class="reference external" href="#py-io-stdcapturefd">7.1.2. <tt class="docutils literal"><span class="pre">py.io.StdCaptureFD</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="xml.html"
+                                  title="previous chapter">6. py.xml: Lightweight and flexible xml/html generation</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="log.html"
+                                  title="next chapter">8. 1&nbsp;&nbsp;&nbsp;<strong class="code">py.log</strong> documentation and musings</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/io.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="log.html" title="8. 1   py.log documentation and musings"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="xml.html" title="6. py.xml: Lightweight and flexible xml/html generation"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

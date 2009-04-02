@@ -1,0 +1,33 @@
+
+=====
+Links
+=====
+
+Some links to ongoing discussions and comments about pylib and technics/concepts pylib uses.
+
+* `Discussion <http://blog.ianbicking.org/site-packages-considered-harmful.html>`_ 
+  about site-packages. That's why pylib autopath and  py.__.misc.dynpkg are a good idea ;-)
+  
+
+* `Pyinotify <http://pyinotify.sourceforge.net/>`_  uses code from pypy autopath functions.
+
+* `Testing (WSGI) Applications with Paste <http://pythonpaste.org/testing-applications.html#the-test-environment>`_ and py.test. "This has been written with py.test in mind." Paste uses py.test.
+ 
+ 
+* `Agile Testing <http://agiletesting.blogspot.com/>`_ by Grig Gheorghiu
+  
+  *  `Slides from 'py library overview' presentation at SoCal Piggies meeting 
+     <http://agiletesting.blogspot.com/2005/07/slides-from-py-library-overview.html>`_
+
+  * `Python unit testing part 3: the py.test tool and library   
+    <http://agiletesting.blogspot.com/2005/01/python-unit-testing-part-3-pytest-tool.html>`_
+  
+  *  `greenlets and py.xml 
+     <http://agiletesting.blogspot.com/2005/07/py-lib-gems-greenlets-and-pyxml.html>`_
+  
+  * `Keyword-based logging with the py library 
+    <http://agiletesting.blogspot.com/2005/06/keyword-based-logging-with-py-library.html>`_
+  
+
+
+

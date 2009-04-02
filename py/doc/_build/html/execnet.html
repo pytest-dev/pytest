@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>2. py.execnet &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="next" title="3. py.path" href="path.html" />
+    <link rel="prev" title="1.7. Working Examples" href="test-examples.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="path.html" title="3. py.path"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test-examples.html" title="1.7. Working Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="py-execnet">
+<h1>2. py.execnet<a class="headerlink" href="#py-execnet" title="Permalink to this headline">¶</a></h1>
+<p><tt class="docutils literal"><span class="pre">py.execnet</span></tt> allows to:</p>
+<ul class="simple">
+<li>instantiate local or remote Python Processes</li>
+<li>send code for execution in one or many processes</li>
+<li>asynchronously send and receive data between processes through channels</li>
+<li>completely avoid manual installation steps on remote places</li>
+</ul>
+<div class="section" id="gateways-immediately-spawn-local-or-remote-process">
+<h2>2.1. Gateways: immediately spawn local or remote process<a class="headerlink" href="#gateways-immediately-spawn-local-or-remote-process" title="Permalink to this headline">¶</a></h2>
+<p>In order to send code to a remote place or a subprocess
+you need to instantiate a so-called Gateway object.
+There are currently three Gateway classes:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">py.execnet.PopenGateway</span></tt> to open a subprocess
+on the local machine.  Useful for making use
+of multiple processors to to contain code execution
+in a separated environment.</li>
+<li><tt class="docutils literal"><span class="pre">py.execnet.SshGateway</span></tt> to connect to
+a remote ssh server and distribute execution to it.</li>
+<li><tt class="docutils literal"><span class="pre">py.execnet.SocketGateway</span></tt> a way to connect to
+a remote Socket based server. <em>Note</em> that this method
+requires a manually started
+:source:py/execnet/script/socketserver.py
+script.  You can run this &#8220;server script&#8221; without
+having the py lib installed on the remote system
+and you can setup it up as permanent service.</li>
+</ul>
+</div>
+<div class="section" id="remote-exec-execute-source-code-remotely">
+<h2>2.2. remote_exec: execute source code remotely<a class="headerlink" href="#remote-exec-execute-source-code-remotely" title="Permalink to this headline">¶</a></h2>
+<p>All gateways offer remote code execution via this high level function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">remote_exec</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;return channel object for communicating with the asynchronously</span>
+<span class="sd">    executing &#39;source&#39; code which will have a corresponding &#39;channel&#39;</span>
+<span class="sd">    object in its executing namespace.&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<p>With <cite>remote_exec</cite> you send source code to the other
+side and get both a local and a remote <a class="reference internal" href="#channel">Channel</a> object,
+which you can use to have the local and remote site
+communicate data in a structured way.   Here is
+an example for reading the PID:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gw</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">channel</span> <span class="o">=</span> <span class="n">gw</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="gp">... </span><span class="s">    import os</span>
+<span class="gp">... </span><span class="s">    channel.send(os.getpid())</span>
+<span class="gp">... </span><span class="s">&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">remote_pid</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">remote_pid</span> <span class="o">!=</span> <span class="n">py</span><span class="o">.</span><span class="n">std</span><span class="o">.</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="channels-bidirectionally-exchange-data-between-hosts">
+<span id="exchange-data"></span><span id="channel-api"></span><span id="channel"></span><h2>2.3. Channels: bidirectionally exchange data between hosts<a class="headerlink" href="#channels-bidirectionally-exchange-data-between-hosts" title="Permalink to this headline">¶</a></h2>
+<p>A channel object allows to send and receive data between
+two asynchronously running programs.  When calling
+<cite>remote_exec</cite> you will get a channel object back and
+the code fragment running on the other side will
+see a channel object in its global namespace.</p>
+<p>Here is the interface of channel objects:</p>
+<div class="highlight-python"><pre>#
+# API for sending and receiving anonymous values
+#
+channel.send(item):
+    sends the given item to the other side of the channel,
+    possibly blocking if the sender queue is full.
+    Note that items need to be marshallable (all basic
+    python types are).
+
+channel.receive():
+    receives an item that was sent from the other side,
+    possibly blocking if there is none.
+    Note that exceptions from the other side will be
+    reraised as gateway.RemoteError exceptions containing
+    a textual representation of the remote traceback.
+
+channel.waitclose(timeout=None):
+    wait until this channel is closed.  Note that a closed
+    channel may still hold items that will be received or
+    send. Note that exceptions from the other side will be
+    reraised as gateway.RemoteError exceptions containing
+    a textual representation of the remote traceback.
+
+channel.close():
+    close this channel on both the local and the remote side.
+    A remote side blocking on receive() on this channel
+    will get woken up and see an EOFError exception.</pre>
+</div>
+</div>
+<div class="section" id="xspec-string-specification-for-gateway-type-and-configuration">
+<span id="xspec"></span><h2>2.4. XSpec: string specification for gateway type and configuration<a class="headerlink" href="#xspec-string-specification-for-gateway-type-and-configuration" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">py.execnet</span></tt> supports a simple extensible format for
+specifying and configuring Gateways for remote execution.
+You can use a string specification to instantiate a new gateway,
+for example a new SshGateway:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">gateway</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">makegateway</span><span class="p">(</span><span class="s">&quot;ssh=myhost&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s look at some examples for valid specifications.
+Specification for an ssh connection to <cite>wyvern</cite>, running on python2.4 in the (newly created) &#8216;mycache&#8217;  subdirectory:</p>
+<div class="highlight-python"><pre>ssh=wyvern//python=python2.4//chdir=mycache</pre>
+</div>
+<p>Specification of a python2.5 subprocess; with a low CPU priority (&#8220;nice&#8221; level). Current dir will be the current dir of the instantiator (that&#8217;s true for all &#8216;popen&#8217; specifications unless they specify &#8216;chdir&#8217;):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">popen</span><span class="o">//</span><span class="n">python</span><span class="o">=</span><span class="mf">2.5</span><span class="o">//</span><span class="n">nice</span><span class="o">=</span><span class="mf">20</span>
+</pre></div>
+</div>
+<p>Specification of a Python Socket server process that listens on 192.168.1.4:8888; current dir will be the &#8216;pyexecnet-cache&#8217; sub directory which is used a default for all remote processes:</p>
+<div class="highlight-python"><pre>socket=192.168.1.4:8888</pre>
+</div>
+<p>More generally, a specification string has this general format:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">key1</span><span class="o">=</span><span class="n">value1</span><span class="o">//</span><span class="n">key2</span><span class="o">=</span><span class="n">value2</span><span class="o">//</span><span class="n">key3</span><span class="o">=</span><span class="n">value3</span>
+</pre></div>
+</div>
+<p>If you omit a value, a boolean true value is assumed.  Currently
+the following key/values are supported:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">popen</span></tt> for a PopenGateway</li>
+<li><tt class="docutils literal"><span class="pre">ssh=host</span></tt> for a SshGateway</li>
+<li><tt class="docutils literal"><span class="pre">socket=address:port</span></tt> for a SocketGateway</li>
+<li><tt class="docutils literal"><span class="pre">python=executable</span></tt> for specifying Python executables</li>
+<li><tt class="docutils literal"><span class="pre">chdir=path</span></tt> change remote working dir to given relative or absolute path</li>
+<li><tt class="docutils literal"><span class="pre">nice=value</span></tt> decrease remote nice level if platforms supports it</li>
+</ul>
+</div>
+<div class="section" id="examples-of-py-execnet-usage">
+<h2>2.5. Examples of py.execnet usage<a class="headerlink" href="#examples-of-py-execnet-usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="compare-cwd-of-popen-gateways">
+<h3>2.5.1. Compare cwd() of Popen Gateways<a class="headerlink" href="#compare-cwd-of-popen-gateways" title="Permalink to this headline">¶</a></h3>
+<p>A PopenGateway has the same working directory as the instantiatior:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span><span class="o">,</span> <span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gw</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ch</span> <span class="o">=</span> <span class="n">gw</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;import os; channel.send(os.getcwd())&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">ch</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">res</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gw</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="synchronously-receive-results-from-two-sub-processes">
+<h3>2.5.2. Synchronously receive results from two sub processes<a class="headerlink" href="#synchronously-receive-results-from-two-sub-processes" title="Permalink to this headline">¶</a></h3>
+<p>Use MultiChannels for receiving multiple results from remote code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ch1</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;channel.send(1)&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ch2</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;channel.send(2)&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mch</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">MultiChannel</span><span class="p">([</span><span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">l</span> <span class="o">=</span> <span class="n">mch</span><span class="o">.</span><span class="n">receive_each</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mf">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="mf">1</span> <span class="ow">in</span> <span class="n">l</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="mf">2</span> <span class="ow">in</span> <span class="n">l</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="asynchronously-receive-results-from-two-sub-processes">
+<h3>2.5.3. Asynchronously receive results from two sub processes<a class="headerlink" href="#asynchronously-receive-results-from-two-sub-processes" title="Permalink to this headline">¶</a></h3>
+<p>Use <tt class="docutils literal"><span class="pre">MultiChannel.make_receive_queue()</span></tt> for asynchronously receiving
+multiple results from remote code.  This standard Queue provides
+<tt class="docutils literal"><span class="pre">(channel,</span> <span class="pre">result)</span></tt> tuples which allows to determine where
+a result comes from:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ch1</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;channel.send(1)&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ch2</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;channel.send(2)&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mch</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">MultiChannel</span><span class="p">([</span><span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">queue</span> <span class="o">=</span> <span class="n">mch</span><span class="o">.</span><span class="n">make_receive_queue</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chan1</span><span class="p">,</span> <span class="n">res1</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>  <span class="c"># you may also specify a timeout</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chan2</span><span class="p">,</span> <span class="n">res2</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res1</span> <span class="o">+</span> <span class="n">res2</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">chan1</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">chan2</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ch1</span><span class="p">,</span> <span class="n">ch2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">chan1</span> <span class="o">!=</span> <span class="n">chan2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="receive-file-contents-from-remote-ssh-account">
+<h3>2.5.4. Receive file contents from remote SSH account<a class="headerlink" href="#receive-file-contents-from-remote-ssh-account" title="Permalink to this headline">¶</a></h3>
+<p>Here is a small program that you can use to retrieve
+contents of remote files:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">py</span>
+<span class="c"># open a gateway to a fresh child process</span>
+<span class="n">gw</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">SshGateway</span><span class="p">(</span><span class="s">&#39;codespeak.net&#39;</span><span class="p">)</span>
+<span class="n">channel</span> <span class="o">=</span> <span class="n">gw</span><span class="o">.</span><span class="n">remote_exec</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        for fn in channel:</span>
+<span class="s">            f = open(fn, &#39;rb&#39;)</span>
+<span class="s">            channel.send(f.read())</span>
+<span class="s">            f.close()</span>
+<span class="s">&quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">somefilelist</span><span class="p">:</span>
+    <span class="n">channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+    <span class="c"># process content</span>
+
+<span class="c"># later you can exit / close down the gateway</span>
+<span class="n">gw</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="instantiate-a-socket-server-in-a-new-subprocess">
+<h3>2.5.5. Instantiate a socket server in a new subprocess<a class="headerlink" href="#instantiate-a-socket-server-in-a-new-subprocess" title="Permalink to this headline">¶</a></h3>
+<p>The following example opens a PopenGateway, i.e. a python
+child process, and starts a socket server within that process
+and then opens a second gateway to the freshly started
+socketserver:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">py</span>
+
+<span class="n">popengw</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">PopenGateway</span><span class="p">()</span>
+<span class="n">socketgw</span> <span class="o">=</span> <span class="n">py</span><span class="o">.</span><span class="n">execnet</span><span class="o">.</span><span class="n">SocketGateway</span><span class="o">.</span><span class="n">new_remote</span><span class="p">(</span><span class="n">popengw</span><span class="p">,</span> <span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="mf">0</span><span class="p">))</span>
+
+<span class="k">print</span> <span class="n">socketgw</span><span class="o">.</span><span class="n">_rinfo</span><span class="p">()</span> <span class="c"># print some info about the remote environment</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">2. py.execnet</a><ul>
+<li><a class="reference external" href="#gateways-immediately-spawn-local-or-remote-process">2.1. Gateways: immediately spawn local or remote process</a></li>
+<li><a class="reference external" href="#remote-exec-execute-source-code-remotely">2.2. remote_exec: execute source code remotely</a></li>
+<li><a class="reference external" href="#channels-bidirectionally-exchange-data-between-hosts">2.3. Channels: bidirectionally exchange data between hosts</a></li>
+<li><a class="reference external" href="#xspec-string-specification-for-gateway-type-and-configuration">2.4. XSpec: string specification for gateway type and configuration</a></li>
+<li><a class="reference external" href="#examples-of-py-execnet-usage">2.5. Examples of py.execnet usage</a><ul>
+<li><a class="reference external" href="#compare-cwd-of-popen-gateways">2.5.1. Compare cwd() of Popen Gateways</a></li>
+<li><a class="reference external" href="#synchronously-receive-results-from-two-sub-processes">2.5.2. Synchronously receive results from two sub processes</a></li>
+<li><a class="reference external" href="#asynchronously-receive-results-from-two-sub-processes">2.5.3. Asynchronously receive results from two sub processes</a></li>
+<li><a class="reference external" href="#receive-file-contents-from-remote-ssh-account">2.5.4. Receive file contents from remote SSH account</a></li>
+<li><a class="reference external" href="#instantiate-a-socket-server-in-a-new-subprocess">2.5.5. Instantiate a socket server in a new subprocess</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="test-examples.html"
+                                  title="previous chapter">1.7. Working Examples</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="path.html"
+                                  title="next chapter">3. py.path</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/execnet.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="path.html" title="3. py.path"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test-examples.html" title="1.7. Working Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

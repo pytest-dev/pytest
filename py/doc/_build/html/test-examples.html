@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.7. Working Examples &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="up" title="1. py.test" href="test.html" />
+    <link rel="next" title="2. py.execnet" href="execnet.html" />
+    <link rel="prev" title="1.6. Test configuration" href="test-config.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="execnet.html" title="2. py.execnet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test-config.html" title="1.6. Test configuration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" accesskey="U">1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="working-examples">
+<h1>1.7. Working Examples<a class="headerlink" href="#working-examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="managing-state-at-module-class-and-method-level">
+<h2>1.7.1. managing state at module, class and method level<a class="headerlink" href="#managing-state-at-module-class-and-method-level" title="Permalink to this headline">¶</a></h2>
+<p>Here is a working example for what goes on when you setup modules,
+classes and methods:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># [[from py/documentation/example/pytest/test_setup_flow_example.py]]</span>
+
+<span class="k">def</span> <span class="nf">setup_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+    <span class="n">module</span><span class="o">.</span><span class="n">TestStateFullThing</span><span class="o">.</span><span class="n">classcount</span> <span class="o">=</span> <span class="mf">0</span>
+
+<span class="k">class</span> <span class="nc">TestStateFullThing</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">setup_class</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">classcount</span> <span class="o">+=</span> <span class="mf">1</span>
+
+    <span class="k">def</span> <span class="nf">teardown_class</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">classcount</span> <span class="o">-=</span> <span class="mf">1</span>
+
+    <span class="k">def</span> <span class="nf">setup_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">func_name</span><span class="p">[</span><span class="mf">5</span><span class="p">:])</span>
+
+    <span class="k">def</span> <span class="nf">test_42</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">classcount</span> <span class="o">==</span> <span class="mf">1</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mf">42</span>
+
+    <span class="k">def</span> <span class="nf">test_23</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">classcount</span> <span class="o">==</span> <span class="mf">1</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mf">23</span>
+
+<span class="k">def</span> <span class="nf">teardown_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">module</span><span class="o">.</span><span class="n">TestStateFullThing</span><span class="o">.</span><span class="n">classcount</span> <span class="o">==</span> <span class="mf">0</span>
+</pre></div>
+</div>
+<p>For this example the control flow happens as follows:</p>
+<div class="highlight-python"><pre>import test_setup_flow_example
+setup_module(test_setup_flow_example)
+   setup_class(TestStateFullThing)
+       instance = TestStateFullThing()
+       setup_method(instance, instance.test_42)
+          instance.test_42()
+       setup_method(instance, instance.test_23)
+          instance.test_23()
+   teardown_class(TestStateFullThing)
+teardown_module(test_setup_flow_example)</pre>
+</div>
+<p>Note that <tt class="docutils literal"><span class="pre">setup_class(TestStateFullThing)</span></tt> is called and not
+<tt class="docutils literal"><span class="pre">TestStateFullThing.setup_class()</span></tt> which would require you
+to insert <tt class="docutils literal"><span class="pre">setup_class</span> <span class="pre">=</span> <span class="pre">classmethod(setup_class)</span></tt> to make
+your setup function callable. Did we mention that lazyness
+is a virtue?</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">1.7. Working Examples</a><ul>
+<li><a class="reference external" href="#managing-state-at-module-class-and-method-level">1.7.1. managing state at module, class and method level</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="test-config.html"
+                                  title="previous chapter">1.6. Test configuration</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="execnet.html"
+                                  title="next chapter">2. py.execnet</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/test-examples.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="execnet.html" title="2. py.execnet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test-config.html" title="1.6. Test configuration"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" >1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

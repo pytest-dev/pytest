@@ -1,0 +1,23 @@
+Test configuration
+========================
+
+test options and values 
+-----------------------------
+
+You can see all available command line options by running::
+
+    py.test -h 
+
+py.test will lookup values of options in this order:
+
+* option value supplied at command line 
+* content of environment variable ``PYTEST_OPTION_NAME=...``
+* ``name = ...`` setting in the nearest ``conftest.py`` file.
+
+The name of an option usually is the one you find 
+in the longform of the option, i.e. the name 
+behind the ``--`` double-dash. 
+
+IOW, you can set default values for options per project, per
+home-directoray, per shell session or per test-run. 
+

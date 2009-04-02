@@ -1,0 +1,155 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.1. Quickstart &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="up" title="1. py.test" href="test.html" />
+    <link rel="next" title="1.2. Features" href="test-features.html" />
+    <link rel="prev" title="1. py.test" href="test.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="test-features.html" title="1.2. Features"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test.html" title="1. py.test"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="test.html" accesskey="U">1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="quickstart">
+<h1>1.1. Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<p>This document assumes basic python knowledge.  If you have a
+<a class="reference external" href="http://pypi.python.org/pypi/setuptools">setuptools installation</a>, install <tt class="docutils literal"><span class="pre">py.test</span></tt> by typing:</p>
+<div class="highlight-python"><pre>easy_install -U py</pre>
+</div>
+<p>For alternative installation methods please see the <a class="reference external" href="download.html">download</a> page.</p>
+<p>You should now have a <tt class="docutils literal"><span class="pre">py.test</span></tt> command line tool and can
+look at its documented cmdline options via this command:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">py</span><span class="o">.</span><span class="n">test</span> <span class="o">-</span><span class="n">h</span>
+</pre></div>
+</div>
+<div class="section" id="writing-and-running-a-test">
+<h2>1.1.1. Writing and running a test<a class="headerlink" href="#writing-and-running-a-test" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">py.test</span></tt> is the command line tool to run tests.
+Let&#8217;s write a first test module by putting the following
+test function into a <tt class="docutils literal"><span class="pre">test_sample.py</span></tt> file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># content of test_sample.py</span>
+<span class="k">def</span> <span class="nf">test_answer</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="mf">42</span> <span class="o">==</span> <span class="mf">43</span>
+</pre></div>
+</div>
+<p>Now you can run the test by passing it as an argument:</p>
+<div class="highlight-python"><pre>py.test test_sample.py</pre>
+</div>
+<p>What does happen here?  <tt class="docutils literal"><span class="pre">py.test</span></tt> looks for functions and
+methods in the module that start with <tt class="docutils literal"><span class="pre">test_</span></tt>.  It then
+executes those tests.  Assertions about test outcomes are
+done via the standard <tt class="docutils literal"><span class="pre">assert</span></tt> statement.</p>
+<p>You can also use <tt class="docutils literal"><span class="pre">py.test</span></tt> to run all tests in a directory structure by
+invoking it without any arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">py</span><span class="o">.</span><span class="n">test</span>
+</pre></div>
+</div>
+<p>This will automatically collect and run any Python module whose filenames
+start with <tt class="docutils literal"><span class="pre">test_</span></tt> or ends with <tt class="docutils literal"><span class="pre">_test</span></tt> from the directory and any
+subdirectories, starting with the current directory, and run them. Each
+Python test module is inspected for test methods starting with <tt class="docutils literal"><span class="pre">test_</span></tt>.</p>
+<p>Please refer to <a class="reference external" href="test-features.html">features</a> for a walk through the basic features.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">1.1. Quickstart</a><ul>
+<li><a class="reference external" href="#writing-and-running-a-test">1.1.1. Writing and running a test</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="test.html"
+                                  title="previous chapter">1. py.test</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="test-features.html"
+                                  title="next chapter">1.2. Features</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/test-quickstart.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="test-features.html" title="1.2. Features"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test.html" title="1. py.test"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="test.html" >1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>

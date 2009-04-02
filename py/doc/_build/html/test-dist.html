@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>1.5. Distributed testing &mdash; py lib v1.0.0b1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0b1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="py lib v1.0.0b1 documentation" href="index.html" />
+    <link rel="up" title="1. py.test" href="test.html" />
+    <link rel="next" title="1.6. Test configuration" href="test-config.html" />
+    <link rel="prev" title="1.4. Writing plugins" href="test-ext.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="test-config.html" title="1.6. Test configuration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="test-ext.html" title="1.4. Writing plugins"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" accesskey="U">1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="distributed-testing">
+<span id="distribute-tests-across-machines"></span><h1>1.5. Distributed testing<a class="headerlink" href="#distributed-testing" title="Permalink to this headline">¶</a></h1>
+<p><tt class="docutils literal"><span class="pre">py.test</span></tt> can ad-hoc distribute test runs to multiple CPUs or remote
+machines.  This allows to speed up development or to use special resources
+of remote machines.  Before running tests remotely, <tt class="docutils literal"><span class="pre">py.test</span></tt> efficiently
+synchronizes your program source code to the remote place.  All test results
+are reported back and displayed to your local test session.  You may
+specify different Python versions and interpreters.</p>
+<p>Synchronisation and running of tests only requires
+a bare Python installation on the remote side.   No
+special software is installed - this is realized
+by use of the <strong>zero installation</strong> <a class="reference external" href="execnet.html">py.execnet</a> mechanisms.</p>
+<div class="section" id="speed-up-test-runs-by-sending-tests-to-multiple-cpus">
+<h2>1.5.1. Speed up test runs by sending tests to multiple CPUs<a class="headerlink" href="#speed-up-test-runs-by-sending-tests-to-multiple-cpus" title="Permalink to this headline">¶</a></h2>
+<p>To send tests to multiple CPUs, type:</p>
+<div class="highlight-python"><pre>py.test -n NUM</pre>
+</div>
+<p>Especially for longer running tests or tests requiring
+a lot of IO this can lead to considerable speed ups.</p>
+</div>
+<div class="section" id="running-tests-in-a-python-subprocess">
+<h2>1.5.2. Running tests in a Python subprocess<a class="headerlink" href="#running-tests-in-a-python-subprocess" title="Permalink to this headline">¶</a></h2>
+<p>To instantiate a python2.4 sub process and send tests to it, you may type:</p>
+<div class="highlight-python"><pre>py.test -d --tx popen//python=python2.4</pre>
+</div>
+<p>This will start a subprocess which is run with the &#8220;python2.4&#8221;
+Python interpreter, found in your system binary lookup path.</p>
+<p>If you prefix the &#8211;tx option value like this:</p>
+<div class="highlight-python"><pre>--tx 3*popen//python=python2.4</pre>
+</div>
+<p>then three subprocesses would be created and tests
+will be load-balanced across these three processes.</p>
+</div>
+<div class="section" id="sending-tests-to-remote-ssh-accounts">
+<h2>1.5.3. Sending tests to remote SSH accounts<a class="headerlink" href="#sending-tests-to-remote-ssh-accounts" title="Permalink to this headline">¶</a></h2>
+<p>Suppose you have a package <tt class="docutils literal"><span class="pre">mypkg</span></tt> which contains some
+tests that you can successfully run locally. And you
+have a ssh-reachable machine <tt class="docutils literal"><span class="pre">myhost</span></tt>.  Then
+you can ad-hoc distribute your tests by typing:</p>
+<div class="highlight-python"><pre>py.test -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg</pre>
+</div>
+<p>This will synchronize your <tt class="docutils literal"><span class="pre">mypkg</span></tt> package directory
+to an remote ssh account and then locally collect tests
+and send them to remote places for execution.</p>
+<p>You can specify multiple <tt class="docutils literal"><span class="pre">--rsyncdir</span></tt> directories
+to be sent to the remote side.</p>
+</div>
+<div class="section" id="sending-tests-to-remote-socket-servers">
+<h2>1.5.4. Sending tests to remote Socket Servers<a class="headerlink" href="#sending-tests-to-remote-socket-servers" title="Permalink to this headline">¶</a></h2>
+<p>Download the single-module <a class="reference external" href="http://codespeak.net/svn/py/dist/py/execnet/script/socketserver.py">socketserver.py</a> Python program
+and run it like this:</p>
+<div class="highlight-python"><pre>python socketserver.py</pre>
+</div>
+<p>It will tell you that it starts listening on the default
+port.  You can now on your home machine specify this
+new socket host with something like this:</p>
+<div class="highlight-python"><pre>py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg</pre>
+</div>
+</div>
+<div class="section" id="running-tests-on-many-platforms-at-once">
+<span id="atonce"></span><h2>1.5.5. Running tests on many platforms at once<a class="headerlink" href="#running-tests-on-many-platforms-at-once" title="Permalink to this headline">¶</a></h2>
+<p>The basic command to run tests on multiple platforms is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">py</span><span class="o">.</span><span class="n">test</span> <span class="o">--</span><span class="n">dist</span><span class="o">=</span><span class="n">each</span> <span class="o">--</span><span class="n">tx</span><span class="o">=</span><span class="n">spec1</span> <span class="o">--</span><span class="n">tx</span><span class="o">=</span><span class="n">spec2</span>
+</pre></div>
+</div>
+<p>If you specify a windows host, an OSX host and a Linux
+environment this command will send each tests to all
+platforms - and report back failures from all platforms
+at once.   The provided specifications strings
+use the <a class="reference external" href="execnet.html#xspec">xspec syntax</a>.</p>
+</div>
+<div class="section" id="specifying-test-exec-environments-in-a-conftest-py">
+<h2>1.5.6. Specifying test exec environments in a conftest.py<a class="headerlink" href="#specifying-test-exec-environments-in-a-conftest-py" title="Permalink to this headline">¶</a></h2>
+<p>Instead of specifying command line options, you can
+put options values in a <tt class="docutils literal"><span class="pre">conftest.py</span></tt> file like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pytest_option_tx</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ssh=myhost//python=python2.5&#39;</span><span class="p">,</span> <span class="s">&#39;popen//python=python2.5&#39;</span><span class="p">]</span>
+<span class="n">pytest_option_dist</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>Any commandline <tt class="docutils literal"><span class="pre">--tx</span></tt> specifictions  will add to the list of available execution
+environments.</p>
+</div>
+<div class="section" id="specifying-rsync-dirs-in-a-conftest-py">
+<h2>1.5.7. Specifying &#8220;rsync&#8221; dirs in a conftest.py<a class="headerlink" href="#specifying-rsync-dirs-in-a-conftest-py" title="Permalink to this headline">¶</a></h2>
+<p>In your <tt class="docutils literal"><span class="pre">mypkg/conftest.py</span></tt> you may specify directories to synchronise
+or to exclude:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">rsyncdirs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="s">&#39;../plugins&#39;</span><span class="p">]</span>
+<span class="n">rsyncignore</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;_cache&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>These directory specifications are relative to the directory
+where the <tt class="docutils literal"><span class="pre">conftest.py</span></tt> is found.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">1.5. Distributed testing</a><ul>
+<li><a class="reference external" href="#speed-up-test-runs-by-sending-tests-to-multiple-cpus">1.5.1. Speed up test runs by sending tests to multiple CPUs</a></li>
+<li><a class="reference external" href="#running-tests-in-a-python-subprocess">1.5.2. Running tests in a Python subprocess</a></li>
+<li><a class="reference external" href="#sending-tests-to-remote-ssh-accounts">1.5.3. Sending tests to remote SSH accounts</a></li>
+<li><a class="reference external" href="#sending-tests-to-remote-socket-servers">1.5.4. Sending tests to remote Socket Servers</a></li>
+<li><a class="reference external" href="#running-tests-on-many-platforms-at-once">1.5.5. Running tests on many platforms at once</a></li>
+<li><a class="reference external" href="#specifying-test-exec-environments-in-a-conftest-py">1.5.6. Specifying test exec environments in a conftest.py</a></li>
+<li><a class="reference external" href="#specifying-rsync-dirs-in-a-conftest-py">1.5.7. Specifying &#8220;rsync&#8221; dirs in a conftest.py</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="test-ext.html"
+                                  title="previous chapter">1.4. Writing plugins</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="test-config.html"
+                                  title="next chapter">1.6. Test configuration</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/test-dist.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="test-config.html" title="1.6. Test configuration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="test-ext.html" title="1.4. Writing plugins"
+             >previous</a> |</li>
+        <li><a href="index.html">py lib v1.0.0b1 documentation</a> &raquo;</li>
+          <li><a href="contents.html" >Contents</a> &raquo;</li>
+          <li><a href="test.html" >1. py.test</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Holger Krekel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.7.
+    </div>
+  </body>
+</html>
