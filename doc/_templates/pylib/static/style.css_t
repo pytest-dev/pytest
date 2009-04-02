@@ -1,5 +1,7 @@
+@import url("basic.css");
+
 body,body.editor,body.body {
-    font: 110% "Times New Roman", Arial, Verdana, Helvetica, serif;
+    font: 110% Verdana, Helvetica, Arial, serif;
     background: White;
     color: Black;
 }
