@@ -2,12 +2,10 @@
 py.test
 =======
 
-*py.test* is a tool for:
-
-* rapidly writing unit- and functional tests in Python
-* writing tests for non-python code and data
-* receiving useful reports on test failures 
-* distributing tests to multiple CPUs and remote environments
+* rapidly collect and run tests 
+* use unit- or doctests, functional or integration tests 
+* distribute tests to multiple environments
+* local or global plugins for custom test types
 
 quickstart_: for getting started immediately.
 

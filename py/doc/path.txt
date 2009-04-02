@@ -2,7 +2,6 @@
 py.path
 =======
 
-
 The 'py' lib provides a uniform high-level api to deal with filesystems
 and filesystem-like interfaces: :api:`py.path`.  It aims to offer a central
 object to fs-like object trees (reading from and writing to files, adding
