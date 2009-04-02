@@ -6,76 +6,17 @@ Miscellaneous features of the py lib
 Mapping the standard python library into py 
 ===========================================
 
-After you have worked with the py lib a bit, you probably enjoy
-the lazy importing feature, i.e. you only have to do ``import py`` and
-work your way to your desired object.  Using the full path 
-also ensures that there remains a focus on getting short paths 
-to objects. 
-
-The :api:`py.std` hook
-----------------------
-
-Of course, no matter what, everybody will continue to use the
-python standard library because it is a very usable code base.
-However, to properly support lazyness the py lib offers a way
-to get to many standard modules without requiring "import"
-statements.  For example, to get to the print-exception
+The :api:`py.std` object allows lazy access to 
+standard library modules.  For example, to get to the print-exception
 functionality of the standard library you can write:: 
 
     py.std.traceback.print_exc()
 
 without having to do anything else than the usual ``import py`` 
-at the beginning.  Note that not having imports for the 
-`python standard library` obviously gets rid of the *unused 
-import* problem. Modules only get imported when you actually
-need them. 
-
-Moreover, this approach resolves some of the issues stated in
-`the relative/absolute import PEP-328`_, as with the above
-approach you never have ambiguity problems.  The above
-traceback-usage is an absolute path that will not be
-accidentally get confused with local names.  (Well, never put
-a file ``py.py`` in an importable path, btw, mind you :-) 
-
-Automagically accessing sub packages doesn't work (yet?) 
---------------------------------------------------------
-
-If you use the :api:`py.std` hook you currently cannot magically
-import nested packages which otherwise need explicit imports of
-their sub-packages.  For example, the suversion bindings
-require you to do something like:: 
-
-    import svn.client 
-
-If you just do the naive thing with the py lib, i.e. write
-``py.std.svn.client`` it will not work unless you previously
-imported it already.  The py lib currently doesn't try to
-magically make this work.  The :api:`py.std` hook really is
-intended for Python standard modules which very seldomly (if
-at all) provide such nested packages. 
-
-**Note that you may never rely** on module identity, i.e. 
-that ``X is py.std.X`` for any ``X``. This is to allow
-us later to lazyly import nested packages. Yes, lazyness
-is hard to resist :-) 
-
-Note: you get an AttributeError, not an ImportError
----------------------------------------------------
-
-If you say ``py.std.XYZ`` and importing ``XYZ`` produces an
-``ImportError`` , it will actually show up as an
-``AttributeError``. It is deemed more important to adhere to
-the standard ``__getattr__`` protocol than to let the
-``ImportError`` pass through.  For example, you might want to
-do::
-
-    getattr(py.std.cStringIO, 'StringIO', py.std.StringIO.StringIO) 
-
-and you would expect that it works. It does work although it will 
-take away some lazyness because ``py.std.StringIO.StringIO`` will
-be imported in any case. 
-
-.. _`the relative/absolute import PEP-328`: http://www.python.org/peps/pep-0328.html
+at the beginning.  You can access any other top-level standard
+library module this way.  This means that you will only trigger 
+imports of modules that are actually needed.  Note that no attempt
+is made to import submodules.  
 
 Support for interaction with system utilities/binaries
 ======================================================

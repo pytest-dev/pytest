@@ -6,7 +6,7 @@ def test_os():
     assert py.std.os is os
 
 def test_import_error_converts_to_attributeerror():
-    py.test.raises(AttributeError, "py.std.xyzalskdj")
+    py.test.raises(ImportError, "py.std.xyzalskdj")
 
 def test_std_gets_it():
     for x in py.std.sys.modules:
