@@ -25,11 +25,11 @@ class SessionTests:
         assert failed[0].colitem.name == "test_one_one"
         assert failed[1].colitem.name == "test_other"
         assert failed[2].colitem.name == "test_two"
-        itemstarted = sorter.getnamed("itemstart")
+        itemstarted = sorter.getevents("itemstart")
         assert len(itemstarted) == 4
-        colstarted = sorter.getnamed("collectionstart")
+        colstarted = sorter.getevents("collectionstart")
         assert len(colstarted) == 1
-        col = colstarted[0].collector
+        col = colstarted[0].event.collector
         assert isinstance(col, py.test.collect.Module)
 
     def test_nested_import_error(self, testdir): 

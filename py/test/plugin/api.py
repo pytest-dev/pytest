@@ -55,7 +55,7 @@ class PluginHooks:
 
 class Events:
     # Events 
-    def pyevent(self, eventname, *args, **kwargs):
+    def pyevent(self, eventname, args, kwargs):
         """ generically called for each notification event. """
 
     def pyevent__gateway_init(self, gateway):
@@ -76,7 +76,7 @@ class Events:
     def pyevent__internalerror(self, event):
         """ called for internal errors. """
 
-    def pyevent__itemstart(self, item, node):
+    def pyevent__itemstart(self, item, node=None):
         """ test item gets collected. """
 
     def pyevent__itemtestreport(self, event):
@@ -91,7 +91,7 @@ class Events:
     def pyevent__collectionreport(self, event):
         """ collector finished collecting. """
 
-    def pyevent__testrunstart(self, event):
+    def pyevent__testrunstart(self):
         """ whole test run starts. """
 
     def pyevent__testrunfinish(self, event):

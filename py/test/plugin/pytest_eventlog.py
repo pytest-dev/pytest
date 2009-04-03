@@ -16,7 +16,7 @@ class EventlogPlugin:
             self.eventlogfile.close()
             del self.eventlogfile
 
-    def pyevent(self, eventname, *args, **kwargs):
+    def pyevent(self, eventname, args, kwargs):
         if hasattr(self, 'eventlogfile'):
             f = self.eventlogfile
             print >>f, eventname, args, kwargs
@@ -36,6 +36,6 @@ def test_generic(plugintester):
     """)
     testdir.runpytest("--eventlog=event.log")
     s = testdir.tmpdir.join("event.log").read()
-    assert s.find("TestrunStart") != -1
+    assert s.find("testrunstart") != -1
     assert s.find("ItemTestReport") != -1
     assert s.find("TestrunFinish") != -1

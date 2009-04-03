@@ -9,7 +9,7 @@ class EventQueue:
         self.queue = queue
         bus.register(self)
 
-    def pyevent(self, eventname, *args, **kwargs):
+    def pyevent(self, eventname, args, kwargs):
         self.queue.put((eventname, args, kwargs))
 
     def geteventargs(self, eventname, timeout=2.0):
@@ -48,7 +48,7 @@ class MySetup:
         assert not self.node.channel.isclosed()
         return self.node 
 
-    def finalize(self):
+    def xfinalize(self):
         if hasattr(self, 'node'):
             gw = self.node.gateway
             print "exiting:", gw
@@ -56,7 +56,7 @@ class MySetup:
 
 def pytest_funcarg__mysetup(pyfuncitem):
     mysetup = MySetup(pyfuncitem)
-    pyfuncitem.addfinalizer(mysetup.finalize)
+    #pyfuncitem.addfinalizer(mysetup.finalize)
     return mysetup
 
 def pytest_funcarg__testdir(__call__, pyfuncitem):

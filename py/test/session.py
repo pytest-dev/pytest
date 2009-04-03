@@ -79,7 +79,7 @@ class Session(object):
 
     def sessionstarts(self):
         """ setup any neccessary resources ahead of the test run. """
-        self.bus.notify("testrunstart", event.TestrunStart())
+        self.bus.notify("testrunstart")
         
     def pyevent__itemtestreport(self, rep):
         if rep.failed:

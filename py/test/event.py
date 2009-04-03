@@ -22,10 +22,6 @@ class NOP(BaseEvent):
 # Basic Live Reporting Events 
 # ----------------------------------------------------------------------
 
-class TestrunStart(BaseEvent):
-    def __init__(self):
-        self.timestart = time.time()
-
 class TestrunFinish(BaseEvent):
     def __init__(self, exitstatus=0, excinfo=None):
         self.exitstatus = exitstatus

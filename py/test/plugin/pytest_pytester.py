@@ -3,8 +3,10 @@ pytes plugin for easing testing of pytest runs themselves.
 """
 
 import py
+import inspect
 from py.__.test import event
 from py.__.test.config import Config as pytestConfig
+import api
 
 class PytesterPlugin:
     def pytest_funcarg__linecomp(self, pyfuncitem):
@@ -257,6 +259,13 @@ class Event:
     def __repr__(self):
         return "<Event %r %r>" %(self.name, self.args)
 
+class ParsedEvent:
+    def __init__(self, locals):
+        self.__dict__ = locals.copy()
+
+    def __repr__(self):
+        return "<Event %r>" %(self.__dict__,)
+
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
         self.events = []
@@ -264,7 +273,7 @@ class EventRecorder(object):
         self.debug = debug
         pyplugins.register(self)
 
-    def pyevent(self, name, *args, **kwargs):
+    def pyevent(self, name, args, kwargs):
         if name == "plugin_registered" and args == (self,):
             return
         if self.debug:
@@ -278,12 +287,42 @@ class EventRecorder(object):
                 return event
         raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
+    def getevents(self, eventname):
+        method = self.geteventmethod(eventname)
+        l = []
+        for event in self.events:
+            if event.name == eventname:
+                pevent = method(*event.args, **event.kwargs)
+                l.append(pevent)  
+        return l
+
+    def geteventmethod(self, eventname):
+        mname = "pyevent__" + eventname
+        method = getattr(api.Events, mname)
+        args, varargs, varkw, default = inspect.getargspec(method)
+        assert args[0] == "self"
+        args = args[1:]
+        fspec = inspect.formatargspec(args, varargs, varkw, default)
+        source = """def %(mname)s%(fspec)s: 
+                    return ParsedEvent(locals())""" % locals()
+        print source
+        exec source
+        return locals()[mname]
+
+
+    def firstparsedevent(self, eventname):
+        return  self.parsedevents(eventname)[0]
+
     def get(self, cls):
         l = []
         for event in self.events:
-            value = event.args[0]
-            if isinstance(value, cls):
-                l.append(value)
+            try:
+                value = event.args[0]
+            except IndexError:
+                continue
+            else:
+                if isinstance(value, cls):
+                    l.append(value)
         return l 
 
     def getnamed(self, *names):

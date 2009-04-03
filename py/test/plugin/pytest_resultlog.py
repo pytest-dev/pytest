@@ -81,7 +81,9 @@ class ResultLog(object):
             shortrepr, longrepr = getoutcomecodes(event)
             self.write_log_entry(shortrepr, gpath, longrepr)
 
-    def pyevent(self, eventname, event, *args, **kwargs):
+    def pyevent(self, eventname, args, kwargs):
+        if args:
+            event = args[0]
         if eventname == "itemtestreport":
             self.log_outcome(event)
         elif eventname == "collectionreport":
@@ -90,6 +92,7 @@ class ResultLog(object):
         elif eventname == "internalerror":
             path = event.repr.reprcrash.path # fishing :(
             self.write_log_entry('!', path, str(event.repr))
+
 
 # ===============================================================================
 #
@@ -223,7 +226,7 @@ class TestWithFunctionIntegration:
         except ValueError:
             excinfo = event.InternalException()
         reslog = ResultLog(StringIO.StringIO())        
-        reslog.pyevent("internalerror", excinfo)
+        reslog.pyevent("internalerror", (excinfo,), {})
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

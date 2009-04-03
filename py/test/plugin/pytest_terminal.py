@@ -194,7 +194,7 @@ class TerminalReporter:
                 self.stats.setdefault("skipped", []).append(event)
                 self.write_fspath_result(event.colitem.fspath, "S")
 
-    def pyevent__testrunstart(self, event):
+    def pyevent__testrunstart(self):
         self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
 
@@ -370,7 +370,7 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
-        rep.config.bus.notify("testrunstart", event.TestrunStart())
+        rep.config.bus.notify("testrunstart")
         
         for item in testdir.genitems([modcol]):
             ev = basic_run_report(item) 
@@ -397,7 +397,7 @@ class TestTerminal:
         """, configargs=("-v",))
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
-        rep.config.bus.notify("testrunstart", event.TestrunStart())
+        rep.config.bus.notify("testrunstart")
         items = modcol.collect()
         rep.config.option.debug = True # 
         for item in items:
@@ -422,7 +422,7 @@ class TestTerminal:
         modcol = testdir.getmodulecol("import xyz")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.bus.register(rep)
-        rep.config.bus.notify("testrunstart", event.TestrunStart())
+        rep.config.bus.notify("testrunstart")
         l = list(testdir.genitems([modcol]))
         assert len(l) == 0
         linecomp.assert_contains_lines([
@@ -518,8 +518,8 @@ class TestTerminal:
             """, configargs=("--tb=%s" % tbopt,))
             rep = TerminalReporter(modcol.config, file=linecomp.stringio)
             rep.config.bus.register(rep)
-            rep.config.bus.notify("testrunstart", event.TestrunStart())
-            rep.config.bus.notify("testrunstart", event.TestrunStart())
+            rep.config.bus.notify("testrunstart")
+            rep.config.bus.notify("testrunstart")
             for item in testdir.genitems([modcol]):
                 rep.config.bus.notify("itemtestreport", basic_run_report(item))
             rep.config.bus.notify("testrunfinish", event.TestrunFinish())
@@ -566,7 +566,7 @@ class TestTerminal:
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         modcol.config.bus.register(rep)
         bus = modcol.config.bus
-        bus.notify("testrunstart", event.TestrunStart())
+        bus.notify("testrunstart")
         try:
             for item in testdir.genitems([modcol]):
                 bus.notify("itemtestreport", basic_run_report(item))

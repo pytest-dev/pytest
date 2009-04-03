@@ -21,8 +21,8 @@ class ExecnetcleanupPlugin:
         if self._gateways is not None:
             self._gateways.remove(gateway)
 
-    def pyevent__testrunstart(self, event):
-        self.trace("testrunstart", event)
+    def pyevent__testrunstart(self):
+        self.trace("testrunstart")
         self._gateways = []
 
     def pyevent__testrunfinish(self, event):
