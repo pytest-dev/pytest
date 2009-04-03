@@ -11,7 +11,6 @@ import py, os, sys
 from py.__.test import event
 from py.__.test.outcome import Exit
 from py.__.test.dist.mypickle import ImmutablePickler
-import py.__.test.custompdb
 
 class RobustRun(object):
     """ a robust setup/execute/teardown protocol used both for test collectors 
@@ -25,20 +24,22 @@ class RobustRun(object):
     def __repr__(self):
         return "<%s colitem=%s>" %(self.__class__.__name__, self.colitem)
 
+
+class ItemRunner(RobustRun):
     def run(self):
         """ return result of running setup, execution, teardown procedures. """ 
         excinfo = None
-        res = NORESULT
         capture = self.getcapture()
         try:
             try:
                 when = "setup"
-                self.setup()
+                self.colitem.config._setupstate.prepare(self.colitem)
                 try:
-                    res = self.execute()
+                    when = "execute"
+                    res = self.colitem.runtest()
                 finally:
                     when = "teardown"
-                    self.teardown()
+                    self.colitem.config._setupstate.teardown_exact(self.colitem)
                     when = "execute"
             finally:
                 outerr = capture.reset()
@@ -46,19 +47,9 @@ class RobustRun(object):
             raise
         except: 
             excinfo = py.code.ExceptionInfo()
-        return self.makereport(res, when, excinfo, outerr)
+        return self.makereport(when, excinfo, outerr)
 
-class ItemRunner(RobustRun):
-    def setup(self):
-        self.colitem.config._setupstate.prepare(self.colitem)
-    def teardown(self):
-        self.colitem.config._setupstate.teardown_exact(self.colitem)
-    def execute(self):
-        #self.colitem.config.pytestplugins.pre_execute(self.colitem)
-        self.colitem.runtest()
-        #self.colitem.config.pytestplugins.post_execute(self.colitem)
-
-    def makereport(self, res, when, excinfo, outerr):
+    def makereport(self, when, excinfo, outerr):
         testrep = self.colitem.config.pytestplugins.call_firstresult(
             "pytest_item_makereport", item=self.colitem, 
             excinfo=excinfo, when=when, outerr=outerr)
@@ -69,12 +60,22 @@ class ItemRunner(RobustRun):
         return testrep
 
 class CollectorRunner(RobustRun):
-    def setup(self):
-        pass
-    def teardown(self):
-        pass
-    def execute(self):
-        return self.colitem._memocollect()
+    def run(self):
+        """ return result of running setup, execution, teardown procedures. """ 
+        excinfo = None
+        res = NORESULT
+        capture = self.getcapture()
+        try:
+            try:
+                res = self.colitem._memocollect()
+            finally:
+                outerr = capture.reset()
+        except (Exit, KeyboardInterrupt):
+            raise
+        except: 
+            excinfo = py.code.ExceptionInfo()
+        return self.makereport(res, "execute", excinfo, outerr)
+
     def makereport(self, res, when, excinfo, outerr):
         return event.CollectionReport(self.colitem, res, excinfo, when, outerr)
    
