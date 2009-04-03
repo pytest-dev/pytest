@@ -181,7 +181,7 @@ class TestPyPlugins:
             def pyevent__hello(self): 
                 l.append("hellospecific")
         class api2:
-            def pyevent(self, name, *args): 
+            def pyevent(self, name, args, kwargs): 
                 if name == "hello":
                     l.append(name + "anonymous") 
         plugins.register(api1())
@@ -240,7 +240,7 @@ class TestPyPluginsEvents:
         plugins = PyPlugins()
         l = []
         class A:
-            def pyevent(self, name, *args, **kwargs): 
+            def pyevent(self, name, args, kwargs): 
                 if name == "name":
                     l.extend([args, kwargs])
 

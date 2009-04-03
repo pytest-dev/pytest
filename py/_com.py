@@ -51,7 +51,11 @@ class MultiCall:
             if needscall:
                 res = currentmethod(self, *self.args, **self.kwargs)
             else:
-                res = currentmethod(*self.args, **self.kwargs)
+                #try:
+                    res = currentmethod(*self.args, **self.kwargs)
+                #except TypeError:
+                #    print currentmethod.__module__, currentmethod.__name__, self.args, self.kwargs
+                #    raise
             if hasattr(self, '_ex1'):
                 self.results = [res]
                 break
@@ -152,7 +156,6 @@ class PyPlugins:
         MultiCall(self.listattr("pyevent__" + eventname), 
              *args, **kwargs).execute()
         #print "calling anonymous hooks", args, kwargs
-        MultiCall(self.listattr("pyevent"), 
-             eventname, *args, **kwargs).execute()
+        MultiCall(self.listattr("pyevent"), eventname, args, kwargs).execute()
 
 pyplugins = PyPlugins()
