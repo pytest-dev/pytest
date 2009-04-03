@@ -45,8 +45,8 @@ class LoopState(object):
             self.dsession.handle_crashitem(crashitem, node)
             self.colitems.extend(pending[1:])
 
-    def pyevent__rescheduleitems(self, event):
-        self.colitems.extend(event.items)
+    def pyevent__rescheduleitems(self, items):
+        self.colitems.extend(items)
         self.dowork = False # avoid busywait
 
 class DSession(Session):
@@ -175,7 +175,7 @@ class DSession(Session):
             if isinstance(next, py.test.collect.Item):
                 senditems.append(next)
             else:
-                self.bus.notify("collectionstart", event.CollectionStart(next))
+                self.bus.notify("collectionstart", next)
                 self.queueevent("collectionreport", basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
@@ -202,7 +202,7 @@ class DSession(Session):
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
-            self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
+            self.queueevent("rescheduleitems", tosend)
 
     def senditems_load(self, tosend):
         if not tosend:
@@ -224,7 +224,7 @@ class DSession(Session):
                     break
         if tosend:
             # we have some left, give it to the main loop
-            self.queueevent("rescheduleitems", event.RescheduleItems(tosend))
+            self.queueevent("rescheduleitems", tosend)
 
     def removeitem(self, item, node):
         if item not in self.item2nodes:

@@ -42,7 +42,7 @@ class Session(object):
                     yield next 
             else:
                 assert isinstance(next, Collector)
-                notify("collectionstart", event.CollectionStart(next))
+                notify("collectionstart", next)
                 ev = basic_collect_report(next)
                 if ev.passed:
                     for x in self.genitems(ev.result, keywordexpr):
@@ -67,7 +67,7 @@ class Session(object):
                     continue
             remaining.append(colitem)
         if deselected: 
-            self.bus.notify("deselected", event.Deselected(deselected, ))
+            self.bus.notify("deselected", deselected)
             if self.config.option.keyword.endswith(":"):
                 self._nomatch = True
         return remaining 

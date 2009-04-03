@@ -82,10 +82,10 @@ class Events:
     def pyevent__itemtestreport(self, event):
         """ test has been run. """
 
-    def pyevent__deselected(self, event):
-        """ item has been dselected. """
+    def pyevent__deselected(self, items):
+        """ collected items that were deselected (by keyword). """
 
-    def pyevent__collectionstart(self, event):
+    def pyevent__collectionstart(self, collector):
         """ collector starts collecting. """
 
     def pyevent__collectionreport(self, event):

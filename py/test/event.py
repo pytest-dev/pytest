@@ -12,19 +12,12 @@ class BaseEvent(object):
            for key, value in self.__dict__.items()]
         return "<%s %s>" %(self.__class__.__name__, " ".join(l),)
 
-def timestamp():
-    return time.time()
-
 class NOP(BaseEvent):
     pass
 
 # ----------------------------------------------------------------------
 # Events related to collecting and executing test Items 
 # ----------------------------------------------------------------------
-
-class Deselected(BaseEvent):
-    def __init__(self, items):
-        self.items = items 
 
 class BaseReport(BaseEvent):
     def toterminal(self, out):
@@ -73,9 +66,6 @@ class ItemTestReport(BaseReport):
             self.shortrepr = shortrepr 
             self.longrepr = longrepr 
             
-class CollectionStart(BaseEvent):
-    def __init__(self, collector):
-        self.collector = collector 
 
 class CollectionReport(BaseReport):
     """ Collection Report. """
@@ -107,30 +97,6 @@ class LooponfailingInfo(BaseEvent):
     def __init__(self, failreports, rootdirs):
         self.failreports = failreports
         self.rootdirs = rootdirs
-
-# ----------------------------------------------------------------------
-# Distributed Testing Events 
-# ----------------------------------------------------------------------
-
-class RescheduleItems(BaseEvent):
-    def __init__(self, items):
-        self.items = items
- 
-# ---------------------------------------------------------------------
-# Events related to rsyncing
-# ---------------------------------------------------------------------
-
-class HostRSyncing(BaseEvent):
-    def __init__(self, host, root, remotepath, synced):
-        self.host = host
-        self.root = root
-        self.remotepath = remotepath
-        self.synced = synced
-
-class HostRSyncRootReady(BaseEvent):
-    def __init__(self, host, root):
-        self.host = host
-        self.root = root
 
 # make all eventclasses available on BaseEvent so that
 # consumers of events can easily filter by 

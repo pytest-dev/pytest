@@ -29,7 +29,7 @@ class SessionTests:
         assert len(itemstarted) == 4
         colstarted = sorter.getevents("collectionstart")
         assert len(colstarted) == 1
-        col = colstarted[0].event.collector
+        col = colstarted[0].collector
         assert isinstance(col, py.test.collect.Module)
 
     def test_nested_import_error(self, testdir): 
@@ -204,7 +204,7 @@ class TestNewSession(SessionTests):
         itemstarted = sorter.getnamed("itemstart")
         assert len(itemstarted) == 3
         assert not sorter.getnamed("itemtestreport") 
-        started = sorter.getnamed("collectionstart")
+        started = sorter.getevents("collectionstart")
         finished = sorter.getnamed("collectionreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 

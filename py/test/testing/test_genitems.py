@@ -74,7 +74,7 @@ class TestKeywordSelection:
             passed, skipped, failed = sorter.listoutcomes()
             assert len(failed) == 1
             assert failed[0].colitem.name == name 
-            assert len(sorter.getnamed('deselected')) == 1
+            assert len(sorter.getevents('deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
             #yield check, keyword, 'test_one'
@@ -102,7 +102,7 @@ class TestKeywordSelection:
             passed, skipped, failed = sorter.listoutcomes()
             assert len(passed) == 1
             assert passed[0].colitem.name == "test_2"
-            dlist = sorter.getnamed("deselected")
+            dlist = sorter.getevents("deselected")
             assert len(dlist) == 1
             assert dlist[0].items[0].name == 'test_1'
 
@@ -116,7 +116,7 @@ class TestKeywordSelection:
         passed, skipped, failed = sorter.listoutcomes()
         assert len(passed) == 2
         assert not failed 
-        dlist = sorter.getnamed("deselected")
+        dlist = sorter.getevents("deselected")
         assert len(dlist) == 1
         item = dlist[0].items[0]
         assert item.name == "test_one" 

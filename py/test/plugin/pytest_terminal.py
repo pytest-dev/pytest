@@ -158,8 +158,8 @@ class TerminalReporter:
         if self.config.option.debug:
             self.write_sep("!", "RESCHEDULING %s " %(event.items,))
 
-    def pyevent__deselected(self, event):
-        self.stats.setdefault('deselected', []).append(event)
+    def pyevent__deselected(self, items):
+        self.stats.setdefault('deselected', []).append(items)
     
     def pyevent__itemtestreport(self, event):
         fspath = event.colitem.fspath 
@@ -309,8 +309,8 @@ class CollectonlyReporter:
     def outindent(self, line):
         self.out.line(self.indent + str(line))
 
-    def pyevent__collectionstart(self, event):
-        self.outindent(event.collector)
+    def pyevent__collectionstart(self, collector):
+        self.outindent(collector)
         self.indent += self.INDENT 
     
     def pyevent__itemstart(self, item, node=None):
@@ -627,7 +627,7 @@ class TestCollectonly:
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
         modcol.config.bus.register(rep)
         indent = rep.indent
-        rep.config.bus.notify("collectionstart", event.CollectionStart(modcol))
+        rep.config.bus.notify("collectionstart", modcol)
         linecomp.assert_contains_lines([
            "<Module 'test_collectonly_basic.py'>"
         ])
