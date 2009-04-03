@@ -219,15 +219,15 @@ class TerminalReporter:
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
-    def pyevent__testrunfinish(self, event):
+    def pyevent__testrunfinish(self, exitstatus, excrepr=None):
         self._tw.line("")
-        if event.exitstatus in (0, 1, 2):
+        if exitstatus in (0, 1, 2):
             self.summary_failures()
             self.summary_skips()
             self.config.pytestplugins.call_each("pytest_terminal_summary", terminalreporter=self)
-        if event.excrepr is not None:
-            self.summary_final_exc(event.excrepr)
-        if event.exitstatus == 2:
+        if excrepr is not None:
+            self.summary_final_exc(excrepr)
+        if exitstatus == 2:
             self.write_sep("!", "KEYBOARD INTERRUPT")
         self.summary_deselected()
         self.summary_stats()
@@ -246,7 +246,7 @@ class TerminalReporter:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
 
     #
-    # summaries for TestrunFinish 
+    # summaries for testrunfinish 
     #
 
     def summary_failures(self):
@@ -322,7 +322,7 @@ class CollectonlyReporter:
             self._failed.append(event)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pyevent__testrunfinish(self, event):
+    def pyevent__testrunfinish(self, exitstatus, excrepr=None):
         if self._failed:
             self.out.sep("!", "collection failures")
         for event in self._failed:
@@ -378,7 +378,7 @@ class TestTerminal:
         linecomp.assert_contains_lines([
                 "*test_pass_skip_fail.py .sF"
         ])
-        rep.config.bus.notify("testrunfinish", event.TestrunFinish())
+        rep.config.bus.notify("testrunfinish", exitstatus=1)
         linecomp.assert_contains_lines([
             "    def test_func():",
             ">       assert 0",
@@ -411,7 +411,7 @@ class TestTerminal:
             "*test_pass_skip_fail_verbose.py:4: *test_skip*SKIP*",
             "*test_pass_skip_fail_verbose.py:6: *test_func*FAIL*",
         ])
-        rep.config.bus.notify("testrunfinish", event.TestrunFinish())
+        rep.config.bus.notify("testrunfinish", exitstatus=1)
         linecomp.assert_contains_lines([
             "    def test_func():",
             ">       assert 0",
@@ -428,7 +428,7 @@ class TestTerminal:
         linecomp.assert_contains_lines([
             "*test_collect_fail.py F*"
         ])
-        rep.config.bus.notify("testrunfinish", event.TestrunFinish())
+        rep.config.bus.notify("testrunfinish", exitstatus=1)
         linecomp.assert_contains_lines([
             ">   import xyz",
             "E   ImportError: No module named xyz"
@@ -522,7 +522,7 @@ class TestTerminal:
             rep.config.bus.notify("testrunstart")
             for item in testdir.genitems([modcol]):
                 rep.config.bus.notify("itemtestreport", basic_run_report(item))
-            rep.config.bus.notify("testrunfinish", event.TestrunFinish())
+            rep.config.bus.notify("testrunfinish", exitstatus=1)
             s = linecomp.stringio.getvalue()
             if tbopt == "long":
                 print s
@@ -577,7 +577,7 @@ class TestTerminal:
         s = linecomp.stringio.getvalue()
         if not verbose:
             assert s.find("_keyboard_interrupt.py Fs") != -1
-        bus.notify("testrunfinish", event.TestrunFinish(exitstatus=2, excinfo=excinfo))
+        bus.notify("testrunfinish", exitstatus=2, excrepr=excinfo.getrepr())
         text = linecomp.stringio.getvalue()
         linecomp.assert_contains_lines([
             "    def test_foobar():",

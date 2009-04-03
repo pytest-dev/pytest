@@ -22,15 +22,6 @@ class NOP(BaseEvent):
 # Basic Live Reporting Events 
 # ----------------------------------------------------------------------
 
-class TestrunFinish(BaseEvent):
-    def __init__(self, exitstatus=0, excinfo=None):
-        self.exitstatus = exitstatus
-        if excinfo is None:
-            self.excrepr = None
-        else:
-            self.excrepr = excinfo.getrepr()
-        self.timeend = time.time()
-
 class InternalException(BaseEvent):
     def __init__(self, excinfo=None):
         if excinfo is None:

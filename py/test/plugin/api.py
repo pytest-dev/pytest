@@ -94,7 +94,7 @@ class Events:
     def pyevent__testrunstart(self):
         """ whole test run starts. """
 
-    def pyevent__testrunfinish(self, event):
+    def pyevent__testrunfinish(self, exitstatus, excrepr=None):
         """ whole test run finishes. """
 
     def pyevent__gwmanage_newgateway(self, gateway):

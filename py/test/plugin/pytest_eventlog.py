@@ -38,4 +38,4 @@ def test_generic(plugintester):
     s = testdir.tmpdir.join("event.log").read()
     assert s.find("testrunstart") != -1
     assert s.find("ItemTestReport") != -1
-    assert s.find("TestrunFinish") != -1
+    assert s.find("testrunfinish") != -1

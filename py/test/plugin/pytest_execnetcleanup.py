@@ -25,8 +25,8 @@ class ExecnetcleanupPlugin:
         self.trace("testrunstart")
         self._gateways = []
 
-    def pyevent__testrunfinish(self, event):
-        self.trace("testrunfinish", event)
+    def pyevent__testrunfinish(self, exitstatus, excrepr=None):
+        self.trace("testrunfinish", exitstatus)
         l = []
         for gw in self._gateways:
             gw.exit()

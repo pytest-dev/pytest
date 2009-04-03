@@ -91,7 +91,8 @@ class Session(object):
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
         self.bus.notify("testrunfinish", 
-                        event.TestrunFinish(exitstatus=exitstatus, excinfo=excinfo))
+                        exitstatus=exitstatus, 
+                        excrepr=excinfo and excinfo.getrepr() or None)
 
     def getinitialitems(self, colitems):
         if colitems is None:
