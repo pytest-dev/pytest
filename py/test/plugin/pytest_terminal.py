@@ -82,9 +82,9 @@ class TerminalReporter:
         else: 
             return "???", dict(red=True)
 
-    def pyevent__internalerror(self, event):
-        for line in str(event.repr).split("\n"):
-            self.write_line("InternalException: " + line)
+    def pyevent__internalerror(self, excrepr):
+        for line in str(excrepr).split("\n"):
+            self.write_line("INTERNALERROR> " + line)
 
     def pyevent__gwmanage_newgateway(self, gateway, rinfo):
         #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
@@ -438,9 +438,9 @@ class TestTerminal:
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
-        rep.pyevent__internalerror(event.InternalException(excinfo))
+        rep.pyevent__internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines([
-            "InternalException: >*raise ValueError*"
+            "INTERNALERROR> *raise ValueError*"
         ])
 
     def test_gwmanage_events(self, testdir, linecomp):

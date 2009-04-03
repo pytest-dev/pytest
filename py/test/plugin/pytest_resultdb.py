@@ -178,10 +178,10 @@ class ResultDB(object):
         if not event.passed:
             self.log_outcome(event)
 
-    def pyevent__internalerror(self, event):
-        path = event.repr.reprcrash.path # fishing :(
-        self.write_log_entry(event, '!', path, str(event.repr))
-
+    def pyevent__internalerror(self, excrepr):
+        path = excrepr.reprcrash.path 
+        XXX # we don't have an event
+        self.write_log_entry(event, '!', path, str(excrepr))
 
 SQL_CREATE_TABLES = """
 create table pytest_results (
@@ -368,9 +368,9 @@ class TestWithFunctionIntegration:
         try:
             raise ValueError
         except ValueError:
-            excinfo = event.InternalException()
+            excinfo = py.code.ExceptionInfo()
         reslog = ResultDB(StringIO.StringIO())        
-        reslog.pyevent("internalerror", (excinfo,), {})
+        reslog.pyevent("internalerror", (excinfo.getrepr(),), {})
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

@@ -77,6 +77,12 @@ class PytestPlugins(object):
     def notify(self, eventname, *args, **kwargs):
         return self.pyplugins.notify(eventname, *args, **kwargs)
 
+    def notify_exception(self, excinfo=None):
+        if excinfo is None:
+            excinfo = py.code.ExceptionInfo()
+        excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
+        return self.notify("internalerror", excrepr)
+
     def do_addoption(self, parser):
         methods = self.pyplugins.listattr("pytest_addoption", reverse=True)
         mc = py._com.MultiCall(methods, parser=parser)

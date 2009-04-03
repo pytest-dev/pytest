@@ -19,23 +19,12 @@ class NOP(BaseEvent):
     pass
 
 # ----------------------------------------------------------------------
-# Basic Live Reporting Events 
-# ----------------------------------------------------------------------
-
-class InternalException(BaseEvent):
-    def __init__(self, excinfo=None):
-        if excinfo is None:
-            excinfo = py.code.ExceptionInfo()
-        self.repr = excinfo.getrepr(funcargs=True, showlocals=True)
-
-# ----------------------------------------------------------------------
 # Events related to collecting and executing test Items 
 # ----------------------------------------------------------------------
 
 class Deselected(BaseEvent):
     def __init__(self, items):
         self.items = items 
-        
 
 class BaseReport(BaseEvent):
     def toterminal(self, out):

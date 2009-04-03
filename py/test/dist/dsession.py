@@ -140,7 +140,7 @@ class DSession(Session):
         except KeyboardInterrupt:
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
-            self.bus.notify("internalerror", event.InternalException())
+            self.config.pytestplugins.notify_exception()
             exitstatus = outcome.EXIT_INTERNALERROR
         self.config.bus.unregister(loopstate)
         if exitstatus == 0 and self._testsfailed:

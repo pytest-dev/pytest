@@ -73,7 +73,7 @@ class Events:
     def pyevent__trace(self, category, msg):
         """ called for tracing events. """
 
-    def pyevent__internalerror(self, event):
+    def pyevent__internalerror(self, excrepr):
         """ called for internal errors. """
 
     def pyevent__itemstart(self, item, node=None):

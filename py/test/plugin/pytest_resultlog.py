@@ -90,8 +90,9 @@ class ResultLog(object):
             if not event.passed:
                 self.log_outcome(event)
         elif eventname == "internalerror":
-            path = event.repr.reprcrash.path # fishing :(
-            self.write_log_entry('!', path, str(event.repr))
+            excrepr = args[0]
+            path = excrepr.reprcrash.path # fishing :(
+            self.write_log_entry('!', path, str(excrepr))
 
 
 # ===============================================================================
@@ -224,9 +225,9 @@ class TestWithFunctionIntegration:
         try:
             raise ValueError
         except ValueError:
-            excinfo = event.InternalException()
+            excinfo = py.code.ExceptionInfo()
         reslog = ResultLog(StringIO.StringIO())        
-        reslog.pyevent("internalerror", (excinfo,), {})
+        reslog.pyevent("internalerror", (excinfo.getrepr(),), {})
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

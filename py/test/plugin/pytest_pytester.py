@@ -264,7 +264,7 @@ class ParsedEvent:
         self.__dict__ = locals.copy()
 
     def __repr__(self):
-        return "<Event %r>" %(self.__dict__,)
+        return "<ParsedEvent %r>" %(self.__dict__,)
 
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
@@ -288,6 +288,7 @@ class EventRecorder(object):
         raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
     def getevents(self, eventname):
+        """ return list of ParsedEvent instances matching the given eventname. """
         method = self.geteventmethod(eventname)
         l = []
         for event in self.events:

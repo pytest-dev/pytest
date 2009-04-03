@@ -63,7 +63,7 @@ class TXNode(object):
         except:
             excinfo = py.code.ExceptionInfo()
             print "!" * 20, excinfo
-            self.notify("internalerror", event.InternalException(excinfo))
+            self.notify_internal(excinfo)
 
     def send(self, item):
         assert item is not None
@@ -127,7 +127,8 @@ class SlaveNode(object):
         except KeyboardInterrupt:
             raise
         except:
-            self.sendevent("internalerror", event.InternalException())
+            er = py.code.ExceptionInfo().getrepr(funcargs=True, showlocals=True)
+            self.sendevent("internalerror", excrepr=er)
             raise
 
     def runtest(self, item):

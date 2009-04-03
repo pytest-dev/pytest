@@ -121,7 +121,7 @@ class Session(object):
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             captured_excinfo = py.code.ExceptionInfo()
-            self.bus.notify("internalerror", event.InternalException(captured_excinfo))
+            self.config.pytestplugins.notify_exception(captured_excinfo)
             exitstatus = outcome.EXIT_INTERNALERROR
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
