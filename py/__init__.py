@@ -25,8 +25,8 @@ version = "1.0.0b1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63360 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-03-26 13:51:47 +0100 (Thu, 26 Mar 2009) $',
+    revision = int('$LastChangedRevision: 63580 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-04-03 19:45:25 +0200 (Fri, 03 Apr 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
@@ -117,7 +117,6 @@ initpkg(__name__,
 
     # some nice slightly magic APIs
     'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),
-    'magic.greenlet'         : ('./magic/greenlet.py', 'greenlet'),
     'magic.invoke'           : ('./magic/invoke.py', 'invoke'),
     'magic.revoke'           : ('./magic/invoke.py', 'revoke'),
     'magic.patch'            : ('./magic/patch.py', 'patch'),

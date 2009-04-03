@@ -667,14 +667,11 @@ class TestCollectonly:
               !!! ValueError: 0 !!!
         """)
 
-def test_repr_python_version():
-    py.magic.patch(sys, 'version_info', (2, 5, 1, 'final', 0))
-    try:
-        assert repr_pythonversion() == "2.5.1-final-0"
-        py.std.sys.version_info = x = (2,3)
-        assert repr_pythonversion() == str(x) 
-    finally: 
-        py.magic.revert(sys, 'version_info') 
+def test_repr_python_version(monkeypatch):
+    monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
+    assert repr_pythonversion() == "2.5.1-final-0"
+    py.std.sys.version_info = x = (2,3)
+    assert repr_pythonversion() == str(x) 
 
 def test_generic(plugintester):
     plugintester.apicheck(TerminalPlugin)

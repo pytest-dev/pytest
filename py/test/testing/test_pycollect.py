@@ -21,22 +21,16 @@ class TestModule:
         py.test.raises(SyntaxError, modcol.collect)
         py.test.raises(SyntaxError, modcol.run)
 
-    def test_module_assertion_setup(self, testdir):
+    def test_module_assertion_setup(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("pass")
         from py.__.magic import assertion
         l = []
-        py.magic.patch(assertion, "invoke", lambda: l.append(None))
-        try:
-            modcol.setup()
-        finally:
-            py.magic.revert(assertion, "invoke")
+        monkeypatch.setattr(assertion, "invoke", lambda: l.append(None))
+        modcol.setup()
         x = l.pop()
         assert x is None
-        py.magic.patch(assertion, "revoke", lambda: l.append(None))
-        try:
-            modcol.teardown()
-        finally:
-            py.magic.revert(assertion, "revoke")
+        monkeypatch.setattr(assertion, "revoke", lambda: l.append(None))
+        modcol.teardown()
         x = l.pop()
         assert x is None
 

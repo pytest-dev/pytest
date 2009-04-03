@@ -135,7 +135,8 @@ class SessionTests:
         assert skips[0].skipped 
 
 class TestNewSession(SessionTests):
-    def test_pdb_run(self, testdir):
+    def test_pdb_run(self, testdir, monkeypatch):
+        import py.__.test.custompdb
         tfile = testdir.makepyfile("""
             def test_usepdb(): 
                 assert 0
@@ -143,11 +144,8 @@ class TestNewSession(SessionTests):
         l = []
         def mypdb(*args):
             l.append(args)
-        py.magic.patch(py.__.test.custompdb, 'post_mortem', mypdb)
-        try:
-            sorter = testdir.inline_run('--pdb', tfile)
-        finally:
-            py.magic.revert(py.__.test.custompdb, 'post_mortem')
+        monkeypatch.setattr(py.__.test.custompdb, 'post_mortem', mypdb)
+        sorter = testdir.inline_run('--pdb', tfile)
         rep = sorter.getreport("test_usepdb")
         assert rep.failed
         assert len(l) == 1

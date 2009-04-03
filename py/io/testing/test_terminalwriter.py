@@ -6,22 +6,15 @@ def skip_win32():
     if sys.platform == 'win32':
         py.test.skip('Not relevant on win32')
 
-def test_terminalwriter_computes_width():
-    py.magic.patch(terminalwriter, 'get_terminal_width', lambda: 42)
-    try:
-        tw = py.io.TerminalWriter()  
-        assert tw.fullwidth == 42
-    finally:         
-        py.magic.revert(terminalwriter, 'get_terminal_width')
+def test_terminalwriter_computes_width(monkeypatch):
+    monkeypatch.setattr(terminalwriter, 'get_terminal_width', lambda: 42)
+    tw = py.io.TerminalWriter()  
+    assert tw.fullwidth == 42
 
-def test_terminalwriter_defaultwidth_80():
-    py.magic.patch(terminalwriter, '_getdimensions', lambda: 0/0)
-    try:
-        tw = py.io.TerminalWriter()  
-        assert tw.fullwidth == int(os.environ.get('COLUMNS', 80)) -1
-    finally:         
-        py.magic.revert(terminalwriter, '_getdimensions')
-        
+def test_terminalwriter_defaultwidth_80(monkeypatch):
+    monkeypatch.setattr(terminalwriter, '_getdimensions', lambda: 0/0)
+    tw = py.io.TerminalWriter()  
+    assert tw.fullwidth == int(os.environ.get('COLUMNS', 80)) -1
     
 def test_terminalwriter_default_instantiation():
     tw = py.io.TerminalWriter(stringio=True)
