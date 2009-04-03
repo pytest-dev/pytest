@@ -7,10 +7,9 @@ import py
 XSpec = py.execnet.XSpec
 
 def run(item, node):
-    runner = item._getrunner()
-    rep = runner(item)
-    rep.node = node
-    return rep
+    report = item.config.pytestplugins.do_itemrun(item) 
+    report.node = node 
+    return report
 
 class MockNode:
     def __init__(self):

@@ -36,6 +36,9 @@ class PluginHooks:
     def pytest_pymodule_makeitem(self, modcol, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
 
+    def pytest_itemrun(self, item, pdb=None):
+        """ run given test item and return test report. """ 
+
     # ------------------------------------------------------------------------------
     # runtest related hooks 
     # ------------------------------------------------------------------------------

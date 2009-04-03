@@ -465,14 +465,8 @@ class Directory(FSCollector):
             return self.config.pytestplugins.call_each(
                 'pytest_collect_directory', path=path, parent=self)
 
-from py.__.test.runner import basic_run_report, forked_run_report
 class Item(Node): 
     """ a basic test item. """
-    def _getrunner(self):
-        if self.config.option.boxed:
-            return forked_run_report
-        return basic_run_report
-
     def _deprecated_testexecution(self):
         if self.__class__.run != Item.run:
             warnoldtestrun()

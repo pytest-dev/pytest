@@ -105,6 +105,9 @@ class PytestPlugins(object):
         self.pyplugins.call_each("pytest_unconfigure", config=config)
         config.bus.unregister(self)
 
+    def do_itemrun(self, item, pdb=None):
+        return self.pyplugins.call_firstresult("pytest_itemrun", item=item, pdb=pdb)
+
 # 
 #  XXX old code to automatically load classes
 #

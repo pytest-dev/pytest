@@ -132,7 +132,5 @@ class SlaveNode(object):
             raise
 
     def runtest(self, item):
-        runner = item._getrunner()
-        testrep = runner(item)
-        self.sendevent("itemtestreport", testrep)
-
+        report = item.config.pytestplugins.do_itemrun(item)
+        self.sendevent("itemtestreport", report)

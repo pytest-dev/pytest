@@ -3,6 +3,15 @@ import py
 class DefaultPlugin:
     """ Plugin implementing defaults and general options. """ 
 
+    def pytest_itemrun(self, item, pdb=None):
+        from py.__.test.runner import basic_run_report, forked_run_report
+        if item.config.option.boxed:
+            runner = forked_run_report
+        else:
+            runner = basic_run_report
+        report = runner(item, pdb=pdb) 
+        return report 
+
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)
 
@@ -13,8 +22,8 @@ class DefaultPlugin:
            path in parent.config.args:
             if ext == ".py":
                 return parent.Module(path, parent=parent) 
-      
-    def pytest_collect_directory(self, path, parent):
+
+    def pytest_collect_recurse(self, path, parent):
         #excludelist = parent._config.getvalue_pathlist('dir_exclude', path)
         #if excludelist and path in excludelist:
         #    return 
@@ -24,7 +33,11 @@ class DefaultPlugin:
                 if path == arg or arg.relto(path):
                     break
             else:
-                return 
+                return False 
+        return True
+      
+    def pytest_collect_directory(self, path, parent):
+        # XXX reconsider the following comment 
         # not use parent.Directory here as we generally 
         # want dir/conftest.py to be able to 
         # define Directory(dir) already 

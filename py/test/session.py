@@ -133,7 +133,6 @@ class Session(object):
         post_mortem(excinfo._excinfo[2])
 
     def runtest(self, item):
-        runner = item._getrunner()
         pdb = self.config.option.usepdb and self.runpdb or None
-        testrep = runner(item, pdb=pdb) 
-        self.bus.notify("itemtestreport", testrep)
+        report = item.config.pytestplugins.do_itemrun(item, pdb=pdb)
+        self.bus.notify("itemtestreport", report) 
