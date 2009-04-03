@@ -1,9 +1,9 @@
 import uuid
 import py
-from pytest_resultlog import generic_path, getoutcomecodes
+from pytest_resultlog import ResultLog
 
 class ResultdbPlugin:
-    """resultdb plugin for database logging of test results. 
+    """XXX in progress: resultdb plugin for database logging of test results. 
 
     Saves test results to a datastore.
 
@@ -144,12 +144,12 @@ class SQLiteResultArchive(object):
         return d
 
 
-class ResultDB(object):
+class ResultDB(ResultLog):
     def __init__(self, cls, db_path):
         self.archive = cls(db_path)
         self.archive.init_db()
 
-    def write_log_entry(self, event, shortrepr, name, longrepr):
+    def write_log_entry(self, testpath, shortrepr, longrepr):
         data = {}
         event_excludes = ['colitem', 'longrepr']
         for item in vars(event).keys():
@@ -159,29 +159,9 @@ class ResultDB(object):
         data['longrepr'] = longrepr
         data['shortrepr'] = shortrepr
 
-        data['fspath'] = unicode(event.colitem.fspath)
-        data['itemname'] = event.colitem.name
-
-        data['name'] = name
+        data['testpath'] = unicode(testpath)
         self.archive.append_data([data])
 
-    def log_outcome(self, event):
-        if (not event.passed or isinstance(event, event.ItemTestReport)):
-            gpath = generic_path(event.colitem)
-            shortrepr, longrepr = getoutcomecodes(event)
-            self.write_log_entry(event, shortrepr, gpath, longrepr)
-
-    def pyevent__itemtestreport(self, event):
-        self.log_outcome(event)
-
-    def pyevent__collectionreport(self, event):
-        if not event.passed:
-            self.log_outcome(event)
-
-    def pyevent__internalerror(self, excrepr):
-        path = excrepr.reprcrash.path 
-        XXX # we don't have an event
-        self.write_log_entry(event, '!', path, str(excrepr))
 
 SQL_CREATE_TABLES = """
 create table pytest_results (
@@ -370,7 +350,7 @@ class TestWithFunctionIntegration:
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         reslog = ResultDB(StringIO.StringIO())        
-        reslog.pyevent("internalerror", (excinfo.getrepr(),), {})
+        reslog.pyevent__internalerror(excinfo.getrepr)
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

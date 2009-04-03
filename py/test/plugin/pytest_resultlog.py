@@ -44,55 +44,43 @@ def generic_path(item):
         gpath.append(name)
         fspath = newfspath
     return ''.join(gpath)
-
-def getoutcomecodes(ev):
-    if isinstance(ev, ev.CollectionReport):
-        # encode pass/fail/skip indepedent of terminal reporting semantics 
-        # XXX handle collection and item reports more uniformly 
-        assert not ev.passed
-        if ev.failed: 
-            code = "F"
-        elif ev.skipped: 
-            code = "S"
-        longrepr = str(ev.longrepr.reprcrash)
-    else:
-        assert isinstance(ev, ev.ItemTestReport)
-        code = ev.shortrepr 
-        if ev.passed:
-            longrepr = ""
-        elif ev.failed:
-            longrepr = str(ev.longrepr) 
-        elif ev.skipped:
-            longrepr = str(ev.longrepr.reprcrash.message)
-    return code, longrepr 
         
 class ResultLog(object):
     def __init__(self, logfile):
         self.logfile = logfile # preferably line buffered
 
-    def write_log_entry(self, shortrepr, name, longrepr):
-        print >>self.logfile, "%s %s" % (shortrepr, name)
+    def write_log_entry(self, testpath, shortrepr, longrepr):
+        print >>self.logfile, "%s %s" % (shortrepr, testpath)
         for line in longrepr.splitlines():
             print >>self.logfile, " %s" % line
 
-    def log_outcome(self, event):
-        if (not event.passed or isinstance(event, event.ItemTestReport)):
-            gpath = generic_path(event.colitem)
-            shortrepr, longrepr = getoutcomecodes(event)
-            self.write_log_entry(shortrepr, gpath, longrepr)
+    def log_outcome(self, event, shortrepr, longrepr):
+        testpath = generic_path(event.colitem)
+        self.write_log_entry(testpath, shortrepr, longrepr) 
 
-    def pyevent(self, eventname, args, kwargs):
-        if args:
-            event = args[0]
-        if eventname == "itemtestreport":
-            self.log_outcome(event)
-        elif eventname == "collectionreport":
-            if not event.passed:
-                self.log_outcome(event)
-        elif eventname == "internalerror":
-            excrepr = args[0]
-            path = excrepr.reprcrash.path # fishing :(
-            self.write_log_entry('!', path, str(excrepr))
+    def pyevent__itemtestreport(self, event):
+        code = event.shortrepr 
+        if event.passed:
+            longrepr = ""
+        elif event.failed:
+            longrepr = str(event.longrepr) 
+        elif event.skipped:
+            longrepr = str(event.longrepr.reprcrash.message)
+        self.log_outcome(event, code, longrepr) 
+
+    def pyevent__collectionreport(self, event):
+        if not event.passed:
+            if event.failed: 
+                code = "F"
+            else:
+                assert event.skipped
+                code = "S"
+            longrepr = str(event.longrepr.reprcrash)
+            self.log_outcome(event, code, longrepr)    
+
+    def pyevent__internalerror(self, excrepr):
+        path = excrepr.reprcrash.path 
+        self.write_log_entry(path, '!', str(excrepr))
 
 
 # ===============================================================================
@@ -127,7 +115,7 @@ def test_generic_path():
 def test_write_log_entry():
     reslog = ResultLog(None)
     reslog.logfile = StringIO.StringIO()
-    reslog.write_log_entry('.', 'name', '')  
+    reslog.write_log_entry('name', '.', '')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
     entry_lines = entry.splitlines()
@@ -135,7 +123,7 @@ def test_write_log_entry():
     assert entry_lines[0] == '. name'
 
     reslog.logfile = StringIO.StringIO()
-    reslog.write_log_entry('s', 'name', 'Skipped')  
+    reslog.write_log_entry('name', 's', 'Skipped')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
     entry_lines = entry.splitlines()
@@ -144,7 +132,7 @@ def test_write_log_entry():
     assert entry_lines[1] == ' Skipped'
 
     reslog.logfile = StringIO.StringIO()
-    reslog.write_log_entry('s', 'name', 'Skipped\n')  
+    reslog.write_log_entry('name', 's', 'Skipped\n')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
     entry_lines = entry.splitlines()
@@ -154,7 +142,7 @@ def test_write_log_entry():
 
     reslog.logfile = StringIO.StringIO()
     longrepr = ' tb1\n tb 2\nE tb3\nSome Error'
-    reslog.write_log_entry('F', 'name', longrepr)
+    reslog.write_log_entry('name', 'F', longrepr)
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
     entry_lines = entry.splitlines()
@@ -227,7 +215,7 @@ class TestWithFunctionIntegration:
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         reslog = ResultLog(StringIO.StringIO())        
-        reslog.pyevent("internalerror", (excinfo.getrepr(),), {})
+        reslog.pyevent__internalerror(excinfo.getrepr())
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

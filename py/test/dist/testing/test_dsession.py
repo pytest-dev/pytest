@@ -131,9 +131,9 @@ class TestDSession:
         # check that RescheduleEvents are not immediately
         # rescheduled if there are no nodes
         assert loopstate.dowork == False 
-        session.queueevent("anonymous", event.NOP())
+        session.queueevent("anonymous")
         session.loop_once(loopstate)
-        session.queueevent("anonymous", event.NOP())
+        session.queueevent("anonymous")
         session.loop_once(loopstate)
         assert node.sent == [[item]]
         session.queueevent("itemtestreport", run(item, node))

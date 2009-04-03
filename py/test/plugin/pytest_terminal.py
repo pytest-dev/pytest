@@ -154,9 +154,9 @@ class TerminalReporter:
             #self.write_fspath_result(fspath, "")
             self.write_ensure_prefix(line, "") 
 
-    def pyevent__rescheduleitems(self, event):
+    def pyevent__rescheduleitems(self, items):
         if self.config.option.debug:
-            self.write_sep("!", "RESCHEDULING %s " %(event.items,))
+            self.write_sep("!", "RESCHEDULING %s " %(items,))
 
     def pyevent__deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
@@ -232,17 +232,17 @@ class TerminalReporter:
         self.summary_deselected()
         self.summary_stats()
 
-    def pyevent__looponfailinfo(self, event):
-        if event.failreports:
+    def pyevent__looponfailinfo(self, failreports, rootdirs):
+        if failreports:
             self.write_sep("#", "LOOPONFAILING", red=True)
-            for report in event.failreports:
+            for report in failreports:
                 try:
                     loc = report.longrepr.reprcrash
                 except AttributeError:
                     loc = str(report.longrepr)[:50]
                 self.write_line(loc, red=True)
         self.write_sep("#", "waiting for changes")
-        for rootdir in event.rootdirs:
+        for rootdir in rootdirs:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
 
     #
@@ -496,7 +496,7 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [basic_run_report(x) for x in modcol.collect()]
-        rep.pyevent__looponfailinfo(event.LooponfailingInfo(reports, [modcol.config.topdir]))
+        rep.pyevent__looponfailinfo(reports, [modcol.config.topdir])
         linecomp.assert_contains_lines([
             "*test_looponfailreport.py:2: assert 0",
             "*test_looponfailreport.py:4: ValueError*",

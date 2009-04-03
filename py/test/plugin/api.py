@@ -108,10 +108,10 @@ class Events:
     def pyevent__testnodedown(self, node, error):
         """ Test Node is down. """
 
-    def pyevent__rescheduleitems(self, event):
+    def pyevent__rescheduleitems(self, items):
         """ reschedule Items from a node that went down. """
 
-    def pyevent__looponfailinfo(self, event):
+    def pyevent__looponfailinfo(self, failreports, rootdirs):
         """ info for repeating failing tests. """
 
     def pyevent__plugin_registered(self, plugin):

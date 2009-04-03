@@ -394,7 +394,7 @@ class EventRecorder(object):
 def test_eventrecorder():
     bus = py._com.PyPlugins()
     recorder = EventRecorder(bus)
-    bus.notify("anonymous", event.NOP())
+    bus.notify("anonymous")
     assert recorder.events 
     assert not recorder.getfailures()
     rep = event.ItemTestReport(None, None)

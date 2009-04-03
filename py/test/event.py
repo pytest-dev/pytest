@@ -6,20 +6,16 @@ import py
 import time
 from py.__.test.outcome import Skipped
 
-class BaseEvent(object):
+# ----------------------------------------------------------------------
+# Events related to collecting and executing test Items 
+# ----------------------------------------------------------------------
+
+class BaseReport(object):
     def __repr__(self):
         l = ["%s=%s" %(key, value)
            for key, value in self.__dict__.items()]
         return "<%s %s>" %(self.__class__.__name__, " ".join(l),)
 
-class NOP(BaseEvent):
-    pass
-
-# ----------------------------------------------------------------------
-# Events related to collecting and executing test Items 
-# ----------------------------------------------------------------------
-
-class BaseReport(BaseEvent):
     def toterminal(self, out):
         longrepr = self.longrepr 
         if hasattr(longrepr, 'toterminal'):
@@ -93,16 +89,3 @@ class CollectionReport(BaseReport):
         else:
             out.line(str(longrepr))
 
-class LooponfailingInfo(BaseEvent):
-    def __init__(self, failreports, rootdirs):
-        self.failreports = failreports
-        self.rootdirs = rootdirs
-
-# make all eventclasses available on BaseEvent so that
-# consumers of events can easily filter by 
-# 'isinstance(event, event.Name)' checks
-
-for name, cls in vars().items():
-    if hasattr(cls, '__bases__') and issubclass(cls, BaseEvent):
-        setattr(BaseEvent, name, cls)
-#
