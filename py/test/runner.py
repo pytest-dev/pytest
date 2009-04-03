@@ -12,19 +12,6 @@ from py.__.test import event
 from py.__.test.outcome import Exit
 from py.__.test.dist.mypickle import ImmutablePickler
 
-class RobustRun(object):
-    """ a robust setup/execute/teardown protocol used both for test collectors 
-        and test items. 
-    """
-    def __init__(self, colitem, pdb=None):
-        self.colitem = colitem 
-        self.getcapture = colitem.config._getcapture 
-        self.pdb = pdb 
-
-    def __repr__(self):
-        return "<%s colitem=%s>" %(self.__class__.__name__, self.colitem)
-
-
 def basic_run_report(item, pdb=None):
     """ return report about setting up and running a test item. """ 
     excinfo = None

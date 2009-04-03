@@ -19,8 +19,8 @@ class TXNode(object):
         self.putevent = putevent 
         self.gateway = gateway
         self.channel = install_slave(gateway, config)
-        self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
         self._sendslaveready = slaveready
+        self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
         self._down = False
 
     def notify(self, eventname, *args, **kwargs):
@@ -63,7 +63,7 @@ class TXNode(object):
         except:
             excinfo = py.code.ExceptionInfo()
             print "!" * 20, excinfo
-            self.notify_internal(excinfo)
+            self.config.pytestplugins.notify_exception(excinfo)
 
     def send(self, item):
         assert item is not None

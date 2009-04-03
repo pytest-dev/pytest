@@ -1,6 +1,5 @@
 import py
 from py.__.test.runner import basic_run_report, forked_run_report, basic_collect_report
-from py.__.test.runner import RobustRun
 from py.__.code.excinfo import ReprExceptionInfo
 
 class BaseTests:
@@ -262,10 +261,3 @@ class TestCollectionEvent:
         assert ev.skipped 
 
 
-class TestRunnerRepr:
-    def test_runner_repr(self, testdir):
-        item = testdir.getitem("def test_func(): pass")
-        robustrun = RobustRun(item)
-        r = repr(robustrun)
-        assert r
-        assert r.find(item.name) != -1
