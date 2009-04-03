@@ -67,13 +67,12 @@ class CollectionReport(BaseReport):
     """ Collection Report. """
     skipped = failed = passed = False 
 
-    def __init__(self, colitem, result, excinfo=None, when=None, outerr=None):
+    def __init__(self, colitem, result, excinfo=None, outerr=None):
         self.colitem = colitem 
         if not excinfo:
             self.passed = True
             self.result = result 
         else:
-            self.when = when 
             self.outerr = outerr
             self.longrepr = self.colitem._repr_failure_py(excinfo, outerr)
             if excinfo.errisinstance(Skipped):
