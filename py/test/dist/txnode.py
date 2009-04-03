@@ -106,12 +106,16 @@ class SlaveNode(object):
     def sendevent(self, eventname, *args, **kwargs):
         self.channel.send((eventname, args, kwargs))
 
+    def pyevent__itemtestreport(self, report):
+        self.sendevent("itemtestreport", report)
+
     def run(self):
         channel = self.channel
         self.config, basetemp = channel.receive()
         if basetemp:
             self.config.basetemp = py.path.local(basetemp)
         self.config.pytestplugins.do_configure(self.config)
+        self.config.pytestplugins.register(self)
         self.sendevent("slaveready")
         try:
             while 1:
@@ -121,16 +125,12 @@ class SlaveNode(object):
                     break
                 if isinstance(task, list):
                     for item in task:
-                        self.runtest(item)
+                        item.config.pytestplugins.do_itemrun(item)
                 else:
-                    self.runtest(task)
+                    task.config.pytestplugins.do_itemrun(item=task)
         except KeyboardInterrupt:
             raise
         except:
             er = py.code.ExceptionInfo().getrepr(funcargs=True, showlocals=True)
             self.sendevent("internalerror", excrepr=er)
             raise
-
-    def runtest(self, item):
-        report = item.config.pytestplugins.do_itemrun(item)
-        self.sendevent("itemtestreport", report)

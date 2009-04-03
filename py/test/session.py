@@ -105,7 +105,6 @@ class Session(object):
         colitems = self.getinitialitems(colitems)
         self.shouldstop = False 
         self.sessionstarts()
-        #self.bus.notify("testnodeready", maketestnodeready())
         exitstatus = outcome.EXIT_OK
         captured_excinfo = None
         try:
@@ -134,5 +133,4 @@ class Session(object):
 
     def runtest(self, item):
         pdb = self.config.option.usepdb and self.runpdb or None
-        report = item.config.pytestplugins.do_itemrun(item, pdb=pdb)
-        self.bus.notify("itemtestreport", report) 
+        item.config.pytestplugins.do_itemrun(item, pdb=pdb)

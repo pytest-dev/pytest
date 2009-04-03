@@ -28,6 +28,8 @@ class EventQueue:
                 if name == eventname:
                     return args
                 events.append(name)
+                if name == "internalerror":
+                    print str(kwargs["excrepr"])
 
 class MySetup:
     def __init__(self, pyfuncitem):

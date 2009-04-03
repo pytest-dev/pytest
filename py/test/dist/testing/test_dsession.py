@@ -7,9 +7,10 @@ import py
 XSpec = py.execnet.XSpec
 
 def run(item, node):
-    report = item.config.pytestplugins.do_itemrun(item) 
-    report.node = node 
-    return report
+    from py.__.test.runner import basic_run_report
+    rep = basic_run_report(item)
+    rep.node = node
+    return rep 
 
 class MockNode:
     def __init__(self):
@@ -218,7 +219,7 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert node.sent == [[item]]
-        ev = run(item, node)
+        ev = run(item, node) 
         session.queueevent("itemtestreport", ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  

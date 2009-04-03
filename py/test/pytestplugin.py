@@ -106,7 +106,9 @@ class PytestPlugins(object):
         config.bus.unregister(self)
 
     def do_itemrun(self, item, pdb=None):
-        return self.pyplugins.call_firstresult("pytest_itemrun", item=item, pdb=pdb)
+        res = self.pyplugins.call_firstresult("pytest_itemrun", item=item, pdb=pdb)
+        if res is None:
+            raise ValueError("could not run %r" %(item,))
 
 # 
 #  XXX old code to automatically load classes

@@ -10,7 +10,8 @@ class DefaultPlugin:
         else:
             runner = basic_run_report
         report = runner(item, pdb=pdb) 
-        return report 
+        item.config.pytestplugins.notify("itemtestreport", report) 
+        return True
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)
