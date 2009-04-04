@@ -353,8 +353,7 @@ def repr_pythonversion(v=None):
 #
 # ===============================================================================
 
-from py.__.test import event
-from py.__.test.runner import basic_run_report
+from py.__.test import runner
 
 class TestTerminal:
 
@@ -373,7 +372,7 @@ class TestTerminal:
         rep.config.bus.notify("testrunstart")
         
         for item in testdir.genitems([modcol]):
-            ev = basic_run_report(item) 
+            ev = runner.basic_run_report(item) 
             rep.config.bus.notify("itemtestreport", ev)
         linecomp.assert_contains_lines([
                 "*test_pass_skip_fail.py .sF"
@@ -404,7 +403,7 @@ class TestTerminal:
             rep.config.bus.notify("itemstart", item, None)
             s = linecomp.stringio.getvalue().strip()
             assert s.endswith(item.name)
-            rep.config.bus.notify("itemtestreport", basic_run_report(item))
+            rep.config.bus.notify("itemtestreport", runner.basic_run_report(item))
 
         linecomp.assert_contains_lines([
             "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
@@ -495,7 +494,7 @@ class TestTerminal:
                 raise ValueError()
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        reports = [basic_run_report(x) for x in modcol.collect()]
+        reports = [runner.basic_run_report(x) for x in modcol.collect()]
         rep.pyevent__looponfailinfo(reports, [modcol.config.topdir])
         linecomp.assert_contains_lines([
             "*test_looponfailreport.py:2: assert 0",
@@ -521,7 +520,8 @@ class TestTerminal:
             rep.config.bus.notify("testrunstart")
             rep.config.bus.notify("testrunstart")
             for item in testdir.genitems([modcol]):
-                rep.config.bus.notify("itemtestreport", basic_run_report(item))
+                rep.config.bus.notify("itemtestreport", 
+                    runner.basic_run_report(item))
             rep.config.bus.notify("testrunfinish", exitstatus=1)
             s = linecomp.stringio.getvalue()
             if tbopt == "long":
@@ -569,7 +569,8 @@ class TestTerminal:
         bus.notify("testrunstart")
         try:
             for item in testdir.genitems([modcol]):
-                bus.notify("itemtestreport", basic_run_report(item))
+                bus.notify("itemtestreport", 
+                    runner.basic_run_report(item))
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
         else:
@@ -602,12 +603,12 @@ class TestTerminal:
                 lineno = 3
                 message = "justso"
 
-        ev1 = event.CollectionReport(None, None)
+        ev1 = runner.CollectionReport(None, None)
         ev1.when = "execute"
         ev1.skipped = True
         ev1.longrepr = longrepr 
         
-        ev2 = event.ItemTestReport(None, excinfo=longrepr)
+        ev2 = runner.ItemTestReport(None, excinfo=longrepr)
         ev2.skipped = True
 
         l = folded_skips([ev1, ev2])
@@ -637,7 +638,7 @@ class TestCollectonly:
            "  <Function 'test_func'>", 
         ])
         rep.config.bus.notify( "collectionreport", 
-            event.CollectionReport(modcol, [], excinfo=None))
+            runner.CollectionReport(modcol, [], excinfo=None))
         assert rep.indent == indent 
 
     def test_collectonly_skipped_module(self, testdir, linecomp):

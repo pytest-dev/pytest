@@ -1,6 +1,5 @@
 from py.__.test.dist.dsession import DSession
 from py.__.test.runner import basic_collect_report 
-from py.__.test import event
 from py.__.test import outcome
 import py
 

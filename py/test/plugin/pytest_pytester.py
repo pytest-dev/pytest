@@ -4,7 +4,7 @@ pytes plugin for easing testing of pytest runs themselves.
 
 import py
 import inspect
-from py.__.test import event
+from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
 import api
 
@@ -374,7 +374,7 @@ class EventRecorder(object):
         """ return a testreport whose dotted import path matches """
         __tracebackhide__ = True
         l = []
-        for rep in self.get(event.ItemTestReport):
+        for rep in self.get(runner.ItemTestReport):
             if inamepart in rep.colitem.listnames():
                 l.append(rep)
         if not l:
@@ -397,23 +397,23 @@ def test_eventrecorder():
     bus.notify("anonymous")
     assert recorder.events 
     assert not recorder.getfailures()
-    rep = event.ItemTestReport(None, None)
+    rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.failed = True
     bus.notify("itemtestreport", rep)
     failures = recorder.getfailures()
     assert failures == [rep]
-    failures = recorder.get(event.ItemTestReport)
+    failures = recorder.get(runner.ItemTestReport)
     assert failures == [rep]
     failures = recorder.getnamed("itemtestreport")
     assert failures == [rep]
 
-    rep = event.ItemTestReport(None, None)
+    rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.skipped = True
     bus.notify("itemtestreport", rep)
 
-    rep = event.CollectionReport(None, None)
+    rep = runner.CollectionReport(None, None)
     rep.passed = False
     rep.failed = True
     bus.notify("itemtestreport", rep)

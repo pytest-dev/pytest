@@ -14,8 +14,8 @@ class DefaultPlugin:
         return True
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
-        from py.__.test import event
-        return event.ItemTestReport(item, excinfo, when, outerr)
+        from py.__.test import runner
+        return runner.ItemTestReport(item, excinfo, when, outerr)
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)

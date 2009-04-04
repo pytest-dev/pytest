@@ -209,7 +209,6 @@ class TestWithFunctionIntegration:
     def test_internal_exception(self):
         # they are produced for example by a teardown failing
         # at the end of the run
-        from py.__.test import event
         try:
             raise ValueError
         except ValueError:
