@@ -6,7 +6,7 @@
     * and generating report events about it 
 """
 
-import py, os, sys
+import py
 
 from py.__.test.outcome import Exit, Skipped
 
@@ -55,7 +55,6 @@ def basic_collect_report(collector):
     return CollectionReport(collector, res, excinfo, outerr)
 
 from cPickle import Pickler, Unpickler
-from cStringIO import StringIO
 
 def forked_run_report(item, pdb=None):
     EXITSTATUS_TESTEXIT = 4
@@ -66,7 +65,7 @@ def forked_run_report(item, pdb=None):
         try:
             testrep = basic_run_report(item)
         except (KeyboardInterrupt, Exit): 
-            os._exit(EXITSTATUS_TESTEXIT)
+            py.std.os._exit(EXITSTATUS_TESTEXIT)
         return ipickle.dumps(testrep)
 
     ff = py.process.ForkedFunc(runforked)
@@ -164,3 +163,70 @@ class CollectionReport(BaseReport):
         else:
             out.line(str(longrepr))
 
+class ItemSetupReport(BaseReport):
+    """ Test Execution Report. """
+    failed = passed = skipped = False
+
+    def __init__(self, item, excinfo=None, outerr=None):
+        self.item = item 
+        self.outerr = outerr 
+        if not excinfo:
+            self.passed = True
+        else:
+            if excinfo.errisinstance(Skipped):
+                self.skipped = True 
+            else:
+                self.failed = True
+            self.excrepr = item._repr_failure_py(excinfo, outerr)
+
+class SetupState(object):
+    """ shared state for setting up/tearing down test items or collectors. """
+    def __init__(self):
+        self.stack = []
+
+    def teardown_all(self): 
+        while self.stack: 
+            col = self.stack.pop() 
+            col.teardown() 
+
+    def teardown_exact(self, item):
+        if self.stack and self.stack[-1] == item:
+            col = self.stack.pop()
+            col.teardown()
+     
+    def prepare(self, colitem): 
+        """ setup objects along the collector chain to the test-method
+            Teardown any unneccessary previously setup objects."""
+        needed_collectors = colitem.listchain() 
+        while self.stack: 
+            if self.stack == needed_collectors[:len(self.stack)]: 
+                break 
+            col = self.stack.pop() 
+            col.teardown()
+        for col in needed_collectors[len(self.stack):]: 
+            col.setup() 
+            self.stack.append(col) 
+
+    def fixturecall(self, callable, item):
+        excinfo = None
+        capture = item.config._getcapture()
+        try:
+            try:
+                callable(item)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except:
+                excinfo = py.code.ExceptionInfo()
+        finally:
+            outerr = capture.reset()
+        if not excinfo:
+            return True
+        else:
+            rep = ItemSetupReport(item, excinfo, outerr)
+            item.config.pytestplugins.notify("itemsetupreport", rep)
+
+    def setupitem(self, item):
+        return self.fixturecall(self.prepare, item) 
+
+    def teardownitem(self, item):
+        self.fixturecall(self.teardown_exact, item) 

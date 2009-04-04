@@ -138,3 +138,74 @@ def test_method_setup_uses_fresh_instances(testdir):
                 assert not hasattr(self, 'world')
     """)
     sorter.assertoutcome(passed=4, failed=0)
+
+from py.__.test.config import SetupState
+
+class TestSetupState:
+    def test_setupitem_works(self, testdir):
+        item = testdir.getitem("""
+            def setup_module(mod):
+                pass 
+            def test_func():
+                pass
+        """)
+        evrec = testdir.geteventrecorder(item.config)
+        setup = SetupState()
+        res = setup.setupitem(item)
+        assert res
+
+    def test_setupitem_fails(self, testdir):
+        item = testdir.getitem("""
+            def setup_module(mod):
+                print "world"
+                raise ValueError(42)
+            def test_func():
+                pass
+        """)
+        evrec = testdir.geteventrecorder(item.config)
+        setup = SetupState()
+        res = setup.setupitem(item)
+        assert not res
+        rep = evrec.popevent("itemsetupreport").rep
+        assert rep.failed
+        assert not rep.skipped
+        assert rep.excrepr 
+        assert "42" in str(rep.excrepr)
+        assert rep.outerr[0].find("world") != -1
+
+    def test_teardownitem_fails(self, testdir):
+        item = testdir.getitem("""
+            def test_func():
+                pass
+            def teardown_function(func): 
+                print "13"
+                raise ValueError(25)
+        """)
+        evrec = testdir.geteventrecorder(item.config)
+        setup = SetupState()
+        res = setup.setupitem(item)
+        assert res 
+        setup.teardownitem(item)
+        rep = evrec.popevent("itemsetupreport").rep
+        assert rep.item == item 
+        assert rep.failed 
+        assert not rep.passed
+        assert "13" in rep.outerr[0]
+        assert "25" in str(rep.excrepr)
+
+    def test_setupitem_skips(self, testdir):
+        item = testdir.getitem("""
+            import py
+            def setup_module(mod):
+                py.test.skip("17")
+            def test_func():
+                pass
+        """)
+        evrec = testdir.geteventrecorder(item.config)
+        setup = SetupState()
+        setup.setupitem(item)
+        rep = evrec.popevent("itemsetupreport").rep
+        assert not rep.failed
+        assert rep.skipped
+        assert rep.excrepr 
+        assert "17" in str(rep.excrepr)

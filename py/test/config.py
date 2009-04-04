@@ -3,6 +3,7 @@ from conftesthandle import Conftest
 
 from py.__.test import parseopt
 from py.__.misc.warn import APIWARN
+from py.__.test.runner import SetupState
 
 def ensuretemp(string, dir=1): 
     """ return temporary directory path with
@@ -312,34 +313,6 @@ def gettopdir(args):
     else:
         return pkgdir.dirpath()
 
-class SetupState(object):
-    """ shared state for setting up/tearing down test items or collectors. """
-    def __init__(self):
-        self.stack = []
-
-    def teardown_all(self): 
-        while self.stack: 
-            col = self.stack.pop() 
-            col.teardown() 
-
-    def teardown_exact(self, item):
-        if self.stack and self.stack[-1] == item:
-            col = self.stack.pop()
-            col.teardown()
-     
-    def prepare(self, colitem): 
-        """ setup objects along the collector chain to the test-method
-            Teardown any unneccessary previously setup objects."""
-
-        needed_collectors = colitem.listchain() 
-        while self.stack: 
-            if self.stack == needed_collectors[:len(self.stack)]: 
-                break 
-            col = self.stack.pop() 
-            col.teardown()
-        for col in needed_collectors[len(self.stack):]: 
-            col.setup() 
-            self.stack.append(col) 
 
 # this is the one per-process instance of py.test configuration 
 config_per_process = Config(

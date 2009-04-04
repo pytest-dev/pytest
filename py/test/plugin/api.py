@@ -85,6 +85,9 @@ class Events:
     def pyevent__itemtestreport(self, event):
         """ test has been run. """
 
+    def pyevent__itemsetupreport(self, rep):
+        """ test has been run. """
+
     def pyevent__deselected(self, items):
         """ collected items that were deselected (by keyword). """
 

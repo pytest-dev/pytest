@@ -74,6 +74,11 @@ class TmpTestdir:
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
 
+    def geteventrecorder(self, config):
+        evrec = EventRecorder(config.bus) 
+        self.pyfuncitem.addfinalizer(lambda: config.bus.unregister(evrec))
+        return evrec
+
     def chdir(self):
         old = self.tmpdir.chdir()
         if not hasattr(self, '_olddir'):
@@ -174,9 +179,12 @@ class TmpTestdir:
 
     def getitem(self,  source, funcname="test_func"):
         modcol = self.getmodulecol(source)
-        item = modcol.join(funcname) 
-        assert item is not None, "%r item not found in module:\n%s" %(funcname, source)
-        return item 
+        moditems = modcol.collect()
+        for item in modcol.collect():
+            if item.name == funcname:
+                return item 
+        else:
+            assert 0, "%r item not found in module:\n%s" %(funcname, source)
 
     def getitems(self,  source):
         modcol = self.getmodulecol(source)
@@ -284,12 +292,13 @@ class EventRecorder(object):
         for i, event in py.builtin.enumerate(self.events):
             if event.name == name:
                 del self.events[i]
-                return event
+                eventparser = self.geteventparser(name)
+                return eventparser(*event.args, **event.kwargs)
         raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
     def getevents(self, eventname):
         """ return list of ParsedEvent instances matching the given eventname. """
-        method = self.geteventmethod(eventname)
+        method = self.geteventparser(eventname)
         l = []
         for event in self.events:
             if event.name == eventname:
@@ -297,22 +306,17 @@ class EventRecorder(object):
                 l.append(pevent)  
         return l
 
-    def geteventmethod(self, eventname):
+    def geteventparser(self, eventname):
         mname = "pyevent__" + eventname
         method = getattr(api.Events, mname)
         args, varargs, varkw, default = inspect.getargspec(method)
         assert args[0] == "self"
         args = args[1:]
         fspec = inspect.formatargspec(args, varargs, varkw, default)
-        source = """def %(mname)s%(fspec)s: 
-                    return ParsedEvent(locals())""" % locals()
-        print source
-        exec source
+        code = py.code.compile("""def %(mname)s%(fspec)s: 
+                    return ParsedEvent(locals())""" % locals())
+        exec code
         return locals()[mname]
-
-
-    def firstparsedevent(self, eventname):
-        return  self.parsedevents(eventname)[0]
 
     def get(self, cls):
         l = []
