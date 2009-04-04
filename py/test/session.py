@@ -6,7 +6,7 @@
 """
 
 import py
-from py.__.test import event, outcome
+from py.__.test import outcome
 
 # imports used for genitems()
 Item = py.test.collect.Item

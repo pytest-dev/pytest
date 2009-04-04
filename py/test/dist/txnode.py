@@ -2,9 +2,7 @@
     Manage setup, running and local representation of remote nodes/processes. 
 """
 import py
-from py.__.test import event
 from py.__.test.dist.mypickle import PickleChannel
-
 
 class TXNode(object):
     """ Represents a Test Execution environment in the controlling process. 

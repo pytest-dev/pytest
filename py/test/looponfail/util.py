@@ -1,5 +1,4 @@
 import py
-from py.__.test import event
 
 class StatRecorder:
     def __init__(self, rootdirlist):

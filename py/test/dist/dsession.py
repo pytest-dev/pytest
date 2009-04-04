@@ -5,7 +5,6 @@
 """
 
 import py
-from py.__.test import event
 from py.__.test.runner import basic_run_report, basic_collect_report
 from py.__.test.session import Session
 from py.__.test import outcome 
@@ -237,6 +236,7 @@ class DSession(Session):
         self.node2pending[node].remove(item)
 
     def handle_crashitem(self, item, node):
+        from py.__.test import event
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = event.ItemTestReport(item, when="???", excinfo=longrepr)
         rep.node = node

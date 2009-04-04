@@ -12,7 +12,6 @@ from __future__ import generators
 import py
 from py.__.test.session import Session
 from py.__.test.dist.mypickle import PickleChannel
-from py.__.test import event
 from py.__.test.looponfail import util
 
 class LooponfailingSession(Session):
