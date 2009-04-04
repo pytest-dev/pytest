@@ -251,14 +251,3 @@ class DSession(Session):
     def teardown(self):
         """ teardown any resources after a test run. """ 
         self.nodemanager.teardown_nodes()
-
-# debugging function
-def dump_picklestate(item):
-    l = []
-    while 1:
-        state = item.__getstate__()
-        l.append(state)
-        item = state[-1]
-        if len(state) != 2:
-            break
-    return l
