@@ -82,7 +82,7 @@ class Events:
     def pyevent__itemstart(self, item, node=None):
         """ test item gets collected. """
 
-    def pyevent__itemtestreport(self, event):
+    def pyevent__itemtestreport(self, rep):
         """ test has been run. """
 
     def pyevent__item_runtest_finished(self, item, excinfo, outerr):
@@ -97,7 +97,7 @@ class Events:
     def pyevent__collectionstart(self, collector):
         """ collector starts collecting. """
 
-    def pyevent__collectionreport(self, event):
+    def pyevent__collectionreport(self, rep):
         """ collector finished collecting. """
 
     def pyevent__testrunstart(self):

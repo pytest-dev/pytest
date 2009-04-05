@@ -104,8 +104,8 @@ class SlaveNode(object):
     def sendevent(self, eventname, *args, **kwargs):
         self.channel.send((eventname, args, kwargs))
 
-    def pyevent__itemtestreport(self, report):
-        self.sendevent("itemtestreport", report)
+    def pyevent__itemtestreport(self, rep):
+        self.sendevent("itemtestreport", rep)
 
     def run(self):
         channel = self.channel

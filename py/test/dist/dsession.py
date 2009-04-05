@@ -24,15 +24,15 @@ class LoopState(object):
         self.shuttingdown = False
         self.testsfailed = False
 
-    def pyevent__itemtestreport(self, event):
-        if event.colitem in self.dsession.item2nodes:
-            self.dsession.removeitem(event.colitem, event.node)
-        if event.failed:
+    def pyevent__itemtestreport(self, rep):
+        if rep.colitem in self.dsession.item2nodes:
+            self.dsession.removeitem(rep.colitem, rep.node)
+        if rep.failed:
             self.testsfailed = True
 
-    def pyevent__collectionreport(self, event):
-        if event.passed:
-            self.colitems.extend(event.result)
+    def pyevent__collectionreport(self, rep):
+        if rep.passed:
+            self.colitems.extend(rep.result)
 
     def pyevent__testnodeready(self, node):
         self.dsession.addnode(node)

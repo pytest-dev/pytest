@@ -69,15 +69,15 @@ class TerminalReporter:
                 break 
         return cat, self.getoutcomeletter(event), self.getoutcomeword(event)
 
-    def getoutcomeletter(self, event):
-        return event.shortrepr 
+    def getoutcomeletter(self, rep):
+        return rep.shortrepr 
 
-    def getoutcomeword(self, event):
-        if event.passed: 
+    def getoutcomeword(self, rep):
+        if rep.passed: 
             return "PASS", dict(green=True)
-        elif event.failed: 
+        elif rep.failed: 
             return "FAIL", dict(red=True)
-        elif event.skipped: 
+        elif rep.skipped: 
             return "SKIP"
         else: 
             return "???", dict(red=True)
@@ -161,38 +161,38 @@ class TerminalReporter:
     def pyevent__deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
     
-    def pyevent__itemtestreport(self, event):
-        fspath = event.colitem.fspath 
-        cat, letter, word = self.getcategoryletterword(event)
+    def pyevent__itemtestreport(self, rep):
+        fspath = rep.colitem.fspath 
+        cat, letter, word = self.getcategoryletterword(rep)
         if isinstance(word, tuple):
             word, markup = word
         else:
             markup = {}
-        self.stats.setdefault(cat, []).append(event)
+        self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
             self.write_fspath_result(fspath, letter)
         else:
-            info = event.colitem.repr_metainfo()
+            info = rep.colitem.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
-            if not hasattr(event, 'node'):
+            if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
             else:
                 self.ensure_newline()
-                if hasattr(event, 'node'):
-                    self._tw.write("%s " % event.node.gateway.id)
+                if hasattr(rep, 'node'):
+                    self._tw.write("%s " % rep.node.gateway.id)
                 self._tw.write(word, **markup)
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pyevent__collectionreport(self, event):
-        if not event.passed:
-            if event.failed:
-                self.stats.setdefault("failed", []).append(event)
-                msg = event.longrepr.reprcrash.message 
-                self.write_fspath_result(event.colitem.fspath, "F")
-            elif event.skipped:
-                self.stats.setdefault("skipped", []).append(event)
-                self.write_fspath_result(event.colitem.fspath, "S")
+    def pyevent__collectionreport(self, rep):
+        if not rep.passed:
+            if rep.failed:
+                self.stats.setdefault("failed", []).append(rep)
+                msg = rep.longrepr.reprcrash.message 
+                self.write_fspath_result(rep.colitem.fspath, "F")
+            elif rep.skipped:
+                self.stats.setdefault("skipped", []).append(rep)
+                self.write_fspath_result(rep.colitem.fspath, "S")
 
     def pyevent__testrunstart(self):
         self.write_sep("=", "test session starts", bold=True)
@@ -316,17 +316,17 @@ class CollectonlyReporter:
     def pyevent__itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pyevent__collectionreport(self, event):
-        if not event.passed:
-            self.outindent("!!! %s !!!" % event.longrepr.reprcrash.message)
-            self._failed.append(event)
+    def pyevent__collectionreport(self, rep):
+        if not rep.passed:
+            self.outindent("!!! %s !!!" % rep.longrepr.reprcrash.message)
+            self._failed.append(rep)
         self.indent = self.indent[:-len(self.INDENT)]
 
     def pyevent__testrunfinish(self, exitstatus, excrepr=None):
         if self._failed:
             self.out.sep("!", "collection failures")
-        for event in self._failed:
-            event.toterminal(self.out)
+        for rep in self._failed:
+            rep.toterminal(self.out)
                 
 def folded_skips(skipped):
     d = {}

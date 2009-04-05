@@ -77,7 +77,7 @@ class TestSetupState:
         evrec = testdir.geteventrecorder(item.config)
         setup = SetupState()
         setup.do_fixture_and_runtest(item)
-        rep = evrec.popevent("itemtestreport").event
+        rep = evrec.popevent("itemtestreport").rep 
         assert rep.passed 
 
     def test_runtest_fails(self, testdir):

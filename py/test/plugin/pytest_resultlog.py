@@ -58,25 +58,25 @@ class ResultLog(object):
         testpath = generic_path(event.colitem)
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
-    def pyevent__itemtestreport(self, event):
-        code = event.shortrepr 
-        if event.passed:
+    def pyevent__itemtestreport(self, rep):
+        code = rep.shortrepr 
+        if rep.passed:
             longrepr = ""
-        elif event.failed:
-            longrepr = str(event.longrepr) 
-        elif event.skipped:
-            longrepr = str(event.longrepr.reprcrash.message)
-        self.log_outcome(event, code, longrepr) 
+        elif rep.failed:
+            longrepr = str(rep.longrepr) 
+        elif rep.skipped:
+            longrepr = str(rep.longrepr.reprcrash.message)
+        self.log_outcome(rep, code, longrepr) 
 
-    def pyevent__collectionreport(self, event):
-        if not event.passed:
-            if event.failed: 
+    def pyevent__collectionreport(self, rep):
+        if not rep.passed:
+            if rep.failed: 
                 code = "F"
             else:
-                assert event.skipped
+                assert rep.skipped
                 code = "S"
-            longrepr = str(event.longrepr.reprcrash)
-            self.log_outcome(event, code, longrepr)    
+            longrepr = str(rep.longrepr.reprcrash)
+            self.log_outcome(rep, code, longrepr)    
 
     def pyevent__internalerror(self, excrepr):
         path = excrepr.reprcrash.path 

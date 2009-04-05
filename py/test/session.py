@@ -43,11 +43,11 @@ class Session(object):
             else:
                 assert isinstance(next, Collector)
                 notify("collectionstart", next)
-                ev = basic_collect_report(next)
-                if ev.passed:
-                    for x in self.genitems(ev.result, keywordexpr):
+                rep = basic_collect_report(next)
+                if rep.passed:
+                    for x in self.genitems(rep.result, keywordexpr):
                         yield x 
-                notify("collectionreport", ev)
+                notify("collectionreport", rep)
             if self.shouldstop:
                 break
 
