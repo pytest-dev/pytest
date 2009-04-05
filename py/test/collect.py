@@ -1,22 +1,7 @@
 """
-Collect test items at filesystem and python module levels. 
-
-Collectors and test items form a tree.  The difference
-between a collector and a test item as seen from the session 
-is smalll.  Collectors usually return a list of child 
-collectors/items whereas items usually return None 
-indicating a successful test run.  
-
-The is a schematic example of a tree of collectors and test items:: 
-
-    Directory
-        Directory 
-            CustomCollector  # provided via conftest's 
-                CustomItem   # provided via conftest's
-                CustomItem   # provided via conftest's
-        Directory       
-            ... 
-
+base test collection objects.  
+Collectors and test Items form a tree
+that is usually built iteratively.  
 """ 
 import py
 from py.__.misc.warn import APIWARN

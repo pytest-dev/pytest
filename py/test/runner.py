@@ -156,13 +156,6 @@ class CollectionReport(BaseReport):
             else:
                 self.failed = True
 
-    def toterminal(self, out):
-        longrepr = self.longrepr 
-        if hasattr(longrepr, 'toterminal'):
-            longrepr.toterminal(out)
-        else:
-            out.line(str(longrepr))
-
 class ItemSetupReport(BaseReport):
     """ Test Execution Report. """
     failed = passed = skipped = False
