@@ -27,9 +27,9 @@ def test_module_and_function_setup(testdir):
                 assert modlevel[0] == 42
                 assert not hasattr(test_modlevel, 'answer') 
     """)
-    rep = sorter.getreport("test_modlevel") 
+    rep = sorter.matchreport("test_modlevel") 
     assert rep.passed 
-    rep = sorter.getreport("test_module") 
+    rep = sorter.matchreport("test_module") 
     assert rep.passed 
 
 def test_class_setup(testdir):
@@ -118,7 +118,7 @@ def test_func_generator_setup(testdir):
             yield check 
             assert x == [1]
     """)
-    rep = sorter.getreport("test_one") 
+    rep = sorter.matchreport("test_one", names="itemtestreport") 
     assert rep.passed 
         
 def test_method_setup_uses_fresh_instances(testdir):

@@ -61,6 +61,9 @@ class Events:
     def pyevent(self, eventname, args, kwargs):
         """ generically called for each notification event. """
 
+    def pyevent__NOP(self, *args, **kwargs):
+        """ the no-operation call. """ 
+
     def pyevent__gateway_init(self, gateway):
         """ called after a gateway has been initialized. """
 

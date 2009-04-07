@@ -84,8 +84,8 @@ def test_simple_unittest(testdir):
                 self.assertEquals('foo', 'bar')
     """)
     sorter = testdir.inline_run(testpath)
-    assert sorter.getreport("testpassing").passed
-    assert sorter.getreport("test_failing").failed 
+    assert sorter.matchreport("testpassing").passed
+    assert sorter.matchreport("test_failing").failed 
 
 def test_setup(testdir):
     testpath = testdir.makepyfile(test_two="""
@@ -98,7 +98,7 @@ def test_setup(testdir):
                 self.assertEquals(1, self.foo)
     """)
     sorter = testdir.inline_run(testpath)
-    rep = sorter.getreport("test_setUp")
+    rep = sorter.matchreport("test_setUp")
     assert rep.passed
 
 def test_teardown(testdir):

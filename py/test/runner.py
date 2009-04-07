@@ -98,6 +98,7 @@ class BaseReport(object):
         else:
             out.line(str(longrepr))
    
+# XXX rename to runtest() report ? 
 class ItemTestReport(BaseReport):
     """ Test Execution Report. """
     failed = passed = skipped = False
@@ -138,11 +139,13 @@ class ItemTestReport(BaseReport):
             self.longrepr = longrepr 
             
 
+# XXX rename to collectreport 
 class CollectionReport(BaseReport):
     """ Collection Report. """
     skipped = failed = passed = False 
 
     def __init__(self, colitem, result, excinfo=None, outerr=None):
+        # XXX rename to collector 
         self.colitem = colitem 
         if not excinfo:
             self.passed = True

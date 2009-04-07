@@ -37,8 +37,7 @@ class TestCapture:
                 out, err = stdcapture.reset()
                 assert out.startswith("42")
         """)
-        ev, = evrec.getnamed("itemtestreport")
-        assert ev.passed
+        evrec.assertoutcome(passed=1)
         
     def test_stdfd_functional(self, testdir):        
         testdir.plugins.append(IocapturePlugin())
@@ -49,6 +48,4 @@ class TestCapture:
                 out, err = stdcapturefd.reset()
                 assert out.startswith("42")
         """)
-        ev, = evrec.getnamed("itemtestreport")
-        assert ev.passed
-        
+        evrec.assertoutcome(passed=1)

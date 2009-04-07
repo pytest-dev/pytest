@@ -74,18 +74,17 @@ class TestBootstrapping:
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="""class APlugin: pass""")
         plugins = PytestPlugins() 
-        evrec = EventRecorder(plugins)
+        sorter = EventRecorder(plugins)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         plugins.consider_module(mod)
-        evlist = evrec.getnamed("plugin_registered")
-        assert len(evlist) == 1 
-        assert evlist[0].__class__.__name__ == "APlugin"
+        call = sorter.getcall("plugin_registered")
+        assert call.plugin.__class__.__name__ == "APlugin"
 
         # check that it is not registered twice 
         plugins.consider_module(mod)
-        evlist = evrec.getnamed("plugin_registered")
-        assert len(evlist) == 1 
+        l = sorter.getcalls("plugin_registered")
+        assert len(l) == 1
 
     def test_consider_conftest(self, testdir):
         pp = PytestPlugins()

@@ -108,9 +108,8 @@ class TestDoctests:
             >>> x == 1
             False
         """)
-        events = testdir.inline_run(p)
-        ev, = events.getnamed("itemtestreport")
-        assert ev.failed 
+        sorter = testdir.inline_run(p)
+        sorter.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
         from py.__.test.outcome import Failed 
@@ -123,11 +122,9 @@ class TestDoctests:
             2
         """)
         sorter = testdir.inline_run(p)
-        events = sorter.getnamed("itemtestreport")
-        assert len(events) == 1
-        ev, = events
-        assert ev.failed
-        assert ev.longrepr 
+        call = sorter.getcall("itemtestreport")
+        assert call.rep.failed
+        assert call.rep.longrepr 
         # XXX 
         #testitem, = items
         #excinfo = py.test.raises(Failed, "testitem.runtest()")
@@ -144,9 +141,8 @@ class TestDoctests:
 
             '''
         """)
-        events = testdir.inline_run(p, "--doctest-modules")
-        ev, = events.getnamed("itemtestreport")
-        assert ev.failed 
+        sorter = testdir.inline_run(p, "--doctest-modules")
+        sorter.assertoutcome(failed=1) 
 
     def test_txtfile_failing(self, testdir):
         testdir.plugins.append('pytest_doctest')

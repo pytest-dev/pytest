@@ -130,9 +130,9 @@ class SessionTests:
             def test_one(): pass
         """)
         sorter = testdir.inline_run(testdir.tmpdir)
-        skips = sorter.getnamed("collectionreport")
-        assert len(skips) == 1
-        assert skips[0].skipped 
+        reports = sorter.getreports("collectionreport")
+        assert len(reports) == 1
+        assert reports[0].skipped 
 
 class TestNewSession(SessionTests):
     def test_pdb_run(self, testdir, monkeypatch):
@@ -146,7 +146,7 @@ class TestNewSession(SessionTests):
             l.append(args)
         monkeypatch.setattr(py.__.test.custompdb, 'post_mortem', mypdb)
         sorter = testdir.inline_run('--pdb', tfile)
-        rep = sorter.getreport("test_usepdb")
+        rep = sorter.matchreport("test_usepdb")
         assert rep.failed
         assert len(l) == 1
         tb = py.code.Traceback(l[0][0])
@@ -199,11 +199,11 @@ class TestNewSession(SessionTests):
         )
         sorter = testdir.inline_run('--collectonly', p.dirpath())
        
-        itemstarted = sorter.getnamed("itemstart")
+        itemstarted = sorter.getcalls("itemstart")
         assert len(itemstarted) == 3
-        assert not sorter.getnamed("itemtestreport") 
+        assert not sorter.getreports("itemtestreport") 
         started = sorter.getcalls("collectionstart")
-        finished = sorter.getnamed("collectionreport")
+        finished = sorter.getreports("collectionreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 
         colfail = [x for x in finished if x.failed]
@@ -215,7 +215,7 @@ class TestNewSession(SessionTests):
         testdir.makepyfile(__init__="")
         testdir.makepyfile(test_one="xxxx", test_two="yyyy")
         sorter = testdir.inline_run("-x", testdir.tmpdir)
-        finished = sorter.getnamed("collectionreport")
+        finished = sorter.getreports("collectionreport")
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 

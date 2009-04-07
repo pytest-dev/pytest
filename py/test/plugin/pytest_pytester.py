@@ -296,12 +296,19 @@ class EventRecorder(object):
                 return eventparser(*event.args, **event.kwargs)
         raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
-    def getcalls(self, eventname):
+    def getcall(self, name):
+        l = self.getcalls(name)
+        assert len(l) == 1, (name, l)
+        return l[0]
+
+    def getcalls(self, *names):
         """ return list of ParsedCall instances matching the given eventname. """
-        method = self._getcallparser(eventname)
+        if len(names) == 1 and isinstance(names, str):
+            names = names.split()
         l = []
         for event in self.events:
-            if event.name == eventname:
+            if event.name in names:
+                method = self._getcallparser(event.name)
                 pevent = method(*event.args, **event.kwargs)
                 l.append(pevent)  
         return l
@@ -318,35 +325,34 @@ class EventRecorder(object):
         exec code
         return locals()[mname]
 
-    def get(self, cls):
+    # functionality for test reports 
+
+    def getreports(self, names="itemtestreport collectionreport"):
+        names = names.split()
         l = []
-        for event in self.events:
-            try:
-                value = event.args[0]
-            except IndexError:
-                continue
-            else:
-                if isinstance(value, cls):
-                    l.append(value)
+        for call in self.getcalls(*names):
+            l.append(call.rep)
         return l 
 
-    def getnamed(self, *names):
+    def matchreport(self, inamepart="", names="itemtestreport collectionreport"):
+        """ return a testreport whose dotted import path matches """
         l = []
-        for event in self.events:
-            if event.name in names:
-                l.append(event.args[0])
-        return l 
-
-    def getfirstnamed(self, name):
-        for event in self.events:
-            if event.name == name:
-                return event.args[0]
+        for rep in self.getreports(names=names):
+            if not inamepart or inamepart in rep.colitem.listnames():
+                l.append(rep)
+        if not l:
+            raise ValueError("could not find test report matching %r: no test reports at all!" %
+                (inamepart,))
+        if len(l) > 1:
+            raise ValueError("found more than one testreport matching %r: %s" %(
+                             inamepart, l))
+        return l[0]
 
     def getfailures(self, names='itemtestreport collectionreport'):
         l = []
-        for ev in self.getnamed(*names.split()):
-            if ev.failed:
-                l.append(ev)
+        for call in self.getcalls(*names.split()):
+            if call.rep.failed:
+                l.append(call.rep)
         return l
 
     def getfailedcollections(self):
@@ -356,13 +362,13 @@ class EventRecorder(object):
         passed = []
         skipped = []
         failed = []
-        for ev in self.getnamed('itemtestreport'): # , 'collectionreport'):
-            if ev.passed: 
-                passed.append(ev) 
-            elif ev.skipped: 
-                skipped.append(ev) 
-            elif ev.failed:
-                failed.append(ev) 
+        for rep in self.getreports("itemtestreport"):
+            if rep.passed: 
+                passed.append(rep) 
+            elif rep.skipped: 
+                skipped.append(rep) 
+            elif rep.failed:
+                failed.append(rep) 
         return passed, skipped, failed 
 
     def countoutcomes(self):
@@ -373,21 +379,6 @@ class EventRecorder(object):
         assert passed == len(realpassed)
         assert skipped == len(realskipped)
         assert failed == len(realfailed)
-
-    def getreport(self, inamepart): 
-        """ return a testreport whose dotted import path matches """
-        __tracebackhide__ = True
-        l = []
-        for rep in self.get(runner.ItemTestReport):
-            if inamepart in rep.colitem.listnames():
-                l.append(rep)
-        if not l:
-            raise ValueError("could not find test report matching %r: no test reports at all!" %
-                (inamepart,))
-        if len(l) > 1:
-            raise ValueError("found more than one testreport matching %r: %s" %(
-                             inamepart, l))
-        return l[0]
 
     def clear(self):
         self.events[:] = []
@@ -407,9 +398,7 @@ def test_eventrecorder():
     bus.notify("itemtestreport", rep)
     failures = recorder.getfailures()
     assert failures == [rep]
-    failures = recorder.get(runner.ItemTestReport)
-    assert failures == [rep]
-    failures = recorder.getnamed("itemtestreport")
+    failures = recorder.getfailures()
     assert failures == [rep]
 
     rep = runner.ItemTestReport(None, None)

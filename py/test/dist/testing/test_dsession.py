@@ -181,7 +181,7 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert loopstate.colitems == [item2] # do not reschedule crash item
-        testrep = evrec.getfirstnamed("itemtestreport")
+        testrep = evrec.matchreport(names="itemtestreport")
         assert testrep.failed
         assert testrep.colitem == item1
         assert str(testrep.longrepr).find("crashed") != -1
@@ -204,9 +204,9 @@ class TestDSession:
         session = DSession(item.config)
       
         evrec = EventRecorder(session.bus)
-        session.queueevent("NOPevent", 42)
+        session.queueevent("NOP", 42)
         session.loop_once(session._initloopstate([]))
-        assert evrec.getfirstnamed('NOPevent')
+        assert evrec.getcall('NOP')
 
     def runthrough(self, item):
         session = DSession(item.config)
@@ -274,10 +274,10 @@ class TestDSession:
         evrec = EventRecorder(session.bus)
         session.queueevent("itemtestreport", run(item, node))
         session.loop_once(loopstate)
-        assert not evrec.getfirstnamed("testnodedown")
+        assert not evrec.getcalls("testnodedown")
         session.queueevent("testnodedown", node, None)
         session.loop_once(loopstate)
-        assert evrec.getfirstnamed('testnodedown') == node
+        assert evrec.getcall('testnodedown').node == node
 
     def test_filteritems(self, testdir, EventRecorder):
         modcol = testdir.getmodulecol("""

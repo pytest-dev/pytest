@@ -104,11 +104,11 @@ class TestNodeManager:
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
-        evrec = EventRecorder(config.bus, debug=True)
+        sorter = EventRecorder(config.bus, debug=True)
         nodemanager.setup_nodes(putevent=[].append)
         for spec in nodemanager.gwmanager.specs:
-            l = evrec.getnamed("trace")
-            print evrec.events
+            l = sorter.getcalls("trace")
+            print sorter.events
             assert l 
         nodemanager.teardown_nodes()
 
