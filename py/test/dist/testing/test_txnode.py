@@ -111,7 +111,7 @@ class TestMasterSlaveConnection:
         node = mysetup.makenode(item.config)
         node.channel.close()
         py.test.raises(IOError, "node.send(item)")
-        #ev = self.getevents("internalerror")
+        #ev = self.getcalls("internalerror")
         #assert ev.excinfo.errisinstance(IOError)
 
     def test_send_one(self, testdir, mysetup):

@@ -296,14 +296,14 @@ class TestDSession:
         remaining = session.filteritems(items)
         assert remaining == []
         
-        event = evrec.getevents("deselected")[-1]
+        event = evrec.getcalls("deselected")[-1]
         assert event.items == items 
 
         modcol.config.option.keyword = "test_fail"
         remaining = session.filteritems(items)
         assert remaining == [items[0]]
 
-        event = evrec.getevents("deselected")[-1]
+        event = evrec.getcalls("deselected")[-1]
         assert event.items == [items[1]]
 
     def test_testnodedown_shutdown_after_completion(self, testdir):

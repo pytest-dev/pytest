@@ -267,12 +267,12 @@ class Event:
     def __repr__(self):
         return "<Event %r %r>" %(self.name, self.args)
 
-class ParsedEvent:
+class ParsedCall:
     def __init__(self, locals):
         self.__dict__ = locals.copy()
 
     def __repr__(self):
-        return "<ParsedEvent %r>" %(self.__dict__,)
+        return "<ParsedCall %r>" %(self.__dict__,)
 
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
@@ -288,17 +288,17 @@ class EventRecorder(object):
             print "[event: %s]: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
         self.events.append(Event(name, args, kwargs))
 
-    def popevent(self, name):
+    def popcall(self, name):
         for i, event in py.builtin.enumerate(self.events):
             if event.name == name:
                 del self.events[i]
-                eventparser = self.geteventparser(name)
+                eventparser = self._getcallparser(name)
                 return eventparser(*event.args, **event.kwargs)
         raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
-    def getevents(self, eventname):
-        """ return list of ParsedEvent instances matching the given eventname. """
-        method = self.geteventparser(eventname)
+    def getcalls(self, eventname):
+        """ return list of ParsedCall instances matching the given eventname. """
+        method = self._getcallparser(eventname)
         l = []
         for event in self.events:
             if event.name == eventname:
@@ -306,7 +306,7 @@ class EventRecorder(object):
                 l.append(pevent)  
         return l
 
-    def geteventparser(self, eventname):
+    def _getcallparser(self, eventname):
         mname = "pyevent__" + eventname
         method = getattr(api.Events, mname)
         args, varargs, varkw, default = inspect.getargspec(method)
@@ -314,7 +314,7 @@ class EventRecorder(object):
         args = args[1:]
         fspec = inspect.formatargspec(args, varargs, varkw, default)
         code = py.code.compile("""def %(mname)s%(fspec)s: 
-                    return ParsedEvent(locals())""" % locals())
+                    return ParsedCall(locals())""" % locals())
         exec code
         return locals()[mname]
 
