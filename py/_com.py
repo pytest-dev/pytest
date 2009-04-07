@@ -159,14 +159,16 @@ class PyPlugins:
         MultiCall(self.listattr("pyevent"), eventname, args, kwargs).execute()
 
 
-class MultiAPI:
-    def __init__(self, apiclass, plugins, prefix):
-        for fullname in vars(apiclass):
-            if fullname[:2] != "__":
-                assert fullname.startswith(prefix)
-                name = fullname[len(prefix):]
-                mm = CallMaker(plugins, fullname)
+class PluginAPI: 
+    def __init__(self, apiclass, plugins):
+        self._apiclass = apiclass
+        self._plugins = plugins
+        for name in vars(apiclass):
+            if name[:2] != "__":
+                mm = CallMaker(plugins, name)
                 setattr(self, name, mm)
+    def __repr__(self):
+        return "<PluginAPI %r %r>" %(self._apiclass, self._plugins)
 
 class CallMaker:
     def __init__(self, plugins, name):

@@ -2,7 +2,7 @@
 import py
 import os
 from py._com import PyPlugins, MultiCall
-from py._com import MultiAPI
+from py._com import PluginAPI
 
 pytest_plugins = "xfail"
 
@@ -254,15 +254,14 @@ class TestMulticallMaker:
     def test_happypath(self):
         plugins = PyPlugins()
         class Api:
-            def xyz_hello(self, arg):
+            def hello(self, arg):
                 pass
 
-        mcm = MultiAPI(apiclass=Api, plugins=plugins, prefix="xyz_")
+        mcm = PluginAPI(apiclass=Api, plugins=plugins)
         assert hasattr(mcm, 'hello')
-        assert repr(mcm.hello).find("xyz_hello") != -1
-        assert not hasattr(mcm, 'xyz_hello')
+        assert repr(mcm.hello).find("hello") != -1
         class Plugin:
-            def xyz_hello(self, arg):
+            def hello(self, arg):
                 return arg + 1
         plugins.register(Plugin())
         l = mcm.hello(3)

@@ -2,6 +2,7 @@
 handling py.test plugins. 
 """
 import py
+from py.__.test.plugin import api
 
 class PytestPlugins(object):
     def __init__(self, pyplugins=None):
@@ -10,6 +11,10 @@ class PytestPlugins(object):
         self.pyplugins = pyplugins 
         self.MultiCall = self.pyplugins.MultiCall
         self._plugins = {}
+
+    def _getapi(self):
+        return  py._com.PluginAPI(apiclass=api.PluginHooks, 
+                             plugins=self.pyplugins) 
 
     def register(self, plugin):
         self.pyplugins.register(plugin)

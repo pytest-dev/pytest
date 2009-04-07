@@ -17,7 +17,7 @@ class DefaultPlugin:
         from py.__.test import runner
         return runner.ItemTestReport(item, excinfo, when, outerr)
 
-    def pyevent__item_runtest_finished(self, item, excinfo, outerr):
+    def pytest_item_runtest_finished(self, item, excinfo, outerr):
         from py.__.test import runner
         rep = runner.ItemTestReport(item, excinfo, "execute", outerr)
         item.config.pytestplugins.notify("itemtestreport", rep) 

@@ -1,4 +1,5 @@
 import py
+from outcome import Skipped
 
 class RunnerPlugin:
     def pytest_configure(self, config):
@@ -15,7 +16,7 @@ class RunnerPlugin:
             item.config.pytestplugins.notify("itemsetupreport", rep)
         else:
             call = item.config.guardedcall(lambda: item.runtest())
-            item.config.mc.pytest_item_runtest_finished(
+            item.config.api.pytest_item_runtest_finished(
                 item=item, excinfo=call.excinfo, outerr=call.outerr)
             call = item.config.guardedcall(lambda: self.teardown_exact(item))
             if call.excinfo:
@@ -203,16 +204,14 @@ class TestSetupState:
         assert not hasattr(item.parent.obj, 'x')
 
 class TestRunnerPlugin:
-    disabled = True
     def test_pytest_item_setup_and_runtest(self, testdir):
         item = testdir.getitem("""def test_func(): pass""")
         plugin = RunnerPlugin()
         plugin.pytest_configure(item.config)
         sorter = testdir.geteventrecorder(item.config)
         plugin.pytest_item_setup_and_runtest(item)
-        rep = sorter.getreport("itemtestreport")
+        rep = sorter.getcall("itemtestreport").rep
         assert rep.passed 
-        
         
 class TestSetupEvents:
     disabled = True
