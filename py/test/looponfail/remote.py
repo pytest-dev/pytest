@@ -140,7 +140,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
         def pyevent__itemtestreport(self, rep):
             if rep.failed:
                 self.append(rep)
-        pyevent__collectionreport = pyevent__itemtestreport
+        pyevent__collectreport = pyevent__itemtestreport
         
     failreports = Failures()
     session.bus.register(failreports)

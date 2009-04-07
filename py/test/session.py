@@ -47,7 +47,7 @@ class Session(object):
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
                         yield x 
-                notify("collectionreport", rep)
+                notify("collectreport", rep)
             if self.shouldstop:
                 break
 
@@ -86,7 +86,7 @@ class Session(object):
             self._testsfailed = True
             if self.config.option.exitfirst:
                 self.shouldstop = True
-    pyevent__collectionreport = pyevent__itemtestreport
+    pyevent__collectreport = pyevent__itemtestreport
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 

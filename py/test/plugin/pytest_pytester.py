@@ -327,14 +327,14 @@ class EventRecorder(object):
 
     # functionality for test reports 
 
-    def getreports(self, names="itemtestreport collectionreport"):
+    def getreports(self, names="itemtestreport collectreport"):
         names = names.split()
         l = []
         for call in self.getcalls(*names):
             l.append(call.rep)
         return l 
 
-    def matchreport(self, inamepart="", names="itemtestreport collectionreport"):
+    def matchreport(self, inamepart="", names="itemtestreport collectreport"):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
@@ -348,7 +348,7 @@ class EventRecorder(object):
                              inamepart, l))
         return l[0]
 
-    def getfailures(self, names='itemtestreport collectionreport'):
+    def getfailures(self, names='itemtestreport collectreport'):
         l = []
         for call in self.getcalls(*names.split()):
             if call.rep.failed:
@@ -356,7 +356,7 @@ class EventRecorder(object):
         return l
 
     def getfailedcollections(self):
-        return self.getfailures('collectionreport')
+        return self.getfailures('collectreport')
 
     def listoutcomes(self):
         passed = []
@@ -406,7 +406,7 @@ def test_eventrecorder():
     rep.skipped = True
     bus.notify("itemtestreport", rep)
 
-    rep = runner.CollectionReport(None, None)
+    rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
     bus.notify("itemtestreport", rep)

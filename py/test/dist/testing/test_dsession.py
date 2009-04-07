@@ -80,7 +80,7 @@ class TestDSession:
         session = DSession(modcol.config)
         session.triggertesting([modcol])
         name, args, kwargs = session.queue.get(block=False)
-        assert name == 'collectionreport'
+        assert name == 'collectreport'
         rep, = args 
         assert len(rep.result) == 1
 
@@ -343,7 +343,7 @@ class TestDSession:
         session.queueevent("itemtestreport", run(item1, node)) 
 
         # but we have a collection pending
-        session.queueevent("collectionreport", colreport) 
+        session.queueevent("collectreport", colreport) 
 
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)

@@ -68,7 +68,7 @@ class ResultLog(object):
             longrepr = str(rep.longrepr.reprcrash.message)
         self.log_outcome(rep, code, longrepr) 
 
-    def pyevent__collectionreport(self, rep):
+    def pyevent__collectreport(self, rep):
         if not rep.passed:
             if rep.failed: 
                 code = "F"

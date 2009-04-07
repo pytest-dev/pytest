@@ -184,7 +184,7 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pyevent__collectionreport(self, rep):
+    def pyevent__collectreport(self, rep):
         if not rep.passed:
             if rep.failed:
                 self.stats.setdefault("failed", []).append(rep)
@@ -316,7 +316,7 @@ class CollectonlyReporter:
     def pyevent__itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pyevent__collectionreport(self, rep):
+    def pyevent__collectreport(self, rep):
         if not rep.passed:
             self.outindent("!!! %s !!!" % rep.longrepr.reprcrash.message)
             self._failed.append(rep)
@@ -603,7 +603,7 @@ class TestTerminal:
                 lineno = 3
                 message = "justso"
 
-        ev1 = runner.CollectionReport(None, None)
+        ev1 = runner.CollectReport(None, None)
         ev1.when = "execute"
         ev1.skipped = True
         ev1.longrepr = longrepr 
@@ -637,8 +637,8 @@ class TestCollectonly:
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>", 
         ])
-        rep.config.bus.notify( "collectionreport", 
-            runner.CollectionReport(modcol, [], excinfo=None))
+        rep.config.bus.notify( "collectreport", 
+            runner.CollectReport(modcol, [], excinfo=None))
         assert rep.indent == indent 
 
     def test_collectonly_skipped_module(self, testdir, linecomp):

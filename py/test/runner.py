@@ -52,7 +52,7 @@ def basic_collect_report(collector):
         raise
     except: 
         excinfo = py.code.ExceptionInfo()
-    return CollectionReport(collector, res, excinfo, outerr)
+    return CollectReport(collector, res, excinfo, outerr)
 
 from cPickle import Pickler, Unpickler
 
@@ -98,9 +98,7 @@ class BaseReport(object):
         else:
             out.line(str(longrepr))
    
-# XXX rename to runtest() report ? 
 class ItemTestReport(BaseReport):
-    """ Test Execution Report. """
     failed = passed = skipped = False
 
     def __init__(self, colitem, excinfo=None, when=None, outerr=None):
@@ -139,9 +137,7 @@ class ItemTestReport(BaseReport):
             self.longrepr = longrepr 
             
 
-# XXX rename to collectreport 
-class CollectionReport(BaseReport):
-    """ Collection Report. """
+class CollectReport(BaseReport):
     skipped = failed = passed = False 
 
     def __init__(self, colitem, result, excinfo=None, outerr=None):
@@ -160,7 +156,6 @@ class CollectionReport(BaseReport):
                 self.failed = True
 
 class ItemSetupReport(BaseReport):
-    """ Test Execution Report. """
     failed = passed = skipped = False
     def __init__(self, item, excinfo=None, outerr=None):
         self.item = item 

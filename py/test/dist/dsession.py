@@ -30,7 +30,7 @@ class LoopState(object):
         if rep.failed:
             self.testsfailed = True
 
-    def pyevent__collectionreport(self, rep):
+    def pyevent__collectreport(self, rep):
         if rep.passed:
             self.colitems.extend(rep.result)
 
@@ -175,7 +175,7 @@ class DSession(Session):
                 senditems.append(next)
             else:
                 self.bus.notify("collectionstart", next)
-                self.queueevent("collectionreport", basic_collect_report(next))
+                self.queueevent("collectreport", basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
         else:

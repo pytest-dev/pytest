@@ -100,7 +100,7 @@ class Events:
     def pyevent__collectionstart(self, collector):
         """ collector starts collecting. """
 
-    def pyevent__collectionreport(self, rep):
+    def pyevent__collectreport(self, rep):
         """ collector finished collecting. """
 
     def pyevent__testrunstart(self):

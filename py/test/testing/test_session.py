@@ -130,7 +130,7 @@ class SessionTests:
             def test_one(): pass
         """)
         sorter = testdir.inline_run(testdir.tmpdir)
-        reports = sorter.getreports("collectionreport")
+        reports = sorter.getreports("collectreport")
         assert len(reports) == 1
         assert reports[0].skipped 
 
@@ -203,7 +203,7 @@ class TestNewSession(SessionTests):
         assert len(itemstarted) == 3
         assert not sorter.getreports("itemtestreport") 
         started = sorter.getcalls("collectionstart")
-        finished = sorter.getreports("collectionreport")
+        finished = sorter.getreports("collectreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 
         colfail = [x for x in finished if x.failed]
@@ -215,7 +215,7 @@ class TestNewSession(SessionTests):
         testdir.makepyfile(__init__="")
         testdir.makepyfile(test_one="xxxx", test_two="yyyy")
         sorter = testdir.inline_run("-x", testdir.tmpdir)
-        finished = sorter.getreports("collectionreport")
+        finished = sorter.getreports("collectreport")
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
