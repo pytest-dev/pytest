@@ -158,4 +158,26 @@ class PyPlugins:
         #print "calling anonymous hooks", args, kwargs
         MultiCall(self.listattr("pyevent"), eventname, args, kwargs).execute()
 
+
+class MultiAPI:
+    def __init__(self, apiclass, plugins, prefix):
+        for fullname in vars(apiclass):
+            if fullname[:2] != "__":
+                assert fullname.startswith(prefix)
+                name = fullname[len(prefix):]
+                mm = CallMaker(plugins, fullname)
+                setattr(self, name, mm)
+
+class CallMaker:
+    def __init__(self, plugins, name):
+        self.plugins = plugins
+        self.name = name 
+
+    def __repr__(self):
+        return "<MulticallMaker %r %s>" %(self.name, self.plugins)
+
+    def __call__(self, *args, **kwargs):
+        mc = MultiCall(self.plugins.listattr(self.name), *args, **kwargs)
+        return mc.execute()
+
 pyplugins = PyPlugins()

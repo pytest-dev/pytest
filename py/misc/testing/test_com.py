@@ -2,6 +2,7 @@
 import py
 import os
 from py._com import PyPlugins, MultiCall
+from py._com import MultiAPI
 
 pytest_plugins = "xfail"
 
@@ -248,3 +249,22 @@ class TestPyPluginsEvents:
         plugins.notify("name", 13, x=15)
         assert l == [(13, ), {'x':15}]
 
+
+class TestMulticallMaker:
+    def test_happypath(self):
+        plugins = PyPlugins()
+        class Api:
+            def xyz_hello(self, arg):
+                pass
+
+        mcm = MultiAPI(apiclass=Api, plugins=plugins, prefix="xyz_")
+        assert hasattr(mcm, 'hello')
+        assert repr(mcm.hello).find("xyz_hello") != -1
+        assert not hasattr(mcm, 'xyz_hello')
+        class Plugin:
+            def xyz_hello(self, arg):
+                return arg + 1
+        plugins.register(Plugin())
+        l = mcm.hello(3)
+        assert l == [4]
+        assert not hasattr(mcm, 'world')

@@ -25,8 +25,8 @@ version = "1.0.0b1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63580 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-04-03 19:45:25 +0200 (Fri, 03 Apr 2009) $',
+    revision = int('$LastChangedRevision: 63806 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-04-07 22:22:52 +0200 (Tue, 07 Apr 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
@@ -57,6 +57,7 @@ initpkg(__name__,
     '_com.PyPlugins'         : ('./_com.py', 'PyPlugins'), 
     '_com.MultiCall'         : ('./_com.py', 'MultiCall'), 
     '_com.pyplugins'         : ('./_com.py', 'pyplugins'), 
+    '_com.MultiAPI'          : ('./_com.py', 'MultiAPI'), 
 
     # py lib cmdline tools 
     'cmdline.pytest'         : ('./cmdline/pytest.py', 'main',),
