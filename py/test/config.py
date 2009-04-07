@@ -286,6 +286,28 @@ class Config(object):
             roots.append(pydir)
         return roots 
 
+    def guardedcall(self, func):
+        excinfo = result = None
+        capture = self._getcapture()
+        try:
+            try:
+                result = func()
+            except KeyboardInterrupt:
+                raise
+            except:
+                excinfo = py.code.ExceptionInfo()
+        finally:
+            stdout, stderr = capture.reset()
+        return CallResult(result, excinfo, stdout, stderr)
+
+class CallResult:
+    def __init__(self, result, excinfo, stdout, stderr):
+        self.stdout = stdout 
+        self.stderr = stderr
+        self.outerr = (self.stdout, self.stderr)
+        self.excinfo = excinfo
+        if excinfo is None:
+            self.result = result 
     
 #
 # helpers

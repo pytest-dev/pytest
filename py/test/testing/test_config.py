@@ -137,8 +137,7 @@ class TestConfigAPI:
         assert pl[1] == somepath
 
     def test_setsessionclass_and_initsession(self, testdir):
-        from py.__.test.config import Config 
-        config = Config()
+        config = testdir.Config()
         class Session1: 
             def __init__(self, config):
                 self.config = config 
@@ -147,7 +146,6 @@ class TestConfigAPI:
         assert isinstance(session, Session1)
         assert session.config is config
         py.test.raises(ValueError, "config.setsessionclass(Session1)")
-
 
 
 class TestConfigApi_getcolitems:
@@ -213,6 +211,37 @@ class TestConfigApi_getcolitems:
         for col in col.listchain():
             assert col.config is config 
 
+
+class TestGuardedCall:
+    def test_guardedcall_ok(self, testdir):
+        config = testdir.parseconfig()
+        def myfunc(x):
+            print x
+            print >>py.std.sys.stderr, "hello"
+            return 7
+        call = config.guardedcall(lambda: myfunc(3))
+        assert call.excinfo is None
+        assert call.result == 7
+        assert call.stdout.startswith("3")
+        assert call.stderr.startswith("hello")
+
+    def test_guardedcall_fail(self, testdir):
+        config = testdir.parseconfig()
+        def myfunc(x):
+            print x
+            raise ValueError(17)
+        call = config.guardedcall(lambda: myfunc(3))
+        assert call.excinfo 
+        assert call.excinfo.type == ValueError 
+        assert not hasattr(call, 'result')
+        assert call.stdout.startswith("3")
+        assert not call.stderr 
+
+    def test_guardedcall_keyboardinterrupt(self, testdir):
+        config = testdir.parseconfig()
+        def myfunc():
+            raise KeyboardInterrupt
+        py.test.raises(KeyboardInterrupt, config.guardedcall, myfunc)
 
 class TestOptionEffects:
     def test_boxed_option_default(self, testdir):

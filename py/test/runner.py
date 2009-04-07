@@ -198,41 +198,22 @@ class SetupState(object):
             self.stack.append(col) 
 
     def do_setup(self, item):
-        excinfo, outerr = guarded_call(item.config._getcapture(), 
-                lambda: self.prepare(item)
-        )
-        rep = ItemSetupReport(item, excinfo, outerr)
+        call = item.config.guardedcall(lambda: self.prepare(item))
+        rep = ItemSetupReport(item, call.excinfo, call.outerr)
         item.config.pytestplugins.notify("itemsetupreport", rep)
-        return not excinfo 
+        return not call.excinfo 
 
     def do_teardown(self, item):
-        excinfo, outerr = guarded_call(item.config._getcapture(), 
-                lambda: self.teardown_exact(item)
-        )
-        if excinfo:
-            rep = ItemSetupReport(item, excinfo, outerr)
+        call = item.config.guardedcall(lambda: self.teardown_exact(item))
+        if call.excinfo:
+            rep = ItemSetupReport(item, call.excinfo, call.outerr)
             item.config.pytestplugins.notify("itemsetupreport", rep)
 
     def do_fixture_and_runtest(self, item):
         """ setup fixture and perform actual item.runtest(). """
         if self.do_setup(item):
-            excinfo, outerr = guarded_call(item.config._getcapture(), 
-                   lambda: item.runtest())
+            call = item.config.guardedcall(lambda: item.runtest())
             item.config.pytestplugins.notify(
                 "item_runtest_finished", 
-                item=item, excinfo=excinfo, outerr=outerr)
+                item=item, excinfo=call.excinfo, outerr=call.outerr)
             self.do_teardown(item)
-
-def guarded_call(capture, call):
-    excinfo = None
-    try:
-        try:
-            call()
-        except (KeyboardInterrupt, Exit):
-            raise
-        except:
-            excinfo = py.code.ExceptionInfo()
-    finally:
-        outerr = capture.reset()
-    return excinfo, outerr 
-
