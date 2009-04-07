@@ -2,6 +2,7 @@
 from py.__.test.config import SetupState
 
 class TestSetupState:
+    disabled = True
     def test_setup_ok(self, testdir):
         item = testdir.getitem("""
             def setup_module(mod):

@@ -196,24 +196,3 @@ class SetupState(object):
         for col in needed_collectors[len(self.stack):]: 
             col.setup() 
             self.stack.append(col) 
-
-    def do_setup(self, item):
-        call = item.config.guardedcall(lambda: self.prepare(item))
-        rep = ItemSetupReport(item, call.excinfo, call.outerr)
-        item.config.pytestplugins.notify("itemsetupreport", rep)
-        return not call.excinfo 
-
-    def do_teardown(self, item):
-        call = item.config.guardedcall(lambda: self.teardown_exact(item))
-        if call.excinfo:
-            rep = ItemSetupReport(item, call.excinfo, call.outerr)
-            item.config.pytestplugins.notify("itemsetupreport", rep)
-
-    def do_fixture_and_runtest(self, item):
-        """ setup fixture and perform actual item.runtest(). """
-        if self.do_setup(item):
-            call = item.config.guardedcall(lambda: item.runtest())
-            item.config.pytestplugins.notify(
-                "item_runtest_finished", 
-                item=item, excinfo=call.excinfo, outerr=call.outerr)
-            self.do_teardown(item)
