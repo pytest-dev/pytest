@@ -1,5 +1,6 @@
 """
 TODO:
+    + switching on this plugin breaks 'setup_method' mechanism which then is not previously called before the test function.
     + credits to Ralf Schmitt See: http://twistedmatrix.com/pipermail/twisted-python/2007-February/014872.html
     + add option for twisted logging
     + write tests
