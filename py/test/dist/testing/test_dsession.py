@@ -99,9 +99,8 @@ class TestDSession:
         assert session.node2pending[node1] == sent1
         assert session.node2pending[node2] == sent2
         name, args, kwargs = session.queue.get(block=False)
-        assert name == "rescheduleitems"
-        items, = args 
-        assert items == [item]
+        assert name == "pytest_rescheduleitems"
+        assert kwargs['items'] == [item]
 
     def test_keyboardinterrupt(self, testdir):
         item = testdir.getitem("def test_func(): pass")
@@ -125,7 +124,7 @@ class TestDSession:
         node = MockNode()
         session.addnode(node)
         loopstate = session._initloopstate([])
-        session.queueevent("rescheduleitems", [item])
+        session.queueevent("pytest_rescheduleitems", items=[item])
         session.loop_once(loopstate)
         # check that RescheduleEvents are not immediately
         # rescheduled if there are no nodes
@@ -292,18 +291,18 @@ class TestDSession:
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
         items = modcol.collect()
-        evrec = testdir.geteventrecorder(session.bus)
+        callrecorder = testdir.geteventrecorder(session.bus).callrecorder
         remaining = session.filteritems(items)
         assert remaining == []
         
-        event = evrec.getcalls("deselected")[-1]
+        event = callrecorder.getcalls("pytest_deselected")[-1]
         assert event.items == items 
 
         modcol.config.option.keyword = "test_fail"
         remaining = session.filteritems(items)
         assert remaining == [items[0]]
 
-        event = evrec.getcalls("deselected")[-1]
+        event = callrecorder.getcalls("pytest_deselected")[-1]
         assert event.items == [items[1]]
 
     def test_testnodedown_shutdown_after_completion(self, testdir):

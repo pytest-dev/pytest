@@ -158,7 +158,7 @@ class TerminalReporter:
         if self.config.option.debug:
             self.write_sep("!", "RESCHEDULING %s " %(items,))
 
-    def pyevent__deselected(self, items):
+    def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
     
     def pytest_itemtestreport(self, rep):
@@ -232,7 +232,7 @@ class TerminalReporter:
         self.summary_deselected()
         self.summary_stats()
 
-    def pyevent__looponfailinfo(self, failreports, rootdirs):
+    def pytest_looponfailinfo(self, failreports, rootdirs):
         if failreports:
             self.write_sep("#", "LOOPONFAILING", red=True)
             for report in failreports:
@@ -495,7 +495,7 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [runner.basic_run_report(x) for x in modcol.collect()]
-        rep.pyevent__looponfailinfo(reports, [modcol.config.topdir])
+        rep.pytest_looponfailinfo(reports, [modcol.config.topdir])
         linecomp.assert_contains_lines([
             "*test_looponfailreport.py:2: assert 0",
             "*test_looponfailreport.py:4: ValueError*",

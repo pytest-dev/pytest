@@ -104,6 +104,14 @@ class PluginHooks:
     def pytest_testrunfinish(self, exitstatus, excrepr=None):
         """ whole test run finishes. """
 
+    def pytest_deselected(self, items):
+        """ collected items that were deselected (by keyword). """
+
+    def pytest_rescheduleitems(self, items):
+        """ reschedule Items from a node that went down. """
+
+    def pytest_looponfailinfo(self, failreports, rootdirs):
+        """ info for repeating failing tests. """
 
 
 class Events:
@@ -119,14 +127,5 @@ class Events:
 
     def pyevent__internalerror(self, excrepr):
         """ called for internal errors. """
-
-    def pyevent__deselected(self, items):
-        """ collected items that were deselected (by keyword). """
-
-    def pytest_rescheduleitems(self, items):
-        """ reschedule Items from a node that went down. """
-
-    def pyevent__looponfailinfo(self, failreports, rootdirs):
-        """ info for repeating failing tests. """
 
    

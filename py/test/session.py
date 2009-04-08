@@ -66,7 +66,7 @@ class Session(object):
                     continue
             remaining.append(colitem)
         if deselected: 
-            self.bus.notify("deselected", deselected)
+            self.config.api.pytest_deselected(items=deselected)
             if self.config.option.keyword.endswith(":"):
                 self._nomatch = True
         return remaining 

@@ -44,7 +44,7 @@ class LoopState(object):
             self.dsession.handle_crashitem(crashitem, node)
             self.colitems.extend(pending[1:])
 
-    def pyevent__rescheduleitems(self, items):
+    def pytest_rescheduleitems(self, items):
         self.colitems.extend(items)
         self.dowork = False # avoid busywait
 
@@ -204,7 +204,7 @@ class DSession(Session):
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
-            self.queueevent("rescheduleitems", tosend)
+            self.queueevent(pytest_rescheduleitems, tosend)
 
     def senditems_load(self, tosend):
         if not tosend:
@@ -226,7 +226,7 @@ class DSession(Session):
                     break
         if tosend:
             # we have some left, give it to the main loop
-            self.queueevent("rescheduleitems", tosend)
+            self.queueevent("pytest_rescheduleitems", items=tosend)
 
     def removeitem(self, item, node):
         if item not in self.item2nodes:

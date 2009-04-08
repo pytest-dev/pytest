@@ -147,7 +147,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
 
     DEBUG("SLAVE: starting session.main()")
     session.main(colitems)
-    session.bus.notify("looponfailinfo", 
+    session.config.api.pytest_looponfailinfo(
         failreports=list(failreports), 
         rootdirs=[config.topdir])
     channel.send([x.colitem._totrail() for x in failreports])
