@@ -57,6 +57,17 @@ class ExecnetAPI:
         """ signal initialisation of new gateway. """ 
     def pyexecnet_gateway_exit(self, gateway):
         """ signal exitting of gateway. """ 
+
+    def pyexecnet_gwmanage_newgateway(self, gateway, platinfo):
+        """ called when a manager has made a new gateway. """ 
+
+    def pyexecnet_gwmanage_rsyncstart(self, source, gateways):
+        """ called before rsyncing a directory to remote gateways takes place. """
+
+    def pyexecnet_gwmanage_rsyncfinish(self, source, gateways):
+        """ called after rsyncing a directory to remote gateways takes place. """
+
+        
         
 # ----------------------------------------------------------
 # Base Gateway (used for both remote and local side) 
@@ -76,12 +87,11 @@ class Gateway(object):
         self._io = io
         self._channelfactory = ChannelFactory(self, _startcount)
         self._cleanup.register(self) 
-        try:
+        if _startcount == 1: # only import 'py' on the "client" side 
             from py._com import PluginAPI 
-        except ImportError:
-            self.api = ExecnetAPI()
-        else:
             self.api = PluginAPI(ExecnetAPI)
+        else:
+            self.api = ExecnetAPI()
 
     def _initreceive(self, requestqueue=False):
         if requestqueue: 

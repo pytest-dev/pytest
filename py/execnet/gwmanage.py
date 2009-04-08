@@ -21,6 +21,7 @@ class GatewayManager:
             if not spec.chdir and not spec.popen:
                 spec.chdir = defaultchdir
             self.specs.append(spec)
+        self.api = py._com.PluginAPI(py.execnet._API)
 
     def trace(self, msg):
         self.notify("trace", "gatewaymanage", msg)
@@ -34,7 +35,8 @@ class GatewayManager:
             gw = py.execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
-            self.notify("gwmanage_newgateway", gw, gw._rinfo())
+            self.api.pyexecnet_gwmanage_newgateway(
+                gateway=gw, platinfo=gw._rinfo())
 
     def getgateways(self, remote=True, inplacelocal=True):
         if not self.gateways and self.specs:
@@ -79,9 +81,15 @@ class GatewayManager:
                 rsync.add_target_host(gateway, finished=finished)
                 seen[spec] = gateway
         if seen:
-            self.notify("gwmanage_rsyncstart", source=source, gateways=seen.values())
+            self.api.pyexecnet_gwmanage_rsyncstart(
+                source=source, 
+                gateways=seen.values(),
+            )
             rsync.send()
-            self.notify("gwmanage_rsyncfinish", source=source, gateways=seen.values())
+            self.api.pyexecnet_gwmanage_rsyncfinish(
+                source=source, 
+                gateways=seen.values()
+            )
         else:
             self.trace("rsync: nothing to do.")
 

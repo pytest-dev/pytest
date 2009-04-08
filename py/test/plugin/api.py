@@ -77,18 +77,6 @@ class Events:
     def pyevent__NOP(self, *args, **kwargs):
         """ the no-operation call. """ 
 
-    def pyevent__gateway_init(self, gateway):
-        """ called after a gateway has been initialized. """
-
-    def pyevent__gateway_exit(self, gateway):
-        """ called when gateway is being exited. """
-
-    def pyevent__gwmanage_rsyncstart(self, source, gateways):
-        """ called before rsyncing a directory to remote gateways takes place. """
-
-    def pyevent__gwmanage_rsyncfinish(self, source, gateways):
-        """ called after rsyncing a directory to remote gateways takes place. """
-
     def pyevent__trace(self, category, msg):
         """ called for tracing events. """
 

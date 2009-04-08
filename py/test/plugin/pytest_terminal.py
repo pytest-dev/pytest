@@ -86,18 +86,18 @@ class TerminalReporter:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
 
-    def pyevent__gwmanage_newgateway(self, gateway, rinfo):
+    def pyexecnet_gwmanage_newgateway(self, gateway, platinfo):
         #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
         d = {}
-        d['version'] = repr_pythonversion(rinfo.version_info)
+        d['version'] = repr_pythonversion(platinfo.version_info)
         d['id'] = gateway.id
         d['spec'] = gateway.spec._spec 
-        d['platform'] = rinfo.platform 
+        d['platform'] = platinfo.platform 
         if self.config.option.verbose:
-            d['extra'] = "- " + rinfo.executable
+            d['extra'] = "- " + platinfo.executable
         else:
             d['extra'] = ""
-        d['cwd'] = rinfo.cwd
+        d['cwd'] = platinfo.cwd
         infoline = ("%(id)s %(spec)s -- platform %(platform)s, "
                         "Python %(version)s "
                         "cwd: %(cwd)s"
@@ -105,14 +105,14 @@ class TerminalReporter:
         self.write_line(infoline)
         self.gateway2info[gateway] = infoline
 
-    def pyevent__gwmanage_rsyncstart(self, source, gateways):
+    def pyexecnet_gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         msg = "rsyncstart: %s -> %s" %(source, targets)
         if not self.config.option.verbose:
             msg += " # use --verbose to see rsync progress"
         self.write_line(msg)
 
-    def pyevent__gwmanage_rsyncfinish(self, source, gateways):
+    def pyexecnet_gwmanage_rsyncfinish(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
@@ -460,17 +460,17 @@ class TestTerminal:
             executable = "hello"
             platform = "xyz"
             cwd = "qwe"
-
-        rep.pyevent__gwmanage_newgateway(gw1, rinfo)
+        
+        rep.pyexecnet_gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
             "X1*popen*xyz*2.5*"
         ])
 
-        rep.pyevent__gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
+        rep.pyexecnet_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncstart: hello -> X1, X2"
         ])
-        rep.pyevent__gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
+        rep.pyexecnet_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncfinish: hello -> X1, X2"
         ])

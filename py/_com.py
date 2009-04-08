@@ -36,26 +36,8 @@ class MultiCall:
 
     def execute(self, firstresult=False):
         while self.methods:
-            self.currentmethod = currentmethod = self.methods.pop()
-            # provide call introspection if "__call__" is the first positional argument 
-            if hasattr(currentmethod, 'im_self'):
-                varnames = currentmethod.im_func.func_code.co_varnames
-                needscall = varnames[1:2] == ('__call__',)
-            else:
-                try:
-                    varnames = currentmethod.func_code.co_varnames
-                except AttributeError:
-                    # builtin function
-                    varnames = ()
-                needscall = varnames[:1] == ('__call__',)
-            if needscall:
-                res = currentmethod(self, *self.args, **self.kwargs)
-            else:
-                #try:
-                    res = currentmethod(*self.args, **self.kwargs)
-                #except TypeError:
-                #    print currentmethod.__module__, currentmethod.__name__, self.args, self.kwargs
-                #    raise
+            currentmethod = self.methods.pop()
+            res = self.execute_method(currentmethod)
             if hasattr(self, '_ex1'):
                 self.results = [res]
                 break
@@ -69,6 +51,28 @@ class MultiCall:
             return self.results 
         if self.results:
             return self.results[-1] 
+
+    def execute_method(self, currentmethod):
+        self.currentmethod = currentmethod
+        # provide call introspection if "__call__" is the first positional argument 
+        if hasattr(currentmethod, 'im_self'):
+            varnames = currentmethod.im_func.func_code.co_varnames
+            needscall = varnames[1:2] == ('__call__',)
+        else:
+            try:
+                varnames = currentmethod.func_code.co_varnames
+            except AttributeError:
+                # builtin function
+                varnames = ()
+            needscall = varnames[:1] == ('__call__',)
+        if needscall:
+            return currentmethod(self, *self.args, **self.kwargs)
+        else:
+            #try:
+                return currentmethod(*self.args, **self.kwargs)
+            #except TypeError:
+            #    print currentmethod.__module__, currentmethod.__name__, self.args, self.kwargs
+            #    raise
 
     def exclude_other_results(self):
         self._ex1 = True

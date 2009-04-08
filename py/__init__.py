@@ -25,8 +25,8 @@ version = "1.0.0b1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63808 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-04-07 22:46:50 +0200 (Tue, 07 Apr 2009) $',
+    revision = int('$LastChangedRevision: 63869 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-04-08 19:50:14 +0200 (Wed, 08 Apr 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
@@ -146,6 +146,7 @@ initpkg(__name__,
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),
+    'execnet._API'           : ('./execnet/gateway.py', 'ExecnetAPI'),
     'execnet.SocketGateway'  : ('./execnet/register.py', 'SocketGateway'),
     'execnet.PopenGateway'   : ('./execnet/register.py', 'PopenGateway'),
     'execnet.SshGateway'     : ('./execnet/register.py', 'SshGateway'),
