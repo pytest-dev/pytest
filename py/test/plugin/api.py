@@ -48,7 +48,7 @@ class PluginHooks:
     # runtest related hooks 
     # ------------------------------------------------------------------------------
 
-    def pytest_pyfunc_call(self, call, pyfuncitem, args, kwargs):
+    def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):

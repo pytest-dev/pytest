@@ -1,5 +1,5 @@
 import py
-from outcome import Skipped
+from py.__.test.outcome import Skipped
 
 class RunnerPlugin:
     def pytest_configure(self, config):
