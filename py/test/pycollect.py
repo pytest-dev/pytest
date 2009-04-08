@@ -327,6 +327,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         super(Function, self).__init__(name, parent, config=config) 
         self._finalizers = []
         self._args = args
+        self.funcargs = {}
         if callobj is not _dummy: 
             self._obj = callobj 
 
@@ -348,13 +349,15 @@ class Function(FunctionMixin, py.test.collect.Item):
     def runtest(self):
         """ execute the given test function. """
         if not self._deprecated_testexecution():
-            kw = self.lookup_allargs()
+            self.setupargs() # XXX move to setup() / consider funcargs plugin
             ret = self.config.api.pytest_pyfunc_call(
-                pyfuncitem=self, args=self._args, kwargs=kw)
+                pyfuncitem=self, args=self._args, kwargs=self.funcargs)
 
-    def lookup_allargs(self):
-        kwargs = {}
-        if not self._args:  
+    def setupargs(self):
+        if self._args:
+            # generator case: we don't do anything then
+            pass
+        else:
             # standard Python Test function/method case  
             funcobj = self.obj 
             startindex = getattr(funcobj, 'im_self', None) and 1 or 0 
@@ -363,16 +366,13 @@ class Function(FunctionMixin, py.test.collect.Item):
                 if i < startindex:
                     continue 
                 try:
-                    kwargs[argname] = self.lookup_onearg(argname)
+                    self.funcargs[argname] = self.lookup_onearg(argname)
                 except LookupError, e:
                     numdefaults = len(funcobj.func_defaults or ()) 
                     if i + numdefaults >= len(argnames):
                         continue # continue # seems that our args have defaults 
                     else:
                         raise
-        else:
-            pass # XXX lookup of arguments for yielded/generated tests as well ?
-        return kwargs
 
     def lookup_onearg(self, argname):
         prefix = "pytest_funcarg__"

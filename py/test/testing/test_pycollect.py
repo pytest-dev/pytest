@@ -250,7 +250,7 @@ class TestFunction:
                     return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
-        exc = py.test.raises(LookupError, "item.lookup_allargs()")
+        exc = py.test.raises(LookupError, "item.setupargs()")
         s = str(exc.value)
         assert s.find("something") != -1
 
@@ -260,8 +260,8 @@ class TestFunction:
             def pytest_funcarg__some(self, pyfuncitem):
                 return pyfuncitem.name 
         item.config.pytestplugins.register(Provider())
-        kw = item.lookup_allargs()
-        assert len(kw) == 1
+        item.setupargs()
+        assert len(item.funcargs) == 1
 
     def test_funcarg_lookup_default_gets_overriden(self, testdir):
         item = testdir.getitem("def test_func(some=42, other=13): pass")
@@ -269,9 +269,9 @@ class TestFunction:
             def pytest_funcarg__other(self, pyfuncitem):
                 return pyfuncitem.name 
         item.config.pytestplugins.register(Provider())
-        kw = item.lookup_allargs()
-        assert len(kw) == 1
-        name, value = kw.popitem()
+        item.setupargs()
+        assert len(item.funcargs) == 1
+        name, value = item.funcargs.popitem()
         assert name == "other"
         assert value == item.name 
 
@@ -283,10 +283,10 @@ class TestFunction:
             def pytest_funcarg__other(self, pyfuncitem):
                 return 42
         item.config.pytestplugins.register(Provider())
-        kw = item.lookup_allargs()
-        assert len(kw) == 2
-        assert kw['some'] == "test_func"
-        assert kw['other'] == 42
+        item.setupargs()
+        assert len(item.funcargs) == 2
+        assert item.funcargs['some'] == "test_func"
+        assert item.funcargs['other'] == 42
 
     def test_funcarg_addfinalizer(self, testdir):
         item = testdir.getitem("def test_func(some): pass")
@@ -296,9 +296,9 @@ class TestFunction:
                 pyfuncitem.addfinalizer(lambda: l.append(42))
                 return 3
         item.config.pytestplugins.register(Provider())
-        kw = item.lookup_allargs()
-        assert len(kw) == 1
-        assert kw['some'] == 3
+        item.setupargs()
+        assert len(item.funcargs) == 1
+        assert item.funcargs['some'] == 3
         assert len(l) == 0
         item.teardown()
         assert len(l) == 1
@@ -318,10 +318,10 @@ class TestFunction:
         item1, item2 = testdir.genitems([modcol])
         modcol.setup()
         assert modcol.config.pytestplugins.isregistered(modcol.obj)
-        kwargs = item1.lookup_allargs()
-        assert kwargs['something'] ==  "test_method"
-        kwargs = item2.lookup_allargs()
-        assert kwargs['something'] ==  "test_func"
+        item1.setupargs()
+        assert item1.funcargs['something'] ==  "test_method"
+        item2.setupargs()
+        assert item2.funcargs['something'] ==  "test_func"
         modcol.teardown()
         assert not modcol.config.pytestplugins.isregistered(modcol.obj)
 
