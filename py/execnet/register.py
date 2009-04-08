@@ -41,7 +41,7 @@ class InstallableGateway(gateway.Gateway):
         super(InstallableGateway, self).__init__(io=io, _startcount=1) 
         # XXX we dissallow execution form the other side
         self._initreceive(requestqueue=False) 
-        py._com.pyplugins.notify("gateway_init", self)
+        self.api.pyexecnet_gateway_init(gateway=self)
 
     def _remote_bootstrap_gateway(self, io, extra=''):
         """ return Gateway with a asynchronously remotely

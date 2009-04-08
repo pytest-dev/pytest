@@ -250,7 +250,7 @@ class TestPyPluginsEvents:
         assert l == [(13, ), {'x':15}]
 
 
-class TestMulticallMaker:
+class TestPluginAPI:
     def test_happypath(self):
         plugins = PyPlugins()
         class Api:
@@ -267,3 +267,22 @@ class TestMulticallMaker:
         l = mcm.hello(3)
         assert l == [4]
         assert not hasattr(mcm, 'world')
+
+    def test_firstresult(self):
+        plugins = PyPlugins()
+        class Api:
+            def hello(self, arg): pass
+            hello.firstresult = True
+
+        mcm = PluginAPI(apiclass=Api, plugins=plugins)
+        class Plugin:
+            def hello(self, arg):
+                return arg + 1
+        plugins.register(Plugin())
+        res = mcm.hello(3)
+        assert res == 4
+
+    def test_default_plugins(self):
+        class Api: pass 
+        mcm = PluginAPI(apiclass=Api)
+        assert mcm._plugins == py._com.pyplugins

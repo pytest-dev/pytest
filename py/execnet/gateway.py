@@ -52,6 +52,12 @@ class GatewayCleanup:
             gw.exit()
             #gw.join() # should work as well
 
+class ExecnetAPI:
+    def pyexecnet_gateway_init(self, gateway):
+        """ signal initialisation of new gateway. """ 
+    def pyexecnet_gateway_exit(self, gateway):
+        """ signal exitting of gateway. """ 
+        
 # ----------------------------------------------------------
 # Base Gateway (used for both remote and local side) 
 # ----------------------------------------------------------
@@ -70,6 +76,12 @@ class Gateway(object):
         self._io = io
         self._channelfactory = ChannelFactory(self, _startcount)
         self._cleanup.register(self) 
+        try:
+            from py._com import PluginAPI 
+        except ImportError:
+            self.api = ExecnetAPI()
+        else:
+            self.api = PluginAPI(ExecnetAPI)
 
     def _initreceive(self, requestqueue=False):
         if requestqueue: 
@@ -331,12 +343,7 @@ class Gateway(object):
         self._cleanup.unregister(self)
         self._stopexec()
         self._stopsend()
-        try:
-            py._com.pyplugins.notify("gateway_exit", self)
-        except NameError: 
-            # XXX on the remote side 'py' is not imported 
-            # and so we can't notify 
-            pass
+        self.api.pyexecnet_gateway_exit(gateway=self)
 
     def _remote_redirect(self, stdout=None, stderr=None): 
         """ return a handle representing a redirection of a remote 

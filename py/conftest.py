@@ -1,4 +1,5 @@
-pytest_plugins = 'pytest_doctest', 'pytest_pytester' # , 'pytest_restdoc'
+pytest_plugins = '_pytest doctest pytester'.split()
+
 rsyncdirs = ['../doc']
 rsyncignore = ['c-extension/greenlet/build']
 

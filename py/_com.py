@@ -160,26 +160,32 @@ class PyPlugins:
 
 
 class PluginAPI: 
-    def __init__(self, apiclass, plugins):
+    def __init__(self, apiclass, plugins=None):
         self._apiclass = apiclass
+        if plugins is None:
+            plugins = pyplugins
         self._plugins = plugins
-        for name in vars(apiclass):
+        for name, method in vars(apiclass).items():
             if name[:2] != "__":
-                mm = CallMaker(plugins, name)
+                firstresult = getattr(method, 'firstresult', False)
+                mm = ApiCall(plugins, name, firstresult=firstresult)
                 setattr(self, name, mm)
     def __repr__(self):
         return "<PluginAPI %r %r>" %(self._apiclass, self._plugins)
 
-class CallMaker:
-    def __init__(self, plugins, name):
+class ApiCall:
+    def __init__(self, plugins, name, firstresult):
         self.plugins = plugins
         self.name = name 
+        self.firstresult = firstresult 
 
     def __repr__(self):
-        return "<MulticallMaker %r %s>" %(self.name, self.plugins)
+        mode = self.firstresult and "firstresult" or "each"
+        return "<ApiCall %r mode=%s %s>" %(self.name, mode, self.plugins)
 
     def __call__(self, *args, **kwargs):
         mc = MultiCall(self.plugins.listattr(self.name), *args, **kwargs)
-        return mc.execute()
+        #print "making multicall", self
+        return mc.execute(firstresult=self.firstresult)
 
 pyplugins = PyPlugins()

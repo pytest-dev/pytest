@@ -1,11 +1,13 @@
 import py
 pytest_plugins = "pytester"
+from py.__.execnet.gateway import ExecnetAPI
 
 class TestExecnetEvents:
-    def test_popengateway(self, eventrecorder):
+    def test_popengateway_events(self, _pytest):
+        rec = _pytest.getcallrecorder(ExecnetAPI)
         gw = py.execnet.PopenGateway()
-        event = eventrecorder.popevent("gateway_init")
-        assert event.args[0] == gw 
+        call = rec.popcall("pyexecnet_gateway_init") 
+        assert call.gateway == gw
         gw.exit()
-        event = eventrecorder.popevent("gateway_exit")
-        assert event.args[0] == gw 
+        call = rec.popcall("pyexecnet_gateway_exit")
+        assert call.gateway == gw
