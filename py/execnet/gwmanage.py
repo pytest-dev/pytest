@@ -23,12 +23,6 @@ class GatewayManager:
             self.specs.append(spec)
         self.api = py._com.PluginAPI(py.execnet._API)
 
-    def trace(self, msg):
-        self.notify("trace", "gatewaymanage", msg)
-
-    def notify(self, eventname, *args, **kwargs):
-        py._com.pyplugins.notify(eventname, *args, **kwargs)
-
     def makegateways(self):
         assert not self.gateways
         for spec in self.specs:
@@ -90,13 +84,10 @@ class GatewayManager:
                 source=source, 
                 gateways=seen.values()
             )
-        else:
-            self.trace("rsync: nothing to do.")
 
     def exit(self):
         while self.gateways:
             gw = self.gateways.pop()
-            self.trace("exiting gateway %s" % gw)
             gw.exit()
 
 class HostRSync(py.execnet.RSync):
