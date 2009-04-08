@@ -98,6 +98,13 @@ class PluginHooks:
     def pytest_testnodedown(self, node, error):
         """ Test Node is down. """
 
+    def pytest_testrunstart(self):
+        """ whole test run starts. """
+
+    def pytest_testrunfinish(self, exitstatus, excrepr=None):
+        """ whole test run finishes. """
+
+
 
 class Events:
     # Events 
@@ -115,19 +122,6 @@ class Events:
 
     def pyevent__deselected(self, items):
         """ collected items that were deselected (by keyword). """
-
-
-    def pyevent__testrunstart(self):
-        """ whole test run starts. """
-
-    def pyevent__testrunfinish(self, exitstatus, excrepr=None):
-        """ whole test run finishes. """
-
-    def pyevent__gwmanage_newgateway(self, gateway):
-        """ execnet gateway manager has instantiated a gateway. 
-            The gateway will have an 'id' attribute that is unique 
-            within the gateway manager context. 
-        """
 
     def pytest_rescheduleitems(self, items):
         """ reschedule Items from a node that went down. """

@@ -78,7 +78,7 @@ class Session(object):
 
     def sessionstarts(self):
         """ setup any neccessary resources ahead of the test run. """
-        self.bus.notify("testrunstart")
+        self.config.api.pytest_testrunstart()
         
     def pytest_itemtestreport(self, rep):
         if rep.failed:
@@ -89,9 +89,10 @@ class Session(object):
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
-        self.bus.notify("testrunfinish", 
-                        exitstatus=exitstatus, 
-                        excrepr=excinfo and excinfo.getrepr() or None)
+        self.config.api.pytest_testrunfinish(
+            exitstatus=exitstatus, 
+            excrepr=excinfo and excinfo.getrepr() or None
+        )
 
     def getinitialitems(self, colitems):
         if colitems is None:
