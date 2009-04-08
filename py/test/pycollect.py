@@ -140,8 +140,8 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self.config.pytestplugins.call_firstresult(
-            "pytest_pymodule_makeitem", modcol=self, name=name, obj=obj)
+        res = self.config.api.pytest_pymodule_makeitem(
+            modcol=self, name=name, obj=obj)
         if res:
             return res
         if (self.classnamefilter(name)) and \
@@ -349,8 +349,8 @@ class Function(FunctionMixin, py.test.collect.Item):
         """ execute the given test function. """
         if not self._deprecated_testexecution():
             kw = self.lookup_allargs()
-            ret = self.config.pytestplugins.call_firstresult(
-                "pytest_pyfunc_call", pyfuncitem=self, args=self._args, kwargs=kw)
+            ret = self.config.api.pytest_pyfunc_call(
+                pyfuncitem=self, args=self._args, kwargs=kw)
 
     def lookup_allargs(self):
         kwargs = {}

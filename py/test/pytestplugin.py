@@ -102,12 +102,12 @@ class PytestPlugins(object):
         assert not hasattr(self, '_config')
         config.bus.register(self)
         self._config = config
-        self.pyplugins.call_each("pytest_configure", config=self._config)
+        config.api.pytest_configure(config=self._config)
 
     def do_unconfigure(self, config):
         config = self._config 
         del self._config 
-        self.pyplugins.call_each("pytest_unconfigure", config=config)
+        config.api.pytest_unconfigure(config=config)
         config.bus.unregister(self)
 
     def do_itemrun(self, item, pdb=None):

@@ -154,8 +154,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
 class DoctestText(py.test.collect.Item): 
     def runtest(self): 
         content = self._normalize_linesep()
-        newcontent = self.config.pytestplugins.call_firstresult(
-            'pytest_doctest_prepare_content', content=content)
+        newcontent = self.config.api.pytest_doctest_prepare_content(content=content)
         if newcontent is not None:
             content = newcontent 
         s = content 

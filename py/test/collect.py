@@ -438,8 +438,7 @@ class Directory(FSCollector):
         return res
 
     def consider_file(self, path):
-        return self.config.pytestplugins.call_each(
-            'pytest_collect_file', path=path, parent=self)
+        return self.config.api.pytest_collect_file(path=path, parent=self)
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
@@ -447,8 +446,8 @@ class Directory(FSCollector):
         res = self.config.pytestplugins.call_firstresult(
             'pytest_collect_recurse', path=path, parent=self)
         if res is None or res:
-            return self.config.pytestplugins.call_each(
-                'pytest_collect_directory', path=path, parent=self)
+            return self.config.api.pytest_collect_directory(
+                path=path, parent=self)
 
 class Item(Node): 
     """ a basic test item. """

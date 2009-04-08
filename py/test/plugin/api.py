@@ -35,6 +35,7 @@ class PluginHooks:
 
     def pytest_pymodule_makeitem(self, modcol, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
+    pytest_pymodule_makeitem.firstresult = True
 
     def pytest_itemrun(self, item, pdb=None):
         """ run given test item and return test report. """ 
@@ -52,13 +53,21 @@ class PluginHooks:
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
         """ return ItemTestReport event for the given test outcome. """
+    pytest_item_makereport.firstresult = True
 
     # reporting hooks (invoked from pytest_terminal.py) 
-    def pytest_report_teststatus(self, event):
+    def pytest_report_teststatus(self, rep):
         """ return shortletter and verbose word. """
+    pytest_report_teststatus.firstresult = True
 
     def pytest_terminal_summary(self, terminalreporter):
         """ add additional section in terminal summary reporting. """
+
+    # doctest hooks (invoked from pytest_terminal.py) 
+    def pytest_doctest_prepare_content(self, content):
+        """ return processed content for a given doctest"""
+    pytest_doctest_prepare_content.firstresult = True
+
 
 class Events:
     # Events 

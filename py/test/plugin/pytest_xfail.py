@@ -22,12 +22,12 @@ class XfailPlugin(object):
                     res.failed = True
                 return res 
 
-    def pytest_report_teststatus(self, event):
+    def pytest_report_teststatus(self, rep):
         """ return shortletter and verbose word. """
-        if 'xfail' in event.keywords: 
-            if event.skipped:
+        if 'xfail' in rep.keywords: 
+            if rep.skipped:
                 return "xfailed", "x", "xfail"
-            elif event.failed:
+            elif rep.failed:
                 return "xpassed", "P", "xpass" 
 
     # a hook implemented called by the terminalreporter instance/plugin

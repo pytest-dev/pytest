@@ -60,14 +60,14 @@ class TerminalReporter:
         self.ensure_newline()
         self._tw.sep(sep, title, **markup)
 
-    def getcategoryletterword(self, event):
-        res = self.config.pytestplugins.call_firstresult("pytest_report_teststatus", event=event)
+    def getcategoryletterword(self, rep):
+        res = self.config.api.pytest_report_teststatus(rep)
         if res:
             return res
         for cat in 'skipped failed passed ???'.split():
-            if getattr(event, cat, None):
+            if getattr(rep, cat, None):
                 break 
-        return cat, self.getoutcomeletter(event), self.getoutcomeword(event)
+        return cat, self.getoutcomeletter(rep), self.getoutcomeword(rep)
 
     def getoutcomeletter(self, rep):
         return rep.shortrepr 
@@ -224,7 +224,7 @@ class TerminalReporter:
         if exitstatus in (0, 1, 2):
             self.summary_failures()
             self.summary_skips()
-            self.config.pytestplugins.call_each("pytest_terminal_summary", terminalreporter=self)
+            self.config.api.pytest_terminal_summary(terminalreporter=self)
         if excrepr is not None:
             self.summary_final_exc(excrepr)
         if exitstatus == 2:
