@@ -80,7 +80,7 @@ class TestDSession:
         session = DSession(modcol.config)
         session.triggertesting([modcol])
         name, args, kwargs = session.queue.get(block=False)
-        assert name == 'collectreport'
+        assert name == 'pytest_collectreport'
         rep, = args 
         assert len(rep.result) == 1
 
@@ -135,7 +135,7 @@ class TestDSession:
         session.queueevent("anonymous")
         session.loop_once(loopstate)
         assert node.sent == [[item]]
-        session.queueevent("itemtestreport", run(item, node))
+        session.queueevent("pytest_itemtestreport", run(item, node))
         session.loop_once(loopstate)
         assert loopstate.shuttingdown 
         assert not loopstate.testsfailed 
@@ -148,7 +148,7 @@ class TestDSession:
         session.addnode(node)
        
         # setup a HostDown event
-        session.queueevent("testnodedown", node, None)
+        session.queueevent("pytest_testnodedown", node, None)
 
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
@@ -156,7 +156,7 @@ class TestDSession:
         dumpqueue(session.queue)
         assert loopstate.exitstatus == outcome.EXIT_NOHOSTS
 
-    def test_testnodedown_causes_reschedule_pending(self, testdir, EventRecorder):
+    def test_testnodedown_causes_reschedule_pending(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_crash(): 
                 assert 0
@@ -174,8 +174,8 @@ class TestDSession:
         # have one test pending for a node that goes down 
         session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
-        session.queueevent("testnodedown", node, None)
-        evrec = EventRecorder(session.bus)
+        session.queueevent("pytest_testnodedown", node, None)
+        evrec = testdir.geteventrecorder(session.bus)
         print session.item2nodes
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
@@ -192,18 +192,18 @@ class TestDSession:
         # setup a session with two nodes
         session = DSession(item.config)
         node1 = MockNode()
-        session.queueevent("testnodeready", node1)
+        session.queueevent("pytest_testnodeready", node1)
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
         assert len(session.node2pending) == 0
         session.loop_once(loopstate)
         assert len(session.node2pending) == 1
 
-    def test_event_propagation(self, testdir, EventRecorder):
+    def test_event_propagation(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
       
-        evrec = EventRecorder(session.bus)
+        evrec = testdir.geteventrecorder(session.bus)
         session.queueevent("NOP", 42)
         session.loop_once(session._initloopstate([]))
         assert evrec.getcall('NOP')
@@ -219,10 +219,10 @@ class TestDSession:
 
         assert node.sent == [[item]]
         ev = run(item, node) 
-        session.queueevent("itemtestreport", ev)
+        session.queueevent("pytest_itemtestreport", rep=ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  
-        session.queueevent("testnodedown", node, None)
+        session.queueevent("pytest_testnodedown", node=node, error=None)
         session.loop_once(loopstate)
         dumpqueue(session.queue)
         return session, loopstate.exitstatus 
@@ -256,30 +256,30 @@ class TestDSession:
         # run tests ourselves and produce reports 
         ev1 = run(items[0], node)
         ev2 = run(items[1], node)
-        session.queueevent("itemtestreport", ev1) # a failing one
-        session.queueevent("itemtestreport", ev2)
+        session.queueevent("pytest_itemtestreport", rep=ev1) # a failing one
+        session.queueevent("pytest_itemtestreport", rep=ev2)
         # now call the loop
         loopstate = session._initloopstate(items)
         session.loop_once(loopstate)
         assert loopstate.testsfailed
         assert loopstate.shuttingdown
 
-    def test_shuttingdown_filters_events(self, testdir, EventRecorder):
+    def test_shuttingdown_filters_events(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
         node = MockNode()
         session.addnode(node)
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
-        evrec = EventRecorder(session.bus)
-        session.queueevent("itemtestreport", run(item, node))
+        evrec = testdir.geteventrecorder(session.bus)
+        session.queueevent("pytest_itemtestreport", rep=run(item, node))
         session.loop_once(loopstate)
-        assert not evrec.getcalls("testnodedown")
-        session.queueevent("testnodedown", node, None)
+        assert not evrec.getcalls("pytest_testnodedown")
+        session.queueevent("pytest_testnodedown", node=node, error=None)
         session.loop_once(loopstate)
-        assert evrec.getcall('testnodedown').node == node
+        assert evrec.getcall('pytest_testnodedown').node == node
 
-    def test_filteritems(self, testdir, EventRecorder):
+    def test_filteritems(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_fail(): 
                 assert 0
@@ -292,7 +292,7 @@ class TestDSession:
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
         items = modcol.collect()
-        evrec = EventRecorder(session.bus)
+        evrec = testdir.geteventrecorder(session.bus)
         remaining = session.filteritems(items)
         assert remaining == []
         
@@ -313,13 +313,13 @@ class TestDSession:
         node = MockNode()
         session.addnode(node)
         session.senditems_load([item])
-        session.queueevent("itemtestreport", run(item, node))
+        session.queueevent("pytest_itemtestreport", rep=run(item, node))
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
         assert node._shutdown is True
         assert loopstate.exitstatus is None, "loop did not wait for testnodedown"
         assert loopstate.shuttingdown 
-        session.queueevent("testnodedown", node, None)
+        session.queueevent("pytest_testnodedown", node=node, error=None)
         session.loop_once(loopstate)
         assert loopstate.exitstatus == 0
 
@@ -340,10 +340,10 @@ class TestDSession:
         # node2pending will become empty when the loop sees the report 
         rep = run(item1, node)
 
-        session.queueevent("itemtestreport", run(item1, node)) 
+        session.queueevent("pytest_itemtestreport", rep=run(item1, node)) 
 
         # but we have a collection pending
-        session.queueevent("collectreport", colreport) 
+        session.queueevent("pytest_collectreport", rep=colreport) 
 
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
@@ -354,7 +354,6 @@ class TestDSession:
         assert loopstate.exitstatus is None, "loop did not care for colitems"
 
     def test_dist_some_tests(self, testdir):
-        from py.__.test.dist.testing.test_txnode import EventQueue
         p1 = testdir.makepyfile(test_one="""
             def test_1(): 
                 pass
@@ -366,16 +365,16 @@ class TestDSession:
         """)
         config = testdir.parseconfig('-d', p1, '--tx=popen')
         dsession = DSession(config)
-        eq = EventQueue(config.bus)
+        callrecorder = testdir.geteventrecorder(config.bus).callrecorder
         dsession.main([config.getfsnode(p1)])
-        ev, = eq.geteventargs("itemtestreport")
-        assert ev.passed
-        ev, = eq.geteventargs("itemtestreport")
-        assert ev.skipped
-        ev, = eq.geteventargs("itemtestreport")
-        assert ev.failed
+        rep = callrecorder.popcall("pytest_itemtestreport").rep 
+        assert rep.passed
+        rep = callrecorder.popcall("pytest_itemtestreport").rep
+        assert rep.skipped
+        rep = callrecorder.popcall("pytest_itemtestreport").rep
+        assert rep.failed
         # see that the node is really down 
-        node, error = eq.geteventargs("testnodedown")
+        node = callrecorder.popcall("pytest_testnodedown").node
         assert node.gateway.spec.popen
-        eq.geteventargs("testrunfinish")
+        #XXX eq.geteventargs("pytest_testrunfinish")
 

@@ -58,7 +58,7 @@ class ResultLog(object):
         testpath = generic_path(event.colitem)
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
-    def pyevent__itemtestreport(self, rep):
+    def pytest_itemtestreport(self, rep):
         code = rep.shortrepr 
         if rep.passed:
             longrepr = ""
@@ -68,7 +68,7 @@ class ResultLog(object):
             longrepr = str(rep.longrepr.reprcrash.message)
         self.log_outcome(rep, code, longrepr) 
 
-    def pyevent__collectreport(self, rep):
+    def pytest_collectreport(self, rep):
         if not rep.passed:
             if rep.failed: 
                 code = "F"

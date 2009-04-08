@@ -97,14 +97,14 @@ class TestNodeManager:
             assert gwspec._samefilesystem()
             assert not gwspec.chdir
 
-    def test_setup_DEBUG(self, source, EventRecorder):
+    def test_setup_DEBUG(self, source, testdir):
         specs = ["popen"] * 2
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
-        sorter = EventRecorder(config.bus, debug=True)
+        sorter = testdir.geteventrecorder(config.bus)
         nodemanager.setup_nodes(putevent=[].append)
         for spec in nodemanager.gwmanager.specs:
             l = sorter.getcalls("trace")
@@ -119,6 +119,6 @@ class TestNodeManager:
         """)
         sorter = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
                 "--tx=%s" % specssh, testdir.tmpdir)
-        ev = sorter.getfirstnamed("itemtestreport")
+        ev = sorter.getfirstnamed(pytest_itemtestreport)
         assert ev.passed 
 

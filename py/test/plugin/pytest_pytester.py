@@ -6,7 +6,9 @@ import py
 import inspect
 from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
+from pytest__pytest import CallRecorder
 import api
+
 
 class PytesterPlugin:
     def pytest_funcarg__linecomp(self, pyfuncitem):
@@ -19,8 +21,8 @@ class PytesterPlugin:
         tmptestdir = TmpTestdir(pyfuncitem)
         return tmptestdir
  
-    def pytest_funcarg__EventRecorder(self, pyfuncitem):
-        return EventRecorder
+    #def pytest_funcarg__EventRecorder(self, pyfuncitem):
+    #    return EventRecorder
 
     def pytest_funcarg__eventrecorder(self, pyfuncitem):
         evrec = EventRecorder(py._com.pyplugins)
@@ -74,10 +76,12 @@ class TmpTestdir:
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
 
-    def geteventrecorder(self, config):
-        evrec = EventRecorder(config.bus) 
-        self.pyfuncitem.addfinalizer(lambda: config.bus.unregister(evrec))
-        return evrec
+    def geteventrecorder(self, bus):
+        sorter = EventRecorder(bus)
+        sorter.callrecorder = CallRecorder(bus)
+        sorter.callrecorder.start_recording(api.PluginHooks)
+        self.pyfuncitem.addfinalizer(sorter.callrecorder.finalize)
+        return sorter
 
     def chdir(self):
         old = self.tmpdir.chdir()
@@ -128,7 +132,7 @@ class TmpTestdir:
         #config = self.parseconfig(*args)
         config = self.parseconfig(*args)
         session = config.initsession()
-        rec = EventRecorder(config.bus)
+        rec = self.geteventrecorder(config.bus)
         colitems = [config.getfsnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
         return items, rec 
@@ -150,10 +154,10 @@ class TmpTestdir:
         config = self.parseconfig(*args)
         config.pytestplugins.do_configure(config)
         session = config.initsession()
-        sorter = EventRecorder(config.bus)
+        sorter = self.geteventrecorder(config.bus)
         session.main()
         config.pytestplugins.do_unconfigure(config)
-        return sorter
+        return sorter 
 
     def config_preparse(self):
         config = self.Config()
@@ -306,11 +310,17 @@ class EventRecorder(object):
         if len(names) == 1 and isinstance(names, str):
             names = names.split()
         l = []
-        for event in self.events:
-            if event.name in names:
-                method = self._getcallparser(event.name)
-                pevent = method(*event.args, **event.kwargs)
-                l.append(pevent)  
+        for name in names:
+            if self.callrecorder.recordsmethod("pytest_" + name):
+                name = "pytest_" + name
+            if self.callrecorder.recordsmethod(name):
+                l.extend(self.callrecorder.getcalls(name))
+            else:
+                for event in self.events:
+                    if event.name == name:
+                        method = self._getcallparser(event.name)
+                        pevent = method(*event.args, **event.kwargs)
+                        l.append(pevent)  
         return l
 
     def _getcallparser(self, eventname):
@@ -328,7 +338,7 @@ class EventRecorder(object):
     # functionality for test reports 
 
     def getreports(self, names="itemtestreport collectreport"):
-        names = names.split()
+        names = [("pytest_" + x) for x in names.split()]
         l = []
         for call in self.getcalls(*names):
             l.append(call.rep)
@@ -386,6 +396,7 @@ class EventRecorder(object):
     def unregister(self):
         self.pyplugins.unregister(self)
 
+@py.test.mark.xfail
 def test_eventrecorder():
     bus = py._com.PyPlugins()
     recorder = EventRecorder(bus)
@@ -395,7 +406,7 @@ def test_eventrecorder():
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.notify("itemtestreport", rep)
+    bus.notify("pytest_itemtestreport", rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
@@ -404,12 +415,12 @@ def test_eventrecorder():
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.skipped = True
-    bus.notify("itemtestreport", rep)
+    bus.notify("pytest_itemtestreport", rep)
 
     rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.notify("itemtestreport", rep)
+    bus.notify("pytest_itemtestreport", rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -423,7 +434,7 @@ def test_eventrecorder():
     recorder.clear() 
     assert not recorder.events
     assert not recorder.getfailures()
-    bus.notify("itemtestreport", rep)
+    bus.notify(pytest_itemtestreport, rep)
     assert not recorder.events 
     assert not recorder.getfailures()
 

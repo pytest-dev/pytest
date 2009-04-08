@@ -122,7 +122,7 @@ class TestDoctests:
             2
         """)
         sorter = testdir.inline_run(p)
-        call = sorter.getcall("itemtestreport")
+        call = sorter.getcall("pytest_itemtestreport")
         assert call.rep.failed
         assert call.rep.longrepr 
         # XXX 

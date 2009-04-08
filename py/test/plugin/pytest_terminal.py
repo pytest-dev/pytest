@@ -116,7 +116,7 @@ class TerminalReporter:
         targets = ", ".join([gw.id for gw in gateways])
         self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
-    def pyevent__plugin_registered(self, plugin):
+    def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig: 
             msg = "PLUGIN registered: %s" %(plugin,)
             # XXX this event may happen during setup/teardown time 
@@ -124,10 +124,10 @@ class TerminalReporter:
             #     which garbles our output if we use self.write_line 
             self.write_line(msg)
 
-    def pyevent__testnodeready(self, node):
+    def pytest_testnodeready(self, node):
         self.write_line("%s txnode ready to receive tests" %(node.gateway.id,))
 
-    def pyevent__testnodedown(self, node, error):
+    def pytest_testnodedown(self, node, error):
         if error:
             self.write_line("%s node down, error: %s" %(node.gateway.id, error))
 
@@ -136,7 +136,7 @@ class TerminalReporter:
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
 
-    def pyevent__itemstart(self, item, node=None):
+    def pytest_itemstart(self, item, node=None):
         if self.config.option.debug:
             info = item.repr_metainfo()
             line = info.verboseline(basedir=self.curdir) + " "
@@ -154,14 +154,14 @@ class TerminalReporter:
             #self.write_fspath_result(fspath, "")
             self.write_ensure_prefix(line, "") 
 
-    def pyevent__rescheduleitems(self, items):
+    def pytest_rescheduleitems(self, items):
         if self.config.option.debug:
             self.write_sep("!", "RESCHEDULING %s " %(items,))
 
     def pyevent__deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
     
-    def pyevent__itemtestreport(self, rep):
+    def pytest_itemtestreport(self, rep):
         fspath = rep.colitem.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
         if isinstance(word, tuple):
@@ -184,7 +184,7 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pyevent__collectreport(self, rep):
+    def pytest_collectreport(self, rep):
         if not rep.passed:
             if rep.failed:
                 self.stats.setdefault("failed", []).append(rep)
@@ -309,14 +309,14 @@ class CollectonlyReporter:
     def outindent(self, line):
         self.out.line(self.indent + str(line))
 
-    def pyevent__collectionstart(self, collector):
+    def pytest_collectstart(self, collector):
         self.outindent(collector)
         self.indent += self.INDENT 
     
-    def pyevent__itemstart(self, item, node=None):
+    def pytest_itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pyevent__collectreport(self, rep):
+    def pytest_collectreport(self, rep):
         if not rep.passed:
             self.outindent("!!! %s !!!" % rep.longrepr.reprcrash.message)
             self._failed.append(rep)
@@ -373,7 +373,7 @@ class TestTerminal:
         
         for item in testdir.genitems([modcol]):
             ev = runner.basic_run_report(item) 
-            rep.config.bus.notify("itemtestreport", ev)
+            rep.config.api.pytest_itemtestreport(rep=ev)
         linecomp.assert_contains_lines([
                 "*test_pass_skip_fail.py .sF"
         ])
@@ -400,10 +400,10 @@ class TestTerminal:
         items = modcol.collect()
         rep.config.option.debug = True # 
         for item in items:
-            rep.config.bus.notify("itemstart", item, None)
+            rep.config.api.pytest_itemstart(item=item, node=None)
             s = linecomp.stringio.getvalue().strip()
             assert s.endswith(item.name)
-            rep.config.bus.notify("itemtestreport", runner.basic_run_report(item))
+            rep.config.api.pytest_itemtestreport(rep=runner.basic_run_report(item))
 
         linecomp.assert_contains_lines([
             "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
@@ -520,8 +520,8 @@ class TestTerminal:
             rep.config.bus.notify("testrunstart")
             rep.config.bus.notify("testrunstart")
             for item in testdir.genitems([modcol]):
-                rep.config.bus.notify("itemtestreport", 
-                    runner.basic_run_report(item))
+                rep.config.api.pytest_itemtestreport(
+                    rep=runner.basic_run_report(item))
             rep.config.bus.notify("testrunfinish", exitstatus=1)
             s = linecomp.stringio.getvalue()
             if tbopt == "long":
@@ -548,7 +548,7 @@ class TestTerminal:
         l = list(testdir.genitems([modcol]))
         assert len(l) == 1
         modcol.config.option.debug = True
-        rep.config.bus.notify("itemstart", l[0])
+        rep.config.api.pytest_itemstart(item=l[0])
         linecomp.assert_contains_lines([
             "*test_show_path_before_running_test.py*"
         ])
@@ -569,8 +569,8 @@ class TestTerminal:
         bus.notify("testrunstart")
         try:
             for item in testdir.genitems([modcol]):
-                bus.notify("itemtestreport", 
-                    runner.basic_run_report(item))
+                modcol.config.api.pytest_itemtestreport(
+                    rep=runner.basic_run_report(item))
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
         else:
@@ -628,17 +628,17 @@ class TestCollectonly:
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
         modcol.config.bus.register(rep)
         indent = rep.indent
-        rep.config.bus.notify("collectionstart", modcol)
+        rep.config.api.pytest_collectstart(collector=modcol)
         linecomp.assert_contains_lines([
            "<Module 'test_collectonly_basic.py'>"
         ])
         item = modcol.join("test_func")
-        rep.config.bus.notify("itemstart", item)
+        rep.config.api.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>", 
         ])
-        rep.config.bus.notify( "collectreport", 
-            runner.CollectReport(modcol, [], excinfo=None))
+        rep.config.api.pytest_collectreport(
+            rep=runner.CollectReport(modcol, [], excinfo=None))
         assert rep.indent == indent 
 
     def test_collectonly_skipped_module(self, testdir, linecomp):

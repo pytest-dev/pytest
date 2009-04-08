@@ -100,6 +100,7 @@ class BaseReport(object):
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
+    # XXX rename colitem to item here
     def __init__(self, colitem, excinfo=None, when=None, outerr=None):
         self.colitem = colitem 
         if colitem and when != "setup":

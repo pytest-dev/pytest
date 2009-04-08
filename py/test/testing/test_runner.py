@@ -27,7 +27,7 @@ class TestSetupState:
         setup = SetupState()
         res = setup.do_setup(item)
         assert not res
-        rep = evrec.popcall("itemsetupreport").rep
+        rep = evrec.popcall(pytest_itemsetupreport).rep
         assert rep.failed
         assert not rep.skipped
         assert rep.excrepr 
@@ -46,10 +46,10 @@ class TestSetupState:
         setup = SetupState()
         res = setup.do_setup(item)
         assert res 
-        rep = evrec.popcall("itemsetupreport").rep
+        rep = evrec.popcall(pytest_itemsetupreport).rep
         assert rep.passed
         setup.do_teardown(item)
-        rep = evrec.popcall("itemsetupreport").rep
+        rep = evrec.popcall(pytest_itemsetupreport).rep
         assert rep.item == item 
         assert rep.failed 
         assert not rep.passed
@@ -67,7 +67,7 @@ class TestSetupState:
         evrec = testdir.geteventrecorder(item.config)
         setup = SetupState()
         setup.do_setup(item)
-        rep = evrec.popcall("itemsetupreport").rep
+        rep = evrec.popcall(pytest_itemsetupreport).rep
         assert not rep.failed
         assert rep.skipped
         assert rep.excrepr 
@@ -78,7 +78,7 @@ class TestSetupState:
         evrec = testdir.geteventrecorder(item.config)
         setup = SetupState()
         setup.do_fixture_and_runtest(item)
-        rep = evrec.popcall("itemtestreport").rep 
+        rep = evrec.popcall(pytest_itemtestreport).rep 
         assert rep.passed 
 
     def test_runtest_fails(self, testdir):
@@ -86,7 +86,7 @@ class TestSetupState:
         evrec = testdir.geteventrecorder(item.config)
         setup = SetupState()
         setup.do_fixture_and_runtest(item)
-        event = evrec.popcall("item_runtest_finished")
+        event = evrec.popcall(pytest_item_runtest_finished)
         assert event.excinfo 
         
     

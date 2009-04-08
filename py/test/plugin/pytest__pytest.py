@@ -21,10 +21,13 @@ class ParsedCall:
     def __init__(self, name, locals):
         assert '_name' not in locals 
         self.__dict__.update(locals)
+        self.__dict__.pop('self')
         self._name = name 
 
     def __repr__(self):
-        return "<ParsedCall %r>" %(self.__dict__,)
+        d = self.__dict__.copy()
+        del d['_name']
+        return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 class CallRecorder:
     def __init__(self, pyplugins):
@@ -46,6 +49,11 @@ class CallRecorder:
     def finalize(self):
         for recorder in self._recorders.values():
             self._pyplugins.unregister(recorder)
+
+    def recordsmethod(self, name):
+        for apiclass in self._recorders:
+            if hasattr(apiclass, name):
+                return True
 
     def _getcallparser(self, method):
         name = method.__name__
@@ -69,6 +77,22 @@ class CallRecorder:
                 del self.calls[i]
                 return call 
         raise ValueError("could not find call %r in %r" %(name, self.calls))
+
+    def getcalls(self, names):
+        if isinstance(names, str):
+            names = names.split()
+        for name in names:
+            for cls in self._recorders:
+                if name in vars(cls):
+                    break
+            else:
+                raise ValueError("callname %r not found in %r" %(
+                name, self._recorders.keys()))
+        l = []
+        for call in self.calls:
+            if call._name in names:
+                l.append(call)
+        return l
 
 def test_generic(plugintester):
     plugintester.apicheck(_pytestPlugin)

@@ -167,7 +167,7 @@ class TestCollectPluginHooks:
         assert "hello" in wascalled
         assert "world" in wascalled
         # make sure the directories do not get double-appended 
-        colreports = sorter.getreports(names="collectreport")
+        colreports = sorter.getreports("collectreport")
         names = [rep.colitem.name for rep in colreports]
         assert names.count("hello") == 1
 

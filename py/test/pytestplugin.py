@@ -86,14 +86,14 @@ class PytestPlugins(object):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()
         excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
-        return self.notify("internalerror", excrepr)
+        return self.notify("internalerror", excrepr=excrepr)
 
     def do_addoption(self, parser):
         methods = self.pyplugins.listattr("pytest_addoption", reverse=True)
         mc = py._com.MultiCall(methods, parser=parser)
         mc.execute()
 
-    def pyevent__plugin_registered(self, plugin):
+    def pytest_plugin_registered(self, plugin):
         if hasattr(self, '_config'):
             self.pyplugins.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
             self.pyplugins.call_plugin(plugin, "pytest_configure", config=self._config)

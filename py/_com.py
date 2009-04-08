@@ -115,11 +115,11 @@ class PyPlugins:
 
     def register(self, plugin):
         assert not isinstance(plugin, str)
+        self.call_each("pytest_plugin_registered", plugin)
         self._plugins.append(plugin)
-        self.notify("plugin_registered", plugin)
 
     def unregister(self, plugin):
-        self.notify("plugin_unregistered", plugin)
+        self.call_each("pytest_plugin_unregistered", plugin)
         self._plugins.remove(plugin)
 
     def getplugins(self):

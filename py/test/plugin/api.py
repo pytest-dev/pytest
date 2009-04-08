@@ -68,6 +68,36 @@ class PluginHooks:
         """ return processed content for a given doctest"""
     pytest_doctest_prepare_content.firstresult = True
 
+    def pytest_itemstart(self, item, node=None):
+        """ test item gets collected. """
+
+    def pytest_itemtestreport(self, rep):
+        """ test has been run. """
+
+    def pytest_item_runtest_finished(self, item, excinfo, outerr):
+        """ test has been run. """
+
+    def pytest_itemsetupreport(self, rep):
+        """ a report on running a fixture function. """ 
+
+    def pytest_collectstart(self, collector):
+        """ collector starts collecting. """
+
+    def pytest_collectreport(self, rep):
+        """ collector finished collecting. """
+
+    def pytest_plugin_registered(self, plugin):
+        """ a new py lib plugin got registered. """
+
+    def pytest_plugin_unregistered(self, plugin):
+        """ a py lib plugin got unregistered. """
+
+    def pytest_testnodeready(self, node):
+        """ Test Node is ready to operate. """
+
+    def pytest_testnodedown(self, node, error):
+        """ Test Node is down. """
+
 
 class Events:
     # Events 
@@ -83,26 +113,9 @@ class Events:
     def pyevent__internalerror(self, excrepr):
         """ called for internal errors. """
 
-    def pyevent__itemstart(self, item, node=None):
-        """ test item gets collected. """
-
-    def pyevent__itemtestreport(self, rep):
-        """ test has been run. """
-
-    def pyevent__item_runtest_finished(self, item, excinfo, outerr):
-        """ test has been run. """
-
-    def pyevent__itemsetupreport(self, rep):
-        """ a report on running a fixture function. """ 
-
     def pyevent__deselected(self, items):
         """ collected items that were deselected (by keyword). """
 
-    def pyevent__collectionstart(self, collector):
-        """ collector starts collecting. """
-
-    def pyevent__collectreport(self, rep):
-        """ collector finished collecting. """
 
     def pyevent__testrunstart(self):
         """ whole test run starts. """
@@ -115,19 +128,11 @@ class Events:
             The gateway will have an 'id' attribute that is unique 
             within the gateway manager context. 
         """
-    def pyevent__testnodeready(self, node):
-        """ Test Node is ready to operate. """
 
-    def pyevent__testnodedown(self, node, error):
-        """ Test Node is down. """
-
-    def pyevent__rescheduleitems(self, items):
+    def pytest_rescheduleitems(self, items):
         """ reschedule Items from a node that went down. """
 
     def pyevent__looponfailinfo(self, failreports, rootdirs):
         """ info for repeating failing tests. """
 
-    def pyevent__plugin_registered(self, plugin):
-        """ a new py lib plugin got registered. """
-        
    

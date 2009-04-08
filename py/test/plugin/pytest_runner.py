@@ -13,7 +13,7 @@ class RunnerPlugin:
         call = item.config.guardedcall(lambda: setupstate.prepare(item))
         rep = ItemSetupReport(item, call.excinfo, call.outerr)
         if call.excinfo:
-            item.config.pytestplugins.notify("itemsetupreport", rep)
+            item.config.pytestplugins.notify(pytest_itemsetupreport, rep)
         else:
             call = item.config.guardedcall(lambda: item.runtest())
             item.config.api.pytest_item_runtest_finished(
@@ -21,7 +21,7 @@ class RunnerPlugin:
             call = item.config.guardedcall(lambda: self.teardown_exact(item))
             if call.excinfo:
                 rep = ItemSetupReport(item, call.excinfo, call.outerr)
-                item.config.pytestplugins.notify("itemsetupreport", rep)
+                item.config.api.pytest_itemsetupreport(rep=rep)
 
     def pytest_collector_collect(self, collector):
         call = item.config.guardedcall(lambda x: collector._memocollect())
@@ -208,9 +208,9 @@ class TestRunnerPlugin:
         item = testdir.getitem("""def test_func(): pass""")
         plugin = RunnerPlugin()
         plugin.pytest_configure(item.config)
-        sorter = testdir.geteventrecorder(item.config)
+        sorter = testdir.geteventrecorder(item.config.bus)
         plugin.pytest_item_setup_and_runtest(item)
-        rep = sorter.getcall("itemtestreport").rep
+        rep = sorter.getcall("pytest_itemtestreport").rep
         assert rep.passed 
         
 class TestSetupEvents:
@@ -223,7 +223,7 @@ class TestSetupEvents:
             def test_func():
                 pass
         """)
-        assert not sorter.getcalls("itemsetupreport")
+        assert not sorter.getcalls(pytest_itemsetupreport)
 
     def test_setup_fails(self, testdir):
         sorter = testdir.inline_runsource("""
@@ -233,7 +233,7 @@ class TestSetupEvents:
             def test_func():
                 pass
         """)
-        rep = sorter.popcall("itemsetupreport").rep
+        rep = sorter.popcall(pytest_itemsetupreport).rep
         assert rep.failed
         assert not rep.skipped
         assert rep.excrepr 
@@ -248,7 +248,7 @@ class TestSetupEvents:
                 print "13"
                 raise ValueError(25)
         """)
-        rep = evrec.popcall("itemsetupreport").rep 
+        rep = evrec.popcall(pytest_itemsetupreport).rep 
         assert rep.failed 
         assert rep.item == item 
         assert not rep.passed
@@ -263,7 +263,7 @@ class TestSetupEvents:
             def test_func():
                 pass
         """)
-        rep = sorter.popcall("itemsetupreport")
+        rep = sorter.popcall(pytest_itemsetupreport)
         assert not rep.failed
         assert rep.skipped
         assert rep.excrepr 

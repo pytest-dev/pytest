@@ -34,20 +34,19 @@ class Session(object):
                 colitems[:] = list(next) + colitems 
                 continue
             assert self.bus is next.config.bus
-            notify = self.bus.notify 
             if isinstance(next, Item):
                 remaining = self.filteritems([next])
                 if remaining:
-                    notify("itemstart", next)
+                    self.config.api.pytest_itemstart(item=next)
                     yield next 
             else:
                 assert isinstance(next, Collector)
-                notify("collectionstart", next)
+                self.config.api.pytest_collectstart(collector=next)
                 rep = basic_collect_report(next)
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
                         yield x 
-                notify("collectreport", rep)
+                self.config.api.pytest_collectreport(rep=rep)
             if self.shouldstop:
                 break
 
@@ -81,12 +80,12 @@ class Session(object):
         """ setup any neccessary resources ahead of the test run. """
         self.bus.notify("testrunstart")
         
-    def pyevent__itemtestreport(self, rep):
+    def pytest_itemtestreport(self, rep):
         if rep.failed:
             self._testsfailed = True
             if self.config.option.exitfirst:
                 self.shouldstop = True
-    pyevent__collectreport = pyevent__itemtestreport
+    pytest_collectreport = pytest_itemtestreport
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 

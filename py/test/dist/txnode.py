@@ -38,21 +38,21 @@ class TXNode(object):
                 if not self._down:
                     if not err:
                         err = "Not properly terminated"
-                    self.notify("testnodedown", self, err)
+                    self.notify("pytest_testnodedown", node=self, error=err)
                     self._down = True
                 return
             eventname, args, kwargs = eventcall 
             if eventname == "slaveready":
                 if self._sendslaveready:
                     self._sendslaveready(self)
-                self.notify("testnodeready", self)
+                self.notify("pytest_testnodeready", node=self)
             elif eventname == "slavefinished":
                 self._down = True
-                self.notify("testnodedown", self, None)
-            elif eventname == "itemtestreport":
-                rep = args[0]
+                self.notify("pytest_testnodedown", error=None, node=self)
+            elif eventname == "pytest_itemtestreport":
+                rep = kwargs['rep']
                 rep.node = self
-                self.notify("itemtestreport", rep)
+                self.notify("pytest_itemtestreport", rep=rep)
             else:
                 self.notify(eventname, *args, **kwargs)
         except KeyboardInterrupt: 
@@ -104,8 +104,8 @@ class SlaveNode(object):
     def sendevent(self, eventname, *args, **kwargs):
         self.channel.send((eventname, args, kwargs))
 
-    def pyevent__itemtestreport(self, rep):
-        self.sendevent("itemtestreport", rep)
+    def pytest_itemtestreport(self, rep):
+        self.sendevent("pytest_itemtestreport", rep=rep)
 
     def run(self):
         channel = self.channel

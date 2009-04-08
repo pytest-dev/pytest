@@ -69,12 +69,12 @@ class TestBootstrapping:
         assert plugins.getplugin("plug1").__class__.__name__ == "Plug1Plugin"
         assert plugins.getplugin("plug2").__class__.__name__ == "Plug2Plugin"
 
-    def test_consider_module_import_module(self, testdir, EventRecorder):
+    def test_consider_module_import_module(self, testdir):
         mod = py.std.new.module("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="""class APlugin: pass""")
         plugins = PytestPlugins() 
-        sorter = EventRecorder(plugins)
+        sorter = testdir.geteventrecorder(plugins)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         plugins.consider_module(mod)

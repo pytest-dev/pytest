@@ -24,20 +24,20 @@ class LoopState(object):
         self.shuttingdown = False
         self.testsfailed = False
 
-    def pyevent__itemtestreport(self, rep):
+    def pytest_itemtestreport(self, rep):
         if rep.colitem in self.dsession.item2nodes:
             self.dsession.removeitem(rep.colitem, rep.node)
         if rep.failed:
             self.testsfailed = True
 
-    def pyevent__collectreport(self, rep):
+    def pytest_collectreport(self, rep):
         if rep.passed:
             self.colitems.extend(rep.result)
 
-    def pyevent__testnodeready(self, node):
+    def pytest_testnodeready(self, node):
         self.dsession.addnode(node)
 
-    def pyevent__testnodedown(self, node, error=None):
+    def pytest_testnodedown(self, node, error=None):
         pending = self.dsession.removenode(node)
         if pending:
             crashitem = pending[0]
@@ -95,8 +95,12 @@ class DSession(Session):
                 continue
         loopstate.dowork = True 
           
-        eventname, args, kwargs = eventcall
-        self.bus.notify(eventname, *args, **kwargs)
+        callname, args, kwargs = eventcall
+        call = getattr(self.config.api, callname, None)
+        if call is not None:
+            call(*args, **kwargs)
+        else:
+            self.bus.notify(callname, *args, **kwargs)
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
@@ -110,10 +114,9 @@ class DSession(Session):
         # once we are in shutdown mode we dont send 
         # events other than HostDown upstream 
         eventname, args, kwargs = self.queue.get()
-        if eventname == "testnodedown":
-            node, error = args[0], args[1]
-            self.bus.notify("testnodedown", node, error)
-            self.removenode(node)
+        if eventname == "pytest_testnodedown":
+            self.config.api.pytest_testnodedown(**kwargs)
+            self.removenode(kwargs['node'])
         if not self.node2pending:
             # finished
             if loopstate.testsfailed:
@@ -174,8 +177,8 @@ class DSession(Session):
             if isinstance(next, py.test.collect.Item):
                 senditems.append(next)
             else:
-                self.bus.notify("collectionstart", next)
-                self.queueevent("collectreport", basic_collect_report(next))
+                self.bus.notify("collectstart", next)
+                self.queueevent("pytest_collectreport", basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
         else:
@@ -197,7 +200,7 @@ class DSession(Session):
             pending.extend(sending)
             for item in sending:
                 self.item2nodes.setdefault(item, []).append(node)
-                self.bus.notify("itemstart", item, node)
+                self.config.api.pytest_itemstart(item=item, node=node)
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
@@ -216,7 +219,7 @@ class DSession(Session):
                     #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
                     self.item2nodes.setdefault(item, []).append(node)
-                    self.bus.notify("itemstart", item, node)
+                    self.config.api.pytest_itemstart(item=item, node=node)
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:
@@ -239,7 +242,7 @@ class DSession(Session):
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = ItemTestReport(item, when="???", excinfo=longrepr)
         rep.node = node
-        self.bus.notify("itemtestreport", rep)
+        self.config.api.pytest_itemtestreport(rep=rep)
 
     def setup(self):
         """ setup any neccessary resources ahead of the test run. """

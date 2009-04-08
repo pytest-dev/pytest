@@ -27,7 +27,7 @@ class SessionTests:
         assert failed[2].colitem.name == "test_two"
         itemstarted = sorter.getcalls("itemstart")
         assert len(itemstarted) == 4
-        colstarted = sorter.getcalls("collectionstart")
+        colstarted = sorter.getcalls("collectstart")
         assert len(colstarted) == 1
         col = colstarted[0].collector
         assert isinstance(col, py.test.collect.Module)
@@ -199,10 +199,10 @@ class TestNewSession(SessionTests):
         )
         sorter = testdir.inline_run('--collectonly', p.dirpath())
        
-        itemstarted = sorter.getcalls("itemstart")
+        itemstarted = sorter.getcalls("pytest_itemstart")
         assert len(itemstarted) == 3
         assert not sorter.getreports("itemtestreport") 
-        started = sorter.getcalls("collectionstart")
+        started = sorter.getcalls("pytest_collectstart")
         finished = sorter.getreports("collectreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 

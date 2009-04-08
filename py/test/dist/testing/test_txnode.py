@@ -26,7 +26,9 @@ class EventQueue:
                 name, args, kwargs = eventcall 
                 assert isinstance(name, str)
                 if name == eventname:
-                    return args
+                    if args:
+                        return args
+                    return kwargs
                 events.append(name)
                 if name == "internalerror":
                     print str(kwargs["excrepr"])
@@ -78,9 +80,9 @@ class TestMasterSlaveConnection:
     def test_crash_invalid_item(self, mysetup):
         node = mysetup.makenode()
         node.send(123) # invalid item 
-        n, error = mysetup.geteventargs("testnodedown")
-        assert n is node 
-        assert str(error).find("AttributeError") != -1
+        kwargs = mysetup.geteventargs("pytest_testnodedown")
+        assert kwargs['node'] is node 
+        assert str(kwargs['error']).find("AttributeError") != -1
 
     def test_crash_killed(self, testdir, mysetup):
         if not hasattr(py.std.os, 'kill'):
@@ -92,16 +94,16 @@ class TestMasterSlaveConnection:
         """)
         node = mysetup.makenode(item.config)
         node.send(item) 
-        n, error = mysetup.geteventargs("testnodedown")
-        assert n is node 
-        assert str(error).find("Not properly terminated") != -1
+        kwargs = mysetup.geteventargs("pytest_testnodedown")
+        assert kwargs['node'] is node 
+        assert str(kwargs['error']).find("Not properly terminated") != -1
 
     def test_node_down(self, mysetup):
         node = mysetup.makenode()
         node.shutdown()
-        n, error = mysetup.geteventargs("testnodedown")
-        assert n is node 
-        assert not error
+        kwargs = mysetup.geteventargs("pytest_testnodedown")
+        assert kwargs['node'] is node 
+        assert not kwargs['error']
         node.callback(node.ENDMARK)
         excinfo = py.test.raises(IOError, 
             "mysetup.geteventargs('testnodedown', timeout=0.01)")
@@ -118,11 +120,11 @@ class TestMasterSlaveConnection:
         item = testdir.getitem("def test_func(): pass")
         node = mysetup.makenode(item.config)
         node.send(item)
-        ev, = mysetup.geteventargs("itemtestreport")
-        assert ev.passed 
-        assert ev.colitem == item
-        #assert event.item == item 
-        #assert event.item is not item 
+        kwargs = mysetup.geteventargs("pytest_itemtestreport")
+        rep = kwargs['rep'] 
+        assert rep.passed 
+        print rep
+        assert rep.colitem == item
 
     def test_send_some(self, testdir, mysetup):
         items = testdir.getitems("""
@@ -138,10 +140,11 @@ class TestMasterSlaveConnection:
         for item in items:
             node.send(item)
         for outcome in "passed failed skipped".split():
-            ev, = mysetup.geteventargs("itemtestreport")
-            assert getattr(ev, outcome) 
+            kwargs = mysetup.geteventargs("pytest_itemtestreport")
+            rep = kwargs['rep']
+            assert getattr(rep, outcome) 
 
         node.sendlist(items)
         for outcome in "passed failed skipped".split():
-            ev, = mysetup.geteventargs("itemtestreport")
-            assert getattr(ev, outcome) 
+            rep = mysetup.geteventargs("pytest_itemtestreport")['rep']
+            assert getattr(rep, outcome) 
