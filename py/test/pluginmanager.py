@@ -1,5 +1,5 @@
 """
-handling py.test plugins. 
+managing loading and interacting with pytest plugins. 
 """
 import py
 from py.__.test.plugin import api
@@ -10,11 +10,11 @@ class PluginManager(object):
             comregistry = py._com.Registry()
         self.comregistry = comregistry 
         self.MultiCall = self.comregistry.MultiCall
-        self.plugins = {}
+        self.impname2plugin = {}
 
         self.api = py._com.PluginAPI(
             apiclass=api.PluginHooks, 
-            plugins=self.comregistry) 
+            registry=self.comregistry) 
 
     def register(self, plugin):
         self.comregistry.register(plugin)
@@ -24,13 +24,13 @@ class PluginManager(object):
         return self.comregistry.isregistered(plugin)
 
     def getplugins(self):
-        return self.comregistry.plugins
+        return list(self.comregistry)
 
     # API for bootstrapping 
     #
     def getplugin(self, importname):
         impname, clsname = canonical_names(importname)
-        return self.plugins[impname]
+        return self.impname2plugin[impname]
 
     def _envlist(self, varname):
         val = py.std.os.environ.get(varname, None)
@@ -44,8 +44,8 @@ class PluginManager(object):
 
     def consider_conftest(self, conftestmodule):
         cls = getattr(conftestmodule, 'ConftestPlugin', None)
-        if cls is not None and cls not in self.plugins:
-            self.plugins[cls] = True
+        if cls is not None and cls not in self.impname2plugin:
+            self.impname2plugin[cls] = True
             self.register(cls())
         self.consider_module(conftestmodule)
 
@@ -60,11 +60,11 @@ class PluginManager(object):
     def import_plugin(self, spec):
         assert isinstance(spec, str)
         modname, clsname = canonical_names(spec)
-        if modname in self.plugins:
+        if modname in self.impname2plugin:
             return
         mod = importplugin(modname)
         plugin = registerplugin(self.comregistry.register, mod, clsname)
-        self.plugins[modname] = plugin
+        self.impname2plugin[modname] = plugin
         self.consider_module(mod)
     # 
     #

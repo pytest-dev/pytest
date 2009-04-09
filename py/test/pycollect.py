@@ -386,8 +386,8 @@ class Function(FunctionMixin, py.test.collect.Item):
     def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
         metainfo = self.repr_metainfo()
         available = []
-        plugins = self.config.pluginmanager.plugins.values()
-        plugins.extend(self.config.pluginmanager.comregistry.plugins)
+        plugins = list(self.config.pluginmanager.comregistry)
+        #plugins.extend(self.config.pluginmanager.registry.plugins)
         for plugin in plugins:
             for name in vars(plugin.__class__):
                 if name.startswith(prefix):

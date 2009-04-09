@@ -71,27 +71,27 @@ class Registry:
     def __init__(self, plugins=None):
         if plugins is None:
             plugins = []
-        self.plugins = plugins
+        self._plugins = plugins
 
     def register(self, plugin):
         assert not isinstance(plugin, str)
         self.call_each("pytest_plugin_registered", plugin)
-        self.plugins.append(plugin)
+        self._plugins.append(plugin)
 
     def unregister(self, plugin):
         self.call_each("pytest_plugin_unregistered", plugin)
-        self.plugins.remove(plugin)
+        self._plugins.remove(plugin)
 
     def isregistered(self, plugin):
-        return plugin in self.plugins 
+        return plugin in self._plugins 
 
     def __iter__(self):
-        return iter(self.plugins)
+        return iter(self._plugins)
 
     def listattr(self, attrname, plugins=None, extra=(), reverse=False):
         l = []
         if plugins is None:
-            plugins = self.plugins
+            plugins = self._plugins
         if extra:
             plugins += list(extra)
         for plugin in plugins:
@@ -117,31 +117,31 @@ class Registry:
 
 
 class PluginAPI: 
-    def __init__(self, apiclass, plugins=None):
+    def __init__(self, apiclass, registry=None):
         self._apiclass = apiclass
-        if plugins is None:
-            plugins = comregistry
-        self.plugins = plugins
+        if registry is None:
+            registry = comregistry
+        self.registry = registry
         for name, method in vars(apiclass).items():
             if name[:2] != "__":
                 firstresult = getattr(method, 'firstresult', False)
-                mm = ApiCall(plugins, name, firstresult=firstresult)
+                mm = ApiCall(registry, name, firstresult=firstresult)
                 setattr(self, name, mm)
     def __repr__(self):
-        return "<PluginAPI %r %r>" %(self._apiclass, self.plugins)
+        return "<PluginAPI %r %r>" %(self._apiclass, self._plugins)
 
 class ApiCall:
-    def __init__(self, plugins, name, firstresult):
-        self.plugins = plugins
+    def __init__(self, registry, name, firstresult):
+        self.registry = registry
         self.name = name 
         self.firstresult = firstresult 
 
     def __repr__(self):
         mode = self.firstresult and "firstresult" or "each"
-        return "<ApiCall %r mode=%s %s>" %(self.name, mode, self.plugins)
+        return "<ApiCall %r mode=%s %s>" %(self.name, mode, self.registry)
 
     def __call__(self, *args, **kwargs):
-        mc = MultiCall(self.plugins.listattr(self.name), *args, **kwargs)
+        mc = MultiCall(self.registry.listattr(self.name), *args, **kwargs)
         #print "making multicall", self
         return mc.execute(firstresult=self.firstresult)
 

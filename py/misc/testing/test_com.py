@@ -165,37 +165,37 @@ def test_api_and_defaults():
 
 class TestPluginAPI:
     def test_happypath(self):
-        plugins = Registry()
+        registry = Registry()
         class Api:
             def hello(self, arg):
                 pass
 
-        mcm = PluginAPI(apiclass=Api, plugins=plugins)
+        mcm = PluginAPI(apiclass=Api, registry=registry)
         assert hasattr(mcm, 'hello')
         assert repr(mcm.hello).find("hello") != -1
         class Plugin:
             def hello(self, arg):
                 return arg + 1
-        plugins.register(Plugin())
+        registry.register(Plugin())
         l = mcm.hello(3)
         assert l == [4]
         assert not hasattr(mcm, 'world')
 
     def test_firstresult(self):
-        plugins = Registry()
+        registry = Registry()
         class Api:
             def hello(self, arg): pass
             hello.firstresult = True
 
-        mcm = PluginAPI(apiclass=Api, plugins=plugins)
+        mcm = PluginAPI(apiclass=Api, registry=registry)
         class Plugin:
             def hello(self, arg):
                 return arg + 1
-        plugins.register(Plugin())
+        registry.register(Plugin())
         res = mcm.hello(3)
         assert res == 4
 
     def test_default_plugins(self):
         class Api: pass 
         mcm = PluginAPI(apiclass=Api)
-        assert mcm.plugins == py._com.comregistry
+        assert mcm.registry == py._com.comregistry
