@@ -79,15 +79,11 @@ class PluginManager(object):
         for x in self.comregistry.listattr(attrname):
             return x
 
-    def listattr(self, attrname):
-        return self.comregistry.listattr(attrname)
+    def listattr(self, attrname, plugins=None):
+        return self.comregistry.listattr(attrname, plugins=plugins)
 
     def call_firstresult(self, *args, **kwargs):
         return self.comregistry.call_firstresult(*args, **kwargs)
-
-    def call_each(self, *args, **kwargs):
-        #print "plugins.call_each", args[0], args[1:], kwargs
-        return self.comregistry.call_each(*args, **kwargs)
 
     def notify_exception(self, excinfo=None):
         if excinfo is None:
@@ -102,8 +98,12 @@ class PluginManager(object):
 
     def pytest_plugin_registered(self, plugin):
         if hasattr(self, '_config'):
-            self.comregistry.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
-            self.comregistry.call_plugin(plugin, "pytest_configure", config=self._config)
+            self.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
+            self.call_plugin(plugin, "pytest_configure", config=self._config)
+
+    def call_plugin(self, plugin, methname, **kwargs):
+        return self.MultiCall(self.listattr(methname, plugins=[plugin]), 
+                **kwargs).execute(firstresult=True)
 
     def do_configure(self, config):
         assert not hasattr(self, '_config')

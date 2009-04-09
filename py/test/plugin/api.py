@@ -44,6 +44,7 @@ class PluginHooks:
         """ return True/False to cause/prevent recursion into given directory. 
             return None if you do not want to make the decision. 
         """ 
+    pytest_collect_recurse.firstresult = True
 
     def pytest_collect_directory(self, path, parent):
         """ return Collection node or None. """

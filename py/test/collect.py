@@ -443,8 +443,7 @@ class Directory(FSCollector):
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             APIWARN("0.99", "usefilters argument not needed")
-        res = self.config.pluginmanager.call_firstresult(
-            'pytest_collect_recurse', path=path, parent=self)
+        res = self.config.api.pytest_collect_recurse(path=path, parent=self)
         if res is None or res:
             return self.config.api.pytest_collect_directory(
                 path=path, parent=self)

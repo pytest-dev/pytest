@@ -106,7 +106,7 @@ def test_callrecorder_basic():
         def xyz(self, arg):
             pass
     rec.start_recording(ApiClass)
-    comregistry.call_each("xyz", 123)
+    rec.api.xyz(arg=123)
     call = rec.popcall("xyz")
     assert call.arg == 123 
     assert call._name == "xyz"
@@ -124,7 +124,7 @@ def test_functional(testdir, linecomp):
                 def xyz(self, arg):
                     return arg + 1
             rec._comregistry.register(Plugin())
-            res = rec._comregistry.call_firstresult("xyz", 41)
-            assert res == 42
+            res = rec.api.xyz(arg=41)
+            assert res == [42]
     """)
     sorter.assertoutcome(passed=1)

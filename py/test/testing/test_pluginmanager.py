@@ -172,12 +172,9 @@ class TestPytestPluginInteractions:
     def test_configure(self, testdir):
         config = testdir.parseconfig()
         l = []
-        events = []
         class A:
             def pytest_configure(self, config):
                 l.append(self)
-            def xyz(self, obj):
-                events.append(obj)
                 
         config.pluginmanager.register(A())
         assert len(l) == 0
@@ -186,11 +183,7 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())  # this should lead to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
-        
-        config.pluginmanager.call_each("xyz", obj=42)
-        assert len(events) == 2
-        assert events == [42,42]
-
+       
         config.pluginmanager.do_unconfigure(config=config)
         config.pluginmanager.register(A())
         assert len(l) == 2
@@ -209,16 +202,6 @@ class TestPytestPluginInteractions:
         pluginmanager.register(My1())
         assert pluginmanager.getfirst("x") == 1
 
-    def test_call_each(self):
-        pluginmanager = PluginManager()
-        class My:
-            def method(self, arg):
-                pass
-        pluginmanager.register(My())
-        py.test.raises(TypeError, 'pluginmanager.call_each("method")')
-        l = pluginmanager.call_each("method", arg=42)
-        assert l == []
-        py.test.raises(TypeError, 'pluginmanager.call_each("method", arg=42, s=13)')
 
     def test_call_firstresult(self):
         pluginmanager = PluginManager()
