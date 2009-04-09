@@ -37,37 +37,29 @@ class PluginHooks:
         """ return custom item/collector for a python object in a module, or None.  """
     pytest_pymodule_makeitem.firstresult = True
 
+    def pytest_collectstart(self, collector):
+        """ collector starts collecting. """
+
+    def pytest_collectreport(self, rep):
+        """ collector finished collecting. """
+
+
+    # ------------------------------------------------------------------------------
+    # runtest related hooks 
+    # ------------------------------------------------------------------------------
+    #
     def pytest_itemrun(self, item, pdb=None):
         """ run given test item and return test report. """ 
 
     def pytest_item_runtest_finished(self, item, excinfo, outerr):
         """ called in-process after runtest() returned. """ 
         
-
-    # ------------------------------------------------------------------------------
-    # runtest related hooks 
-    # ------------------------------------------------------------------------------
-
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
-        """ return ItemTestReport event for the given test outcome. """
+        """ return ItemTestReport for the given test outcome. """
     pytest_item_makereport.firstresult = True
-
-    # reporting hooks (invoked from pytest_terminal.py) 
-    def pytest_report_teststatus(self, rep):
-        """ return shortletter and verbose word. """
-    pytest_report_teststatus.firstresult = True
-
-    def pytest_terminal_summary(self, terminalreporter):
-        """ add additional section in terminal summary reporting. """
-
-    # doctest hooks (invoked from pytest_terminal.py) 
-    def pytest_doctest_prepare_content(self, content):
-        """ return processed content for a given doctest"""
-    pytest_doctest_prepare_content.firstresult = True
-
 
     def pytest_itemstart(self, item, node=None):
         """ test item gets collected. """
@@ -81,11 +73,26 @@ class PluginHooks:
     def pytest_itemsetupreport(self, rep):
         """ a report on running a fixture function. """ 
 
-    def pytest_collectstart(self, collector):
-        """ collector starts collecting. """
+    # ------------------------------------------------------------------------------
+    # reporting hooks (invoked from pytest_terminal.py) 
+    # ------------------------------------------------------------------------------
+    def pytest_report_teststatus(self, rep):
+        """ return shortletter and verbose word. """
+    pytest_report_teststatus.firstresult = True
 
-    def pytest_collectreport(self, rep):
-        """ collector finished collecting. """
+    def pytest_terminal_summary(self, terminalreporter):
+        """ add additional section in terminal summary reporting. """
+
+    # ------------------------------------------------------------------------------
+    # doctest hooks 
+    # ------------------------------------------------------------------------------
+    def pytest_doctest_prepare_content(self, content):
+        """ return processed content for a given doctest"""
+    pytest_doctest_prepare_content.firstresult = True
+
+    # ------------------------------------------------------------------------------
+    # misc hooks 
+    # ------------------------------------------------------------------------------
 
     def pytest_plugin_registered(self, plugin):
         """ a new py lib plugin got registered. """
@@ -118,5 +125,5 @@ class PluginHooks:
         """ called for internal errors. """
 
     def pytest_trace(self, category, msg):
-        """ called for tracing events. """
+        """ called for debug info. """ 
    
