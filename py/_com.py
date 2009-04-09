@@ -101,10 +101,6 @@ class Registry:
             l.reverse()
         return l
 
-    def call_each(self, methname, *args, **kwargs):
-        """ return call object for executing a plugin call. """
-        return MultiCall(self.listattr(methname), *args, **kwargs).execute()
-
     def call_firstresult(self, methname, *args, **kwargs):
         """ return first non-None result of a plugin method. """ 
         return MultiCall(self.listattr(methname), *args, **kwargs).execute(firstresult=True)

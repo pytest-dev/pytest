@@ -97,29 +97,6 @@ class TestRegistry:
         assert not registry.isregistered(my)
         assert list(registry) == [my2]
 
-    def test_call_methods(self):
-        plugins = Registry()
-        class api1:
-            def m(self, __call__, x):
-                return x
-        class api2:
-            def m(self, __call__, x, y=33):
-                return y 
-        plugins.register(api1())
-        plugins.register(api2())
-        res = plugins.call_firstresult("m", x=5)
-        assert plugins.call_firstresult("notexist") is None
-
-        assert res == 33
-        reslist = plugins.call_each("m", x=5)
-        assert len(reslist) == 2
-        assert 5 in reslist
-        assert 33 in reslist
-        assert plugins.call_each("notexist") == []
-
-        assert plugins.call_plugin(api1(), 'm', x=12) == 12
-        assert plugins.call_plugin(api2(), 't') is None
-
     def test_call_none_is_no_result(self):
         plugins = Registry()
         class api1:
@@ -132,7 +109,6 @@ class TestRegistry:
         plugins.register(api1())
         plugins.register(api2())
         assert plugins.call_firstresult('m') == 41
-        assert plugins.call_each('m') == [41]
 
     def test_call_noneasresult(self):
         plugins = Registry()
@@ -142,7 +118,6 @@ class TestRegistry:
         plugins.register(api1())
         plugins.register(api1())
         assert plugins.call_firstresult('m') is None
-        assert plugins.call_each('m') == [None, None]
 
     def test_listattr(self):
         plugins = Registry()
