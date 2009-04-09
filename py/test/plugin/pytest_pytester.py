@@ -25,8 +25,8 @@ class PytesterPlugin:
     #    return EventRecorder
 
     def pytest_funcarg__eventrecorder(self, pyfuncitem):
-        evrec = EventRecorder(py._com.pyplugins)
-        pyfuncitem.addfinalizer(lambda: evrec.pyplugins.unregister(evrec))
+        evrec = EventRecorder(py._com.comregistry)
+        pyfuncitem.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
         return evrec
 
 def test_generic(plugintester):
@@ -65,10 +65,10 @@ class TmpTestdir:
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
-    def Config(self, pyplugins=None, topdir=None):
+    def Config(self, comregistry=None, topdir=None):
         if topdir is None:
             topdir = self.tmpdir.dirpath()
-        return pytestConfig(pyplugins, topdir=topdir)
+        return pytestConfig(comregistry, topdir=topdir)
 
     def finalize(self):
         for p in self._syspathremove:
@@ -132,7 +132,7 @@ class TmpTestdir:
         #config = self.parseconfig(*args)
         config = self.parseconfig(*args)
         session = config.initsession()
-        rec = self.geteventrecorder(config.bus)
+        rec = self.geteventrecorder(config.pluginmanager)
         colitems = [config.getfsnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
         return items, rec 
@@ -152,20 +152,20 @@ class TmpTestdir:
 
     def inline_run(self, *args):
         config = self.parseconfig(*args)
-        config.pytestplugins.do_configure(config)
+        config.pluginmanager.do_configure(config)
         session = config.initsession()
-        sorter = self.geteventrecorder(config.bus)
+        sorter = self.geteventrecorder(config.pluginmanager)
         session.main()
-        config.pytestplugins.do_unconfigure(config)
+        config.pluginmanager.do_unconfigure(config)
         return sorter 
 
     def config_preparse(self):
         config = self.Config()
         for plugin in self.plugins:
             if isinstance(plugin, str):
-                config.pytestplugins.import_plugin(plugin)
+                config.pluginmanager.import_plugin(plugin)
             else:
-                config.pytestplugins.register(plugin)
+                config.pluginmanager.register(plugin)
         return config
 
     def parseconfig(self, *args):
@@ -178,7 +178,7 @@ class TmpTestdir:
 
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
-        config.pytestplugins.do_configure(config)
+        config.pluginmanager.do_configure(config)
         return config
 
     def getitem(self,  source, funcname="test_func"):
@@ -279,10 +279,10 @@ class ParsedCall:
         return "<ParsedCall %r>" %(self.__dict__,)
 
 class EventRecorder(object):
-    def __init__(self, pyplugins, debug=False): # True):
-        self.pyplugins = pyplugins
+    def __init__(self, comregistry, debug=False): # True):
+        self.comregistry = comregistry
         self.debug = debug
-        pyplugins.register(self)
+        comregistry.register(self)
 
     def getcall(self, name):
         l = self.getcalls(name)
@@ -360,11 +360,11 @@ class EventRecorder(object):
         self.callrecorder.calls[:] = []
 
     def unregister(self):
-        self.pyplugins.unregister(self)
+        self.comregistry.unregister(self)
         self.callrecorder.finalize()
 
 def test_eventrecorder(testdir):
-    bus = py._com.PyPlugins()
+    bus = py._com.Registry()
     recorder = testdir.geteventrecorder(bus)
     assert not recorder.getfailures()
     rep = runner.ItemTestReport(None, None)

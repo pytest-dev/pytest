@@ -67,7 +67,7 @@ class TestCollector:
 
     def test_listnames_and__getitembynames(self, testdir):
         modcol = testdir.getmodulecol("pass", withinit=True)
-        print modcol.config.pytestplugins.getplugins()
+        print modcol.config.pluginmanager.getplugins()
         names = modcol.listnames()
         print names
         dircol = modcol.config.getfsnode(modcol.config.topdir)
@@ -145,7 +145,7 @@ class TestCollectPluginHooks:
             def pytest_collect_file(self, path, parent):
                 wascalled.append(path)
         config = testdir.Config()
-        config.pytestplugins.register(Plugin())
+        config.pluginmanager.register(Plugin())
         config.parse([tmpdir])
         col = config.getfsnode(tmpdir)
         testdir.makefile(".abc", "xyz")

@@ -121,11 +121,11 @@ class DSession(Session):
                 loopstate.exitstatus = outcome.EXIT_TESTSFAILED
             else:
                 loopstate.exitstatus = outcome.EXIT_OK
-        #self.config.bus.unregister(loopstate)
+        #self.config.pluginmanager.unregister(loopstate)
 
     def _initloopstate(self, colitems):
         loopstate = LoopState(self, colitems)
-        self.config.bus.register(loopstate)
+        self.config.pluginmanager.register(loopstate)
         return loopstate
 
     def loop(self, colitems):
@@ -140,9 +140,9 @@ class DSession(Session):
         except KeyboardInterrupt:
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
-            self.config.pytestplugins.notify_exception()
+            self.config.pluginmanager.notify_exception()
             exitstatus = outcome.EXIT_INTERNALERROR
-        self.config.bus.unregister(loopstate)
+        self.config.pluginmanager.unregister(loopstate)
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
         return exitstatus

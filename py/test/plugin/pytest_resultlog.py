@@ -14,13 +14,13 @@ class ResultlogPlugin:
         if resultlog:
             logfile = open(resultlog, 'w', 1) # line buffered
             self.resultlog = ResultLog(logfile) 
-            config.bus.register(self.resultlog)
+            config.pluginmanager.register(self.resultlog)
 
     def pytest_unconfigure(self, config):
         if hasattr(self, 'resultlog'):
             self.resultlog.logfile.close()
             del self.resultlog 
-            #config.bus.unregister(self.resultlog)
+            #config.pluginmanager.unregister(self.resultlog)
 
 def generic_path(item):
     chain = item.listchain()

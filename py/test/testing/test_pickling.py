@@ -4,22 +4,22 @@ def pytest_funcarg__pickletransport(pyfuncitem):
     return ImmutablePickleTransport()
 
 def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):
-    # for each function call we patch py._com.pyplugins
+    # for each function call we patch py._com.comregistry
     # so that the unpickling of config objects 
     # (which bind to this mechanism) doesn't do harm 
     # usually config objects are no meant to be unpickled in
     # the same system 
     oldconfig = py.test.config 
-    oldcom = py._com.pyplugins 
+    oldcom = py._com.comregistry 
     print "setting py.test.config to None"
     py.test.config = None
-    py._com.pyplugins = py._com.PyPlugins()
+    py._com.comregistry = py._com.Registry()
     try:
         return __call__.execute(firstresult=True)
     finally:
         print "setting py.test.config to", oldconfig
         py.test.config = oldconfig
-        py._com.pyplugins = oldcom
+        py._com.comregistry = oldcom
 
 class ImmutablePickleTransport:
     def __init__(self):
@@ -195,13 +195,10 @@ def test_config__setstate__wired_correctly_in_childprocess(testdir):
         from py.__.test.dist.mypickle import PickleChannel
         channel = PickleChannel(channel)
         config = channel.receive()
-        assert py.test.config.pytestplugins.pyplugins == py._com.pyplugins, "pyplugins wrong"
-        assert py.test.config.bus == py._com.pyplugins, "bus wrong"
+        assert py.test.config.pluginmanager.comregistry == py._com.comregistry, "comregistry wrong"
     """)
     channel = PickleChannel(channel)
     config = testdir.parseconfig()
     channel.send(config)
-    channel.waitclose() # this will raise 
+    channel.waitclose() # this will potentially raise 
     gw.exit()
-    
-

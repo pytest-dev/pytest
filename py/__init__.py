@@ -25,8 +25,8 @@ version = "1.0.0b1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63869 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-04-08 19:50:14 +0200 (Wed, 08 Apr 2009) $',
+    revision = int('$LastChangedRevision: 63894 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-04-09 16:03:09 +0200 (Thu, 09 Apr 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
@@ -54,9 +54,9 @@ initpkg(__name__,
     exportdefs = {
 
     # py lib events and plugins 
-    '_com.PyPlugins'         : ('./_com.py', 'PyPlugins'), 
+    '_com.Registry'         : ('./_com.py', 'Registry'), 
     '_com.MultiCall'         : ('./_com.py', 'MultiCall'), 
-    '_com.pyplugins'         : ('./_com.py', 'pyplugins'), 
+    '_com.comregistry'         : ('./_com.py', 'comregistry'), 
     '_com.PluginAPI'         : ('./_com.py', 'PluginAPI'), 
 
     # py lib cmdline tools 
@@ -70,7 +70,7 @@ initpkg(__name__,
 
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
-    'test._PytestPlugins'    : ('./test/pytestplugin.py', 'PytestPlugins'),
+    'test._PluginManager'    : ('./test/pytestplugin.py', 'PluginManager'),
     'test.raises'            : ('./test/outcome.py', 'raises'),
     'test.mark'              : ('./test/outcome.py', 'mark',),
     'test.deprecated_call'   : ('./test/outcome.py', 'deprecated_call'), 
@@ -199,6 +199,6 @@ initpkg(__name__,
 })
 
 import py
-py._com.pyplugins.consider_env()
+py._com.comregistry.consider_env()
 
 

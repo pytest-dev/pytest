@@ -158,7 +158,7 @@ class DefaultPlugin:
     def loadplugins(self, config):
         for name in config.getvalue("plugin"):
             print "importing", name
-            config.pytestplugins.import_plugin(name)
+            config.pluginmanager.import_plugin(name)
 
     def setsession(self, config):
         val = config.getvalue
@@ -177,7 +177,7 @@ def test_implied_different_sessions(tmpdir):
     def x(*args):
         config = py.test.config._reparse([tmpdir] + list(args))
         try:
-            config.pytestplugins.do_configure(config)
+            config.pluginmanager.do_configure(config)
         except ValueError:
             return Exception
         return getattr(config._sessionclass, '__name__', None)
@@ -194,13 +194,13 @@ def test_plugin_specify(testdir):
     testdir.chdir()
     config = testdir.parseconfig("-p", "nqweotexistent")
     py.test.raises(ImportError, 
-        "config.pytestplugins.do_configure(config)"
+        "config.pluginmanager.do_configure(config)"
     )
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "default")
     assert config.option.plugin == ['default']
-    config.pytestplugins.do_configure(config)
+    config.pluginmanager.do_configure(config)
 
 
 class TestDistOptions:

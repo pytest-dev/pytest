@@ -4,9 +4,9 @@ mypath = py.magic.autopath()
 
 class TestWarningPlugin:
     def setup_method(self, method):
-        self.bus = py._com.PyPlugins()
-        self.wb = WarningPlugin(self.bus)
-        self.bus.register(self)
+        self.pluginmanager = py._com.Registry()
+        self.wb = WarningPlugin(self.pluginmanager)
+        self.pluginmanager.register(self)
         self.warnings = []
 
     def pyevent__WARNING(self, warning):
@@ -46,4 +46,4 @@ class TestWarningPlugin:
 
 def test_default():
     from py.__.misc.warn import APIWARN
-    assert py._com.pyplugins.isregistered(APIWARN.im_self)
+    assert py._com.comregistry.isregistered(APIWARN.im_self)

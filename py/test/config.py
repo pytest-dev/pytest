@@ -28,25 +28,24 @@ class Config(object):
     basetemp = None
     _sessionclass = None
 
-    def __init__(self, pytestplugins=None, topdir=None): 
+    def __init__(self, pluginmanager=None, topdir=None): 
         self.option = CmdOptions()
         self.topdir = topdir
         self._parser = parseopt.Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
         )
-        if pytestplugins is None:
-            pytestplugins = py.test._PytestPlugins()
-        assert isinstance(pytestplugins, py.test._PytestPlugins)
-        self.bus = pytestplugins.pyplugins
-        self.pytestplugins = pytestplugins
+        if pluginmanager is None:
+            pluginmanager = py.test._PluginManager()
+        assert isinstance(pluginmanager, py.test._PluginManager)
+        self.pluginmanager = pluginmanager
         self._conftest = Conftest(onimport=self._onimportconftest)
         self._setupstate = SetupState() 
-        self.api = pytestplugins.api
+        self.api = pluginmanager.api
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
-        self.pytestplugins.consider_conftest(conftestmodule)
+        self.pluginmanager.consider_conftest(conftestmodule)
 
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
@@ -76,8 +75,8 @@ class Config(object):
 
     def _preparse(self, args):
         self._conftest.setinitial(args) 
-        self.pytestplugins.consider_env()
-        self.pytestplugins.do_addoption(self._parser)
+        self.pluginmanager.consider_env()
+        self.pluginmanager.do_addoption(self._parser)
 
     def parse(self, args): 
         """ parse cmdline arguments into this config object. 
@@ -108,7 +107,7 @@ class Config(object):
         # * registering to py lib plugins 
         # * setting py.test.config 
         self.__init__(
-            pytestplugins=py.test._PytestPlugins(py._com.pyplugins),
+            pluginmanager=py.test._PluginManager(py._com.comregistry),
             topdir=py.path.local(),
         )
         # we have to set py.test.config because preparse()
@@ -339,6 +338,6 @@ def gettopdir(args):
 
 # this is the one per-process instance of py.test configuration 
 config_per_process = Config(
-    pytestplugins=py.test._PytestPlugins(py._com.pyplugins)
+    pluginmanager=py.test._PluginManager(py._com.comregistry)
 )
 

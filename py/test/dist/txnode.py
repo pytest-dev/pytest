@@ -61,7 +61,7 @@ class TXNode(object):
         except:
             excinfo = py.code.ExceptionInfo()
             print "!" * 20, excinfo
-            self.config.pytestplugins.notify_exception(excinfo)
+            self.config.pluginmanager.notify_exception(excinfo)
 
     def send(self, item):
         assert item is not None
@@ -112,8 +112,8 @@ class SlaveNode(object):
         self.config, basetemp = channel.receive()
         if basetemp:
             self.config.basetemp = py.path.local(basetemp)
-        self.config.pytestplugins.do_configure(self.config)
-        self.config.pytestplugins.register(self)
+        self.config.pluginmanager.do_configure(self.config)
+        self.config.pluginmanager.register(self)
         self.sendevent("slaveready")
         try:
             while 1:
@@ -123,9 +123,9 @@ class SlaveNode(object):
                     break
                 if isinstance(task, list):
                     for item in task:
-                        item.config.pytestplugins.do_itemrun(item)
+                        item.config.pluginmanager.do_itemrun(item)
                 else:
-                    task.config.pytestplugins.do_itemrun(item=task)
+                    task.config.pluginmanager.do_itemrun(item=task)
         except KeyboardInterrupt:
             raise
         except:

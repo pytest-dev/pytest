@@ -208,7 +208,7 @@ class TestRunnerPlugin:
         item = testdir.getitem("""def test_func(): pass""")
         plugin = RunnerPlugin()
         plugin.pytest_configure(item.config)
-        sorter = testdir.geteventrecorder(item.config.bus)
+        sorter = testdir.geteventrecorder(item.config.pluginmanager)
         plugin.pytest_item_setup_and_runtest(item)
         rep = sorter.getcall("pytest_itemtestreport").rep
         assert rep.passed 

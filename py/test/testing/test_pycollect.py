@@ -37,11 +37,11 @@ class TestModule:
     def test_module_participates_as_plugin(self, testdir):
         modcol = testdir.getmodulecol("")
         modcol.setup()
-        assert modcol.config.pytestplugins.isregistered(modcol.obj)
+        assert modcol.config.pluginmanager.isregistered(modcol.obj)
         modcol.teardown()
-        assert not modcol.config.pytestplugins.isregistered(modcol.obj)
+        assert not modcol.config.pluginmanager.isregistered(modcol.obj)
 
-    def test_module_considers_pytestplugins_at_import(self, testdir):
+    def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")
 
@@ -259,7 +259,7 @@ class TestFunction:
         class Provider:
             def pytest_funcarg__some(self, pyfuncitem):
                 return pyfuncitem.name 
-        item.config.pytestplugins.register(Provider())
+        item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 1
 
@@ -268,7 +268,7 @@ class TestFunction:
         class Provider:
             def pytest_funcarg__other(self, pyfuncitem):
                 return pyfuncitem.name 
-        item.config.pytestplugins.register(Provider())
+        item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 1
         name, value = item.funcargs.popitem()
@@ -282,7 +282,7 @@ class TestFunction:
                 return pyfuncitem.name 
             def pytest_funcarg__other(self, pyfuncitem):
                 return 42
-        item.config.pytestplugins.register(Provider())
+        item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 2
         assert item.funcargs['some'] == "test_func"
@@ -295,7 +295,7 @@ class TestFunction:
             def pytest_funcarg__some(self, pyfuncitem):
                 pyfuncitem.addfinalizer(lambda: l.append(42))
                 return 3
-        item.config.pytestplugins.register(Provider())
+        item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 1
         assert item.funcargs['some'] == 3
@@ -317,13 +317,13 @@ class TestFunction:
         """)
         item1, item2 = testdir.genitems([modcol])
         modcol.setup()
-        assert modcol.config.pytestplugins.isregistered(modcol.obj)
+        assert modcol.config.pluginmanager.isregistered(modcol.obj)
         item1.setupargs()
         assert item1.funcargs['something'] ==  "test_method"
         item2.setupargs()
         assert item2.funcargs['something'] ==  "test_func"
         modcol.teardown()
-        assert not modcol.config.pytestplugins.isregistered(modcol.obj)
+        assert not modcol.config.pluginmanager.isregistered(modcol.obj)
 
 class TestSorting:
     def test_check_equality_and_cmp_basic(self, testdir):

@@ -15,7 +15,7 @@ class TerminalPlugin(object):
                 name = attr.split("_")[-1]
                 assert hasattr(self.reporter._tw, name), name
                 setattr(self.reporter._tw, name, getattr(config, attr))
-        config.bus.register(self.reporter)
+        config.pluginmanager.register(self.reporter)
 
 class TerminalReporter:
     def __init__(self, config, file=None):
@@ -209,7 +209,7 @@ class TerminalReporter:
                        py.path.local(py.__file__).dirpath(), rev))
         if self.config.option.traceconfig:
             plugins = []
-            for x in self.config.pytestplugins._plugins:
+            for x in self.config.pluginmanager.plugins:
                 if isinstance(x, str) and x.startswith("pytest_"):
                     plugins.append(x[7:])
                 else:
@@ -368,7 +368,7 @@ class TestTerminal:
                 assert 0
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.bus.register(rep)
+        rep.config.pluginmanager.register(rep)
         rep.config.api.pytest_testrunstart()
         
         for item in testdir.genitems([modcol]):
@@ -395,7 +395,7 @@ class TestTerminal:
                 assert 0
         """, configargs=("-v",))
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.bus.register(rep)
+        rep.config.pluginmanager.register(rep)
         rep.config.api.pytest_testrunstart()
         items = modcol.collect()
         rep.config.option.debug = True # 
@@ -420,7 +420,7 @@ class TestTerminal:
     def test_collect_fail(self, testdir, linecomp):
         modcol = testdir.getmodulecol("import xyz")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.bus.register(rep)
+        rep.config.pluginmanager.register(rep)
         rep.config.api.pytest_testrunstart()
         l = list(testdir.genitems([modcol]))
         assert len(l) == 0
@@ -516,7 +516,7 @@ class TestTerminal:
                     g()  # --calling--
             """, configargs=("--tb=%s" % tbopt,))
             rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-            rep.config.bus.register(rep)
+            rep.config.pluginmanager.register(rep)
             rep.config.api.pytest_testrunstart()
             for item in testdir.genitems([modcol]):
                 rep.config.api.pytest_itemtestreport(
@@ -543,7 +543,7 @@ class TestTerminal:
                 pass
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        modcol.config.bus.register(rep)
+        modcol.config.pluginmanager.register(rep)
         l = list(testdir.genitems([modcol]))
         assert len(l) == 1
         modcol.config.option.debug = True
@@ -563,8 +563,8 @@ class TestTerminal:
         """, configargs=("-v",)*verbose)
         #""", configargs=("--showskipsummary",) + ("-v",)*verbose)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        modcol.config.bus.register(rep)
-        bus = modcol.config.bus
+        modcol.config.pluginmanager.register(rep)
+        bus = modcol.config.pluginmanager
         modcol.config.api.pytest_testrunstart()
         try:
             for item in testdir.genitems([modcol]):
@@ -625,7 +625,7 @@ class TestCollectonly:
                 pass
         """)
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.bus.register(rep)
+        modcol.config.pluginmanager.register(rep)
         indent = rep.indent
         rep.config.api.pytest_collectstart(collector=modcol)
         linecomp.assert_contains_lines([
@@ -646,7 +646,7 @@ class TestCollectonly:
             py.test.skip("nomod")
         """)
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.bus.register(rep)
+        modcol.config.pluginmanager.register(rep)
         cols = list(testdir.genitems([modcol]))
         assert len(cols) == 0
         linecomp.assert_contains_lines("""
@@ -659,7 +659,7 @@ class TestCollectonly:
             raise ValueError(0)
         """)
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.bus.register(rep)
+        modcol.config.pluginmanager.register(rep)
         cols = list(testdir.genitems([modcol]))
         assert len(cols) == 0
         linecomp.assert_contains_lines("""

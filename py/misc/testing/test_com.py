@@ -1,7 +1,7 @@
 
 import py
 import os
-from py._com import PyPlugins, MultiCall
+from py._com import Registry, MultiCall
 from py._com import PluginAPI
 
 pytest_plugins = "xfail"
@@ -75,13 +75,13 @@ class TestMultiCall:
         #assert res == 10
                 
 
-class TestPyPlugins:
+class TestRegistry:
     def test_MultiCall(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         assert hasattr(plugins, "MultiCall")
 
     def test_register(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class MyPlugin:
             pass
         my = MyPlugin()
@@ -98,7 +98,7 @@ class TestPyPlugins:
         assert plugins.getplugins() == [my2]
 
     def test_call_methods(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class api1:
             def m(self, __call__, x):
                 return x
@@ -121,7 +121,7 @@ class TestPyPlugins:
         assert plugins.call_plugin(api2(), 't') is None
 
     def test_call_none_is_no_result(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class api1:
             def m(self):
                 return None
@@ -135,7 +135,7 @@ class TestPyPlugins:
         assert plugins.call_each('m') == [41]
 
     def test_call_noneasresult(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class api1:
             def m(self, __call__):
                 return __call__.NONEASRESULT
@@ -145,7 +145,7 @@ class TestPyPlugins:
         assert plugins.call_each('m') == [None, None]
 
     def test_listattr(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class api1:
             x = 41
         class api2:
@@ -161,12 +161,12 @@ class TestPyPlugins:
         assert l == [43, 42, 41]
 
     def test_consider_env(self, monkeypatch):
-        plugins = PyPlugins()
+        plugins = Registry()
         monkeypatch.setitem(os.environ, 'PYLIB', "unknownconsider_env")
         py.test.raises(ImportError, "plugins.consider_env()")
 
     def test_consider_module(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         mod = py.std.new.module("temp")
         mod.pylib = ["xxx nomod"]
         excinfo = py.test.raises(ImportError, "plugins.consider_module(mod)")
@@ -174,10 +174,10 @@ class TestPyPlugins:
         plugins.consider_module(mod)
 
 def test_api_and_defaults():
-    assert isinstance(py._com.pyplugins, PyPlugins)
+    assert isinstance(py._com.comregistry, Registry)
 
 def test_subprocess_env(testdir, monkeypatch):
-    plugins = PyPlugins()
+    plugins = Registry()
     old = py.path.local(py.__file__).dirpath().dirpath().chdir()
     try:
         monkeypatch.setitem(os.environ, "PYLIB", 'unknownconsider')
@@ -191,7 +191,7 @@ def test_subprocess_env(testdir, monkeypatch):
 
 class TestPluginAPI:
     def test_happypath(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class Api:
             def hello(self, arg):
                 pass
@@ -208,7 +208,7 @@ class TestPluginAPI:
         assert not hasattr(mcm, 'world')
 
     def test_firstresult(self):
-        plugins = PyPlugins()
+        plugins = Registry()
         class Api:
             def hello(self, arg): pass
             hello.firstresult = True
@@ -224,4 +224,4 @@ class TestPluginAPI:
     def test_default_plugins(self):
         class Api: pass 
         mcm = PluginAPI(apiclass=Api)
-        assert mcm._plugins == py._com.pyplugins
+        assert mcm.plugins == py._com.comregistry

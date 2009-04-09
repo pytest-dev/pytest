@@ -8,10 +8,10 @@ class PytestArg:
     def __init__(self, pyfuncitem):
         self.pyfuncitem = pyfuncitem 
 
-    def getcallrecorder(self, apiclass, pyplugins=None):
-        if pyplugins is None:
-            pyplugins = self.pyfuncitem.config.pytestplugins.pyplugins
-        callrecorder = CallRecorder(pyplugins)
+    def getcallrecorder(self, apiclass, comregistry=None):
+        if comregistry is None:
+            comregistry = self.pyfuncitem.config.pluginmanager.comregistry
+        callrecorder = CallRecorder(comregistry)
         callrecorder.start_recording(apiclass)
         self.pyfuncitem.addfinalizer(callrecorder.finalize)
         return callrecorder 
@@ -30,8 +30,8 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 class CallRecorder:
-    def __init__(self, pyplugins):
-        self._pyplugins = pyplugins
+    def __init__(self, comregistry):
+        self._comregistry = comregistry
         self.calls = []
         self._recorders = {}
         
@@ -44,11 +44,11 @@ class CallRecorder:
                 setattr(RecordCalls, name, self._getcallparser(method))
         recorder = RecordCalls()
         self._recorders[apiclass] = recorder
-        self._pyplugins.register(recorder)
+        self._comregistry.register(recorder)
 
     def finalize(self):
         for recorder in self._recorders.values():
-            self._pyplugins.unregister(recorder)
+            self._comregistry.unregister(recorder)
         self._recorders.clear()
 
     def recordsmethod(self, name):
@@ -99,13 +99,13 @@ def test_generic(plugintester):
     plugintester.apicheck(_pytestPlugin)
 
 def test_callrecorder_basic():
-    pyplugins = py._com.PyPlugins() 
-    rec = CallRecorder(pyplugins)
+    comregistry = py._com.Registry() 
+    rec = CallRecorder(comregistry)
     class ApiClass:
         def xyz(self, arg):
             pass
     rec.start_recording(ApiClass)
-    pyplugins.call_each("xyz", 123)
+    comregistry.call_each("xyz", 123)
     call = rec.popcall("xyz")
     assert call.arg == 123 
     assert call._name == "xyz"
@@ -122,8 +122,8 @@ def test_functional(testdir, linecomp):
             class Plugin:
                 def xyz(self, arg):
                     return arg + 1
-            rec._pyplugins.register(Plugin())
-            res = rec._pyplugins.call_firstresult("xyz", 41)
+            rec._comregistry.register(Plugin())
+            res = rec._comregistry.call_firstresult("xyz", 41)
             assert res == 42
     """)
     sorter.assertoutcome(passed=1)

@@ -167,7 +167,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
         # we assume we are only called once per module 
         mod = self.fspath.pyimport()
         #print "imported test module", mod
-        self.config.pytestplugins.consider_module(mod)
+        self.config.pluginmanager.consider_module(mod)
         return mod
 
     def setup(self): 
@@ -177,7 +177,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
         mod = self.obj
-        self.config.pytestplugins.register(mod)
+        self.config.pluginmanager.register(mod)
         if hasattr(mod, 'setup_module'): 
             self.obj.setup_module(mod)
 
@@ -187,7 +187,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
         if not self.config.option.nomagic:
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
-        self.config.pytestplugins.unregister(self.obj)
+        self.config.pluginmanager.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
@@ -376,8 +376,8 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def lookup_onearg(self, argname):
         prefix = "pytest_funcarg__"
-        #makerlist = self.config.pytestplugins.listattr(prefix + argname)
-        value = self.config.pytestplugins.call_firstresult(prefix + argname, pyfuncitem=self)
+        #makerlist = self.config.pluginmanager.listattr(prefix + argname)
+        value = self.config.pluginmanager.call_firstresult(prefix + argname, pyfuncitem=self)
         if value is not None:
             return value
         else:
@@ -386,8 +386,8 @@ class Function(FunctionMixin, py.test.collect.Item):
     def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
         metainfo = self.repr_metainfo()
         available = []
-        plugins = self.config.pytestplugins._plugins.values()
-        plugins.extend(self.config.pytestplugins.pyplugins._plugins)
+        plugins = self.config.pluginmanager.plugins.values()
+        plugins.extend(self.config.pluginmanager.comregistry.plugins)
         for plugin in plugins:
             for name in vars(plugin.__class__):
                 if name.startswith(prefix):

@@ -41,12 +41,12 @@ class ResultdbPlugin:
                     raise config.Error('Unknown --resultdb_format: %s' % 
                             config.option.resultdbformat) 
 
-                config.bus.register(self.resultdb)
+                config.pluginmanager.register(self.resultdb)
 
     def pytest_unconfigure(self, config):
         if hasattr(self, 'resultdb'):
             del self.resultdb 
-            #config.bus.unregister(self.resultdb)
+            #config.pluginmanager.unregister(self.resultdb)
 
 
 class JSONResultArchive(object):

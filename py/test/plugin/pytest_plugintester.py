@@ -27,7 +27,7 @@ class Support(object):
 class PluginTester(Support):
     def testdir(self):
         # XXX import differently, eg. 
-        #     FSTester = self.pyfuncitem.config.pytestplugins.getpluginattr("pytester", "FSTester")
+        #     FSTester = self.pyfuncitem.config.pluginmanager.getpluginattr("pytester", "FSTester")
         from pytest_pytester import TmpTestdir
         crunner = TmpTestdir(self.pyfuncitem)
         self.pyfuncitem.addfinalizer(crunner.finalize)
@@ -42,7 +42,7 @@ class PluginTester(Support):
     def apicheck(self, pluginclass):
         print "loading and checking", pluginclass 
         fail = False 
-        pm = py.test._PytestPlugins()
+        pm = py.test._PluginManager()
         methods = collectattr(pluginclass)
         hooks = collectattr(api.PluginHooks)
         getargs = py.std.inspect.getargs

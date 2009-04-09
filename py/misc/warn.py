@@ -10,12 +10,12 @@ class Warning(py.std.exceptions.DeprecationWarning):
     def __str__(self):
         return self.msg 
 
-# XXX probably only apiwarn() + py._com.pyplugins forwarding
+# XXX probably only apiwarn() + py._com.comregistry forwarding
 # warn_explicit is actually needed 
 
 class WarningPlugin(object):
     def __init__(self, bus):
-        self.bus = bus
+        self.pluginmanager = bus
         bus.register(self)
         
     def pyevent__WARNING(self, warning):
@@ -62,8 +62,8 @@ class WarningPlugin(object):
                 filename = module
         path = py.path.local(filename)
         warning = Warning(msg, path, lineno)
-        self.bus.call_each("pyevent__WARNING", warning)
+        self.pluginmanager.call_each("pyevent__WARNING", warning)
 
 # singleton api warner for py lib 
-apiwarner = WarningPlugin(py._com.pyplugins)
+apiwarner = WarningPlugin(py._com.comregistry)
 APIWARN = apiwarner.apiwarn

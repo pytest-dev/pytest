@@ -35,7 +35,7 @@ class MySetup:
         self.pyfuncitem = pyfuncitem
 
     def geteventargs(self, eventname, timeout=2.0):
-        eq = EventQueue(self.config.bus, self.queue)
+        eq = EventQueue(self.config.pluginmanager, self.queue)
         return eq.geteventargs(eventname, timeout=timeout)
 
     def makenode(self, config=None):

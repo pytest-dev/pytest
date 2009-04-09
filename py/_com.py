@@ -62,7 +62,7 @@ class MultiCall:
         self._ex1 = True
 
 
-class PyPlugins:
+class Registry:
     """
         Manage Plugins: Load plugins and manage calls to plugins. 
     """
@@ -71,7 +71,7 @@ class PyPlugins:
     def __init__(self, plugins=None):
         if plugins is None:
             plugins = []
-        self._plugins = plugins
+        self.plugins = plugins
 
     def import_module(self, modspec):
         # XXX allow modspec to specify version / lookup 
@@ -99,22 +99,22 @@ class PyPlugins:
     def register(self, plugin):
         assert not isinstance(plugin, str)
         self.call_each("pytest_plugin_registered", plugin)
-        self._plugins.append(plugin)
+        self.plugins.append(plugin)
 
     def unregister(self, plugin):
         self.call_each("pytest_plugin_unregistered", plugin)
-        self._plugins.remove(plugin)
+        self.plugins.remove(plugin)
 
     def getplugins(self):
-        return list(self._plugins)
+        return list(self.plugins)
 
     def isregistered(self, plugin):
-        return plugin in self._plugins 
+        return plugin in self.plugins 
 
     def listattr(self, attrname, plugins=None, extra=(), reverse=False):
         l = []
         if plugins is None:
-            plugins = self._plugins
+            plugins = self.plugins
         if extra:
             plugins += list(extra)
         for plugin in plugins:
@@ -143,15 +143,15 @@ class PluginAPI:
     def __init__(self, apiclass, plugins=None):
         self._apiclass = apiclass
         if plugins is None:
-            plugins = pyplugins
-        self._plugins = plugins
+            plugins = comregistry
+        self.plugins = plugins
         for name, method in vars(apiclass).items():
             if name[:2] != "__":
                 firstresult = getattr(method, 'firstresult', False)
                 mm = ApiCall(plugins, name, firstresult=firstresult)
                 setattr(self, name, mm)
     def __repr__(self):
-        return "<PluginAPI %r %r>" %(self._apiclass, self._plugins)
+        return "<PluginAPI %r %r>" %(self._apiclass, self.plugins)
 
 class ApiCall:
     def __init__(self, plugins, name, firstresult):
@@ -168,4 +168,4 @@ class ApiCall:
         #print "making multicall", self
         return mc.execute(firstresult=self.firstresult)
 
-pyplugins = PyPlugins()
+comregistry = Registry()

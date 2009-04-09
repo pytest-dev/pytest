@@ -174,7 +174,7 @@ class TestDSession:
         session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
         session.queueevent("pytest_testnodedown", node, None)
-        evrec = testdir.geteventrecorder(session.bus)
+        evrec = testdir.geteventrecorder(session.pluginmanager)
         print session.item2nodes
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
@@ -261,7 +261,7 @@ class TestDSession:
         session.addnode(node)
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
-        evrec = testdir.geteventrecorder(session.bus)
+        evrec = testdir.geteventrecorder(session.pluginmanager)
         session.queueevent("pytest_itemtestreport", rep=run(item, node))
         session.loop_once(loopstate)
         assert not evrec.getcalls("pytest_testnodedown")
@@ -282,7 +282,7 @@ class TestDSession:
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
         items = modcol.collect()
-        callrecorder = testdir.geteventrecorder(session.bus).callrecorder
+        callrecorder = testdir.geteventrecorder(session.pluginmanager).callrecorder
         remaining = session.filteritems(items)
         assert remaining == []
         
@@ -355,7 +355,7 @@ class TestDSession:
         """)
         config = testdir.parseconfig('-d', p1, '--tx=popen')
         dsession = DSession(config)
-        callrecorder = testdir.geteventrecorder(config.bus).callrecorder
+        callrecorder = testdir.geteventrecorder(config.pluginmanager).callrecorder
         dsession.main([config.getfsnode(p1)])
         rep = callrecorder.popcall("pytest_itemtestreport").rep 
         assert rep.passed

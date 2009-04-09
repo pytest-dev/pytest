@@ -116,7 +116,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     config.option.looponfail = False 
     config.option.usepdb = False 
     trails = channel.receive()
-    config.pytestplugins.do_configure(config)
+    config.pluginmanager.do_configure(config)
     DEBUG("SLAVE: initsession()")
     session = config.initsession()
     # XXX configure the reporter object's terminal writer more directly
@@ -143,7 +143,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
         pytest_collectreport = pytest_itemtestreport
         
     failreports = Failures()
-    session.bus.register(failreports)
+    session.pluginmanager.register(failreports)
 
     DEBUG("SLAVE: starting session.main()")
     session.main(colitems)

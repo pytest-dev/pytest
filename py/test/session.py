@@ -20,8 +20,8 @@ class Session(object):
     """ 
     def __init__(self, config):
         self.config = config
-        self.bus = config.bus # shortcut 
-        self.bus.register(self)
+        self.pluginmanager = config.pluginmanager # shortcut 
+        self.pluginmanager.register(self)
         self._testsfailed = False
         self._nomatch = False
         self.shouldstop = False
@@ -33,7 +33,7 @@ class Session(object):
             if isinstance(next, (tuple, list)):
                 colitems[:] = list(next) + colitems 
                 continue
-            assert self.bus is next.config.bus
+            assert self.pluginmanager is next.config.pluginmanager
             if isinstance(next, Item):
                 remaining = self.filteritems([next])
                 if remaining:
@@ -120,7 +120,7 @@ class Session(object):
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             captured_excinfo = py.code.ExceptionInfo()
-            self.config.pytestplugins.notify_exception(captured_excinfo)
+            self.config.pluginmanager.notify_exception(captured_excinfo)
             exitstatus = outcome.EXIT_INTERNALERROR
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
@@ -133,4 +133,4 @@ class Session(object):
 
     def runtest(self, item):
         pdb = self.config.option.usepdb and self.runpdb or None
-        item.config.pytestplugins.do_itemrun(item, pdb=pdb)
+        item.config.pluginmanager.do_itemrun(item, pdb=pdb)

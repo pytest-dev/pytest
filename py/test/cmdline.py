@@ -11,10 +11,10 @@ def main(args=None):
     config = py.test.config
     try:
         config.parse(args) 
-        config.pytestplugins.do_configure(config)
+        config.pluginmanager.do_configure(config)
         session = config.initsession()
         exitstatus = session.main()
-        config.pytestplugins.do_unconfigure(config)
+        config.pluginmanager.do_unconfigure(config)
         raise SystemExit(exitstatus)
     except config.Error, e:
         py.std.sys.stderr.write("ERROR: %s\n" %(e.args[0],))

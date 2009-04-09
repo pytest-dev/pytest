@@ -1,15 +1,15 @@
 import py, os
-from py.__.test.pytestplugin import PytestPlugins, canonical_names
+from py.__.test.pytestplugin import PluginManager, canonical_names
 from py.__.test.pytestplugin import registerplugin, importplugin
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
         py.test.raises(ImportError, "plugins.consider_env()")
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         testdir.syspathinsert()
         testdir.makepyfile(pytest_xy123="class Xy123Plugin: pass")
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'xy123')
@@ -27,7 +27,7 @@ class TestBootstrapping:
         p = testdir.makepyfile("""
             import py
             def test_hello():
-                plugin = py.test.config.pytestplugins.getplugin('x500')
+                plugin = py.test.config.pluginmanager.getplugin('x500')
                 assert plugin is not None
         """)
         new = str(x500.dirpath()) # "%s:%s" %(x500.dirpath(), os.environ.get('PYTHONPATH', ''))
@@ -38,7 +38,7 @@ class TestBootstrapping:
         extra = result.stdout.fnmatch_lines(["*1 passed in*"])
 
     def test_import_plugin_importname(self, testdir):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         py.test.raises(ImportError, 'plugins.import_plugin("x.y")')
         py.test.raises(ImportError, 'plugins.import_plugin("pytest_x.y")')
 
@@ -59,7 +59,7 @@ class TestBootstrapping:
         assert plugin2 is plugin1
 
     def test_consider_module(self, testdir):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         testdir.syspathinsert()
         testdir.makepyfile(pytest_plug1="class Plug1Plugin: pass")
         testdir.makepyfile(pytest_plug2="class Plug2Plugin: pass")
@@ -73,7 +73,7 @@ class TestBootstrapping:
         mod = py.std.new.module("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="""class APlugin: pass""")
-        plugins = PytestPlugins() 
+        plugins = PluginManager() 
         sorter = testdir.geteventrecorder(plugins)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
@@ -87,7 +87,7 @@ class TestBootstrapping:
         assert len(l) == 1
 
     def test_consider_conftest(self, testdir):
-        pp = PytestPlugins()
+        pp = PluginManager()
         mod = testdir.makepyfile("class ConftestPlugin: hello = 1").pyimport()
         pp.consider_conftest(mod)
         l = [x for x in pp.getplugins() if isinstance(x, mod.ConftestPlugin)]
@@ -104,11 +104,11 @@ class TestBootstrapping:
 
     def test_consider_conftest_deps(self, testdir):
         mod = testdir.makepyfile("pytest_plugins='xyz'").pyimport()
-        pp = PytestPlugins()
+        pp = PluginManager()
         py.test.raises(ImportError, "pp.consider_conftest(mod)")
 
     def test_registry(self):
-        pp = PytestPlugins()
+        pp = PluginManager()
         a1, a2 = object(), object()
         pp.register(a1)
         assert pp.isregistered(a1)
@@ -150,7 +150,7 @@ class TestPytestPluginInteractions:
         """)
         config = Config() 
         config._conftest.importconftest(p)
-        print config.pytestplugins.getplugins()
+        print config.pluginmanager.getplugins()
         config.parse([])
         assert not config.option.test123
 
@@ -158,7 +158,7 @@ class TestPytestPluginInteractions:
         from py.__.test.config import Config 
         config = Config() 
         config.parse([])
-        config.pytestplugins.do_configure(config=config)
+        config.pluginmanager.do_configure(config=config)
         assert not hasattr(config.option, 'test123')
         p = testdir.makepyfile("""
             class ConftestPlugin:
@@ -179,30 +179,30 @@ class TestPytestPluginInteractions:
             def xyz(self, obj):
                 events.append(obj)
                 
-        config.bus.register(A())
+        config.pluginmanager.register(A())
         assert len(l) == 0
-        config.pytestplugins.do_configure(config=config)
+        config.pluginmanager.do_configure(config=config)
         assert len(l) == 1
-        config.bus.register(A())  # this should lead to a configured() plugin
+        config.pluginmanager.register(A())  # this should lead to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
         
-        config.bus.call_each("xyz", obj=42)
+        config.pluginmanager.call_each("xyz", obj=42)
         assert len(events) == 2
         assert events == [42,42]
 
-        config.pytestplugins.do_unconfigure(config=config)
-        config.bus.register(A())
+        config.pluginmanager.do_unconfigure(config=config)
+        config.pluginmanager.register(A())
         assert len(l) == 2
 
     def test_MultiCall(self):
-        pp = PytestPlugins()
+        pp = PluginManager()
         assert hasattr(pp, 'MultiCall')
 
     # lower level API
 
     def test_getfirst(self):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         class My1:
             x = 1
         assert plugins.getfirst("x") is None
@@ -210,7 +210,7 @@ class TestPytestPluginInteractions:
         assert plugins.getfirst("x") == 1
 
     def test_call_each(self):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         class My:
             def method(self, arg):
                 pass
@@ -221,7 +221,7 @@ class TestPytestPluginInteractions:
         py.test.raises(TypeError, 'plugins.call_each("method", arg=42, s=13)')
 
     def test_call_firstresult(self):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         class My1:
             def method(self):
                 pass
@@ -241,7 +241,7 @@ class TestPytestPluginInteractions:
         assert plugins.call_firstresult("method") == True
 
     def test_listattr(self):
-        plugins = PytestPlugins()
+        plugins = PluginManager()
         class My2:
             x = 42
         plugins.register(My2())
@@ -267,7 +267,7 @@ class TestPytestPluginInteractions:
                 return x+0 
         """)
         l = []
-        call = modcol.config.pytestplugins.setupcall(modcol, "pytest_method", 1)
+        call = modcol.config.pluginmanager.setupcall(modcol, "pytest_method", 1)
         assert len(call.methods) == 3
         results = call.execute()
         assert results == [1,2,2]

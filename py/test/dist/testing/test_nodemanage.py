@@ -104,7 +104,7 @@ class TestNodeManager:
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
-        sorter = testdir.geteventrecorder(config.bus).callrecorder
+        sorter = testdir.geteventrecorder(config.pluginmanager).callrecorder
         nodemanager.setup_nodes(putevent=[].append)
         for spec in nodemanager.gwmanager.specs:
             l = sorter.getcalls("pytest_trace")
