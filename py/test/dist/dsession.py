@@ -98,7 +98,8 @@ class DSession(Session):
         callname, args, kwargs = eventcall
         if callname is not None:
             call = getattr(self.config.api, callname)
-            call(*args, **kwargs)
+            assert not args
+            call(**kwargs)
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
@@ -176,15 +177,15 @@ class DSession(Session):
                 senditems.append(next)
             else:
                 self.config.api.pytest_collectstart(collector=next)
-                self.queueevent("pytest_collectreport", basic_collect_report(next))
+                self.queueevent("pytest_collectreport", rep=basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
         else:
             # XXX assert self.config.option.dist == "load"
             self.senditems_load(senditems)
 
-    def queueevent(self, eventname, *args, **kwargs):
-        self.queue.put((eventname, args, kwargs)) 
+    def queueevent(self, eventname, **kwargs):
+        self.queue.put((eventname, (), kwargs)) 
 
     def senditems_each(self, tosend):
         if not tosend:

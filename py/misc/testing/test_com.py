@@ -177,9 +177,19 @@ class TestPluginAPI:
             def hello(self, arg):
                 return arg + 1
         registry.register(Plugin())
-        l = mcm.hello(3)
+        l = mcm.hello(arg=3)
         assert l == [4]
         assert not hasattr(mcm, 'world')
+
+    def test_needskeywordargs(self):
+        registry = Registry()
+        class Api:
+            def hello(self, arg):
+                pass
+        mcm = PluginAPI(apiclass=Api, registry=registry)
+        excinfo = py.test.raises(TypeError, "mcm.hello(3)")
+        assert str(excinfo.value).find("only keyword arguments") != -1
+        assert str(excinfo.value).find("hello(self, arg)")
 
     def test_firstresult(self):
         registry = Registry()
@@ -192,7 +202,7 @@ class TestPluginAPI:
             def hello(self, arg):
                 return arg + 1
         registry.register(Plugin())
-        res = mcm.hello(3)
+        res = mcm.hello(arg=3)
         assert res == 4
 
     def test_default_plugins(self):

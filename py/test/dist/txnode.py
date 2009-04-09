@@ -22,6 +22,7 @@ class TXNode(object):
         self._down = False
 
     def notify(self, eventname, *args, **kwargs):
+        assert not args
         self.putevent((eventname, args, kwargs))
       
     def callback(self, eventcall):

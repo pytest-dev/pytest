@@ -139,8 +139,10 @@ class ApiCall:
         return "<ApiCall %r mode=%s %s>" %(self.name, mode, self.registry)
 
     def __call__(self, *args, **kwargs):
-        mc = MultiCall(self.registry.listattr(self.name), *args, **kwargs)
-        #print "making multicall", self
+        if args:
+            raise TypeError("only keyword arguments allowed "
+                            "for api call to %r" % self.name)
+        mc = MultiCall(self.registry.listattr(self.name), **kwargs)
         return mc.execute(firstresult=self.firstresult)
 
 comregistry = Registry()

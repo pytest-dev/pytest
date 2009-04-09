@@ -81,7 +81,7 @@ class TestDSession:
         session.triggertesting([modcol])
         name, args, kwargs = session.queue.get(block=False)
         assert name == 'pytest_collectreport'
-        rep, = args 
+        rep = kwargs['rep']  
         assert len(rep.result) == 1
 
     def test_triggertesting_item(self, testdir):
@@ -134,7 +134,7 @@ class TestDSession:
         session.queueevent(None)
         session.loop_once(loopstate)
         assert node.sent == [[item]]
-        session.queueevent("pytest_itemtestreport", run(item, node))
+        session.queueevent("pytest_itemtestreport", rep=run(item, node))
         session.loop_once(loopstate)
         assert loopstate.shuttingdown 
         assert not loopstate.testsfailed 
@@ -147,7 +147,7 @@ class TestDSession:
         session.addnode(node)
        
         # setup a HostDown event
-        session.queueevent("pytest_testnodedown", node, None)
+        session.queueevent("pytest_testnodedown", node=node, error=None)
 
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
@@ -173,7 +173,7 @@ class TestDSession:
         # have one test pending for a node that goes down 
         session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
-        session.queueevent("pytest_testnodedown", node, None)
+        session.queueevent("pytest_testnodedown", node=node, error=None)
         evrec = testdir.geteventrecorder(session.pluginmanager)
         print session.item2nodes
         loopstate = session._initloopstate([])
@@ -191,7 +191,7 @@ class TestDSession:
         # setup a session with two nodes
         session = DSession(item.config)
         node1 = MockNode()
-        session.queueevent("pytest_testnodeready", node1)
+        session.queueevent("pytest_testnodeready", node=node1)
         loopstate = session._initloopstate([item])
         loopstate.dowork = False
         assert len(session.node2pending) == 0

@@ -61,7 +61,7 @@ class TerminalReporter:
         self._tw.sep(sep, title, **markup)
 
     def getcategoryletterword(self, rep):
-        res = self.config.api.pytest_report_teststatus(rep)
+        res = self.config.api.pytest_report_teststatus(rep=rep)
         if res:
             return res
         for cat in 'skipped failed passed ???'.split():
