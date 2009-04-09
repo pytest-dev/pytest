@@ -129,7 +129,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
             try:
                 colitem = py.test.collect.Collector._fromtrail(trail, config)
             except AssertionError, e:  
-                #XXX session.bus.notify of "test disappeared"
+                #XXX send info for "test disappeared" or so
                 continue 
             colitems.append(colitem)
     else:

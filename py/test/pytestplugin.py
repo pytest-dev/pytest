@@ -79,9 +79,6 @@ class PytestPlugins(object):
         #print "plugins.call_each", args[0], args[1:], kwargs
         return self.pyplugins.call_each(*args, **kwargs)
 
-    def notify(self, eventname, *args, **kwargs):
-        return self.pyplugins.notify(eventname, *args, **kwargs)
-
     def notify_exception(self, excinfo=None):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()

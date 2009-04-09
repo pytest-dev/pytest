@@ -96,11 +96,9 @@ class DSession(Session):
         loopstate.dowork = True 
           
         callname, args, kwargs = eventcall
-        call = getattr(self.config.api, callname, None)
-        if call is not None:
+        if callname is not None:
+            call = getattr(self.config.api, callname)
             call(*args, **kwargs)
-        else:
-            self.bus.notify(callname, *args, **kwargs)
 
         # termination conditions
         if ((loopstate.testsfailed and self.config.option.exitfirst) or 
@@ -177,7 +175,7 @@ class DSession(Session):
             if isinstance(next, py.test.collect.Item):
                 senditems.append(next)
             else:
-                self.bus.notify("collectstart", next)
+                self.config.api.pytest_collectstart(collector=next)
                 self.queueevent("pytest_collectreport", basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)

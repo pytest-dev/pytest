@@ -129,9 +129,9 @@ class TestDSession:
         # check that RescheduleEvents are not immediately
         # rescheduled if there are no nodes
         assert loopstate.dowork == False 
-        session.queueevent("anonymous")
+        session.queueevent(None)
         session.loop_once(loopstate)
-        session.queueevent("anonymous")
+        session.queueevent(None)
         session.loop_once(loopstate)
         assert node.sent == [[item]]
         session.queueevent("pytest_itemtestreport", run(item, node))
@@ -204,7 +204,7 @@ class TestDSession:
         session.addnode(node)
         loopstate = session._initloopstate([item])
 
-        session.queueevent("NOP")
+        session.queueevent(None)
         session.loop_once(loopstate)
 
         assert node.sent == [[item]]

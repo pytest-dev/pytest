@@ -1,21 +1,5 @@
 """
-py lib plugins and events. 
-
-you can write plugins that extend the py lib API. 
-currently this is mostly used by py.test 
-
-registering a plugin
-++++++++++++++++++++++++++++++++++
-
-::
-    >>> class MyPlugin:
-    ...    def pyevent__plugin_registered(self, plugin):
-    ...       print "registering", plugin.__class__.__name__
-    ... 
-    >>> import py
-    >>> py._com.pyplugins.register(MyPlugin())
-    registering MyPlugin
-
+py lib plugins and plugin call management
 """
 
 import py
@@ -92,7 +76,6 @@ class PyPlugins:
     def import_module(self, modspec):
         # XXX allow modspec to specify version / lookup 
         modpath = modspec
-        self.notify("importingmodule", modpath)
         __import__(modpath) 
 
     def consider_env(self):
@@ -154,13 +137,6 @@ class PyPlugins:
     def call_plugin(self, plugin, methname, *args, **kwargs):
         return MultiCall(self.listattr(methname, plugins=[plugin]), 
                     *args, **kwargs).execute(firstresult=True)
-
-    def notify(self, eventname, *args, **kwargs):
-        #print "notifying", eventname, args, kwargs
-        MultiCall(self.listattr("pyevent__" + eventname), 
-             *args, **kwargs).execute()
-        #print "calling anonymous hooks", args, kwargs
-        MultiCall(self.listattr("pyevent"), eventname, args, kwargs).execute()
 
 
 class PluginAPI: 

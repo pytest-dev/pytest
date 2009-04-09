@@ -11,9 +11,9 @@ class RunnerPlugin:
     def pytest_item_setup_and_runtest(self, item):
         setupstate = item.config._setupstate
         call = item.config.guardedcall(lambda: setupstate.prepare(item))
-        rep = ItemSetupReport(item, call.excinfo, call.outerr)
         if call.excinfo:
-            item.config.pytestplugins.notify(pytest_itemsetupreport, rep)
+            rep = ItemSetupReport(item, call.excinfo, call.outerr)
+            item.config.api.pytest_itemsetupreport(rep=rep)
         else:
             call = item.config.guardedcall(lambda: item.runtest())
             item.config.api.pytest_item_runtest_finished(

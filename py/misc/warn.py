@@ -62,7 +62,7 @@ class WarningPlugin(object):
                 filename = module
         path = py.path.local(filename)
         warning = Warning(msg, path, lineno)
-        self.bus.notify("WARNING", warning)
+        self.bus.call_each("pyevent__WARNING", warning)
 
 # singleton api warner for py lib 
 apiwarner = WarningPlugin(py._com.pyplugins)

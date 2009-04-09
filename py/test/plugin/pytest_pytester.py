@@ -385,21 +385,20 @@ class EventRecorder(object):
 
     def clear(self):
         self.events[:] = []
+        self.callrecorder.calls[:] = []
 
     def unregister(self):
         self.pyplugins.unregister(self)
+        self.callrecorder.finalize()
 
-@py.test.mark.xfail
-def test_eventrecorder():
+def test_eventrecorder(testdir):
     bus = py._com.PyPlugins()
-    recorder = EventRecorder(bus)
-    bus.notify("anonymous")
-    assert recorder.events 
+    recorder = testdir.geteventrecorder(bus)
     assert not recorder.getfailures()
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.notify("pytest_itemtestreport", rep)
+    bus.call_each("pytest_itemtestreport", rep=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
@@ -408,12 +407,12 @@ def test_eventrecorder():
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.skipped = True
-    bus.notify("pytest_itemtestreport", rep)
+    bus.call_each("pytest_itemtestreport", rep=rep)
 
     rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.notify("pytest_itemtestreport", rep)
+    bus.call_each("pytest_itemtestreport", rep=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -427,8 +426,7 @@ def test_eventrecorder():
     recorder.clear() 
     assert not recorder.events
     assert not recorder.getfailures()
-    bus.notify(pytest_itemtestreport, rep)
-    assert not recorder.events 
+    bus.call_each("pytest_itemtestreport", rep=rep)
     assert not recorder.getfailures()
 
 class LineComp:

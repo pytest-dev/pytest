@@ -97,21 +97,6 @@ class TestPyPlugins:
         assert not plugins.isregistered(my)
         assert plugins.getplugins() == [my2]
 
-    def test_onregister(self):
-        plugins = PyPlugins()
-        l = []
-        class MyApi:
-            def pyevent__plugin_registered(self, plugin):
-                l.append(plugin)
-            def pyevent__plugin_unregistered(self, plugin):
-                l.remove(plugin)
-        myapi = MyApi()
-        plugins.register(myapi)
-        assert len(l) == 1
-        assert l[0] is myapi 
-        plugins.unregister(myapi)
-        assert not l
-
     def test_call_methods(self):
         plugins = PyPlugins()
         class api1:
@@ -175,21 +160,6 @@ class TestPyPlugins:
         l = list(plugins.listattr('x', reverse=True))
         assert l == [43, 42, 41]
 
-    def test_notify_anonymous_ordered(self):
-        plugins = PyPlugins()
-        l = []
-        class api1:
-            def pyevent__hello(self): 
-                l.append("hellospecific")
-        class api2:
-            def pyevent(self, name, args, kwargs): 
-                if name == "hello":
-                    l.append(name + "anonymous") 
-        plugins.register(api1())
-        plugins.register(api2())
-        plugins.notify('hello')
-        assert l == ["hellospecific", "helloanonymous"]
-
     def test_consider_env(self, monkeypatch):
         plugins = PyPlugins()
         monkeypatch.setitem(os.environ, 'PYLIB', "unknownconsider_env")
@@ -201,14 +171,7 @@ class TestPyPlugins:
         mod.pylib = ["xxx nomod"]
         excinfo = py.test.raises(ImportError, "plugins.consider_module(mod)")
         mod.pylib = "os"
-        class Events(list):
-            def pyevent__importingmodule(self, mod):
-                self.append(mod)
-        l = Events()
-        plugins.register(l)
         plugins.consider_module(mod)
-        assert len(l) == 1
-        assert l[0] == (mod.pylib)
 
 def test_api_and_defaults():
     assert isinstance(py._com.pyplugins, PyPlugins)
@@ -225,30 +188,6 @@ def test_subprocess_env(testdir, monkeypatch):
         assert str(excinfo.value).find("unknownconsider") != -1
     finally:
         old.chdir()
-
-class TestPyPluginsEvents:
-    def test_pyevent__named_dispatch(self):
-        plugins = PyPlugins()
-        l = []
-        class A:
-            def pyevent__name(self, x): 
-                l.append(x)
-        plugins.register(A())
-        plugins.notify("name", 13)
-        assert l == [13]
-
-    def test_pyevent__anonymous_dispatch(self):
-        plugins = PyPlugins()
-        l = []
-        class A:
-            def pyevent(self, name, args, kwargs): 
-                if name == "name":
-                    l.extend([args, kwargs])
-
-        plugins.register(A())
-        plugins.notify("name", 13, x=15)
-        assert l == [(13, ), {'x':15}]
-
 
 class TestPluginAPI:
     def test_happypath(self):

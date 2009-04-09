@@ -49,6 +49,7 @@ class CallRecorder:
     def finalize(self):
         for recorder in self._recorders.values():
             self._pyplugins.unregister(recorder)
+        self._recorders.clear()
 
     def recordsmethod(self, name):
         for apiclass in self._recorders:

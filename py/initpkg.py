@@ -280,5 +280,4 @@ def autoimport(pkgname):
     ENVKEY = pkgname.upper() + "_AUTOIMPORT"
     if ENVKEY in os.environ:
         for impname in os.environ[ENVKEY].split(","):
-            py._com.pyplugins.notify("autoimport", impname)
             __import__(impname) 

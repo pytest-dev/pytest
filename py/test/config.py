@@ -50,7 +50,7 @@ class Config(object):
 
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
-            self.bus.notify("trace", "config", msg) 
+            self.api.pytest_trace(category="config", msg=msg)
 
     def _processopt(self, opt):
         if hasattr(opt, 'default') and opt.dest:
