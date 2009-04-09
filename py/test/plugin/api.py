@@ -14,9 +14,24 @@ class PluginHooks:
             and all plugins and initial conftest files been loaded. 
             ``config`` provides access to all such configuration values. 
         """
+
     def pytest_unconfigure(self, config):
         """ called before test process is exited. 
         """
+
+    # ------------------------------------------------------------------------------
+    # test Session related hooks 
+    # ------------------------------------------------------------------------------
+
+    def pytest_testrunstart(self):
+        """ whole test run starts. """
+
+    def pytest_testrunfinish(self, exitstatus, excrepr=None):
+        """ whole test run finishes. """
+
+    def pytest_deselected(self, items):
+        """ collected items that were deselected (by keyword). """
+
 
 
     # ------------------------------------------------------------------------------
@@ -100,20 +115,23 @@ class PluginHooks:
     def pytest_plugin_unregistered(self, plugin):
         """ a py lib plugin got unregistered. """
 
+    def pytest_internalerror(self, excrepr):
+        """ called for internal errors. """
+
+    def pytest_trace(self, category, msg):
+        """ called for debug info. """ 
+   
+
+
+    # ------------------------------------------------------------------------------
+    # distributed testing 
+    # ------------------------------------------------------------------------------
+
     def pytest_testnodeready(self, node):
         """ Test Node is ready to operate. """
 
     def pytest_testnodedown(self, node, error):
         """ Test Node is down. """
-
-    def pytest_testrunstart(self):
-        """ whole test run starts. """
-
-    def pytest_testrunfinish(self, exitstatus, excrepr=None):
-        """ whole test run finishes. """
-
-    def pytest_deselected(self, items):
-        """ collected items that were deselected (by keyword). """
 
     def pytest_rescheduleitems(self, items):
         """ reschedule Items from a node that went down. """
@@ -121,9 +139,3 @@ class PluginHooks:
     def pytest_looponfailinfo(self, failreports, rootdirs):
         """ info for repeating failing tests. """
 
-    def pytest_internalerror(self, excrepr):
-        """ called for internal errors. """
-
-    def pytest_trace(self, category, msg):
-        """ called for debug info. """ 
-   

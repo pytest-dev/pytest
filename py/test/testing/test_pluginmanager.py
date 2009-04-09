@@ -4,22 +4,22 @@ from py.__.test.pluginmanager import registerplugin, importplugin
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
-        py.test.raises(ImportError, "plugins.consider_env()")
+        py.test.raises(ImportError, "pluginmanager.consider_env()")
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         testdir.syspathinsert()
         testdir.makepyfile(pytest_xy123="class Xy123Plugin: pass")
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'xy123')
-        l1 = len(plugins.getplugins())
-        plugins.consider_env()
-        l2 = len(plugins.getplugins())
+        l1 = len(pluginmanager.getplugins())
+        pluginmanager.consider_env()
+        l2 = len(pluginmanager.getplugins())
         assert l2 == l1 + 1 
-        assert plugins.getplugin('pytest_xy123') 
-        plugins.consider_env()
-        l3 = len(plugins.getplugins())
+        assert pluginmanager.getplugin('pytest_xy123') 
+        pluginmanager.consider_env()
+        l3 = len(pluginmanager.getplugins())
         assert l2 == l3
 
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
@@ -38,9 +38,9 @@ class TestBootstrapping:
         extra = result.stdout.fnmatch_lines(["*1 passed in*"])
 
     def test_import_plugin_importname(self, testdir):
-        plugins = PluginManager()
-        py.test.raises(ImportError, 'plugins.import_plugin("x.y")')
-        py.test.raises(ImportError, 'plugins.import_plugin("pytest_x.y")')
+        pluginmanager = PluginManager()
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("x.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_x.y")')
 
         reset = testdir.syspathinsert()
         pluginname = "pytest_hello"
@@ -48,41 +48,41 @@ class TestBootstrapping:
             class HelloPlugin:
                 pass
         """})
-        plugins.import_plugin("hello")
-        len1 = len(plugins.getplugins())
-        plugins.import_plugin("pytest_hello")
-        len2 = len(plugins.getplugins())
+        pluginmanager.import_plugin("hello")
+        len1 = len(pluginmanager.getplugins())
+        pluginmanager.import_plugin("pytest_hello")
+        len2 = len(pluginmanager.getplugins())
         assert len1 == len2
-        plugin1 = plugins.getplugin("pytest_hello")
+        plugin1 = pluginmanager.getplugin("pytest_hello")
         assert plugin1.__class__.__name__ == 'HelloPlugin'
-        plugin2 = plugins.getplugin("hello")
+        plugin2 = pluginmanager.getplugin("hello")
         assert plugin2 is plugin1
 
     def test_consider_module(self, testdir):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         testdir.syspathinsert()
         testdir.makepyfile(pytest_plug1="class Plug1Plugin: pass")
         testdir.makepyfile(pytest_plug2="class Plug2Plugin: pass")
         mod = py.std.new.module("temp")
         mod.pytest_plugins = ["pytest_plug1", "pytest_plug2"]
-        plugins.consider_module(mod)
-        assert plugins.getplugin("plug1").__class__.__name__ == "Plug1Plugin"
-        assert plugins.getplugin("plug2").__class__.__name__ == "Plug2Plugin"
+        pluginmanager.consider_module(mod)
+        assert pluginmanager.getplugin("plug1").__class__.__name__ == "Plug1Plugin"
+        assert pluginmanager.getplugin("plug2").__class__.__name__ == "Plug2Plugin"
 
     def test_consider_module_import_module(self, testdir):
         mod = py.std.new.module("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="""class APlugin: pass""")
-        plugins = PluginManager() 
-        sorter = testdir.geteventrecorder(plugins)
+        pluginmanager = PluginManager() 
+        sorter = testdir.geteventrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
-        plugins.consider_module(mod)
-        call = sorter.getcall("plugin_registered")
+        pluginmanager.consider_module(mod)
+        call = sorter.getcall(pluginmanager.api.pytest_plugin_registered.name)
         assert call.plugin.__class__.__name__ == "APlugin"
 
         # check that it is not registered twice 
-        plugins.consider_module(mod)
+        pluginmanager.consider_module(mod)
         l = sorter.getcalls("plugin_registered")
         assert len(l) == 1
 
@@ -202,26 +202,26 @@ class TestPytestPluginInteractions:
     # lower level API
 
     def test_getfirst(self):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         class My1:
             x = 1
-        assert plugins.getfirst("x") is None
-        plugins.register(My1())
-        assert plugins.getfirst("x") == 1
+        assert pluginmanager.getfirst("x") is None
+        pluginmanager.register(My1())
+        assert pluginmanager.getfirst("x") == 1
 
     def test_call_each(self):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         class My:
             def method(self, arg):
                 pass
-        plugins.register(My())
-        py.test.raises(TypeError, 'plugins.call_each("method")')
-        l = plugins.call_each("method", arg=42)
+        pluginmanager.register(My())
+        py.test.raises(TypeError, 'pluginmanager.call_each("method")')
+        l = pluginmanager.call_each("method", arg=42)
         assert l == []
-        py.test.raises(TypeError, 'plugins.call_each("method", arg=42, s=13)')
+        py.test.raises(TypeError, 'pluginmanager.call_each("method", arg=42, s=13)')
 
     def test_call_firstresult(self):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         class My1:
             def method(self):
                 pass
@@ -231,22 +231,22 @@ class TestPytestPluginInteractions:
         class My3:
             def method(self):
                 return None
-        assert plugins.call_firstresult("method") is None
-        assert plugins.call_firstresult("methodnotexists") is None
-        plugins.register(My1())
-        assert plugins.call_firstresult("method") is None
-        plugins.register(My2())
-        assert plugins.call_firstresult("method") == True
-        plugins.register(My3())
-        assert plugins.call_firstresult("method") == True
+        assert pluginmanager.call_firstresult("method") is None
+        assert pluginmanager.call_firstresult("methodnotexists") is None
+        pluginmanager.register(My1())
+        assert pluginmanager.call_firstresult("method") is None
+        pluginmanager.register(My2())
+        assert pluginmanager.call_firstresult("method") == True
+        pluginmanager.register(My3())
+        assert pluginmanager.call_firstresult("method") == True
 
     def test_listattr(self):
-        plugins = PluginManager()
+        pluginmanager = PluginManager()
         class My2:
             x = 42
-        plugins.register(My2())
-        assert not plugins.listattr("hello")
-        assert plugins.listattr("x") == [42]
+        pluginmanager.register(My2())
+        assert not pluginmanager.listattr("hello")
+        assert pluginmanager.listattr("x") == [42]
 
     @py.test.mark(xfail="implement setupcall")
     def test_call_setup_participants(self, testdir):

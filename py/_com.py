@@ -75,11 +75,9 @@ class Registry:
 
     def register(self, plugin):
         assert not isinstance(plugin, str)
-        self.call_each("pytest_plugin_registered", plugin)
         self._plugins.append(plugin)
 
     def unregister(self, plugin):
-        self.call_each("pytest_plugin_unregistered", plugin)
         self._plugins.remove(plugin)
 
     def isregistered(self, plugin):

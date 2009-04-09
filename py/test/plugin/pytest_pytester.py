@@ -21,9 +21,6 @@ class PytesterPlugin:
         tmptestdir = TmpTestdir(pyfuncitem)
         return tmptestdir
  
-    #def pytest_funcarg__EventRecorder(self, pyfuncitem):
-    #    return EventRecorder
-
     def pytest_funcarg__eventrecorder(self, pyfuncitem):
         evrec = EventRecorder(py._com.comregistry)
         pyfuncitem.addfinalizer(lambda: evrec.comregistry.unregister(evrec))

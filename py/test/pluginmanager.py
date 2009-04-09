@@ -17,9 +17,13 @@ class PluginManager(object):
             registry=self.comregistry) 
 
     def register(self, plugin):
+        self.api.pytest_plugin_registered(plugin=plugin)
         self.comregistry.register(plugin)
+
     def unregister(self, plugin):
+        self.api.pytest_plugin_unregistered(plugin=plugin)
         self.comregistry.unregister(plugin)
+
     def isregistered(self, plugin):
         return self.comregistry.isregistered(plugin)
 
@@ -63,7 +67,7 @@ class PluginManager(object):
         if modname in self.impname2plugin:
             return
         mod = importplugin(modname)
-        plugin = registerplugin(self.comregistry.register, mod, clsname)
+        plugin = registerplugin(self.register, mod, clsname)
         self.impname2plugin[modname] = plugin
         self.consider_module(mod)
     # 
