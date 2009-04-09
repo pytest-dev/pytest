@@ -73,29 +73,6 @@ class Registry:
             plugins = []
         self.plugins = plugins
 
-    def import_module(self, modspec):
-        # XXX allow modspec to specify version / lookup 
-        modpath = modspec
-        __import__(modpath) 
-
-    def consider_env(self):
-        """ consider ENV variable for loading modules. """ 
-        for spec in self._envlist("PYLIB"):
-            self.import_module(spec)
-
-    def _envlist(self, varname):
-        val = py.std.os.environ.get(varname, None)
-        if val is not None:
-            return val.split(',')
-        return ()
-
-    def consider_module(self, mod, varname="pylib"):
-        speclist = getattr(mod, varname, ())
-        if not isinstance(speclist, (list, tuple)):
-            speclist = (speclist,)
-        for spec in speclist:
-            self.import_module(spec)
-
     def register(self, plugin):
         assert not isinstance(plugin, str)
         self.call_each("pytest_plugin_registered", plugin)
@@ -105,11 +82,11 @@ class Registry:
         self.call_each("pytest_plugin_unregistered", plugin)
         self.plugins.remove(plugin)
 
-    def getplugins(self):
-        return list(self.plugins)
-
     def isregistered(self, plugin):
         return plugin in self.plugins 
+
+    def __iter__(self):
+        return iter(self.plugins)
 
     def listattr(self, attrname, plugins=None, extra=(), reverse=False):
         l = []

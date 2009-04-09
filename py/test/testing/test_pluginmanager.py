@@ -1,6 +1,6 @@
 import py, os
-from py.__.test.pytestplugin import PluginManager, canonical_names
-from py.__.test.pytestplugin import registerplugin, importplugin
+from py.__.test.pluginmanager import PluginManager, canonical_names
+from py.__.test.pluginmanager import registerplugin, importplugin
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
@@ -22,7 +22,7 @@ class TestBootstrapping:
         l3 = len(plugins.getplugins())
         assert l2 == l3
 
-    def test_pytestplugin_ENV_startup(self, testdir, monkeypatch):
+    def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
         x500 = testdir.makepyfile(pytest_x500="class X500Plugin: pass")
         p = testdir.makepyfile("""
             import py

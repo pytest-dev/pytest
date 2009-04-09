@@ -81,21 +81,21 @@ class TestRegistry:
         assert hasattr(plugins, "MultiCall")
 
     def test_register(self):
-        plugins = Registry()
+        registry = Registry()
         class MyPlugin:
             pass
         my = MyPlugin()
-        plugins.register(my)
-        assert plugins.getplugins() == [my]
+        registry.register(my)
+        assert list(registry) == [my]
         my2 = MyPlugin()
-        plugins.register(my2)
-        assert plugins.getplugins() == [my, my2]
+        registry.register(my2)
+        assert list(registry) == [my, my2]
 
-        assert plugins.isregistered(my)
-        assert plugins.isregistered(my2)
-        plugins.unregister(my)
-        assert not plugins.isregistered(my)
-        assert plugins.getplugins() == [my2]
+        assert registry.isregistered(my)
+        assert registry.isregistered(my2)
+        registry.unregister(my)
+        assert not registry.isregistered(my)
+        assert list(registry) == [my2]
 
     def test_call_methods(self):
         plugins = Registry()
@@ -160,34 +160,8 @@ class TestRegistry:
         l = list(plugins.listattr('x', reverse=True))
         assert l == [43, 42, 41]
 
-    def test_consider_env(self, monkeypatch):
-        plugins = Registry()
-        monkeypatch.setitem(os.environ, 'PYLIB', "unknownconsider_env")
-        py.test.raises(ImportError, "plugins.consider_env()")
-
-    def test_consider_module(self):
-        plugins = Registry()
-        mod = py.std.new.module("temp")
-        mod.pylib = ["xxx nomod"]
-        excinfo = py.test.raises(ImportError, "plugins.consider_module(mod)")
-        mod.pylib = "os"
-        plugins.consider_module(mod)
-
 def test_api_and_defaults():
     assert isinstance(py._com.comregistry, Registry)
-
-def test_subprocess_env(testdir, monkeypatch):
-    plugins = Registry()
-    old = py.path.local(py.__file__).dirpath().dirpath().chdir()
-    try:
-        monkeypatch.setitem(os.environ, "PYLIB", 'unknownconsider')
-        excinfo = py.test.raises(py.process.cmdexec.Error, """
-            py.process.cmdexec('%s -c "import py"')
-        """ % py.std.sys.executable)
-        assert str(excinfo.value).find("ImportError") != -1
-        assert str(excinfo.value).find("unknownconsider") != -1
-    finally:
-        old.chdir()
 
 class TestPluginAPI:
     def test_happypath(self):

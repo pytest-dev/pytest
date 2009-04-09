@@ -24,16 +24,22 @@ class PluginManager(object):
         return self.comregistry.isregistered(plugin)
 
     def getplugins(self):
-        return self.comregistry.getplugins()
+        return self.comregistry.plugins
 
     # API for bootstrapping 
     #
     def getplugin(self, importname):
         impname, clsname = canonical_names(importname)
         return self.plugins[impname]
+
+    def _envlist(self, varname):
+        val = py.std.os.environ.get(varname, None)
+        if val is not None:
+            return val.split(',')
+        return ()
     
     def consider_env(self):
-        for spec in self.comregistry._envlist("PYTEST_PLUGINS"):
+        for spec in self._envlist("PYTEST_PLUGINS"):
             self.import_plugin(spec)
 
     def consider_conftest(self, conftestmodule):
