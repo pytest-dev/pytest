@@ -209,11 +209,16 @@ class TerminalReporter:
                        py.path.local(py.__file__).dirpath(), rev))
         if self.config.option.traceconfig:
             plugins = []
-            for x in self.config.pluginmanager.plugins:
-                if isinstance(x, str) and x.startswith("pytest_"):
-                    plugins.append(x[7:])
+            for plugin in self.config.pluginmanager.comregistry:
+                name = plugin.__class__.__name__
+                if name.endswith("Plugin"):
+                    name = name[:-6]
+                    #if name == "Conftest":
+                    #    XXX get filename 
+                    plugins.append(name)
                 else:
-                    plugins.append(str(x)) # XXX display conftest plugins more nicely 
+                    plugins.append(str(plugin))
+
             plugins = ", ".join(plugins) 
             self.write_line("active plugins: %s" %(plugins,))
         for i, testarg in py.builtin.enumerate(self.config.args):
