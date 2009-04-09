@@ -2,7 +2,6 @@
 import os, inspect, socket
 import sys
 from py.magic import autopath ; mypath = autopath()
-from py.__.misc.warn import APIWARN
 
 try:
     from subprocess import Popen, PIPE
@@ -165,7 +164,7 @@ class SshGateway(PopenCmdGateway):
             cmdline[i] = "'" + cmdline[i].replace("'", "'\\''") + "'"
         cmd = 'ssh -C'
         if identity is not None: 
-            APIWARN("1.0", "pass in 'ssh_config' file instead of identity")
+            py.log.APIWARN("1.0", "pass in 'ssh_config' file instead of identity")
             cmd += ' -i %s' % (identity,)
         if ssh_config is not None:
             cmd += ' -F %s' % (ssh_config)

@@ -4,7 +4,6 @@ Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
-from py.__.misc.warn import APIWARN
 from py.__.test.outcome import Skipped
 
 def configproperty(name):
@@ -442,7 +441,7 @@ class Directory(FSCollector):
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
-            APIWARN("0.99", "usefilters argument not needed")
+            py.log.APIWARN("0.99", "usefilters argument not needed")
         res = self.config.api.pytest_collect_recurse(path=path, parent=self)
         if res is None or res:
             return self.config.api.pytest_collect_directory(
@@ -479,13 +478,13 @@ class Item(Node):
         """ execute this test item."""
         
 def warnoldcollect():
-    APIWARN("1.0", 
+    py.log.APIWARN("1.0", 
         "implement collector.collect() instead of "
         "collector.run() and collector.join()",
         stacklevel=2)
 
 def warnoldtestrun():
-    APIWARN("1.0", 
+    py.log.APIWARN("1.0", 
         "implement item.runtest() instead of "
         "item.run() and item.execute()",
         stacklevel=2)

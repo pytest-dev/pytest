@@ -2,7 +2,6 @@ import py, os
 from conftesthandle import Conftest
 
 from py.__.test import parseopt
-from py.__.misc.warn import APIWARN
 from py.__.test.runner import SetupState
 
 def ensuretemp(string, dir=1): 
@@ -181,7 +180,7 @@ class Config(object):
         """ add a named group of options to the current testing session. 
             This function gets invoked during testing session initialization. 
         """ 
-        APIWARN("1.0", "define plugins to add options", stacklevel=2)
+        py.log.APIWARN("1.0", "define plugins to add options", stacklevel=2)
         group = self._parser.addgroup(groupname)
         for opt in specs:
             group._addoption_instance(opt)

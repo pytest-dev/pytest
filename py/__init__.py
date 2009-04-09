@@ -25,8 +25,8 @@ version = "1.0.0b1"
 
 initpkg(__name__,
     description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 63896 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-04-09 16:21:07 +0200 (Thu, 09 Apr 2009) $',
+    revision = int('$LastChangedRevision: 63913 $'.split(':')[1][:-1]),
+    lastchangedate = '$LastChangedDate: 2009-04-09 22:32:04 +0200 (Thu, 09 Apr 2009) $',
     version = version, 
     url = "http://pylib.org", 
     download_url = "http://codespeak.net/py/%s/download.html" % version,
@@ -179,6 +179,7 @@ initpkg(__name__,
 
     # logging API ('producers' and 'consumers' connected via keywords)
     'log.__doc__'            : ('./log/__init__.py', '__doc__'),
+    'log.APIWARN'            : ('./log/warning.py', 'APIWARN'),
     'log.Producer'           : ('./log/producer.py', 'Producer'),
     'log.default'            : ('./log/producer.py', 'default'),
     'log._getstate'          : ('./log/producer.py', '_getstate'),

@@ -1,5 +1,5 @@
 import py
-from py.__.misc.warn import WarningPlugin
+from py.__.log.warning import WarningPlugin
 mypath = py.magic.autopath()
 
 class TestWarningPlugin:
@@ -45,5 +45,4 @@ class TestWarningPlugin:
         assert warning.msg == "xxx (since version 3.0)"
 
 def test_default():
-    from py.__.misc.warn import APIWARN
-    assert py._com.comregistry.isregistered(APIWARN.im_self)
+    assert py._com.comregistry.isregistered(py.log.APIWARN.im_self)
