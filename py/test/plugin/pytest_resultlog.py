@@ -78,7 +78,7 @@ class ResultLog(object):
             longrepr = str(rep.longrepr.reprcrash)
             self.log_outcome(rep, code, longrepr)    
 
-    def pyevent__internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr):
         path = excrepr.reprcrash.path 
         self.write_log_entry(path, '!', str(excrepr))
 
@@ -214,7 +214,7 @@ class TestWithFunctionIntegration:
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         reslog = ResultLog(StringIO.StringIO())        
-        reslog.pyevent__internalerror(excinfo.getrepr())
+        reslog.pytest_internalerror(excinfo.getrepr())
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

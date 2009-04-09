@@ -45,7 +45,6 @@ class PluginTester(Support):
         pm = py.test._PytestPlugins()
         methods = collectattr(pluginclass)
         hooks = collectattr(api.PluginHooks)
-        hooks.update(collectattr(api.Events))
         getargs = py.std.inspect.getargs
 
         def isgenerichook(name):
@@ -78,7 +77,7 @@ class PluginTester(Support):
         if fail:
             py.test.fail("Plugin API error")
 
-def collectattr(obj, prefixes=("pytest_", "pyevent__")):
+def collectattr(obj, prefixes=("pytest_",)):
     methods = {}
     for apiname in vars(obj): 
         for prefix in prefixes:

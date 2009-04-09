@@ -113,19 +113,9 @@ class PluginHooks:
     def pytest_looponfailinfo(self, failreports, rootdirs):
         """ info for repeating failing tests. """
 
-
-class Events:
-    # Events 
-    def pyevent(self, eventname, args, kwargs):
-        """ generically called for each notification event. """
-
-    def pyevent__NOP(self, *args, **kwargs):
-        """ the no-operation call. """ 
-
-    def pyevent__trace(self, category, msg):
-        """ called for tracing events. """
-
-    def pyevent__internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr):
         """ called for internal errors. """
 
+    def pytest_trace(self, category, msg):
+        """ called for tracing events. """
    

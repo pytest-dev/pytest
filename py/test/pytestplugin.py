@@ -12,9 +12,9 @@ class PytestPlugins(object):
         self.MultiCall = self.pyplugins.MultiCall
         self._plugins = {}
 
-    def _getapi(self):
-        return  py._com.PluginAPI(apiclass=api.PluginHooks, 
-                             plugins=self.pyplugins) 
+        self.api = py._com.PluginAPI(
+            apiclass=api.PluginHooks, 
+            plugins=self.pyplugins) 
 
     def register(self, plugin):
         self.pyplugins.register(plugin)
@@ -86,7 +86,7 @@ class PytestPlugins(object):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()
         excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
-        return self.notify("internalerror", excrepr=excrepr)
+        return self.api.pytest_internalerror(excrepr=excrepr)
 
     def do_addoption(self, parser):
         methods = self.pyplugins.listattr("pytest_addoption", reverse=True)

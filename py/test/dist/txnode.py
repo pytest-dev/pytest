@@ -130,5 +130,5 @@ class SlaveNode(object):
             raise
         except:
             er = py.code.ExceptionInfo().getrepr(funcargs=True, showlocals=True)
-            self.sendevent("internalerror", excrepr=er)
+            self.sendevent("pytest_internalerror", excrepr=er)
             raise

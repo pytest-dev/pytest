@@ -9,9 +9,6 @@ class EventQueue:
         self.queue = queue
         bus.register(self)
 
-    def pyevent(self, eventname, args, kwargs):
-        self.queue.put((eventname, args, kwargs))
-
     def geteventargs(self, eventname, timeout=2.0):
         events = []
         while 1:
@@ -30,7 +27,7 @@ class EventQueue:
                         return args
                     return kwargs
                 events.append(name)
-                if name == "internalerror":
+                if name == "pytest_internalerror":
                     print str(kwargs["excrepr"])
 
 class MySetup:
@@ -113,7 +110,7 @@ class TestMasterSlaveConnection:
         node = mysetup.makenode(item.config)
         node.channel.close()
         py.test.raises(IOError, "node.send(item)")
-        #ev = self.getcalls("internalerror")
+        #ev = self.getcalls(pytest_internalerror)
         #assert ev.excinfo.errisinstance(IOError)
 
     def test_send_one(self, testdir, mysetup):

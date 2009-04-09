@@ -349,7 +349,7 @@ class TestWithFunctionIntegration:
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         reslog = ResultDB(StringIO.StringIO())        
-        reslog.pyevent__internalerror(excinfo.getrepr)
+        reslog.pytest_internalerror(excinfo.getrepr)
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 

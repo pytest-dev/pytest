@@ -198,15 +198,6 @@ class TestDSession:
         session.loop_once(loopstate)
         assert len(session.node2pending) == 1
 
-    def test_event_propagation(self, testdir):
-        item = testdir.getitem("def test_func(): pass")
-        session = DSession(item.config)
-      
-        evrec = testdir.geteventrecorder(session.bus)
-        session.queueevent("NOP", 42)
-        session.loop_once(session._initloopstate([]))
-        assert evrec.getcall('NOP')
-
     def runthrough(self, item):
         session = DSession(item.config)
         node = MockNode()

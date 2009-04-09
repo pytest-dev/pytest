@@ -285,13 +285,6 @@ class EventRecorder(object):
         self.debug = debug
         pyplugins.register(self)
 
-    def pyevent(self, name, args, kwargs):
-        if name == "plugin_registered" and args == (self,):
-            return
-        if self.debug:
-            print "[event: %s]: %s **%s" %(name, ", ".join(map(str, args)), kwargs,)
-        self.events.append(Event(name, args, kwargs))
-
     def popcall(self, name):
         for i, event in py.builtin.enumerate(self.events):
             if event.name == name:

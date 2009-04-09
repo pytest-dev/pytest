@@ -42,7 +42,7 @@ class Config(object):
         self.pytestplugins = pytestplugins
         self._conftest = Conftest(onimport=self._onimportconftest)
         self._setupstate = SetupState() 
-        self.api = pytestplugins._getapi()
+        self.api = pytestplugins.api
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))

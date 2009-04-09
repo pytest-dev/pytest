@@ -15,7 +15,7 @@ class NodeManager(object):
         self._nodesready = py.std.threading.Event()
 
     def trace(self, msg):
-        self.config.bus.notify("trace", "nodemanage", msg)
+        self.config.api.pytest_trace(category="nodemanage", msg=msg)
 
     def config_getignores(self):
         return self.config.getconftest_pathlist("rsyncignore")

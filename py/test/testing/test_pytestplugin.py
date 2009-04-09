@@ -176,7 +176,7 @@ class TestPytestPluginInteractions:
         class A:
             def pytest_configure(self, config):
                 l.append(self)
-            def pyevent__hello(self, obj):
+            def xyz(self, obj):
                 events.append(obj)
                 
         config.bus.register(A())
@@ -187,7 +187,7 @@ class TestPytestPluginInteractions:
         assert len(l) == 2
         assert l[0] != l[1]
         
-        config.bus.notify("hello", 42)
+        config.bus.call_each("xyz", obj=42)
         assert len(events) == 2
         assert events == [42,42]
 

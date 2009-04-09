@@ -82,7 +82,7 @@ class TerminalReporter:
         else: 
             return "???", dict(red=True)
 
-    def pyevent__internalerror(self, excrepr):
+    def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
 
@@ -131,7 +131,7 @@ class TerminalReporter:
         if error:
             self.write_line("%s node down, error: %s" %(node.gateway.id, error))
 
-    def pyevent__trace(self, category, msg):
+    def pytest_trace(self, category, msg):
         if self.config.option.debug or \
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
@@ -437,7 +437,7 @@ class TestTerminal:
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
-        rep.pyevent__internalerror(excinfo.getrepr())
+        rep.pytest_internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines([
             "INTERNALERROR> *raise ValueError*"
         ])
