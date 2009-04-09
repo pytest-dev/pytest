@@ -3,11 +3,11 @@ import py
 from py.__.test.dist.txnode import TXNode
 
 class EventQueue:
-    def __init__(self, bus, queue=None):
+    def __init__(self, registry, queue=None):
         if queue is None:
             queue = py.std.Queue.Queue()
         self.queue = queue
-        bus.register(self)
+        registry.register(self)
 
     def geteventargs(self, eventname, timeout=2.0):
         events = []

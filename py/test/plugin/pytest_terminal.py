@@ -509,7 +509,7 @@ class TestTerminal:
         ])
 
     def test_tb_option(self, testdir, linecomp):
-        # XXX usage of testdir and event bus
+        # XXX usage of testdir 
         for tbopt in ["long", "short", "no"]:
             print 'testing --tb=%s...' % tbopt
             modcol = testdir.getmodulecol("""
@@ -569,7 +569,6 @@ class TestTerminal:
         #""", configargs=("--showskipsummary",) + ("-v",)*verbose)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         modcol.config.pluginmanager.register(rep)
-        bus = modcol.config.pluginmanager
         modcol.config.api.pytest_testrunstart()
         try:
             for item in testdir.genitems([modcol]):

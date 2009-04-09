@@ -317,7 +317,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
-def test_default_bus():
+def test_default_registry():
     assert py.test.config.pluginmanager.comregistry is py._com.comregistry
    
 @py.test.mark.todo("test for deprecation")

@@ -45,6 +45,7 @@ class CallRecorder:
         recorder = RecordCalls()
         self._recorders[apiclass] = recorder
         self._comregistry.register(recorder)
+        self.api = py._com.PluginAPI(apiclass, registry=self._comregistry)
 
     def finalize(self):
         for recorder in self._recorders.values():

@@ -73,10 +73,11 @@ class TmpTestdir:
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
 
-    def geteventrecorder(self, bus):
-        sorter = EventRecorder(bus)
-        sorter.callrecorder = CallRecorder(bus)
+    def geteventrecorder(self, registry):
+        sorter = EventRecorder(registry)
+        sorter.callrecorder = CallRecorder(registry)
         sorter.callrecorder.start_recording(api.PluginHooks)
+        sorter.api = sorter.callrecorder.api
         self.pyfuncitem.addfinalizer(sorter.callrecorder.finalize)
         return sorter
 
@@ -361,13 +362,13 @@ class EventRecorder(object):
         self.callrecorder.finalize()
 
 def test_eventrecorder(testdir):
-    bus = py._com.Registry()
-    recorder = testdir.geteventrecorder(bus)
+    registry = py._com.Registry()
+    recorder = testdir.geteventrecorder(registry)
     assert not recorder.getfailures()
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.call_each("pytest_itemtestreport", rep=rep)
+    recorder.api.pytest_itemtestreport(rep=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
@@ -376,12 +377,12 @@ def test_eventrecorder(testdir):
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.skipped = True
-    bus.call_each("pytest_itemtestreport", rep=rep)
+    recorder.api.pytest_itemtestreport(rep=rep)
 
     rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
-    bus.call_each("pytest_itemtestreport", rep=rep)
+    recorder.api.pytest_itemtestreport(rep=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -394,7 +395,7 @@ def test_eventrecorder(testdir):
     recorder.unregister()
     recorder.clear() 
     assert not recorder.getfailures()
-    bus.call_each("pytest_itemtestreport", rep=rep)
+    recorder.api.pytest_itemtestreport(rep=rep)
     assert not recorder.getfailures()
 
 class LineComp:

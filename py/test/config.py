@@ -22,7 +22,9 @@ class Error(Exception):
     """ Test Configuration Error. """
 
 class Config(object): 
-    """ central bus for dealing with configuration/initialization data. """ 
+    """ test configuration object, provides access to config valueso, 
+        the pluginmanager and plugin api. 
+    """
     Option = py.compat.optparse.Option # deprecated
     Error = Error
     basetemp = None
