@@ -216,7 +216,7 @@ class TestGenerator:
                 yield list_append_2
                 yield assert_order_of_execution   
         """)
-        sorter = testdir.inline_run(o) # .events_from_cmdline([o])
+        sorter = testdir.inline_run(o) 
         passed, skipped, failed = sorter.countoutcomes() 
         assert passed == 4
         assert not skipped and not failed 

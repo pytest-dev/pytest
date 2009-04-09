@@ -280,18 +280,9 @@ class ParsedCall:
 
 class EventRecorder(object):
     def __init__(self, pyplugins, debug=False): # True):
-        self.events = []
         self.pyplugins = pyplugins
         self.debug = debug
         pyplugins.register(self)
-
-    def popcall(self, name):
-        for i, event in py.builtin.enumerate(self.events):
-            if event.name == name:
-                del self.events[i]
-                eventparser = self._getcallparser(name)
-                return eventparser(*event.args, **event.kwargs)
-        raise KeyError("popevent: %r not found in %r"  %(name, self.events))
 
     def getcall(self, name):
         l = self.getcalls(name)
@@ -308,25 +299,7 @@ class EventRecorder(object):
                 name = "pytest_" + name
             if self.callrecorder.recordsmethod(name):
                 l.extend(self.callrecorder.getcalls(name))
-            else:
-                for event in self.events:
-                    if event.name == name:
-                        method = self._getcallparser(event.name)
-                        pevent = method(*event.args, **event.kwargs)
-                        l.append(pevent)  
         return l
-
-    def _getcallparser(self, eventname):
-        mname = "pyevent__" + eventname
-        method = getattr(api.Events, mname)
-        args, varargs, varkw, default = inspect.getargspec(method)
-        assert args[0] == "self"
-        args = args[1:]
-        fspec = inspect.formatargspec(args, varargs, varkw, default)
-        code = py.code.compile("""def %(mname)s%(fspec)s: 
-                    return ParsedCall(locals())""" % locals())
-        exec code
-        return locals()[mname]
 
     # functionality for test reports 
 
@@ -384,7 +357,6 @@ class EventRecorder(object):
         assert failed == len(realfailed)
 
     def clear(self):
-        self.events[:] = []
         self.callrecorder.calls[:] = []
 
     def unregister(self):
@@ -424,7 +396,6 @@ def test_eventrecorder(testdir):
 
     recorder.unregister()
     recorder.clear() 
-    assert not recorder.events
     assert not recorder.getfailures()
     bus.call_each("pytest_itemtestreport", rep=rep)
     assert not recorder.getfailures()

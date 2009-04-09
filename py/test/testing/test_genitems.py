@@ -10,7 +10,7 @@ class Test_genitems:
                 pass
         """)
         p.copy(p.dirpath(p.purebasename + "2" + ".py"))
-        items, events = testdir.inline_genitems(p.dirpath())
+        items, sorter = testdir.inline_genitems(p.dirpath())
         assert len(items) == 4
         for numi, i in enumerate(items):
             for numj, j in enumerate(items):
@@ -27,8 +27,8 @@ class Test_genitems:
     def test_subdir_conftest_error(self, testdir):
         tmp = testdir.tmpdir
         tmp.ensure("sub", "conftest.py").write("raise SyntaxError\n")
-        items, events = testdir.inline_genitems(tmp)
-        collectionfailures = events.getfailedcollections()
+        items, sorter = testdir.inline_genitems(tmp)
+        collectionfailures = sorter.getfailedcollections()
         assert len(collectionfailures) == 1
         ev = collectionfailures[0] 
         assert ev.longrepr.reprcrash.message.startswith("SyntaxError")
@@ -45,7 +45,7 @@ class Test_genitems:
             class TestY(TestX):
                 pass
         ''')
-        items, events = testdir.inline_genitems(p)
+        items, sorter = testdir.inline_genitems(p)
         assert len(items) == 3
         assert items[0].name == 'testone'
         assert items[1].name == 'testmethod_one'

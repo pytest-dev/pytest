@@ -254,7 +254,7 @@ class TestDSession:
         assert loopstate.testsfailed
         assert loopstate.shuttingdown
 
-    def test_shuttingdown_filters_events(self, testdir):
+    def test_shuttingdown_filters(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         session = DSession(item.config)
         node = MockNode()

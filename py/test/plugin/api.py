@@ -1,5 +1,5 @@
 """
-API definitions for pytest plugin hooks and events
+API definitions for pytest plugin hooks 
 """
 
 class PluginHooks:
@@ -67,6 +67,7 @@ class PluginHooks:
     def pytest_doctest_prepare_content(self, content):
         """ return processed content for a given doctest"""
     pytest_doctest_prepare_content.firstresult = True
+
 
     def pytest_itemstart(self, item, node=None):
         """ test item gets collected. """

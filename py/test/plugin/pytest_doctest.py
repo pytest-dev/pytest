@@ -87,8 +87,7 @@ class TestDoctests:
         """)
         for x in (testdir.tmpdir, checkfile): 
             #print "checking that %s returns custom items" % (x,) 
-            items, events = testdir.inline_genitems(x)
-            print events.events
+            items, sorter = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestTextfile)
 
@@ -97,7 +96,6 @@ class TestDoctests:
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir): 
             items, evrec = testdir.inline_genitems(p, '--doctest-modules')
-            print evrec.events
             assert len(items) == 1
             assert isinstance(items[0], DoctestModule)
 
