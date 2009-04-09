@@ -164,7 +164,7 @@ class SshGateway(PopenCmdGateway):
             cmdline[i] = "'" + cmdline[i].replace("'", "'\\''") + "'"
         cmd = 'ssh -C'
         if identity is not None: 
-            py.log.APIWARN("1.0", "pass in 'ssh_config' file instead of identity")
+            py.log._apiwarn("1.0", "pass in 'ssh_config' file instead of identity")
             cmd += ' -i %s' % (identity,)
         if ssh_config is not None:
             cmd += ' -F %s' % (ssh_config)

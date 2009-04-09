@@ -66,4 +66,4 @@ class WarningPlugin(object):
 
 # singleton api warner for py lib 
 apiwarner = WarningPlugin(py._com.comregistry)
-APIWARN = apiwarner.apiwarn
+_apiwarn = apiwarner.apiwarn

@@ -441,7 +441,7 @@ class Directory(FSCollector):
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
-            py.log.APIWARN("0.99", "usefilters argument not needed")
+            py.log._apiwarn("0.99", "usefilters argument not needed")
         res = self.config.api.pytest_collect_recurse(path=path, parent=self)
         if res is None or res:
             return self.config.api.pytest_collect_directory(
@@ -478,13 +478,13 @@ class Item(Node):
         """ execute this test item."""
         
 def warnoldcollect():
-    py.log.APIWARN("1.0", 
+    py.log._apiwarn("1.0", 
         "implement collector.collect() instead of "
         "collector.run() and collector.join()",
         stacklevel=2)
 
 def warnoldtestrun():
-    py.log.APIWARN("1.0", 
+    py.log._apiwarn("1.0", 
         "implement item.runtest() instead of "
         "item.run() and item.execute()",
         stacklevel=2)

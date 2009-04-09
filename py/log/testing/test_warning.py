@@ -45,4 +45,4 @@ class TestWarningPlugin:
         assert warning.msg == "xxx (since version 3.0)"
 
 def test_default():
-    assert py._com.comregistry.isregistered(py.log.APIWARN.im_self)
+    assert py._com.comregistry.isregistered(py.log._apiwarn.im_self)
