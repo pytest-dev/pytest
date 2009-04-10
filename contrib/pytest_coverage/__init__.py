@@ -314,13 +314,15 @@ class CoveragePlugin:
                         dest = os.path.join(dir_annotate_output, r)
                         shutil.copy(src, dest)
 
-    def pyevent__collectionstart(self, collector):
+    def pytest_collectstart(self, collector):
         if isinstance(collector, py.__.test.pycollect.Module):
             COVERAGE_MODULES.update(getattr(collector.obj, 
                 'COVERAGE_MODULES', []))
 
-    def pyevent__testrunstart(self):
+    def pytest_testrunstart(self):
+        print "self.coverage", self.coverage
         if hasattr(self, 'coverage'):
+            print "START coverage"
             self.coverage.erase()
             self.coverage.start()
 
