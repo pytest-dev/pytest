@@ -1,14 +1,6 @@
 Things to do for 1.0.0 
 ========================= 
 
-- scale down "magic" impressions & improve py.test: 
-  - documentation entry points for users 
-  - documentation entry points for extenders
-  - advertise plugins instead of conftest!
-  - new config system
-  - small things: --nomagic -> --no-reassert
-  - deprecate py.magic 
-
 py.test 
 --------------
 
