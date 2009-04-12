@@ -13,6 +13,8 @@ class Frame(object):
         self.raw = frame
 
     def statement(self):
+        if self.code.fullsource is None:
+            return py.code.Source("")
         return self.code.fullsource.getstatement(self.lineno)
     statement = property(statement, None, None,
                          "statement this frame is at")
