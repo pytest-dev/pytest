@@ -51,7 +51,6 @@ Full Contents
    log
    misc
    coding-style
-   links
    contact
    download
    releases
