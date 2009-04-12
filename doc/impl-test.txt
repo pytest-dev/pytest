@@ -4,7 +4,6 @@ ATTIC documentation
 
 XXX REVIEW and remove the below  XXX
 
-
 Customizing the testing process 
 ===============================
 
