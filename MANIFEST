@@ -1,3 +1,4 @@
+.hgignore
 CHANGELOG
 LICENSE
 MANIFEST
@@ -125,11 +126,12 @@ py/log/producer.py
 py/log/testing/__init__.py
 py/log/testing/test_log.py
 py/log/testing/test_logger.py
+py/log/testing/test_warning.py
+py/log/warning.py
 py/magic/__init__.py
 py/magic/assertion.py
 py/magic/autopath.py
 py/magic/exprinfo.py
-py/magic/greenlet.py
 py/magic/invoke.py
 py/magic/patch.py
 py/magic/testing/__init__.py
@@ -164,8 +166,6 @@ py/misc/testing/test_initpkg.py
 py/misc/testing/test_std.py
 py/misc/testing/test_svnlook.py
 py/misc/testing/test_terminal.py
-py/misc/testing/test_warn.py
-py/misc/warn.py
 py/path/__init__.py
 py/path/common.py
 py/path/gateway/TODO.txt
@@ -248,7 +248,6 @@ py/test/dist/testing/test_mypickle.py
 py/test/dist/testing/test_nodemanage.py
 py/test/dist/testing/test_txnode.py
 py/test/dist/txnode.py
-py/test/event.py
 py/test/looponfail/__init__.py
 py/test/looponfail/remote.py
 py/test/looponfail/testing/__init__.py
@@ -258,7 +257,9 @@ py/test/looponfail/util.py
 py/test/outcome.py
 py/test/parseopt.py
 py/test/plugin/__init__.py
+py/test/plugin/api.py
 py/test/plugin/conftest.py
+py/test/plugin/pytest__pytest.py
 py/test/plugin/pytest_default.py
 py/test/plugin/pytest_doctest.py
 py/test/plugin/pytest_eventlog.py
@@ -266,6 +267,7 @@ py/test/plugin/pytest_execnetcleanup.py
 py/test/plugin/pytest_figleaf.py
 py/test/plugin/pytest_iocapture.py
 py/test/plugin/pytest_monkeypatch.py
+py/test/plugin/pytest_pdb.py
 py/test/plugin/pytest_plugintester.py
 py/test/plugin/pytest_pocoo.py
 py/test/plugin/pytest_pylint.py
@@ -273,12 +275,13 @@ py/test/plugin/pytest_pytester.py
 py/test/plugin/pytest_restdoc.py
 py/test/plugin/pytest_resultdb.py
 py/test/plugin/pytest_resultlog.py
+py/test/plugin/pytest_runner.py
 py/test/plugin/pytest_terminal.py
 py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
+py/test/pluginmanager.py
 py/test/pycollect.py
-py/test/pytestplugin.py
 py/test/runner.py
 py/test/session.py
 py/test/testing/__init__.py
@@ -298,12 +301,13 @@ py/test/testing/test_genitems.py
 py/test/testing/test_outcome.py
 py/test/testing/test_parseopt.py
 py/test/testing/test_pickling.py
+py/test/testing/test_pluginmanager.py
 py/test/testing/test_pycollect.py
-py/test/testing/test_pytestplugin.py
 py/test/testing/test_recording.py
+py/test/testing/test_runner.py
 py/test/testing/test_runner_functional.py
 py/test/testing/test_session.py
-py/test/testing/test_setup_nested.py
+py/test/testing/test_setup_functional.py
 py/test/testing/test_traceback.py
 py/test/web/__init__.py
 py/test/web/exception.py
