@@ -1,7 +1,20 @@
+======================================
+Writing plugins and extensions 
+======================================
 
-===============
-Writing plugins
-===============
+
+.. _`local plugin`: 
+
+Local Plugins
+==================================
+
+You can easily specify a project-specific or "local" 
+plugin by defining a ``ConftestPlugin`` in a ``conftest.py``
+file like this::
+
+    class ConftestPlugin:
+        """ my local plugin. """ 
+
 
 Learning by examples
 =====================

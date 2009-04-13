@@ -1,142 +1,244 @@
+======================================================
+**funcargs**: powerful and simple test setup
+======================================================
 
-=====================================
-Python test function arguments 
-=====================================
+In version 1.0 py.test introduces a new mechanism for setting up test
+state for use by Python test functions.  It is particularly useful 
+for functional and integration testing but also for unit testing.  
+Using funcargs you can:
 
-py.test enables a new way to separate test configuration 
-and test setup from actual test code in test functions. 
-When it runs a test functions it will lookup function
-arguments by name and provide a value.  
-Here is a simple example for such a test function: 
+* write self-contained, simple to read and debug test functions 
+* cleanly encapsulate glue code between your app and your tests 
+* do test scenario setup dependent on command line opts or environment
 
-    def test_function(mysetup): 
-        # work with mysetup 
-  
-To provide a value py.test looks for a ``pytest_funcargs``
-dictionary in the test module, for example::
+The basic funcarg request/provide mechanism 
+=============================================
 
-    class MySetup:
-        def __init__(self, pyfuncitem):
-            self.pyfuncitem = pyfuncitem
-    pytest_funcargs = {'mysetup': MySetup}
+All you need to do from a test function or test method 
+is to specify an argument for your test function:
 
-This is already enough to run the test.  Of course
-up until now our ``mysetup`` does not provide 
-much value.  But it is now easy to add new 
-methods on the ``MySetup`` class that have 
-full access to the test collection process. 
+.. sourcecode:: python
 
-Plugins can register their funcargs via
-the config object, usually upon initial configure::
+    def test_function(myarg):
+        # use myarg  
+
+For each test function that requests the ``myarg``
+argument a matching so called funcarg provider 
+will be invoked.  A Funcarg provider for ``myarg``
+is written down liks this:
+
+.. sourcecode:: python
+
+    def pytest_funcarg__myarg(self, request):
+        # return value for myarg here
+
+Such a provider method can live on a test class,
+test module or on a local or global plugin. 
+The method is recognized by the ``pytest_funcarg__``
+prefix and is correlated to the argument
+name which follows this prefix. Because it
+has access to the "request" object a provider
+method is a uniquely powerful place for 
+containing setup up of test scenarios and
+test configuration. 
+
+.. _`request object`:
+
+request objects
+------------------------
+
+Request objects give access to command line options, 
+the underlying python function and the test running 
+process.  Each funcarg provider method receives a ``request`` object
+that allows interaction with the test method and test
+running process.  Basic attributes::
+
+    argname: requested argument name 
+    function: python function object requesting the argument
+    config: access to command line opts and general config
+
+Request objects have a ``addfinalizer`` method that 
+allows to **register a finalizer method** which is 
+called after a test function has finished running. 
+This is useful for tearing down or cleaning up
+test state. Here is a basic example for providing
+a ``myfile`` object that will be closed upon test
+function finish:
+
+.. sourcecode:: python
+
+    def pytest_funcarg__myfile(self, request):
+        # ... create and open a "myfile" object ...
+        request.addfinalizer(lambda: myfile.close())
+        return myfile
+
+If you want to **decorate a function argument** that is 
+provided elsewhere you can use the ``call_next_provider``
+method to obtain the "next" value: 
+
+.. sourcecode:: python
+
+    def pytest_funcarg__myfile(self, request):
+        myfile = request.call_next_provider()
+        # do something extra 
+        return myfile
+
+This will raise a ``request.Error`` exception if there 
+is no next provider left.  See the `decorator example`_ 
+for a use of this method. 
+
+.. _`lookup order`: 
+
+Order of funcarg provider lookup
+----------------------------------------
+
+For any funcarg argument request here is the
+lookup order for provider methods: 
+
+1. test class (if we are executing a method) 
+2. test module 
+3. local plugins
+4. global plugins 
+
+
+Funcarg Examples
+=====================
+
+Example: basic application specific setup
+-----------------------------------------------------
+
+Here is a basic useful example for handling application 
+specific setup.  The goal is to have one place where
+we have the glue code for bootstrapping and configuring 
+application objects and allow test modules and 
+test functions to stay ignorant of involved details. 
+Let's start with the using side and consider a simple 
+test function living in a test file ``test_sample.py``:
+
+.. sourcecode:: python
+
+    def test_answer(mysetup): 
+        app = mysetup.myapp()
+        answer = app.question()
+        assert answer == 42
+
+To run this test py.test looks up and calls a provider to obtain the
+required "mysetup" function argument.  The test function simply
+interacts with the provided application specific setup. 
+
+To provide the ``mysetup`` function argument we write down
+a provider method in a `local plugin`_ by putting this 
+into a local ``conftest.py``:
+
+.. sourcecode:: python
+
+    from myapp import MyApp
 
     class ConftestPlugin:
-        def pytest_configure(self, config):
-            config.register_funcargs(mysetup=MySetup) 
+        def pytest_funcarg__mysetup(self, request):
+            return MySetup()
+
+    class MySetup:
+        def myapp(self):
+            return MyApp()
+
+The ``pytest_funcarg__mysetup`` method is called to 
+provide a value for the test function argument. 
+To complete the example we put a pseudo MyApp object
+into ``myapp.py``:
+
+.. sourcecode:: python
+
+    class MyApp:
+        def question(self):
+            return 6 * 9
+
+.. _`local plugin`: test-ext.html#local-plugin
+
+Example: specifying funcargs in test modules or classes
+---------------------------------------------------------
+
+.. sourcecode:: python
+
+    def pytest_funcarg__mysetup(request):
+        result = request.call_next_provider()
+        result.extra = "..."
+        return result 
+
+You can also put such a function into a test class like this:
+
+.. sourcecode:: python
+
+    class TestClass:
+        def pytest_funcarg__mysetup(self, request):
+            # ...
+            #
+
+            
+Example: command line option for providing SSH-host
+-----------------------------------------------------------
 
 If you provide a "funcarg" from a plugin you can 
 easily make methods depend on command line options 
 or environment settings.  Here is a complete 
 example that allows to run tests involving
-an SSH connection if an ssh host is specified::
+an SSH connection if an ssh host is specified:
+
+.. sourcecode:: python
 
     class ConftestPlugin:
         def pytest_addoption(self, parser):
             parser.addoption("--ssh", action="store", default=None,
                 help="specify ssh host to run tests with")
 
-        def pytest_configure(self, config):
-            config.register_funcargs(mysetup=MySetup)
+        pytest_funcarg__mysetup = MySetupFuncarg
 
-    class MySetup:
-        def __init__(self, pyfuncitem):
-            self.pyfuncitem = pyfuncitem 
+    class MySetupFuncarg:
+        def __init__(self, request):
+            self.request = request 
         def ssh_gateway(self):
-            host = pyfuncitem.config.option.ssh
+            host = self.request.config.option.ssh
             if host is None:
                 py.test.skip("specify ssh host with --ssh to run this test")
             return py.execnet.SshGateway(host)
 
-Now any test functions can use the "mysetup" object, for example::
+Now any test functions can use the "mysetup.ssh_gateway()" method like this:
+
+.. sourcecode:: python
 
     class TestClass:
         def test_function(self, mysetup):
             ssh_gw = mysetup.ssh_gateway()
             # work with ssh_gw 
-       
-Without specifying a command line option the output looks like this::
+      
+Running this without the command line will yield this run result::
 
     ...
 
 
-Lookup rules 
-======================
+.. _`accept example`: 
 
-In order to run this test function a value for the 
-``mysetup`` needs to be found.  Here is how py.test
-finds a matching provider function:
+example: specifying and selecting acceptance tests 
+--------------------------------------------------------------
 
-1. see if there is a ``pytest_funcargs`` dictionary 
-   which maps ``mysetup`` to a provider function. 
-   if so, call the provider function. 
+.. sourcecode:: python
 
-XXX
-    
-
-
-example
-=====================
-
-You can run a test file ``test_some.py`` with this content: 
-
-    pytest_funcargs = {'myarg': (lambda pyfuncitem: 42)}
-
-    def test_something(myarg):
-        assert myarg == 42
-
-You can also put this on a class:
-
-    class TestClass:
-        pytest_funcargs = {'myarg': (lambda pyfuncitem: 42)}
-
-        def test_something(self, myarg):
-            assert myarg == 42
-
-To separate funcarg setup you can also put a funcarg 
-definition into a conftest.py::
-
-    pytest_funcargs = {'myarg': decorate_myarg}
-    def decorate_myarg(pyfuncitem):
-        result = pyfuncitem.call_next_provider()
-        return result + 1
-
-for registering funcargs from a plugin, talk to the
-test configuration object like this::
-
-    class MyPlugin:
-        def pytest_configure(self, config):
-            config.register_funcargs(
-                myarg=decorate_myarg
-            )
-
-a local helper funcarg for doing acceptance tests maybe 
-by running shell commands could look like this::
-
-    class MyPlugin:
+    class ConftestPlugin:
         def pytest_option(self, parser):
-            group = parser.addgroup("myproject acceptance tests")
+            group = parser.getgroup("myproject")
             group.addoption("-A", dest="acceptance", action="store_true", 
                 help="run (slow) acceptance tests")
 
-        def pytest_configure(self, config):
-            config.register_funcargs(accept=AcceptFuncarg)
+        def pytest_funcarg__accept(self, request):
+            return AcceptFuncarg(request)
 
     class AcceptFuncarg:
-        def __init__(self, pyfuncitem):
-            if not pyfuncitem.config.option.acceptance:
+        def __init__(self, request):
+            if not request.config.option.acceptance:
                 py.test.skip("specify -A to run acceptance tests")
-            self.tmpdir = pyfuncitem.config.maketempdir(pyfuncitem.name)
+            self.tmpdir = request.config.maketempdir(request.argname)
             self._old = self.tmpdir.chdir()
-            pyfuncitem.addfinalizer(self.finalize)
+            request.addfinalizer(self.finalize)
 
         def run(self):
             return py.process.cmdexec("echo hello")
@@ -144,17 +246,70 @@ by running shell commands could look like this::
         def finalize(self):
             self._old.chdir()
             # cleanup any other resources
+
    
 and the actual test function example:
+
+.. sourcecode:: python
 
     def test_some_acceptance_aspect(accept):
         accept.tmpdir.mkdir("somesub")
         result = accept.run()
         assert result
-    
-for registering funcargs from a plugin, talk to the
-test configuration object like this::
+   
+That's it!  This test will get automatically skipped with
+an appropriate message if you just run ``py.test``:: 
 
-    XXX
+    ... OUTPUT of py.test on this example ... 
 
+
+.. _`decorator example`: 
+
+example: decorating/extending a funcarg in a TestClass 
+--------------------------------------------------------------
+
+For larger scale setups it's sometimes useful to decorare 
+a funcarg just for a particular test module or even 
+a particular test class.  We can extend the `accept example`_ 
+by putting this in our test class:
+
+.. sourcecode:: python
+
+    class TestSpecialAcceptance:
+        def pytest_funcarg__accept(self, request):
+            arg = request.call_next_provider()
+            # create a special layout in our tempdir
+            arg.tmpdir.mkdir("special")
+            return arg 
+
+        def test_sometest(self, accept):
+            assert accept.tmpdir.join("special").check()
+
+According to the `lookup order`_ our class-specific provider will
+be invoked first.  Here, we just ask our request object to 
+call the next provider and decoare its result.  This simple
+mechanism allows us to stay ignorant of how/where the 
+function argument is provided.  
+
+Note that we make use here of `py.path.local`_ objects
+that provide uniform access to the local filesystem. 
+
+.. _`py.path.local`: path.html#local
+
+Questions and Answers
+==================================
+
+Why ``pytest_funcarg__*`` methods? 
+------------------------------------
+
+When experimenting with funcargs we also considered an explicit
+registration mechanism, i.e. calling a register method e.g. on the
+config object.  But lacking a good use case for this indirection and
+flexibility we decided to go for `Convention over Configuration`_ 
+and allow to directly specify the provider.  It has the 
+positive implication that you should be able to 
+"grep" for `pytest_funcarg__MYARG`` and will find all
+providing sites (usually exactly one).  
+
+.. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 
