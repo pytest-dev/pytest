@@ -22,6 +22,9 @@ class Page(object):
         self._root = html.html(self.head, self.body) 
         self.fill() 
 
+    def a_href(self, name, url):
+        return html.a(name, class_="menu", href=url)
+
     def a_docref(self, name, relhtmlpath):
         docpath = self.project.docpath
         return html.a(name, class_="menu",
@@ -39,6 +42,8 @@ class Page(object):
             self.a_docref("index", "index.html"),
             #self.a_apigenref("api", "api/index.html"),
             #self.a_apigenref("source", "source/index.html"),
+            #self.a_href("source", "http://bitbucket.org/hpk42/py-trunk/src/"),
+            self.a_href("issues", "http://bitbucket.org/hpk42/py-trunk/issues/"),
             self.a_docref("contact", "contact.html"),
             self.a_docref("download", "download.html"),
         ]

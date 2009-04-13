@@ -32,7 +32,6 @@ Contact and communication
     or the mailing list and ask questions, get involved. 
 
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
-.. _`coding style`: coding-style.html 
 .. _us: http://codespeak.net/mailman/listinfo/py-dev
 .. _codespeak: http://codespeak.net/
 .. _`py-dev`: 

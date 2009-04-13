@@ -93,10 +93,10 @@ platforms - and report back failures from all platforms
 at once.   The provided specifications strings 
 use the `xspec syntax`_. 
 
-.. _`xspec syntax`: execnet.html#xspec
+.. _`xspec syntax`: ../execnet.html#xspec
 
 .. _`socketserver.py`: http://codespeak.net/svn/py/dist/py/execnet/script/socketserver.py
-.. _`py.execnet`: execnet.html
+.. _`py.execnet`: ../execnet.html
 
 Specifying test exec environments in a conftest.py
 -------------------------------------------------------------

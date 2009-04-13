@@ -5,7 +5,7 @@ py.test
 * rapidly collect and run tests 
 * use unit- or doctests, functional or integration tests 
 * distribute tests to multiple environments
-* local or global plugins for custom test types
+* local or global plugins for custom test scenarios and types
 
 quickstart_: for getting started immediately.
 
@@ -17,24 +17,10 @@ extend_: writing plugins and advanced configuration.
 
 `distributed testing`_ how to distribute test runs to other machines and platforms. 
 
-.. _quickstart: test-quickstart.html
-.. _features: test-features.html
-.. _plugins: test-plugins.html
-.. _extend: test-ext.html
-.. _`distributed testing`: test-dist.html
+.. _quickstart: quickstart.html
+.. _features: features.html
+.. _plugins: plugins.html
+.. _extend: ext.html
+.. _`distributed testing`: dist.html
 
 
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   test-quickstart
-   test-features
-   test-plugins
-   test-ext
-   test-dist
-   test-config
-   test-statemanage
-   test-examples
-   impl-test

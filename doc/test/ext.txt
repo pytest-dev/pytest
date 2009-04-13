@@ -110,11 +110,4 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 Plugin hooks and events  
 =======================================
 
-.. automodule:: py.__.test.plugin.api
-
-.. autoclass:: PluginHooks
-    :members:
-
-.. autoclass:: Events
-    :members:
-
+XXX

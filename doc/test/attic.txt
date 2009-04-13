@@ -46,7 +46,7 @@ useful for calling application test machinery with different
 parameter sets but counting each of the calls as a separate
 tests. 
 
-.. _`generative tests`: test-features.html#generative-tests
+.. _`generative tests`: features.html#generative-tests
 
 The other extension possibility is about 
 specifying a custom test ``Item`` class which 

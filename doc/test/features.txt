@@ -1,17 +1,25 @@
 ==================================================
-Features
+py.test Features
 ==================================================
 
-py.test is a standalone-tool that collects and runs tests for
-your Python application and modules.  py.test works across
-linux, windows and osx and on Python 2.3 - Python 2.6.
+py.test is an extensible tool for running all kinds
+of tests one one or more machines.  It supports a variety
+of testing methods for your Python application and modules,
+including unit, functional, integration and doc-testing. 
 
-It aims to support *unit-tests* and *functional tests* written
-in Python and is used in projects that run more than 10000
-tests regularly.  
+It is used in projects that run more than 10000 tests 
+daily as well as single-python-module projects. 
 
 py.test presents a clean and powerful command line interface
 and strives to generally make testing a fun effort. 
+
+py.test 1.0 works across linux, windows and osx 
+and on Python 2.3 - Python 2.6.
+
+More detailed feature list: 
+
+.. contents::
+    :depth: 1
 
 automatically collects and executes tests 
 ===============================================
@@ -23,7 +31,13 @@ From each test module every function with a leading ``test_``
 or class with a leading ``Test`` name is collected.  
 
 .. _`generative tests`: 
-.. _`collection process`: test-ext.html#collection-process
+.. _`collection process`: ext.html#collection-process
+
+Rapidly write integration, functional, unit tests 
+===================================================
+
+py.test provides 
+
 
 load-balance tests to multiple CPUs
 ===================================
@@ -35,7 +49,7 @@ tests to multiple CPUs by issuing for example::
 
 Read more on `distributed testing`_. 
 
-.. _`distributed testing`: test-dist.html
+.. _`distributed testing`: dist.html
 
 Distribute tests across machines
 ===================================
@@ -47,7 +61,7 @@ platforms one a single test run`. Ad-hoc
 means that there are **no installation 
 requirements whatsoever** on the remote side. 
 
-.. _`ad-hoc run your test on multiple platforms one a single test run`: test-dist.html#atonce
+.. _`ad-hoc run your test on multiple platforms one a single test run`: dist.html#atonce
 
 extensive debugging support 
 ===================================
@@ -270,7 +284,7 @@ for these purposes:
 * running non-python tests
 * managing test state setup 
 
-.. _`py.test plugins`: test-plugins.html
+.. _`py.test plugins`: plugins.html
 
 .. _`reStructured Text`: http://docutils.sourceforge.net
 .. _`Python debugger`: http://docs.python.org/lib/module-pdb.html

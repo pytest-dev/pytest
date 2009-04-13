@@ -15,7 +15,7 @@ available on your command prompt.
 The ``py.test`` executable is the main entry point into the py-lib testing tool,
 see the `py.test documentation`_.
 
-.. _`py.test documentation`: test.html
+.. _`py.test documentation`: test/test.html
 
 ``py.cleanup``
 ==============

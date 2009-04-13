@@ -53,7 +53,7 @@ Python test module is inspected for test methods starting with ``test_``.
 Please refer to `features`_ for a walk through the basic features. 
 
 
-.. _download: download.html
-.. _features: test-features.html
+.. _download: ../download.html
+.. _features: features.html
 
 
