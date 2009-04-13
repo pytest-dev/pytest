@@ -2,6 +2,7 @@
 **funcargs**: powerful and simple test setup
 ======================================================
 
+
 In version 1.0 py.test introduces a new mechanism for setting up test
 state for use by Python test functions.  It is particularly useful 
 for functional and integration testing but also for unit testing.  
@@ -14,6 +15,9 @@ Using funcargs you can easily:
 Using the funcargs mechanism will increase readability 
 and allow for easier refactoring of your application
 and its test suites. 
+
+.. contents:: Contents:
+    :depth: 2
 
 The basic funcarg request/provide mechanism 
 =============================================
@@ -41,20 +45,20 @@ test module or on a local or global plugin.
 The method is recognized by the ``pytest_funcarg__``
 prefix and is correlated to the argument
 name which follows this prefix.  The passed in
-"request" object allows to interact 
+``request`` object allows to interact 
 with test configuration, test collection
-and test running aspects. 
+and test running aspects.  
 
 .. _`request object`:
 
-request objects
+funcarg request objects
 ------------------------
 
-Request objects give access to command line options, 
-the underlying python function and the test running 
-process.  Each funcarg provider method receives a ``request`` object
-that allows interaction with the test method and test
-running process.  Basic attributes of request objects:
+Request objects encapsulate a request for a function argument from a
+specific test function.  Request objects provide access to command line
+options, the underlying python function and allow interaction 
+with other providers and the test running process.  
+Basic attributes of request objects:
 
 ``request.argname``: name of the requested function argument 
 
@@ -136,7 +140,7 @@ test function living in a test file ``test_sample.py``:
         assert answer == 42
 
 To run this test py.test looks up and calls a provider to obtain the
-required "mysetup" function argument.  The test function simply
+required ``mysetup`` function argument.  The test function simply
 interacts with the provided application specific setup. 
 
 To provide the ``mysetup`` function argument we write down
@@ -305,7 +309,7 @@ by putting this in our test class:
 
 According to the `lookup order`_ our class-specific provider will
 be invoked first.  Here, we just ask our request object to 
-call the next provider and decoare its result.  This simple
+call the next provider and decorate its result.  This simple
 mechanism allows us to stay ignorant of how/where the 
 function argument is provided.  
 
@@ -316,6 +320,8 @@ that provide uniform access to the local filesystem.
 
 Questions and Answers
 ==================================
+
+.. _`why pytest_pyfuncarg__ methods?`:
 
 Why ``pytest_funcarg__*`` methods? 
 ------------------------------------
