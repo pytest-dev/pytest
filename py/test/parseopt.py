@@ -38,11 +38,11 @@ class Parser:
         self._groups.append(group)
         return group 
 
-    def getgroup(self, name):
+    def getgroup(self, name, description=""):
         for group in self._groups:
             if group.name == name:
                 return group
-        raise ValueError("group %r not found" %(name,))
+        return self.addgroup(name, description)
 
     def addoption(self, *opts, **attrs):
         """ add an optparse-style option. """
