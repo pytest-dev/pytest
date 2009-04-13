@@ -96,6 +96,47 @@ class ReSTSyntaxTest(py.test.collect.Item):
         toctree_directive.options = {'maxdepth': int, 'glob': directives.flag,
                              'hidden': directives.flag}
         directives.register_directive('toctree', toctree_directive)
+        self.register_pygments()
+
+    def register_pygments(self):
+        # taken from pygments-main/external/rst-directive.py 
+        try:
+            from pygments.formatters import HtmlFormatter
+        except ImportError:
+            def pygments_directive(name, arguments, options, content, lineno,
+                                   content_offset, block_text, state, state_machine):
+                return []
+        else:
+            # The default formatter
+            DEFAULT = HtmlFormatter(noclasses=True)
+            # Add name -> formatter pairs for every variant you want to use
+            VARIANTS = {
+                # 'linenos': HtmlFormatter(noclasses=INLINESTYLES, linenos=True),
+            }
+
+            from docutils import nodes
+            from docutils.parsers.rst import directives
+
+            from pygments import highlight
+            from pygments.lexers import get_lexer_by_name, TextLexer
+
+            def pygments_directive(name, arguments, options, content, lineno,
+                                   content_offset, block_text, state, state_machine):
+                try:
+                    lexer = get_lexer_by_name(arguments[0])
+                except ValueError:
+                    # no lexer found - use the text one instead of an exception
+                    lexer = TextLexer()
+                # take an arbitrary option if more than one is given
+                formatter = options and VARIANTS[options.keys()[0]] or DEFAULT
+                parsed = highlight(u'\n'.join(content), lexer, formatter)
+                return [nodes.raw('', parsed, format='html')]
+
+        pygments_directive.arguments = (1, 0, 1)
+        pygments_directive.content = 1
+        pygments_directive.options = dict([(key, directives.flag) for key in VARIANTS])
+
+        directives.register_directive('sourcecode', pygments_directive)
 
     def resolve_linkrole(self, name, text, check=True):
         apigen_relpath = self.project.apigen_relpath
