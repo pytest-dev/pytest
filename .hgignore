@@ -9,3 +9,4 @@ syntax:glob
 syntax:glob
 *.pyc
 *.pyo
+*.html
