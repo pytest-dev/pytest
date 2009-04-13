@@ -5,11 +5,11 @@
 In version 1.0 py.test introduces a new mechanism for setting up test
 state for use by Python test functions.  It is particularly useful 
 for functional and integration testing but also for unit testing.  
-Using funcargs you can:
+Using funcargs you can easily:
 
 * write self-contained, simple to read and debug test functions 
 * cleanly encapsulate glue code between your app and your tests 
-* do test scenario setup dependent on command line opts or environment
+* setup test state depending on command line options or environment
 
 Using the funcargs mechanism will increase readability 
 and allow for easier refactoring of your application
@@ -18,15 +18,15 @@ and its test suites.
 The basic funcarg request/provide mechanism 
 =============================================
 
-All you need to do from a test function or test method 
-is to specify an argument for your test function:
+To use funcargs you only need to specify 
+a named argument for your test function:
 
 .. sourcecode:: python
 
     def test_function(myarg):
         # use myarg  
 
-For each test function that requests the ``myarg``
+For each test function that requests this ``myarg``
 argument a matching so called funcarg provider 
 will be invoked.  A Funcarg provider for ``myarg``
 is written down liks this:
@@ -40,11 +40,10 @@ Such a provider method can live on a test class,
 test module or on a local or global plugin. 
 The method is recognized by the ``pytest_funcarg__``
 prefix and is correlated to the argument
-name which follows this prefix. Because it
-has access to the "request" object a provider
-method is a uniquely powerful place for 
-containing setup up of test scenarios and
-test configuration. 
+name which follows this prefix.  The passed in
+"request" object allows to interact 
+with test configuration, test collection
+and test running aspects. 
 
 .. _`request object`:
 
@@ -55,11 +54,13 @@ Request objects give access to command line options,
 the underlying python function and the test running 
 process.  Each funcarg provider method receives a ``request`` object
 that allows interaction with the test method and test
-running process.  Basic attributes::
+running process.  Basic attributes of request objects:
 
-    argname: requested argument name 
-    function: python function object requesting the argument
-    config: access to command line opts and general config
+``request.argname``: name of the request argument 
+
+``request.function``: python function object requesting the argument
+
+``request.config``: access to command line opts and general config
 
 Request objects have a ``addfinalizer`` method that 
 allows to **register a finalizer method** which is 
@@ -103,6 +104,15 @@ lookup order for provider methods:
 2. test module 
 3. local plugins
 4. global plugins 
+
+
+Using multiple funcargs 
+----------------------------------------
+
+A test function may receive more than one 
+function arguments.  For each of the 
+function arguments a lookup of a 
+matching provider will be performed. 
 
 
 Funcarg Examples
