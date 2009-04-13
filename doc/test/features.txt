@@ -38,17 +38,16 @@ Rapidly write integration, functional, unit tests
 
 XXX 
 
-Unique test state setup/fixture methods 
+funcargs and xUnit style setups 
 ===================================================
 
-py.test provides the `unique funcargs mechanism`_ 
-for constructing test fixtures and handling 
-complex test scenarios.  You can also 
-use `traditional xUnit style setup`_ for
-existing code bases or if you prefer 
-it for your unit tests. 
+py.test provides powerful means for managing test
+state and fixtures.  Apart from the `traditional 
+xUnit style setup`_ for unittests it features the 
+simple and powerful `funcargs mechanism`_ for handling
+both complex and simple test scenarious. 
 
-.. _`unique funcargs mechanism`: funcargs.html
+.. _`funcargs mechanism`: funcargs.html
 .. _`traditional xUnit style setup`: xunit_setup.html
 
 load-balance tests to multiple CPUs

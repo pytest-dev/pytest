@@ -11,6 +11,9 @@ Using funcargs you can:
 * cleanly encapsulate glue code between your app and your tests 
 * do test scenario setup dependent on command line opts or environment
 
+Using the funcargs mechanism will keep your test suite clean
+and allow for easier refactoring of your applications. 
+
 The basic funcarg request/provide mechanism 
 =============================================
 
