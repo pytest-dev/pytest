@@ -326,7 +326,7 @@ config object.  But lacking a good use case for this indirection and
 flexibility we decided to go for `Convention over Configuration`_ 
 and allow to directly specify the provider.  It has the 
 positive implication that you should be able to 
-"grep" for `pytest_funcarg__MYARG`` and will find all
+"grep" for ``pytest_funcarg__MYARG`` and will find all
 providing sites (usually exactly one).  
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
