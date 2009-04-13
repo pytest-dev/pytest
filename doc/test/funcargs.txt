@@ -56,14 +56,13 @@ process.  Each funcarg provider method receives a ``request`` object
 that allows interaction with the test method and test
 running process.  Basic attributes of request objects:
 
-``request.argname``: name of the request argument 
+``request.argname``: name of the requested function argument 
 
 ``request.function``: python function object requesting the argument
 
 ``request.config``: access to command line opts and general config
 
-Request objects have a ``addfinalizer`` method that 
-allows to **register a finalizer method** which is 
+Request objects allow to **register a finalizer method** which is 
 called after a test function has finished running. 
 This is useful for tearing down or cleaning up
 test state. Here is a basic example for providing
@@ -78,8 +77,8 @@ function finish:
         return myfile
 
 If you want to **decorate a function argument** that is 
-provided elsewhere you can use the ``call_next_provider``
-method to obtain the "next" value: 
+provided elsewhere you can ask the request object 
+to provide the "next" value:
 
 .. sourcecode:: python
 
@@ -141,8 +140,8 @@ required "mysetup" function argument.  The test function simply
 interacts with the provided application specific setup. 
 
 To provide the ``mysetup`` function argument we write down
-a provider method in a `local plugin`_ by putting this 
-into a local ``conftest.py``:
+a provider method in a `local plugin`_ by putting the
+following code into a local ``conftest.py``:
 
 .. sourcecode:: python
 
@@ -157,7 +156,7 @@ into a local ``conftest.py``:
             return MyApp()
 
 The ``pytest_funcarg__mysetup`` method is called to 
-provide a value for the test function argument. 
+provide a value for the requested ``mysetup`` test function argument. 
 To complete the example we put a pseudo MyApp object
 into ``myapp.py``:
 
@@ -167,7 +166,12 @@ into ``myapp.py``:
         def question(self):
             return 6 * 9
 
+You can now run the test with ``py.test test_sample.py``:
+
+.. sourcecode:: python
+
 .. _`local plugin`: ext.html#local-plugin
+
 
 Example: specifying funcargs in test modules or classes
 ---------------------------------------------------------
