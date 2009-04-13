@@ -153,7 +153,7 @@ into ``myapp.py``:
         def question(self):
             return 6 * 9
 
-.. _`local plugin`: test-ext.html#local-plugin
+.. _`local plugin`: ext.html#local-plugin
 
 Example: specifying funcargs in test modules or classes
 ---------------------------------------------------------
@@ -294,7 +294,7 @@ function argument is provided.
 Note that we make use here of `py.path.local`_ objects
 that provide uniform access to the local filesystem. 
 
-.. _`py.path.local`: path.html#local
+.. _`py.path.local`: ../path.html#local
 
 Questions and Answers
 ==================================
