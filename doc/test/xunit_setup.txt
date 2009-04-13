@@ -5,12 +5,12 @@ xUnit style setup
 .. _`funcargs`: funcargs.html
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 
-** Note that since version 1.0 py.test offers `funcargs`_ 
-for simple and complex test setup needs.  Especially 
-if you want to do functional and integration testing,
-but also fo runittesting, it is highly recommended 
-that you consider using `funcargs`_ for keeping 
-a clean and maintenable test suite. **
+Note: 
+
+    Since version 1.0 py.test offers funcargs_ for both 
+    simple and complex test setup needs.  Especially 
+    for functional and integration, but also for unit testing, it is
+    highly recommended that you use this new method. 
 
 Python, Java and other languages have a tradition
 of using xUnit_ style testing. This typically 
