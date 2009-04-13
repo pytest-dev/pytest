@@ -20,9 +20,7 @@ of course all the functionality is bundled together rather than spread over a
 number of modules.
 
 Example usage, here we use the :api:`py.test.ensuretemp()` function to create
-a :api:`py.path.local` object for us (which wraps a directory):
-
-.. sourcecode:: pycon
+a :api:`py.path.local` object for us (which wraps a directory)::
 
   >>> import py
   >>> temppath = py.test.ensuretemp('py.path_documentation')
@@ -48,9 +46,7 @@ Both allow you to access relatively advanced features such as metadata and
 versioning, and both in a way more user-friendly manner than existing other
 solutions.
 
-Some example usage of :api:`py.path.svnurl`:
-
-.. sourcecode:: pycon
+Some example usage of :api:`py.path.svnurl`::
 
   .. >>> import py
   .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
@@ -63,9 +59,7 @@ Some example usage of :api:`py.path.svnurl`:
   >>> time.strftime('%Y-%m-%d', time.gmtime(firstentry.date))
   '2004-10-02'
 
-Example usage of :api:`py.path.svnwc`:
-
-.. sourcecode:: pycon
+Example usage of :api:`py.path.svnwc`::
 
   .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> temp = py.test.ensuretemp('py.path_documentation')
@@ -104,7 +98,7 @@ Searching `.txt` files
 Search for a particular string inside all files with a .txt extension in a
 specific directory.
 
-.. sourcecode:: pycon
+::
 
   >>> dirpath = temppath.ensure('testdir', dir=True)
   >>> dirpath.join('textfile1.txt').write('foo bar baz')
@@ -126,9 +120,7 @@ Working with Paths
 This example shows the :api:`py.path` features to deal with
 filesystem paths Note that the filesystem is never touched,
 all operations are performed on a string level (so the paths
-don't have to exist, either):
-
-.. sourcecode:: pycon
+don't have to exist, either)::
 
   >>> p1 = py.path.local('/foo/bar')
   >>> p2 = p1.join('baz/qux')
@@ -161,9 +153,7 @@ Checking path types
 .......................
 
 Now we will show a bit about the powerful 'check()' method on paths, which
-allows you to check whether a file exists, what type it is, etc.:
-
-.. sourcecode:: pycon
+allows you to check whether a file exists, what type it is, etc.::
 
   >>> file1 = temppath.join('file1')
   >>> file1.check() # does it exist?
@@ -187,9 +177,7 @@ Setting svn-properties
 .......................
 
 As an example of 'uncommon' methods, we'll show how to read and write
-properties in an :api:`py.path.svnwc` instance:
-
-.. sourcecode:: pycon
+properties in an :api:`py.path.svnwc` instance::
 
   .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> wc.propget('foo')
@@ -207,9 +195,7 @@ SVN authentication
 .......................
 
 Some uncommon functionality can also be provided as extensions, such as SVN
-authentication:
-
-.. sourcecode:: pycon
+authentication::
 
   .. >>> if not py.test.config.option.urlcheck: raise ValueError('skipchunk')
   >>> auth = py.path.SvnAuth('anonymous', 'user', cache_auth=False,
