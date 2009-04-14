@@ -72,9 +72,9 @@ class TestRequest:
         req = item.getrequest("other")
         assert req.argname == "other"
         assert req.function == item.obj 
-        assert req.funcname == "test_func" 
+        assert req.function.__name__ == "test_func" 
         assert req.config == item.config 
-        assert repr(req).find(req.funcname) != -1
+        assert repr(req).find(req.function.__name__) != -1
         
     def test_request_contains_funcargs_methods(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -114,8 +114,17 @@ class TestRequest:
         req.addfinalizer(l.pop)
         item.teardown()
 
+    def test_request_maketemp(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        req = item.getrequest("xxx")
+        tmpdir = req.maketempdir()
+        tmpdir2 = req.maketempdir()
+        assert tmpdir != tmpdir2
+        assert tmpdir.basename.startswith("test_func")
+        assert tmpdir2.basename.startswith("test_func")
+
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
         req = item.getrequest("hello")
-        assert req.getfspath() == modcol.fspath 
+        assert req.fspath == modcol.fspath 

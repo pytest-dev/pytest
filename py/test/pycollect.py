@@ -403,6 +403,7 @@ class FuncargRequest:
         self.argname = argname 
         self.function = pyfuncitem.obj
         self.config = pyfuncitem.config
+        self.fspath = pyfuncitem.fspath
         self._plugins = self._getplugins()
         self._methods = self.config.pluginmanager.listattr(
             plugins=self._plugins, 
@@ -431,8 +432,12 @@ class FuncargRequest:
     def addfinalizer(self, finalizer):
         self._pyfuncitem.addfinalizer(finalizer)
 
-    def getfspath(self):
-        return self._pyfuncitem.fspath
+    def maketempdir(self):
+        basetemp = self.config.getbasetemp()
+        tmp = py.path.local.make_numbered_dir(
+            prefix=self.function.__name__ + "_", 
+            keep=0, rootdir=basetemp)
+        return tmp
 
     def _raiselookupfailed(self):
         available = []
@@ -446,5 +451,6 @@ class FuncargRequest:
         msg = "funcargument %r not found for: %s" %(self.argname,metainfo.verboseline())
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise LookupError(msg)
+
 
         

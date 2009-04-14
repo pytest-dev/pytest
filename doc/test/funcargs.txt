@@ -57,13 +57,20 @@ Request objects encapsulate a request for a function argument from a
 specific test function.  Request objects provide access to command line
 options, the underlying python function and allow interaction 
 with other providers and the test running process.  
-Basic attributes of request objects:
+
+Attributes of request objects
+++++++++++++++++++++++++++++++++++++++++
 
 ``request.argname``: name of the requested function argument 
 
 ``request.function``: python function object requesting the argument
 
+``request.fspath``: filesystem path of containing module
+
 ``request.config``: access to command line opts and general config
+
+finalizing after test function executed 
+++++++++++++++++++++++++++++++++++++++++
 
 Request objects allow to **register a finalizer method** which is 
 called after a test function has finished running. 
@@ -79,6 +86,35 @@ function finish:
         request.addfinalizer(lambda: myfile.close())
         return myfile
 
+a unique temporary directory 
+++++++++++++++++++++++++++++++++++++++++
+
+request objects allow to create unique temporary 
+directories.  These directories will be created
+as subdirectories under the `per-testsession
+temporary directory`_.  Each request object 
+receives its own unique subdirectory whose
+basenames starts with the name of the function
+that triggered the funcarg request.  You
+can further work with the provided `py.path.local`_ 
+object to e.g. create subdirs or config files::
+
+    def pytest_funcarg__mysetup(self, request):
+        tmpdir = request.maketempdir()
+        tmpdir.mkdir("mysubdir")
+        tmpdir.join("config.ini").write("[default")
+        return tmpdir 
+
+Note that you do not need to perform finalization, 
+i.e. remove the temporary directory as this is
+part of the global management of the base temporary
+directory. 
+
+.. _`per-testsession temporary directory`: config.html#basetemp
+
+decorating/adding to existing funcargs 
+++++++++++++++++++++++++++++++++++++++++
+
 If you want to **decorate a function argument** that is 
 provided elsewhere you can ask the request object 
 to provide the "next" value:
@@ -93,6 +129,7 @@ to provide the "next" value:
 This will raise a ``request.Error`` exception if there 
 is no next provider left.  See the `decorator example`_ 
 for a use of this method. 
+
 
 .. _`lookup order`: 
 

@@ -3,7 +3,7 @@ from py.__.test.dist.nodemanage import NodeManager
 
 class pytest_funcarg__mysetup:
     def __init__(self, request):
-        basetemp = request.config.ensuretemp(request.getfspath().purebasename)
+        basetemp = request.maketempdir()
         basetemp = basetemp.mkdir(request.function.__name__) 
         self.source = basetemp.mkdir("source")
         self.dest = basetemp.mkdir("dest")
