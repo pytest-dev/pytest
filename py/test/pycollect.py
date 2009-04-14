@@ -415,15 +415,30 @@ class Function(FunctionMixin, py.test.collect.Item):
         
 
 class FuncargRequest:
+    class Error(LookupError):
+        """ error on performing funcarg request. """ 
+        
     def __init__(self, pyfuncitem, argname):
         self.pyfuncitem = pyfuncitem
         self.argname = argname 
-        funcargname = "pytest_funcarg__" + str(argname) 
-        pm = self.pyfuncitem.config.pluginmanager 
+        self.function = pyfuncitem.obj
+        self.config = pyfuncitem.config
         extra = []
         current = pyfuncitem
         while not isinstance(current, Module):
             current = current.parent
             if isinstance(current, (Instance, Module)):
                 extra.insert(0, current.obj)
-        self._methods = pm.listattr(funcargname, extra=extra)
+        self._methods = self.pyfuncitem.config.pluginmanager.listattr(
+            "pytest_funcarg__" + str(argname), 
+            extra=extra,
+        )
+
+    def call_next_provider(self):
+        if not self._methods:
+            raise self.Error("no provider methods left")
+        nextmethod = self._methods.pop()
+        return nextmethod(request=self)
+
+    def addfinalizer(self, finalizer):
+        self.pyfuncitem.addfinalizer(finalizer)

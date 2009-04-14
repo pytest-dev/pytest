@@ -84,6 +84,16 @@ class TestFuncargs:
         assert not modcol.config.pluginmanager.isregistered(modcol.obj)
 
 class TestRequest:
+    def test_request_attributes(self, testdir):
+        item = testdir.getitem("""
+            def pytest_funcarg__something(request): pass
+            def test_func(something): pass
+        """)
+        req = item.getrequest("other")
+        assert req.argname == "other"
+        assert req.function == item.obj 
+        assert req.config == item.config 
+        
     def test_request_contains_funcargs_methods(self, testdir):
         modcol = testdir.getmodulecol("""
             def pytest_funcarg__something(request):
@@ -101,3 +111,23 @@ class TestRequest:
         method1, method2 = methods 
         assert not hasattr(method1, 'im_self')
         assert method2.im_self is not None
+
+    def test_request_call_next_provider(self, testdir):
+        item = testdir.getitem("""
+            def pytest_funcarg__something(request): pass
+            def test_func(something): pass
+        """)
+        req = item.getrequest("something")
+        val = req.call_next_provider()
+        assert val is None
+        py.test.raises(req.Error, "req.call_next_provider()")
+
+    def test_request_addfinalizer(self, testdir):
+        item = testdir.getitem("""
+            def pytest_funcarg__something(request): pass
+            def test_func(something): pass
+        """)
+        req = item.getrequest("something")
+        l = [1]
+        req.addfinalizer(l.pop)
+        item.teardown()
