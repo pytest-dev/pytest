@@ -365,30 +365,15 @@ class Function(FunctionMixin, py.test.collect.Item):
             for i, argname in py.builtin.enumerate(argnames):
                 if i < startindex:
                     continue 
+                request = self.getrequest(argname) 
                 try:
-                    argvalue = self.getrequest(argname).call_next_provider()
-                    self.funcargs[argname] = argvalue
-                except LookupError, e:
+                    self.funcargs[argname] = request.call_next_provider()
+                except request.Error:
                     numdefaults = len(funcobj.func_defaults or ()) 
                     if i + numdefaults >= len(argnames):
-                        continue # continue # seems that our args have defaults 
+                        continue # our args have defaults XXX issue warning? 
                     else:
-                        raise
-
-    def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
-        metainfo = self.repr_metainfo()
-        available = []
-        plugins = list(self.config.pluginmanager.comregistry)
-        #plugins.extend(self.config.pluginmanager.registry.plugins)
-        for plugin in plugins:
-            for name in vars(plugin.__class__):
-                if name.startswith(prefix):
-                    name = name[len(prefix):]
-                    if name not in available:
-                        available.append(name) 
-        msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        raise LookupError(msg)
+                        raise # request.raiselookupfailed()
 
     def __eq__(self, other):
         try:
@@ -435,7 +420,6 @@ class FuncargRequest:
         if not self._methods:
             raise self.Error("no provider methods left")
         nextmethod = self._methods.pop()
-        print "calling", nextmethod
         return nextmethod(request=self)
 
     def addfinalizer(self, finalizer):
@@ -443,4 +427,20 @@ class FuncargRequest:
 
     def getfspath(self):
         return self.pyfuncitem.fspath
+
+    def _raisefuncargerror(self):
+        metainfo = self.repr_metainfo()
+        available = []
+        plugins = list(self.config.pluginmanager.comregistry)
+        #plugins.extend(self.config.pluginmanager.registry.plugins)
+        for plugin in plugins:
+            for name in vars(plugin.__class__):
+                if name.startswith(prefix):
+                    name = name[len(prefix):]
+                    if name not in available:
+                        available.append(name) 
+        msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        raise LookupError(msg)
+
         
