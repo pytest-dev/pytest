@@ -4,7 +4,6 @@ LICENSE
 MANIFEST
 README.txt
 TODO.txt
-ez_setup.py
 py/LICENSE
 py/__init__.py
 py/_com.py
@@ -297,6 +296,7 @@ py/test/testing/test_compat.py
 py/test/testing/test_config.py
 py/test/testing/test_conftesthandle.py
 py/test/testing/test_deprecated_api.py
+py/test/testing/test_funcargs.py
 py/test/testing/test_genitems.py
 py/test/testing/test_outcome.py
 py/test/testing/test_parseopt.py

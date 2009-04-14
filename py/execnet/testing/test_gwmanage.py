@@ -33,7 +33,8 @@ class TestGatewayManagerPopen:
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_popens_rsync(self, source):
+    def test_popens_rsync(self, mysetup):
+        source = mysetup.source
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         assert len(hm.gateways) == 2
@@ -45,7 +46,8 @@ class TestGatewayManagerPopen:
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_rsync_popen_with_path(self, source, dest):
+    def test_rsync_popen_with_path(self, mysetup):
+        source, dest = mysetup.source, mysetup.dest 
         hm = GatewayManager(["popen//chdir=%s" %dest] * 1)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
@@ -59,7 +61,8 @@ class TestGatewayManagerPopen:
         assert dest.join("dir1", "dir2").check()
         assert dest.join("dir1", "dir2", 'hello').check()
 
-    def test_hostmanage_rsync_same_popen_twice(self, source, dest, _pytest):
+    def test_hostmanage_rsync_same_popen_twice(self, mysetup, _pytest):
+        source, dest = mysetup.source, mysetup.dest 
         rec = _pytest.getcallrecorder(py.execnet._API)
         hm = GatewayManager(["popen//chdir=%s" %dest] * 2)
         hm.makegateways()
@@ -109,13 +112,15 @@ class TestGatewayManagerPopen:
         assert l[0].startswith(curwd)
         assert l[0].endswith("hello")
 
-def pytest_funcarg__source(pyfuncitem):
-    return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("source")
-def pytest_funcarg__dest(pyfuncitem):
-    return py.test.ensuretemp(pyfuncitem.getmodpath()).mkdir("dest")
+class pytest_funcarg__mysetup:
+    def __init__(self, request):
+        tmp = request.maketempdir()
+        self.source = tmp.mkdir("source")
+        self.dest = tmp.mkdir("dest")
 
 class TestHRSync:
-    def test_hrsync_filter(self, source, dest):
+    def test_hrsync_filter(self, mysetup):
+        source, dest = mysetup.source, mysetup.dest
         source.ensure("dir", "file.txt")
         source.ensure(".svn", "entries")
         source.ensure(".somedotfile", "moreentries")
@@ -129,7 +134,8 @@ class TestHRSync:
         assert 'file.txt' in basenames
         assert 'somedir' in basenames
 
-    def test_hrsync_one_host(self, source, dest):
+    def test_hrsync_one_host(self, mysetup):
+        source, dest = mysetup.source, mysetup.dest
         gw = py.execnet.makegateway("popen//chdir=%s" % dest)
         finished = []
         rsync = HostRSync(source)
