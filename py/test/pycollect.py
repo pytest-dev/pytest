@@ -373,7 +373,7 @@ class Function(FunctionMixin, py.test.collect.Item):
                     if i + numdefaults >= len(argnames):
                         continue # our args have defaults XXX issue warning? 
                     else:
-                        raise # request.raiselookupfailed()
+                        request._raiselookupfailed()
 
     def __eq__(self, other):
         try:
@@ -392,6 +392,8 @@ class Function(FunctionMixin, py.test.collect.Item):
         
 
 class FuncargRequest:
+    _argprefix = "pytest_funcarg__"
+
     class Error(LookupError):
         """ error on performing funcarg request. """ 
         
@@ -402,19 +404,24 @@ class FuncargRequest:
         self.function = pyfuncitem.obj
         self.funcname = pyfuncitem.name
         self.config = pyfuncitem.config
-        extra = []
-        current = pyfuncitem
-        while not isinstance(current, Module):
-            current = current.parent
-            if isinstance(current, (Instance, Module)):
-                extra.insert(0, current.obj)
-        self._methods = self.pyfuncitem.config.pluginmanager.listattr(
-            "pytest_funcarg__" + str(argname), 
-            extra=extra,
+        self._plugins = self._getplugins()
+        self._methods = self.config.pluginmanager.listattr(
+            plugins=self._plugins, 
+            attrname=self._argprefix + str(argname)
         )
 
     def __repr__(self):
         return "<FuncargRequest %r for %r>" %(self.argname, self.pyfuncitem)
+
+
+    def _getplugins(self):
+        plugins = []
+        current = self.pyfuncitem
+        while not isinstance(current, Module):
+            current = current.parent
+            if isinstance(current, (Instance, Module)):
+                plugins.insert(0, current.obj)
+        return self.config.pluginmanager.getplugins() + plugins 
 
     def call_next_provider(self):
         if not self._methods:
@@ -428,18 +435,16 @@ class FuncargRequest:
     def getfspath(self):
         return self.pyfuncitem.fspath
 
-    def _raisefuncargerror(self):
-        metainfo = self.repr_metainfo()
+    def _raiselookupfailed(self):
         available = []
-        plugins = list(self.config.pluginmanager.comregistry)
-        #plugins.extend(self.config.pluginmanager.registry.plugins)
-        for plugin in plugins:
+        for plugin in self._plugins:
             for name in vars(plugin.__class__):
-                if name.startswith(prefix):
-                    name = name[len(prefix):]
+                if name.startswith(self._argprefix):
+                    name = name[len(self._argprefix):]
                     if name not in available:
                         available.append(name) 
-        msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
+        metainfo = self.pyfuncitem.repr_metainfo()
+        msg = "funcargument %r not found for: %s" %(self.argname,metainfo.verboseline())
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise LookupError(msg)
 

@@ -4,13 +4,13 @@ class TestFuncargs:
     def test_funcarg_lookupfails(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_funcarg__xyz(self, request):
+                def pytest_funcarg__xyzsomething(self, request):
                     return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
         exc = py.test.raises(LookupError, "item.setupargs()")
         s = str(exc.value)
-        assert s.find("something") != -1
+        assert s.find("xyzsomething") != -1
 
     def test_funcarg_lookup_default(self, testdir):
         item = testdir.getitem("def test_func(some, other=42): pass")
