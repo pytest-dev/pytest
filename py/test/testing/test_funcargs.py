@@ -16,7 +16,7 @@ class TestFuncargs:
         item = testdir.getitem("def test_func(some, other=42): pass")
         class Provider:
             def pytest_funcarg__some(self, request):
-                return request.funcname
+                return request.function.__name__
         item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 1
@@ -25,7 +25,7 @@ class TestFuncargs:
         item = testdir.getitem("def test_func(some=42, other=13): pass")
         class Provider:
             def pytest_funcarg__other(self, request):
-                return request.funcname
+                return request.function.__name__
         item.config.pluginmanager.register(Provider())
         item.setupargs()
         assert len(item.funcargs) == 1
@@ -37,7 +37,7 @@ class TestFuncargs:
         item = testdir.getitem("def test_func(some, other): pass")
         class Provider:
             def pytest_funcarg__some(self, request):
-                return request.funcname 
+                return request.function.__name__ 
             def pytest_funcarg__other(self, request):
                 return 42
         item.config.pluginmanager.register(Provider())
@@ -49,7 +49,7 @@ class TestFuncargs:
     def test_funcarg_lookup_modulelevel(self, testdir):
         modcol = testdir.getmodulecol("""
             def pytest_funcarg__something(request):
-                return request.funcname
+                return request.function.__name__
 
             class TestClass:
                 def test_method(self, something):

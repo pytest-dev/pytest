@@ -2,7 +2,6 @@
 **funcargs**: powerful and simple test setup
 ======================================================
 
-
 In version 1.0 py.test introduces a new mechanism for setting up test
 state for use by Python test functions.  It is particularly useful 
 for functional and integration testing but also for unit testing.  
@@ -170,9 +169,21 @@ into ``myapp.py``:
         def question(self):
             return 6 * 9
 
-You can now run the test with ``py.test test_sample.py``:
+You can now run the test with ``py.test test_sample.py`` which will
+show this failure:
 
-.. sourcecode:: python
+.. sourcecode:: python 
+
+        def test_answer(mysetup):
+            app = mysetup.myapp()
+            answer = app.question()
+    >       assert answer == 42
+    E       assert 54 == 42
+
+If you are confused as to that the question or answer is
+here, please visit here_.
+
+.. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
 
 .. _`local plugin`: ext.html#local-plugin
 

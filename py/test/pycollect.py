@@ -399,10 +399,9 @@ class FuncargRequest:
         
     def __init__(self, pyfuncitem, argname):
         # XXX make pyfuncitem _pyfuncitem 
-        self.pyfuncitem = pyfuncitem
+        self._pyfuncitem = pyfuncitem
         self.argname = argname 
         self.function = pyfuncitem.obj
-        self.funcname = pyfuncitem.name
         self.config = pyfuncitem.config
         self._plugins = self._getplugins()
         self._methods = self.config.pluginmanager.listattr(
@@ -411,12 +410,12 @@ class FuncargRequest:
         )
 
     def __repr__(self):
-        return "<FuncargRequest %r for %r>" %(self.argname, self.pyfuncitem)
+        return "<FuncargRequest %r for %r>" %(self.argname, self._pyfuncitem)
 
 
     def _getplugins(self):
         plugins = []
-        current = self.pyfuncitem
+        current = self._pyfuncitem
         while not isinstance(current, Module):
             current = current.parent
             if isinstance(current, (Instance, Module)):
@@ -430,10 +429,10 @@ class FuncargRequest:
         return nextmethod(request=self)
 
     def addfinalizer(self, finalizer):
-        self.pyfuncitem.addfinalizer(finalizer)
+        self._pyfuncitem.addfinalizer(finalizer)
 
     def getfspath(self):
-        return self.pyfuncitem.fspath
+        return self._pyfuncitem.fspath
 
     def _raiselookupfailed(self):
         available = []
@@ -443,7 +442,7 @@ class FuncargRequest:
                     name = name[len(self._argprefix):]
                     if name not in available:
                         available.append(name) 
-        metainfo = self.pyfuncitem.repr_metainfo()
+        metainfo = self._pyfuncitem.repr_metainfo()
         msg = "funcargument %r not found for: %s" %(self.argname,metainfo.verboseline())
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise LookupError(msg)

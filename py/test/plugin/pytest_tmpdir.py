@@ -14,7 +14,7 @@ class TmpdirPlugin:
     """ 
 
     def pytest_funcarg__tmpdir(self, request):
-        name = request.funcname 
+        name = request.function.__name__ 
         return request.config.mktemp(name, numbered=True)
 
 # ===============================================================================

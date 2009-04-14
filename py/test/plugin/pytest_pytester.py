@@ -42,7 +42,7 @@ class TmpTestdir:
         self.request = request
         # XXX remove duplication with tmpdir plugin 
         basetmp = request.config.ensuretemp("testdir")
-        name = request.funcname
+        name = request.function.__name__
         for i in range(100):
             try:
                 tmpdir = basetmp.mkdir(name + str(i))
@@ -90,7 +90,7 @@ class TmpTestdir:
         items = kwargs.items()
         if args:
             source = "\n".join(map(str, args))
-            basename = self.request.funcname
+            basename = self.request.function.__name__
             items.insert(0, (basename, source))
         ret = None
         for name, value in items:
@@ -200,7 +200,7 @@ class TmpTestdir:
         return self.config.getfsnode(path)
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
-        kw = {self.request.funcname: py.code.Source(source).strip()}
+        kw = {self.request.function.__name__: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__ = "#")
