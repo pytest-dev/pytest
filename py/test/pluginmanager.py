@@ -79,8 +79,8 @@ class PluginManager(object):
         for x in self.comregistry.listattr(attrname):
             return x
 
-    def listattr(self, attrname, plugins=None):
-        return self.comregistry.listattr(attrname, plugins=plugins)
+    def listattr(self, attrname, plugins=None, extra=()):
+        return self.comregistry.listattr(attrname, plugins=plugins, extra=extra)
 
     def call_firstresult(self, *args, **kwargs):
         return self.comregistry.call_firstresult(*args, **kwargs)

@@ -410,6 +410,20 @@ class Function(FunctionMixin, py.test.collect.Item):
     def __ne__(self, other):
         return not self == other
 
+    def getrequest(self, argname):
+        return FuncargRequest(pyfuncitem=self, argname=argname) 
+        
 
-# DEPRECATED
-#from py.__.test.plugin.pytest_doctest import DoctestFile 
+class FuncargRequest:
+    def __init__(self, pyfuncitem, argname):
+        self.pyfuncitem = pyfuncitem
+        self.argname = argname 
+        funcargname = "pytest_funcarg__" + str(argname) 
+        pm = self.pyfuncitem.config.pluginmanager 
+        extra = []
+        current = pyfuncitem
+        while not isinstance(current, Module):
+            current = current.parent
+            if isinstance(current, (Instance, Module)):
+                extra.insert(0, current.obj)
+        self._methods = pm.listattr(funcargname, extra=extra)
