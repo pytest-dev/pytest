@@ -18,6 +18,7 @@ class PluginManager(object):
 
     def register(self, plugin):
         self.api.pytest_plugin_registered(plugin=plugin)
+        import types
         self.comregistry.register(plugin)
 
     def unregister(self, plugin):
@@ -79,8 +80,8 @@ class PluginManager(object):
         for x in self.comregistry.listattr(attrname):
             return x
 
-    def listattr(self, attrname, plugins=None):
-        return self.comregistry.listattr(attrname, plugins=plugins)
+    def listattr(self, attrname, plugins=None, extra=()):
+        return self.comregistry.listattr(attrname, plugins=plugins, extra=extra)
 
     def call_firstresult(self, *args, **kwargs):
         return self.comregistry.call_firstresult(*args, **kwargs)

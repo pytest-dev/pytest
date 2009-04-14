@@ -6,37 +6,23 @@ from py.__.test.plugin import api
 
 class PlugintesterPlugin:
     """ test support code for testing pytest plugins. """
-    def pytest_funcarg__plugintester(self, pyfuncitem):
-        pt = PluginTester(pyfuncitem) 
-        pyfuncitem.addfinalizer(pt.finalize)
-        return pt
+    def pytest_funcarg__plugintester(self, request):
+        return PluginTester(request) 
 
-class Support(object):
-    def __init__(self, pyfuncitem):
-        """ instantiated per function that requests it. """
-        self.pyfuncitem = pyfuncitem
+class PluginTester:
+    def __init__(self, request):
+        self.request = request
 
-    def getmoditem(self):
-        for colitem in self.pyfuncitem.listchain():
-            if isinstance(colitem, colitem.Module):
-                return colitem 
-
-    def finalize(self):
-        """ called after test function finished execution"""
-
-class PluginTester(Support):
     def testdir(self):
-        # XXX import differently, eg. 
-        #     FSTester = self.pyfuncitem.config.pluginmanager.getpluginattr("pytester", "FSTester")
         from pytest_pytester import TmpTestdir
-        crunner = TmpTestdir(self.pyfuncitem)
-        self.pyfuncitem.addfinalizer(crunner.finalize)
+        crunner = TmpTestdir(self.request)
+        self.request.addfinalizer(crunner.finalize)
         # 
-        for colitem in self.pyfuncitem.listchain():
-            if isinstance(colitem, py.test.collect.Module) and \
-               colitem.name.startswith("pytest_"):
-                    crunner.plugins.append(colitem.fspath.purebasename)
-                    break 
+        #for colitem in self.request.listchain():
+        #    if isinstance(colitem, py.test.collect.Module) and \
+        #       colitem.name.startswith("pytest_"):
+        #            crunner.plugins.append(colitem.fspath.purebasename)
+        #            break 
         return crunner 
 
     def apicheck(self, pluginclass):

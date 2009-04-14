@@ -1,0 +1,73 @@
+====================================
+xUnit style setup
+====================================
+
+.. _`funcargs`: funcargs.html
+.. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
+
+Note: 
+
+    Since version 1.0 py.test offers funcargs_ for both 
+    simple and complex test setup needs.  Especially 
+    for functional and integration, but also for unit testing, it is
+    highly recommended that you use this new method. 
+
+Python, Java and other languages have a tradition
+of using xUnit_ style testing. This typically 
+involves the call of a ``setup`` method before
+a test function is run and ``teardown`` after
+it finishes.  With ``py.test`` there are three 
+scopes for which you can provide setup/teardown
+hooks to provide test fixtures: per-module, per-class 
+and per-method/function. ``py.test`` will 
+discover and call according methods automatically. 
+All setup/teardown methods are optional.  
+
+The following methods are called at module level if they exist:
+
+.. sourcecode:: python
+
+    def setup_module(module):
+        """ setup up any state specific to the execution
+            of the given module. 
+        """
+
+    def teardown_module(module):
+        """ teardown any state that was previously setup 
+            with a setup_module method. 
+        """
+
+The following hooks are available for test classes:
+
+.. sourcecode:: python
+
+    def setup_class(cls): 
+        """ setup up any state specific to the execution
+            of the given class (which usually contains tests). 
+        """
+
+    def teardown_class(cls): 
+        """ teardown any state that was previously setup 
+            with a call to setup_class.
+        """
+
+    def setup_method(self, method):
+        """ setup up any state tied to the execution of the given 
+            method in a class.  setup_method is invoked for every 
+            test method of a class. 
+        """
+
+    def teardown_method(self, method): 
+        """ teardown any state that was previously setup 
+            with a setup_method call. 
+        """
+
+The last two hooks, ``setup_method`` and ``teardown_method``, are
+equivalent to ``setUp`` and ``tearDown`` in the Python standard
+library's `unittest.py module`_.
+
+Note that it possible that setup/teardown pairs are invoked multiple 
+times per testing process. 
+
+.. _`unittest.py module`: http://docs.python.org/library/unittest.html
+

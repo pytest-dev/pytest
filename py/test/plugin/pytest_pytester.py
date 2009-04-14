@@ -11,19 +11,19 @@ import api
 
 
 class PytesterPlugin:
-    def pytest_funcarg__linecomp(self, pyfuncitem):
+    def pytest_funcarg__linecomp(self, request):
         return LineComp()
 
-    def pytest_funcarg__LineMatcher(self, pyfuncitem):
+    def pytest_funcarg__LineMatcher(self, request):
         return LineMatcher
 
-    def pytest_funcarg__testdir(self, pyfuncitem):
-        tmptestdir = TmpTestdir(pyfuncitem)
+    def pytest_funcarg__testdir(self, request):
+        tmptestdir = TmpTestdir(request)
         return tmptestdir
  
-    def pytest_funcarg__eventrecorder(self, pyfuncitem):
+    def pytest_funcarg__eventrecorder(self, request):
         evrec = EventRecorder(py._com.comregistry)
-        pyfuncitem.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
+        request.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
         return evrec
 
 def test_generic(plugintester):
@@ -38,11 +38,11 @@ class RunResult:
         self.stderr = LineMatcher(errlines)
 
 class TmpTestdir:
-    def __init__(self, pyfuncitem):
-        self.pyfuncitem = pyfuncitem
+    def __init__(self, request):
+        self.request = request
         # XXX remove duplication with tmpdir plugin 
-        basetmp = pyfuncitem.config.ensuretemp("testdir")
-        name = pyfuncitem.name
+        basetmp = request.config.ensuretemp("testdir")
+        name = request.function.__name__
         for i in range(100):
             try:
                 tmpdir = basetmp.mkdir(name + str(i))
@@ -57,7 +57,7 @@ class TmpTestdir:
         self._syspathremove = []
         self.chdir() # always chdir
         assert hasattr(self, '_olddir')
-        self.pyfuncitem.addfinalizer(self.finalize)
+        self.request.addfinalizer(self.finalize)
 
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
@@ -78,7 +78,7 @@ class TmpTestdir:
         sorter.callrecorder = CallRecorder(registry)
         sorter.callrecorder.start_recording(api.PluginHooks)
         sorter.api = sorter.callrecorder.api
-        self.pyfuncitem.addfinalizer(sorter.callrecorder.finalize)
+        self.request.addfinalizer(sorter.callrecorder.finalize)
         return sorter
 
     def chdir(self):
@@ -90,7 +90,7 @@ class TmpTestdir:
         items = kwargs.items()
         if args:
             source = "\n".join(map(str, args))
-            basename = self.pyfuncitem.name 
+            basename = self.request.function.__name__
             items.insert(0, (basename, source))
         ret = None
         for name, value in items:
@@ -139,7 +139,7 @@ class TmpTestdir:
         # used from runner functional tests 
         item = self.getitem(source)
         # the test class where we are called from wants to provide the runner 
-        testclassinstance = self.pyfuncitem.obj.im_self
+        testclassinstance = self.request.function.im_self
         runner = testclassinstance.getrunner()
         return runner(item, **runnerargs)
 
@@ -200,7 +200,7 @@ class TmpTestdir:
         return self.config.getfsnode(path)
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
-        kw = {self.pyfuncitem.name: py.code.Source(source).strip()}
+        kw = {self.request.function.__name__: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__ = "#")
@@ -455,3 +455,10 @@ class LineMatcher:
         return extralines 
 
 
+
+
+def test_parseconfig(testdir):
+    config1 = testdir.parseconfig()
+    config2 = testdir.parseconfig()
+    assert config2 != config1
+    assert config1 != py.test.config

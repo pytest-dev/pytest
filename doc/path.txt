@@ -11,6 +11,8 @@ provides a number of implementations of this API.
 Path implementations provided by :api:`py.path`
 ===============================================
 
+.. _`local`: 
+
 :api:`py.path.local`
 --------------------
 

@@ -177,7 +177,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
         mod = self.obj
-        self.config.pluginmanager.register(mod)
+        #self.config.pluginmanager.register(mod)
         if hasattr(mod, 'setup_module'): 
             self.obj.setup_module(mod)
 
@@ -187,7 +187,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
         if not self.config.option.nomagic:
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
-        self.config.pluginmanager.unregister(self.obj)
+        #self.config.pluginmanager.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
@@ -365,38 +365,15 @@ class Function(FunctionMixin, py.test.collect.Item):
             for i, argname in py.builtin.enumerate(argnames):
                 if i < startindex:
                     continue 
+                request = self.getrequest(argname) 
                 try:
-                    self.funcargs[argname] = self.lookup_onearg(argname)
-                except LookupError, e:
+                    self.funcargs[argname] = request.call_next_provider()
+                except request.Error:
                     numdefaults = len(funcobj.func_defaults or ()) 
                     if i + numdefaults >= len(argnames):
-                        continue # continue # seems that our args have defaults 
+                        continue # our args have defaults XXX issue warning? 
                     else:
-                        raise
-
-    def lookup_onearg(self, argname):
-        prefix = "pytest_funcarg__"
-        #makerlist = self.config.pluginmanager.listattr(prefix + argname)
-        value = self.config.pluginmanager.call_firstresult(prefix + argname, pyfuncitem=self)
-        if value is not None:
-            return value
-        else:
-            self._raisefuncargerror(argname, prefix)
-
-    def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
-        metainfo = self.repr_metainfo()
-        available = []
-        plugins = list(self.config.pluginmanager.comregistry)
-        #plugins.extend(self.config.pluginmanager.registry.plugins)
-        for plugin in plugins:
-            for name in vars(plugin.__class__):
-                if name.startswith(prefix):
-                    name = name[len(prefix):]
-                    if name not in available:
-                        available.append(name) 
-        msg = "funcargument %r not found for: %s" %(argname,metainfo.verboseline())
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        raise LookupError(msg)
+                        request._raiselookupfailed()
 
     def __eq__(self, other):
         try:
@@ -410,6 +387,70 @@ class Function(FunctionMixin, py.test.collect.Item):
     def __ne__(self, other):
         return not self == other
 
+    def getrequest(self, argname):
+        return FuncargRequest(pyfuncitem=self, argname=argname) 
+        
 
-# DEPRECATED
-#from py.__.test.plugin.pytest_doctest import DoctestFile 
+class FuncargRequest:
+    _argprefix = "pytest_funcarg__"
+
+    class Error(LookupError):
+        """ error on performing funcarg request. """ 
+        
+    def __init__(self, pyfuncitem, argname):
+        # XXX make pyfuncitem _pyfuncitem 
+        self._pyfuncitem = pyfuncitem
+        self.argname = argname 
+        self.function = pyfuncitem.obj
+        self.config = pyfuncitem.config
+        self.fspath = pyfuncitem.fspath
+        self._plugins = self._getplugins()
+        self._methods = self.config.pluginmanager.listattr(
+            plugins=self._plugins, 
+            attrname=self._argprefix + str(argname)
+        )
+
+    def __repr__(self):
+        return "<FuncargRequest %r for %r>" %(self.argname, self._pyfuncitem)
+
+
+    def _getplugins(self):
+        plugins = []
+        current = self._pyfuncitem
+        while not isinstance(current, Module):
+            current = current.parent
+            if isinstance(current, (Instance, Module)):
+                plugins.insert(0, current.obj)
+        return self.config.pluginmanager.getplugins() + plugins 
+
+    def call_next_provider(self):
+        if not self._methods:
+            raise self.Error("no provider methods left")
+        nextmethod = self._methods.pop()
+        return nextmethod(request=self)
+
+    def addfinalizer(self, finalizer):
+        self._pyfuncitem.addfinalizer(finalizer)
+
+    def maketempdir(self):
+        basetemp = self.config.getbasetemp()
+        tmp = py.path.local.make_numbered_dir(
+            prefix=self.function.__name__ + "_", 
+            keep=0, rootdir=basetemp)
+        return tmp
+
+    def _raiselookupfailed(self):
+        available = []
+        for plugin in self._plugins:
+            for name in vars(plugin.__class__):
+                if name.startswith(self._argprefix):
+                    name = name[len(self._argprefix):]
+                    if name not in available:
+                        available.append(name) 
+        metainfo = self._pyfuncitem.repr_metainfo()
+        msg = "funcargument %r not found for: %s" %(self.argname,metainfo.verboseline())
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        raise LookupError(msg)
+
+
+        

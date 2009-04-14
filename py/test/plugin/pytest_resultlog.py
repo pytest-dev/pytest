@@ -157,6 +157,7 @@ class TestWithFunctionIntegration:
     # ignorant regarding formatting details.  
     def getresultlog(self, testdir, arg):
         resultlog = testdir.tmpdir.join("resultlog")
+        testdir.plugins.append("resultlog")
         args = ["--resultlog=%s" % resultlog] + [arg]
         testdir.runpytest(*args)
         return filter(None, resultlog.readlines(cr=0))
@@ -166,7 +167,6 @@ class TestWithFunctionIntegration:
         ok = testdir.makepyfile(test_collection_ok="")
         skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
-
         lines = self.getresultlog(testdir, ok) 
         assert not lines
 
@@ -226,6 +226,7 @@ class TestWithFunctionIntegration:
 def test_generic(plugintester, LineMatcher):
     plugintester.apicheck(ResultlogPlugin)
     testdir = plugintester.testdir()
+    testdir.plugins.append("resultlog")
     testdir.makepyfile("""
         import py
         def test_pass():

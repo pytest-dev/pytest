@@ -1,31 +1,27 @@
 import py
 
-def pytest_funcarg__pickletransport(pyfuncitem):
-    return ImmutablePickleTransport()
-
-def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):
-    # for each function call we patch py._com.comregistry
-    # so that the unpickling of config objects 
-    # (which bind to this mechanism) doesn't do harm 
-    # usually config objects are no meant to be unpickled in
-    # the same system 
+def setglobals(request):
     oldconfig = py.test.config 
     oldcom = py._com.comregistry 
     print "setting py.test.config to None"
     py.test.config = None
     py._com.comregistry = py._com.Registry()
-    try:
-        return __call__.execute(firstresult=True)
-    finally:
+    def resetglobals():
         print "setting py.test.config to", oldconfig
         py.test.config = oldconfig
         py._com.comregistry = oldcom
+    request.addfinalizer(resetglobals)
+
+def pytest_funcarg__testdir(request):
+    setglobals(request)
+    return request.call_next_provider()
 
 class ImmutablePickleTransport:
-    def __init__(self):
+    def __init__(self, request):
         from py.__.test.dist.mypickle import ImmutablePickler
         self.p1 = ImmutablePickler(uneven=0)
         self.p2 = ImmutablePickler(uneven=1)
+        setglobals(request)
 
     def p1_to_p2(self, obj):
         return self.p2.loads(self.p1.dumps(obj))
@@ -39,6 +35,8 @@ class ImmutablePickleTransport:
         return p2config
 
 class TestImmutablePickling:
+    pytest_funcarg__pickletransport = ImmutablePickleTransport
+
     def test_pickle_config(self, testdir, pickletransport):
         config1 = testdir.parseconfig()
         assert config1.topdir == testdir.tmpdir

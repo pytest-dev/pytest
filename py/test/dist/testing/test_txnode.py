@@ -31,8 +31,8 @@ class EventQueue:
                     print str(kwargs["excrepr"])
 
 class MySetup:
-    def __init__(self, pyfuncitem):
-        self.pyfuncitem = pyfuncitem
+    def __init__(self, request):
+        self.request = request
 
     def geteventargs(self, eventname, timeout=2.0):
         eq = EventQueue(self.config.pluginmanager, self.queue)
@@ -55,16 +55,10 @@ class MySetup:
             print "exiting:", gw
             gw.exit()
 
-def pytest_funcarg__mysetup(pyfuncitem):
-    mysetup = MySetup(pyfuncitem)
+def pytest_funcarg__mysetup(request):
+    mysetup = MySetup(request)
     #pyfuncitem.addfinalizer(mysetup.finalize)
     return mysetup
-
-def pytest_funcarg__testdir(__call__, pyfuncitem):
-    # decorate to make us always change to testdir
-    testdir = __call__.execute(firstresult=True)
-    testdir.chdir()
-    return testdir 
 
 def test_node_hash_equality(mysetup):
     node = mysetup.makenode()

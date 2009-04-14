@@ -135,6 +135,12 @@ class TestRegistry:
         l = list(plugins.listattr('x', reverse=True))
         assert l == [43, 42, 41]
 
+        class api4: 
+            x = 44
+        l = list(plugins.listattr('x', extra=(api4,)))
+        assert l == range(41, 45)
+        assert len(list(plugins)) == 3  # otherwise extra added
+
 def test_api_and_defaults():
     assert isinstance(py._com.comregistry, Registry)
 

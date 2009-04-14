@@ -90,9 +90,7 @@ class Registry:
         l = []
         if plugins is None:
             plugins = self._plugins
-        if extra:
-            plugins += list(extra)
-        for plugin in plugins:
+        for plugin in list(plugins) + list(extra):
             try:
                 l.append(getattr(plugin, attrname))
             except AttributeError:

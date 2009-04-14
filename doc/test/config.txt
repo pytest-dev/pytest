@@ -21,3 +21,26 @@ behind the ``--`` double-dash.
 IOW, you can set default values for options per project, per
 home-directoray, per shell session or per test-run. 
 
+
+.. _`basetemp`: 
+
+per-testrun temporary directories 
+-------------------------------------------
+
+``py.test`` runs provide means to create per-test session
+temporary (sub) directories.  You can create such directories 
+like this:
+
+.. sourcecode: python
+
+    import py
+    basetemp = py.test.config.ensuretemp() 
+    basetemp_subdir = py.test.config.ensuretemp("subdir") 
+
+By default, ``py.test`` creates a ``pytest-NUMBER`` directory
+and will keep around the directories of the last three 
+test runs.  You can also set the base temporary directory 
+with the `--basetemp`` option.  When distributing 
+tests on the same machine, ``py.test`` takes care to 
+pass around the basetemp directory such that all temporary
+files land below the same basetemp directory.  

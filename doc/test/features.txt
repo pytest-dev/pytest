@@ -36,8 +36,19 @@ or class with a leading ``Test`` name is collected.
 Rapidly write integration, functional, unit tests 
 ===================================================
 
-py.test provides 
+XXX 
 
+funcargs and xUnit style setups 
+===================================================
+
+py.test provides powerful means for managing test
+state and fixtures.  Apart from the `traditional 
+xUnit style setup`_ for unittests it features the 
+simple and powerful `funcargs mechanism`_ for handling
+both complex and simple test scenarious. 
+
+.. _`funcargs mechanism`: funcargs.html
+.. _`traditional xUnit style setup`: xunit_setup.html
 
 load-balance tests to multiple CPUs
 ===================================
