@@ -18,6 +18,7 @@ class PluginManager(object):
 
     def register(self, plugin):
         self.api.pytest_plugin_registered(plugin=plugin)
+        import types
         self.comregistry.register(plugin)
 
     def unregister(self, plugin):

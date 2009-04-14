@@ -22,7 +22,6 @@ class DefaultPlugin:
         rep = runner.ItemTestReport(item, excinfo, "execute", outerr)
         item.config.api.pytest_itemtestreport(rep=rep) 
 
-    # XXX make this access pyfuncitem.args or funcargs 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)
 

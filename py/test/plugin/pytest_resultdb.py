@@ -1,4 +1,3 @@
-import uuid
 import py
 from pytest_resultlog import ResultLog
 
@@ -65,7 +64,7 @@ class JSONResultArchive(object):
             self._flush()
 
     def append_data(self, data):
-        runid = uuid.uuid4()
+        runid = py.std.uuid.uuid4()
         for item in data:
             item = item.copy()
             item['runid'] = str(runid)
@@ -100,7 +99,7 @@ class SQLiteResultArchive(object):
 
     def append_data(self, data):
         flat_data = []
-        runid = uuid.uuid4()
+        runid = py.std.uuid.uuid4()
         for item in data:
             item = item.copy()
             item['runid'] = str(runid)

@@ -5,10 +5,10 @@ rsyncignore = ['c-extension/greenlet/build']
 
 import py
 class PylibTestconfigPlugin:
-    def pytest_funcarg__specssh(self, pyfuncitem):
-        return getspecssh(pyfuncitem.config)
-    def pytest_funcarg__specsocket(self, pyfuncitem):
-        return getsocketspec(pyfuncitem.config)
+    def pytest_funcarg__specssh(self, request):
+        return getspecssh(request.config)
+    def pytest_funcarg__specsocket(self, request):
+        return getsocketspec(request.config)
 
     def pytest_addoption(self, parser):
         group = parser.addgroup("pylib", "py lib testing options")

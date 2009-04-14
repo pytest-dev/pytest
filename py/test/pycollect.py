@@ -177,7 +177,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
             #print "*" * 20, "INVOKE assertion", self
             py.magic.invoke(assertion=1)
         mod = self.obj
-        self.config.pluginmanager.register(mod)
+        #self.config.pluginmanager.register(mod)
         if hasattr(mod, 'setup_module'): 
             self.obj.setup_module(mod)
 
@@ -187,7 +187,7 @@ class Module(py.test.collect.File, PyCollectorMixin):
         if not self.config.option.nomagic:
             #print "*" * 20, "revoke assertion", self
             py.magic.revoke(assertion=1)
-        self.config.pluginmanager.unregister(self.obj)
+        #self.config.pluginmanager.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
@@ -366,22 +366,14 @@ class Function(FunctionMixin, py.test.collect.Item):
                 if i < startindex:
                     continue 
                 try:
-                    self.funcargs[argname] = self.lookup_onearg(argname)
+                    argvalue = self.getrequest(argname).call_next_provider()
+                    self.funcargs[argname] = argvalue
                 except LookupError, e:
                     numdefaults = len(funcobj.func_defaults or ()) 
                     if i + numdefaults >= len(argnames):
                         continue # continue # seems that our args have defaults 
                     else:
                         raise
-
-    def lookup_onearg(self, argname):
-        prefix = "pytest_funcarg__"
-        #makerlist = self.config.pluginmanager.listattr(prefix + argname)
-        value = self.config.pluginmanager.call_firstresult(prefix + argname, pyfuncitem=self)
-        if value is not None:
-            return value
-        else:
-            self._raisefuncargerror(argname, prefix)
 
     def _raisefuncargerror(self, argname, prefix="pytest_funcarg__"):
         metainfo = self.repr_metainfo()
@@ -419,9 +411,11 @@ class FuncargRequest:
         """ error on performing funcarg request. """ 
         
     def __init__(self, pyfuncitem, argname):
+        # XXX make pyfuncitem _pyfuncitem 
         self.pyfuncitem = pyfuncitem
         self.argname = argname 
         self.function = pyfuncitem.obj
+        self.funcname = pyfuncitem.name
         self.config = pyfuncitem.config
         extra = []
         current = pyfuncitem
@@ -434,11 +428,19 @@ class FuncargRequest:
             extra=extra,
         )
 
+    def __repr__(self):
+        return "<FuncargRequest %r for %r>" %(self.argname, self.pyfuncitem)
+
     def call_next_provider(self):
         if not self._methods:
             raise self.Error("no provider methods left")
         nextmethod = self._methods.pop()
+        print "calling", nextmethod
         return nextmethod(request=self)
 
     def addfinalizer(self, finalizer):
         self.pyfuncitem.addfinalizer(finalizer)
+
+    def getfspath(self):
+        return self.pyfuncitem.fspath
+        

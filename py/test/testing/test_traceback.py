@@ -10,7 +10,7 @@ class TestTracebackCutting:
     def test_traceback_argsetup(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_funcarg__hello(self, pyfuncitem):
+                def pytest_funcarg__hello(self, request):
                     raise ValueError("xyz")
         """)
         p = testdir.makepyfile("def test(hello): pass")

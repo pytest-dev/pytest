@@ -34,13 +34,6 @@ class TestModule:
         x = l.pop()
         assert x is None
 
-    def test_module_participates_as_plugin(self, testdir):
-        modcol = testdir.getmodulecol("")
-        modcol.setup()
-        assert modcol.config.pluginmanager.isregistered(modcol.obj)
-        modcol.teardown()
-        assert not modcol.config.pluginmanager.isregistered(modcol.obj)
-
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")

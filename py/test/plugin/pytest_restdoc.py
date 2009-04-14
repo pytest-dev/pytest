@@ -382,10 +382,15 @@ class TestApigenLinkRole:
                        "resolve_linkrole('source', 'py/foo/bar.py')")
 
 
-def pytest_funcarg__testdir(__call__, pyfuncitem):
-    testdir = __call__.execute(firstresult=True)
+def pytest_funcarg__testdir(request):
+    testdir = request.call_next_provider()
     testdir.makepyfile(confrest="from py.__.misc.rest import Project")
     testdir.plugins.append(RestdocPlugin())
+    count = 0
+    for p in testdir.plugins:
+        if isinstance(p, RestdocPlugin):
+            count += 1
+            assert count < 2
     return testdir
     
 class TestDoctest:

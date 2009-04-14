@@ -1,19 +1,19 @@
 import py
 
 class _pytestPlugin:
-    def pytest_funcarg___pytest(self, pyfuncitem):
-        return PytestArg(pyfuncitem)
+    def pytest_funcarg___pytest(self, request):
+        return PytestArg(request)
 
 class PytestArg:
-    def __init__(self, pyfuncitem):
-        self.pyfuncitem = pyfuncitem 
+    def __init__(self, request):
+        self.request = request 
 
     def getcallrecorder(self, apiclass, comregistry=None):
         if comregistry is None:
-            comregistry = self.pyfuncitem.config.pluginmanager.comregistry
+            comregistry = self.request.config.pluginmanager.comregistry
         callrecorder = CallRecorder(comregistry)
         callrecorder.start_recording(apiclass)
-        self.pyfuncitem.addfinalizer(callrecorder.finalize)
+        self.request.addfinalizer(callrecorder.finalize)
         return callrecorder 
 
 
