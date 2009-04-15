@@ -67,9 +67,6 @@ class PluginHooks:
     def pytest_itemrun(self, item, pdb=None):
         """ run given test item and return test report. """ 
 
-    def pytest_item_runtest_finished(self, item, excinfo, outerr):
-        """ called in-process after runtest() returned. """ 
-        
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
 
