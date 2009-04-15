@@ -131,7 +131,7 @@ is no next provider left.  See the `decorator example`_
 for a use of this method. 
 
 
-.. _`lookup order`: 
+.. _`funcarg lookup order`: 
 
 Order of funcarg provider lookup
 ----------------------------------------
@@ -154,30 +154,35 @@ function arguments a lookup of a
 matching provider will be performed. 
 
 
-Funcarg Examples
-=====================
+Funcarg Tutorial Examples
+============================
 
-Example: basic application specific setup
------------------------------------------------------
+tutorial example: the "test/app-specific" setup pattern 
+---------------------------------------------------------
 
-Here is a basic useful example for handling application 
-specific setup.  The goal is to have one place where
-we have the glue code for bootstrapping and configuring 
-application objects and allow test modules and 
-test functions to stay ignorant of involved details. 
-Let's start with the using side and consider a simple 
-test function living in a test file ``test_sample.py``:
+Here is a basic useful step-wise example for handling application
+specific test setup.  The goal is to have one place where we have the 
+glue code for bootstrapping and configuring application objects and allow
+test modules and test functions to stay ignorant of involved details. 
+
+step 1: use and implement a test/app-specific "mysetup"
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Let's write a simple test function living in a test file
+``test_sample.py`` that uses a ``mysetup`` funcarg for accessing test
+specific setup. 
 
 .. sourcecode:: python
 
+    # ./test_sample.py
     def test_answer(mysetup): 
         app = mysetup.myapp()
         answer = app.question()
         assert answer == 42
 
-To run this test py.test looks up and calls a provider to obtain the
-required ``mysetup`` function argument.  The test function simply
-interacts with the provided application specific setup. 
+To run this test py.test needs to find and call a provider to 
+obtain the required ``mysetup`` function argument.  The test 
+function interacts with the provided application specific setup. 
 
 To provide the ``mysetup`` function argument we write down
 a provider method in a `local plugin`_ by putting the
@@ -185,6 +190,7 @@ following code into a local ``conftest.py``:
 
 .. sourcecode:: python
 
+    # ./conftest.py 
     from myapp import MyApp
 
     class ConftestPlugin:
@@ -195,13 +201,14 @@ following code into a local ``conftest.py``:
         def myapp(self):
             return MyApp()
 
-The ``pytest_funcarg__mysetup`` method is called to 
-provide a value for the requested ``mysetup`` test function argument. 
-To complete the example we put a pseudo MyApp object
-into ``myapp.py``:
+py.test finds the ``pytest_funcarg__mysetup`` method by
+name, see `funcarg lookup order`_ for more on this mechanism. 
+
+To run the example we put a pseudo MyApp object into ``myapp.py``:
 
 .. sourcecode:: python
 
+    # ./myapp.py
     class MyApp:
         def question(self):
             return 6 * 9
@@ -217,42 +224,19 @@ show this failure:
     >       assert answer == 42
     E       assert 54 == 42
 
-If you are confused as to that the question or answer is
-here, please visit here_.
+If you are confused as to what the concrete question or answers 
+mean actually, please visit here_ :) 
 
 .. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
-
 .. _`local plugin`: ext.html#local-plugin
 
 
-Example: specifying funcargs in test modules or classes
----------------------------------------------------------
+step 2: adding a command line option 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-.. sourcecode:: python
-
-    def pytest_funcarg__mysetup(request):
-        result = request.call_next_provider()
-        result.extra = "..."
-        return result 
-
-You can also put such a function into a test class like this:
-
-.. sourcecode:: python
-
-    class TestClass:
-        def pytest_funcarg__mysetup(self, request):
-            # ...
-            #
-
-            
-Example: command line option for providing SSH-host
------------------------------------------------------------
-
-If you provide a "funcarg" from a plugin you can 
-easily make methods depend on command line options 
-or environment settings.  Here is a complete 
-example that allows to run tests involving
-an SSH connection if an ssh host is specified:
+If you provide a "funcarg" from a plugin you can easily make methods
+depend on command line options or environment settings.  Let's write a
+local plugin that adds a command line option to ``py.test`` invocations: 
 
 .. sourcecode:: python
 
@@ -266,25 +250,44 @@ an SSH connection if an ssh host is specified:
     class MySetupFuncarg:
         def __init__(self, request):
             self.request = request 
-        def ssh_gateway(self):
+        def getsshconnection(self):
             host = self.request.config.option.ssh
             if host is None:
                 py.test.skip("specify ssh host with --ssh to run this test")
             return py.execnet.SshGateway(host)
 
-Now any test functions can use the "mysetup.ssh_gateway()" method like this:
+Now any test functions can use the ``mysetup.getsshconnection()`` method like this:
 
 .. sourcecode:: python
 
     class TestClass:
         def test_function(self, mysetup):
-            ssh_gw = mysetup.ssh_gateway()
-            # work with ssh_gw 
+            conn = mysetup.getsshconnection()
+            # work with conn 
       
 Running this without the command line will yield this run result::
 
-    ...
+    XXX fill in 
 
+
+Example: specifying funcargs in test modules or classes
+---------------------------------------------------------
+
+.. sourcecode:: python
+
+    def pytest_funcarg__mysetup(request):
+        result = request.call_next_provider()
+        result.extra = "..."
+        return result 
+
+You can put such a function into a test class like this:
+
+.. sourcecode:: python
+
+    class TestClass:
+        def pytest_funcarg__mysetup(self, request):
+            # ...
+            #
 
 .. _`accept example`: 
 
@@ -355,7 +358,7 @@ by putting this in our test class:
         def test_sometest(self, accept):
             assert accept.tmpdir.join("special").check()
 
-According to the `lookup order`_ our class-specific provider will
+According to the `funcarg lookup order`_ our class-specific provider will
 be invoked first.  Here, we just ask our request object to 
 call the next provider and decorate its result.  This simple
 mechanism allows us to stay ignorant of how/where the 

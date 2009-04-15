@@ -4,6 +4,7 @@ LICENSE
 MANIFEST
 README.txt
 TODO.txt
+_findpy.py
 py/LICENSE
 py/__init__.py
 py/_com.py
