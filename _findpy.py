@@ -1,7 +1,9 @@
 #!/usr/bin/env python 
 
 #
-# find and import a version of 'py'
+# try to find and import a nearby version of the 'py' package. 
+# otherwise use the system global default 
+# XXX turn this into a developer-only thing? 
 #
 import sys
 import os

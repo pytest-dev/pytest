@@ -10,3 +10,4 @@ syntax:glob
 *.pyc
 *.pyo
 *.swp
+*.html
