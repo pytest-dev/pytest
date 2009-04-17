@@ -191,10 +191,12 @@ def test_generic(plugintester):
     
 def test_plugin_specify(testdir):
     testdir.chdir()
-    config = testdir.parseconfig("-p", "nqweotexistent")
-    py.test.raises(ImportError, 
-        "config.pluginmanager.do_configure(config)"
-    )
+    config = py.test.raises(ImportError, """
+            testdir.parseconfig("-p", "nqweotexistent")
+    """)
+    #py.test.raises(ImportError, 
+    #    "config.pluginmanager.do_configure(config)"
+    #)
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "default")
