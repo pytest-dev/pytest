@@ -47,6 +47,11 @@ class PluginManager(object):
         for spec in self._envlist("PYTEST_PLUGINS"):
             self.import_plugin(spec)
 
+    def consider_preparse(self, args):
+        for opt1,opt2 in zip(args, args[1:]):
+            if opt1 == "-p": 
+                self.import_plugin(opt2)
+
     def consider_conftest(self, conftestmodule):
         cls = getattr(conftestmodule, 'ConftestPlugin', None)
         if cls is not None and cls not in self.impname2plugin:

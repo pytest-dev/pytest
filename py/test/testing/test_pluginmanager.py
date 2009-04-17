@@ -8,6 +8,12 @@ class TestBootstrapping:
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
         py.test.raises(ImportError, "pluginmanager.consider_env()")
 
+    def test_preparse_args(self, monkeypatch):
+        pluginmanager = PluginManager()
+        py.test.raises(ImportError, """
+            pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
+        """)
+
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
         pluginmanager = PluginManager()
         testdir.syspathinsert()

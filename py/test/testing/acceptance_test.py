@@ -17,6 +17,23 @@ class TestGeneralUsage:
             '*ERROR: hello'
         ])
 
+    def test_config_preparse_plugin_option(self, testdir):
+        testdir.makepyfile(pytest_xyz="""
+            class XyzPlugin:
+                def pytest_addoption(self, parser):
+                    parser.addoption("--xyz", dest="xyz", action="store")
+        """)
+        testdir.makepyfile(test_one="""
+            import py
+            def test_option():
+                assert py.test.config.option.xyz == "123"
+        """)
+        result = testdir.runpytest("-p", "xyz", "--xyz=123")
+        assert result.ret == 0
+        assert result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
     def test_basetemp(self, testdir):
         mytemp = testdir.tmpdir.mkdir("mytemp")
         p = testdir.makepyfile("""
