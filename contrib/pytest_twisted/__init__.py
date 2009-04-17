@@ -100,18 +100,13 @@ class TwistedPlugin:
 
     def pytest_pyfunc_call(self, pyfuncitem, *args, **kwargs):
         if self.twisted:
-            def wrapper(func):
-                """
-                wrapper just to pass back (injecting) the test-function into
-                doit() by using a greenlet switch.
-                """
-                if hasattr(func, 'obj'):
-                    # XXX: what about **kwargs?
-                    res = gr_twisted.switch(lambda: func.obj(*args))
-                    if res:
-                        res.raiseException()
-            pyfuncitem = wrapper(pyfuncitem)    
-
+            # XXX1 kwargs?  
+            # XXX2 we want to delegate actual call to next plugin
+            #      (which may want to produce test coverage, etc.) 
+            res = gr_twisted.switch(lambda: pyfuncitem.obj(*args))
+            if res:
+                res.raiseException()
+            return True # indicates that we performed the function call 
 
 gr_twisted  = greenlet(_run_twisted)
 gr_tests    = greenlet.getcurrent()
