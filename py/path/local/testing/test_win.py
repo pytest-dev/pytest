@@ -42,4 +42,15 @@ class TestWINLocalPath:
         assert t1 == str(self.root) + '\\a_path'
         t1 = self.root.join('dir/a_path')
         assert t1 == str(self.root) + '\\dir\\a_path'
-        
+
+    def test_sysfind_in_currentdir(self):                                                                         
+        cmd = py.path.local.sysfind('cmd')                                                                        
+        root = cmd.new(dirname='', basename='') # c:\ in most installations                                       
+                                                                                                                  
+        old = root.chdir()                                                                                        
+        try:                                                                                                      
+            x = py.path.local.sysfind(cmd.relto(root))                                                            
+            assert x.check(file=1)                                                                                
+        finally:                                                                                                  
+             old.chdir()    
+

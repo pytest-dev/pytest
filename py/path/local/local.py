@@ -514,6 +514,8 @@ class LocalPath(common.FSPathBase, PlatformMixin):
         else:
             if iswin32:
                 paths = py.std.os.environ['Path'].split(';')
+                if '' not in paths and '.' not in paths:
+                    paths.append('.')
                 try:
                     systemroot = os.environ['SYSTEMROOT']
                 except KeyError:
