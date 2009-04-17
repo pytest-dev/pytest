@@ -69,6 +69,7 @@ class PluginHooks:
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
+    pytest_pyfunc_call.firstresult = True
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
         """ return ItemTestReport for the given test outcome. """
