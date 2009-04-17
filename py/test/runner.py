@@ -53,8 +53,6 @@ def basic_collect_report(collector):
         excinfo = py.code.ExceptionInfo()
     return CollectReport(collector, res, excinfo, outerr)
 
-from cPickle import Pickler, Unpickler
-
 def forked_run_report(item, pdb=None):
     EXITSTATUS_TESTEXIT = 4
     from py.__.test.dist.mypickle import ImmutablePickler

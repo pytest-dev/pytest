@@ -203,7 +203,7 @@ class DSession(Session):
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
-            self.queueevent(pytest_rescheduleitems, tosend)
+            self.queueevent("pytest_rescheduleitems", items=tosend)
 
     def senditems_load(self, tosend):
         if not tosend:
