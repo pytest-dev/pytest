@@ -49,7 +49,7 @@ class Syslog:
     for priority in "LOG_EMERG LOG_ALERT LOG_CRIT LOG_ERR LOG_WARNING LOG_NOTICE LOG_INFO LOG_DEBUG".split():
         try:
             exec("%s = py.std.syslog.%s" % (priority, priority))
-        except AttributeError:
+        except ImportError:
             pass
     
     def __init__(self, priority = None):
