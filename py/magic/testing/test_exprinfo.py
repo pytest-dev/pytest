@@ -129,5 +129,5 @@ def test_inconsistent_assert_result(testdir):
     """)
     result = testdir.runpytest(p)
     s = result.stdout.str()
-    assert s.find("re-evaluating") 
+    assert s.find("re-run") != -1
 
