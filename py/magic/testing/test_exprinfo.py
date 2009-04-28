@@ -119,3 +119,15 @@ def test_keyboard_interrupt():
             pass
         else:
             raise AssertionError, "ex %s didn't pass through" %(exstr, )
+
+def test_inconsistent_assert_result(testdir):
+    p = testdir.makepyfile("""
+        def test_func():
+            def f(l=[1,0]): 
+                return l.pop()
+            assert f()
+    """)
+    result = testdir.runpytest(p)
+    s = result.stdout.str()
+    assert s.find("re-evaluating") 
+

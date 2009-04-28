@@ -428,7 +428,9 @@ def interpret(source, frame, should_fail=False):
         import traceback
         traceback.print_exc()
     if should_fail:
-        return "(inconsistently failed then succeeded)"
+        return ("(assert failed but re-evaluating the assert expression "
+                "for printing intermediate values lead to a True value. "
+                "advise: avoid side-effects in assert expressions or use --nomagic)")
     else:
         return None
 
