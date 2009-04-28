@@ -3,6 +3,7 @@ pytes plugin for easing testing of pytest runs themselves.
 """
 
 import py
+import os
 import inspect
 from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
@@ -222,6 +223,9 @@ class TmpTestdir:
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")
+        env = os.environ.copy()
+        env['PYTHONPATH'] = "%s:%s" % (os.getcwd(), env['PYTHONPATH'])
+        kw['env'] = env
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):
