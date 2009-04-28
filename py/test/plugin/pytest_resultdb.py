@@ -287,6 +287,7 @@ def verify_archive_item_shape(item):
 
 class TestWithFunctionIntegration:
     def getarchive(self, testdir, arg):
+        py.test.importorskip("sqlite3")
         py.test.importorskip("simplejson")
         resultdb = testdir.tmpdir.join("resultdb")
         args = ["--resultdb=%s" % resultdb, "--resultdb_format=sqlite"] + [arg]
