@@ -12,31 +12,6 @@ def configproperty(name):
         return self.config.getvalue(name, self.fspath) 
     return property(fget)
 
-class ReprMetaInfo(object):
-    def __init__(self, fspath=None, lineno=None, modpath=None):
-        self.fspath = fspath
-        self.lineno = lineno 
-        self.modpath = modpath
-
-    def verboseline(self, basedir=None):
-        params = self.__dict__.copy()
-        if self.fspath:
-            if basedir is not None:
-                params['fspath'] = basedir.bestrelpath(self.fspath)
-        if self.lineno is not None:
-            params['lineno'] = self.lineno + 1
-
-        if self.fspath and self.lineno and self.modpath:
-            line = "%(fspath)s:%(lineno)s: %(modpath)s"
-        elif self.fspath and self.modpath:
-            line = "%(fspath)s: %(modpath)s"
-        elif self.fspath and self.lineno:
-            line = "%(fspath)s:%(lineno)s"
-        else:
-            line = "[nometainfo]"
-        return line % params
-        
-
 class Node(object): 
     """ base class for Nodes in the collection tree.  
         Collector nodes have children and 
@@ -50,7 +25,6 @@ class Node(object):
         - configuration/options for setup/teardown 
           stdout/stderr capturing and execution of test items 
     """
-    ReprMetaInfo = ReprMetaInfo
     def __init__(self, name, parent=None, config=None):
         self.name = name 
         self.parent = parent
@@ -450,31 +424,21 @@ class Item(Node):
     def _deprecated_testexecution(self):
         if self.__class__.run != Item.run:
             warnoldtestrun(function=self.run)
-            self.run()
-            return True
         elif self.__class__.execute != Item.execute:
             warnoldtestrun(function=self.execute)
-            self.execute(self.obj, *self._args)
-            return True
+        else:
+            return False
+        self.run()
+        return True
 
     def run(self):
-        """ deprecated, here because subclasses might call it. """ 
+        """ deprecated, here because subclasses might call it. """
         return self.execute(self.obj, *self._args)
 
     def execute(self, obj, *args):
-        """ deprecated, here because subclasses might call it. """ 
-        warnoldtestrun(function=self.execute)
+        """ deprecated, here because subclasses might call it. """
         return obj(*args)
 
-    def repr_metainfo(self):
-        try:
-            return self.ReprMetaInfo(self.fspath, modpath=self.__class__.__name__)
-        except AttributeError:
-            code = py.code.Code(self.execute)
-            return self.ReprMetaInfo(code.path, code.firstlineno)
-      
-    def runtest(self):
-        """ execute this test item."""
         
 def warnoldcollect(function=None):
     py.log._apiwarn("1.0", 

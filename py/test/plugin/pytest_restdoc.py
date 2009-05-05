@@ -64,6 +64,9 @@ class ReSTSyntaxTest(py.test.collect.Item):
         super(ReSTSyntaxTest, self).__init__(*args, **kwargs)
         self.project = project
 
+    def metainfo(self):
+        return self.fspath, None, "syntax check"
+
     def runtest(self):
         self.restcheck(py.path.svnwc(self.fspath))
 
@@ -193,6 +196,9 @@ class ReSTSyntaxTest(py.test.collect.Item):
                     #return [] # no need to rebuild 
 
 class DoctestText(py.test.collect.Item): 
+    def metainfo(self):
+        return self.fspath, None, "doctest"
+
     def runtest(self): 
         content = self._normalize_linesep()
         newcontent = self.config.api.pytest_doctest_prepare_content(content=content)
@@ -276,9 +282,9 @@ class LinkCheckerMaker(py.test.collect.Collector):
                             args=(tryfn, path, lineno), callobj=localrefcheck)
         
 class CheckLink(py.test.collect.Function): 
-    def repr_metainfo(self):
-        return self.ReprMetaInfo(fspath=self.fspath, lineno=self._args[2],
-            modpath="checklink: %s" % (self._args[0],))
+    def metainfo(self, basedir=None):
+        return (self.fspath, self._args[2], "checklink: %s" % self._args[0])
+
     def setup(self): 
         pass 
     def teardown(self): 

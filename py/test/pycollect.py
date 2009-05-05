@@ -87,15 +87,10 @@ class PyobjMixin(object):
         self._fslineno = fspath, lineno
         return fspath, lineno
 
-    def repr_metainfo(self):
+    def metainfo(self):
         fspath, lineno = self.getfslineno()
         modpath = self.getmodpath()
-        return self.ReprMetaInfo(
-            fspath=fspath, 
-            lineno=lineno,
-            modpath=modpath,
-        )
-
+        return fspath, lineno, modpath 
 
 class PyCollectorMixin(PyobjMixin, py.test.collect.Collector): 
     Class = configproperty('Class')
@@ -235,6 +230,7 @@ class Instance(PyCollectorMixin, py.test.collect.Collector):
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
+
     def _getsortvalue(self):  
         return self.getfslineno()
 
@@ -314,6 +310,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
             name = None
         call, args = obj[0], obj[1:]
         return name, call, args 
+    
 
 #
 #  Test Items 
@@ -389,7 +386,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def getrequest(self, argname):
         return FuncargRequest(pyfuncitem=self, argname=argname) 
-        
+
 
 class FuncargRequest:
     _argprefix = "pytest_funcarg__"
@@ -447,8 +444,9 @@ class FuncargRequest:
                     name = name[len(self._argprefix):]
                     if name not in available:
                         available.append(name) 
-        metainfo = self._pyfuncitem.repr_metainfo()
-        msg = "funcargument %r not found for: %s" %(self.argname,metainfo.verboseline())
+        fspath, lineno, msg = self._pyfuncitem.metainfo()
+        line = "%s:%s" %(fspath, lineno)
+        msg = "funcargument %r not found for: %s" %(self.argname, line)
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise LookupError(msg)
 

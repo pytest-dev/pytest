@@ -138,8 +138,7 @@ class TerminalReporter:
 
     def pytest_itemstart(self, item, node=None):
         if self.config.option.debug:
-            info = item.repr_metainfo()
-            line = info.verboseline(basedir=self.curdir) + " "
+            line = self._metainfoline(item)
             extra = ""
             if node:
                 extra = "-> " + str(node.gateway.id)
@@ -149,8 +148,7 @@ class TerminalReporter:
         elif self.config.option.verbose and self.config.option.dist == "no":
             # ensure that the path is printed before the 1st test of
             # a module starts running
-            info = item.repr_metainfo()
-            line = info.verboseline(basedir=self.curdir) + " "
+            line = self._metainfoline(item)
             #self.write_fspath_result(fspath, "")
             self.write_ensure_prefix(line, "") 
 
@@ -172,8 +170,7 @@ class TerminalReporter:
         if not self.config.option.verbose:
             self.write_fspath_result(fspath, letter)
         else:
-            info = rep.colitem.repr_metainfo()
-            line = info.verboseline(basedir=self.curdir) + " "
+            line = self._metainfoline(rep.colitem)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
             else:
@@ -249,6 +246,22 @@ class TerminalReporter:
         self.write_sep("#", "waiting for changes")
         for rootdir in rootdirs:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
+
+    def _metainfoline(self, item):
+        fspath, lineno, msg = item.metainfo()
+        if fspath:
+            fspath = self.curdir.bestrelpath(fspath)
+        if lineno is not None:
+            lineno += 1
+        if fspath and lineno and msg:
+            line = "%(fspath)s:%(lineno)s: %(msg)s"
+        elif fspath and msg:
+            line = "%(fspath)s: %(msg)s"
+        elif fspath and lineno:
+            line = "%(fspath)s:%(lineno)s"
+        else:
+            line = "[nometainfo]"
+        return line % locals() + " "
 
     #
     # summaries for testrunfinish 

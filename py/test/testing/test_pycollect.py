@@ -339,3 +339,55 @@ class TestConftestCustomization:
         assert len(colitems) == 1
         assert colitems[0].name == "check_method"
 
+
+class TestMetaInfo:
+        
+    def test_func_metainfo(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        fspath, lineno, modpath = item.metainfo()
+        assert fspath == item.fspath 
+        assert lineno == 0
+        assert modpath == "test_func"
+
+    def test_class_metainfo(self, testdir):
+        modcol = testdir.getmodulecol("""
+            # lineno 0
+            class TestClass:
+                def test_hello(self): pass
+        """)
+        classcol = modcol.collect_by_name("TestClass")
+        fspath, lineno, msg = classcol.metainfo()
+        assert fspath == modcol.fspath 
+        assert lineno == 1
+        assert msg == "TestClass"
+
+    def test_generator_metainfo(self, testdir):
+        modcol = testdir.getmodulecol("""
+            # lineno 0
+            def test_gen(): 
+                def check(x): 
+                    assert x
+                yield check, 3
+        """)
+        gencol = modcol.collect_by_name("test_gen")
+        fspath, lineno, modpath = gencol.metainfo()
+        assert fspath == modcol.fspath
+        assert lineno == 1
+        assert modpath == "test_gen"
+
+        genitem = gencol.collect()[0]
+        fspath, lineno, modpath = genitem.metainfo()
+        assert fspath == modcol.fspath
+        assert lineno == 2
+        assert modpath == "test_gen[0]"
+        """
+            def test_func():
+                pass
+            def test_genfunc():
+                def check(x):
+                    pass
+                yield check, 3
+            class TestClass:
+                def test_method(self):
+                    pass
+       """
