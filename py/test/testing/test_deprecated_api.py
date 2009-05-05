@@ -2,15 +2,8 @@
 import py
 
 class TestCollectDeprecated:
-    def test_directory_run_join_warnings(self, testdir):
-        p = testdir.makepyfile(test_one="")
-        config = testdir.parseconfig(p)  
-        dirnode = config.getfsnode(p.dirpath())
-        py.test.deprecated_call(dirnode.run)
-        # XXX for directories we still have join()
-        #py.test.deprecated_call(dirnode.join, 'test_one')
         
-    def test_collect_with_deprecated_run_and_join(self, testdir):
+    def test_collect_with_deprecated_run_and_join(self, testdir, recwarn):
         testdir.makepyfile(conftest="""
             import py
 
@@ -52,23 +45,31 @@ class TestCollectDeprecated:
         """)
         config = testdir.parseconfig()
         dirnode = config.getfsnode(p.dirpath())
-        colitems = py.test.deprecated_call(dirnode.collect)
+        colitems = dirnode.collect()
+        w = recwarn.pop(DeprecationWarning)
+        assert w.filename.find("conftest.py") != -1
+        #recwarn.resetregistry()
+        #assert 0, (w.message, w.filename, w.lineno)
         assert len(colitems) == 1
         modcol = colitems[0]
         assert modcol.name == "somefile.py"
-        colitems = py.test.deprecated_call(modcol.collect)
+        colitems = modcol.collect()
+        recwarn.pop(DeprecationWarning)
         assert len(colitems) == 2
         assert colitems[0].name == 'check'
         assert colitems[1].name == 'Cls'
         clscol = colitems[1] 
-        colitems = py.test.deprecated_call(clscol.collect)
+
+        colitems = clscol.collect()
+        recwarn.pop(DeprecationWarning)
         assert len(colitems) == 1
         icol = colitems[0] 
-        colitems = py.test.deprecated_call(icol.collect)
+        colitems = icol.collect()
+        recwarn.pop(DeprecationWarning)
         assert len(colitems) == 1
         assert colitems[0].name == 'check2'
 
-    def test_collect_with_deprecated_join_but_no_run(self, testdir):
+    def test_collect_with_deprecated_join_but_no_run(self, testdir, recwarn):
         testdir.makepyfile(conftest="""
             import py
 
@@ -87,42 +88,57 @@ class TestCollectDeprecated:
             def check_one(): pass
             class SomeClass: pass
         """)
-        colitems = py.test.deprecated_call(col.collect)
+        colitems = col.collect()
+        recwarn.pop(DeprecationWarning) 
         assert len(colitems) == 1
         funcitem = colitems[0]
         assert funcitem.name == "check_one"
 
-    def test_function_custom_run(self, testdir):
+    def test_function_custom_run(self, testdir, recwarn):
         testdir.makepyfile(conftest="""
             import py
-            class MyFunction(py.test.collect.Function):
+            class Function(py.test.collect.Function):
                 def run(self):
                     pass
-            Function=MyFunction 
         """)
         modcol = testdir.getmodulecol("def test_func(): pass")
         funcitem = modcol.collect()[0]
         assert funcitem.name == 'test_func'
-        py.test.deprecated_call(funcitem.runtest)
+        recwarn.clear()
+        funcitem.runtest()
+        recwarn.pop(DeprecationWarning)
 
-    def test_function_custom_execute(self, testdir):
+    def test_function_custom_execute(self, testdir, recwarn):
         testdir.makepyfile(conftest="""
             import py
+
             class MyFunction(py.test.collect.Function):
                 def execute(self, obj, *args):
                     pass
             Function=MyFunction 
         """)
-        modcol = testdir.getmodulecol("def test_func(): pass")
+        modcol = testdir.getmodulecol("def test_func2(): pass")
         funcitem = modcol.collect()[0]
-        assert funcitem.name == 'test_func'
-        py.test.deprecated_call(funcitem.runtest)
+        assert funcitem.name == 'test_func2'
+        funcitem._deprecated_testexecution()
+        w = recwarn.pop(DeprecationWarning)
+        assert w.filename.find("conftest.py") != -1
 
-    def test_function_deprecated_run_execute(self, testdir):
-        modcol = testdir.getmodulecol("def test_some(): pass")
+    def test_function_deprecated_run_execute(self, testdir, recwarn):
+        testdir.makepyfile(conftest="""
+            import py
+
+            class Function(py.test.collect.Function):
+
+                def run(self):
+                    pass
+        """)
+        modcol = testdir.getmodulecol("def test_some2(): pass")
         funcitem = modcol.collect()[0]
-        py.test.deprecated_call(funcitem.run)
-        py.test.deprecated_call(funcitem.execute, funcitem.obj)
+
+        recwarn.clear()
+        funcitem._deprecated_testexecution()
+        recwarn.pop(DeprecationWarning)
 
     def test_function_deprecated_run_recursive(self, testdir):
         testdir.makepyfile(conftest="""

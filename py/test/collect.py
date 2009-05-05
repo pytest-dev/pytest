@@ -347,7 +347,7 @@ class Collector(Node):
         setattr(self, attrname, True)
         method = getattr(self.__class__, 'run', None)
         if method is not None and method != Collector.run:
-            warnoldcollect()
+            warnoldcollect(function=method)
             names = self.run()
             return filter(None, [self.join(name) for name in names])
 
@@ -356,14 +356,12 @@ class Collector(Node):
             You can return an empty list.  Callers of this method
             must take care to catch exceptions properly.  
         """
-        warnoldcollect()
         return [colitem.name for colitem in self._memocollect()]
 
     def join(self, name): 
         """  DEPRECATED: return a child collector or item for the given name.  
              If the return value is None there is no such child. 
         """
-        warnoldcollect()
         return self.collect_by_name(name)
 
 class FSCollector(Collector): 
@@ -451,20 +449,21 @@ class Item(Node):
     """ a basic test item. """
     def _deprecated_testexecution(self):
         if self.__class__.run != Item.run:
-            warnoldtestrun()
+            warnoldtestrun(function=self.run)
             self.run()
             return True
         elif self.__class__.execute != Item.execute:
-            warnoldtestrun()
+            warnoldtestrun(function=self.execute)
             self.execute(self.obj, *self._args)
             return True
 
     def run(self):
-        warnoldtestrun()
+        """ deprecated, here because subclasses might call it. """ 
         return self.execute(self.obj, *self._args)
 
     def execute(self, obj, *args):
-        warnoldtestrun()
+        """ deprecated, here because subclasses might call it. """ 
+        warnoldtestrun(function=self.execute)
         return obj(*args)
 
     def repr_metainfo(self):
@@ -477,14 +476,14 @@ class Item(Node):
     def runtest(self):
         """ execute this test item."""
         
-def warnoldcollect():
+def warnoldcollect(function=None):
     py.log._apiwarn("1.0", 
         "implement collector.collect() instead of "
         "collector.run() and collector.join()",
-        stacklevel=2)
+        stacklevel=2, function=function)
 
-def warnoldtestrun():
+def warnoldtestrun(function=None):
     py.log._apiwarn("1.0", 
         "implement item.runtest() instead of "
         "item.run() and item.execute()",
-        stacklevel=2)
+        stacklevel=2, function=function)

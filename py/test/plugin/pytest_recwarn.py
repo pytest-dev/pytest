@@ -44,6 +44,7 @@ class WarningsRecorder:
         for i, w in py.builtin.enumerate(self.list):
             if issubclass(w.category, cls):
                 return self.list.pop(i)
+        __tracebackhide__ = True
         assert 0, "%r not found in %r" %(cls, self.list)
 
     #def resetregistry(self):
@@ -51,7 +52,7 @@ class WarningsRecorder:
     #    warnings.onceregistry.clear()
     #    warnings.__warningregistry__.clear()
 
-    def reset(self): 
+    def clear(self): 
         self.list[:] = []
 
     def finalize(self):
@@ -69,7 +70,7 @@ def test_WarningRecorder():
     warn = rec.pop()
     assert str(warn.message) == "hello"
     l = rec.list
-    rec.reset()
+    rec.clear()
     assert len(rec.list) == 0
     assert l is rec.list
     py.test.raises(AssertionError, "rec.pop()")

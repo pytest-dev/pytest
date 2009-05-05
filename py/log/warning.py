@@ -10,26 +10,30 @@ class Warning(py.std.exceptions.DeprecationWarning):
     def __str__(self):
         return self.msg 
 
-def _apiwarn(startversion, msg, stacklevel=1):
+def _apiwarn(startversion, msg, stacklevel=1, function=None):
     # below is mostly COPIED from python2.4/warnings.py's def warn()
     # Get context information
     msg = "%s (since version %s)" %(msg, startversion)
-    warn(msg, stacklevel=stacklevel+1)
+    warn(msg, stacklevel=stacklevel+1, function=function)
 
-def warn(msg, stacklevel=1):
-    try:
-        caller = sys._getframe(stacklevel)
-    except ValueError:
-        globals = sys.__dict__
-        lineno = 1
+def warn(msg, stacklevel=1, function=None):
+    if function is not None:
+        filename = py.std.inspect.getfile(function)
+        lineno = function.func_code.co_firstlineno
     else:
-        globals = caller.f_globals
-        lineno = caller.f_lineno
-    if '__name__' in globals:
-        module = globals['__name__']
-    else:
-        module = "<string>"
-    filename = globals.get('__file__')
+        try:
+            caller = sys._getframe(stacklevel)
+        except ValueError:
+            globals = sys.__dict__
+            lineno = 1
+        else:
+            globals = caller.f_globals
+            lineno = caller.f_lineno
+        if '__name__' in globals:
+            module = globals['__name__']
+        else:
+            module = "<string>"
+        filename = globals.get('__file__')
     if filename:
         fnl = filename.lower()
         if fnl.endswith(".pyc") or fnl.endswith(".pyo"):

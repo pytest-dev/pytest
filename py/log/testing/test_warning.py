@@ -26,3 +26,15 @@ def test_stacklevel():
     lno = test_stacklevel.func_code.co_firstlineno + 6
     warning = str(err)
     assert warning.find(":%s" % lno) != -1
+
+def test_function():
+    capture = py.io.StdCapture()
+    py.log._apiwarn("x.y.z", "something", function=test_function)
+    out, err = capture.reset()
+    print "out", out
+    print "err", err
+    assert err.find("x.y.z") != -1
+    lno = test_function.func_code.co_firstlineno 
+    exp = "%s:%s" % (mypath, lno)
+    assert err.find(exp) != -1
+
