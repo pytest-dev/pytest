@@ -131,9 +131,10 @@ class TestCollectFS:
         names = [x.name for x in col.collect()]
         assert names == ["dir1", "dir2", "test_one.py", "test_two.py", "x"]
 
-    def test_collector_deprecated_run_method(self, testdir):
+    def test_collector_deprecated_run_method(self, testdir, recwarn):
         modcol = testdir.getmodulecol("pass")
-        res1 = py.test.deprecated_call(modcol.run)
+        res1 = modcol.run()
+        recwarn.pop(DeprecationWarning) 
         res2 = modcol.collect()
         assert res1 == [x.name for x in res2]
 
