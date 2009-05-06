@@ -254,16 +254,29 @@ class TmpTestdir:
         return RunResult(ret, out, err)
 
     def runpybin(self, scriptname, *args):
+        fullargs = self._getpybinargs(scriptname) + args
+        return self.run(*fullargs)
+
+    def _getpybinargs(self, scriptname):
         bindir = py.path.local(py.__file__).dirpath("bin")
         script = bindir.join(scriptname)
         assert script.check()
-        return self.run(py.std.sys.executable, script, *args)
+        return py.std.sys.executable, script
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 
             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args 
         return self.runpybin("py.test", *args)
+
+    def spawn_pytest(self, string, expect_timeout=10.0):
+        pexpect = py.test.importorskip("pexpect", "2.3")
+        basetemp = self.tmpdir.mkdir("pexpect")
+        invoke = "%s %s" % self._getpybinargs("py.test")
+        cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
+        child = pexpect.spawn(cmd, logfile=basetemp.join("spawn.out").open("w"))
+        child.timeout = expect_timeout
+        return child
 
 class Event:
     def __init__(self, name, args, kwargs):

@@ -1,7 +1,5 @@
 import py
 
-pydir = py.path.local(py.__file__).dirpath()
-pytestpath = pydir.join("bin", "py.test")
 EXPECTTIMEOUT=10.0
 
 class TestGeneralUsage:
@@ -445,30 +443,13 @@ class TestDistribution:
 
 
 class TestInteractive:
-    def getspawn(self, tmpdir):
-        pexpect = py.test.importorskip("pexpect")
-        basetemp = tmpdir.mkdir("basetemp")
-        def spawn(cmd):
-            cmd = cmd + " --basetemp=" + str(basetemp)
-            return pexpect.spawn(cmd, logfile=tmpdir.join("spawn.out").open("w"))
-        return spawn
-
-    def requirespexpect(self, version_needed):
-        pexpect = py.test.importorskip("pexpect")
-        ver = tuple(map(int, pexpect.__version__.split(".")))
-        if ver < version_needed:
-            py.test.skip("pexpect version %s needed" %(".".join(map(str, version_needed))))
-       
     def test_pdb_interaction(self, testdir):
-        self.requirespexpect((2,3))
-        spawn = self.getspawn(testdir.tmpdir)
         p1 = testdir.makepyfile("""
             def test_1():
                 i = 0
                 assert i == 1
         """)
-        child = spawn("%s %s --pdb %s" % (py.std.sys.executable, pytestpath, p1))
-        child.timeout = EXPECTTIMEOUT
+        child = testdir.spawn_pytest("--pdb %s" % p1)
         #child.expect(".*def test_1.*")
         child.expect(".*i = 0.*")
         child.expect("(Pdb)")
@@ -478,14 +459,12 @@ class TestInteractive:
             child.wait()
 
     def test_simple_looponfail_interaction(self, testdir):
-        spawn = self.getspawn(testdir.tmpdir)
         p1 = testdir.makepyfile("""
             def test_1():
                 assert 1 == 0 
         """)
         p1.setmtime(p1.mtime() - 50.0)  
-        child = spawn("%s %s --looponfail %s" % (py.std.sys.executable, pytestpath, p1))
-        child.timeout = EXPECTTIMEOUT
+        child = testdir.spawn_pytest("--looponfail %s" % p1)
         child.expect("assert 1 == 0")
         child.expect("test_simple_looponfail_interaction.py:")
         child.expect("1 failed")
