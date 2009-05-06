@@ -6,6 +6,8 @@ class ResultdbPlugin:
 
     Saves test results to a datastore.
 
+    XXX this needs to be merged with resultlog plugin
+
     Also mixes in some early ideas about an archive abstraction for test 
     results.
     """ 
@@ -262,7 +264,11 @@ class TestJSONResultArchive(BaseResultArchiveTests):
 class TestSQLiteResultArchive(BaseResultArchiveTests):
     cls = SQLiteResultArchive
 
+    def setup_method(self, method):
+        py.test.importorskip("sqlite3")
+
     def test_init_db_sql(self, testdir):
+        py.test.importorskip("sqlite3")
         tempdb_path = unicode(testdir.tmpdir.join(self.tempdb))
         archive = self.cls(tempdb_path)
         archive.init_db()

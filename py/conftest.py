@@ -1,7 +1,6 @@
 pytest_plugins = '_pytest doctest pytester'.split()
 
 rsyncdirs = ['../doc']
-rsyncignore = ['c-extension/greenlet/build']
 
 import py
 class PylibTestconfigPlugin:
