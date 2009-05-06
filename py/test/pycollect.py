@@ -247,7 +247,7 @@ class FunctionMixin(PyobjMixin):
             obj = self.parent.obj 
         setup_func_or_method = getattr(obj, name, None)
         if setup_func_or_method is not None: 
-            return setup_func_or_method(self.obj) 
+            setup_func_or_method(self.obj) 
 
     def teardown(self): 
         """ perform teardown for this test function. """
@@ -345,14 +345,18 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def runtest(self):
         """ execute the given test function. """
-        if not self._deprecated_testexecution():
-            self.setupargs() # XXX move to setup() / consider funcargs plugin
-            ret = self.config.api.pytest_pyfunc_call(
-                pyfuncitem=self, args=self._args, kwargs=self.funcargs)
+        self.config.api.pytest_pyfunc_call(pyfuncitem=self, 
+            args=self._args, kwargs=self.funcargs)
 
-    def setupargs(self):
+    def setup(self):
+        super(Function, self).setup()
+        self._setupfuncargs()
+
+    def _setupfuncargs(self):
         if self._args:
-            # generator case: we don't do anything then
+            # functions yielded from a generator: we don't want
+            # to support that because we want to go here anyway: 
+            # http://bitbucket.org/hpk42/py-trunk/issue/2/next-generation-generative-tests
             pass
         else:
             # standard Python Test function/method case  

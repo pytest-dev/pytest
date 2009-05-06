@@ -8,7 +8,7 @@ class TestFuncargs:
                     return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
-        exc = py.test.raises(LookupError, "item.setupargs()")
+        exc = py.test.raises(LookupError, "item._setupfuncargs()")
         s = str(exc.value)
         assert s.find("xyzsomething") != -1
 
@@ -18,7 +18,7 @@ class TestFuncargs:
             def pytest_funcarg__some(self, request):
                 return request.function.__name__
         item.config.pluginmanager.register(Provider())
-        item.setupargs()
+        item._setupfuncargs()
         assert len(item.funcargs) == 1
 
     def test_funcarg_lookup_default_gets_overriden(self, testdir):
@@ -27,7 +27,7 @@ class TestFuncargs:
             def pytest_funcarg__other(self, request):
                 return request.function.__name__
         item.config.pluginmanager.register(Provider())
-        item.setupargs()
+        item._setupfuncargs()
         assert len(item.funcargs) == 1
         name, value = item.funcargs.popitem()
         assert name == "other"
@@ -41,7 +41,7 @@ class TestFuncargs:
             def pytest_funcarg__other(self, request):
                 return 42
         item.config.pluginmanager.register(Provider())
-        item.setupargs()
+        item._setupfuncargs()
         assert len(item.funcargs) == 2
         assert item.funcargs['some'] == "test_func"
         assert item.funcargs['other'] == 42
@@ -58,9 +58,9 @@ class TestFuncargs:
                 pass 
         """)
         item1, item2 = testdir.genitems([modcol])
-        item1.setupargs()
+        item1._setupfuncargs()
         assert item1.funcargs['something'] ==  "test_method"
-        item2.setupargs()
+        item2._setupfuncargs()
         assert item2.funcargs['something'] ==  "test_func"
 
 class TestRequest:

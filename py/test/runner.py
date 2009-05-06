@@ -20,7 +20,8 @@ def basic_run_report(item, pdb=None):
             item.config._setupstate.prepare(item)
             try:
                 when = "execute"
-                res = item.runtest()
+                if not item._deprecated_testexecution():
+                    item.runtest()
             finally:
                 when = "teardown"
                 item.config._setupstate.teardown_exact(item)

@@ -105,7 +105,7 @@ class TestCollectDeprecated:
         funcitem = modcol.collect()[0]
         assert funcitem.name == 'test_func'
         recwarn.clear()
-        funcitem.runtest()
+        funcitem._deprecated_testexecution()
         recwarn.pop(DeprecationWarning)
 
     def test_function_custom_execute(self, testdir, recwarn):
