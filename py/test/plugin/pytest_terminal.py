@@ -149,8 +149,10 @@ class TerminalReporter:
             # ensure that the path is printed before the 1st test of
             # a module starts running
             line = self._metainfoline(item)
-            #self.write_fspath_result(fspath, "")
             self.write_ensure_prefix(line, "") 
+        else:
+            fspath, lineno, msg = item.metainfo()
+            self.write_fspath_result(fspath, "")
 
     def pytest_rescheduleitems(self, items):
         if self.config.option.debug:
@@ -556,16 +558,10 @@ class TestTerminal:
             linecomp.stringio.truncate(0)
 
     def test_show_path_before_running_test(self, testdir, linecomp):
-        modcol = testdir.getmodulecol("""
-            def test_foobar():
-                pass
-        """)
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        modcol.config.pluginmanager.register(rep)
-        l = list(testdir.genitems([modcol]))
-        assert len(l) == 1
-        modcol.config.option.debug = True
-        rep.config.api.pytest_itemstart(item=l[0])
+        item = testdir.getitem("def test_func(): pass")
+        rep = TerminalReporter(item.config, file=linecomp.stringio)
+        item.config.pluginmanager.register(rep)
+        rep.config.api.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
             "*test_show_path_before_running_test.py*"
         ])
