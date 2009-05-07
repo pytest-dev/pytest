@@ -439,6 +439,8 @@ class Item(Node):
         """ deprecated, here because subclasses might call it. """
         return obj(*args)
 
+    def metainfo(self):
+        return self.fspath, None, ""
         
 def warnoldcollect(function=None):
     py.log._apiwarn("1.0", 
