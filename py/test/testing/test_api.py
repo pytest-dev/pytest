@@ -11,4 +11,4 @@ class TestPyfuncHooks:
                 return True
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())
-        config.api.pytest_pyfunc_call(pyfuncitem=item)
+        config.hook.pytest_pyfunc_call(pyfuncitem=item)

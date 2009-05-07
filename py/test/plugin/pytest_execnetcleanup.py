@@ -43,7 +43,7 @@ class ExecnetcleanupPlugin:
             return res
    
 def test_generic(plugintester):
-    plugintester.apicheck(ExecnetcleanupPlugin)
+    plugintester.hookcheck(ExecnetcleanupPlugin)
 
 @py.test.mark.xfail("clarify plugin registration/unregistration")
 def test_execnetplugin(testdir):

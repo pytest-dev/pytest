@@ -25,7 +25,7 @@ class PluginTester:
         #            break 
         return crunner 
 
-    def apicheck(self, pluginclass):
+    def hookcheck(self, pluginclass):
         print "loading and checking", pluginclass 
         fail = False 
         pm = py.test._PluginManager()
@@ -84,4 +84,4 @@ def formatdef(func):
 # ===============================================================================
 
 def test_generic(plugintester):
-    plugintester.apicheck(PlugintesterPlugin)
+    plugintester.hookcheck(PlugintesterPlugin)

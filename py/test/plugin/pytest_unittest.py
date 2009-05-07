@@ -71,7 +71,7 @@ class UnitTestFunction(py.test.collect.Function):
 
 
 def test_generic(plugintester):
-    plugintester.apicheck(UnittestPlugin)
+    plugintester.hookcheck(UnittestPlugin)
 
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""

@@ -21,7 +21,7 @@ class TestGatewayManagerPopen:
             assert spec.chdir == "abc"
         
     def test_popen_makegateway_events(self, _pytest):
-        rec = _pytest.getcallrecorder(py.execnet._API)
+        rec = _pytest.getcallrecorder(py.execnet._HookSpecs)
         hm = GatewayManager(["popen"] * 2)
         hm.makegateways()
         call = rec.popcall("pyexecnet_gwmanage_newgateway")
@@ -63,7 +63,7 @@ class TestGatewayManagerPopen:
 
     def test_hostmanage_rsync_same_popen_twice(self, mysetup, _pytest):
         source, dest = mysetup.source, mysetup.dest 
-        rec = _pytest.getcallrecorder(py.execnet._API)
+        rec = _pytest.getcallrecorder(py.execnet._HookSpecs)
         hm = GatewayManager(["popen//chdir=%s" %dest] * 2)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")

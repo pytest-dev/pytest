@@ -32,7 +32,7 @@ def basic_run_report(item, pdb=None):
         raise
     except: 
         excinfo = py.code.ExceptionInfo()
-    testrep = item.config.api.pytest_item_makereport(
+    testrep = item.config.hook.pytest_item_makereport(
         item=item, excinfo=excinfo, when=when, outerr=outerr)
     if pdb and testrep.failed:
         tw = py.io.TerminalWriter()

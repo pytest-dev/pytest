@@ -61,7 +61,7 @@ class TerminalReporter:
         self._tw.sep(sep, title, **markup)
 
     def getcategoryletterword(self, rep):
-        res = self.config.api.pytest_report_teststatus(rep=rep)
+        res = self.config.hook.pytest_report_teststatus(rep=rep)
         if res:
             return res
         for cat in 'skipped failed passed ???'.split():
@@ -228,7 +228,7 @@ class TerminalReporter:
         if exitstatus in (0, 1, 2):
             self.summary_failures()
             self.summary_skips()
-            self.config.api.pytest_terminal_summary(terminalreporter=self)
+            self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if excrepr is not None:
             self.summary_final_exc(excrepr)
         if exitstatus == 2:
@@ -389,15 +389,15 @@ class TestTerminal:
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.pluginmanager.register(rep)
-        rep.config.api.pytest_testrunstart()
+        rep.config.hook.pytest_testrunstart()
         
         for item in testdir.genitems([modcol]):
             ev = runner.basic_run_report(item) 
-            rep.config.api.pytest_itemtestreport(rep=ev)
+            rep.config.hook.pytest_itemtestreport(rep=ev)
         linecomp.assert_contains_lines([
                 "*test_pass_skip_fail.py .sF"
         ])
-        rep.config.api.pytest_testrunfinish(exitstatus=1)
+        rep.config.hook.pytest_testrunfinish(exitstatus=1)
         linecomp.assert_contains_lines([
             "    def test_func():",
             ">       assert 0",
@@ -416,21 +416,21 @@ class TestTerminal:
         """, configargs=("-v",))
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.pluginmanager.register(rep)
-        rep.config.api.pytest_testrunstart()
+        rep.config.hook.pytest_testrunstart()
         items = modcol.collect()
         rep.config.option.debug = True # 
         for item in items:
-            rep.config.api.pytest_itemstart(item=item, node=None)
+            rep.config.hook.pytest_itemstart(item=item, node=None)
             s = linecomp.stringio.getvalue().strip()
             assert s.endswith(item.name)
-            rep.config.api.pytest_itemtestreport(rep=runner.basic_run_report(item))
+            rep.config.hook.pytest_itemtestreport(rep=runner.basic_run_report(item))
 
         linecomp.assert_contains_lines([
             "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
             "*test_pass_skip_fail_verbose.py:4: *test_skip*SKIP*",
             "*test_pass_skip_fail_verbose.py:6: *test_func*FAIL*",
         ])
-        rep.config.api.pytest_testrunfinish(exitstatus=1)
+        rep.config.hook.pytest_testrunfinish(exitstatus=1)
         linecomp.assert_contains_lines([
             "    def test_func():",
             ">       assert 0",
@@ -441,13 +441,13 @@ class TestTerminal:
         modcol = testdir.getmodulecol("import xyz")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.config.pluginmanager.register(rep)
-        rep.config.api.pytest_testrunstart()
+        rep.config.hook.pytest_testrunstart()
         l = list(testdir.genitems([modcol]))
         assert len(l) == 0
         linecomp.assert_contains_lines([
             "*test_collect_fail.py F*"
         ])
-        rep.config.api.pytest_testrunfinish(exitstatus=1)
+        rep.config.hook.pytest_testrunfinish(exitstatus=1)
         linecomp.assert_contains_lines([
             ">   import xyz",
             "E   ImportError: No module named xyz"
@@ -537,11 +537,11 @@ class TestTerminal:
             """, configargs=("--tb=%s" % tbopt,))
             rep = TerminalReporter(modcol.config, file=linecomp.stringio)
             rep.config.pluginmanager.register(rep)
-            rep.config.api.pytest_testrunstart()
+            rep.config.hook.pytest_testrunstart()
             for item in testdir.genitems([modcol]):
-                rep.config.api.pytest_itemtestreport(
+                rep.config.hook.pytest_itemtestreport(
                     rep=runner.basic_run_report(item))
-            rep.config.api.pytest_testrunfinish(exitstatus=1)
+            rep.config.hook.pytest_testrunfinish(exitstatus=1)
             s = linecomp.stringio.getvalue()
             if tbopt == "long":
                 print s
@@ -561,7 +561,7 @@ class TestTerminal:
         item = testdir.getitem("def test_func(): pass")
         rep = TerminalReporter(item.config, file=linecomp.stringio)
         item.config.pluginmanager.register(rep)
-        rep.config.api.pytest_itemstart(item=item)
+        rep.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
             "*test_show_path_before_running_test.py*"
         ])
@@ -578,10 +578,10 @@ class TestTerminal:
         #""", configargs=("--showskipsummary",) + ("-v",)*verbose)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         modcol.config.pluginmanager.register(rep)
-        modcol.config.api.pytest_testrunstart()
+        modcol.config.hook.pytest_testrunstart()
         try:
             for item in testdir.genitems([modcol]):
-                modcol.config.api.pytest_itemtestreport(
+                modcol.config.hook.pytest_itemtestreport(
                     rep=runner.basic_run_report(item))
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
@@ -590,7 +590,7 @@ class TestTerminal:
         s = linecomp.stringio.getvalue()
         if not verbose:
             assert s.find("_keyboard_interrupt.py Fs") != -1
-        modcol.config.api.pytest_testrunfinish(exitstatus=2, excrepr=excinfo.getrepr())
+        modcol.config.hook.pytest_testrunfinish(exitstatus=2, excrepr=excinfo.getrepr())
         text = linecomp.stringio.getvalue()
         linecomp.assert_contains_lines([
             "    def test_foobar():",
@@ -640,16 +640,16 @@ class TestCollectonly:
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
         modcol.config.pluginmanager.register(rep)
         indent = rep.indent
-        rep.config.api.pytest_collectstart(collector=modcol)
+        rep.config.hook.pytest_collectstart(collector=modcol)
         linecomp.assert_contains_lines([
            "<Module 'test_collectonly_basic.py'>"
         ])
         item = modcol.join("test_func")
-        rep.config.api.pytest_itemstart(item=item)
+        rep.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>", 
         ])
-        rep.config.api.pytest_collectreport(
+        rep.config.hook.pytest_collectreport(
             rep=runner.CollectReport(modcol, [], excinfo=None))
         assert rep.indent == indent 
 
@@ -687,6 +687,6 @@ def test_repr_python_version(monkeypatch):
     assert repr_pythonversion() == str(x) 
 
 def test_generic(plugintester):
-    plugintester.apicheck(TerminalPlugin)
-    plugintester.apicheck(TerminalReporter)
-    plugintester.apicheck(CollectonlyReporter)
+    plugintester.hookcheck(TerminalPlugin)
+    plugintester.hookcheck(TerminalReporter)
+    plugintester.hookcheck(CollectonlyReporter)

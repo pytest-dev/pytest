@@ -2,7 +2,7 @@
 import py
 import os
 from py._com import Registry, MultiCall
-from py._com import PluginAPI
+from py._com import Hooks
 
 pytest_plugins = "xfail"
 
@@ -144,14 +144,14 @@ class TestRegistry:
 def test_api_and_defaults():
     assert isinstance(py._com.comregistry, Registry)
 
-class TestPluginAPI:
+class TestHooks:
     def test_happypath(self):
         registry = Registry()
         class Api:
             def hello(self, arg):
                 pass
 
-        mcm = PluginAPI(apiclass=Api, registry=registry)
+        mcm = Hooks(hookspecs=Api, registry=registry)
         assert hasattr(mcm, 'hello')
         assert repr(mcm.hello).find("hello") != -1
         class Plugin:
@@ -167,7 +167,7 @@ class TestPluginAPI:
         class Api:
             def hello(self, arg):
                 pass
-        mcm = PluginAPI(apiclass=Api, registry=registry)
+        mcm = Hooks(hookspecs=Api, registry=registry)
         excinfo = py.test.raises(TypeError, "mcm.hello(3)")
         assert str(excinfo.value).find("only keyword arguments") != -1
         assert str(excinfo.value).find("hello(self, arg)")
@@ -178,7 +178,7 @@ class TestPluginAPI:
             def hello(self, arg): pass
             hello.firstresult = True
 
-        mcm = PluginAPI(apiclass=Api, registry=registry)
+        mcm = Hooks(hookspecs=Api, registry=registry)
         class Plugin:
             def hello(self, arg):
                 return arg + 1
@@ -188,5 +188,5 @@ class TestPluginAPI:
 
     def test_default_plugins(self):
         class Api: pass 
-        mcm = PluginAPI(apiclass=Api)
+        mcm = Hooks(hookspecs=Api)
         assert mcm.registry == py._com.comregistry

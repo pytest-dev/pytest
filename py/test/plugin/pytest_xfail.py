@@ -57,7 +57,7 @@ class XfailPlugin(object):
 # ===============================================================================
 
 def test_generic(plugintester):
-    plugintester.apicheck(XfailPlugin) 
+    plugintester.hookcheck(XfailPlugin) 
                
 def test_xfail(plugintester, linecomp):
     testdir = plugintester.testdir()

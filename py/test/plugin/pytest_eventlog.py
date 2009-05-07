@@ -28,7 +28,7 @@ class EventlogPlugin:
 
 @py.test.mark.xfail
 def test_generic(plugintester):
-    plugintester.apicheck(EventlogPlugin)
+    plugintester.hookcheck(EventlogPlugin)
 
     testdir = plugintester.testdir()
     testdir.makepyfile("""

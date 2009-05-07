@@ -88,10 +88,10 @@ class Gateway(object):
         self._channelfactory = ChannelFactory(self, _startcount)
         self._cleanup.register(self) 
         if _startcount == 1: # only import 'py' on the "client" side 
-            from py._com import PluginAPI 
-            self.api = PluginAPI(ExecnetAPI)
+            from py._com import Hooks 
+            self.hook = Hooks(ExecnetAPI)
         else:
-            self.api = ExecnetAPI()
+            self.hook = ExecnetAPI()
 
     def _initreceive(self, requestqueue=False):
         if requestqueue: 
@@ -353,7 +353,7 @@ class Gateway(object):
         self._cleanup.unregister(self)
         self._stopexec()
         self._stopsend()
-        self.api.pyexecnet_gateway_exit(gateway=self)
+        self.hook.pyexecnet_gateway_exit(gateway=self)
 
     def _remote_redirect(self, stdout=None, stderr=None): 
         """ return a handle representing a redirection of a remote 

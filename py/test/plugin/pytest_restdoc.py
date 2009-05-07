@@ -142,7 +142,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
         directives.register_directive('sourcecode', pygments_directive)
 
     def resolve_linkrole(self, name, text, check=True):
-        apigen_relpath = self.project.apigen_relpath
+        apigen_relpath = self.project.hookgen_relpath
     
         if name == 'api':
             if text == 'py':
@@ -201,7 +201,7 @@ class DoctestText(py.test.collect.Item):
 
     def runtest(self): 
         content = self._normalize_linesep()
-        newcontent = self.config.api.pytest_doctest_prepare_content(content=content)
+        newcontent = self.config.hook.pytest_doctest_prepare_content(content=content)
         if newcontent is not None:
             content = newcontent 
         s = content 
@@ -346,7 +346,7 @@ def localrefcheck(tryfn, path, lineno):
 # PLUGIN tests
 #
 def test_generic(plugintester):
-    plugintester.apicheck(RestdocPlugin)
+    plugintester.hookcheck(RestdocPlugin)
 
 def test_deindent():
     assert deindent('foo') == 'foo'

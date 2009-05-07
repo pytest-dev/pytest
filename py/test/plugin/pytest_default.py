@@ -10,7 +10,7 @@ class DefaultPlugin:
         else:
             runner = basic_run_report
         report = runner(item, pdb=pdb) 
-        item.config.api.pytest_itemtestreport(rep=report)
+        item.config.hook.pytest_itemtestreport(rep=report)
         return True
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
@@ -20,7 +20,7 @@ class DefaultPlugin:
     def pytest_item_runtest_finished(self, item, excinfo, outerr):
         from py.__.test import runner
         rep = runner.ItemTestReport(item, excinfo, "execute", outerr)
-        item.config.api.pytest_itemtestreport(rep=rep) 
+        item.config.hook.pytest_itemtestreport(rep=rep) 
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         pyfuncitem.obj(*args, **kwargs)
@@ -187,7 +187,7 @@ def test_implied_different_sessions(tmpdir):
     assert x('-f') == 'LooponfailingSession'
 
 def test_generic(plugintester):
-    plugintester.apicheck(DefaultPlugin)
+    plugintester.hookcheck(DefaultPlugin)
     
 def test_plugin_specify(testdir):
     testdir.chdir()

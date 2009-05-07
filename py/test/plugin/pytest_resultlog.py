@@ -224,7 +224,7 @@ class TestWithFunctionIntegration:
         assert 'ValueError' in entry  
 
 def test_generic(plugintester, LineMatcher):
-    plugintester.apicheck(ResultlogPlugin)
+    plugintester.hookcheck(ResultlogPlugin)
     testdir = plugintester.testdir()
     testdir.plugins.append("resultlog")
     testdir.makepyfile("""

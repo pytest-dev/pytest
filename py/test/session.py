@@ -37,16 +37,16 @@ class Session(object):
             if isinstance(next, Item):
                 remaining = self.filteritems([next])
                 if remaining:
-                    self.config.api.pytest_itemstart(item=next)
+                    self.config.hook.pytest_itemstart(item=next)
                     yield next 
             else:
                 assert isinstance(next, Collector)
-                self.config.api.pytest_collectstart(collector=next)
+                self.config.hook.pytest_collectstart(collector=next)
                 rep = basic_collect_report(next)
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
                         yield x 
-                self.config.api.pytest_collectreport(rep=rep)
+                self.config.hook.pytest_collectreport(rep=rep)
             if self.shouldstop:
                 break
 
@@ -66,7 +66,7 @@ class Session(object):
                     continue
             remaining.append(colitem)
         if deselected: 
-            self.config.api.pytest_deselected(items=deselected)
+            self.config.hook.pytest_deselected(items=deselected)
             if self.config.option.keyword.endswith(":"):
                 self._nomatch = True
         return remaining 
@@ -78,7 +78,7 @@ class Session(object):
 
     def sessionstarts(self):
         """ setup any neccessary resources ahead of the test run. """
-        self.config.api.pytest_testrunstart()
+        self.config.hook.pytest_testrunstart()
         
     def pytest_itemtestreport(self, rep):
         if rep.failed:
@@ -89,7 +89,7 @@ class Session(object):
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
-        self.config.api.pytest_testrunfinish(
+        self.config.hook.pytest_testrunfinish(
             exitstatus=exitstatus, 
             excrepr=excinfo and excinfo.getrepr() or None
         )

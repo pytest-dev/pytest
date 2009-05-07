@@ -54,10 +54,10 @@ initpkg(__name__,
     exportdefs = {
 
     # py lib events and plugins 
-    '_com.Registry'         : ('./_com.py', 'Registry'), 
+    '_com.Registry'          : ('./_com.py', 'Registry'), 
     '_com.MultiCall'         : ('./_com.py', 'MultiCall'), 
-    '_com.comregistry'         : ('./_com.py', 'comregistry'), 
-    '_com.PluginAPI'         : ('./_com.py', 'PluginAPI'), 
+    '_com.comregistry'       : ('./_com.py', 'comregistry'), 
+    '_com.Hooks'             : ('./_com.py', 'Hooks'), 
 
     # py lib cmdline tools 
     'cmdline.pytest'         : ('./cmdline/pytest.py', 'main',),
@@ -146,7 +146,7 @@ initpkg(__name__,
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),
-    'execnet._API'           : ('./execnet/gateway.py', 'ExecnetAPI'),
+    'execnet._HookSpecs'           : ('./execnet/gateway.py', 'ExecnetAPI'),
     'execnet.SocketGateway'  : ('./execnet/register.py', 'SocketGateway'),
     'execnet.PopenGateway'   : ('./execnet/register.py', 'PopenGateway'),
     'execnet.SshGateway'     : ('./execnet/register.py', 'SshGateway'),

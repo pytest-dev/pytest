@@ -365,7 +365,7 @@ class TestWithFunctionIntegration:
         assert 'ValueError' in entry  
 
 def test_generic(plugintester):
-    plugintester.apicheck(ResultdbPlugin)
+    plugintester.hookcheck(ResultdbPlugin)
     testdir = plugintester.testdir()
     testdir.makepyfile("""
         import py

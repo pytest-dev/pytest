@@ -8,11 +8,11 @@ class PytestArg:
     def __init__(self, request):
         self.request = request 
 
-    def getcallrecorder(self, apiclass, comregistry=None):
+    def getcallrecorder(self, hookspecs, comregistry=None):
         if comregistry is None:
             comregistry = self.request.config.pluginmanager.comregistry
         callrecorder = CallRecorder(comregistry)
-        callrecorder.start_recording(apiclass)
+        callrecorder.start_recording(hookspecs)
         self.request.addfinalizer(callrecorder.finalize)
         return callrecorder 
 
@@ -35,17 +35,17 @@ class CallRecorder:
         self.calls = []
         self._recorders = {}
         
-    def start_recording(self, apiclass):
-        assert apiclass not in self._recorders 
+    def start_recording(self, hookspecs):
+        assert hookspecs not in self._recorders 
         class RecordCalls: 
             _recorder = self 
-        for name, method in vars(apiclass).items():
+        for name, method in vars(hookspecs).items():
             if name[0] != "_":
                 setattr(RecordCalls, name, self._getcallparser(method))
         recorder = RecordCalls()
-        self._recorders[apiclass] = recorder
+        self._recorders[hookspecs] = recorder
         self._comregistry.register(recorder)
-        self.api = py._com.PluginAPI(apiclass, registry=self._comregistry)
+        self.hook = py._com.Hooks(hookspecs, registry=self._comregistry)
 
     def finalize(self):
         for recorder in self._recorders.values():
@@ -53,8 +53,8 @@ class CallRecorder:
         self._recorders.clear()
 
     def recordsmethod(self, name):
-        for apiclass in self._recorders:
-            if hasattr(apiclass, name):
+        for hookspecs in self._recorders:
+            if hasattr(hookspecs, name):
                 return True
 
     def _getcallparser(self, method):
@@ -97,7 +97,7 @@ class CallRecorder:
         return l
 
 def test_generic(plugintester):
-    plugintester.apicheck(_pytestPlugin)
+    plugintester.hookcheck(_pytestPlugin)
 
 def test_callrecorder_basic():
     comregistry = py._com.Registry() 
@@ -106,7 +106,7 @@ def test_callrecorder_basic():
         def xyz(self, arg):
             pass
     rec.start_recording(ApiClass)
-    rec.api.xyz(arg=123)
+    rec.hook.xyz(arg=123)
     call = rec.popcall("xyz")
     assert call.arg == 123 
     assert call._name == "xyz"
@@ -124,7 +124,7 @@ def test_functional(testdir, linecomp):
                 def xyz(self, arg):
                     return arg + 1
             rec._comregistry.register(Plugin())
-            res = rec.api.xyz(arg=41)
+            res = rec.hook.xyz(arg=41)
             assert res == [42]
     """)
     sorter.assertoutcome(passed=1)

@@ -13,15 +13,15 @@ class RunnerPlugin:
         call = item.config.guardedcall(lambda: setupstate.prepare(item))
         if call.excinfo:
             rep = ItemSetupReport(item, call.excinfo, call.outerr)
-            item.config.api.pytest_itemsetupreport(rep=rep)
+            item.config.hook.pytest_itemsetupreport(rep=rep)
         else:
             call = item.config.guardedcall(lambda: item.runtest())
-            item.config.api.pytest_item_runtest_finished(
+            item.config.hook.pytest_item_runtest_finished(
                 item=item, excinfo=call.excinfo, outerr=call.outerr)
             call = item.config.guardedcall(lambda: self.teardown_exact(item))
             if call.excinfo:
                 rep = ItemSetupReport(item, call.excinfo, call.outerr)
-                item.config.api.pytest_itemsetupreport(rep=rep)
+                item.config.hook.pytest_itemsetupreport(rep=rep)
 
     def pytest_collector_collect(self, collector):
         call = item.config.guardedcall(lambda x: collector._memocollect())
@@ -146,7 +146,7 @@ class SetupState(object):
 # ===============================================================================
 
 def test_generic(plugintester):
-    plugintester.apicheck(RunnerPlugin())
+    plugintester.hookcheck(RunnerPlugin())
 
 class TestSetupState:
     def test_setup_prepare(self, testdir):

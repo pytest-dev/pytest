@@ -55,7 +55,7 @@ class FigleafPlugin:
 
 
 def test_generic(plugintester):
-    plugintester.apicheck(FigleafPlugin)
+    plugintester.hookcheck(FigleafPlugin)
 
 def test_functional(testdir):
     py.test.importorskip("figleaf")

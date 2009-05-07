@@ -26,7 +26,7 @@ class Capture:
         return res 
 
 def test_generic(plugintester):
-    plugintester.apicheck(IocapturePlugin)
+    plugintester.hookcheck(IocapturePlugin)
 
 class TestCapture:
     def test_std_functional(self, testdir):        

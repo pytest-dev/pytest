@@ -409,14 +409,14 @@ class Directory(FSCollector):
         return res
 
     def consider_file(self, path):
-        return self.config.api.pytest_collect_file(path=path, parent=self)
+        return self.config.hook.pytest_collect_file(path=path, parent=self)
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             py.log._apiwarn("0.99", "usefilters argument not needed")
-        res = self.config.api.pytest_collect_recurse(path=path, parent=self)
+        res = self.config.hook.pytest_collect_recurse(path=path, parent=self)
         if res is None or res:
-            return self.config.api.pytest_collect_directory(
+            return self.config.hook.pytest_collect_directory(
                 path=path, parent=self)
 
 class Item(Node): 

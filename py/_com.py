@@ -108,21 +108,21 @@ class Registry:
                     *args, **kwargs).execute(firstresult=True)
 
 
-class PluginAPI: 
-    def __init__(self, apiclass, registry=None):
-        self._apiclass = apiclass
+class Hooks: 
+    def __init__(self, hookspecs, registry=None):
+        self._hookspecs = hookspecs
         if registry is None:
             registry = comregistry
         self.registry = registry
-        for name, method in vars(apiclass).items():
+        for name, method in vars(hookspecs).items():
             if name[:2] != "__":
                 firstresult = getattr(method, 'firstresult', False)
-                mm = ApiCall(registry, name, firstresult=firstresult)
+                mm = HookCall(registry, name, firstresult=firstresult)
                 setattr(self, name, mm)
     def __repr__(self):
-        return "<PluginAPI %r %r>" %(self._apiclass, self._plugins)
+        return "<Hooks %r %r>" %(self._hookspecs, self._plugins)
 
-class ApiCall:
+class HookCall:
     def __init__(self, registry, name, firstresult):
         self.registry = registry
         self.name = name 
@@ -130,7 +130,7 @@ class ApiCall:
 
     def __repr__(self):
         mode = self.firstresult and "firstresult" or "each"
-        return "<ApiCall %r mode=%s %s>" %(self.name, mode, self.registry)
+        return "<HookCall %r mode=%s %s>" %(self.name, mode, self.registry)
 
     def __call__(self, *args, **kwargs):
         if args:

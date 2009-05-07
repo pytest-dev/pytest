@@ -28,7 +28,7 @@ class PytesterPlugin:
         return evrec
 
 def test_generic(plugintester):
-    plugintester.apicheck(PytesterPlugin)
+    plugintester.hookcheck(PytesterPlugin)
 
 class RunResult:
     def __init__(self, ret, outlines, errlines):
@@ -78,7 +78,7 @@ class TmpTestdir:
         sorter = EventRecorder(registry)
         sorter.callrecorder = CallRecorder(registry)
         sorter.callrecorder.start_recording(api.PluginHooks)
-        sorter.api = sorter.callrecorder.api
+        sorter.hook = sorter.callrecorder.hook
         self.request.addfinalizer(sorter.callrecorder.finalize)
         return sorter
 
@@ -385,7 +385,7 @@ def test_eventrecorder(testdir):
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.failed = True
-    recorder.api.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_itemtestreport(rep=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
@@ -394,12 +394,12 @@ def test_eventrecorder(testdir):
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
     rep.skipped = True
-    recorder.api.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_itemtestreport(rep=rep)
 
     rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
-    recorder.api.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_itemtestreport(rep=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -412,7 +412,7 @@ def test_eventrecorder(testdir):
     recorder.unregister()
     recorder.clear() 
     assert not recorder.getfailures()
-    recorder.api.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_itemtestreport(rep=rep)
     assert not recorder.getfailures()
 
 class LineComp:

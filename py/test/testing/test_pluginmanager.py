@@ -84,7 +84,7 @@ class TestBootstrapping:
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
-        call = sorter.getcall(pluginmanager.api.pytest_plugin_registered.name)
+        call = sorter.getcall(pluginmanager.hook.pytest_plugin_registered.name)
         assert call.plugin.__class__.__name__ == "APlugin"
 
         # check that it is not registered twice 

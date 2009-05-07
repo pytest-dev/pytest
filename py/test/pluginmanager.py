@@ -12,17 +12,17 @@ class PluginManager(object):
         self.MultiCall = self.comregistry.MultiCall
         self.impname2plugin = {}
 
-        self.api = py._com.PluginAPI(
-            apiclass=api.PluginHooks, 
+        self.hook = py._com.Hooks(
+            hookspecs=api.PluginHooks, 
             registry=self.comregistry) 
 
     def register(self, plugin):
-        self.api.pytest_plugin_registered(plugin=plugin)
+        self.hook.pytest_plugin_registered(plugin=plugin)
         import types
         self.comregistry.register(plugin)
 
     def unregister(self, plugin):
-        self.api.pytest_plugin_unregistered(plugin=plugin)
+        self.hook.pytest_plugin_unregistered(plugin=plugin)
         self.comregistry.unregister(plugin)
 
     def isregistered(self, plugin):
@@ -95,7 +95,7 @@ class PluginManager(object):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()
         excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
-        return self.api.pytest_internalerror(excrepr=excrepr)
+        return self.hook.pytest_internalerror(excrepr=excrepr)
 
     def do_addoption(self, parser):
         methods = self.comregistry.listattr("pytest_addoption", reverse=True)
@@ -115,12 +115,12 @@ class PluginManager(object):
         assert not hasattr(self, '_config')
         config.pluginmanager.register(self)
         self._config = config
-        config.api.pytest_configure(config=self._config)
+        config.hook.pytest_configure(config=self._config)
 
     def do_unconfigure(self, config):
         config = self._config 
         del self._config 
-        config.api.pytest_unconfigure(config=config)
+        config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
     def do_itemrun(self, item, pdb=None):

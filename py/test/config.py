@@ -42,7 +42,7 @@ class Config(object):
         self.pluginmanager = pluginmanager
         self._conftest = Conftest(onimport=self._onimportconftest)
         self._setupstate = SetupState() 
-        self.api = pluginmanager.api
+        self.hook = pluginmanager.hook
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
@@ -50,7 +50,7 @@ class Config(object):
 
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
-            self.api.pytest_trace(category="config", msg=msg)
+            self.hook.pytest_trace(category="config", msg=msg)
 
     def _processopt(self, opt):
         if hasattr(opt, 'default') and opt.dest:

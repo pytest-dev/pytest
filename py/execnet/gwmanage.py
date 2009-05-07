@@ -21,7 +21,7 @@ class GatewayManager:
             if not spec.chdir and not spec.popen:
                 spec.chdir = defaultchdir
             self.specs.append(spec)
-        self.api = py._com.PluginAPI(py.execnet._API)
+        self.hook = py._com.Hooks(py.execnet._HookSpecs)
 
     def makegateways(self):
         assert not self.gateways
@@ -29,7 +29,7 @@ class GatewayManager:
             gw = py.execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
-            self.api.pyexecnet_gwmanage_newgateway(
+            self.hook.pyexecnet_gwmanage_newgateway(
                 gateway=gw, platinfo=gw._rinfo())
 
     def getgateways(self, remote=True, inplacelocal=True):
@@ -75,12 +75,12 @@ class GatewayManager:
                 rsync.add_target_host(gateway, finished=finished)
                 seen[spec] = gateway
         if seen:
-            self.api.pyexecnet_gwmanage_rsyncstart(
+            self.hook.pyexecnet_gwmanage_rsyncstart(
                 source=source, 
                 gateways=seen.values(),
             )
             rsync.send()
-            self.api.pyexecnet_gwmanage_rsyncfinish(
+            self.hook.pyexecnet_gwmanage_rsyncfinish(
                 source=source, 
                 gateways=seen.values()
             )

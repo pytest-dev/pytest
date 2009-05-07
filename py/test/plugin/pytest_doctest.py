@@ -162,5 +162,5 @@ class TestDoctests:
 
 
 def test_generic(plugintester):
-    plugintester.apicheck(DoctestPlugin)
+    plugintester.hookcheck(DoctestPlugin)
 

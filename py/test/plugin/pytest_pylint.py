@@ -51,7 +51,7 @@ class PylintItem(py.test.collect.Item):
         print rating
 
 def test_generic(plugintester):
-    plugintester.apicheck(PylintPlugin)
+    plugintester.hookcheck(PylintPlugin)
 
 #def test_functional <pull from figleaf plugin>
 

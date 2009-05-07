@@ -135,7 +135,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self.config.api.pytest_pymodule_makeitem(
+        res = self.config.hook.pytest_pymodule_makeitem(
             modcol=self, name=name, obj=obj)
         if res:
             return res
@@ -345,7 +345,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def runtest(self):
         """ execute the given test function. """
-        self.config.api.pytest_pyfunc_call(pyfuncitem=self, 
+        self.config.hook.pytest_pyfunc_call(pyfuncitem=self, 
             args=self._args, kwargs=self.funcargs)
 
     def setup(self):

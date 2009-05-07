@@ -24,7 +24,7 @@ class TmpdirPlugin:
 # ===============================================================================
 #
 def test_generic(plugintester):
-    plugintester.apicheck(TmpdirPlugin)
+    plugintester.hookcheck(TmpdirPlugin)
 
 def test_funcarg(testdir):
     item = testdir.getitem("def test_func(tmpdir): pass")

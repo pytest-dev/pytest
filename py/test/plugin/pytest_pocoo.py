@@ -41,7 +41,7 @@ class PocooPlugin:
 
 
 def test_apicheck(plugintester):
-    plugintester.apicheck(PocooPlugin)
+    plugintester.hookcheck(PocooPlugin)
 
 def test_toproxy(testdir, monkeypatch):
     l = []

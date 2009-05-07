@@ -97,7 +97,7 @@ class DSession(Session):
           
         callname, args, kwargs = eventcall
         if callname is not None:
-            call = getattr(self.config.api, callname)
+            call = getattr(self.config.hook, callname)
             assert not args
             call(**kwargs)
 
@@ -114,7 +114,7 @@ class DSession(Session):
         # events other than HostDown upstream 
         eventname, args, kwargs = self.queue.get()
         if eventname == "pytest_testnodedown":
-            self.config.api.pytest_testnodedown(**kwargs)
+            self.config.hook.pytest_testnodedown(**kwargs)
             self.removenode(kwargs['node'])
         if not self.node2pending:
             # finished
@@ -176,7 +176,7 @@ class DSession(Session):
             if isinstance(next, py.test.collect.Item):
                 senditems.append(next)
             else:
-                self.config.api.pytest_collectstart(collector=next)
+                self.config.hook.pytest_collectstart(collector=next)
                 self.queueevent("pytest_collectreport", rep=basic_collect_report(next))
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
@@ -199,7 +199,7 @@ class DSession(Session):
             pending.extend(sending)
             for item in sending:
                 self.item2nodes.setdefault(item, []).append(node)
-                self.config.api.pytest_itemstart(item=item, node=node)
+                self.config.hook.pytest_itemstart(item=item, node=node)
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
@@ -218,7 +218,7 @@ class DSession(Session):
                     #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
                     self.item2nodes.setdefault(item, []).append(node)
-                    self.config.api.pytest_itemstart(item=item, node=node)
+                    self.config.hook.pytest_itemstart(item=item, node=node)
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:
@@ -241,7 +241,7 @@ class DSession(Session):
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = ItemTestReport(item, when="???", excinfo=longrepr)
         rep.node = node
-        self.config.api.pytest_itemtestreport(rep=rep)
+        self.config.hook.pytest_itemtestreport(rep=rep)
 
     def setup(self):
         """ setup any neccessary resources ahead of the test run. """
