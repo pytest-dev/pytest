@@ -224,8 +224,10 @@ class TmpTestdir:
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")
         env = os.environ.copy()
-        env['PYTHONPATH'] = "%s:%s" % (os.getcwd(), env['PYTHONPATH'])
+        env['PYTHONPATH'] = ":".join(filter(None, [
+            str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
+        #print "env", env
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):

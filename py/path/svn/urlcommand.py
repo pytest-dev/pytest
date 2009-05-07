@@ -28,13 +28,7 @@ class SvnCommandPath(svncommon.SvnPathBase):
             rev = path.rev 
             auth = path.auth
             path = path.strpath 
-        proto, uri = path.split("://", 1)
-        host, uripath = uri.split('/', 1)
-        # only check for bad chars in the non-protocol parts
-        if (svncommon._check_for_bad_chars(host, svncommon.ALLOWED_CHARS_HOST)
-                or svncommon._check_for_bad_chars(uripath,
-                                                  svncommon.ALLOWED_CHARS)):
-            raise ValueError("bad char in path %s" % (path, ))
+        svncommon.checkbadchars(path)
         path = path.rstrip('/')
         self.strpath = path
         self.rev = rev

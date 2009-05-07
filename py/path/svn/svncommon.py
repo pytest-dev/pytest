@@ -35,6 +35,17 @@ def _check_for_bad_chars(text, allowed_chars=ALLOWED_CHARS):
         return True
     return False
 
+def checkbadchars(url):
+    # (hpk) not quite sure about the exact purpose, guido w.? 
+    proto, uri = url.split("://", 1)
+    if proto != "file":
+        host, uripath = uri.split('/', 1)
+        # only check for bad chars in the non-protocol parts
+        if (_check_for_bad_chars(host, ALLOWED_CHARS_HOST) \
+            or _check_for_bad_chars(uripath, ALLOWED_CHARS)):
+            raise ValueError("bad char in %r" % (url, ))
+            
+
 #_______________________________________________________________
 
 class SvnPathBase(common.FSPathBase):

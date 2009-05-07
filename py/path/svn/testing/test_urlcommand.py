@@ -124,4 +124,4 @@ class TestSvnInfoCommand:
         assert info.kind == 'dir'
 
 def test_badchars():
-    py.test.raises(ValueError, "py.path.svnurl('file:///tmp/@@@:')")
+    py.test.raises(ValueError, "py.path.svnurl('http://host/tmp/@@@:')")

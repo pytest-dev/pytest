@@ -36,8 +36,6 @@ class TestBootstrapping:
                 plugin = py.test.config.pluginmanager.getplugin('x500')
                 assert plugin is not None
         """)
-        new = str(x500.dirpath()) # "%s:%s" %(x500.dirpath(), os.environ.get('PYTHONPATH', ''))
-        monkeypatch.setitem(os.environ, 'PYTHONPATH', new)
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'pytest_x500')
         result = testdir.runpytest(p)
         assert result.ret == 0
