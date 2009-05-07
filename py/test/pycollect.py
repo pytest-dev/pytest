@@ -279,9 +279,9 @@ class FunctionMixin(PyobjMixin):
 
 class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector): 
     def collect(self):
-        # test generators are collectors yet participate in 
-        # the test-item setup and teardown protocol. 
-        # otherwise we could avoid global setupstate
+        # test generators are seen as collectors but they also 
+        # invoke setup/teardown on popular request 
+        # (induced by the common "test_*" naming shared with normal tests)
         self.config._setupstate.prepare(self) 
         l = []
         seen = {}
