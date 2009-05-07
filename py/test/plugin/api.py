@@ -49,9 +49,9 @@ class PluginHooks:
     def pytest_collect_directory(self, path, parent):
         """ return Collection node or None. """
 
-    def pytest_pymodule_makeitem(self, modcol, name, obj):
+    def pytest_pycollect_obj(self, collector, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
-    pytest_pymodule_makeitem.firstresult = True
+    pytest_pycollect_obj.firstresult = True
 
     def pytest_collectstart(self, collector):
         """ collector starts collecting. """

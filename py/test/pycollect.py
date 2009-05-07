@@ -135,8 +135,8 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self.config.hook.pytest_pymodule_makeitem(
-            modcol=self, name=name, obj=obj)
+        res = self.config.hook.pytest_pycollect_obj(
+            collector=self, name=name, obj=obj)
         if res:
             return res
         if (self.classnamefilter(name)) and \

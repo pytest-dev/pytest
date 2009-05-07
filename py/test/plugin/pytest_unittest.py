@@ -18,9 +18,9 @@ import py
 class UnittestPlugin:
     """ discover and integrate traditional ``unittest.py`` tests. 
     """
-    def pytest_pymodule_makeitem(self, modcol, name, obj):
+    def pytest_pycollect_obj(self, collector, name, obj):
         if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
-            return UnitTestCase(name, parent=modcol)
+            return UnitTestCase(name, parent=collector)
 
 class UnitTestCase(py.test.collect.Class):
     def collect(self):
