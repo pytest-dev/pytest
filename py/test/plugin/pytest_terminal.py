@@ -136,24 +136,6 @@ class TerminalReporter:
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
 
-    def pytest_itemstart(self, item, node=None):
-        if self.config.option.debug:
-            line = self._metainfoline(item)
-            extra = ""
-            if node:
-                extra = "-> " + str(node.gateway.id)
-            self.write_ensure_prefix(line, extra)
-        # in dist situations itemstart (currently only means we 
-        # queued the item for testing, doesn't tell much
-        elif self.config.option.verbose and self.config.option.dist == "no":
-            # ensure that the path is printed before the 1st test of
-            # a module starts running
-            line = self._metainfoline(item)
-            self.write_ensure_prefix(line, "") 
-        else:
-            fspath, lineno, msg = item.metainfo()
-            self.write_fspath_result(fspath, "")
-
     def pytest_rescheduleitems(self, items):
         if self.config.option.debug:
             self.write_sep("!", "RESCHEDULING %s " %(items,))
@@ -161,6 +143,27 @@ class TerminalReporter:
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
     
+
+    def pytest_itemstart(self, item, node=None):
+        if self.config.option.dist != "no":
+            # for dist-testing situations itemstart means we 
+            # queued the item for sending, not interesting (unless debugging) 
+            if self.config.option.debug:
+                line = self._metainfoline(item)
+                extra = ""
+                if node:
+                    extra = "-> " + str(node.gateway.id)
+                self.write_ensure_prefix(line, extra)
+        else:
+            if self.config.option.verbose:
+                line = self._metainfoline(item)
+                self.write_ensure_prefix(line, "") 
+            else:
+                # ensure that the path is printed before the 
+                # 1st test of a module starts running
+                fspath, lineno, msg = item.metainfo()
+                self.write_fspath_result(fspath, "")
+
     def pytest_itemtestreport(self, rep):
         fspath = rep.colitem.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
@@ -170,6 +173,7 @@ class TerminalReporter:
             markup = {}
         self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
+            fspath, lineno, msg = rep.colitem.metainfo()
             self.write_fspath_result(fspath, letter)
         else:
             line = self._metainfoline(rep.colitem)
@@ -559,11 +563,31 @@ class TestTerminal:
 
     def test_show_path_before_running_test(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
-        rep = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(rep)
-        rep.config.hook.pytest_itemstart(item=item)
+        tr = TerminalReporter(item.config, file=linecomp.stringio)
+        item.config.pluginmanager.register(tr)
+        tr.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
             "*test_show_path_before_running_test.py*"
+        ])
+
+    def test_itemreport_metainfo(self, testdir, linecomp):
+        testdir.makeconftest("""
+            import py
+            class Function(py.test.collect.Function):
+                def metainfo(self):
+                    return "ABCDE", 42, "custom"    
+        """)
+        item = testdir.getitem("def test_func(): pass")
+        tr = TerminalReporter(item.config, file=linecomp.stringio)
+        item.config.pluginmanager.register(tr)
+        tr.config.hook.pytest_itemstart(item=item)
+        linecomp.assert_contains_lines([
+            "*ABCDE "
+        ])
+        tr.config.option.verbose = True
+        tr.config.hook.pytest_itemstart(item=item)
+        linecomp.assert_contains_lines([
+            "*ABCDE:43: custom*"
         ])
 
     def pseudo_keyboard_interrupt(self, testdir, linecomp, verbose=False):
