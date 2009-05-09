@@ -1,8 +1,7 @@
 """
 
-"recwarn" funcarg plugin that helps to assert 
-that warnings are shown to a user.  See the test
-at the bottom for an example. 
+provides "recwarn" funcarg for asserting warnings to be shown 
+to a user.  See the test at the bottom for an example. 
 
 """
 import py
