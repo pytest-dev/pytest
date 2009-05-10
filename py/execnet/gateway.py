@@ -167,7 +167,8 @@ class Gateway(object):
             except IOError: 
                 self._trace('IOError on _stopsend()')
             self._channelfactory._finished_receiving()
-            self._trace('leaving %r' % threading.currentThread())
+            if threading: # might be None during shutdown/finalization
+                self._trace('leaving %r' % threading.currentThread())
 
     from sys import exc_info
     def _send(self, msg):
