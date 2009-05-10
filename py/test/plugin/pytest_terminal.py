@@ -207,9 +207,10 @@ class TerminalReporter:
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
 
-        rev = py.__pkg__.getrev()
-        self.write_line("using py lib: %s <rev %s>" % (
-                       py.path.local(py.__file__).dirpath(), rev))
+        if self.config.option.debug or self.config.option.traceconfig:
+            rev = py.__pkg__.getrev()
+            self.write_line("using py lib: %s <rev %s>" % (
+                           py.path.local(py.__file__).dirpath(), rev))
         if self.config.option.traceconfig:
             plugins = []
             for plugin in self.config.pluginmanager.comregistry:
