@@ -142,7 +142,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
         directives.register_directive('sourcecode', pygments_directive)
 
     def resolve_linkrole(self, name, text, check=True):
-        apigen_relpath = self.project.hookgen_relpath
+        apigen_relpath = self.project.apigen_relpath
     
         if name == 'api':
             if text == 'py':

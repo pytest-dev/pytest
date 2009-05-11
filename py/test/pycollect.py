@@ -20,6 +20,7 @@ import py
 from py.__.test.collect import configproperty, warnoldcollect
 from py.__.code.source import findsource
 pydir = py.path.local(py.__file__).dirpath()
+from py.__.test import funcargs
 
 class PyobjMixin(object):
     def obj(): 
@@ -36,6 +37,16 @@ class PyobjMixin(object):
 
     def _getobj(self):
         return getattr(self.parent.obj, self.name)
+
+    def getmodulecollector(self):
+        return self._getparent(Module)
+    def getclasscollector(self):
+        return self._getparent(Class)
+    def _getparent(self, cls):
+        current = self
+        while current and not isinstance(current, cls):
+            current = current.parent
+        return current 
 
     def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
@@ -150,10 +161,25 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             if res is not None:
                 return res 
             if obj.func_code.co_flags & 32: # generator function 
+                # XXX deprecation warning 
                 return self.Generator(name, parent=self)
             else: 
-                return self.Function(name, parent=self)
+                return self._genfunctions(name, obj)
 
+    def _genfunctions(self, name, funcobj):
+        module = self.getmodulecollector().obj
+        # due to _buildname2items funcobj is the raw function, we need
+        # to work to get at the class 
+        clscol = self.getclasscollector()
+        cls = clscol and clscol.obj or None
+        runspec = funcargs.RunSpecs(funcobj, config=self.config, cls=cls, module=module)
+        gentesthook = self.config.hook.pytest_genfuncruns.clone(extralookup=module)
+        gentesthook(runspec=runspec)
+        if not runspec._combinations:
+            return self.Function(name, parent=self)
+        return funcargs.FunctionCollector(name=name, 
+            parent=self, combinations=runspec._combinations)
+        
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):
         return self._memoizedcall('_obj', self._importtestmodule)
@@ -320,11 +346,13 @@ class Function(FunctionMixin, py.test.collect.Item):
     """ a Function Item is responsible for setting up  
         and executing a Python callable test object.
     """
-    def __init__(self, name, parent=None, config=None, args=(), callobj=_dummy):
+    def __init__(self, name, parent=None, config=None, args=(), funcargs=None, callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
         self._finalizers = []
         self._args = args
-        self.funcargs = {}
+        if funcargs is None:
+            funcargs = {}
+        self.funcargs = funcargs 
         if callobj is not _dummy: 
             self._obj = callobj 
 
@@ -350,31 +378,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def setup(self):
         super(Function, self).setup()
-        self._setupfuncargs()
-
-    def _setupfuncargs(self):
-        if self._args:
-            # functions yielded from a generator: we don't want
-            # to support that because we want to go here anyway: 
-            # http://bitbucket.org/hpk42/py-trunk/issue/2/next-generation-generative-tests
-            pass
-        else:
-            # standard Python Test function/method case  
-            funcobj = self.obj 
-            startindex = getattr(funcobj, 'im_self', None) and 1 or 0 
-            argnames = py.std.inspect.getargs(self.obj.func_code)[0]
-            for i, argname in py.builtin.enumerate(argnames):
-                if i < startindex:
-                    continue 
-                request = self.getrequest(argname) 
-                try:
-                    self.funcargs[argname] = request.call_next_provider()
-                except request.Error:
-                    numdefaults = len(funcobj.func_defaults or ()) 
-                    if i + numdefaults >= len(argnames):
-                        continue # our args have defaults XXX issue warning? 
-                    else:
-                        request._raiselookupfailed()
+        funcargs.fillfuncargs(self)
 
     def __eq__(self, other):
         try:
@@ -385,74 +389,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         except AttributeError:
             pass
         return False
+
     def __ne__(self, other):
         return not self == other
 
-    def getrequest(self, argname):
-        return FuncargRequest(pyfuncitem=self, argname=argname) 
-
-
-class FuncargRequest:
-    _argprefix = "pytest_funcarg__"
-
-    class Error(LookupError):
-        """ error on performing funcarg request. """ 
-        
-    def __init__(self, pyfuncitem, argname):
-        # XXX make pyfuncitem _pyfuncitem 
-        self._pyfuncitem = pyfuncitem
-        self.argname = argname 
-        self.function = pyfuncitem.obj
-        self.config = pyfuncitem.config
-        self.fspath = pyfuncitem.fspath
-        self._plugins = self._getplugins()
-        self._methods = self.config.pluginmanager.listattr(
-            plugins=self._plugins, 
-            attrname=self._argprefix + str(argname)
-        )
-
-    def __repr__(self):
-        return "<FuncargRequest %r for %r>" %(self.argname, self._pyfuncitem)
-
-
-    def _getplugins(self):
-        plugins = []
-        current = self._pyfuncitem
-        while not isinstance(current, Module):
-            current = current.parent
-            if isinstance(current, (Instance, Module)):
-                plugins.insert(0, current.obj)
-        return self.config.pluginmanager.getplugins() + plugins 
-
-    def call_next_provider(self):
-        if not self._methods:
-            raise self.Error("no provider methods left")
-        nextmethod = self._methods.pop()
-        return nextmethod(request=self)
-
-    def addfinalizer(self, finalizer):
-        self._pyfuncitem.addfinalizer(finalizer)
-
-    def maketempdir(self):
-        basetemp = self.config.getbasetemp()
-        tmp = py.path.local.make_numbered_dir(
-            prefix=self.function.__name__ + "_", 
-            keep=0, rootdir=basetemp)
-        return tmp
-
-    def _raiselookupfailed(self):
-        available = []
-        for plugin in self._plugins:
-            for name in vars(plugin.__class__):
-                if name.startswith(self._argprefix):
-                    name = name[len(self._argprefix):]
-                    if name not in available:
-                        available.append(name) 
-        fspath, lineno, msg = self._pyfuncitem.metainfo()
-        line = "%s:%s" %(fspath, lineno)
-        msg = "funcargument %r not found for: %s" %(self.argname, line)
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        raise LookupError(msg)
-
-
-        

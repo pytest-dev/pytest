@@ -123,10 +123,14 @@ class Hooks:
         return "<Hooks %r %r>" %(self._hookspecs, self._plugins)
 
 class HookCall:
-    def __init__(self, registry, name, firstresult):
+    def __init__(self, registry, name, firstresult, extralookup=None):
         self.registry = registry
         self.name = name 
         self.firstresult = firstresult 
+        self.extralookup = extralookup and [extralookup] or ()
+
+    def clone(self, extralookup):
+        return HookCall(self.registry, self.name, self.firstresult, extralookup)
 
     def __repr__(self):
         mode = self.firstresult and "firstresult" or "each"
@@ -136,7 +140,8 @@ class HookCall:
         if args:
             raise TypeError("only keyword arguments allowed "
                             "for api call to %r" % self.name)
-        mc = MultiCall(self.registry.listattr(self.name), **kwargs)
+        attr = self.registry.listattr(self.name, extra=self.extralookup)
+        mc = MultiCall(attr, **kwargs)
         return mc.execute(firstresult=self.firstresult)
 
 comregistry = Registry()

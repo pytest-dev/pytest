@@ -1,52 +1,76 @@
 ======================================================
-**funcargs**: powerful and simple test setup
+**funcargs**: powerful test setup and parametrization
 ======================================================
 
-In version 1.0 py.test introduces a new mechanism for setting up test
-state for use by Python test functions.  It is particularly useful 
-for functional and integration testing but also for unit testing.  
-Using funcargs you can easily:
+Since version 1.0 it is possible to provide arguments to test functions,
+often called "funcargs".  The funcarg mechanisms were developed with
+these goals in mind: 
 
-* write self-contained, simple to read and debug test functions 
-* cleanly encapsulate glue code between your app and your tests 
-* setup test state depending on command line options or environment
+* **no boilerplate**: cleanly encapsulate test setup and fixtures
+* **flexibility**: easily setup test state depending on command line options or environment
+* **readability**: write simple to read and debug test functions 
+* **parametrizing tests**: run a test function multiple times with different parameters
 
-Using the funcargs mechanism will increase readability 
-and allow for easier refactoring of your application
-and its test suites. 
 
 .. contents:: Contents:
     :depth: 2
 
-The basic funcarg request/provide mechanism 
+Basic mechanisms by example
 =============================================
 
-To use funcargs you only need to specify 
-a named argument for your test function:
+providing single function arguments as needed 
+---------------------------------------------------------
+
+Let's look at a simple example of using funcargs within a test module:
 
 .. sourcecode:: python
 
-    def test_function(myarg):
-        # use myarg  
+    def pytest_funcarg__myfuncarg(request):
+        return 42
 
-For each test function that requests this ``myarg``
-argument a matching so called funcarg provider 
-will be invoked.  A Funcarg provider for ``myarg``
-is written down liks this:
+    def test_function(myfuncarg):
+        assert myfuncarg == 42
+
+1. To setup the running of the ``test_function()`` call, py.test 
+   looks up a provider for the ``myfuncarg`` argument. 
+   The provider method is recognized by its ``pytest_funcarg__`` prefix 
+   followed by the requested function argument name. 
+   The `request object`_ gives access to test context. 
+
+2. A ``test_function(42)`` call is executed.  If the test fails
+   one can see the original provided value. 
+
+
+generating test runs with multiple function argument values 
+----------------------------------------------------------------------
+
+You can parametrize multiple runs of a test function by 
+providing multiple values for function arguments.  Here 
+is an example for running the same test function three times. 
 
 .. sourcecode:: python
 
-    def pytest_funcarg__myarg(self, request):
-        # return value for myarg here
+    def pytest_genfuncruns(runspec):
+        if "arg1" in runspec.funcargnames:
+            runspec.addfuncarg("arg1", 10)
+            runspec.addfuncarg("arg1", 20)
+            runspec.addfuncarg("arg1", 30)
 
-Such a provider method can live on a test class,
-test module or on a local or global plugin. 
-The method is recognized by the ``pytest_funcarg__``
-prefix and is correlated to the argument
-name which follows this prefix.  The passed in
-``request`` object allows to interact 
-with test configuration, test collection
-and test running aspects.  
+    def test_function(arg1): 
+        assert myfuncarg in (10, 20, 30)
+
+Here is what happens:
+
+1. The ``pytest_genfuncruns()`` hook will be called once for each test
+   function.  The if-statement makes sure that we only add function
+   arguments (and runs) for functions that need it.   The `runspec object`_ 
+   provides access to context information. 
+
+2. Subsequently the ``test_function()`` will be called three times 
+   with three different values for ``arg1``.  
+
+Funcarg rules and support objects
+====================================
 
 .. _`request object`:
 
@@ -65,11 +89,13 @@ Attributes of request objects
 
 ``request.function``: python function object requesting the argument
 
-``request.fspath``: filesystem path of containing module
+``request.cls``: class object where the test function is defined in or None. 
+
+``runspec.module``: module object where the test function is defined in. 
 
 ``request.config``: access to command line opts and general config
 
-finalizing after test function executed 
+cleanup after test function execution
 ++++++++++++++++++++++++++++++++++++++++
 
 Request objects allow to **register a finalizer method** which is 
@@ -86,33 +112,8 @@ function finish:
         request.addfinalizer(lambda: myfile.close())
         return myfile
 
-a unique temporary directory 
-++++++++++++++++++++++++++++++++++++++++
 
-request objects allow to create unique temporary 
-directories.  These directories will be created
-as subdirectories under the `per-testsession
-temporary directory`_.  Each request object 
-receives its own unique subdirectory whose
-basenames starts with the name of the function
-that triggered the funcarg request.  You
-can further work with the provided `py.path.local`_ 
-object to e.g. create subdirs or config files::
-
-    def pytest_funcarg__mysetup(self, request):
-        tmpdir = request.maketempdir()
-        tmpdir.mkdir("mysubdir")
-        tmpdir.join("config.ini").write("[default")
-        return tmpdir 
-
-Note that you do not need to perform finalization, 
-i.e. remove the temporary directory as this is
-part of the global management of the base temporary
-directory. 
-
-.. _`per-testsession temporary directory`: config.html#basetemp
-
-decorating/adding to existing funcargs 
+decorating other funcarg providers 
 ++++++++++++++++++++++++++++++++++++++++
 
 If you want to **decorate a function argument** that is 
@@ -131,33 +132,73 @@ is no next provider left.  See the `decorator example`_
 for a use of this method. 
 
 
-.. _`funcarg lookup order`: 
+.. _`lookup order`: 
 
-Order of funcarg provider lookup
-----------------------------------------
+Order of provider and test generator lookup
+----------------------------------------------
 
-For any funcarg argument request here is the
-lookup order for provider methods: 
+Both test generators as well as funcarg providers 
+are looked up in the following three scopes:
 
-1. test class (if we are executing a method) 
-2. test module 
-3. local plugins
-4. global plugins 
-
+1. test module 
+2. local plugins
+3. global plugins 
 
 Using multiple funcargs 
 ----------------------------------------
 
-A test function may receive more than one 
-function arguments.  For each of the 
-function arguments a lookup of a 
-matching provider will be performed. 
+Test functions can have multiple arguments
+which can either come from a test generator 
+or from a provider. 
+
+.. _`runspec object`:
+
+runspec objects
+------------------------
+
+Runspecs help to inspect a testfunction and 
+to generate tests with combinations of function argument values. 
+
+generating and combining funcargs 
++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Calling ``runspec.addfuncarg(argname, value)`` will trigger 
+tests function calls with the given function 
+argument value.  For each already existing
+funcarg combination, the added funcarg value will
+
+* be merged to the existing funcarg combination if the
+  new argument name isn't part of the funcarg combination yet. 
+
+* otherwise generate a new test call where the existing 
+  funcarg combination is copied and updated
+  with the newly added funcarg value. 
+
+For simple usage, e.g. test functions with a single
+generated function argument, each call to ``addfuncarg``
+will just trigger a new call. 
+
+This scheme allows two sources to generate 
+function arguments independently from each other. 
+
+Attributes of runspec objects
+++++++++++++++++++++++++++++++++++++++++
+
+``runspec.funcargnames``: set of required function arguments for given function
+
+``runspec.function``: underlying python test function 
+
+``runspec.cls``: class object where the test function is defined in or None. 
+
+``runspec.module``: the module object where the test function is defined in. 
+
+``runspec.config``: access to command line opts and general config
 
 
-Funcarg Tutorial Examples
-============================
+Useful Funcarg Tutorial Examples
+=======================================
 
-tutorial example: the "test/app-specific" setup pattern 
+application specific test setup 
 ---------------------------------------------------------
 
 Here is a basic useful step-wise example for handling application
@@ -202,7 +243,7 @@ following code into a local ``conftest.py``:
             return MyApp()
 
 py.test finds the ``pytest_funcarg__mysetup`` method by
-name, see `funcarg lookup order`_ for more on this mechanism. 
+name, see also `lookup order`_.
 
 To run the example we put a pseudo MyApp object into ``myapp.py``:
 
@@ -265,29 +306,8 @@ Now any test functions can use the ``mysetup.getsshconnection()`` method like th
             conn = mysetup.getsshconnection()
             # work with conn 
       
-Running this without the command line will yield this run result::
-
-    XXX fill in 
-
-
-Example: specifying funcargs in test modules or classes
----------------------------------------------------------
-
-.. sourcecode:: python
-
-    def pytest_funcarg__mysetup(request):
-        result = request.call_next_provider()
-        result.extra = "..."
-        return result 
-
-You can put such a function into a test class like this:
-
-.. sourcecode:: python
-
-    class TestClass:
-        def pytest_funcarg__mysetup(self, request):
-            # ...
-            #
+Running this without specifying a command line option will result in a skipped
+test_function.  
 
 .. _`accept example`: 
 
@@ -309,16 +329,12 @@ example: specifying and selecting acceptance tests
         def __init__(self, request):
             if not request.config.option.acceptance:
                 py.test.skip("specify -A to run acceptance tests")
-            self.tmpdir = request.config.maketempdir(request.argname)
-            self._old = self.tmpdir.chdir()
-            request.addfinalizer(self.finalize)
-
-        def run(self):
-            return py.process.cmdexec("echo hello")
-
-        def finalize(self):
-            self._old.chdir()
-            # cleanup any other resources
+            self.tmpdir = request.config.mktemp(request.function.__name__, numbered=True)
+            
+        def run(self, cmd):
+            """ called by test code to execute an acceptance test. """ 
+            self.tmpdir.chdir() 
+            return py.process.cmdexec(cmd)
 
    
 and the actual test function example:
@@ -327,47 +343,115 @@ and the actual test function example:
 
     def test_some_acceptance_aspect(accept):
         accept.tmpdir.mkdir("somesub")
-        result = accept.run()
-        assert result
+        result = accept.run("ls -la")
+        assert "somesub" in result
    
-That's it!  This test will get automatically skipped with
-an appropriate message if you just run ``py.test``:: 
-
-    ... OUTPUT of py.test on this example ... 
-
+If you run this test without specifying a command line option
+the test will get skipped with an appropriate message. Otherwise
+you can start to add convenience and test support methods 
+to your AcceptFuncarg and drive running of tools or
+applications and provide ways to do assertions about
+the output. 
 
 .. _`decorator example`: 
 
-example: decorating/extending a funcarg in a TestClass 
+example: decorating a funcarg in a test module
 --------------------------------------------------------------
 
 For larger scale setups it's sometimes useful to decorare 
-a funcarg just for a particular test module or even 
-a particular test class.  We can extend the `accept example`_ 
-by putting this in our test class:
+a funcarg just for a particular test module.  We can 
+extend the `accept example`_ by putting this in our test class:
 
 .. sourcecode:: python
 
-    class TestSpecialAcceptance:
-        def pytest_funcarg__accept(self, request):
-            arg = request.call_next_provider()
-            # create a special layout in our tempdir
-            arg.tmpdir.mkdir("special")
-            return arg 
+    def pytest_funcarg__accept(self, request):
+        arg = request.call_next_provider()
+        # create a special layout in our tempdir
+        arg.tmpdir.mkdir("special")
+        return arg 
 
+    class TestSpecialAcceptance:
         def test_sometest(self, accept):
             assert accept.tmpdir.join("special").check()
 
-According to the `funcarg lookup order`_ our class-specific provider will
-be invoked first.  Here, we just ask our request object to 
-call the next provider and decorate its result.  This simple
+According to the the `lookup order`_ our module level provider 
+will be invoked first and it can ask ask its request object to 
+call the next provider and then decorate its result.  This 
 mechanism allows us to stay ignorant of how/where the 
 function argument is provided.  
 
-Note that we make use here of `py.path.local`_ objects
-that provide uniform access to the local filesystem. 
+sidenote: the temporary directory used here are instances of 
+the `py.path.local`_ class which provides many of the os.path 
+methods in a convenient way. 
 
 .. _`py.path.local`: ../path.html#local
+
+.. _`combine multiple funcarg values`:
+
+
+parametrize test functions by combining generated funcargs 
+--------------------------------------------------------------------------
+
+Adding different funcargs will generate test calls with
+all combinations of added funcargs.  Consider this example:
+
+.. sourcecode:: python
+
+    def makearg1(runspec):
+        runspec.addfuncarg("arg1", 10)
+        runspec.addfuncarg("arg1", 11)
+
+    def makearg2(runspec):
+        runspec.addfuncarg("arg2", 20)
+        runspec.addfuncarg("arg2", 21)
+
+    def pytest_genfuncruns(runspec):
+        makearg1(runspec) 
+        makearg2(runspec) 
+
+    # the actual test function
+
+    def test_function(arg1, arg2):
+        assert arg1 in (10, 20) 
+        assert arg2 in (20, 30) 
+
+Running this test module will result in ``test_function`` 
+being called four times, in the following order::
+
+    test_function(10, 20)
+    test_function(10, 21)
+    test_function(11, 20)
+    test_function(11, 21)
+
+
+example: test functions with generated and provided funcargs 
+-------------------------------------------------------------------
+
+You can mix generated function arguments and normally 
+provided ones. Consider this module:
+
+.. sourcecode:: python
+
+    def pytest_genfuncruns(runspec):
+        if "arg1" in runspec.funcargnames: # test_function2 does not have it 
+            runspec.addfuncarg("arg1", 10)
+            runspec.addfuncarg("arg1", 20)
+
+    def pytest_funcarg__arg2(request):
+        return [10, 20]
+
+    def test_function(arg1, arg2):
+        assert arg1 in arg2 
+
+    def test_function2(arg2):
+        assert args2 == [10, 20]
+
+Running this test module will result in ``test_function`` 
+being called twice, with these arguments::
+
+    test_function(10, [10, 20])
+    test_function(20, [10, 20])
+
 
 Questions and Answers
 ==================================
@@ -377,14 +461,14 @@ Questions and Answers
 Why ``pytest_funcarg__*`` methods? 
 ------------------------------------
 
-When experimenting with funcargs we also considered an explicit
-registration mechanism, i.e. calling a register method e.g. on the
-config object.  But lacking a good use case for this indirection and
-flexibility we decided to go for `Convention over Configuration`_ 
-and allow to directly specify the provider.  It has the 
-positive implication that you should be able to 
-"grep" for ``pytest_funcarg__MYARG`` and will find all
-providing sites (usually exactly one).  
+When experimenting with funcargs we also
+considered an explicit registration mechanism, i.e. calling a register
+method on the config object.  But lacking a good use case for this
+indirection and flexibility we decided to go for `Convention over
+Configuration`_ and allow to directly specify the provider.  It has the
+positive implication that you should be able to "grep" for
+``pytest_funcarg__MYARG`` and will find all providing sites (usually
+exactly one).  
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 

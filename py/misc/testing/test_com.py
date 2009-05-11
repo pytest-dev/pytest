@@ -190,3 +190,23 @@ class TestHooks:
         class Api: pass 
         mcm = Hooks(hookspecs=Api)
         assert mcm.registry == py._com.comregistry
+
+    def test_hooks_extra_plugins(self):
+        registry = Registry()
+        class Api:
+            def hello(self, arg):
+                pass
+        hook_hello = Hooks(hookspecs=Api, registry=registry).hello 
+        class Plugin:
+            def hello(self, arg):
+                return arg + 1
+        registry.register(Plugin())
+        class Plugin2:
+            def hello(self, arg):
+                return arg + 2
+        newhook = hook_hello.clone(extralookup=Plugin2())
+        l = newhook(arg=3)
+        assert l == [5, 4]
+        l2 = hook_hello(arg=3)
+        assert l2 == [4]
+        

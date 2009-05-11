@@ -114,7 +114,7 @@ class TestGatewayManagerPopen:
 
 class pytest_funcarg__mysetup:
     def __init__(self, request):
-        tmp = request.maketempdir()
+        tmp = request.config.mktemp(request.function.__name__, numbered=True)
         self.source = tmp.mkdir("source")
         self.dest = tmp.mkdir("dest")
 

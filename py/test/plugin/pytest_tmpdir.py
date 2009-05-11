@@ -27,9 +27,10 @@ def test_generic(plugintester):
     plugintester.hookcheck(TmpdirPlugin)
 
 def test_funcarg(testdir):
+    from py.__.test.funcargs import FuncargRequest
     item = testdir.getitem("def test_func(tmpdir): pass")
     plugin = TmpdirPlugin()
-    p = plugin.pytest_funcarg__tmpdir(item.getrequest("tmpdir"))
+    p = plugin.pytest_funcarg__tmpdir(FuncargRequest(item, "tmpdir"))
     assert p.check()
     bn = p.basename.strip("0123456789-")
     assert bn.endswith("test_func")

@@ -215,6 +215,12 @@ class TestGenerator:
         assert not skipped and not failed 
 
 class TestFunction:
+    def test_getmodulecollector(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        modcol = item.getmodulecollector()
+        assert isinstance(modcol, py.test.collect.Module)
+        assert hasattr(modcol.obj, 'test_func')
+        
     def test_function_equality(self, tmpdir):
         config = py.test.config._reparse([tmpdir])
         f1 = py.test.collect.Function(name="name", config=config, 

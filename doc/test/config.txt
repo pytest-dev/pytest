@@ -28,8 +28,10 @@ per-testrun temporary directories
 -------------------------------------------
 
 ``py.test`` runs provide means to create per-test session
-temporary (sub) directories.  You can create such directories 
-like this:
+temporary (sub) directories through the config object.  
+You can create directories like this:
+
+.. XXX use a more local example, just with "config" 
 
 .. sourcecode: python
 

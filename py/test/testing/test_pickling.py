@@ -34,9 +34,9 @@ class ImmutablePickleTransport:
         p2config._initafterpickle(config.topdir)
         return p2config
 
-class TestImmutablePickling:
-    pytest_funcarg__pickletransport = ImmutablePickleTransport
+pytest_funcarg__pickletransport = ImmutablePickleTransport
 
+class TestImmutablePickling:
     def test_pickle_config(self, testdir, pickletransport):
         config1 = testdir.parseconfig()
         assert config1.topdir == testdir.tmpdir

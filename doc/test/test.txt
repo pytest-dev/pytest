@@ -11,14 +11,18 @@ quickstart_: for getting started immediately.
 
 features_: a walk through basic features and usage. 
 
+funcargs_: powerful parametrized test function setup  
+
+`distributed testing`_: distribute test runs to other machines and platforms. 
+
 plugins_: using available plugins. 
 
 extend_: writing plugins and advanced configuration. 
 
-`distributed testing`_ how to distribute test runs to other machines and platforms. 
 
 .. _quickstart: quickstart.html
 .. _features: features.html
+.. _funcargs: funcargs.html
 .. _plugins: plugins.html
 .. _extend: ext.html
 .. _`distributed testing`: dist.html
