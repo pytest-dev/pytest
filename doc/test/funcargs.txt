@@ -50,21 +50,20 @@ is an example for running the same test function three times.
 
 .. sourcecode:: python
 
-    def pytest_genfuncruns(runspec):
-        if "arg1" in runspec.funcargnames:
-            runspec.addfuncarg("arg1", 10)
-            runspec.addfuncarg("arg1", 20)
-            runspec.addfuncarg("arg1", 30)
+    def pytest_genfunc(funcspec):
+        if "arg1" in funcspec.funcargnames:
+            for value in range(3):
+                funcspec.addcall(arg1=value)
 
     def test_function(arg1): 
-        assert myfuncarg in (10, 20, 30)
+        assert myfuncarg in (0, 1, 2)
 
 Here is what happens:
 
-1. The ``pytest_genfuncruns()`` hook will be called once for each test
-   function.  The if-statement makes sure that we only add function
-   arguments (and runs) for functions that need it.   The `runspec object`_ 
-   provides access to context information. 
+1. The ``pytest_genfunc()`` hook will be called once for each test
+   function.  The if-statement makes sure that we only add calls
+   for functions that actually need the provided value. 
+   The `funcspec object`_ provides access to context information. 
 
 2. Subsequently the ``test_function()`` will be called three times 
    with three different values for ``arg1``.  
@@ -91,7 +90,7 @@ Attributes of request objects
 
 ``request.cls``: class object where the test function is defined in or None. 
 
-``runspec.module``: module object where the test function is defined in. 
+``funcspec.module``: module object where the test function is defined in. 
 
 ``request.config``: access to command line opts and general config
 
@@ -151,48 +150,31 @@ Test functions can have multiple arguments
 which can either come from a test generator 
 or from a provider. 
 
-.. _`runspec object`:
+.. _`funcspec object`:
 
-runspec objects
+funcspec objects
 ------------------------
 
 Runspecs help to inspect a testfunction and 
 to generate tests with combinations of function argument values. 
 
-generating and combining funcargs 
-+++++++++++++++++++++++++++++++++++++++++++++++++++
+Calling ``funcspec.addcall(**funcargs)`` will add 
+a tests function call using the given dictionary
+of function arguments.  This addition of a call
+happens during test collection. 
 
-Calling ``runspec.addfuncarg(argname, value)`` will trigger 
-tests function calls with the given function 
-argument value.  For each already existing
-funcarg combination, the added funcarg value will
-
-* be merged to the existing funcarg combination if the
-  new argument name isn't part of the funcarg combination yet. 
-
-* otherwise generate a new test call where the existing 
-  funcarg combination is copied and updated
-  with the newly added funcarg value. 
-
-For simple usage, e.g. test functions with a single
-generated function argument, each call to ``addfuncarg``
-will just trigger a new call. 
-
-This scheme allows two sources to generate 
-function arguments independently from each other. 
-
-Attributes of runspec objects
+Attributes of funcspec objects
 ++++++++++++++++++++++++++++++++++++++++
 
-``runspec.funcargnames``: set of required function arguments for given function
+``funcspec.funcargnames``: set of required function arguments for given function
 
-``runspec.function``: underlying python test function 
+``funcspec.function``: underlying python test function 
 
-``runspec.cls``: class object where the test function is defined in or None. 
+``funcspec.cls``: class object where the test function is defined in or None. 
 
-``runspec.module``: the module object where the test function is defined in. 
+``funcspec.module``: the module object where the test function is defined in. 
 
-``runspec.config``: access to command line opts and general config
+``funcspec.config``: access to command line opts and general config
 
 
 Useful Funcarg Tutorial Examples
@@ -386,45 +368,35 @@ methods in a convenient way.
 
 .. _`py.path.local`: ../path.html#local
 
-.. _`combine multiple funcarg values`:
 
-
-parametrize test functions by combining generated funcargs 
+parametrize test functions with multiple func args 
 --------------------------------------------------------------------------
 
-Adding different funcargs will generate test calls with
-all combinations of added funcargs.  Consider this example:
+You can trigger calling test functions which take more
+than one function argument.  Consider this example:
 
 .. sourcecode:: python
 
-    def makearg1(runspec):
-        runspec.addfuncarg("arg1", 10)
-        runspec.addfuncarg("arg1", 11)
-
-    def makearg2(runspec):
-        runspec.addfuncarg("arg2", 20)
-        runspec.addfuncarg("arg2", 21)
-
-    def pytest_genfuncruns(runspec):
-        makearg1(runspec) 
-        makearg2(runspec) 
+    def pytest_genfunc(funcspec):
+        for arg1 in range(2):
+            for arg2 in (10, 20):
+                funcspec.addcall(arg1=arg1, arg2=arg2)
 
     # the actual test function
 
     def test_function(arg1, arg2):
-        assert arg1 in (10, 20) 
-        assert arg2 in (20, 30) 
+        pass
 
 Running this test module will result in ``test_function`` 
-being called four times, in the following order::
+being called four times, with the following arguments::
 
-    test_function(10, 20)
-    test_function(10, 21)
-    test_function(11, 20)
-    test_function(11, 21)
+    test_function(0, 10)
+    test_function(0, 20)
+    test_function(1, 10)
+    test_function(2, 20)
 
 
-example: test functions with generated and provided funcargs 
+example: test functions with pre-generated and provided funcargs 
 -------------------------------------------------------------------
 
 You can mix generated function arguments and normally 
@@ -432,10 +404,10 @@ provided ones. Consider this module:
 
 .. sourcecode:: python
 
-    def pytest_genfuncruns(runspec):
-        if "arg1" in runspec.funcargnames: # test_function2 does not have it 
-            runspec.addfuncarg("arg1", 10)
-            runspec.addfuncarg("arg1", 20)
+    def pytest_genfunc(funcspec):
+        if "arg1" in funcspec.funcargnames: # test_function2 does not have it 
+            funcspec.addcall(arg1=10)
+            funcspec.addcall(arg1=20)
 
     def pytest_funcarg__arg2(request):
         return [10, 20]

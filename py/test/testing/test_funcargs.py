@@ -131,71 +131,58 @@ class TestRequest:
         req = funcargs.FuncargRequest(item, "xxx")
         assert req.fspath == modcol.fspath 
 
-class TestRunSpecs:
+class TestFuncSpecs:
     def test_no_funcargs(self, testdir):
         def function(): pass
-        runspec = funcargs.RunSpecs(function)
-        assert not runspec.funcargnames
+        funcspec = funcargs.FuncSpecs(function)
+        assert not funcspec.funcargnames
 
     def test_function_basic(self):
         def func(arg1, arg2="qwe"): pass
-        runspec = funcargs.RunSpecs(func)
-        assert len(runspec.funcargnames) == 1
-        assert 'arg1' in runspec.funcargnames
-        assert runspec.function is func 
-        assert runspec.cls is None
+        funcspec = funcargs.FuncSpecs(func)
+        assert len(funcspec.funcargnames) == 1
+        assert 'arg1' in funcspec.funcargnames
+        assert funcspec.function is func 
+        assert funcspec.cls is None
 
-    def test_addfuncarg_basic(self):
+    def test_addcall_basic(self):
         def func(arg1): pass
-        runspec = funcargs.RunSpecs(func)
+        funcspec = funcargs.FuncSpecs(func)
         py.test.raises(ValueError, """
-            runspec.addfuncarg("notexists", 100)
+            funcspec.addcall(notexists=100)
         """)
-        runspec.addfuncarg("arg1", 100)
-        assert len(runspec._combinations) == 1
-        assert runspec._combinations[0] == {'arg1': 100}
+        funcspec.addcall(arg1=100)
+        assert len(funcspec._calls) == 1
+        assert funcspec._calls[0] == {'arg1': 100}
 
-    def test_addfuncarg_two(self):
+    def test_addcall_two(self):
         def func(arg1): pass
-        runspec = funcargs.RunSpecs(func)
-        runspec.addfuncarg("arg1", 100) 
-        runspec.addfuncarg("arg1", 101)
-        assert len(runspec._combinations) == 2
-        assert runspec._combinations[0] == {'arg1': 100}
-        assert runspec._combinations[1] == {'arg1': 101}
-
-    def test_addfuncarg_combined(self):
-        runspec = funcargs.RunSpecs(lambda arg1, arg2: 0)
-        runspec.addfuncarg('arg1', 1)
-        runspec.addfuncarg('arg1', 2)
-        runspec.addfuncarg('arg2', 100)
-        combinations = runspec._combinations
-        assert len(combinations) == 2
-        assert combinations[0] == {'arg1': 1, 'arg2': 100}
-        assert combinations[1] == {'arg1': 2, 'arg2': 100}
-        runspec.addfuncarg('arg2', 101)
-        assert len(combinations) == 4
-        assert combinations[-1] == {'arg1': 2, 'arg2': 101}
+        funcspec = funcargs.FuncSpecs(func)
+        funcspec.addcall(arg1=100)
+        funcspec.addcall(arg1=101)
+        assert len(funcspec._calls) == 2
+        assert funcspec._calls[0] == {'arg1': 100}
+        assert funcspec._calls[1] == {'arg1': 101}
 
 class TestGenfuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
             import py
-            def pytest_genfuncruns(runspec):
-                runspec.addfuncarg("runspec", runspec)
+            def pytest_genfunc(funcspec):
+                funcspec.addcall(funcspec=funcspec)
 
-            def test_function(runspec):
-                assert runspec.config == py.test.config
-                assert runspec.module.__name__ == __name__
-                assert runspec.function == test_function
-                assert runspec.cls is None
+            def test_function(funcspec):
+                assert funcspec.config == py.test.config
+                assert funcspec.module.__name__ == __name__
+                assert funcspec.function == test_function
+                assert funcspec.cls is None
             class TestClass:
-                def test_method(self, runspec):
-                    assert runspec.config == py.test.config
-                    assert runspec.module.__name__ == __name__
+                def test_method(self, funcspec):
+                    assert funcspec.config == py.test.config
+                    assert funcspec.module.__name__ == __name__
                     # XXX actually have the unbound test function here?
-                    assert runspec.function == TestClass.test_method.im_func
-                    assert runspec.cls == TestClass
+                    assert funcspec.function == TestClass.test_method.im_func
+                    assert funcspec.cls == TestClass
         """)
         result = testdir.runpytest(p, "-v")
         result.stdout.fnmatch_lines([
@@ -205,10 +192,10 @@ class TestGenfuncFunctional:
     def test_arg_twice(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_genfuncruns(self, runspec):
-                    assert "arg" in runspec.funcargnames 
-                    runspec.addfuncarg("arg", 10)
-                    runspec.addfuncarg("arg", 20)
+                def pytest_genfunc(self, funcspec):
+                    assert "arg" in funcspec.funcargnames 
+                    funcspec.addcall(arg=10)
+                    funcspec.addcall(arg=20)
         """)
         p = testdir.makepyfile("""
             def test_myfunc(arg):
@@ -223,9 +210,9 @@ class TestGenfuncFunctional:
 
     def test_two_functions(self, testdir):
         p = testdir.makepyfile("""
-            def pytest_genfuncruns(runspec):
-                runspec.addfuncarg("arg1", 10)
-                runspec.addfuncarg("arg1", 20)
+            def pytest_genfunc(funcspec):
+                funcspec.addcall(arg1=10)
+                funcspec.addcall(arg1=20)
 
             def test_func1(arg1):
                 assert arg1 == 10
@@ -243,20 +230,17 @@ class TestGenfuncFunctional:
     def test_genfuncarg_inmodule(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_genfuncruns(self, runspec):
-                    assert "arg" in runspec.funcargnames 
-                    runspec.addfuncarg("arg", 10)
+                def pytest_genfunc(self, funcspec):
+                    assert "arg1" in funcspec.funcargnames 
+                    funcspec.addcall(arg1=1, arg2=2)
         """)
         p = testdir.makepyfile("""
-            def pytest_genfuncruns(runspec):
-                runspec.addfuncarg("arg2", 10)
-                runspec.addfuncarg("arg2", 20)
-                runspec.addfuncarg("classarg", 17)
+            def pytest_genfunc(funcspec):
+                funcspec.addcall(arg1=10, arg2=10)
 
             class TestClass:
-                def test_myfunc(self, arg, arg2, classarg):
-                    assert classarg == 17
-                    assert arg == arg2
+                def test_myfunc(self, arg1, arg2):
+                    assert arg1 == arg2 
         """)
         result = testdir.runpytest("-v", p)
         assert result.stdout.fnmatch_lines([

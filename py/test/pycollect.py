@@ -172,13 +172,13 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         # to work to get at the class 
         clscol = self.getclasscollector()
         cls = clscol and clscol.obj or None
-        runspec = funcargs.RunSpecs(funcobj, config=self.config, cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_genfuncruns.clone(extralookup=module)
-        gentesthook(runspec=runspec)
-        if not runspec._combinations:
+        funcspec = funcargs.FuncSpecs(funcobj, config=self.config, cls=cls, module=module)
+        gentesthook = self.config.hook.pytest_genfunc.clone(extralookup=module)
+        gentesthook(funcspec=funcspec)
+        if not funcspec._calls:
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
-            parent=self, combinations=runspec._combinations)
+            parent=self, combinations=funcspec._calls)
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):

@@ -25,7 +25,7 @@ def fillfuncargs(function):
                 except request.Error:
                     request._raiselookupfailed()
 
-class RunSpecs:
+class FuncSpecs:
     def __init__(self, function, config=None, cls=None, module=None):
         self.config = config
         self.module = module 
@@ -33,22 +33,14 @@ class RunSpecs:
         self.funcargnames = getfuncargnames(function)
         self.cls = cls
         self.module = module
-        self._combinations = []
+        self._calls = []
 
-    def addfuncarg(self, argname, value):
-        if argname not in self.funcargnames:
-            raise ValueError("function %r has no funcarg %r" %(
-                    self.function, argname))
-        newcombi = []
-        if not self._combinations:
-            newcombi.append({argname:value})
-        else:
-            for combi in self._combinations:
-                if argname in combi:
-                    combi = combi.copy()
-                    newcombi.append(combi)
-                combi[argname] = value 
-        self._combinations.extend(newcombi)
+    def addcall(self, **kwargs):
+        for argname in kwargs:
+            if argname not in self.funcargnames:
+                raise ValueError("function %r has no funcarg %r" %(
+                        self.function, argname))
+        self._calls.append(kwargs)
 
 class FunctionCollector(py.test.collect.Collector):
     def __init__(self, name, parent, combinations):
