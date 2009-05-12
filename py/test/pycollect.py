@@ -18,7 +18,6 @@ a tree of collectors and test items that this modules provides::
 """ 
 import py
 from py.__.test.collect import configproperty, warnoldcollect
-from py.__.code.source import findsource
 pydir = py.path.local(py.__file__).dirpath()
 from py.__.test import funcargs
 
@@ -65,37 +64,21 @@ class PyobjMixin(object):
         s = ".".join(parts)
         return s.replace(".[", "[")
 
-    def getfslineno(self):
+    def _getfslineno(self):
         try:
             return self._fslineno
         except AttributeError:
             pass
         obj = self.obj
-        # let decorators etc specify a sane ordering
+        # xxx let decorators etc specify a sane ordering
         if hasattr(obj, 'place_as'):
             obj = obj.place_as
-        try:
-            code = py.code.Code(obj)
-        except TypeError:
-            # fallback to 
-            fn = (py.std.inspect.getsourcefile(obj) or
-                  py.std.inspect.getfile(obj))
-            fspath = fn and py.path.local(fn) or None
-            if fspath:
-                try:
-                    _, lineno = findsource(obj)
-                except IOError:
-                    lineno = None
-            else:
-                lineno = None
-        else:
-            fspath = code.path
-            lineno = code.firstlineno 
-        self._fslineno = fspath, lineno
-        return fspath, lineno
 
-    def metainfo(self):
-        fspath, lineno = self.getfslineno()
+        self._fslineno = py.code.getfslineno(obj)
+        return self._fslineno
+
+    def reportinfo(self):
+        fspath, lineno = self._getfslineno()
         modpath = self.getmodpath()
         return fspath, lineno, modpath 
 
@@ -229,7 +212,7 @@ class Class(PyCollectorMixin, py.test.collect.Collector):
             teardown_class(self.obj) 
 
     def _getsortvalue(self):  
-        return self.getfslineno()
+        return self._getfslineno()
 
 class Instance(PyCollectorMixin, py.test.collect.Collector): 
     def _getobj(self): 
@@ -254,7 +237,7 @@ class FunctionMixin(PyobjMixin):
     """
 
     def _getsortvalue(self):  
-        return self.getfslineno()
+        return self._getfslineno()
 
     def setup(self): 
         """ perform setup for this test function. """

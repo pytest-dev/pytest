@@ -76,7 +76,7 @@ def forked_run_report(item, pdb=None):
         return report_process_crash(item, result)
 
 def report_process_crash(item, result):
-    path, lineno = item.getfslineno()
+    path, lineno = item._getfslineno()
     longrepr = [
         ("X", "CRASHED"), 
         ("%s:%s: CRASHED with signal %d" %(path, lineno, result.signal)),

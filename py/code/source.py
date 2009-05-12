@@ -217,6 +217,26 @@ def compile_(source, filename=None, mode='exec', flags=
     return co
 
 
+def getfslineno(obj):
+    try:
+        code = py.code.Code(obj)
+    except TypeError:
+        # fallback to 
+        fn = (py.std.inspect.getsourcefile(obj) or
+              py.std.inspect.getfile(obj))
+        fspath = fn and py.path.local(fn) or None
+        if fspath:
+            try:
+                _, lineno = findsource(obj)
+            except IOError:
+                lineno = None
+        else:
+            lineno = None
+    else:
+        fspath = code.path
+        lineno = code.firstlineno 
+    return fspath, lineno
+
 #
 # helper functions
 #

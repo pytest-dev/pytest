@@ -355,3 +355,27 @@ def test_findsource___source__():
     assert 'if 1:' in str(src)
     assert src[lineno] == "    def x():"
     
+
+def test_getfslineno():
+    from py.code import getfslineno
+
+    def f(x):
+        pass
+
+    fspath, lineno = getfslineno(f)
+
+    fname = __file__
+    if fname.lower().endswith('.pyc'):
+        fname = fname[:-1]
+
+    assert fspath == py.path.local(fname)
+    assert lineno == f.func_code.co_firstlineno-1 # see findsource
+
+    class A(object):
+        pass
+
+    fspath, lineno = getfslineno(A)
+
+    _, A_lineno = py.std.inspect.findsource(A)
+    assert fspath == py.path.local(fname)
+    assert lineno == A_lineno

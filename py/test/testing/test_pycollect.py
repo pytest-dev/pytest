@@ -217,7 +217,7 @@ class TestGenerator:
 class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        modcol = item.getmodulecollector()
+        modcol = item._getparent(py.test.collect.Module)
         assert isinstance(modcol, py.test.collect.Module)
         assert hasattr(modcol.obj, 'test_func')
         
@@ -346,28 +346,28 @@ class TestConftestCustomization:
         assert colitems[0].name == "check_method"
 
 
-class TestMetaInfo:
+class TestReportinfo:
         
-    def test_func_metainfo(self, testdir):
+    def test_func_reportinfo(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        fspath, lineno, modpath = item.metainfo()
+        fspath, lineno, modpath = item.reportinfo()
         assert fspath == item.fspath 
         assert lineno == 0
         assert modpath == "test_func"
 
-    def test_class_metainfo(self, testdir):
+    def test_class_reportinfo(self, testdir):
         modcol = testdir.getmodulecol("""
             # lineno 0
             class TestClass:
                 def test_hello(self): pass
         """)
         classcol = modcol.collect_by_name("TestClass")
-        fspath, lineno, msg = classcol.metainfo()
+        fspath, lineno, msg = classcol.reportinfo()
         assert fspath == modcol.fspath 
         assert lineno == 1
         assert msg == "TestClass"
 
-    def test_generator_metainfo(self, testdir):
+    def test_generator_reportinfo(self, testdir):
         modcol = testdir.getmodulecol("""
             # lineno 0
             def test_gen(): 
@@ -376,13 +376,13 @@ class TestMetaInfo:
                 yield check, 3
         """)
         gencol = modcol.collect_by_name("test_gen")
-        fspath, lineno, modpath = gencol.metainfo()
+        fspath, lineno, modpath = gencol.reportinfo()
         assert fspath == modcol.fspath
         assert lineno == 1
         assert modpath == "test_gen"
 
         genitem = gencol.collect()[0]
-        fspath, lineno, modpath = genitem.metainfo()
+        fspath, lineno, modpath = genitem.reportinfo()
         assert fspath == modcol.fspath
         assert lineno == 2
         assert modpath == "test_gen[0]"

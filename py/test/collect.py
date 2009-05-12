@@ -439,7 +439,7 @@ class Item(Node):
         """ deprecated, here because subclasses might call it. """
         return obj(*args)
 
-    def metainfo(self):
+    def reportinfo(self):
         return self.fspath, None, ""
         
 def warnoldcollect(function=None):

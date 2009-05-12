@@ -99,6 +99,12 @@ class PluginHooks:
     def pytest_terminal_summary(self, terminalreporter):
         """ add additional section in terminal summary reporting. """
 
+    def pytest_report_iteminfo(self, item):
+        """ return (fspath, lineno, name) for the item.
+            the information is used for result display and to sort tests
+        """
+    pytest_report_iteminfo.firstresult = True
+
     # ------------------------------------------------------------------------------
     # doctest hooks 
     # ------------------------------------------------------------------------------

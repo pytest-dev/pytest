@@ -54,6 +54,9 @@ class DefaultPlugin:
         Directory = parent.config.getvalue('Directory', path) 
         return Directory(path, parent=parent)
 
+    def pytest_report_iteminfo(self, item):
+        return item.reportinfo()
+
     def pytest_addoption(self, parser):
         group = parser.addgroup("general", "test collection and failure interaction options")
         group._addoption('-v', '--verbose', action="count", 
@@ -248,3 +251,16 @@ def test_dist_options(testdir):
     
     config = testdir.parseconfigure("-d")
     assert config.option.dist == "load"
+
+def test_pytest_report_iteminfo():
+    plugin = DefaultPlugin()
+
+    class FakeItem(object):
+
+        def reportinfo(self):
+            return "-reportinfo-"
+
+    res = plugin.pytest_report_iteminfo(FakeItem())
+
+    assert res == "-reportinfo-"
+    
