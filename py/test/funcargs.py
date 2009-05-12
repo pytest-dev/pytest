@@ -39,6 +39,7 @@ class FuncSpecs:
         self.cls = cls
         self.module = module
         self._calls = []
+        self._ids = py.builtin.set()
 
     def addcall(self, _id=None, **kwargs):
         for argname in kwargs:
@@ -50,8 +51,9 @@ class FuncSpecs:
         if _id is None:
             _id = len(self._calls)
         _id = str(_id)
-        #if _id in self._ids:
-        #    raise ValueError("duplicate id %r" % _id)
+        if _id in self._ids:
+            raise ValueError("duplicate id %r" % _id)
+        self._ids.add(_id)
         self._calls.append(CallSpec(_id, kwargs))
 
 class FunctionCollector(py.test.collect.Collector):

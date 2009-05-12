@@ -152,6 +152,7 @@ class TestFuncSpecs:
             funcspec.addcall(_xyz=10)
         """)
         funcspec.addcall(_id="hello", arg1=100)
+        py.test.raises(ValueError, "funcspec.addcall(_id='hello', arg1=100)")
         call = funcspec._calls[0]
         assert call.id == "hello"
         assert call.funcargs == {'arg1': 100}
