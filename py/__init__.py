@@ -133,6 +133,7 @@ initpkg(__name__,
     'code.Frame'             : ('./code/frame.py', 'Frame'),
     'code.ExceptionInfo'     : ('./code/excinfo.py', 'ExceptionInfo'),
     'code.Traceback'         : ('./code/traceback2.py', 'Traceback'),
+    'code.getfslineno'       : ('./code/source.py', 'getfslineno'),
 
     # backports and additions of builtins
     'builtin.__doc__'        : ('./builtin/__init__.py', '__doc__'),
