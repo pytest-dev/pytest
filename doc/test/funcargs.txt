@@ -2,29 +2,37 @@
 **funcargs**: test setup and parametrization
 ======================================================
 
-Since version 1.0 test functions can make great use of 
-their arguments or "funcargs" for short.  py.test helps 
-to setup or generate argument values with the goal 
-of making it easy to: 
+Since version 1.0 py.test automatically discovers and 
+manages test function arguments.  The mechanism 
+naturally connects to the automatic discovery of 
+test files, classes and functions.  Automatic test discovery
+values the `Convention over Configuration`_ concept. 
+By discovering and calling functions ("funcarg providers") that 
+provide values for your actual test functions 
+it becomes easy to: 
 
-* separate test function code from test setup/fixtures
+* separate test function code from test state setup/fixtures
 * manage test value setup and teardown depending on 
   command line options or configuration
 * parametrize multiple runs of the same test functions 
-* present useful debug info if setup goes wrong
+* present useful debug info if setting up test state goes wrong
 
 Using funcargs, test functions become more expressive, 
 more "templaty" and more test-aspect oriented.  In fact, 
 funcarg mechanisms are meant to be complete and 
 convenient enough to 
 
-* substitute most usages of `xUnit style`_ setup
+* substitute most usages of `xUnit style`_ setup.  
+  For a simple example of how funcargs compare 
+  to xUnit setup, see the `blog post about 
+  the monkeypatch funcarg`_. 
 
 * substitute all usages of `old-style generative tests`_, 
   i.e. test functions that use the "yield" statement. 
   Using yield in test functions is deprecated since 1.0. 
 
 
+.. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`xUnit style`: xunit_setup.html 
 .. _`old-style generative tests`: 
 
@@ -40,28 +48,55 @@ example that you can put into a test module:
 
 .. sourcecode:: python
 
+    # ./test_simpleprovider.py 
     def pytest_funcarg__myfuncarg(request):
         return 42
 
     def test_function(myfuncarg):
-        assert myfuncarg == 42
+        assert myfuncarg == 17
 
-Here is what happens: 
+If you run this with ``py.test test_simpleprovider.py`` you see something like this:
 
-1. **lookup funcarg provider**: For executing ``test_function(myfuncarg)`` 
-   a value is needed.  A value provider is found by looking for a
-   function with a special name of ``pytest_funcarg__${ARGNAME}``.  
+.. sourcecode:: python
 
-2. **setup funcarg value**: ``pytest_funcarg__myfuncarg(request)`` is 
-   called to setup and return the value for ``myfuncarg``.   
+    ============================ test session starts ============================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simpleprovider.py
 
-3. **execute test** ``test_function(42)`` call is executed.  
+    test_simpleprovider.py F
 
-Note that if a provider cannot be found a list of
-available function arguments will be provided. 
+    ================================= FAILURES ==================================
+    _______________________________ test_function _______________________________
 
-For providers that makes use of the `request object`_ 
-please look into the `tutorial examples`_. 
+    myfuncarg = 42
+
+        def test_function(myfuncarg):
+    >       assert myfuncarg == 17
+    E       assert 42 == 17
+
+    test_simpleprovider.py:6: AssertionError
+    ========================= 1 failed in 0.11 seconds ==========================
+
+
+This means that the test function got executed and the assertion failed. 
+Here is how py.test comes to execute this test function: 
+
+1. py.test discovers the ``test_function`` because of the ``test_prefix``. 
+   The test function needs a function argument named ``myfuncarg``.  
+   A matching provider function is discovered by looking for the special 
+   name ``pytest_funcarg__myfuncarg``. 
+
+2. ``pytest_funcarg__myfuncarg(request)`` is called and 
+   returns the value for ``myfuncarg``.   
+
+3. ``test_function(42)`` call is executed. 
+
+Note that if you misspell a function argument or want
+to use one that isn't available, an error with a list of
+available function argument is provided. 
+
+For provider functions that make good use of the 
+`request object`_ please see the `application setup tutorial example`_. 
 
 .. _`request object`: 
 
@@ -136,8 +171,9 @@ example:
 
 .. sourcecode:: python
 
+    # ./test_example.py 
     def pytest_generate_tests(metafunc):
-        if "numiter" in metafunc.funcargs: 
+        if "numiter" in metafunc.funcargnames: 
             for i in range(10):
                 metafunc.addcall(param=i)
 
@@ -145,22 +181,41 @@ example:
         return request.param 
 
     def test_func(numiter):
-        assert numiter < 10
+        assert numiter < 9
+
+If you run this with ``py.test test_example.py`` you'll get:
+
+.. sourcecode:: python
+
+    ================================= test session starts =================================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/test_example.py
+
+    test_example.py .........F
+
+    ====================================== FAILURES =======================================
+    _______________________________ test_func.test_func[9] ________________________________
+
+    numiter = 9
+
+        def test_func(numiter):
+    >       assert numiter < 9
+    E       assert 9 < 9
+
+    /home/hpk/hg/py/trunk/test_example.py:10: AssertionError
+
 
 Here is what happens in detail:
 
-1. **add test function calls**: 
-   ``pytest_generate_tests(metafunc)`` hook is called once for each test
-   function.  The `metafunc object`_ has context information. 
-   ``metafunc.addcall(param=i)`` schedules a new test call
-   such that function argument providers will see an additional 
-   ``param`` attribute on their request object. 
+1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
+   function.  ``metafunc.addcall(param=i)`` adds new test function calls
+   where the ``param`` will appear as ``request.param``. 
 
-2. **setup funcarg values**: the ``pytest_funcarg__arg1(request)`` provider is called 
-   10 times with ten different request objects all pointing to 
-   the same test function.  Our provider here simply returns 
-   the ``arg`` value but we could of course also setup more 
-   heavyweight resources here. 
+2. the ``pytest_funcarg__arg1(request)`` provider 
+   is called 10 times.  Each time it receives a request object
+   that has a ``request.param`` as previously provided by the generator. 
+   Our provider here simply passes through the ``param`` value.  
+   We could also setup more heavyweight resources here. 
   
 3. **execute tests**: ``test_func(numiter)`` is called ten times with 
    ten different arguments. 
@@ -215,6 +270,9 @@ defer setup of heavyweight objects to funcarg providers.*
 Funcarg Tutorial Examples
 =======================================
 
+
+.. _`application setup tutorial example`: 
+
 application specific test setup 
 ---------------------------------------------------------
 
@@ -249,13 +307,16 @@ following code into a local ``conftest.py``:
 .. sourcecode:: python
 
     # ./conftest.py 
+    
     from myapp import MyApp
 
     class ConftestPlugin:
         def pytest_funcarg__mysetup(self, request):
-            return MySetup()
+            return MySetup(request)
 
     class MySetup:
+        def __init__(self, request):
+            self.config = request.config
         def myapp(self):
             return MyApp()
 
@@ -271,7 +332,18 @@ To run the example we put a pseudo MyApp object into ``myapp.py``:
 You can now run the test with ``py.test test_sample.py`` which will
 show this failure:
 
-.. sourcecode:: python 
+.. sourcecode:: python
+
+    ========================= test session starts =========================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/example/funcarg/mysetup
+
+    test_sample.py F
+
+    ============================== FAILURES ===============================
+    _____________________________ test_answer _____________________________
+
+    mysetup = <mysetup.conftest.MySetup instance at 0xa020eac>
 
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -279,8 +351,14 @@ show this failure:
     >       assert answer == 42
     E       assert 54 == 42
 
-If you are confused as to what the concrete question or answers 
-mean actually, please visit here_ :) 
+    test_sample.py:5: AssertionError
+    ====================== 1 failed in 0.11 seconds =======================
+
+This means that our ``mysetup`` object was successfully instantiated, 
+we asked it to provide an application instance and checking
+its ``question`` method resulted in the wrong answer.  If you are 
+confused as to what the concrete question or answers actually mean, 
+please see here_ :)  Otherwise proceed to step 2. 
 
 .. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
 .. _`local plugin`: ext.html#local-plugin
@@ -290,41 +368,67 @@ step 2: adding a command line option
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you provide a "funcarg" from a plugin you can easily make methods
-depend on command line options or environment settings.  Let's write a
-local plugin that adds a command line option to ``py.test`` invocations: 
+depend on command line options or environment settings.  
+To add a command line option we update the conftest.py of
+the previous example to add a command line option 
+and to offer a new mysetup method:
 
 .. sourcecode:: python
 
     # ./conftest.py 
-    class MySetupFuncarg:
-        def __init__(self, request):
-            self.request = request 
-        def getsshconnection(self):
-            host = self.request.config.option.ssh
-            if host is None:
-                py.test.skip("specify ssh host with --ssh to run this test")
-            return py.execnet.SshGateway(host)
+    import py
+    from myapp import MyApp
 
     class ConftestPlugin:
+        def pytest_funcarg__mysetup(self, request):
+            return MySetup(request)
+
         def pytest_addoption(self, parser):
             parser.addoption("--ssh", action="store", default=None,
                 help="specify ssh host to run tests with")
+        
 
-        # alias the above class as the "mysetup" provider 
-        pytest_funcarg__mysetup = MySetupFuncarg
+    class MySetup:
+        def __init__(self, request):
+            self.config = request.config 
 
-Now any test functions can use the ``mysetup.getsshconnection()`` method like this:
+        def myapp(self):
+            return MyApp()
+
+        def getsshconnection(self):
+            host = self.config.option.ssh
+            if host is None:
+                py.test.skip("specify ssh host with --ssh")
+            return py.execnet.SshGateway(host)
+
+
+Now any test function can use the ``mysetup.getsshconnection()`` method like this:
 
 .. sourcecode:: python
 
-    # ./test_function.py 
+    # ./test_ssh.py 
     class TestClass:
         def test_function(self, mysetup):
             conn = mysetup.getsshconnection()
             # work with conn 
       
-Running this without specifying a command line option will result in a skipped
-test_function.  
+Running this without specifying a command line option will result in a skipped test_function: 
+
+.. sourcecode:: python
+
+    ========================= test session starts =========================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: test_ssh.py
+
+    test_ssh.py s
+
+    ________________________ skipped test summary _________________________
+    conftest.py:23: [1] Skipped: 'specify ssh host with --ssh'
+    ====================== 1 skipped in 0.11 seconds ======================
+
+Note especially how the test function could stay clear knowing about how to construct test state values or when to skip and with what message. The test function can concentrate on actual test code and test state providers can interact with execution of tests. 
+
+If you specify a command line option like ``py.test --ssh=python.org`` the test will get un-skipped and actually execute. 
 
 .. _`accept example`: 
 
