@@ -178,7 +178,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         if not funcspec._calls:
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
-            parent=self, combinations=funcspec._calls)
+            parent=self, calls=funcspec._calls)
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):

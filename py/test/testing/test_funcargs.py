@@ -145,6 +145,17 @@ class TestFuncSpecs:
         assert funcspec.function is func 
         assert funcspec.cls is None
 
+    def test_addcall_with_id(self):
+        def func(arg1): pass
+        funcspec = funcargs.FuncSpecs(func)
+        py.test.raises(TypeError, """
+            funcspec.addcall(_xyz=10)
+        """)
+        funcspec.addcall(_id="hello", arg1=100)
+        call = funcspec._calls[0]
+        assert call.id == "hello"
+        assert call.funcargs == {'arg1': 100}
+
     def test_addcall_basic(self):
         def func(arg1): pass
         funcspec = funcargs.FuncSpecs(func)
@@ -153,7 +164,7 @@ class TestFuncSpecs:
         """)
         funcspec.addcall(arg1=100)
         assert len(funcspec._calls) == 1
-        assert funcspec._calls[0] == {'arg1': 100}
+        assert funcspec._calls[0].funcargs == {'arg1': 100}
 
     def test_addcall_two(self):
         def func(arg1): pass
@@ -161,8 +172,8 @@ class TestFuncSpecs:
         funcspec.addcall(arg1=100)
         funcspec.addcall(arg1=101)
         assert len(funcspec._calls) == 2
-        assert funcspec._calls[0] == {'arg1': 100}
-        assert funcspec._calls[1] == {'arg1': 101}
+        assert funcspec._calls[0].funcargs == {'arg1': 100}
+        assert funcspec._calls[1].funcargs == {'arg1': 101}
 
 class TestGenfuncFunctional:
     def test_attributes(self, testdir):
@@ -232,11 +243,11 @@ class TestGenfuncFunctional:
             class ConftestPlugin:
                 def pytest_genfunc(self, funcspec):
                     assert "arg1" in funcspec.funcargnames 
-                    funcspec.addcall(arg1=1, arg2=2)
+                    funcspec.addcall(_id="world", arg1=1, arg2=2)
         """)
         p = testdir.makepyfile("""
             def pytest_genfunc(funcspec):
-                funcspec.addcall(arg1=10, arg2=10)
+                funcspec.addcall(_id="hello", arg1=10, arg2=10)
 
             class TestClass:
                 def test_myfunc(self, arg1, arg2):
@@ -244,7 +255,7 @@ class TestGenfuncFunctional:
         """)
         result = testdir.runpytest("-v", p)
         assert result.stdout.fnmatch_lines([
-            "*test_myfunc*0*PASS*", 
-            "*test_myfunc*1*FAIL*", 
+            "*test_myfunc*hello*PASS*", 
+            "*test_myfunc*world*FAIL*", 
             "*1 failed, 1 passed*"
         ])

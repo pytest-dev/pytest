@@ -25,6 +25,11 @@ def fillfuncargs(function):
                 except request.Error:
                     request._raiselookupfailed()
 
+class CallSpec:
+    def __init__(self, id, funcargs):
+        self.id = id
+        self.funcargs = funcargs 
+
 class FuncSpecs:
     def __init__(self, function, config=None, cls=None, module=None):
         self.config = config
@@ -35,24 +40,31 @@ class FuncSpecs:
         self.module = module
         self._calls = []
 
-    def addcall(self, **kwargs):
+    def addcall(self, _id=None, **kwargs):
         for argname in kwargs:
+            if argname[0] == "_":
+                raise TypeError("argument %r is not a valid keyword." % argname)
             if argname not in self.funcargnames:
                 raise ValueError("function %r has no funcarg %r" %(
                         self.function, argname))
-        self._calls.append(kwargs)
+        if _id is None:
+            _id = len(self._calls)
+        _id = str(_id)
+        #if _id in self._ids:
+        #    raise ValueError("duplicate id %r" % _id)
+        self._calls.append(CallSpec(_id, kwargs))
 
 class FunctionCollector(py.test.collect.Collector):
-    def __init__(self, name, parent, combinations):
+    def __init__(self, name, parent, calls):
         super(FunctionCollector, self).__init__(name, parent)
-        self.combinations = combinations
+        self.calls = calls 
         self.obj = getattr(self.parent.obj, name) 
        
     def collect(self):
         l = []
-        for i, funcargs in py.builtin.enumerate(self.combinations):
-            function = self.parent.Function(name="%s[%s]" %(self.name, i),
-                parent=self, funcargs=funcargs, callobj=self.obj)
+        for call in self.calls:
+            function = self.parent.Function(name="%s[%s]" %(self.name, call.id),
+                parent=self, funcargs=call.funcargs, callobj=self.obj)
             l.append(function)
         return l 
 

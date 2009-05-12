@@ -41,7 +41,7 @@ Let's look at a simple example of using funcargs within a test module:
    one can see the original provided value. 
 
 
-generating test runs with multiple function argument values 
+generating test functions call 
 ----------------------------------------------------------------------
 
 You can parametrize multiple runs of a test function by 
@@ -161,7 +161,12 @@ to generate tests with combinations of function argument values.
 Calling ``funcspec.addcall(**funcargs)`` will add 
 a tests function call using the given dictionary
 of function arguments.  This addition of a call
-happens during test collection. 
+happens during test collection.  
+
+Note that you can provide a name for your test run
+by passing a ``_id=...`` parameter. This name
+will be shown during verbose and traceback 
+reporting. 
 
 Attributes of funcspec objects
 ++++++++++++++++++++++++++++++++++++++++
