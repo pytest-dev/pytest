@@ -270,6 +270,13 @@ class TerminalReporter:
             line = "[nometainfo]"
         return line % locals() + " "
 
+    def _getfailureheadline(self, rep):
+        if isinstance(rep.colitem, py.test.collect.Collector):
+            return str(rep.colitem.fspath)
+        else:
+            fspath, lineno, msg = rep.colitem.metainfo()
+            return msg
+
     #
     # summaries for testrunfinish 
     #
@@ -277,13 +284,14 @@ class TerminalReporter:
     def summary_failures(self):
         if 'failed' in self.stats and self.config.option.tbstyle != "no":
             self.write_sep("=", "FAILURES")
-            for ev in self.stats['failed']:
-                self.write_sep("_", "FAILURES")
-                if hasattr(ev, 'node'):
+            for rep in self.stats['failed']:
+                msg = self._getfailureheadline(rep)
+                self.write_sep("_", msg)
+                if hasattr(rep, 'node'):
                     self.write_line(self.gateway2info.get(
-                        ev.node.gateway, "node %r (platinfo not found? strange)")
+                        rep.node.gateway, "node %r (platinfo not found? strange)")
                             [:self._tw.fullwidth-1])
-                ev.toterminal(self._tw)
+                rep.toterminal(self._tw)
 
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime
