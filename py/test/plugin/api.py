@@ -53,7 +53,7 @@ class PluginHooks:
         """ return custom item/collector for a python object in a module, or None.  """
     pytest_pycollect_obj.firstresult = True
 
-    def pytest_genfunc(self, funcspec):
+    def pytest_generate_tests(self, metafunc):
         """ generate (multiple) parametrized calls to a test function."""
 
     def pytest_collectstart(self, collector):

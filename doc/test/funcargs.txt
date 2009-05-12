@@ -11,7 +11,7 @@ of making it easy to:
 * manage test value setup and teardown depending on 
   command line options or configuration
 * parametrize multiple runs of the same test functions 
-* present useful debug info if something goes wrong
+* present useful debug info if setup goes wrong
 
 Using funcargs, test functions become more expressive, 
 more "templaty" and more test-aspect oriented.  In fact, 
@@ -35,8 +35,8 @@ funcarg providers: setting up test function arguments
 
 Test functions can specify one ore more arguments ("funcargs") 
 and a test module or plugin can define functions that provide
-the function argument.  Let's look at a self-contained example 
-that you can put into a test module: 
+the function argument.  Let's look at a simple self-contained 
+example that you can put into a test module: 
 
 .. sourcecode:: python
 
@@ -48,28 +48,30 @@ that you can put into a test module:
 
 Here is what happens: 
 
-1. **lookup funcarg provider**: The ``test_function`` needs an value for 
-   ``myfuncarg`` to run.  The provider is found by its special 
-   name, ``pytest_funcarg__`` followed by the function 
-   argument argument name.  If a provider cannot be found, 
-   a list of all available function arguments is presented. 
+1. **lookup funcarg provider**: For executing ``test_function(myfuncarg)`` 
+   a value is needed.  A value provider is found by looking for a
+   function with a special name of ``pytest_funcarg__${ARGNAME}``.  
 
 2. **setup funcarg value**: ``pytest_funcarg__myfuncarg(request)`` is 
-   called to setup the value for ``myfuncarg``.   
+   called to setup and return the value for ``myfuncarg``.   
 
 3. **execute test** ``test_function(42)`` call is executed.  
-   If the test fails one can see the original provided 
-   value in the traceback at the top. 
+
+Note that if a provider cannot be found a list of
+available function arguments will be provided. 
+
+For providers that makes use of the `request object`_ 
+please look into the `tutorial examples`_. 
 
 .. _`request object`: 
 
 funcarg request objects
 ------------------------------------------
 
-Request objects are passed to funcarg providers.  Request objects 
+Request objects are passed to funcarg providers.  They 
 encapsulate a request for a function argument for a
-specific test function.  Request objects allow providers to access 
-test configuration and test context: 
+specific test function.  Request objects allow providers 
+to access test configuration and test context: 
 
 ``request.argname``: name of the requested function argument 
 
@@ -81,7 +83,7 @@ test configuration and test context:
 
 ``request.config``: access to command line opts and general config
 
-``request.param``: if exists is the argument passed by a `parametrizing test generator`_ 
+``request.param``: if exists was passed by a `parametrizing test generator`_ 
 
 
 cleanup after test function execution
@@ -90,9 +92,9 @@ cleanup after test function execution
 Request objects allow to **register a finalizer method** which is 
 called after a test function has finished running. 
 This is useful for tearing down or cleaning up
-test state. Here is a basic example for providing
-a ``myfile`` object that will be closed upon test
-function finish:
+test state related to a function argument.  Here is a basic 
+example for providing a ``myfile`` object that will be 
+closed upon test function finish:
 
 .. sourcecode:: python
 
@@ -152,7 +154,7 @@ Here is what happens in detail:
    function.  The `metafunc object`_ has context information. 
    ``metafunc.addcall(param=i)`` schedules a new test call
    such that function argument providers will see an additional 
-   ``arg`` attribute on their request object. 
+   ``param`` attribute on their request object. 
 
 2. **setup funcarg values**: the ``pytest_funcarg__arg1(request)`` provider is called 
    10 times with ten different request objects all pointing to 
@@ -207,6 +209,8 @@ With distributed testing setting up funcargs will
 even happen in a different process.  Therefore one should 
 defer setup of heavyweight objects to funcarg providers.*
 
+
+.. _`tutorial examples`: 
 
 Funcarg Tutorial Examples
 =======================================
@@ -291,13 +295,7 @@ local plugin that adds a command line option to ``py.test`` invocations:
 
 .. sourcecode:: python
 
-    class ConftestPlugin:
-        def pytest_addoption(self, parser):
-            parser.addoption("--ssh", action="store", default=None,
-                help="specify ssh host to run tests with")
-
-        pytest_funcarg__mysetup = MySetupFuncarg
-
+    # ./conftest.py 
     class MySetupFuncarg:
         def __init__(self, request):
             self.request = request 
@@ -307,10 +305,19 @@ local plugin that adds a command line option to ``py.test`` invocations:
                 py.test.skip("specify ssh host with --ssh to run this test")
             return py.execnet.SshGateway(host)
 
+    class ConftestPlugin:
+        def pytest_addoption(self, parser):
+            parser.addoption("--ssh", action="store", default=None,
+                help="specify ssh host to run tests with")
+
+        # alias the above class as the "mysetup" provider 
+        pytest_funcarg__mysetup = MySetupFuncarg
+
 Now any test functions can use the ``mysetup.getsshconnection()`` method like this:
 
 .. sourcecode:: python
 
+    # ./test_function.py 
     class TestClass:
         def test_function(self, mysetup):
             conn = mysetup.getsshconnection()
@@ -326,6 +333,7 @@ example: specifying and selecting acceptance tests
 
 .. sourcecode:: python
 
+    # ./conftest.py 
     class ConftestPlugin:
         def pytest_option(self, parser):
             group = parser.getgroup("myproject")

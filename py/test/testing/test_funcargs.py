@@ -131,100 +131,91 @@ class TestRequest:
         req = funcargs.FuncargRequest(item, "xxx")
         assert req.fspath == modcol.fspath 
 
-class TestFuncSpecs:
+class TestMetafunc:
     def test_no_funcargs(self, testdir):
         def function(): pass
-        funcspec = funcargs.FuncSpecs(function)
-        assert not funcspec.funcargnames
+        metafunc = funcargs.Metafunc(function)
+        assert not metafunc.funcargnames
 
     def test_function_basic(self):
         def func(arg1, arg2="qwe"): pass
-        funcspec = funcargs.FuncSpecs(func)
-        assert len(funcspec.funcargnames) == 1
-        assert 'arg1' in funcspec.funcargnames
-        assert funcspec.function is func 
-        assert funcspec.cls is None
+        metafunc = funcargs.Metafunc(func)
+        assert len(metafunc.funcargnames) == 1
+        assert 'arg1' in metafunc.funcargnames
+        assert metafunc.function is func 
+        assert metafunc.cls is None
 
-    def test_addcall_with_id(self):
+    def test_addcall_no_args(self):
         def func(arg1): pass
-        funcspec = funcargs.FuncSpecs(func)
-        py.test.raises(TypeError, """
-            funcspec.addcall(_xyz=10)
-        """)
-        funcspec.addcall(_id="hello", arg1=100)
-        py.test.raises(ValueError, "funcspec.addcall(_id='hello', arg1=100)")
-        call = funcspec._calls[0]
-        assert call.id == "hello"
-        assert call.funcargs == {'arg1': 100}
+        metafunc = funcargs.Metafunc(func)
+        metafunc.addcall()
+        assert len(metafunc._calls) == 1
+        call = metafunc._calls[0]
+        assert call.id == "0"
+        assert not hasattr(call, 'param')
 
-    def test_addcall_basic(self):
+    def test_addcall_id(self):
         def func(arg1): pass
-        funcspec = funcargs.FuncSpecs(func)
-        py.test.raises(ValueError, """
-            funcspec.addcall(notexists=100)
-        """)
-        funcspec.addcall(arg1=100)
-        assert len(funcspec._calls) == 1
-        assert funcspec._calls[0].funcargs == {'arg1': 100}
+        metafunc = funcargs.Metafunc(func)
+        metafunc.addcall(id=1)
+        py.test.raises(ValueError, "metafunc.addcall(id=1)")
+        py.test.raises(ValueError, "metafunc.addcall(id='1')")
+        metafunc.addcall(id=2)
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].id == "1"
+        assert metafunc._calls[1].id == "2"
 
-    def test_addcall_two(self):
+    def test_addcall_param(self):
         def func(arg1): pass
-        funcspec = funcargs.FuncSpecs(func)
-        funcspec.addcall(arg1=100)
-        funcspec.addcall(arg1=101)
-        assert len(funcspec._calls) == 2
-        assert funcspec._calls[0].funcargs == {'arg1': 100}
-        assert funcspec._calls[1].funcargs == {'arg1': 101}
+        metafunc = funcargs.Metafunc(func)
+        class obj: pass 
+        metafunc.addcall(param=obj) 
+        metafunc.addcall(param=obj) 
+        metafunc.addcall(param=1) 
+        assert len(metafunc._calls) == 3
+        assert metafunc._calls[0].param == obj 
+        assert metafunc._calls[1].param == obj 
+        assert metafunc._calls[2].param == 1
+
 
 class TestGenfuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
+            # assumes that generate/provide runs in the same process
             import py
-            def pytest_genfunc(funcspec):
-                funcspec.addcall(funcspec=funcspec)
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(param=metafunc) 
 
-            def test_function(funcspec):
-                assert funcspec.config == py.test.config
-                assert funcspec.module.__name__ == __name__
-                assert funcspec.function == test_function
-                assert funcspec.cls is None
+            def pytest_funcarg__metafunc(request):
+                return request.param 
+
+            def test_function(metafunc):
+                assert metafunc.config == py.test.config
+                assert metafunc.module.__name__ == __name__
+                assert metafunc.function == test_function
+                assert metafunc.cls is None
+
             class TestClass:
-                def test_method(self, funcspec):
-                    assert funcspec.config == py.test.config
-                    assert funcspec.module.__name__ == __name__
-                    # XXX actually have the unbound test function here?
-                    assert funcspec.function == TestClass.test_method.im_func
-                    assert funcspec.cls == TestClass
+                def test_method(self, metafunc):
+                    assert metafunc.config == py.test.config
+                    assert metafunc.module.__name__ == __name__
+                    # XXX actually have an unbound test function here?
+                    assert metafunc.function == TestClass.test_method.im_func
+                    assert metafunc.cls == TestClass
         """)
         result = testdir.runpytest(p, "-v")
         result.stdout.fnmatch_lines([
             "*2 passed in*",
         ])
 
-    def test_arg_twice(self, testdir):
-        testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_genfunc(self, funcspec):
-                    assert "arg" in funcspec.funcargnames 
-                    funcspec.addcall(arg=10)
-                    funcspec.addcall(arg=20)
-        """)
-        p = testdir.makepyfile("""
-            def test_myfunc(arg):
-                assert arg == 10
-        """)
-        result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
-            "*test_myfunc*PASS*", # case for 10
-            "*test_myfunc*FAIL*", # case for 20
-            "*1 failed, 1 passed*"
-        ])
-
     def test_two_functions(self, testdir):
         p = testdir.makepyfile("""
-            def pytest_genfunc(funcspec):
-                funcspec.addcall(arg1=10)
-                funcspec.addcall(arg1=20)
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(param=10)
+                metafunc.addcall(param=20) 
+
+            def pytest_funcarg__arg1(request):
+                return request.param
 
             def test_func1(arg1):
                 assert arg1 == 10
@@ -239,16 +230,21 @@ class TestGenfuncFunctional:
             "*1 failed, 3 passed*"
         ])
 
-    def test_genfuncarg_inmodule(self, testdir):
+    def test_generate_plugin_and_module(self, testdir):
         testdir.makeconftest("""
             class ConftestPlugin:
-                def pytest_genfunc(self, funcspec):
-                    assert "arg1" in funcspec.funcargnames 
-                    funcspec.addcall(_id="world", arg1=1, arg2=2)
+                def pytest_generate_tests(self, metafunc):
+                    assert "arg1" in metafunc.funcargnames 
+                    metafunc.addcall(id="world", param=(2,100))
         """)
         p = testdir.makepyfile("""
-            def pytest_genfunc(funcspec):
-                funcspec.addcall(_id="hello", arg1=10, arg2=10)
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(param=(1,1), id="hello")
+
+            def pytest_funcarg__arg1(request):
+                return request.param[0]
+            def pytest_funcarg__arg2(request):
+                return request.param[1]
 
             class TestClass:
                 def test_myfunc(self, arg1, arg2):

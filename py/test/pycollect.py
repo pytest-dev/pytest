@@ -151,13 +151,13 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         # to work to get at the class 
         clscol = self._getparent(Class)
         cls = clscol and clscol.obj or None
-        funcspec = funcargs.FuncSpecs(funcobj, config=self.config, cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_genfunc.clone(extralookup=module)
-        gentesthook(funcspec=funcspec)
-        if not funcspec._calls:
+        metafunc = funcargs.Metafunc(funcobj, config=self.config, cls=cls, module=module)
+        gentesthook = self.config.hook.pytest_generate_tests.clone(extralookup=module)
+        gentesthook(metafunc=metafunc)
+        if not metafunc._calls:
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
-            parent=self, calls=funcspec._calls)
+            parent=self, calls=metafunc._calls)
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):
@@ -325,13 +325,15 @@ class Function(FunctionMixin, py.test.collect.Item):
     """ a Function Item is responsible for setting up  
         and executing a Python callable test object.
     """
-    def __init__(self, name, parent=None, config=None, args=(), funcargs=None, callobj=_dummy):
+    def __init__(self, name, parent=None, config=None, args=(), 
+                 requestparam=_dummy, callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
         self._finalizers = []
-        self._args = args
-        if funcargs is None:
-            funcargs = {}
-        self.funcargs = funcargs 
+        self._args = args 
+        if not args: # yielded functions (deprecated) have positional args 
+            self.funcargs = {}
+            if requestparam is not _dummy:
+                self._requestparam = requestparam
         if callobj is not _dummy: 
             self._obj = callobj 
 
@@ -352,12 +354,14 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def runtest(self):
         """ execute the given test function. """
-        self.config.hook.pytest_pyfunc_call(pyfuncitem=self, 
-            args=self._args, kwargs=self.funcargs)
+        kwargs = getattr(self, 'funcargs', {})
+        self.config.hook.pytest_pyfunc_call(
+            pyfuncitem=self, args=self._args, kwargs=kwargs)
 
     def setup(self):
         super(Function, self).setup()
-        funcargs.fillfuncargs(self)
+        if hasattr(self, 'funcargs'): 
+            funcargs.fillfuncargs(self)
 
     def __eq__(self, other):
         try:
