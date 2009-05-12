@@ -81,10 +81,7 @@ class PyobjMixin(object):
         self._fslineno = py.code.getfslineno(obj)
         return self._fslineno
 
-    def metainfo(self):
-        res = self.config.hook.pytest_collect_metainfo(colitem=self)
-        if res:
-            return res
+    def reportinfo(self):
         fspath, lineno = self._getfslineno()
         modpath = self.getmodpath()
         return fspath, lineno, modpath 

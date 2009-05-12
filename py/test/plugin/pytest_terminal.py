@@ -149,19 +149,19 @@ class TerminalReporter:
             # for dist-testing situations itemstart means we 
             # queued the item for sending, not interesting (unless debugging) 
             if self.config.option.debug:
-                line = self._metainfoline(item)
+                line = self._reportinfoline(item)
                 extra = ""
                 if node:
                     extra = "-> " + str(node.gateway.id)
                 self.write_ensure_prefix(line, extra)
         else:
             if self.config.option.verbose:
-                line = self._metainfoline(item)
+                line = self._reportinfoline(item)
                 self.write_ensure_prefix(line, "") 
             else:
                 # ensure that the path is printed before the 
                 # 1st test of a module starts running
-                fspath, lineno, msg = item.metainfo()
+                fspath, lineno, msg = self._getreportinfo(item)
                 self.write_fspath_result(fspath, "")
 
     def pytest_itemtestreport(self, rep):
@@ -173,10 +173,10 @@ class TerminalReporter:
             markup = {}
         self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
-            fspath, lineno, msg = rep.colitem.metainfo()
+            fspath, lineno, msg = self._getreportinfo(rep.colitem)
             self.write_fspath_result(fspath, letter)
         else:
-            line = self._metainfoline(rep.colitem)
+            line = self._reportinfoline(rep.colitem)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
             else:
@@ -254,8 +254,8 @@ class TerminalReporter:
         for rootdir in rootdirs:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
 
-    def _metainfoline(self, item):
-        fspath, lineno, msg = item.metainfo()
+    def _reportinfoline(self, item):
+        fspath, lineno, msg = self._getreportinfo(item)
         if fspath:
             fspath = self.curdir.bestrelpath(fspath)
         if lineno is not None:
@@ -267,15 +267,25 @@ class TerminalReporter:
         elif fspath and lineno:
             line = "%(fspath)s:%(lineno)s"
         else:
-            line = "[nometainfo]"
+            line = "[noreportinfo]"
         return line % locals() + " "
-
+        
     def _getfailureheadline(self, rep):
         if isinstance(rep.colitem, py.test.collect.Collector):
             return str(rep.colitem.fspath)
         else:
-            fspath, lineno, msg = rep.colitem.metainfo()
+            fspath, lineno, msg = self._getreportinfo(rep.colitem)
             return msg
+
+    def _getreportinfo(self, item):
+        try:
+            return item.__reportinfo
+        except AttributeError:
+            pass
+        reportinfo = item.config.hook.pytest_report_iteminfo(item=item)
+        # cache on item
+        item.__reportinfo = reportinfo
+        return reportinfo
 
     #
     # summaries for testrunfinish 
@@ -579,11 +589,11 @@ class TestTerminal:
             "*test_show_path_before_running_test.py*"
         ])
 
-    def test_itemreport_metainfo(self, testdir, linecomp):
+    def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest("""
             import py
             class Function(py.test.collect.Function):
-                def metainfo(self):
+                def reportinfo(self):
                     return "ABCDE", 42, "custom"    
         """)
         item = testdir.getitem("def test_func(): pass")
@@ -598,6 +608,25 @@ class TestTerminal:
         linecomp.assert_contains_lines([
             "*ABCDE:43: custom*"
         ])
+
+    def test_itemreport_pytest_report_iteminfo(self, testdir, linecomp):
+        item = testdir.getitem("def test_func(): pass")
+        class Plugin:
+            def pytest_report_iteminfo(self, item):
+                return "FGHJ", 42, "custom"
+        item.config.pluginmanager.register(Plugin())             
+        tr = TerminalReporter(item.config, file=linecomp.stringio)
+        item.config.pluginmanager.register(tr)
+        tr.config.hook.pytest_itemstart(item=item)
+        linecomp.assert_contains_lines([
+            "*FGHJ "
+        ])
+        tr.config.option.verbose = True
+        tr.config.hook.pytest_itemstart(item=item)
+        linecomp.assert_contains_lines([
+            "*FGHJ:43: custom*"
+        ])
+
 
     def pseudo_keyboard_interrupt(self, testdir, linecomp, verbose=False):
         modcol = testdir.getmodulecol("""

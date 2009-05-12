@@ -111,7 +111,7 @@ class FuncargRequest:
                     name = name[len(self._argprefix):]
                     if name not in available:
                         available.append(name) 
-        fspath, lineno, msg = self._pyfuncitem.metainfo()
+        fspath, lineno, msg = self._pyfuncitem.reportinfo()
         line = "%s:%s" %(fspath, lineno)
         msg = "funcargument %r not found for: %s" %(self.argname, line)
         msg += "\n available funcargs: %s" %(", ".join(available),)
