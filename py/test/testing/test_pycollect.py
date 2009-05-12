@@ -397,3 +397,18 @@ class TestMetaInfo:
                 def test_method(self):
                     pass
        """
+
+    def test_pytest_collect_metainfo(self, testdir):
+        wascalled = []
+        class Plugin:
+            def pytest_collect_metainfo(self, colitem):
+                wascalled.append(colitem)
+
+        item = testdir.getitem("def test_func(): pass")
+        item.config.pluginmanager.register(Plugin())      
+
+        fspath, lineno, modpath = item.metainfo()
+
+        assert wascalled == [item]
+
+        
