@@ -357,7 +357,7 @@ def test_findsource___source__():
     
 
 def test_getfslineno():
-    from py.__.code.source import getfslineno
+    from py.code import getfslineno
 
     def f(x):
         pass
