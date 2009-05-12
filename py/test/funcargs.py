@@ -80,12 +80,12 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         self.argname = argname 
         self.function = pyfuncitem.obj
-        self.module = pyfuncitem.getmodulecollector().obj 
+        self.module = pyfuncitem._getparent(py.test.collect.Module).obj
         self.cls = getattr(self.function, 'im_class', None)
         self.config = pyfuncitem.config
         self.fspath = pyfuncitem.fspath
         self._plugins = self.config.pluginmanager.getplugins()
-        self._plugins.append(pyfuncitem.getmodulecollector().obj)
+        self._plugins.append(self.module)
         self._provider = self.config.pluginmanager.listattr(
             plugins=self._plugins, 
             attrname=self._argprefix + str(argname)

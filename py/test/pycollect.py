@@ -38,10 +38,6 @@ class PyobjMixin(object):
     def _getobj(self):
         return getattr(self.parent.obj, self.name)
 
-    def getmodulecollector(self):
-        return self._getparent(Module)
-    def getclasscollector(self):
-        return self._getparent(Class)
     def _getparent(self, cls):
         current = self
         while current and not isinstance(current, cls):
@@ -167,10 +163,10 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 return self._genfunctions(name, obj)
 
     def _genfunctions(self, name, funcobj):
-        module = self.getmodulecollector().obj
+        module = self._getparent(Module).obj
         # due to _buildname2items funcobj is the raw function, we need
         # to work to get at the class 
-        clscol = self.getclasscollector()
+        clscol = self._getparent(Class)
         cls = clscol and clscol.obj or None
         funcspec = funcargs.FuncSpecs(funcobj, config=self.config, cls=cls, module=module)
         gentesthook = self.config.hook.pytest_genfunc.clone(extralookup=module)
