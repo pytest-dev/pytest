@@ -30,7 +30,6 @@ modules a leading ``test_`` or trailing ``_test`` filename.
 From each test module every function with a leading ``test_``
 or class with a leading ``Test`` name is collected.  
 
-.. _`generative tests`: 
 .. _`collection process`: ext.html#collection-process
 
 Rapidly write integration, functional, unit tests 
@@ -259,11 +258,17 @@ For example, in order to avoid running some tests on Win32::
         def test_xxx(self):
             ... 
 
+.. _`test generators`: funcargs.html#test-generators
+
+.. _`generative tests`: 
+
 generative tests: yielding parametrized tests
 ====================================================
 
+**deprecated since 1.0 in favour of `test generators`_**
+
 *Generative tests* are test methods that are *generator functions* which
-``yield`` callables and their arguments.  This is most useful for running a
+``yield`` callables and their arguments.  This is useful for running a
 test function multiple times against different parameters.  Example::
 
     def test_generative(): 

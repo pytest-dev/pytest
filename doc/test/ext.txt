@@ -120,6 +120,7 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
     the trailing ``.py``. 
 
 
+
 Plugin hooks and events  
 =======================================
 

@@ -1,27 +1,42 @@
 ======================================================
-**funcargs**: powerful test setup and parametrization
+**funcargs**: test setup and parametrization
 ======================================================
 
-Since version 1.0 it is possible to provide arguments to test functions,
-often called "funcargs".  The funcarg mechanisms were developed with
-these goals in mind: 
+Since version 1.0 test functions can make great use of 
+their arguments or "funcargs" for short.  py.test helps 
+to setup or generate argument values with the goal 
+of making it easy to: 
 
-* **no boilerplate**: cleanly encapsulate test setup and fixtures
-* **flexibility**: easily setup test state depending on command line options or environment
-* **readability**: write simple to read and debug test functions 
-* **parametrizing tests**: run a test function multiple times with different parameters
+* separate test function code from test setup/fixtures
+* manage test value setup and teardown depending on 
+  command line options or configuration
+* parametrize multiple runs of the same test functions 
+* present useful debug info if something goes wrong
+
+Using funcargs, test functions become more expressive, 
+more "templaty" and more test-aspect oriented.  In fact, 
+funcarg mechanisms are meant to be complete and 
+convenient enough to 
+
+* substitute most usages of `xUnit style`_ setup
+
+* substitute all usages of `old-style generative tests`_, 
+  i.e. test functions that use the "yield" statement. 
+  Using yield in test functions is deprecated since 1.0. 
 
 
-.. contents:: Contents:
-    :depth: 2
+.. _`xUnit style`: xunit_setup.html 
+.. _`old-style generative tests`: 
 
-Basic mechanisms by example
-=============================================
+.. _`funcarg provider`:
+ 
+funcarg providers: setting up test function arguments 
+==============================================================
 
-providing single function arguments as needed 
----------------------------------------------------------
-
-Let's look at a simple example of using funcargs within a test module:
+Test functions can specify one ore more arguments ("funcargs") 
+and a test module or plugin can define functions that provide
+the function argument.  Let's look at a self-contained example 
+that you can put into a test module: 
 
 .. sourcecode:: python
 
@@ -31,66 +46,30 @@ Let's look at a simple example of using funcargs within a test module:
     def test_function(myfuncarg):
         assert myfuncarg == 42
 
-1. To setup the running of the ``test_function()`` call, py.test 
-   looks up a provider for the ``myfuncarg`` argument. 
-   The provider method is recognized by its ``pytest_funcarg__`` prefix 
-   followed by the requested function argument name. 
-   The `request object`_ gives access to test context. 
+Here is what happens: 
 
-2. The ``test_function(42)`` call is executed.  If the test fails
-   one can see the original provided value. 
+1. **lookup funcarg provider**: The ``test_function`` needs an value for 
+   ``myfuncarg`` to run.  The provider is found by its special 
+   name, ``pytest_funcarg__`` followed by the function 
+   argument argument name.  If a provider cannot be found, 
+   a list of all available function arguments is presented. 
 
+2. **setup funcarg value**: ``pytest_funcarg__myfuncarg(request)`` is 
+   called to setup the value for ``myfuncarg``.   
 
-generating test functions call 
-----------------------------------------------------------------------
+3. **execute test** ``test_function(42)`` call is executed.  
+   If the test fails one can see the original provided 
+   value in the traceback at the top. 
 
-You can parametrize multiple runs of a test function by 
-providing multiple values for function arguments.  Here 
-is an example for running the same test function three times. 
-
-.. sourcecode:: python
-
-    def pytest_genfunc(funcspec):
-        if "arg1" in funcspec.funcargnames:
-            for value in range(3):
-                funcspec.addcall(arg1=value, arg2=range(10))
-
-    def test_function(arg1, arg2): 
-        assert arg1 in arg2
-
-Here is what happens:
-
-1. The ``pytest_genfunc()`` hook will be called once for each test
-   function during the collection process.  The if-statement makes
-   sure that we only add calls for functions that actually need the
-   provided value.  The `funcspec object`_ provides access to context
-   information. 
-
-2. Subsequently the ``test_function()`` will be called three times 
-   with three different values for ``arg1``.  
-
-Funcarg rules and support objects
-====================================
-
-It is helpful to understand when function arguments are setup and when
-function calls are added.  Both providers deal with function arguments
-but at different phases of the testing process.  New Function calls 
-can only be added during the test collection phase whereas function 
-arguments are provided during the actual setup of (already collected) 
-test functions. 
-
-.. _`request object`:
+.. _`request object`: 
 
 funcarg request objects
-------------------------
+------------------------------------------
 
-Request objects encapsulate a request for a function argument from a
-specific test function.  Request objects provide access to command line
-options, the underlying python function and allow interaction 
-with other providers and the test running process.  
-
-Attributes of request objects
-++++++++++++++++++++++++++++++++++++++++
+Request objects are passed to funcarg providers.  Request objects 
+encapsulate a request for a function argument for a
+specific test function.  Request objects allow providers to access 
+test configuration and test context: 
 
 ``request.argname``: name of the requested function argument 
 
@@ -98,12 +77,15 @@ Attributes of request objects
 
 ``request.cls``: class object where the test function is defined in or None. 
 
-``funcspec.module``: module object where the test function is defined in. 
+``request.module``: module object where the test function is defined in. 
 
 ``request.config``: access to command line opts and general config
 
+``request.param``: if exists is the argument passed by a `parametrizing test generator`_ 
+
+
 cleanup after test function execution
-++++++++++++++++++++++++++++++++++++++++
+---------------------------------------------
 
 Request objects allow to **register a finalizer method** which is 
 called after a test function has finished running. 
@@ -139,58 +121,94 @@ is no next provider left.  See the `decorator example`_
 for a use of this method. 
 
 
-.. _`lookup order`: 
+.. _`test generators`: 
+.. _`parametrizing test generator`: 
 
-Order of provider and test generator lookup
-----------------------------------------------
+generating parametrized tests with funcargs 
+===========================================================
 
-Both test generators as well as funcarg providers 
-are looked up in the following three scopes:
+You can parametrize multiple runs of the same test function 
+by schedulings new test function calls which get different
+funcarg values.  Let's look at a simple self-contained 
+example: 
 
-1. test module 
-2. local plugins
-3. global plugins 
+.. sourcecode:: python
 
-Using multiple funcargs 
-----------------------------------------
+    def pytest_generate_tests(metafunc):
+        if "numiter" in metafunc.funcargs: 
+            for i in range(10):
+                metafunc.addcall(param=i)
 
-Test functions can have multiple arguments
-which can either come from a test generator 
-or from a provider. 
+    def pytest_funcarg__numiter(request):
+        return request.param 
 
-.. _`funcspec object`:
+    def test_func(numiter):
+        assert numiter < 10
 
-funcspec objects
-------------------------
+Here is what happens in detail:
 
-Funcspecs help to inspect a testfunction and 
-to generate tests with combinations of function argument values. 
+1. **add test function calls**: 
+   ``pytest_generate_tests(metafunc)`` hook is called once for each test
+   function.  The `metafunc object`_ has context information. 
+   ``metafunc.addcall(param=i)`` schedules a new test call
+   such that function argument providers will see an additional 
+   ``arg`` attribute on their request object. 
 
-Calling ``funcspec.addcall(**funcargs)`` will add 
-a tests function call using the given dictionary
-of function arguments.  This addition of a call
-happens during test collection.  
+2. **setup funcarg values**: the ``pytest_funcarg__arg1(request)`` provider is called 
+   10 times with ten different request objects all pointing to 
+   the same test function.  Our provider here simply returns 
+   the ``arg`` value but we could of course also setup more 
+   heavyweight resources here. 
+  
+3. **execute tests**: ``test_func(numiter)`` is called ten times with 
+   ten different arguments. 
 
-Note that you can provide a name for your test run
-by passing a ``_id=...`` parameter. This name
-will be shown during verbose and traceback 
-reporting. 
+.. _`metafunc object`:
 
-Attributes of funcspec objects
-++++++++++++++++++++++++++++++++++++++++
+test generators and metafunc objects
+-------------------------------------------
 
-``funcspec.funcargnames``: set of required function arguments for given function
+metafunc objects are passed to the ``pytest_generate_tests`` hook. 
+They help to inspect a testfunction and to generate tests 
+according to test configuration or values specified 
+in the class or module where a test function is defined: 
 
-``funcspec.function``: underlying python test function 
+``metafunc.funcargnames``: set of required function arguments for given function
 
-``funcspec.cls``: class object where the test function is defined in or None. 
+``metafunc.function``: underlying python test function 
 
-``funcspec.module``: the module object where the test function is defined in. 
+``metafunc.cls``: class object where the test function is defined in or None. 
 
-``funcspec.config``: access to command line opts and general config
+``metafunc.module``: the module object where the test function is defined in. 
+
+``metafunc.config``: access to command line opts and general config
 
 
-Useful Funcarg Tutorial Examples
+the ``metafunc.addcall()`` method 
+-----------------------------------------------
+
+.. sourcecode:: python
+
+    def addcall(id=None, param=None):
+        """ trigger a later test function call. """ 
+
+The specified ``param`` will be seen by the
+`funcarg provider`_ as a ``request.param`` attribute. 
+
+If you provide an `id`` it will be used for reporting
+and identification purposes.  If you don't supply an `id` 
+the stringified counter of the list of added calls will be used. 
+``id`` values needs to be unique between all 
+invocations for a given test function. 
+
+*Test generators are called during test collection which
+is separate from the actual test setup and test run. 
+With distributed testing setting up funcargs will 
+even happen in a different process.  Therefore one should 
+defer setup of heavyweight objects to funcarg providers.*
+
+
+Funcarg Tutorial Examples
 =======================================
 
 application specific test setup 
@@ -236,9 +254,6 @@ following code into a local ``conftest.py``:
     class MySetup:
         def myapp(self):
             return MyApp()
-
-py.test finds the ``pytest_funcarg__mysetup`` method by
-name, see also `lookup order`_.
 
 To run the example we put a pseudo MyApp object into ``myapp.py``:
 
@@ -369,73 +384,17 @@ extend the `accept example`_ by putting this in our test class:
         def test_sometest(self, accept):
             assert accept.tmpdir.join("special").check()
 
-According to the the `lookup order`_ our module level provider 
-will be invoked first and it can ask ask its request object to 
-call the next provider and then decorate its result.  This 
-mechanism allows us to stay ignorant of how/where the 
-function argument is provided.  
+Our module level provider will be invoked first and it can 
+ask its request object to call the next provider and then 
+decorate its result.  This mechanism allows us to stay 
+ignorant of how/where the function argument is provided - 
+in our example from a ConftestPlugin but could be any plugin. 
 
 sidenote: the temporary directory used here are instances of 
 the `py.path.local`_ class which provides many of the os.path 
 methods in a convenient way. 
 
 .. _`py.path.local`: ../path.html#local
-
-
-parametrize test functions with multiple func args 
---------------------------------------------------------------------------
-
-You can trigger calling test functions which take more
-than one function argument.  Consider this example:
-
-.. sourcecode:: python
-
-    def pytest_genfunc(funcspec):
-        for arg1 in range(2):
-            for arg2 in (10, 20):
-                funcspec.addcall(arg1=arg1, arg2=arg2)
-
-    # the actual test function
-
-    def test_function(arg1, arg2):
-        pass
-
-Running this test module will result in ``test_function`` 
-being called four times, with the following arguments::
-
-    test_function(0, 10)
-    test_function(0, 20)
-    test_function(1, 10)
-    test_function(2, 20)
-
-
-example: test functions with pre-generated and provided funcargs 
--------------------------------------------------------------------
-
-You can mix generated function arguments and normally 
-provided ones. Consider this module:
-
-.. sourcecode:: python
-
-    def pytest_genfunc(funcspec):
-        if "arg1" in funcspec.funcargnames: # test_function2 does not have it 
-            funcspec.addcall(arg1=10)
-            funcspec.addcall(arg1=20)
-
-    def pytest_funcarg__arg2(request):
-        return [10, 20]
-
-    def test_function(arg1, arg2):
-        assert arg1 in arg2 
-
-    def test_function2(arg2):
-        assert args2 == [10, 20]
-
-Running this test module will result in ``test_function`` 
-being called twice, with these arguments::
-
-    test_function(10, [10, 20])
-    test_function(20, [10, 20])
 
 
 Questions and Answers
