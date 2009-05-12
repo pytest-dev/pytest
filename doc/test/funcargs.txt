@@ -37,7 +37,7 @@ Let's look at a simple example of using funcargs within a test module:
    followed by the requested function argument name. 
    The `request object`_ gives access to test context. 
 
-2. A ``test_function(42)`` call is executed.  If the test fails
+2. The ``test_function(42)`` call is executed.  If the test fails
    one can see the original provided value. 
 
 
@@ -53,23 +53,31 @@ is an example for running the same test function three times.
     def pytest_genfunc(funcspec):
         if "arg1" in funcspec.funcargnames:
             for value in range(3):
-                funcspec.addcall(arg1=value)
+                funcspec.addcall(arg1=value, arg2=range(10))
 
-    def test_function(arg1): 
-        assert myfuncarg in (0, 1, 2)
+    def test_function(arg1, arg2): 
+        assert arg1 in arg2
 
 Here is what happens:
 
 1. The ``pytest_genfunc()`` hook will be called once for each test
-   function.  The if-statement makes sure that we only add calls
-   for functions that actually need the provided value. 
-   The `funcspec object`_ provides access to context information. 
+   function during the collection process.  The if-statement makes
+   sure that we only add calls for functions that actually need the
+   provided value.  The `funcspec object`_ provides access to context
+   information. 
 
 2. Subsequently the ``test_function()`` will be called three times 
    with three different values for ``arg1``.  
 
 Funcarg rules and support objects
 ====================================
+
+It is helpful to understand when function arguments are setup and when
+function calls are added.  Both providers deal with function arguments
+but at different phases of the testing process.  New Function calls 
+can only be added during the test collection phase whereas function 
+arguments are provided during the actual setup of (already collected) 
+test functions. 
 
 .. _`request object`:
 
@@ -155,7 +163,7 @@ or from a provider.
 funcspec objects
 ------------------------
 
-Runspecs help to inspect a testfunction and 
+Funcspecs help to inspect a testfunction and 
 to generate tests with combinations of function argument values. 
 
 Calling ``funcspec.addcall(**funcargs)`` will add 
