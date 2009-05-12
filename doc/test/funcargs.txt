@@ -81,7 +81,7 @@ If you run this with ``py.test test_simpleprovider.py`` you see something like t
 This means that the test function got executed and the assertion failed. 
 Here is how py.test comes to execute this test function: 
 
-1. py.test discovers the ``test_function`` because of the ``test_prefix``. 
+1. py.test discovers the ``test_function`` because of the ``test_`` prefix. 
    The test function needs a function argument named ``myfuncarg``.  
    A matching provider function is discovered by looking for the special 
    name ``pytest_funcarg__myfuncarg``. 
@@ -312,15 +312,13 @@ following code into a local ``conftest.py``:
 
     class ConftestPlugin:
         def pytest_funcarg__mysetup(self, request):
-            return MySetup(request)
+            return MySetup()
 
     class MySetup:
-        def __init__(self, request):
-            self.config = request.config
         def myapp(self):
             return MyApp()
-
-To run the example we put a pseudo MyApp object into ``myapp.py``:
+    
+To run the example we represent our application by putting a pseudo MyApp object into ``myapp.py``:
 
 .. sourcecode:: python
 
@@ -412,7 +410,7 @@ Now any test function can use the ``mysetup.getsshconnection()`` method like thi
             conn = mysetup.getsshconnection()
             # work with conn 
       
-Running this without specifying a command line option will result in a skipped test_function: 
+Running ``py.test test_ssh.py`` without specifying a command line option will result in a skipped test_function: 
 
 .. sourcecode:: python
 
