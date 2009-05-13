@@ -129,6 +129,10 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
     if flush:
         file.flush()
 
+def should_do_markup(file):
+    return hasattr(file, 'isatty') and file.isatty() \
+           and os.environ.get('TERM') != 'dumb'
+
 class TerminalWriter(object):
     _esctable = dict(black=30, red=31, green=32, yellow=33, 
                      blue=34, purple=35, cyan=36, white=37,
@@ -146,7 +150,7 @@ class TerminalWriter(object):
             file = WriteFile(file)
         self._file = file
         self.fullwidth = get_terminal_width()
-        self.hasmarkup = hasattr(file, 'isatty') and file.isatty() 
+        self.hasmarkup = should_do_markup(file)
 
     def _escaped(self, text, esc):
         if esc and self.hasmarkup:
@@ -217,7 +221,7 @@ class Win32ConsoleWriter(object):
             file = WriteFile(file)
         self._file = file
         self.fullwidth = get_terminal_width()
-        self.hasmarkup = hasattr(file, 'isatty') and file.isatty()
+        self.hasmarkup = should_do_markup(file)
 
     def sep(self, sepchar, title=None, fullwidth=None, **kw):
         if fullwidth is None:

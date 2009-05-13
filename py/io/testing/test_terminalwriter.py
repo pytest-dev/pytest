@@ -1,6 +1,7 @@
 import py
 import os, sys
 from py.__.io import terminalwriter 
+import StringIO
 
 def skip_win32():
     if sys.platform == 'win32':
@@ -19,6 +20,14 @@ def test_terminalwriter_defaultwidth_80(monkeypatch):
 def test_terminalwriter_default_instantiation():
     tw = py.io.TerminalWriter(stringio=True)
     assert hasattr(tw, 'stringio')
+
+def test_terminalwriter_dumb_term_no_markup(monkeypatch):
+    monkeypatch.setattr(os, 'environ', {'TERM': 'dumb', 'PATH': ''})
+    monkeypatch.setattr(sys, 'stdout', StringIO.StringIO())
+    monkeypatch.setattr(sys.stdout, 'isatty', lambda:True)
+    assert sys.stdout.isatty()
+    tw = py.io.TerminalWriter()
+    assert not tw.hasmarkup
 
 class BaseTests:
     def test_line(self):    
