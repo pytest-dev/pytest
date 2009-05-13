@@ -12,9 +12,10 @@ class PocooPlugin:
     """ report URLs from sending test failures to the pocoo paste service. """
 
     def pytest_addoption(self, parser):
-        parser.addoption('-P', '--pocoo-sendfailures', 
+        group = parser.addgroup("pocoo plugin") 
+        group.addoption('-P', '--pocoo-sendfailures', 
             action='store_true', dest="pocoo_sendfailures", 
-            help="send failures to %s" %(url.base,))
+            help="send failures to %s paste service" %(url.base,))
 
     def getproxy(self):
         return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
@@ -25,8 +26,8 @@ class PocooPlugin:
             if 'failed' in tr.stats and tr.config.option.tbstyle != "no":
                 terminalreporter.write_sep("=", "Sending failures to %s" %(url.base,))
                 terminalreporter.write_line("xmlrpcurl: %s" %(url.xmlrpc,))
-                print self.__class__.getproxy
-                print self.__class__, id(self.__class__)
+                #print self.__class__.getproxy
+                #print self.__class__, id(self.__class__)
                 serverproxy = self.getproxy()
                 for ev in terminalreporter.stats.get('failed'):
                     tw = py.io.TerminalWriter(stringio=True)
