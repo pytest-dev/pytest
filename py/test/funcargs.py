@@ -24,7 +24,8 @@ def fillfuncargs(function):
 
 _notexists = object()
 class CallSpec:
-    def __init__(self, id, param):
+    def __init__(self, funcargs, id, param):
+        self.funcargs = funcargs 
         self.id = id
         if param is not _notexists:
             self.param = param 
@@ -40,14 +41,15 @@ class Metafunc:
         self._calls = []
         self._ids = py.builtin.set()
 
-    def addcall(self, id=None, param=_notexists):
+    def addcall(self, funcargs=None, id=None, param=_notexists):
+        assert funcargs is None or isinstance(funcargs, dict)
         if id is None:
             id = len(self._calls)
         id = str(id)
         if id in self._ids:
             raise ValueError("duplicate id %r" % id)
         self._ids.add(id)
-        self._calls.append(CallSpec(id, param))
+        self._calls.append(CallSpec(funcargs, id, param))
 
 class FunctionCollector(py.test.collect.Collector):
     def __init__(self, name, parent, calls):
@@ -57,9 +59,10 @@ class FunctionCollector(py.test.collect.Collector):
        
     def collect(self):
         l = []
-        for call in self.calls:
-            function = self.parent.Function(name="%s[%s]" %(self.name, call.id),
-                parent=self, requestparam=call.param, callobj=self.obj)
+        for callspec in self.calls:
+            name = "%s[%s]" %(self.name, callspec.id)
+            function = self.parent.Function(name=name, parent=self, 
+                callspec=callspec, callobj=self.obj)
             l.append(function)
         return l 
 

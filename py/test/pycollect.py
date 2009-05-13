@@ -326,14 +326,16 @@ class Function(FunctionMixin, py.test.collect.Item):
         and executing a Python callable test object.
     """
     def __init__(self, name, parent=None, config=None, args=(), 
-                 requestparam=_dummy, callobj=_dummy):
+                 callspec=None, callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
         self._finalizers = []
         self._args = args 
-        if not args: # yielded functions (deprecated) have positional args 
-            self.funcargs = {}
-            if requestparam is not _dummy:
-                self._requestparam = requestparam
+        if args:
+            assert not callspec, "yielded functions (deprecated) cannot have funcargs" 
+        else:
+            self.funcargs = callspec and callspec.funcargs or {}
+            if hasattr(callspec, "param"):
+                self._requestparam = callspec.param
         if callobj is not _dummy: 
             self._obj = callobj 
 

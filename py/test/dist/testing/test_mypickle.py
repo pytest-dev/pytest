@@ -4,22 +4,24 @@ from py.__.test.dist.mypickle import ImmutablePickler, PickleChannel, UnpickleEr
 
 class A: 
     pass
-def test_pickle_and_back_IS_same():
-    def pickle_band_back_IS_same(obj, proto):
-        p1 = ImmutablePickler(uneven=False, protocol=proto)
-        p2 = ImmutablePickler(uneven=True, protocol=proto)
-        s1 = p1.dumps(obj)
-        d2 = p2.loads(s1)
-        s2 = p2.dumps(d2)
-        obj_back = p1.loads(s2)
-        assert obj is obj_back 
 
-    a1 = A()
-    a2 = A()
-    a2.a1 = a1
-    for proto in (0,1,2, -1):
-        for obj in {1:2}, [1,2,3], a1, a2:
-            yield pickle_band_back_IS_same, obj, proto
+def pytest_generate_tests(metafunc):
+    if "obj" in metafunc.funcargnames and "proto" in metafunc.funcargnames:
+        a1 = A()
+        a2 = A()
+        a2.a1 = a1
+        for proto in (0,1,2, -1):
+            for obj in {1:2}, [1,2,3], a1, a2:
+                metafunc.addcall(funcargs=dict(obj=obj, proto=proto))
+        
+def test_pickle_and_back_IS_same(obj, proto):
+    p1 = ImmutablePickler(uneven=False, protocol=proto)
+    p2 = ImmutablePickler(uneven=True, protocol=proto)
+    s1 = p1.dumps(obj)
+    d2 = p2.loads(s1)
+    s2 = p2.dumps(d2)
+    obj_back = p1.loads(s2)
+    assert obj is obj_back 
 
 def test_pickling_twice_before_unpickling():
     p1 = ImmutablePickler(uneven=False)

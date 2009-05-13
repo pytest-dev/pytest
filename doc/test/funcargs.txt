@@ -22,12 +22,12 @@ more "templaty" and more test-aspect oriented.  In fact,
 funcarg mechanisms are meant to be complete and 
 convenient enough to 
 
-* substitute most usages of `xUnit style`_ setup.  
+* substitute and improve on most usages of `xUnit style`_ setup.  
   For a simple example of how funcargs compare 
   to xUnit setup, see the `blog post about 
   the monkeypatch funcarg`_. 
 
-* substitute all usages of `old-style generative tests`_, 
+* substitute and improve on all usages of `old-style generative tests`_, 
   i.e. test functions that use the "yield" statement. 
   Using yield in test functions is deprecated since 1.0. 
 
@@ -95,7 +95,7 @@ Note that if you misspell a function argument or want
 to use one that isn't available, an error with a list of
 available function argument is provided. 
 
-For provider functions that make good use of the 
+For more interesting provider functions that make good use of the 
 `request object`_ please see the `application setup tutorial example`_. 
 
 .. _`request object`: 
@@ -164,9 +164,9 @@ for a use of this method.
 generating parametrized tests with funcargs 
 ===========================================================
 
-You can parametrize multiple runs of the same test function 
-by schedulings new test function calls which get different
-funcarg values.  Let's look at a simple self-contained 
+You can directly parametrize multiple runs of the same test 
+function by adding new test function calls with different
+function argument values. Let's look at a simple self-contained 
 example: 
 
 .. sourcecode:: python
@@ -175,10 +175,7 @@ example:
     def pytest_generate_tests(metafunc):
         if "numiter" in metafunc.funcargnames: 
             for i in range(10):
-                metafunc.addcall(param=i)
-
-    def pytest_funcarg__numiter(request):
-        return request.param 
+                metafunc.addcall(funcargs=dict(numiter=i))
 
     def test_func(numiter):
         assert numiter < 9
@@ -208,16 +205,9 @@ If you run this with ``py.test test_example.py`` you'll get:
 Here is what happens in detail:
 
 1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
-   function.  ``metafunc.addcall(param=i)`` adds new test function calls
-   where the ``param`` will appear as ``request.param``. 
+   function.  It adds ten new function calls with explicit function arguments. 
 
-2. the ``pytest_funcarg__arg1(request)`` provider 
-   is called 10 times.  Each time it receives a request object
-   that has a ``request.param`` as previously provided by the generator. 
-   Our provider here simply passes through the ``param`` value.  
-   We could also setup more heavyweight resources here. 
-  
-3. **execute tests**: ``test_func(numiter)`` is called ten times with 
+2. **execute tests**: ``test_func(numiter)`` is called ten times with 
    ten different arguments. 
 
 .. _`metafunc object`:
@@ -246,11 +236,11 @@ the ``metafunc.addcall()`` method
 
 .. sourcecode:: python
 
-    def addcall(id=None, param=None):
-        """ trigger a later test function call. """ 
+    def addcall(funcargs={}, id=None, param=None):
+        """ trigger a new test function call. """ 
 
-The specified ``param`` will be seen by the
-`funcarg provider`_ as a ``request.param`` attribute. 
+``funcargs`` can be a dictionary of argument names
+mapped to values - providing it is called *direct parametrization*. 
 
 If you provide an `id`` it will be used for reporting
 and identification purposes.  If you don't supply an `id` 
@@ -258,11 +248,16 @@ the stringified counter of the list of added calls will be used.
 ``id`` values needs to be unique between all 
 invocations for a given test function. 
 
-*Test generators are called during test collection which
-is separate from the actual test setup and test run. 
-With distributed testing setting up funcargs will 
-even happen in a different process.  Therefore one should 
-defer setup of heavyweight objects to funcarg providers.*
+``param`` if specified will be seen by any 
+`funcarg provider`_ as a ``request.param`` attribute. 
+Setting it is called *indirect parametrization*.  
+
+Indirect parametrization is preferable if test values are 
+expensive to setup or can only be created in certain environments.  
+Test generators and thus ``addcall()`` invocations are performed 
+during test collection which is separate from the actual test 
+setup and test run phase.  With distributed testing collection 
+and test setup/run happens in different process.  
 
 
 .. _`tutorial examples`: 

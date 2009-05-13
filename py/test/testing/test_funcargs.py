@@ -177,6 +177,16 @@ class TestMetafunc:
         assert metafunc._calls[1].param == obj 
         assert metafunc._calls[2].param == 1
 
+    def test_addcall_funcargs(self):
+        def func(arg1): pass
+        metafunc = funcargs.Metafunc(func)
+        class obj: pass 
+        metafunc.addcall(funcargs={"x": 2})
+        metafunc.addcall(funcargs={"x": 3})
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == {'x': 2}
+        assert metafunc._calls[1].funcargs == {'x': 3}
+        assert not hasattr(metafunc._calls[1], 'param')
 
 class TestGenfuncFunctional:
     def test_attributes(self, testdir):
@@ -206,6 +216,28 @@ class TestGenfuncFunctional:
         result = testdir.runpytest(p, "-v")
         result.stdout.fnmatch_lines([
             "*2 passed in*",
+        ])
+
+    def test_addcall_with_funcargs_two(self, testdir):
+        testdir.makeconftest("""
+            class ConftestPlugin:
+                def pytest_generate_tests(self, metafunc):
+                    assert "arg1" in metafunc.funcargnames 
+                    metafunc.addcall(funcargs=dict(arg1=1, arg2=2))
+        """)
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(funcargs=dict(arg1=1, arg2=1))
+
+            class TestClass:
+                def test_myfunc(self, arg1, arg2):
+                    assert arg1 == arg2 
+        """)
+        result = testdir.runpytest("-v", p)
+        assert result.stdout.fnmatch_lines([
+            "*test_myfunc*0*PASS*", 
+            "*test_myfunc*1*FAIL*", 
+            "*1 failed, 1 passed*"
         ])
 
     def test_two_functions(self, testdir):
