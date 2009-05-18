@@ -19,9 +19,8 @@ def test_getfuncargnames():
 class TestFillFuncArgs:
     def test_funcarg_lookupfails(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_funcarg__xyzsomething(self, request):
-                    return 42
+            def pytest_funcarg__xyzsomething(request):
+                return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
         exc = py.test.raises(LookupError, "funcargs.fillfuncargs(item)")
@@ -67,6 +66,19 @@ class TestFillFuncArgs:
         funcargs.fillfuncargs(item2)
         assert item2.funcargs['something'] ==  "test_func"
 
+    def test_funcarg_lookup_classlevel(self, testdir):
+        p = testdir.makepyfile("""
+            class TestClass:
+                def pytest_funcarg__something(self, request):
+                    return request.instance 
+                def test_method(self, something):
+                    assert something is self 
+        """)
+        result = testdir.runpytest(p)
+        assert result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
 class TestRequest:
     def test_request_attributes(self, testdir):
         item = testdir.getitem("""
@@ -90,6 +102,7 @@ class TestRequest:
         """)
         req = funcargs.FuncargRequest(item, argname="something")
         assert req.cls.__name__ == "TestB"
+        assert req.instance.__class__ == req.cls
         
     def test_request_contains_funcargs_provider(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -284,10 +297,9 @@ class TestGenfuncFunctional:
 
     def test_addcall_with_funcargs_two(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_generate_tests(self, metafunc):
-                    assert "arg1" in metafunc.funcargnames 
-                    metafunc.addcall(funcargs=dict(arg1=1, arg2=2))
+            def pytest_generate_tests(metafunc):
+                assert "arg1" in metafunc.funcargnames 
+                metafunc.addcall(funcargs=dict(arg1=1, arg2=2))
         """)
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
@@ -328,10 +340,9 @@ class TestGenfuncFunctional:
 
     def test_generate_plugin_and_module(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_generate_tests(self, metafunc):
-                    assert "arg1" in metafunc.funcargnames 
-                    metafunc.addcall(id="world", param=(2,100))
+            def pytest_generate_tests(metafunc):
+                assert "arg1" in metafunc.funcargnames 
+                metafunc.addcall(id="world", param=(2,100))
         """)
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):

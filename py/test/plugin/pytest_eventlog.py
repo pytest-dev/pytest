@@ -1,5 +1,8 @@
 import py
 
+""" expected to fail. 
+"""
+
 class EventlogPlugin:
     """ log pytest events to a file. """
     def pytest_addoption(self, parser):
@@ -28,7 +31,7 @@ class EventlogPlugin:
 
 @py.test.mark.xfail
 def test_generic(plugintester):
-    plugintester.hookcheck(EventlogPlugin)
+    plugintester.hookcheck()
 
     testdir = plugintester.testdir()
     testdir.makepyfile("""

@@ -193,11 +193,10 @@ class TestCustomConftests:
 
     def test_avoid_directory_on_option(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_addoption(self, parser):
-                    parser.addoption("--XX", action="store_true", default=False)
-                def pytest_collect_recurse(self, path, parent):
-                    return parent.config.getvalue("XX")
+            def pytest_addoption(parser):
+                parser.addoption("--XX", action="store_true", default=False)
+            def pytest_collect_recurse(path, parent):
+                return parent.config.getvalue("XX")
         """)
         testdir.mkdir("hello")
         sorter = testdir.inline_run(testdir.tmpdir)

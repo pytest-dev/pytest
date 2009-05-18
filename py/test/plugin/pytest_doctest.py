@@ -1,18 +1,17 @@
 import py
 
-class DoctestPlugin:
-    def pytest_addoption(self, parser):
-        group = parser.addgroup("doctest options")
-        group.addoption("--doctest-modules", 
-            action="store_true", default=False,
-            dest="doctestmodules")
+def pytest_addoption(parser):
+    group = parser.addgroup("doctest options")
+    group.addoption("--doctest-modules", 
+        action="store_true", default=False,
+        dest="doctestmodules")
     
-    def pytest_collect_file(self, path, parent):
-        if path.ext == ".py":
-            if parent.config.getvalue("doctestmodules"):
-                return DoctestModule(path, parent)
-        if path.check(fnmatch="test_*.txt"):
-            return DoctestTextfile(path, parent)
+def pytest_collect_file(path, parent):
+    if path.ext == ".py":
+        if parent.config.getvalue("doctestmodules"):
+            return DoctestModule(path, parent)
+    if path.check(fnmatch="test_*.txt"):
+        return DoctestTextfile(path, parent)
 
 from py.__.code.excinfo import Repr, ReprFileLocation
 
@@ -76,8 +75,8 @@ class DoctestModule(DoctestItem):
 #
 
 class TestDoctests:
+
     def test_collect_testtextfile(self, testdir):
-        testdir.plugins.append(DoctestPlugin())
         testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(test_something="""
             alskdjalsdk
@@ -92,7 +91,6 @@ class TestDoctests:
             assert isinstance(items[0], DoctestTextfile)
 
     def test_collect_module(self, testdir):
-        testdir.plugins.append(DoctestPlugin())
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir): 
             items, evrec = testdir.inline_genitems(p, '--doctest-modules')
@@ -100,7 +98,6 @@ class TestDoctests:
             assert isinstance(items[0], DoctestModule)
 
     def test_simple_doctestfile(self, testdir):
-        testdir.plugins.append(DoctestPlugin())
         p = testdir.maketxtfile(test_doc="""
             >>> x = 1
             >>> x == 1
@@ -112,7 +109,6 @@ class TestDoctests:
     def test_doctest_unexpected_exception(self, testdir):
         from py.__.test.outcome import Failed 
 
-        testdir.plugins.append(DoctestPlugin())
         p = testdir.maketxtfile("""
             >>> i = 0
             >>> i = 1 
@@ -130,7 +126,6 @@ class TestDoctests:
         #assert repr.reprlocation 
 
     def test_doctestmodule(self, testdir):
-        testdir.plugins.append(DoctestPlugin())
         p = testdir.makepyfile("""
             '''
                 >>> x = 1
@@ -143,7 +138,7 @@ class TestDoctests:
         sorter.assertoutcome(failed=1) 
 
     def test_txtfile_failing(self, testdir):
-        testdir.plugins.append('pytest_doctest')
+        testdir.plugins.append("doctest")
         p = testdir.maketxtfile("""
             >>> i = 0
             >>> i + 1
@@ -162,5 +157,5 @@ class TestDoctests:
 
 
 def test_generic(plugintester):
-    plugintester.hookcheck(DoctestPlugin)
+    plugintester.hookcheck()
 

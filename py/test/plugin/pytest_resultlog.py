@@ -1,26 +1,27 @@
+"""resultlog plugin for machine-readable logging of test results. 
+   Useful for buildbot integration code. 
+""" 
+
 import py
 
-class ResultlogPlugin:
-    """resultlog plugin for machine-readable logging of test results. 
-       Useful for buildbot integration code. 
-    """ 
-    def pytest_addoption(self, parser):
-        group = parser.addgroup("resultlog", "resultlog plugin options")
-        group.addoption('--resultlog', action="store", dest="resultlog", metavar="path",
-               help="path for machine-readable result log.")
-    
-    def pytest_configure(self, config):
-        resultlog = config.option.resultlog
-        if resultlog:
-            logfile = open(resultlog, 'w', 1) # line buffered
-            self.resultlog = ResultLog(logfile) 
-            config.pluginmanager.register(self.resultlog)
+def pytest_addoption(parser):
+    group = parser.addgroup("resultlog", "resultlog plugin options")
+    group.addoption('--resultlog', action="store", dest="resultlog", metavar="path",
+           help="path for machine-readable result log.")
 
-    def pytest_unconfigure(self, config):
-        if hasattr(self, 'resultlog'):
-            self.resultlog.logfile.close()
-            del self.resultlog 
-            #config.pluginmanager.unregister(self.resultlog)
+def pytest_configure(config):
+    resultlog = config.option.resultlog
+    if resultlog:
+        logfile = open(resultlog, 'w', 1) # line buffered
+        config._resultlog = ResultLog(logfile) 
+        config.pluginmanager.register(config._resultlog)
+
+def pytest_unconfigure(config):
+    resultlog = getattr(config, '_resultlog', None)
+    if resultlog:
+        resultlog.logfile.close()
+        del config.resultlog 
+        config.pluginmanager.unregister(resultlog)
 
 def generic_path(item):
     chain = item.listchain()
@@ -224,7 +225,7 @@ class TestWithFunctionIntegration:
         assert 'ValueError' in entry  
 
 def test_generic(plugintester, LineMatcher):
-    plugintester.hookcheck(ResultlogPlugin)
+    plugintester.hookcheck()
     testdir = plugintester.testdir()
     testdir.plugins.append("resultlog")
     testdir.makepyfile("""

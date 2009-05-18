@@ -1,11 +1,13 @@
 import py
 
-class ExecnetcleanupPlugin:
-    _gateways = None
-    _debug = None
+def pytest_configure(config):
+    debug = config.option.debug
+    config.pluginmanager.register(Execnetcleanup(debug))
 
-    def pytest_configure(self, config):
-        self._debug = config.option.debug
+class Execnetcleanup:
+    _gateways = None
+    def __init__(self, debug=False):
+        self._debug = debug 
 
     def trace(self, msg, *args):
         if self._debug:
@@ -43,7 +45,8 @@ class ExecnetcleanupPlugin:
             return res
    
 def test_generic(plugintester):
-    plugintester.hookcheck(ExecnetcleanupPlugin)
+    plugintester.hookcheck(cls=Execnetcleanup)
+    plugintester.hookcheck()
 
 @py.test.mark.xfail("clarify plugin registration/unregistration")
 def test_execnetplugin(testdir):

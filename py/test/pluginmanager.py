@@ -4,6 +4,10 @@ managing loading and interacting with pytest plugins.
 import py
 from py.__.test.plugin import api
 
+def check_old_use(mod, modname):
+    clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
+    assert not hasattr(mod, clsname), (mod, clsname)
+
 class PluginManager(object):
     def __init__(self, comregistry=None):
         if comregistry is None: 
@@ -16,14 +20,21 @@ class PluginManager(object):
             hookspecs=api.PluginHooks, 
             registry=self.comregistry) 
 
-    def register(self, plugin):
-        self.hook.pytest_plugin_registered(plugin=plugin)
-        import types
-        self.comregistry.register(plugin)
+    def register(self, plugin, name=None):
+        if name is None:
+            name = getattr(plugin, '__name__', id(plugin))
+        if name not in self.impname2plugin:
+            self.impname2plugin[name] = plugin
+            self.hook.pytest_plugin_registered(plugin=plugin)
+            self.comregistry.register(plugin)
+            return True
 
     def unregister(self, plugin):
         self.hook.pytest_plugin_unregistered(plugin=plugin)
         self.comregistry.unregister(plugin)
+        for name, value in self.impname2plugin.items():
+            if value == plugin:
+                del self.impname2plugin[name]
 
     def isregistered(self, plugin):
         return self.comregistry.isregistered(plugin)
@@ -34,7 +45,7 @@ class PluginManager(object):
     # API for bootstrapping 
     #
     def getplugin(self, importname):
-        impname, clsname = canonical_names(importname)
+        impname = canonical_importname(importname)
         return self.impname2plugin[impname]
 
     def _envlist(self, varname):
@@ -54,10 +65,11 @@ class PluginManager(object):
 
     def consider_conftest(self, conftestmodule):
         cls = getattr(conftestmodule, 'ConftestPlugin', None)
-        if cls is not None and cls not in self.impname2plugin:
-            self.impname2plugin[cls] = True
-            self.register(cls())
-        self.consider_module(conftestmodule)
+        if cls is not None:
+            raise ValueError("%r: 'ConftestPlugins' only existed till 1.0.0b1, "
+                "were removed in 1.0.0b2" % (cls,))
+        if self.register(conftestmodule, name=conftestmodule.__file__):
+            self.consider_module(conftestmodule)
 
     def consider_module(self, mod):
         attr = getattr(mod, "pytest_plugins", ())
@@ -69,12 +81,12 @@ class PluginManager(object):
 
     def import_plugin(self, spec):
         assert isinstance(spec, str)
-        modname, clsname = canonical_names(spec)
+        modname = canonical_importname(spec)
         if modname in self.impname2plugin:
             return
         mod = importplugin(modname)
-        plugin = registerplugin(self.register, mod, clsname)
-        self.impname2plugin[modname] = plugin
+        check_old_use(mod, modname) 
+        self.register(mod) 
         self.consider_module(mod)
     # 
     #
@@ -131,19 +143,12 @@ class PluginManager(object):
 # 
 #  XXX old code to automatically load classes
 #
-def canonical_names(importspec):
-    importspec = importspec.lower()
+def canonical_importname(name):
+    name = name.lower()
     modprefix = "pytest_"
-    if not importspec.startswith(modprefix):
-        importspec = modprefix + importspec
-    clsname = importspec[len(modprefix):].capitalize() + "Plugin"
-    return importspec, clsname
-
-def registerplugin(registerfunc, mod, clsname):
-    pluginclass = getattr(mod, clsname) 
-    plugin = pluginclass()
-    registerfunc(plugin)
-    return plugin
+    if not name.startswith(modprefix):
+        name = modprefix + name 
+    return name 
 
 def importplugin(importspec):
     try:

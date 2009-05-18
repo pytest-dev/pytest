@@ -1,21 +1,19 @@
 import py
 import sys
 
-class TerminalPlugin(object):
-    """ Report a test run to a terminal. """
-    def pytest_configure(self, config):
-        if config.option.collectonly:
-            self.reporter = CollectonlyReporter(config)
-        else:
-            self.reporter = TerminalReporter(config)
-        # XXX see remote.py's XXX 
-        for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
-            if hasattr(config, attr):
-                #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
-                name = attr.split("_")[-1]
-                assert hasattr(self.reporter._tw, name), name
-                setattr(self.reporter._tw, name, getattr(config, attr))
-        config.pluginmanager.register(self.reporter)
+def pytest_configure(config):
+    if config.option.collectonly:
+        reporter = CollectonlyReporter(config)
+    else:
+        reporter = TerminalReporter(config)
+    # XXX see remote.py's XXX 
+    for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
+        if hasattr(config, attr):
+            #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
+            name = attr.split("_")[-1]
+            assert hasattr(self.reporter._tw, name), name
+            setattr(reporter._tw, name, getattr(config, attr))
+    config.pluginmanager.register(reporter)
 
 class TerminalReporter:
     def __init__(self, config, file=None):
@@ -142,7 +140,6 @@ class TerminalReporter:
 
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
-    
 
     def pytest_itemstart(self, item, node=None):
         if self.config.option.dist != "no":
@@ -749,6 +746,6 @@ def test_repr_python_version(monkeypatch):
     assert repr_pythonversion() == str(x) 
 
 def test_generic(plugintester):
-    plugintester.hookcheck(TerminalPlugin)
-    plugintester.hookcheck(TerminalReporter)
-    plugintester.hookcheck(CollectonlyReporter)
+    plugintester.hookcheck()
+    plugintester.hookcheck(cls=TerminalReporter)
+    plugintester.hookcheck(cls=CollectonlyReporter)

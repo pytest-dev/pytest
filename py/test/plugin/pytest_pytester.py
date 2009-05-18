@@ -10,25 +10,23 @@ from py.__.test.config import Config as pytestConfig
 from pytest__pytest import CallRecorder
 import api
 
+def pytest_funcarg__linecomp(request):
+    return LineComp()
 
-class PytesterPlugin:
-    def pytest_funcarg__linecomp(self, request):
-        return LineComp()
+def pytest_funcarg__LineMatcher(request):
+    return LineMatcher
 
-    def pytest_funcarg__LineMatcher(self, request):
-        return LineMatcher
+def pytest_funcarg__testdir(request):
+    tmptestdir = TmpTestdir(request)
+    return tmptestdir
 
-    def pytest_funcarg__testdir(self, request):
-        tmptestdir = TmpTestdir(request)
-        return tmptestdir
- 
-    def pytest_funcarg__eventrecorder(self, request):
-        evrec = EventRecorder(py._com.comregistry)
-        request.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
-        return evrec
+def pytest_funcarg__eventrecorder(request):
+    evrec = EventRecorder(py._com.comregistry)
+    request.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
+    return evrec
 
 def test_generic(plugintester):
-    plugintester.hookcheck(PytesterPlugin)
+    plugintester.hookcheck()
 
 class RunResult:
     def __init__(self, ret, outlines, errlines):
@@ -163,7 +161,9 @@ class TmpTestdir:
         for plugin in self.plugins:
             if isinstance(plugin, str):
                 config.pluginmanager.import_plugin(plugin)
-            else:
+            elif plugin:
+                if isinstance(plugin, dict):
+                    plugin = PseudoPlugin(plugin) 
                 config.pluginmanager.register(plugin)
         return config
 
@@ -279,6 +279,11 @@ class TmpTestdir:
         child = pexpect.spawn(cmd, logfile=basetemp.join("spawn.out").open("w"))
         child.timeout = expect_timeout
         return child
+
+class PseudoPlugin:
+    def __init__(self, vars):
+        self.__dict__.update(vars) 
+
 
 class Event:
     def __init__(self, name, args, kwargs):

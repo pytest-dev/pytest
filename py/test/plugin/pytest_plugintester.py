@@ -4,32 +4,39 @@ plugin with support classes and functions for testing pytest functionality
 import py
 from py.__.test.plugin import api
 
-class PlugintesterPlugin:
-    """ test support code for testing pytest plugins. """
-    def pytest_funcarg__plugintester(self, request):
-        return PluginTester(request) 
+def pytest_funcarg__plugintester(request):
+    return PluginTester(request) 
 
 class PluginTester:
     def __init__(self, request):
         self.request = request
 
-    def testdir(self):
+    def testdir(self, globs=None):
         from pytest_pytester import TmpTestdir
-        crunner = TmpTestdir(self.request)
-        self.request.addfinalizer(crunner.finalize)
+        testdir = TmpTestdir(self.request)
+        self.request.addfinalizer(testdir.finalize)
+        if globs is None:
+            globs = py.std.sys._getframe(-1).f_globals
+        testdir.plugins.append(globs) 
         # 
         #for colitem in self.request.listchain():
         #    if isinstance(colitem, py.test.collect.Module) and \
         #       colitem.name.startswith("pytest_"):
         #            crunner.plugins.append(colitem.fspath.purebasename)
         #            break 
-        return crunner 
+        return testdir 
 
-    def hookcheck(self, pluginclass):
-        print "loading and checking", pluginclass 
+    def hookcheck(self, name=None, cls=None): 
+        if cls is None:
+            if name is None: 
+                name = py.std.sys._getframe(-1).f_globals['__name__']
+            plugin = __import__(name) 
+        else:
+            plugin = cls
+        print "checking", plugin
         fail = False 
         pm = py.test._PluginManager()
-        methods = collectattr(pluginclass)
+        methods = collectattr(plugin)
         hooks = collectattr(api.PluginHooks)
         getargs = py.std.inspect.getargs
 
@@ -84,4 +91,4 @@ def formatdef(func):
 # ===============================================================================
 
 def test_generic(plugintester):
-    plugintester.hookcheck(PlugintesterPlugin)
+    plugintester.hookcheck()

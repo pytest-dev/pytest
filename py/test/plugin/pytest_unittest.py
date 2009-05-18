@@ -1,5 +1,5 @@
 """
-automatically collect and run traditional "unittest.py" style tests. 
+automatically discover and run traditional "unittest.py" style tests. 
 
 you can mix unittest TestCase subclasses and 
 py.test style tests in one test module. 
@@ -15,12 +15,9 @@ $Id: conftest.py 60979 2009-01-14 22:29:32Z hpk $
 """
 import py
 
-class UnittestPlugin:
-    """ discover and integrate traditional ``unittest.py`` tests. 
-    """
-    def pytest_pycollect_obj(self, collector, name, obj):
-        if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
-            return UnitTestCase(name, parent=collector)
+def pytest_pycollect_obj(collector, name, obj):
+    if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
+        return UnitTestCase(name, parent=collector)
 
 class UnitTestCase(py.test.collect.Class):
     def collect(self):
@@ -71,7 +68,7 @@ class UnitTestFunction(py.test.collect.Function):
 
 
 def test_generic(plugintester):
-    plugintester.hookcheck(UnittestPlugin)
+    plugintester.hookcheck()
 
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""

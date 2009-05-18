@@ -87,11 +87,10 @@ class TestConfigPickling:
 
     def test_config_pickling_customoption(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_addoption(self, parser):
-                    group = parser.addgroup("testing group")
-                    group.addoption('-G', '--glong', action="store", default=42, 
-                        type="int", dest="gdest", help="g value.")
+            def pytest_addoption(parser):
+                group = parser.addgroup("testing group")
+                group.addoption('-G', '--glong', action="store", default=42, 
+                    type="int", dest="gdest", help="g value.")
         """)
         config = testdir.parseconfig("-G", "11")
         assert config.option.gdest == 11
@@ -108,11 +107,10 @@ class TestConfigPickling:
         tmp = testdir.tmpdir.ensure("w1", "w2", dir=1)
         tmp.ensure("__init__.py")
         tmp.join("conftest.py").write(py.code.Source("""
-            class ConftestPlugin:
-                def pytest_addoption(self, parser):
-                    group = parser.addgroup("testing group")
-                    group.addoption('-G', '--glong', action="store", default=42, 
-                        type="int", dest="gdest", help="g value.")
+            def pytest_addoption(parser):
+                group = parser.addgroup("testing group")
+                group.addoption('-G', '--glong', action="store", default=42, 
+                    type="int", dest="gdest", help="g value.")
         """))
         config = testdir.parseconfig(tmp, "-G", "11")
         assert config.option.gdest == 11

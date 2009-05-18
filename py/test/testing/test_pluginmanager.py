@@ -1,6 +1,5 @@
 import py, os
-from py.__.test.pluginmanager import PluginManager, canonical_names
-from py.__.test.pluginmanager import registerplugin, importplugin
+from py.__.test.pluginmanager import PluginManager, canonical_importname
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
@@ -17,7 +16,7 @@ class TestBootstrapping:
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
         pluginmanager = PluginManager()
         testdir.syspathinsert()
-        testdir.makepyfile(pytest_xy123="class Xy123Plugin: pass")
+        testdir.makepyfile(pytest_xy123="#")
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'xy123')
         l1 = len(pluginmanager.getplugins())
         pluginmanager.consider_env()
@@ -29,7 +28,7 @@ class TestBootstrapping:
         assert l2 == l3
 
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
-        x500 = testdir.makepyfile(pytest_x500="class X500Plugin: pass")
+        x500 = testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""
             import py
             def test_hello():
@@ -48,59 +47,49 @@ class TestBootstrapping:
 
         reset = testdir.syspathinsert()
         pluginname = "pytest_hello"
-        testdir.makepyfile(**{pluginname: """
-            class HelloPlugin:
-                pass
-        """})
+        testdir.makepyfile(**{pluginname: ""})
         pluginmanager.import_plugin("hello")
         len1 = len(pluginmanager.getplugins())
         pluginmanager.import_plugin("pytest_hello")
         len2 = len(pluginmanager.getplugins())
         assert len1 == len2
         plugin1 = pluginmanager.getplugin("pytest_hello")
-        assert plugin1.__class__.__name__ == 'HelloPlugin'
+        assert plugin1.__name__.endswith('pytest_hello')
         plugin2 = pluginmanager.getplugin("hello")
         assert plugin2 is plugin1
 
     def test_consider_module(self, testdir):
         pluginmanager = PluginManager()
         testdir.syspathinsert()
-        testdir.makepyfile(pytest_plug1="class Plug1Plugin: pass")
-        testdir.makepyfile(pytest_plug2="class Plug2Plugin: pass")
+        testdir.makepyfile(pytest_plug1="#")
+        testdir.makepyfile(pytest_plug2="#")
         mod = py.std.new.module("temp")
         mod.pytest_plugins = ["pytest_plug1", "pytest_plug2"]
         pluginmanager.consider_module(mod)
-        assert pluginmanager.getplugin("plug1").__class__.__name__ == "Plug1Plugin"
-        assert pluginmanager.getplugin("plug2").__class__.__name__ == "Plug2Plugin"
+        assert pluginmanager.getplugin("plug1").__name__ == "pytest_plug1"
+        assert pluginmanager.getplugin("plug2").__name__ == "pytest_plug2"
 
     def test_consider_module_import_module(self, testdir):
         mod = py.std.new.module("x")
         mod.pytest_plugins = "pytest_a"
-        aplugin = testdir.makepyfile(pytest_a="""class APlugin: pass""")
+        aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = PluginManager() 
         sorter = testdir.geteventrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
         call = sorter.getcall(pluginmanager.hook.pytest_plugin_registered.name)
-        assert call.plugin.__class__.__name__ == "APlugin"
+        assert call.plugin.__name__ == "pytest_a"
 
         # check that it is not registered twice 
         pluginmanager.consider_module(mod)
         l = sorter.getcalls("plugin_registered")
         assert len(l) == 1
 
-    def test_consider_conftest(self, testdir):
+    def test_consider_conftest_deprecated(self, testdir):
         pp = PluginManager()
-        mod = testdir.makepyfile("class ConftestPlugin: hello = 1").pyimport()
-        pp.consider_conftest(mod)
-        l = [x for x in pp.getplugins() if isinstance(x, mod.ConftestPlugin)]
-        assert len(l) == 1
-        assert l[0].hello == 1
-
-        pp.consider_conftest(mod)
-        l = [x for x in pp.getplugins() if isinstance(x, mod.ConftestPlugin)]
-        assert len(l) == 1
+        mod = testdir.makepyfile("class ConftestPlugin: pass").pyimport()
+        call = py.test.raises(ValueError, pp.consider_conftest, mod)
 
     def test_config_sets_conftesthandle_onimport(self, testdir):
         config = testdir.parseconfig([])
@@ -124,33 +113,16 @@ class TestBootstrapping:
         pp.unregister(a2)
         assert not pp.isregistered(a2)
 
-    def test_canonical_names(self):
+    def test_canonical_importname(self):
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
-            impname, clsname = canonical_names(name)
-            assert impname == "pytest_xyz"
-            assert clsname == "XyzPlugin"
-
-    def test_registerplugin(self):
-        l = []
-        registerfunc = l.append
-        registerplugin(registerfunc, py.io, "TerminalWriter")
-        assert len(l) == 1
-        assert isinstance(l[0], py.io.TerminalWriter)
-
-    def test_importplugin(self):
-        assert importplugin("py") == py 
-        py.test.raises(ImportError, "importplugin('laksjd.qwe')")
-        mod = importplugin("pytest_terminal")
-        assert mod is py.__.test.plugin.pytest_terminal 
-
+            impname = canonical_importname(name)
 
 class TestPytestPluginInteractions:
     def test_do_option_conftestplugin(self, testdir):
         from py.__.test.config import Config 
         p = testdir.makepyfile("""
-            class ConftestPlugin:
-                def pytest_addoption(self, parser):
-                    parser.addoption('--test123', action="store_true")
+            def pytest_addoption(parser):
+                parser.addoption('--test123', action="store_true")
         """)
         config = Config() 
         config._conftest.importconftest(p)
@@ -165,10 +137,9 @@ class TestPytestPluginInteractions:
         config.pluginmanager.do_configure(config=config)
         assert not hasattr(config.option, 'test123')
         p = testdir.makepyfile("""
-            class ConftestPlugin:
-                def pytest_addoption(self, parser):
-                    parser.addoption('--test123', action="store_true", 
-                        default=True)
+            def pytest_addoption(parser):
+                parser.addoption('--test123', action="store_true", 
+                    default=True)
         """)
         config._conftest.importconftest(p)
         assert config.option.test123

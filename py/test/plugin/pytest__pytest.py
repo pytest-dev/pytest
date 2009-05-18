@@ -1,8 +1,7 @@
 import py
 
-class _pytestPlugin:
-    def pytest_funcarg___pytest(self, request):
-        return PytestArg(request)
+def pytest_funcarg___pytest(request):
+    return PytestArg(request)
 
 class PytestArg:
     def __init__(self, request):
@@ -97,7 +96,7 @@ class CallRecorder:
         return l
 
 def test_generic(plugintester):
-    plugintester.hookcheck(_pytestPlugin)
+    plugintester.hookcheck()
 
 def test_callrecorder_basic():
     comregistry = py._com.Registry() 

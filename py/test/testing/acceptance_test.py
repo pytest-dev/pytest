@@ -5,9 +5,8 @@ EXPECTTIMEOUT=10.0
 class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.makeconftest("""
-            class ConftestPlugin:
-                def pytest_configure(self, config):
-                    raise config.Error("hello")
+            def pytest_configure(config):
+                raise config.Error("hello")
         """)
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret != 0
@@ -17,9 +16,8 @@ class TestGeneralUsage:
 
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
-            class XyzPlugin:
-                def pytest_addoption(self, parser):
-                    parser.addoption("--xyz", dest="xyz", action="store")
+            def pytest_addoption(parser):
+                parser.addoption("--xyz", dest="xyz", action="store")
         """)
         testdir.makepyfile(test_one="""
             import py

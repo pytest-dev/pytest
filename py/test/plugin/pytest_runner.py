@@ -146,7 +146,7 @@ class SetupState(object):
 # ===============================================================================
 
 def test_generic(plugintester):
-    plugintester.hookcheck(RunnerPlugin())
+    plugintester.hookcheck()
 
 class TestSetupState:
     def test_setup_prepare(self, testdir):

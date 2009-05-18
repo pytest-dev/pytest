@@ -78,12 +78,15 @@ class FuncargRequest:
         self.function = pyfuncitem.obj
         self.module = pyfuncitem._getparent(py.test.collect.Module).obj
         self.cls = getattr(self.function, 'im_class', None)
+        self.instance = getattr(self.function, 'im_self', None)
         self.config = pyfuncitem.config
         self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam 
         self._plugins = self.config.pluginmanager.getplugins()
         self._plugins.append(self.module)
+        if self.instance is not None:
+            self._plugins.append(self.instance)
         self._provider = self.config.pluginmanager.listattr(
             plugins=self._plugins, 
             attrname=self._argprefix + str(argname)
@@ -126,7 +129,7 @@ class FuncargRequest:
     def _raiselookupfailed(self):
         available = []
         for plugin in self._plugins:
-            for name in vars(plugin.__class__):
+            for name in vars(plugin):
                 if name.startswith(self._argprefix):
                     name = name[len(self._argprefix):]
                     if name not in available:

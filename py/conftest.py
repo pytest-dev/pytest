@@ -3,25 +3,23 @@ pytest_plugins = '_pytest doctest pytester'.split()
 rsyncdirs = ['../doc']
 
 import py
-class PylibTestconfigPlugin:
-    def pytest_funcarg__specssh(self, request):
-        return getspecssh(request.config)
-    def pytest_funcarg__specsocket(self, request):
-        return getsocketspec(request.config)
+def pytest_addoption(parser):
+    group = parser.addgroup("pylib", "py lib testing options")
+    group.addoption('--sshhost', 
+           action="store", dest="sshhost", default=None,
+           help=("ssh xspec for ssh functional tests. "))
+    group.addoption('--gx', 
+           action="append", dest="gspecs", default=None,
+           help=("add a global test environment, XSpec-syntax. "))
+    group.addoption('--runslowtests',
+           action="store_true", dest="runslowtests", default=False,
+           help=("run slow tests"))
 
-    def pytest_addoption(self, parser):
-        group = parser.addgroup("pylib", "py lib testing options")
-        group.addoption('--sshhost', 
-               action="store", dest="sshhost", default=None,
-               help=("ssh xspec for ssh functional tests. "))
-        group.addoption('--gx', 
-               action="append", dest="gspecs", default=None,
-               help=("add a global test environment, XSpec-syntax. "))
-        group.addoption('--runslowtests',
-               action="store_true", dest="runslowtests", default=False,
-               help=("run slow tests"))
+def pytest_funcarg__specssh(request):
+    return getspecssh(request.config)
+def pytest_funcarg__specsocket(request):
+    return getsocketspec(request.config)
 
-ConftestPlugin = PylibTestconfigPlugin
 
 # configuration information for tests 
 def getgspecs(config=None):

@@ -5,32 +5,21 @@ XXX: Currently in progress, NOT IN WORKING STATE.
 """
 import py
 
-class PylintPlugin:
-    def pytest_addoption(self, parser):
-        group = parser.addgroup('pylint options')
-        group.addoption('--pylint', action='store_true',
-                        default=False, dest='pylint',
-                        help='Pylint coverate of test files.')
+lint = py.test.importorskip("pylint") 
 
-    def pytest_configure(self, config):
-        if config.getvalue('pylint'):
-            try:
-                from pylint import lint
-                self.lint = lint
-            except ImportError:
-                raise config.Error('Could not import pylint module')
-            print "trying to configure pytest"
+def pytest_addoption(parser):
+    group = parser.addgroup('pylint options')
+    group.addoption('--pylint', action='store_true',
+                    default=False, dest='pylint',
+                    help='Pylint coverate of test files.')
 
-    def pytest_collect_file(self, path, parent):
-        if path.ext == ".py":
-            if parent.config.getvalue('pylint'):
-                return PylintItem(path, parent, self.lint)
+def pytest_collect_file(path, parent):
+    if path.ext == ".py":
+        if parent.config.getvalue('pylint'):
+            return PylintItem(path, parent, self.lint)
 
-    def pytest_terminal_summary(self, terminalreporter):
-        if hasattr(self, 'lint'):
-            print 'placeholder for pylint output'
-
-
+def pytest_terminal_summary(terminalreporter):
+    print 'placeholder for pylint output'
 
 class PylintItem(py.test.collect.Item):
     def __init__(self, path, parent, lintlib):

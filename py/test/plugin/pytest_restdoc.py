@@ -1,23 +1,22 @@
 import py
 
-class RestdocPlugin:
-    def pytest_addoption(self, parser):
-        group = parser.addgroup("ReST", "ReST documentation check options")
-        group.addoption('-R', '--urlcheck',
-               action="store_true", dest="urlcheck", default=False, 
-               help="urlopen() remote links found in ReST text files.") 
-        group.addoption('--urltimeout', action="store", metavar="secs",
-            type="int", dest="urlcheck_timeout", default=5,
-            help="timeout in seconds for remote urlchecks")
-        group.addoption('--forcegen',
-               action="store_true", dest="forcegen", default=False,
-               help="force generation of html files.")
+def pytest_addoption(parser):
+    group = parser.addgroup("ReST", "ReST documentation check options")
+    group.addoption('-R', '--urlcheck',
+           action="store_true", dest="urlcheck", default=False, 
+           help="urlopen() remote links found in ReST text files.") 
+    group.addoption('--urltimeout', action="store", metavar="secs",
+        type="int", dest="urlcheck_timeout", default=5,
+        help="timeout in seconds for remote urlchecks")
+    group.addoption('--forcegen',
+           action="store_true", dest="forcegen", default=False,
+           help="force generation of html files.")
 
-    def pytest_collect_file(self, path, parent):
-        if path.ext == ".txt":
-            project = getproject(path)
-            if project is not None:
-                return ReSTFile(path, parent=parent, project=project)
+def pytest_collect_file(path, parent):
+    if path.ext == ".txt":
+        project = getproject(path)
+        if project is not None:
+            return ReSTFile(path, parent=parent, project=project)
 
 def getproject(path):
     for parent in path.parts(reverse=True):
@@ -346,7 +345,7 @@ def localrefcheck(tryfn, path, lineno):
 # PLUGIN tests
 #
 def test_generic(plugintester):
-    plugintester.hookcheck(RestdocPlugin)
+    plugintester.hookcheck()
 
 def test_deindent():
     assert deindent('foo') == 'foo'
@@ -388,18 +387,18 @@ class TestApigenLinkRole:
                        "resolve_linkrole('source', 'py/foo/bar.py')")
 
 
-def pytest_funcarg__testdir(request):
-    testdir = request.call_next_provider()
-    testdir.makepyfile(confrest="from py.__.misc.rest import Project")
-    testdir.plugins.append(RestdocPlugin())
-    count = 0
-    for p in testdir.plugins:
-        if isinstance(p, RestdocPlugin):
-            count += 1
-            assert count < 2
-    return testdir
-    
 class TestDoctest:
+    def pytest_funcarg__testdir(self, request):
+        testdir = request.call_next_provider()
+        assert request.module.__name__ == __name__
+        testdir.makepyfile(confrest="from py.__.misc.rest import Project")
+        for p in testdir.plugins:
+            if p == globals():
+                break
+        else:
+            testdir.plugins.append(globals())
+        return testdir
+    
     def test_doctest_extra_exec(self, testdir):
         xtxt = testdir.maketxtfile(x="""
             hello::

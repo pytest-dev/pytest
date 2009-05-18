@@ -7,12 +7,11 @@ to a user.  See the test at the bottom for an example.
 import py
 import os
 
-class RecwarnPlugin:
-    def pytest_funcarg__recwarn(self, request):
-        """ check that warnings have been raised. """ 
-        warnings = WarningsRecorder()
-        request.addfinalizer(warnings.finalize)
-        return warnings
+def pytest_funcarg__recwarn(request):
+    """ check that warnings have been raised. """ 
+    warnings = WarningsRecorder()
+    request.addfinalizer(warnings.finalize)
+    return warnings
 
 class RecordedWarning:
     def __init__(self, message, category, filename, lineno, line):
