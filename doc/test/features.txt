@@ -265,7 +265,7 @@ For example, in order to avoid running some tests on Win32::
 generative tests: yielding parametrized tests
 ====================================================
 
-**deprecated since 1.0 in favour of `test generators`_**
+Deprecated since 1.0 in favour of `test generators`_.
 
 *Generative tests* are test methods that are *generator functions* which
 ``yield`` callables and their arguments.  This is useful for running a

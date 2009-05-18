@@ -34,7 +34,7 @@ convenient enough to
 
 .. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`xUnit style`: xunit_setup.html 
-.. _`old-style generative tests`: 
+.. _`old-style generative tests`: features.html#generative-tests
 
 .. _`funcarg provider`:
  
@@ -273,7 +273,7 @@ application specific test setup
 
 Here is a basic useful step-wise example for handling application
 specific test setup.  The goal is to have one place where we have the 
-glue code for bootstrapping and configuring application objects and allow
+glue and test support code for bootstrapping and configuring application objects and allow
 test modules and test functions to stay ignorant of involved details. 
 
 step 1: use and implement a test/app-specific "mysetup"

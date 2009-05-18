@@ -53,6 +53,15 @@ py.test loads and configures plugins at tool startup:
 * by loading all plugins specified via a ``pytest_plugins``
   variable in ``conftest.py`` files or test modules. 
 
+Specifying a plugin in a test module or ``conftest.py`` will
+only lead to activitation when ``py.test`` actually sees the
+directory and the file during the collection process.  This is
+already after command line parsing and there is no try to do 
+a "pre-scan of all subdirs" as this would mean a potentially
+very large delay.  As long as you don't add command line options this detail 
+does not need to worry you. 
+
+
 example: ensure a plugin is loaded 
 -----------------------------------
 
