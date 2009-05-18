@@ -172,16 +172,32 @@ class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """
     def __init__(self):
         self.stack = []
+        self._finalizers = {}
+
+    def addfinalizer(self, finalizer, colitem):
+        assert callable(finalizer)
+        #assert colitem in self.stack
+        self._finalizers.setdefault(colitem, []).append(finalizer)
+
+    def _teardown(self, colitem):
+        finalizers = self._finalizers.pop(colitem, None)
+        while finalizers:
+            fin = finalizers.pop()
+            fin()
+        colitem.teardown()
+        for colitem in self._finalizers:
+            assert colitem in self.stack
 
     def teardown_all(self): 
         while self.stack: 
             col = self.stack.pop() 
-            col.teardown() 
+            self._teardown(col)
+        assert not self._finalizers
 
     def teardown_exact(self, item):
         if self.stack and self.stack[-1] == item:
             col = self.stack.pop()
-            col.teardown()
+            self._teardown(col)
      
     def prepare(self, colitem): 
         """ setup objects along the collector chain to the test-method
@@ -191,7 +207,7 @@ class SetupState(object):
             if self.stack == needed_collectors[:len(self.stack)]: 
                 break 
             col = self.stack.pop() 
-            col.teardown()
+            self._teardown(col)
         for col in needed_collectors[len(self.stack):]: 
             col.setup() 
             self.stack.append(col) 

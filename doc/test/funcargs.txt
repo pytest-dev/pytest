@@ -120,21 +120,54 @@ to access test configuration and test context:
 
 ``request.param``: if exists was passed by a `parametrizing test generator`_ 
 
+perform scoped setup and teardown 
+---------------------------------------------
+
+.. sourcecode:: python 
+
+    def cached_setup(setup, teardown=None, scope="module", keyextra=None):
+        """ setup and return value of calling setup(), cache results and 
+        optionally teardown the value by calling ``teardown(value)``. The scope
+        determines the key for cashing the setup value.  Specify ``keyextra``
+        to add to the cash-key.  
+        scope == 'function': when test function run finishes. 
+        scope == 'module': when tests in a different module are run
+        scope == 'run': when the test run has been finished. 
+        """
+
+example for providing a value that is to be setup only once during a test run: 
+
+.. sourcecode:: python 
+  
+    def pytest_funcarg__db(request):
+        return request.cached_setup(
+                 lambda: ExpensiveSetup(request.config.option.db), 
+                 lambda val: val.close(), 
+                 scope="run"
+        )
+
 
 cleanup after test function execution
 ---------------------------------------------
 
-Request objects allow to **register a finalizer method** which is 
-called after a test function has finished running. 
-This is useful for tearing down or cleaning up
-test state related to a function argument.  Here is a basic 
-example for providing a ``myfile`` object that will be 
-closed upon test function finish:
+.. sourcecode:: python 
+
+    def addfinalizer(func, scope="function"): 
+        """ register calling a a finalizer function. 
+        scope == 'function': when test function run finishes. 
+        scope == 'module': when tests in a different module are run
+        scope == 'run': when all tests have been run. 
+        """
+     
+Calling ``request.addfinalizer()`` is useful for scheduling teardown 
+functions.  The given scope determines when the teardown function 
+will be called.  Here is a basic example for providing a ``myfile`` 
+object that is to be closed when the test function finishes. 
 
 .. sourcecode:: python
 
     def pytest_funcarg__myfile(self, request):
-        # ... create and open a "myfile" object ...
+        # ... create and open a unique per-function "myfile" object ...
         request.addfinalizer(lambda: myfile.close())
         return myfile
 

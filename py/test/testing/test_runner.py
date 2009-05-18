@@ -2,6 +2,15 @@
 from py.__.test.config import SetupState
 
 class TestSetupState:
+    def test_setup(self, testdir):
+        ss = SetupState()
+        item = testdir.getitem("def test_func(): pass")
+        l = [1]
+        ss.addfinalizer(l.pop, colitem=item)
+        ss._teardown(item)
+        assert not l 
+
+class TestSetupStateFunctional:
     disabled = True
     def test_setup_ok(self, testdir):
         item = testdir.getitem("""
@@ -90,3 +99,4 @@ class TestSetupState:
         assert event.excinfo 
         
     
+

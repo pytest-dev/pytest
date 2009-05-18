@@ -328,7 +328,6 @@ class Function(FunctionMixin, py.test.collect.Item):
     def __init__(self, name, parent=None, config=None, args=(), 
                  callspec=None, callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
-        self._finalizers = []
         self._args = args 
         if args:
             assert not callspec, "yielded functions (deprecated) cannot have funcargs" 
@@ -339,16 +338,9 @@ class Function(FunctionMixin, py.test.collect.Item):
         if callobj is not _dummy: 
             self._obj = callobj 
 
-    def addfinalizer(self, func):
-        self._finalizers.append(func)
+    #def addfinalizer(self, func):
+    #    self.config._setupstate.ddfinalizer(func, colitem=self)
         
-    def teardown(self):
-        finalizers = self._finalizers
-        while finalizers:
-            call = finalizers.pop()
-            call()
-        super(Function, self).teardown()
-
     def readkeywords(self):
         d = super(Function, self).readkeywords()
         d.update(self.obj.func_dict)
@@ -370,7 +362,10 @@ class Function(FunctionMixin, py.test.collect.Item):
             return (self.name == other.name and 
                     self._args == other._args and
                     self.parent == other.parent and
-                    self.obj == other.obj)
+                    self.obj == other.obj and 
+                    getattr(self, '_requestparam', None) == 
+                    getattr(other, '_requestparam', None) 
+            )
         except AttributeError:
             pass
         return False

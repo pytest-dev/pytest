@@ -121,9 +121,73 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item, "something")
+        py.test.raises(ValueError, "req.addfinalizer(None, scope='xyz')")
         l = [1]
         req.addfinalizer(l.pop)
-        item.teardown()
+        req.config._setupstate._teardown(item)
+        assert not l 
+
+    def test_request_cachedsetup(self, testdir):
+        item1,item2 = testdir.getitems("""
+            class TestClass:
+                def test_func1(self, something): 
+                    pass
+                def test_func2(self, something): 
+                    pass
+        """)
+        req1 = funcargs.FuncargRequest(item1, "something")
+        l = ["hello"]
+        def setup():
+            return l.pop()
+        ret1 = req1.cached_setup(setup)
+        assert ret1 == "hello"
+        ret1b = req1.cached_setup(setup)
+        assert ret1 == ret1b
+        req2 = funcargs.FuncargRequest(item2, "something")
+        ret2 = req2.cached_setup(setup)
+        assert ret2 == ret1
+
+    def test_request_cachedsetup_extrakey(self, testdir):
+        item1 = testdir.getitem("def test_func(): pass")
+        req1 = funcargs.FuncargRequest(item1, "something")
+        l = ["hello", "world"]
+        def setup():
+            return l.pop()
+        ret1 = req1.cached_setup(setup, extrakey=1)
+        ret2 = req1.cached_setup(setup, extrakey=2)
+        assert ret2 == "hello"
+        assert ret1 == "world"
+        ret1b = req1.cached_setup(setup, extrakey=1)
+        ret2b = req1.cached_setup(setup, extrakey=2)
+        assert ret1 == ret1b
+        assert ret2 == ret2b
+
+    def test_request_cached_setup_functional(self, testdir):
+        testdir.makepyfile(test_0="""
+            l = []
+            def pytest_funcarg__something(request):
+                val = request.cached_setup(setup, teardown)
+                return val 
+            def setup(mycache=[1]):
+                l.append(mycache.pop())
+                return l 
+            def teardown(something):
+                l.remove(something[0])
+                l.append(2)
+            def test_list_once(something):
+                assert something == [1]
+            def test_list_twice(something):
+                assert something == [1]
+        """)
+        testdir.makepyfile(test_1="""
+            import test_0 # should have run already 
+            def test_check_test0_has_teardown_correct():
+                assert test_0.l == [2]
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*3 passed*"
+        ])
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")

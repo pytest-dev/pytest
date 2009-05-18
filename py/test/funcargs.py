@@ -89,14 +89,36 @@ class FuncargRequest:
             attrname=self._argprefix + str(argname)
         )
 
+    def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
+        if not hasattr(self.config, '_setupcache'):
+            self.config._setupcache = {}
+        cachekey = (self._getscopeitem(scope), extrakey)
+        cache = self.config._setupcache
+        try:
+            val = cache[cachekey]
+        except KeyError:
+            val = setup()
+            cache[cachekey] = val 
+            if teardown is not None:
+                self.addfinalizer(lambda: teardown(val), scope=scope)
+        return val 
+
     def call_next_provider(self):
         if not self._provider:
             raise self.Error("no provider methods left")
         next_provider = self._provider.pop()
         return next_provider(request=self)
 
-    def addfinalizer(self, finalizer):
-        self._pyfuncitem.addfinalizer(finalizer)
+    def _getscopeitem(self, scope):
+        if scope == "function":
+            return self._pyfuncitem
+        elif scope == "module":
+            return self._pyfuncitem._getparent(py.test.collect.Module)
+        raise ValueError("unknown finalization scope %r" %(scope,))
+
+    def addfinalizer(self, finalizer, scope="function"):
+        colitem = self._getscopeitem(scope)
+        self.config._setupstate.addfinalizer(finalizer=finalizer, colitem=colitem)
 
     def __repr__(self):
         return "<FuncargRequest %r for %r>" %(self.argname, self._pyfuncitem)

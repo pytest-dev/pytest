@@ -1,7 +1,7 @@
 import py
 from py.__.test.conftesthandle import Conftest
 
-def pytest_generate_tests(metafunc, generator): 
+def pytest_generate_tests(metafunc):
     if "basedir" in metafunc.funcargnames:
         metafunc.addcall(param="global") 
         metafunc.addcall(param="inpackage")
@@ -15,8 +15,7 @@ def pytest_funcarg__basedir(request):
             d.ensure("adir/__init__.py")
             d.ensure("adir/b/__init__.py")
         return d 
-    return request.cached_setup(perclass=basedirmaker) 
-    return request.cached_setup(perclass=basedirmaker) 
+    return request.cached_setup(lambda: basedirmaker(request), extrakey=request.param)
 
 class TestConftestValueAccessGlobal:
     def test_basic_init(self, basedir):
