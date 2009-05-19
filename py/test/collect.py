@@ -127,6 +127,12 @@ class Node(object):
     def listnames(self): 
         return [x.name for x in self.listchain()]
 
+    def getparent(self, cls):
+        current = self
+        while current and not isinstance(current, cls):
+            current = current.parent
+        return current 
+
     def _getitembynames(self, namelist):
         cur = self
         for name in namelist:

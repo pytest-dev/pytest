@@ -217,7 +217,7 @@ class TestGenerator:
 class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        modcol = item._getparent(py.test.collect.Module)
+        modcol = item.getparent(py.test.collect.Module)
         assert isinstance(modcol, py.test.collect.Module)
         assert hasattr(modcol.obj, 'test_func')
         

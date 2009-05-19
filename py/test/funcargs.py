@@ -76,7 +76,7 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         self.argname = argname 
         self.function = pyfuncitem.obj
-        self.module = pyfuncitem._getparent(py.test.collect.Module).obj
+        self.module = pyfuncitem.getparent(py.test.collect.Module).obj
         self.cls = getattr(self.function, 'im_class', None)
         self.instance = getattr(self.function, 'im_self', None)
         self.config = pyfuncitem.config
@@ -116,7 +116,7 @@ class FuncargRequest:
         if scope == "function":
             return self._pyfuncitem
         elif scope == "module":
-            return self._pyfuncitem._getparent(py.test.collect.Module)
+            return self._pyfuncitem.getparent(py.test.collect.Module)
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def addfinalizer(self, finalizer, scope="function"):

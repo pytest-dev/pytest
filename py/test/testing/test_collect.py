@@ -37,6 +37,24 @@ class TestCollector:
             assert [1,2,3] != fn
             assert modcol != fn
 
+    def test_getparent(self, testdir):
+        modcol = testdir.getmodulecol("""
+            class TestClass:
+                 def test_foo():
+                     pass
+        """)
+        cls = modcol.collect_by_name("TestClass")
+        fn = cls.collect_by_name("()").collect_by_name("test_foo")
+        
+        parent = fn.getparent(py.test.collect.Module)
+        assert parent is modcol
+
+        parent = fn.getparent(py.test.collect.Function)
+        assert parent is fn
+
+        parent = fn.getparent(py.test.collect.Class)
+        assert parent is cls     
+
     def test_totrail_and_back(self, tmpdir):
         a = tmpdir.ensure("a", dir=1)
         tmpdir.ensure("a", "__init__.py")
