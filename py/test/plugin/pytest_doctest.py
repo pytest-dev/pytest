@@ -93,7 +93,7 @@ class TestDoctests:
     def test_collect_module(self, testdir):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir): 
-            items, evrec = testdir.inline_genitems(p, '--doctest-modules')
+            items, reprec = testdir.inline_genitems(p, '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestModule)
 

@@ -25,9 +25,9 @@ class SessionTests:
         assert failed[0].colitem.name == "test_one_one"
         assert failed[1].colitem.name == "test_other"
         assert failed[2].colitem.name == "test_two"
-        itemstarted = sorter.getcalls("itemstart")
+        itemstarted = sorter.getcalls("pytest_itemstart")
         assert len(itemstarted) == 4
-        colstarted = sorter.getcalls("collectstart")
+        colstarted = sorter.getcalls("pytest_collectstart")
         assert len(colstarted) == 1
         col = colstarted[0].collector
         assert isinstance(col, py.test.collect.Module)
@@ -130,7 +130,7 @@ class SessionTests:
             def test_one(): pass
         """)
         sorter = testdir.inline_run(testdir.tmpdir)
-        reports = sorter.getreports("collectreport")
+        reports = sorter.getreports("pytest_collectreport")
         assert len(reports) == 1
         assert reports[0].skipped 
 
@@ -201,9 +201,9 @@ class TestNewSession(SessionTests):
        
         itemstarted = sorter.getcalls("pytest_itemstart")
         assert len(itemstarted) == 3
-        assert not sorter.getreports("itemtestreport") 
+        assert not sorter.getreports("pytest_itemtestreport") 
         started = sorter.getcalls("pytest_collectstart")
-        finished = sorter.getreports("collectreport")
+        finished = sorter.getreports("pytest_collectreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 
         colfail = [x for x in finished if x.failed]
@@ -215,7 +215,7 @@ class TestNewSession(SessionTests):
         testdir.makepyfile(__init__="")
         testdir.makepyfile(test_one="xxxx", test_two="yyyy")
         sorter = testdir.inline_run("-x", testdir.tmpdir)
-        finished = sorter.getreports("collectreport")
+        finished = sorter.getreports("pytest_collectreport")
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 

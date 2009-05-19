@@ -74,7 +74,7 @@ class TestBootstrapping:
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = PluginManager() 
-        sorter = testdir.geteventrecorder(pluginmanager)
+        sorter = testdir.getreportrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
@@ -83,7 +83,7 @@ class TestBootstrapping:
 
         # check that it is not registered twice 
         pluginmanager.consider_module(mod)
-        l = sorter.getcalls("plugin_registered")
+        l = sorter.getcalls("pytest_plugin_registered")
         assert len(l) == 1
 
     def test_consider_conftest_deprecated(self, testdir):
@@ -112,6 +112,19 @@ class TestBootstrapping:
         assert not pp.isregistered(a1)
         pp.unregister(a2)
         assert not pp.isregistered(a2)
+
+    def test_register_imported_modules(self):
+        pp = PluginManager()
+        mod = py.std.new.module("x.y.pytest_hello")
+        pp.register(mod)
+        assert pp.isregistered(mod)
+        assert pp.getplugins() == [mod]
+        py.test.raises(AssertionError, "pp.register(mod)")
+        mod2 = py.std.new.module("pytest_hello")
+        #pp.register(mod2) # double registry 
+        py.test.raises(AssertionError, "pp.register(mod)")
+        #assert not pp.isregistered(mod2)
+        assert pp.getplugins() == [mod] # does not actually modify plugins 
 
     def test_canonical_importname(self):
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':

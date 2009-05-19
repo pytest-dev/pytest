@@ -4,7 +4,7 @@ from py.__.execnet.gateway import ExecnetAPI
 
 class TestExecnetEvents:
     def test_popengateway(self, _pytest):
-        rec = _pytest.getcallrecorder(ExecnetAPI)
+        rec = _pytest.gethookrecorder(ExecnetAPI)
         gw = py.execnet.PopenGateway()
         call = rec.popcall("pyexecnet_gateway_init") 
         assert call.gateway == gw

@@ -57,10 +57,10 @@ def test_toproxy(testdir, monkeypatch):
         def test_skip():
             py.test.skip("")
     """)
-    evrec = testdir.inline_run(testpath, "-P")
+    reprec = testdir.inline_run(testpath, "-P")
     assert len(l) == 1
     assert l[0][0] == "python"
     s = l[0][1]
     assert s.find("def test_fail") != -1
-    assert evrec.countoutcomes() == [1,1,1]
+    assert reprec.countoutcomes() == [1,1,1]
      

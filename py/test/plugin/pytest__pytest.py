@@ -7,14 +7,13 @@ class PytestArg:
     def __init__(self, request):
         self.request = request 
 
-    def getcallrecorder(self, hookspecs, comregistry=None):
+    def gethookrecorder(self, hookspecs, comregistry=None):
         if comregistry is None:
             comregistry = self.request.config.pluginmanager.comregistry
-        callrecorder = CallRecorder(comregistry)
-        callrecorder.start_recording(hookspecs)
-        self.request.addfinalizer(callrecorder.finalize)
-        return callrecorder 
-
+        hookrecorder = HookRecorder(comregistry)
+        hookrecorder.start_recording(hookspecs)
+        self.request.addfinalizer(hookrecorder.finish_recording)
+        return hookrecorder 
 
 class ParsedCall:
     def __init__(self, name, locals):
@@ -28,7 +27,7 @@ class ParsedCall:
         del d['_name']
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
-class CallRecorder:
+class HookRecorder:
     def __init__(self, comregistry):
         self._comregistry = comregistry
         self.calls = []
@@ -40,23 +39,18 @@ class CallRecorder:
             _recorder = self 
         for name, method in vars(hookspecs).items():
             if name[0] != "_":
-                setattr(RecordCalls, name, self._getcallparser(method))
+                setattr(RecordCalls, name, self._makecallparser(method))
         recorder = RecordCalls()
         self._recorders[hookspecs] = recorder
         self._comregistry.register(recorder)
         self.hook = py._com.Hooks(hookspecs, registry=self._comregistry)
 
-    def finalize(self):
+    def finish_recording(self):
         for recorder in self._recorders.values():
             self._comregistry.unregister(recorder)
         self._recorders.clear()
 
-    def recordsmethod(self, name):
-        for hookspecs in self._recorders:
-            if hasattr(hookspecs, name):
-                return True
-
-    def _getcallparser(self, method):
+    def _makecallparser(self, method):
         name = method.__name__
         args, varargs, varkw, default = py.std.inspect.getargspec(method)
         assert args[0] == "self"
@@ -71,13 +65,6 @@ class CallRecorder:
                             ParsedCall(%(name)r, locals()))
         """ % locals())
         return locals()[name]
-
-    def popcall(self, name):
-        for i, call in py.builtin.enumerate(self.calls):
-            if call._name == name:
-                del self.calls[i]
-                return call 
-        raise ValueError("could not find call %r in %r" %(name, self.calls))
 
     def getcalls(self, names):
         if isinstance(names, str):
@@ -95,12 +82,25 @@ class CallRecorder:
                 l.append(call)
         return l
 
+    def popcall(self, name):
+        for i, call in py.builtin.enumerate(self.calls):
+            if call._name == name:
+                del self.calls[i]
+                return call 
+        raise ValueError("could not find call %r in %r" %(name, self.calls))
+
+    def getcall(self, name):
+        l = self.getcalls(name)
+        assert len(l) == 1, (name, l)
+        return l[0]
+
+
 def test_generic(plugintester):
     plugintester.hookcheck()
 
-def test_callrecorder_basic():
+def test_hookrecorder_basic():
     comregistry = py._com.Registry() 
-    rec = CallRecorder(comregistry)
+    rec = HookRecorder(comregistry)
     class ApiClass:
         def xyz(self, arg):
             pass
@@ -118,7 +118,7 @@ def test_functional(testdir, linecomp):
         def test_func(_pytest):
             class ApiClass:
                 def xyz(self, arg):  pass 
-            rec = _pytest.getcallrecorder(ApiClass)
+            rec = _pytest.gethookrecorder(ApiClass)
             class Plugin:
                 def xyz(self, arg):
                     return arg + 1

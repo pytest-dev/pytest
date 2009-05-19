@@ -208,7 +208,7 @@ class TestRunnerPlugin:
         item = testdir.getitem("""def test_func(): pass""")
         plugin = RunnerPlugin()
         plugin.pytest_configure(item.config)
-        sorter = testdir.geteventrecorder(item.config.pluginmanager)
+        sorter = testdir.getreportrecorder(item.config.pluginmanager)
         plugin.pytest_item_setup_and_runtest(item)
         rep = sorter.getcall("pytest_itemtestreport").rep
         assert rep.passed 
@@ -248,7 +248,7 @@ class TestSetupEvents:
                 print "13"
                 raise ValueError(25)
         """)
-        rep = evrec.popcall(pytest_itemsetupreport).rep 
+        rep = reprec.popcall(pytest_itemsetupreport).rep 
         assert rep.failed 
         assert rep.item == item 
         assert not rep.passed

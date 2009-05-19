@@ -74,7 +74,7 @@ class TestKeywordSelection:
             passed, skipped, failed = sorter.listoutcomes()
             assert len(failed) == 1
             assert failed[0].colitem.name == name 
-            assert len(sorter.getcalls('deselected')) == 1
+            assert len(sorter.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
             #yield check, keyword, 'test_one'

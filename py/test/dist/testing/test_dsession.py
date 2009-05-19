@@ -174,13 +174,13 @@ class TestDSession:
         session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
         session.queueevent("pytest_testnodedown", node=node, error=None)
-        evrec = testdir.geteventrecorder(session.pluginmanager)
+        reprec = testdir.getreportrecorder(session.pluginmanager)
         print session.item2nodes
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
 
         assert loopstate.colitems == [item2] # do not reschedule crash item
-        testrep = evrec.matchreport(names="itemtestreport")
+        testrep = reprec.matchreport(names="pytest_itemtestreport")
         assert testrep.failed
         assert testrep.colitem == item1
         assert str(testrep.longrepr).find("crashed") != -1
@@ -261,13 +261,13 @@ class TestDSession:
         session.addnode(node)
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
-        evrec = testdir.geteventrecorder(session.pluginmanager)
+        reprec = testdir.getreportrecorder(session.pluginmanager)
         session.queueevent("pytest_itemtestreport", rep=run(item, node))
         session.loop_once(loopstate)
-        assert not evrec.getcalls("pytest_testnodedown")
+        assert not reprec.getcalls("pytest_testnodedown")
         session.queueevent("pytest_testnodedown", node=node, error=None)
         session.loop_once(loopstate)
-        assert evrec.getcall('pytest_testnodedown').node == node
+        assert reprec.getcall('pytest_testnodedown').node == node
 
     def test_filteritems(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -282,18 +282,18 @@ class TestDSession:
         dsel = session.filteritems([modcol])
         assert dsel == [modcol] 
         items = modcol.collect()
-        callrecorder = testdir.geteventrecorder(session.pluginmanager).callrecorder
+        hookrecorder = testdir.getreportrecorder(session.pluginmanager).hookrecorder
         remaining = session.filteritems(items)
         assert remaining == []
         
-        event = callrecorder.getcalls("pytest_deselected")[-1]
+        event = hookrecorder.getcalls("pytest_deselected")[-1]
         assert event.items == items 
 
         modcol.config.option.keyword = "test_fail"
         remaining = session.filteritems(items)
         assert remaining == [items[0]]
 
-        event = callrecorder.getcalls("pytest_deselected")[-1]
+        event = hookrecorder.getcalls("pytest_deselected")[-1]
         assert event.items == [items[1]]
 
     def test_testnodedown_shutdown_after_completion(self, testdir):
@@ -355,16 +355,16 @@ class TestDSession:
         """)
         config = testdir.parseconfig('-d', p1, '--tx=popen')
         dsession = DSession(config)
-        callrecorder = testdir.geteventrecorder(config.pluginmanager).callrecorder
+        hookrecorder = testdir.getreportrecorder(config.pluginmanager).hookrecorder
         dsession.main([config.getfsnode(p1)])
-        rep = callrecorder.popcall("pytest_itemtestreport").rep 
+        rep = hookrecorder.popcall("pytest_itemtestreport").rep 
         assert rep.passed
-        rep = callrecorder.popcall("pytest_itemtestreport").rep
+        rep = hookrecorder.popcall("pytest_itemtestreport").rep
         assert rep.skipped
-        rep = callrecorder.popcall("pytest_itemtestreport").rep
+        rep = hookrecorder.popcall("pytest_itemtestreport").rep
         assert rep.failed
         # see that the node is really down 
-        node = callrecorder.popcall("pytest_testnodedown").node
+        node = hookrecorder.popcall("pytest_testnodedown").node
         assert node.gateway.spec.popen
         #XXX eq.geteventargs("pytest_testrunfinish")
 

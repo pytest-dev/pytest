@@ -19,7 +19,7 @@ class TestSetupStateFunctional:
             def test_func():
                 pass
         """)
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         res = setup.do_setup(item)
         assert res
@@ -32,11 +32,11 @@ class TestSetupStateFunctional:
             def test_func():
                 pass
         """)
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         res = setup.do_setup(item)
         assert not res
-        rep = evrec.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall(pytest_itemsetupreport).rep
         assert rep.failed
         assert not rep.skipped
         assert rep.excrepr 
@@ -51,14 +51,14 @@ class TestSetupStateFunctional:
                 print "13"
                 raise ValueError(25)
         """)
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         res = setup.do_setup(item)
         assert res 
-        rep = evrec.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall(pytest_itemsetupreport).rep
         assert rep.passed
         setup.do_teardown(item)
-        rep = evrec.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall(pytest_itemsetupreport).rep
         assert rep.item == item 
         assert rep.failed 
         assert not rep.passed
@@ -73,10 +73,10 @@ class TestSetupStateFunctional:
             def test_func():
                 pass
         """)
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         setup.do_setup(item)
-        rep = evrec.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall(pytest_itemsetupreport).rep
         assert not rep.failed
         assert rep.skipped
         assert rep.excrepr 
@@ -84,18 +84,18 @@ class TestSetupStateFunctional:
 
     def test_runtest_ok(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         setup.do_fixture_and_runtest(item)
-        rep = evrec.popcall(pytest_itemtestreport).rep 
+        rep = reprec.popcall(pytest_itemtestreport).rep 
         assert rep.passed 
 
     def test_runtest_fails(self, testdir):
         item = testdir.getitem("def test_func(): assert 0")
-        evrec = testdir.geteventrecorder(item.config)
+        reprec = testdir.getreportrecorder(item.config)
         setup = SetupState()
         setup.do_fixture_and_runtest(item)
-        event = evrec.popcall(pytest_item_runtest_finished)
+        event = reprec.popcall(pytest_item_runtest_finished)
         assert event.excinfo 
         
     

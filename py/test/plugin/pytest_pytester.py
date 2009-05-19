@@ -7,8 +7,9 @@ import os
 import inspect
 from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
-from pytest__pytest import CallRecorder
+from pytest__pytest import HookRecorder
 import api
+
 
 def pytest_funcarg__linecomp(request):
     return LineComp()
@@ -20,10 +21,10 @@ def pytest_funcarg__testdir(request):
     tmptestdir = TmpTestdir(request)
     return tmptestdir
 
-def pytest_funcarg__eventrecorder(request):
-    evrec = EventRecorder(py._com.comregistry)
-    request.addfinalizer(lambda: evrec.comregistry.unregister(evrec))
-    return evrec
+def pytest_funcarg__reportrecorder(request):
+    reprec = ReportRecorder(py._com.comregistry)
+    request.addfinalizer(lambda: reprec.comregistry.unregister(reprec))
+    return reprec
 
 def test_generic(plugintester):
     plugintester.hookcheck()
@@ -72,12 +73,12 @@ class TmpTestdir:
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
 
-    def geteventrecorder(self, registry):
-        sorter = EventRecorder(registry)
-        sorter.callrecorder = CallRecorder(registry)
-        sorter.callrecorder.start_recording(api.PluginHooks)
-        sorter.hook = sorter.callrecorder.hook
-        self.request.addfinalizer(sorter.callrecorder.finalize)
+    def getreportrecorder(self, registry):
+        sorter = ReportRecorder(registry)
+        sorter.hookrecorder = HookRecorder(registry)
+        sorter.hookrecorder.start_recording(api.PluginHooks)
+        sorter.hook = sorter.hookrecorder.hook
+        self.request.addfinalizer(sorter.hookrecorder.finish_recording)
         return sorter
 
     def chdir(self):
@@ -129,7 +130,7 @@ class TmpTestdir:
         #config = self.parseconfig(*args)
         config = self.parseconfig(*args)
         session = config.initsession()
-        rec = self.geteventrecorder(config.pluginmanager)
+        rec = self.getreportrecorder(config.pluginmanager)
         colitems = [config.getfsnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
         return items, rec 
@@ -151,7 +152,7 @@ class TmpTestdir:
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
         session = config.initsession()
-        sorter = self.geteventrecorder(config.pluginmanager)
+        sorter = self.getreportrecorder(config.pluginmanager)
         session.main()
         config.pluginmanager.do_unconfigure(config)
         return sorter 
@@ -161,10 +162,12 @@ class TmpTestdir:
         for plugin in self.plugins:
             if isinstance(plugin, str):
                 config.pluginmanager.import_plugin(plugin)
-            elif plugin:
+            else:
                 if isinstance(plugin, dict):
                     plugin = PseudoPlugin(plugin) 
-                config.pluginmanager.register(plugin)
+                if not config.pluginmanager.isregistered(plugin):
+                    config.pluginmanager.register(plugin)
+        #print "config.pluginmanager.impname2plugin", config.pluginmanager.impname2plugin
         return config
 
     def parseconfig(self, *args):
@@ -284,55 +287,24 @@ class PseudoPlugin:
     def __init__(self, vars):
         self.__dict__.update(vars) 
 
-
-class Event:
-    def __init__(self, name, args, kwargs):
-        self.name = name
-        self.args = args
-        self.kwargs = kwargs
-    def __repr__(self):
-        return "<Event %r %r>" %(self.name, self.args)
-
-class ParsedCall:
-    def __init__(self, locals):
-        self.__dict__ = locals.copy()
-
-    def __repr__(self):
-        return "<ParsedCall %r>" %(self.__dict__,)
-
-class EventRecorder(object):
-    def __init__(self, comregistry, debug=False): # True):
+class ReportRecorder(object):
+    def __init__(self, comregistry):
         self.comregistry = comregistry
-        self.debug = debug
         comregistry.register(self)
 
     def getcall(self, name):
-        l = self.getcalls(name)
-        assert len(l) == 1, (name, l)
-        return l[0]
+        return self.hookrecorder.getcall(name)
 
-    def getcalls(self, *names):
+    def getcalls(self, names):
         """ return list of ParsedCall instances matching the given eventname. """
-        if len(names) == 1 and isinstance(names, str):
-            names = names.split()
-        l = []
-        for name in names:
-            if self.callrecorder.recordsmethod("pytest_" + name):
-                name = "pytest_" + name
-            if self.callrecorder.recordsmethod(name):
-                l.extend(self.callrecorder.getcalls(name))
-        return l
+        return self.hookrecorder.getcalls(names)
 
     # functionality for test reports 
 
-    def getreports(self, names="itemtestreport collectreport"):
-        names = [("pytest_" + x) for x in names.split()]
-        l = []
-        for call in self.getcalls(*names):
-            l.append(call.rep)
-        return l 
+    def getreports(self, names="pytest_itemtestreport pytest_collectreport"):
+        return [x.rep for x in self.getcalls(names)]
 
-    def matchreport(self, inamepart="", names="itemtestreport collectreport"):
+    def matchreport(self, inamepart="", names="pytest_itemtestreport pytest_collectreport"):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
@@ -346,21 +318,17 @@ class EventRecorder(object):
                              inamepart, l))
         return l[0]
 
-    def getfailures(self, names='itemtestreport collectreport'):
-        l = []
-        for call in self.getcalls(*names.split()):
-            if call.rep.failed:
-                l.append(call.rep)
-        return l
+    def getfailures(self, names='pytest_itemtestreport pytest_collectreport'):
+        return [rep for rep in self.getreports(names) if rep.failed]
 
     def getfailedcollections(self):
-        return self.getfailures('collectreport')
+        return self.getfailures('pytest_collectreport')
 
     def listoutcomes(self):
         passed = []
         skipped = []
         failed = []
-        for rep in self.getreports("itemtestreport"):
+        for rep in self.getreports("pytest_itemtestreport"):
             if rep.passed: 
                 passed.append(rep) 
             elif rep.skipped: 
@@ -379,15 +347,15 @@ class EventRecorder(object):
         assert failed == len(realfailed)
 
     def clear(self):
-        self.callrecorder.calls[:] = []
+        self.hookrecorder.calls[:] = []
 
     def unregister(self):
         self.comregistry.unregister(self)
-        self.callrecorder.finalize()
+        self.hookrecorder.finish_recording()
 
-def test_eventrecorder(testdir):
+def test_reportrecorder(testdir):
     registry = py._com.Registry()
-    recorder = testdir.geteventrecorder(registry)
+    recorder = testdir.getreportrecorder(registry)
     assert not recorder.getfailures()
     rep = runner.ItemTestReport(None, None)
     rep.passed = False
@@ -406,7 +374,7 @@ def test_eventrecorder(testdir):
     rep = runner.CollectReport(None, None)
     rep.passed = False
     rep.failed = True
-    recorder.hook.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_collectreport(rep=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -414,13 +382,13 @@ def test_eventrecorder(testdir):
     numpassed, numskipped, numfailed = recorder.countoutcomes()
     assert numpassed == 0
     assert numskipped == 1
-    assert numfailed == 2
+    assert numfailed == 1
+    assert len(recorder.getfailedcollections()) == 1
 
     recorder.unregister()
     recorder.clear() 
-    assert not recorder.getfailures()
     recorder.hook.pytest_itemtestreport(rep=rep)
-    assert not recorder.getfailures()
+    py.test.raises(ValueError, "recorder.getfailures()")
 
 class LineComp:
     def __init__(self):

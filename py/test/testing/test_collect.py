@@ -175,7 +175,7 @@ class TestCollectPluginHooks:
         assert "hello" in wascalled
         assert "world" in wascalled
         # make sure the directories do not get double-appended 
-        colreports = sorter.getreports("collectreport")
+        colreports = sorter.getreports("pytest_collectreport")
         names = [rep.colitem.name for rep in colreports]
         assert names.count("hello") == 1
 
@@ -214,8 +214,8 @@ class TestCustomConftests:
         """)
         testdir.mkdir("hello")
         sorter = testdir.inline_run(testdir.tmpdir)
-        names = [rep.colitem.name for rep in sorter.getreports("collectreport")]
+        names = [rep.colitem.name for rep in sorter.getreports("pytest_collectreport")]
         assert 'hello' not in names 
-        evrec = testdir.inline_run(testdir.tmpdir, "--XX")
-        names = [rep.colitem.name for rep in evrec.getreports("collectreport")]
+        reprec = testdir.inline_run(testdir.tmpdir, "--XX")
+        names = [rep.colitem.name for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' in names 

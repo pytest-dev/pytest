@@ -20,14 +20,22 @@ class PluginManager(object):
             hookspecs=api.PluginHooks, 
             registry=self.comregistry) 
 
-    def register(self, plugin, name=None):
+    def _getpluginname(self, plugin, name):
         if name is None:
-            name = getattr(plugin, '__name__', id(plugin))
-        if name not in self.impname2plugin:
-            self.impname2plugin[name] = plugin
-            self.hook.pytest_plugin_registered(plugin=plugin)
-            self.comregistry.register(plugin)
-            return True
+            if hasattr(plugin, '__name__'):
+                name = plugin.__name__.split(".")[-1]
+            else:
+                name = id(plugin) 
+        return name 
+
+    def register(self, plugin, name=None):
+        assert not self.isregistered(plugin)
+        name = self._getpluginname(plugin, name)
+        assert name not in self.impname2plugin
+        self.impname2plugin[name] = plugin
+        self.hook.pytest_plugin_registered(plugin=plugin)
+        self.comregistry.register(plugin)
+        return True
 
     def unregister(self, plugin):
         self.hook.pytest_plugin_unregistered(plugin=plugin)
@@ -36,8 +44,8 @@ class PluginManager(object):
             if value == plugin:
                 del self.impname2plugin[name]
 
-    def isregistered(self, plugin):
-        return self.comregistry.isregistered(plugin)
+    def isregistered(self, plugin, name=None):
+        return self._getpluginname(plugin, name) in self.impname2plugin
 
     def getplugins(self):
         return list(self.comregistry)
@@ -86,7 +94,7 @@ class PluginManager(object):
             return
         mod = importplugin(modname)
         check_old_use(mod, modname) 
-        self.register(mod) 
+        self.register(mod)
         self.consider_module(mod)
     # 
     #
