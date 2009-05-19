@@ -1,4 +1,17 @@
 import os
+"""
+    provides the "monkeypatch" funcarg for safely patching objects, 
+    dictionaries and environment variables during the execution of 
+    a test.  There are three helper functions: 
+
+        monkeypatch.setattr(obj, name, value) 
+        monkeypatch.setitem(obj, name, value) 
+        monkeypatch.setenv(name, value) 
+
+    After the test run all such modifications will be undone, 
+    which may even mean deleting the attribute or dictionary entry 
+    if it didn't exist before. 
+"""
 
 def pytest_funcarg__monkeypatch(request):
     monkeypatch = MonkeyPatch()
