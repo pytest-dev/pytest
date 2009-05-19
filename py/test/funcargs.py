@@ -64,7 +64,17 @@ class FunctionCollector(py.test.collect.Collector):
             function = self.parent.Function(name=name, parent=self, 
                 callspec=callspec, callobj=self.obj)
             l.append(function)
-        return l 
+        return l
+
+    def reportinfo(self):
+        try:
+            return self._fslineno, self.name
+        except AttributeError:
+            pass        
+        fspath, lineno = py.code.getfslineno(self.obj)
+        self._fslineno = fspath, lineno
+        return fspath, lineno, self.name
+    
 
 class FuncargRequest:
     _argprefix = "pytest_funcarg__"

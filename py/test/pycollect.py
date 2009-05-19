@@ -93,7 +93,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return l
         name2items = self._buildname2items()
         colitems = name2items.values()
-        colitems.sort()
+        colitems.sort(key=lambda item: item.reportinfo()[:2])
         return colitems
 
     def _buildname2items(self): 
@@ -205,9 +205,6 @@ class Class(PyCollectorMixin, py.test.collect.Collector):
             teardown_class = getattr(teardown_class, 'im_func', teardown_class) 
             teardown_class(self.obj) 
 
-    def _getsortvalue(self):  
-        return self._getfslineno()
-
 class Instance(PyCollectorMixin, py.test.collect.Collector): 
     def _getobj(self): 
         return self.parent.obj()  
@@ -229,9 +226,6 @@ class Instance(PyCollectorMixin, py.test.collect.Collector):
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
-
-    def _getsortvalue(self):  
-        return self._getfslineno()
 
     def setup(self): 
         """ perform setup for this test function. """

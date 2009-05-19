@@ -79,13 +79,6 @@ class Node(object):
     
     def __hash__(self):
         return hash((self.name, self.parent))
-
-    def __cmp__(self, other): 
-        if not isinstance(other, Node):
-            return -1
-        s1 = self._getsortvalue()
-        s2 = other._getsortvalue()
-        return cmp(s1, s2) 
  
     def setup(self): 
         pass
@@ -229,9 +222,6 @@ class Node(object):
             if num == len(elems) - 1 and ok:
                 return True
         return False
-
-    def _getsortvalue(self): 
-        return self.name 
 
     def _prunetraceback(self, traceback):
         return traceback 

@@ -6,7 +6,7 @@ class TestCollector:
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 
-    def test_check_equality_and_cmp_basic(self, testdir):
+    def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_pass(): pass
             def test_fail(): assert 0
@@ -25,11 +25,7 @@ class TestCollector:
         assert isinstance(fn3, py.test.collect.Function)
         assert not (fn1 == fn3) 
         assert fn1 != fn3
-        assert cmp(fn1, fn3) == -1
 
-        assert cmp(fn1, 10) == -1 
-        assert cmp(fn2, 10) == -1 
-        assert cmp(fn3, 10) == -1 
         for fn in fn1,fn2,fn3:
             assert fn != 3
             assert fn != modcol
