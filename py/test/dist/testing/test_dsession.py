@@ -329,7 +329,6 @@ class TestDSession:
         session.senditems_load([item1])
         # node2pending will become empty when the loop sees the report 
         rep = run(item1, node)
-
         session.queueevent("pytest_itemtestreport", rep=run(item1, node)) 
 
         # but we have a collection pending
@@ -368,3 +367,13 @@ class TestDSession:
         assert node.gateway.spec.popen
         #XXX eq.geteventargs("pytest_testrunfinish")
 
+    @py.test.mark.xfail("test implementation missing")
+    def test_collected_function_causes_remote_skip_at_module_level(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            py.test.importorskip("xyz")
+            def test_func():
+                pass
+        """)
+        # we need to be able to collect test_func locally but not in the subprocess 
+        XXX
