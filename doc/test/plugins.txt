@@ -1,14 +1,14 @@
-================
-Included plugins
-================
+==========================
+py.test plugins 
+==========================
 
-Many of py.test's features are implemented as a plugin. 
+Much of py.test's functionality is implemented as a plugin. 
 
 Included plugins
 ================
 
 You can find the source code of all default plugins in 
-http://codespeak.net/svn/py/trunk/py/test/plugin/
+http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
 
 plugins that add reporting asepcts
 -----------------------------------
@@ -16,8 +16,6 @@ plugins that add reporting asepcts
 pytest_terminal: default reporter for writing info to terminals 
 
 pytest_resultlog: log test results in machine-readable form to a file 
-
-pytest_eventlog: log all internal pytest events to a file 
 
 plugins for adding new test types 
 -----------------------------------
@@ -37,8 +35,6 @@ pytest_tmpdir: provide temporary directories to test functions
 
 pytest_plugintester: generic plugin apichecks, support for functional plugin tests 
 
-pytest_apigen: tracing values of function/method calls when running tests
-
 Loading plugins and specifying dependencies 
 ============================================
 
@@ -47,8 +43,8 @@ py.test loads and configures plugins at tool startup:
 * by reading the ``PYTEST_PLUGINS`` environment variable 
   and importing the comma-separated list of plugin names. 
 
-* by loading all plugins specified via one or more ``-p name`` 
-  command line options. 
+* by pre-scanning the command line for the ``-p name`` option
+  and loading the specified plugin *before actual command line parsing*. 
 
 * by loading all plugins specified via a ``pytest_plugins``
   variable in ``conftest.py`` files or test modules. 
@@ -58,23 +54,18 @@ only lead to activitation when ``py.test`` actually sees the
 directory and the file during the collection process.  This is
 already after command line parsing and there is no try to do 
 a "pre-scan of all subdirs" as this would mean a potentially
-very large delay.  As long as you don't add command line options this detail 
-does not need to worry you. 
+very large delay.  As long as you don't add command line 
+options this detail does not need to worry you. 
 
 
-example: ensure a plugin is loaded 
+ensure a plugin is loaded 
 -----------------------------------
 
 If you create a ``conftest.py`` file with the following content:: 
 
     pytest_plugins = "pytest_myextension",
 
-then all tests in that directory and below it will run with
-an instantiated "pytest_myextension".  Here is how instantiation
-takes place:
-
-* the module ``pytest_extension`` will be imported and 
-  and its contained `ExtensionPlugin`` class will 
-  be instantiated.  A plugin module may specify its 
-  dependencies via another ``pytest_plugins`` definition. 
-
+then all tests in and below that directory will consult the hooks
+defined in the imported ``pytest_myextension``.  A plugin 
+may specify its dependencies via another ``pytest_plugins`` 
+definition.  
