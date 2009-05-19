@@ -37,12 +37,6 @@ class PyobjMixin(object):
     def _getobj(self):
         return getattr(self.parent.obj, self.name)
 
-    def _getparent(self, cls):
-        current = self
-        while current and not isinstance(current, cls):
-            current = current.parent
-        return current 
-
     def getmodpath(self, stopatmodule=True, includemodule=False):
         """ return python path relative to the containing module. """
         chain = self.listchain()
@@ -99,7 +93,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return l
         name2items = self._buildname2items()
         colitems = name2items.values()
-        colitems.sort()
+        colitems.sort(key=lambda item: item.reportinfo()[:2])
         return colitems
 
     def _buildname2items(self): 
@@ -146,10 +140,10 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 return self._genfunctions(name, obj)
 
     def _genfunctions(self, name, funcobj):
-        module = self._getparent(Module).obj
+        module = self.getparent(Module).obj
         # due to _buildname2items funcobj is the raw function, we need
         # to work to get at the class 
-        clscol = self._getparent(Class)
+        clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         metafunc = funcargs.Metafunc(funcobj, config=self.config, cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests.clone(extralookup=module)
@@ -211,9 +205,6 @@ class Class(PyCollectorMixin, py.test.collect.Collector):
             teardown_class = getattr(teardown_class, 'im_func', teardown_class) 
             teardown_class(self.obj) 
 
-    def _getsortvalue(self):  
-        return self._getfslineno()
-
 class Instance(PyCollectorMixin, py.test.collect.Collector): 
     def _getobj(self): 
         return self.parent.obj()  
@@ -235,9 +226,6 @@ class Instance(PyCollectorMixin, py.test.collect.Collector):
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
-
-    def _getsortvalue(self):  
-        return self._getfslineno()
 
     def setup(self): 
         """ perform setup for this test function. """

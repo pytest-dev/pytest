@@ -79,13 +79,6 @@ class Node(object):
     
     def __hash__(self):
         return hash((self.name, self.parent))
-
-    def __cmp__(self, other): 
-        if not isinstance(other, Node):
-            return -1
-        s1 = self._getsortvalue()
-        s2 = other._getsortvalue()
-        return cmp(s1, s2) 
  
     def setup(self): 
         pass
@@ -126,6 +119,12 @@ class Node(object):
 
     def listnames(self): 
         return [x.name for x in self.listchain()]
+
+    def getparent(self, cls):
+        current = self
+        while current and not isinstance(current, cls):
+            current = current.parent
+        return current 
 
     def _getitembynames(self, namelist):
         cur = self
@@ -223,9 +222,6 @@ class Node(object):
             if num == len(elems) - 1 and ok:
                 return True
         return False
-
-    def _getsortvalue(self): 
-        return self.name 
 
     def _prunetraceback(self, traceback):
         return traceback 

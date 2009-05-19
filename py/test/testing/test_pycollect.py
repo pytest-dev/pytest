@@ -217,7 +217,7 @@ class TestGenerator:
 class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        modcol = item._getparent(py.test.collect.Module)
+        modcol = item.getparent(py.test.collect.Module)
         assert isinstance(modcol, py.test.collect.Module)
         assert hasattr(modcol.obj, 'test_func')
         
@@ -269,7 +269,7 @@ class TestFunction:
         assert not (f5 == f5b)
 
 class TestSorting:
-    def test_check_equality_and_cmp_basic(self, testdir):
+    def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_pass(): pass
             def test_fail(): assert 0
@@ -288,11 +288,7 @@ class TestSorting:
         assert isinstance(fn3, py.test.collect.Function)
         assert not (fn1 == fn3) 
         assert fn1 != fn3
-        assert cmp(fn1, fn3) == -1
 
-        assert cmp(fn1, 10) == -1 
-        assert cmp(fn2, 10) == -1 
-        assert cmp(fn3, 10) == -1 
         for fn in fn1,fn2,fn3:
             assert fn != 3
             assert fn != modcol
@@ -308,18 +304,18 @@ class TestSorting:
                 return g
 
 
-            def test_a(y):
-                pass
-            test_a = dec(test_a)
-
             def test_b(y):
                 pass
             test_b = dec(test_b)
+
+            def test_a(y):
+                pass
+            test_a = dec(test_a)
         """)
         colitems = modcol.collect()
         assert len(colitems) == 2
-        f1, f2 = colitems
-        assert cmp(f2, f1) > 0
+        assert [item.name for item in colitems] == ['test_b', 'test_a']
+
 
 class TestConftestCustomization:
     def test_extra_python_files_and_functions(self, testdir):

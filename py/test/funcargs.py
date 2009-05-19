@@ -64,7 +64,17 @@ class FunctionCollector(py.test.collect.Collector):
             function = self.parent.Function(name=name, parent=self, 
                 callspec=callspec, callobj=self.obj)
             l.append(function)
-        return l 
+        return l
+
+    def reportinfo(self):
+        try:
+            return self._fslineno, self.name
+        except AttributeError:
+            pass        
+        fspath, lineno = py.code.getfslineno(self.obj)
+        self._fslineno = fspath, lineno
+        return fspath, lineno, self.name
+    
 
 class FuncargRequest:
     _argprefix = "pytest_funcarg__"
@@ -76,7 +86,7 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         self.argname = argname 
         self.function = pyfuncitem.obj
-        self.module = pyfuncitem._getparent(py.test.collect.Module).obj
+        self.module = pyfuncitem.getparent(py.test.collect.Module).obj
         self.cls = getattr(self.function, 'im_class', None)
         self.instance = getattr(self.function, 'im_self', None)
         self.config = pyfuncitem.config
@@ -116,7 +126,7 @@ class FuncargRequest:
         if scope == "function":
             return self._pyfuncitem
         elif scope == "module":
-            return self._pyfuncitem._getparent(py.test.collect.Module)
+            return self._pyfuncitem.getparent(py.test.collect.Module)
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def addfinalizer(self, finalizer, scope="function"):
