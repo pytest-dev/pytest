@@ -108,9 +108,6 @@ class PluginManager(object):
     def listattr(self, attrname, plugins=None, extra=()):
         return self.comregistry.listattr(attrname, plugins=plugins, extra=extra)
 
-    def call_firstresult(self, *args, **kwargs):
-        return self.comregistry.call_firstresult(*args, **kwargs)
-
     def notify_exception(self, excinfo=None):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()
@@ -144,7 +141,7 @@ class PluginManager(object):
         config.pluginmanager.unregister(self)
 
     def do_itemrun(self, item, pdb=None):
-        res = self.comregistry.call_firstresult("pytest_itemrun", item=item, pdb=pdb)
+        res = self.hook.pytest_itemrun(item=item, pdb=pdb) 
         if res is None:
             raise ValueError("could not run %r" %(item,))
 

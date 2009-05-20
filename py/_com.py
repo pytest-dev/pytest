@@ -10,7 +10,6 @@ class MultiCall:
         Simple example: 
         MultiCall([list1.append, list2.append], 42).execute()
     """
-    NONEASRESULT = object()
 
     def __init__(self, methods, *args, **kwargs):
         self.methods = methods[:]
@@ -26,8 +25,6 @@ class MultiCall:
                 self.results = [res]
                 break
             if res is not None:
-                if res is self.NONEASRESULT:
-                    res = None
                 self.results.append(res) 
                 if firstresult:
                     break 
@@ -98,15 +95,6 @@ class Registry:
         if reverse:
             l.reverse()
         return l
-
-    def call_firstresult(self, methname, *args, **kwargs):
-        """ return first non-None result of a plugin method. """ 
-        return MultiCall(self.listattr(methname), *args, **kwargs).execute(firstresult=True)
-
-    def call_plugin(self, plugin, methname, *args, **kwargs):
-        return MultiCall(self.listattr(methname, plugins=[plugin]), 
-                    *args, **kwargs).execute(firstresult=True)
-
 
 class Hooks: 
     def __init__(self, hookspecs, registry=None):

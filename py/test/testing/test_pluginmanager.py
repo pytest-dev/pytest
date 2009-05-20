@@ -191,26 +191,6 @@ class TestPytestPluginInteractions:
         assert pluginmanager.getfirst("x") == 1
 
 
-    def test_call_firstresult(self):
-        pluginmanager = PluginManager()
-        class My1:
-            def method(self):
-                pass
-        class My2:
-            def method(self):
-                return True 
-        class My3:
-            def method(self):
-                return None
-        assert pluginmanager.call_firstresult("method") is None
-        assert pluginmanager.call_firstresult("methodnotexists") is None
-        pluginmanager.register(My1())
-        assert pluginmanager.call_firstresult("method") is None
-        pluginmanager.register(My2())
-        assert pluginmanager.call_firstresult("method") == True
-        pluginmanager.register(My3())
-        assert pluginmanager.call_firstresult("method") == True
-
     def test_listattr(self):
         pluginmanager = PluginManager()
         class My2:
