@@ -18,6 +18,7 @@ def pytest_funcarg__testdir(request):
     basename = request.module.__name__.split(".")[-1] 
     if basename.startswith("pytest_"):
         testdir.plugins.append(vars(request.module))
+        testdir.plugins.append(basename) 
     else:
         pass # raise ValueError("need better support code")
     return testdir

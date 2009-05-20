@@ -1,7 +1,8 @@
 """
-mark and report specially about "expected to fail" tests. 
+mark tests as expected-to-fail and report them separately. 
 
-for marking and reporting "expected to fail" tests. 
+example: 
+
     @py.test.mark.xfail("needs refactoring")
     def test_hello():
         ...
@@ -29,7 +30,7 @@ def pytest_report_teststatus(rep):
         elif rep.failed:
             return "xpassed", "P", "xpass" 
 
-# a hook implemented called by the terminalreporter instance/plugin
+# called by the terminalreporter instance/plugin
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     xfailed = tr.stats.get("xfailed")

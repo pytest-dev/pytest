@@ -1,6 +1,5 @@
 """pylint plugin
 
-
 XXX: Currently in progress, NOT IN WORKING STATE.
 """
 import py

@@ -1,4 +1,9 @@
+"""
+automatically collect and execute doctests. 
+"""
+
 import py
+from py.__.code.excinfo import Repr, ReprFileLocation
 
 def pytest_addoption(parser):
     group = parser.addgroup("doctest options")
@@ -12,8 +17,6 @@ def pytest_collect_file(path, parent):
             return DoctestModule(path, parent)
     if path.check(fnmatch="test_*.txt"):
         return DoctestTextfile(path, parent)
-
-from py.__.code.excinfo import Repr, ReprFileLocation
 
 class ReprFailDoctest(Repr):
     def __init__(self, reprlocation, lines):

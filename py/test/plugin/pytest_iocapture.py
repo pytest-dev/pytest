@@ -1,12 +1,22 @@
+"""
+'capsys' and 'capfd' funcargs for capturing stdout/stderror either
+by intercepting sys.stdout/stderr or File Descriptors 1/2. 
+
+Calling the reset() method of the capture funcargs gives 
+a out/err tuple of strings representing the captured streams. 
+You can call reset() multiple times each time getting
+the chunk of output that was captured between the invocations. 
+
+"""
 import py
 
-def pytest_funcarg__stdcapture(request):
+def pytest_funcarg__capsys(request):
     """ capture writes to sys.stdout/sys.stderr. """ 
     capture = Capture(py.io.StdCapture)
     request.addfinalizer(capture.finalize)
     return capture 
 
-def pytest_funcarg__stdcapturefd(request):
+def pytest_funcarg__capfd(request):
     """ capture writes to filedescriptors 1 and 2"""
     capture = Capture(py.io.StdCaptureFD)
     request.addfinalizer(capture.finalize)
@@ -31,19 +41,19 @@ def test_generic(plugintester):
 class TestCapture:
     def test_std_functional(self, testdir):        
         reprec = testdir.inline_runsource("""
-            def test_hello(stdcapture):
+            def test_hello(capsys):
                 print 42
-                out, err = stdcapture.reset()
+                out, err = capsys.reset()
                 assert out.startswith("42")
         """)
         reprec.assertoutcome(passed=1)
         
     def test_stdfd_functional(self, testdir):        
         reprec = testdir.inline_runsource("""
-            def test_hello(stdcapturefd):
+            def test_hello(capfd):
                 import os
                 os.write(1, "42")
-                out, err = stdcapturefd.reset()
+                out, err = capfd.reset()
                 assert out.startswith("42")
         """)
         reprec.assertoutcome(passed=1)

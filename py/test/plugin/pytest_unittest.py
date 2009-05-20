@@ -10,8 +10,6 @@ this code is somewhat derived from Guido Wesdorps
 
     http://johnnydebris.net/svn/projects/py_unittest
 
-$HeadURL: https://codespeak.net/svn/py/branch/pytestplugin/contrib/py_unittest/conftest.py $
-$Id: conftest.py 60979 2009-01-14 22:29:32Z hpk $
 """
 import py
 

@@ -63,6 +63,7 @@ class Registry:
     """
         Manage Plugins: Load plugins and manage calls to plugins. 
     """
+    logfile = None
     MultiCall = MultiCall
 
     def __init__(self, plugins=None):
@@ -130,6 +131,11 @@ class HookCall:
                             "for api call to %r" % self.name)
         attr = self.registry.listattr(self.name, extra=self.extralookup)
         mc = MultiCall(attr, **kwargs)
+        # XXX this should be doable from a hook impl:
+        if self.registry.logfile:
+            self.registry.logfile.write("%s(**%s) # firstresult=%s\n" %
+                (self.name, kwargs, self.firstresult))
+            self.registry.logfile.flush()
         return mc.execute(firstresult=self.firstresult)
 
 comregistry = Registry()

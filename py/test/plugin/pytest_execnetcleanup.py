@@ -1,3 +1,6 @@
+"""
+cleanup gateways that were instantiated during a test function run. 
+"""
 import py
 
 def pytest_configure(config):

@@ -1,3 +1,6 @@
+"""
+write and report coverage data using the 'figleaf' module. 
+"""
 import py
 
 figleaf = py.test.importorskip("figleaf")

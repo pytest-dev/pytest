@@ -1,5 +1,5 @@
 """
-pytes plugin for easing testing of pytest runs themselves. 
+funcargs and support code for testing py.test functionality. 
 """
 
 import py

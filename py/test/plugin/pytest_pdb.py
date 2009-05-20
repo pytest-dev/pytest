@@ -1,3 +1,4 @@
+""" XXX should be used sometime. """ 
 from py.__.test.custompdb import post_mortem
 
 def pytest_item_runtest_finished(item, excinfo, outerr):

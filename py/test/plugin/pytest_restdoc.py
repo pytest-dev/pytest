@@ -1,3 +1,7 @@
+"""
+perform ReST specific tests on .txt files, including
+linkchecks and remote URL checks. 
+"""
 import py
 
 def pytest_addoption(parser):

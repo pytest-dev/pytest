@@ -1,54 +1,51 @@
+"""XXX in progress: resultdb plugin for database logging of test results. 
+
+Saves test results to a datastore.
+
+XXX this needs to be merged with resultlog plugin
+
+Also mixes in some early ideas about an archive abstraction for test 
+results.
+""" 
 import py
+
+py.test.skip("XXX needs to be merged with resultlog")
+
 from pytest_resultlog import ResultLog
 
-class ResultdbPlugin:
-    """XXX in progress: resultdb plugin for database logging of test results. 
+def pytest_addoption(parser):
+    group = parser.addgroup("resultdb", "resultdb plugin options")
+    group.addoption('--resultdb', action="store", dest="resultdb", 
+            metavar="path",
+            help="path to the file to store test results.")
+    group.addoption('--resultdb_format', action="store", 
+            dest="resultdbformat", default='json',
+            help="data format (json, sqlite)")
 
-    Saves test results to a datastore.
+def pytest_configure(config):
+    # XXX using config.XYZ is not good 
+    if config.getvalue('resultdb'):
+        if config.option.resultdb:
+            # local import so missing module won't crash py.test
+            try:
+                import sqlite3
+            except ImportError:
+                raise config.Error('Could not import sqlite3 module')
+            try:
+                import simplejson
+            except ImportError:
+                raise config.Error('Could not import simplejson module')
+            if config.option.resultdbformat.lower() == 'json':
+                resultdb = ResultDB(JSONResultArchive, 
+                        config.option.resultdb) 
+            elif config.option.resultdbformat.lower() == 'sqlite':
+                resultdb = ResultDB(SQLiteResultArchive, 
+                        config.option.resultdb) 
+            else:
+                raise config.Error('Unknown --resultdb_format: %s' % 
+                        config.option.resultdbformat) 
 
-    XXX this needs to be merged with resultlog plugin
-
-    Also mixes in some early ideas about an archive abstraction for test 
-    results.
-    """ 
-    def pytest_addoption(self, parser):
-        group = parser.addgroup("resultdb", "resultdb plugin options")
-        group.addoption('--resultdb', action="store", dest="resultdb", 
-                metavar="path",
-                help="path to the file to store test results.")
-        group.addoption('--resultdb_format', action="store", 
-                dest="resultdbformat", default='json',
-                help="data format (json, sqlite)")
-    
-    def pytest_configure(self, config):
-        if config.getvalue('resultdb'):
-            if config.option.resultdb:
-                # local import so missing module won't crash py.test
-                try:
-                    import sqlite3
-                except ImportError:
-                    raise config.Error('Could not import sqlite3 module')
-                try:
-                    import simplejson
-                except ImportError:
-                    raise config.Error('Could not import simplejson module')
-                if config.option.resultdbformat.lower() == 'json':
-                    self.resultdb = ResultDB(JSONResultArchive, 
-                            config.option.resultdb) 
-                elif config.option.resultdbformat.lower() == 'sqlite':
-                    self.resultdb = ResultDB(SQLiteResultArchive, 
-                            config.option.resultdb) 
-                else:
-                    raise config.Error('Unknown --resultdb_format: %s' % 
-                            config.option.resultdbformat) 
-
-                config.pluginmanager.register(self.resultdb)
-
-    def pytest_unconfigure(self, config):
-        if hasattr(self, 'resultdb'):
-            del self.resultdb 
-            #config.pluginmanager.unregister(self.resultdb)
-
+            config.pluginmanager.register(resultdb)
 
 class JSONResultArchive(object):
     def __init__(self, archive_path):
@@ -328,8 +325,7 @@ class TestWithFunctionIntegration:
             assert x.startswith(" ")
         assert "XXX" in "".join(lines[1:])
 
-    def test_log_test_outcomes(self, plugintester):
-        testdir = plugintester.testdir()
+    def test_log_test_outcomes(self, testdir):
         mod = testdir.makepyfile(test_mod="""
             import py 
             def test_pass(): pass

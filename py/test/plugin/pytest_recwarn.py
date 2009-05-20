@@ -1,8 +1,5 @@
 """
-
-provides "recwarn" funcarg for asserting warnings to be shown 
-to a user.  See the test at the bottom for an example. 
-
+"recwarn" funcarg for asserting that warnings are shown to a user.  
 """
 import py
 import os
