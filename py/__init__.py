@@ -89,6 +89,7 @@ initpkg(__name__,
     'test.collect.Instance'  : ('./test/pycollect.py', 'Instance'),
     'test.collect.Generator' : ('./test/pycollect.py', 'Generator'),
     'test.collect.Function'  : ('./test/pycollect.py', 'Function'),
+    'test.collect._fillfuncargs' : ('./test/funcargs.py', 'fillfuncargs'),
 
     # thread related API (still in early design phase)
     '_thread.WorkerPool'      : ('./thread/pool.py', 'WorkerPool'),
