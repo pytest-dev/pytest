@@ -95,7 +95,7 @@ class FuncargRequest:
     def _fillfuncargs(self):
         argnames = getfuncargnames(self.function)
         if argnames:
-            assert not self._pyfuncitem._args, "yielded functions cannot have funcargs" 
+            assert not getattr(self._pyfuncitem, '_args', None), "yielded functions cannot have funcargs" 
         for argname in argnames:
             if argname not in self._pyfuncitem.funcargs:
                 self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)

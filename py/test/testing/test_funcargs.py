@@ -79,6 +79,17 @@ class TestFillFuncArgs:
             "*1 passed*"
         ])
 
+    def test_fillfuncargs_exposed(self, testdir):
+        item = testdir.getitem("def test_func(some, other=42): pass")
+        class Provider:
+            def pytest_funcarg__some(self, request):
+                return request.function.__name__
+        item.config.pluginmanager.register(Provider())
+        if hasattr(item, '_args'):
+            del item._args
+        py.test.fillfuncargs(item)
+        assert len(item.funcargs) == 1
+
 class TestRequest:
     def test_request_attributes(self, testdir):
         item = testdir.getitem("""
