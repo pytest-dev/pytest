@@ -27,6 +27,8 @@ class XSpec:
 
     def __repr__(self):
         return "<XSpec %r>" %(self._spec,)
+    def __str__(self):
+        return self._spec 
 
     def __hash__(self):
         return hash(self._spec)

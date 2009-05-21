@@ -121,7 +121,7 @@ class TestNodeManager:
                 pass
         """)
         reprec = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
-                "--tx %s" % specssh, testdir.tmpdir)
-        ev = reprec.getfirstnamed("pytest_itemtestreport")
-        assert ev.passed 
+                "--tx", specssh, testdir.tmpdir)
+        rep, = reprec.getreports("pytest_itemtestreport")
+        assert rep.passed 
 
