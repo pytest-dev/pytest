@@ -4,10 +4,10 @@ from py.__.test import parseopt
 pytest_plugins = 'pytest_iocapture'
 
 class TestParser:
-    def test_init(self, stdcapture):
+    def test_init(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         py.test.raises(SystemExit, 'parser.parse(["-h"])')
-        out, err = stdcapture.reset()
+        out, err = capsys.reset()
         assert out.find("xyz") != -1
 
     def test_group_add_and_get(self):

@@ -85,8 +85,7 @@ class TestRequest:
             def pytest_funcarg__something(request): pass
             def test_func(something): pass
         """)
-        req = funcargs.FuncargRequest(item, argname="other")
-        assert req.argname == "other"
+        req = funcargs.FuncargRequest(item)
         assert req.function == item.obj 
         assert hasattr(req.module, 'test_func')
         assert req.cls is None
@@ -100,46 +99,86 @@ class TestRequest:
                 def test_func(self, something): 
                     pass
         """)
-        req = funcargs.FuncargRequest(item, argname="something")
+        req = funcargs.FuncargRequest(item)
         assert req.cls.__name__ == "TestB"
         assert req.instance.__class__ == req.cls
-        
-    def test_request_contains_funcargs_provider(self, testdir):
+
+    def XXXtest_request_contains_funcargs_provider(self, testdir):
         modcol = testdir.getmodulecol("""
             def pytest_funcarg__something(request):
                 pass
             class TestClass:
                 def test_method(self, something):
-                    pass 
+                    pass
         """)
         item1, = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        provider = funcargs.FuncargRequest(item1, "something")._provider 
+        provider = funcargs.FuncargRequest(item1)._provider
         assert len(provider) == 1
         assert provider[0].__name__ == "pytest_funcarg__something"
 
     def test_request_call_next_provider(self, testdir):
         item = testdir.getitem("""
-            def pytest_funcarg__something(request): pass
+            def pytest_funcarg__something(request): return 1
             def test_func(something): pass
         """)
-        req = funcargs.FuncargRequest(item, "something")
-        val = req.call_next_provider()
-        assert val is None
+        req = funcargs.FuncargRequest(item)
+        val = req.getfuncargvalue("something") 
+        assert val == 1
         py.test.raises(req.Error, "req.call_next_provider()")
+
+    def test_getfuncargvalue(self, testdir):
+        item = testdir.getitem("""
+            l = [2]
+            def pytest_funcarg__something(request): return 1
+            def pytest_funcarg__other(request): 
+                return l.pop()
+            def test_func(something): pass
+        """)
+        req = funcargs.FuncargRequest(item)
+        val = req.getfuncargvalue("something") 
+        assert val == 1
+        val = req.getfuncargvalue("something") 
+        assert val == 1
+        val2 = req.getfuncargvalue("other")
+        assert val2 == 2 
+        val2 = req.getfuncargvalue("other")  # see about caching
+        assert val2 == 2
+        req._fillfuncargs()
+        assert item.funcargs == {'something': 1}
 
     def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
             def pytest_funcarg__something(request): pass
             def test_func(something): pass
         """)
-        req = funcargs.FuncargRequest(item, "something")
+        req = funcargs.FuncargRequest(item)
         py.test.raises(ValueError, "req.addfinalizer(None, scope='xyz')")
         l = [1]
         req.addfinalizer(l.pop)
         req.config._setupstate._teardown(item)
         assert not l 
 
+    def test_request_getmodulepath(self, testdir):
+        modcol = testdir.getmodulecol("def test_somefunc(): pass")
+        item, = testdir.genitems([modcol])
+        req = funcargs.FuncargRequest(item)
+        assert req.fspath == modcol.fspath 
+
+class TestRequestProtocol:
+    @py.test.mark.xfail
+    def test_protocol(self, testdir):
+        item = testdir.getitem("""
+            def pytest_funcarg_arg1(request): return 1
+            def pytest_funcarg_arg2(request): return 2
+            def test_func(arg1, arg2): pass
+        """)
+        req = funcargs.FuncargRequest(item)
+        req._fillargs()
+        #assert item.funcreq.
+         
+
+class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
         item1,item2 = testdir.getitems("""
             class TestClass:
@@ -148,7 +187,7 @@ class TestRequest:
                 def test_func2(self, something): 
                     pass
         """)
-        req1 = funcargs.FuncargRequest(item1, "something")
+        req1 = funcargs.FuncargRequest(item1)
         l = ["hello"]
         def setup():
             return l.pop()
@@ -156,13 +195,13 @@ class TestRequest:
         assert ret1 == "hello"
         ret1b = req1.cached_setup(setup)
         assert ret1 == ret1b
-        req2 = funcargs.FuncargRequest(item2, "something")
+        req2 = funcargs.FuncargRequest(item2)
         ret2 = req2.cached_setup(setup)
         assert ret2 == ret1
 
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
-        req1 = funcargs.FuncargRequest(item1, "something")
+        req1 = funcargs.FuncargRequest(item1)
         l = ["hello", "world"]
         def setup():
             return l.pop()
@@ -202,11 +241,6 @@ class TestRequest:
             "*3 passed*"
         ])
 
-    def test_request_getmodulepath(self, testdir):
-        modcol = testdir.getmodulecol("def test_somefunc(): pass")
-        item, = testdir.genitems([modcol])
-        req = funcargs.FuncargRequest(item, "xxx")
-        assert req.fspath == modcol.fspath 
 
 class TestMetafunc:
     def test_no_funcargs(self, testdir):

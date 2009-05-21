@@ -108,8 +108,6 @@ encapsulate a request for a function argument for a
 specific test function.  Request objects allow providers 
 to access test configuration and test context: 
 
-``request.argname``: name of the requested function argument 
-
 ``request.function``: python function object requesting the argument
 
 ``request.cls``: class object where the test function is defined in or None. 
@@ -119,6 +117,7 @@ to access test configuration and test context:
 ``request.config``: access to command line opts and general config
 
 ``request.param``: if exists was passed by a `parametrizing test generator`_ 
+
 
 perform scoped setup and teardown 
 ---------------------------------------------
@@ -171,6 +170,21 @@ object that is to be closed when the test function finishes.
         request.addfinalizer(lambda: myfile.close())
         return myfile
 
+requesting values of other funcargs 
+---------------------------------------------
+
+While setting up one function argument you may 
+want to retrieve another function argument. 
+
+.. sourcecode:: python 
+
+    def getfuncargvalue(name): 
+        """ Lookup and call function argument provider for the given name. 
+        Each function argument is only requested once per function setup. 
+        """ 
+
+Note that it does not matter if the test function 
+specifies the requested function argument. 
 
 decorating other funcarg providers 
 ++++++++++++++++++++++++++++++++++++++++

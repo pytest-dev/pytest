@@ -10,16 +10,8 @@ def getfuncargnames(function):
     
 def fillfuncargs(function):
     """ fill missing funcargs. """ 
-    argnames = getfuncargnames(function.obj)
-    if argnames:
-        assert not function._args, "yielded functions cannot have funcargs" 
-        for argname in argnames:
-            if argname not in function.funcargs:
-                request = FuncargRequest(pyfuncitem=function, argname=argname) 
-                try:
-                    function.funcargs[argname] = request.call_next_provider()
-                except request.Error:
-                    request._raiselookupfailed()
+    request = FuncargRequest(pyfuncitem=function)
+    request._fillfuncargs()
 
 
 _notexists = object()
@@ -78,13 +70,13 @@ class FunctionCollector(py.test.collect.Collector):
 
 class FuncargRequest:
     _argprefix = "pytest_funcarg__"
+    _argname = None
 
     class Error(LookupError):
         """ error on performing funcarg request. """ 
 
-    def __init__(self, pyfuncitem, argname):
+    def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
-        self.argname = argname 
         self.function = pyfuncitem.obj
         self.module = pyfuncitem.getparent(py.test.collect.Module).obj
         self.cls = getattr(self.function, 'im_class', None)
@@ -97,14 +89,20 @@ class FuncargRequest:
         self._plugins.append(self.module)
         if self.instance is not None:
             self._plugins.append(self.instance)
-        self._provider = self.config.pluginmanager.listattr(
-            plugins=self._plugins, 
-            attrname=self._argprefix + str(argname)
-        )
+        self._funcargs  = self._pyfuncitem.funcargs.copy()
+        self._provider = {}
+
+    def _fillfuncargs(self):
+        argnames = getfuncargnames(self.function)
+        if argnames:
+            assert not self._pyfuncitem._args, "yielded functions cannot have funcargs" 
+        for argname in argnames:
+            if argname not in self._pyfuncitem.funcargs:
+                self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         if not hasattr(self.config, '_setupcache'):
-            self.config._setupcache = {}
+            self.config._setupcache = {} # XXX weakref? 
         cachekey = (self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
         try:
@@ -117,10 +115,33 @@ class FuncargRequest:
         return val 
 
     def call_next_provider(self):
-        if not self._provider:
-            raise self.Error("no provider methods left")
-        next_provider = self._provider.pop()
+        if not self._provider[self._argname]:
+            raise self.Error("no provider methods left for %r" % self._argname)
+        next_provider = self._provider[self._argname].pop()
         return next_provider(request=self)
+
+    def getfuncargvalue(self, argname):
+        try:
+            return self._funcargs[argname]
+        except KeyError:
+            pass
+        assert argname not in self._provider
+        self._provider[argname] = self.config.pluginmanager.listattr(
+            plugins=self._plugins, 
+            attrname=self._argprefix + str(argname)
+        )
+        # during call_next_provider() we keep state about the current 
+        # argument on the request object - we may go for instantiating 
+        # request objects per each funcargname if neccessary
+        oldname = self._argname 
+        self._argname = argname 
+        try:
+            self._funcargs[argname] = res = self.call_next_provider()
+        except self.Error:
+            self._raiselookupfailed(argname)
+        if oldname:
+            self._argname = oldname 
+        return res
 
     def _getscopeitem(self, scope):
         if scope == "function":
@@ -134,9 +155,9 @@ class FuncargRequest:
         self.config._setupstate.addfinalizer(finalizer=finalizer, colitem=colitem)
 
     def __repr__(self):
-        return "<FuncargRequest %r for %r>" %(self.argname, self._pyfuncitem)
+        return "<FuncargRequest for %r>" %(self._pyfuncitem)
 
-    def _raiselookupfailed(self):
+    def _raiselookupfailed(self, argname):
         available = []
         for plugin in self._plugins:
             for name in vars(plugin):
@@ -146,7 +167,7 @@ class FuncargRequest:
                         available.append(name) 
         fspath, lineno, msg = self._pyfuncitem.reportinfo()
         line = "%s:%s" %(fspath, lineno)
-        msg = "funcargument %r not found for: %s" %(self.argname, line)
+        msg = "funcargument %r not found for: %s" %(argname, line)
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise LookupError(msg)
 
