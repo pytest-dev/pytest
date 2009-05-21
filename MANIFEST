@@ -248,6 +248,7 @@ py/test/dist/testing/test_mypickle.py
 py/test/dist/testing/test_nodemanage.py
 py/test/dist/testing/test_txnode.py
 py/test/dist/txnode.py
+py/test/funcargs.py
 py/test/looponfail/__init__.py
 py/test/looponfail/remote.py
 py/test/looponfail/testing/__init__.py
@@ -265,6 +266,7 @@ py/test/plugin/pytest_doctest.py
 py/test/plugin/pytest_eventlog.py
 py/test/plugin/pytest_execnetcleanup.py
 py/test/plugin/pytest_figleaf.py
+py/test/plugin/pytest_hooklog.py
 py/test/plugin/pytest_iocapture.py
 py/test/plugin/pytest_monkeypatch.py
 py/test/plugin/pytest_pdb.py
@@ -272,6 +274,7 @@ py/test/plugin/pytest_plugintester.py
 py/test/plugin/pytest_pocoo.py
 py/test/plugin/pytest_pylint.py
 py/test/plugin/pytest_pytester.py
+py/test/plugin/pytest_recwarn.py
 py/test/plugin/pytest_restdoc.py
 py/test/plugin/pytest_resultdb.py
 py/test/plugin/pytest_resultlog.py
@@ -292,6 +295,7 @@ py/test/testing/import_test/package/absolute_import_shared_lib.py
 py/test/testing/import_test/package/module_that_imports_shared_lib.py
 py/test/testing/import_test/package/shared_lib.py
 py/test/testing/import_test/package/test_import.py
+py/test/testing/test_api.py
 py/test/testing/test_collect.py
 py/test/testing/test_compat.py
 py/test/testing/test_config.py

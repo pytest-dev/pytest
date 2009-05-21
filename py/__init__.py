@@ -1,17 +1,15 @@
 
 # -*- coding: utf-8 -*-
 """
-The py lib is an extensible library for testing, distributed processing and 
-interacting with filesystems. 
+advanced testing and development support library: 
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
 - `py.path`_: path abstractions over local and subversion files 
 - `py.code`_: dynamic code compile and traceback printing support
 
-The py lib and its tools should work well on Linux, Win32, 
-OSX, Python versions 2.3-2.6.  For questions please go to
-http://pylib.org/contact.html
+Compatibility: Linux, Win32, OSX, Python versions 2.3-2.6. 
+For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
 .. _`py.execnet`: http://pylib.org/execnet.html
@@ -24,12 +22,9 @@ from initpkg import initpkg
 version = "1.0.0b2"
 
 initpkg(__name__,
-    description = "pylib and py.test: agile development and test support library",
-    revision = int('$LastChangedRevision: 65143 $'.split(':')[1][:-1]),
-    lastchangedate = '$LastChangedDate: 2009-05-07 19:37:45 +0200 (Thu, 07 May 2009) $',
+    description = "py.test and pylib: advanced testing tool and networking lib", 
     version = version, 
     url = "http://pylib.org", 
-    download_url = "http://codespeak.net/py/%s/download.html" % version,
     license = "MIT license",
     platforms = ['unix', 'linux', 'osx', 'cygwin', 'win32'],
     author = "holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others",
@@ -48,7 +43,6 @@ initpkg(__name__,
         "Topic :: Utilities",
         "Programming Language :: Python",
     ],
-
 
     # EXPORTED API 
     exportdefs = {
