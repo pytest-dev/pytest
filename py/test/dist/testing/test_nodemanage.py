@@ -8,6 +8,7 @@ class pytest_funcarg__mysetup:
             numbered=True)
         self.source = basetemp.mkdir("source")
         self.dest = basetemp.mkdir("dest")
+        request.getfuncargvalue("_pytest")
 
 class TestNodeManager:
     @py.test.mark.xfail("consider / forbid implicit rsyncdirs?")
@@ -107,7 +108,7 @@ class TestNodeManager:
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
-        sorter = testdir.getreportrecorder(config.pluginmanager).hookrecorder
+        sorter = testdir.getreportrecorder(config).hookrecorder
         nodemanager.setup_nodes(putevent=[].append)
         for spec in nodemanager.gwmanager.specs:
             l = sorter.getcalls("pytest_trace")

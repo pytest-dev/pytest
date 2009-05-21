@@ -101,7 +101,7 @@ class Hooks:
     def __init__(self, hookspecs, registry=None):
         self._hookspecs = hookspecs
         if registry is None:
-            registry = comregistry
+            registry = py._com.comregistry
         self.registry = registry
         for name, method in vars(hookspecs).items():
             if name[:2] != "__":

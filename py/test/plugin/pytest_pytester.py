@@ -7,7 +7,6 @@ import os
 import inspect
 from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
-from pytest__pytest import HookRecorder
 import api
 
 
@@ -40,6 +39,7 @@ class RunResult:
 class TmpTestdir:
     def __init__(self, request):
         self.request = request
+        self._pytest = request.getfuncargvalue("_pytest")
         # XXX remove duplication with tmpdir plugin 
         basetmp = request.config.ensuretemp("testdir")
         name = request.function.__name__
@@ -73,13 +73,22 @@ class TmpTestdir:
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
 
-    def getreportrecorder(self, registry):
-        sorter = ReportRecorder(registry)
-        sorter.hookrecorder = HookRecorder(registry)
-        sorter.hookrecorder.start_recording(api.PluginHooks)
-        sorter.hook = sorter.hookrecorder.hook
-        self.request.addfinalizer(sorter.hookrecorder.finish_recording)
-        return sorter
+    def getreportrecorder(self, obj):
+        if isinstance(obj, py._com.Registry):
+            registry = obj
+        elif hasattr(obj, 'comregistry'):
+            registry = obj.comregistry
+        elif hasattr(obj, 'pluginmanager'):
+            registry = obj.pluginmanager.comregistry
+        elif hasattr(obj, 'config'):
+            registry = obj.config.pluginmanager.comregistry
+        else:
+            raise ValueError("obj %r provides no comregistry" %(obj,))
+        assert isinstance(registry, py._com.Registry)
+        reprec = ReportRecorder(registry)
+        reprec.hookrecorder = self._pytest.gethookrecorder(api.PluginHooks, registry)
+        reprec.hook = reprec.hookrecorder.hook
+        return reprec
 
     def chdir(self):
         old = self.tmpdir.chdir()
@@ -130,7 +139,7 @@ class TmpTestdir:
         #config = self.parseconfig(*args)
         config = self.parseconfig(*args)
         session = config.initsession()
-        rec = self.getreportrecorder(config.pluginmanager)
+        rec = self.getreportrecorder(config)
         colitems = [config.getfsnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
         return items, rec 
@@ -152,7 +161,7 @@ class TmpTestdir:
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
         session = config.initsession()
-        sorter = self.getreportrecorder(config.pluginmanager)
+        sorter = self.getreportrecorder(config)
         session.main()
         config.pluginmanager.do_unconfigure(config)
         return sorter 

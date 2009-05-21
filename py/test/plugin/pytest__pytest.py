@@ -6,11 +6,15 @@ def pytest_funcarg___pytest(request):
 class PytestArg:
     def __init__(self, request):
         self.request = request 
+        self.monkeypatch = self.request.getfuncargvalue("monkeypatch")
+        self.comregistry = py._com.Registry()
+        self.monkeypatch.setattr(py._com, 'comregistry', self.comregistry)
 
-    def gethookrecorder(self, hookspecs, comregistry=None):
-        if comregistry is None:
-            comregistry = self.request.config.pluginmanager.comregistry
-        hookrecorder = HookRecorder(comregistry)
+    def gethookrecorder(self, hookspecs, registry=None):
+        if registry is not None:
+            self.monkeypatch.setattr(py._com, 'comregistry', registry) 
+            self.comregistry = registry 
+        hookrecorder = HookRecorder(self.comregistry) 
         hookrecorder.start_recording(hookspecs)
         self.request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder 
@@ -110,6 +114,11 @@ def test_hookrecorder_basic():
     assert call.arg == 123 
     assert call._name == "xyz"
     py.test.raises(ValueError, "rec.popcall('abc')")
+
+reg = py._com.comregistry
+def test_functional_default(testdir, _pytest):
+    assert _pytest.comregistry == py._com.comregistry 
+    assert _pytest.comregistry != reg
 
 def test_functional(testdir, linecomp):
     sorter = testdir.inline_runsource("""

@@ -117,6 +117,7 @@ class pytest_funcarg__mysetup:
         tmp = request.config.mktemp(request.function.__name__, numbered=True)
         self.source = tmp.mkdir("source")
         self.dest = tmp.mkdir("dest")
+        request.getfuncargvalue("_pytest") # to have patching of py._com.comregistry
 
 class TestHRSync:
     def test_hrsync_filter(self, mysetup):
