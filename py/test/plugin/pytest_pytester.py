@@ -9,6 +9,7 @@ from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
 import api
 
+pytest_plugins = '_pytest'
 
 def pytest_funcarg__linecomp(request):
     return LineComp()
@@ -455,11 +456,19 @@ class LineMatcher:
         extralines.extend(lines1)
         return extralines 
 
-
-
-
 def test_parseconfig(testdir):
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
     assert config2 != config1
     assert config1 != py.test.config
+
+def test_testdir_runs_with_plugin(testdir):
+    testdir.makepyfile("""
+        pytest_plugins = "pytest_pytester" 
+        def test_hello(testdir):
+            assert 1
+    """)
+    result = testdir.runpytest()
+    assert result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])
