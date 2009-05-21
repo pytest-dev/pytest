@@ -4,55 +4,15 @@ Things to do for 1.0.0
 py.test 
 --------------
 
-- compatilibity: honour/warn item.run() method of test items (so far
-  probably only execute() is warned about or the other way round)
+- clarify setup/run events and runner.py versus pytest_runner.py, 
+  introduce a general pytest_item_setup(item, setupstate)
+  and always isolate py._com.comregistry when py lib's own tests are run
 
-- introduce plugin arch, port existing things to plugins:
-  - importorskip 
-  - filelog 
-  - chtmpdir per method 
-  - apigen 
-  - xfail 
-  - acceptance/assertlines 
-  - dist-testing? 
-
-- introduce setuptools-style version checking, at least
-  for py lib itself, maybe also for other packages: 
-
-     py.checkversion("py>=1.0")
-
-- generative tests: it is somewhat misleading for 
-  the classical htmlviews that generated tests are identified 
-  by numbers rather than by its parameters.  unclear how
-  to fix this because we may not always be able to assume
-  that we can identify a generated tests by using its parameters
-  (it might not be hashable, doesn't have a sensical repr ...?)
+- hook review and hook docs 
 
 - turn deprecation / apiwarnings into events, report them at the end? 
 
-- get APIGEN back to work 
-
-- get web reporter back to work 
-
-- introduce decorator "shouldfail" or "xfail" 
-  as to mark a test as "expected to fail", 
-  report specially if it surprisingly passes 
-
 - nightly test runs on multiple platforms 
-
-- review and refactor architecture of py.test with particular
-  respect to: 
-  - writing (stacked) extensions / plugins (compared to Nose) 
-  - porting existing extensions (htmlconftest / buildbot / PyPy's conftest's ...) 
-  - fast and stable distributed testing 
-  - reliable cross-platform testing 
-
-- improve py.test documentation to reflect new
-  event architecture 
-
-- review and optimize skip-handling (it can be quite slow in
-  certain situations because e.g. setup/teardown is fully performed 
-  although we have "skip by keyword" and could detect this early)
 
 py.execnet
 --------------
@@ -60,55 +20,23 @@ py.execnet
 - cross-python version (2.2/2.3-2.5/6) and cross-platform testing of 
   setup/teardown semantics
 
-- optimize general setup and rsync timing? 
+py.test apigen plugin
+---------------------------
 
-py.apigen 
-----------------
+- make it work again with the new plugin arch
 
-- make it work again 
+packaging / svn-mercurial interaction
+--------------------------------------------
 
-see apigen_refactorings.txt
+- decide if to go with or without setuptools, check windows 2.6
+  availability 
 
-- check out CodeInvestigator 
-  http://codeinvestigator.googlepages.com/main
+- open a mercurial branch for releases? 
 
-  or other code that collects data from running a program 
-  (in our case running the tests)
+- write a script to dumb-bridge the mercurial repo to svn 
+  (i.e. forget about svn history)
 
-Criticism and solutions 
---------------------------------
-"too big": 
-    - too much code, you need entire py lib, hard to include into app 
-      + have a small pytest boostrap that loads pylib.zip from net
-      + provide smaller script ala simpy 
-    - lots of cmdline options, possibilities, documentation
-      rather unsorted 
-
-"needless differences between py.test and nosetests":
-    - py.test.skip 
-    - raises  
-
-"tutorial structure missing", e.g.:
-    - "how to get started" in a minimal way, also how to use
-      existing conftests/plugins 
-    - how to configure py.test 
-    - how to write plugins/extensions 
-
-"too much magic"
-   - re-execution of assert expressions 
-     + rename "--nomagic" to something that turns off "superassertions" 
-     + hint at --tb=... 
-   - get rid of py/magic directory 
-
-has a good ui but could be better
-    - support developer communication, e.g. py.test
-      --sendfailures=freenode-pypy 
-      --sendfailures=pocoo # prints out paste.pocoo.url with traceback 
-    - graphical interface, probably QT 
-    - generally store test results and use them for subsequent calls 
-
-
-ld (review and shift to above)
+1.1 and beyond 
 =================================
 
 refactorings
@@ -118,16 +46,6 @@ refactorings
   some imports/conditions are not satisfied) 
   - check if it works on win32 
   - refine error reporting (don't show python tracebacks) 
-
-- generalization of "host specifications" for execnet and
-  py.test --dist usages in particular (see also revision 37500 which 
-  contained a draft for that).  The goal is to have cross-platform 
-  testing and dist-testing and other usages of py.execnet all 
-  use a common syntax for specifiying connection methods and 
-  be able to instantiate gateways/connections through it. 
-
-- unification of "gateway"/host setup and teardown, including
-  rsyncing, i.e. cross-platform and dist-testing. 
 
 - py.log: unify API, possibly deprecate duplicate ones, 
   base things on a Config object  (hte latter almost a feature though) 
@@ -139,7 +57,9 @@ features
 --------------
 
 - (Harald Armin Massa): make py2exe work with py lib 
+
 - optimize file checking with --looponfailing (harald has code for win32)
+
 - have a py.test scan/run database for results and test names
   etc. (to allow quicker selection of tests and post-run 
   information on failures etc.)  (M760) 
@@ -168,116 +88,8 @@ features
 - references from ReST docs to modules, functions and classes
   of apigen generated html docs (M960)
 
-- review svn-testing (and escape characters), consider
-  svn-bindings (M634)
-
 - py.test.pdb - there is my hack for a while now, which integrates
   rlcompleter2 with pdb. First of all it requires some strange changes
   to rlcompleter itself, which has no tests. Long-term plan would be
   to have pyrepl+rlcompleter2+pdb fixes integrated into pylib and
   have it tested. This requires work though.
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---- below neeeds more review ---
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-More random notes, goals
---------------------------------
-- REDUCE "MAGICALNESS", from an IRC discussion with ronny:
-  - integration into IDEs
-  - python2.6/python3 compat? 
-  - initpkg exports
-  - assert reinterpretation 
-  - greenlet compiles at runtime only in "dev-mode"
-  - conftest's are "scary", hum, what about 
-
-nicefications: 
-looponfailing shoudl nicely signal tests that failed but now PASS tests
-rename Node to itemtestloop
-refactor config and session tests to go into test_distsession.py 
-raises DID NOT RAISE: report the return value
-have node.shutdown perform out-of-band so that shutdowns happens more quickly
-tracebacks of importerrors of test modules should start with the test module file
-
-- fix hostmanage to care for setting PYTHONPATH properly
-
-- BRANCH: 
-  adding of options 
-
-- BRANCH: 
-    TEMPDIR handling 
-    syspath handling (notify on changes, restore for each test?) 
-
-- COMPLETE REPORTING FOR MERGE!
-  - remove ItemStart and CollectionStart 
-    which are only needed for collectonly. 
-    implement it some other way. 
-
-  - pre-counting of test items 
-
-  - move assert reinterp back to session? 
-
-  - merge "--tb" and "--fulltrace" option, --tb=full 
-  - implement --showouterr, don't show outerr by default 
-
-  - domainpath? 
-
-  - translate remote filenames to local filenames so that,
-    probably based on option
-
-  - review safe_repr
-
-  - move OutcomeRepr.where/exconly attr to ReprExceptionInfo 
-    or substitute as LocationRepr? 
-
-- reprcrash rename message to exconly 
-
-- test terminal reporter 
-  ACCEPTANCE test for eventlog writing
-  ACCEPTANCE test for acceptance custom reporting :) 
-
-  ACCEPTANCE showing nice Collection Errors  
-    
-  ACCEPTANCE test for "py.test2" exit signals 
-  ACCEPTANCE test for "py.test2 --traceconfig" 
-  ACCEPTANCE test for nice reprsentation of failures during Collection
-  ACCEPTANCE test for nice reprsentation of failures during Generator Collection 
-  ACCEPTANCE test for "py.test2" conftest containing syntax errors
-  
-  ACCEPTANCE test for "py.test2" honouring conftest specifying "extrainfo"
-  ACCEPTANCE test for "py.test2" on a simple example project 
- 
-- merge CollectionFinish and ItemTestReport
-  maybe with base class: BaseReport and some common attrs/methods
- 
-- merge terminal/remote and dist-testing
-  and make allocation of tests to hosts more dynamic
-
-- time setup/teardown and the actual test runs separately 
-  ACCEPTANCE:
-  py.test2 --
-  py.test2 --repeat=10
-
-- expect failing tests 
-  py.test2.expectfail(feature=138)
-
-
-while killing a process:
-Exception in thread receiver:
-Traceback (most recent call last):
-  File "threading.py", line 460, in __bootstrap
-    self.run()
-  File "threading.py", line 440, in run
-    self.__target(*self.__args, **self.__kwargs)
-  File "/home/hpk/py/branch/event/py/execnet/gateway.py", line 140, in _thread_receiver
-    self._stopsend()
-  File "/home/hpk/py/branch/event/py/execnet/gateway.py", line 329, in _stopsend
-    self._send(None)
-  File "/home/hpk/py/branch/event/py/execnet/gateway.py", line 147, in _send
-    self._io.close_write()
-  File "/home/hpk/py/branch/event/py/execnet/inputoutput.py", line 106, in close_write
-    self.outfile.close()
-IOError: [Errno 32] Broken pipe
-
-
-
