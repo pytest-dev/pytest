@@ -1,16 +1,10 @@
 
-class ConftestPlugin:
-    def pytest_configure(self, config):
-        self._setup = None
-
-    def pytest_funcarg__setup(self, request):
-        if self._setup is None:
-            self._setup = CostlySetup()
-        return self._setup
-
-    def pytest_unconfigure(self, config):
-        if self._setup is not None:
-            self._setup.finalize()
+def pytest_funcarg__setup(request):
+    return request.cached_setup(
+        setup=lambda: CostlySetup(), 
+        teardown=lambda costlysetup: costlysetup.finalize(),
+        scope="session",
+    )
 
 class CostlySetup:
     def __init__(self):

@@ -1,13 +1,12 @@
 import py
 from myapp import MyApp
 
-class ConftestPlugin:
-    def pytest_funcarg__mysetup(self, request):
-        return MySetup(request)
+def pytest_funcarg__mysetup(request):
+    return MySetup(request)
 
-    def pytest_addoption(self, parser):
-        parser.addoption("--ssh", action="store", default=None,
-            help="specify ssh host to run tests with")
+def pytest_addoption(parser):
+    parser.addoption("--ssh", action="store", default=None,
+        help="specify ssh host to run tests with")
     
 
 class MySetup:
