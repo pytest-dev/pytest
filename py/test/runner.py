@@ -175,29 +175,37 @@ class SetupState(object):
         self._finalizers = {}
 
     def addfinalizer(self, finalizer, colitem):
+        """ attach a finalizer to the given colitem. 
+        if colitem is None, this will add a finalizer that 
+        is called at the end of teardown_all(). 
+        """
         assert callable(finalizer)
         #assert colitem in self.stack
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
-    def _teardown(self, colitem):
+    def _pop_and_teardown(self):
+        colitem = self.stack.pop()
+        self._teardown_with_finalization(colitem)
+
+    def _teardown_with_finalization(self, colitem): 
         finalizers = self._finalizers.pop(colitem, None)
         while finalizers:
             fin = finalizers.pop()
             fin()
-        colitem.teardown()
+        if colitem: 
+            colitem.teardown()
         for colitem in self._finalizers:
-            assert colitem in self.stack
+            assert colitem is None or colitem in self.stack
 
     def teardown_all(self): 
         while self.stack: 
-            col = self.stack.pop() 
-            self._teardown(col)
+            self._pop_and_teardown()
+        self._teardown_with_finalization(None)
         assert not self._finalizers
 
     def teardown_exact(self, item):
-        if self.stack and self.stack[-1] == item:
-            col = self.stack.pop()
-            self._teardown(col)
+        assert self.stack and self.stack[-1] == item
+        self._pop_and_teardown()
      
     def prepare(self, colitem): 
         """ setup objects along the collector chain to the test-method
@@ -206,8 +214,7 @@ class SetupState(object):
         while self.stack: 
             if self.stack == needed_collectors[:len(self.stack)]: 
                 break 
-            col = self.stack.pop() 
-            self._teardown(col)
+            self._pop_and_teardown()
         for col in needed_collectors[len(self.stack):]: 
             col.setup() 
             self.stack.append(col) 

@@ -125,13 +125,14 @@ perform scoped setup and teardown
 .. sourcecode:: python 
 
     def cached_setup(setup, teardown=None, scope="module", keyextra=None):
-        """ setup and return value of calling setup(), cache results and 
-        optionally teardown the value by calling ``teardown(value)``. The scope
-        determines the key for cashing the setup value.  Specify ``keyextra``
-        to add to the cash-key.  
-        scope == 'function': when test function run finishes. 
+        """ cache and return result of calling setup().  
+
+        The scope determines the cache key and ``keyextra`` adds to the cachekey. 
+        The scope also determines when teardown(result) will be called. 
+        valid scopes: 
+        scope == 'function': when the single test function run finishes. 
         scope == 'module': when tests in a different module are run
-        scope == 'run': when the test run has been finished. 
+        scope == 'session': when tests of the session have run. 
         """
 
 example for providing a value that is to be setup only once during a test run: 
@@ -153,9 +154,9 @@ cleanup after test function execution
 
     def addfinalizer(func, scope="function"): 
         """ register calling a a finalizer function. 
-        scope == 'function': when test function run finishes. 
+        scope == 'function': when the single test function run finishes. 
         scope == 'module': when tests in a different module are run
-        scope == 'run': when all tests have been run. 
+        scope == 'session': when tests of the session have run. 
         """
      
 Calling ``request.addfinalizer()`` is useful for scheduling teardown 

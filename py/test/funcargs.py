@@ -148,6 +148,8 @@ class FuncargRequest:
             return self._pyfuncitem
         elif scope == "module":
             return self._pyfuncitem.getparent(py.test.collect.Module)
+        elif scope == "session":
+            return None
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def addfinalizer(self, finalizer, scope="function"):

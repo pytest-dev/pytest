@@ -147,17 +147,36 @@ class TestRequest:
         req._fillfuncargs()
         assert item.funcargs == {'something': 1}
 
-    def test_request_addfinalizer(self, testdir):
+    def test_request_addfinalizer_scopes(self, testdir):
         item = testdir.getitem("""
-            def pytest_funcarg__something(request): pass
+            teardownlist = []
+            def pytest_funcarg__something(request): 
+                for scope in ("function", "module", "session"):
+                    request.addfinalizer(
+                        lambda x=scope: teardownlist.append(x), 
+                        scope=scope)
+                
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
+        req.config._setupstate.prepare(item) # XXX 
+        req._fillfuncargs()
+        # successively check finalization calls 
+        teardownlist = item.getparent(py.test.collect.Module).obj.teardownlist 
+        ss = item.config._setupstate
+        assert not teardownlist 
+        ss.teardown_exact(item) 
+        print ss.stack
+        assert teardownlist == ['function']
+        ss.teardown_exact(item.parent) 
+        assert teardownlist == ['function', 'module']
+        ss.teardown_all()
+        assert teardownlist == ['function', 'module', 'session']
+
+    def test_request_addfinalizer_unknown_scope(self, testdir):
+        item = testdir.getitem("def test_func(): pass") 
+        req = funcargs.FuncargRequest(item)
         py.test.raises(ValueError, "req.addfinalizer(None, scope='xyz')")
-        l = [1]
-        req.addfinalizer(l.pop)
-        req.config._setupstate._teardown(item)
-        assert not l 
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")

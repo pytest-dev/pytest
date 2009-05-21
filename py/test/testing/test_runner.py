@@ -6,8 +6,24 @@ class TestSetupState:
         ss = SetupState()
         item = testdir.getitem("def test_func(): pass")
         l = [1]
+        ss.prepare(item)
         ss.addfinalizer(l.pop, colitem=item)
-        ss._teardown(item)
+        assert l
+        ss._pop_and_teardown()
+        assert not l 
+
+    def test_setup_scope_None(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        ss = SetupState()
+        l = [1]
+        ss.prepare(item)
+        ss.addfinalizer(l.pop, colitem=None)
+        assert l
+        ss._pop_and_teardown()
+        assert l 
+        ss._pop_and_teardown()
+        assert l 
+        ss.teardown_all()
         assert not l 
 
 class TestSetupStateFunctional:
