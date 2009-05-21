@@ -161,10 +161,10 @@ class TmpTestdir:
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
         session = config.initsession()
-        sorter = self.getreportrecorder(config)
+        reprec = self.getreportrecorder(config)
         session.main()
         config.pluginmanager.do_unconfigure(config)
-        return sorter 
+        return reprec 
 
     def config_preparse(self):
         config = self.Config()

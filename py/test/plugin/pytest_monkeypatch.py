@@ -86,11 +86,11 @@ def test_setenv():
     assert 'XYZ123' not in os.environ
 
 def test_monkeypatch_plugin(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         pytest_plugins = 'pytest_monkeypatch', 
         def test_method(monkeypatch):
             assert monkeypatch.__class__.__name__ == "MonkeyPatch"
     """)
-    res = sorter.countoutcomes()
+    res = reprec.countoutcomes()
     assert tuple(res) == (1, 0, 0), res
         

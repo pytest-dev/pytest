@@ -121,7 +121,7 @@ def test_functional_default(testdir, _pytest):
     assert _pytest.comregistry != reg
 
 def test_functional(testdir, linecomp):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         import py
         pytest_plugins="_pytest"
         def test_func(_pytest):
@@ -135,4 +135,4 @@ def test_functional(testdir, linecomp):
             res = rec.hook.xyz(arg=41)
             assert res == [42]
     """)
-    sorter.assertoutcome(passed=1)
+    reprec.assertoutcome(passed=1)

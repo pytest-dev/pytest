@@ -3,7 +3,7 @@
 # module, class, and instance level
 
 def test_module_and_function_setup(testdir):
-    sorter = testdir.inline_runsource(""" 
+    reprec = testdir.inline_runsource(""" 
         modlevel = []
         def setup_module(module):
             assert not modlevel
@@ -27,13 +27,13 @@ def test_module_and_function_setup(testdir):
                 assert modlevel[0] == 42
                 assert not hasattr(test_modlevel, 'answer') 
     """)
-    rep = sorter.matchreport("test_modlevel") 
+    rep = reprec.matchreport("test_modlevel") 
     assert rep.passed 
-    rep = sorter.matchreport("test_module") 
+    rep = reprec.matchreport("test_module") 
     assert rep.passed 
 
 def test_class_setup(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         class TestSimpleClassSetup:
             clslevel = []
             def setup_class(cls):
@@ -53,10 +53,10 @@ def test_class_setup(testdir):
             assert not TestSimpleClassSetup.clslevel 
             assert not TestInheritedClassSetupStillWorks.clslevel
     """)
-    sorter.assertoutcome(passed=1+2+1)
+    reprec.assertoutcome(passed=1+2+1)
 
 def test_method_setup(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         class TestSetupMethod:
             def setup_method(self, meth):
                 self.methsetup = meth 
@@ -69,10 +69,10 @@ def test_method_setup(testdir):
             def test_other(self):
                 assert self.methsetup == self.test_other
     """)
-    sorter.assertoutcome(passed=2)
+    reprec.assertoutcome(passed=2)
        
 def test_method_generator_setup(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         class TestSetupTeardownOnInstance: 
             def setup_class(cls):
                 cls.classsetup = True 
@@ -91,10 +91,10 @@ def test_method_generator_setup(testdir):
                 assert self.methsetup == self.test_generate 
                 assert value == 5
     """)
-    sorter.assertoutcome(passed=1, failed=1)
+    reprec.assertoutcome(passed=1, failed=1)
 
 def test_func_generator_setup(testdir):
-    sorter = testdir.inline_runsource(""" 
+    reprec = testdir.inline_runsource(""" 
         import sys
 
         def setup_module(mod):
@@ -118,11 +118,11 @@ def test_func_generator_setup(testdir):
             yield check 
             assert x == [1]
     """)
-    rep = sorter.matchreport("test_one", names="pytest_itemtestreport") 
+    rep = reprec.matchreport("test_one", names="pytest_itemtestreport") 
     assert rep.passed 
         
 def test_method_setup_uses_fresh_instances(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         class TestSelfState1: 
             def __init__(self):
                 self.hello = 42
@@ -137,5 +137,5 @@ def test_method_setup_uses_fresh_instances(testdir):
             def test_world(self):
                 assert not hasattr(self, 'world')
     """)
-    sorter.assertoutcome(passed=4, failed=0)
+    reprec.assertoutcome(passed=4, failed=0)
 

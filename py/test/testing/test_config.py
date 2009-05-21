@@ -303,8 +303,8 @@ class TestConfig_gettopdir:
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
-        sorter = testdir.inline_run(*opts)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(*opts)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 2 
         assert skipped == passed == 0
     path = testdir.makepyfile("""

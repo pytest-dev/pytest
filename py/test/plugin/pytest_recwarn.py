@@ -73,7 +73,7 @@ def test_WarningRecorder():
     assert showwarning == py.std.warnings.showwarning
 
 def test_recwarn_functional(testdir):
-    sorter = testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         pytest_plugins = 'pytest_recwarn', 
         import warnings
         oldwarn = warnings.showwarning
@@ -85,6 +85,6 @@ def test_recwarn_functional(testdir):
         def test_finalized():
             assert warnings.showwarning == oldwarn
     """)
-    res = sorter.countoutcomes()
+    res = reprec.countoutcomes()
     assert tuple(res) == (2, 0, 0), res
         

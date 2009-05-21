@@ -179,8 +179,8 @@ class TestGenerator:
                     yield list_append, i
                 yield assert_order_of_execution
         """)
-        sorter = testdir.inline_run(o)
-        passed, skipped, failed = sorter.countoutcomes() 
+        reprec = testdir.inline_run(o)
+        passed, skipped, failed = reprec.countoutcomes() 
         assert passed == 7
         assert not skipped and not failed 
 
@@ -209,8 +209,8 @@ class TestGenerator:
                 yield list_append_2
                 yield assert_order_of_execution   
         """)
-        sorter = testdir.inline_run(o) 
-        passed, skipped, failed = sorter.countoutcomes() 
+        reprec = testdir.inline_run(o) 
+        passed, skipped, failed = reprec.countoutcomes() 
         assert passed == 4
         assert not skipped and not failed 
 

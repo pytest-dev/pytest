@@ -78,9 +78,9 @@ def test_simple_unittest(testdir):
             def test_failing(self):
                 self.assertEquals('foo', 'bar')
     """)
-    sorter = testdir.inline_run(testpath)
-    assert sorter.matchreport("testpassing").passed
-    assert sorter.matchreport("test_failing").failed 
+    reprec = testdir.inline_run(testpath)
+    assert reprec.matchreport("testpassing").passed
+    assert reprec.matchreport("test_failing").failed 
 
 def test_setup(testdir):
     testpath = testdir.makepyfile(test_two="""
@@ -92,8 +92,8 @@ def test_setup(testdir):
             def test_setUp(self):
                 self.assertEquals(1, self.foo)
     """)
-    sorter = testdir.inline_run(testpath)
-    rep = sorter.matchreport("test_setUp")
+    reprec = testdir.inline_run(testpath)
+    rep = reprec.matchreport("test_setUp")
     assert rep.passed
 
 def test_teardown(testdir):
@@ -110,8 +110,8 @@ def test_teardown(testdir):
             def test_check(self):
                 self.assertEquals(MyTestCase.l, [None])
     """)
-    sorter = testdir.inline_run(testpath)
-    passed, skipped, failed = sorter.countoutcomes()
+    reprec = testdir.inline_run(testpath)
+    passed, skipped, failed = reprec.countoutcomes()
     print "COUNTS", passed, skipped, failed
     assert failed == 0, failed
     assert passed == 2

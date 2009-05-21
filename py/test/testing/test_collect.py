@@ -171,11 +171,11 @@ class TestCollectPluginHooks:
         testdir.plugins.append(Plugin())
         testdir.mkdir("hello")
         testdir.mkdir("world")
-        sorter = testdir.inline_run()
+        reprec = testdir.inline_run()
         assert "hello" in wascalled
         assert "world" in wascalled
         # make sure the directories do not get double-appended 
-        colreports = sorter.getreports("pytest_collectreport")
+        colreports = reprec.getreports("pytest_collectreport")
         names = [rep.colitem.name for rep in colreports]
         assert names.count("hello") == 1
 
@@ -213,8 +213,8 @@ class TestCustomConftests:
                 return parent.config.getvalue("XX")
         """)
         testdir.mkdir("hello")
-        sorter = testdir.inline_run(testdir.tmpdir)
-        names = [rep.colitem.name for rep in sorter.getreports("pytest_collectreport")]
+        reprec = testdir.inline_run(testdir.tmpdir)
+        names = [rep.colitem.name for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' not in names 
         reprec = testdir.inline_run(testdir.tmpdir, "--XX")
         names = [rep.colitem.name for rep in reprec.getreports("pytest_collectreport")]

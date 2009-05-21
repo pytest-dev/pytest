@@ -10,7 +10,7 @@ class Test_genitems:
                 pass
         """)
         p.copy(p.dirpath(p.purebasename + "2" + ".py"))
-        items, sorter = testdir.inline_genitems(p.dirpath())
+        items, reprec = testdir.inline_genitems(p.dirpath())
         assert len(items) == 4
         for numi, i in enumerate(items):
             for numj, j in enumerate(items):
@@ -27,8 +27,8 @@ class Test_genitems:
     def test_subdir_conftest_error(self, testdir):
         tmp = testdir.tmpdir
         tmp.ensure("sub", "conftest.py").write("raise SyntaxError\n")
-        items, sorter = testdir.inline_genitems(tmp)
-        collectionfailures = sorter.getfailedcollections()
+        items, reprec = testdir.inline_genitems(tmp)
+        collectionfailures = reprec.getfailedcollections()
         assert len(collectionfailures) == 1
         ev = collectionfailures[0] 
         assert ev.longrepr.reprcrash.message.startswith("SyntaxError")
@@ -45,7 +45,7 @@ class Test_genitems:
             class TestY(TestX):
                 pass
         ''')
-        items, sorter = testdir.inline_genitems(p)
+        items, reprec = testdir.inline_genitems(p)
         assert len(items) == 3
         assert items[0].name == 'testone'
         assert items[1].name == 'testmethod_one'
@@ -70,11 +70,11 @@ class TestKeywordSelection:
                     assert 42 == 43 
         """)
         def check(keyword, name):
-            sorter = testdir.inline_run("-s", "-k", keyword, file_test)
-            passed, skipped, failed = sorter.listoutcomes()
+            reprec = testdir.inline_run("-s", "-k", keyword, file_test)
+            passed, skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
             assert failed[0].colitem.name == name 
-            assert len(sorter.getcalls('pytest_deselected')) == 1
+            assert len(reprec.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
             #yield check, keyword, 'test_one'
@@ -97,12 +97,12 @@ class TestKeywordSelection:
         """)
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1', 
                         'TestClass test_2', 'xxx TestClass test_2',): 
-            sorter = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
+            reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
             print "keyword", repr(keyword)
-            passed, skipped, failed = sorter.listoutcomes()
+            passed, skipped, failed = reprec.listoutcomes()
             assert len(passed) == 1
             assert passed[0].colitem.name == "test_2"
-            dlist = sorter.getcalls("pytest_deselected")
+            dlist = reprec.getcalls("pytest_deselected")
             assert len(dlist) == 1
             assert dlist[0].items[0].name == 'test_1'
 
@@ -112,11 +112,11 @@ class TestKeywordSelection:
             def test_two(): assert 1
             def test_three(): assert 1
         """)
-        sorter = testdir.inline_run("-k", "test_two:", threepass)
-        passed, skipped, failed = sorter.listoutcomes()
+        reprec = testdir.inline_run("-k", "test_two:", threepass)
+        passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 2
         assert not failed 
-        dlist = sorter.getcalls("pytest_deselected")
+        dlist = reprec.getcalls("pytest_deselected")
         assert len(dlist) == 1
         item = dlist[0].items[0]
         assert item.name == "test_one" 

@@ -208,32 +208,32 @@ class TestRunnerPlugin:
         item = testdir.getitem("""def test_func(): pass""")
         plugin = RunnerPlugin()
         plugin.pytest_configure(item.config)
-        sorter = testdir.getreportrecorder(item)
+        reprec = testdir.getreportrecorder(item)
         plugin.pytest_item_setup_and_runtest(item)
-        rep = sorter.getcall("pytest_itemtestreport").rep
+        rep = reprec.getcall("pytest_itemtestreport").rep
         assert rep.passed 
         
 class TestSetupEvents:
     disabled = True
 
     def test_setup_runtest_ok(self, testdir):
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             def setup_module(mod):
                 pass 
             def test_func():
                 pass
         """)
-        assert not sorter.getcalls(pytest_itemsetupreport)
+        assert not reprec.getcalls(pytest_itemsetupreport)
 
     def test_setup_fails(self, testdir):
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             def setup_module(mod):
                 print "world"
                 raise ValueError(42)
             def test_func():
                 pass
         """)
-        rep = sorter.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall(pytest_itemsetupreport).rep
         assert rep.failed
         assert not rep.skipped
         assert rep.excrepr 
@@ -241,7 +241,7 @@ class TestSetupEvents:
         assert rep.outerr[0].find("world") != -1
 
     def test_teardown_fails(self, testdir):
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             def test_func():
                 pass
             def teardown_function(func): 
@@ -256,14 +256,14 @@ class TestSetupEvents:
         assert "25" in str(rep.excrepr)
 
     def test_setup_skips(self, testdir):
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             import py
             def setup_module(mod):
                 py.test.skip("17")
             def test_func():
                 pass
         """)
-        rep = sorter.popcall(pytest_itemsetupreport)
+        rep = reprec.popcall(pytest_itemsetupreport)
         assert not rep.failed
         assert rep.skipped
         assert rep.excrepr 

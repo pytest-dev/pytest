@@ -409,8 +409,8 @@ class TestDoctest:
                 .. >>> raise ValueError 
                    >>> None
         """)
-        sorter = testdir.inline_run(xtxt)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(xtxt)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1
 
     def test_doctest_basic(self, testdir): 
@@ -432,23 +432,23 @@ class TestDoctest:
 
             end
         """)
-        sorter = testdir.inline_run(xtxt)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(xtxt)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 0 
         assert passed + skipped == 2
 
     def test_doctest_eol(self, testdir): 
         ytxt = testdir.maketxtfile(y=".. >>> 1 + 1\r\n   2\r\n\r\n")
-        sorter = testdir.inline_run(ytxt)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(ytxt)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 0 
         assert passed + skipped == 2
 
     def test_doctest_indentation(self, testdir):
         footxt = testdir.maketxtfile(foo=
             '..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
-        sorter = testdir.inline_run(footxt)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(footxt)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 0
         assert skipped + passed == 2 
 
@@ -458,8 +458,8 @@ class TestDoctest:
 
             .. _`blah`: javascript:some_function()
         """)
-        sorter = testdir.inline_run(xtxt)
-        passed, skipped, failed = sorter.countoutcomes()
+        reprec = testdir.inline_run(xtxt)
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 0
         assert skipped + passed == 3 
 
@@ -479,9 +479,9 @@ class TestDoctest:
                 False
 
         """)
-        sorter = testdir.inline_run(xtxt)
+        reprec = testdir.inline_run(xtxt)
         assert len(l) == 1
-        passed, skipped, failed = sorter.countoutcomes()
+        passed, skipped, failed = reprec.countoutcomes()
         assert passed >= 1
         assert not failed 
         assert skipped <= 1

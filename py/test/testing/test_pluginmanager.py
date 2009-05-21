@@ -74,16 +74,16 @@ class TestBootstrapping:
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = PluginManager() 
-        sorter = testdir.getreportrecorder(pluginmanager)
+        reprec = testdir.getreportrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
-        call = sorter.getcall(pluginmanager.hook.pytest_plugin_registered.name)
+        call = reprec.getcall(pluginmanager.hook.pytest_plugin_registered.name)
         assert call.plugin.__name__ == "pytest_a"
 
         # check that it is not registered twice 
         pluginmanager.consider_module(mod)
-        l = sorter.getcalls("pytest_plugin_registered")
+        l = reprec.getcalls("pytest_plugin_registered")
         assert len(l) == 1
 
     def test_consider_conftest_deprecated(self, testdir):

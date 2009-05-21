@@ -89,7 +89,7 @@ class TestDoctests:
         """)
         for x in (testdir.tmpdir, checkfile): 
             #print "checking that %s returns custom items" % (x,) 
-            items, sorter = testdir.inline_genitems(x)
+            items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestTextfile)
 
@@ -106,8 +106,8 @@ class TestDoctests:
             >>> x == 1
             False
         """)
-        sorter = testdir.inline_run(p)
-        sorter.assertoutcome(failed=1)
+        reprec = testdir.inline_run(p)
+        reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
         from py.__.test.outcome import Failed 
@@ -118,8 +118,8 @@ class TestDoctests:
             >>> x
             2
         """)
-        sorter = testdir.inline_run(p)
-        call = sorter.getcall("pytest_itemtestreport")
+        reprec = testdir.inline_run(p)
+        call = reprec.getcall("pytest_itemtestreport")
         assert call.rep.failed
         assert call.rep.longrepr 
         # XXX 
@@ -137,8 +137,8 @@ class TestDoctests:
 
             '''
         """)
-        sorter = testdir.inline_run(p, "--doctest-modules")
-        sorter.assertoutcome(failed=1) 
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(failed=1) 
 
     def test_txtfile_failing(self, testdir):
         testdir.plugins.append("doctest")

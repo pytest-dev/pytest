@@ -108,10 +108,10 @@ class TestNodeManager:
         config = py.test.config._reparse([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
-        sorter = testdir.getreportrecorder(config).hookrecorder
+        reprec = testdir.getreportrecorder(config).hookrecorder
         nodemanager.setup_nodes(putevent=[].append)
         for spec in nodemanager.gwmanager.specs:
-            l = sorter.getcalls("pytest_trace")
+            l = reprec.getcalls("pytest_trace")
             assert l 
         nodemanager.teardown_nodes()
 
@@ -120,8 +120,8 @@ class TestNodeManager:
             def test_one():
                 pass
         """)
-        sorter = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
-                "--tx=%s" % specssh, testdir.tmpdir)
-        ev = sorter.getfirstnamed(pytest_itemtestreport)
+        reprec = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
+                "--tx %s" % specssh, testdir.tmpdir)
+        ev = reprec.getfirstnamed("pytest_itemtestreport")
         assert ev.passed 
 

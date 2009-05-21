@@ -17,17 +17,17 @@ class SessionTests:
             def test_two(someargs):
                 pass
         """)
-        sorter = testdir.inline_run(tfile)
-        passed, skipped, failed = sorter.listoutcomes()
+        reprec = testdir.inline_run(tfile)
+        passed, skipped, failed = reprec.listoutcomes()
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3  
         assert failed[0].colitem.name == "test_one_one"
         assert failed[1].colitem.name == "test_other"
         assert failed[2].colitem.name == "test_two"
-        itemstarted = sorter.getcalls("pytest_itemstart")
+        itemstarted = reprec.getcalls("pytest_itemstart")
         assert len(itemstarted) == 4
-        colstarted = sorter.getcalls("pytest_collectstart")
+        colstarted = reprec.getcalls("pytest_collectstart")
         assert len(colstarted) == 1
         col = colstarted[0].collector
         assert isinstance(col, py.test.collect.Module)
@@ -41,19 +41,19 @@ class SessionTests:
             import does_not_work 
             a = 1
         """)
-        sorter = testdir.inline_run(tfile)
-        l = sorter.getfailedcollections()
+        reprec = testdir.inline_run(tfile)
+        l = reprec.getfailedcollections()
         assert len(l) == 1 
         out = l[0].longrepr.reprcrash.message
         assert out.find('does_not_work') != -1 
 
     def test_raises_output(self, testdir): 
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             import py
             def test_raises_doesnt():
                 py.test.raises(ValueError, int, "3")
         """)
-        passed, skipped, failed = sorter.listoutcomes()
+        passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
         if not out.find("DID NOT RAISE") != -1: 
@@ -61,28 +61,28 @@ class SessionTests:
             py.test.fail("incorrect raises() output") 
 
     def test_generator_yields_None(self, testdir): 
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             def test_1():
                 yield None 
         """)
-        failures = sorter.getfailedcollections()
+        failures = reprec.getfailedcollections()
         out = failures[0].longrepr.reprcrash.message
         i = out.find('TypeError') 
         assert i != -1 
 
     def test_syntax_error_module(self, testdir): 
-        sorter = testdir.inline_runsource("this is really not python")
-        l = sorter.getfailedcollections()
+        reprec = testdir.inline_runsource("this is really not python")
+        l = reprec.getfailedcollections()
         assert len(l) == 1
         out = l[0].longrepr.reprcrash.message
         assert out.find(str('not python')) != -1
 
     def test_exit_first_problem(self, testdir): 
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             def test_one(): assert 0
             def test_two(): assert 0
         """, '--exitfirst')
-        passed, skipped, failed = sorter.countoutcomes()
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1
         assert passed == skipped == 0
 
@@ -111,8 +111,8 @@ class SessionTests:
                     t = BrokenRepr2()
                     assert t.foo == 1
         """)
-        sorter = testdir.inline_run(p)
-        passed, skipped, failed = sorter.listoutcomes()
+        reprec = testdir.inline_run(p)
+        passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 2
         out = failed[0].longrepr.reprcrash.message
         assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
@@ -129,8 +129,8 @@ class SessionTests:
         """, test_file="""
             def test_one(): pass
         """)
-        sorter = testdir.inline_run(testdir.tmpdir)
-        reports = sorter.getreports("pytest_collectreport")
+        reprec = testdir.inline_run(testdir.tmpdir)
+        reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
         assert reports[0].skipped 
 
@@ -145,15 +145,15 @@ class TestNewSession(SessionTests):
         def mypdb(*args):
             l.append(args)
         monkeypatch.setattr(py.__.test.custompdb, 'post_mortem', mypdb)
-        sorter = testdir.inline_run('--pdb', tfile)
-        rep = sorter.matchreport("test_usepdb")
+        reprec = testdir.inline_run('--pdb', tfile)
+        rep = reprec.matchreport("test_usepdb")
         assert rep.failed
         assert len(l) == 1
         tb = py.code.Traceback(l[0][0])
         assert tb[-1].name == "test_usepdb" 
 
     def test_order_of_execution(self, testdir): 
-        sorter = testdir.inline_runsource("""
+        reprec = testdir.inline_runsource("""
             l = []
             def test_1():
                 l.append(1)
@@ -172,7 +172,7 @@ class TestNewSession(SessionTests):
                 def test_4(self):
                     assert self.reslist == [1,2,1,2,3]
         """)
-        passed, skipped, failed = sorter.countoutcomes()
+        passed, skipped, failed = reprec.countoutcomes()
         assert failed == skipped == 0
         assert passed == 7
         # also test listnames() here ... 
@@ -197,13 +197,13 @@ class TestNewSession(SessionTests):
             test_three="xxxdsadsadsadsa",
             __init__=""
         )
-        sorter = testdir.inline_run('--collectonly', p.dirpath())
+        reprec = testdir.inline_run('--collectonly', p.dirpath())
        
-        itemstarted = sorter.getcalls("pytest_itemstart")
+        itemstarted = reprec.getcalls("pytest_itemstart")
         assert len(itemstarted) == 3
-        assert not sorter.getreports("pytest_itemtestreport") 
-        started = sorter.getcalls("pytest_collectstart")
-        finished = sorter.getreports("pytest_collectreport")
+        assert not reprec.getreports("pytest_itemtestreport") 
+        started = reprec.getcalls("pytest_collectstart")
+        finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished) 
         assert len(started) == 8 
         colfail = [x for x in finished if x.failed]
@@ -214,8 +214,8 @@ class TestNewSession(SessionTests):
     def test_minus_x_import_error(self, testdir):
         testdir.makepyfile(__init__="")
         testdir.makepyfile(test_one="xxxx", test_two="yyyy")
-        sorter = testdir.inline_run("-x", testdir.tmpdir)
-        finished = sorter.getreports("pytest_collectreport")
+        reprec = testdir.inline_run("-x", testdir.tmpdir)
+        finished = reprec.getreports("pytest_collectreport")
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
