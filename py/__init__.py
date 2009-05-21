@@ -79,7 +79,6 @@ initpkg(__name__,
     'test.fail'              : ('./test/outcome.py', 'fail'),
     'test.exit'              : ('./test/outcome.py', 'exit'),
     'test.pdb'               : ('./test/custompdb.py', 'set_trace'),
-    'test.fillfuncargs'      : ('./test/funcargs.py', 'fillfuncargs'),
 
     # configuration/initialization related test api
     'test.config'            : ('./test/config.py', 'config_per_process'),
@@ -96,6 +95,7 @@ initpkg(__name__,
     'test.collect.Instance'  : ('./test/pycollect.py', 'Instance'),
     'test.collect.Generator' : ('./test/pycollect.py', 'Generator'),
     'test.collect.Function'  : ('./test/pycollect.py', 'Function'),
+    'test.collect._fillfuncargs' : ('./test/funcargs.py', 'fillfuncargs'),
 
     # thread related API (still in early design phase)
     '_thread.WorkerPool'      : ('./thread/pool.py', 'WorkerPool'),
