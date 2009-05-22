@@ -31,6 +31,6 @@ def test_functional(testdir):
     """)
     testdir.runpytest("--hooklog=hook.log")
     s = testdir.tmpdir.join("hook.log").read()
-    assert s.find("pytest_testrunstart") != -1
+    assert s.find("pytest_sessionstart") != -1
     assert s.find("ItemTestReport") != -1
-    assert s.find("testrunfinish") != -1
+    assert s.find("sessionfinish") != -1

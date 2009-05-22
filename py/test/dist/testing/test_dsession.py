@@ -365,7 +365,7 @@ class TestDSession:
         # see that the node is really down 
         node = hookrecorder.popcall("pytest_testnodedown").node
         assert node.gateway.spec.popen
-        #XXX eq.geteventargs("pytest_testrunfinish")
+        #XXX eq.geteventargs("pytest_sessionfinish")
 
     @py.test.mark.xfail("test implementation missing")
     def test_collected_function_causes_remote_skip_at_module_level(self, testdir):

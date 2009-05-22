@@ -78,7 +78,7 @@ class Session(object):
 
     def sessionstarts(self):
         """ setup any neccessary resources ahead of the test run. """
-        self.config.hook.pytest_testrunstart()
+        self.config.hook.pytest_sessionstart(session=self)
         
     def pytest_itemtestreport(self, rep):
         if rep.failed:
@@ -89,7 +89,8 @@ class Session(object):
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
-        self.config.hook.pytest_testrunfinish(
+        self.config.hook.pytest_sessionfinish(
+            session=self, 
             exitstatus=exitstatus, 
             excrepr=excinfo and excinfo.getrepr() or None
         )

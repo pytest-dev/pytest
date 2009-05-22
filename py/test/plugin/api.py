@@ -23,16 +23,14 @@ class PluginHooks:
     # test Session related hooks 
     # ------------------------------------------------------------------------------
 
-    def pytest_testrunstart(self):
-        """ whole test run starts. """
+    def pytest_sessionstart(self, session):
+        """ before session.main() is called. """
 
-    def pytest_testrunfinish(self, exitstatus, excrepr=None):
+    def pytest_sessionfinish(self, session, exitstatus, excrepr=None):
         """ whole test run finishes. """
 
     def pytest_deselected(self, items):
         """ collected items that were deselected (by keyword). """
-
-
 
     # ------------------------------------------------------------------------------
     # collection hooks

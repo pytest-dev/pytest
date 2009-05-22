@@ -4,34 +4,25 @@ cleanup gateways that were instantiated during a test function run.
 import py
 
 def pytest_configure(config):
-    debug = config.option.debug
-    config.pluginmanager.register(Execnetcleanup(debug))
+    config.pluginmanager.register(Execnetcleanup())
 
 class Execnetcleanup:
     _gateways = None
     def __init__(self, debug=False):
         self._debug = debug 
 
-    def trace(self, msg, *args):
-        if self._debug:
-            print "[execnetcleanup %0x] %s %s" %(id(self), msg, args)
-        
     def pyexecnet_gateway_init(self, gateway):
-        self.trace("init", gateway)
         if self._gateways is not None:
             self._gateways.append(gateway)
         
     def pyexecnet_gateway_exit(self, gateway):
-        self.trace("exit", gateway)
         if self._gateways is not None:
             self._gateways.remove(gateway)
 
-    def pytest_testrunstart(self):
-        self.trace("testrunstart")
+    def pytest_sessionstart(self, session):
         self._gateways = []
 
-    def pytest_testrunfinish(self, exitstatus, excrepr=None):
-        self.trace("testrunfinish", exitstatus)
+    def pytest_sessionfinish(self, session, exitstatus, excrepr=None):
         l = []
         for gw in self._gateways:
             gw.exit()

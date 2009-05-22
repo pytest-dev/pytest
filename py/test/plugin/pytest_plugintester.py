@@ -61,7 +61,7 @@ class PluginTester:
                 for arg, hookarg in zip(method_args[0], hookargs[0]):
                     if arg != hookarg: 
                         print "argument mismatch:" 
-                        print "actual  : %s.%s" %(pluginclass.__name__, formatdef(method))
+                        print "actual  : %s.%s" %(plugin.__name__, formatdef(method))
                         print "required:", formatdef(hook)
                         fail = True
                         break 
