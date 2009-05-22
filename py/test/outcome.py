@@ -36,11 +36,11 @@ class ExceptionFailure(Failed):
         self.expr = expr 
         self.expected = expected
 
-class Exit(Exception):
+class Exit(KeyboardInterrupt):
     """ for immediate program exits without tracebacks and reporter/summary. """
     def __init__(self, msg="unknown reason"):
         self.msg = msg 
-        Exception.__init__(self, msg)
+        KeyboardInterrupt.__init__(self, msg)
 
 # exposed helper methods 
 

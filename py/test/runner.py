@@ -8,7 +8,7 @@
 
 import py
 
-from py.__.test.outcome import Exit, Skipped
+from py.__.test.outcome import Skipped
 
 def basic_run_report(item, pdb=None):
     """ return report about setting up and running a test item. """ 
@@ -28,7 +28,7 @@ def basic_run_report(item, pdb=None):
                 when = "execute"
         finally:
             outerr = capture.reset()
-    except (Exit, KeyboardInterrupt):
+    except KeyboardInterrupt:
         raise
     except: 
         excinfo = py.code.ExceptionInfo()
@@ -48,7 +48,7 @@ def basic_collect_report(collector):
             res = collector._memocollect()
         finally:
             outerr = capture.reset()
-    except (Exit, KeyboardInterrupt):
+    except KeyboardInterrupt:
         raise
     except: 
         excinfo = py.code.ExceptionInfo()
@@ -62,7 +62,7 @@ def forked_run_report(item, pdb=None):
     def runforked():
         try:
             testrep = basic_run_report(item)
-        except (KeyboardInterrupt, Exit): 
+        except KeyboardInterrupt: 
             py.std.os._exit(EXITSTATUS_TESTEXIT)
         return ipickle.dumps(testrep)
 
@@ -72,7 +72,7 @@ def forked_run_report(item, pdb=None):
         return ipickle.loads(result.retval)
     else:
         if result.exitstatus == EXITSTATUS_TESTEXIT:
-            raise Exit("forked test item %s raised Exit" %(item,))
+            py.test.exit("forked test item %s raised Exit" %(item,))
         return report_process_crash(item, result)
 
 def report_process_crash(item, result):
