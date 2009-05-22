@@ -38,8 +38,4 @@ class PylintItem(py.test.collect.Item):
         print ">>>",
         print rating
 
-def test_generic(plugintester):
-    plugintester.hookcheck(PylintPlugin)
-
-#def test_functional <pull from figleaf plugin>
 

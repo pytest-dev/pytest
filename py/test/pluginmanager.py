@@ -9,6 +9,8 @@ def check_old_use(mod, modname):
     assert not hasattr(mod, clsname), (mod, clsname)
 
 class PluginManager(object):
+    class Error(Exception):
+        """signals a plugin specific error."""
     def __init__(self, comregistry=None):
         if comregistry is None: 
             comregistry = py._com.Registry()
@@ -34,6 +36,7 @@ class PluginManager(object):
         assert name not in self.impname2plugin
         self.impname2plugin[name] = plugin
         self.hook.pytest_plugin_registered(plugin=plugin)
+        self._checkplugin(plugin)
         self.comregistry.register(plugin)
         return True
 
@@ -96,6 +99,46 @@ class PluginManager(object):
         check_old_use(mod, modname) 
         self.register(mod)
         self.consider_module(mod)
+
+    def _checkplugin(self, plugin):
+        # =====================================================
+        # check plugin hooks 
+        # =====================================================
+        methods = collectattr(plugin)
+        hooks = collectattr(api.PluginHooks)
+        stringio = py.std.StringIO.StringIO()
+        def Print(*args):
+            if args:
+                stringio.write(" ".join(map(str, args)))
+            stringio.write("\n")
+
+        fail = False
+        while methods:
+            name, method = methods.popitem()
+            #print "checking", name
+            if isgenerichook(name):
+                continue
+            if name not in hooks: 
+                Print("found unknown hook:", name)
+                fail = True
+            else:
+                method_args = getargs(method)
+                if '__call__' in method_args:
+                    method_args.remove('__call__')
+                hook = hooks[name]
+                hookargs = getargs(hook)
+                for arg, hookarg in zip(method_args, hookargs):
+                    if arg != hookarg: 
+                        Print("argument mismatch: %r != %r"  %(arg, hookarg))
+                        Print("actual  : %s" %(formatdef(method)))
+                        Print("required:", formatdef(hook))
+                        fail = True
+                        break 
+                #if not fail:
+                #    print "matching hook:", formatdef(method)
+            if fail:
+                name = getattr(plugin, '__name__', plugin)
+                raise self.Error("%s:\n%s" %(name, stringio.getvalue()))
     # 
     #
     # API for interacting with registered and instantiated plugin objects 
@@ -169,3 +212,30 @@ def importplugin(importspec):
             #print "syspath:", py.std.sys.path
             #print "curdir:", py.std.os.getcwd()
             return __import__(importspec)  # show the original exception
+
+
+
+def isgenerichook(name):
+    return name == "pytest_plugins" or \
+           name.startswith("pytest_funcarg__") or \
+           name.startswith("pytest_option_")
+
+def getargs(func):
+    args = py.std.inspect.getargs(func.func_code)[0]
+    startindex = hasattr(func, 'im_self') and 1 or 0
+    return args[startindex:]
+
+def collectattr(obj, prefixes=("pytest_",)):
+    methods = {}
+    for apiname in dir(obj):
+        for prefix in prefixes:
+            if apiname.startswith(prefix):
+                methods[apiname] = getattr(obj, apiname) 
+    return methods 
+
+def formatdef(func):
+    return "%s%s" %(
+        func.func_name, 
+        py.std.inspect.formatargspec(*py.std.inspect.getargspec(func))
+    )
+

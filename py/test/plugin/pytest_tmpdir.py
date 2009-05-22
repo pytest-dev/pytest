@@ -21,8 +21,6 @@ def pytest_funcarg__tmpdir(request):
 #
 # ===============================================================================
 #
-def test_generic(plugintester):
-    plugintester.hookcheck()
 
 def test_funcarg(testdir):
     from py.__.test.funcargs import FuncargRequest

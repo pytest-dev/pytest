@@ -163,8 +163,7 @@ class TestWithFunctionIntegration:
         testdir.runpytest(*args)
         return filter(None, resultlog.readlines(cr=0))
         
-    def test_collection_report(self, plugintester):
-        testdir = plugintester.testdir()
+    def test_collection_report(self, testdir):
         ok = testdir.makepyfile(test_collection_ok="")
         skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
@@ -186,8 +185,7 @@ class TestWithFunctionIntegration:
             assert x.startswith(" ")
         assert "XXX" in "".join(lines[1:])
 
-    def test_log_test_outcomes(self, plugintester):
-        testdir = plugintester.testdir()
+    def test_log_test_outcomes(self, testdir):
         mod = testdir.makepyfile(test_mod="""
             import py 
             def test_pass(): pass
@@ -224,9 +222,7 @@ class TestWithFunctionIntegration:
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry  
 
-def test_generic(plugintester, LineMatcher):
-    plugintester.hookcheck()
-    testdir = plugintester.testdir()
+def test_generic(testdir, LineMatcher):
     testdir.plugins.append("resultlog")
     testdir.makepyfile("""
         import py

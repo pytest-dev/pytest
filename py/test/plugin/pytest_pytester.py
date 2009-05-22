@@ -26,9 +26,6 @@ def pytest_funcarg__reportrecorder(request):
     request.addfinalizer(lambda: reprec.comregistry.unregister(reprec))
     return reprec
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 class RunResult:
     def __init__(self, ret, outlines, errlines):
         self.ret = ret

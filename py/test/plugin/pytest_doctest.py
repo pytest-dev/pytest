@@ -156,8 +156,3 @@ class TestDoctests:
             "    1",
             "*test_txtfile_failing.txt:2: DocTestFailure"
         ])
-
-
-def test_generic(plugintester):
-    plugintester.hookcheck()
-

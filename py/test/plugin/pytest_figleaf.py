@@ -50,9 +50,6 @@ def get_coverage(datafile, config):
     return coverage
 
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 def test_functional(testdir):
     py.test.importorskip("figleaf")
     testdir.plugins.append("figleaf")

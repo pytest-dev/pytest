@@ -746,7 +746,3 @@ def test_repr_python_version(monkeypatch):
     py.std.sys.version_info = x = (2,3)
     assert repr_pythonversion() == str(x) 
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-    plugintester.hookcheck(cls=TerminalReporter)
-    plugintester.hookcheck(cls=CollectonlyReporter)

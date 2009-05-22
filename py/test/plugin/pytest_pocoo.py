@@ -38,9 +38,6 @@ def pytest_terminal_summary(terminalreporter):
                 break
 
 
-def test_apicheck(plugintester):
-    plugintester.hookcheck()
-
 def test_toproxy(testdir, monkeypatch):
     l = []
     class MockProxy:

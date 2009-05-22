@@ -1,6 +1,6 @@
 import py
 
-pytest_plugins = "pytester", "plugintester"
+pytest_plugins = "pytester"
 
 def pytest_collect_file(path, parent):
     if path.basename.startswith("pytest_") and path.ext == ".py":

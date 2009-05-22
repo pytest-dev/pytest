@@ -99,9 +99,6 @@ class HookRecorder:
         return l[0]
 
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 def test_hookrecorder_basic():
     comregistry = py._com.Registry() 
     rec = HookRecorder(comregistry)

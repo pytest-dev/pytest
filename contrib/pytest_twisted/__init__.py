@@ -115,10 +115,7 @@ gr_tests    = greenlet.getcurrent()
 # plugin tests 
 # ===============================================================================
 
-def test_generic(plugintester):
-    plugintester.apicheck(TwistedPlugin)
-
-    testdir = plugintester.testdir()
+def test_generic(testdir):
     testdir.makepyfile('''
         def test_pass():
             pass

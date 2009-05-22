@@ -126,8 +126,6 @@ class ItemFixtureReport(BaseReport):
 #
 # ===============================================================================
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
 
 class TestSetupState:
     def test_setup_prepare(self, testdir):

@@ -65,9 +65,6 @@ class UnitTestFunction(py.test.collect.Function):
         instance.tearDown()
 
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
         import unittest

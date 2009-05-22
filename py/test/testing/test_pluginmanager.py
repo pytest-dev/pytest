@@ -1,5 +1,5 @@
 import py, os
-from py.__.test.pluginmanager import PluginManager, canonical_importname
+from py.__.test.pluginmanager import PluginManager, canonical_importname, collectattr
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
@@ -102,7 +102,8 @@ class TestBootstrapping:
 
     def test_registry(self):
         pp = PluginManager()
-        a1, a2 = object(), object()
+        class A: pass 
+        a1, a2 = A(), A()
         pp.register(a1)
         assert pp.isregistered(a1)
         pp.register(a2)
@@ -125,6 +126,20 @@ class TestBootstrapping:
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == [mod] # does not actually modify plugins 
+
+    def test_register_mismatch_method(self):
+        pp = PluginManager()
+        class hello:
+            def pytest_gurgel(self):
+                pass
+        py.test.raises(pp.Error, "pp.register(hello())")
+
+    def test_register_mismatch_arg(self):
+        pp = PluginManager()
+        class hello:
+            def pytest_configure(self, asd):
+                pass
+        excinfo = py.test.raises(pp.Error, "pp.register(hello())")
 
     def test_canonical_importname(self):
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
@@ -223,3 +238,14 @@ class TestPytestPluginInteractions:
         results = call.execute()
         assert results == [1,2,2]
 
+def test_collectattr():
+    class A:
+        def pytest_hello(self):
+            pass
+    class B(A):
+        def pytest_world(self):
+            pass
+    methods = py.builtin.sorted(collectattr(B))
+    assert list(methods) == ['pytest_hello', 'pytest_world']
+    methods = py.builtin.sorted(collectattr(B()))
+    assert list(methods) == ['pytest_hello', 'pytest_world']

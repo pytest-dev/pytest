@@ -21,9 +21,6 @@ def pytest_unconfigure(config):
 # plugin tests 
 # ===============================================================================
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 def test_functional(testdir):
     testdir.makepyfile("""
         def test_pass():

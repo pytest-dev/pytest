@@ -56,11 +56,8 @@ def pytest_terminal_summary(terminalreporter):
 #
 # ===============================================================================
 
-def test_generic(plugintester):
-    plugintester.hookcheck() 
                
-def test_xfail(plugintester, linecomp):
-    testdir = plugintester.testdir()
+def test_xfail(testdir, linecomp):
     p = testdir.makepyfile(test_one="""
         import py
         pytest_plugins="pytest_xfail",

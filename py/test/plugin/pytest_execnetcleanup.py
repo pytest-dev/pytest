@@ -38,10 +38,6 @@ class Execnetcleanup:
                 self._gateways[-1].exit()
             return res
    
-def test_generic(plugintester):
-    plugintester.hookcheck(cls=Execnetcleanup)
-    plugintester.hookcheck()
-
 @py.test.mark.xfail("clarify plugin registration/unregistration")
 def test_execnetplugin(testdir):
     p = ExecnetcleanupPlugin()

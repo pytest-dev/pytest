@@ -35,9 +35,6 @@ class Capture:
         self._capture = self._captureclass()
         return res 
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-
 class TestCapture:
     def test_std_functional(self, testdir):        
         reprec = testdir.inline_runsource("""

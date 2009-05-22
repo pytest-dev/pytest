@@ -172,9 +172,6 @@ def test_implied_different_sessions(tmpdir):
     assert x('-n3') == 'DSession'
     assert x('-f') == 'LooponfailingSession'
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-    
 def test_plugin_specify(testdir):
     testdir.chdir()
     config = py.test.raises(ImportError, """

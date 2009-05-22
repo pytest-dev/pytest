@@ -300,9 +300,8 @@ class TestWithFunctionIntegration:
         archive.init_db()
         return archive
         
-    def test_collection_report(self, plugintester):
+    def test_collection_report(self, testdir):
         py.test.skip("Needs a rewrite for db version.")
-        testdir = plugintester.testdir()
         ok = testdir.makepyfile(test_collection_ok="")
         skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
@@ -360,9 +359,7 @@ class TestWithFunctionIntegration:
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry  
 
-def test_generic(plugintester):
-    plugintester.hookcheck()
-    testdir = plugintester.testdir()
+def test_generic(testdir):
     testdir.makepyfile("""
         import py
         def test_pass():

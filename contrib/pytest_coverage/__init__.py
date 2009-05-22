@@ -327,22 +327,3 @@ class CoveragePlugin:
             self.coverage.start()
 
 
-# ===============================================================================
-# plugin tests 
-# ===============================================================================
-# XXX
-'''
-def test_generic(plugintester):
-    plugintester.apicheck(EventlogPlugin)
-
-    testdir = plugintester.testdir()
-    testdir.makepyfile("""
-        def test_pass():
-            pass
-    """)
-    testdir.runpytest("--eventlog=event.log")
-    s = testdir.tmpdir.join("event.log").read()
-    assert s.find("TestrunStart") != -1
-    assert s.find("ItemTestReport") != -1
-    assert s.find("TestrunFinish") != -1
-'''

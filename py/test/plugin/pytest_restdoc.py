@@ -348,8 +348,6 @@ def localrefcheck(tryfn, path, lineno):
 #
 # PLUGIN tests
 #
-def test_generic(plugintester):
-    plugintester.hookcheck()
 
 def test_deindent():
     assert deindent('foo') == 'foo'
