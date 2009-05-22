@@ -135,22 +135,6 @@ class SessionTests:
         assert reports[0].skipped 
 
 class TestNewSession(SessionTests):
-    def test_pdb_run(self, testdir, monkeypatch):
-        import py.__.test.custompdb
-        tfile = testdir.makepyfile("""
-            def test_usepdb(): 
-                assert 0
-        """)
-        l = []
-        def mypdb(*args):
-            l.append(args)
-        monkeypatch.setattr(py.__.test.custompdb, 'post_mortem', mypdb)
-        reprec = testdir.inline_run('--pdb', tfile)
-        rep = reprec.matchreport("test_usepdb")
-        assert rep.failed
-        assert len(l) == 1
-        tb = py.code.Traceback(l[0][0])
-        assert tb[-1].name == "test_usepdb" 
 
     def test_order_of_execution(self, testdir): 
         reprec = testdir.inline_runsource("""

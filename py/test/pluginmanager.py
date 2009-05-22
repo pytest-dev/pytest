@@ -140,8 +140,8 @@ class PluginManager(object):
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
-    def do_itemrun(self, item, pdb=None):
-        res = self.hook.pytest_itemrun(item=item, pdb=pdb) 
+    def do_itemrun(self, item):
+        res = self.hook.pytest_itemrun(item=item)
         if res is None:
             raise ValueError("could not run %r" %(item,))
 

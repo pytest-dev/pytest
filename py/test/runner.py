@@ -9,7 +9,6 @@
 import py
 
 from py.__.test.outcome import Skipped
-from py.__.test.custompdb import post_mortem
 
 class Call:
     excinfo = None 
@@ -26,7 +25,7 @@ def runtest_with_deprecated_check(item):
     if not item._deprecated_testexecution():
         item.runtest()
 
-def basic_run_report(item, pdb=None):
+def basic_run_report(item):
     """ return report about setting up and running a test item. """
     setupstate = item.config._setupstate
     capture = item.config._getcapture()
@@ -38,13 +37,9 @@ def basic_run_report(item, pdb=None):
                 call = Call("teardown", lambda: setupstate.teardown_exact(item))
     finally:
         outerr = capture.reset()
-    testrep = item.config.hook.pytest_item_makereport(
-        item=item, excinfo=call.excinfo, when=call.when, outerr=outerr)
-    if pdb and testrep.failed:
-        tw = py.io.TerminalWriter()
-        testrep.toterminal(tw)
-        pdb(call.excinfo)
-    return testrep
+    return item.config.hook.pytest_item_makereport(
+            item=item, excinfo=call.excinfo, 
+            when=call.when, outerr=outerr)
 
 def basic_collect_report(collector):
     call = collector.config.guardedcall(
@@ -55,7 +50,7 @@ def basic_collect_report(collector):
         result = call.result
     return CollectReport(collector, result, call.excinfo, call.outerr)
 
-def forked_run_report(item, pdb=None):
+def forked_run_report(item):
     EXITSTATUS_TESTEXIT = 4
     from py.__.test.dist.mypickle import ImmutablePickler
     ipickle = ImmutablePickler(uneven=0)

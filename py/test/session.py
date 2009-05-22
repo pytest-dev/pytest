@@ -112,8 +112,7 @@ class Session(object):
                 if self.shouldstop: 
                     break 
                 if not self.config.option.collectonly: 
-                    self.runtest(item)
-
+                    item.config.pluginmanager.do_itemrun(item) 
             self.config._setupstate.teardown_all()
         except KeyboardInterrupt:
             captured_excinfo = py.code.ExceptionInfo()
@@ -126,11 +125,3 @@ class Session(object):
             exitstatus = outcome.EXIT_TESTSFAILED
         self.sessionfinishes(exitstatus=exitstatus, excinfo=captured_excinfo)
         return exitstatus
-
-    def runpdb(self, excinfo):
-        from py.__.test.custompdb import post_mortem
-        post_mortem(excinfo._excinfo[2])
-
-    def runtest(self, item):
-        pdb = self.config.option.usepdb and self.runpdb or None
-        item.config.pluginmanager.do_itemrun(item, pdb=pdb)

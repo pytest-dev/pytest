@@ -441,21 +441,6 @@ class TestDistribution:
 
 
 class TestInteractive:
-    def test_pdb_interaction(self, testdir):
-        p1 = testdir.makepyfile("""
-            def test_1():
-                i = 0
-                assert i == 1
-        """)
-        child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*def test_1.*")
-        child.expect(".*i = 0.*")
-        child.expect("(Pdb)")
-        child.sendeof()
-        child.expect("1 failed")
-        if child.isalive(): 
-            child.wait()
-
     def test_simple_looponfail_interaction(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():

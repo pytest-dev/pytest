@@ -145,18 +145,28 @@ class TmpTestdir:
         items = list(session.genitems(colitems))
         return items, rec 
 
-    def runitem(self, source, **runnerargs):
+    def runitem(self, source):
         # used from runner functional tests 
         item = self.getitem(source)
         # the test class where we are called from wants to provide the runner 
         testclassinstance = self.request.function.im_self
         runner = testclassinstance.getrunner()
-        return runner(item, **runnerargs)
+        return runner(item)
 
     def inline_runsource(self, source, *cmdlineargs):
         p = self.makepyfile(source)
         l = list(cmdlineargs) + [p]
         return self.inline_run(*l)
+
+    def inline_runsource1(self, *args):
+        args = list(args)
+        source = args.pop()
+        p = self.makepyfile(source)
+        l = list(args) + [p]
+        reprec = self.inline_run(*l)
+        reports = reprec.getreports("pytest_itemtestreport")
+        assert len(reports) == 1, reports 
+        return reports[0]
 
     def inline_run(self, *args):
         config = self.parseconfig(*args)

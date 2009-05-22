@@ -62,10 +62,14 @@ class PluginHooks:
     def pytest_collectreport(self, rep):
         """ collector finished collecting. """
 
+    # XXX rename to item_collected()?  meaning in distribution context? 
+    def pytest_itemstart(self, item, node=None):
+        """ test item gets collected. """
+
     # ------------------------------------------------------------------------------
     # runtest related hooks 
     # ------------------------------------------------------------------------------
-    #
+    
     def pytest_itemrun(self, item, pdb=None):
         """ run given test item and return test report. """ 
     pytest_itemrun.firstresult = True
@@ -75,21 +79,11 @@ class PluginHooks:
     pytest_pyfunc_call.firstresult = True
 
     def pytest_item_makereport(self, item, excinfo, when, outerr):
-        """ return ItemTestReport for the given test outcome. """
+        """ make ItemTestReport for the specified test outcome. """
     pytest_item_makereport.firstresult = True
 
-    def pytest_itemstart(self, item, node=None):
-        """ test item gets collected. """
-
     def pytest_itemtestreport(self, rep):
-        """ test has been run. """
-
-    # XXX pytest_runner reports 
-    def pytest_item_runtest_finished(self, item, excinfo, outerr):
-        """ test has been run. """
-
-    def pytest_itemfixturereport(self, rep):
-        """ a report on running a fixture function. """ 
+        """ process item test report. """ 
 
     # ------------------------------------------------------------------------------
     # reporting hooks (invoked from pytest_terminal.py) 

@@ -2,24 +2,18 @@
 
 import py
 
-def pytest_itemrun(item, pdb=None):
+def pytest_itemrun(item):
     from py.__.test.runner import basic_run_report, forked_run_report
     if item.config.option.boxed:
-        runner = forked_run_report
+        report = forked_run_report(item)
     else:
-        runner = basic_run_report
-    report = runner(item, pdb=pdb) 
+        report = basic_run_report(item) 
     item.config.hook.pytest_itemtestreport(rep=report)
     return True
 
 def pytest_item_makereport(item, excinfo, when, outerr):
     from py.__.test import runner
     return runner.ItemTestReport(item, excinfo, when, outerr)
-
-def pytest_item_runtest_finished(item, excinfo, outerr):
-    from py.__.test import runner
-    rep = runner.ItemTestReport(item, excinfo, "execute", outerr)
-    item.config.hook.pytest_itemtestreport(rep=rep) 
 
 def pytest_pyfunc_call(pyfuncitem, args, kwargs):
     pyfuncitem.obj(*args, **kwargs)
@@ -57,7 +51,7 @@ def pytest_report_iteminfo(item):
     return item.reportinfo()
 
 def pytest_addoption(parser):
-    group = parser.addgroup("general", "test collection and failure interaction options")
+    group = parser.getgroup("general", "test collection and failure interaction options")
     group._addoption('-v', '--verbose', action="count", 
                dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-x', '--exitfirst',
@@ -75,9 +69,6 @@ def pytest_addoption(parser):
     #group._addoption('--showskipsummary',
     #           action="store_true", dest="showskipsummary", default=False,
     #           help="always show summary of skipped tests") 
-    group._addoption('--pdb',
-               action="store_true", dest="usepdb", default=False,
-               help="start pdb (the Python debugger) on errors.")
     group._addoption('--tb', metavar="style", 
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no'],
@@ -89,9 +80,7 @@ def pytest_addoption(parser):
                action="store_true", dest="boxed", default=False,
                help="box each test run in a separate process") 
     group._addoption('-p', action="append", dest="plugin", default = [],
-               help=("load the specified plugin after command line parsing. "
-                     "Example: '-p hello' will trigger 'import pytest_hello' "
-                     "and instantiate 'HelloPlugin' from the module."))
+               help=("load the specified plugin after command line parsing. "))
     group._addoption('-f', '--looponfail',
                action="store_true", dest="looponfail", default=False,
                help="run tests, re-run failing test set until all pass.")
@@ -150,11 +139,6 @@ def fixoptions(config):
         config.option.tx = ['popen'] * int(config.option.numprocesses)
     if config.option.distload:
         config.option.dist = "load"
-    if config.getvalue("usepdb"):
-        if config.getvalue("looponfail"):
-            raise config.Error("--pdb incompatible with --looponfail.")
-        if config.option.dist != "no":
-            raise config.Error("--pdb incomptaible with distributing tests.")
 
 def loadplugins(config):
     for name in config.getvalue("plugin"):
@@ -241,9 +225,6 @@ class TestDistOptions:
         assert testdir.tmpdir.join('x') in roots 
 
 def test_dist_options(testdir):
-    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '--looponfail')")
-    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '-n 3')")
-    py.test.raises(Exception, "testdir.parseconfigure('--pdb', '-d')")
     config = testdir.parseconfigure("-n 2")
     assert config.option.dist == "load"
     assert config.option.tx == ['popen'] * 2

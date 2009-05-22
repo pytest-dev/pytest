@@ -222,26 +222,6 @@ class TestExecutionNonForked(BaseFunctionalTests):
         else: 
             py.test.fail("did not raise")
 
-    def test_pdb_on_fail(self, testdir):
-        l = []
-        rep = testdir.runitem("""
-            def test_func():
-                assert 0
-        """, pdb=l.append)
-        assert rep.failed
-        assert rep.when == "runtest"
-        assert len(l) == 1
-
-    def test_pdb_on_skip(self, testdir):
-        l = []
-        rep = testdir.runitem("""
-            import py
-            def test_func():
-                py.test.skip("hello")
-        """, pdb=l.append)
-        assert len(l) == 0
-        assert rep.skipped 
-
 class TestExecutionForked(BaseFunctionalTests): 
     def getrunner(self):
         if not hasattr(py.std.os, 'fork'):
