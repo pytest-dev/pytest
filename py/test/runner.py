@@ -9,35 +9,41 @@
 import py
 
 from py.__.test.outcome import Skipped
+from py.__.test.custompdb import post_mortem
+
+class Call:
+    excinfo = None 
+    def __init__(self, when, func):
+        self.when = when 
+        try:
+            self.result = func()
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()
+
+def runtest_with_deprecated_check(item):
+    if not item._deprecated_testexecution():
+        item.runtest()
 
 def basic_run_report(item, pdb=None):
-    """ return report about setting up and running a test item. """ 
-    excinfo = None
+    """ return report about setting up and running a test item. """
+    setupstate = item.config._setupstate
     capture = item.config._getcapture()
     try:
-        try:
-            when = "setup"
-            item.config._setupstate.prepare(item)
-            try:
-                when = "runtest"
-                if not item._deprecated_testexecution():
-                    item.runtest()
-            finally:
-                when = "teardown"
-                item.config._setupstate.teardown_exact(item)
-                when = "runtest"
-        finally:
-            outerr = capture.reset()
-    except KeyboardInterrupt:
-        raise
-    except: 
-        excinfo = py.code.ExceptionInfo()
+        call = Call("setup", lambda: setupstate.prepare(item))
+        if not call.excinfo:
+            call = Call("runtest", lambda: runtest_with_deprecated_check(item))
+            if not call.excinfo:
+                call = Call("teardown", lambda: setupstate.teardown_exact(item))
+    finally:
+        outerr = capture.reset()
     testrep = item.config.hook.pytest_item_makereport(
-        item=item, excinfo=excinfo, when=when, outerr=outerr)
+        item=item, excinfo=call.excinfo, when=call.when, outerr=outerr)
     if pdb and testrep.failed:
         tw = py.io.TerminalWriter()
         testrep.toterminal(tw)
-        pdb(excinfo)
+        pdb(call.excinfo)
     return testrep
 
 def basic_collect_report(collector):
