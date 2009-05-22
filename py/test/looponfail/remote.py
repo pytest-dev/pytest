@@ -150,4 +150,4 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     session.config.hook.pytest_looponfailinfo(
         failreports=list(failreports), 
         rootdirs=[config.topdir])
-    channel.send([x.colitem._totrail() for x in failreports])
+    channel.send([rep.getnode()._totrail() for rep in failreports])

@@ -25,8 +25,8 @@ class LoopState(object):
         self.testsfailed = False
 
     def pytest_itemtestreport(self, rep):
-        if rep.colitem in self.dsession.item2nodes:
-            self.dsession.removeitem(rep.colitem, rep.node)
+        if rep.item in self.dsession.item2nodes:
+            self.dsession.removeitem(rep.item, rep.node)
         if rep.failed:
             self.testsfailed = True
 

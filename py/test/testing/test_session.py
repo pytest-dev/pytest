@@ -22,9 +22,9 @@ class SessionTests:
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3  
-        assert failed[0].colitem.name == "test_one_one"
-        assert failed[1].colitem.name == "test_other"
-        assert failed[2].colitem.name == "test_two"
+        assert failed[0].item.name == "test_one_one"
+        assert failed[1].item.name == "test_other"
+        assert failed[2].item.name == "test_two"
         itemstarted = reprec.getcalls("pytest_itemstart")
         assert len(itemstarted) == 4
         colstarted = reprec.getcalls("pytest_collectstart")

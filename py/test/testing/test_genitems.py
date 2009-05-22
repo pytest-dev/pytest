@@ -73,7 +73,7 @@ class TestKeywordSelection:
             reprec = testdir.inline_run("-s", "-k", keyword, file_test)
             passed, skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
-            assert failed[0].colitem.name == name 
+            assert failed[0].item.name == name 
             assert len(reprec.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
@@ -101,7 +101,7 @@ class TestKeywordSelection:
             print "keyword", repr(keyword)
             passed, skipped, failed = reprec.listoutcomes()
             assert len(passed) == 1
-            assert passed[0].colitem.name == "test_2"
+            assert passed[0].item.name == "test_2"
             dlist = reprec.getcalls("pytest_deselected")
             assert len(dlist) == 1
             assert dlist[0].items[0].name == 'test_1'

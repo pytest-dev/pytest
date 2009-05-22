@@ -40,7 +40,7 @@ def pytest_terminal_summary(terminalreporter):
             entry = event.longrepr.reprcrash 
             key = entry.path, entry.lineno, entry.message
             reason = event.longrepr.reprcrash.message
-            modpath = event.colitem.getmodpath(includemodule=True)
+            modpath = event.item.getmodpath(includemodule=True)
             #tr._tw.line("%s %s:%d: %s" %(modpath, entry.path, entry.lineno, entry.message))
             tr._tw.line("%s %s:%d: " %(modpath, entry.path, entry.lineno))
 
@@ -48,7 +48,7 @@ def pytest_terminal_summary(terminalreporter):
     if xpassed:
         tr.write_sep("_", "UNEXPECTEDLY PASSING TESTS")
         for event in xpassed:
-            tr._tw.line("%s: xpassed" %(event.colitem,))
+            tr._tw.line("%s: xpassed" %(event.item,))
 
 # ===============================================================================
 #

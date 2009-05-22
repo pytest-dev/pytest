@@ -20,7 +20,7 @@ def pytest_unconfigure(config):
     resultlog = getattr(config, '_resultlog', None)
     if resultlog:
         resultlog.logfile.close()
-        del config.resultlog 
+        del config._resultlog 
         config.pluginmanager.unregister(resultlog)
 
 def generic_path(item):
@@ -55,8 +55,8 @@ class ResultLog(object):
         for line in longrepr.splitlines():
             print >>self.logfile, " %s" % line
 
-    def log_outcome(self, event, shortrepr, longrepr):
-        testpath = generic_path(event.colitem)
+    def log_outcome(self, node, shortrepr, longrepr):
+        testpath = generic_path(node)
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
     def pytest_itemtestreport(self, rep):
@@ -67,7 +67,7 @@ class ResultLog(object):
             longrepr = str(rep.longrepr) 
         elif rep.skipped:
             longrepr = str(rep.longrepr.reprcrash.message)
-        self.log_outcome(rep, code, longrepr) 
+        self.log_outcome(rep.item, code, longrepr) 
 
     def pytest_collectreport(self, rep):
         if not rep.passed:
@@ -77,7 +77,7 @@ class ResultLog(object):
                 assert rep.skipped
                 code = "S"
             longrepr = str(rep.longrepr.reprcrash)
-            self.log_outcome(rep, code, longrepr)    
+            self.log_outcome(rep.collector, code, longrepr)    
 
     def pytest_internalerror(self, excrepr):
         path = excrepr.reprcrash.path 

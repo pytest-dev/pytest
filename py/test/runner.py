@@ -19,13 +19,13 @@ def basic_run_report(item, pdb=None):
             when = "setup"
             item.config._setupstate.prepare(item)
             try:
-                when = "execute"
+                when = "runtest"
                 if not item._deprecated_testexecution():
                     item.runtest()
             finally:
                 when = "teardown"
                 item.config._setupstate.teardown_exact(item)
-                when = "execute"
+                when = "runtest"
         finally:
             outerr = capture.reset()
     except KeyboardInterrupt:
@@ -41,18 +41,13 @@ def basic_run_report(item, pdb=None):
     return testrep
 
 def basic_collect_report(collector):
-    excinfo = res = None
-    try:
-        capture = collector.config._getcapture()
-        try:
-            res = collector._memocollect()
-        finally:
-            outerr = capture.reset()
-    except KeyboardInterrupt:
-        raise
-    except: 
-        excinfo = py.code.ExceptionInfo()
-    return CollectReport(collector, res, excinfo, outerr)
+    call = collector.config.guardedcall(
+        lambda: collector._memocollect()
+    )
+    result = None
+    if not call.excinfo:
+        result = call.result
+    return CollectReport(collector, result, call.excinfo, call.outerr)
 
 def forked_run_report(item, pdb=None):
     EXITSTATUS_TESTEXIT = 4
@@ -99,11 +94,10 @@ class BaseReport(object):
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
-    # XXX rename colitem to item here
-    def __init__(self, colitem, excinfo=None, when=None, outerr=None):
-        self.colitem = colitem 
-        if colitem and when != "setup":
-            self.keywords = colitem.readkeywords() 
+    def __init__(self, item, excinfo=None, when=None, outerr=None):
+        self.item = item 
+        if item and when != "setup":
+            self.keywords = item.readkeywords() 
         else:
             # if we fail during setup it might mean 
             # we are not able to access the underlying object
@@ -123,50 +117,40 @@ class ItemTestReport(BaseReport):
             elif excinfo.errisinstance(Skipped):
                 self.skipped = True 
                 shortrepr = "s"
-                longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+                longrepr = self.item._repr_failure_py(excinfo, outerr)
             else:
                 self.failed = True
-                shortrepr = self.colitem.shortfailurerepr
-                if self.when == "execute":
-                    longrepr = self.colitem.repr_failure(excinfo, outerr)
+                shortrepr = self.item.shortfailurerepr
+                if self.when == "runtest":
+                    longrepr = self.item.repr_failure(excinfo, outerr)
                 else: # exception in setup or teardown 
-                    longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+                    longrepr = self.item._repr_failure_py(excinfo, outerr)
                     shortrepr = shortrepr.lower()
             self.shortrepr = shortrepr 
             self.longrepr = longrepr 
-            
+
+    def getnode(self):
+        return self.item 
 
 class CollectReport(BaseReport):
     skipped = failed = passed = False 
 
-    def __init__(self, colitem, result, excinfo=None, outerr=None):
-        # XXX rename to collector 
-        self.colitem = colitem 
+    def __init__(self, collector, result, excinfo=None, outerr=None):
+        self.collector = collector 
         if not excinfo:
             self.passed = True
             self.result = result 
         else:
             self.outerr = outerr
-            self.longrepr = self.colitem._repr_failure_py(excinfo, outerr)
+            self.longrepr = self.collector._repr_failure_py(excinfo, outerr)
             if excinfo.errisinstance(Skipped):
                 self.skipped = True
                 self.reason = str(excinfo.value)
             else:
                 self.failed = True
 
-class ItemSetupReport(BaseReport):
-    failed = passed = skipped = False
-    def __init__(self, item, excinfo=None, outerr=None):
-        self.item = item 
-        self.outerr = outerr 
-        if not excinfo:
-            self.passed = True
-        else:
-            if excinfo.errisinstance(Skipped):
-                self.skipped = True 
-            else:
-                self.failed = True
-            self.excrepr = item._repr_failure_py(excinfo, [])
+    def getnode(self):
+        return self.collector 
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """

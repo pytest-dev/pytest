@@ -141,7 +141,6 @@ class TestDoctests:
         reprec.assertoutcome(failed=1) 
 
     def test_txtfile_failing(self, testdir):
-        testdir.plugins.append("doctest")
         p = testdir.maketxtfile("""
             >>> i = 0
             >>> i + 1

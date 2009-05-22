@@ -115,7 +115,7 @@ class TestMasterSlaveConnection:
         rep = kwargs['rep'] 
         assert rep.passed 
         print rep
-        assert rep.colitem == item
+        assert rep.item == item
 
     def test_send_some(self, testdir, mysetup):
         items = testdir.getitems("""

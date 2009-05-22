@@ -84,10 +84,11 @@ class PluginHooks:
     def pytest_itemtestreport(self, rep):
         """ test has been run. """
 
+    # XXX pytest_runner reports 
     def pytest_item_runtest_finished(self, item, excinfo, outerr):
         """ test has been run. """
 
-    def pytest_itemsetupreport(self, rep):
+    def pytest_itemfixturereport(self, rep):
         """ a report on running a fixture function. """ 
 
     # ------------------------------------------------------------------------------

@@ -305,6 +305,9 @@ class ReportRecorder(object):
     def getcall(self, name):
         return self.hookrecorder.getcall(name)
 
+    def popcall(self, name):
+        return self.hookrecorder.popcall(name)
+
     def getcalls(self, names):
         """ return list of ParsedCall instances matching the given eventname. """
         return self.hookrecorder.getcalls(names)
@@ -318,7 +321,8 @@ class ReportRecorder(object):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
-            if not inamepart or inamepart in rep.colitem.listnames():
+            colitem = rep.getnode()
+            if not inamepart or inamepart in colitem.listnames():
                 l.append(rep)
         if not l:
             raise ValueError("could not find test report matching %r: no test reports at all!" %

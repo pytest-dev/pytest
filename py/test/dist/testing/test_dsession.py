@@ -180,10 +180,10 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert loopstate.colitems == [item2] # do not reschedule crash item
-        testrep = reprec.matchreport(names="pytest_itemtestreport")
-        assert testrep.failed
-        assert testrep.colitem == item1
-        assert str(testrep.longrepr).find("crashed") != -1
+        rep = reprec.matchreport(names="pytest_itemtestreport")
+        assert rep.failed
+        assert rep.item == item1
+        assert str(rep.longrepr).find("crashed") != -1
         #assert str(testrep.longrepr).find(node.gateway.spec) != -1
 
     def test_testnodeready_adds_to_available(self, testdir):

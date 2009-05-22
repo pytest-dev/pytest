@@ -1,31 +1,39 @@
 import py
 from py.__.test.outcome import Skipped
+from py.__.test.runner import SetupState
 
-class RunnerPlugin:
-    def pytest_configure(self, config):
-        config._setupstate = SetupState()
+py.test.skip("remove me")
 
-    def pytest_unconfigure(self, config):
-        config._setupstate.teardown_all()
+def pytest_configure(config):
+    config._setupstate = SetupState()
 
-    def pytest_item_setup_and_runtest(self, item):
-        setupstate = item.config._setupstate
-        call = item.config.guardedcall(lambda: setupstate.prepare(item))
-        if call.excinfo:
-            rep = ItemSetupReport(item, call.excinfo, call.outerr)
-            item.config.hook.pytest_itemsetupreport(rep=rep)
-        else:
-            call = item.config.guardedcall(lambda: item.runtest())
-            item.config.hook.pytest_item_runtest_finished(
-                item=item, excinfo=call.excinfo, outerr=call.outerr)
-            call = item.config.guardedcall(lambda: self.teardown_exact(item))
-            if call.excinfo:
-                rep = ItemSetupReport(item, call.excinfo, call.outerr)
-                item.config.hook.pytest_itemsetupreport(rep=rep)
+def pytest_unconfigure(config):
+    config._setupstate.teardown_all()
 
-    def pytest_collector_collect(self, collector):
-        call = item.config.guardedcall(lambda x: collector._memocollect())
-        return CollectReport(collector, res, excinfo, outerr)
+def pytest_item_setup_and_runtest(item):
+    setupstate = item.config._setupstate
+
+    # setup (and implied teardown of previous items) 
+    call = item.config.guardedcall(lambda: setupstate.prepare(item))
+    if call.excinfo:
+        rep = ItemTestReport(item, call.excinfo, call.outerr)
+        item.config.hook.pytest_itemfixturereport(rep=rep)
+        return
+
+    # runtest 
+    call = item.config.guardedcall(lambda: item.runtest())
+    item.config.hook.pytest_item_runtest_finished(
+        item=item, excinfo=call.excinfo, outerr=call.outerr)
+
+    # teardown 
+    call = item.config.guardedcall(lambda: setupstate.teardown_exact(item))
+    if call.excinfo:
+        rep = ItemFixtureReport(item, call.excinfo, call.outerr)
+        item.config.hook.pytest_itemfixturereport(rep=rep)
+
+def pytest_collector_collect(collector):
+    call = item.config.guardedcall(lambda x: collector._memocollect())
+    return CollectReport(collector, res, excinfo, outerr)
 
 class BaseReport(object):
     def __repr__(self):
@@ -97,7 +105,7 @@ class CollectReport(BaseReport):
             else:
                 self.failed = True
 
-class ItemSetupReport(BaseReport):
+class ItemFixtureReport(BaseReport):
     failed = passed = skipped = False
     def __init__(self, item, excinfo=None, outerr=None):
         self.item = item 
@@ -111,33 +119,6 @@ class ItemSetupReport(BaseReport):
                 self.failed = True
             self.excrepr = item._repr_failure_py(excinfo, [])
 
-class SetupState(object):
-    """ shared state for setting up/tearing down test items or collectors. """
-    def __init__(self):
-        self.stack = []
-
-    def teardown_all(self): 
-        while self.stack: 
-            col = self.stack.pop() 
-            col.teardown() 
-
-    def teardown_exact(self, item):
-        if self.stack and self.stack[-1] == item:
-            col = self.stack.pop()
-            col.teardown()
-     
-    def prepare(self, colitem): 
-        """ setup objects along the collector chain to the test-method
-            Teardown any unneccessary previously setup objects."""
-        needed_collectors = colitem.listchain() 
-        while self.stack: 
-            if self.stack == needed_collectors[:len(self.stack)]: 
-                break 
-            col = self.stack.pop() 
-            col.teardown()
-        for col in needed_collectors[len(self.stack):]: 
-            col.setup() 
-            self.stack.append(col) 
 
 # ===============================================================================
 #
@@ -206,67 +187,71 @@ class TestSetupState:
 class TestRunnerPlugin:
     def test_pytest_item_setup_and_runtest(self, testdir):
         item = testdir.getitem("""def test_func(): pass""")
-        plugin = RunnerPlugin()
-        plugin.pytest_configure(item.config)
+        pytest_configure(item.config)
         reprec = testdir.getreportrecorder(item)
-        plugin.pytest_item_setup_and_runtest(item)
+        pytest_item_setup_and_runtest(item)
         rep = reprec.getcall("pytest_itemtestreport").rep
         assert rep.passed 
-        
+       
 class TestSetupEvents:
-    disabled = True
-
-    def test_setup_runtest_ok(self, testdir):
-        reprec = testdir.inline_runsource("""
+    def pytest_funcarg__runfunc(self, request):
+        testdir = request.getfuncargvalue("testdir")
+        def runfunc(source):
+            item = testdir.getitem(source)
+            reprec = testdir.getreportrecorder(item)
+            pytest_item_setup_and_runtest(item)
+            return reprec 
+        return runfunc
+        
+    def test_setup_runtest_ok(self, runfunc):
+        reprec = runfunc("""
             def setup_module(mod):
                 pass 
             def test_func():
                 pass
         """)
-        assert not reprec.getcalls(pytest_itemsetupreport)
+        assert not reprec.getcalls("pytest_itemfixturereport")
 
-    def test_setup_fails(self, testdir):
-        reprec = testdir.inline_runsource("""
+    def test_setup_fails(self, runfunc):
+        reprec = runfunc(""" 
             def setup_module(mod):
                 print "world"
                 raise ValueError(42)
             def test_func():
                 pass
         """)
-        rep = reprec.popcall(pytest_itemsetupreport).rep
+        rep = reprec.popcall("pytest_itemfixturereport").rep
         assert rep.failed
         assert not rep.skipped
         assert rep.excrepr 
         assert "42" in str(rep.excrepr)
         assert rep.outerr[0].find("world") != -1
 
-    def test_teardown_fails(self, testdir):
-        reprec = testdir.inline_runsource("""
+    def test_teardown_fails(self, runfunc):
+        reprec = runfunc(""" 
             def test_func():
                 pass
             def teardown_function(func): 
                 print "13"
                 raise ValueError(25)
         """)
-        rep = reprec.popcall(pytest_itemsetupreport).rep 
+        rep = reprec.popcall("pytest_itemfixturereport").rep 
         assert rep.failed 
-        assert rep.item == item 
+        assert rep.item.name == "test_func" 
         assert not rep.passed
         assert "13" in rep.outerr[0]
         assert "25" in str(rep.excrepr)
 
-    def test_setup_skips(self, testdir):
-        reprec = testdir.inline_runsource("""
+    def test_setup_skips(self, runfunc):
+        reprec = runfunc(""" 
             import py
             def setup_module(mod):
                 py.test.skip("17")
             def test_func():
                 pass
         """)
-        rep = reprec.popcall(pytest_itemsetupreport)
+        rep = reprec.popcall("pytest_itemfixturereport").rep
         assert not rep.failed
         assert rep.skipped
         assert rep.excrepr 
         assert "17" in str(rep.excrepr)
-    
-

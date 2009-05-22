@@ -162,7 +162,7 @@ class TerminalReporter:
                 self.write_fspath_result(fspath, "")
 
     def pytest_itemtestreport(self, rep):
-        fspath = rep.colitem.fspath 
+        fspath = rep.item.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
         if isinstance(word, tuple):
             word, markup = word
@@ -170,10 +170,10 @@ class TerminalReporter:
             markup = {}
         self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
-            fspath, lineno, msg = self._getreportinfo(rep.colitem)
+            fspath, lineno, msg = self._getreportinfo(rep.item)
             self.write_fspath_result(fspath, letter)
         else:
-            line = self._reportinfoline(rep.colitem)
+            line = self._reportinfoline(rep.item)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
             else:
@@ -189,10 +189,10 @@ class TerminalReporter:
             if rep.failed:
                 self.stats.setdefault("failed", []).append(rep)
                 msg = rep.longrepr.reprcrash.message 
-                self.write_fspath_result(rep.colitem.fspath, "F")
+                self.write_fspath_result(rep.collector.fspath, "F")
             elif rep.skipped:
                 self.stats.setdefault("skipped", []).append(rep)
-                self.write_fspath_result(rep.colitem.fspath, "S")
+                self.write_fspath_result(rep.collector.fspath, "S")
 
     def pytest_testrunstart(self):
         self.write_sep("=", "test session starts", bold=True)
@@ -268,10 +268,10 @@ class TerminalReporter:
         return line % locals() + " "
         
     def _getfailureheadline(self, rep):
-        if isinstance(rep.colitem, py.test.collect.Collector):
-            return str(rep.colitem.fspath)
+        if hasattr(rep, "collector"):
+            return str(rep.collector.fspath)
         else:
-            fspath, lineno, msg = self._getreportinfo(rep.colitem)
+            fspath, lineno, msg = self._getreportinfo(rep.item)
             return msg
 
     def _getreportinfo(self, item):

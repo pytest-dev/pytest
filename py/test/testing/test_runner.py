@@ -1,9 +1,10 @@
-
-from py.__.test.config import SetupState
+import py
+from py.__.test import runner 
+from py.__.code.excinfo import ReprExceptionInfo
 
 class TestSetupState:
     def test_setup(self, testdir):
-        ss = SetupState()
+        ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
         l = [1]
         ss.prepare(item)
@@ -14,7 +15,7 @@ class TestSetupState:
 
     def test_setup_scope_None(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        ss = SetupState()
+        ss = runner.SetupState()
         l = [1]
         ss.prepare(item)
         ss.addfinalizer(l.pop, colitem=None)
@@ -26,93 +27,263 @@ class TestSetupState:
         ss.teardown_all()
         assert not l 
 
-class TestSetupStateFunctional:
-    disabled = True
-    def test_setup_ok(self, testdir):
-        item = testdir.getitem("""
-            def setup_module(mod):
-                pass 
+
+class BaseFunctionalTests:
+    def test_funcattr(self, testdir):
+        rep = testdir.runitem("""
+            import py
+            @py.test.mark(xfail="needs refactoring")
+            def test_func():
+                raise Exit()
+        """)
+        assert rep.keywords['xfail'] == "needs refactoring" 
+
+    def test_passfunction(self, testdir):
+        rep = testdir.runitem("""
             def test_func():
                 pass
         """)
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        res = setup.do_setup(item)
-        assert res
+        assert rep.passed 
+        assert not rep.failed
+        assert rep.shortrepr == "."
+        assert not hasattr(rep, 'longrepr')
+                
+    def test_failfunction(self, testdir):
+        rep = testdir.runitem("""
+            def test_func():
+                assert 0
+        """)
+        assert not rep.passed 
+        assert not rep.skipped 
+        assert rep.failed 
+        assert rep.when == "runtest"
+        assert isinstance(rep.longrepr, ReprExceptionInfo)
+        assert str(rep.shortrepr) == "F"
 
-    def test_setup_fails(self, testdir):
-        item = testdir.getitem("""
-            def setup_module(mod):
-                print "world"
+    def test_skipfunction(self, testdir):
+        rep = testdir.runitem("""
+            import py
+            def test_func():
+                py.test.skip("hello")
+        """)
+        assert not rep.failed 
+        assert not rep.passed 
+        assert rep.skipped 
+        #assert rep.skipped.when == "runtest"
+        #assert rep.skipped.when == "runtest"
+        #assert rep.skipped == "%sreason == "hello"
+        #assert rep.skipped.location.lineno == 3
+        #assert rep.skipped.location.path
+        #assert not rep.skipped.failurerepr 
+
+    def test_skip_in_setup_function(self, testdir):
+        rep = testdir.runitem("""
+            import py
+            def setup_function(func):
+                py.test.skip("hello")
+            def test_func():
+                pass
+        """)
+        print rep
+        assert not rep.failed 
+        assert not rep.passed 
+        assert rep.skipped 
+        #assert rep.skipped.reason == "hello"
+        #assert rep.skipped.location.lineno == 3
+        #assert rep.skipped.location.lineno == 3
+
+    def test_failure_in_setup_function(self, testdir):
+        rep = testdir.runitem("""
+            import py
+            def setup_function(func):
                 raise ValueError(42)
             def test_func():
                 pass
         """)
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        res = setup.do_setup(item)
-        assert not res
-        rep = reprec.popcall(pytest_itemsetupreport).rep
-        assert rep.failed
-        assert not rep.skipped
-        assert rep.excrepr 
-        assert "42" in str(rep.excrepr)
-        assert rep.outerr[0].find("world") != -1
-
-    def test_teardown_fails(self, testdir):
-        item = testdir.getitem("""
-            def test_func():
-                pass
-            def teardown_function(func): 
-                print "13"
-                raise ValueError(25)
-        """)
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        res = setup.do_setup(item)
-        assert res 
-        rep = reprec.popcall(pytest_itemsetupreport).rep
-        assert rep.passed
-        setup.do_teardown(item)
-        rep = reprec.popcall(pytest_itemsetupreport).rep
-        assert rep.item == item 
+        print rep
+        assert not rep.skipped 
+        assert not rep.passed 
         assert rep.failed 
-        assert not rep.passed
-        assert "13" in rep.outerr[0]
-        assert "25" in str(rep.excrepr)
+        assert rep.when == "setup"
 
-    def test_setupitem_skips(self, testdir):
-        item = testdir.getitem("""
+    def test_failure_in_teardown_function(self, testdir):
+        rep = testdir.runitem("""
             import py
-            def setup_module(mod):
-                py.test.skip("17")
+            def teardown_function(func):
+                raise ValueError(42)
             def test_func():
                 pass
         """)
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        setup.do_setup(item)
-        rep = reprec.popcall(pytest_itemsetupreport).rep
-        assert not rep.failed
-        assert rep.skipped
-        assert rep.excrepr 
-        assert "17" in str(rep.excrepr)
+        print rep
+        assert not rep.skipped 
+        assert not rep.passed 
+        assert rep.failed 
+        assert rep.when == "teardown" 
+        assert rep.longrepr.reprcrash.lineno == 3
+        assert rep.longrepr.reprtraceback.reprentries 
 
-    def test_runtest_ok(self, testdir):
-        item = testdir.getitem("def test_func(): pass")
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        setup.do_fixture_and_runtest(item)
-        rep = reprec.popcall(pytest_itemtestreport).rep 
-        assert rep.passed 
+    def test_custom_failure_repr(self, testdir):
+        testdir.makepyfile(conftest="""
+            import py
+            class Function(py.test.collect.Function):
+                def repr_failure(self, excinfo, outerr):
+                    return "hello" 
+        """)
+        rep = testdir.runitem("""
+            import py
+            def test_func():
+                assert 0
+        """)
+        assert not rep.skipped 
+        assert not rep.passed 
+        assert rep.failed 
+        #assert rep.outcome.when == "runtest"
+        #assert rep.failed.where.lineno == 3
+        #assert rep.failed.where.path.basename == "test_func.py" 
+        #assert rep.failed.failurerepr == "hello"
 
-    def test_runtest_fails(self, testdir):
-        item = testdir.getitem("def test_func(): assert 0")
-        reprec = testdir.getreportrecorder(item.config)
-        setup = SetupState()
-        setup.do_fixture_and_runtest(item)
-        event = reprec.popcall(pytest_item_runtest_finished)
-        assert event.excinfo 
+    def test_failure_in_setup_function_ignores_custom_failure_repr(self, testdir):
+        testdir.makepyfile(conftest="""
+            import py
+            class Function(py.test.collect.Function):
+                def repr_failure(self, excinfo):
+                    assert 0
+        """)
+        rep = testdir.runitem("""
+            import py
+            def setup_function(func):
+                raise ValueError(42)
+            def test_func():
+                pass
+        """)
+        print rep
+        assert not rep.skipped 
+        assert not rep.passed 
+        assert rep.failed 
+        #assert rep.outcome.when == "setup"
+        #assert rep.outcome.where.lineno == 3
+        #assert rep.outcome.where.path.basename == "test_func.py" 
+        #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
+
+    def test_capture_in_func(self, testdir):
+        rep = testdir.runitem("""
+            import py
+            def setup_function(func):
+                print >>py.std.sys.stderr, "in setup"
+            def test_func():
+                print "in function"
+                assert 0
+            def teardown_func(func):
+                print "in teardown"
+        """)
+        assert rep.failed 
+        # out, err = rep.failed.outerr
+        # assert out == ['in function\nin teardown\n']
+        # assert err == ['in setup\n']
         
-    
+    def test_systemexit_does_not_bail_out(self, testdir):
+        try:
+            rep = testdir.runitem("""
+                def test_func():
+                    raise SystemExit(42)
+            """)
+        except SystemExit:
+            py.test.fail("runner did not catch SystemExit")
+        assert rep.failed
+        assert rep.when == "runtest"
+
+    def test_exit_propagates(self, testdir):
+        from py.__.test.outcome import Exit
+        try:
+            testdir.runitem("""
+                from py.__.test.outcome import Exit
+                def test_func():
+                    raise Exit()
+            """)
+        except Exit:
+            pass
+        else: 
+            py.test.fail("did not raise")
+
+
+class TestExecutionNonForked(BaseFunctionalTests):
+    def getrunner(self):
+        return runner.basic_run_report 
+
+    def test_keyboardinterrupt_propagates(self, testdir):
+        from py.__.test.outcome import Exit
+        try:
+            testdir.runitem("""
+                def test_func():
+                    raise KeyboardInterrupt("fake")
+            """)
+        except KeyboardInterrupt, e:
+            pass
+        else: 
+            py.test.fail("did not raise")
+
+    def test_pdb_on_fail(self, testdir):
+        l = []
+        rep = testdir.runitem("""
+            def test_func():
+                assert 0
+        """, pdb=l.append)
+        assert rep.failed
+        assert rep.when == "runtest"
+        assert len(l) == 1
+
+    def test_pdb_on_skip(self, testdir):
+        l = []
+        rep = testdir.runitem("""
+            import py
+            def test_func():
+                py.test.skip("hello")
+        """, pdb=l.append)
+        assert len(l) == 0
+        assert rep.skipped 
+
+class TestExecutionForked(BaseFunctionalTests): 
+    def getrunner(self):
+        if not hasattr(py.std.os, 'fork'):
+            py.test.skip("no os.fork available")
+        return runner.forked_run_report
+
+    def test_suicide(self, testdir):
+        rep = testdir.runitem("""
+            def test_func():
+                import os
+                os.kill(os.getpid(), 15)
+        """)
+        assert rep.failed
+        assert rep.when == "???"
+
+class TestCollectionReports:
+    def test_collect_result(self, testdir):
+        col = testdir.getmodulecol("""
+            def test_func1():
+                pass
+            class TestClass:
+                pass
+        """)
+        rep = runner.basic_collect_report(col)
+        assert not rep.failed
+        assert not rep.skipped
+        assert rep.passed 
+        res = rep.result 
+        assert len(res) == 2
+        assert res[0].name == "test_func1" 
+        assert res[1].name == "TestClass" 
+
+    def test_skip_at_module_scope(self, testdir):
+        col = testdir.getmodulecol("""
+            import py
+            py.test.skip("hello")
+            def test_func():
+                pass
+        """)
+        rep = runner.basic_collect_report(col)
+        assert not rep.failed 
+        assert not rep.passed 
+        assert rep.skipped 
+
 

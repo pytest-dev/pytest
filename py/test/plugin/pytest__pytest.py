@@ -91,7 +91,7 @@ class HookRecorder:
             if call._name == name:
                 del self.calls[i]
                 return call 
-        raise ValueError("could not find call %r in %r" %(name, self.calls))
+        raise ValueError("could not find call %r" %(name, ))
 
     def getcall(self, name):
         l = self.getcalls(name)
