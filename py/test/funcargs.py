@@ -33,9 +33,11 @@ class Metafunc:
         self._calls = []
         self._ids = py.builtin.set()
 
-    def addcall(self, funcargs=None, id=None, param=_notexists):
+    def addcall(self, funcargs=None, id=_notexists, param=_notexists):
         assert funcargs is None or isinstance(funcargs, dict)
         if id is None:
+            raise ValueError("id=None not allowed") 
+        if id is _notexists:
             id = len(self._calls)
         id = str(id)
         if id in self._ids:

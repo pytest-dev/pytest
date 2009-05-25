@@ -313,6 +313,7 @@ class Function(FunctionMixin, py.test.collect.Item):
     """ a Function Item is responsible for setting up  
         and executing a Python callable test object.
     """
+    _genid = None
     def __init__(self, name, parent=None, config=None, args=(), 
                  callspec=None, callobj=_dummy):
         super(Function, self).__init__(name, parent, config=config) 
@@ -320,9 +321,13 @@ class Function(FunctionMixin, py.test.collect.Item):
         if args:
             assert not callspec, "yielded functions (deprecated) cannot have funcargs" 
         else:
-            self.funcargs = callspec and callspec.funcargs or {}
-            if hasattr(callspec, "param"):
-                self._requestparam = callspec.param
+            if callspec is not None:
+                self.funcargs = callspec.funcargs or {}
+                self._genid = callspec.id 
+                if hasattr(callspec, "param"):
+                    self._requestparam = callspec.param
+            else:
+                self.funcargs = {}
         if callobj is not _dummy: 
             self._obj = callobj 
 
@@ -351,8 +356,8 @@ class Function(FunctionMixin, py.test.collect.Item):
                     self._args == other._args and
                     self.parent == other.parent and
                     self.obj == other.obj and 
-                    getattr(self, '_requestparam', None) == 
-                    getattr(other, '_requestparam', None) 
+                    getattr(self, '_genid', None) == 
+                    getattr(other, '_genid', None) 
             )
         except AttributeError:
             pass

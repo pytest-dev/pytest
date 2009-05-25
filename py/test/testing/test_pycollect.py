@@ -242,25 +242,16 @@ class TestFunction:
         assert f1 == f1_b
         assert not f1 != f1_b
 
+    def test_function_equality_with_callspec(self, tmpdir):
+        config = py.test.config._reparse([tmpdir])
         class callspec1:
             param = 1
             funcargs = {}
+            id = "hello"
         class callspec2:
-            param = 2
-            funcargs = {}
-        f5 = py.test.collect.Function(name="name", config=config, 
-                                      callspec=callspec1, callobj=isinstance)
-        f5b = py.test.collect.Function(name="name", config=config, 
-                                      callspec=callspec2, callobj=isinstance)
-        assert f5 != f5b
-        assert not (f5 == f5b)
-
-        class callspec1:
             param = 1
             funcargs = {}
-        class callspec2:
-            param = 2
-            funcargs = {}
+            id = "world"
         f5 = py.test.collect.Function(name="name", config=config, 
                                       callspec=callspec1, callobj=isinstance)
         f5b = py.test.collect.Function(name="name", config=config, 

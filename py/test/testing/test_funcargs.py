@@ -298,6 +298,8 @@ class TestMetafunc:
     def test_addcall_id(self):
         def func(arg1): pass
         metafunc = funcargs.Metafunc(func)
+        py.test.raises(ValueError, "metafunc.addcall(id=None)")
+
         metafunc.addcall(id=1)
         py.test.raises(ValueError, "metafunc.addcall(id=1)")
         py.test.raises(ValueError, "metafunc.addcall(id='1')")
@@ -338,6 +340,7 @@ class TestGenfuncFunctional:
                 metafunc.addcall(param=metafunc) 
 
             def pytest_funcarg__metafunc(request):
+                assert request._pyfuncitem._genid == "0"
                 return request.param 
 
             def test_function(metafunc):
