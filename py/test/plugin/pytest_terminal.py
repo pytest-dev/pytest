@@ -349,6 +349,10 @@ class CollectonlyReporter:
     def outindent(self, line):
         self.out.line(self.indent + str(line))
 
+    def pytest_internalerror(self, excrepr):
+        for line in str(excrepr).split("\n"):
+            self.out.line("INTERNALERROR> " + line)
+
     def pytest_collectstart(self, collector):
         self.outindent(collector)
         self.indent += self.INDENT 
@@ -739,6 +743,17 @@ class TestCollectonly:
             <Module 'test_collectonly_failed_module.py'>
               !!! ValueError: 0 !!!
         """)
+
+    def test_collectonly_fatal(self, testdir):
+        p1 = testdir.makeconftest("""
+            def pytest_collectstart(collector):
+                assert 0, "urgs" 
+        """)
+        result = testdir.runpytest("--collectonly") 
+        result.stdout.fnmatch_lines([
+            "*INTERNAL*args*"
+        ])
+        assert result.ret == 3
 
 def test_repr_python_version(monkeypatch):
     monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
