@@ -1,5 +1,5 @@
 """
-Notes: twisted's asynchrone behavior may have influence on the order of test-functions
+Notes: twisted's asynchronous behavior may have influence on the order of test-functions
 
 TODO:
     + credits to Ralf Schmitt See: http://twistedmatrix.com/pipermail/twisted-python/2007-February/014872.html
@@ -63,10 +63,10 @@ def _run_twisted(logging=False):
             
         # the test-function *may* return a deferred
         # here the test-function will actually been called
-        # done() is finalizing a test-process by assureing recursive envoking
+        # done() is finalizing a test-process by assuring recursive invoking
         # of doit()
         defer.maybeDeferred(res).addCallback(done).addErrback(err)
-    # initialy preparing the calling of doit() and starting the reactor
+    # initially preparing the calling of doit() and starting the reactor
     reactor.callLater(0.0, doit, None)
     reactor.run()
 
