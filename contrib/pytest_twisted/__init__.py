@@ -100,6 +100,7 @@ class TwistedPlugin:
 
     def pytest_pyfunc_call(self, pyfuncitem, *args, **kwargs):
         if self.twisted:
+            args = args or pyfuncitem._args  # generator tests
             # XXX1 kwargs?  
             # XXX2 we want to delegate actual call to next plugin
             #      (which may want to produce test coverage, etc.) 
