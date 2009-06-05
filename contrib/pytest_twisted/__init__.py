@@ -1,4 +1,6 @@
 """
+Allows to test twisted applications with pytest.
+
 Notes: twisted's asynchronous behavior may have influence on the order of test-functions
 
 TODO:
@@ -6,22 +8,20 @@ TODO:
     + get test to work
 """
 
-import os
 import sys
 
-import py
-
 try:
-    from twisted.internet.defer import Deferred
+    from twisted.internet import reactor, defer
+    from twisted.python import failure, log
 except ImportError:
     print "To use the twisted option you have to install twisted."
-    sys.exit(0)
+    sys.exit(10)
 try:
     from greenlet import greenlet
 except ImportError:
     print "Since pylib 1.0 greenlet are removed and separately packaged: " \
             "http://pypi.python.org/pypi/greenlet" 
-    sys.exit(0)
+    sys.exit(10)
 
 
 def _start_twisted_logging():
@@ -35,14 +35,11 @@ def _start_twisted_logging():
         def flush(self):
             sys.stdout.flush()
             # sys.stdout will be changed by py.test later.
-    import twisted.python.log
-    twisted.python.log.startLogging(Logger(), setStdout=0)
+    log.startLogging(Logger(), setStdout=0)
 
 def _run_twisted(logging=False):
     """Start twisted mainloop and initialize recursive calling of doit()."""
 
-    from twisted.internet import reactor, defer
-    from twisted.python import log, failure
     # make twisted copy traceback...
     failure.Failure.cleanFailure = lambda *args: None
     if logging:
@@ -70,44 +67,28 @@ def _run_twisted(logging=False):
     reactor.callLater(0.0, doit, None)
     reactor.run()
 
+def pytest_addoption(parser):
+    group = parser.addgroup('twisted options')
+    group.addoption('--twisted-logging', action='store_true', default=False,
+            dest='twisted_logging',
+            help="switch on twisted internal logging")
 
-class TwistedPlugin:
-    """Allows to test twisted applications with pytest."""
+def pytest_configure(config):
+    twisted_logging = config.getvalue("twisted_logging")
+    gr_twisted.switch(twisted_logging)
 
-    def pytest_addoption(self, parser):
-        #parser.addoption("--twisted", dest="twisted", 
-        #    help="Allows to test twisted applications with pytest.")
+def pytest_unconfigure(config):
+    gr_twisted.switch(None)
 
-        group = parser.addgroup('twisted options')
-        group.addoption('-T', action='store_true', default=False,
-                dest = 'twisted',
-                help="Allows to test twisted applications.")
-        group.addoption('--twisted-logging', action='store', default=False,
-                dest='twisted_logging',
-                help="switch on twisted internal logging")
-        self.twisted = False
-
-    def pytest_configure(self, config):
-        twisted         = config.getvalue("twisted")
-        twisted_logging = config.getvalue("twisted_logging")
-        if twisted:
-            self.twisted = True
-            gr_twisted.switch(twisted_logging)
-
-    def pytest_unconfigure(self, config):
-        if self.twisted:
-            gr_twisted.switch(None)
-
-    def pytest_pyfunc_call(self, pyfuncitem, *args, **kwargs):
-        if self.twisted:
-            args = args or pyfuncitem._args  # generator tests
-            # XXX1 kwargs?  
-            # XXX2 we want to delegate actual call to next plugin
-            #      (which may want to produce test coverage, etc.) 
-            res = gr_twisted.switch(lambda: pyfuncitem.obj(*args))
-            if res:
-                res.raiseException()
-            return True # indicates that we performed the function call 
+def pytest_pyfunc_call(pyfuncitem, *args, **kwargs):
+    args = args or pyfuncitem._args  # generator tests
+    # XXX1 kwargs?  
+    # XXX2 we want to delegate actual call to next plugin
+    #      (which may want to produce test coverage, etc.) 
+    res = gr_twisted.switch(lambda: pyfuncitem.obj(*args))
+    if res:
+        res.raiseException()
+    return True # indicates that we performed the function call 
 
 gr_twisted  = greenlet(_run_twisted)
 gr_tests    = greenlet.getcurrent()
