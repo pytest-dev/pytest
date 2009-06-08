@@ -44,6 +44,17 @@ def _run_twisted(logging=False):
     failure.Failure.cleanFailure = lambda *args: None
     if logging:
         _start_twisted_logging()
+        
+    def fix_signal_handling():
+        # see http://twistedmatrix.com/trac/ticket/733
+        import signal
+        if hasattr(signal, "siginterrupt"):
+            signal.siginterrupt(signal.SIGCHLD, False)
+
+    def start():
+        fix_signal_handling()
+        doit(None)
+        
     # recursively called for each test-function/method due done()
     def doit(val): # val always None
         # switch context to wait that wrapper() passes back to test-method
@@ -64,7 +75,7 @@ def _run_twisted(logging=False):
         # of doit()
         defer.maybeDeferred(res).addCallback(done).addErrback(err)
     # initially preparing the calling of doit() and starting the reactor
-    reactor.callLater(0.0, doit, None)
+    reactor.callLater(0.0, start)
     reactor.run()
 
 def pytest_addoption(parser):
