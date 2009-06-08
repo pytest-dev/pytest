@@ -2,19 +2,6 @@
 
 import py
 
-def pytest_itemrun(item):
-    from py.__.test.runner import basic_run_report, forked_run_report
-    if item.config.option.boxed:
-        report = forked_run_report(item)
-    else:
-        report = basic_run_report(item) 
-    item.config.hook.pytest_itemtestreport(rep=report)
-    return True
-
-def pytest_item_makereport(item, excinfo, when, outerr):
-    from py.__.test import runner
-    return runner.ItemTestReport(item, excinfo, when, outerr)
-
 def pytest_pyfunc_call(pyfuncitem, args, kwargs):
     pyfuncitem.obj(*args, **kwargs)
 
@@ -76,9 +63,6 @@ def pytest_addoption(parser):
     group._addoption('-s', 
                action="store_true", dest="nocapture", default=False,
                help="disable catching of stdout/stderr during test run.")
-    group.addoption('--boxed',
-               action="store_true", dest="boxed", default=False,
-               help="box each test run in a separate process") 
     group._addoption('-p', action="append", dest="plugin", default = [],
                help=("load the specified plugin after command line parsing. "))
     group._addoption('-f', '--looponfail',

@@ -2,7 +2,6 @@ import py, os
 from conftesthandle import Conftest
 
 from py.__.test import parseopt
-from py.__.test.runner import SetupState
 
 def ensuretemp(string, dir=1): 
     """ return temporary directory path with
@@ -41,7 +40,6 @@ class Config(object):
         assert isinstance(pluginmanager, py.test._PluginManager)
         self.pluginmanager = pluginmanager
         self._conftest = Conftest(onimport=self._onimportconftest)
-        self._setupstate = SetupState() 
         self.hook = pluginmanager.hook
 
     def _onimportconftest(self, conftestmodule):

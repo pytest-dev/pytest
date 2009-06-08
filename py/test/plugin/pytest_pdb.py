@@ -22,7 +22,7 @@ def pytest_configure(config):
         config.pluginmanager.register(PdbInvoke())
 
 class PdbInvoke:
-    def pytest_item_makereport(self, item, excinfo, when, outerr):
+    def pytest_runtest_makereport(self, item, excinfo, when, outerr):
         if excinfo and not excinfo.errisinstance(Skipped): 
             tw = py.io.TerminalWriter()
             repr = excinfo.getrepr()

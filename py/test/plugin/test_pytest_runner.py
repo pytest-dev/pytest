@@ -1,5 +1,5 @@
 import py
-from py.__.test import runner 
+from py.__.test.plugin import pytest_runner as runner
 from py.__.code.excinfo import ReprExceptionInfo
 
 class TestSetupState:
@@ -56,7 +56,7 @@ class BaseFunctionalTests:
         assert not rep.passed 
         assert not rep.skipped 
         assert rep.failed 
-        assert rep.when == "runtest"
+        assert rep.when == "call"
         assert isinstance(rep.longrepr, ReprExceptionInfo)
         assert str(rep.shortrepr) == "F"
 
@@ -69,8 +69,8 @@ class BaseFunctionalTests:
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
-        #assert rep.skipped.when == "runtest"
-        #assert rep.skipped.when == "runtest"
+        #assert rep.skipped.when == "call"
+        #assert rep.skipped.when == "call"
         #assert rep.skipped == "%sreason == "hello"
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.path
@@ -137,7 +137,7 @@ class BaseFunctionalTests:
         assert not rep.skipped 
         assert not rep.passed 
         assert rep.failed 
-        #assert rep.outcome.when == "runtest"
+        #assert rep.outcome.when == "call"
         #assert rep.failed.where.lineno == 3
         #assert rep.failed.where.path.basename == "test_func.py" 
         #assert rep.failed.failurerepr == "hello"
@@ -190,7 +190,7 @@ class BaseFunctionalTests:
         except SystemExit:
             py.test.fail("runner did not catch SystemExit")
         assert rep.failed
-        assert rep.when == "runtest"
+        assert rep.when == "call"
 
     def test_exit_propagates(self, testdir):
         from py.__.test.outcome import Exit
@@ -245,7 +245,7 @@ class TestCollectionReports:
             class TestClass:
                 pass
         """)
-        rep = runner.basic_collect_report(col)
+        rep = runner.pytest_make_collect_report(col)
         assert not rep.failed
         assert not rep.skipped
         assert rep.passed 
@@ -261,9 +261,7 @@ class TestCollectionReports:
             def test_func():
                 pass
         """)
-        rep = runner.basic_collect_report(col)
+        rep = runner.pytest_make_collect_report(col)
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
-
-

@@ -1,39 +1,17 @@
 ==========================
-py.test plugins 
+hooks and plugins 
 ==========================
 
-Much of py.test's functionality is implemented as a plugin. 
+py.test implements much of its functionality by calling so called
+**hooks**.  A hook is a function with a ``pytest_`` prefix and a list of
+named arguments.  Hook functions are usually defined in plugins. 
+A plugin is a module or package that makes hook functions available. 
 
-Included plugins
-================
+When loading a plugin module (which needs to have a ``pytest_`` prefix as well) 
+py.test performs strict checking on the function signature.  Function 
+and argument names need to match exactly the `original definition of the hook`_.
+This allows for early mismatch reporting and minimizes version incompatibilites. 
 
-You can find the source code of all default plugins in 
-http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
-
-plugins that add reporting asepcts
------------------------------------
-
-pytest_terminal: default reporter for writing info to terminals 
-
-pytest_resultlog: log test results in machine-readable form to a file 
-
-plugins for adding new test types 
------------------------------------
-
-pytest_unittest: run traditional unittest TestCase instances
-
-pytest_doctest: run doctests in python modules or .txt files
-
-pytest_restdoc: provide RestructuredText syntax and link checking
-
-plugins for python test functions
------------------------------------
-
-pytest_xfail: provides "expected to fail" test marker 
-
-pytest_tmpdir: provide temporary directories to test functions 
-
-pytest_plugintester: generic plugin apichecks, support for functional plugin tests 
 
 Loading plugins and specifying dependencies 
 ============================================
@@ -46,26 +24,42 @@ py.test loads and configures plugins at tool startup:
 * by pre-scanning the command line for the ``-p name`` option
   and loading the specified plugin *before actual command line parsing*. 
 
-* by loading all plugins specified via a ``pytest_plugins``
-  variable in ``conftest.py`` files or test modules. 
+* by loading all plugins specified by the ``pytest_plugins``
+  variable in a ``conftest.py`` file or test modules. 
 
 Specifying a plugin in a test module or ``conftest.py`` will
 only lead to activitation when ``py.test`` actually sees the
-directory and the file during the collection process.  This is
+directory and the file during the collection process.  This happens 
 already after command line parsing and there is no try to do 
 a "pre-scan of all subdirs" as this would mean a potentially
 very large delay.  As long as you don't add command line 
 options this detail does not need to worry you. 
 
+A plugin module may specify its dependencies via 
+another ``pytest_plugins`` definition. 
 
-ensure a plugin is loaded 
------------------------------------
+Included plugins
+================
 
-If you create a ``conftest.py`` file with the following content:: 
+You can find the source code of all default plugins in 
+http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
 
-    pytest_plugins = "pytest_myextension",
+Overview on available hooks 
+====================================
 
-then all tests in and below that directory will consult the hooks
-defined in the imported ``pytest_myextension``.  A plugin 
-may specify its dependencies via another ``pytest_plugins`` 
-definition.  
+"runtest" hooks 
+-------------------
+
+A number of hooks allow interacting with the running of a test. 
+A test can be many things - for example a python, javascript
+or prolog test function or a doctest.  The following hooks are 
+usually invoked on running a test item:: 
+
+    pytest_runtest_protocol(item) -> True # and invokes: 
+        pytest_runtest_setup(item) -> None
+        pytest_runtest_call(item) -> (excinfo, when, outerr) 
+        pytest_runtest_makereport(item, excinfo, when, outerr) -> report 
+        pytest_runtest_logreport(report) -> None
+        pytest_runtest_teardown(item) -> None
+
+

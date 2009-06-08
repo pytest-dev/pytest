@@ -50,10 +50,10 @@ class TXNode(object):
             elif eventname == "slavefinished":
                 self._down = True
                 self.notify("pytest_testnodedown", error=None, node=self)
-            elif eventname == "pytest_itemtestreport":
+            elif eventname == "pytest_runtest_logreport":
                 rep = kwargs['rep']
                 rep.node = self
-                self.notify("pytest_itemtestreport", rep=rep)
+                self.notify("pytest_runtest_logreport", rep=rep)
             else:
                 self.notify(eventname, *args, **kwargs)
         except KeyboardInterrupt: 
@@ -105,8 +105,8 @@ class SlaveNode(object):
     def sendevent(self, eventname, *args, **kwargs):
         self.channel.send((eventname, args, kwargs))
 
-    def pytest_itemtestreport(self, rep):
-        self.sendevent("pytest_itemtestreport", rep=rep)
+    def pytest_runtest_logreport(self, rep):
+        self.sendevent("pytest_runtest_logreport", rep=rep)
 
     def run(self):
         channel = self.channel
@@ -124,9 +124,9 @@ class SlaveNode(object):
                     break
                 if isinstance(task, list):
                     for item in task:
-                        item.config.pluginmanager.do_itemrun(item)
+                        item.config.hook.pytest_runtest_protocol(item=item) 
                 else:
-                    task.config.pluginmanager.do_itemrun(item=task)
+                    task.config.hook.pytest_runtest_protocol(item=task) 
         except KeyboardInterrupt:
             raise
         except:

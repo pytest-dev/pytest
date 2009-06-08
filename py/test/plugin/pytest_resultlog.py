@@ -59,7 +59,7 @@ class ResultLog(object):
         testpath = generic_path(node)
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
-    def pytest_itemtestreport(self, rep):
+    def pytest_runtest_logreport(self, rep):
         code = rep.shortrepr 
         if rep.passed:
             longrepr = ""

@@ -1,5 +1,5 @@
 """ 
-    internal classes for
+    collect and run test items. 
 
     * executing test items 
     * running collectors 
@@ -9,6 +9,58 @@
 import py
 
 from py.__.test.outcome import Skipped
+
+#
+# pytest plugin hooks 
+#
+
+def pytest_addoption(parser):
+    group = parser.getgroup("general") 
+    group.addoption('--boxed',
+               action="store_true", dest="boxed", default=False,
+               help="box each test run in a separate process") 
+
+def pytest_configure(config):
+    config._setupstate = SetupState()
+
+def pytest_unconfigure(config):
+    config._setupstate.teardown_all()
+
+def pytest_make_collect_report(collector):
+    call = collector.config.guardedcall(
+        lambda: collector._memocollect()
+    )
+    result = None
+    if not call.excinfo:
+        result = call.result
+    return CollectReport(collector, result, call.excinfo, call.outerr)
+
+    return report 
+
+def pytest_runtest_protocol(item):
+    if item.config.option.boxed:
+        report = forked_run_report(item)
+    else:
+        report = basic_run_report(item) 
+    item.config.hook.pytest_runtest_logreport(rep=report)
+    return True
+
+def pytest_runtest_setup(item):
+    item.config._setupstate.prepare(item)
+
+def pytest_runtest_call(item):
+    if not item._deprecated_testexecution():
+        item.runtest()
+
+def pytest_runtest_makereport(item, excinfo, when, outerr):
+    return ItemTestReport(item, excinfo, when, outerr)
+
+def pytest_runtest_teardown(item):
+    item.config._setupstate.teardown_exact(item)
+
+#
+# Implementation
+#
 
 class Call:
     excinfo = None 
@@ -21,34 +73,23 @@ class Call:
         except:
             self.excinfo = py.code.ExceptionInfo()
 
-def runtest_with_deprecated_check(item):
-    if not item._deprecated_testexecution():
-        item.runtest()
 
 def basic_run_report(item):
     """ return report about setting up and running a test item. """
-    setupstate = item.config._setupstate
     capture = item.config._getcapture()
+    hook = item.config.hook
     try:
-        call = Call("setup", lambda: setupstate.prepare(item))
+        call = Call("setup", lambda: hook.pytest_runtest_setup(item=item))
         if not call.excinfo:
-            call = Call("runtest", lambda: runtest_with_deprecated_check(item))
+            call = Call("call", lambda: hook.pytest_runtest_call(item=item))
+            # in case of an error we defer teardown to not shadow the error
             if not call.excinfo:
-                call = Call("teardown", lambda: setupstate.teardown_exact(item))
+                call = Call("teardown", lambda: hook.pytest_runtest_teardown(item=item))
     finally:
         outerr = capture.reset()
-    return item.config.hook.pytest_item_makereport(
+    return item.config.hook.pytest_runtest_makereport(
             item=item, excinfo=call.excinfo, 
             when=call.when, outerr=outerr)
-
-def basic_collect_report(collector):
-    call = collector.config.guardedcall(
-        lambda: collector._memocollect()
-    )
-    result = None
-    if not call.excinfo:
-        result = call.result
-    return CollectReport(collector, result, call.excinfo, call.outerr)
 
 def forked_run_report(item):
     EXITSTATUS_TESTEXIT = 4
@@ -122,7 +163,7 @@ class ItemTestReport(BaseReport):
             else:
                 self.failed = True
                 shortrepr = self.item.shortfailurerepr
-                if self.when == "runtest":
+                if self.when == "call":
                     longrepr = self.item.repr_failure(excinfo, outerr)
                 else: # exception in setup or teardown 
                     longrepr = self.item._repr_failure_py(excinfo, outerr)

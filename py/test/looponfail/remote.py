@@ -137,10 +137,10 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     session.shouldclose = channel.isclosed 
    
     class Failures(list):
-        def pytest_itemtestreport(self, rep):
+        def pytest_runtest_logreport(self, rep):
             if rep.failed:
                 self.append(rep)
-        pytest_collectreport = pytest_itemtestreport
+        pytest_collectreport = pytest_runtest_logreport
         
     failreports = Failures()
     session.pluginmanager.register(failreports)

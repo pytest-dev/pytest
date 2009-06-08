@@ -185,7 +185,7 @@ class TestNewSession(SessionTests):
        
         itemstarted = reprec.getcalls("pytest_itemstart")
         assert len(itemstarted) == 3
-        assert not reprec.getreports("pytest_itemtestreport") 
+        assert not reprec.getreports("pytest_runtest_logreport") 
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished) 

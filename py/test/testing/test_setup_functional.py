@@ -118,7 +118,7 @@ def test_func_generator_setup(testdir):
             yield check 
             assert x == [1]
     """)
-    rep = reprec.matchreport("test_one", names="pytest_itemtestreport") 
+    rep = reprec.matchreport("test_one", names="pytest_runtest_logreport") 
     assert rep.passed 
         
 def test_method_setup_uses_fresh_instances(testdir):

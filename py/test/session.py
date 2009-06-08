@@ -11,7 +11,6 @@ from py.__.test import outcome
 # imports used for genitems()
 Item = py.test.collect.Item
 Collector = py.test.collect.Collector
-from runner import basic_collect_report
 
 class Session(object): 
     """ 
@@ -42,7 +41,7 @@ class Session(object):
             else:
                 assert isinstance(next, Collector)
                 self.config.hook.pytest_collectstart(collector=next)
-                rep = basic_collect_report(next)
+                rep = self.config.hook.pytest_make_collect_report(collector=next)
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
                         yield x 
@@ -80,12 +79,12 @@ class Session(object):
         """ setup any neccessary resources ahead of the test run. """
         self.config.hook.pytest_sessionstart(session=self)
         
-    def pytest_itemtestreport(self, rep):
+    def pytest_runtest_logreport(self, rep):
         if rep.failed:
             self._testsfailed = True
             if self.config.option.exitfirst:
                 self.shouldstop = True
-    pytest_collectreport = pytest_itemtestreport
+    pytest_collectreport = pytest_runtest_logreport
 
     def sessionfinishes(self, exitstatus=0, excinfo=None):
         """ teardown any resources after a test run. """ 
@@ -113,8 +112,7 @@ class Session(object):
                 if self.shouldstop: 
                     break 
                 if not self.config.option.collectonly: 
-                    item.config.pluginmanager.do_itemrun(item) 
-            self.config._setupstate.teardown_all()
+                    item.config.hook.pytest_runtest_protocol(item=item)
         except KeyboardInterrupt:
             captured_excinfo = py.code.ExceptionInfo()
             exitstatus = outcome.EXIT_INTERRUPTED

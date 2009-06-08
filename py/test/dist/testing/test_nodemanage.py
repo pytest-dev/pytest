@@ -122,6 +122,6 @@ class TestNodeManager:
         """)
         reprec = testdir.inline_run("-d", "--rsyncdir=%s" % testdir.tmpdir, 
                 "--tx", specssh, testdir.tmpdir)
-        rep, = reprec.getreports("pytest_itemtestreport")
+        rep, = reprec.getreports("pytest_runtest_logreport")
         assert rep.passed 
 

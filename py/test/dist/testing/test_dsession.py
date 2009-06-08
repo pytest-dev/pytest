@@ -1,13 +1,12 @@
 from py.__.test.dist.dsession import DSession
-from py.__.test.runner import basic_collect_report 
 from py.__.test import outcome
 import py
 
 XSpec = py.execnet.XSpec
 
-def run(item, node):
-    from py.__.test.runner import basic_run_report
-    rep = basic_run_report(item)
+def run(item, node, excinfo=None):
+    rep = item.config.hook.pytest_runtest_makereport(
+            item=item, excinfo=excinfo, when="call", outerr=("", ""))
     rep.node = node
     return rep 
 
@@ -134,7 +133,7 @@ class TestDSession:
         session.queueevent(None)
         session.loop_once(loopstate)
         assert node.sent == [[item]]
-        session.queueevent("pytest_itemtestreport", rep=run(item, node))
+        session.queueevent("pytest_runtest_logreport", rep=run(item, node))
         session.loop_once(loopstate)
         assert loopstate.shuttingdown 
         assert not loopstate.testsfailed 
@@ -180,7 +179,7 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert loopstate.colitems == [item2] # do not reschedule crash item
-        rep = reprec.matchreport(names="pytest_itemtestreport")
+        rep = reprec.matchreport(names="pytest_runtest_logreport")
         assert rep.failed
         assert rep.item == item1
         assert str(rep.longrepr).find("crashed") != -1
@@ -198,7 +197,7 @@ class TestDSession:
         session.loop_once(loopstate)
         assert len(session.node2pending) == 1
 
-    def runthrough(self, item):
+    def runthrough(self, item, excinfo=None):
         session = DSession(item.config)
         node = MockNode()
         session.addnode(node)
@@ -208,8 +207,8 @@ class TestDSession:
         session.loop_once(loopstate)
 
         assert node.sent == [[item]]
-        ev = run(item, node) 
-        session.queueevent("pytest_itemtestreport", rep=ev)
+        ev = run(item, node, excinfo=excinfo) 
+        session.queueevent("pytest_runtest_logreport", rep=ev)
         session.loop_once(loopstate)
         assert loopstate.shuttingdown  
         session.queueevent("pytest_testnodedown", node=node, error=None)
@@ -224,7 +223,7 @@ class TestDSession:
 
     def test_exit_completed_tests_fail(self, testdir):
         item = testdir.getitem("def test_func(): 0/0")
-        session, exitstatus = self.runthrough(item)
+        session, exitstatus = self.runthrough(item, excinfo="fail")
         assert exitstatus == outcome.EXIT_TESTSFAILED
 
     def test_exit_on_first_failing(self, testdir):
@@ -238,16 +237,16 @@ class TestDSession:
         session = DSession(modcol.config)
         node = MockNode()
         session.addnode(node)
-        items = basic_collect_report(modcol).result
+        items = modcol.config.hook.pytest_make_collect_report(collector=modcol).result
 
         # trigger testing  - this sends tests to the node
         session.triggertesting(items)
 
         # run tests ourselves and produce reports 
-        ev1 = run(items[0], node)
-        ev2 = run(items[1], node)
-        session.queueevent("pytest_itemtestreport", rep=ev1) # a failing one
-        session.queueevent("pytest_itemtestreport", rep=ev2)
+        ev1 = run(items[0], node, "fail")
+        ev2 = run(items[1], node, None)
+        session.queueevent("pytest_runtest_logreport", rep=ev1) # a failing one
+        session.queueevent("pytest_runtest_logreport", rep=ev2)
         # now call the loop
         loopstate = session._initloopstate(items)
         session.loop_once(loopstate)
@@ -262,7 +261,7 @@ class TestDSession:
         loopstate = session._initloopstate([])
         loopstate.shuttingdown = True
         reprec = testdir.getreportrecorder(session)
-        session.queueevent("pytest_itemtestreport", rep=run(item, node))
+        session.queueevent("pytest_runtest_logreport", rep=run(item, node))
         session.loop_once(loopstate)
         assert not reprec.getcalls("pytest_testnodedown")
         session.queueevent("pytest_testnodedown", node=node, error=None)
@@ -303,7 +302,7 @@ class TestDSession:
         node = MockNode()
         session.addnode(node)
         session.senditems_load([item])
-        session.queueevent("pytest_itemtestreport", rep=run(item, node))
+        session.queueevent("pytest_runtest_logreport", rep=run(item, node))
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
         assert node._shutdown is True
@@ -324,12 +323,12 @@ class TestDSession:
         node = MockNode()
         session.addnode(node)
 
-        colreport = basic_collect_report(modcol)
+        colreport = modcol.config.hook.pytest_make_collect_report(collector=modcol)
         item1, item2 = colreport.result
         session.senditems_load([item1])
         # node2pending will become empty when the loop sees the report 
         rep = run(item1, node)
-        session.queueevent("pytest_itemtestreport", rep=run(item1, node)) 
+        session.queueevent("pytest_runtest_logreport", rep=run(item1, node)) 
 
         # but we have a collection pending
         session.queueevent("pytest_collectreport", rep=colreport) 
@@ -356,11 +355,11 @@ class TestDSession:
         dsession = DSession(config)
         hookrecorder = testdir.getreportrecorder(config).hookrecorder
         dsession.main([config.getfsnode(p1)])
-        rep = hookrecorder.popcall("pytest_itemtestreport").rep 
+        rep = hookrecorder.popcall("pytest_runtest_logreport").rep 
         assert rep.passed
-        rep = hookrecorder.popcall("pytest_itemtestreport").rep
+        rep = hookrecorder.popcall("pytest_runtest_logreport").rep
         assert rep.skipped
-        rep = hookrecorder.popcall("pytest_itemtestreport").rep
+        rep = hookrecorder.popcall("pytest_runtest_logreport").rep
         assert rep.failed
         # see that the node is really down 
         node = hookrecorder.popcall("pytest_testnodedown").node

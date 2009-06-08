@@ -35,6 +35,10 @@ class PluginHooks:
     # ------------------------------------------------------------------------------
     # collection hooks
     # ------------------------------------------------------------------------------
+    def pytest_make_collect_report(self, collector):
+        """ perform a collection and return a collection. """ 
+    pytest_make_collect_report.firstresult = True
+
     def pytest_collect_file(self, path, parent):
         """ return Collection node or None. """
 
@@ -67,20 +71,29 @@ class PluginHooks:
     # ------------------------------------------------------------------------------
     # runtest related hooks 
     # ------------------------------------------------------------------------------
+    def pytest_runtest_setup(self, item):
+        """ called before pytest_runtest(). """ 
+
+    def pytest_runtest_teardown(self, item):
+        """ called after pytest_runtest_call. """ 
+
+    def pytest_runtest_call(self, item):
+        """ called after pytest_runtest_call. """ 
+
+    def pytest_runtest_makereport(self, item, excinfo, when, outerr):
+        """ make ItemTestReport for the specified test outcome. """
+    pytest_runtest_makereport.firstresult = True
     
-    def pytest_itemrun(self, item, pdb=None):
+    def pytest_runtest_protocol(self, item):
         """ run given test item and return test report. """ 
-    pytest_itemrun.firstresult = True
+    pytest_runtest_protocol.firstresult = True
 
     def pytest_pyfunc_call(self, pyfuncitem, args, kwargs):
         """ return True if we consumed/did the call to the python function item. """
     pytest_pyfunc_call.firstresult = True
 
-    def pytest_item_makereport(self, item, excinfo, when, outerr):
-        """ make ItemTestReport for the specified test outcome. """
-    pytest_item_makereport.firstresult = True
 
-    def pytest_itemtestreport(self, rep):
+    def pytest_runtest_logreport(self, rep):
         """ process item test report. """ 
 
     # ------------------------------------------------------------------------------

@@ -5,7 +5,6 @@
 """
 
 import py
-from py.__.test.runner import basic_run_report, basic_collect_report, ItemTestReport
 from py.__.test.session import Session
 from py.__.test import outcome 
 from py.__.test.dist.nodemanage import NodeManager
@@ -24,7 +23,7 @@ class LoopState(object):
         self.shuttingdown = False
         self.testsfailed = False
 
-    def pytest_itemtestreport(self, rep):
+    def pytest_runtest_logreport(self, rep):
         if rep.item in self.dsession.item2nodes:
             self.dsession.removeitem(rep.item, rep.node)
         if rep.failed:
@@ -61,14 +60,14 @@ class DSession(Session):
         self.item2nodes = {}
         super(DSession, self).__init__(config=config)
 
-    def pytest_configure(self, __call__, config):
-        __call__.execute()
-        try:
-            config.getxspecs()
-        except config.Error:
-            print
-            raise config.Error("dist mode %r needs test execution environments, "
-                               "none found." %(config.option.dist))
+    #def pytest_configure(self, __call__, config):
+    #    __call__.execute()
+    #    try:
+    #        config.getxspecs()
+    #    except config.Error:
+    #        print
+    #        raise config.Error("dist mode %r needs test execution environments, "
+    #                           "none found." %(config.option.dist))
 
     def main(self, colitems=None):
         colitems = self.getinitialitems(colitems)
@@ -177,7 +176,8 @@ class DSession(Session):
                 senditems.append(next)
             else:
                 self.config.hook.pytest_collectstart(collector=next)
-                self.queueevent("pytest_collectreport", rep=basic_collect_report(next))
+                colrep = self.config.hook.pytest_make_collect_report(collector=next)
+                self.queueevent("pytest_collectreport", rep=colrep)
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
         else:
@@ -239,9 +239,10 @@ class DSession(Session):
 
     def handle_crashitem(self, item, node):
         longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
-        rep = ItemTestReport(item, when="???", excinfo=longrepr)
+        rep = item.config.hook.pytest_runtest_makereport(
+            item=item, when="???", excinfo=longrepr, outerr=None)
         rep.node = node
-        self.config.hook.pytest_itemtestreport(rep=rep)
+        self.config.hook.pytest_runtest_logreport(rep=rep)
 
     def setup(self):
         """ setup any neccessary resources ahead of the test run. """

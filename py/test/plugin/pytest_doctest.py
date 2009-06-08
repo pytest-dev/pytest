@@ -119,7 +119,7 @@ class TestDoctests:
             2
         """)
         reprec = testdir.inline_run(p)
-        call = reprec.getcall("pytest_itemtestreport")
+        call = reprec.getcall("pytest_runtest_logreport")
         assert call.rep.failed
         assert call.rep.longrepr 
         # XXX 

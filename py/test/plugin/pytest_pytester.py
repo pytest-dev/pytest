@@ -5,7 +5,6 @@ funcargs and support code for testing py.test functionality.
 import py
 import os
 import inspect
-from py.__.test import runner
 from py.__.test.config import Config as pytestConfig
 import api
 
@@ -161,7 +160,7 @@ class TmpTestdir:
         p = self.makepyfile(source)
         l = list(args) + [p]
         reprec = self.inline_run(*l)
-        reports = reprec.getreports("pytest_itemtestreport")
+        reports = reprec.getreports("pytest_runtest_logreport")
         assert len(reports) == 1, reports 
         return reports[0]
 
@@ -227,6 +226,12 @@ class TmpTestdir:
             self.makepyfile(__init__ = "#")
         self.config = self.parseconfig(path, *configargs)
         self.session = self.config.initsession()
+        #self.config.pluginmanager.do_configure(config=self.config)
+        # XXX 
+        self.config.pluginmanager.import_plugin("runner") 
+        plugin = self.config.pluginmanager.getplugin("runner") 
+        plugin.pytest_configure(config=self.config)
+
         return self.config.getfsnode(path)
 
     def prepare(self):
@@ -321,10 +326,10 @@ class ReportRecorder(object):
 
     # functionality for test reports 
 
-    def getreports(self, names="pytest_itemtestreport pytest_collectreport"):
+    def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
         return [x.rep for x in self.getcalls(names)]
 
-    def matchreport(self, inamepart="", names="pytest_itemtestreport pytest_collectreport"):
+    def matchreport(self, inamepart="", names="pytest_runtest_logreport pytest_collectreport"):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
@@ -339,7 +344,7 @@ class ReportRecorder(object):
                              inamepart, l))
         return l[0]
 
-    def getfailures(self, names='pytest_itemtestreport pytest_collectreport'):
+    def getfailures(self, names='pytest_runtest_logreport pytest_collectreport'):
         return [rep for rep in self.getreports(names) if rep.failed]
 
     def getfailedcollections(self):
@@ -349,7 +354,7 @@ class ReportRecorder(object):
         passed = []
         skipped = []
         failed = []
-        for rep in self.getreports("pytest_itemtestreport"):
+        for rep in self.getreports("pytest_runtest_logreport"):
             if rep.passed: 
                 passed.append(rep) 
             elif rep.skipped: 
@@ -378,23 +383,29 @@ def test_reportrecorder(testdir):
     registry = py._com.Registry()
     recorder = testdir.getreportrecorder(registry)
     assert not recorder.getfailures()
-    rep = runner.ItemTestReport(None, None)
+    item = testdir.getitem("def test_func(): pass")
+    rep = item.config.hook.pytest_runtest_makereport(
+        item=item, excinfo=None, when="call", outerr=None)
+
     rep.passed = False
     rep.failed = True
-    recorder.hook.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(rep=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    rep = runner.ItemTestReport(None, None)
+    rep = item.config.hook.pytest_runtest_makereport(
+        item=item, excinfo=None, when="call", outerr=None)
     rep.passed = False
     rep.skipped = True
-    recorder.hook.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(rep=rep)
 
-    rep = runner.CollectReport(None, None)
+    modcol = testdir.getmodulecol("")
+    rep = modcol.config.hook.pytest_make_collect_report(collector=modcol)
     rep.passed = False
     rep.failed = True
+    rep.skipped = False
     recorder.hook.pytest_collectreport(rep=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
@@ -408,7 +419,7 @@ def test_reportrecorder(testdir):
 
     recorder.unregister()
     recorder.clear() 
-    recorder.hook.pytest_itemtestreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(rep=rep)
     py.test.raises(ValueError, "recorder.getfailures()")
 
 class LineComp:

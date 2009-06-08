@@ -331,16 +331,13 @@ class Function(FunctionMixin, py.test.collect.Item):
         if callobj is not _dummy: 
             self._obj = callobj 
 
-    #def addfinalizer(self, func):
-    #    self.config._setupstate.ddfinalizer(func, colitem=self)
-        
     def readkeywords(self):
         d = super(Function, self).readkeywords()
         d.update(self.obj.func_dict)
         return d
 
     def runtest(self):
-        """ execute the given test function. """
+        """ execute the underlying test function. """
         kwargs = getattr(self, 'funcargs', {})
         self.config.hook.pytest_pyfunc_call(
             pyfuncitem=self, args=self._args, kwargs=kwargs)
