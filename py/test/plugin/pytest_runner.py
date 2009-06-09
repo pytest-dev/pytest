@@ -61,11 +61,7 @@ def pytest_runtest_call(item):
         item.runtest()
 
 def pytest_runtest_makereport(item, call):
-    if isinstance(call, str):
-        # crashed item 
-        return ItemTestReport(item, excinfo=call, when="???")
-    else:
-        return ItemTestReport(item, call.excinfo, call.when, call.outerr)
+    return ItemTestReport(item, call.excinfo, call.when, call.outerr)
 
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
@@ -101,10 +97,15 @@ class RuntestHookCall:
             self.outerr = capture.reset()
 
 def forked_run_report(item):
+    # for now, we run setup/teardown in the subprocess 
+    # XXX optionally allow sharing of setup/teardown 
     EXITSTATUS_TESTEXIT = 4
     from py.__.test.dist.mypickle import ImmutablePickler
     ipickle = ImmutablePickler(uneven=0)
     ipickle.selfmemoize(item.config)
+    # XXX workaround the issue that 2.6 cannot pickle 
+    # instances of classes defined in global conftest.py files
+    ipickle.selfmemoize(item) 
     def runforked():
         try:
             reports = runtestprotocol(item, log=False)

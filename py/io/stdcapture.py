@@ -22,14 +22,14 @@ class Capture(object):
     call = classmethod(call) 
 
     def reset(self): 
-        """ reset sys.stdout and sys.stderr
-
-            returns a tuple of file objects (out, err) for the captured
-            data
+        """ reset sys.stdout and sys.stderr and return captured output 
+            as strings and restore sys.stdout/err.
         """
-        outfile, errfile = self.done()
-        return outfile.read(), errfile.read()
-
+        x, y = self.done() 
+        outerr = x.read(), y.read() 
+        x.close()
+        y.close()
+        return outerr
 
 class StdCaptureFD(Capture): 
     """ This class allows to capture writes to FD1 and FD2 
@@ -58,11 +58,14 @@ class StdCaptureFD(Capture):
 
     def done(self):
         """ return (outfile, errfile) and stop capturing. """
-        outfile = errfile = emptyfile
         if hasattr(self, 'out'): 
             outfile = self.out.done() 
+        else:
+            outfile = StringIO()
         if hasattr(self, 'err'): 
             errfile = self.err.done() 
+        else:
+            errfile = StringIO()
         if hasattr(self, '_oldin'):
             oldsys, oldfd = self._oldin 
             os.dup2(oldfd, 0)
@@ -94,15 +97,9 @@ class StdCapture(Capture):
             self.oldin  = sys.stdin
             sys.stdin  = self.newin  = DontReadFromInput()
 
-    def reset(self):
-        """ return captured output as strings and restore sys.stdout/err."""
-        x, y = self.done() 
-        return x.read(), y.read() 
-
     def done(self): 
         """ return (outfile, errfile) and stop capturing. """
         o,e = sys.stdout, sys.stderr
-        outfile = errfile = emptyfile
         if self._out: 
             try:
                 sys.stdout = self.oldout 
@@ -111,6 +108,8 @@ class StdCapture(Capture):
             del self.oldout
             outfile = self.newout
             outfile.seek(0)
+        else:
+            outfile = StringIO()
         if self._err: 
             try:
                 sys.stderr = self.olderr 
@@ -119,6 +118,8 @@ class StdCapture(Capture):
             del self.olderr 
             errfile = self.newerr 
             errfile.seek(0)
+        else:
+            errfile = StringIO()
         if self._in:
             sys.stdin = self.oldin 
         return outfile, errfile
@@ -144,5 +145,4 @@ except AttributeError:
     else:
         devnullpath = '/dev/null'
 
-emptyfile = StringIO()
 
