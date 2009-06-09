@@ -238,9 +238,9 @@ class DSession(Session):
         self.node2pending[node].remove(item)
 
     def handle_crashitem(self, item, node):
-        longrepr = "!!! Node %r crashed during running of test %r" %(node, item)
-        rep = item.config.hook.pytest_runtest_makereport(
-            item=item, when="???", excinfo=longrepr, outerr=None)
+        runner = item.config.pluginmanager.getplugin("runner") 
+        info = "!!! Node %r crashed during running of test %r" %(node, item)
+        rep = runner.ItemTestReport(item=item, excinfo=info, when="???")
         rep.node = node
         self.config.hook.pytest_runtest_logreport(rep=rep)
 

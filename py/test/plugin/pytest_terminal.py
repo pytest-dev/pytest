@@ -162,6 +162,8 @@ class TerminalReporter:
                 self.write_fspath_result(fspath, "")
 
     def pytest_runtest_logreport(self, rep):
+        if rep.passed and rep.when in ("setup", "teardown"):
+            return 
         fspath = rep.item.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
         if isinstance(word, tuple):
@@ -399,6 +401,9 @@ def repr_pythonversion(v=None):
 
 import pytest_runner as runner # XXX 
 
+def basic_run_report(item):
+    return runner.call_and_report(item, "call", log=False)
+
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""
@@ -415,7 +420,7 @@ class TestTerminal:
         rep.config.hook.pytest_sessionstart(session=testdir.session)
 
         for item in testdir.genitems([modcol]):
-            ev = runner.basic_run_report(item) 
+            ev = basic_run_report(item) 
             rep.config.hook.pytest_runtest_logreport(rep=ev)
         linecomp.assert_contains_lines([
                 "*test_pass_skip_fail.py .sF"
@@ -446,7 +451,7 @@ class TestTerminal:
             rep.config.hook.pytest_itemstart(item=item, node=None)
             s = linecomp.stringio.getvalue().strip()
             assert s.endswith(item.name)
-            rep.config.hook.pytest_runtest_logreport(rep=runner.basic_run_report(item))
+            rep.config.hook.pytest_runtest_logreport(rep=basic_run_report(item))
 
         linecomp.assert_contains_lines([
             "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
@@ -537,7 +542,7 @@ class TestTerminal:
                 raise ValueError()
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        reports = [runner.basic_run_report(x) for x in modcol.collect()]
+        reports = [basic_run_report(x) for x in modcol.collect()]
         rep.pytest_looponfailinfo(reports, [modcol.config.topdir])
         linecomp.assert_contains_lines([
             "*test_looponfailreport.py:2: assert 0",
@@ -563,7 +568,7 @@ class TestTerminal:
             rep.config.hook.pytest_sessionstart(session=testdir.session)
             for item in testdir.genitems([modcol]):
                 rep.config.hook.pytest_runtest_logreport(
-                    rep=runner.basic_run_report(item))
+                    rep=basic_run_report(item))
             rep.config.hook.pytest_sessionfinish(session=testdir.session, exitstatus=1)
             s = linecomp.stringio.getvalue()
             if tbopt == "long":
@@ -644,7 +649,7 @@ class TestTerminal:
         try:
             for item in testdir.genitems([modcol]):
                 modcol.config.hook.pytest_runtest_logreport(
-                    rep=runner.basic_run_report(item))
+                    rep=basic_run_report(item))
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
         else:

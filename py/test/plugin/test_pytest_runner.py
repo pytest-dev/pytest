@@ -30,29 +30,32 @@ class TestSetupState:
 
 class BaseFunctionalTests:
     def test_funcattr(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             @py.test.mark(xfail="needs refactoring")
             def test_func():
                 raise Exit()
         """)
+        rep = reports[1]
         assert rep.keywords['xfail'] == "needs refactoring" 
 
     def test_passfunction(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             def test_func():
                 pass
         """)
+        rep = reports[1]
         assert rep.passed 
         assert not rep.failed
         assert rep.shortrepr == "."
         assert not hasattr(rep, 'longrepr')
                 
     def test_failfunction(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             def test_func():
                 assert 0
         """)
+        rep = reports[1]
         assert not rep.passed 
         assert not rep.skipped 
         assert rep.failed 
@@ -61,11 +64,12 @@ class BaseFunctionalTests:
         assert str(rep.shortrepr) == "F"
 
     def test_skipfunction(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def test_func():
                 py.test.skip("hello")
         """)
+        rep = reports[1]
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
@@ -77,44 +81,49 @@ class BaseFunctionalTests:
         #assert not rep.skipped.failurerepr 
 
     def test_skip_in_setup_function(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def setup_function(func):
                 py.test.skip("hello")
             def test_func():
                 pass
         """)
-        print rep
+        print reports
+        rep = reports[0]
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
         #assert rep.skipped.reason == "hello"
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.lineno == 3
+        assert len(reports) == 1
 
     def test_failure_in_setup_function(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def setup_function(func):
                 raise ValueError(42)
             def test_func():
                 pass
         """)
-        print rep
+        rep = reports[0]
         assert not rep.skipped 
         assert not rep.passed 
         assert rep.failed 
         assert rep.when == "setup"
+        assert len(reports) == 1
 
     def test_failure_in_teardown_function(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def teardown_function(func):
                 raise ValueError(42)
             def test_func():
                 pass
         """)
-        print rep
+        print reports
+        assert len(reports) == 3
+        rep = reports[2]
         assert not rep.skipped 
         assert not rep.passed 
         assert rep.failed 
@@ -129,11 +138,12 @@ class BaseFunctionalTests:
                 def repr_failure(self, excinfo, outerr):
                     return "hello" 
         """)
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def test_func():
                 assert 0
         """)
+        rep = reports[1]
         assert not rep.skipped 
         assert not rep.passed 
         assert rep.failed 
@@ -149,13 +159,15 @@ class BaseFunctionalTests:
                 def repr_failure(self, excinfo):
                     assert 0
         """)
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             import py
             def setup_function(func):
                 raise ValueError(42)
             def test_func():
                 pass
         """)
+        assert len(reports) == 1
+        rep = reports[0]
         print rep
         assert not rep.skipped 
         assert not rep.passed 
@@ -166,29 +178,29 @@ class BaseFunctionalTests:
         #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_capture_in_func(self, testdir):
-        rep = testdir.runitem("""
-            import py
+        reports = testdir.runitem("""
+            import sys
             def setup_function(func):
-                print >>py.std.sys.stderr, "in setup"
+                print "in setup"
             def test_func():
                 print "in function"
                 assert 0
-            def teardown_func(func):
+            def teardown_function(func):
                 print "in teardown"
         """)
-        assert rep.failed 
-        # out, err = rep.failed.outerr
-        # assert out == ['in function\nin teardown\n']
-        # assert err == ['in setup\n']
+        assert reports[0].outerr[0] == "in setup\n"
+        assert reports[1].outerr[0] == "in function\n"
+        assert reports[2].outerr[0] == "in teardown\n"
         
     def test_systemexit_does_not_bail_out(self, testdir):
         try:
-            rep = testdir.runitem("""
+            reports = testdir.runitem("""
                 def test_func():
                     raise SystemExit(42)
             """)
         except SystemExit:
             py.test.fail("runner did not catch SystemExit")
+        rep = reports[1]
         assert rep.failed
         assert rep.when == "call"
 
@@ -208,7 +220,9 @@ class BaseFunctionalTests:
 
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
-        return runner.basic_run_report 
+        def f(item):
+            return runner.runtestprotocol(item, log=False)
+        return f
 
     def test_keyboardinterrupt_propagates(self, testdir):
         from py.__.test.outcome import Exit
@@ -229,11 +243,12 @@ class TestExecutionForked(BaseFunctionalTests):
         return runner.forked_run_report
 
     def test_suicide(self, testdir):
-        rep = testdir.runitem("""
+        reports = testdir.runitem("""
             def test_func():
                 import os
                 os.kill(os.getpid(), 15)
         """)
+        rep = reports[0]
         assert rep.failed
         assert rep.when == "???"
 
@@ -265,3 +280,18 @@ class TestCollectionReports:
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
+
+
+def test_functional_boxed(testdir):
+    if not hasattr(py.std.os, 'fork'):
+        py.test.skip("needs os.fork")
+    p1 = testdir.makepyfile("""
+        import os
+        def test_function():
+            os.kill(os.getpid(), 15)
+    """)
+    result = testdir.runpytest(p1, "--boxed")
+    assert result.stdout.fnmatch_lines([
+        "*CRASHED*",
+        "*1 failed*"
+    ])

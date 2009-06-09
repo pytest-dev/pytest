@@ -12,7 +12,6 @@ from py.__.test.outcome import Skipped
 
 #
 # pytest plugin hooks 
-#
 
 def pytest_addoption(parser):
     group = parser.getgroup("general") 
@@ -38,12 +37,21 @@ def pytest_make_collect_report(collector):
     return report 
 
 def pytest_runtest_protocol(item):
-    if item.config.option.boxed:
-        report = forked_run_report(item)
+    if item.config.getvalue("boxed"):
+        reports = forked_run_report(item) 
+        for rep in reports:
+            item.config.hook.pytest_runtest_logreport(rep=rep)
     else:
-        report = basic_run_report(item) 
-    item.config.hook.pytest_runtest_logreport(rep=report)
+        runtestprotocol(item)
     return True
+
+def runtestprotocol(item, log=True):
+    rep = call_and_report(item, "setup", log)
+    reports = [rep]
+    if rep.passed:
+        reports.append(call_and_report(item, "call", log))
+        reports.append(call_and_report(item, "teardown", log))
+    return reports
 
 def pytest_runtest_setup(item):
     item.config._setupstate.prepare(item)
@@ -52,44 +60,45 @@ def pytest_runtest_call(item):
     if not item._deprecated_testexecution():
         item.runtest()
 
-def pytest_runtest_makereport(item, excinfo, when, outerr):
-    return ItemTestReport(item, excinfo, when, outerr)
+def pytest_runtest_makereport(item, call):
+    if isinstance(call, str):
+        # crashed item 
+        return ItemTestReport(item, excinfo=call, when="???")
+    else:
+        return ItemTestReport(item, call.excinfo, call.when, call.outerr)
 
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
 
 #
 # Implementation
-#
 
-class Call:
-    excinfo = None 
-    def __init__(self, when, func):
-        self.when = when 
-        try:
-            self.result = func()
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.excinfo = py.code.ExceptionInfo()
-
-
-def basic_run_report(item):
-    """ return report about setting up and running a test item. """
-    capture = item.config._getcapture()
+def call_and_report(item, when, log=True):
+    call = RuntestHookCall(item, when)
     hook = item.config.hook
-    try:
-        call = Call("setup", lambda: hook.pytest_runtest_setup(item=item))
-        if not call.excinfo:
-            call = Call("call", lambda: hook.pytest_runtest_call(item=item))
-            # in case of an error we defer teardown to not shadow the error
-            if not call.excinfo:
-                call = Call("teardown", lambda: hook.pytest_runtest_teardown(item=item))
-    finally:
-        outerr = capture.reset()
-    return item.config.hook.pytest_runtest_makereport(
-            item=item, excinfo=call.excinfo, 
-            when=call.when, outerr=outerr)
+    report = hook.pytest_runtest_makereport(item=item, call=call)
+    if log and (when == "call" or not report.passed):
+        hook.pytest_runtest_logreport(rep=report) 
+    return report
+
+
+class RuntestHookCall:
+    excinfo = None 
+    _prefix = "pytest_runtest_"
+    def __init__(self, item, when):
+        self.when = when 
+        hookname = self._prefix + when 
+        hook = getattr(item.config.hook, hookname)
+        capture = item.config._getcapture()
+        try:
+            try:
+                self.result = hook(item=item)
+            except KeyboardInterrupt:
+                raise
+            except:
+                self.excinfo = py.code.ExceptionInfo()
+        finally:
+            self.outerr = capture.reset()
 
 def forked_run_report(item):
     EXITSTATUS_TESTEXIT = 4
@@ -98,10 +107,10 @@ def forked_run_report(item):
     ipickle.selfmemoize(item.config)
     def runforked():
         try:
-            testrep = basic_run_report(item)
+            reports = runtestprotocol(item, log=False)
         except KeyboardInterrupt: 
             py.std.os._exit(EXITSTATUS_TESTEXIT)
-        return ipickle.dumps(testrep)
+        return ipickle.dumps(reports)
 
     ff = py.process.ForkedFunc(runforked)
     result = ff.waitfinish()
@@ -110,15 +119,13 @@ def forked_run_report(item):
     else:
         if result.exitstatus == EXITSTATUS_TESTEXIT:
             py.test.exit("forked test item %s raised Exit" %(item,))
-        return report_process_crash(item, result)
+        return [report_process_crash(item, result)]
 
 def report_process_crash(item, result):
     path, lineno = item._getfslineno()
-    longrepr = [
-        ("X", "CRASHED"), 
-        ("%s:%s: CRASHED with signal %d" %(path, lineno, result.signal)),
-    ]
-    return ItemTestReport(item, excinfo=longrepr, when="???")
+    info = "%s:%s: running the test CRASHED with signal %d" %(
+            path, lineno, result.signal)
+    return ItemTestReport(item, excinfo=info, when="???")
 
 class BaseReport(object):
     def __repr__(self):
@@ -138,6 +145,8 @@ class ItemTestReport(BaseReport):
 
     def __init__(self, item, excinfo=None, when=None, outerr=None):
         self.item = item 
+        self.when = when
+        self.outerr = outerr
         if item and when != "setup":
             self.keywords = item.readkeywords() 
         else:
@@ -151,7 +160,6 @@ class ItemTestReport(BaseReport):
             self.passed = True
             self.shortrepr = "." 
         else:
-            self.when = when 
             if not isinstance(excinfo, py.code.ExceptionInfo):
                 self.failed = True
                 shortrepr = "?"

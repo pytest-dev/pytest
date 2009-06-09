@@ -22,12 +22,12 @@ def pytest_configure(config):
         config.pluginmanager.register(PdbInvoke())
 
 class PdbInvoke:
-    def pytest_runtest_makereport(self, item, excinfo, when, outerr):
-        if excinfo and not excinfo.errisinstance(Skipped): 
+    def pytest_runtest_makereport(self, item, call):
+        if call.excinfo and not call.excinfo.errisinstance(Skipped): 
             tw = py.io.TerminalWriter()
-            repr = excinfo.getrepr()
+            repr = call.excinfo.getrepr()
             repr.toterminal(tw) 
-            post_mortem(excinfo._excinfo[2])
+            post_mortem(call.excinfo._excinfo[2])
 
 class Pdb(py.std.pdb.Pdb):
     def do_list(self, arg):

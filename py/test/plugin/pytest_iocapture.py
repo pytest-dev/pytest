@@ -22,16 +22,24 @@ def pytest_funcarg__capfd(request):
     request.addfinalizer(capture.finalize)
     return capture 
 
+def pytest_pyfunc_call(pyfuncitem, args, kwargs):
+    for funcarg, value in kwargs.items():
+        if funcarg == "capsys" or funcarg == "capfd":
+            value.reset()
+
 class Capture:
+    _capture = None
     def __init__(self, captureclass):
         self._captureclass = captureclass
-        self._capture = self._captureclass()
 
     def finalize(self):
-        self._capture.reset()
+        if self._capture:
+            self._capture.reset()
 
     def reset(self):
-        res = self._capture.reset()
+        res = None
+        if self._capture:
+            res = self._capture.reset()
         self._capture = self._captureclass()
         return res 
 

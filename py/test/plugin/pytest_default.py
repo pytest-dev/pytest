@@ -2,8 +2,9 @@
 
 import py
 
-def pytest_pyfunc_call(pyfuncitem, args, kwargs):
-    pyfuncitem.obj(*args, **kwargs)
+def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):
+    if not __call__.execute(firstresult=True):
+        pyfuncitem.obj(*args, **kwargs)
 
 def pytest_collect_file(path, parent):
     ext = path.ext 

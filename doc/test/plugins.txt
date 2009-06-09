@@ -2,16 +2,17 @@
 hooks and plugins 
 ==========================
 
-py.test implements much of its functionality by calling so called
-**hooks**.  A hook is a function with a ``pytest_`` prefix and a list of
-named arguments.  Hook functions are usually defined in plugins. 
-A plugin is a module or package that makes hook functions available. 
+py.test implements much of its functionality by calling **hooks**.  
+A hook is a function with a ``pytest_`` prefixed name.  Hook functions
+are usually defined in plugins.  A plugin is a regular python module or 
+package that makes hook functions available. 
 
 When loading a plugin module (which needs to have a ``pytest_`` prefix as well) 
 py.test performs strict checking on the function signature.  Function 
 and argument names need to match exactly the `original definition of the hook`_.
 This allows for early mismatch reporting and minimizes version incompatibilites. 
 
+.. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/api.py
 
 Loading plugins and specifying dependencies 
 ============================================
@@ -42,7 +43,13 @@ Included plugins
 ================
 
 You can find the source code of all default plugins in 
-http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
+
+    http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
+
+Additionally you can check out some more contributed plugins here
+
+    http://bitbucket.org/hpk42/py-trunk/src/tip/contrib/
+
 
 Overview on available hooks 
 ====================================
@@ -50,16 +57,54 @@ Overview on available hooks
 "runtest" hooks 
 -------------------
 
-A number of hooks allow interacting with the running of a test. 
-A test can be many things - for example a python, javascript
-or prolog test function or a doctest.  The following hooks are 
-usually invoked on running a test item:: 
+Each test item is usually executed by calling the following three hooks::
 
-    pytest_runtest_protocol(item) -> True # and invokes: 
-        pytest_runtest_setup(item) -> None
-        pytest_runtest_call(item) -> (excinfo, when, outerr) 
-        pytest_runtest_makereport(item, excinfo, when, outerr) -> report 
-        pytest_runtest_logreport(report) -> None
-        pytest_runtest_teardown(item) -> None
+    pytest_runtest_setup(item) 
+    pytest_runtest_call(item) 
+    pytest_runtest_teardown(item) 
 
+For each of the three invocations a `call object`_ encapsulates
+information about the outcome of the call and is subsequently used 
+to make a report object:: 
+
+    report = hook.pytest_runtest_makereport(item, call)
+
+For example, the `pytest_pdb plugin`_ uses this hook to activate
+interactive debugging on failures when ``--pdb`` is specified on the
+command line. 
+
+Usually three reports will be generated for a single test item.  However, 
+if the ``pytest_runtest_setup`` fails no call or teardown hooks 
+will be called and only one report will be created. 
+
+Each of the up to three reports is eventually fed to the logreport hook::
+
+    pytest_runtest_logreport(report) 
+
+A ``report`` object contains status and reporting information:: 
+
+    report.longrepr = string/lines/object to print 
+    report.when = "setup", "call" or "teardown" 
+    report.shortrepr = letter for progress-report 
+    report.passed = True or False
+    report.failed = True or False
+    report.skipped = True or False
+
+The `pytest_terminal plugin`_ uses this hook to print information
+about a test run. 
+    
+The protocol described here is implemented via this hook::
+ 
+    pytest_runtest_protocol(item) -> True 
+
+.. _`call object`: 
+
+The call object contains information about a performed call::
+
+    call.excinfo = ExceptionInfo object or None 
+    call.when = "setup", "call" or "teardown" 
+    call.outerr = None or tuple of strings representing captured stdout/stderr 
+
+.. _`pytest_pdb plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pdb.py
+.. _`pytest_terminal plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_terminal.py
 

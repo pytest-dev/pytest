@@ -72,18 +72,14 @@ class PluginHooks:
     # runtest related hooks 
     # ------------------------------------------------------------------------------
     def pytest_runtest_setup(self, item):
-        """ called before pytest_runtest(). """ 
-
-    def pytest_runtest_teardown(self, item):
-        """ called after pytest_runtest_call. """ 
+        """ called before pytest_runtest_call(). """ 
 
     def pytest_runtest_call(self, item):
-        """ called after pytest_runtest_call. """ 
+        """ execute test item. """ 
 
-    def pytest_runtest_makereport(self, item, excinfo, when, outerr):
-        """ make ItemTestReport for the specified test outcome. """
-    pytest_runtest_makereport.firstresult = True
-    
+    def pytest_runtest_teardown(self, item):
+        """ called after pytest_runtest_call(). """ 
+
     def pytest_runtest_protocol(self, item):
         """ run given test item and return test report. """ 
     pytest_runtest_protocol.firstresult = True
@@ -92,6 +88,9 @@ class PluginHooks:
         """ return True if we consumed/did the call to the python function item. """
     pytest_pyfunc_call.firstresult = True
 
+    def pytest_runtest_makereport(self, item, call):
+        """ make ItemTestReport for the specified test outcome. """
+    pytest_runtest_makereport.firstresult = True
 
     def pytest_runtest_logreport(self, rep):
         """ process item test report. """ 

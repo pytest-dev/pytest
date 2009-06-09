@@ -269,8 +269,12 @@ class TmpTestdir:
         p1 = py.path.local("stdout")
         p2 = py.path.local("stderr")
         print "running", cmdargs, "curdir=", py.path.local()
-        popen = self.popen(cmdargs, stdout=p1.open("w"), stderr=p2.open("w"))
+        f1 = p1.open("w")
+        f2 = p2.open("w")
+        popen = self.popen(cmdargs, stdout=f1, stderr=f2, close_fds=True)
         ret = popen.wait()
+        f1.close()
+        f2.close()
         out, err = p1.readlines(cr=0), p2.readlines(cr=0)
         if err:
             for line in err: 
@@ -356,7 +360,8 @@ class ReportRecorder(object):
         failed = []
         for rep in self.getreports("pytest_runtest_logreport"):
             if rep.passed: 
-                passed.append(rep) 
+                if rep.when == "call": 
+                    passed.append(rep) 
             elif rep.skipped: 
                 skipped.append(rep) 
             elif rep.failed:
@@ -384,19 +389,25 @@ def test_reportrecorder(testdir):
     recorder = testdir.getreportrecorder(registry)
     assert not recorder.getfailures()
     item = testdir.getitem("def test_func(): pass")
-    rep = item.config.hook.pytest_runtest_makereport(
-        item=item, excinfo=None, when="call", outerr=None)
+    class rep:
+        excinfo = None
+        passed = False
+        failed = True 
+        skipped = False
+        when = "call" 
 
-    rep.passed = False
-    rep.failed = True
     recorder.hook.pytest_runtest_logreport(rep=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    rep = item.config.hook.pytest_runtest_makereport(
-        item=item, excinfo=None, when="call", outerr=None)
+    class rep:
+        excinfo = None
+        passed = False
+        failed = False
+        skipped = True
+        when = "call" 
     rep.passed = False
     rep.skipped = True
     recorder.hook.pytest_runtest_logreport(rep=rep)

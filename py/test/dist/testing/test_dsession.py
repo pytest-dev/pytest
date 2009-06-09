@@ -5,8 +5,9 @@ import py
 XSpec = py.execnet.XSpec
 
 def run(item, node, excinfo=None):
-    rep = item.config.hook.pytest_runtest_makereport(
-            item=item, excinfo=excinfo, when="call", outerr=("", ""))
+    runner = item.config.pluginmanager.getplugin("runner")
+    rep = runner.ItemTestReport(item=item, 
+        excinfo=excinfo, when="call", outerr=("", ""))
     rep.node = node
     return rep 
 
