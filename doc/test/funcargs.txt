@@ -402,7 +402,7 @@ confused as to what the concrete question or answers actually mean,
 please see here_ :)  Otherwise proceed to step 2. 
 
 .. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
-.. _`local plugin`: ext.html#local-plugin
+.. _`local plugin`: extend.html#local-plugin
 
 
 step 2: adding a command line option 

@@ -30,7 +30,7 @@ modules a leading ``test_`` or trailing ``_test`` filename.
 From each test module every function with a leading ``test_``
 or class with a leading ``Test`` name is collected.  
 
-.. _`collection process`: ext.html#collection-process
+.. _`collection process`: extend.html#collection-process
 
 
 funcargs and xUnit style setups 
@@ -287,19 +287,19 @@ To make it easier to distinguish the generated tests it is possible to specify a
         for x in (42,17,49): 
             yield "case %d" % x, check, x 
 
-extensible plugin system 
+easy to extend 
 =========================================
 
-py.test itself consists of many plugins 
-and you can easily write new `py.test plugins`_ 
-for these purposes:
+Since 1.0 py.test has advanced `extension mechanisms`_. 
+One can can easily modify or add aspects for for 
+purposes such as: 
 
 * reporting extensions
-* customizing collection and run of tests 
+* customizing collection and execution of tests 
 * running non-python tests
-* managing test state setup 
+* managing custom test state setup 
 
-.. _`py.test plugins`: plugins.html
+.. _`extension mechanisms`: extend.html
 
 .. _`reStructured Text`: http://docutils.sourceforge.net
 .. _`Python debugger`: http://docs.python.org/lib/module-pdb.html

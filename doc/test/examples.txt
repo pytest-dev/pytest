@@ -1,3 +1,23 @@
+Learning by examples
+=====================
+
+adding custom options
+----------------------
+
+py.test supports adding of standard optparse_ Options. 
+A plugin may implement the ``addoption`` hook for registering 
+custom options:: 
+
+    def pytest_addoption(parser):
+        parser.addoption("-M", "--myopt", action="store", 
+            help="specify string to set myopt")
+
+    def pytest_configure(config):
+        if config.option.myopt:
+            # do action based on option value
+            #
+            
+.. _optparse: http://docs.python.org/library/optparse.html
 
 Working Examples
 ================

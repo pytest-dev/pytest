@@ -15,16 +15,13 @@ funcargs_: powerful parametrized test function setup
 
 `distributed testing`_: distribute test runs to other machines and platforms. 
 
-plugins_: using available plugins. 
-
-extend_: writing plugins and advanced configuration. 
+extend_: easily write per-project hooks or global plugins
 
 
 .. _quickstart: quickstart.html
 .. _features: features.html
 .. _funcargs: funcargs.html
-.. _plugins: plugins.html
-.. _extend: ext.html
+.. _extend: extend.html
 .. _`distributed testing`: dist.html
 
 

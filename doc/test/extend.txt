@@ -1,0 +1,174 @@
+================================================
+Extending and customizating py.test 
+================================================
+
+.. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/api.py
+
+.. _`local plugin`:
+
+py.test implements much of its functionality by calling `well specified 
+hooks`_.  Hook functions are defined in local or global plugins.  
+By default local plugins are the ``conftest.py`` modules in your project.  
+Global plugins are python modules or packages with a ``pytest_`` prefixed name.  
+
+
+Loading plugins and specifying dependencies 
+============================================
+
+py.test loads plugin modules at tool startup in the following ways:
+
+* by reading the ``PYTEST_PLUGINS`` environment variable 
+  and importing the comma-separated list of plugin names. 
+
+* by pre-scanning the command line for the ``-p name`` option
+  and loading the specified plugin before actual command line parsing. 
+
+* by loading all plugins specified by the ``pytest_plugins``
+  variable in a ``conftest.py`` file or test modules. 
+
+Note that at tool startup only ``conftest.py`` files in
+the directory of the specified test modules (or the current dir if None) 
+or any of the parent directories are found.  There is no try to 
+pre-scan all subdirectories to find ``conftest.py`` files or test 
+modules.  Each plugins may specify its dependencies via 
+``pytest_plugins`` definition recursively. 
+
+.. _`well specified hooks`: 
+
+Available py.test hooks 
+====================================
+
+A py.test hook is nothing more than a python function with 
+a ``pytest_`` prefixed name taking a number of arguments.  
+When loading a plugin module which contains hooks py.test performs
+strict checking on all hook functions.  Function and argument names need
+to match exactly the `original definition of the hook`_.  This allows
+for early mismatch reporting and minimizes version incompatibilites. 
+
+"runtest" hooks 
+-------------------
+
+Each test item is usually executed by calling the following three hooks::
+
+    pytest_runtest_setup(item) 
+    pytest_runtest_call(item) 
+    pytest_runtest_teardown(item) 
+
+For each of the three invocations a `call object`_ encapsulates
+information about the outcome of the call and is subsequently used 
+to make a report object:: 
+
+    report = hook.pytest_runtest_makereport(item, call)
+
+For example, the `pytest_pdb plugin`_ uses this hook to activate
+interactive debugging on failures when ``--pdb`` is specified on the
+command line. 
+
+Usually three reports will be generated for a single test item.  However, 
+if the ``pytest_runtest_setup`` fails no call or teardown hooks 
+will be called and only one report will be created. 
+
+Each of the up to three reports is eventually fed to the logreport hook::
+
+    pytest_runtest_logreport(report) 
+
+A ``report`` object contains status and reporting information:: 
+
+    report.longrepr = string/lines/object to print 
+    report.when = "setup", "call" or "teardown" 
+    report.shortrepr = letter for progress-report 
+    report.passed = True or False
+    report.failed = True or False
+    report.skipped = True or False
+
+The `pytest_terminal plugin`_ uses this hook to print information
+about a test run. 
+    
+The protocol described here is implemented via this hook::
+ 
+    pytest_runtest_protocol(item) -> True 
+
+.. _`call object`: 
+
+The call object contains information about a performed call::
+
+    call.excinfo = ExceptionInfo object or None 
+    call.when = "setup", "call" or "teardown" 
+    call.outerr = None or tuple of strings representing captured stdout/stderr 
+
+.. _`pytest_pdb plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pdb.py
+.. _`pytest_terminal plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_terminal.py
+
+
+Included default plugins
+=============================
+
+You can find the source code of all default plugins in 
+
+    http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
+
+Additionally you can check out some more contributed plugins here
+
+    http://bitbucket.org/hpk42/py-trunk/src/tip/contrib/
+
+
+.. _`collection process`: 
+
+Test Collection process 
+====================================================== 
+
+The collecting process is iterative so that distribution
+and execution of tests can start as soon as the first test
+item is collected.  Collection nodes with children are 
+called "Collectors" and terminal nodes are called "Items".  
+Here is an example of such a tree, generated with the 
+command ``py.test --collectonly py/xmlobj``:: 
+
+    <Directory 'xmlobj'>
+        <Directory 'testing'>
+            <Module 'test_html.py' (py.__.xmlobj.testing.test_html)>
+                <Function 'test_html_name_stickyness'>
+                <Function 'test_stylenames'>
+                <Function 'test_class_None'>
+                <Function 'test_alternating_style'>
+            <Module 'test_xml.py' (py.__.xmlobj.testing.test_xml)>
+                <Function 'test_tag_with_text'>
+                <Function 'test_class_identity'>
+                <Function 'test_tag_with_text_and_attributes'>
+                <Function 'test_tag_with_subclassed_attr_simple'>
+                <Function 'test_tag_nested'>
+                <Function 'test_tag_xmlname'>
+
+By default all directories not starting with a dot are traversed, 
+looking for ``test_*.py`` and ``*_test.py`` files.  Those Python 
+files are imported under their `package name`_. 
+
+The Module collector looks for test functions 
+and test classes and methods. Test functions and methods
+are prefixed ``test`` by default.  Test classes must 
+start with a capitalized ``Test`` prefix. 
+
+.. _`package name`: 
+
+constructing the package name for test modules
+-------------------------------------------------
+
+Test modules are imported under their fully qualified 
+name.  Given a filesystem ``fspath`` it is constructed as follows:
+
+* walk the directories up to the last one that contains 
+  an ``__init__.py`` file.  
+
+* perform ``sys.path.insert(0, basedir)``.
+
+* import the root package as ``root``
+
+* determine the fully qualified name for ``fspath`` by either:
+
+  * calling ``root.__pkg__.getimportname(fspath)`` if the
+    ``__pkg__`` exists.` or 
+
+  * otherwise use the relative path of the module path to
+    the base dir and turn slashes into dots and strike
+    the trailing ``.py``. 
+
