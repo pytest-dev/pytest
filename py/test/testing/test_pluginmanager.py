@@ -197,15 +197,6 @@ class TestPytestPluginInteractions:
 
     # lower level API
 
-    def test_getfirst(self):
-        pluginmanager = PluginManager()
-        class My1:
-            x = 1
-        assert pluginmanager.getfirst("x") is None
-        pluginmanager.register(My1())
-        assert pluginmanager.getfirst("x") == 1
-
-
     def test_listattr(self):
         pluginmanager = PluginManager()
         class My2:

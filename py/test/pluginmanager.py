@@ -53,12 +53,12 @@ class PluginManager(object):
     def getplugins(self):
         return list(self.comregistry)
 
-    # API for bootstrapping 
-    #
     def getplugin(self, importname):
         impname = canonical_importname(importname)
         return self.impname2plugin[impname]
 
+    # API for bootstrapping 
+    #
     def _envlist(self, varname):
         val = py.std.os.environ.get(varname, None)
         if val is not None:
@@ -144,10 +144,6 @@ class PluginManager(object):
     # API for interacting with registered and instantiated plugin objects 
     #
     # 
-    def getfirst(self, attrname):
-        for x in self.comregistry.listattr(attrname):
-            return x
-
     def listattr(self, attrname, plugins=None, extra=()):
         return self.comregistry.listattr(attrname, plugins=plugins, extra=extra)
 
