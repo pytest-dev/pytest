@@ -116,33 +116,21 @@ class FuncargRequest:
                 self.addfinalizer(lambda: teardown(val), scope=scope)
         return val 
 
-    def call_next_provider(self):
-        if not self._provider[self._argname]:
-            raise self.Error("no provider methods left for %r" % self._argname)
-        next_provider = self._provider[self._argname].pop()
-        return next_provider(request=self)
-
     def getfuncargvalue(self, argname):
         try:
             return self._funcargs[argname]
         except KeyError:
             pass
-        assert argname not in self._provider
-        self._provider[argname] = self.config.pluginmanager.listattr(
-            plugins=self._plugins, 
-            attrname=self._argprefix + str(argname)
-        )
-        # during call_next_provider() we keep state about the current 
-        # argument on the request object - we may go for instantiating 
-        # request objects per each funcargname if neccessary
-        oldname = self._argname 
-        self._argname = argname 
-        try:
-            self._funcargs[argname] = res = self.call_next_provider()
-        except self.Error:
+        if argname not in self._provider:
+            self._provider[argname] = self.config.pluginmanager.listattr(
+                    plugins=self._plugins, 
+                    attrname=self._argprefix + str(argname)
+            )
+        #else: we are called recursively  
+        if not self._provider[argname]:
             self._raiselookupfailed(argname)
-        if oldname:
-            self._argname = oldname 
+        funcargprovider = self._provider[argname].pop()
+        self._funcargs[argname] = res = funcargprovider(request=self)
         return res
 
     def _getscopeitem(self, scope):

@@ -14,7 +14,7 @@ def setglobals(request):
 
 def pytest_funcarg__testdir(request):
     setglobals(request)
-    return request.call_next_provider()
+    return request.getfuncargvalue("testdir")
 
 class ImmutablePickleTransport:
     def __init__(self, request):

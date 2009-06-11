@@ -174,8 +174,10 @@ object that is to be closed when the test function finishes.
 requesting values of other funcargs 
 ---------------------------------------------
 
-While setting up one function argument you may 
-want to retrieve another function argument. 
+Inside a funcarg provider, you sometimes may want to use a
+different function argument which  may be specified with
+the test function or not.  For such purposes you can 
+dynamically request a funcarg value:
 
 .. sourcecode:: python 
 
@@ -184,26 +186,10 @@ want to retrieve another function argument.
         Each function argument is only requested once per function setup. 
         """ 
 
-Note that it does not matter if the test function 
-specifies the requested function argument. 
-
-decorating other funcarg providers 
-++++++++++++++++++++++++++++++++++++++++
-
-If you want to **decorate a function argument** that is 
-provided elsewhere you can ask the request object 
-to provide the "next" value:
-
-.. sourcecode:: python
-
-    def pytest_funcarg__myfile(self, request):
-        myfile = request.call_next_provider()
-        # do something extra 
-        return myfile
-
-This will raise a ``request.Error`` exception if there 
-is no next provider left.  See the `decorator example`_ 
-for a use of this method. 
+You can also use this function if you want to `decorate a funcarg`_ 
+locally, i.e. you want to provide the normal value but add/do something
+extra.  If a provider cannot be found a ``request.Error`` exception will be 
+raised. 
 
 
 .. _`test generators`: 
@@ -516,7 +502,7 @@ to your AcceptFuncarg and drive running of tools or
 applications and provide ways to do assertions about
 the output. 
 
-.. _`decorator example`: 
+.. _`decorate a funcarg`: 
 
 example: decorating a funcarg in a test module
 --------------------------------------------------------------
@@ -528,7 +514,7 @@ extend the `accept example`_ by putting this in our test class:
 .. sourcecode:: python
 
     def pytest_funcarg__accept(self, request):
-        arg = request.call_next_provider()
+        arg = request.getfuncargvalue("accept") # call the next provider
         # create a special layout in our tempdir
         arg.tmpdir.mkdir("special")
         return arg 

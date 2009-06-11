@@ -391,7 +391,7 @@ class TestApigenLinkRole:
 
 class TestDoctest:
     def pytest_funcarg__testdir(self, request):
-        testdir = request.call_next_provider()
+        testdir = request.getfuncargvalue("testdir")
         assert request.module.__name__ == __name__
         testdir.makepyfile(confrest="from py.__.misc.rest import Project")
         for p in testdir.plugins:

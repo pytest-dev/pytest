@@ -9,7 +9,7 @@ def pytest_collect_file(path, parent):
 
 # decorate testdir to contain plugin under test 
 def pytest_funcarg__testdir(request):
-    testdir = request.call_next_provider()
+    testdir = request.getfuncargvalue("testdir")
     #for obj in (request.cls, request.module):
     #    if hasattr(obj, 'testplugin'): 
     #        testdir.plugins.append(obj.testplugin)

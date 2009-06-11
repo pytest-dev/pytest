@@ -128,15 +128,20 @@ class TestRequest:
         assert len(provider) == 1
         assert provider[0].__name__ == "pytest_funcarg__something"
 
-    def test_request_call_next_provider(self, testdir):
+    def test_getfuncargvalue_recursive(self, testdir):
+        testdir.makeconftest("""
+            def pytest_funcarg__something(request):
+                return 1
+        """)
         item = testdir.getitem("""
-            def pytest_funcarg__something(request): return 1
-            def test_func(something): pass
+            def pytest_funcarg__something(request):
+                return request.getfuncargvalue("something") + 1
+            def test_func(something): 
+                assert something == 2
         """)
         req = funcargs.FuncargRequest(item)
         val = req.getfuncargvalue("something") 
-        assert val == 1
-        py.test.raises(req.Error, "req.call_next_provider()")
+        assert val == 2
 
     def test_getfuncargvalue(self, testdir):
         item = testdir.getitem("""
