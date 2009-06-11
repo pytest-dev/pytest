@@ -94,7 +94,7 @@ import os, StringIO
 
 def test_generic_path():
     from py.__.test.collect import Node, Item, FSCollector
-    p1 = Node('a', config='dummy')
+    p1 = Node('a')
     assert p1.fspath is None
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)
@@ -103,7 +103,7 @@ def test_generic_path():
     res = generic_path(item)
     assert res == 'a.B().c'
 
-    p0 = FSCollector('proj/test', config='dummy')
+    p0 = FSCollector('proj/test')
     p1 = FSCollector('proj/test/a', parent=p0)
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)

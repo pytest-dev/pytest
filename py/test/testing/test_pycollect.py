@@ -6,7 +6,8 @@ class TestModule:
     def test_module_file_not_found(self, testdir):
         tmpdir = testdir.tmpdir
         fn = tmpdir.join('nada','no')
-        col = py.test.collect.Module(fn, config=testdir.parseconfig(tmpdir))
+        col = py.test.collect.Module(fn)
+        col.config = testdir.parseconfig(tmpdir)
         py.test.raises(py.error.ENOENT, col.collect) 
 
     def test_failing_import(self, testdir):
@@ -223,13 +224,13 @@ class TestFunction:
         
     def test_function_equality(self, tmpdir):
         config = py.test.config._reparse([tmpdir])
-        f1 = py.test.collect.Function(name="name", config=config, 
+        f1 = py.test.collect.Function(name="name", 
                                       args=(1,), callobj=isinstance)
-        f2 = py.test.collect.Function(name="name", config=config, 
+        f2 = py.test.collect.Function(name="name",
                                       args=(1,), callobj=callable)
         assert not f1 == f2
         assert f1 != f2
-        f3 = py.test.collect.Function(name="name", config=config, 
+        f3 = py.test.collect.Function(name="name", 
                                       args=(1,2), callobj=callable)
         assert not f3 == f2
         assert f3 != f2
@@ -237,7 +238,7 @@ class TestFunction:
         assert not f3 == f1
         assert f3 != f1
 
-        f1_b = py.test.collect.Function(name="name", config=config, 
+        f1_b = py.test.collect.Function(name="name", 
                                       args=(1,), callobj=isinstance)
         assert f1 == f1_b
         assert not f1 != f1_b
@@ -252,9 +253,9 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
-        f5 = py.test.collect.Function(name="name", config=config, 
+        f5 = py.test.collect.Function(name="name", 
                                       callspec=callspec1, callobj=isinstance)
-        f5b = py.test.collect.Function(name="name", config=config, 
+        f5b = py.test.collect.Function(name="name", 
                                       callspec=callspec2, callobj=isinstance)
         assert f5 != f5b
         assert not (f5 == f5b)

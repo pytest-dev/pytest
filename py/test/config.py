@@ -155,7 +155,8 @@ class Config(object):
         if pkgpath is None:
             pkgpath = path.check(file=1) and path.dirpath() or path
         Dir = self._conftest.rget("Directory", pkgpath)
-        col = Dir(pkgpath, config=self)
+        col = Dir(pkgpath)
+        col.config = self 
         return col._getfsnode(path)
 
     def getconftest_pathlist(self, name, path=None):

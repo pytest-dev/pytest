@@ -25,14 +25,11 @@ class Node(object):
         - configuration/options for setup/teardown 
           stdout/stderr capturing and execution of test items 
     """
-    def __init__(self, name, parent=None, config=None):
+    def __init__(self, name, parent=None):
         self.name = name 
         self.parent = parent
-        if config is None:
-            config = parent.config
-        self.config = config 
+        self.config = getattr(parent, 'config', None)
         self.fspath = getattr(parent, 'fspath', None) 
-
 
     # 
     # note to myself: Pickling is uh.
@@ -281,7 +278,6 @@ class Collector(Node):
     """
     Directory = configproperty('Directory')
     Module = configproperty('Module')
-    #DoctestFile = configproperty('DoctestFile')
 
     def collect(self):
         """ returns a list of children (items and collectors) 
@@ -335,9 +331,9 @@ class Collector(Node):
         return self.collect_by_name(name)
 
 class FSCollector(Collector): 
-    def __init__(self, fspath, parent=None, config=None): 
+    def __init__(self, fspath, parent=None):
         fspath = py.path.local(fspath) 
-        super(FSCollector, self).__init__(fspath.basename, parent, config=config) 
+        super(FSCollector, self).__init__(fspath.basename, parent)
         self.fspath = fspath 
 
     def __getstate__(self):
