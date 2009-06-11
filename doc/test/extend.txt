@@ -2,7 +2,6 @@
 Extending and customizating py.test 
 ================================================
 
-.. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/api.py
 
 .. _`local plugin`:
 
@@ -44,6 +43,8 @@ When loading a plugin module which contains hooks py.test performs
 strict checking on all hook functions.  Function and argument names need
 to match exactly the `original definition of the hook`_.  This allows
 for early mismatch reporting and minimizes version incompatibilites. 
+
+.. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
 
 "runtest" hooks 
 -------------------

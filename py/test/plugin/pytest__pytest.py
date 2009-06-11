@@ -57,7 +57,8 @@ class HookRecorder:
     def _makecallparser(self, method):
         name = method.__name__
         args, varargs, varkw, default = py.std.inspect.getargspec(method)
-        assert args[0] == "self"
+        if args[0] != "self":
+            args.insert(0, 'self') 
         fspec = py.std.inspect.formatargspec(args, varargs, varkw, default)
         # we use exec because we want to have early type
         # errors on wrong input arguments, using

@@ -6,7 +6,7 @@ import py
 import os
 import inspect
 from py.__.test.config import Config as pytestConfig
-import api
+import hookspec
 
 pytest_plugins = '_pytest'
 
@@ -83,7 +83,7 @@ class TmpTestdir:
             raise ValueError("obj %r provides no comregistry" %(obj,))
         assert isinstance(registry, py._com.Registry)
         reprec = ReportRecorder(registry)
-        reprec.hookrecorder = self._pytest.gethookrecorder(api.PluginHooks, registry)
+        reprec.hookrecorder = self._pytest.gethookrecorder(hookspec, registry)
         reprec.hook = reprec.hookrecorder.hook
         return reprec
 

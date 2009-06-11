@@ -104,7 +104,7 @@ class Hooks:
             registry = py._com.comregistry
         self.registry = registry
         for name, method in vars(hookspecs).items():
-            if name[:2] != "__":
+            if name[:1] != "_":
                 firstresult = getattr(method, 'firstresult', False)
                 mm = HookCall(registry, name, firstresult=firstresult)
                 setattr(self, name, mm)

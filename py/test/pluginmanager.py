@@ -2,7 +2,7 @@
 managing loading and interacting with pytest plugins. 
 """
 import py
-from py.__.test.plugin import api
+from py.__.test.plugin import hookspec
 
 def check_old_use(mod, modname):
     clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
@@ -19,7 +19,7 @@ class PluginManager(object):
         self.impname2plugin = {}
 
         self.hook = py._com.Hooks(
-            hookspecs=api.PluginHooks, 
+            hookspecs=hookspec, 
             registry=self.comregistry) 
 
     def _getpluginname(self, plugin, name):
@@ -105,7 +105,7 @@ class PluginManager(object):
         # check plugin hooks 
         # =====================================================
         methods = collectattr(plugin)
-        hooks = collectattr(api.PluginHooks)
+        hooks = collectattr(hookspec)
         stringio = py.std.StringIO.StringIO()
         def Print(*args):
             if args:
