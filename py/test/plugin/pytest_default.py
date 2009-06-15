@@ -19,24 +19,18 @@ def pytest_collect_file(path, parent):
         if ext == ".py":
             return parent.Module(path, parent=parent) 
 
-def pytest_collect_recurse(path, parent):
-    #excludelist = parent._config.getvalue_pathlist('dir_exclude', path)
-    #if excludelist and path in excludelist:
-    #    return 
-    if not parent.recfilter(path):
-        # check if cmdline specified this dir or a subdir directly
-        for arg in parent.config.args:
-            if path == arg or arg.relto(path):
-                break
-        else:
-            return False 
-    return True
-  
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment 
     # not use parent.Directory here as we generally 
     # want dir/conftest.py to be able to 
     # define Directory(dir) already 
+    if not parent.recfilter(path): # by default special ".cvs", ... 
+        # check if cmdline specified this dir or a subdir directly
+        for arg in parent.config.args:
+            if path == arg or arg.relto(path):
+                break
+        else:
+            return 
     Directory = parent.config.getvalue('Directory', path) 
     return Directory(path, parent=parent)
 

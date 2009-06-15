@@ -1,12 +1,57 @@
 Test configuration
 ========================
 
-test options and values 
+available test options 
 -----------------------------
 
-You can see all available command line options by running::
+You can see command line options by running::
 
     py.test -h 
+
+This will display all available command line options
+including the ones added by plugins `loaded at tool startup`_. 
+
+.. _`loaded at tool startup`: extend.html#tool-startup
+
+.. _conftestpy: 
+.. _collectignore:
+
+conftest.py: project specific test configuration
+--------------------------------------------------------
+
+A unique feature of py.test are its powerful ``conftest.py`` files which
+allow to `set option defaults`_, `implement hooks`_, `specify funcargs`_
+or set particular variables to influence the testing process:
+
+* ``pytest_plugins``: list of named plugins to load 
+
+* ``collect_ignore``: list of paths to ignore during test collection (relative to the containing
+  ``conftest.py`` file) 
+
+* ``rsyncdirs``: list of to-be-rsynced directories for distributed
+  testing 
+
+You may put a conftest.py files in your project root directory or into
+your package directory if you want to add project-specific test options. 
+
+``py.test`` loads all ``conftest.py`` files upwards from the command
+line specified test files.  It will lookup configuration values
+right-to-left, i.e. the closer conftest files will be checked first.
+You may have a ``conftest.py`` in your very home directory to have some
+global configuration values. 
+
+There is a flag that may help you debugging your conftest.py 
+configuration::
+
+    py.test --traceconfig 
+
+.. _`implement hooks`: extend.html#conftest.py-plugin
+.. _`specify funcargs`: funcargs.html#application-setup-tutorial-example
+
+.. _`set option defaults`: 
+
+setting option defaults 
+-------------------------------
 
 py.test will lookup values of options in this order:
 
@@ -16,11 +61,10 @@ py.test will lookup values of options in this order:
 
 The name of an option usually is the one you find 
 in the longform of the option, i.e. the name 
-behind the ``--`` double-dash. 
+behind the ``--`` double-dash that you get with ``py.test -h``.
 
 IOW, you can set default values for options per project, per
 home-directoray, per shell session or per test-run. 
-
 
 .. _`basetemp`: 
 

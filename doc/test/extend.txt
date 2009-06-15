@@ -1,55 +1,103 @@
 ================================================
-Extending and customizating py.test 
+Extending and customizing py.test 
 ================================================
-
 
 .. _`local plugin`:
 
 py.test implements much of its functionality by calling `well specified 
-hooks`_.  Hook functions are defined in local or global plugins.  
-By default local plugins are the ``conftest.py`` modules in your project.  
-Global plugins are python modules or packages with a ``pytest_`` prefixed name.  
+hooks`_.  Python modules which contain such hook functions are called 
+plugins.  Hook functions are discovered in ``conftest.py`` files or
+in **named** plugins.  ``conftest.py`` files are sometimes called "anonymous"
+or "local" plugins if they define hooks.  Named plugins are python modules 
+or packages that have an all lowercase ``pytest_`` prefixed name and who
+are imported during tool startup or the testing process.  
 
+.. _`tool startup`:
 
-Loading plugins and specifying dependencies 
-============================================
+Plugin discovery at tool startup
+--------------------------------------------
 
-py.test loads plugin modules at tool startup in the following ways:
+py.test loads plugin modules at tool startup in the following way:
 
 * by reading the ``PYTEST_PLUGINS`` environment variable 
-  and importing the comma-separated list of plugin names. 
+  and importing the comma-separated list of named plugins. 
 
 * by pre-scanning the command line for the ``-p name`` option
   and loading the specified plugin before actual command line parsing. 
 
-* by loading all plugins specified by the ``pytest_plugins``
-  variable in a ``conftest.py`` file or test modules. 
+* by loading all `conftest.py plugin`_ files as inferred by the command line
+  invocation 
+
+* by recursively loading all plugins specified by the 
+  ``pytest_plugins`` variable in a ``conftest.py`` file 
 
 Note that at tool startup only ``conftest.py`` files in
 the directory of the specified test modules (or the current dir if None) 
 or any of the parent directories are found.  There is no try to 
 pre-scan all subdirectories to find ``conftest.py`` files or test 
-modules.  Each plugins may specify its dependencies via 
-``pytest_plugins`` definition recursively. 
+modules.  
+
+Specifying plugins in a test module or plugin
+-----------------------------------------------
+
+You can specify plugins in a test module or a plugin like this:
+
+.. sourcecode:: python
+
+    pytest_plugins = "name1", "name2", 
+
+When the test module or plugin is loaded the specified plugins
+will be loaded.  If you specify plugins without the ``pytest_``
+prefix it will be automatically added.  All plugin names 
+must be lowercase. 
+
+.. _`conftest.py plugin`:
+.. _`conftestplugin`:
+
+conftest.py as anonymous per-project plugins 
+--------------------------------------------------
+
+The purpose of ``conftest.py`` files is to allow `project-specific 
+test configuration`_.  But they also make for a good place to implement 
+project-specific test related features through hooks.  For example you may 
+set the `collect_ignore`_ variable depending on a command line option
+by defining the following hook in a ``conftest.py`` file:
+
+.. _`exclude-file-example`: 
+
+.. sourcecode:: python
+
+    # ./conftest.py in your root or package dir 
+    collect_ignore = ['hello', 'test_world.py'] 
+    def pytest_addoption(parser):
+        parser.addoption("--runall", action="store_true", default=False)
+    def pytest_configure(config):
+        if config.getvalue("runall"):
+            collect_ignore[:] = []
+
+.. _`project-specific test configuration`: config.html#conftestpy 
+.. _`collect_ignore`: config.html#collectignore
 
 .. _`well specified hooks`: 
 
 Available py.test hooks 
 ====================================
 
-A py.test hook is nothing more than a python function with 
-a ``pytest_`` prefixed name taking a number of arguments.  
-When loading a plugin module which contains hooks py.test performs
-strict checking on all hook functions.  Function and argument names need
-to match exactly the `original definition of the hook`_.  This allows
-for early mismatch reporting and minimizes version incompatibilites. 
+py.test calls hooks functions to implement its `test collection`_, running and 
+reporting process.  Upon loading of a plugin py.test performs
+strict checking on contained hook functions.  Function and argument names 
+need to match exactly the `original definition of the hook`_.  It thus 
+provides useful error reporting on mistyped hook or argument names
+and minimizes version incompatibilites. 
 
 .. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
 
 generic "runtest" hooks 
 ------------------------------
 
-Each test item is usually executed by calling the following three hooks::
+Each test item is usually executed by calling the following three hooks:
+
+.. sourcecode:: python
 
     pytest_runtest_setup(item) 
     pytest_runtest_call(item) 
@@ -57,7 +105,9 @@ Each test item is usually executed by calling the following three hooks::
 
 For each of the three invocations a `call object`_ encapsulates
 information about the outcome of the call and is subsequently used 
-to make a report object:: 
+to make a report object: 
+
+.. sourcecode:: python
 
     report = hook.pytest_runtest_makereport(item, call)
 
@@ -69,11 +119,15 @@ Usually three reports will be generated for a single test item.  However,
 if the ``pytest_runtest_setup`` fails no call or teardown hooks 
 will be called and only one report will be created. 
 
-Each of the up to three reports is eventually fed to the logreport hook::
+Each of the up to three reports is eventually fed to the logreport hook:
+
+.. sourcecode:: python
 
     pytest_runtest_logreport(report) 
 
-A ``report`` object contains status and reporting information:: 
+A ``report`` object contains status and reporting information:
+
+.. sourcecode:: python
 
     report.longrepr = string/lines/object to print 
     report.when = "setup", "call" or "teardown" 
@@ -85,13 +139,17 @@ A ``report`` object contains status and reporting information::
 The `pytest_terminal plugin`_ uses this hook to print information
 about a test run. 
     
-The protocol described here is implemented via this hook::
+The protocol described here is implemented via this hook:
+
+.. sourcecode:: python
  
     pytest_runtest_protocol(item) -> True 
 
 .. _`call object`: 
 
-The call object contains information about a performed call::
+The call object contains information about a performed call:
+
+.. sourcecode:: python
 
     call.excinfo = ExceptionInfo object or None 
     call.when = "setup", "call" or "teardown" 
@@ -104,18 +162,37 @@ The call object contains information about a performed call::
 generic collection hooks 
 ------------------------------
 
-XXX 
+py.test calls the following two fundamental hooks for collecting files and directories: 
 
-Python module and test function hooks 
--------------------------------------------
+.. sourcecode:: python
+
+    def pytest_collect_directory(path, parent):
+        """ return Collection node or None for the given path. """
+
+    def pytest_collect_file(path, parent):
+        """ return Collection node or None for the given path. """
+
+Both return a `collection node`_ for a given path.  All returned 
+nodes from all hook implementations will participate in the
+collection and running protocol.  The ``parent`` object is
+the parent node and may be used to access command line
+options via the ``parent.config`` object. 
+
+
+Python specific test function and module hooks 
+----------------------------------------------------
 
 For influencing the collection of objects in Python modules 
 you can use the following hook:
+
+.. sourcecode:: python
 
     pytest_pycollect_makeitem(collector, name, obj)
 
 This hook will be called for each Python object in a collected
 Python module.  The return value is a custom `collection node`_. 
+
+
 
 .. XXX or ``False`` if you want to indicate that the given item should not be collected. 
 
@@ -135,6 +212,7 @@ Additionally you can check out some more contributed plugins here
 
 .. _`collection process`: 
 .. _`collection node`: 
+.. _`test collection`:
 
 
 Test Collection process 

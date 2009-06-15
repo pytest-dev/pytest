@@ -2,14 +2,15 @@
 **funcargs**: test setup and parametrization
 ======================================================
 
-Since version 1.0 py.test automatically discovers and 
-manages test function arguments.  The mechanism 
-naturally connects to the automatic discovery of 
-test files, classes and functions.  Automatic test discovery
-values the `Convention over Configuration`_ concept. 
-By discovering and calling functions ("funcarg providers") that 
-provide values for your actual test functions 
-it becomes easy to: 
+Since version 1.0 py.test introduces test function arguments,
+in short "funcargs" for your Python test functions.  The basic idea 
+that your unit-, functional- or acceptance test functions can name
+arguments and py.test will discover a matching provider from your 
+test configuration.  The mechanism complements the automatic 
+discovery of test files, classes and functions which follows
+the `Convention over Configuration`_ strategy.  By discovering and
+calling functions ("funcarg providers") that provide values for your
+actual test functions it becomes easy to: 
 
 * separate test function code from test state setup/fixtures
 * manage test value setup and teardown depending on 
@@ -339,9 +340,8 @@ following code into a local ``conftest.py``:
     
     from myapp import MyApp
 
-    class ConftestPlugin:
-        def pytest_funcarg__mysetup(self, request):
-            return MySetup()
+    def pytest_funcarg__mysetup(request):
+        return MySetup()
 
     class MySetup:
         def myapp(self):
@@ -406,13 +406,12 @@ and to offer a new mysetup method:
     import py
     from myapp import MyApp
 
-    class ConftestPlugin:
-        def pytest_funcarg__mysetup(self, request):
-            return MySetup(request)
+    def pytest_funcarg__mysetup(request):
+        return MySetup(request)
 
-        def pytest_addoption(self, parser):
-            parser.addoption("--ssh", action="store", default=None,
-                help="specify ssh host to run tests with")
+    def pytest_addoption(parser):
+        parser.addoption("--ssh", action="store", default=None,
+            help="specify ssh host to run tests with")
         
 
     class MySetup:
@@ -465,14 +464,13 @@ example: specifying and selecting acceptance tests
 .. sourcecode:: python
 
     # ./conftest.py 
-    class ConftestPlugin:
-        def pytest_option(self, parser):
-            group = parser.getgroup("myproject")
-            group.addoption("-A", dest="acceptance", action="store_true", 
-                help="run (slow) acceptance tests")
+    def pytest_option(parser):
+        group = parser.getgroup("myproject")
+        group.addoption("-A", dest="acceptance", action="store_true", 
+            help="run (slow) acceptance tests")
 
-        def pytest_funcarg__accept(self, request):
-            return AcceptFuncarg(request)
+    def pytest_funcarg__accept(request):
+        return AcceptFuncarg(request)
 
     class AcceptFuncarg:
         def __init__(self, request):
@@ -527,13 +525,14 @@ Our module level provider will be invoked first and it can
 ask its request object to call the next provider and then 
 decorate its result.  This mechanism allows us to stay 
 ignorant of how/where the function argument is provided - 
-in our example from a ConftestPlugin but could be any plugin. 
+in our example from a `conftest plugin`_. 
 
 sidenote: the temporary directory used here are instances of 
 the `py.path.local`_ class which provides many of the os.path 
 methods in a convenient way. 
 
 .. _`py.path.local`: ../path.html#local
+.. _`conftest plugin`: extend.html#conftestplugin
 
 
 Questions and Answers

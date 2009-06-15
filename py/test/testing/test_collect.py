@@ -205,17 +205,22 @@ class TestCustomConftests:
         assert item.name == "hello.xxx"
         assert item.__class__.__name__ == "CustomItem"
 
-    def test_avoid_directory_on_option(self, testdir):
+    def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest("""
+            collect_ignore = ['hello', 'test_world.py']
             def pytest_addoption(parser):
                 parser.addoption("--XX", action="store_true", default=False)
-            def pytest_collect_recurse(path, parent):
-                return parent.config.getvalue("XX")
+            def pytest_configure(config):
+                if config.getvalue("XX"):
+                    collect_ignore[:] = []
         """)
         testdir.mkdir("hello")
+        testdir.makepyfile(test_world="#")
         reprec = testdir.inline_run(testdir.tmpdir)
         names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' not in names 
+        assert 'test_world.py' not in names 
         reprec = testdir.inline_run(testdir.tmpdir, "--XX")
         names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' in names 
+        assert 'test_world.py' in names 

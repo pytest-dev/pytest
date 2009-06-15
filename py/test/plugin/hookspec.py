@@ -15,8 +15,7 @@ def pytest_configure(config):
     """
 
 def pytest_unconfigure(config):
-    """ called before test process is exited. 
-    """
+    """ called before test process is exited.  """
 
 # ------------------------------------------------------------------------------
 # test Session related hooks 
@@ -29,24 +28,17 @@ def pytest_sessionfinish(session, exitstatus, excrepr=None):
     """ whole test run finishes. """
 
 def pytest_deselected(items):
-    """ collected items that were deselected (by keyword). """
+    """ repeatedly called for test items deselected by keyword. """
 
 # ------------------------------------------------------------------------------
 # collection hooks
 # ------------------------------------------------------------------------------
 
+def pytest_collect_directory(path, parent):
+    """ return Collection node or None for the given path. """
 
 def pytest_collect_file(path, parent):
-    """ return Collection node or None. """
-
-def pytest_collect_recurse(path, parent):
-    """ return True/False to cause/prevent recursion into given directory. 
-        return None if you do not want to make the decision. 
-    """ 
-pytest_collect_recurse.firstresult = True
-
-def pytest_collect_directory(path, parent):
-    """ return Collection node or None. """
+    """ return Collection node or None for the given path. """
 
 def pytest_collectstart(collector):
     """ collector starts collecting. """
@@ -71,7 +63,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 pytest_pycollect_makeitem.firstresult = True
 
 def pytest_pyfunc_call(pyfuncitem):
-    """ perform function call with the given function arguments. """ 
+    """ perform function call to the with the given function arguments. """ 
 pytest_pyfunc_call.firstresult = True
 
 def pytest_generate_tests(metafunc):

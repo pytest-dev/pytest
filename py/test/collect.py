@@ -384,7 +384,13 @@ class Directory(FSCollector):
                     l.append(res)
         return l
 
+    def _ignore(self, path):
+        ignore_paths = self.config.getconftest_pathlist("collect_ignore", path=path)
+        return ignore_paths and path in ignore_paths 
+
     def consider(self, path):
+        if self._ignore(path):
+            return
         if path.check(file=1):
             res = self.consider_file(path)
         elif path.check(dir=1):
@@ -392,10 +398,11 @@ class Directory(FSCollector):
         else:
             res = None            
         if isinstance(res, list):
-            # throw out identical modules
+            # throw out identical results
             l = []
             for x in res:
                 if x not in l:
+                    assert x.parent == self, "wrong collection tree construction"
                     l.append(x)
             res = l 
         return res
@@ -406,10 +413,8 @@ class Directory(FSCollector):
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             py.log._apiwarn("0.99", "usefilters argument not needed")
-        res = self.config.hook.pytest_collect_recurse(path=path, parent=self)
-        if res is None or res:
-            return self.config.hook.pytest_collect_directory(
-                path=path, parent=self)
+        return self.config.hook.pytest_collect_directory(
+            path=path, parent=self)
 
 class Item(Node): 
     """ a basic test item. """

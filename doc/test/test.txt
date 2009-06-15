@@ -15,13 +15,15 @@ funcargs_: powerful parametrized test function setup
 
 `distributed testing`_: distribute test runs to other machines and platforms. 
 
-extend_: easily write per-project hooks or global plugins
+extend_: intro to extend and customize py.test runs 
 
+config_: ``conftest.py`` files and general configuration 
 
 .. _quickstart: quickstart.html
 .. _features: features.html
 .. _funcargs: funcargs.html
 .. _extend: extend.html
+.. _config: config.html
 .. _`distributed testing`: dist.html
 
 

@@ -1,6 +1,18 @@
 $Id: CHANGELOG 64077 2009-04-14 21:04:57Z hpk $
 
-Changes between 0.9.2 and 1.0 (UNRELEASED)
+Changes between 1.0.0b1 and 1.0.0b2
+=============================================
+
+* plugin classes are removed: one now defines 
+  hooks directly in conftest.py or global pytest_*.py 
+  files. 
+
+* documented and refined various hooks 
+
+* added new style of generative tests via pytest_generate_tests
+  hook
+
+Changes between 0.9.2 and 1.0.0b1
 =============================================
 
 * introduced new "funcarg" setup method, 
