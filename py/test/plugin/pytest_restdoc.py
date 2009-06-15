@@ -271,7 +271,7 @@ class LinkCheckerMaker(py.test.collect.Collector):
                 if tryfn.startswith('http:') or tryfn.startswith('https'): 
                     if self.config.getvalue("urlcheck"):
                         yield CheckLink(name, parent=self, 
-                            args=(tryfn, path, lineno, timeout), callobj=urlcheck)
+                            args=(tryfn, path, lineno, timeout), checkfunc=urlcheck)
                 elif tryfn.startswith('webcal:'):
                     continue
                 else: 
@@ -282,16 +282,19 @@ class LinkCheckerMaker(py.test.collect.Collector):
                         checkfn = tryfn 
                     if checkfn.strip() and (1 or checkfn.endswith('.html')): 
                         yield CheckLink(name, parent=self, 
-                            args=(tryfn, path, lineno), callobj=localrefcheck)
+                            args=(tryfn, path, lineno), checkfunc=localrefcheck)
         
-class CheckLink(py.test.collect.Function): 
-    def reportinfo(self, basedir=None):
-        return (self.fspath, self._args[2], "checklink: %s" % self._args[0])
+class CheckLink(py.test.collect.Item):
+    def __init__(self, name, parent, args, checkfunc):
+        super(CheckLink, self).__init__(name, parent)
+        self.args = args
+        self.checkfunc = checkfunc
 
-    def setup(self): 
-        pass 
-    def teardown(self): 
-        pass 
+    def runtest(self):
+        return self.checkfunc(*self.args)
+
+    def reportinfo(self, basedir=None):
+        return (self.fspath, self.args[2], "checklink: %s" % self.args[0])
 
 def urlcheck(tryfn, path, lineno, TIMEOUT_URLOPEN): 
     old = py.std.socket.getdefaulttimeout()

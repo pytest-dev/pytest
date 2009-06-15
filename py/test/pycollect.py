@@ -119,9 +119,9 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self.config.hook.pytest_pycollect_obj(
+        res = self.config.hook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
-        if res:
+        if res is not None:
             return res
         if (self.classnamefilter(name)) and \
             py.std.inspect.isclass(obj):
@@ -314,11 +314,11 @@ class Function(FunctionMixin, py.test.collect.Item):
         and executing a Python callable test object.
     """
     _genid = None
-    def __init__(self, name, parent=None, args=(), 
+    def __init__(self, name, parent=None, args=None, 
                  callspec=None, callobj=_dummy):
         super(Function, self).__init__(name, parent)
         self._args = args 
-        if args:
+        if self._isyieldedfunction():
             assert not callspec, "yielded functions (deprecated) cannot have funcargs" 
         else:
             if callspec is not None:
@@ -331,6 +331,9 @@ class Function(FunctionMixin, py.test.collect.Item):
         if callobj is not _dummy: 
             self._obj = callobj 
 
+    def _isyieldedfunction(self):
+        return self._args is not None
+
     def readkeywords(self):
         d = super(Function, self).readkeywords()
         d.update(self.obj.func_dict)
@@ -338,9 +341,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def runtest(self):
         """ execute the underlying test function. """
-        kwargs = getattr(self, 'funcargs', {})
-        self.config.hook.pytest_pyfunc_call(
-            pyfuncitem=self, args=self._args, kwargs=kwargs)
+        self.config.hook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self):
         super(Function, self).setup()

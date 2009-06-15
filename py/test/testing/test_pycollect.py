@@ -264,10 +264,10 @@ class TestFunction:
         item = testdir.getitem("def test_func(): raise ValueError")
         config = item.config
         class MyPlugin1:
-            def pytest_pyfunc_call(self, pyfuncitem, *args, **kwargs):
+            def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
         class MyPlugin2:
-            def pytest_pyfunc_call(self, pyfuncitem, *args, **kwargs):
+            def pytest_pyfunc_call(self, pyfuncitem):
                 return True
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())

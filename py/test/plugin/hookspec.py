@@ -34,9 +34,7 @@ def pytest_deselected(items):
 # ------------------------------------------------------------------------------
 # collection hooks
 # ------------------------------------------------------------------------------
-def pytest_make_collect_report(collector):
-    """ perform a collection and return a collection. """ 
-pytest_make_collect_report.firstresult = True
+
 
 def pytest_collect_file(path, parent):
     """ return Collection node or None. """
@@ -50,25 +48,37 @@ pytest_collect_recurse.firstresult = True
 def pytest_collect_directory(path, parent):
     """ return Collection node or None. """
 
-def pytest_pycollect_obj(collector, name, obj):
-    """ return custom item/collector for a python object in a module, or None.  """
-pytest_pycollect_obj.firstresult = True
-
-def pytest_generate_tests(metafunc):
-    """ generate (multiple) parametrized calls to a test function."""
-
 def pytest_collectstart(collector):
     """ collector starts collecting. """
 
 def pytest_collectreport(rep):
     """ collector finished collecting. """
 
+def pytest_make_collect_report(collector):
+    """ perform a collection and return a collection. """ 
+pytest_make_collect_report.firstresult = True
+
 # XXX rename to item_collected()?  meaning in distribution context? 
 def pytest_itemstart(item, node=None):
     """ test item gets collected. """
 
 # ------------------------------------------------------------------------------
-# runtest related hooks 
+# Python test function related hooks 
+# ------------------------------------------------------------------------------
+
+def pytest_pycollect_makeitem(collector, name, obj):
+    """ return custom item/collector for a python object in a module, or None.  """
+pytest_pycollect_makeitem.firstresult = True
+
+def pytest_pyfunc_call(pyfuncitem):
+    """ perform function call with the given function arguments. """ 
+pytest_pyfunc_call.firstresult = True
+
+def pytest_generate_tests(metafunc):
+    """ generate (multiple) parametrized calls to a test function."""
+
+# ------------------------------------------------------------------------------
+# generic runtest related hooks 
 # ------------------------------------------------------------------------------
 def pytest_runtest_setup(item):
     """ called before pytest_runtest_call(). """ 
@@ -83,10 +93,6 @@ def pytest_runtest_protocol(item):
     """ run given test item and return test report. """ 
 pytest_runtest_protocol.firstresult = True
 
-def pytest_pyfunc_call(pyfuncitem, args, kwargs):
-    """ return True if we consumed/did the call to the python function item. """
-pytest_pyfunc_call.firstresult = True
-
 def pytest_runtest_makereport(item, call):
     """ make ItemTestReport for the specified test outcome. """
 pytest_runtest_makereport.firstresult = True
@@ -95,7 +101,7 @@ def pytest_runtest_logreport(rep):
     """ process item test report. """ 
 
 # ------------------------------------------------------------------------------
-# reporting hooks (invoked from pytest_terminal.py) 
+# generic reporting hooks (invoked from pytest_terminal.py) 
 # ------------------------------------------------------------------------------
 def pytest_report_teststatus(rep):
     """ return shortletter and verbose word. """
@@ -117,6 +123,7 @@ def pytest_doctest_prepare_content(content):
     """ return processed content for a given doctest"""
 pytest_doctest_prepare_content.firstresult = True
 
+
 # ------------------------------------------------------------------------------
 # misc hooks 
 # ------------------------------------------------------------------------------
@@ -132,8 +139,6 @@ def pytest_internalerror(excrepr):
 
 def pytest_trace(category, msg):
     """ called for debug info. """ 
-
-
 
 # ------------------------------------------------------------------------------
 # distributed testing 

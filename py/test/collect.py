@@ -425,11 +425,11 @@ class Item(Node):
 
     def run(self):
         """ deprecated, here because subclasses might call it. """
-        return self.execute(self.obj, *self._args)
+        return self.execute(self.obj)
 
-    def execute(self, obj, *args):
+    def execute(self, obj):
         """ deprecated, here because subclasses might call it. """
-        return obj(*args)
+        return obj()
 
     def reportinfo(self):
         return self.fspath, None, ""

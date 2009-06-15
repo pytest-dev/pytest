@@ -22,8 +22,8 @@ def pytest_funcarg__capfd(request):
     request.addfinalizer(capture.finalize)
     return capture 
 
-def pytest_pyfunc_call(pyfuncitem, args, kwargs):
-    for funcarg, value in kwargs.items():
+def pytest_pyfunc_call(pyfuncitem):
+    for funcarg, value in pyfuncitem.funcargs.items():
         if funcarg == "capsys" or funcarg == "capfd":
             value.reset()
 

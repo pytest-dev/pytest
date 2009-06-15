@@ -29,8 +29,8 @@ class Execnetcleanup:
             l.append(gw)
         #for gw in l:
         #    gw.join()
-        #
-    def pytest_pyfunc_call(self, __call__, pyfuncitem, args, kwargs):
+        
+    def pytest_pyfunc_call(self, __call__, pyfuncitem):
         if self._gateways is not None:
             gateways = self._gateways[:]
             res = __call__.execute(firstresult=True)

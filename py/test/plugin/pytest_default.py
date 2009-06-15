@@ -2,9 +2,14 @@
 
 import py
 
-def pytest_pyfunc_call(__call__, pyfuncitem, args, kwargs):
+def pytest_pyfunc_call(__call__, pyfuncitem):
     if not __call__.execute(firstresult=True):
-        pyfuncitem.obj(*args, **kwargs)
+        testfunction = pyfuncitem.obj 
+        if pyfuncitem._isyieldedfunction():
+            testfunction(*pyfuncitem._args)
+        else:
+            funcargs = pyfuncitem.funcargs
+            testfunction(**funcargs)
 
 def pytest_collect_file(path, parent):
     ext = path.ext 

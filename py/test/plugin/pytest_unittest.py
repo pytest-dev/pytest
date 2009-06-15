@@ -13,7 +13,7 @@ this code is somewhat derived from Guido Wesdorps
 """
 import py
 
-def pytest_pycollect_obj(collector, name, obj):
+def pytest_pycollect_makeitem(collector, name, obj):
     if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
         return UnitTestCase(name, parent=collector)
 

@@ -46,8 +46,8 @@ for early mismatch reporting and minimizes version incompatibilites.
 
 .. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
 
-"runtest" hooks 
--------------------
+generic "runtest" hooks 
+------------------------------
 
 Each test item is usually executed by calling the following three hooks::
 
@@ -101,6 +101,26 @@ The call object contains information about a performed call::
 .. _`pytest_terminal plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_terminal.py
 
 
+generic collection hooks 
+------------------------------
+
+XXX 
+
+Python module and test function hooks 
+-------------------------------------------
+
+For influencing the collection of objects in Python modules 
+you can use the following hook:
+
+    pytest_pycollect_makeitem(collector, name, obj)
+
+This hook will be called for each Python object in a collected
+Python module.  The return value is a custom `collection node`_. 
+
+.. XXX or ``False`` if you want to indicate that the given item should not be collected. 
+
+
+
 Included default plugins
 =============================
 
@@ -114,6 +134,8 @@ Additionally you can check out some more contributed plugins here
 
 
 .. _`collection process`: 
+.. _`collection node`: 
+
 
 Test Collection process 
 ====================================================== 
