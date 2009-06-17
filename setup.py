@@ -7,21 +7,21 @@
 """
 import os, sys
         
-from distutils.core import setup
-            
+import ez_setup
+ez_setup.use_setuptools()
+from setuptools import setup, Extension
+        
 long_description = """
 
-The py lib is an extensible library for testing, distributed processing and 
-interacting with filesystems. 
+advanced testing and development support library: 
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
 - `py.path`_: path abstractions over local and subversion files 
 - `py.code`_: dynamic code compile and traceback printing support
 
-The py lib and its tools should work well on Linux, Win32, 
-OSX, Python versions 2.3-2.6.  For questions please go to
-http://pylib.org/contact.html
+Compatibility: Linux, Win32, OSX, Python versions 2.3-2.6. 
+For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
 .. _`py.execnet`: http://pylib.org/execnet.html
@@ -42,14 +42,13 @@ def main():
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
         author_email='holger at merlinux.eu, py-dev at codespeak.net',
         
-        py_modules=['_findpy'],
-        scripts=['py/bin/py.cleanup',
-                 'py/bin/py.countloc',
-                 'py/bin/py.lookup',
-                 'py/bin/py.rest',
-                 'py/bin/py.svnwcrevert',
-                 'py/bin/py.test',
-                 'py/bin/py.which'],
+        entry_points={'console_scripts': ['py.cleanup = py.cmdline:pycleanup',
+                                          'py.countloc = py.cmdline:pycountloc',
+                                          'py.lookup = py.cmdline:pylookup',
+                                          'py.rest = py.cmdline:pyrest',
+                                          'py.svnwcrevert = py.cmdline:pysvnwcrevert',
+                                          'py.test = py.cmdline:pytest',
+                                          'py.which = py.cmdline:pywhich']},
         classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
@@ -61,7 +60,9 @@ def main():
                      'Topic :: System :: Distributed Computing',
                      'Topic :: Utilities',
                      'Programming Language :: Python'],
-        packages=['py',
+        packages=['example.funcarg.mysetup',
+                  'example.funcarg.mysetup2',
+                  'py',
                   'py.builtin',
                   'py.builtin.testing',
                   'py.cmdline',
@@ -145,6 +146,7 @@ def main():
                              'rest/testing/data/part1.txt',
                              'rest/testing/data/part2.txt',
                              'rest/testing/data/tocdepth.rst2pdfconfig']},
+        zip_safe=False,
     )
 
 if __name__ == '__main__':
