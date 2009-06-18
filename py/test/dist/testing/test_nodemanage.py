@@ -4,7 +4,7 @@ from py.__.test.dist.nodemanage import NodeManager
 class pytest_funcarg__mysetup:
     def __init__(self, request):
         basetemp = request.config.mktemp(
-            "mysetup:%s" % request.function.__name__, 
+            "mysetup-%s" % request.function.__name__, 
             numbered=True)
         self.source = basetemp.mkdir("source")
         self.dest = basetemp.mkdir("dest")

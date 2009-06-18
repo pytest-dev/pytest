@@ -3,7 +3,7 @@ funcargs and support code for testing py.test functionality.
 """
 
 import py
-import os
+import sys, os
 import inspect
 from py.__.test.config import Config as pytestConfig
 import hookspec
@@ -271,7 +271,8 @@ class TmpTestdir:
         print "running", cmdargs, "curdir=", py.path.local()
         f1 = p1.open("w")
         f2 = p2.open("w")
-        popen = self.popen(cmdargs, stdout=f1, stderr=f2, close_fds=True)
+        popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
+            close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()
         f2.close()

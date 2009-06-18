@@ -23,9 +23,10 @@ def pytest_funcarg__capfd(request):
     return capture 
 
 def pytest_pyfunc_call(pyfuncitem):
-    for funcarg, value in pyfuncitem.funcargs.items():
-        if funcarg == "capsys" or funcarg == "capfd":
-            value.reset()
+    if hasattr(pyfuncitem, 'funcargs'):
+        for funcarg, value in pyfuncitem.funcargs.items():
+            if funcarg == "capsys" or funcarg == "capfd":
+                value.reset()
 
 class Capture:
     _capture = None
@@ -62,3 +63,11 @@ class TestCapture:
                 assert out.startswith("42")
         """)
         reprec.assertoutcome(passed=1)
+
+    def test_funcall_yielded_no_funcargs(self, testdir):        
+        reprec = testdir.inline_runsource("""
+            def test_hello():
+                yield lambda: None
+        """)
+        reprec.assertoutcome(passed=1)
+

@@ -5,7 +5,7 @@ Downloading
 "easy_install py"
 ===================================================
 
-With a working `setuptools installation`_ you can install from the command line::
+If you have a working `setuptools installation`_ you can install from the command line::
 
     easy_install -U py 
 

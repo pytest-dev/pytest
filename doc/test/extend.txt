@@ -89,11 +89,11 @@ Available py.test hooks
 py.test calls hooks functions to implement its `test collection`_, running and 
 reporting process.  Upon loading of a plugin py.test performs
 strict checking on contained hook functions.  Function and argument names 
-need to match exactly the `original definition of the hook`_.  It thus 
+need to match exactly one of `hook definition specification`_. It thus 
 provides useful error reporting on mistyped hook or argument names
 and minimizes version incompatibilites. 
 
-.. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
+.. _`hook definition specification`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
 
 .. _`configuration hooks`: 
 
