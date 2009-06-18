@@ -158,6 +158,22 @@ class TestPytestPluginInteractions:
         config.parse([])
         assert not config.option.test123
 
+    def test_do_ext_namespace(self, testdir):
+        testdir.makeconftest("""
+            def pytest_namespace(config):
+                return {'hello': 'world'}
+        """)
+        p = testdir.makepyfile("""
+            from py.test import hello 
+            import py
+            def test_hello():
+                assert hello == "world" 
+        """)
+        result = testdir.runpytest(p) 
+        assert result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
     def test_do_option_postinitialize(self, testdir):
         from py.__.test.config import Config 
         config = Config() 
@@ -205,7 +221,7 @@ class TestPytestPluginInteractions:
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
 
-    @py.test.mark(xfail="implement setupcall")
+    @py.test.xfail # setup call methods
     def test_call_setup_participants(self, testdir):
         testdir.makepyfile(
             conftest="""

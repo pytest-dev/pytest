@@ -7,10 +7,15 @@ Changes between 1.0.0b1 and 1.0.0b2
   hooks directly in conftest.py or global pytest_*.py 
   files. 
 
-* documented and refined various hooks 
+* added new pytest_namespace(config) hook that allows 
+  to inject helpers directly to the py.test.* namespace. 
 
-* added new style of generative tests via pytest_generate_tests
-  hook
+* documented and refined many hooks 
+
+* added new style of generative tests via 
+  pytest_generate_tests hook that integrates 
+  well with function arguments. 
+ 
 
 Changes between 0.9.2 and 1.0.0b1
 =============================================

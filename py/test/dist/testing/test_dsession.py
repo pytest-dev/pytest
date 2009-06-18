@@ -367,7 +367,7 @@ class TestDSession:
         assert node.gateway.spec.popen
         #XXX eq.geteventargs("pytest_sessionfinish")
 
-    @py.test.mark.xfail("test implementation missing")
+    @py.test.xfail
     def test_collected_function_causes_remote_skip_at_module_level(self, testdir):
         p = testdir.makepyfile("""
             import py

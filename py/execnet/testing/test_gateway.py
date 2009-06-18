@@ -543,7 +543,7 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
             ret = channel.receive()
             assert ret == 42
             
-    @py.test.mark.xfail("fix needed: dying remote process does not cause waitclose() to fail")
+    @py.test.xfail # "fix needed: dying remote process does not cause waitclose() to fail"
     def test_waitclose_on_remote_killed(self):
         gw = py.execnet.PopenGateway()
         channel = gw.remote_exec("""
@@ -616,12 +616,12 @@ class TestSshGateway(BasicRemoteExecution):
     def test_sshaddress(self):
         assert self.gw.remoteaddress == self.sshhost
 
-    @py.test.mark.xfail("XXX ssh-gateway error handling")
+    @py.test.xfail # XXX ssh-gateway error handling
     def test_connexion_failes_on_non_existing_hosts(self):
         py.test.raises(IOError, 
             "py.execnet.SshGateway('nowhere.codespeak.net')")
 
-    @py.test.mark.xfail("XXX ssh-gateway error handling")
+    @py.test.xfail # "XXX ssh-gateway error handling"
     def test_deprecated_identity(self):
         py.test.deprecated_call(
             py.test.raises, IOError, 

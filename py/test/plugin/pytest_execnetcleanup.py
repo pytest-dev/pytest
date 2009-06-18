@@ -3,6 +3,8 @@ cleanup gateways that were instantiated during a test function run.
 """
 import py
 
+pytest_plugins = "xfail"
+
 def pytest_configure(config):
     config.pluginmanager.register(Execnetcleanup())
 
@@ -37,18 +39,16 @@ class Execnetcleanup:
             while len(self._gateways) > len(gateways):
                 self._gateways[-1].exit()
             return res
-   
-@py.test.mark.xfail("clarify plugin registration/unregistration")
+  
 def test_execnetplugin(testdir):
-    p = ExecnetcleanupPlugin()
-    testdir.plugins.append(p)
-    testdir.inline_runsource("""
+    reprec = testdir.inline_runsource("""
         import py
         import sys
         def test_hello():
             sys._gw = py.execnet.PopenGateway()
+        def test_world():
+            assert hasattr(sys, '_gw')
+            py.test.raises(KeyError, "sys._gw.exit()") # already closed 
+            
     """, "-s", "--debug")
-    assert not p._gateways 
-    assert py.std.sys._gw
-    py.test.raises(KeyError, "py.std.sys._gw.exit()") # already closed 
-    
+    reprec.assertoutcome(passed=2)

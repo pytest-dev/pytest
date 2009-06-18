@@ -91,6 +91,7 @@ class TestConfigTmpdir:
         assert config2.basetemp != config3.basetemp
 
 class TestConfigAPI: 
+
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")
         testdir.mkdir("sub").join("conftest.py").write("x=2 ; y = 3")
@@ -320,8 +321,8 @@ def test_options_on_small_file_do_not_blow_up(testdir):
 def test_default_registry():
     assert py.test.config.pluginmanager.comregistry is py._com.comregistry
    
-@py.test.mark.todo("test for deprecation")
 def test_ensuretemp():
+    # XXX test for deprecation
     d1 = py.test.ensuretemp('hello') 
     d2 = py.test.ensuretemp('hello') 
     assert d1 == d2

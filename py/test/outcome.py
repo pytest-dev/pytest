@@ -139,36 +139,6 @@ def deprecated_call(func, *args, **kwargs):
         raise AssertionError("%r did not produce DeprecationWarning" %(func,))
     return ret
 
-class KeywordDecorator:
-    """ decorator for setting function attributes. """
-    def __init__(self, keywords, lastname=None):
-        self._keywords = keywords
-        self._lastname = lastname
-
-    def __call__(self, func=None, **kwargs):
-        if func is None:
-            kw = self._keywords.copy()
-            kw.update(kwargs)
-            return KeywordDecorator(kw)
-        elif not hasattr(func, 'func_dict'):
-            kw = self._keywords.copy()
-            name = self._lastname
-            if name is None:
-                name = "mark"
-            kw[name] = func
-            return KeywordDecorator(kw)
-        func.func_dict.update(self._keywords)
-        return func 
-
-    def __getattr__(self, name):
-        if name[0] == "_":
-            raise AttributeError(name)
-        kw = self._keywords.copy()
-        kw[name] = True
-        return self.__class__(kw, lastname=name)
-
-mark = KeywordDecorator({})
-
 # exitcodes for the command line
 EXIT_OK = 0
 EXIT_TESTSFAILED = 1

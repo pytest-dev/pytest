@@ -162,16 +162,25 @@ class PluginManager(object):
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
             self.call_plugin(plugin, "pytest_configure", config=self._config)
+            #dic = self.call_plugin(plugin, "pytest_namespace", config=self._config)
+            #self._updateext(dic)
 
     def call_plugin(self, plugin, methname, **kwargs):
         return self.MultiCall(self.listattr(methname, plugins=[plugin]), 
                 **kwargs).execute(firstresult=True)
+
+    def _updateext(self, dic):
+        if dic:
+            for name, value in dic.items():
+                setattr(py.test, name, value)
 
     def do_configure(self, config):
         assert not hasattr(self, '_config')
         config.pluginmanager.register(self)
         self._config = config
         config.hook.pytest_configure(config=self._config)
+        for dic in config.hook.pytest_namespace(config=config) or []:
+            self._updateext(dic)
 
     def do_unconfigure(self, config):
         config = self._config 
@@ -179,6 +188,9 @@ class PluginManager(object):
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
+class Ext:
+    """ namespace for extension objects. """ 
+    
 # 
 #  XXX old code to automatically load classes
 #

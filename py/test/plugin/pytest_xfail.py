@@ -3,7 +3,7 @@ mark tests as expected-to-fail and report them separately.
 
 example: 
 
-    @py.test.mark.xfail("needs refactoring")
+    @py.test.xfail
     def test_hello():
         ...
         assert 0
@@ -52,29 +52,34 @@ def pytest_terminal_summary(terminalreporter):
         for event in xpassed:
             tr._tw.line("%s: xpassed" %(event.item,))
 
+def xfail_decorator(func):
+    func.xfail = True
+    return func
+ 
+def pytest_namespace(config):
+    return dict(xfail=xfail_decorator)
+
 # ===============================================================================
 #
 # plugin tests 
 #
 # ===============================================================================
 
-               
 def test_xfail(testdir, linecomp):
     p = testdir.makepyfile(test_one="""
         import py
-        pytest_plugins="pytest_xfail",
-        @py.test.mark.xfail
+        @py.test.xfail
         def test_this():
             assert 0
 
-        @py.test.mark.xfail
+        @py.test.xfail
         def test_that():
             assert 1
     """)
     result = testdir.runpytest(p)
     extra = result.stdout.fnmatch_lines([
         "*expected failures*",
-        "*test_one.test_this*test_one.py:5*",
+        "*test_one.test_this*test_one.py:4*",
         "*UNEXPECTEDLY PASSING*",
         "*test_that*",
     ])

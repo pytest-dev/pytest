@@ -8,11 +8,14 @@ py.test implements much of its functionality by calling `well specified
 hooks`_.  Python modules which contain such hook functions are called 
 plugins.  Hook functions are discovered in ``conftest.py`` files or
 in **named** plugins.  ``conftest.py`` files are sometimes called "anonymous"
-or "local" plugins if they define hooks.  Named plugins are python modules 
-or packages that have an all lowercase ``pytest_`` prefixed name and who
-are imported during tool startup or the testing process.  
+or "local" plugins if they contain hooks.  They allow to write and distribute
+some extensions along with the test suite or the application package easily. 
+Named plugins are python modules or packages that have an all lowercase 
+``pytest_`` prefixed name and who are imported during tool startup or 
+the testing process.  
 
 .. _`tool startup`:
+.. _`test tool starts up`: 
 
 Plugin discovery at tool startup
 --------------------------------------------
@@ -91,6 +94,53 @@ provides useful error reporting on mistyped hook or argument names
 and minimizes version incompatibilites. 
 
 .. _`original definition of the hook`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
+
+.. _`configuration hooks`: 
+
+command line parsing and configuration hooks 
+--------------------------------------------------------------------
+
+When the `test tool starts up`_ it will invoke all hooks that add
+command line options in the python standard optparse style. 
+
+.. sourcecode:: python
+
+    def pytest_addoption(parser): 
+        """ add command line options. """" 
+        parser.addoption("--myopt", dest="myopt", action="store_true")
+
+After all these hooks have been called, the command line is parser 
+and a ``config`` object is created and another hook is invoked, 
+for example: 
+
+.. sourcecode:: python
+
+    def pytest_configure(config): 
+        config.getvalue("myopt") 
+
+When the test run finishes this corresponding finalizer hook is called:
+
+    def pytest_unconfigure(config): 
+        ... 
+
+
+adding global py.test helpers and functionality 
+--------------------------------------------------------------------
+
+If you want to make global helper functions or objects available 
+to your test code you can implement: 
+
+    def pytest_namespace(config):
+        """ return dictionary with items to be made available on py.test. """
+
+All such returned items will be made available directly on 
+the ``py.test`` namespace.  
+
+If you want to provide helpers that are specific to a test function run or need
+to be setup per test function run, please refer to the `funcargs mechanism`_. 
+
+.. _`funcargs mechanism`: funcargs.html
+
 
 generic "runtest" hooks 
 ------------------------------
@@ -179,7 +229,7 @@ the parent node and may be used to access command line
 options via the ``parent.config`` object. 
 
 
-Python specific test function and module hooks 
+Python test function and module hooks 
 ----------------------------------------------------
 
 For influencing the collection of objects in Python modules 
@@ -187,12 +237,11 @@ you can use the following hook:
 
 .. sourcecode:: python
 
-    pytest_pycollect_makeitem(collector, name, obj)
+    def pytest_pycollect_makeitem(collector, name, obj):
+        """ return custom item/collector for a python object in a module, or None.  """
 
 This hook will be called for each Python object in a collected
-Python module.  The return value is a custom `collection node`_. 
-
-
+Python module.  The return value is a custom `collection node`_ or None. 
 
 .. XXX or ``False`` if you want to indicate that the given item should not be collected. 
 

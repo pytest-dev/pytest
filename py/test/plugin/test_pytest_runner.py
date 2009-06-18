@@ -29,16 +29,6 @@ class TestSetupState:
 
 
 class BaseFunctionalTests:
-    def test_funcattr(self, testdir):
-        reports = testdir.runitem("""
-            import py
-            @py.test.mark(xfail="needs refactoring")
-            def test_func():
-                raise Exit()
-        """)
-        rep = reports[1]
-        assert rep.keywords['xfail'] == "needs refactoring" 
-
     def test_passfunction(self, testdir):
         reports = testdir.runitem("""
             def test_func():

@@ -200,18 +200,6 @@ class TestRequest:
         req = funcargs.FuncargRequest(item)
         assert req.fspath == modcol.fspath 
 
-class TestRequestProtocol:
-    @py.test.mark.xfail
-    def test_protocol(self, testdir):
-        item = testdir.getitem("""
-            def pytest_funcarg_arg1(request): return 1
-            def pytest_funcarg_arg2(request): return 2
-            def test_func(arg1, arg2): pass
-        """)
-        req = funcargs.FuncargRequest(item)
-        req._fillargs()
-        #assert item.funcreq.
-         
 
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):

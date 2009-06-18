@@ -66,13 +66,11 @@ initpkg(__name__,
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
     'test._PluginManager'    : ('./test/pluginmanager.py', 'PluginManager'),
     'test.raises'            : ('./test/outcome.py', 'raises'),
-    'test.mark'              : ('./test/outcome.py', 'mark',),
     'test.deprecated_call'   : ('./test/outcome.py', 'deprecated_call'), 
     'test.skip'              : ('./test/outcome.py', 'skip'),
     'test.importorskip'      : ('./test/outcome.py', 'importorskip'),
     'test.fail'              : ('./test/outcome.py', 'fail'),
     'test.exit'              : ('./test/outcome.py', 'exit'),
-    'test.pdb'               : ('./test/custompdb.py', 'set_trace'),
 
     # configuration/initialization related test api
     'test.config'            : ('./test/config.py', 'config_per_process'),

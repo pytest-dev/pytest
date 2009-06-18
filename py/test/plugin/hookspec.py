@@ -14,6 +14,10 @@ def pytest_configure(config):
         ``config`` provides access to all such configuration values. 
     """
 
+def pytest_namespace(config):
+    """ return dict of name->object to become available at py.test.*"""
+
+
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
