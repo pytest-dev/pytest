@@ -1,6 +1,13 @@
 """
-"recwarn" funcarg for asserting that warnings are shown to a user.  
+help performing checks for deprecation and other warnings. Provides: 
+
+    recwarn: function argument where one can call recwarn.pop() to get
+             the last warning that would have been shown. 
+
+    py.test.deprecated_call(func, *args, **kwargs): 
+            assert that a function call triggers a deprecation warning. 
 """
+
 import py
 import os
 
@@ -9,6 +16,37 @@ def pytest_funcarg__recwarn(request):
     warnings = WarningsRecorder()
     request.addfinalizer(warnings.finalize)
     return warnings
+
+def pytest_namespace(config):
+    return {'deprecated_call': deprecated_call}
+
+def deprecated_call(func, *args, **kwargs):
+    """ assert that calling func(*args, **kwargs)
+        triggers a DeprecationWarning. 
+    """ 
+    warningmodule = py.std.warnings
+    l = []
+    oldwarn_explicit = getattr(warningmodule, 'warn_explicit')
+    def warn_explicit(*args, **kwargs): 
+        l.append(args) 
+        oldwarn_explicit(*args, **kwargs)
+    oldwarn = getattr(warningmodule, 'warn')
+    def warn(*args, **kwargs): 
+        l.append(args) 
+        oldwarn(*args, **kwargs)
+        
+    warningmodule.warn_explicit = warn_explicit
+    warningmodule.warn = warn
+    try:
+        ret = func(*args, **kwargs)
+    finally:
+        warningmodule.warn_explicit = warn_explicit
+        warningmodule.warn = warn
+    if not l:
+        #print warningmodule
+        raise AssertionError("%r did not produce DeprecationWarning" %(func,))
+    return ret
+
 
 class RecordedWarning:
     def __init__(self, message, category, filename, lineno, line):
@@ -88,3 +126,46 @@ def test_recwarn_functional(testdir):
     res = reprec.countoutcomes()
     assert tuple(res) == (2, 0, 0), res
         
+#
+# ============ test py.test.deprecated_call() ==============
+#
+
+def dep(i):
+    if i == 0:
+        py.std.warnings.warn("is deprecated", DeprecationWarning)
+    return 42
+
+reg = {}
+def dep_explicit(i):
+    if i == 0:
+        py.std.warnings.warn_explicit("dep_explicit", category=DeprecationWarning, 
+                                      filename="hello", lineno=3)
+
+def test_deprecated_call_raises():
+    excinfo = py.test.raises(AssertionError, 
+                   "py.test.deprecated_call(dep, 3)")
+    assert str(excinfo).find("did not produce") != -1 
+
+def test_deprecated_call():
+    py.test.deprecated_call(dep, 0)
+
+def test_deprecated_call_ret():
+    ret = py.test.deprecated_call(dep, 0)
+    assert ret == 42
+
+def test_deprecated_call_preserves():
+    r = py.std.warnings.onceregistry.copy()
+    f = py.std.warnings.filters[:]
+    test_deprecated_call_raises()
+    test_deprecated_call()
+    assert r == py.std.warnings.onceregistry
+    assert f == py.std.warnings.filters
+
+def test_deprecated_explicit_call_raises():
+    py.test.raises(AssertionError, 
+                   "py.test.deprecated_call(dep_explicit, 3)")
+
+def test_deprecated_explicit_call():
+    py.test.deprecated_call(dep_explicit, 0)
+    py.test.deprecated_call(dep_explicit, 0)
+
