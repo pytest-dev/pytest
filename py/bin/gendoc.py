@@ -10,6 +10,7 @@ except ImportError:
     py.std.sys.exit()
 else:
     args = list(sys.argv[1:])
+    args.extend(['-p', 'apigen'])
     argkeys = [a.split('=')[0] for a in args]
     if '--apigen' not in argkeys:
         args.append('--apigen')
@@ -18,5 +19,5 @@ else:
             os.path.dirname(apigen.__file__), 'tool', 'py_build', 'build.py')
         args.append('--apigenscript=%s' % (fpath,))
     if '--apigenpath' not in argkeys:
-        args.append('--apigenpath=/tmp/pylib-api')
+        args.append('--apigenpath=api')
     py.test.cmdline.main(args)

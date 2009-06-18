@@ -109,7 +109,7 @@ class Hooks:
                 mm = HookCall(registry, name, firstresult=firstresult)
                 setattr(self, name, mm)
     def __repr__(self):
-        return "<Hooks %r %r>" %(self._hookspecs, self._plugins)
+        return "<Hooks %r %r>" %(self._hookspecs, self.registry)
 
 class HookCall:
     def __init__(self, registry, name, firstresult, extralookup=None):

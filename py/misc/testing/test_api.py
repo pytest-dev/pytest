@@ -4,6 +4,17 @@ import py
 import sys
 import inspect
 
+def test_all_resolves():
+    seen = py.builtin.set([py])
+    lastlength = None
+    while len(seen) != lastlength:
+        lastlength = len(seen) 
+        for item in py.builtin.frozenset(seen):
+            for value in item.__dict__.values():
+                if isinstance(value, type(py.test)):
+                    seen.add(value)
+        
+            
 class TestAPI_V0_namespace_consistence:
     def test_path_entrypoints(self):
         assert inspect.ismodule(py.path)
