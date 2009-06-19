@@ -8,11 +8,11 @@ py.test implements much of its functionality by calling `well specified
 hooks`_.  Python modules which contain such hook functions are called 
 plugins.  Hook functions are discovered in ``conftest.py`` files or
 in **named** plugins.  ``conftest.py`` files are sometimes called "anonymous"
-or "local" plugins if they contain hooks.  They allow to write and distribute
-some extensions along with the test suite or the application package easily. 
-Named plugins are python modules or packages that have an all lowercase 
-``pytest_`` prefixed name and who are imported during tool startup or 
-the testing process.  
+or conftest plugins. They are useful for keeping test extensions close
+to the application package.  Named plugins are normal python modules or packages 
+that can be distributed separately.   Named plugins need to follow a naming pattern;
+they have an all lowercase ``pytest_`` prefixed name.  While conftest plugins are
+discovered automatically, named plugins must be explicitely specified. 
 
 .. _`tool startup`:
 .. _`test tool starts up`: 
@@ -61,7 +61,7 @@ conftest.py as anonymous per-project plugins
 --------------------------------------------------
 
 The purpose of ``conftest.py`` files is to allow `project-specific 
-test configuration`_.  But they also make for a good place to implement 
+test configuration`_.  They thus make for a good place to implement 
 project-specific test related features through hooks.  For example you may 
 set the `collect_ignore`_ variable depending on a command line option
 by defining the following hook in a ``conftest.py`` file:
@@ -91,7 +91,9 @@ reporting process.  Upon loading of a plugin py.test performs
 strict checking on contained hook functions.  Function and argument names 
 need to match exactly one of `hook definition specification`_. It thus 
 provides useful error reporting on mistyped hook or argument names
-and minimizes version incompatibilites. 
+and minimizes version incompatibilites.  Below you find some introductory 
+information on particular hooks.  It's sensible to look at existing 
+plugins so see example usages and start off with your own plugin. 
 
 .. _`hook definition specification`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
 

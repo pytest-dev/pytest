@@ -6,8 +6,7 @@ XXX draft
 Welcome to the 1.0.0 py lib release - a python library aiming
 to support agile and test-driven development.  
 
-It passes tests against Linux, OSX and Win32, on Python 
-2.3, 2.4, 2.5 and 2.6.
+It works with Linux, OSX and Win32, on Python 2.3, 2.4, 2.5 and 2.6.
 
 Main API/Tool Features: 
 
