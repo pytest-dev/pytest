@@ -1,6 +1,6 @@
 $Id: CHANGELOG 65819 2009-06-18 18:09:57Z hpk $
 
-Changes between 1.0.0b1 and 1.0.0b2
+Changes between 1.0.0b1 and 1.0.0b3
 =============================================
 
 * plugin classes are removed: one now defines 

@@ -33,7 +33,8 @@ class PluginManager(object):
     def register(self, plugin, name=None):
         assert not self.isregistered(plugin)
         name = self._getpluginname(plugin, name)
-        assert name not in self.impname2plugin
+        if name in self.impname2plugin:
+            return False
         self.impname2plugin[name] = plugin
         self.hook.pytest_plugin_registered(plugin=plugin)
         self._checkplugin(plugin)
