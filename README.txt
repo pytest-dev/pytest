@@ -17,4 +17,3 @@ have fun,
 
 holger krekel, holger at merlinux eu
 
-$Id: README.txt 63546 2009-04-02 17:34:16Z hpk $
