@@ -113,7 +113,7 @@ class FuncargRequest:
             val = setup()
             cache[cachekey] = val 
             if teardown is not None:
-                self.addfinalizer(lambda: teardown(val), scope=scope)
+                self._addfinalizer(lambda: teardown(val), scope=scope)
         return val 
 
     def getfuncargvalue(self, argname):
@@ -142,9 +142,13 @@ class FuncargRequest:
             return None
         raise ValueError("unknown finalization scope %r" %(scope,))
 
-    def addfinalizer(self, finalizer, scope="function"):
+    def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
         self.config._setupstate.addfinalizer(finalizer=finalizer, colitem=colitem)
+
+    def addfinalizer(self, finalizer):
+        """ call the given finalizer after test function finished execution. """ 
+        self._addfinalizer(finalizer, scope="function") 
 
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)

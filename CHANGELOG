@@ -1,3 +1,8 @@
+Changes between 1.0.0b3 and 1.0.0
+=============================================
+
+* remove scope-argument from request.addfinalizer() because 
+  request.cached_setup has the scope arg. TOOWTDI. 
 
 Changes between 1.0.0b1 and 1.0.0b3
 =============================================

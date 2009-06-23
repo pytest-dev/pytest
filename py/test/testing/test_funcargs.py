@@ -163,15 +163,11 @@ class TestRequest:
         req._fillfuncargs()
         assert item.funcargs == {'something': 1}
 
-    def test_request_addfinalizer_scopes(self, testdir):
+    def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
             teardownlist = []
             def pytest_funcarg__something(request): 
-                for scope in ("function", "module", "session"):
-                    request.addfinalizer(
-                        lambda x=scope: teardownlist.append(x), 
-                        scope=scope)
-                
+                request.addfinalizer(lambda: teardownlist.append(1))
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
@@ -183,23 +179,13 @@ class TestRequest:
         assert not teardownlist 
         ss.teardown_exact(item) 
         print ss.stack
-        assert teardownlist == ['function']
-        ss.teardown_exact(item.parent) 
-        assert teardownlist == ['function', 'module']
-        ss.teardown_all()
-        assert teardownlist == ['function', 'module', 'session']
-
-    def test_request_addfinalizer_unknown_scope(self, testdir):
-        item = testdir.getitem("def test_func(): pass") 
-        req = funcargs.FuncargRequest(item)
-        py.test.raises(ValueError, "req.addfinalizer(None, scope='xyz')")
+        assert teardownlist == [1]
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
         req = funcargs.FuncargRequest(item)
         assert req.fspath == modcol.fspath 
-
 
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
