@@ -2,7 +2,7 @@
 Downloading
 ==============
 
-.. _`PyPI project page`: http://pypi.python.org/pypi?%3Aaction=pkg_edit&name=py
+.. _`PyPI project page`: http://pypi.python.org/pypi/py/
 
 Latest Release, see `PyPI project page`_
 
