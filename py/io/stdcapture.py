@@ -137,6 +137,9 @@ class DontReadFromInput:
     readlines = read
     __iter__ = read
 
+    def isatty(self):
+	return False
+
 try:
     devnullpath = os.devnull
 except AttributeError:

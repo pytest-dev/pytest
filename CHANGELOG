@@ -8,7 +8,10 @@ Changes between 1.0.0b3 and 1.0.0
 
 * apply modified patches from Andreas Kloeckner to allow 
   test functions to have no func_code (#22) and to make 
-  "-k" and function keywords work  (#20)
+  "-k" and function keywords work  (#20) 
+
+* apply patch from Daniel Peolzleithner (issue #23) 
+
 
 Changes between 1.0.0b1 and 1.0.0b3
 =============================================
