@@ -204,6 +204,7 @@ class TerminalReporter:
         msg = "python: platform %s -- Python %s" % (sys.platform, verinfo)
         if self.config.option.verbose or self.config.option.debug:
             msg += " -- " + str(sys.executable)
+            msg += " -- pytest-%s" % (py.__version__)
         self.write_line(msg)
 
         if self.config.option.debug or self.config.option.traceconfig:

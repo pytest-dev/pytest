@@ -1,5 +1,5 @@
 MANIFEST
-py/__init__.py
+py/test/plugin/pytest_terminal.py
 setup.py
 .hgignore
 .hgtags
@@ -61,6 +61,7 @@ example/pytest/test_failures.py
 example/pytest/test_setup_flow_example.py
 ez_setup.py
 py/LICENSE
+py/__init__.py
 py/_com.py
 py/bin/_findpy.py
 py/bin/_genscripts.py
@@ -330,7 +331,6 @@ py/test/plugin/pytest_restdoc.py
 py/test/plugin/pytest_resultdb.py
 py/test/plugin/pytest_resultlog.py
 py/test/plugin/pytest_runner.py
-py/test/plugin/pytest_terminal.py
 py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
