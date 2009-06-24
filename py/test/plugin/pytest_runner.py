@@ -19,11 +19,14 @@ def pytest_addoption(parser):
                action="store_true", dest="boxed", default=False,
                help="box each test run in a separate process") 
 
+# XXX move to pytest_sessionstart and fix py.test owns tests 
 def pytest_configure(config):
     config._setupstate = SetupState()
 
-def pytest_unconfigure(config):
-    config._setupstate.teardown_all()
+def pytest_sessionfinish(session, exitstatus, excrepr=None):
+    # XXX see above
+    if hasattr(session.config, '_setupstate'):
+        session.config._setupstate.teardown_all()
 
 def pytest_make_collect_report(collector):
     call = collector.config.guardedcall(
