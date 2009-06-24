@@ -204,6 +204,7 @@ class TerminalReporter:
         msg = "python: platform %s -- Python %s" % (sys.platform, verinfo)
         if self.config.option.verbose or self.config.option.debug:
             msg += " -- " + str(sys.executable)
+            msg += " -- pytest-%s" % (py.__version__)
         self.write_line(msg)
 
         if self.config.option.debug or self.config.option.traceconfig:
@@ -227,7 +228,8 @@ class TerminalReporter:
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
-    def pytest_sessionfinish(self, session, exitstatus, excrepr=None):
+    def pytest_sessionfinish(self, __call__, session, exitstatus, excrepr=None):
+        __call__.execute() 
         self._tw.line("")
         if exitstatus in (0, 1, 2):
             self.summary_failures()

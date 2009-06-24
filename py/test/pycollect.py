@@ -133,11 +133,11 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             res = self._deprecated_join(name)
             if res is not None:
                 return res 
-            if obj.func_code.co_flags & 32: # generator function 
+            if is_generator(obj):
                 # XXX deprecation warning 
                 return self.Generator(name, parent=self)
-            else: 
-                return self._genfunctions(name, obj)
+            else:
+                return self._genfunctions(name, obj) 
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
@@ -152,6 +152,12 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
             parent=self, calls=metafunc._calls)
+
+def is_generator(func):
+    try:
+        return (func.func_code.co_flags & 32) # generator function 
+    except AttributeError: # c / builtin functions have no func_code
+        return False 
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):

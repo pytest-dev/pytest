@@ -204,7 +204,7 @@ class Node(object):
     def _matchonekeyword(self, key, chain):
         elems = key.split(".")
         # XXX O(n^2), anyone cares?
-        chain = [item._keywords() for item in chain if item._keywords()]
+        chain = [item.readkeywords() for item in chain if item._keywords()]
         for start, _ in enumerate(chain):
             if start + len(elems) > len(chain):
                 return False

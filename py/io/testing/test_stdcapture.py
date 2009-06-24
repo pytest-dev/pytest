@@ -1,6 +1,15 @@
 import os, sys
 import py
 
+def test_dontreadfrominput():
+    from py.__.io.stdcapture import  DontReadFromInput
+    f = DontReadFromInput()
+    assert not f.isatty() 
+    py.test.raises(IOError, f.read)
+    py.test.raises(IOError, f.readlines)
+    py.test.raises(IOError, iter, f) 
+    py.test.raises(ValueError, f.fileno)
+
 class TestStdCapture: 
     def getcapture(self, **kw):
         return py.io.StdCapture(**kw)

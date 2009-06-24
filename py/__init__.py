@@ -19,7 +19,7 @@ For questions please check out http://pylib.org/contact.html
 """
 from initpkg import initpkg
 
-version = "1.0.0b3"
+version = "trunk"
 
 initpkg(__name__,
     description = "py.test and pylib: advanced testing tool and networking lib", 

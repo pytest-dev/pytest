@@ -1,22 +1,38 @@
-py lib 1.0.0: distributed testing and dynamic code deployment 
-===============================================================
+py.test / py lib 1.0.0: distributed testing and dynamic code deployment 
+============================================================================
 
-XXX draft
+Welcome to the 1.0 release bringing new flexibility and 
+power to testing with Python!  Main news: 
 
-Welcome to the 1.0.0 py lib release - a python library aiming
-to support agile and test-driven development.  
+* new py.test plugin architecture, some examples: 
 
-It works with Linux, OSX and Win32, on Python 2.3, 2.4, 2.5 and 2.6.
+  pytest_xfail.py: mark tests as "expected to fail" 
+  pytest_pocoo.py: automatically send tracebacks to pocoo paste service 
+  pytest_monkeypatch.py: safely patch parts of your environment in a test function
+  pytest_figleaf.py: generate html coverage reports 
+  pytest_resultlog.py: generate buildbot-friendly output 
 
-Main API/Tool Features: 
+  and much more! 
 
-* py.test: cross-project testing tool with many advanced features
+* funcargs - the new flexible mechanism for managing all your test setup/fixture needs! 
+
+* flexibly distribute tests to multiple computers from the command line
+
+See the py.test documentation for more info: 
+
+    http://pytest.org
+
+The py lib contains the py.test tool and offers its well-tested code 
+independently from the testing tool, mainly:
+
 * py.execnet: ad-hoc code distribution to SSH, Socket and local sub processes
 * py.code: support for dynamically running and debugging python code 
 * py.path: path abstractions over local and subversion files 
 
-Download/Install:   http://codespeak.net/py/1.0.0/download.html
-Documentation/API:  http://codespeak.net/py/1.0.0/index.html
+The whole package works well with Linux, OSX and Win32, on 
+Python 2.3, 2.4, 2.5 and 2.6.  (Expect Python3 compatibility soon!) 
+
+Download/Install:   http://codespeak.net/py/dist/download.html 
 
 best, 
 holger
