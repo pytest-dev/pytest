@@ -19,7 +19,7 @@ For questions please check out http://pylib.org/contact.html
 """
 from initpkg import initpkg
 
-version = "1.0.x"
+version = "1.0.0b4"
 
 initpkg(__name__,
     description = "py.test and pylib: advanced testing tool and networking lib", 
@@ -31,7 +31,7 @@ initpkg(__name__,
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 5 - Stable", 
+        "Development Status :: 4 - Beta", 
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",
