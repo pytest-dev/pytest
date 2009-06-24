@@ -12,6 +12,8 @@ Changes between 1.0.0b3 and 1.0.0
 
 * apply patch from Daniel Peolzleithner (issue #23) 
 
+* resolve issue #18, multiprocessing.Manager() and 
+  redirection clash 
 
 Changes between 1.0.0b1 and 1.0.0b3
 =============================================
