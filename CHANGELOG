@@ -6,6 +6,9 @@ Changes between 1.0.0b3 and 1.0.0
 
 * perform setup finalization before reporting failures
 
+* apply modified from Andreas Kloeckner to allow 
+  test functions to have no func_code 
+
 Changes between 1.0.0b1 and 1.0.0b3
 =============================================
 
