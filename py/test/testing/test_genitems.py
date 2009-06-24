@@ -121,3 +121,16 @@ class TestKeywordSelection:
         item = dlist[0].items[0]
         assert item.name == "test_one" 
 
+
+    def test_keyword_extra(self, testdir):
+        p = testdir.makepyfile("""
+           def test_one(): 
+               assert 0  
+           test_one.mykeyword = True
+        """)
+        reprec = testdir.inline_run("-k", "-mykeyword", p)
+        passed, skipped, failed = reprec.countoutcomes()
+        assert passed + skipped + failed == 0 
+        reprec = testdir.inline_run("-k", "mykeyword", p)
+        passed, skipped, failed = reprec.countoutcomes()
+        assert failed == 1
