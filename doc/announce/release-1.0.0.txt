@@ -1,32 +1,37 @@
-py.test / py lib 1.0.0: distributed testing and dynamic code deployment 
+py.test / py lib 1.0.0: new test plugins, funcargs and cleanups 
 ============================================================================
 
 Welcome to the 1.0 release bringing new flexibility and 
 power to testing with Python!  Main news: 
 
-* new py.test plugin architecture, some examples: 
+* improved architecture, featuring simple single-file plugins, e.g:
 
+  pytest_unittest.py: run traditional unittest.py tests 
   pytest_xfail.py: mark tests as "expected to fail" 
   pytest_pocoo.py: automatically send tracebacks to pocoo paste service 
   pytest_monkeypatch.py: safely patch parts of your environment in a test function
   pytest_figleaf.py: generate html coverage reports 
   pytest_resultlog.py: generate buildbot-friendly output 
 
-  and much more! 
+  and many more! 
 
-* funcargs - the new flexible mechanism for managing all your test setup/fixture needs! 
+* funcargs - powerful mechanism for all your setup needs 
 
-* flexibly distribute tests to multiple computers from the command line
+* distributed testing: ad-hoc send and run tests on many platforms 
+
+* remove first round of non-test related code, notably 
+  greenlets and apigen (documentation generation) that 
+  now live on their own 
 
 See the py.test documentation for more info: 
 
     http://pytest.org
 
-The py lib contains the py.test tool and offers its well-tested code 
-independently from the testing tool, mainly:
+The py lib also got smaller and focuses on offering much of the 
+well-tested py.test code in independent namespaces: 
 
 * py.execnet: ad-hoc code distribution to SSH, Socket and local sub processes
-* py.code: support for dynamically running and debugging python code 
+* py.code: higher-level introspection and dynamic generation of python code 
 * py.path: path abstractions over local and subversion files 
 
 The whole package works well with Linux, OSX and Win32, on 

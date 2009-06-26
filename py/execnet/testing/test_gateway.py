@@ -92,6 +92,11 @@ class BasicRemoteExecution:
     def test_repr_doesnt_crash(self):
         assert isinstance(repr(self), str)
 
+    def test_attribute__name__(self):
+        channel = self.gw.remote_exec("channel.send(__name__)")
+        name = channel.receive()
+        assert name == "__channelexec__" 
+
     def test_correct_setup_no_py(self):
         channel = self.gw.remote_exec("""
             import sys

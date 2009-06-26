@@ -230,7 +230,7 @@ class Gateway(object):
         from sys import exc_info
         channel, (source, outid, errid) = item 
         try:
-            loc = { 'channel' : channel }
+            loc = { 'channel' : channel, '__name__': '__channelexec__'}
             self._trace("execution starts:", repr(source)[:50])
             close = self._local_redirect_thread_output(outid, errid) 
             try:

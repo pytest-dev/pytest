@@ -233,3 +233,19 @@ socketserver::
     socketgw = py.execnet.SocketGateway.new_remote(popengw, ("127.0.0.1", 0))
 
     print socketgw._rinfo() # print some info about the remote environment
+
+
+Sending a module / checking if run through remote_exec 
+--------------------------------------------------------------
+
+You can pass a module object to ``remote_exec`` in which case
+its source code will be sent.  No dependencies will be transferred
+so the module must be self-contained or only use modules that are 
+installed on the "other" side.  Module code can detect if it is 
+running in a remote_exec situation by checking for the special 
+``__name__`` attribute like this::
+
+    if __name__ == '__channelexec__':
+        # ... call module functions ... 
+        
+
