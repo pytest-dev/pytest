@@ -39,7 +39,7 @@ convenient enough to
 
 .. _`funcarg provider`:
  
-funcarg providers: setting up test function arguments 
+funcarg providers: instantiating test function arguments 
 ==============================================================
 
 Test functions can specify one ore more arguments ("funcargs") 
