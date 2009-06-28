@@ -320,6 +320,7 @@ py/test/plugin/pytest_execnetcleanup.py
 py/test/plugin/pytest_figleaf.py
 py/test/plugin/pytest_hooklog.py
 py/test/plugin/pytest_iocapture.py
+py/test/plugin/pytest_keyword.py
 py/test/plugin/pytest_monkeypatch.py
 py/test/plugin/pytest_pdb.py
 py/test/plugin/pytest_pocoo.py

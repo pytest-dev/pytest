@@ -1,6 +1,8 @@
 Changes between 1.0.0b3 and 1.0.0
 =============================================
 
+* re-added py.test.mark decorator for setting keywords on functions 
+
 * remove scope-argument from request.addfinalizer() because 
   request.cached_setup has the scope arg. TOOWTDI. 
 
