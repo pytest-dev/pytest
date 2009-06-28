@@ -3,12 +3,14 @@ mark tests as expected-to-fail and report them separately.
 
 example: 
 
-    @py.test.xfail
+    @py.test.mark.xfail
     def test_hello():
         ...
         assert 0
 """
 import py
+
+pytest_plugins = ['keyword']
 
 def pytest_runtest_makereport(__call__, item, call):
     if call.when != "call":
@@ -52,12 +54,6 @@ def pytest_terminal_summary(terminalreporter):
         for event in xpassed:
             tr._tw.line("%s: xpassed" %(event.item,))
 
-def xfail_decorator(func):
-    func.xfail = True
-    return func
- 
-def pytest_namespace(config):
-    return dict(xfail=xfail_decorator)
 
 # ===============================================================================
 #
@@ -68,11 +64,11 @@ def pytest_namespace(config):
 def test_xfail(testdir, linecomp):
     p = testdir.makepyfile(test_one="""
         import py
-        @py.test.xfail
+        @py.test.mark.xfail
         def test_this():
             assert 0
 
-        @py.test.xfail
+        @py.test.mark.xfail
         def test_that():
             assert 1
     """)

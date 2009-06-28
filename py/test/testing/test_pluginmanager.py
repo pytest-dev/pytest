@@ -221,7 +221,7 @@ class TestPytestPluginInteractions:
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
 
-    @py.test.xfail # setup call methods
+    @py.test.mark.xfail # setup call methods
     def test_call_setup_participants(self, testdir):
         testdir.makepyfile(
             conftest="""

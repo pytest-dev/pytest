@@ -11,7 +11,7 @@ class pytest_funcarg__mysetup:
         request.getfuncargvalue("_pytest")
 
 class TestNodeManager:
-    @py.test.xfail
+    @py.test.mark.xfail
     def test_rsync_roots_no_roots(self, mysetup):
         mysetup.source.ensure("dir1", "file1").write("hello")
         config = py.test.config._reparse([source])
