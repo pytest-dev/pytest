@@ -90,7 +90,7 @@ def pytest_runtest_protocol(item):
 pytest_runtest_protocol.firstresult = True
 
 def pytest_runtest_makereport(item, call):
-    """ make ItemTestReport for the specified test outcome. """
+    """ make ItemTestReport for the given item and call outcome. """ 
 pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(rep):
