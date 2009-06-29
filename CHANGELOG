@@ -1,5 +1,11 @@
-Changes between 1.0.0b3 and 1.0.0
+Changes between 1.0.0b3 and 1.0.0b6
 =============================================
+
+* renamed py.test.xfail back to py.test.mark.xfail to avoid 
+  two ways to decorate for xfail
+
+* re-added py.test.mark decorator for setting keywords on functions 
+  (it was actually documented so removing it was not nice) 
 
 * remove scope-argument from request.addfinalizer() because 
   request.cached_setup has the scope arg. TOOWTDI. 
