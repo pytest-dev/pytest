@@ -1,8 +1,6 @@
 MANIFEST
 py/__init__.py
 setup.py
-.hgignore
-.hgtags
 CHANGELOG
 LICENSE
 README.txt
@@ -59,7 +57,6 @@ example/genxml.py
 example/pytest/failure_demo.py
 example/pytest/test_failures.py
 example/pytest/test_setup_flow_example.py
-ez_setup.py
 py/LICENSE
 py/_com.py
 py/bin/_findpy.py
