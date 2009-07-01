@@ -39,13 +39,13 @@ class DoctestItem(py.test.collect.Item):
             example = doctestfailure.example
             test = doctestfailure.test
             filename = test.filename 
-            lineno = example.lineno + 1
+            lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = py.compat.doctest.OutputChecker() 
             REPORT_UDIFF = py.compat.doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
-            i = max(0, lineno - 10)
+            i = max(test.lineno, max(0, lineno - 10)) # XXX? 
             lines = []
             for line in filelines[i:lineno]:
                 lines.append("%03d %s" % (i+1, line))
@@ -139,6 +139,28 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1) 
+
+    def test_doctestmodule_external(self, testdir):
+        p = testdir.makepyfile("""
+            #
+            def somefunc():
+                '''
+                    >>> i = 0
+                    >>> i + 1
+                    2
+                '''
+        """)
+        result = testdir.runpytest(p, "--doctest-modules")
+        result.stdout.fnmatch_lines([
+            '004 *>>> i = 0',
+            '005 *>>> i + 1',
+            '*Expected:',
+            "*    2",
+            "*Got:",
+            "*    1",
+            "*:5: DocTestFailure"
+        ])
+        
 
     def test_txtfile_failing(self, testdir):
         p = testdir.maketxtfile("""

@@ -1,4 +1,9 @@
-Changes between 1.0.0b3 and 1.0.0b6
+Changes between 1.0.0b7 and 1.0.0 
+=====================================
+
+* tweaked doctest output for docstrings in py modules 
+
+Changes between 1.0.0b3 and 1.0.0b7
 =============================================
 
 * renamed py.test.xfail back to py.test.mark.xfail to avoid 

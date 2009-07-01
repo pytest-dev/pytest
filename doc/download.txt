@@ -9,7 +9,8 @@ Latest Release, see `PyPI project page`_
 "easy_install py"
 ===================================================
 
-If you have a working `setuptools installation`_ you can install from the command line::
+With a working `setuptools installation`_ you can type::
+
 
     easy_install -U py 
 
@@ -35,6 +36,9 @@ code automatically during the above install).
 Installing on Debian or Fedora 
 ===================================
 
+As of July 2009 pytest/pylib 1.0 RPMs and Debian packages 
+are not yet available. 
+
 On Debian systems look for ``python-codespeak-lib``.
 *This package is probably outdated - if somebody 
 can help with bringing this up to date, 
@@ -46,9 +50,10 @@ Dwayne Bailey has thankfully put together a Fedora `RPM`_.
 
 .. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
 
-
 Downloading a tar/zip archive and installing that
 ===================================================
+
+You need a working `setuptools installation`_. 
 
 Go to the python package index (pypi) and download a tar or zip file:
 
@@ -58,34 +63,24 @@ and unpack it to a directory, where you then type::
 
     python setup.py install
 
-If you don't have a working C-compiler you can do::
-
-    python setup.py install_lib
-
-You will then not be able to use greenlets but otherwise
-``py.test`` and all tools and APIs are fine to use. 
-
 Installing from subversion / develop mode
 ============================================
 
 To follow development or help with fixing things
 for the next release, checkout the complete code
-and documentation source::
+and documentation source with mercurial::
 
-    svn co http://codespeak.net/svn/py/release/0.9.x py-0.9.x
+    hg clone https://bitbucket.org/hpk42/py-trunk/
 
-You can then issue::
+or with subversion:
+
+    svn co http://codespeak.net/svn/py/trunk
+
+With a working `setuptools installation`_ you can then issue::
 
     python setup.py develop 
 
 in order to work with your checkout version. 
-
-other interesting svn checkout points::
-
-    http://codespeak.net/
-        svn/py/release      # release tags and branches
-        svn/py/dist         # latest stable (may or may not be a release) 
-        svn/py/trunk        # head development / merge point
 
 
 Working with multiple py lib versions / svn externals
