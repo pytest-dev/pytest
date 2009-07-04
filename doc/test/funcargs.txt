@@ -1,6 +1,6 @@
-======================================================
-**funcargs**: test setup and parametrization
-======================================================
+==========================================================
+**funcargs**: pythonic test setup and parametrization
+==========================================================
 
 Since version 1.0 py.test introduces test function arguments,
 in short "funcargs" for your Python test functions.  The basic idea 
@@ -156,15 +156,15 @@ perform scope-specific setup and cleanup
         scope == 'session': when tests of the session have run. 
         """
 
-example for providing a value that is to be setup only once during a test run: 
+example for providing a value that is to be setup only once during a test session: 
 
 .. sourcecode:: python 
   
     def pytest_funcarg__db(request):
         return request.cached_setup(
-                 lambda: ExpensiveSetup(request.config.option.db), 
-                 lambda val: val.close(), 
-                 scope="run"
+                 setup=lambda: ExpensiveSetup(request.config.option.db), 
+                 teardown=lambda val: val.close(), 
+                 scope="session"
         )
 
 

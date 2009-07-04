@@ -68,25 +68,28 @@ home-directoray, per shell session or per test-run.
 
 .. _`basetemp`: 
 
-per-testrun temporary directories 
+Temporary directories 
 -------------------------------------------
 
 ``py.test`` runs provide means to create per-test session
 temporary (sub) directories through the config object.  
-You can create directories like this:
+You can create directories by calling a method
+on the config object: 
 
-.. XXX use a more local example, just with "config" 
+- ``config.mktemp(basename)``: create and returns a new tempdir 
 
-.. sourcecode: python
+- ``config.ensuretemp(basename)``: create or return a new tempdir 
 
-    import py
-    basetemp = py.test.config.ensuretemp() 
-    basetemp_subdir = py.test.config.ensuretemp("subdir") 
-
-By default, ``py.test`` creates a ``pytest-NUMBER`` directory
+tempdirs are created as sub directories of a per-session testdir 
 and will keep around the directories of the last three 
 test runs.  You can also set the base temporary directory 
 with the `--basetemp`` option.  When distributing 
 tests on the same machine, ``py.test`` takes care to 
 pass around the basetemp directory such that all temporary
 files land below the same basetemp directory.  
+
+The config object is available when implementing `function arguments`_ 
+or `extensions`_ and can otherwise be globally accessed as ``py.test.config``. 
+
+.. _`function arguments`: funcargs.html
+.. _`extensions`: extend.html

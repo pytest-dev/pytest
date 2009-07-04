@@ -1,0 +1,26 @@
+==========================
+Talks and Tutorials 
+==========================
+
+.. _`funcargs`: funcargs.html
+
+a list of the latest talk and tutorial material: 
+
+- `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009): 
+
+  - testing terminology 
+  - basic py.test usage, file system layout
+  - test function arguments (funcargs_) and test fixtures 
+  - existing plugins 
+  - distributed testing 
+
+- `ep2009-pytest.pdf`_ 60 minute py.test talk, highlighting unique features and a roadmap (July 2009) 
+
+- `pycon2009-pytest-introduction.zip`_ slides and files, extended version of py.test basic introduction, discusses more options, also introduces old-style xUnit setup, looponfailing and other features. 
+
+- `pycon2009-pytest-advanced.pdf`_ contain a slightly older version of funcargs and distributed testing, compared to the EuroPython 2009 slides. 
+
+.. _`ep2009-rapidtesting.pdf`: http://codespeak.net/download/py/ep2009-rapidtesting.pdf
+.. _`ep2009-pytest.pdf`: http://codespeak.net/download/py/ep2009-pytest.pdf
+.. _`pycon2009-pytest-introduction.zip`: http://codespeak.net/download/py/pycon2009-pytest-introduction.zip
+.. _`pycon2009-pytest-advanced.pdf`: http://codespeak.net/download/py/pycon2009-pytest-advanced.pdf

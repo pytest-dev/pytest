@@ -17,8 +17,11 @@ funcargs_: powerful parametrized test function setup
 
 extend_: intro to extend and customize py.test runs 
 
-config_: ``conftest.py`` files and general configuration 
+config_: ``conftest.py`` files and the config object 
 
+talks_: talk and tutorial slides 
+
+.. _talks: talks.html
 .. _quickstart: quickstart.html
 .. _features: features.html
 .. _funcargs: funcargs.html

@@ -50,10 +50,12 @@ Python test module is inspected for test methods starting with ``test_``.
 .. Organising your tests 
 .. ---------------------------
 
-Please refer to `features`_ for a walk through the basic features. 
-
+Please refer to `features`_ for a walk through the basic features
+or checkout the `tutorials`_ page for more introduction material. 
 
 .. _download: ../download.html
 .. _features: features.html
+.. _tutorials: talks.html
+
 
 
