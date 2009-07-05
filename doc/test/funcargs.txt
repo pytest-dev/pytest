@@ -1,45 +1,34 @@
 ==========================================================
-**funcargs**: pythonic test setup and parametrization
+**funcargs**: test function arguments FTW
 ==========================================================
 
-Since version 1.0 py.test introduces test function arguments,
-in short "funcargs" for your Python test functions.  The basic idea 
-that your unit-, functional- or acceptance test functions can name
-arguments and py.test will discover a matching provider from your 
-test configuration.  The mechanism complements the automatic 
-discovery of test files, classes and functions which follows
-the `Convention over Configuration`_ strategy.  By discovering and
-calling functions ("funcarg providers") that provide values for your
-actual test functions it becomes easy to: 
+Since version 1.0 py.test features the "funcarg" mechanism which
+allows a test function to take arguments which will be independently
+provided by factory functions.  Factory functions are automatically 
+discovered and allow to encapsulate all neccessary setup and glue code 
+for running tests.  Compared to `xUnit style`_ the new mechanism is
+meant to:
 
-* separate test function code from test state setup/fixtures
-* manage test value setup and teardown depending on 
-  command line options or configuration
-* parametrize multiple runs of the same test functions 
-* present useful debug info if setting up test state goes wrong
+* make test functions easier to write and to read 
+* isolate test fixture creation to a single place 
+* bring new flexibility and power to test state management 
+* enable running of a test function with different values 
+  (superseding `old-style generative tests`_)
+* to enable creation of helper objects that interact with the execution 
+  of a test function, see the `blog post about the monkeypatch funcarg`_. 
 
-Using funcargs, test functions become more expressive, 
-more "templaty" and more test-aspect oriented.  In fact, 
-funcarg mechanisms are meant to be complete and 
-convenient enough to 
+If you find issues or have further suggestions for improving
+the mechanism you are welcome to checkout `contact possibilities`_ page. 
 
-* substitute and improve on most usages of `xUnit style`_ setup.  
-  For a simple example of how funcargs compare 
-  to xUnit setup, see the `blog post about 
-  the monkeypatch funcarg`_. 
-
-* substitute and improve on all usages of `old-style generative tests`_, 
-  i.e. test functions that use the "yield" statement. 
-  Using yield in test functions is deprecated since 1.0. 
-
+.. _`contact possibilities`: ../contact.html
 
 .. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`xUnit style`: xunit_setup.html 
 .. _`old-style generative tests`: features.html#generative-tests
 
-.. _`funcarg provider`:
+.. _`funcarg factory`:
  
-funcarg providers: setting up test function arguments 
+funcarg factories: setting up test function arguments 
 ==============================================================
 
 Test functions can specify one ore more arguments ("funcargs") 
@@ -49,22 +38,22 @@ example that you can put into a test module:
 
 .. sourcecode:: python
 
-    # ./test_simpleprovider.py 
+    # ./test_simplefactory.py 
     def pytest_funcarg__myfuncarg(request):
         return 42
 
     def test_function(myfuncarg):
         assert myfuncarg == 17
 
-If you run this with ``py.test test_simpleprovider.py`` you see something like this:
+If you run this with ``py.test test_simplefactory.py`` you see something like this:
 
 .. sourcecode:: python
 
     ============================ test session starts ============================
     python: platform linux2 -- Python 2.6.2
-    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simpleprovider.py
+    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simplefactory.py
 
-    test_simpleprovider.py F
+    test_simplefactory.py F
 
     ================================= FAILURES ==================================
     _______________________________ test_function _______________________________
@@ -75,7 +64,7 @@ If you run this with ``py.test test_simpleprovider.py`` you see something like t
     >       assert myfuncarg == 17
     E       assert 42 == 17
 
-    test_simpleprovider.py:6: AssertionError
+    test_simplefactory.py:6: AssertionError
     ========================= 1 failed in 0.11 seconds ==========================
 
 
@@ -84,7 +73,7 @@ Here is how py.test comes to execute this test function:
 
 1. py.test discovers the ``test_function`` because of the ``test_`` prefix. 
    The test function needs a function argument named ``myfuncarg``.  
-   A matching provider function is discovered by looking for the special 
+   A matching factory function is discovered by looking for the special 
    name ``pytest_funcarg__myfuncarg``. 
 
 2. ``pytest_funcarg__myfuncarg(request)`` is called and 
@@ -96,18 +85,17 @@ Note that if you misspell a function argument or want
 to use one that isn't available, an error with a list of
 available function argument is provided. 
 
-For more interesting provider functions that make good use of the 
+For more interesting factory functions that make good use of the 
 `request object`_ please see the `application setup tutorial example`_. 
 
 .. _`request object`: 
 
-funcarg request objects
+funcarg factory request objects
 ------------------------------------------
 
-Request objects are passed to funcarg providers.  They 
-encapsulate a request for a function argument for a
-specific test function.  Request objects allow providers 
-to access test configuration and test context: 
+Request objects are passed to funcarg factories and allow 
+to access test configuration, test context and `useful caching
+and finalization helpers`_. Here is a list of attributes: 
 
 ``request.function``: python function object requesting the argument
 
@@ -119,9 +107,11 @@ to access test configuration and test context:
 
 ``request.param``: if exists was passed by a `parametrizing test generator`_ 
 
+.. _`useful caching and finalization helpers`: 
 
-teardown/cleanup after test function execution
-------------------------------------------------
+
+registering funcarg related finalizers/cleanup 
+----------------------------------------------------
 
 .. sourcecode:: python 
 
@@ -130,7 +120,8 @@ teardown/cleanup after test function execution
      
 Calling ``request.addfinalizer()`` is useful for scheduling teardown 
 functions.  Here is an example for providing a ``myfile`` 
-object that is to be closed when the test function finishes. 
+object that is to be closed when the execution of a 
+test function finishes. 
 
 .. sourcecode:: python
 
@@ -140,8 +131,8 @@ object that is to be closed when the test function finishes.
         return myfile
 
 
-perform scope-specific setup and cleanup 
----------------------------------------------
+managing fixtures across test modules and test runs
+----------------------------------------------------------
 
 .. sourcecode:: python 
 
@@ -156,13 +147,16 @@ perform scope-specific setup and cleanup
         scope == 'session': when tests of the session have run. 
         """
 
-example for providing a value that is to be setup only once during a test session: 
+Calling ``request.cached_setup()`` helps you to manage fixture 
+objects across several scopes.  For example, for creating a Database object 
+that is to be setup only once during a test session you can use the helper
+like this:
 
 .. sourcecode:: python 
   
-    def pytest_funcarg__db(request):
+    def pytest_funcarg__database(request):
         return request.cached_setup(
-                 setup=lambda: ExpensiveSetup(request.config.option.db), 
+                 setup=lambda: Database("..."), 
                  teardown=lambda val: val.close(), 
                  scope="session"
         )
@@ -171,23 +165,18 @@ example for providing a value that is to be setup only once during a test sessio
 requesting values of other funcargs 
 ---------------------------------------------
 
-Inside a funcarg provider, you sometimes may want to use a
-different function argument which  may be specified with
-the test function or not.  For such purposes you can 
-dynamically request a funcarg value:
-
 .. sourcecode:: python 
 
     def getfuncargvalue(name): 
-        """ Lookup and call function argument provider for the given name. 
-        Each function argument is only requested once per function setup. 
+        """ Lookup and call function argument factory for the given name. 
+        Each function argument is only created once per function setup. 
         """ 
 
-You can also use this function if you want to `decorate a funcarg`_ 
-locally, i.e. you want to provide the normal value but add/do something
-extra.  If a provider cannot be found a ``request.Error`` exception will be 
-raised. 
-
+``request.getfuncargvalue(name)`` calls another funcarg factory function. 
+You can use this function if you want to `decorate a funcarg`_, i.e. 
+you want to provide the "normal" value but add something
+extra.  If a factory cannot be found a ``request.Error`` 
+exception will be raised. 
 
 .. _`test generators`: 
 .. _`parametrizing test generator`: 
@@ -195,7 +184,7 @@ raised.
 generating parametrized tests with funcargs 
 ===========================================================
 
-You can directly parametrize multiple runs of the same test 
+You can parametrize multiple runs of the same test 
 function by adding new test function calls with different
 function argument values. Let's look at a simple self-contained 
 example: 
@@ -280,7 +269,7 @@ the stringified counter of the list of added calls will be used.
 invocations for a given test function. 
 
 ``param`` if specified will be seen by any 
-`funcarg provider`_ as a ``request.param`` attribute. 
+`funcarg factory`_ as a ``request.param`` attribute. 
 Setting it is called *indirect parametrization*.  
 
 Indirect parametrization is preferable if test values are 
@@ -322,12 +311,12 @@ specific setup.
         answer = app.question()
         assert answer == 42
 
-To run this test py.test needs to find and call a provider to 
+To run this test py.test needs to find and call a factory to 
 obtain the required ``mysetup`` function argument.  The test 
 function interacts with the provided application specific setup. 
 
 To provide the ``mysetup`` function argument we write down
-a provider method in a `local plugin`_ by putting the
+a factory method in a `local plugin`_ by putting the
 following code into a local ``conftest.py``:
 
 .. sourcecode:: python
@@ -448,7 +437,7 @@ Running ``py.test test_ssh.py`` without specifying a command line option will re
     conftest.py:23: [1] Skipped: 'specify ssh host with --ssh'
     ====================== 1 skipped in 0.11 seconds ======================
 
-Note especially how the test function could stay clear knowing about how to construct test state values or when to skip and with what message. The test function can concentrate on actual test code and test state providers can interact with execution of tests. 
+Note especially how the test function could stay clear knowing about how to construct test state values or when to skip and with what message. The test function can concentrate on actual test code and test state factories can interact with execution of tests. 
 
 If you specify a command line option like ``py.test --ssh=python.org`` the test will get un-skipped and actually execute. 
 
@@ -508,7 +497,7 @@ extend the `accept example`_ by putting this in our test class:
 .. sourcecode:: python
 
     def pytest_funcarg__accept(self, request):
-        arg = request.getfuncargvalue("accept") # call the next provider
+        arg = request.getfuncargvalue("accept") # call the next factory
         # create a special layout in our tempdir
         arg.tmpdir.mkdir("special")
         return arg 
@@ -517,8 +506,8 @@ extend the `accept example`_ by putting this in our test class:
         def test_sometest(self, accept):
             assert accept.tmpdir.join("special").check()
 
-Our module level provider will be invoked first and it can 
-ask its request object to call the next provider and then 
+Our module level factory will be invoked first and it can 
+ask its request object to call the next factory and then 
 decorate its result.  This mechanism allows us to stay 
 ignorant of how/where the function argument is provided - 
 in our example from a `conftest plugin`_. 
@@ -543,7 +532,7 @@ When experimenting with funcargs we also
 considered an explicit registration mechanism, i.e. calling a register
 method on the config object.  But lacking a good use case for this
 indirection and flexibility we decided to go for `Convention over
-Configuration`_ and allow to directly specify the provider.  It has the
+Configuration`_ and allow to directly specify the factory.  It has the
 positive implication that you should be able to "grep" for
 ``pytest_funcarg__MYARG`` and will find all providing sites (usually
 exactly one).  

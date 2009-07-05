@@ -165,7 +165,7 @@ class FuncargRequest:
         line = "%s:%s" %(fspath, lineno)
         msg = "funcargument %r not found for: %s" %(argname, line)
         msg += "\n available funcargs: %s" %(", ".join(available),)
-        raise LookupError(msg)
+        raise self.Error(msg)
 
 
         

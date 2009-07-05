@@ -152,6 +152,7 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
+        py.test.raises(req.Error, req.getfuncargvalue, "notexists")
         val = req.getfuncargvalue("something") 
         assert val == 1
         val = req.getfuncargvalue("something") 
@@ -180,6 +181,21 @@ class TestRequest:
         ss.teardown_exact(item) 
         print ss.stack
         assert teardownlist == [1]
+
+    def test_request_addfinalizer_partial_setup_failure(self, testdir):
+        p = testdir.makepyfile("""
+            l = []
+            def pytest_funcarg__something(request): 
+                request.addfinalizer(lambda: l.append(None))
+            def test_func(something, missingarg): 
+                pass
+            def test_second():
+                assert len(l) == 1
+        """)
+        result = testdir.runpytest(p)
+        assert result.stdout.fnmatch_lines([
+            "*1 failed*1 passed*"
+            ])
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
