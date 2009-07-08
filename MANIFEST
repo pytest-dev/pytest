@@ -1,8 +1,6 @@
-MANIFEST
-py/__init__.py
-setup.py
 CHANGELOG
 LICENSE
+MANIFEST
 README.txt
 _findpy.py
 doc/announce/release-0.9.0.txt
@@ -31,6 +29,7 @@ doc/test/extend.txt
 doc/test/features.txt
 doc/test/funcargs.txt
 doc/test/quickstart.txt
+doc/test/talks.txt
 doc/test/test.txt
 doc/test/xunit_setup.txt
 doc/xml.txt
@@ -58,6 +57,7 @@ example/pytest/failure_demo.py
 example/pytest/test_failures.py
 example/pytest/test_setup_flow_example.py
 py/LICENSE
+py/__init__.py
 py/_com.py
 py/bin/_findpy.py
 py/bin/_genscripts.py
@@ -333,6 +333,7 @@ py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
 py/test/plugin/test_pytest_runner.py
+py/test/plugin/test_pytest_runner_xunit.py
 py/test/pluginmanager.py
 py/test/pycollect.py
 py/test/session.py
@@ -358,7 +359,6 @@ py/test/testing/test_pluginmanager.py
 py/test/testing/test_pycollect.py
 py/test/testing/test_recording.py
 py/test/testing/test_session.py
-py/test/testing/test_setup_functional.py
 py/test/testing/test_traceback.py
 py/test/web/__init__.py
 py/test/web/exception.py
@@ -382,3 +382,4 @@ py/xmlobj/testing/test_html.py
 py/xmlobj/testing/test_xml.py
 py/xmlobj/visit.py
 py/xmlobj/xml.py
+setup.py

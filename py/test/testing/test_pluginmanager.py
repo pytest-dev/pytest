@@ -221,30 +221,6 @@ class TestPytestPluginInteractions:
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
 
-    @py.test.mark.xfail # setup call methods
-    def test_call_setup_participants(self, testdir):
-        testdir.makepyfile(
-            conftest="""
-                import py
-                def pytest_method(self, x):
-                    return x+1
-                pytest_plugin = "pytest_someplugin",
-            """
-        )
-        testdir.makepyfile(pytest_someplugin="""
-                def pytest_method(self, x):
-                    return x+1
-        """)
-        modcol = testdir.getmodulecol("""
-            def pytest_method(x):
-                return x+0 
-        """)
-        l = []
-        call = modcol.config.pluginmanager.setupcall(modcol, "pytest_method", 1)
-        assert len(call.methods) == 3
-        results = call.execute()
-        assert results == [1,2,2]
-
 def test_collectattr():
     class A:
         def pytest_hello(self):

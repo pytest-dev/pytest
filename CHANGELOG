@@ -6,7 +6,8 @@ Changes between 1.0.0b7 and 1.0.0b8
   talk/tutorial doc page 
 
 * fixed teardown problem related to partially failing funcarg setups 
-  (thanks MrTopf for reporting) 
+  (thanks MrTopf for reporting), "pytest_runtest_teardown" is now 
+  always invoked even if the "pytest_runtest_setup" failed. 
 
 * tweaked doctest output for docstrings in py modules, 
   thanks Radomir. 

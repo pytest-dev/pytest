@@ -362,6 +362,7 @@ def test_deindent():
 
 class TestApigenLinkRole:
     disabled = True
+
     # these tests are moved here from the former py/doc/conftest.py
     def test_resolve_linkrole(self):
         from py.__.doc.conftest import get_apigen_relpath
