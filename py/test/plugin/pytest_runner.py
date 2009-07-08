@@ -1,5 +1,5 @@
 """ 
-collect and run test items and creating reports. 
+collect and run test items and create reports. 
 """
 
 import py

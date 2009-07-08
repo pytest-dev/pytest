@@ -1,4 +1,4 @@
-""" log calling of plugin hooks to a file. """ 
+""" log invocations of extension hooks to a file. """ 
 import py
 
 def pytest_addoption(parser):

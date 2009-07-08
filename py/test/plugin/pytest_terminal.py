@@ -1,3 +1,6 @@
+"""
+terminal reporting of the full testing process.
+"""
 import py
 import sys
 

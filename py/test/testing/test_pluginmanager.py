@@ -7,11 +7,26 @@ class TestBootstrapping:
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
         py.test.raises(ImportError, "pluginmanager.consider_env()")
 
-    def test_preparse_args(self, monkeypatch):
+    def test_preparse_args(self):
         pluginmanager = PluginManager()
         py.test.raises(ImportError, """
             pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
         """)
+
+    def test_plugin_skip(self, testdir, monkeypatch):
+        testdir.makepyfile(pytest_skipping1="""
+            import py
+            py.test.skip("hello")
+        """)
+        result = testdir.runpytest("-p", "skipping1")
+        result.stdout.fnmatch_lines([
+            "*WARNING*could not import plugin*skipping1*hello*"
+        ])
+        monkeypatch.setenv("PYTEST_PLUGINS", "skipping1")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*WARNING*could not import plugin*skipping1*hello*"
+        ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
         pluginmanager = PluginManager()

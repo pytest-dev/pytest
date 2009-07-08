@@ -1,6 +1,5 @@
 """
-perform ReST specific tests on .txt files, including
-linkchecks and remote URL checks. 
+perform ReST syntax, local and remote reference tests on .rst/.txt files. 
 """
 import py
 
@@ -17,7 +16,7 @@ def pytest_addoption(parser):
            help="force generation of html files.")
 
 def pytest_collect_file(path, parent):
-    if path.ext == ".txt":
+    if path.ext in (".txt", ".rst"):
         project = getproject(path)
         if project is not None:
             return ReSTFile(path, parent=parent, project=project)

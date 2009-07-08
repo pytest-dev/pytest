@@ -1,9 +1,15 @@
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
-* docs: refined funcargs doc, use the term 
-  "factory" instead of "provider",  added a new 
-  talk/tutorial doc page 
+* if plugins use "py.test.importorskip" for importing 
+  a dependency only a warning will be issued instead 
+  of exiting the testing process. 
+
+* docs: 
+  - refined funcargs doc , use the term "factory" instead 
+    of "provider"
+  - added a new talk/tutorial doc page 
+  - better plugin docstrings
 
 * fixed teardown problem related to partially failing funcarg setups 
   (thanks MrTopf for reporting), "pytest_runtest_teardown" is now 

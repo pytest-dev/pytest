@@ -1,5 +1,5 @@
 """
-funcargs and support code for testing py.test functionality. 
+funcargs and support code for testing py.test's own functionality. 
 """
 
 import py

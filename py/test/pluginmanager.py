@@ -3,6 +3,7 @@ managing loading and interacting with pytest plugins.
 """
 import py
 from py.__.test.plugin import hookspec
+from py.__.test.outcome import Skipped
 
 def check_old_use(mod, modname):
     clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
@@ -96,10 +97,20 @@ class PluginManager(object):
         modname = canonical_importname(spec)
         if modname in self.impname2plugin:
             return
-        mod = importplugin(modname)
-        check_old_use(mod, modname) 
-        self.register(mod)
-        self.consider_module(mod)
+        try:
+            mod = importplugin(modname)
+        except KeyboardInterrupt:
+            raise
+        except Skipped, e:
+            self._warn("could not import plugin %r, reason: %r" %(
+                (modname, e.msg)))
+        else:
+            check_old_use(mod, modname) 
+            self.register(mod)
+            self.consider_module(mod)
+
+    def _warn(self, msg):
+        print "===WARNING=== %s" % (msg,)
 
     def _checkplugin(self, plugin):
         # =====================================================
@@ -242,4 +253,37 @@ def formatdef(func):
         func.func_name, 
         py.std.inspect.formatargspec(*py.std.inspect.getargspec(func))
     )
+
+if __name__ == "__main__":
+    import py.__.test.plugin
+    basedir = py.path.local(py.__.test.plugin.__file__).dirpath()
+    name2text = {}
+    for p in basedir.listdir("pytest_*"):
+        if p.ext == ".py" or (
+           p.check(dir=1) and p.join("__init__.py").check()):
+            impname = p.purebasename 
+            if impname.find("__") != -1:
+                continue
+            try:
+                plugin = importplugin(impname)
+            except (ImportError, py.__.test.outcome.Skipped):
+                name2text[impname] = "IMPORT ERROR"
+            else:
+                doc = plugin.__doc__ or ""
+                doc = doc.strip()
+                name2text[impname] = doc
+           
+    for name in sorted(name2text.keys()):
+        text = name2text[name]
+        if name[0] == "_":
+            continue
+        print "%-20s %s" % (name, text.split("\n")[0])
+
+        #text = py.std.textwrap.wrap(name2text[name], 
+        #    width = 80,
+        #    initial_indent="%s: " % name, 
+        #    replace_whitespace = False)
+        #for line in text:
+        #    print line
+     
 

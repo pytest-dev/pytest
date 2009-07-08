@@ -1,5 +1,5 @@
 """
-py.test plugin for sending testing failure information to paste.pocoo.org 
+submit failure information to paste.pocoo.org 
 """
 import py
 

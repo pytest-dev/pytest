@@ -1,4 +1,4 @@
-""" Plugin implementing defaults and general options. """ 
+""" default hooks and general py.test options. """ 
 
 import py
 
@@ -115,7 +115,7 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     fixoptions(config)
     setsession(config)
-    loadplugins(config)
+    #xxxloadplugins(config)
 
 def fixoptions(config):
     if config.option.numprocesses:
@@ -124,7 +124,7 @@ def fixoptions(config):
     if config.option.distload:
         config.option.dist = "load"
 
-def loadplugins(config):
+def xxxloadplugins(config):
     for name in config.getvalue("plugin"):
         print "importing", name
         config.pluginmanager.import_plugin(name)
