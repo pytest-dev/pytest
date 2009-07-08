@@ -1,7 +1,15 @@
-Changes between 1.0.0b7 and 1.0.0 
+Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
-* tweaked doctest output for docstrings in py modules 
+* docs: refined funcargs doc, use the term 
+  "factory" instead of "provider",  added a new 
+  talk/tutorial doc page 
+
+* fixed teardown problem related to partially failing funcarg setups 
+  (thanks MrTopf for reporting) 
+
+* tweaked doctest output for docstrings in py modules, 
+  thanks Radomir. 
 
 Changes between 1.0.0b3 and 1.0.0b7
 =============================================

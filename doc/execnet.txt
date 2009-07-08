@@ -9,6 +9,11 @@ py.execnet
 * asynchronously send and receive data between processes through channels 
 * completely avoid manual installation steps on remote places
 
+There is a `EuroPython2009 talk`_ from July 2009 with
+examples and some pictures. 
+
+.. _`EuroPython2009 talk`: http://codespeak.net/download/py/ep2009-execnet.pdf 
+
 Gateways: immediately spawn local or remote process
 ===================================================
 
