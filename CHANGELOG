@@ -35,6 +35,8 @@ Changes between 1.0.0b3 and 1.0.0b7
 * resolve issue #18, multiprocessing.Manager() and 
   redirection clash 
 
+* make __name__ == "__channelexec__" for remote_exec code
+
 Changes between 1.0.0b1 and 1.0.0b3
 =============================================
 
