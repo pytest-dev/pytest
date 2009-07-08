@@ -7,11 +7,26 @@ class TestBootstrapping:
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
         py.test.raises(ImportError, "pluginmanager.consider_env()")
 
-    def test_preparse_args(self, monkeypatch):
+    def test_preparse_args(self):
         pluginmanager = PluginManager()
         py.test.raises(ImportError, """
             pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
         """)
+
+    def test_plugin_skip(self, testdir, monkeypatch):
+        testdir.makepyfile(pytest_skipping1="""
+            import py
+            py.test.skip("hello")
+        """)
+        result = testdir.runpytest("-p", "skipping1")
+        result.stdout.fnmatch_lines([
+            "*WARNING*could not import plugin*skipping1*hello*"
+        ])
+        monkeypatch.setenv("PYTEST_PLUGINS", "skipping1")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*WARNING*could not import plugin*skipping1*hello*"
+        ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
         pluginmanager = PluginManager()
@@ -220,30 +235,6 @@ class TestPytestPluginInteractions:
         pluginmanager.register(My2())
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
-
-    @py.test.mark.xfail # setup call methods
-    def test_call_setup_participants(self, testdir):
-        testdir.makepyfile(
-            conftest="""
-                import py
-                def pytest_method(self, x):
-                    return x+1
-                pytest_plugin = "pytest_someplugin",
-            """
-        )
-        testdir.makepyfile(pytest_someplugin="""
-                def pytest_method(self, x):
-                    return x+1
-        """)
-        modcol = testdir.getmodulecol("""
-            def pytest_method(x):
-                return x+0 
-        """)
-        l = []
-        call = modcol.config.pluginmanager.setupcall(modcol, "pytest_method", 1)
-        assert len(call.methods) == 3
-        results = call.execute()
-        assert results == [1,2,2]
 
 def test_collectattr():
     class A:

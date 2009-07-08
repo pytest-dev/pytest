@@ -1,6 +1,5 @@
 """
-interactive debugging with a PDB prompt. 
-
+interactive debugging with the Python Debugger.
 """
 import py
 import pdb, sys, linecache

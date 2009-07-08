@@ -1,6 +1,5 @@
 """
-'capsys' and 'capfd' funcargs for capturing stdout/stderror either
-by intercepting sys.stdout/stderr or File Descriptors 1/2. 
+'capsys' and 'capfd' funcargs for capturing stdout/stderror.
 
 Calling the reset() method of the capture funcargs gives 
 a out/err tuple of strings representing the captured streams. 

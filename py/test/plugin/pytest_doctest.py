@@ -1,5 +1,5 @@
 """
-automatically collect and execute doctests. 
+collect and execute doctests from modules and test files. 
 """
 
 import py

@@ -1,5 +1,5 @@
 """
-cleanup gateways that were instantiated during a test function run. 
+cleanup execnet gateways during test function runs.
 """
 import py
 

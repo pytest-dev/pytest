@@ -1,13 +1,13 @@
 """
-    "monkeypatch" funcarg for safely patching objects, 
-    dictionaries and environment variables during the execution of 
-    a test.  "monkeypatch" has three helper functions: 
+safely patch object attributes, dicts and environment variables. 
 
-        monkeypatch.setattr(obj, name, value) 
-        monkeypatch.setitem(obj, name, value) 
-        monkeypatch.setenv(name, value) 
+the "monkeypatch" funcarg has three helper functions: 
 
-    After the test has run modifications will be undone. 
+    monkeypatch.setattr(obj, name, value) 
+    monkeypatch.setitem(obj, name, value) 
+    monkeypatch.setenv(name, value) 
+
+After the test has run modifications will be undone. 
 """
 import os
 

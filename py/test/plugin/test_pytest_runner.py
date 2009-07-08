@@ -86,7 +86,8 @@ class BaseFunctionalTests:
         #assert rep.skipped.reason == "hello"
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.lineno == 3
-        assert len(reports) == 1
+        assert len(reports) == 2
+        assert reports[1].passed # teardown 
 
     def test_failure_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -101,7 +102,7 @@ class BaseFunctionalTests:
         assert not rep.passed 
         assert rep.failed 
         assert rep.when == "setup"
-        assert len(reports) == 1
+        assert len(reports) == 2
 
     def test_failure_in_teardown_function(self, testdir):
         reports = testdir.runitem("""
@@ -156,7 +157,7 @@ class BaseFunctionalTests:
             def test_func():
                 pass
         """)
-        assert len(reports) == 1
+        assert len(reports) == 2
         rep = reports[0]
         print rep
         assert not rep.skipped 

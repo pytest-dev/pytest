@@ -1,9 +1,5 @@
 """ 
-    collect and run test items. 
-
-    * executing test items 
-    * running collectors 
-    * and generating report events about it 
+collect and run test items and create reports. 
 """
 
 import py
@@ -53,7 +49,7 @@ def runtestprotocol(item, log=True):
     reports = [rep]
     if rep.passed:
         reports.append(call_and_report(item, "call", log))
-        reports.append(call_and_report(item, "teardown", log))
+    reports.append(call_and_report(item, "teardown", log))
     return reports
 
 def pytest_runtest_setup(item):
@@ -225,11 +221,14 @@ class SetupState(object):
         colitem = self.stack.pop()
         self._teardown_with_finalization(colitem)
 
-    def _teardown_with_finalization(self, colitem): 
+    def _callfinalizers(self, colitem):
         finalizers = self._finalizers.pop(colitem, None)
         while finalizers:
             fin = finalizers.pop()
             fin()
+
+    def _teardown_with_finalization(self, colitem): 
+        self._callfinalizers(colitem) 
         if colitem: 
             colitem.teardown()
         for colitem in self._finalizers:
@@ -242,17 +241,19 @@ class SetupState(object):
         assert not self._finalizers
 
     def teardown_exact(self, item):
-        assert self.stack and self.stack[-1] == item
-        self._pop_and_teardown()
+        if item == self.stack[-1]:
+            self._pop_and_teardown()
+        else:
+            self._callfinalizers(item)
      
     def prepare(self, colitem): 
         """ setup objects along the collector chain to the test-method
-            Teardown any unneccessary previously setup objects."""
+            and teardown previously setup objects."""
         needed_collectors = colitem.listchain() 
         while self.stack: 
             if self.stack == needed_collectors[:len(self.stack)]: 
                 break 
             self._pop_and_teardown()
         for col in needed_collectors[len(self.stack):]: 
-            self.stack.append(col) 
             col.setup() 
+            self.stack.append(col) 

@@ -1,5 +1,5 @@
 """
-help performing checks for deprecation and other warnings. Provides: 
+helpers for asserting deprecation and other warnings. 
 
     recwarn: function argument where one can call recwarn.pop() to get
              the last warning that would have been shown. 

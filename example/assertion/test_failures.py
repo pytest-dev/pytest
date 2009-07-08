@@ -9,6 +9,6 @@ def test_failure_demo_fails_properly(testdir):
     passed, skipped, failed = reprec.countoutcomes() 
     assert passed == 0 
     assert failed == 20, failed
-    colreports = reprec.getnamed("collectionreport")
+    colreports = reprec.getreports("pytest_collectreport")
     failed = len([x.failed for x in colreports])
     assert failed == 5

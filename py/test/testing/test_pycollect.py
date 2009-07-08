@@ -39,6 +39,7 @@ class TestModule:
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")
 
+class TestDisabled:
     def test_disabled_module(self, testdir):
         modcol = testdir.getmodulecol("""
             disabled = True
@@ -51,7 +52,6 @@ class TestModule:
         assert len(l) == 1
         py.test.raises(Skipped, "modcol.setup()")
 
-class TestClass:
     def test_disabled_class(self, testdir):
         modcol = testdir.getmodulecol("""
             class TestClass:
@@ -66,6 +66,15 @@ class TestClass:
         l = modcol.collect() 
         assert len(l) == 1
         py.test.raises(Skipped, "modcol.setup()")
+
+    def test_disabled_class_functional(self, testdir):
+        reprec = testdir.inline_runsource("""
+            class TestSimpleClassSetup:
+                disabled = True
+                def test_classlevel(self): pass
+                def test_classlevel2(self): pass
+        """)
+        reprec.assertoutcome(skipped=2)
 
 class TestGenerator:
     def test_generative_functions(self, testdir): 

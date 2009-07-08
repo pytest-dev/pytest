@@ -55,6 +55,7 @@ def test_class_setup(testdir):
     """)
     reprec.assertoutcome(passed=1+2+1)
 
+
 def test_method_setup(testdir):
     reprec = testdir.inline_runsource("""
         class TestSetupMethod:
