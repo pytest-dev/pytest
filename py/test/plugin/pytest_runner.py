@@ -24,6 +24,13 @@ def pytest_sessionfinish(session, exitstatus, excrepr=None):
     if hasattr(session.config, '_setupstate'):
         session.config._setupstate.teardown_all()
 
+    # prevent logging module atexit handler from choking on 
+    # its attempt to close already closed streams 
+    # see http://bugs.python.org/issue6333
+    mod = py.std.sys.modules.get("logging", None)
+    if mod is not None: 
+        mod.raiseExceptions = False 
+
 def pytest_make_collect_report(collector):
     call = collector.config.guardedcall(
         lambda: collector._memocollect()

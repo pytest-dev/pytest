@@ -286,3 +286,17 @@ def test_functional_boxed(testdir):
         "*CRASHED*",
         "*1 failed*"
     ])
+
+def test_logging_interaction(testdir):
+    p = testdir.makepyfile("""
+        def test_logging():
+            import logging
+            import StringIO
+            stream = StringIO.StringIO()
+            logging.basicConfig(stream=stream)
+            stream.close() # to free memory/release resources
+    """)
+    result = testdir.runpytest(p)
+    assert result.stderr.str().find("atexit") == -1
+        
+    
