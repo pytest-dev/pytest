@@ -37,6 +37,8 @@ example/assertion/failure_demo.py
 example/assertion/test_failures.py
 example/assertion/test_setup_flow_example.py
 example/execnet/popen_read_multiple.py
+example/execnet/svn-sync-repo.py
+example/execnet/sysinfo.py
 example/funcarg/conftest.py
 example/funcarg/costlysetup/conftest.py
 example/funcarg/costlysetup/sub1/test_quick.py

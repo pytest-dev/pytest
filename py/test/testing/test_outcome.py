@@ -26,8 +26,10 @@ def test_importorskip():
         py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
         py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
         path = py.test.importorskip("py", minversion=".".join(py.__version__))
+        mod = py.std.new.module("hello123")
+        mod.__version__ = "1.3" 
         py.test.raises(Skipped, """
-            py.test.importorskip("py", minversion="5.0")
+            py.test.importorskip("hello123", minversion="5.0")
         """)
     except Skipped:
         print py.code.ExceptionInfo()
