@@ -11,6 +11,8 @@ quickstart_: for getting started immediately.
 
 features_: a walk through basic features and usage. 
 
+`available plugins`_: list of py.test plugins 
+
 funcargs_: powerful parametrized test function setup  
 
 `distributed testing`_: distribute test runs to other machines and platforms. 
@@ -21,6 +23,7 @@ config_: ``conftest.py`` files and the config object
 
 talks_: talk and tutorial slides 
 
+.. _`available plugins`: plugins.html
 .. _talks: talks.html
 .. _quickstart: quickstart.html
 .. _features: features.html

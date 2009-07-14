@@ -1,11 +1,10 @@
 """
 helpers for asserting deprecation and other warnings. 
 
-    recwarn: function argument where one can call recwarn.pop() to get
-             the last warning that would have been shown. 
+**recwarn**: function argument where one can call recwarn.pop() to get
+the last warning that would have been shown. 
 
-    py.test.deprecated_call(func, *args, **kwargs): 
-            assert that a function call triggers a deprecation warning. 
+**py.test.deprecated_call(func, *args, **kwargs)**: assert that the given function call triggers a deprecation warning. 
 """
 
 import py

@@ -173,20 +173,20 @@ class Project:
                                     stylesheet=stylesheet, encoding=encoding)
         content = strip_html_header(content, encoding=encoding)
 
-        page = self.Page(self, "[%s] " % txtpath.purebasename,
+        title = "[%s] %s" % (txtpath.purebasename, py.version)
+        page = self.Page(self, title, 
                          outputpath, stylesheeturl=stylesheet)
 
         try:
-            svninfo = txtpath.info() 
-            modified = " modified %s by %s" % (worded_time(svninfo.mtime),
-                                               getrealname(svninfo.last_author))
-        except (KeyboardInterrupt, SystemExit): 
-            raise
-        except:
+            modified = py.process.cmdexec(
+                "hg tip --template 'last modified {date|shortdate}'" 
+            )
+        except py.process.cmdexec.Error:
             modified = " "
 
         page.contentspace.append(
-            html.div(html.div(modified, style="float: right; font-style: italic;"), 
+            html.div(html.div(modified, 
+                style="float: right; font-style: italic;"), 
                      id = 'docinfoline'))
 
         page.contentspace.append(py.xml.raw(content))

@@ -292,7 +292,8 @@ To make it easier to distinguish the generated tests it is possible to specify a
 easy to extend 
 =========================================
 
-Since 1.0 py.test has advanced `extension mechanisms`_. 
+Since 1.0 py.test has advanced `extension mechanisms`_
+and a growing `list of plugins`_. 
 One can can easily modify or add aspects for for 
 purposes such as: 
 
@@ -301,6 +302,7 @@ purposes such as:
 * running non-python tests
 * managing custom test state setup 
 
+.. _`list of plugins`: plugins.html
 .. _`extension mechanisms`: extend.html
 
 .. _`reStructured Text`: http://docutils.sourceforge.net

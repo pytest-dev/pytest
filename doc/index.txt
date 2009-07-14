@@ -39,27 +39,3 @@ Minor support functionality
 .. _`py.xml`: xml.html 
 .. _`miscellaneous features`: misc.html 
 
-Full Contents
-===================================
-
-.. toctree::
-   :maxdepth: 2
-
-   test
-   execnet
-   path
-   code
-   bin
-   xml
-   io
-   log
-   misc
-   coding-style
-   contact
-   download
-   releases
-
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
