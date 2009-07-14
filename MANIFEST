@@ -28,6 +28,7 @@ doc/test/examples.txt
 doc/test/extend.txt
 doc/test/features.txt
 doc/test/funcargs.txt
+doc/test/plugins.txt
 doc/test/quickstart.txt
 doc/test/talks.txt
 doc/test/test.txt
@@ -60,6 +61,7 @@ example/funcarg/test_simpleprovider.py
 example/genhtml.py
 example/genhtmlcss.py
 example/genxml.py
+makepluginlist.py
 py/LICENSE
 py/__init__.py
 py/_com.py
