@@ -6,11 +6,10 @@ Downloading
 
 Latest Release, see `PyPI project page`_
 
-"easy_install py"
+using setuptools / easy_install 
 ===================================================
 
 With a working `setuptools installation`_ you can type::
-
 
     easy_install -U py 
 
@@ -26,21 +25,77 @@ install the full py lib.  If you don't have a compiler available
 you can still install the py lib but without greenlets - look 
 below for the ``install_lib`` target. 
 
-**IMPORTANT NOTE**: if you are using Windows and have previous 
-installations of the py lib on your system, please download 
+**IMPORTANT NOTE**: if you are using Windows and have 
+0.8 versions of the py lib on your system, please download 
 and execute http://codespeak.net/svn/py/build/winpathclean.py
 This will check that no previous files are getting in the way. 
-(Unfortunately we don't know about a way to execute this 
-code automatically during the above install). 
+You can find out the py lib version with::
 
-Installing on Debian or Fedora 
+    import py
+    print py.version
+
+
+.. _`checkout`:
+
+Installing from version control / develop mode
+=================================================
+
+To follow development or help with fixing things
+for the next release, checkout the complete code
+and documentation source with mercurial_::
+
+    hg clone https://bitbucket.org/hpk42/py-trunk/
+
+With a working `setuptools installation`_ you can then issue::
+
+    python setup.py develop 
+
+in order to work with your checkout version. 
+
+.. _mercurial: http://mercurial.selenic.com/wiki/
+
+Working without setuptools / from source
+==========================================
+
+If you have a checkout_ or a tarball_ it is actually not neccessary to issue
+``setup.py`` commands in order to use py lib and its tools.  You can
+simply add the root directory to ``PYTHONPATH`` and ``py/bin`` or
+``py\bin\win32`` to your ``PATH`` settings. 
+
+There are also helper scripts to set the environment
+on windows::
+
+    c:\\path\to\checkout\py\env.cmd
+
+and on linux/osx you can add something like this to 
+your shell initialization::
+
+    eval `python ~/path/to/checkout/py/env.py`
+
+both of which which will get you good settings 
+for ``PYTHONPATH`` and ``PATH``.
+
+Note also that the command line scripts will look 
+for "nearby" py libs, so if you have a layout like this::
+
+    mypkg/
+        subpkg1/
+            tests/
+        tests/
+    py/ 
+
+then issuing ``py.test subpkg1`` will use the py lib
+from that projects root directory. 
+
+Debian and RPM packages 
 ===================================
 
 As of July 2009 pytest/pylib 1.0 RPMs and Debian packages 
-are not yet available. 
+are not yet available. So you will only find older
+versions. 
 
 On Debian systems look for ``python-codespeak-lib``.
-*This package is probably outdated - if somebody 
+*But this package is probably outdated - if somebody 
 can help with bringing this up to date, 
 that would be very much appreciated.*
 
@@ -50,65 +105,18 @@ Dwayne Bailey has thankfully put together a Fedora `RPM`_.
 
 .. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
 
-Downloading a tar/zip archive and installing that
+.. _tarball:
+
+Installing from a TAR archive 
 ===================================================
 
 You need a working `setuptools installation`_. 
 
-Go to the python package index (pypi) and download a tar or zip file:
+Go to the python package index (pypi) and download a tar file:
 
     http://pypi.python.org/pypi/py/
 
 and unpack it to a directory, where you then type::
 
     python setup.py install
-
-Installing from subversion / develop mode
-============================================
-
-To follow development or help with fixing things
-for the next release, checkout the complete code
-and documentation source with mercurial::
-
-    hg clone https://bitbucket.org/hpk42/py-trunk/
-
-or with subversion:
-
-    svn co http://codespeak.net/svn/py/trunk
-
-With a working `setuptools installation`_ you can then issue::
-
-    python setup.py develop 
-
-in order to work with your checkout version. 
-
-
-Working with multiple py lib versions / svn externals
-=======================================================
-
-If you happen to have multiple versions of the py lib 
-around or you ship the py lib as an svn-external to 
-then you might want to use py lib scripts more directly.
-For example if you have a project layout like this::
-
-    mypkg/
-        subpkg1/
-            tests/
-        tests/
-    py/ # as svn-external, could be specific tag/version
-
-then you want to make sure that the actual local py lib is used
-and not another system-wide version.  For this you need to add
-``py/bin`` or ``py\bin\win32`` respectively to your system's PATH settings. 
-
-You can do this by executing (on windows) a script to set the environment::
-
-    c:\\path\to\checkout\py\env.cmd
-
-or on linux/osx you can add something like this to your shell
-initialization::
-
-    eval `python ~/path/to/checkout/py/env.py`
-
-to get good settings for PYTHONPATH and PATH.
 

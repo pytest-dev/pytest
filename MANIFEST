@@ -28,6 +28,7 @@ doc/test/examples.txt
 doc/test/extend.txt
 doc/test/features.txt
 doc/test/funcargs.txt
+doc/test/plugins.txt
 doc/test/quickstart.txt
 doc/test/talks.txt
 doc/test/test.txt
@@ -37,6 +38,7 @@ example/assertion/failure_demo.py
 example/assertion/test_failures.py
 example/assertion/test_setup_flow_example.py
 example/execnet/popen_read_multiple.py
+example/execnet/redirect_remote_output.py
 example/execnet/svn-sync-repo.py
 example/execnet/sysinfo.py
 example/funcarg/conftest.py
@@ -59,6 +61,7 @@ example/funcarg/test_simpleprovider.py
 example/genhtml.py
 example/genhtmlcss.py
 example/genxml.py
+makepluginlist.py
 py/LICENSE
 py/__init__.py
 py/_com.py

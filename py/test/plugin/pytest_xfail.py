@@ -1,7 +1,7 @@
 """
 mark tests as expected-to-fail and report them separately. 
 
-example: 
+example::
 
     @py.test.mark.xfail
     def test_hello():

@@ -1,5 +1,9 @@
 """
-write and report coverage data using the 'figleaf' module. 
+write and report coverage data with 'figleaf'. 
+
+This plugin generates test coverage data or HTML files
+from running tests against a code base. 
+
 """
 import py
 

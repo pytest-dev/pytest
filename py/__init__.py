@@ -18,8 +18,9 @@ For questions please check out http://pylib.org/contact.html
  
 """
 from initpkg import initpkg
+trunk = None
 
-version = "trunk"
+version = trunk or "1.0.0b8"
 
 initpkg(__name__,
     description = "py.test and pylib: advanced testing tool and networking lib", 

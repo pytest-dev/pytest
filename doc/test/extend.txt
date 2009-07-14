@@ -4,15 +4,18 @@ Extending and customizing py.test
 
 .. _`local plugin`:
 
-py.test implements much of its functionality by calling `well specified 
-hooks`_.  Python modules which contain such hook functions are called 
-plugins.  Hook functions are discovered in ``conftest.py`` files or
-in **named** plugins.  ``conftest.py`` files are sometimes called "anonymous"
-or conftest plugins. They are useful for keeping test extensions close
-to the application package.  Named plugins are normal python modules or packages 
-that can be distributed separately.   Named plugins need to follow a naming pattern;
-they have an all lowercase ``pytest_`` prefixed name.  While conftest plugins are
-discovered automatically, named plugins must be explicitely specified. 
+py.test implements much of its functionality by calling `well specified
+hooks`_.  Python modules which contain such hook functions are called
+plugins.  Hook functions are discovered in ``conftest.py`` files or in
+`named plugins`_.  ``conftest.py`` files are sometimes called
+"anonymous" or conftest plugins. They are useful for keeping test
+extensions close to your application.  Named plugins are normal python
+modules or packages that can be distributed separately.   Named plugins
+need to follow a naming pattern; they have an all lowercase ``pytest_``
+prefixed name.  While conftest plugins are discovered automatically,
+named plugins must be explicitely specified. 
+
+.. _`named plugins`: plugins.html
 
 .. _`tool startup`:
 .. _`test tool starts up`: 

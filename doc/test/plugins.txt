@@ -1,0 +1,72 @@
+
+=====================================================
+Plugins related to Python test functions and programs
+=====================================================
+* `pytest_xfail`_ mark tests as expected-to-fail and report them separately.
+
+* `pytest_figleaf`_ write and report coverage data with 'figleaf'.
+
+* `pytest_monkeypatch`_ safely patch object attributes, dicts and environment variables.
+
+* `pytest_iocapture`_ 'capsys' and 'capfd' funcargs for capturing stdout/stderror.
+
+* `pytest_recwarn`_ helpers for asserting deprecation and other warnings.
+
+
+==============================================
+Plugins for other testing styles and languages
+==============================================
+* `pytest_unittest`_ automatically discover and run traditional "unittest.py" style tests.
+
+* `pytest_doctest`_ collect and execute doctests from modules and test files.
+
+* `pytest_restdoc`_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
+
+* `pytest_oejskit`_ Testing Javascript in real browsers
+
+
+=================================================
+Plugins for generic reporting and failure logging
+=================================================
+* `pytest_pocoo`_ submit failure information to paste.pocoo.org
+
+* `pytest_resultlog`_ resultlog plugin for machine-readable logging of test results.
+
+* `pytest_terminal`_ terminal reporting of the full testing process.
+
+
+=====================================
+internal plugins / core functionality
+=====================================
+* `pytest_pdb`_ interactive debugging with the Python Debugger.
+
+* `pytest_keyword`_ py.test.mark / keyword plugin
+
+* `pytest_hooklog`_ log invocations of extension hooks to a file.
+
+* `pytest_runner`_ collect and run test items and create reports.
+
+* `pytest_execnetcleanup`_ cleanup execnet gateways during test function runs.
+
+* `pytest_pytester`_ funcargs and support code for testing py.test's own functionality.
+
+
+
+.. _`pytest_xfail`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_xfail.py
+.. _`pytest_figleaf`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_figleaf.py
+.. _`pytest_monkeypatch`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_monkeypatch.py
+.. _`pytest_iocapture`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_iocapture.py
+.. _`pytest_recwarn`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_recwarn.py
+.. _`pytest_unittest`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_unittest.py
+.. _`pytest_doctest`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_doctest.py
+.. _`pytest_restdoc`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_restdoc.py
+.. _`pytest_oejskit`: http://bitbucket.org/pedronis/js-infrastructure/src/tip/pytest_jstests.py
+.. _`pytest_pocoo`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pocoo.py
+.. _`pytest_resultlog`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_resultlog.py
+.. _`pytest_terminal`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_terminal.py
+.. _`pytest_pdb`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pdb.py
+.. _`pytest_keyword`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_keyword.py
+.. _`pytest_hooklog`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_hooklog.py
+.. _`pytest_runner`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_runner.py
+.. _`pytest_execnetcleanup`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_execnetcleanup.py
+.. _`pytest_pytester`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pytester.py

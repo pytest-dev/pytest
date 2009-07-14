@@ -1,7 +1,7 @@
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
-* workaround a logging module interaction ("closing already closed
+* workaround a buggy logging module interaction ("closing already closed
   files").  Thanks to Sridhar Ratnakumar for triggering. 
 
 * if plugins use "py.test.importorskip" for importing 
@@ -12,7 +12,9 @@ Changes between 1.0.0b7 and 1.0.0b8
   - refined funcargs doc , use the term "factory" instead 
     of "provider"
   - added a new talk/tutorial doc page 
+  - better download page
   - better plugin docstrings
+  - added new plugins page and automatic doc generation script
 
 * fixed teardown problem related to partially failing funcarg setups 
   (thanks MrTopf for reporting), "pytest_runtest_teardown" is now 
