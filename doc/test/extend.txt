@@ -135,8 +135,8 @@ adding global py.test helpers and functionality
 If you want to make global helper functions or objects available 
 to your test code you can implement: 
 
-    def pytest_namespace(config):
-        """ return dictionary with items to be made available on py.test. """
+    def pytest_namespace():
+        """ return dictionary with items to be made available on py.test. namespace """
 
 All such returned items will be made available directly on 
 the ``py.test`` namespace.  

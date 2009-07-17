@@ -16,9 +16,31 @@ from pytest_terminal import repr_pythonversion, folded_skips
 def basic_run_report(item):
     return runner.call_and_report(item, "call", log=False)
 
+class Option:
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+    def _getcmdargs(self):
+        l = []
+        if self.verbose:
+            l.append('-v')
+        return l
+    def _getcmdstring(self):
+        return " ".join(self._getcmdargs())
+
+def pytest_generate_tests(metafunc):
+    if "option" in metafunc.funcargnames:
+        metafunc.addcall(
+            id="default", 
+            funcargs={'option': Option(verbose=False)}
+        )
+        metafunc.addcall(
+            id="verbose", 
+            funcargs={'option': Option(verbose=True)}
+        )
+
 class TestTerminal:
-    def test_pass_skip_fail(self, testdir, linecomp):
-        modcol = testdir.getmodulecol("""
+    def test_pass_skip_fail(self, testdir, option):
+        p = testdir.makepyfile("""
             import py
             def test_ok():
                 pass
@@ -27,70 +49,30 @@ class TestTerminal:
             def test_func():
                 assert 0
         """)
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.pluginmanager.register(rep)
-        rep.config.hook.pytest_sessionstart(session=testdir.session)
-
-        for item in testdir.genitems([modcol]):
-            ev = basic_run_report(item) 
-            rep.config.hook.pytest_runtest_logreport(rep=ev)
-        linecomp.assert_contains_lines([
-                "*test_pass_skip_fail.py .sF"
+        result = testdir.runpytest(option._getcmdstring())
+        if option.verbose:
+            result.stdout.fnmatch_lines([
+            "*test_pass_skip_fail.py:2: *test_ok*PASS*",
+            "*test_pass_skip_fail.py:4: *test_skip*SKIP*",
+            "*test_pass_skip_fail.py:6: *test_func*FAIL*",
+            ])
+        else:
+            result.stdout.fnmatch_lines([
+            "*test_pass_skip_fail.py .sF"
         ])
-        rep.config.hook.pytest_sessionfinish(session=testdir.session, exitstatus=1)
-        linecomp.assert_contains_lines([
+        result.stdout.fnmatch_lines([
             "    def test_func():",
             ">       assert 0",
             "E       assert 0",
         ])
 
-    def test_pass_skip_fail_verbose(self, testdir, linecomp):
-        modcol = testdir.getmodulecol("""
-            import py
-            def test_ok():
-                pass
-            def test_skip():
-                py.test.skip("xx")
-            def test_func():
-                assert 0
-        """, configargs=("-v",))
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.pluginmanager.register(rep)
-        rep.config.hook.pytest_sessionstart(session=testdir.session)
-        items = modcol.collect()
-        rep.config.option.debug = True # 
-        for item in items:
-            rep.config.hook.pytest_itemstart(item=item, node=None)
-            s = linecomp.stringio.getvalue().strip()
-            assert s.endswith(item.name)
-            rep.config.hook.pytest_runtest_logreport(rep=basic_run_report(item))
-
-        linecomp.assert_contains_lines([
-            "*test_pass_skip_fail_verbose.py:2: *test_ok*PASS*",
-            "*test_pass_skip_fail_verbose.py:4: *test_skip*SKIP*",
-            "*test_pass_skip_fail_verbose.py:6: *test_func*FAIL*",
-        ])
-        rep.config.hook.pytest_sessionfinish(session=testdir.session, exitstatus=1)
-        linecomp.assert_contains_lines([
-            "    def test_func():",
-            ">       assert 0",
-            "E       assert 0",
-        ])
-
-    def test_collect_fail(self, testdir, linecomp):
-        modcol = testdir.getmodulecol("import xyz")
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.config.pluginmanager.register(rep)
-        rep.config.hook.pytest_sessionstart(session=testdir.session)
-        l = list(testdir.genitems([modcol]))
-        assert len(l) == 0
-        linecomp.assert_contains_lines([
-            "*test_collect_fail.py F*"
-        ])
-        rep.config.hook.pytest_sessionfinish(session=testdir.session, exitstatus=1)
-        linecomp.assert_contains_lines([
+    def test_collect_fail(self, testdir, option):
+        p = testdir.makepyfile("import xyz")
+        result = testdir.runpytest(option._getcmdstring())
+        result.stdout.fnmatch_lines([
+            "*test_collect_fail.py F*",
             ">   import xyz",
-            "E   ImportError: No module named xyz"
+            "E   ImportError: No module named xyz",
         ])
 
     def test_internalerror(self, testdir, linecomp):
@@ -163,28 +145,20 @@ class TestTerminal:
             "*%s*" % (modcol.config.topdir),
         ])
 
-    def test_tb_option(self, testdir, linecomp):
-        # XXX usage of testdir 
+    def test_tb_option(self, testdir, option):
+        p = testdir.makepyfile("""
+            import py
+            def g():
+                raise IndexError
+            def test_func():
+                print 6*7
+                g()  # --calling--
+        """)
         for tbopt in ["long", "short", "no"]:
             print 'testing --tb=%s...' % tbopt
-            modcol = testdir.getmodulecol("""
-                import py
-                def g():
-                    raise IndexError
-                def test_func():
-                    print 6*7
-                    g()  # --calling--
-            """, configargs=("--tb=%s" % tbopt,))
-            rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-            rep.config.pluginmanager.register(rep)
-            rep.config.hook.pytest_sessionstart(session=testdir.session)
-            for item in testdir.genitems([modcol]):
-                rep.config.hook.pytest_runtest_logreport(
-                    rep=basic_run_report(item))
-            rep.config.hook.pytest_sessionfinish(session=testdir.session, exitstatus=1)
-            s = linecomp.stringio.getvalue()
+            result = testdir.runpytest('--tb=%s' % tbopt)
+            s = result.stdout.str()
             if tbopt == "long":
-                print s
                 assert 'print 6*7' in s
             else:
                 assert 'print 6*7' not in s
@@ -195,7 +169,6 @@ class TestTerminal:
                 assert 'FAILURES' not in s
                 assert '--calling--' not in s
                 assert 'IndexError' not in s
-            linecomp.stringio.truncate(0)
 
     def test_show_path_before_running_test(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
@@ -245,48 +218,27 @@ class TestTerminal:
         ])
 
 
-    def pseudo_keyboard_interrupt(self, testdir, linecomp, verbose=False):
-        modcol = testdir.getmodulecol("""
+    def test_keyboard_interrupt(self, testdir, option):
+        p = testdir.makepyfile("""
             def test_foobar():
                 assert 0
             def test_spamegg():
                 import py; py.test.skip('skip me please!')
             def test_interrupt_me():
                 raise KeyboardInterrupt   # simulating the user
-        """, configargs=("-v",)*verbose)
-        #""", configargs=("--showskipsummary",) + ("-v",)*verbose)
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        modcol.config.pluginmanager.register(rep)
-        modcol.config.hook.pytest_sessionstart(session=testdir.session)
-        try:
-            for item in testdir.genitems([modcol]):
-                modcol.config.hook.pytest_runtest_logreport(
-                    rep=basic_run_report(item))
-        except KeyboardInterrupt:
-            excinfo = py.code.ExceptionInfo()
-        else:
-            py.test.fail("no KeyboardInterrupt??")
-        s = linecomp.stringio.getvalue()
-        if not verbose:
-            assert s.find("_keyboard_interrupt.py Fs") != -1
-        modcol.config.hook.pytest_sessionfinish(
-            session=testdir.session, exitstatus=2, excrepr=excinfo.getrepr())
-        text = linecomp.stringio.getvalue()
-        linecomp.assert_contains_lines([
+        """)
+
+        result = testdir.runpytest(option._getcmdstring())
+        result.stdout.fnmatch_lines([
             "    def test_foobar():",
             ">       assert 0",
             "E       assert 0",
+            "*_keyboard_interrupt.py:6: KeyboardInterrupt*", 
         ])
-        #assert "Skipped: 'skip me please!'" in text
-        assert "_keyboard_interrupt.py:6: KeyboardInterrupt" in text
-        see_details = "raise KeyboardInterrupt   # simulating the user" in text
-        assert see_details == verbose
-
-    def test_keyboard_interrupt(self, testdir, linecomp):
-        self.pseudo_keyboard_interrupt(testdir, linecomp)
-        
-    def test_verbose_keyboard_interrupt(self, testdir, linecomp):
-        self.pseudo_keyboard_interrupt(testdir, linecomp, verbose=True)
+        if option.verbose:
+            result.stdout.fnmatch_lines([
+                "*raise KeyboardInterrupt   # simulating the user*",
+            ])
 
     def test_skip_reasons_folding(self):
         class longrepr:

@@ -16,7 +16,7 @@ def pytest_funcarg__recwarn(request):
     request.addfinalizer(warnings.finalize)
     return warnings
 
-def pytest_namespace(config):
+def pytest_namespace():
     return {'deprecated_call': deprecated_call}
 
 def deprecated_call(func, *args, **kwargs):

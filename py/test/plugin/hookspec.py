@@ -9,14 +9,14 @@ py.test plugin hooks
 def pytest_addoption(parser):
     """ called before commandline parsing.  """
 
+def pytest_namespace():
+    """ return dict of name->object which will get stored at py.test. namespace"""
+
 def pytest_configure(config):
     """ called after command line options have been parsed. 
         and all plugins and initial conftest files been loaded. 
         ``config`` provides access to all such configuration values. 
     """
-
-def pytest_namespace(config):
-    """ return dict of name->object to become available at py.test.*"""
 
 def pytest_unconfigure(config):
     """ called before test process is exited.  """

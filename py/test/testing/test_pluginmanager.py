@@ -175,7 +175,7 @@ class TestPytestPluginInteractions:
 
     def test_do_ext_namespace(self, testdir):
         testdir.makeconftest("""
-            def pytest_namespace(config):
+            def pytest_namespace():
                 return {'hello': 'world'}
         """)
         p = testdir.makepyfile("""
