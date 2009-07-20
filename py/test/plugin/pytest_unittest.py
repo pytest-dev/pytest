@@ -1,19 +1,24 @@
 """
 automatically discover and run traditional "unittest.py" style tests. 
 
-you can mix unittest TestCase subclasses and 
-py.test style tests in one test module. 
+Usage
+----------------
 
-XXX consider user-specified test_suite() 
+This plugin collects and runs Python `unittest.py style`_ tests. 
+It will automatically collect ``unittest.TestCase`` subclasses 
+and their ``test`` methods from the test modules of a project
+(usually following the ``test_*.py`` pattern). 
 
-this code is somewhat derived from Guido Wesdorps 
+This plugin is enabled by default. 
 
-    http://johnnydebris.net/svn/projects/py_unittest
-
+.. _`unittest.py style`: http://docs.python.org/library/unittest.html
 """
 import py
+import sys
 
 def pytest_pycollect_makeitem(collector, name, obj):
+    if 'unittest' not in sys.modules:
+        return # nobody could have possibly derived a subclass 
     if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
         return UnitTestCase(name, parent=collector)
 

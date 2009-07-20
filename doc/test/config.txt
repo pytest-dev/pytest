@@ -1,5 +1,6 @@
-Test configuration
-========================
+.. contents:: 
+    :local:
+    :depth: 2
 
 available test options 
 -----------------------------

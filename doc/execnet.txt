@@ -1,16 +1,24 @@
-==========
-py.execnet
-==========
+==============================================================================
+py.execnet: *elastic* distributed programming 
+==============================================================================
 
-``py.execnet`` allows to:
+``execnet`` helps you to: 
 
-* instantiate local or remote Python Processes
+* ad-hoc instantiate local or remote Python Processes
 * send code for execution in one or many processes 
-* asynchronously send and receive data between processes through channels 
-* completely avoid manual installation steps on remote places
+* send and receive data between processes through channels
+
+One of it's unique features is that it uses a **zero-install** 
+technique: no manual installation steps are required on 
+remote places, only a basic working Python interpreter 
+and some input/output connection to it. 
 
 There is a `EuroPython2009 talk`_ from July 2009 with
 examples and some pictures. 
+
+.. contents:: 
+    :local:
+    :depth: 2
 
 .. _`EuroPython2009 talk`: http://codespeak.net/download/py/ep2009-execnet.pdf 
 

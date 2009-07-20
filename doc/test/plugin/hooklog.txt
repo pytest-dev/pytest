@@ -1,0 +1,72 @@
+
+pytest_hooklog plugin
+=====================
+
+log invocations of extension hooks to a file.
+
+
+
+command line options
+--------------------
+
+
+``--hooklog=HOOKLOG``
+    write hook calls to the given file.
+
+Getting and improving this plugin
+---------------------------------
+
+
+Do you find the above documentation or the plugin itself lacking,
+not fit for what you need?  Here is a **30 seconds guide**
+to get you started on improving the plugin:
+
+1. Download `pytest_hooklog.py`_ plugin source code 
+2. put it somewhere as ``pytest_hooklog.py`` into your import path 
+3. a subsequent test run will now use your local version! 
+
+Further information: extend_ documentation, other plugins_ or contact_.  
+
+For your convenience here is also an inlined version of ``pytest_hooklog.py``:
+
+.. sourcecode:: python
+
+    """ log invocations of extension hooks to a file. """ 
+    import py
+    
+    def pytest_addoption(parser):
+        parser.addoption("--hooklog", dest="hooklog", default=None, 
+            help="write hook calls to the given file.")
+    
+    def pytest_configure(config):
+        hooklog = config.getvalue("hooklog")
+        if hooklog:
+            assert not config.pluginmanager.comregistry.logfile
+            config.pluginmanager.comregistry.logfile = open(hooklog, 'w')
+    
+    def pytest_unconfigure(config):
+        f = config.pluginmanager.comregistry.logfile
+        if f:
+            f.close()
+            config.pluginmanager.comregistry.logfile = None
+    
+    # ===============================================================================
+    # plugin tests 
+    # ===============================================================================
+    
+    def test_functional(testdir):
+        testdir.makepyfile("""
+            def test_pass():
+                pass
+        """)
+        testdir.runpytest("--hooklog=hook.log")
+        s = testdir.tmpdir.join("hook.log").read()
+        assert s.find("pytest_sessionstart") != -1
+        assert s.find("ItemTestReport") != -1
+        assert s.find("sessionfinish") != -1
+
+.. _`pytest_hooklog.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_hooklog.py
+.. _`extend`: ../extend.html
+.. _`plugins`: index.html
+.. _`contact`: ../../contact.html
+.. _`checkout the py.test development version`: ../../download.html#checkout

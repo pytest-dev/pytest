@@ -103,6 +103,15 @@ class FuncargRequest:
                 self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
+        """ cache and return result of calling setup().  
+
+        The scope and the ``extrakey`` determine the cache key. 
+        The scope also determines when teardown(result) 
+        will be called.  valid scopes are: 
+        scope == 'function': when the single test function run finishes. 
+        scope == 'module': when tests in a different module are run
+        scope == 'session': when tests of the session have run. 
+        """
         if not hasattr(self.config, '_setupcache'):
             self.config._setupcache = {} # XXX weakref? 
         cachekey = (self._getscopeitem(scope), extrakey)

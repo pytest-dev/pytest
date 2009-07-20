@@ -1,5 +1,5 @@
 """
-py.test plugin hooks 
+hook specifications for py.test plugins 
 """
 
 # -------------------------------------------------------------------------
@@ -9,14 +9,13 @@ py.test plugin hooks
 def pytest_addoption(parser):
     """ called before commandline parsing.  """
 
+def pytest_namespace():
+    """ return dict of name->object which will get stored at py.test. namespace"""
+
 def pytest_configure(config):
     """ called after command line options have been parsed. 
         and all plugins and initial conftest files been loaded. 
-        ``config`` provides access to all such configuration values. 
     """
-
-def pytest_namespace(config):
-    """ return dict of name->object to become available at py.test.*"""
 
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
@@ -94,11 +93,11 @@ def pytest_runtest_logreport(rep):
 def pytest_sessionstart(session):
     """ before session.main() is called. """
 
-def pytest_sessionfinish(session, exitstatus, excrepr=None):
+def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
 
 # -------------------------------------------------------------------------
-# generic reporting hooks (invoked from pytest_terminal)
+# hooks for influencing reporting (invoked from pytest_terminal)
 # -------------------------------------------------------------------------
 
 def pytest_report_teststatus(rep):
@@ -140,7 +139,7 @@ def pytest_looponfailinfo(failreports, rootdirs):
 
 
 # -------------------------------------------------------------------------
-# internal debugging hooks 
+# error handling and internal debugging hooks 
 # -------------------------------------------------------------------------
 
 def pytest_plugin_registered(plugin):
@@ -151,6 +150,9 @@ def pytest_plugin_unregistered(plugin):
 
 def pytest_internalerror(excrepr):
     """ called for internal errors. """
+
+def pytest_keyboard_interrupt(excinfo):
+    """ called for keyboard interrupt. """
 
 def pytest_trace(category, msg):
     """ called for debug info. """ 

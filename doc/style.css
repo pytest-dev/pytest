@@ -67,10 +67,6 @@ ul a, ol a {
 dl {
 }
 
-dt {
-    font-weight: bold;    
-}
-
 dd {
     line-height: 1.5em;
     margin-bottom: 1em;
@@ -85,15 +81,18 @@ blockquote {
 code {
     color: Black;
     /*background-color: #dee7ec;*/
-    background-color: #cccccc;
+    /*background-color: #cccccc;*/
 }
 
 pre {
     padding: 1em;
-    border: 1px solid #8cacbb;
+    border: 1px dotted #8cacbb;
     color: Black;
+    /*
     background-color: #dee7ec;
     background-color: #cccccc;
+    background-color: #dee7ec;
+    */
     overflow: auto;
 }
 
@@ -111,7 +110,6 @@ a[href] { color: black; text-decoration: underline; }
 
 span.menu_selected {
 	color: black;
-  	font: 140% Verdana, Helvetica, Arial, sans-serif;
 	text-decoration: none;
     padding-right: 0.3em;
     background-color: #cccccc;
@@ -120,14 +118,13 @@ span.menu_selected {
 
 a.menu {
   	/*color: #3ba6ec; */
-  	font: 140% Verdana, Helvetica, Arial, sans-serif;
+  	font: 120% Verdana, Helvetica, Arial, sans-serif;
 	text-decoration: none;
     padding-right: 0.3em;
 }
 
 a.menu[href]:visited, a.menu[href]:link{
   	/*color: #3ba6ec; */
-  	font: 140% Verdana, Helvetica, Arial, sans-serif;
 	text-decoration: none;
 }
 
@@ -135,11 +132,12 @@ a.menu[href]:hover {
   	/*color: black;*/
 }
 
-div.project_title{
+div#pagetitle{
   /*border-spacing: 20px;*/
   font: 160% Verdana, Helvetica, Arial, sans-serif;
   color: #3ba6ec; 
   vertical-align: middle;
+  left: 80 px;
   padding-bottom: 0.3em;
 }
 
@@ -566,7 +564,11 @@ td.navibar {
     padding: 0px;
 }
 
-div.pagename {
+a#versioninfo {
+    color: blue;
+}
+
+div#pagename {
     font-size: 140%;
     color: blue;
     text-align: center;
@@ -593,37 +595,6 @@ a.wikiaction[href]:hover {
 	/*background-color: #dddddd; */
 }
 
-span.wikiuserpref {
-    padding-top: 1em;
-    font-size: 120%;
-}
-
-div.wikitrail {
-    vertical-align: bottom;
-    /*font-size: -1;*/
-    padding-top: 1em;
-    display: none;
-}
-
-div.wikiaction {
-    vertical-align: middle;
-    /*border-bottom: 1px solid #8cacbb;*/
-    padding-bottom:1em;
-    text-align: left;
-    width: 100%;
-}
-
-div.wikieditmenu {
-    text-align: right;
-}
-
-form.wikiedit {
-    border: 1px solid #8cacbb;
-    background-color: #f0f0f0;
-    background-color: #fabf00;
-    padding: 1em;
-    padding-right: 0em;
-}
 
 div.legenditem {
     padding-top: 0.5em;
@@ -769,25 +740,16 @@ td.toplist {
 }
 
 img#pyimg {
-    position: absolute;
-    top: 4px;
-    left: 4px;
+    float: left;
 }
     
 div#navspace {
     position: absolute;
-    top: 100px;
-    left: 11px;
     font-size: 100%;
     width: 150px;
     overflow: hidden; /* scroll;  */
 }
 
-div#metaspace {
-    position: absolute;
-    top: 10px;
-    left: 170px;
-}
 
 div#errorline {
     position: relative;
@@ -799,7 +761,6 @@ div#contentspace {
     position: absolute;
   	/* font: 120% "Times New Roman", serif;*/
     font: 110% Verdana, Helvetica, Arial, sans-serif;
-    top: 100px;
     left: 170px;
     margin-right: 5px;
 }
@@ -810,16 +771,17 @@ div#menubar {
 }
 
 /* for the documentation page */
-div#docinfoline {
-  position: relative;
-  top: 5px; 
-  left: 0px;
-
-  /*background-color: #dee7ec; */
-  padding: 5pt; 
-  padding-bottom: 1em; 
+div#title{
+    
+  font-size: 110%;
   color: black;
-  /*border-width: 1pt;
+    
+    
+  /*background-color: #dee7ec; 
+  #padding: 5pt; 
+  #padding-bottom: 1em; 
+  #color: black;
+  border-width: 1pt;
   border-style: solid;*/
 
 }

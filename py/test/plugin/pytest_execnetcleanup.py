@@ -24,7 +24,7 @@ class Execnetcleanup:
     def pytest_sessionstart(self, session):
         self._gateways = []
 
-    def pytest_sessionfinish(self, session, exitstatus, excrepr=None):
+    def pytest_sessionfinish(self, session, exitstatus):
         l = []
         for gw in self._gateways:
             gw.exit()

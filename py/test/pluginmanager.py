@@ -174,7 +174,7 @@ class PluginManager(object):
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
             self.call_plugin(plugin, "pytest_configure", config=self._config)
-            #dic = self.call_plugin(plugin, "pytest_namespace", config=self._config)
+            #dic = self.call_plugin(plugin, "pytest_namespace")
             #self._updateext(dic)
 
     def call_plugin(self, plugin, methname, **kwargs):
@@ -191,7 +191,7 @@ class PluginManager(object):
         config.pluginmanager.register(self)
         self._config = config
         config.hook.pytest_configure(config=self._config)
-        for dic in config.hook.pytest_namespace(config=config) or []:
+        for dic in config.hook.pytest_namespace() or []:
             self._updateext(dic)
 
     def do_unconfigure(self, config):

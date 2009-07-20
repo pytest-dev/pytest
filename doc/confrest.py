@@ -4,6 +4,13 @@ from py.__.misc.difftime import worded_time
 
 html = py.xml.html 
 
+class css:
+    #pagetitle = "pagetitle"
+    contentspace = "contentspace"
+    menubar = "menubar"
+    navspace = "navspace"
+    versioninfo = "versioninfo"
+
 class Page(object): 
     doctype = ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"'
                ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
@@ -22,8 +29,8 @@ class Page(object):
         self._root = html.html(self.head, self.body) 
         self.fill() 
 
-    def a_href(self, name, url):
-        return html.a(name, class_="menu", href=url)
+    def a_href(self, name, url, **kwargs):
+        return html.a(name, class_="menu", href=url, **kwargs)
 
     def a_docref(self, name, relhtmlpath):
         docpath = self.project.docpath
@@ -39,20 +46,27 @@ class Page(object):
         
     def fill_menubar(self):
         items = [
-            self.a_docref("index", "index.html"),
+            self.a_docref("pylib index", "index.html"),
+            self.a_docref("py.test index", "test/test.html"),
+            self.a_docref("py.test plugins", "test/plugin/index.html"),
+            self.a_docref("py.execnet", "execnet.html"),
+            #self.a_docref("py.code", "code.html"),
             #self.a_apigenref("api", "api/index.html"),
             #self.a_apigenref("source", "source/index.html"),
             #self.a_href("source", "http://bitbucket.org/hpk42/py-trunk/src/"),
             self.a_href("issues", "http://bitbucket.org/hpk42/py-trunk/issues/"),
             self.a_docref("contact", "contact.html"),
-            self.a_docref("download", "download.html"),
+            self.a_docref("install", "download.html"),
         ]
-        items2 = [items.pop(0)]
-        sep = " "
-        for item in items:
-            items2.append(sep)
-            items2.append(item)
-        self.menubar = html.div(id="menubar", *items2)
+        self.menubar = html.div(id=css.menubar, *[
+            html.div(item) for item in items])
+        version = py.version
+        self.menubar.insert(0, 
+            html.div("%s" % (py.version), style="font-style: italic;")
+        )
+            #self.a_href("%s-%s" % (self.title, py.version), 
+            #    "http://pypi.python.org/pypi/py/%s" % version, 
+            #id="versioninfo",
 
     def fill(self):
         content_type = "%s;charset=%s" %(self.type, self.encoding)
@@ -65,14 +79,14 @@ class Page(object):
                               type="text/css"))
         self.fill_menubar()
 
-        self.metaspace = html.div(
-                html.div(self.title, class_="project_title"),
-                self.menubar,
-                id='metaspace')
-
-        self.body.append(self.project.logo)
-        self.body.append(self.metaspace)
-        self.contentspace = html.div(id="contentspace")
+        self.body.append(html.div(
+            self.project.logo,
+            self.menubar,
+            id=css.navspace, 
+        ))
+            
+        #self.body.append(html.div(self.title, id=css.pagetitle))
+        self.contentspace = html.div(id=css.contentspace)
         self.body.append(self.contentspace)
 
     def unicode(self, doctype=True): 
@@ -115,9 +129,9 @@ class Project:
     encoding = 'latin1' 
     logo = html.div(
         html.a(
-            html.img(alt="py lib", id='pyimg', height=114, width=154, 
+            html.img(alt="py lib", id='pyimg', height=114/2, width=154/2, 
                               src="http://codespeak.net/img/pylib.png"), 
-                            href="http://codespeak.net"))
+                            href="http://pylib.org"))
     Page = PyPage 
 
     def __init__(self, sourcepath=None):
@@ -173,21 +187,21 @@ class Project:
                                     stylesheet=stylesheet, encoding=encoding)
         content = strip_html_header(content, encoding=encoding)
 
-        title = "[%s] %s" % (txtpath.purebasename, py.version)
+        title = txtpath.purebasename 
+        if txtpath.dirpath().basename == "test":
+            title = "py.test " + title
+        # title = "[%s] %s" % (txtpath.purebasename, py.version)
         page = self.Page(self, title, 
                          outputpath, stylesheeturl=stylesheet)
 
         try:
             modified = py.process.cmdexec(
-                "hg tip --template 'last modified {date|shortdate}'" 
+                "hg tip --template 'modified {date|shortdate}'" 
             )
         except py.process.cmdexec.Error:
             modified = " "
 
-        page.contentspace.append(
-            html.div(html.div(modified, 
-                style="float: right; font-style: italic;"), 
-                     id = 'docinfoline'))
+        #page.body.append(html.div(modified, id="docinfoline"))
 
         page.contentspace.append(py.xml.raw(content))
         outputpath.ensure().write(page.unicode().encode(encoding)) 

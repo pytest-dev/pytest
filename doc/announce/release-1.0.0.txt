@@ -4,39 +4,41 @@ py.test / py lib 1.0.0: new test plugins, funcargs and cleanups
 Welcome to the 1.0 release bringing new flexibility and 
 power to testing with Python.  Main news: 
 
-* improved test architecture, featuring super-simple project 
-  specific or cross-project single-file plugins, e.g:
+* funcargs - new flexibilty and zero-boilerplate fixtures for Python testing: 
 
-  * pytest_unittest.py: run traditional unittest.py tests 
-  * pytest_xfail.py: mark tests as "expected to fail" 
+  - separate test code, configuration and setup 
+  - ideal for integration and functional tests
+  - more powerful dynamic generation of tests
+
+* new plugin architecture, allowing project-specific and 
+  cross-project single-file plugins.  Many useful examples
+  shipped by default:
+
+  * pytest_unittest.py: run and integrate traditional unittest.py tests 
+  * pytest_xfail.py: mark tests as "expected to fail" and report separately.
   * pytest_pocoo.py: automatically send tracebacks to pocoo paste service 
-  * pytest_monkeypatch.py: safely patch parts of your environment in a test function
+  * pytest_monkeypatch.py: safely monkeypatch from tests
   * pytest_figleaf.py: generate html coverage reports 
-  * pytest_resultlog.py: generate buildbot-friendly output 
+  * pytest_resultlog.py: generate buildbot-friendly reporting output 
 
   and many more!
-
-* funcargs - bringing new flexibilty and zero-boilerplate to Python testing: 
-
-  - cleanly separated test code and test configuration and test value setup 
-  - ideal for integration and functional tests
-  - new generative tests -> deprecation of yield-generated tests
 
 * distributed testing and distributed execution (py.execnet): 
 
   - new unified "TX" URL scheme for specifying remote resources 
   - new sync/async ways to handle multiple remote processes 
-  - much improved documentation 
+  - improved documentation 
 
-
-See the py.test documentation for more info: 
+See the py.test and py lib documentation for more info: 
 
     http://pytest.org
+    http://pylib.org
 
-The py lib also got smaller and focuses on offering much of the 
-well-tested py.test code in independent namespaces: 
+The py lib now is smaller and focuses more on offering 
+functionality used by the py.test tool in independent 
+namespaces: 
 
-* py.execnet: ad-hoc code distribution to SSH, Socket and local sub processes
+* py.execnet: elastic code deployment to SSH, Socket and local sub processes
 * py.code: higher-level introspection and dynamic generation of python code 
 * py.path: path abstractions over local and subversion files 
 
@@ -46,8 +48,6 @@ the installation procedures.
 
 The whole package works well with Linux, OSX and Win32, on 
 Python 2.3, 2.4, 2.5 and 2.6.  (Expect Python3 compatibility soon!) 
-
-Download/Install:   http://codespeak.net/py/dist/download.html 
 
 best, 
 holger

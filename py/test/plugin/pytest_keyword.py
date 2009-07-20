@@ -3,7 +3,7 @@
 """
 import py
 
-def pytest_namespace(config):
+def pytest_namespace():
     mark = KeywordDecorator({})
     return {'mark': mark}
 

@@ -86,12 +86,11 @@ class Session(object):
                 self.shouldstop = True
     pytest_collectreport = pytest_runtest_logreport
 
-    def sessionfinishes(self, exitstatus=0, excinfo=None):
+    def sessionfinishes(self, exitstatus):
         """ teardown any resources after a test run. """ 
         self.config.hook.pytest_sessionfinish(
             session=self, 
             exitstatus=exitstatus, 
-            excrepr=excinfo and excinfo.getrepr() or None
         )
 
     def getinitialitems(self, colitems):
@@ -114,13 +113,14 @@ class Session(object):
                 if not self.config.option.collectonly: 
                     item.config.hook.pytest_runtest_protocol(item=item)
         except KeyboardInterrupt:
-            captured_excinfo = py.code.ExceptionInfo()
+            excinfo = py.code.ExceptionInfo()
+            item.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
-            captured_excinfo = py.code.ExceptionInfo()
+            excinfo = py.code.ExceptionInfo()
             self.config.pluginmanager.notify_exception(captured_excinfo)
             exitstatus = outcome.EXIT_INTERNALERROR
         if exitstatus == 0 and self._testsfailed:
             exitstatus = outcome.EXIT_TESTSFAILED
-        self.sessionfinishes(exitstatus=exitstatus, excinfo=captured_excinfo)
+        self.sessionfinishes(exitstatus=exitstatus)
         return exitstatus

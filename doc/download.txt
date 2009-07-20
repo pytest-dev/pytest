@@ -1,10 +1,11 @@
-==============
-Downloading
-==============
+.. 
+    ==============
+    Downloading
+    ==============
 
-.. _`PyPI project page`: http://pypi.python.org/pypi/py/
+    .. _`PyPI project page`: http://pypi.python.org/pypi/py/
 
-Latest Release, see `PyPI project page`_
+    Latest Release, see `PyPI project page`_
 
 using setuptools / easy_install 
 ===================================================
@@ -52,7 +53,12 @@ With a working `setuptools installation`_ you can then issue::
 
 in order to work with your checkout version. 
 
+For enhancing one of the plugins you may go to
+the ``py/test/plugin/`` sub directory. 
+
 .. _mercurial: http://mercurial.selenic.com/wiki/
+
+.. _`no-setuptools`:
 
 Working without setuptools / from source
 ==========================================

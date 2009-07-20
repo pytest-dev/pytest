@@ -1,13 +1,21 @@
 """
-mark tests as expected-to-fail and report them separately. 
+mark python tests as expected-to-fail and report them separately. 
 
-example::
+usage
+------------
+
+Use the generic mark decorator to add the 'xfail' keyword to your 
+test function::
 
     @py.test.mark.xfail
     def test_hello():
         ...
-        assert 0
+
+This test will be executed but no traceback will be reported 
+when it fails. Instead terminal reporting will list it in the 
+"expected to fail" section or "unexpectedly passing" section.  
 """
+
 import py
 
 pytest_plugins = ['keyword']

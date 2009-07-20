@@ -1,18 +1,20 @@
-Contact and communication 
+Contact and Communication points 
 ===================================
 
-- **#pylib on irc.freenode.net**: you are welcome to lurk or ask questions! 
+- `py-dev developers list`_ announcements and discussions. 
 
-- `py-dev developers list`_ development mailing list.  
+- #pylib on irc.freenode.net IRC channel for random questions. 
 
 - `tetamap`_: Holger Krekel's blog, often about testing and py.test related news. 
 
-- `py-svn general commit mailing list`_ to follow all development commits. 
+- `py-svn general commit mailing list`_ to follow development commits, 
 
-- `development bug/feature tracker`_ this roundup instance serves to file bugs and track issues.  
-  (soon to be substitued by a google-code or other hosted one). 
+- `bitbucket issue tracker`_ use this bitbucket issue tracker to report
+  bugs or request features. 
 
-- `merlinux.eu`_ offers teaching and consulting services. 
+- `merlinux.eu`_ offers on-site teaching and consulting services. 
+
+.. _`bitbucket issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/ 
 
 .. _`merlinux.eu`: http://merlinux.eu
 

@@ -7,7 +7,7 @@ plugins = [
     ('Plugins related to Python test functions and programs', 
             'xfail figleaf monkeypatch iocapture recwarn',),
     ('Plugins for other testing styles and languages', 
-            'unittest doctest restdoc osjskit'),
+            'unittest doctest oejskit restdoc'),
     ('Plugins for generic reporting and failure logging', 
             'pocoo resultlog terminal',),
     ('internal plugins / core functionality', 
@@ -16,91 +16,247 @@ plugins = [
 ]
 
 externals = {
-    'osjskit': ('`pytest_oejskit`_ Testing Javascript in real browsers', 
-    '''
-jskit contains infrastructure and in particular a py.test plugin to enable running tests for JavaScript code inside browsers directly using py.test as the test driver. Running inside the browsers comes with some speed cost, on the other hand it means for example the code is tested against the real-word DOM implementations.
+    'oejskit': 'run javascript tests in real life browsers',
 
-The approach also enables to write integration tests such that the JavaScript code is tested against server-side Python code mocked as necessary. Any server-side framework that can already be exposed through WSGI (or for which a subset of WSGI can be written to accommodate the jskit own needs) can play along.
-
-jskit also contains code to help modularizing JavaScript code which can be used to describe and track dependencies dynamically during development and that can help resolving them statically when deploying/packaging.
-
-jskit depends on simplejson. It also uses MochiKit - of which it ships a version within itself for convenience - for its own working though in does not imposes its usage on tested code.
-
-jskit was initially developed by Open End AB and is released under the MIT license.
-''', 'http://pypi.python.org/pypi/oejskit',
-('pytest_oejskit', 
-'http://bitbucket.org/pedronis/js-infrastructure/src/tip/pytest_jstests.py',
-))}
+}
                 
-class ExternalDoc:
-    def __init__(self, name):
-        self.title, self.longdesc, self.url, sourcelink = externals[name]
-        self.sourcelink = sourcelink 
-        
-        
+def warn(*args):
+    msg = " ".join(map(str, args))
+    print >>sys.stderr, "WARN:", msg
 
-class PluginDoc:
-    def __init__(self, plugin):
-        self.plugin = plugin
+class RestWriter:
+    def __init__(self, target):
+        self.target = py.path.local(target)
+        self.links = []
+
+    def _getmsg(self, args):
+        return " ".join(map(str, args))
+
+    def Print(self, *args, **kwargs):
+        msg = self._getmsg(args)
+        if 'indent' in kwargs:
+            indent = kwargs['indent'] * " "
+            lines = [(indent + x) for x in msg.split("\n")]
+            msg = "\n".join(lines)
+        self.out.write(msg)
+        if not msg or msg[-1] != "\n":
+            self.out.write("\n")
+        self.out.flush()
+
+    def sourcecode(self, source):
+        lines = str(source).split("\n")
+        self.Print(".. sourcecode:: python")
+        self.Print()
+        for line in lines:
+            self.Print("   ", line)
+
+    def _sep(self, separator, args):
+        msg = self._getmsg(args)
+        sep = len(msg) * separator
+        self.Print()
+        self.Print(msg)
+        self.Print(sep)
+        self.Print()
+
+
+    def h1(self, *args):
+        self._sep('=', args)
+
+    def h2(self, *args):
+        self._sep('-', args)
+
+    def h3(self, *args):
+        self._sep('+', args)
+
+    def li(self, *args):
+        msg = self._getmsg(args)
+        sep = "* %s" %(msg)
+        self.Print(sep)
+
+    def dt(self, term):
+        self.Print("``%s``" % term)
+
+    def dd(self, doc):
+        self.Print(doc, indent=4)
+
+    def para(self, *args):
+        msg = self._getmsg(args)
+        self.Print(msg)
+
+    def add_internal_link(self, name, path):
+        relpath = path.new(ext=".html").relto(self.target.dirpath())
+        self.links.append((name, relpath))
+
+    def write_links(self):
+        self.Print()
+        for link in self.links:
+            #warn(repr(self.link))
+            self.Print(".. _`%s`: %s" % (link[0], link[1]))
+
+    def make(self, **kwargs):
+        self.out = self.target.open("w")
+        self.makerest(**kwargs)
+        self.write_links()
+
+        self.out.close()
+        print "wrote", self.target
+        del self.out
+     
+class PluginOverview(RestWriter):
+    def makerest(self, config):
+        plugindir = py.path.local(py.__file__).dirpath("test", "plugin")
+        for cat, specs in plugins:
+            pluginlist = specs.split()
+            self.h1(cat)
+            for name in pluginlist:
+                oneliner = externals.get(name, None)
+                docpath = self.target.dirpath(name).new(ext=".txt")
+                if oneliner is not None:
+                    htmlpath = docpath.new(ext='.html')
+                    self.para("%s_ %s" %(name, oneliner))
+                    self.add_internal_link(name, htmlpath)
+                else:
+                    doc = PluginDoc(docpath)
+                    doc.make(config=config, name=name) 
+                    self.add_internal_link(name, doc.target)
+                    self.para("%s_ %s" %(name, doc.oneliner))
+                self.Print()
+
+class HookSpec(RestWriter):
+    
+    def makerest(self, config):
+        module = config.pluginmanager.hook._hookspecs
+        source = py.code.Source(module)
+        self.h1("hook specification sourcecode")
+        self.sourcecode(source)
+
+class PluginDoc(RestWriter):
+    def makerest(self, config, name):
+        config.pluginmanager.import_plugin(name)
+        plugin = config.pluginmanager.getplugin(name)
+        assert plugin is not None, plugin
+
         doc = plugin.__doc__.strip()
         i = doc.find("\n")
         if i == -1:
-            title = doc
-            longdesc = "XXX no long description available"
+            oneliner = doc
+            moduledoc = ""
         else:
-            title = doc[:i].strip()
-            longdesc = doc[i+1:].strip()
-        purename = plugin.__name__.split(".")[-1].strip()
-        self.title = "`%s`_ %s" %(purename, title)
-        self.longdesc = longdesc
-        self.sourcelink = (purename, 
-            "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" + 
-            purename + ".py")
-   
-def warn(msg):
-    print >>sys.stderr, "WARNING:", msg
+            oneliner = doc[:i].strip()
+            moduledoc = doc[i+1:].strip()
 
- 
-def makedoc(name):
-    if name in externals:
-        return ExternalDoc(name)
-    config.pluginmanager.import_plugin(name)
-    plugin = config.pluginmanager.getplugin(name)
-    if plugin is None:
-        return None
-    return PluginDoc(plugin)
+        self.name = plugin.__name__.split(".")[-1]
+        self.oneliner = oneliner 
+        self.moduledoc = moduledoc
+       
+        self.h1("%s plugin" % self.name) # : %s" %(self.name, self.oneliner))
+        self.Print(self.oneliner)
+        self.Print()
 
-def header():
-    #print "=" * WIDTH
-    #print "list of available py.test plugins" 
-    #print "=" * WIDTH
-    print
+        self.Print(moduledoc)
+    
+        self.emit_funcargs(plugin)
+        self.emit_options(plugin)
+        self.emit_source(plugin, config.hg_changeset)
+        #self.sourcelink = (purename, 
+        #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" + 
+        #    purename + ".py")
+        #
+    def emit_source(self, plugin, hg_changeset):
+        basename = py.path.local(plugin.__file__).basename
+        if basename.endswith("pyc"):
+            basename = basename[:-1]
+        #self.para("`%s`_ source code" % basename)
+        #self.links.append((basename, 
+        #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" +
+        #    basename))
+        self.h2("Getting and improving this plugin")
+        self.para(py.code.Source("""
+            Do you find the above documentation or the plugin itself lacking,
+            not fit for what you need?  Here is a **30 seconds guide**
+            to get you started on improving the plugin:
+
+            1. Download `%s`_ plugin source code 
+            2. put it somewhere as ``%s`` into your import path 
+            3. a subsequent test run will now use your local version! 
+
+            Further information: extend_ documentation, other plugins_ or contact_.  
+        """ % (basename, basename)))
+        #    your work appreciated if you offer back your version.  In this case
+        #    it probably makes sense if you `checkout the py.test 
+        #    development version`_ and apply your changes to the plugin
+        #    version in there. 
+        self.links.append((basename, 
+            "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
+            "py/test/plugin/%s" %(hg_changeset, basename)))
+        self.links.append(('extend', '../extend.html'))
+        self.links.append(('plugins', 'index.html'))
+        self.links.append(('contact', '../../contact.html'))
+        self.links.append(('checkout the py.test development version', 
+            '../../download.html#checkout'))
+        
+        #self.h2("plugin source code") 
+        self.Print()
+        self.para("For your convenience here is also an inlined version "
+                  "of ``%s``:" %basename)
+        #self(or copy-paste from below)
+        self.Print()
+        self.sourcecode(py.code.Source(plugin))
+
+    def emit_funcargs(self, plugin):
+        funcargfuncs = []
+        prefix = "pytest_funcarg__"
+        for name in vars(plugin):
+            if name.startswith(prefix):
+                funcargfuncs.append(getattr(plugin, name))
+        if not funcargfuncs:
+            return
+        for func in funcargfuncs:
+            argname = func.__name__[len(prefix):]
+            self.Print(".. _`%s funcarg`:" % argname)
+            self.Print()
+            self.h2("the %r test function argument" % argname)
+            if func.__doc__:
+                doclines = func.__doc__.split("\n")
+                source = py.code.Source("\n".join(doclines[1:]))
+                source.lines.insert(0, doclines[0])
+                self.para(str(source))
+            else:
+                self.para("XXX missing docstring")
+                warn("missing docstring", func)
+
+    def emit_options(self, plugin):
+        from py.__.test.parseopt import Parser
+        options = []
+        parser = Parser(processopt=options.append)
+        if hasattr(plugin, 'pytest_addoption'):
+            plugin.pytest_addoption(parser)
+        if not options:
+            return
+        self.h2("command line options")
+        self.Print()
+        formatter = py.compat.optparse.IndentedHelpFormatter()
+        for opt in options:
+            switches = formatter.format_option_strings(opt)
+            self.Print("``%s``" % switches)
+            self.Print(opt.help, indent=4)
 
 if __name__ == "__main__":
-    config = py.test.config
-    config.parse([])
-    config.pluginmanager.do_configure(config)
+    _config = py.test.config
+    _config.parse([])
+    _config.pluginmanager.do_configure(_config)
 
-    header()
+    pydir = py.path.local(py.__file__).dirpath()
+
+    cmd = "hg tip --template '{node}'" 
+    old = pydir.dirpath().chdir()
+    _config.hg_changeset = py.process.cmdexec(cmd).strip()
+
+    testdir = pydir.dirpath("doc", 'test')
    
-    links = []
-    for cat, specs in plugins:
-        pluginlist = specs.split()
-        print len(cat) * "="
-        print cat
-        print len(cat) * "="
-        for name in pluginlist:
-            doc = makedoc(name)
-            if doc is None:
-                warn("skipping", name)
-                continue
-            print "* " + str(doc.title)
-            #print len(doc.title) * "*"
-            #print doc.longdesc 
-            links.append(doc.sourcelink)
-            print
-        print 
-    print
-    for link in links:
-        warn(repr(link))
-        print ".. _`%s`: %s" % (link[0], link[1])
+    ov = PluginOverview(testdir.join("plugin", "index.txt"))
+    ov.make(config=_config)
+    
+    ov = HookSpec(testdir.join("plugin", "hookspec.txt"))
+    ov.make(config=_config)
+

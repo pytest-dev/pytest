@@ -1,22 +1,48 @@
 """
-'capsys' and 'capfd' funcargs for capturing stdout/stderror.
+convenient capturing of writes to stdout/stderror streams 
+and file descriptors. 
 
-Calling the reset() method of the capture funcargs gives 
-a out/err tuple of strings representing the captured streams. 
-You can call reset() multiple times each time getting
-the chunk of output that was captured between the invocations. 
+Example Usage
+----------------------
 
+You can use the `capsys funcarg`_ to capture writes 
+to stdout and stderr streams by using it in a test 
+likes this:
+
+.. sourcecode:: python
+
+    def test_myoutput(capsys):
+        print "hello" 
+        print >>sys.stderr, "world"
+        out, err = capsys.reset()
+        assert out == "hello\\n"
+        assert err == "world\\n"
+        print "next"
+        out, err = capsys.reset()
+        assert out == "next\\n" 
+
+The ``reset()`` call returns a tuple and will restart 
+capturing so that you can successively check for output. 
+After the test function finishes the original streams
+will be restored. 
 """
+
 import py
 
 def pytest_funcarg__capsys(request):
-    """ capture writes to sys.stdout/sys.stderr. """ 
+    """captures writes to sys.stdout/sys.stderr and makes 
+    them available successively via a ``capsys.reset()`` method 
+    which returns a ``(out, err)`` tuple of captured strings. 
+    """ 
     capture = Capture(py.io.StdCapture)
     request.addfinalizer(capture.finalize)
     return capture 
 
 def pytest_funcarg__capfd(request):
-    """ capture writes to filedescriptors 1 and 2"""
+    """captures writes to file descriptors 1 and 2 and makes 
+    them available successively via a ``capsys.reset()`` method 
+    which returns a ``(out, err)`` tuple of captured strings. 
+    """ 
     capture = Capture(py.io.StdCaptureFD)
     request.addfinalizer(capture.finalize)
     return capture 

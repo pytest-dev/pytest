@@ -1,0 +1,71 @@
+
+Plugins related to Python test functions and programs
+=====================================================
+
+xfail_ mark python tests as expected-to-fail and report them separately.
+
+figleaf_ write and report coverage data with 'figleaf'.
+
+monkeypatch_ safely patch object attributes, dicts and environment variables.
+
+iocapture_ convenient capturing of writes to stdout/stderror streams
+
+recwarn_ helpers for asserting deprecation and other warnings.
+
+
+Plugins for other testing styles and languages
+==============================================
+
+unittest_ automatically discover and run traditional "unittest.py" style tests.
+
+doctest_ collect and execute doctests from modules and test files.
+
+oejskit_ run javascript tests in real life browsers
+
+restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
+
+
+Plugins for generic reporting and failure logging
+=================================================
+
+pocoo_ submit failure information to paste.pocoo.org
+
+resultlog_ resultlog plugin for machine-readable logging of test results.
+
+terminal_ terminal reporting of the full testing process.
+
+
+internal plugins / core functionality
+=====================================
+
+pdb_ interactive debugging with the Python Debugger.
+
+keyword_ py.test.mark / keyword plugin
+
+hooklog_ log invocations of extension hooks to a file.
+
+runner_ collect and run test items and create reports.
+
+execnetcleanup_ cleanup execnet gateways during test function runs.
+
+pytester_ funcargs and support code for testing py.test's own functionality.
+
+
+.. _`xfail`: xfail.html
+.. _`figleaf`: figleaf.html
+.. _`monkeypatch`: monkeypatch.html
+.. _`iocapture`: iocapture.html
+.. _`recwarn`: recwarn.html
+.. _`unittest`: unittest.html
+.. _`doctest`: doctest.html
+.. _`oejskit`: oejskit.html
+.. _`restdoc`: restdoc.html
+.. _`pocoo`: pocoo.html
+.. _`resultlog`: resultlog.html
+.. _`terminal`: terminal.html
+.. _`pdb`: pdb.html
+.. _`keyword`: keyword.html
+.. _`hooklog`: hooklog.html
+.. _`runner`: runner.html
+.. _`execnetcleanup`: execnetcleanup.html
+.. _`pytester`: pytester.html

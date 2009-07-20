@@ -15,7 +15,7 @@ need to follow a naming pattern; they have an all lowercase ``pytest_``
 prefixed name.  While conftest plugins are discovered automatically,
 named plugins must be explicitely specified. 
 
-.. _`named plugins`: plugins.html
+.. _`named plugins`: plugin/index.html
 
 .. _`tool startup`:
 .. _`test tool starts up`: 
@@ -98,7 +98,7 @@ and minimizes version incompatibilites.  Below you find some introductory
 information on particular hooks.  It's sensible to look at existing 
 plugins so see example usages and start off with your own plugin. 
 
-.. _`hook definition specification`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
+.. _`hook definition specification`: plugin/hookspec.html
 
 .. _`configuration hooks`: 
 
@@ -135,8 +135,8 @@ adding global py.test helpers and functionality
 If you want to make global helper functions or objects available 
 to your test code you can implement: 
 
-    def pytest_namespace(config):
-        """ return dictionary with items to be made available on py.test. """
+    def pytest_namespace():
+        """ return dictionary with items to be made available on py.test. namespace """
 
 All such returned items will be made available directly on 
 the ``py.test`` namespace.  
