@@ -1,0 +1,110 @@
+
+pytest_keyword plugin
+=====================
+
+py.test.mark / keyword plugin
+
+
+
+Getting and improving this plugin
+---------------------------------
+
+
+Do you find the above documentation or the plugin itself lacking,
+not fit for what you need?  Here is a **30 seconds guide**
+to get you started on improving the plugin:
+
+1. Download `pytest_keyword.py`_ plugin source code 
+2. put it somewhere as ``pytest_keyword.py`` into your import path 
+3. a subsequent test run will now use your local version! 
+
+Further information: extend_ documentation, other plugins_ or contact_.  
+
+For your convenience here is also an inlined version of ``pytest_keyword.py``:
+
+.. sourcecode:: python
+
+    """
+        py.test.mark / keyword plugin 
+    """
+    import py
+    
+    def pytest_namespace():
+        mark = KeywordDecorator({})
+        return {'mark': mark}
+    
+    class KeywordDecorator:
+        """ decorator for setting function attributes. """
+        def __init__(self, keywords, lastname=None):
+            self._keywords = keywords
+            self._lastname = lastname
+    
+        def __call__(self, func=None, **kwargs):
+            if func is None:
+                kw = self._keywords.copy()
+                kw.update(kwargs)
+                return KeywordDecorator(kw)
+            elif not hasattr(func, 'func_dict'):
+                kw = self._keywords.copy()
+                name = self._lastname
+                if name is None:
+                    name = "mark"
+                kw[name] = func
+                return KeywordDecorator(kw)
+            func.func_dict.update(self._keywords)
+            return func 
+    
+        def __getattr__(self, name):
+            if name[0] == "_":
+                raise AttributeError(name)
+            kw = self._keywords.copy()
+            kw[name] = True
+            return self.__class__(kw, lastname=name)
+    
+    def test_pytest_mark_getattr():
+        mark = KeywordDecorator({})
+        def f(): pass
+    
+        mark.hello(f)
+        assert f.hello == True
+    
+        mark.hello("test")(f)
+        assert f.hello == "test"
+    
+        py.test.raises(AttributeError, "mark._hello")
+        py.test.raises(AttributeError, "mark.__str__")
+    
+    def test_pytest_mark_call():
+        mark = KeywordDecorator({})
+        def f(): pass
+        mark(x=3)(f)
+        assert f.x == 3
+        def g(): pass
+        mark(g)
+        assert not g.func_dict
+    
+        mark.hello(f)
+        assert f.hello == True
+    
+        mark.hello("test")(f)
+        assert f.hello == "test"
+    
+        mark("x1")(f)
+        assert f.mark == "x1"
+    
+    def test_mark_plugin(testdir):
+        p = testdir.makepyfile("""
+            import py
+            pytest_plugins = "keyword" 
+            @py.test.mark.hello
+            def test_hello():
+                assert hasattr(test_hello, 'hello')
+        """)
+        result = testdir.runpytest(p)
+        assert result.stdout.fnmatch_lines(["*passed*"])
+
+.. _`pytest_keyword.py`: http://bitbucket.org/hpk42/py-trunk/raw/e666e1d61190c52fb074f998d1781673db4d4d2f/py/test/plugin/pytest_keyword.py
+.. _`extend`: ../extend.html
+.. _`plugins`: index.html
+.. _`contact`: ../../contact.html
+.. _`checkout the py.test development version`: ../../download.html#checkout

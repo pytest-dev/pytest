@@ -1,19 +1,19 @@
-py lib: Main tools and APIs
-===================================
+py lib: testing and distributed programming library 
+====================================================
 
-.. _`PyPI project page`: http://pypi.python.org/pypi?%3Aaction=pkg_edit&name=py
-
-Latest Release, see `PyPI project page`_
+The ``py`` lib has several namespaces which help with testing,
+generating and distributing code across machines.  Here is 
+documentation on the most interesting ones:
 
 `py.test`_ write and deploy unit- and functional tests to multiple machines. 
 
-`py.execnet`_ rapidly deploy local or remote processes from your program. 
+`py.execnet`_ elastic distributed programming.
+
+`py.code`_: generate code and use advanced introspection/traceback support. 
 
 `py.path`_: use path objects to transparently access local and svn filesystems.
 
-`py.code`_: generate python code and use advanced introspection/traceback support. 
-
-Minor support functionality 
+Other (minor) support functionality 
 ===================================
 
 `py lib scripts`_ to make python development easier. 
@@ -26,6 +26,10 @@ Minor support functionality
 
 `miscellaneous features`_ describes some small but nice py lib features.
 
+
+.. _`PyPI project page`: http://pypi.python.org/pypi?%3Aaction=pkg_edit&name=py
+
+For the latest Release, see `PyPI project page`_
 
 .. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 

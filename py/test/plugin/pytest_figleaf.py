@@ -1,9 +1,6 @@
 """
 write and report coverage data with 'figleaf'. 
 
-This plugin generates test coverage data or HTML files
-from running tests against a code base. 
-
 """
 import py
 
@@ -13,11 +10,11 @@ def pytest_addoption(parser):
     group = parser.addgroup('figleaf options')
     group.addoption('-F', action='store_true', default=False,
             dest = 'figleaf',
-            help=('trace coverage with figleaf and write HTML '
+            help=('trace python coverage with figleaf and write HTML '
                  'for files below the current working dir'))
     group.addoption('--figleaf-data', action='store', default='.figleaf',
             dest='figleafdata',
-            help='path coverage tracing file.')
+            help='path to coverage tracing file.')
     group.addoption('--figleaf-html', action='store', default='html',
             dest='figleafhtml', 
             help='path to the coverage html dir.')

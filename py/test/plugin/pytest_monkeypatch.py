@@ -1,17 +1,43 @@
 """
 safely patch object attributes, dicts and environment variables. 
 
-the "monkeypatch" funcarg has three helper functions: 
+Usage
+----------------
 
-    monkeypatch.setattr(obj, name, value) 
-    monkeypatch.setitem(obj, name, value) 
-    monkeypatch.setenv(name, value) 
+Use the `monkeypatch funcarg`_ to safely patch the environment
+variables, object attributes or dictionaries.  For example, if you want
+to set the environment variable ``ENV1`` and patch the
+``os.path.abspath`` function to return a particular value during a test
+function execution you can write it down like this:
 
-After the test has run modifications will be undone. 
+.. sourcecode:: python 
+
+    def test_mytest(monkeypatch):
+        monkeypatch.setenv('ENV1', 'myval')
+        monkeypatch.setattr(os.path, 'abspath', lambda x: '/')
+        ... # your test code 
+
+The function argument will do the modifications and memorize the 
+old state.  After the test function finished execution all 
+modifications will be reverted.  See the `monkeypatch blog post`_ 
+for an extensive discussion. 
+
+.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
+
 import os
 
 def pytest_funcarg__monkeypatch(request):
+    """The returned ``monkeypatch`` funcarg provides three 
+    helper methods to modify objects, dictionaries or os.environ::
+
+        monkeypatch.setattr(obj, name, value)  
+        monkeypatch.setitem(mapping, name, value) 
+        monkeypatch.setenv(name, value) 
+
+    All such modifications will be undone when the requesting 
+    test function finished its execution. 
+    """
     monkeypatch = MonkeyPatch()
     request.addfinalizer(monkeypatch.finalize)
     return monkeypatch

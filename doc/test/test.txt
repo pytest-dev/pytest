@@ -1,11 +1,13 @@
-=======
-py.test
-=======
+=======================================
+py.test documentation index 
+=======================================
+
+the project independent ``py.test`` command line tool helps you to: 
 
 * rapidly collect and run tests 
-* use unit- or doctests, functional or integration tests 
+* run unit- or doctests, functional or integration tests 
 * distribute tests to multiple environments
-* local or global plugins for custom test scenarios and types
+* use local or global plugins for custom test types and setup 
 
 quickstart_: for getting started immediately.
 
@@ -23,7 +25,7 @@ config_: ``conftest.py`` files and the config object
 
 talks_: talk and tutorial slides 
 
-.. _`available plugins`: plugins.html
+.. _`available plugins`: plugin/index.html
 .. _talks: talks.html
 .. _quickstart: quickstart.html
 .. _features: features.html

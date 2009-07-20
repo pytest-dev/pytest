@@ -11,3 +11,6 @@ syntax:glob
 *.pyo
 *.swp
 *.html
+
+build/
+py.egg-info

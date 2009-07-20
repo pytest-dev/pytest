@@ -1,8 +1,8 @@
-=======
-py.code
-=======
+================================================================================
+py.code: higher level python code and introspection objects
+================================================================================
 
-The :api:`py.code` part of the 'py lib' contains some functionality to help
+The :api:`py.code` part of the pylib contains some functionality to help
 dealing with Python code objects. Even though working with Python's internal
 code objects (as found on frames and callables) can be very powerful, it's
 usually also quite cumbersome, because the API provided by core Python is

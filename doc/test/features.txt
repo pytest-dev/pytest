@@ -1,25 +1,22 @@
 ==================================================
-py.test Features
+py.test features
 ==================================================
 
 py.test is an extensible tool for running all kinds
-of tests one one or more machines.  It supports a variety
-of testing methods for your Python application and modules,
-including unit, functional, integration and doc-testing. 
-
-It is used in projects that run more than 10000 tests 
-daily as well as single-python-module projects. 
+of tests on one or more machines.  It supports a variety
+of testing methods including unit, functional, integration 
+and doc-testing.  It is used in projects that run more 
+than 10 thousand tests regularly as well as in single-file projects. 
 
 py.test presents a clean and powerful command line interface
-and strives to generally make testing a fun effort. 
+and strives to generally make testing a fun no-boilerplate effort. 
+It works and is tested against linux, windows and osx 
+on CPython 2.3 - CPython 2.6. 
 
-py.test 1.0 works across linux, windows and osx 
-and on Python 2.3 - Python 2.6.
-
-More detailed feature list: 
-
-.. contents::
+.. contents:: List of Contents
     :depth: 1
+
+.. _`autocollect`:
 
 automatically collects and executes tests 
 ===============================================
@@ -302,7 +299,7 @@ purposes such as:
 * running non-python tests
 * managing custom test state setup 
 
-.. _`list of plugins`: plugins.html
+.. _`list of plugins`: plugin/index.html
 .. _`extension mechanisms`: extend.html
 
 .. _`reStructured Text`: http://docutils.sourceforge.net

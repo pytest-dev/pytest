@@ -1,5 +1,16 @@
 """
 collect and execute doctests from modules and test files. 
+
+Usage
+-------------
+
+By default all files matching the ``test_*.txt`` pattern will 
+be run with the ``doctest`` module.  If you issue::
+
+    py.test --doctest-modules
+
+all python files in your projects will be doctest-run 
+as well. 
 """
 
 import py
@@ -9,6 +20,7 @@ def pytest_addoption(parser):
     group = parser.addgroup("doctest options")
     group.addoption("--doctest-modules", 
         action="store_true", default=False,
+        help="search all python files for doctests", 
         dest="doctestmodules")
     
 def pytest_collect_file(path, parent):

@@ -1,5 +1,5 @@
 """
-py.test plugin hooks 
+hook specifications for py.test plugins 
 """
 
 # -------------------------------------------------------------------------
@@ -15,7 +15,6 @@ def pytest_namespace():
 def pytest_configure(config):
     """ called after command line options have been parsed. 
         and all plugins and initial conftest files been loaded. 
-        ``config`` provides access to all such configuration values. 
     """
 
 def pytest_unconfigure(config):

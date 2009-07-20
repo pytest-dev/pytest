@@ -15,7 +15,7 @@ need to follow a naming pattern; they have an all lowercase ``pytest_``
 prefixed name.  While conftest plugins are discovered automatically,
 named plugins must be explicitely specified. 
 
-.. _`named plugins`: plugins.html
+.. _`named plugins`: plugin/index.html
 
 .. _`tool startup`:
 .. _`test tool starts up`: 
@@ -98,7 +98,7 @@ and minimizes version incompatibilites.  Below you find some introductory
 information on particular hooks.  It's sensible to look at existing 
 plugins so see example usages and start off with your own plugin. 
 
-.. _`hook definition specification`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/hookspec.py
+.. _`hook definition specification`: plugin/hookspec.html
 
 .. _`configuration hooks`: 
 

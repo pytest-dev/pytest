@@ -1,6 +1,8 @@
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
+* pytest_unittest-plugin are now enabled by default
+
 * introduced pytest_keyboardinterrupt hook and 
   refined pytest_sessionfinish hooked. 
 
