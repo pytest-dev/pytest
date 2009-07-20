@@ -561,7 +561,7 @@ For your convenience here is also an inlined version of ``pytest_pytester.py``:
             "*1 passed*"
         ])
 
-.. _`pytest_pytester.py`: http://bitbucket.org/hpk42/py-trunk/raw/e666e1d61190c52fb074f998d1781673db4d4d2f/py/test/plugin/pytest_pytester.py
+.. _`pytest_pytester.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_pytester.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html

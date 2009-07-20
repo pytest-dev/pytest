@@ -297,7 +297,7 @@ For your convenience here is also an inlined version of ``pytest_runner.py``:
                 col.setup() 
                 self.stack.append(col) 
 
-.. _`pytest_runner.py`: http://bitbucket.org/hpk42/py-trunk/raw/e666e1d61190c52fb074f998d1781673db4d4d2f/py/test/plugin/pytest_runner.py
+.. _`pytest_runner.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_runner.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html
