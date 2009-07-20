@@ -94,11 +94,11 @@ def pytest_runtest_logreport(rep):
 def pytest_sessionstart(session):
     """ before session.main() is called. """
 
-def pytest_sessionfinish(session, exitstatus, excrepr=None):
+def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
 
 # -------------------------------------------------------------------------
-# generic reporting hooks (invoked from pytest_terminal)
+# hooks for influencing reporting (invoked from pytest_terminal)
 # -------------------------------------------------------------------------
 
 def pytest_report_teststatus(rep):
@@ -140,7 +140,7 @@ def pytest_looponfailinfo(failreports, rootdirs):
 
 
 # -------------------------------------------------------------------------
-# internal debugging hooks 
+# error handling and internal debugging hooks 
 # -------------------------------------------------------------------------
 
 def pytest_plugin_registered(plugin):
@@ -151,6 +151,9 @@ def pytest_plugin_unregistered(plugin):
 
 def pytest_internalerror(excrepr):
     """ called for internal errors. """
+
+def pytest_keyboard_interrupt(excinfo):
+    """ called for keyboard interrupt. """
 
 def pytest_trace(category, msg):
     """ called for debug info. """ 

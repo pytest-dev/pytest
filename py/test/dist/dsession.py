@@ -75,7 +75,7 @@ class DSession(Session):
         self.setup()
         exitstatus = self.loop(colitems)
         self.teardown()
-        self.sessionfinishes() 
+        self.sessionfinishes(exitstatus=exitstatus) 
         return exitstatus
 
     def loop_once(self, loopstate):

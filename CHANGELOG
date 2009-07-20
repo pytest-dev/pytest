@@ -1,6 +1,9 @@
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
+* introduced pytest_keyboardinterrupt hook and 
+  refined pytest_sessionfinish hooked. 
+
 * workaround a buggy logging module interaction ("closing already closed
   files").  Thanks to Sridhar Ratnakumar for triggering. 
 

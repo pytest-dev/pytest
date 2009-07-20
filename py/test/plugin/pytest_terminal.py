@@ -231,19 +231,28 @@ class TerminalReporter:
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
-    def pytest_sessionfinish(self, __call__, session, exitstatus, excrepr=None):
+    def pytest_sessionfinish(self, __call__, session, exitstatus):
         __call__.execute() 
         self._tw.line("")
         if exitstatus in (0, 1, 2):
             self.summary_failures()
             self.summary_skips()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
-        if excrepr is not None:
-            self.summary_final_exc(excrepr)
         if exitstatus == 2:
-            self.write_sep("!", "KEYBOARD INTERRUPT")
+            self._report_keyboardinterrupt()
         self.summary_deselected()
         self.summary_stats()
+
+    def pytest_keyboard_interrupt(self, excinfo):
+        self._keyboardinterrupt_memo = excinfo.getrepr()
+
+    def _report_keyboardinterrupt(self):
+        self.write_sep("!", "KEYBOARD INTERRUPT")
+        excrepr = self._keyboardinterrupt_memo
+        if self.config.option.verbose:
+            excrepr.toterminal(self._tw)
+        else:
+            excrepr.reprcrash.toterminal(self._tw)
 
     def pytest_looponfailinfo(self, failreports, rootdirs):
         if failreports:
@@ -334,14 +343,6 @@ class TerminalReporter:
                     for num, fspath, lineno, reason in fskips:
                         self._tw.line("%s:%d: [%d] %s" %(fspath, lineno, num, reason))
 
-    def summary_final_exc(self, excrepr):
-        self.write_sep("!")
-        if self.config.option.verbose:
-            excrepr.toterminal(self._tw)
-        else:
-            excrepr.reprcrash.toterminal(self._tw)
-
-
 class CollectonlyReporter:
     INDENT = "  "
 
@@ -373,7 +374,7 @@ class CollectonlyReporter:
             self._failed.append(rep)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pytest_sessionfinish(self, session, exitstatus, excrepr=None):
+    def pytest_sessionfinish(self, session, exitstatus):
         if self._failed:
             self.out.sep("!", "collection failures")
         for rep in self._failed:
