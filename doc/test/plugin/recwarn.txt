@@ -204,7 +204,7 @@ For your convenience here is also an inlined version of ``pytest_recwarn.py``:
         py.test.deprecated_call(dep_explicit, 0)
         py.test.deprecated_call(dep_explicit, 0)
 
-.. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_recwarn.py
+.. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/3d511a58acc10477ff4f766df4a9224cfc3546af/py/test/plugin/pytest_recwarn.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html

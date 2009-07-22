@@ -1,10 +1,10 @@
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 
-* pytest_unittest-plugin are now enabled by default
+* pytest_unittest-plugin is now enabled by default
 
 * introduced pytest_keyboardinterrupt hook and 
-  refined pytest_sessionfinish hooked. 
+  refined pytest_sessionfinish hooked, added tests. 
 
 * workaround a buggy logging module interaction ("closing already closed
   files").  Thanks to Sridhar Ratnakumar for triggering. 
@@ -13,9 +13,8 @@ Changes between 1.0.0b7 and 1.0.0b8
   a dependency only a warning will be issued instead 
   of exiting the testing process. 
 
-* docs: 
-  - refined funcargs doc , use the term "factory" instead 
-    of "provider"
+* many improvements to docs: 
+  - refined funcargs doc , use the term "factory" instead of "provider"
   - added a new talk/tutorial doc page 
   - better download page
   - better plugin docstrings

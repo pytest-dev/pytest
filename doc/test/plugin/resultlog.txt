@@ -274,7 +274,7 @@ For your convenience here is also an inlined version of ``pytest_resultlog.py``:
             "s *:test_skip", 
         ])
 
-.. _`pytest_resultlog.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_resultlog.py
+.. _`pytest_resultlog.py`: http://bitbucket.org/hpk42/py-trunk/raw/3d511a58acc10477ff4f766df4a9224cfc3546af/py/test/plugin/pytest_resultlog.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html
