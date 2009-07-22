@@ -1,6 +1,5 @@
 """
-convenient capturing of writes to stdout/stderror streams 
-and file descriptors. 
+convenient capturing of writes to stdout/stderror streams and file descriptors. 
 
 Example Usage
 ----------------------

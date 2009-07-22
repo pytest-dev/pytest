@@ -10,9 +10,10 @@ plugins = [
             'unittest doctest oejskit restdoc'),
     ('Plugins for generic reporting and failure logging', 
             'pocoo resultlog terminal',),
-    ('internal plugins / core functionality', 
-        'pdb keyword hooklog runner execnetcleanup pytester',
-    )
+    #('internal plugins / core functionality', 
+    #    #'pdb keyword hooklog runner execnetcleanup # pytester',
+    #    'pdb keyword hooklog runner execnetcleanup' # pytester',
+    #)
 ]
 
 externals = {
@@ -152,6 +153,9 @@ class PluginDoc(RestWriter):
         self.h1("%s plugin" % self.name) # : %s" %(self.name, self.oneliner))
         self.Print(self.oneliner)
         self.Print()
+        self.Print(".. contents::")
+        self.Print("  :local:")
+        self.Print()
 
         self.Print(moduledoc)
     
@@ -170,15 +174,13 @@ class PluginDoc(RestWriter):
         #self.links.append((basename, 
         #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" +
         #    basename))
-        self.h2("Getting and improving this plugin")
+        self.h1("Start improving this plugin in 30 seconds")
         self.para(py.code.Source("""
-            Do you find the above documentation or the plugin itself lacking,
-            not fit for what you need?  Here is a **30 seconds guide**
-            to get you started on improving the plugin:
+            Do you find the above documentation or the plugin itself lacking? 
 
             1. Download `%s`_ plugin source code 
             2. put it somewhere as ``%s`` into your import path 
-            3. a subsequent test run will now use your local version! 
+            3. a subsequent ``py.test`` run will use your local version
 
             Further information: extend_ documentation, other plugins_ or contact_.  
         """ % (basename, basename)))
@@ -194,14 +196,15 @@ class PluginDoc(RestWriter):
         self.links.append(('contact', '../../contact.html'))
         self.links.append(('checkout the py.test development version', 
             '../../download.html#checkout'))
-        
-        #self.h2("plugin source code") 
-        self.Print()
-        self.para("For your convenience here is also an inlined version "
-                  "of ``%s``:" %basename)
-        #self(or copy-paste from below)
-        self.Print()
-        self.sourcecode(py.code.Source(plugin))
+       
+        if 0: # this breaks the page layout and makes large doc files
+            #self.h2("plugin source code") 
+            self.Print()
+            self.para("For your convenience here is also an inlined version "
+                      "of ``%s``:" %basename)
+            #self(or copy-paste from below)
+            self.Print()
+            self.sourcecode(py.code.Source(plugin))
 
     def emit_funcargs(self, plugin):
         funcargfuncs = []
@@ -213,6 +216,7 @@ class PluginDoc(RestWriter):
             return
         for func in funcargfuncs:
             argname = func.__name__[len(prefix):]
+            self.Print()
             self.Print(".. _`%s funcarg`:" % argname)
             self.Print()
             self.h2("the %r test function argument" % argname)
