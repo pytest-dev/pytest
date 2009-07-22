@@ -7,6 +7,7 @@ import sys, os
 import inspect
 from py.__.test.config import Config as pytestConfig
 import hookspec
+import subprocess
 
 pytest_plugins = '_pytest'
 
@@ -506,3 +507,104 @@ def test_testdir_runs_with_plugin(testdir):
     assert result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
+
+#
+# experimental funcargs for venv/install-tests
+#
+
+def pytest_funcarg__venv(request):
+    p = request.config.mktemp(request.function.__name__, numbered=True)
+    venv = VirtualEnv(str(p)) 
+    venv.create()
+    return venv 
+   
+def pytest_funcarg__py_setup(request):
+    rootdir = py.path.local(py.__file__).dirpath().dirpath()
+    setup = rootdir.join('setup.py')
+    if not setup.check():
+        py.test.skip("not found: %r" % setup)
+    return SetupBuilder(setup)
+
+class SetupBuilder:
+    def __init__(self, setup_path):
+        self.setup_path = setup_path
+
+    def make_sdist(self, destdir=None):
+        temp = py.path.local.mkdtemp()
+        try:
+            args = ['python', str(self.setup_path), 'sdist', 
+                    '--dist-dir', str(temp)]
+            subprocess.check_call(args)
+            l = temp.listdir('py-*')
+            assert len(l) == 1
+            sdist = l[0]
+            if destdir is None:
+                destdir = self.setup_path.dirpath('build')
+                assert destdir.check()
+            else:
+                destdir = py.path.local(destdir)
+            target = destdir.join(sdist.basename)
+            sdist.copy(target)
+            return target 
+        finally:
+            temp.remove()
+
+# code taken from Ronny Pfannenschmidt's virtualenvmanager 
+
+class VirtualEnv(object):
+    def __init__(self, path):
+        #XXX: supply the python executable
+        self.path = path
+
+    def __repr__(self):
+        return "<VirtualEnv at %r>" %(self.path)
+
+    def _cmd(self, name):
+        return os.path.join(self.path, 'bin', name)
+
+    @property
+    def valid(self):
+        return os.path.exists(self._cmd('python'))
+
+    def create(self, sitepackages=False):
+        args = ['virtualenv', self.path]
+        if not sitepackages:
+            args.append('--no-site-packages')
+        subprocess.check_call(args)
+
+    def makegateway(self):
+        python = self._cmd('python')
+        return py.execnet.makegateway("popen//python=%s" %(python,))
+
+    def pcall(self, cmd, *args, **kw):
+        assert self.valid
+        return subprocess.call([
+                self._cmd(cmd)
+            ] + list(args),
+            **kw)
+
+
+    def easy_install(self, *packages, **kw):
+        args = []
+        if 'index' in kw:
+            index = kw['index']
+            if isinstance(index, (list, tuple)):
+                for i in index:
+                    args.extend(['-i', i])
+            else:
+                args.extend(['-i', index])
+
+        args.extend(packages)
+        self.pcall('easy_install', *args)
+
+
+    @property
+    def has_pip(self):
+        return os.path.exists(self._cmd('pip'))
+
+    def pip_install(self, *packages):
+        if not self.has_pip:
+            self.easy_install('pip')
+
+        self.pcall('pip', *packages)
+
