@@ -57,7 +57,7 @@ class HookRecorder:
     def _makecallparser(self, method):
         name = method.__name__
         args, varargs, varkw, default = py.std.inspect.getargspec(method)
-        if args and args[0] != "self":
+        if not args or args[0] != "self":
             args.insert(0, 'self') 
         fspec = py.std.inspect.formatargspec(args, varargs, varkw, default)
         # we use exec because we want to have early type
@@ -112,6 +112,19 @@ def test_hookrecorder_basic():
     assert call.arg == 123 
     assert call._name == "xyz"
     py.test.raises(ValueError, "rec.popcall('abc')")
+
+def test_hookrecorder_basic_no_args_hook():
+    import sys
+    comregistry = py._com.Registry() 
+    rec = HookRecorder(comregistry)
+    apimod = type(sys)('api')
+    def xyz():
+        pass
+    apimod.xyz = xyz
+    rec.start_recording(apimod)
+    rec.hook.xyz()
+    call = rec.popcall("xyz")
+    assert call._name == "xyz"
 
 reg = py._com.comregistry
 def test_functional_default(testdir, _pytest):
