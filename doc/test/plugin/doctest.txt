@@ -233,7 +233,7 @@ For your convenience here is also an inlined version of ``pytest_doctest.py``:
                 "*test_txtfile_failing.txt:2: DocTestFailure"
             ])
 
-.. _`pytest_doctest.py`: http://bitbucket.org/hpk42/py-trunk/raw/3d511a58acc10477ff4f766df4a9224cfc3546af/py/test/plugin/pytest_doctest.py
+.. _`pytest_doctest.py`: http://bitbucket.org/hpk42/py-trunk/raw/ea1f958813ebbff45161fdb468a6204be5396112/py/test/plugin/pytest_doctest.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html
