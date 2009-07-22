@@ -138,6 +138,8 @@ class DSession(Session):
                     exitstatus = loopstate.exitstatus
                     break 
         except KeyboardInterrupt:
+            excinfo = py.code.ExceptionInfo()
+            self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             self.config.pluginmanager.notify_exception()

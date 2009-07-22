@@ -17,12 +17,16 @@ def basic_run_report(item):
     return runner.call_and_report(item, "call", log=False)
 
 class Option:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, dist=None):
         self.verbose = verbose
+        self.dist = dist
     def _getcmdargs(self):
         l = []
         if self.verbose:
             l.append('-v')
+        if self.dist:
+            l.append('--dist=%s' % self.dist)
+            l.append('--tx=popen')
         return l
     def _getcmdstring(self):
         return " ".join(self._getcmdargs())
@@ -37,6 +41,12 @@ def pytest_generate_tests(metafunc):
             id="verbose", 
             funcargs={'option': Option(verbose=True)}
         )
+        nodist = getattr(metafunc.function, 'nodist', False)
+        if not nodist:
+            metafunc.addcall(
+                id="verbose-dist", 
+                funcargs={'option': Option(dist='each', verbose=True)}
+            )
 
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
@@ -49,13 +59,22 @@ class TestTerminal:
             def test_func():
                 assert 0
         """)
-        result = testdir.runpytest(option._getcmdstring())
+        result = testdir.runpytest(*option._getcmdargs())
         if option.verbose:
-            result.stdout.fnmatch_lines([
-            "*test_pass_skip_fail.py:2: *test_ok*PASS*",
-            "*test_pass_skip_fail.py:4: *test_skip*SKIP*",
-            "*test_pass_skip_fail.py:6: *test_func*FAIL*",
-            ])
+            if not option.dist:
+                result.stdout.fnmatch_lines([
+                    "*test_pass_skip_fail.py:2: *test_ok*PASS*",
+                    "*test_pass_skip_fail.py:4: *test_skip*SKIP*",
+                    "*test_pass_skip_fail.py:6: *test_func*FAIL*",
+                ])
+            else:
+                expected = [
+                    "*PASS*test_pass_skip_fail.py:2: *test_ok*", 
+                    "*SKIP*test_pass_skip_fail.py:4: *test_skip*", 
+                    "*FAIL*test_pass_skip_fail.py:6: *test_func*", 
+                ]
+                for line in expected:
+                    result.stdout.fnmatch_lines([line])
         else:
             result.stdout.fnmatch_lines([
             "*test_pass_skip_fail.py .sF"
@@ -68,7 +87,7 @@ class TestTerminal:
 
     def test_collect_fail(self, testdir, option):
         p = testdir.makepyfile("import xyz")
-        result = testdir.runpytest(option._getcmdstring())
+        result = testdir.runpytest(*option._getcmdargs())
         result.stdout.fnmatch_lines([
             "*test_collect_fail.py F*",
             ">   import xyz",
@@ -217,7 +236,15 @@ class TestTerminal:
             "*FGHJ:43: custom*"
         ])
 
+    def test_keyboard_interrupt_dist(self, testdir, option):
+        p = testdir.makepyfile("""
+            raise KeyboardInterrupt
+        """)
+        result = testdir.runpytest(*option._getcmdargs())
+        assert result.ret == 2
+        result.stdout.fnmatch_lines(['*KEYBOARD INTERRUPT*'])
 
+    @py.test.mark.nodist
     def test_keyboard_interrupt(self, testdir, option):
         p = testdir.makepyfile("""
             def test_foobar():
@@ -228,7 +255,7 @@ class TestTerminal:
                 raise KeyboardInterrupt   # simulating the user
         """)
 
-        result = testdir.runpytest(option._getcmdstring())
+        result = testdir.runpytest(*option._getcmdargs())
         result.stdout.fnmatch_lines([
             "    def test_foobar():",
             ">       assert 0",
@@ -239,6 +266,7 @@ class TestTerminal:
             result.stdout.fnmatch_lines([
                 "*raise KeyboardInterrupt   # simulating the user*",
             ])
+        result.stdout.fnmatch_lines(['*KEYBOARD INTERRUPT*'])
 
     def test_skip_reasons_folding(self):
         class longrepr:

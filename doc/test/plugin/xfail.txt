@@ -4,6 +4,9 @@ pytest_xfail plugin
 
 mark python tests as expected-to-fail and report them separately.
 
+.. contents::
+  :local:
+
 usage
 ------------
 
@@ -18,116 +21,19 @@ This test will be executed but no traceback will be reported
 when it fails. Instead terminal reporting will list it in the 
 "expected to fail" section or "unexpectedly passing" section.
 
-Getting and improving this plugin
----------------------------------
+Start improving this plugin in 30 seconds
+=========================================
 
 
-Do you find the above documentation or the plugin itself lacking,
-not fit for what you need?  Here is a **30 seconds guide**
-to get you started on improving the plugin:
+Do you find the above documentation or the plugin itself lacking? 
 
 1. Download `pytest_xfail.py`_ plugin source code 
 2. put it somewhere as ``pytest_xfail.py`` into your import path 
-3. a subsequent test run will now use your local version! 
+3. a subsequent ``py.test`` run will use your local version
 
 Further information: extend_ documentation, other plugins_ or contact_.  
 
-For your convenience here is also an inlined version of ``pytest_xfail.py``:
-
-.. sourcecode:: python
-
-    """
-    mark python tests as expected-to-fail and report them separately. 
-    
-    usage
-    ------------
-    
-    Use the generic mark decorator to add the 'xfail' keyword to your 
-    test function::
-    
-        @py.test.mark.xfail
-        def test_hello():
-            ...
-    
-    This test will be executed but no traceback will be reported 
-    when it fails. Instead terminal reporting will list it in the 
-    "expected to fail" section or "unexpectedly passing" section.  
-    """
-    
-    import py
-    
-    pytest_plugins = ['keyword']
-    
-    def pytest_runtest_makereport(__call__, item, call):
-        if call.when != "call":
-            return
-        if hasattr(item, 'obj') and hasattr(item.obj, 'func_dict'):
-            if 'xfail' in item.obj.func_dict:
-                res = __call__.execute(firstresult=True)
-                if call.excinfo:
-                    res.skipped = True
-                    res.failed = res.passed = False
-                else:
-                    res.skipped = res.passed = False
-                    res.failed = True
-                return res 
-    
-    def pytest_report_teststatus(rep):
-        """ return shortletter and verbose word. """
-        if 'xfail' in rep.keywords: 
-            if rep.skipped:
-                return "xfailed", "x", "xfail"
-            elif rep.failed:
-                return "xpassed", "P", "xpass" 
-    
-    # called by the terminalreporter instance/plugin
-    def pytest_terminal_summary(terminalreporter):
-        tr = terminalreporter
-        xfailed = tr.stats.get("xfailed")
-        if xfailed:
-            tr.write_sep("_", "expected failures")
-            for event in xfailed:
-                entry = event.longrepr.reprcrash 
-                key = entry.path, entry.lineno, entry.message
-                reason = event.longrepr.reprcrash.message
-                modpath = event.item.getmodpath(includemodule=True)
-                #tr._tw.line("%s %s:%d: %s" %(modpath, entry.path, entry.lineno, entry.message))
-                tr._tw.line("%s %s:%d: " %(modpath, entry.path, entry.lineno))
-    
-        xpassed = terminalreporter.stats.get("xpassed")
-        if xpassed:
-            tr.write_sep("_", "UNEXPECTEDLY PASSING TESTS")
-            for event in xpassed:
-                tr._tw.line("%s: xpassed" %(event.item,))
-    
-    
-    # ===============================================================================
-    #
-    # plugin tests 
-    #
-    # ===============================================================================
-    
-    def test_xfail(testdir, linecomp):
-        p = testdir.makepyfile(test_one="""
-            import py
-            @py.test.mark.xfail
-            def test_this():
-                assert 0
-    
-            @py.test.mark.xfail
-            def test_that():
-                assert 1
-        """)
-        result = testdir.runpytest(p)
-        extra = result.stdout.fnmatch_lines([
-            "*expected failures*",
-            "*test_one.test_this*test_one.py:4*",
-            "*UNEXPECTEDLY PASSING*",
-            "*test_that*",
-        ])
-        assert result.ret == 1
-
-.. _`pytest_xfail.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_xfail.py
+.. _`pytest_xfail.py`: http://bitbucket.org/hpk42/py-trunk/raw/85fe614ab05f301f206935d11a477df184cbbce6/py/test/plugin/pytest_xfail.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html

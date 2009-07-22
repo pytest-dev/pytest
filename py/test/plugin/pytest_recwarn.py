@@ -1,17 +1,46 @@
 """
 helpers for asserting deprecation and other warnings. 
 
-**recwarn**: function argument where one can call recwarn.pop() to get
-the last warning that would have been shown. 
+Example usage 
+---------------------
 
-**py.test.deprecated_call(func, *args, **kwargs)**: assert that the given function call triggers a deprecation warning. 
+You can use the ``recwarn`` funcarg to track 
+warnings within a test function:
+
+.. sourcecode:: python
+
+    def test_hello(recwarn):
+        from warnings import warn
+        warn("hello", DeprecationWarning)
+        w = recwarn.pop(DeprecationWarning)
+        assert issubclass(w.category, DeprecationWarning)
+        assert 'hello' in str(w.message)
+        assert w.filename
+        assert w.lineno
+
+You can also call a global helper for checking
+taht a certain function call yields a Deprecation
+warning:
+
+.. sourcecode:: python
+
+    import py
+            
+    def test_global():
+        py.test.deprecated_call(myfunction, 17)
+        
+        
 """
 
 import py
 import os
 
 def pytest_funcarg__recwarn(request):
-    """ check that warnings have been raised. """ 
+    """Return a WarningsRecorder instance that provides these methods:
+
+    * ``pop(category=None)``: return last warning matching the category.
+    * ``clear()``: clear list of warnings 
+    """
     warnings = WarningsRecorder()
     request.addfinalizer(warnings.finalize)
     return warnings

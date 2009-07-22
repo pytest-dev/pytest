@@ -633,6 +633,10 @@ div.heading, h1 {
     border-bottom: 1px solid #8CACBB;
 }
 
+h2 {
+    border-bottom: 1px dotted #8CACBB;
+}
+
 
 h1, h2, h3, h4, h5, h6 {
     color: Black;
@@ -648,11 +652,10 @@ h1, h2, h3, h4, h5, h6 {
 
 
 h1 { font-size: 145%; }
-h2 { font-size: 135%; }
-h3 { font-size: 125%; }
-h4 { font-size: 120%; }
-h5 { font-size: 110%; }
-h6 { font-size: 80%; }
+h2 { font-size: 115%; }
+h3 { font-size: 105%; }
+h4 { font-size: 100%; }
+h5 { font-size: 100%; }
 
 h1 a { text-decoration: None;}
 

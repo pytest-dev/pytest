@@ -4,6 +4,9 @@ pytest_pocoo plugin
 
 submit failure information to paste.pocoo.org
 
+.. contents::
+  :local:
+
 
 
 command line options
@@ -13,88 +16,19 @@ command line options
 ``-P, --pocoo-sendfailures``
     send failures to http://paste.pocoo.org paste service
 
-Getting and improving this plugin
----------------------------------
+Start improving this plugin in 30 seconds
+=========================================
 
 
-Do you find the above documentation or the plugin itself lacking,
-not fit for what you need?  Here is a **30 seconds guide**
-to get you started on improving the plugin:
+Do you find the above documentation or the plugin itself lacking? 
 
 1. Download `pytest_pocoo.py`_ plugin source code 
 2. put it somewhere as ``pytest_pocoo.py`` into your import path 
-3. a subsequent test run will now use your local version! 
+3. a subsequent ``py.test`` run will use your local version
 
 Further information: extend_ documentation, other plugins_ or contact_.  
 
-For your convenience here is also an inlined version of ``pytest_pocoo.py``:
-
-.. sourcecode:: python
-
-    """
-    submit failure information to paste.pocoo.org 
-    """
-    import py
-    
-    class url:
-        base = "http://paste.pocoo.org"
-        xmlrpc = base + "/xmlrpc/"
-        show = base + "/show/"
-    
-    def pytest_addoption(parser):
-        group = parser.addgroup("pocoo plugin") 
-        group.addoption('-P', '--pocoo-sendfailures', 
-            action='store_true', dest="pocoo_sendfailures", 
-            help="send failures to %s paste service" %(url.base,))
-    
-    def getproxy():
-        return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
-    
-    def pytest_terminal_summary(terminalreporter):
-        if terminalreporter.config.option.pocoo_sendfailures:
-            tr = terminalreporter
-            if 'failed' in tr.stats and tr.config.option.tbstyle != "no":
-                terminalreporter.write_sep("=", "Sending failures to %s" %(url.base,))
-                terminalreporter.write_line("xmlrpcurl: %s" %(url.xmlrpc,))
-                #print self.__class__.getproxy
-                #print self.__class__, id(self.__class__)
-                serverproxy = getproxy()
-                for ev in terminalreporter.stats.get('failed'):
-                    tw = py.io.TerminalWriter(stringio=True)
-                    ev.toterminal(tw)
-                    s = tw.stringio.getvalue()
-                    # XXX add failure summary 
-                    assert len(s)
-                    terminalreporter.write_line("newpaste() ...")
-                    proxyid = serverproxy.newPaste("python", s)
-                    terminalreporter.write_line("%s%s\n" % (url.show, proxyid))
-                    break
-    
-    
-    def test_toproxy(testdir, monkeypatch):
-        l = []
-        class MockProxy:
-            def newPaste(self, language, code):
-                l.append((language, code))
-        monkeypatch.setitem(globals(), 'getproxy', MockProxy) 
-        testdir.plugins.insert(0, globals())
-        testpath = testdir.makepyfile("""
-            import py
-            def test_pass():
-                pass
-            def test_fail():
-                assert 0
-            def test_skip():
-                py.test.skip("")
-        """)
-        reprec = testdir.inline_run(testpath, "-P")
-        assert len(l) == 1
-        assert l[0][0] == "python"
-        s = l[0][1]
-        assert s.find("def test_fail") != -1
-        assert reprec.countoutcomes() == [1,1,1]
-
-.. _`pytest_pocoo.py`: http://bitbucket.org/hpk42/py-trunk/raw/c28e76a64569475dda8b92c68f9c1c0902c5049e/py/test/plugin/pytest_pocoo.py
+.. _`pytest_pocoo.py`: http://bitbucket.org/hpk42/py-trunk/raw/85fe614ab05f301f206935d11a477df184cbbce6/py/test/plugin/pytest_pocoo.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html

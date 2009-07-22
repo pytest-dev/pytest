@@ -114,7 +114,7 @@ class Session(object):
                     item.config.hook.pytest_runtest_protocol(item=item)
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
-            item.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
+            self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
