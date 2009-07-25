@@ -31,7 +31,6 @@ def pytest_sessionfinish(session, exitstatus):
         mod.raiseExceptions = False 
 
 def pytest_make_collect_report(collector):
-    # XXX capturing is missing
     result = excinfo = None
     try:
         result = collector._memocollect()

@@ -34,10 +34,6 @@ def pytest_addoption(parser):
        action="store_true", dest="nocapture", default=False,
        help="disable catching of stdout/stderr during test run.")
 
-def pytest_configure(config):
-    if not config.option.nocapture:
-        config.pluginmanager.register(CapturePerTest())
-
 def determine_capturing(config, path=None):
     iocapture = config.getvalue("iocapture", path=path)
     if iocapture == "fd": 
@@ -49,6 +45,28 @@ def determine_capturing(config, path=None):
     else:
         # how to raise errors here? 
         raise config.Error("unknown io capturing: " + iocapture)
+
+def pytest_make_collect_report(__call__, collector):
+    cap = determine_capturing(collector.config, collector.fspath)
+    try:
+        rep = __call__.execute(firstresult=True)
+    finally:
+        outerr = cap.reset()
+    addouterr(rep, outerr)
+    return rep
+   
+def addouterr(rep, outerr):
+    repr = getattr(rep, 'longrepr', None)
+    if not hasattr(repr, 'addsection'):
+        return
+    for secname, content in zip(["out", "err"], outerr):
+        if content:
+            repr.addsection("Captured std%s" % secname, content.rstrip())
+
+def pytest_configure(config):
+    if not config.option.nocapture:
+        config.pluginmanager.register(CapturePerTest())
+
 
 class CapturePerTest:
     def __init__(self):
@@ -78,12 +96,8 @@ class CapturePerTest:
         outerr = capture.reset()
         # XXX shift reporting elsewhere 
         rep = __call__.execute(firstresult=True)
-        if hasattr(rep, 'longrepr'):
-            repr = rep.longrepr
-            if hasattr(repr, 'addsection'):
-                for secname, content in zip(["out", "err"], outerr):
-                    if content:
-                        repr.addsection("Captured std%s" % secname, content.rstrip())
+        addouterr(rep, outerr)
+
         return rep
 
 def pytest_funcarg__capsys(request):
@@ -91,7 +105,7 @@ def pytest_funcarg__capsys(request):
     them available successively via a ``capsys.reset()`` method 
     which returns a ``(out, err)`` tuple of captured strings. 
     """ 
-    capture = Capture(py.io.StdCapture)
+    capture = CaptureFuncarg(py.io.StdCapture)
     request.addfinalizer(capture.finalize)
     return capture 
 
@@ -100,7 +114,7 @@ def pytest_funcarg__capfd(request):
     them available successively via a ``capsys.reset()`` method 
     which returns a ``(out, err)`` tuple of captured strings. 
     """ 
-    capture = Capture(py.io.StdCaptureFD)
+    capture = CaptureFuncarg(py.io.StdCaptureFD)
     request.addfinalizer(capture.finalize)
     return capture 
 
@@ -110,7 +124,7 @@ def pytest_pyfunc_call(pyfuncitem):
             if funcarg == "capsys" or funcarg == "capfd":
                 value.reset()
 
-class Capture: # funcarg
+class CaptureFuncarg:
     _capture = None
     def __init__(self, captureclass):
         self._captureclass = captureclass
@@ -125,31 +139,4 @@ class Capture: # funcarg
             res = self._capture.reset()
         self._capture = self._captureclass()
         return res 
-
-class TestCapture:
-    def test_std_functional(self, testdir):        
-        reprec = testdir.inline_runsource("""
-            def test_hello(capsys):
-                print 42
-                out, err = capsys.reset()
-                assert out.startswith("42")
-        """)
-        reprec.assertoutcome(passed=1)
-        
-    def test_stdfd_functional(self, testdir):        
-        reprec = testdir.inline_runsource("""
-            def test_hello(capfd):
-                import os
-                os.write(1, "42")
-                out, err = capfd.reset()
-                assert out.startswith("42")
-        """)
-        reprec.assertoutcome(passed=1)
-
-    def test_funcall_yielded_no_funcargs(self, testdir):        
-        reprec = testdir.inline_runsource("""
-            def test_hello():
-                yield lambda: None
-        """)
-        reprec.assertoutcome(passed=1)
 
