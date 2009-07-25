@@ -247,7 +247,8 @@ class Node(object):
         return col._getitembynames(names)
     _fromtrail = staticmethod(_fromtrail)
 
-    def _repr_failure_py(self, excinfo, outerr):
+    def _repr_failure_py(self, excinfo, outerr=None):
+        assert outerr is None, "XXX deprecated"
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
         # XXX temporary hack: getrepr() should not take a 'style' argument
         # at all; it should record all data in all cases, and the style
@@ -256,13 +257,9 @@ class Node(object):
             style = "short"
         else:
             style = "long"
-        repr = excinfo.getrepr(funcargs=True, 
+        return excinfo.getrepr(funcargs=True, 
                                showlocals=self.config.option.showlocals,
                                style=style)
-        for secname, content in zip(["out", "err"], outerr):
-            if content:
-                repr.addsection("Captured std%s" % secname, content.rstrip())
-        return repr 
 
     repr_failure = _repr_failure_py
     shortfailurerepr = "F"
@@ -291,9 +288,10 @@ class Collector(Node):
             if colitem.name == name:
                 return colitem
 
-    def repr_failure(self, excinfo, outerr):
+    def repr_failure(self, excinfo, outerr=None):
         """ represent a failure. """
-        return self._repr_failure_py(excinfo, outerr)
+        assert outerr is None, "XXX deprecated"
+        return self._repr_failure_py(excinfo)
 
     def _memocollect(self):
         """ internal helper method to cache results of calling collect(). """

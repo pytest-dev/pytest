@@ -1,6 +1,11 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
+* reworked per-test output capturing into the pytest_iocapture.py plugin 
+  and thus removed capturing code from config object 
+
+* item.repr_failure(excinfo) instead of item.repr_failure(excinfo, outerr)
+
 
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================

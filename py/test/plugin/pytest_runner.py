@@ -31,15 +31,15 @@ def pytest_sessionfinish(session, exitstatus):
         mod.raiseExceptions = False 
 
 def pytest_make_collect_report(collector):
-    call = collector.config.guardedcall(
-        lambda: collector._memocollect()
-    )
-    result = None
-    if not call.excinfo:
-        result = call.result
-    return CollectReport(collector, result, call.excinfo, call.outerr)
-
-    return report 
+    # XXX capturing is missing
+    result = excinfo = None
+    try:
+        result = collector._memocollect()
+    except KeyboardInterrupt:
+        raise
+    except:
+        excinfo = py.code.ExceptionInfo()
+    return CollectReport(collector, result, excinfo)
 
 def pytest_runtest_protocol(item):
     if item.config.getvalue("boxed"):
@@ -66,7 +66,7 @@ def pytest_runtest_call(item):
         item.runtest()
 
 def pytest_runtest_makereport(item, call):
-    return ItemTestReport(item, call.excinfo, call.when, call.outerr)
+    return ItemTestReport(item, call.excinfo, call.when)
 
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
@@ -82,7 +82,6 @@ def call_and_report(item, when, log=True):
         hook.pytest_runtest_logreport(rep=report) 
     return report
 
-
 class RuntestHookCall:
     excinfo = None 
     _prefix = "pytest_runtest_"
@@ -90,16 +89,12 @@ class RuntestHookCall:
         self.when = when 
         hookname = self._prefix + when 
         hook = getattr(item.config.hook, hookname)
-        capture = item.config._getcapture()
         try:
-            try:
-                self.result = hook(item=item)
-            except KeyboardInterrupt:
-                raise
-            except:
-                self.excinfo = py.code.ExceptionInfo()
-        finally:
-            self.outerr = capture.reset()
+            self.result = hook(item=item)
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()
 
 def forked_run_report(item):
     # for now, we run setup/teardown in the subprocess 
@@ -149,10 +144,9 @@ class BaseReport(object):
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
-    def __init__(self, item, excinfo=None, when=None, outerr=None):
+    def __init__(self, item, excinfo=None, when=None):
         self.item = item 
         self.when = when
-        self.outerr = outerr
         if item and when != "setup":
             self.keywords = item.readkeywords() 
         else:
@@ -173,14 +167,14 @@ class ItemTestReport(BaseReport):
             elif excinfo.errisinstance(Skipped):
                 self.skipped = True 
                 shortrepr = "s"
-                longrepr = self.item._repr_failure_py(excinfo, outerr)
+                longrepr = self.item._repr_failure_py(excinfo)
             else:
                 self.failed = True
                 shortrepr = self.item.shortfailurerepr
                 if self.when == "call":
-                    longrepr = self.item.repr_failure(excinfo, outerr)
+                    longrepr = self.item.repr_failure(excinfo)
                 else: # exception in setup or teardown 
-                    longrepr = self.item._repr_failure_py(excinfo, outerr)
+                    longrepr = self.item._repr_failure_py(excinfo)
                     shortrepr = shortrepr.lower()
             self.shortrepr = shortrepr 
             self.longrepr = longrepr 
@@ -191,14 +185,13 @@ class ItemTestReport(BaseReport):
 class CollectReport(BaseReport):
     skipped = failed = passed = False 
 
-    def __init__(self, collector, result, excinfo=None, outerr=None):
+    def __init__(self, collector, result, excinfo=None):
         self.collector = collector 
         if not excinfo:
             self.passed = True
             self.result = result 
         else:
-            self.outerr = outerr
-            self.longrepr = self.collector._repr_failure_py(excinfo, outerr)
+            self.longrepr = self.collector._repr_failure_py(excinfo)
             if excinfo.errisinstance(Skipped):
                 self.skipped = True
                 self.reason = str(excinfo.value)

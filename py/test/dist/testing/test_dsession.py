@@ -7,7 +7,7 @@ XSpec = py.execnet.XSpec
 def run(item, node, excinfo=None):
     runner = item.config.pluginmanager.getplugin("runner")
     rep = runner.ItemTestReport(item=item, 
-        excinfo=excinfo, when="call", outerr=("", ""))
+        excinfo=excinfo, when="call")
     rep.node = node
     return rep 
 

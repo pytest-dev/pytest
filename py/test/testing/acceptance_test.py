@@ -227,28 +227,6 @@ class TestGeneralUsage:
             "*test_traceback_failure.py:4: AssertionError"
         ])
 
-    def test_capturing_outerr(self, testdir): 
-        p1 = testdir.makepyfile("""
-            import sys 
-            def test_capturing():
-                print 42
-                print >>sys.stderr, 23 
-            def test_capturing_error():
-                print 1
-                print >>sys.stderr, 2
-                raise ValueError
-        """)
-        result = testdir.runpytest(p1)
-        result.stdout.fnmatch_lines([
-            "*test_capturing_outerr.py .F", 
-            "====* FAILURES *====",
-            "____*____", 
-            "*test_capturing_outerr.py:8: ValueError",
-            "*--- Captured stdout ---*",
-            "1",
-            "*--- Captured stderr ---*",
-            "2",
-        ])
 
     def test_showlocals(self, testdir): 
         p1 = testdir.makepyfile("""

@@ -28,6 +28,64 @@ will be restored.
 
 import py
 
+def pytest_addoption(parser):
+    group = parser.getgroup("general")
+    group._addoption('-s', 
+       action="store_true", dest="nocapture", default=False,
+       help="disable catching of stdout/stderr during test run.")
+
+def pytest_configure(config):
+    if not config.option.nocapture:
+        config.pluginmanager.register(CapturePerTest())
+
+def determine_capturing(config, path=None):
+    iocapture = config.getvalue("iocapture", path=path)
+    if iocapture == "fd": 
+        return py.io.StdCaptureFD()
+    elif iocapture == "sys":
+        return py.io.StdCapture()
+    elif iocapture == "no": 
+        return py.io.StdCapture(out=False, err=False, in_=False)
+    else:
+        # how to raise errors here? 
+        raise config.Error("unknown io capturing: " + iocapture)
+
+class CapturePerTest:
+    def __init__(self):
+        self.item2capture = {}
+        
+    def _setcapture(self, item):
+        assert item not in self.item2capture
+        cap = determine_capturing(item.config, path=item.fspath)
+        self.item2capture[item] = cap
+
+    def pytest_runtest_setup(self, item):
+        self._setcapture(item)
+
+    def pytest_runtest_call(self, item):
+        self._setcapture(item)
+
+    def pytest_runtest_teardown(self, item):
+        self._setcapture(item)
+
+    def pytest_keyboard_interrupt(self, excinfo):
+        for cap in self.item2capture.values():
+            cap.reset()
+        self.item2capture.clear()
+
+    def pytest_runtest_makereport(self, __call__, item, call):
+        capture = self.item2capture.pop(item)
+        outerr = capture.reset()
+        # XXX shift reporting elsewhere 
+        rep = __call__.execute(firstresult=True)
+        if hasattr(rep, 'longrepr'):
+            repr = rep.longrepr
+            if hasattr(repr, 'addsection'):
+                for secname, content in zip(["out", "err"], outerr):
+                    if content:
+                        repr.addsection("Captured std%s" % secname, content.rstrip())
+        return rep
+
 def pytest_funcarg__capsys(request):
     """captures writes to sys.stdout/sys.stderr and makes 
     them available successively via a ``capsys.reset()`` method 
@@ -52,7 +110,7 @@ def pytest_pyfunc_call(pyfuncitem):
             if funcarg == "capsys" or funcarg == "capfd":
                 value.reset()
 
-class Capture:
+class Capture: # funcarg
     _capture = None
     def __init__(self, captureclass):
         self._captureclass = captureclass

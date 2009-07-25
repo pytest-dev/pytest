@@ -10,5 +10,5 @@ Generator = py.test.collect.Generator
 Function = py.test.collect.Function
 Instance = py.test.collect.Instance
 
-pytest_plugins = "default runner terminal keyword xfail tmpdir execnetcleanup monkeypatch recwarn pdb unittest".split()
+pytest_plugins = "default iocapture runner terminal keyword xfail tmpdir execnetcleanup monkeypatch recwarn pdb unittest".split()
 

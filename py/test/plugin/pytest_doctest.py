@@ -45,7 +45,7 @@ class DoctestItem(py.test.collect.Item):
         super(DoctestItem, self).__init__(name=name, parent=parent)
         self.fspath = path 
 
-    def repr_failure(self, excinfo, outerr):
+    def repr_failure(self, excinfo):
         if excinfo.errisinstance(py.compat.doctest.DocTestFailure):
             doctestfailure = excinfo.value
             example = doctestfailure.example
@@ -67,9 +67,9 @@ class DoctestItem(py.test.collect.Item):
             return ReprFailDoctest(reprlocation, lines)
         elif excinfo.errisinstance(py.compat.doctest.UnexpectedException):
             excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
-            return super(DoctestItem, self).repr_failure(excinfo, outerr)
+            return super(DoctestItem, self).repr_failure(excinfo)
         else: 
-            return super(DoctestItem, self).repr_failure(excinfo, outerr)
+            return super(DoctestItem, self).repr_failure(excinfo)
 
 class DoctestTextfile(DoctestItem):
     def runtest(self):

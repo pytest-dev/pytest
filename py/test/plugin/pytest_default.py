@@ -60,9 +60,6 @@ def pytest_addoption(parser):
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no'],
                help="traceback verboseness (long/short/no).")
-    group._addoption('-s', 
-               action="store_true", dest="nocapture", default=False,
-               help="disable catching of stdout/stderr during test run.")
     group._addoption('-p', action="append", dest="plugin", default = [],
                help=("load the specified plugin after command line parsing. "))
     group._addoption('-f', '--looponfail',
