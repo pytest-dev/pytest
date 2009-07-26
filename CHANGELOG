@@ -1,6 +1,9 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
+* make assert-reinterpretation work better with comparisons not 
+  returning bools (reported with numpy from thanks maciej fijalkowski)
+
 * reworked per-test output capturing into the pytest_iocapture.py plugin 
   and thus removed capturing code from config object 
 
