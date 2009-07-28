@@ -1,70 +1,86 @@
 """
-    py.test.mark / keyword plugin 
+mark test functions with keywords that may hold values. 
+
+Marking functions and setting rich attributes
+----------------------------------------------------
+
+By default, all filename parts and class/function names of a test
+function are put into the set of keywords for a given test.  You can
+specify additional kewords like this::
+
+    @py.test.mark.webtest 
+    def test_send_http():
+        ... 
+
+This will set an attribute 'webtest' on the given test function
+and by default all such attributes signal keywords.  You can 
+also set values in this attribute which you could read from
+a hook in order to do something special with respect to
+the test function::
+
+    @py.test.mark.timeout(seconds=5)
+    def test_receive():
+        ...
+
+This will set the "timeout" attribute with a Marker object 
+that has a 'seconds' attribute. 
+
 """
 import py
 
 def pytest_namespace():
-    mark = KeywordDecorator({})
-    return {'mark': mark}
+    return {'mark': Mark()}
 
-class KeywordDecorator:
-    """ decorator for setting function attributes. """
-    def __init__(self, keywords, lastname=None):
-        self._keywords = keywords
-        self._lastname = lastname
 
-    def __call__(self, func=None, **kwargs):
-        if func is None:
-            kw = self._keywords.copy()
-            kw.update(kwargs)
-            return KeywordDecorator(kw)
-        elif not hasattr(func, 'func_dict'):
-            kw = self._keywords.copy()
-            name = self._lastname
-            if name is None:
-                name = "mark"
-            kw[name] = func
-            return KeywordDecorator(kw)
-        func.func_dict.update(self._keywords)
-        return func 
-
+class Mark(object):
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
-        kw = self._keywords.copy()
-        kw[name] = True
-        return self.__class__(kw, lastname=name)
+        return MarkerDecorator(name)
 
-def test_pytest_mark_getattr():
-    mark = KeywordDecorator({})
+class MarkerDecorator:
+    """ decorator for setting function attributes. """
+    def __init__(self, name):
+        self.markname = name
+
+    def __repr__(self):
+        d = self.__dict__.copy()
+        name = d.pop('markname')
+        return "<MarkerDecorator %r %r>" %(name, d)
+
+    def __call__(self, *args, **kwargs):
+        if not args:
+            if hasattr(self, 'kwargs'):
+                raise TypeError("double mark-keywords?") 
+            self.kwargs = kwargs.copy()
+            return self 
+        else:
+            if not len(args) == 1 or not hasattr(args[0], 'func_dict'):
+                raise TypeError("need exactly one function to decorate, "
+                                "got %r" %(args,))
+            func = args[0]
+            mh = MarkHolder(getattr(self, 'kwargs', {}))
+            setattr(func, self.markname, mh)
+            return func
+
+class MarkHolder:
+    def __init__(self, kwargs):
+        self.__dict__.update(kwargs)
+
+def test_pytest_mark_api():
+    mark = Mark()
+    py.test.raises(TypeError, "mark(x=3)")
+
     def f(): pass
-
     mark.hello(f)
-    assert f.hello == True
+    assert f.hello
 
-    mark.hello("test")(f)
-    assert f.hello == "test"
+    mark.world(x=3, y=4)(f)
+    assert f.world 
+    assert f.world.x == 3
+    assert f.world.y == 4
 
-    py.test.raises(AttributeError, "mark._hello")
-    py.test.raises(AttributeError, "mark.__str__")
-
-def test_pytest_mark_call():
-    mark = KeywordDecorator({})
-    def f(): pass
-    mark(x=3)(f)
-    assert f.x == 3
-    def g(): pass
-    mark(g)
-    assert not g.func_dict
-
-    mark.hello(f)
-    assert f.hello == True
-
-    mark.hello("test")(f)
-    assert f.hello == "test"
-
-    mark("x1")(f)
-    assert f.mark == "x1"
+    py.test.raises(TypeError, "mark.some(x=3)(f=5)")
 
 def test_mark_plugin(testdir):
     p = testdir.makepyfile("""

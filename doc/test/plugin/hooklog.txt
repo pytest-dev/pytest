@@ -1,0 +1,35 @@
+
+pytest_hooklog plugin
+=====================
+
+log invocations of extension hooks to a file.
+
+.. contents::
+  :local:
+
+
+
+command line options
+--------------------
+
+
+``--hooklog=HOOKLOG``
+    write hook calls to the given file.
+
+Start improving this plugin in 30 seconds
+=========================================
+
+
+Do you find the above documentation or the plugin itself lacking? 
+
+1. Download `pytest_hooklog.py`_ plugin source code 
+2. put it somewhere as ``pytest_hooklog.py`` into your import path 
+3. a subsequent ``py.test`` run will use your local version
+
+Further information: extend_ documentation, other plugins_ or contact_.  
+
+.. _`pytest_hooklog.py`: http://bitbucket.org/hpk42/py-trunk/raw/2b8d56b82ce6966960cf41d38dc2b794797912ba/py/test/plugin/pytest_hooklog.py
+.. _`extend`: ../extend.html
+.. _`plugins`: index.html
+.. _`contact`: ../../contact.html
+.. _`checkout the py.test development version`: ../../download.html#checkout

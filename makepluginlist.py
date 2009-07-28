@@ -10,6 +10,8 @@ plugins = [
             'unittest doctest oejskit restdoc'),
     ('Plugins for generic reporting and failure logging', 
             'pocoo resultlog terminal',),
+    ('internal plugins / core functionality', 
+        'pdb keyword hooklog')
     #('internal plugins / core functionality', 
     #    #'pdb keyword hooklog runner execnetcleanup # pytester',
     #    'pdb keyword hooklog runner execnetcleanup' # pytester',

@@ -1,6 +1,8 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
+* simplified py.test.mark API 
+
 * make assert-reinterpretation work better with comparisons not 
   returning bools (reported with numpy from thanks maciej fijalkowski)
 

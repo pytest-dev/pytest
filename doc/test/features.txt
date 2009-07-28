@@ -237,11 +237,15 @@ class/function names of a test function are put into the set
 of keywords for a given test.  You can specify additional 
 kewords like this::
 
-    @py.test.mark(webtest=True)
+    @py.test.mark.webtest 
     def test_send_http():
         ... 
 
-and then use those keywords to select tests. 
+and then use those keywords to select tests.  See the `pytest_keyword`_
+plugin for more information. 
+
+.. _`pytest_keyword`: plugin/keyword.html
+
 
 disabling a test class
 ---------------------- 
