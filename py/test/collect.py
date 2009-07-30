@@ -4,7 +4,6 @@ Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
-from py.__.test.outcome import Skipped
 
 def configproperty(name):
     def fget(self):
@@ -31,6 +30,10 @@ class Node(object):
         self.config = getattr(parent, 'config', None)
         self.fspath = getattr(parent, 'fspath', None) 
 
+    def _checkcollectable(self):
+        if not hasattr(self, 'fspath'):
+            self.parent._memocollect() # to reraise exception
+            
     # 
     # note to myself: Pickling is uh.
     # 
@@ -44,6 +47,7 @@ class Node(object):
         except Exception:
             # seems our parent can't collect us 
             # so let's be somewhat operable 
+            # _checkcollectable() is to tell outsiders about the fact
             self.name = name 
             self.parent = parent 
             self.config = parent.config

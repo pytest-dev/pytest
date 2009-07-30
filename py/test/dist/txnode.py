@@ -124,12 +124,37 @@ class SlaveNode(object):
                     break
                 if isinstance(task, list):
                     for item in task:
-                        item.config.hook.pytest_runtest_protocol(item=item) 
+                        self.run_single(item=item)
                 else:
-                    task.config.hook.pytest_runtest_protocol(item=task) 
+                    self.run_single(item=task)
         except KeyboardInterrupt:
             raise
         except:
             er = py.code.ExceptionInfo().getrepr(funcargs=True, showlocals=True)
             self.sendevent("pytest_internalerror", excrepr=er)
             raise
+
+    def run_single(self, item):
+        call = CallInfo(item._checkcollectable, 'setup')
+        if call.excinfo:
+            # likely it is not collectable here because of
+            # platform/import-dependency induced skips 
+            # XXX somewhat ugly shortcuts - also makes a collection
+            #     failure into an ItemTestReport - this might confuse
+            #     pytest_runtest_logreport hooks 
+            runner = item.config.pluginmanager.getplugin("pytest_runner")
+            rep = runner.pytest_runtest_makereport(item=item, call=call)
+            self.pytest_runtest_logreport(rep)
+            return
+        item.config.hook.pytest_runtest_protocol(item=item) 
+
+class CallInfo:
+    excinfo = None 
+    def __init__(self, func, when):
+        self.when = when 
+        try:
+            self.result = func()
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()

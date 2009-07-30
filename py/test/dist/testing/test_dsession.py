@@ -367,13 +367,21 @@ class TestDSession:
         assert node.gateway.spec.popen
         #XXX eq.geteventargs("pytest_sessionfinish")
 
-    @py.test.mark.xfail
-    def test_collected_function_causes_remote_skip_at_module_level(self, testdir):
-        p = testdir.makepyfile("""
-            import py
-            py.test.importorskip("xyz")
-            def test_func():
-                pass
-        """)
-        # we need to be able to collect test_func locally but not in the subprocess 
-        XXX
+def test_collected_function_causes_remote_skip(testdir):
+    sub = testdir.mkpydir("testing")
+    sub.join("test_module.py").write(py.code.Source("""
+        import py
+        path = py.path.local(%r)
+        if path.check():
+            path.remove()
+        else:
+            py.test.skip("remote skip")
+        def test_func(): 
+            pass
+        def test_func2(): 
+            pass
+    """ % str(sub.ensure("somefile"))))
+    result = testdir.runpytest('-v', '--dist=each', '--tx=popen')
+    result.stdout.fnmatch_lines([
+        "*2 skipped*"
+    ])

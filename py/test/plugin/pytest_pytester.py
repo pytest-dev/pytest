@@ -129,7 +129,12 @@ class TmpTestdir:
             
     def mkdir(self, name):
         return self.tmpdir.mkdir(name)
-    
+
+    def mkpydir(self, name):
+        p = self.mkdir(name)
+        p.ensure("__init__.py")
+        return p
+
     def genitems(self, colitems):
         return list(self.session.genitems(colitems))
 

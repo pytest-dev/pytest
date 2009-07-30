@@ -1,7 +1,11 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
-* simplified py.test.mark API 
+* dist-testing: properly handle test items that get locally 
+  collected but cannot be collected on the remote side - often 
+  due to platform/dependency reasons
+
+* simplified py.test.mark API - see keyword plugin documentation
 
 * make assert-reinterpretation work better with comparisons not 
   returning bools (reported with numpy from thanks maciej fijalkowski)
