@@ -1,6 +1,9 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
+* fix svn-1.6 compat issue with py.path.svnwc().versioned()
+  (thanks Wouter Vanden Hove)
+
 * dist-testing: properly handle test items that get locally 
   collected but cannot be collected on the remote side - often 
   due to platform/dependency reasons

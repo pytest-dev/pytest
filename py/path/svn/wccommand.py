@@ -454,6 +454,8 @@ recursively. """
             except py.process.cmdexec.Error, e:
                 if e.err.find('is not a working copy')!=-1:
                     return False
+                if e.err.lower().find('not a versioned resource') != -1:
+                    return False
                 raise
             else:
                 return True 
