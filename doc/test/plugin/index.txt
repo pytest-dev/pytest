@@ -8,7 +8,7 @@ figleaf_ write and report coverage data with 'figleaf'.
 
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
-iocapture_ convenient capturing of writes to stdout/stderror streams and file descriptors.
+iocapture_ configurable per-test stdout/stderr capturing mechanisms.
 
 recwarn_ helpers for asserting deprecation and other warnings.
 
@@ -35,6 +35,16 @@ resultlog_ resultlog plugin for machine-readable logging of test results.
 terminal_ Implements terminal reporting of the full testing process.
 
 
+internal plugins / core functionality
+=====================================
+
+pdb_ interactive debugging with the Python Debugger.
+
+keyword_ mark test functions with keywords that may hold values.
+
+hooklog_ log invocations of extension hooks to a file.
+
+
 .. _`xfail`: xfail.html
 .. _`figleaf`: figleaf.html
 .. _`monkeypatch`: monkeypatch.html
@@ -47,3 +57,6 @@ terminal_ Implements terminal reporting of the full testing process.
 .. _`pocoo`: pocoo.html
 .. _`resultlog`: resultlog.html
 .. _`terminal`: terminal.html
+.. _`pdb`: pdb.html
+.. _`keyword`: keyword.html
+.. _`hooklog`: hooklog.html

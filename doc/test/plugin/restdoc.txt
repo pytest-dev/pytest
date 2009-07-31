@@ -32,7 +32,7 @@ Do you find the above documentation or the plugin itself lacking?
 
 Further information: extend_ documentation, other plugins_ or contact_.  
 
-.. _`pytest_restdoc.py`: http://bitbucket.org/hpk42/py-trunk/raw/85fe614ab05f301f206935d11a477df184cbbce6/py/test/plugin/pytest_restdoc.py
+.. _`pytest_restdoc.py`: http://bitbucket.org/hpk42/py-trunk/raw/6e9879aca934933c6065776820f22095634a7edf/py/test/plugin/pytest_restdoc.py
 .. _`extend`: ../extend.html
 .. _`plugins`: index.html
 .. _`contact`: ../../contact.html

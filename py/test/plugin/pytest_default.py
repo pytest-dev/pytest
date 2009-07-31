@@ -81,9 +81,6 @@ def pytest_addoption(parser):
                help="don't cut any tracebacks (default is to cut).")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
-    group._addoption('--iocapture', action="store", default="fd", metavar="method",
-               type="choice", choices=['fd', 'sys', 'no'],
-               help="set iocapturing method: fd|sys|no.")
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="generate and show debugging information.")

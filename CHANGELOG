@@ -10,6 +10,13 @@ Changes between 1.0.0b8 and 1.0.0b9
 
 * simplified py.test.mark API - see keyword plugin documentation
 
+* integrate better with logging: capturing now by default captures
+  test functions and their immediate setup/teardown in a single stream 
+
+* capsys and capfd funcargs now have a readouterr() and a close() method
+  (underlyingly py.io.StdCapture/FD objects are used which grew a 
+  readouterr() method as well to return snapshots of captured out/err)
+
 * make assert-reinterpretation work better with comparisons not 
   returning bools (reported with numpy from thanks maciej fijalkowski)
 

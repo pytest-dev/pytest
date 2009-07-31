@@ -314,7 +314,8 @@ class TerminalReporter:
                 self.write_sep("_", msg)
                 if hasattr(rep, 'node'):
                     self.write_line(self.gateway2info.get(
-                        rep.node.gateway, "node %r (platinfo not found? strange)")
+                        rep.node.gateway, 
+                        "node %r (platinfo not found? strange)")
                             [:self._tw.fullwidth-1])
                 rep.toterminal(self._tw)
 

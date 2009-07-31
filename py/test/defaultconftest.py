@@ -12,3 +12,4 @@ Instance = py.test.collect.Instance
 
 pytest_plugins = "default runner iocapture terminal keyword xfail tmpdir execnetcleanup monkeypatch recwarn pdb unittest".split()
 
+conf_capture = "fd"

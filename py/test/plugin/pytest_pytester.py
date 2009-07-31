@@ -301,6 +301,9 @@ class TmpTestdir:
         assert script.check()
         return py.std.sys.executable, script
 
+    def runpython(self, script):
+        return self.run(py.std.sys.executable, script)
+
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 
             keep=None, rootdir=self.tmpdir)
@@ -520,7 +523,6 @@ def test_testdir_runs_with_plugin(testdir):
 def pytest_funcarg__venv(request):
     p = request.config.mktemp(request.function.__name__, numbered=True)
     venv = VirtualEnv(str(p)) 
-    venv.create()
     return venv 
    
 def pytest_funcarg__py_setup(request):
@@ -533,6 +535,7 @@ def pytest_funcarg__py_setup(request):
 class SetupBuilder:
     def __init__(self, setup_path):
         self.setup_path = setup_path
+        assert setup_path.check()
 
     def make_sdist(self, destdir=None):
         temp = py.path.local.mkdtemp()
@@ -567,9 +570,9 @@ class VirtualEnv(object):
     def _cmd(self, name):
         return os.path.join(self.path, 'bin', name)
 
-    @property
-    def valid(self):
-        return os.path.exists(self._cmd('python'))
+    def ensure(self):
+        if not os.path.exists(self._cmd('python')):
+            self.create()
 
     def create(self, sitepackages=False):
         args = ['virtualenv', self.path]
@@ -582,7 +585,7 @@ class VirtualEnv(object):
         return py.execnet.makegateway("popen//python=%s" %(python,))
 
     def pcall(self, cmd, *args, **kw):
-        assert self.valid
+        self.ensure()
         return subprocess.call([
                 self._cmd(cmd)
             ] + list(args),

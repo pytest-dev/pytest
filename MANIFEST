@@ -351,6 +351,7 @@ py/test/plugin/pytest_terminal.py
 py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
+py/test/plugin/test_pytest_iocapture.py
 py/test/plugin/test_pytest_runner.py
 py/test/plugin/test_pytest_runner_xunit.py
 py/test/plugin/test_pytest_terminal.py

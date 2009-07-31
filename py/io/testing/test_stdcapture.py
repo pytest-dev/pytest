@@ -30,6 +30,19 @@ class TestStdCapture:
         assert out == "hello world\n"
         assert err == "hello error\n"
 
+    def test_capturing_readouterr(self):
+        cap = self.getcapture()
+        try:
+            print "hello world"
+            print >>sys.stderr, "hello error"
+            out, err = cap.readouterr()
+            assert out == "hello world\n"
+            assert err == "hello error\n"
+            print >>sys.stderr, "error2"
+        finally:
+            out, err = cap.reset()
+        assert err == "error2\n"
+
     def test_capturing_mixed(self):
         cap = self.getcapture(mixed=True)
         print "hello",
@@ -43,7 +56,7 @@ class TestStdCapture:
         cap = self.getcapture() 
         print "hello"
         cap.reset()
-        py.test.raises(EnvironmentError, "cap.reset()")
+        py.test.raises(Exception, "cap.reset()")
 
     def test_capturing_modify_sysouterr_in_between(self):
         oldout = sys.stdout 
@@ -67,7 +80,7 @@ class TestStdCapture:
         cap2 = self.getcapture() 
         print "cap2"
         out2, err2 = cap2.reset()
-        py.test.raises(EnvironmentError, "cap2.reset()")
+        py.test.raises(Exception, "cap2.reset()")
         out1, err1 = cap1.reset() 
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
@@ -103,6 +116,24 @@ class TestStdCapture:
         cap = self.getcapture()
         py.test.raises(IOError, "sys.stdin.read()")
         out, err = cap.reset()
+
+    def test_suspend_resume(self):
+        cap = self.getcapture(out=True, err=False, in_=False)
+        try:
+            print "hello"
+            sys.stderr.write("error\n")
+            out, err = cap.suspend()
+            assert out == "hello\n"
+            assert not err 
+            print "in between"
+            sys.stderr.write("in between\n")
+            cap.resume()
+            print "after"
+            sys.stderr.write("error_after\n")
+        finally:
+            out, err = cap.reset()
+        assert out == "after\n"
+        assert not err 
 
 class TestStdCaptureFD(TestStdCapture): 
     def getcapture(self, **kw): 
@@ -150,10 +181,14 @@ def test_callcapture_nofd():
         os.write(1, "hello")
         os.write(2, "hello")
         print x
-        print >>py.std.sys.stderr, y
+        print >>sys.stderr, y
         return 42
    
-    res, out, err = py.io.StdCapture.call(func, 3, y=4) 
+    capfd = py.io.StdCaptureFD(patchsys=False)
+    try:
+        res, out, err = py.io.StdCapture.call(func, 3, y=4) 
+    finally:
+        capfd.reset()
     assert res == 42 
     assert out.startswith("3") 
     assert err.startswith("4") 

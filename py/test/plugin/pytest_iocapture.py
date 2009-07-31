@@ -1,60 +1,97 @@
 """
-convenient capturing of writes to stdout/stderror streams and file descriptors. 
+configurable per-test stdout/stderr capturing mechanisms. 
 
-Example Usage
-----------------------
+This plugin captures stdout/stderr output for each test separately. 
+In case of test failures this captured output is shown grouped 
+togtther with the test. 
 
-You can use the `capsys funcarg`_ to capture writes 
-to stdout and stderr streams by using it in a test 
-likes this:
+The plugin also provides test function arguments that help to
+assert stdout/stderr output from within your tests, see the 
+`funcarg example`_. 
+
+
+Capturing of input/output streams during tests 
+---------------------------------------------------
+
+By default ``sys.stdout`` and ``sys.stderr`` are substituted with
+temporary streams during the execution of tests and setup/teardown code.  
+During the whole testing process it will re-use the same temporary 
+streams allowing to play well with the logging module which easily
+takes ownership on these streams. 
+
+Also, 'sys.stdin' is substituted with a file-like "null" object that 
+does not return any values.  This is to immediately error out
+on tests that wait on reading something from stdin. 
+
+You can influence output capturing mechanisms from the command line::
+
+    py.test -s            # disable all capturing
+    py.test --capture=sys # set StringIO() to each of sys.stdout/stderr 
+    py.test --capture=fd  # capture stdout/stderr on Filedescriptors 1/2 
+
+If you set capturing values in a conftest file like this::
+
+    # conftest.py
+    conf_capture = 'fd'
+
+then all tests in that directory will execute with "fd" style capturing. 
+
+sys-level capturing 
+------------------------------------------
+
+Capturing on 'sys' level means that ``sys.stdout`` and ``sys.stderr`` 
+will be replaced with StringIO() objects.   
+
+FD-level capturing and subprocesses
+------------------------------------------
+
+The ``fd`` based method means that writes going to system level files
+based on the standard file descriptors will be captured, for example 
+writes such as ``os.write(1, 'hello')`` will be captured properly. 
+Capturing on fd-level will include output generated from 
+any subprocesses created during a test. 
+
+.. _`funcarg example`:
+
+Example Usage of the capturing Function arguments
+---------------------------------------------------
+
+You can use the `capsys funcarg`_ and `capfd funcarg`_ to 
+capture writes to stdout and stderr streams.  Using the
+funcargs frees your test from having to care about setting/resetting 
+the old streams and also interacts well with py.test's own 
+per-test capturing.  Here is an example test function:
 
 .. sourcecode:: python
 
     def test_myoutput(capsys):
         print "hello" 
         print >>sys.stderr, "world"
-        out, err = capsys.reset()
+        out, err = capsys.readouterr()
         assert out == "hello\\n"
         assert err == "world\\n"
         print "next"
-        out, err = capsys.reset()
+        out, err = capsys.readouterr()
         assert out == "next\\n" 
 
-The ``reset()`` call returns a tuple and will restart 
-capturing so that you can successively check for output. 
-After the test function finishes the original streams
-will be restored. 
+The ``readouterr()`` call snapshots the output so far - 
+and capturing will be continued.  After the test 
+function finishes the original streams will 
+be restored.  If you want to capture on 
+the filedescriptor level you can use the ``capfd`` function
+argument which offers the same interface. 
 """
 
 import py
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
-    group._addoption('-s', 
-       action="store_true", dest="nocapture", default=False,
-       help="disable catching of stdout/stderr during test run.")
+    group._addoption('-s', action="store_const", const="no", dest="capture", 
+        help="shortcut for --capture=no.")
+    group._addoption('--capture', action="store", default=None,
+        metavar="capture", type="choice", choices=['fd', 'sys', 'no'],
+        help="set IO capturing method during tests: sys|fd|no.")
 
-def determine_capturing(config, path=None):
-    iocapture = config.getvalue("iocapture", path=path)
-    if iocapture == "fd": 
-        return py.io.StdCaptureFD()
-    elif iocapture == "sys":
-        return py.io.StdCapture()
-    elif iocapture == "no": 
-        return py.io.StdCapture(out=False, err=False, in_=False)
-    else:
-        # how to raise errors here? 
-        raise config.Error("unknown io capturing: " + iocapture)
-
-def pytest_make_collect_report(__call__, collector):
-    cap = determine_capturing(collector.config, collector.fspath)
-    try:
-        rep = __call__.execute(firstresult=True)
-    finally:
-        outerr = cap.reset()
-    addouterr(rep, outerr)
-    return rep
-   
 def addouterr(rep, outerr):
     repr = getattr(rep, 'longrepr', None)
     if not hasattr(repr, 'addsection'):
@@ -64,79 +101,140 @@ def addouterr(rep, outerr):
             repr.addsection("Captured std%s" % secname, content.rstrip())
 
 def pytest_configure(config):
-    if not config.option.nocapture:
-        config.pluginmanager.register(CapturePerTest())
+    config.pluginmanager.register(CaptureManager(), 'capturemanager')
 
-
-class CapturePerTest:
+class CaptureManager:
     def __init__(self):
-        self.item2capture = {}
-        
-    def _setcapture(self, item):
-        assert item not in self.item2capture
-        cap = determine_capturing(item.config, path=item.fspath)
-        self.item2capture[item] = cap
+        self._method2capture = {}
+
+    def _startcapture(self, method):
+        if method == "fd": 
+            return py.io.StdCaptureFD()
+        elif method == "sys":
+            return py.io.StdCapture()
+        else:
+            raise ValueError("unknown capturing method: %r" % method)
+
+    def _getmethod(self, config, fspath):
+        if config.option.capture:
+            return config.option.capture
+        return config._conftest.rget("conf_capture", path=fspath)
+
+    def resumecapture_item(self, item):
+        method = self._getmethod(item.config, item.fspath)
+        if not hasattr(item, 'outerr'):
+            item.outerr = ('', '') # we accumulate outerr on the item
+        return self.resumecapture(method)
+
+    def resumecapture(self, method):
+        if hasattr(self, '_capturing'):
+            raise ValueError("cannot resume, already capturing with %r" % 
+                (self._capturing,))
+        if method != "no":
+            cap = self._method2capture.get(method)
+            if cap is None:
+                cap = self._startcapture(method)
+                self._method2capture[method] = cap 
+            else:
+                cap.resume()
+        self._capturing = method 
+
+    def suspendcapture(self):
+        self.deactivate_funcargs()
+        method = self._capturing
+        if method != "no":
+            cap = self._method2capture[method]
+            outerr = cap.suspend()
+        else:
+            outerr = "", ""
+        del self._capturing
+        return outerr 
+
+    def activate_funcargs(self, pyfuncitem):
+        if not hasattr(pyfuncitem, 'funcargs'):
+            return
+        assert not hasattr(self, '_capturing_funcargs')
+        l = []
+        for name, obj in pyfuncitem.funcargs.items():
+            if name in ('capsys', 'capfd'):
+                obj._start()
+                l.append(obj)
+        if l:
+            self._capturing_funcargs = l
+
+    def deactivate_funcargs(self):
+        if hasattr(self, '_capturing_funcargs'):
+            for capfuncarg in self._capturing_funcargs:
+                capfuncarg._finalize()
+            del self._capturing_funcargs
+
+    def pytest_make_collect_report(self, __call__, collector):
+        method = self._getmethod(collector.config, collector.fspath)
+        self.resumecapture(method)
+        try:
+            rep = __call__.execute(firstresult=True)
+        finally:
+            outerr = self.suspendcapture()
+        addouterr(rep, outerr)
+        return rep
 
     def pytest_runtest_setup(self, item):
-        self._setcapture(item)
+        self.resumecapture_item(item)
 
     def pytest_runtest_call(self, item):
-        self._setcapture(item)
+        self.resumecapture_item(item)
+        self.activate_funcargs(item)
 
     def pytest_runtest_teardown(self, item):
-        self._setcapture(item)
+        self.resumecapture_item(item)
 
     def pytest_keyboard_interrupt(self, excinfo):
-        for cap in self.item2capture.values():
-            cap.reset()
-        self.item2capture.clear()
+        if hasattr(self, '_capturing'):
+            self.suspendcapture()
 
     def pytest_runtest_makereport(self, __call__, item, call):
-        capture = self.item2capture.pop(item)
-        outerr = capture.reset()
-        # XXX shift reporting elsewhere 
+        self.deactivate_funcargs()
         rep = __call__.execute(firstresult=True)
-        addouterr(rep, outerr)
-
+        outerr = self.suspendcapture()
+        outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
+        if not rep.passed:
+            addouterr(rep, outerr)
+        if not rep.passed or rep.when == "teardown":
+            outerr = ('', '')
+        item.outerr = outerr 
         return rep
 
 def pytest_funcarg__capsys(request):
     """captures writes to sys.stdout/sys.stderr and makes 
-    them available successively via a ``capsys.reset()`` method 
-    which returns a ``(out, err)`` tuple of captured strings. 
+    them available successively via a ``capsys.readouterr()`` method 
+    which returns a ``(out, err)`` tuple of captured snapshot strings. 
     """ 
-    capture = CaptureFuncarg(py.io.StdCapture)
-    request.addfinalizer(capture.finalize)
-    return capture 
+    return CaptureFuncarg(request, py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
     """captures writes to file descriptors 1 and 2 and makes 
-    them available successively via a ``capsys.reset()`` method 
-    which returns a ``(out, err)`` tuple of captured strings. 
+    snapshotted ``(out, err)`` string tuples available 
+    via the ``capsys.readouterr()`` method. 
     """ 
-    capture = CaptureFuncarg(py.io.StdCaptureFD)
-    request.addfinalizer(capture.finalize)
-    return capture 
+    return CaptureFuncarg(request, py.io.StdCaptureFD)
 
-def pytest_pyfunc_call(pyfuncitem):
-    if hasattr(pyfuncitem, 'funcargs'):
-        for funcarg, value in pyfuncitem.funcargs.items():
-            if funcarg == "capsys" or funcarg == "capfd":
-                value.reset()
 
 class CaptureFuncarg:
-    _capture = None
-    def __init__(self, captureclass):
-        self._captureclass = captureclass
+    def __init__(self, request, captureclass):
+        self._cclass = captureclass
+        #request.addfinalizer(self._finalize)
 
-    def finalize(self):
-        if self._capture:
-            self._capture.reset()
+    def _start(self):
+        self.capture = self._cclass()
 
-    def reset(self):
-        res = None
-        if self._capture:
-            res = self._capture.reset()
-        self._capture = self._captureclass()
-        return res 
+    def _finalize(self):
+        if hasattr(self, 'capture'):
+            self.capture.reset()
+            del self.capture 
 
+    def readouterr(self):
+        return self.capture.readouterr()
+
+    def close(self):
+        self.capture.reset()
+        del self.capture
