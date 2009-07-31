@@ -30,11 +30,14 @@ doc/test/features.txt
 doc/test/funcargs.txt
 doc/test/plugin/doctest.txt
 doc/test/plugin/figleaf.txt
+doc/test/plugin/hooklog.txt
 doc/test/plugin/hookspec.txt
 doc/test/plugin/index.txt
 doc/test/plugin/iocapture.txt
+doc/test/plugin/keyword.txt
 doc/test/plugin/monkeypatch.txt
 doc/test/plugin/oejskit.txt
+doc/test/plugin/pdb.txt
 doc/test/plugin/pocoo.txt
 doc/test/plugin/recwarn.txt
 doc/test/plugin/restdoc.txt

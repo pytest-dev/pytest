@@ -28,6 +28,8 @@ def warn(*args):
     print >>sys.stderr, "WARN:", msg
 
 class RestWriter:
+    _all_links = {}
+
     def __init__(self, target):
         self.target = py.path.local(target)
         self.links = []
@@ -92,9 +94,23 @@ class RestWriter:
 
     def write_links(self):
         self.Print()
+        self.Print(".. include:: links.txt")
         for link in self.links:
-            #warn(repr(self.link))
-            self.Print(".. _`%s`: %s" % (link[0], link[1]))
+            key = link[0]
+            if key in self._all_links:
+                assert self._all_links[key] == link[1], (key, link[1])
+            else:
+                self._all_links[key] = link[1]
+      
+    def write_all_links(cls, linkpath):
+        p = linkpath.new(basename="links.txt")
+        p_writer = RestWriter(p)
+        p_writer.out = p_writer.target.open("w")
+        for name, value in cls._all_links.items():
+            p_writer.Print(".. _`%s`: %s" % (name, value))
+        p_writer.out.close()
+        del p_writer.out
+    write_all_links = classmethod(write_all_links)
 
     def make(self, **kwargs):
         self.out = self.target.open("w")
@@ -265,4 +281,6 @@ if __name__ == "__main__":
     
     ov = HookSpec(testdir.join("plugin", "hookspec.txt"))
     ov.make(config=_config)
+
+    RestWriter.write_all_links(testdir.join("plugin", "links.txt"))
 

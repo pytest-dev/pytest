@@ -45,18 +45,4 @@ keyword_ mark test functions with keywords that may hold values.
 hooklog_ log invocations of extension hooks to a file.
 
 
-.. _`xfail`: xfail.html
-.. _`figleaf`: figleaf.html
-.. _`monkeypatch`: monkeypatch.html
-.. _`iocapture`: iocapture.html
-.. _`recwarn`: recwarn.html
-.. _`unittest`: unittest.html
-.. _`doctest`: doctest.html
-.. _`oejskit`: oejskit.html
-.. _`restdoc`: restdoc.html
-.. _`pocoo`: pocoo.html
-.. _`resultlog`: resultlog.html
-.. _`terminal`: terminal.html
-.. _`pdb`: pdb.html
-.. _`keyword`: keyword.html
-.. _`hooklog`: hooklog.html
+.. include:: links.txt
