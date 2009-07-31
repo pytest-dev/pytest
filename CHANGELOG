@@ -1,6 +1,8 @@
 Changes between 1.0.0b8 and 1.0.0b9
 =====================================
 
+* cleanly handle and report final teardown of test setup
+
 * fix svn-1.6 compat issue with py.path.svnwc().versioned()
   (thanks Wouter Vanden Hove)
 

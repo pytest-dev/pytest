@@ -115,6 +115,7 @@ class SlaveNode(object):
             self.config.basetemp = py.path.local(basetemp)
         self.config.pluginmanager.do_configure(self.config)
         self.config.pluginmanager.register(self)
+        self.runner = self.config.pluginmanager.getplugin("pytest_runner")
         self.sendevent("slaveready")
         try:
             while 1:
@@ -135,26 +136,15 @@ class SlaveNode(object):
             raise
 
     def run_single(self, item):
-        call = CallInfo(item._checkcollectable, 'setup')
+        call = self.runner.CallInfo(item._checkcollectable, when='setup')
         if call.excinfo:
             # likely it is not collectable here because of
             # platform/import-dependency induced skips 
             # XXX somewhat ugly shortcuts - also makes a collection
             #     failure into an ItemTestReport - this might confuse
             #     pytest_runtest_logreport hooks 
-            runner = item.config.pluginmanager.getplugin("pytest_runner")
-            rep = runner.pytest_runtest_makereport(item=item, call=call)
+            rep = self.runner.pytest_runtest_makereport(item=item, call=call)
             self.pytest_runtest_logreport(rep)
             return
         item.config.hook.pytest_runtest_protocol(item=item) 
 
-class CallInfo:
-    excinfo = None 
-    def __init__(self, func, when):
-        self.when = when 
-        try:
-            self.result = func()
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.excinfo = py.code.ExceptionInfo()

@@ -166,8 +166,10 @@ class TerminalReporter:
                 fspath, lineno, msg = self._getreportinfo(item)
                 self.write_fspath_result(fspath, "")
 
+    def pytest__teardown_final_logerror(self, rep):
+        self.stats.setdefault("error", []).append(rep)
+ 
     def pytest_runtest_logreport(self, rep):
-        fspath = rep.item.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
         if not letter and not word:
             # probably passed setup/teardown
@@ -290,9 +292,11 @@ class TerminalReporter:
     def _getfailureheadline(self, rep):
         if hasattr(rep, "collector"):
             return str(rep.collector.fspath)
-        else:
+        elif hasattr(rep, 'item'):
             fspath, lineno, msg = self._getreportinfo(rep.item)
             return msg
+        else:
+            return "test session" 
 
     def _getreportinfo(self, item):
         try:

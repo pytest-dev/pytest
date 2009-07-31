@@ -123,7 +123,6 @@ class TestPerTestCapturing:
             #"*1 fixture failure*"
         ])
 
-    @py.test.mark.xfail
     def test_teardown_final_capturing(self, testdir):
         p = testdir.makepyfile("""
             def teardown_module(mod):
@@ -134,8 +133,10 @@ class TestPerTestCapturing:
         """)
         result = testdir.runpytest(p)
         assert result.stdout.fnmatch_lines([
-            "teardown module*", 
-            #"*1 fixture failure*"
+            "*def teardown_module(mod):*", 
+            "*Captured stdout*", 
+            "*teardown module*", 
+            "*1 error*", 
         ])
 
     def test_capturing_outerr(self, testdir): 

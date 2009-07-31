@@ -22,7 +22,10 @@ def pytest_configure(config):
 def pytest_sessionfinish(session, exitstatus):
     # XXX see above
     if hasattr(session.config, '_setupstate'):
-        session.config._setupstate.teardown_all()
+        hook = session.config.hook
+        rep = hook.pytest__teardown_final(session=session)
+        if rep:
+            hook.pytest__teardown_final_logerror(rep=rep)
     # prevent logging module atexit handler from choking on 
     # its attempt to close already closed streams 
     # see http://bugs.python.org/issue6333
@@ -70,6 +73,12 @@ def pytest_runtest_makereport(item, call):
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
 
+def pytest__teardown_final(session):
+    call = CallInfo(session.config._setupstate.teardown_all, when="teardown")
+    if call.excinfo:
+        rep = TeardownErrorReport(call.excinfo)
+        return rep 
+
 def pytest_report_teststatus(rep):
     if rep.when in ("setup", "teardown"):
         if rep.failed:
@@ -83,22 +92,24 @@ def pytest_report_teststatus(rep):
 # Implementation
 
 def call_and_report(item, when, log=True):
-    call = RuntestHookCall(item, when)
+    call = call_runtest_hook(item, when)
     hook = item.config.hook
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log and (when == "call" or not report.passed):
         hook.pytest_runtest_logreport(rep=report) 
     return report
 
-class RuntestHookCall:
+def call_runtest_hook(item, when):
+    hookname = "pytest_runtest_" + when 
+    hook = getattr(item.config.hook, hookname)
+    return CallInfo(lambda: hook(item=item), when=when)
+
+class CallInfo:
     excinfo = None 
-    _prefix = "pytest_runtest_"
-    def __init__(self, item, when):
+    def __init__(self, func, when):
         self.when = when 
-        hookname = self._prefix + when 
-        hook = getattr(item.config.hook, hookname)
         try:
-            self.result = hook(item=item)
+            self.result = func()
         except KeyboardInterrupt:
             raise
         except:
@@ -208,6 +219,13 @@ class CollectReport(BaseReport):
 
     def getnode(self):
         return self.collector 
+
+class TeardownErrorReport(BaseReport):
+    skipped = passed = False 
+    failed = True
+    when = "teardown"
+    def __init__(self, excinfo):
+        self.longrepr = excinfo.getrepr(funcargs=True)
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """
