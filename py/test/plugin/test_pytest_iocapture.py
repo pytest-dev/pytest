@@ -222,9 +222,9 @@ class TestLoggingInteraction:
             result = testdir.runpytest(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
+                "*WARN*hello3",  # errors show first!
                 "*WARN*hello1", 
                 "*WARN*hello2", 
-                "*WARN*hello3", 
             ])
             # verify proper termination
             assert "closed" not in s
@@ -286,7 +286,7 @@ class TestCaptureFuncarg:
         result = testdir.runpytest(p)
         assert result.stdout.fnmatch_lines([
             "*test_partial_setup_failure*",
-            "*1 failed*",
+            "*1 error*",
         ])
 
     def test_keyboardinterrupt_disables_capturing(self, testdir):        
@@ -304,60 +304,3 @@ class TestCaptureFuncarg:
 
 
 
-class TestFixtureReporting:
-    @py.test.mark.xfail
-    def test_setup_fixture_error(self, testdir):
-        p = testdir.makepyfile("""
-            def setup_function(function):
-                print "setup func"
-                assert 0
-            def test_nada():
-                pass
-        """)
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "*FIXTURE ERROR at setup of test_nada*",
-            "*setup_function(function):*",
-            "*setup func*",
-            "*assert 0*",
-            "*0 passed*1 error*",
-        ])
-        assert result.ret != 0
-    
-    @py.test.mark.xfail
-    def test_teardown_fixture_error(self, testdir):
-        p = testdir.makepyfile("""
-            def test_nada():
-                pass
-            def teardown_function(function):
-                print "teardown func"
-                assert 0
-        """)
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "*FIXTURE ERROR at teardown*", 
-            "*teardown_function(function):*",
-            "*teardown func*",
-            "*assert 0*",
-            "*1 passed*1 error*",
-        ])
-
-    @py.test.mark.xfail
-    def test_teardown_fixture_error_and_test_failure(self, testdir):
-        p = testdir.makepyfile("""
-            def test_fail():
-                assert 0, "failingfunc"
-
-            def teardown_function(function):
-                print "teardown func"
-                assert 0
-        """)
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "*failingfunc*", 
-            "*FIXTURE ERROR at teardown*", 
-            "*teardown_function(function):*",
-            "*teardown func*",
-            "*assert 0*",
-            "*1 failed*1 error",
-         ])

@@ -70,6 +70,15 @@ def pytest_runtest_makereport(item, call):
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
 
+def pytest_report_teststatus(rep):
+    if rep.when in ("setup", "teardown"):
+        if rep.failed:
+            #      category, shortletter, verbose-word 
+            return "error", "E", "ERROR"
+        elif rep.skipped:
+            return "skipped", "s", "SKIPPED"
+        else:
+            return "", "", ""
 #
 # Implementation
 

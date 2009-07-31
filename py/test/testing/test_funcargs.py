@@ -194,7 +194,7 @@ class TestRequest:
         """)
         result = testdir.runpytest(p)
         assert result.stdout.fnmatch_lines([
-            "*1 failed*1 passed*"
+            "*1 passed*1 error*"
             ])
 
     def test_request_getmodulepath(self, testdir):

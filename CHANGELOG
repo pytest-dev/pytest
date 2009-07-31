@@ -4,6 +4,10 @@ Changes between 1.0.0b8 and 1.0.0b9
 * fix svn-1.6 compat issue with py.path.svnwc().versioned()
   (thanks Wouter Vanden Hove)
 
+* setup/teardown or collection problems now show as ERRORs
+  or with big "E"'s in the progress lines.  they are reported
+  and counted separately. 
+ 
 * dist-testing: properly handle test items that get locally 
   collected but cannot be collected on the remote side - often 
   due to platform/dependency reasons

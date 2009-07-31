@@ -167,10 +167,11 @@ class TerminalReporter:
                 self.write_fspath_result(fspath, "")
 
     def pytest_runtest_logreport(self, rep):
-        if rep.passed and rep.when in ("setup", "teardown"):
-            return 
         fspath = rep.item.fspath 
         cat, letter, word = self.getcategoryletterword(rep)
+        if not letter and not word:
+            # probably passed setup/teardown
+            return
         if isinstance(word, tuple):
             word, markup = word
         else:
@@ -194,9 +195,9 @@ class TerminalReporter:
     def pytest_collectreport(self, rep):
         if not rep.passed:
             if rep.failed:
-                self.stats.setdefault("failed", []).append(rep)
+                self.stats.setdefault("error", []).append(rep)
                 msg = rep.longrepr.reprcrash.message 
-                self.write_fspath_result(rep.collector.fspath, "F")
+                self.write_fspath_result(rep.collector.fspath, "E")
             elif rep.skipped:
                 self.stats.setdefault("skipped", []).append(rep)
                 self.write_fspath_result(rep.collector.fspath, "S")
@@ -237,6 +238,7 @@ class TerminalReporter:
         __call__.execute() 
         self._tw.line("")
         if exitstatus in (0, 1, 2):
+            self.summary_errors()
             self.summary_failures()
             self.summary_skips()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
@@ -312,17 +314,39 @@ class TerminalReporter:
             for rep in self.stats['failed']:
                 msg = self._getfailureheadline(rep)
                 self.write_sep("_", msg)
-                if hasattr(rep, 'node'):
-                    self.write_line(self.gateway2info.get(
-                        rep.node.gateway, 
-                        "node %r (platinfo not found? strange)")
-                            [:self._tw.fullwidth-1])
+                self.write_platinfo(rep)
                 rep.toterminal(self._tw)
+
+    def summary_errors(self):
+        if 'error' in self.stats and self.config.option.tbstyle != "no":
+            self.write_sep("=", "ERRORS")
+            for rep in self.stats['error']:
+                msg = self._getfailureheadline(rep)
+                if not hasattr(rep, 'when'):
+                    # collect
+                    msg = "ERROR during collection " + msg
+                elif rep.when == "setup":
+                    msg = "ERROR at setup of " + msg 
+                elif rep.when == "teardown":
+                    msg = "ERROR at teardown of " + msg 
+                self.write_sep("_", msg)
+                self.write_platinfo(rep)
+                rep.toterminal(self._tw)
+
+    def write_platinfo(self, rep):
+        if hasattr(rep, 'node'):
+            self.write_line(self.gateway2info.get(
+                rep.node.gateway, 
+                "node %r (platinfo not found? strange)")
+                    [:self._tw.fullwidth-1])
 
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime
 
         keys = "failed passed skipped deselected".split()
+        for key in self.stats.keys():
+            if key not in keys:
+                keys.append(key)
         parts = []
         for key in keys:
             val = self.stats.get(key, None)
