@@ -198,6 +198,17 @@ class ItemTestReport(BaseReport):
             self.shortrepr = shortrepr 
             self.longrepr = longrepr 
 
+    def __repr__(self):
+        status = (self.passed and "passed" or 
+                  self.skipped and "skipped" or 
+                  self.failed and "failed" or 
+                  "CORRUPT")
+        l = [repr(self.item.name), "when=%r" % self.when, "outcome %r" % status,]
+        if hasattr(self, 'node'):
+            l.append("txnode=%s" % self.node.gateway.id)
+        info = " " .join(map(str, l))
+        return "<ItemTestReport %s>" % info 
+
     def getnode(self):
         return self.item 
 

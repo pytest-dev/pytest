@@ -11,12 +11,12 @@ def test_waitfinish_removes_tempdir():
     ff.waitfinish()
     assert not ff.tempdir.check()
 
-def test_tempdir_gets_gc_collected():
+def test_tempdir_gets_gc_collected(monkeypatch):
+    monkeypatch.setattr(os, 'fork', lambda: os.getpid())
     ff = py.process.ForkedFunc(boxf1)
     assert ff.tempdir.check()
     ff.__del__()
     assert not ff.tempdir.check()
-    os.waitpid(ff.pid, 0)
 
 def test_basic_forkedfunc():
     result = py.process.ForkedFunc(boxf1).waitfinish()

@@ -21,6 +21,11 @@ class TXNode(object):
         self.channel.setcallback(self.callback, endmarker=self.ENDMARK)
         self._down = False
 
+    def __repr__(self):
+        id = self.gateway.id
+        status = self._down and 'true' or 'false'
+        return "<TXNode %r down=%s>" %(id, status)
+
     def notify(self, eventname, *args, **kwargs):
         assert not args
         self.putevent((eventname, args, kwargs))

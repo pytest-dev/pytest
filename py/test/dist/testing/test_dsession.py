@@ -155,6 +155,45 @@ class TestDSession:
         dumpqueue(session.queue)
         assert loopstate.exitstatus == outcome.EXIT_NOHOSTS
 
+    def test_removeitem_from_failing_teardown(self, testdir):
+        # teardown reports only come in when they signal a failure
+        # internal session-management should basically ignore them 
+        # XXX probably it'S best to invent a new error hook for 
+        # teardown/setup related failures
+        modcol = testdir.getmodulecol("""
+            def test_one(): 
+                pass 
+            def teardown_function(function):
+                assert 0
+        """)
+        item1, = modcol.collect()
+
+        # setup a session with two nodes
+        session = DSession(item1.config)
+        node1, node2 = MockNode(), MockNode()
+        session.addnode(node1)
+        session.addnode(node2)
+      
+        # have one test pending for a node that goes down 
+        session.senditems_each([item1])
+        nodes = session.item2nodes[item1]
+        class rep:
+            failed = True
+            item = item1
+            node = nodes[0]
+            when = "call"
+        session.queueevent("pytest_runtest_logreport", rep=rep)
+        reprec = testdir.getreportrecorder(session)
+        print session.item2nodes
+        loopstate = session._initloopstate([])
+        assert len(session.item2nodes[item1]) == 2
+        session.loop_once(loopstate)
+        assert len(session.item2nodes[item1]) == 1
+        rep.when = "teardown"
+        session.queueevent("pytest_runtest_logreport", rep=rep)
+        session.loop_once(loopstate)
+        assert len(session.item2nodes[item1]) == 1
+
     def test_testnodedown_causes_reschedule_pending(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_crash(): 
@@ -173,7 +212,8 @@ class TestDSession:
         # have one test pending for a node that goes down 
         session.senditems_load([item1, item2])
         node = session.item2nodes[item1] [0]
-        session.queueevent("pytest_testnodedown", node=node, error=None)
+        item1.config.option.dist = "load"
+        session.queueevent("pytest_testnodedown", node=node, error="xyz")
         reprec = testdir.getreportrecorder(session)
         print session.item2nodes
         loopstate = session._initloopstate([])
@@ -385,3 +425,18 @@ def test_collected_function_causes_remote_skip(testdir):
     result.stdout.fnmatch_lines([
         "*2 skipped*"
     ])
+
+def test_teardownfails_one_function(testdir):
+    p = testdir.makepyfile("""
+        def test_func(): 
+            pass
+        def teardown_function(function):
+            assert 0
+    """)
+    result = testdir.runpytest(p, '--dist=each', '--tx=popen')
+    result.stdout.fnmatch_lines([
+        "*def teardown_function(function):*", 
+        "*1 passed*1 error*"
+    ])
+
+
