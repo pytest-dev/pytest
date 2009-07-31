@@ -105,12 +105,14 @@ class ReSTSyntaxTest(py.test.collect.Item):
 
     def register_pygments(self):
         # taken from pygments-main/external/rst-directive.py 
+        from docutils.parsers.rst import directives
         try:
             from pygments.formatters import HtmlFormatter
         except ImportError:
             def pygments_directive(name, arguments, options, content, lineno,
                                    content_offset, block_text, state, state_machine):
                 return []
+            pygments_directive.options = {}
         else:
             # The default formatter
             DEFAULT = HtmlFormatter(noclasses=True)
@@ -120,7 +122,6 @@ class ReSTSyntaxTest(py.test.collect.Item):
             }
 
             from docutils import nodes
-            from docutils.parsers.rst import directives
 
             from pygments import highlight
             from pygments.lexers import get_lexer_by_name, TextLexer
@@ -137,10 +138,10 @@ class ReSTSyntaxTest(py.test.collect.Item):
                 parsed = highlight(u'\n'.join(content), lexer, formatter)
                 return [nodes.raw('', parsed, format='html')]
 
+            pygments_directive.options = dict([(key, directives.flag) for key in VARIANTS])
+
         pygments_directive.arguments = (1, 0, 1)
         pygments_directive.content = 1
-        pygments_directive.options = dict([(key, directives.flag) for key in VARIANTS])
-
         directives.register_directive('sourcecode', pygments_directive)
 
     def resolve_linkrole(self, name, text, check=True):

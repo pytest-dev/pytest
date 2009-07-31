@@ -542,7 +542,7 @@ class SetupBuilder:
         try:
             args = ['python', str(self.setup_path), 'sdist', 
                     '--dist-dir', str(temp)]
-            subprocess.check_call(args)
+            subcall(args)
             l = temp.listdir('py-*')
             assert len(l) == 1
             sdist = l[0]
@@ -557,6 +557,11 @@ class SetupBuilder:
         finally:
             temp.remove()
 
+def subcall(args):
+    if hasattr(subprocess, 'check_call'):
+        subprocess.check_call(args)
+    else:
+        subprocess.call(args)
 # code taken from Ronny Pfannenschmidt's virtualenvmanager 
 
 class VirtualEnv(object):
@@ -578,7 +583,7 @@ class VirtualEnv(object):
         args = ['virtualenv', self.path]
         if not sitepackages:
             args.append('--no-site-packages')
-        subprocess.check_call(args)
+        subcall(args)
 
     def makegateway(self):
         python = self._cmd('python')

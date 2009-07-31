@@ -20,18 +20,11 @@ def pytest_configure(config):
     config._setupstate = SetupState()
 
 def pytest_sessionfinish(session, exitstatus):
-    # XXX see above
     if hasattr(session.config, '_setupstate'):
         hook = session.config.hook
         rep = hook.pytest__teardown_final(session=session)
         if rep:
             hook.pytest__teardown_final_logerror(rep=rep)
-    # prevent logging module atexit handler from choking on 
-    # its attempt to close already closed streams 
-    # see http://bugs.python.org/issue6333
-    mod = py.std.sys.modules.get("logging", None)
-    if mod is not None: 
-        mod.raiseExceptions = False 
 
 def pytest_make_collect_report(collector):
     result = excinfo = None
