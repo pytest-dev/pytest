@@ -271,8 +271,9 @@ class FunctionMixin(PyobjMixin):
             traceback = ntraceback.filter()
         return traceback 
 
-    def repr_failure(self, excinfo, outerr):
-        return self._repr_failure_py(excinfo, outerr)
+    def repr_failure(self, excinfo, outerr=None):
+        assert outerr is None, "XXX outerr usage is deprecated"
+        return self._repr_failure_py(excinfo)
 
     shortfailurerepr = "F"
 

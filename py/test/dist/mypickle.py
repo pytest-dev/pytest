@@ -69,7 +69,8 @@ class ImmutablePickler:
         pickler = MyPickler(f, self._protocol, uneven=self.uneven)
         pickler.memo = self._picklememo
         pickler.dump(obj)
-        self._updateunpicklememo()
+        if obj is not None:
+            self._updateunpicklememo()
         #print >>debug, "dumped", obj 
         #print >>debug, "picklememo", self._picklememo
         return f.getvalue()

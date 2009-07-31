@@ -86,6 +86,14 @@ pytest_runtest_makereport.firstresult = True
 def pytest_runtest_logreport(rep):
     """ process item test report. """ 
 
+# special handling for final teardown - somewhat internal for now
+def pytest__teardown_final(session):
+    """ called before test session finishes. """
+pytest__teardown_final.firstresult = True
+
+def pytest__teardown_final_logerror(rep):
+    """ called if runtest_teardown_final failed. """ 
+
 # -------------------------------------------------------------------------
 # test session related hooks 
 # -------------------------------------------------------------------------

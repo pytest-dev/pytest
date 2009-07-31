@@ -126,7 +126,7 @@ class BaseFunctionalTests:
         testdir.makepyfile(conftest="""
             import py
             class Function(py.test.collect.Function):
-                def repr_failure(self, excinfo, outerr):
+                def repr_failure(self, excinfo):
                     return "hello" 
         """)
         reports = testdir.runitem("""
@@ -143,7 +143,7 @@ class BaseFunctionalTests:
         #assert rep.failed.where.path.basename == "test_func.py" 
         #assert rep.failed.failurerepr == "hello"
 
-    def test_failure_in_setup_function_ignores_custom_failure_repr(self, testdir):
+    def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
         testdir.makepyfile(conftest="""
             import py
             class Function(py.test.collect.Function):
@@ -168,21 +168,6 @@ class BaseFunctionalTests:
         #assert rep.outcome.where.path.basename == "test_func.py" 
         #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
 
-    def test_capture_in_func(self, testdir):
-        reports = testdir.runitem("""
-            import sys
-            def setup_function(func):
-                print "in setup"
-            def test_func():
-                print "in function"
-                assert 0
-            def teardown_function(func):
-                print "in teardown"
-        """)
-        assert reports[0].outerr[0] == "in setup\n"
-        assert reports[1].outerr[0] == "in function\n"
-        assert reports[2].outerr[0] == "in teardown\n"
-        
     def test_systemexit_does_not_bail_out(self, testdir):
         try:
             reports = testdir.runitem("""
@@ -207,6 +192,23 @@ class BaseFunctionalTests:
             pass
         else: 
             py.test.fail("did not raise")
+
+    @py.test.mark.xfail
+    def test_capture_per_func(self, testdir):
+        reports = testdir.runitem("""
+            import sys
+            def setup_function(func):
+                print "in setup"
+            def test_func():
+                print "in function"
+                assert 0
+            def teardown_function(func):
+                print "in teardown"
+        """)
+        assert reports[0].outerr[0] == "in setup\n"
+        assert reports[1].outerr[0] == "in function\n"
+        assert reports[2].outerr[0] == "in teardown\n"
+        
 
 
 class TestExecutionNonForked(BaseFunctionalTests):
@@ -287,16 +289,3 @@ def test_functional_boxed(testdir):
         "*1 failed*"
     ])
 
-def test_logging_interaction(testdir):
-    p = testdir.makepyfile("""
-        def test_logging():
-            import logging
-            import StringIO
-            stream = StringIO.StringIO()
-            logging.basicConfig(stream=stream)
-            stream.close() # to free memory/release resources
-    """)
-    result = testdir.runpytest(p)
-    assert result.stderr.str().find("atexit") == -1
-        
-    

@@ -240,20 +240,6 @@ class Config(object):
         finally: 
             config_per_process = py.test.config = oldconfig 
 
-    def _getcapture(self, path=None):
-        if self.option.nocapture:
-            iocapture = "no" 
-        else:
-            iocapture = self.getvalue("iocapture", path=path)
-        if iocapture == "fd": 
-            return py.io.StdCaptureFD()
-        elif iocapture == "sys":
-            return py.io.StdCapture()
-        elif iocapture == "no": 
-            return py.io.StdCapture(out=False, err=False, in_=False)
-        else:
-            raise self.Error("unknown io capturing: " + iocapture)
-
     def getxspecs(self):
         xspeclist = []
         for xspec in self.getvalue("tx"):
@@ -286,29 +272,6 @@ class Config(object):
         if pydir is not None:
             roots.append(pydir)
         return roots 
-
-    def guardedcall(self, func):
-        excinfo = result = None
-        capture = self._getcapture()
-        try:
-            try:
-                result = func()
-            except KeyboardInterrupt:
-                raise
-            except:
-                excinfo = py.code.ExceptionInfo()
-        finally:
-            stdout, stderr = capture.reset()
-        return CallResult(result, excinfo, stdout, stderr)
-
-class CallResult:
-    def __init__(self, result, excinfo, stdout, stderr):
-        self.stdout = stdout 
-        self.stderr = stderr
-        self.outerr = (self.stdout, self.stderr)
-        self.excinfo = excinfo
-        if excinfo is None:
-            self.result = result 
     
 #
 # helpers

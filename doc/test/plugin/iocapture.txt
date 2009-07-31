@@ -2,34 +2,90 @@
 pytest_iocapture plugin
 =======================
 
-convenient capturing of writes to stdout/stderror streams and file descriptors.
+configurable per-test stdout/stderr capturing mechanisms.
 
 .. contents::
   :local:
 
-Example Usage
-----------------------
+This plugin captures stdout/stderr output for each test separately. 
+In case of test failures this captured output is shown grouped 
+togtther with the test. 
 
-You can use the `capsys funcarg`_ to capture writes 
-to stdout and stderr streams by using it in a test 
-likes this:
+The plugin also provides test function arguments that help to
+assert stdout/stderr output from within your tests, see the 
+`funcarg example`_. 
+
+
+Capturing of input/output streams during tests 
+---------------------------------------------------
+
+By default ``sys.stdout`` and ``sys.stderr`` are substituted with
+temporary streams during the execution of tests and setup/teardown code.  
+During the whole testing process it will re-use the same temporary 
+streams allowing to play well with the logging module which easily
+takes ownership on these streams. 
+
+Also, 'sys.stdin' is substituted with a file-like "null" object that 
+does not return any values.  This is to immediately error out
+on tests that wait on reading something from stdin. 
+
+You can influence output capturing mechanisms from the command line::
+
+    py.test -s            # disable all capturing
+    py.test --capture=sys # set StringIO() to each of sys.stdout/stderr 
+    py.test --capture=fd  # capture stdout/stderr on Filedescriptors 1/2 
+
+If you set capturing values in a conftest file like this::
+
+    # conftest.py
+    conf_capture = 'fd'
+
+then all tests in that directory will execute with "fd" style capturing. 
+
+sys-level capturing 
+------------------------------------------
+
+Capturing on 'sys' level means that ``sys.stdout`` and ``sys.stderr`` 
+will be replaced with StringIO() objects.   
+
+FD-level capturing and subprocesses
+------------------------------------------
+
+The ``fd`` based method means that writes going to system level files
+based on the standard file descriptors will be captured, for example 
+writes such as ``os.write(1, 'hello')`` will be captured properly. 
+Capturing on fd-level will include output generated from 
+any subprocesses created during a test. 
+
+.. _`funcarg example`:
+
+Example Usage of the capturing Function arguments
+---------------------------------------------------
+
+You can use the `capsys funcarg`_ and `capfd funcarg`_ to 
+capture writes to stdout and stderr streams.  Using the
+funcargs frees your test from having to care about setting/resetting 
+the old streams and also interacts well with py.test's own 
+per-test capturing.  Here is an example test function:
 
 .. sourcecode:: python
 
     def test_myoutput(capsys):
         print "hello" 
         print >>sys.stderr, "world"
-        out, err = capsys.reset()
+        out, err = capsys.readouterr()
         assert out == "hello\n"
         assert err == "world\n"
         print "next"
-        out, err = capsys.reset()
+        out, err = capsys.readouterr()
         assert out == "next\n" 
 
-The ``reset()`` call returns a tuple and will restart 
-capturing so that you can successively check for output. 
-After the test function finishes the original streams
-will be restored.
+The ``readouterr()`` call snapshots the output so far - 
+and capturing will be continued.  After the test 
+function finishes the original streams will 
+be restored.  If you want to capture on 
+the filedescriptor level you can use the ``capfd`` function
+argument which offers the same interface.
 
 .. _`capsys funcarg`:
 
@@ -38,8 +94,8 @@ the 'capsys' test function argument
 -----------------------------------
 
 captures writes to sys.stdout/sys.stderr and makes 
-them available successively via a ``capsys.reset()`` method 
-which returns a ``(out, err)`` tuple of captured strings. 
+them available successively via a ``capsys.readouterr()`` method 
+which returns a ``(out, err)`` tuple of captured snapshot strings. 
 
 .. _`capfd funcarg`:
 
@@ -48,8 +104,17 @@ the 'capfd' test function argument
 ----------------------------------
 
 captures writes to file descriptors 1 and 2 and makes 
-them available successively via a ``capsys.reset()`` method 
-which returns a ``(out, err)`` tuple of captured strings. 
+snapshotted ``(out, err)`` string tuples available 
+via the ``capsys.readouterr()`` method. 
+
+command line options
+--------------------
+
+
+``-s``
+    shortcut for --capture=no.
+``--capture=capture``
+    set IO capturing method during tests: sys|fd|no.
 
 Start improving this plugin in 30 seconds
 =========================================
@@ -63,8 +128,4 @@ Do you find the above documentation or the plugin itself lacking?
 
 Further information: extend_ documentation, other plugins_ or contact_.  
 
-.. _`pytest_iocapture.py`: http://bitbucket.org/hpk42/py-trunk/raw/85fe614ab05f301f206935d11a477df184cbbce6/py/test/plugin/pytest_iocapture.py
-.. _`extend`: ../extend.html
-.. _`plugins`: index.html
-.. _`contact`: ../../contact.html
-.. _`checkout the py.test development version`: ../../download.html#checkout
+.. include:: links.txt

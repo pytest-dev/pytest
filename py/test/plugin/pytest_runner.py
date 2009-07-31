@@ -20,26 +20,21 @@ def pytest_configure(config):
     config._setupstate = SetupState()
 
 def pytest_sessionfinish(session, exitstatus):
-    # XXX see above
     if hasattr(session.config, '_setupstate'):
-        session.config._setupstate.teardown_all()
-    # prevent logging module atexit handler from choking on 
-    # its attempt to close already closed streams 
-    # see http://bugs.python.org/issue6333
-    mod = py.std.sys.modules.get("logging", None)
-    if mod is not None: 
-        mod.raiseExceptions = False 
+        hook = session.config.hook
+        rep = hook.pytest__teardown_final(session=session)
+        if rep:
+            hook.pytest__teardown_final_logerror(rep=rep)
 
 def pytest_make_collect_report(collector):
-    call = collector.config.guardedcall(
-        lambda: collector._memocollect()
-    )
-    result = None
-    if not call.excinfo:
-        result = call.result
-    return CollectReport(collector, result, call.excinfo, call.outerr)
-
-    return report 
+    result = excinfo = None
+    try:
+        result = collector._memocollect()
+    except KeyboardInterrupt:
+        raise
+    except:
+        excinfo = py.code.ExceptionInfo()
+    return CollectReport(collector, result, excinfo)
 
 def pytest_runtest_protocol(item):
     if item.config.getvalue("boxed"):
@@ -66,40 +61,52 @@ def pytest_runtest_call(item):
         item.runtest()
 
 def pytest_runtest_makereport(item, call):
-    return ItemTestReport(item, call.excinfo, call.when, call.outerr)
+    return ItemTestReport(item, call.excinfo, call.when)
 
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
 
+def pytest__teardown_final(session):
+    call = CallInfo(session.config._setupstate.teardown_all, when="teardown")
+    if call.excinfo:
+        rep = TeardownErrorReport(call.excinfo)
+        return rep 
+
+def pytest_report_teststatus(rep):
+    if rep.when in ("setup", "teardown"):
+        if rep.failed:
+            #      category, shortletter, verbose-word 
+            return "error", "E", "ERROR"
+        elif rep.skipped:
+            return "skipped", "s", "SKIPPED"
+        else:
+            return "", "", ""
 #
 # Implementation
 
 def call_and_report(item, when, log=True):
-    call = RuntestHookCall(item, when)
+    call = call_runtest_hook(item, when)
     hook = item.config.hook
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log and (when == "call" or not report.passed):
         hook.pytest_runtest_logreport(rep=report) 
     return report
 
+def call_runtest_hook(item, when):
+    hookname = "pytest_runtest_" + when 
+    hook = getattr(item.config.hook, hookname)
+    return CallInfo(lambda: hook(item=item), when=when)
 
-class RuntestHookCall:
+class CallInfo:
     excinfo = None 
-    _prefix = "pytest_runtest_"
-    def __init__(self, item, when):
+    def __init__(self, func, when):
         self.when = when 
-        hookname = self._prefix + when 
-        hook = getattr(item.config.hook, hookname)
-        capture = item.config._getcapture()
         try:
-            try:
-                self.result = hook(item=item)
-            except KeyboardInterrupt:
-                raise
-            except:
-                self.excinfo = py.code.ExceptionInfo()
-        finally:
-            self.outerr = capture.reset()
+            self.result = func()
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()
 
 def forked_run_report(item):
     # for now, we run setup/teardown in the subprocess 
@@ -149,10 +156,9 @@ class BaseReport(object):
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
-    def __init__(self, item, excinfo=None, when=None, outerr=None):
+    def __init__(self, item, excinfo=None, when=None):
         self.item = item 
         self.when = when
-        self.outerr = outerr
         if item and when != "setup":
             self.keywords = item.readkeywords() 
         else:
@@ -173,17 +179,28 @@ class ItemTestReport(BaseReport):
             elif excinfo.errisinstance(Skipped):
                 self.skipped = True 
                 shortrepr = "s"
-                longrepr = self.item._repr_failure_py(excinfo, outerr)
+                longrepr = self.item._repr_failure_py(excinfo)
             else:
                 self.failed = True
                 shortrepr = self.item.shortfailurerepr
                 if self.when == "call":
-                    longrepr = self.item.repr_failure(excinfo, outerr)
+                    longrepr = self.item.repr_failure(excinfo)
                 else: # exception in setup or teardown 
-                    longrepr = self.item._repr_failure_py(excinfo, outerr)
+                    longrepr = self.item._repr_failure_py(excinfo)
                     shortrepr = shortrepr.lower()
             self.shortrepr = shortrepr 
             self.longrepr = longrepr 
+
+    def __repr__(self):
+        status = (self.passed and "passed" or 
+                  self.skipped and "skipped" or 
+                  self.failed and "failed" or 
+                  "CORRUPT")
+        l = [repr(self.item.name), "when=%r" % self.when, "outcome %r" % status,]
+        if hasattr(self, 'node'):
+            l.append("txnode=%s" % self.node.gateway.id)
+        info = " " .join(map(str, l))
+        return "<ItemTestReport %s>" % info 
 
     def getnode(self):
         return self.item 
@@ -191,14 +208,13 @@ class ItemTestReport(BaseReport):
 class CollectReport(BaseReport):
     skipped = failed = passed = False 
 
-    def __init__(self, collector, result, excinfo=None, outerr=None):
+    def __init__(self, collector, result, excinfo=None):
         self.collector = collector 
         if not excinfo:
             self.passed = True
             self.result = result 
         else:
-            self.outerr = outerr
-            self.longrepr = self.collector._repr_failure_py(excinfo, outerr)
+            self.longrepr = self.collector._repr_failure_py(excinfo)
             if excinfo.errisinstance(Skipped):
                 self.skipped = True
                 self.reason = str(excinfo.value)
@@ -207,6 +223,13 @@ class CollectReport(BaseReport):
 
     def getnode(self):
         return self.collector 
+
+class TeardownErrorReport(BaseReport):
+    skipped = passed = False 
+    failed = True
+    when = "teardown"
+    def __init__(self, excinfo):
+        self.longrepr = excinfo.getrepr(funcargs=True)
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """

@@ -11,6 +11,13 @@ from py.__.test.dist.nodemanage import NodeManager
 
 import Queue 
 
+debug_file = None # open('/tmp/loop.log', 'w')
+def debug(*args):
+    if debug_file is not None:
+        s = " ".join(map(str, args))
+        debug_file.write(s+"\n")
+        debug_file.flush()
+
 class LoopState(object):
     def __init__(self, dsession, colitems):
         self.dsession = dsession
@@ -23,9 +30,14 @@ class LoopState(object):
         self.shuttingdown = False
         self.testsfailed = False
 
+    def __repr__(self):
+        return "<LoopState exitstatus=%r shuttingdown=%r len(colitems)=%d>" % (
+            self.exitstatus, self.shuttingdown, len(self.colitems))
+
     def pytest_runtest_logreport(self, rep):
         if rep.item in self.dsession.item2nodes:
-            self.dsession.removeitem(rep.item, rep.node)
+            if rep.when != "teardown": # otherwise we have already managed it
+                self.dsession.removeitem(rep.item, rep.node)
         if rep.failed:
             self.testsfailed = True
 
@@ -39,9 +51,14 @@ class LoopState(object):
     def pytest_testnodedown(self, node, error=None):
         pending = self.dsession.removenode(node)
         if pending:
-            crashitem = pending[0]
-            self.dsession.handle_crashitem(crashitem, node)
-            self.colitems.extend(pending[1:])
+            if error:
+                crashitem = pending[0]
+                debug("determined crashitem", crashitem)
+                self.dsession.handle_crashitem(crashitem, node)
+                # XXX recovery handling for "each"? 
+                # currently pending items are not retried 
+                if self.dsession.config.option.dist == "load":
+                    self.colitems.extend(pending[1:])
 
     def pytest_rescheduleitems(self, items):
         self.colitems.extend(items)
@@ -115,6 +132,9 @@ class DSession(Session):
         if eventname == "pytest_testnodedown":
             self.config.hook.pytest_testnodedown(**kwargs)
             self.removenode(kwargs['node'])
+        elif eventname == "pytest_runtest_logreport":
+            # might be some teardown report
+            self.config.hook.pytest_runtest_logreport(**kwargs)
         if not self.node2pending:
             # finished
             if loopstate.testsfailed:
@@ -200,7 +220,9 @@ class DSession(Session):
             node.sendlist(sending)
             pending.extend(sending)
             for item in sending:
-                self.item2nodes.setdefault(item, []).append(node)
+                nodes = self.item2nodes.setdefault(item, [])
+                assert node not in nodes
+                nodes.append(node)
                 self.config.hook.pytest_itemstart(item=item, node=node)
         tosend[:] = tosend[room:]  # update inplace
         if tosend:
@@ -237,7 +259,8 @@ class DSession(Session):
             nodes.remove(node)
         if not nodes:
             del self.item2nodes[item]
-        self.node2pending[node].remove(item)
+        pending = self.node2pending[node]
+        pending.remove(item)
 
     def handle_crashitem(self, item, node):
         runner = item.config.pluginmanager.getplugin("runner") 

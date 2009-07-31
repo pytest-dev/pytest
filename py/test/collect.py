@@ -4,7 +4,6 @@ Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
-from py.__.test.outcome import Skipped
 
 def configproperty(name):
     def fget(self):
@@ -31,6 +30,10 @@ class Node(object):
         self.config = getattr(parent, 'config', None)
         self.fspath = getattr(parent, 'fspath', None) 
 
+    def _checkcollectable(self):
+        if not hasattr(self, 'fspath'):
+            self.parent._memocollect() # to reraise exception
+            
     # 
     # note to myself: Pickling is uh.
     # 
@@ -44,6 +47,7 @@ class Node(object):
         except Exception:
             # seems our parent can't collect us 
             # so let's be somewhat operable 
+            # _checkcollectable() is to tell outsiders about the fact
             self.name = name 
             self.parent = parent 
             self.config = parent.config
@@ -247,7 +251,8 @@ class Node(object):
         return col._getitembynames(names)
     _fromtrail = staticmethod(_fromtrail)
 
-    def _repr_failure_py(self, excinfo, outerr):
+    def _repr_failure_py(self, excinfo, outerr=None):
+        assert outerr is None, "XXX deprecated"
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
         # XXX temporary hack: getrepr() should not take a 'style' argument
         # at all; it should record all data in all cases, and the style
@@ -256,13 +261,9 @@ class Node(object):
             style = "short"
         else:
             style = "long"
-        repr = excinfo.getrepr(funcargs=True, 
+        return excinfo.getrepr(funcargs=True, 
                                showlocals=self.config.option.showlocals,
                                style=style)
-        for secname, content in zip(["out", "err"], outerr):
-            if content:
-                repr.addsection("Captured std%s" % secname, content.rstrip())
-        return repr 
 
     repr_failure = _repr_failure_py
     shortfailurerepr = "F"
@@ -291,9 +292,10 @@ class Collector(Node):
             if colitem.name == name:
                 return colitem
 
-    def repr_failure(self, excinfo, outerr):
+    def repr_failure(self, excinfo, outerr=None):
         """ represent a failure. """
-        return self._repr_failure_py(excinfo, outerr)
+        assert outerr is None, "XXX deprecated"
+        return self._repr_failure_py(excinfo)
 
     def _memocollect(self):
         """ internal helper method to cache results of calling collect(). """

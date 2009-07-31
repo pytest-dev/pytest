@@ -37,8 +37,4 @@ Do you find the above documentation or the plugin itself lacking?
 
 Further information: extend_ documentation, other plugins_ or contact_.  
 
-.. _`pytest_doctest.py`: http://bitbucket.org/hpk42/py-trunk/raw/85fe614ab05f301f206935d11a477df184cbbce6/py/test/plugin/pytest_doctest.py
-.. _`extend`: ../extend.html
-.. _`plugins`: index.html
-.. _`contact`: ../../contact.html
-.. _`checkout the py.test development version`: ../../download.html#checkout
+.. include:: links.txt

@@ -122,6 +122,10 @@ class Compare(Interpretable):
         expr = Interpretable(self.expr)
         expr.eval(frame)
         for operation, expr2 in self.ops:
+            if hasattr(self, 'result'):
+                # shortcutting in chained expressions
+                if not frame.is_true(self.result):
+                    break
             expr2 = Interpretable(expr2)
             expr2.eval(frame)
             self.explanation = "%s %s %s" % (
@@ -135,8 +139,6 @@ class Compare(Interpretable):
                 raise
             except:
                 raise Failure(self)
-            if not frame.is_true(self.result):
-                break
             expr = expr2
 
 class And(Interpretable):

@@ -89,9 +89,10 @@ class TestTerminal:
         p = testdir.makepyfile("import xyz")
         result = testdir.runpytest(*option._getcmdargs())
         result.stdout.fnmatch_lines([
-            "*test_collect_fail.py F*",
+            "*test_collect_fail.py E*",
             ">   import xyz",
             "E   ImportError: No module named xyz",
+            "*1 error*",
         ])
 
     def test_internalerror(self, testdir, linecomp):
@@ -357,3 +358,62 @@ def test_repr_python_version(monkeypatch):
     py.std.sys.version_info = x = (2,3)
     assert repr_pythonversion() == str(x) 
 
+class TestFixtureReporting:
+    def test_setup_fixture_error(self, testdir):
+        p = testdir.makepyfile("""
+            def setup_function(function):
+                print "setup func"
+                assert 0
+            def test_nada():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ERROR at setup of test_nada*",
+            "*setup_function(function):*",
+            "*setup func*",
+            "*assert 0*",
+            "*1 error*",
+        ])
+        assert result.ret != 0
+    
+    def test_teardown_fixture_error(self, testdir):
+        p = testdir.makepyfile("""
+            def test_nada():
+                pass
+            def teardown_function(function):
+                print "teardown func"
+                assert 0
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ERROR at teardown*", 
+            "*teardown_function(function):*",
+            "*assert 0*",
+            "*Captured stdout*",
+            "*teardown func*",
+            "*1 passed*1 error*",
+        ])
+
+    def test_teardown_fixture_error_and_test_failure(self, testdir):
+        p = testdir.makepyfile("""
+            def test_fail():
+                assert 0, "failingfunc"
+
+            def teardown_function(function):
+                print "teardown func"
+                assert False
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ERROR at teardown of test_fail*", 
+            "*teardown_function(function):*",
+            "*assert False*",
+            "*Captured stdout*",
+            "*teardown func*",
+
+            "*test_fail*", 
+            "*def test_fail():",
+            "*failingfunc*",
+            "*1 failed*1 error*",
+         ])

@@ -131,3 +131,26 @@ def test_inconsistent_assert_result(testdir):
     s = result.stdout.str()
     assert s.find("re-run") != -1
 
+def test_twoarg_comparison_does_not_call_nonzero():
+    # this arises e.g. in numpy array comparisons 
+    class X(object):
+        def __eq__(self, other):
+            return self
+
+        def __nonzero__(self):
+            raise ValueError
+
+        def all(self):
+            return False
+
+    def f():
+        a = X()
+        b = X()
+        assert (a == b).all()
+
+    excinfo = getexcinfo(AssertionError, f)
+    msg = getmsg(excinfo)
+    print msg
+    assert "re-run" not in msg
+    assert "ValueError" not in msg
+

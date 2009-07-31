@@ -1,3 +1,37 @@
+Changes between 1.0.0b8 and 1.0.0b9
+=====================================
+
+* cleanly handle and report final teardown of test setup
+
+* fix svn-1.6 compat issue with py.path.svnwc().versioned()
+  (thanks Wouter Vanden Hove)
+
+* setup/teardown or collection problems now show as ERRORs
+  or with big "E"'s in the progress lines.  they are reported
+  and counted separately. 
+ 
+* dist-testing: properly handle test items that get locally 
+  collected but cannot be collected on the remote side - often 
+  due to platform/dependency reasons
+
+* simplified py.test.mark API - see keyword plugin documentation
+
+* integrate better with logging: capturing now by default captures
+  test functions and their immediate setup/teardown in a single stream 
+
+* capsys and capfd funcargs now have a readouterr() and a close() method
+  (underlyingly py.io.StdCapture/FD objects are used which grew a 
+  readouterr() method as well to return snapshots of captured out/err)
+
+* make assert-reinterpretation work better with comparisons not 
+  returning bools (reported with numpy from thanks maciej fijalkowski)
+
+* reworked per-test output capturing into the pytest_iocapture.py plugin 
+  and thus removed capturing code from config object 
+
+* item.repr_failure(excinfo) instead of item.repr_failure(excinfo, outerr)
+
+
 Changes between 1.0.0b7 and 1.0.0b8
 =====================================
 

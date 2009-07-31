@@ -212,38 +212,6 @@ class TestConfigApi_getcolitems:
         for col in col.listchain():
             assert col.config is config 
 
-
-class TestGuardedCall:
-    def test_guardedcall_ok(self, testdir):
-        config = testdir.parseconfig()
-        def myfunc(x):
-            print x
-            print >>py.std.sys.stderr, "hello"
-            return 7
-        call = config.guardedcall(lambda: myfunc(3))
-        assert call.excinfo is None
-        assert call.result == 7
-        assert call.stdout.startswith("3")
-        assert call.stderr.startswith("hello")
-
-    def test_guardedcall_fail(self, testdir):
-        config = testdir.parseconfig()
-        def myfunc(x):
-            print x
-            raise ValueError(17)
-        call = config.guardedcall(lambda: myfunc(3))
-        assert call.excinfo 
-        assert call.excinfo.type == ValueError 
-        assert not hasattr(call, 'result')
-        assert call.stdout.startswith("3")
-        assert not call.stderr 
-
-    def test_guardedcall_keyboardinterrupt(self, testdir):
-        config = testdir.parseconfig()
-        def myfunc():
-            raise KeyboardInterrupt
-        py.test.raises(KeyboardInterrupt, config.guardedcall, myfunc)
-
 class TestOptionEffects:
     def test_boxed_option_default(self, testdir):
         tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
@@ -257,29 +225,6 @@ class TestOptionEffects:
     def test_is_not_boxed_by_default(self, testdir):
         config = py.test.config._reparse([testdir.tmpdir])
         assert not config.option.boxed
-
-    def test_config_iocapturing(self, testdir):
-        config = testdir.parseconfig(testdir.tmpdir)
-        assert config.getvalue("iocapture")
-        tmpdir = testdir.tmpdir.ensure("sub-with-conftest", dir=1)
-        tmpdir.join("conftest.py").write(py.code.Source("""
-            pytest_option_iocapture = "no"
-        """))
-        config = py.test.config._reparse([tmpdir])
-        assert config.getvalue("iocapture") == "no"
-        capture = config._getcapture()
-        assert isinstance(capture, py.io.StdCapture)
-        assert not capture._out
-        assert not capture._err
-        assert not capture._in
-        assert isinstance(capture, py.io.StdCapture)
-        for opt, cls in (("sys", py.io.StdCapture),  
-                         ("fd", py.io.StdCaptureFD), 
-                        ):
-            config.option.iocapture = opt
-            capture = config._getcapture()
-            assert isinstance(capture, cls) 
-
 
 class TestConfig_gettopdir:
     def test_gettopdir(self, testdir):

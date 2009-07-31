@@ -129,7 +129,12 @@ class TmpTestdir:
             
     def mkdir(self, name):
         return self.tmpdir.mkdir(name)
-    
+
+    def mkpydir(self, name):
+        p = self.mkdir(name)
+        p.ensure("__init__.py")
+        return p
+
     def genitems(self, colitems):
         return list(self.session.genitems(colitems))
 
@@ -295,6 +300,9 @@ class TmpTestdir:
         script = bindir.join(scriptname)
         assert script.check()
         return py.std.sys.executable, script
+
+    def runpython(self, script):
+        return self.run(py.std.sys.executable, script)
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 
@@ -515,7 +523,6 @@ def test_testdir_runs_with_plugin(testdir):
 def pytest_funcarg__venv(request):
     p = request.config.mktemp(request.function.__name__, numbered=True)
     venv = VirtualEnv(str(p)) 
-    venv.create()
     return venv 
    
 def pytest_funcarg__py_setup(request):
@@ -528,13 +535,14 @@ def pytest_funcarg__py_setup(request):
 class SetupBuilder:
     def __init__(self, setup_path):
         self.setup_path = setup_path
+        assert setup_path.check()
 
     def make_sdist(self, destdir=None):
         temp = py.path.local.mkdtemp()
         try:
             args = ['python', str(self.setup_path), 'sdist', 
                     '--dist-dir', str(temp)]
-            subprocess.check_call(args)
+            subcall(args)
             l = temp.listdir('py-*')
             assert len(l) == 1
             sdist = l[0]
@@ -549,6 +557,11 @@ class SetupBuilder:
         finally:
             temp.remove()
 
+def subcall(args):
+    if hasattr(subprocess, 'check_call'):
+        subprocess.check_call(args)
+    else:
+        subprocess.call(args)
 # code taken from Ronny Pfannenschmidt's virtualenvmanager 
 
 class VirtualEnv(object):
@@ -562,22 +575,22 @@ class VirtualEnv(object):
     def _cmd(self, name):
         return os.path.join(self.path, 'bin', name)
 
-    @property
-    def valid(self):
-        return os.path.exists(self._cmd('python'))
+    def ensure(self):
+        if not os.path.exists(self._cmd('python')):
+            self.create()
 
     def create(self, sitepackages=False):
         args = ['virtualenv', self.path]
         if not sitepackages:
             args.append('--no-site-packages')
-        subprocess.check_call(args)
+        subcall(args)
 
     def makegateway(self):
         python = self._cmd('python')
         return py.execnet.makegateway("popen//python=%s" %(python,))
 
     def pcall(self, cmd, *args, **kw):
-        assert self.valid
+        self.ensure()
         return subprocess.call([
                 self._cmd(cmd)
             ] + list(args),

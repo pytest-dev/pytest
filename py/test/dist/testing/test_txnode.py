@@ -32,6 +32,7 @@ class EventQueue:
 
 class MySetup:
     def __init__(self, request):
+        self.id = 0
         self.request = request
 
     def geteventargs(self, eventname, timeout=2.0):
@@ -45,6 +46,8 @@ class MySetup:
         self.queue = py.std.Queue.Queue()
         self.xspec = py.execnet.XSpec("popen")
         self.gateway = py.execnet.makegateway(self.xspec)
+        self.id += 1
+        self.gateway.id = str(self.id)
         self.node = TXNode(self.gateway, self.config, putevent=self.queue.put)
         assert not self.node.channel.isclosed()
         return self.node 

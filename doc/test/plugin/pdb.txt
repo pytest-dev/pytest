@@ -1,20 +1,20 @@
 
-pytest_resultlog plugin
-=======================
+pytest_pdb plugin
+=================
 
-resultlog plugin for machine-readable logging of test results.
+interactive debugging with the Python Debugger.
 
 .. contents::
   :local:
 
-Useful for buildbot integration code.
+
 
 command line options
 --------------------
 
 
-``--resultlog=path``
-    path for machine-readable result log.
+``--pdb``
+    start pdb (the Python debugger) on errors.
 
 Start improving this plugin in 30 seconds
 =========================================
@@ -22,8 +22,8 @@ Start improving this plugin in 30 seconds
 
 Do you find the above documentation or the plugin itself lacking? 
 
-1. Download `pytest_resultlog.py`_ plugin source code 
-2. put it somewhere as ``pytest_resultlog.py`` into your import path 
+1. Download `pytest_pdb.py`_ plugin source code 
+2. put it somewhere as ``pytest_pdb.py`` into your import path 
 3. a subsequent ``py.test`` run will use your local version
 
 Further information: extend_ documentation, other plugins_ or contact_.  
