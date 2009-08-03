@@ -57,14 +57,15 @@ class ExceptionInfo(object):
         reprcrash = ReprFileLocation(path, lineno+1, exconly)
         return reprcrash
 
-    def getrepr(self, showlocals=False, style="long", tbfilter=True, funcargs=False):
+    def getrepr(self, showlocals=False, style="long", 
+            abspath=False, tbfilter=True, funcargs=False):
         """ return str()able representation of this exception info.
             showlocals: show locals per traceback entry 
             style: long|short|no traceback style 
             tbfilter: hide entries (where __tracebackhide__ is true)
         """
         fmt = FormattedExcinfo(showlocals=showlocals, style=style, 
-                               tbfilter=tbfilter, funcargs=funcargs)
+            abspath=abspath, tbfilter=tbfilter, funcargs=funcargs)
         return fmt.repr_excinfo(self)
 
     def __str__(self):
@@ -78,11 +79,12 @@ class FormattedExcinfo(object):
     flow_marker = ">"    
     fail_marker = "E"
     
-    def __init__(self, showlocals=False, style="long", tbfilter=True, funcargs=False):
+    def __init__(self, showlocals=False, style="long", abspath=True, tbfilter=True, funcargs=False):
         self.showlocals = showlocals
         self.style = style
         self.tbfilter = tbfilter
         self.funcargs = funcargs
+        self.abspath = abspath 
 
     def _getindent(self, source):
         # figure out indent for given source 
@@ -154,8 +156,9 @@ class FormattedExcinfo(object):
                 if name == '__builtins__': 
                     lines.append("__builtins__ = <builtins>")
                 else:
-                    # This formatting could all be handled by the _repr() function, which is 
-                    # only repr.Repr in disguise, so is very configurable.
+                    # This formatting could all be handled by the
+                    # _repr() function, which is only repr.Repr in
+                    # disguise, so is very configurable.
                     str_repr = self._saferepr(value)
                     #if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
@@ -180,7 +183,8 @@ class FormattedExcinfo(object):
             reprargs = self.repr_args(entry) 
             lines.extend(self.get_source(source, line_index, excinfo))
             message = excinfo and excinfo.typename or ""
-            filelocrepr = ReprFileLocation(entry.path, entry.lineno+1, message)
+            path = self._makepath(entry.path)
+            filelocrepr = ReprFileLocation(path, entry.lineno+1, message)
             localsrepr =  self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, filelocrepr)
         else: 
@@ -192,6 +196,13 @@ class FormattedExcinfo(object):
             if excinfo: 
                 lines.extend(self.get_exconly(excinfo, indent=4))
             return ReprEntry(lines, None, None, None)
+
+    def _makepath(self, path):
+        if not self.abspath:
+            np = py.path.local().bestrelpath(path)
+            if len(np) < len(str(path)):
+                path = np
+        return path
 
     def repr_traceback(self, excinfo): 
         traceback = excinfo.traceback 

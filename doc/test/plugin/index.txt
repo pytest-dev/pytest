@@ -2,7 +2,7 @@
 Plugins related to Python test functions and programs
 =====================================================
 
-xfail_ mark python tests as expected-to-fail and report them separately.
+xfail_ mark python test functions as expected-to-fail and report them separately.
 
 figleaf_ write and report coverage data with 'figleaf'.
 

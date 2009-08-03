@@ -2,7 +2,7 @@
 pytest_xfail plugin
 ===================
 
-mark python tests as expected-to-fail and report them separately.
+mark python test functions as expected-to-fail and report them separately.
 
 .. contents::
   :local:
@@ -10,8 +10,8 @@ mark python tests as expected-to-fail and report them separately.
 usage
 ------------
 
-Use the generic mark decorator to add the 'xfail' keyword to your 
-test function::
+Use the generic mark decorator to mark your test functions as 
+'expected to fail':: 
 
     @py.test.mark.xfail
     def test_hello():

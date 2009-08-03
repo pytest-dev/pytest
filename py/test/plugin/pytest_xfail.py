@@ -1,11 +1,11 @@
 """
-mark python tests as expected-to-fail and report them separately. 
+mark python test functions as expected-to-fail and report them separately. 
 
 usage
 ------------
 
-Use the generic mark decorator to add the 'xfail' keyword to your 
-test function::
+Use the generic mark decorator to mark your test functions as 
+'expected to fail':: 
 
     @py.test.mark.xfail
     def test_hello():
@@ -14,6 +14,7 @@ test function::
 This test will be executed but no traceback will be reported 
 when it fails. Instead terminal reporting will list it in the 
 "expected to fail" section or "unexpectedly passing" section.  
+
 """
 
 import py
@@ -48,28 +49,29 @@ def pytest_terminal_summary(terminalreporter):
     xfailed = tr.stats.get("xfailed")
     if xfailed:
         tr.write_sep("_", "expected failures")
-        for event in xfailed:
-            entry = event.longrepr.reprcrash 
-            key = entry.path, entry.lineno, entry.message
-            reason = event.longrepr.reprcrash.message
-            modpath = event.item.getmodpath(includemodule=True)
-            #tr._tw.line("%s %s:%d: %s" %(modpath, entry.path, entry.lineno, entry.message))
-            tr._tw.line("%s %s:%d: " %(modpath, entry.path, entry.lineno))
+        for rep in xfailed:
+            entry = rep.longrepr.reprcrash 
+            modpath = rep.item.getmodpath(includemodule=True)
+            pos = "%s %s:%d: " %(modpath, entry.path, entry.lineno)
+            reason = rep.longrepr.reprcrash.message
+            tr._tw.line("%s %s" %(pos, reason))
 
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
         tr.write_sep("_", "UNEXPECTEDLY PASSING TESTS")
-        for event in xpassed:
-            tr._tw.line("%s: xpassed" %(event.item,))
+        for rep in xpassed:
+            fspath, lineno, modpath = rep.item.reportinfo()
+            pos = "%s %s:%d: unexpectedly passing" %(modpath, fspath, lineno)
+            tr._tw.line(pos)
 
 
-# ===============================================================================
+# =============================================================================
 #
 # plugin tests 
 #
-# ===============================================================================
+# =============================================================================
 
-def test_xfail(testdir, linecomp):
+def test_xfail(testdir):
     p = testdir.makepyfile(test_one="""
         import py
         @py.test.mark.xfail

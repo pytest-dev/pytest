@@ -625,6 +625,27 @@ raise ValueError()
         assert tw.lines[9] == ""
         assert tw.lines[10].endswith("mod.py:3: ValueError")
 
+    def test_toterminal_long_filenames(self):
+        mod = self.importasmod("""
+            def f():
+                raise ValueError()
+        """)
+        excinfo = py.test.raises(ValueError, mod.f)
+        tw = TWMock()
+        path = py.path.local(mod.__file__)
+        old = path.dirpath().chdir()
+        try: 
+            repr = excinfo.getrepr(abspath=False)
+            repr.toterminal(tw)
+            line = tw.lines[-1]
+            assert line == "mod.py:3: ValueError" 
+
+            repr = excinfo.getrepr(abspath=True)
+            repr.toterminal(tw)
+            line = tw.lines[-1]
+            assert line == "%s:3: ValueError" %(path,)
+        finally:
+            old.chdir()
 
     def test_format_excinfo(self):
         mod = self.importasmod("""
