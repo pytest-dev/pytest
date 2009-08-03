@@ -8,7 +8,7 @@ figleaf_ write and report coverage data with 'figleaf'.
 
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
-iocapture_ configurable per-test stdout/stderr capturing mechanisms.
+capture_ configurable per-test stdout/stderr capturing mechanisms.
 
 recwarn_ helpers for asserting deprecation and other warnings.
 

@@ -1,5 +1,5 @@
 import py, os, sys
-from py.__.test.plugin.pytest_iocapture import CaptureManager
+from py.__.test.plugin.pytest_capture import CaptureManager
 
 class TestCaptureManager:
 
@@ -87,6 +87,31 @@ class TestPerTestCapturing:
             "setup test_func2*",
             "in func2*", 
         ]) 
+
+    @py.test.mark.xfail
+    def test_capture_scope_cache(self, testdir):
+        p = testdir.makepyfile("""
+            import sys
+            def setup_module(func):
+                print "module-setup"
+            def setup_function(func):
+                print "function-setup"
+            def test_func():
+                print "in function"
+                assert 0
+            def teardown_function(func):
+                print "in teardown"
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*test_func():*",
+            "*Captured stdout during setup*", 
+            "module-setup*", 
+            "function-setup*", 
+            "*Captured stdout*",
+            "in teardown*",
+        ])
+
 
     def test_no_carry_over(self, testdir):
         p = testdir.makepyfile("""
@@ -230,9 +255,7 @@ class TestLoggingInteraction:
             # verify proper termination
             assert "closed" not in s
 
-    @py.test.mark.xfail
     def test_logging_and_crossscope_fixtures(self, testdir):
-        # XXX also needs final teardown reporting to work!
         p = testdir.makepyfile("""
             import logging
             def setup_module(function):
@@ -246,14 +269,14 @@ class TestLoggingInteraction:
                 logging.warn("hello3")
                 assert 0
         """)
-        for optargs in (('--iocapture=sys',), ('--iocapture=fd',)):
+        for optargs in (('--capture=sys',), ('--capture=fd',)):
             print optargs
             result = testdir.runpytest(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
+                "*WARN*hello3",  # errors come first
                 "*WARN*hello1", 
                 "*WARN*hello2", 
-                "*WARN*hello3", 
             ])
             # verify proper termination
             assert "closed" not in s
@@ -302,6 +325,4 @@ class TestCaptureFuncarg:
             "*KEYBOARD INTERRUPT*"
         ])
         assert result.ret == 2
-
-
 

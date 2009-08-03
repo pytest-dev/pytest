@@ -5,7 +5,7 @@ WIDTH = 75
 
 plugins = [
     ('Plugins related to Python test functions and programs', 
-            'xfail figleaf monkeypatch iocapture recwarn',),
+            'xfail figleaf monkeypatch capture recwarn',),
     ('Plugins for other testing styles and languages', 
             'unittest doctest oejskit restdoc'),
     ('Plugins for generic reporting and failure logging', 
