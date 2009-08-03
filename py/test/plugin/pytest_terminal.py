@@ -6,6 +6,24 @@ This is a good source for looking at the various reporting hooks.
 import py
 import sys
 
+def pytest_addoption(parser):
+    group = parser.getgroup("test process debugging")
+    group.addoption('--collectonly',
+        action="store_true", dest="collectonly",
+        help="only collect tests, don't execute them."),
+    group.addoption('--traceconfig',
+               action="store_true", dest="traceconfig", default=False,
+               help="trace considerations of conftest.py files."),
+    group._addoption('--nomagic',
+               action="store_true", dest="nomagic", default=False,
+               help="don't reinterpret asserts, no traceback cutting. ")
+    group._addoption('--fulltrace',
+               action="store_true", dest="fulltrace", default=False,
+               help="don't cut any tracebacks (default is to cut).")
+    group.addoption('--debug',
+               action="store_true", dest="debug", default=False,
+               help="generate and show debugging information.")
+
 def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)

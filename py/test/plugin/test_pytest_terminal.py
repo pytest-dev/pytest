@@ -352,6 +352,40 @@ class TestCollectonly:
         ])
         assert result.ret == 3
 
+    def test_collectonly_simple(self, testdir):
+        p = testdir.makepyfile("""
+            def test_func1():
+                pass
+            class TestClass:
+                def test_method(self):
+                    pass
+        """)
+        result = testdir.runpytest("--collectonly", p)
+        stderr = result.stderr.str().strip()
+        assert stderr.startswith("inserting into sys.path")
+        assert result.ret == 0
+        extra = result.stdout.fnmatch_lines(py.code.Source("""
+            <Module '*.py'>
+              <Function 'test_func1'*>
+              <Class 'TestClass'>
+                <Instance '()'>
+                  <Function 'test_method'*>
+        """).strip())
+
+    def test_collectonly_error(self, testdir):
+        p = testdir.makepyfile("import Errlkjqweqwe")
+        result = testdir.runpytest("--collectonly", p)
+        stderr = result.stderr.str().strip()
+        assert stderr.startswith("inserting into sys.path")
+        assert result.ret == 1
+        extra = result.stdout.fnmatch_lines(py.code.Source("""
+            <Module '*.py'>
+              *ImportError*
+            !!!*failures*!!!
+            *test_collectonly_error.py:1*
+        """).strip())
+
+
 def test_repr_python_version(monkeypatch):
     monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
     assert repr_pythonversion() == "2.5.1-final-0"
@@ -417,3 +451,174 @@ class TestFixtureReporting:
             "*failingfunc*",
             "*1 failed*1 error*",
          ])
+
+class TestTerminalFunctional:
+    def test_skipped_reasons(self, testdir):
+        testdir.makepyfile(
+            test_one="""
+                from conftest import doskip
+                def setup_function(func):
+                    doskip()
+                def test_func():
+                    pass
+                class TestClass:
+                    def test_method(self):
+                        doskip()
+           """,
+           test_two = """
+                from conftest import doskip
+                doskip()
+           """,
+           conftest = """
+                import py
+                def doskip():
+                    py.test.skip('test')
+            """
+        )
+        result = testdir.runpytest() 
+        extra = result.stdout.fnmatch_lines([
+            "*test_one.py ss",
+            "*test_two.py S",
+            "___* skipped test summary *_", 
+            "*conftest.py:3: *3* Skipped: 'test'", 
+        ])
+        assert result.ret == 0
+
+    def test_deselected(self, testdir):
+        testpath = testdir.makepyfile("""
+                def test_one():
+                    pass
+                def test_two():
+                    pass
+                def test_three():
+                    pass
+           """
+        )
+        result = testdir.runpytest("-k", "test_two:", testpath)
+        extra = result.stdout.fnmatch_lines([
+            "*test_deselected.py ..", 
+            "=* 1 test*deselected by 'test_two:'*=", 
+        ])
+        assert result.ret == 0
+
+    def test_no_skip_summary_if_failure(self, testdir):
+        testdir.makepyfile("""
+            import py
+            def test_ok():
+                pass
+            def test_fail():
+                assert 0
+            def test_skip():
+                py.test.skip("dontshow")
+        """)
+        result = testdir.runpytest() 
+        assert result.stdout.str().find("skip test summary") == -1
+        assert result.ret == 1
+
+    def test_passes(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_passes():
+                pass
+            class TestClass:
+                def test_method(self):
+                    pass
+        """)
+        old = p1.dirpath().chdir()
+        try:
+            result = testdir.runpytest()
+        finally:
+            old.chdir()
+        extra = result.stdout.fnmatch_lines([
+            "test_passes.py ..", 
+            "* 2 pass*",
+        ])
+        assert result.ret == 0
+
+    def test_header_trailer_info(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_passes():
+                pass
+        """)
+        result = testdir.runpytest()
+        verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
+        extra = result.stdout.fnmatch_lines([
+            "*===== test session starts ====*",
+            "python: platform %s -- Python %s*" %(
+                    py.std.sys.platform, verinfo), # , py.std.sys.executable),
+            "*test_header_trailer_info.py .",
+            "=* 1 passed in *.[0-9][0-9] seconds *=", 
+        ])
+
+    def test_traceback_failure(self, testdir):
+        p1 = testdir.makepyfile("""
+            def g():
+                return 2
+            def f(x):
+                assert x == g()
+            def test_onefails():
+                f(3)
+        """)
+        result = testdir.runpytest(p1)
+        result.stdout.fnmatch_lines([
+            "*test_traceback_failure.py F", 
+            "====* FAILURES *====",
+            "____*____", 
+            "",
+            "    def test_onefails():",
+            ">       f(3)",
+            "",
+            "*test_*.py:6: ",
+            "_ _ _ *",
+            #"",
+            "    def f(x):",
+            ">       assert x == g()",
+            "E       assert 3 == 2",
+            "E        +  where 2 = g()",
+            "",
+            "*test_traceback_failure.py:4: AssertionError"
+        ])
+
+
+    def test_showlocals(self, testdir): 
+        p1 = testdir.makepyfile("""
+            def test_showlocals():
+                x = 3
+                y = "x" * 5000 
+                assert 0
+        """)
+        result = testdir.runpytest(p1, '-l')
+        result.stdout.fnmatch_lines([
+            #"_ _ * Locals *", 
+            "x* = 3",
+            "y* = 'xxxxxx*"
+        ])
+
+    def test_verbose_reporting(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def test_fail():
+                raise ValueError()
+            def test_pass():
+                pass
+            class TestClass:
+                def test_skip(self):
+                    py.test.skip("hello")
+            def test_gen():
+                def check(x):
+                    assert x == 1
+                yield check, 0
+        """)
+        result = testdir.runpytest(p1, '-v')
+        result.stdout.fnmatch_lines([
+            "*test_verbose_reporting.py:2: test_fail*FAIL*", 
+            "*test_verbose_reporting.py:4: test_pass*PASS*",
+            "*test_verbose_reporting.py:7: TestClass.test_skip*SKIP*",
+            "*test_verbose_reporting.py:10: test_gen*FAIL*",
+        ])
+        assert result.ret == 1
+        result = testdir.runpytest(p1, '-v', '-n 1')
+        result.stdout.fnmatch_lines([
+            "*FAIL*test_verbose_reporting.py:2: test_fail*", 
+        ])
+        assert result.ret == 1
+
