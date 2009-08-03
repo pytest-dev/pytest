@@ -201,13 +201,8 @@ class TerminalWriter(object):
         self._file.flush()
 
     def line(self, s='', **kw):
-        if s:
-            s = self.markup(s, **kw)
-            self._file.write(s + '\n')
-        else:
-            self._file.write('\n')
-        self._file.flush()
-
+        self.write(s, **kw)
+        self.write('\n')
 
 class Win32ConsoleWriter(object):
 

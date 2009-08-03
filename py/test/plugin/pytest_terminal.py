@@ -18,7 +18,7 @@ def pytest_configure(config):
             name = attr.split("_")[-1]
             assert hasattr(self.reporter._tw, name), name
             setattr(reporter._tw, name, getattr(config, attr))
-    config.pluginmanager.register(reporter)
+    config.pluginmanager.register(reporter, 'terminalreporter')
 
 class TerminalReporter:
     def __init__(self, config, file=None):

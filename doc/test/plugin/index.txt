@@ -28,7 +28,7 @@ restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt file
 Plugins for generic reporting and failure logging
 =================================================
 
-pocoo_ submit failure information to paste.pocoo.org
+pastebin_ submit failure or test session information to a pastebin service.
 
 resultlog_ resultlog plugin for machine-readable logging of test results.
 

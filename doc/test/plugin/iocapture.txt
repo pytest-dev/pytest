@@ -113,8 +113,8 @@ command line options
 
 ``-s``
     shortcut for --capture=no.
-``--capture=capture``
-    set IO capturing method during tests: sys|fd|no.
+``--capture=method``
+    set capturing method during tests: fd (default)|sys|no.
 
 Start improving this plugin in 30 seconds
 =========================================
