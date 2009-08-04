@@ -1,6 +1,6 @@
 
-pytest_iocapture plugin
-=======================
+pytest_capture plugin
+=====================
 
 configurable per-test stdout/stderr capturing mechanisms.
 
@@ -113,8 +113,8 @@ command line options
 
 ``-s``
     shortcut for --capture=no.
-``--capture=capture``
-    set IO capturing method during tests: sys|fd|no.
+``--capture=method``
+    set capturing method during tests: fd (default)|sys|no.
 
 Start improving this plugin in 30 seconds
 =========================================
@@ -122,8 +122,8 @@ Start improving this plugin in 30 seconds
 
 Do you find the above documentation or the plugin itself lacking? 
 
-1. Download `pytest_iocapture.py`_ plugin source code 
-2. put it somewhere as ``pytest_iocapture.py`` into your import path 
+1. Download `pytest_capture.py`_ plugin source code 
+2. put it somewhere as ``pytest_capture.py`` into your import path 
 3. a subsequent ``py.test`` run will use your local version
 
 Further information: extend_ documentation, other plugins_ or contact_.  

@@ -2,13 +2,13 @@
 Plugins related to Python test functions and programs
 =====================================================
 
-xfail_ mark python tests as expected-to-fail and report them separately.
+xfail_ mark python test functions as expected-to-fail and report them separately.
 
 figleaf_ write and report coverage data with 'figleaf'.
 
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
-iocapture_ configurable per-test stdout/stderr capturing mechanisms.
+capture_ configurable per-test stdout/stderr capturing mechanisms.
 
 recwarn_ helpers for asserting deprecation and other warnings.
 
@@ -28,7 +28,7 @@ restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt file
 Plugins for generic reporting and failure logging
 =================================================
 
-pocoo_ submit failure information to paste.pocoo.org
+pastebin_ submit failure or test session information to a pastebin service.
 
 resultlog_ resultlog plugin for machine-readable logging of test results.
 

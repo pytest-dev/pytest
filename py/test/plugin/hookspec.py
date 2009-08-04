@@ -33,7 +33,7 @@ def pytest_collect_file(path, parent):
 def pytest_collectstart(collector):
     """ collector starts collecting. """
 
-def pytest_collectreport(rep):
+def pytest_collectreport(report):
     """ collector finished collecting. """
 
 def pytest_deselected(items):
@@ -83,7 +83,7 @@ def pytest_runtest_makereport(item, call):
     """ make ItemTestReport for the given item and call outcome. """ 
 pytest_runtest_makereport.firstresult = True
 
-def pytest_runtest_logreport(rep):
+def pytest_runtest_logreport(report):
     """ process item test report. """ 
 
 # special handling for final teardown - somewhat internal for now

@@ -38,7 +38,7 @@ def pytest_report_iteminfo(item):
     return item.reportinfo()
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general", "test collection and failure interaction options")
+    group = parser.getgroup("general", "general testing options")
     group._addoption('-v', '--verbose', action="count", 
                dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-x', '--exitfirst',
@@ -67,23 +67,8 @@ def pytest_addoption(parser):
                help="run tests, re-run failing test set until all pass.")
 
     group = parser.addgroup("test process debugging")
-    group.addoption('--collectonly',
-        action="store_true", dest="collectonly",
-        help="only collect tests, don't execute them."),
-    group.addoption('--traceconfig',
-               action="store_true", dest="traceconfig", default=False,
-               help="trace considerations of conftest.py files."),
-    group._addoption('--nomagic',
-               action="store_true", dest="nomagic", default=False,
-               help="don't reinterpret asserts, no traceback cutting. ")
-    group._addoption('--fulltrace',
-               action="store_true", dest="fulltrace", default=False,
-               help="don't cut any tracebacks (default is to cut).")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
-    group.addoption('--debug',
-               action="store_true", dest="debug", default=False,
-               help="generate and show debugging information.")
 
     group = parser.addgroup("dist", "distributed testing") #  see http://pytest.org/help/dist")
     group._addoption('--dist', metavar="distmode", 

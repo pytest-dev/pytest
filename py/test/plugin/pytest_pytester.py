@@ -341,7 +341,7 @@ class ReportRecorder(object):
     # functionality for test reports 
 
     def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
-        return [x.rep for x in self.getcalls(names)]
+        return [x.report for x in self.getcalls(names)]
 
     def matchreport(self, inamepart="", names="pytest_runtest_logreport pytest_collectreport"):
         """ return a testreport whose dotted import path matches """
@@ -406,7 +406,7 @@ def test_reportrecorder(testdir):
         skipped = False
         when = "call" 
 
-    recorder.hook.pytest_runtest_logreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(report=rep)
     failures = recorder.getfailures()
     assert failures == [rep]
     failures = recorder.getfailures()
@@ -420,14 +420,14 @@ def test_reportrecorder(testdir):
         when = "call" 
     rep.passed = False
     rep.skipped = True
-    recorder.hook.pytest_runtest_logreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(report=rep)
 
     modcol = testdir.getmodulecol("")
     rep = modcol.config.hook.pytest_make_collect_report(collector=modcol)
     rep.passed = False
     rep.failed = True
     rep.skipped = False
-    recorder.hook.pytest_collectreport(rep=rep)
+    recorder.hook.pytest_collectreport(report=rep)
 
     passed, skipped, failed = recorder.listoutcomes()
     assert not passed and skipped and failed
@@ -440,7 +440,7 @@ def test_reportrecorder(testdir):
 
     recorder.unregister()
     recorder.clear() 
-    recorder.hook.pytest_runtest_logreport(rep=rep)
+    recorder.hook.pytest_runtest_logreport(report=rep)
     py.test.raises(ValueError, "recorder.getfailures()")
 
 class LineComp:

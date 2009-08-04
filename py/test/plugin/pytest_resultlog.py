@@ -59,25 +59,25 @@ class ResultLog(object):
         testpath = generic_path(node)
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
-    def pytest_runtest_logreport(self, rep):
-        code = rep.shortrepr 
-        if rep.passed:
+    def pytest_runtest_logreport(self, report):
+        code = report.shortrepr 
+        if report.passed:
             longrepr = ""
-        elif rep.failed:
-            longrepr = str(rep.longrepr) 
-        elif rep.skipped:
-            longrepr = str(rep.longrepr.reprcrash.message)
-        self.log_outcome(rep.item, code, longrepr) 
+        elif report.failed:
+            longrepr = str(report.longrepr) 
+        elif report.skipped:
+            longrepr = str(report.longrepr.reprcrash.message)
+        self.log_outcome(report.item, code, longrepr) 
 
-    def pytest_collectreport(self, rep):
-        if not rep.passed:
-            if rep.failed: 
+    def pytest_collectreport(self, report):
+        if not report.passed:
+            if report.failed: 
                 code = "F"
             else:
-                assert rep.skipped
+                assert report.skipped
                 code = "S"
-            longrepr = str(rep.longrepr.reprcrash)
-            self.log_outcome(rep.collector, code, longrepr)    
+            longrepr = str(report.longrepr.reprcrash)
+            self.log_outcome(report.collector, code, longrepr)    
 
     def pytest_internalerror(self, excrepr):
         path = excrepr.reprcrash.path 

@@ -4,38 +4,33 @@ XXX: Currently in progress, NOT IN WORKING STATE.
 """
 import py
 
-lint = py.test.importorskip("pylint") 
+pylint = py.test.importorskip("pylint.lint") 
 
 def pytest_addoption(parser):
     group = parser.addgroup('pylint options')
     group.addoption('--pylint', action='store_true',
                     default=False, dest='pylint',
-                    help='Pylint coverate of test files.')
+                    help='run pylint on python files.')
 
 def pytest_collect_file(path, parent):
     if path.ext == ".py":
         if parent.config.getvalue('pylint'):
-            return PylintItem(path, parent, self.lint)
+            return PylintItem(path, parent)
 
-def pytest_terminal_summary(terminalreporter):
-    print 'placeholder for pylint output'
+#def pytest_terminal_summary(terminalreporter):
+#    print 'placeholder for pylint output'
 
 class PylintItem(py.test.collect.Item):
-    def __init__(self, path, parent, lintlib):
-        name = self.__class__.__name__ + ":" + path.basename
-        super(PylintItem, self).__init__(name=name, parent=parent)
-        self.fspath = path
-        self.lint = lintlib
-
     def runtest(self):
-        # run lint here
         capture = py.io.StdCaptureFD()
-        #pylib.org has docs on py.io.stdcaptureFD
-        self.linter = self.lint.PyLinter()  #TODO: should this be in the PylintPlugin?
-        self.linter.check(str(self.fspath))
-        out, err = capture.reset()
+        try:
+            linter = pylint.lint.PyLinter()
+            linter.check(str(self.fspath))
+        finally:
+            out, err = capture.reset()
         rating = out.strip().split('\n')[-1]
         print ">>>",
         print rating
+        assert 0
 
 

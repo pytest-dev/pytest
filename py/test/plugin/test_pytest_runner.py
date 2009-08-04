@@ -193,24 +193,6 @@ class BaseFunctionalTests:
         else: 
             py.test.fail("did not raise")
 
-    @py.test.mark.xfail
-    def test_capture_per_func(self, testdir):
-        reports = testdir.runitem("""
-            import sys
-            def setup_function(func):
-                print "in setup"
-            def test_func():
-                print "in function"
-                assert 0
-            def teardown_function(func):
-                print "in teardown"
-        """)
-        assert reports[0].outerr[0] == "in setup\n"
-        assert reports[1].outerr[0] == "in function\n"
-        assert reports[2].outerr[0] == "in teardown\n"
-        
-
-
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
         def f(item):

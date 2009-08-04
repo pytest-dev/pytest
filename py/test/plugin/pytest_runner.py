@@ -40,7 +40,7 @@ def pytest_runtest_protocol(item):
     if item.config.getvalue("boxed"):
         reports = forked_run_report(item) 
         for rep in reports:
-            item.config.hook.pytest_runtest_logreport(rep=rep)
+            item.config.hook.pytest_runtest_logreport(report=rep)
     else:
         runtestprotocol(item)
     return True
@@ -89,7 +89,7 @@ def call_and_report(item, when, log=True):
     hook = item.config.hook
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log and (when == "call" or not report.passed):
-        hook.pytest_runtest_logreport(rep=report) 
+        hook.pytest_runtest_logreport(report=report) 
     return report
 
 def call_runtest_hook(item, when):

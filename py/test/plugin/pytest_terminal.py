@@ -6,6 +6,24 @@ This is a good source for looking at the various reporting hooks.
 import py
 import sys
 
+def pytest_addoption(parser):
+    group = parser.getgroup("test process debugging")
+    group.addoption('--collectonly',
+        action="store_true", dest="collectonly",
+        help="only collect tests, don't execute them."),
+    group.addoption('--traceconfig',
+               action="store_true", dest="traceconfig", default=False,
+               help="trace considerations of conftest.py files."),
+    group._addoption('--nomagic',
+               action="store_true", dest="nomagic", default=False,
+               help="don't reinterpret asserts, no traceback cutting. ")
+    group._addoption('--fulltrace',
+               action="store_true", dest="fulltrace", default=False,
+               help="don't cut any tracebacks (default is to cut).")
+    group.addoption('--debug',
+               action="store_true", dest="debug", default=False,
+               help="generate and show debugging information.")
+
 def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
@@ -18,7 +36,7 @@ def pytest_configure(config):
             name = attr.split("_")[-1]
             assert hasattr(self.reporter._tw, name), name
             setattr(reporter._tw, name, getattr(config, attr))
-    config.pluginmanager.register(reporter)
+    config.pluginmanager.register(reporter, 'terminalreporter')
 
 class TerminalReporter:
     def __init__(self, config, file=None):
@@ -169,7 +187,8 @@ class TerminalReporter:
     def pytest__teardown_final_logerror(self, rep):
         self.stats.setdefault("error", []).append(rep)
  
-    def pytest_runtest_logreport(self, rep):
+    def pytest_runtest_logreport(self, report):
+        rep = report
         cat, letter, word = self.getcategoryletterword(rep)
         if not letter and not word:
             # probably passed setup/teardown
@@ -194,15 +213,15 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pytest_collectreport(self, rep):
-        if not rep.passed:
-            if rep.failed:
-                self.stats.setdefault("error", []).append(rep)
-                msg = rep.longrepr.reprcrash.message 
-                self.write_fspath_result(rep.collector.fspath, "E")
-            elif rep.skipped:
-                self.stats.setdefault("skipped", []).append(rep)
-                self.write_fspath_result(rep.collector.fspath, "S")
+    def pytest_collectreport(self, report):
+        if not report.passed:
+            if report.failed:
+                self.stats.setdefault("error", []).append(report)
+                msg = report.longrepr.reprcrash.message 
+                self.write_fspath_result(report.collector.fspath, "E")
+            elif report.skipped:
+                self.stats.setdefault("skipped", []).append(report)
+                self.write_fspath_result(report.collector.fspath, "S")
 
     def pytest_sessionstart(self, session):
         self.write_sep("=", "test session starts", bold=True)
@@ -399,10 +418,10 @@ class CollectonlyReporter:
     def pytest_itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pytest_collectreport(self, rep):
-        if not rep.passed:
-            self.outindent("!!! %s !!!" % rep.longrepr.reprcrash.message)
-            self._failed.append(rep)
+    def pytest_collectreport(self, report):
+        if not report.passed:
+            self.outindent("!!! %s !!!" % report.longrepr.reprcrash.message)
+            self._failed.append(report)
         self.indent = self.indent[:-len(self.INDENT)]
 
     def pytest_sessionfinish(self, session, exitstatus):

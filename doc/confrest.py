@@ -14,6 +14,17 @@ class css:
 class Page(object): 
     doctype = ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"'
                ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
+    googlefragment = """
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-7597274-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+"""
 
     def __init__(self, project, title, targetpath, stylesheeturl=None,
                  type="text/html", encoding="ISO-8859-1"): 
@@ -47,8 +58,10 @@ class Page(object):
     def fill_menubar(self):
         items = [
             self.a_docref("pylib index", "index.html"),
-            self.a_docref("py.test index", "test/test.html"),
-            self.a_docref("py.test plugins", "test/plugin/index.html"),
+            self.a_docref("test doc-index", "test/test.html"),
+            self.a_docref("test quickstart", "test/quickstart.html"),
+            self.a_docref("test features", "test/features.html"),
+            self.a_docref("test plugins", "test/plugin/index.html"),
             self.a_docref("py.execnet", "execnet.html"),
             #self.a_docref("py.code", "code.html"),
             #self.a_apigenref("api", "api/index.html"),
@@ -91,6 +104,7 @@ class Page(object):
 
     def unicode(self, doctype=True): 
         page = self._root.unicode() 
+        page = page.replace("</body>", self.googlefragment + "</body>")
         if doctype: 
             return self.doctype + page 
         else: 
