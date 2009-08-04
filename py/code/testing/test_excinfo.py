@@ -638,7 +638,9 @@ raise ValueError()
             repr = excinfo.getrepr(abspath=False)
             repr.toterminal(tw)
             line = tw.lines[-1]
-            assert line == "mod.py:3: ValueError" 
+            x = py.path.local().bestrelpath(path) 
+            if len(x) < len(str(path)):
+                assert line == "mod.py:3: ValueError" 
 
             repr = excinfo.getrepr(abspath=True)
             repr.toterminal(tw)

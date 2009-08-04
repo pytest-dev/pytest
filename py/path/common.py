@@ -152,14 +152,14 @@ class PathBase(object):
         return ""
 
     def bestrelpath(self, dest): 
-        """ return relative path from self to dest
-            such that self.join(bestrelpath) == dest. 
+        """ return a string which is a relative path from self 
+            to dest such that self.join(bestrelpath) == dest and 
             if not such path can be determined return dest. 
         """ 
         try:
             base = self.common(dest)
             if not base:  # can be the case on windows
-                return dest
+                return str(dest)
             self2base = self.relto(base)
             reldest = dest.relto(base)
             if self2base:
@@ -172,7 +172,7 @@ class PathBase(object):
             target = dest.sep.join(l)
             return target 
         except AttributeError:
-            return dest
+            return str(dest)
 
 
     def parts(self, reverse=False):
