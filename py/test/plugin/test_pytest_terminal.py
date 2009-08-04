@@ -311,7 +311,7 @@ class TestCollectonly:
            "  <Function 'test_func'>", 
         ])
         rep.config.hook.pytest_collectreport(
-            rep=runner.CollectReport(modcol, [], excinfo=None))
+            report=runner.CollectReport(modcol, [], excinfo=None))
         assert rep.indent == indent 
 
     def test_collectonly_skipped_module(self, testdir, linecomp):

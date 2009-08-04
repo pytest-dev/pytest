@@ -32,7 +32,7 @@ initpkg(__name__,
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 4 - Beta", 
+        "Development Status :: 5 - Stable", 
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",

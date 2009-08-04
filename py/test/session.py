@@ -45,7 +45,7 @@ class Session(object):
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
                         yield x 
-                self.config.hook.pytest_collectreport(rep=rep)
+                self.config.hook.pytest_collectreport(report=rep)
             if self.shouldstop:
                 break
 
@@ -79,8 +79,8 @@ class Session(object):
         """ setup any neccessary resources ahead of the test run. """
         self.config.hook.pytest_sessionstart(session=self)
         
-    def pytest_runtest_logreport(self, rep):
-        if rep.failed:
+    def pytest_runtest_logreport(self, report):
+        if report.failed:
             self._testsfailed = True
             if self.config.option.exitfirst:
                 self.shouldstop = True

@@ -3,19 +3,21 @@
 ==========================================================
 
 Since version 1.0 py.test features the "funcarg" mechanism which
-allows a test function to take arguments which will be independently
-provided by factory functions.  Factory functions are automatically 
-discovered and allow to encapsulate all neccessary setup and glue code 
-for running tests.  Compared to `xUnit style`_ the new mechanism is
-meant to:
+allows a test function to take arguments independently provided 
+by factory functions.  Factory functions allow to encapsulate 
+all setup and fixture glue code into nicely separated objects
+and provide a natural way for writing python test functions.  
+Compared to `xUnit style`_ the new mechanism is meant to:
 
 * make test functions easier to write and to read 
 * isolate test fixture creation to a single place 
 * bring new flexibility and power to test state management 
-* enable running of a test function with different values 
+* naturally extend towards parametrizing test functions
+  with multiple argument sets 
   (superseding `old-style generative tests`_)
-* to enable creation of helper objects that interact with the execution 
-  of a test function, see the `blog post about the monkeypatch funcarg`_. 
+* enable creation of zero-boilerplate test helper objects that 
+  interact with the execution of a test function, see the 
+  `blog post about the monkeypatch funcarg`_. 
 
 If you find issues or have further suggestions for improving
 the mechanism you are welcome to checkout `contact possibilities`_ page. 

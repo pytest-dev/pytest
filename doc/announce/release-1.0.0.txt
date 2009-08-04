@@ -1,54 +1,63 @@
-py.test / py lib 1.0.0: new test plugins, funcargs and cleanups 
-============================================================================
 
-Welcome to the 1.0 release bringing new flexibility and 
-power to testing with Python.  Main news: 
+pylib 1.0.0 released: testing-with-python innovations continue
+--------------------------------------------------------------------
 
-* funcargs - new flexibilty and zero-boilerplate fixtures for Python testing: 
+Took a few betas but finally i uploaded a `1.0.0 py lib release`_,
+featuring the mature and powerful py.test tool and "execnet-style"
+*elastic* distributed programming.  With the new release, there are
+many new advanced automated testing features - here is a quick summary:
 
-  - separate test code, configuration and setup 
+* funcargs_ - pythonic zero-boilerplate fixtures for Python test functions :
+
+  - totally separates test code, test configuration and test setup 
   - ideal for integration and functional tests
-  - more powerful dynamic generation of tests
+  - allows for flexible and natural test parametrization schemes
 
-* new plugin architecture, allowing project-specific and 
-  cross-project single-file plugins.  Many useful examples
-  shipped by default:
+* new `plugin architecture`_, allowing easy-to-write project-specific and cross-project single-file plugins.   The most notable new external plugin is `oejskit`_ which naturally enables **running and reporting of javascript-unittests in real-life browsers**. 
 
-  * pytest_unittest.py: run and integrate traditional unittest.py tests 
-  * pytest_xfail.py: mark tests as "expected to fail" and report separately.
-  * pytest_pocoo.py: automatically send tracebacks to pocoo paste service 
-  * pytest_monkeypatch.py: safely monkeypatch from tests
-  * pytest_figleaf.py: generate html coverage reports 
-  * pytest_resultlog.py: generate buildbot-friendly reporting output 
+* many new features done in easy-to-improve `default plugins`_, highlights:
 
-  and many more!
+  * xfail: mark tests as "expected to fail" and report separately.
+  * pastebin: automatically send tracebacks to pocoo paste service 
+  * capture: flexibly capture stdout/stderr of subprocesses, per-test ...
+  * monkeypatch: safely monkeypatch modules/classes from within tests
+  * unittest: run and integrate traditional unittest.py tests 
+  * figleaf: generate html coverage reports with the figleaf module
+  * resultlog: generate buildbot-friendly reporting output 
+  * ...
 
-* distributed testing and distributed execution (py.execnet): 
+* `distributed testing`_ and `elastic distributed execution`_: 
 
-  - new unified "TX" URL scheme for specifying remote resources 
-  - new sync/async ways to handle multiple remote processes 
+  - new unified "TX" URL scheme for specifying remote processes 
+  - new distribution modes "--dist=each" and "--dist=load" 
+  - new sync/async ways to handle 1:N communication 
   - improved documentation 
 
-See the py.test and py lib documentation for more info: 
+The py lib continues to offer most of the functionality used by
+the testing tool in `independent namespaces`_.  
+
+Some non-test related code, notably greenlets/co-routines and
+api-generation now live as their own projects which simplifies the
+installation procedure because no C-Extensions are required anymore. 
+
+The whole package should work well with Linux, Win32 and OSX, on Python
+2.3, 2.4, 2.5 and 2.6.  (Expect Python3 compatibility soon!) 
+
+For more info, see the py.test and py lib documentation: 
 
     http://pytest.org
+
     http://pylib.org
 
-The py lib now is smaller and focuses more on offering 
-functionality used by the py.test tool in independent 
-namespaces: 
-
-* py.execnet: elastic code deployment to SSH, Socket and local sub processes
-* py.code: higher-level introspection and dynamic generation of python code 
-* py.path: path abstractions over local and subversion files 
-
-Some non-strictly-test related code, notably greenlets/co-routines 
-and apigen now live on their own and have been removed, also simplifying
-the installation procedures. 
-
-The whole package works well with Linux, OSX and Win32, on 
-Python 2.3, 2.4, 2.5 and 2.6.  (Expect Python3 compatibility soon!) 
-
-best, 
+have fun, 
 holger
+
+.. _`independent namespaces`: http://pylib.org
+.. _`funcargs`: http://codespeak.net/py/dist/test/funcargs.html
+.. _`plugin architecture`: http://codespeak.net/py/dist/test/extend.html
+.. _`default plugins`: http://codespeak.net/py/dist/test/plugin/index.html
+.. _`distributed testing`: http://codespeak.net/py/dist/test/dist.html
+.. _`elastic distributed execution`: http://codespeak.net/py/dist/execnet.html
+.. _`1.0.0 py lib release`: http://pypi.python.org/pypi/py 
+.. _`oejskit`: http://codespeak.net/py/dist/test/plugin/oejskit.html
 

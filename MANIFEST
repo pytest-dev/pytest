@@ -60,7 +60,9 @@ example/execnet/svn-sync-repo.py
 example/execnet/sysinfo.py
 example/funcarg/conftest.py
 example/funcarg/costlysetup/conftest.py
+example/funcarg/costlysetup/sub1/__init__.py
 example/funcarg/costlysetup/sub1/test_quick.py
+example/funcarg/costlysetup/sub2/__init__.py
 example/funcarg/costlysetup/sub2/test_two.py
 example/funcarg/mysetup/__init__.py
 example/funcarg/mysetup/conftest.py

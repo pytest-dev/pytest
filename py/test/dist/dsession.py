@@ -34,16 +34,16 @@ class LoopState(object):
         return "<LoopState exitstatus=%r shuttingdown=%r len(colitems)=%d>" % (
             self.exitstatus, self.shuttingdown, len(self.colitems))
 
-    def pytest_runtest_logreport(self, rep):
-        if rep.item in self.dsession.item2nodes:
-            if rep.when != "teardown": # otherwise we have already managed it
-                self.dsession.removeitem(rep.item, rep.node)
-        if rep.failed:
+    def pytest_runtest_logreport(self, report):
+        if report.item in self.dsession.item2nodes:
+            if report.when != "teardown": # otherwise we already managed it
+                self.dsession.removeitem(report.item, report.node)
+        if report.failed:
             self.testsfailed = True
 
-    def pytest_collectreport(self, rep):
-        if rep.passed:
-            self.colitems.extend(rep.result)
+    def pytest_collectreport(self, report):
+        if report.passed:
+            self.colitems.extend(report.result)
 
     def pytest_testnodeready(self, node):
         self.dsession.addnode(node)
@@ -199,7 +199,7 @@ class DSession(Session):
             else:
                 self.config.hook.pytest_collectstart(collector=next)
                 colrep = self.config.hook.pytest_make_collect_report(collector=next)
-                self.queueevent("pytest_collectreport", rep=colrep)
+                self.queueevent("pytest_collectreport", report=colrep)
         if self.config.option.dist == "each":
             self.senditems_each(senditems)
         else:
@@ -267,7 +267,7 @@ class DSession(Session):
         info = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = runner.ItemTestReport(item=item, excinfo=info, when="???")
         rep.node = node
-        self.config.hook.pytest_runtest_logreport(rep=rep)
+        self.config.hook.pytest_runtest_logreport(report=rep)
 
     def setup(self):
         """ setup any neccessary resources ahead of the test run. """

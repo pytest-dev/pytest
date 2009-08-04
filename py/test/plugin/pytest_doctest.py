@@ -132,8 +132,8 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p)
         call = reprec.getcall("pytest_runtest_logreport")
-        assert call.rep.failed
-        assert call.rep.longrepr 
+        assert call.report.failed
+        assert call.report.longrepr 
         # XXX 
         #testitem, = items
         #excinfo = py.test.raises(Failed, "testitem.runtest()")

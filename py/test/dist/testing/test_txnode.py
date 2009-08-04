@@ -115,7 +115,7 @@ class TestMasterSlaveConnection:
         node = mysetup.makenode(item.config)
         node.send(item)
         kwargs = mysetup.geteventargs("pytest_runtest_logreport")
-        rep = kwargs['rep'] 
+        rep = kwargs['report'] 
         assert rep.passed 
         print rep
         assert rep.item == item
@@ -135,10 +135,10 @@ class TestMasterSlaveConnection:
             node.send(item)
         for outcome in "passed failed skipped".split():
             kwargs = mysetup.geteventargs("pytest_runtest_logreport")
-            rep = kwargs['rep']
-            assert getattr(rep, outcome) 
+            report = kwargs['report']
+            assert getattr(report, outcome) 
 
         node.sendlist(items)
         for outcome in "passed failed skipped".split():
-            rep = mysetup.geteventargs("pytest_runtest_logreport")['rep']
+            rep = mysetup.geteventargs("pytest_runtest_logreport")['report']
             assert getattr(rep, outcome) 

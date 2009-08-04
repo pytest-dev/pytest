@@ -45,7 +45,7 @@ def main():
                                           'py.svnwcrevert = py.cmdline:pysvnwcrevert',
                                           'py.test = py.cmdline:pytest',
                                           'py.which = py.cmdline:pywhich']},
-        classifiers=['Development Status :: 4 - Beta',
+        classifiers=['Development Status :: 5 - Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',

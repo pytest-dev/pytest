@@ -27,7 +27,7 @@ Other (minor) support functionality
 `miscellaneous features`_ describes some small but nice py lib features.
 
 
-.. _`PyPI project page`: http://pypi.python.org/pypi?%3Aaction=pkg_edit&name=py
+.. _`PyPI project page`: http://pypi.python.org/pypi/py/
 
 For the latest Release, see `PyPI project page`_
 

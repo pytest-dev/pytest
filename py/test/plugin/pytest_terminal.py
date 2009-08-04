@@ -187,7 +187,8 @@ class TerminalReporter:
     def pytest__teardown_final_logerror(self, rep):
         self.stats.setdefault("error", []).append(rep)
  
-    def pytest_runtest_logreport(self, rep):
+    def pytest_runtest_logreport(self, report):
+        rep = report
         cat, letter, word = self.getcategoryletterword(rep)
         if not letter and not word:
             # probably passed setup/teardown
@@ -212,15 +213,15 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def pytest_collectreport(self, rep):
-        if not rep.passed:
-            if rep.failed:
-                self.stats.setdefault("error", []).append(rep)
-                msg = rep.longrepr.reprcrash.message 
-                self.write_fspath_result(rep.collector.fspath, "E")
-            elif rep.skipped:
-                self.stats.setdefault("skipped", []).append(rep)
-                self.write_fspath_result(rep.collector.fspath, "S")
+    def pytest_collectreport(self, report):
+        if not report.passed:
+            if report.failed:
+                self.stats.setdefault("error", []).append(report)
+                msg = report.longrepr.reprcrash.message 
+                self.write_fspath_result(report.collector.fspath, "E")
+            elif report.skipped:
+                self.stats.setdefault("skipped", []).append(report)
+                self.write_fspath_result(report.collector.fspath, "S")
 
     def pytest_sessionstart(self, session):
         self.write_sep("=", "test session starts", bold=True)
@@ -417,10 +418,10 @@ class CollectonlyReporter:
     def pytest_itemstart(self, item, node=None):
         self.outindent(item)
 
-    def pytest_collectreport(self, rep):
-        if not rep.passed:
-            self.outindent("!!! %s !!!" % rep.longrepr.reprcrash.message)
-            self._failed.append(rep)
+    def pytest_collectreport(self, report):
+        if not report.passed:
+            self.outindent("!!! %s !!!" % report.longrepr.reprcrash.message)
+            self._failed.append(report)
         self.indent = self.indent[:-len(self.INDENT)]
 
     def pytest_sessionfinish(self, session, exitstatus):

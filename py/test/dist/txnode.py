@@ -56,9 +56,9 @@ class TXNode(object):
                 self._down = True
                 self.notify("pytest_testnodedown", error=None, node=self)
             elif eventname == "pytest_runtest_logreport":
-                rep = kwargs['rep']
+                rep = kwargs['report']
                 rep.node = self
-                self.notify("pytest_runtest_logreport", rep=rep)
+                self.notify("pytest_runtest_logreport", report=rep)
             else:
                 self.notify(eventname, *args, **kwargs)
         except KeyboardInterrupt: 
@@ -110,8 +110,8 @@ class SlaveNode(object):
     def sendevent(self, eventname, *args, **kwargs):
         self.channel.send((eventname, args, kwargs))
 
-    def pytest_runtest_logreport(self, rep):
-        self.sendevent("pytest_runtest_logreport", rep=rep)
+    def pytest_runtest_logreport(self, report):
+        self.sendevent("pytest_runtest_logreport", report=report)
 
     def run(self):
         channel = self.channel
