@@ -13,6 +13,8 @@ quickstart_: for getting started immediately.
 
 features_: a walk through basic features and usage. 
 
+`talks, tutorials, examples`_: tutorial examples, slides 
+
 `available plugins`_: list of py.test plugins 
 
 funcargs_: powerful parametrized test function setup  
@@ -23,10 +25,9 @@ extend_: intro to extend and customize py.test runs
 
 config_: ``conftest.py`` files and the config object 
 
-talks_: talk and tutorial slides 
 
 .. _`available plugins`: plugin/index.html
-.. _talks: talks.html
+.. _`talks, tutorials, examples`: talks.html
 .. _quickstart: quickstart.html
 .. _features: features.html
 .. _funcargs: funcargs.html

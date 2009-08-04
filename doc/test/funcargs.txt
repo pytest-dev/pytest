@@ -289,6 +289,7 @@ Funcarg Tutorial Examples
 
 
 .. _`application setup tutorial example`: 
+.. _appsetup:
 
 application specific test setup 
 ---------------------------------------------------------
@@ -494,12 +495,13 @@ example: decorating a funcarg in a test module
 
 For larger scale setups it's sometimes useful to decorare 
 a funcarg just for a particular test module.  We can 
-extend the `accept example`_ by putting this in our test class:
+extend the `accept example`_ by putting this in our test module:
 
 .. sourcecode:: python
 
-    def pytest_funcarg__accept(self, request):
-        arg = request.getfuncargvalue("accept") # call the next factory
+    def pytest_funcarg__accept(request):
+        # call the next factory (living in our conftest.py) 
+        arg = request.getfuncargvalue("accept") 
         # create a special layout in our tempdir
         arg.tmpdir.mkdir("special")
         return arg 
