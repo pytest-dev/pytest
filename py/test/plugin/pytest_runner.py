@@ -24,7 +24,7 @@ def pytest_sessionfinish(session, exitstatus):
         hook = session.config.hook
         rep = hook.pytest__teardown_final(session=session)
         if rep:
-            hook.pytest__teardown_final_logerror(rep=rep)
+            hook.pytest__teardown_final_logerror(report=rep)
 
 def pytest_make_collect_report(collector):
     result = excinfo = None
@@ -72,12 +72,12 @@ def pytest__teardown_final(session):
         rep = TeardownErrorReport(call.excinfo)
         return rep 
 
-def pytest_report_teststatus(rep):
-    if rep.when in ("setup", "teardown"):
-        if rep.failed:
+def pytest_report_teststatus(report):
+    if report.when in ("setup", "teardown"):
+        if report.failed:
             #      category, shortletter, verbose-word 
             return "error", "E", "ERROR"
-        elif rep.skipped:
+        elif report.skipped:
             return "skipped", "s", "SKIPPED"
         else:
             return "", "", ""

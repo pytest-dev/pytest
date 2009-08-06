@@ -91,7 +91,7 @@ def pytest__teardown_final(session):
     """ called before test session finishes. """
 pytest__teardown_final.firstresult = True
 
-def pytest__teardown_final_logerror(rep):
+def pytest__teardown_final_logerror(report):
     """ called if runtest_teardown_final failed. """ 
 
 # -------------------------------------------------------------------------
@@ -108,8 +108,8 @@ def pytest_sessionfinish(session, exitstatus):
 # hooks for influencing reporting (invoked from pytest_terminal)
 # -------------------------------------------------------------------------
 
-def pytest_report_teststatus(rep):
-    """ return shortletter and verbose word. """
+def pytest_report_teststatus(report):
+    """ return result-category, shortletter and verbose word for reporting."""
 pytest_report_teststatus.firstresult = True
 
 def pytest_terminal_summary(terminalreporter):

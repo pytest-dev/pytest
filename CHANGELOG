@@ -7,6 +7,8 @@ Changes between 1.0.0 and 1.0.1
 
 * terser reporting of collection error tracebacks, now skips py-internals 
 
+* renaming of arguments to some special rather internal hooks
+
 Changes between 1.0.0b9 and 1.0.0
 =====================================
 

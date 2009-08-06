@@ -35,12 +35,11 @@ def pytest_runtest_makereport(__call__, item, call):
                 res.failed = True
             return res 
 
-def pytest_report_teststatus(rep):
-    """ return shortletter and verbose word. """
-    if 'xfail' in rep.keywords: 
-        if rep.skipped:
+def pytest_report_teststatus(report):
+    if 'xfail' in report.keywords: 
+        if report.skipped:
             return "xfailed", "x", "xfail"
-        elif rep.failed:
+        elif report.failed:
             return "xpassed", "P", "xpass" 
 
 # called by the terminalreporter instance/plugin
