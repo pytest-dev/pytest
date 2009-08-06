@@ -5,6 +5,8 @@ Changes between 1.0.0 and 1.0.1
   work within tests, they are encoded as "utf8" by default, terminalwriting 
   was adapted and somewhat unified between windows and linux 
 
+* terser reporting of collection error tracebacks, now skips py-internals 
+
 Changes between 1.0.0b9 and 1.0.0
 =====================================
 
