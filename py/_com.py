@@ -17,6 +17,16 @@ class MultiCall:
         self.kwargs = kwargs 
         self.results = []
 
+    def __repr__(self):
+        args = []
+        if self.args:
+            args.append("posargs=%r" %(self.args,))
+        kw = self.kwargs
+        args.append(", ".join(["%s=%r" % x for x in self.kwargs.items()]))
+        args = " ".join(args)
+        status = "results: %r, rmethods: %r" % (self.results, self.methods)
+        return "<MultiCall %s %s>" %(args, status)
+
     def execute(self, firstresult=False):
         while self.methods:
             currentmethod = self.methods.pop()

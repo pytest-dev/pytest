@@ -145,11 +145,9 @@ class SlaveNode(object):
         if call.excinfo:
             # likely it is not collectable here because of
             # platform/import-dependency induced skips 
-            # XXX somewhat ugly shortcuts - also makes a collection
-            #     failure into an ItemTestReport - this might confuse
-            #     pytest_runtest_logreport hooks 
+            # we fake a setup-error report with the obtained exception
+            # and do not care about capturing or non-runner hooks 
             rep = self.runner.pytest_runtest_makereport(item=item, call=call)
             self.pytest_runtest_logreport(rep)
             return
         item.config.hook.pytest_runtest_protocol(item=item) 
-

@@ -1,3 +1,10 @@
+Changes between 1.0.0 and 1.0.1
+=====================================
+
+* various unicode fixes: capturing and prints of unicode strings now 
+  work within tests, they are encoded as "utf8" by default, terminalwriting 
+  was adapted and somewhat unified between windows and linux 
+
 Changes between 1.0.0b9 and 1.0.0
 =====================================
 

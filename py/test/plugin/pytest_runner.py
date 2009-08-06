@@ -108,6 +108,13 @@ class CallInfo:
         except:
             self.excinfo = py.code.ExceptionInfo()
 
+    def __repr__(self):
+        if self.excinfo:
+            status = "exception: %s" % str(self.excinfo.value)
+        else:
+            status = "result: %r" % (self.result,)
+        return "<CallInfo when=%r %s>" % (self.when, status)
+
 def forked_run_report(item):
     # for now, we run setup/teardown in the subprocess 
     # XXX optionally allow sharing of setup/teardown 

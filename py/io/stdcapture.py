@@ -76,7 +76,7 @@ class StdCaptureFD(Capture):
             os.close(fd)
         if out: 
             tmpfile = None
-            if isinstance(out, file):
+            if hasattr(out, 'write'):
                 tmpfile = out
             self.out = py.io.FDCapture(1, tmpfile=tmpfile)
             if patchsys: 
@@ -84,7 +84,7 @@ class StdCaptureFD(Capture):
         if err: 
             if mixed and out:
                 tmpfile = self.out.tmpfile 
-            elif isinstance(err, file):
+            elif hasattr(err, 'write'):
                 tmpfile = err
             else:
                 tmpfile = None
