@@ -8,6 +8,8 @@ Changes between 1.0.0 and 1.0.1
 * fix issue #27: better reporting on non-collectable items given on commandline 
   (e.g. pyc files) 
 
+* "Test" prefixed classes with an __init__ method are *not* collected by default anymore
+
 * terser reporting of collection error tracebacks
 
 * renaming of arguments to some special rather internal hooks

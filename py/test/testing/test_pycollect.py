@@ -39,6 +39,19 @@ class TestModule:
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")
 
+class TestClass:
+    def test_class_with_init_not_collected(self, testdir):
+        modcol = testdir.getmodulecol("""
+            class TestClass1:
+                def __init__(self):
+                    pass 
+            class TestClass2(object):
+                def __init__(self):
+                    pass 
+        """)
+        l = modcol.collect() 
+        assert len(l) == 0
+    
 class TestDisabled:
     def test_disabled_module(self, testdir):
         modcol = testdir.getmodulecol("""

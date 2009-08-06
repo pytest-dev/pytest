@@ -125,18 +125,12 @@ def test_func_generator_setup(testdir):
 def test_method_setup_uses_fresh_instances(testdir):
     reprec = testdir.inline_runsource("""
         class TestSelfState1: 
-            def __init__(self):
-                self.hello = 42
+            memory = []
             def test_hello(self):
-                self.world = 23
+                self.memory.append(self)
+
             def test_afterhello(self):
-                assert not hasattr(self, 'world')
-                assert self.hello == 42
-        class TestSelfState2: 
-            def test_hello(self):
-                self.world = 10
-            def test_world(self):
-                assert not hasattr(self, 'world')
+                assert self != self.memory[0]
     """)
-    reprec.assertoutcome(passed=4, failed=0)
+    reprec.assertoutcome(passed=2, failed=0)
 
