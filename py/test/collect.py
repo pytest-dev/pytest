@@ -167,16 +167,13 @@ class Node(object):
                 if colitem.fspath == fspath or colitem.name == basename:
                     l.append(colitem)
             if not l:
-                msg = ("Collector %r does not provide %r colitem "
-                       "existing colitems are: %s" %
-                       (cur, fspath, colitems))
-                raise AssertionError(msg) 
+                raise self.config.Error("can't collect: %s" %(fspath,))
             if basenames:
                 if len(l) > 1:
                     msg = ("Collector %r has more than one %r colitem "
                            "existing colitems are: %s" %
                            (cur, fspath, colitems))
-                    raise AssertionError(msg) 
+                    raise self.config.Error("xxx-too many test types for: %s" % (fspath, ))
                 cur = l[0]
             else:
                 if len(l) > 1:

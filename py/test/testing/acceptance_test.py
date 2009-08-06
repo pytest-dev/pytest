@@ -67,3 +67,12 @@ class TestGeneralUsage:
             "E   ImportError: No module named does_not_work",
         ])
         assert result.ret == 1
+
+    def test_not_collectable_arguments(self, testdir):
+        p1 = testdir.makepyfile("")
+        p2 = testdir.makefile(".pyc", "123")
+        result = testdir.runpytest(p1, p2)
+        assert result.ret != 0
+        assert result.stderr.fnmatch_lines([
+            "*ERROR: can't collect: %s" %(p2,)
+        ])

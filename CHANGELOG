@@ -5,7 +5,10 @@ Changes between 1.0.0 and 1.0.1
   work within tests, they are encoded as "utf8" by default, terminalwriting 
   was adapted and somewhat unified between windows and linux 
 
-* terser reporting of collection error tracebacks, now skips py-internals 
+* fix issue #27: better reporting on non-collectable items given on commandline 
+  (e.g. pyc files) 
+
+* terser reporting of collection error tracebacks
 
 * renaming of arguments to some special rather internal hooks
 
