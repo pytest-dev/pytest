@@ -4,6 +4,7 @@ Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
+pydir = py.path.local(py.__file__).dirpath()
 
 def configproperty(name):
     def fget(self):
@@ -166,16 +167,13 @@ class Node(object):
                 if colitem.fspath == fspath or colitem.name == basename:
                     l.append(colitem)
             if not l:
-                msg = ("Collector %r does not provide %r colitem "
-                       "existing colitems are: %s" %
-                       (cur, fspath, colitems))
-                raise AssertionError(msg) 
+                raise self.config.Error("can't collect: %s" %(fspath,))
             if basenames:
                 if len(l) > 1:
                     msg = ("Collector %r has more than one %r colitem "
                            "existing colitems are: %s" %
                            (cur, fspath, colitems))
-                    raise AssertionError(msg) 
+                    raise self.config.Error("xxx-too many test types for: %s" % (fspath, ))
                 cur = l[0]
             else:
                 if len(l) > 1:
@@ -331,6 +329,15 @@ class Collector(Node):
              If the return value is None there is no such child. 
         """
         return self.collect_by_name(name)
+
+    def _prunetraceback(self, traceback):
+        if hasattr(self, 'fspath'):
+            path = self.fspath 
+            ntraceback = traceback.cut(path=self.fspath)
+            if ntraceback == traceback:
+                ntraceback = ntraceback.cut(excludepath=pydir)
+            traceback = ntraceback.filter()
+        return traceback 
 
 class FSCollector(Collector): 
     def __init__(self, fspath, parent=None):

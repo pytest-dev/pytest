@@ -123,8 +123,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             collector=self, name=name, obj=obj)
         if res is not None:
             return res
-        if (self.classnamefilter(name)) and \
-            py.std.inspect.isclass(obj):
+        if self._istestclasscandidate(name, obj):
             res = self._deprecated_join(name)
             if res is not None:
                 return res 
@@ -139,14 +138,25 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             else:
                 return self._genfunctions(name, obj) 
 
+    def _istestclasscandidate(self, name, obj):
+        if self.classnamefilter(name) and \
+           py.std.inspect.isclass(obj):
+            if hasinit(obj):
+                # XXX WARN 
+                return False
+            return True
+            
+
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
         # due to _buildname2items funcobj is the raw function, we need
         # to work to get at the class 
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
-        metafunc = funcargs.Metafunc(funcobj, config=self.config, cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_generate_tests.clone(extralookup=module)
+        metafunc = funcargs.Metafunc(funcobj, config=self.config, 
+            cls=cls, module=module)
+        gentesthook = self.config.hook.pytest_generate_tests.clone(
+                extralookup=module)
         gentesthook(metafunc=metafunc)
         if not metafunc._calls:
             return self.Function(name, parent=self)
@@ -371,3 +381,9 @@ class Function(FunctionMixin, py.test.collect.Item):
     def __ne__(self, other):
         return not self == other
 
+
+def hasinit(obj):
+    init = getattr(obj, '__init__', None)
+    if init:
+        if not isinstance(init, type(object.__init__)):
+            return True

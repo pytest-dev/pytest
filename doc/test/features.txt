@@ -21,7 +21,7 @@ on CPython 2.3 - CPython 2.6.
 automatically collects and executes tests 
 ===============================================
 
-py.test discovers tests automatically by inspect specified
+py.test discovers tests automatically by inspecting specified
 directories or files.  By default, it collects all python
 modules a leading ``test_`` or trailing ``_test`` filename.
 From each test module every function with a leading ``test_``

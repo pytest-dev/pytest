@@ -82,7 +82,7 @@ class TerminalReporter:
         self._tw.sep(sep, title, **markup)
 
     def getcategoryletterword(self, rep):
-        res = self.config.hook.pytest_report_teststatus(rep=rep)
+        res = self.config.hook.pytest_report_teststatus(report=rep)
         if res:
             return res
         for cat in 'skipped failed passed ???'.split():
@@ -184,8 +184,8 @@ class TerminalReporter:
                 fspath, lineno, msg = self._getreportinfo(item)
                 self.write_fspath_result(fspath, "")
 
-    def pytest__teardown_final_logerror(self, rep):
-        self.stats.setdefault("error", []).append(rep)
+    def pytest__teardown_final_logerror(self, report):
+        self.stats.setdefault("error", []).append(report)
  
     def pytest_runtest_logreport(self, report):
         rep = report

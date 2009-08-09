@@ -10,6 +10,7 @@ class TestMultiCall:
     def test_uses_copy_of_methods(self):
         l = [lambda: 42]
         mc = MultiCall(l)
+        repr(mc)
         l[:] = []
         res = mc.execute()
         return res == 42
@@ -33,16 +34,27 @@ class TestMultiCall:
         p1 = P1() 
         p2 = P2() 
         multicall = MultiCall([p1.m, p2.m], 23)
+        assert "23" in repr(multicall)
         reslist = multicall.execute()
         assert len(reslist) == 2
         # ensure reversed order 
         assert reslist == [23, 17]
+
+    def test_keyword_args(self):
+        def f(x): 
+            return x + 1
+        multicall = MultiCall([f], x=23)
+        assert "x=23" in repr(multicall)
+        reslist = multicall.execute()
+        assert reslist == [24]
+        assert "24" in repr(multicall)
 
     def test_optionalcallarg(self):
         class P1:
             def m(self, x):
                 return x
         call = MultiCall([P1().m], 23)
+        assert "23" in repr(call)
         assert call.execute() == [23]
         assert call.execute(firstresult=True) == 23
  

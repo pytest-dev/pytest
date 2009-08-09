@@ -179,6 +179,18 @@ class TestCollectPluginHooks:
         names = [rep.collector.name for rep in colreports]
         assert names.count("hello") == 1
 
+class TestPrunetraceback:
+    def test_collection_error(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        result = testdir.runpytest(p)
+        assert "__import__" not in result.stdout.str(), "too long traceback"
+        result.stdout.fnmatch_lines([
+            "*ERROR during collection*",
+            ">*import not_exists*"
+        ])
+
 class TestCustomConftests:
     def test_non_python_files(self, testdir):
         testdir.makepyfile(conftest="""

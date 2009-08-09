@@ -37,6 +37,16 @@ class BaseTests:
         assert len(l) == 1
         assert l[0] == "hello\n"
 
+    def test_line_unicode(self):    
+        tw = self.getwriter()
+        for encoding in 'utf8', 'latin1':
+            tw._encoding = encoding 
+            msg = unicode('b\u00f6y', 'utf8')
+            tw.line(msg)
+            l = self.getlines()
+            assert not isinstance(l[0], unicode) 
+            assert unicode(l[0], encoding) == msg + "\n"
+
     def test_sep_no_title(self):
         tw = self.getwriter()
         tw.sep("-", fullwidth=60) 
@@ -84,6 +94,16 @@ class BaseTests:
         tw.sep("-", "hello")
         l = self.getlines()
         assert len(l[0]) == len(l[1])
+
+class TestTmpfile(BaseTests):
+    def getwriter(self):
+        self.path = py.test.config.ensuretemp("terminalwriter").ensure("tmpfile")
+        self.tw = py.io.TerminalWriter(self.path.open('w+'))
+        return self.tw
+    def getlines(self):
+        io = self.tw._file
+        io.flush()
+        return self.path.open('r').readlines()
 
 class TestStringIO(BaseTests):
     def getwriter(self):

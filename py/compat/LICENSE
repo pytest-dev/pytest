@@ -1,7 +1,7 @@
 License for modules in py/compat directory 
 ============================================================== 
 
-The "*.py" files in py/compat/ and subdirectories are are all
+The "*.py" files in py/compat/ and subdirectories are all
 - except when otherwise stated at the beginning of the file - 
 copyrighted by the Python Software Foundation and licensed
 under the Python Software License of which you can find a copy

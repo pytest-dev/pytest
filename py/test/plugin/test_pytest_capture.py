@@ -1,5 +1,5 @@
 import py, os, sys
-from py.__.test.plugin.pytest_capture import CaptureManager
+from py.__.test.plugin.pytest_capture import CaptureManager, ustream
 
 class TestCaptureManager:
 
@@ -53,6 +53,29 @@ class TestCaptureManager:
             assert err == "world\n"
         finally:
             capouter.reset()
+
+@py.test.mark.multi(method=['fd', 'sys'])
+def test_capturing_unicode(testdir, method):
+    testdir.makepyfile("""
+        # taken from issue 227 from nosests 
+        def test_unicode():
+            import sys
+            print sys.stdout
+            print u'b\\u00f6y'
+    """)
+    result = testdir.runpytest("--capture=%s" % method)
+    result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])
+
+def test_ustream_helper(testdir):
+    p = testdir.makepyfile("hello")
+    f = p.open('w')
+    #f.encoding = "utf8"
+    x = ustream(f)
+    x.write(u'b\\00f6y')
+    x.close()
+    
 
 def test_collect_capturing(testdir):
     p = testdir.makepyfile("""

@@ -107,11 +107,24 @@ class CaptureManager:
     def __init__(self):
         self._method2capture = {}
 
+    def _maketempfile(self):
+        f = py.std.tempfile.TemporaryFile()
+        newf = py.io.dupfile(f) 
+        f.close()
+        return ustream(newf)
+
+    def _makestringio(self):
+        return py.std.StringIO.StringIO() 
+
     def _startcapture(self, method):
         if method == "fd": 
-            return py.io.StdCaptureFD()
+            return py.io.StdCaptureFD(
+                out=self._maketempfile(), err=self._maketempfile()
+            )
         elif method == "sys":
-            return py.io.StdCapture()
+            return py.io.StdCapture(
+                out=self._makestringio(), err=self._makestringio()
+            )
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
@@ -252,3 +265,13 @@ class CaptureFuncarg:
     def close(self):
         self.capture.reset()
         del self.capture
+
+def ustream(f):
+    import codecs
+    encoding = getattr(f, 'encoding', None) or "UTF-8"
+    reader = codecs.getreader(encoding)
+    writer = codecs.getwriter(encoding)
+    srw = codecs.StreamReaderWriter(f, reader, writer)
+    srw.encoding = encoding
+    return srw 
+

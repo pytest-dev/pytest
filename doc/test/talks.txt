@@ -4,7 +4,40 @@ Talks and Tutorials
 
 .. _`funcargs`: funcargs.html
 
-a list of the latest talk and tutorial material: 
+tutorial examples and blog postings
+---------------------------------------------
+
+function arguments: 
+
+- `application setup in test functions with funcargs`_ (doc link)
+- `monkey patching done right`_ (blog post, consult `monkeypatch
+  plugin`_ for actual 1.0 API)
+  
+test parametrization: 
+
+- `generating parametrized tests with funcargs`_ (doc link) 
+- `parametrizing tests, generalized`_ (blog entry) 
+- `putting test-hooks into local or global plugins`_ (blog entry) 
+
+distributed testing: 
+
+- `simultanously test your code on all platforms`_ (blog entry) 
+ 
+plugins: 
+
+- usage examples are in most of the referenced `plugins`_ docs 
+
+.. _plugins: plugin/index.html
+.. _`monkeypatch plugin`: plugin/monkeypatch.html
+.. _`application setup in test functions with funcargs`: funcargs.html#appsetup
+.. _`simultanously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
+.. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/ 
+.. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
+.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
+.. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
+
+conference talks and tutorials
+----------------------------------------
 
 - `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009): 
 
