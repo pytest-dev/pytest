@@ -200,6 +200,11 @@ def test_tbentry_reinterpret():
 def test_excinfo_exconly():
     excinfo = py.test.raises(ValueError, h)
     assert excinfo.exconly().startswith('ValueError')
+    excinfo = py.test.raises(ValueError, 
+        "raise ValueError('hello\\nworld')")
+    msg = excinfo.exconly(tryshort=True)
+    assert msg.startswith('ValueError')
+    assert msg.endswith("world")
 
 def test_excinfo_repr():
     excinfo = py.test.raises(ValueError, h)
@@ -242,7 +247,6 @@ def test_entrysource_Queue_example():
     assert s.startswith("def get")
 
 def test_codepath_Queue_example():
-    py.test.skip("try harder to get at the paths of code objects.")
     import Queue
     try:
         Queue.Queue().get(timeout=0.001)

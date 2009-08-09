@@ -200,9 +200,6 @@ class PluginManager(object):
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
-class Ext:
-    """ namespace for extension objects. """ 
-    
 # 
 #  XXX old code to automatically load classes
 #

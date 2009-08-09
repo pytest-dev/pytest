@@ -173,8 +173,8 @@ class TestSourceParsingAndCompiling:
         assert len(source) == 6
         assert source.getstatementrange(2) == (1, 4)
 
+    @py.test.mark.xfail
     def test_getstatementrange_bug2(self):
-        py.test.skip("fix me (issue19)")
         source = Source("""\
             assert (
                 33
@@ -300,8 +300,8 @@ def test_deindent():
     lines = deindent(source.splitlines())
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
+@py.test.mark.xfail
 def test_source_of_class_at_eof_without_newline():
-    py.test.skip("CPython's inspect.getsource is buggy")
     # this test fails because the implicit inspect.getsource(A) below 
     # does not return the "x = 1" last line. 
     tmpdir = py.test.ensuretemp("source_write_read")

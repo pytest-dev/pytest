@@ -19,8 +19,6 @@ when it fails. Instead terminal reporting will list it in the
 
 import py
 
-pytest_plugins = ['keyword']
-
 def pytest_runtest_makereport(__call__, item, call):
     if call.when != "call":
         return
@@ -53,6 +51,9 @@ def pytest_terminal_summary(terminalreporter):
             modpath = rep.item.getmodpath(includemodule=True)
             pos = "%s %s:%d: " %(modpath, entry.path, entry.lineno)
             reason = rep.longrepr.reprcrash.message
+            i = reason.find("\n")
+            if i != -1:
+                reason = reason[:i]
             tr._tw.line("%s %s" %(pos, reason))
 
     xpassed = terminalreporter.stats.get("xpassed")
@@ -89,3 +90,4 @@ def test_xfail(testdir):
         "*test_that*",
     ])
     assert result.ret == 1
+

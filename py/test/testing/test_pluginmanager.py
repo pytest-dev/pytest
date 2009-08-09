@@ -185,7 +185,7 @@ class TestPytestPluginInteractions:
                 assert hello == "world" 
         """)
         result = testdir.runpytest(p) 
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
 
@@ -247,3 +247,12 @@ def test_collectattr():
     assert list(methods) == ['pytest_hello', 'pytest_world']
     methods = py.builtin.sorted(collectattr(B()))
     assert list(methods) == ['pytest_hello', 'pytest_world']
+
+@py.test.mark.xfail
+def test_namespace_has_default_and_env_plugins(testdir):
+    p = testdir.makepyfile("""
+        import py
+        py.test.mark 
+    """)
+    result = testdir.runpython(p)
+    assert result.ret == 0
