@@ -52,7 +52,7 @@ initpkg(__name__,
     '_com.Registry'          : ('./_com.py', 'Registry'), 
     '_com.MultiCall'         : ('./_com.py', 'MultiCall'), 
     '_com.comregistry'       : ('./_com.py', 'comregistry'), 
-    '_com.Hooks'             : ('./_com.py', 'Hooks'), 
+    '_com.HookRelay'             : ('./_com.py', 'HookRelay'), 
 
     # py lib cmdline tools 
     'cmdline.pytest'         : ('./cmdline/pytest.py', 'main',),

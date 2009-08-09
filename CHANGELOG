@@ -1,18 +1,21 @@
 Changes between 1.0.0 and 1.0.1
 =====================================
 
-* various unicode fixes: capturing and prints of unicode strings now 
-  work within tests, they are encoded as "utf8" by default, terminalwriting 
+* unicode fixes: capturing and unicode writes to sys.stdout 
+  (through e.g a print statement) now work within tests, 
+  they are encoded as "utf8" by default, also terminalwriting 
   was adapted and somewhat unified between windows and linux 
 
 * fix issue #27: better reporting on non-collectable items given on commandline 
   (e.g. pyc files) 
 
-* "Test" prefixed classes with an __init__ method are *not* collected by default anymore
+* "Test" prefixed classes are *not* collected by default anymore if they 
+  have an __init__ method 
 
 * terser reporting of collection error tracebacks
 
-* renaming of arguments to some special rather internal hooks
+* streamlined internal plugin arch code, renamed of internal methods 
+  and argnames (related to py/_com.py multicall/plugin)
 
 Changes between 1.0.0b9 and 1.0.0
 =====================================

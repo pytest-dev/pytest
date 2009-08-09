@@ -1,15 +1,12 @@
 
 import py
 import os
-from py._com import Registry, MultiCall
-from py._com import Hooks
-
-pytest_plugins = "xfail"
+from py._com import Registry, MultiCall, HookRelay
 
 class TestMultiCall:
     def test_uses_copy_of_methods(self):
         l = [lambda: 42]
-        mc = MultiCall(l)
+        mc = MultiCall(l, {})
         repr(mc)
         l[:] = []
         res = mc.execute()
@@ -18,22 +15,19 @@ class TestMultiCall:
     def test_call_passing(self):
         class P1:
             def m(self, __call__, x):
-                assert __call__.currentmethod == self.m 
                 assert len(__call__.results) == 1
                 assert not __call__.methods
                 return 17
 
         class P2:
             def m(self, __call__, x):
-                assert __call__.currentmethod == self.m 
-                assert __call__.args
                 assert __call__.results == []
                 assert __call__.methods
                 return 23 
                
         p1 = P1() 
         p2 = P2() 
-        multicall = MultiCall([p1.m, p2.m], 23)
+        multicall = MultiCall([p1.m, p2.m], {'x': 23})
         assert "23" in repr(multicall)
         reslist = multicall.execute()
         assert len(reslist) == 2
@@ -43,62 +37,44 @@ class TestMultiCall:
     def test_keyword_args(self):
         def f(x): 
             return x + 1
-        multicall = MultiCall([f], x=23)
-        assert "x=23" in repr(multicall)
+        multicall = MultiCall([f], dict(x=23))
+        assert "'x': 23" in repr(multicall)
         reslist = multicall.execute()
         assert reslist == [24]
-        assert "24" in repr(multicall)
+        assert "1 results" in repr(multicall)
 
     def test_optionalcallarg(self):
         class P1:
             def m(self, x):
                 return x
-        call = MultiCall([P1().m], 23)
+        call = MultiCall([P1().m], dict(x=23))
         assert "23" in repr(call)
         assert call.execute() == [23]
-        assert call.execute(firstresult=True) == 23
+        call = MultiCall([P1().m], dict(x=23), firstresult=True)
  
     def test_call_subexecute(self):
         def m(__call__):
-            subresult = __call__.execute(firstresult=True)
+            subresult = __call__.execute()
             return subresult + 1
 
         def n():
             return 1
 
-        call = MultiCall([n, m])
-        res = call.execute(firstresult=True)
-        assert res == 2
-
-    def test_call_exclude_other_results(self):
-        def m(__call__):
-            __call__.exclude_other_results()
-            return 10
-
-        def n():
-            return 1
-
-        call = MultiCall([n, n, m, n])
+        call = MultiCall([n, m], {}, firstresult=True)
         res = call.execute()
-        assert res == [10]
-        # doesn't really make sense for firstresult-mode - because
-        # we might not have had a chance to run at all. 
-        #res = call.execute(firstresult=True)
-        #assert res == 10
+        assert res == 2
 
     def test_call_none_is_no_result(self):
         def m1():
             return 1
         def m2():
             return None
-        mc = MultiCall([m1, m2])
-        res = mc.execute(firstresult=True)
+        res = MultiCall([m1, m2], {}, firstresult=True).execute()
         assert res == 1
+        res = MultiCall([m1, m2], {}).execute()
+        assert res == [1]
 
 class TestRegistry:
-    def test_MultiCall(self):
-        plugins = Registry()
-        assert hasattr(plugins, "MultiCall")
 
     def test_register(self):
         registry = Registry()
@@ -142,14 +118,14 @@ class TestRegistry:
 def test_api_and_defaults():
     assert isinstance(py._com.comregistry, Registry)
 
-class TestHooks:
+class TestHookRelay:
     def test_happypath(self):
         registry = Registry()
         class Api:
             def hello(self, arg):
                 pass
 
-        mcm = Hooks(hookspecs=Api, registry=registry)
+        mcm = HookRelay(hookspecs=Api, registry=registry)
         assert hasattr(mcm, 'hello')
         assert repr(mcm.hello).find("hello") != -1
         class Plugin:
@@ -160,23 +136,21 @@ class TestHooks:
         assert l == [4]
         assert not hasattr(mcm, 'world')
 
-    def test_needskeywordargs(self):
+    def test_only_kwargs(self):
         registry = Registry()
         class Api:
             def hello(self, arg):
                 pass
-        mcm = Hooks(hookspecs=Api, registry=registry)
-        excinfo = py.test.raises(TypeError, "mcm.hello(3)")
-        assert str(excinfo.value).find("only keyword arguments") != -1
-        assert str(excinfo.value).find("hello(self, arg)")
+        mcm = HookRelay(hookspecs=Api, registry=registry)
+        py.test.raises(TypeError, "mcm.hello(3)")
 
-    def test_firstresult(self):
+    def test_firstresult_definition(self):
         registry = Registry()
         class Api:
             def hello(self, arg): pass
             hello.firstresult = True
 
-        mcm = Hooks(hookspecs=Api, registry=registry)
+        mcm = HookRelay(hookspecs=Api, registry=registry)
         class Plugin:
             def hello(self, arg):
                 return arg + 1
@@ -186,15 +160,16 @@ class TestHooks:
 
     def test_default_plugins(self):
         class Api: pass 
-        mcm = Hooks(hookspecs=Api)
-        assert mcm.registry == py._com.comregistry
+        mcm = HookRelay(hookspecs=Api, registry=py._com.comregistry)
+        assert mcm._registry == py._com.comregistry
 
     def test_hooks_extra_plugins(self):
         registry = Registry()
         class Api:
             def hello(self, arg):
                 pass
-        hook_hello = Hooks(hookspecs=Api, registry=registry).hello 
+        hookrelay = HookRelay(hookspecs=Api, registry=registry)
+        hook_hello = hookrelay.hello
         class Plugin:
             def hello(self, arg):
                 return arg + 1
@@ -202,7 +177,7 @@ class TestHooks:
         class Plugin2:
             def hello(self, arg):
                 return arg + 2
-        newhook = hook_hello.clone(extralookup=Plugin2())
+        newhook = hookrelay._makecall("hello", extralookup=Plugin2())
         l = newhook(arg=3)
         assert l == [5, 4]
         l2 = hook_hello(arg=3)

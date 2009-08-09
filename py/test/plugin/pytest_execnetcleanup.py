@@ -35,7 +35,7 @@ class Execnetcleanup:
     def pytest_pyfunc_call(self, __call__, pyfuncitem):
         if self._gateways is not None:
             gateways = self._gateways[:]
-            res = __call__.execute(firstresult=True)
+            res = __call__.execute()
             while len(self._gateways) > len(gateways):
                 self._gateways[-1].exit()
             return res

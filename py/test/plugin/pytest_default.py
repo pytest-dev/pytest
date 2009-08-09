@@ -3,7 +3,7 @@
 import py
 
 def pytest_pyfunc_call(__call__, pyfuncitem):
-    if not __call__.execute(firstresult=True):
+    if not __call__.execute():
         testfunction = pyfuncitem.obj 
         if pyfuncitem._isyieldedfunction():
             testfunction(*pyfuncitem._args)

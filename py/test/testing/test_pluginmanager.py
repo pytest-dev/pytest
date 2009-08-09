@@ -222,10 +222,6 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())
         assert len(l) == 2
 
-    def test_MultiCall(self):
-        pp = PluginManager()
-        assert hasattr(pp, 'MultiCall')
-
     # lower level API
 
     def test_listattr(self):

@@ -24,7 +24,7 @@ def pytest_runtest_makereport(__call__, item, call):
         return
     if hasattr(item, 'obj') and hasattr(item.obj, 'func_dict'):
         if 'xfail' in item.obj.func_dict:
-            res = __call__.execute(firstresult=True)
+            res = __call__.execute()
             if call.excinfo:
                 res.skipped = True
                 res.failed = res.passed = False

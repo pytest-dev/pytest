@@ -155,8 +155,8 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         cls = clscol and clscol.obj or None
         metafunc = funcargs.Metafunc(funcobj, config=self.config, 
             cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_generate_tests.clone(
-                extralookup=module)
+        gentesthook = self.config.hook._makecall(
+            "pytest_generate_tests", extralookup=module)
         gentesthook(metafunc=metafunc)
         if not metafunc._calls:
             return self.Function(name, parent=self)

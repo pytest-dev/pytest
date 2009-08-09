@@ -185,7 +185,7 @@ class CaptureManager:
         method = self._getmethod(collector.config, collector.fspath)
         self.resumecapture(method)
         try:
-            rep = __call__.execute(firstresult=True)
+            rep = __call__.execute()
         finally:
             outerr = self.suspendcapture()
         addouterr(rep, outerr)
@@ -208,7 +208,7 @@ class CaptureManager:
         method = self._getmethod(session.config, None)
         self.resumecapture(method)
         try:
-            rep = __call__.execute(firstresult=True)
+            rep = __call__.execute()
         finally:
             outerr = self.suspendcapture()
         if rep:
@@ -221,7 +221,7 @@ class CaptureManager:
 
     def pytest_runtest_makereport(self, __call__, item, call):
         self.deactivate_funcargs()
-        rep = __call__.execute(firstresult=True)
+        rep = __call__.execute()
         outerr = self.suspendcapture()
         outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
         if not rep.passed:

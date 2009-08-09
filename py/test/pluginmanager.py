@@ -16,10 +16,9 @@ class PluginManager(object):
         if comregistry is None: 
             comregistry = py._com.Registry()
         self.comregistry = comregistry 
-        self.MultiCall = self.comregistry.MultiCall
         self.impname2plugin = {}
 
-        self.hook = py._com.Hooks(
+        self.hook = py._com.HookRelay(
             hookspecs=hookspec, 
             registry=self.comregistry) 
 
@@ -166,20 +165,24 @@ class PluginManager(object):
         return self.hook.pytest_internalerror(excrepr=excrepr)
 
     def do_addoption(self, parser):
-        methods = self.comregistry.listattr("pytest_addoption", reverse=True)
-        mc = py._com.MultiCall(methods, parser=parser)
+        mname = "pytest_addoption"
+        methods = self.comregistry.listattr(mname, reverse=True)
+        mc = py._com.MultiCall(methods, {'parser': parser})
         mc.execute()
 
     def pytest_plugin_registered(self, plugin):
         if hasattr(self, '_config'):
-            self.call_plugin(plugin, "pytest_addoption", parser=self._config._parser)
-            self.call_plugin(plugin, "pytest_configure", config=self._config)
+            self.call_plugin(plugin, "pytest_addoption", 
+                {'parser': self._config._parser})
+            self.call_plugin(plugin, "pytest_configure", 
+                {'config': self._config})
             #dic = self.call_plugin(plugin, "pytest_namespace")
             #self._updateext(dic)
 
-    def call_plugin(self, plugin, methname, **kwargs):
-        return self.MultiCall(self.listattr(methname, plugins=[plugin]), 
-                **kwargs).execute(firstresult=True)
+    def call_plugin(self, plugin, methname, kwargs):
+        return py._com.MultiCall(
+                methods=self.listattr(methname, plugins=[plugin]), 
+                kwargs=kwargs, firstresult=True).execute()
 
     def _updateext(self, dic):
         if dic:
