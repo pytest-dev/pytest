@@ -15,10 +15,15 @@ def pytest_funcarg__testdir(request):
     #        testdir.plugins.append(obj.testplugin)
     #        break
     #else:
-    basename = request.module.__name__.split(".")[-1] 
-    if basename.startswith("pytest_"):
+    modname = request.module.__name__.split(".")[-1] 
+    if modname.startswith("pytest_"):
         testdir.plugins.append(vars(request.module))
-        testdir.plugins.append(basename) 
+        testdir.plugins.append(modname) 
+    #elif modname.startswith("test_pytest"):
+    #    pname = modname[5:]
+    #    assert pname not in testdir.plugins
+    #    testdir.plugins.append(pname) 
+    #    #testdir.plugins.append(vars(request.module))
     else:
         pass # raise ValueError("need better support code")
     return testdir

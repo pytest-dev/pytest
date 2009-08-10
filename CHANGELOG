@@ -1,6 +1,10 @@
 Changes between 1.0.0 and 1.0.1
 =====================================
 
+* added a 'pytest_nose' plugin which handles nose.SkipTest, 
+  nose-style function/method/generator setup/teardown and 
+  tries to report functions correctly. 
+
 * unicode fixes: capturing and unicode writes to sys.stdout 
   (through e.g a print statement) now work within tests, 
   they are encoded as "utf8" by default, also terminalwriting 

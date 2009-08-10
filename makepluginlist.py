@@ -7,7 +7,7 @@ plugins = [
     ('Plugins related to Python test functions and programs', 
             'xfail figleaf monkeypatch capture recwarn',),
     ('Plugins for other testing styles and languages', 
-            'unittest doctest oejskit restdoc'),
+            'oejskit unittest nose doctest restdoc'),
     ('Plugins for generic reporting and failure logging', 
             'pastebin resultlog terminal',),
     ('internal plugins / core functionality', 

@@ -241,15 +241,10 @@ class TerminalReporter:
         if self.config.option.traceconfig:
             plugins = []
             for plugin in self.config.pluginmanager.comregistry:
-                name = plugin.__class__.__name__
-                if name.endswith("Plugin"):
-                    name = name[:-6]
-                    #if name == "Conftest":
-                    #    XXX get filename 
-                    plugins.append(name)
-                else:
-                    plugins.append(str(plugin))
-
+                name = getattr(plugin, '__name__', None)
+                if name is None:
+                    name = plugin.__class__.__name__
+                plugins.append(name)
             plugins = ", ".join(plugins) 
             self.write_line("active plugins: %s" %(plugins,))
         for i, testarg in py.builtin.enumerate(self.config.args):
