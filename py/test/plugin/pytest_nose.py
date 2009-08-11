@@ -47,7 +47,7 @@ import py
 import inspect
 import sys
 
-def pytest_runtest_makereport(__call__, item, call):
+def pytest_runtest_makereport(__multicall__, item, call):
     SkipTest = getattr(sys.modules.get('nose', None), 'SkipTest', None)
     if SkipTest:
         if call.excinfo and call.excinfo.errisinstance(SkipTest):

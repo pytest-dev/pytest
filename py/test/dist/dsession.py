@@ -77,8 +77,8 @@ class DSession(Session):
         self.item2nodes = {}
         super(DSession, self).__init__(config=config)
 
-    #def pytest_configure(self, __call__, config):
-    #    __call__.execute()
+    #def pytest_configure(self, __multicall__, config):
+    #    __multicall__.execute()
     #    try:
     #        config.getxspecs()
     #    except config.Error:

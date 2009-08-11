@@ -19,12 +19,12 @@ when it fails. Instead terminal reporting will list it in the
 
 import py
 
-def pytest_runtest_makereport(__call__, item, call):
+def pytest_runtest_makereport(__multicall__, item, call):
     if call.when != "call":
         return
     if hasattr(item, 'obj') and hasattr(item.obj, 'func_dict'):
         if 'xfail' in item.obj.func_dict:
-            res = __call__.execute()
+            res = __multicall__.execute()
             if call.excinfo:
                 res.skipped = True
                 res.failed = res.passed = False

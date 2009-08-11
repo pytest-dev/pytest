@@ -1,8 +1,18 @@
 
 import py
 import os
-from py._com import Registry, MultiCall, HookRelay
+from py.__._com import Registry, MultiCall, HookRelay, varnames
 
+def test_varnames():
+    def f(x):
+        pass
+    class A:
+        def f(self, y):
+            pass
+    assert varnames(f) == ("x",)
+    assert varnames(A.f) == ('y',)
+    assert varnames(A().f) == ('y',)
+    
 class TestMultiCall:
     def test_uses_copy_of_methods(self):
         l = [lambda: 42]
@@ -14,15 +24,15 @@ class TestMultiCall:
 
     def test_call_passing(self):
         class P1:
-            def m(self, __call__, x):
-                assert len(__call__.results) == 1
-                assert not __call__.methods
+            def m(self, __multicall__, x):
+                assert len(__multicall__.results) == 1
+                assert not __multicall__.methods
                 return 17
 
         class P2:
-            def m(self, __call__, x):
-                assert __call__.results == []
-                assert __call__.methods
+            def m(self, __multicall__, x):
+                assert __multicall__.results == []
+                assert __multicall__.methods
                 return 23 
                
         p1 = P1() 
@@ -37,24 +47,23 @@ class TestMultiCall:
     def test_keyword_args(self):
         def f(x): 
             return x + 1
-        multicall = MultiCall([f], dict(x=23))
+        class A:
+            def f(self, x, y):
+                return x + y
+        multicall = MultiCall([f, A().f], dict(x=23, y=24))
         assert "'x': 23" in repr(multicall)
+        assert "'y': 24" in repr(multicall)
         reslist = multicall.execute()
-        assert reslist == [24]
-        assert "1 results" in repr(multicall)
+        assert reslist == [24+23, 24]
+        assert "2 results" in repr(multicall)
 
-    def test_optionalcallarg(self):
-        class P1:
-            def m(self, x):
-                return x
-        call = MultiCall([P1().m], dict(x=23))
-        assert "23" in repr(call)
-        assert call.execute() == [23]
-        call = MultiCall([P1().m], dict(x=23), firstresult=True)
- 
+    def test_keywords_call_error(self):
+        multicall = MultiCall([lambda x: x], {})
+        py.test.raises(TypeError, "multicall.execute()")
+
     def test_call_subexecute(self):
-        def m(__call__):
-            subresult = __call__.execute()
+        def m(__multicall__):
+            subresult = __multicall__.execute()
             return subresult + 1
 
         def n():

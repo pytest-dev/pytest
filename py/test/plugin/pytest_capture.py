@@ -181,11 +181,11 @@ class CaptureManager:
                 capfuncarg._finalize()
             del self._capturing_funcargs
 
-    def pytest_make_collect_report(self, __call__, collector):
+    def pytest_make_collect_report(self, __multicall__, collector):
         method = self._getmethod(collector.config, collector.fspath)
         self.resumecapture(method)
         try:
-            rep = __call__.execute()
+            rep = __multicall__.execute()
         finally:
             outerr = self.suspendcapture()
         addouterr(rep, outerr)
@@ -204,11 +204,11 @@ class CaptureManager:
     def pytest_runtest_teardown(self, item):
         self.resumecapture_item(item)
 
-    def pytest__teardown_final(self, __call__, session):
+    def pytest__teardown_final(self, __multicall__, session):
         method = self._getmethod(session.config, None)
         self.resumecapture(method)
         try:
-            rep = __call__.execute()
+            rep = __multicall__.execute()
         finally:
             outerr = self.suspendcapture()
         if rep:
@@ -219,9 +219,9 @@ class CaptureManager:
         if hasattr(self, '_capturing'):
             self.suspendcapture()
 
-    def pytest_runtest_makereport(self, __call__, item, call):
+    def pytest_runtest_makereport(self, __multicall__, item, call):
         self.deactivate_funcargs()
-        rep = __call__.execute()
+        rep = __multicall__.execute()
         outerr = self.suspendcapture()
         outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
         if not rep.passed:

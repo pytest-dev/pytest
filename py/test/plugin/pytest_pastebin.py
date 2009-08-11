@@ -33,9 +33,9 @@ def pytest_addoption(parser):
         type="choice", choices=['failed', 'all'], 
         help="send failed|all info to Pocoo pastebin service.")
 
-def pytest_configure(__call__, config):
+def pytest_configure(__multicall__, config):
     import tempfile
-    __call__.execute()
+    __multicall__.execute()
     if config.option.pastebin == "all":
         config._pastebinfile = tempfile.TemporaryFile()
         tr = config.pluginmanager.impname2plugin['terminalreporter']

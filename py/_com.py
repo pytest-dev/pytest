@@ -9,7 +9,8 @@ class MultiCall:
 
     def __init__(self, methods, kwargs, firstresult=False):
         self.methods = methods[:]
-        self.kwargs = kwargs 
+        self.kwargs = kwargs.copy()
+        self.kwargs['__multicall__'] = self
         self.results = []
         self.firstresult = firstresult
 
@@ -20,28 +21,30 @@ class MultiCall:
     def execute(self):
         while self.methods:
             method = self.methods.pop()
-            res = self._call1(method)
+            kwargs = self.getkwargs(method)
+            res = method(**kwargs)
             if res is not None:
                 self.results.append(res) 
                 if self.firstresult:
-                    break
+                    return res
         if not self.firstresult:
             return self.results 
-        if self.results:
-            return self.results[-1]
 
-    def _call1(self, method):
-        kwargs = self.kwargs
-        if '__call__' in varnames(method):
-            kwargs = kwargs.copy()
-            kwargs['__call__'] = self
-        return method(**kwargs)
+    def getkwargs(self, method):
+        kwargs = {}
+        for argname in varnames(method):
+            try:
+                kwargs[argname] = self.kwargs[argname]
+            except KeyError:
+                pass # might be optional param
+        return kwargs 
 
 def varnames(rawcode):
+    ismethod = hasattr(rawcode, 'im_self')
     rawcode = getattr(rawcode, 'im_func', rawcode)
     rawcode = getattr(rawcode, 'func_code', rawcode)
     try:
-        return rawcode.co_varnames 
+        return rawcode.co_varnames[ismethod:]
     except AttributeError:
         return ()
 
@@ -101,9 +104,6 @@ class HookRelay:
     def _performcall(self, name, multicall):
         return multicall.execute()
         
-    def __repr__(self):
-        return "<HookRelay %r %r>" %(self._hookspecs, self._registry)
-
 class HookCaller:
     def __init__(self, hookrelay, name, firstresult, extralookup=()):
         self.hookrelay = hookrelay 
@@ -112,12 +112,10 @@ class HookCaller:
         self.extralookup = extralookup and [extralookup] or ()
 
     def __repr__(self):
-        return "<HookCaller %r firstresult=%s %s>" %(
-            self.name, self.firstresult, self.hookrelay)
+        return "<HookCaller %r>" %(self.name,)
 
     def __call__(self, **kwargs):
-        methods = self.hookrelay._getmethods(self.name, 
-            extralookup=self.extralookup)
+        methods = self.hookrelay._getmethods(self.name, self.extralookup)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         return self.hookrelay._performcall(self.name, mc)
    

@@ -134,15 +134,16 @@ class PluginManager(object):
                 fail = True
             else:
                 method_args = getargs(method)
-                if '__call__' in method_args:
-                    method_args.remove('__call__')
+                if '__multicall__' in method_args:
+                    method_args.remove('__multicall__')
                 hook = hooks[name]
                 hookargs = getargs(hook)
-                for arg, hookarg in zip(method_args, hookargs):
-                    if arg != hookarg: 
-                        Print("argument mismatch: %r != %r"  %(arg, hookarg))
-                        Print("actual  : %s" %(formatdef(method)))
-                        Print("required:", formatdef(hook))
+                for arg in method_args:
+                    if arg not in hookargs:
+                        Print("argument %r not available"  %(arg, ))
+                        Print("actual definition: %s" %(formatdef(method)))
+                        Print("available hook arguments: %s" % 
+                                ", ".join(hookargs))
                         fail = True
                         break 
                 #if not fail:

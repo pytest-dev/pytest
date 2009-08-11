@@ -250,8 +250,8 @@ class TerminalReporter:
         for i, testarg in py.builtin.enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
-    def pytest_sessionfinish(self, __call__, session, exitstatus):
-        __call__.execute() 
+    def pytest_sessionfinish(self, exitstatus, __multicall__):
+        __multicall__.execute() 
         self._tw.line("")
         if exitstatus in (0, 1, 2):
             self.summary_errors()

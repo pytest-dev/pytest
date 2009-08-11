@@ -18,8 +18,8 @@ Changes between 1.0.0 and 1.0.1
 
 * terser reporting of collection error tracebacks
 
-* streamlined internal plugin arch code, renamed of internal methods 
-  and argnames (related to py/_com.py multicall/plugin)
+* simplified multicall mechanism and plugin architecture, 
+  renamed some internal methods and argnames 
 
 Changes between 1.0.0b9 and 1.0.0
 =====================================
