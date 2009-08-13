@@ -16,6 +16,8 @@ Changes between 1.0.0 and 1.0.1
 * "Test" prefixed classes are *not* collected by default anymore if they 
   have an __init__ method 
 
+* monkeypatch setenv() now accepts a "prepend" parameter
+
 * terser reporting of collection error tracebacks
 
 * simplified multicall mechanism and plugin architecture, 

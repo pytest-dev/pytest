@@ -4,7 +4,7 @@ from py.__.test.pluginmanager import PluginManager, canonical_importname, collec
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
         pluginmanager = PluginManager()
-        monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
+        monkeypatch.setenv('PYTEST_PLUGINS', 'nonexisting', prepend=",")
         py.test.raises(ImportError, "pluginmanager.consider_env()")
 
     def test_preparse_args(self):
@@ -50,7 +50,7 @@ class TestBootstrapping:
                 plugin = py.test.config.pluginmanager.getplugin('x500')
                 assert plugin is not None
         """)
-        monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'pytest_x500')
+        monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
         result = testdir.runpytest(p)
         assert result.ret == 0
         extra = result.stdout.fnmatch_lines(["*1 passed in*"])
