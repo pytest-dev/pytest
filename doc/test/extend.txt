@@ -90,13 +90,13 @@ Available py.test hooks
 ====================================
 
 py.test calls hooks functions to implement its `test collection`_, running and 
-reporting process.  Upon loading of a plugin py.test performs
-strict checking on contained hook functions.  Function and argument names 
-need to match exactly one of `hook definition specification`_. It thus 
-provides useful error reporting on mistyped hook or argument names
-and minimizes version incompatibilites.  Below you find some introductory 
-information on particular hooks.  It's sensible to look at existing 
-plugins so see example usages and start off with your own plugin. 
+reporting process.  When py.test loads a plugin it validates that all hook functions
+conform to the `hook definition specification`_.  The hook function name and its 
+argument names need to match exactly but it is allowed for an implementation
+to accept *less* parameters.  You'll get useful errors on mistyped hook or 
+argument names.  Read on for some introductory information on particular 
+hooks.  It's sensible to look at existing plugins so see example usages 
+and start off with your own plugin. 
 
 .. _`hook definition specification`: plugin/hookspec.html
 

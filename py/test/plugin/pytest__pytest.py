@@ -47,7 +47,7 @@ class HookRecorder:
         recorder = RecordCalls()
         self._recorders[hookspecs] = recorder
         self._comregistry.register(recorder)
-        self.hook = py._com.Hooks(hookspecs, registry=self._comregistry)
+        self.hook = py._com.HookRelay(hookspecs, registry=self._comregistry)
 
     def finish_recording(self):
         for recorder in self._recorders.values():

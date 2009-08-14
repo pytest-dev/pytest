@@ -1,18 +1,31 @@
 Changes between 1.0.0 and 1.0.1
 =====================================
 
-* various unicode fixes: capturing and prints of unicode strings now 
-  work within tests, they are encoded as "utf8" by default, terminalwriting 
+* added a 'pytest_nose' plugin which handles nose.SkipTest, 
+  nose-style function/method/generator setup/teardown and 
+  tries to report functions correctly. 
+
+* unicode fixes: capturing and unicode writes to sys.stdout 
+  (through e.g a print statement) now work within tests, 
+  they are encoded as "utf8" by default, also terminalwriting 
   was adapted and somewhat unified between windows and linux 
 
 * fix issue #27: better reporting on non-collectable items given on commandline 
-  (e.g. pyc files) 
+  (e.g. pyc files)
 
-* "Test" prefixed classes with an __init__ method are *not* collected by default anymore
+* fix issue #33: added --version flag (thanks Benjamin Peterson) 
 
-* terser reporting of collection error tracebacks
+* fix issue #32: adding support for "incomplete" paths to wcpath.status()
 
-* renaming of arguments to some special rather internal hooks
+* "Test" prefixed classes are *not* collected by default anymore if they 
+  have an __init__ method 
+
+* monkeypatch setenv() now accepts a "prepend" parameter
+
+* improved reporting of collection error tracebacks
+
+* simplified multicall mechanism and plugin architecture, 
+  renamed some internal methods and argnames 
 
 Changes between 1.0.0b9 and 1.0.0
 =====================================

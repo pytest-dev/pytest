@@ -21,7 +21,8 @@ class GatewayManager:
             if not spec.chdir and not spec.popen:
                 spec.chdir = defaultchdir
             self.specs.append(spec)
-        self.hook = py._com.Hooks(py.execnet._HookSpecs)
+        self.hook = py._com.HookRelay(
+            py.execnet._HookSpecs, py._com.comregistry)
 
     def makegateways(self):
         assert not self.gateways

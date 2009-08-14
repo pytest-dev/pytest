@@ -55,6 +55,9 @@ class UnitTestFunction(py.test.collect.Function):
         if obj is not _dummy:
             self._obj = obj
         self._sort_value = sort_value
+        if hasattr(self.parent, 'newinstance'):
+            self.parent.newinstance()
+            self.obj = self._getobj()
 
     def runtest(self):
         target = self.obj
@@ -87,7 +90,6 @@ def test_simple_unittest(testdir):
 def test_setup(testdir):
     testpath = testdir.makepyfile(test_two="""
         import unittest
-        pytest_plugins = "pytest_unittest" # XXX 
         class MyTestCase(unittest.TestCase):
             def setUp(self):
                 self.foo = 1
@@ -97,6 +99,18 @@ def test_setup(testdir):
     reprec = testdir.inline_run(testpath)
     rep = reprec.matchreport("test_setUp")
     assert rep.passed
+
+def test_new_instances(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            def test_func1(self):
+                self.x = 2
+            def test_func2(self):
+                assert not hasattr(self, 'x')
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=2)
 
 def test_teardown(testdir):
     testpath = testdir.makepyfile(test_three="""

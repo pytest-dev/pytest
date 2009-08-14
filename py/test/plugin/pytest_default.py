@@ -1,9 +1,10 @@
 """ default hooks and general py.test options. """ 
 
+import sys
 import py
 
-def pytest_pyfunc_call(__call__, pyfuncitem):
-    if not __call__.execute(firstresult=True):
+def pytest_pyfunc_call(__multicall__, pyfuncitem):
+    if not __multicall__.execute():
         testfunction = pyfuncitem.obj 
         if pyfuncitem._isyieldedfunction():
             testfunction(*pyfuncitem._args)
@@ -90,10 +91,17 @@ def pytest_addoption(parser):
                help="shortcut for '--dist=load --tx=NUM*popen'")
     group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
                help="add directory for rsyncing to remote tx nodes.")
+    group.addoption('--version', action="store_true",
+                    help="display version information")
 
 def pytest_configure(config):
     fixoptions(config)
     setsession(config)
+    if config.option.version:
+        p = py.path.local(py.__file__).dirpath()
+        print "This is py.test version %s, imported from %s" % (
+            py.__version__, p)
+        sys.exit(0)
     #xxxloadplugins(config)
 
 def fixoptions(config):

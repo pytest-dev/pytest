@@ -88,8 +88,8 @@ class Gateway(object):
         self._channelfactory = ChannelFactory(self, _startcount)
         self._cleanup.register(self) 
         if _startcount == 1: # only import 'py' on the "client" side 
-            from py._com import Hooks 
-            self.hook = Hooks(ExecnetAPI)
+            import py
+            self.hook = py._com.HookRelay(ExecnetAPI, py._com.comregistry)
         else:
             self.hook = ExecnetAPI()
 

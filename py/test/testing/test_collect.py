@@ -145,7 +145,7 @@ class TestCollectFS:
         names = [x.name for x in col.collect()]
         assert names == ["dir1", "dir2", "test_one.py", "test_two.py", "x"]
 
-class TestCollectPluginHooks:
+class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):
         tmpdir = testdir.tmpdir
         wascalled = []

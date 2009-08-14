@@ -1,0 +1,64 @@
+
+pytest_nose plugin
+==================
+
+nose-compatibility plugin: allow to run nose test suites natively.
+
+.. contents::
+  :local:
+
+This is an experimental plugin for allowing to run tests written 
+in the 'nosetests' style with py.test.  
+nosetests is a popular clone 
+of py.test and thus shares some philosophy.  This plugin is an 
+attempt to understand and neutralize differences.  It allows to 
+run nosetests' own test suite and a number of other test suites 
+without problems. 
+
+Usage
+-------------
+
+If you type::
+
+    py.test -p nose 
+
+where you would type ``nosetests``, you can run your nose style tests.  
+You might also try to run without the nose plugin to see where your test
+suite is incompatible to the default py.test. 
+
+To avoid the need for specifying a command line option you can set an environment 
+variable::
+
+    PYTEST_PLUGINS=nose  
+
+or create a ``conftest.py`` file in your test directory or below::
+
+    # conftest.py 
+    pytest_plugins = "nose", 
+
+If you find issues or have suggestions you may run:: 
+
+    py.test -p nose --pastebin=all 
+
+to create a URL of a test run session and send it with comments to the issue
+tracker or mailing list. 
+
+Known issues 
+------------------
+
+- nose-style doctests are not collected and executed correctly,
+  also fixtures don't work.
+
+Start improving this plugin in 30 seconds
+=========================================
+
+
+Do you find the above documentation or the plugin itself lacking? 
+
+1. Download `pytest_nose.py`_ plugin source code 
+2. put it somewhere as ``pytest_nose.py`` into your import path 
+3. a subsequent ``py.test`` run will use your local version
+
+Further information: extend_ documentation, other plugins_ or contact_.  
+
+.. include:: links.txt

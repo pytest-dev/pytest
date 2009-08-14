@@ -4,7 +4,7 @@ safely patch object attributes, dicts and environment variables.
 Usage
 ----------------
 
-Use the `monkeypatch funcarg`_ to safely patch the environment
+Use the `monkeypatch funcarg`_ to safely patch environment
 variables, object attributes or dictionaries.  For example, if you want
 to set the environment variable ``ENV1`` and patch the
 ``os.path.abspath`` function to return a particular value during a test
@@ -20,7 +20,16 @@ function execution you can write it down like this:
 The function argument will do the modifications and memorize the 
 old state.  After the test function finished execution all 
 modifications will be reverted.  See the `monkeypatch blog post`_ 
-for an extensive discussion. 
+for an extensive discussion.  
+
+To add to a possibly existing environment parameter you
+can use this example: 
+
+.. sourcecode:: python 
+
+    def test_mypath_finding(monkeypatch):
+        monkeypatch.setenv('PATH', 'x/y', prepend=":")
+        #  x/y will be at the beginning of $PATH 
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
@@ -57,8 +66,11 @@ class MonkeyPatch:
         self._setitem.insert(0, (dictionary, name, dictionary.get(name, notset)))
         dictionary[name] = value
 
-    def setenv(self, name, value):
-        self.setitem(os.environ, name, str(value))        
+    def setenv(self, name, value, prepend=None):
+        value = str(value)
+        if prepend and name in os.environ:
+            value = value + prepend + os.environ[name]
+        self.setitem(os.environ, name, value)
 
     def finalize(self):
         for obj, name, value in self._setattr:
@@ -108,6 +120,16 @@ def test_setenv():
     monkeypatch.setenv('XYZ123', 2)
     import os
     assert os.environ['XYZ123'] == "2"
+    monkeypatch.finalize()
+    assert 'XYZ123' not in os.environ
+
+def test_setenv_prepend():
+    import os
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv('XYZ123', 2, prepend="-")
+    assert os.environ['XYZ123'] == "2"
+    monkeypatch.setenv('XYZ123', 3, prepend="-")
+    assert os.environ['XYZ123'] == "3-2"
     monkeypatch.finalize()
     assert 'XYZ123' not in os.environ
 

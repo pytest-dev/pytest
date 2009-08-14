@@ -39,8 +39,7 @@ class ExceptionInfo(object):
         """
         lines = py.std.traceback.format_exception_only(self.type, self.value)
         text = ''.join(lines)
-        if text.endswith('\n'):
-            text = text[:-1]
+        text = text.rstrip()
         if tryshort: 
             if text.startswith(self._striptext): 
                 text = text[len(self._striptext):]

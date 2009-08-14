@@ -395,7 +395,12 @@ class Directory(FSCollector):
 
     def _ignore(self, path):
         ignore_paths = self.config.getconftest_pathlist("collect_ignore", path=path)
-        return ignore_paths and path in ignore_paths 
+        return ignore_paths and path in ignore_paths
+        # XXX more refined would be: 
+        if ignore_paths:
+            for p in ignore_paths:
+                if path == p or path.relto(p):
+                    return True
 
     def consider(self, path):
         if self._ignore(path):

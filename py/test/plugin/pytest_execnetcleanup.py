@@ -32,10 +32,10 @@ class Execnetcleanup:
         #for gw in l:
         #    gw.join()
         
-    def pytest_pyfunc_call(self, __call__, pyfuncitem):
+    def pytest_pyfunc_call(self, __multicall__, pyfuncitem):
         if self._gateways is not None:
             gateways = self._gateways[:]
-            res = __call__.execute(firstresult=True)
+            res = __multicall__.execute()
             while len(self._gateways) > len(gateways):
                 self._gateways[-1].exit()
             return res

@@ -4,7 +4,7 @@ from py.__.test.pluginmanager import PluginManager, canonical_importname, collec
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
         pluginmanager = PluginManager()
-        monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'nonexistingmodule')
+        monkeypatch.setenv('PYTEST_PLUGINS', 'nonexisting', prepend=",")
         py.test.raises(ImportError, "pluginmanager.consider_env()")
 
     def test_preparse_args(self):
@@ -50,7 +50,7 @@ class TestBootstrapping:
                 plugin = py.test.config.pluginmanager.getplugin('x500')
                 assert plugin is not None
         """)
-        monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'pytest_x500')
+        monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
         result = testdir.runpytest(p)
         assert result.ret == 0
         extra = result.stdout.fnmatch_lines(["*1 passed in*"])
@@ -185,7 +185,7 @@ class TestPytestPluginInteractions:
                 assert hello == "world" 
         """)
         result = testdir.runpytest(p) 
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
 
@@ -222,10 +222,6 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())
         assert len(l) == 2
 
-    def test_MultiCall(self):
-        pp = PluginManager()
-        assert hasattr(pp, 'MultiCall')
-
     # lower level API
 
     def test_listattr(self):
@@ -247,3 +243,12 @@ def test_collectattr():
     assert list(methods) == ['pytest_hello', 'pytest_world']
     methods = py.builtin.sorted(collectattr(B()))
     assert list(methods) == ['pytest_hello', 'pytest_world']
+
+@py.test.mark.xfail
+def test_namespace_has_default_and_env_plugins(testdir):
+    p = testdir.makepyfile("""
+        import py
+        py.test.mark 
+    """)
+    result = testdir.runpython(p)
+    assert result.ret == 0

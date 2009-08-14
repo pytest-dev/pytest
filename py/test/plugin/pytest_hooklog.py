@@ -8,14 +8,27 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     hooklog = config.getvalue("hooklog")
     if hooklog:
-        assert not config.pluginmanager.comregistry.logfile
-        config.pluginmanager.comregistry.logfile = open(hooklog, 'w')
+        config._hooklogfile = open(hooklog, 'w', 0)
+        config._hooklog_oldperformcall = config.hook._performcall
+        config.hook._performcall = (lambda name, multicall: 
+            logged_call(name=name, multicall=multicall, config=config))
+
+def logged_call(name, multicall, config):
+    f = config._hooklogfile
+    f.write("%s(**%s)\n" % (name, multicall.kwargs))
+    try:
+        res = config._hooklog_oldperformcall(name=name, multicall=multicall)
+    except:
+        f.write("-> exception")
+        raise
+    f.write("-> %r" % (res,))
+    return res
 
 def pytest_unconfigure(config):
-    f = config.pluginmanager.comregistry.logfile
-    if f:
-        f.close()
-        config.pluginmanager.comregistry.logfile = None
+    try:
+        del config.hook.__dict__['_performcall'] 
+    except KeyError:
+        pass
 
 # ===============================================================================
 # plugin tests 
