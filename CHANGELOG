@@ -11,14 +11,16 @@ Changes between 1.0.0 and 1.0.1
   was adapted and somewhat unified between windows and linux 
 
 * fix issue #27: better reporting on non-collectable items given on commandline 
-  (e.g. pyc files) 
+  (e.g. pyc files)
+
+* fix issue #33: added --version flag (thanks Benjamin Peterson) 
 
 * "Test" prefixed classes are *not* collected by default anymore if they 
   have an __init__ method 
 
 * monkeypatch setenv() now accepts a "prepend" parameter
 
-* terser reporting of collection error tracebacks
+* improved reporting of collection error tracebacks
 
 * simplified multicall mechanism and plugin architecture, 
   renamed some internal methods and argnames 

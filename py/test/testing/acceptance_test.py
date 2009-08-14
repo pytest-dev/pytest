@@ -3,6 +3,14 @@ import py
 EXPECTTIMEOUT=10.0
 
 class TestGeneralUsage:
+    def test_version(self, testdir):
+        assert py.version == py.__version__ 
+        result = testdir.runpytest("--version")
+        assert result.ret == 0
+        p = py.path.local(py.__file__).dirpath()
+        assert result.stderr.fnmatch_lines([
+            '*py.test*%s*, imported from: %s*' % (py.version, p)
+        ])
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
