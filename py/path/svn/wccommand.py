@@ -671,6 +671,10 @@ class XMLWCStatus(WCStatus):
                 wcpath = rootwcpath.join(path, abs=1)
                 rootstatus.ignored.append(wcpath)
                 continue
+            elif itemstatus == 'incomplete':
+                wcpath = rootwcpath.join(path, abs=1)
+                rootstatus.incomplete.append(wcpath)
+                continue
 
             rev = statusel.getAttribute('revision')
             if itemstatus == 'added' or itemstatus == 'none':
