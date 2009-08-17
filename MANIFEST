@@ -37,6 +37,7 @@ doc/test/plugin/index.txt
 doc/test/plugin/keyword.txt
 doc/test/plugin/links.txt
 doc/test/plugin/monkeypatch.txt
+doc/test/plugin/nose.txt
 doc/test/plugin/oejskit.txt
 doc/test/plugin/pastebin.txt
 doc/test/plugin/pdb.txt
@@ -345,6 +346,7 @@ py/test/plugin/pytest_figleaf.py
 py/test/plugin/pytest_hooklog.py
 py/test/plugin/pytest_keyword.py
 py/test/plugin/pytest_monkeypatch.py
+py/test/plugin/pytest_nose.py
 py/test/plugin/pytest_pastebin.py
 py/test/plugin/pytest_pdb.py
 py/test/plugin/pytest_pylint.py
@@ -358,6 +360,7 @@ py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
 py/test/plugin/test_pytest_capture.py
+py/test/plugin/test_pytest_nose.py
 py/test/plugin/test_pytest_runner.py
 py/test/plugin/test_pytest_runner_xunit.py
 py/test/plugin/test_pytest_terminal.py
