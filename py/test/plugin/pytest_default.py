@@ -99,8 +99,8 @@ def pytest_configure(config):
     setsession(config)
     if config.option.version:
         p = py.path.local(py.__file__).dirpath()
-        print "This is py.test version %s, imported from %s" % (
-            py.__version__, p)
+        sys.stderr.write("This is py.test version %s, imported from %s\n" % 
+            (py.__version__, p))
         sys.exit(0)
     #xxxloadplugins(config)
 
