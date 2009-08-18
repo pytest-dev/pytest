@@ -249,7 +249,7 @@ class TestTerminal:
         ])
         result = testdir.runpytest("-v", p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py <- test_p1.py:2: TestMore.test_p1*",
+            "*test_p2.py <- *test_p1.py:2: TestMore.test_p1*",
         ])
 
     def test_keyboard_interrupt_dist(self, testdir, option):

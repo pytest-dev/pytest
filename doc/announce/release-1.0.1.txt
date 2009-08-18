@@ -1,0 +1,45 @@
+1.0.1: bug fixes, nose/unittest.py support, improved reporting
+--------------------------------------------------------------------
+
+The py.test/pylib 1.0.1 release is a bugfix release for 1.0.1, coming
+with improved documentation and more support for running existing
+nose/unittest.py style test suites.  Checkout:
+
+    quickstart: http://codespeak.net/py/current/test/quickstart.html
+
+    pytest: http://pytest.org 
+
+    pylib: http://pylib.org 
+
+or read on for the changelog. 
+
+Changes 1.0.0 to 1.0.1 
+------------------------
+
+* added a 'pytest_nose' plugin which handles nose.SkipTest, 
+  nose-style function/method/generator setup/teardown and 
+  tries to report functions correctly.  
+
+* much improved documentation layout: see http://pytest.org 
+
+* unicode fixes: capturing and unicode writes to sys.stdout 
+  (through e.g a print statement) now work within tests, 
+  they are encoded as "utf8" by default, also terminalwriting 
+  was adapted and somewhat unified between windows and linux 
+
+* fix issue #27: better reporting on non-collectable items given on commandline 
+  (e.g. pyc files)
+
+* fix issue #33: added --version flag (thanks Benjamin Peterson) 
+
+* fix issue #32: adding support for "incomplete" paths to wcpath.status()
+
+* "Test" prefixed classes are *not* collected by default anymore if they 
+  have an __init__ method 
+
+* monkeypatch setenv() now accepts a "prepend" parameter
+
+* improved reporting of collection error tracebacks
+
+* simplified multicall mechanism and plugin architecture, 
+  renamed some internal methods and argnames 
