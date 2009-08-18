@@ -20,12 +20,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-Do you find the above documentation or the plugin itself lacking? 
-
 1. Download `pytest_pdb.py`_ plugin source code 
 2. put it somewhere as ``pytest_pdb.py`` into your import path 
 3. a subsequent ``py.test`` run will use your local version
 
-Further information: extend_ documentation, other plugins_ or contact_.  
+Checkout customize_, other plugins_ or `get in contact`_. 
 
 .. include:: links.txt

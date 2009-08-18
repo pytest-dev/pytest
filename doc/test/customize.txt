@@ -1,8 +1,112 @@
 ================================================
-Extending and customizing py.test 
+Customizing and Extending py.test 
 ================================================
 
+.. contents:: 
+    :local:
+    :depth: 2
+
+basic test configuration 
+===================================
+
+available command line options 
+---------------------------------
+
+You can see command line options by running::
+
+    py.test -h 
+
+This will display all available command line options
+including the ones added by plugins `loaded at tool startup`_. 
+
+
+.. _`project-specific test configuration`: 
+.. _`collect_ignore`: 
+
+conftest.py: project specific test configuration
+--------------------------------------------------------
+
+A unique feature of py.test are its ``conftest.py`` files which
+allow to `set option defaults`_, `implement hooks`_, `specify funcargs`_
+or set particular variables to influence the testing process:
+
+* ``pytest_plugins``: list of named plugins to load 
+
+* ``collect_ignore``: list of paths to ignore during test collection (relative to the containing
+  ``conftest.py`` file) 
+
+* ``rsyncdirs``: list of to-be-rsynced directories for distributed
+  testing 
+
+You may put a conftest.py files in your project root directory or into
+your package directory if you want to add project-specific test options. 
+
+``py.test`` loads all ``conftest.py`` files upwards from the command
+line specified test files.  It will lookup configuration values
+right-to-left, i.e. the closer conftest files will be checked first.
+You may have a ``conftest.py`` in your very home directory to have some
+global configuration values. 
+
+There is a flag that may help you debugging your conftest.py 
+configuration::
+
+    py.test --traceconfig 
+
+.. _`specify funcargs`: funcargs.html#application-setup-tutorial-example
+
+.. _`set option defaults`: 
+
+setting option defaults 
+-------------------------------
+
+py.test will lookup values of options in this order:
+
+* option value supplied at command line 
+* content of environment variable ``PYTEST_OPTION_NAME=...``
+* ``name = ...`` setting in the nearest ``conftest.py`` file.
+
+The name of an option usually is the one you find 
+in the longform of the option, i.e. the name 
+behind the ``--`` double-dash that you get with ``py.test -h``.
+
+IOW, you can set default values for options per project, per
+home-directoray, per shell session or per test-run. 
+
+.. _`basetemp`: 
+
+Temporary directories 
+-------------------------------------------
+
+``py.test`` runs provide means to create per-test session
+temporary (sub) directories through the config object.  
+You can create directories by calling a method
+on the config object: 
+
+- ``config.mktemp(basename)``: create and returns a new tempdir 
+
+- ``config.ensuretemp(basename)``: create or return a new tempdir 
+
+tempdirs are created as sub directories of a per-session testdir 
+and will keep around the directories of the last three 
+test runs.  You can also set the base temporary directory 
+with the `--basetemp`` option.  When distributing 
+tests on the same machine, ``py.test`` takes care to 
+pass around the basetemp directory such that all temporary
+files land below the same basetemp directory.  
+
+The config object is available when implementing `function arguments`_ 
+or `extensions`_ and can otherwise be globally accessed as ``py.test.config``. 
+
+.. _`function arguments`: funcargs.html
+.. _`extensions`: 
+
+Plugin basics
+=========================
+
 .. _`local plugin`:
+
+project specific "local" or named "global" plugins
+--------------------------------------------------------------
 
 py.test implements much of its functionality by calling `well specified
 hooks`_.  Python modules which contain such hook functions are called
@@ -18,6 +122,7 @@ named plugins must be explicitely specified.
 .. _`named plugins`: plugin/index.html
 
 .. _`tool startup`:
+.. _`loaded at tool startup`: 
 .. _`test tool starts up`: 
 
 Plugin discovery at tool startup
@@ -81,17 +186,18 @@ by defining the following hook in a ``conftest.py`` file:
         if config.getvalue("runall"):
             collect_ignore[:] = []
 
-.. _`project-specific test configuration`: config.html#conftestpy 
-.. _`collect_ignore`: config.html#collectignore
 
 .. _`well specified hooks`: 
+.. _`implement hooks`: 
 
-Available py.test hooks 
+Important py.test hooks 
 ====================================
 
-py.test calls hooks functions to implement its `test collection`_, running and 
-reporting process.  When py.test loads a plugin it validates that all hook functions
-conform to the `hook definition specification`_.  The hook function name and its 
+py.test calls hooks functions to implement its `test collection`_,
+running and reporting process.  When py.test loads a plugin it validates
+that all hook functions conform to the `hook definition specification`_.
+
+The hook function name and its 
 argument names need to match exactly but it is allowed for an implementation
 to accept *less* parameters.  You'll get useful errors on mistyped hook or 
 argument names.  Read on for some introductory information on particular 
@@ -170,9 +276,10 @@ For example, the `pytest_pdb plugin`_ uses this hook to activate
 interactive debugging on failures when ``--pdb`` is specified on the
 command line. 
 
-Usually three reports will be generated for a single test item.  However, 
-if the ``pytest_runtest_setup`` fails no call or teardown hooks 
-will be called and only one report will be created. 
+Usually three reports will be generated for a single test item for each
+of the three runtest hooks respectively.  If ``pytest_runtest_setup`` 
+fails then ``pytest_runtest_teardown`` will be called but not 
+``pytest_runtest_call``. 
 
 Each of the up to three reports is eventually fed to the logreport hook:
 
@@ -194,7 +301,7 @@ A ``report`` object contains status and reporting information:
 The `pytest_terminal plugin`_ uses this hook to print information
 about a test run. 
     
-The protocol described here is implemented via this hook:
+The whole protocol described here is implemented via this hook:
 
 .. sourcecode:: python
  
@@ -251,19 +358,6 @@ Python module.  The return value is a custom `collection node`_ or None.
 .. XXX or ``False`` if you want to indicate that the given item should not be collected. 
 
 
-
-Included default plugins
-=============================
-
-You can find the source code of all default plugins in 
-
-    http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/
-
-Additionally you can check out some more contributed plugins here
-
-    http://bitbucket.org/hpk42/py-trunk/src/tip/contrib/
-
-
 .. _`collection process`: 
 .. _`collection node`: 
 .. _`test collection`:
@@ -271,6 +365,9 @@ Additionally you can check out some more contributed plugins here
 
 Test Collection process 
 ====================================================== 
+
+the collection tree 
+---------------------------------
 
 The collecting process is iterative so that distribution
 and execution of tests can start as soon as the first test

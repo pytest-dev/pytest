@@ -228,9 +228,9 @@ class TerminalReporter:
 
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "python: platform %s -- Python %s" % (sys.platform, verinfo)
-        if self.config.option.verbose or self.config.option.debug:
-            msg += " -- " + str(sys.executable)
+        if self.config.option.verbose or self.config.option.debug or getattr(self.config.option, 'pastebin', None):
             msg += " -- pytest-%s" % (py.__version__)
+            msg += " -- " + str(sys.executable)
         self.write_line(msg)
 
         if self.config.option.debug or self.config.option.traceconfig:

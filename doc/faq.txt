@@ -1,0 +1,123 @@
+==================================
+Frequently Asked Questions 
+==================================
+
+.. contents:: 
+    :local:
+    :depth: 2
+
+naming, nose and magic 
+============================
+
+Why the ``py`` naming? what is it? 
+------------------------------------
+
+Because the name was kind of available and there was the
+idea to have the package evolve into a "standard" library 
+kind of thing that works cross-python versions and is
+not tied to a particular CPython revision or its release
+cycle.  Clearly, this was ambitious and the naming
+has maybe haunted the project rather than helping it. 
+There may be a project name change and possibly a 
+split up into different projects sometime. 
+
+Why the ``py.test`` naming? 
+------------------------------------
+
+the py lib contains other command line tools that
+all share the ``py.`` prefix which makes it easy
+to use TAB-completion on the shell.  Another motivation
+was to make it obvious where testing functionality 
+for the ``py.test`` command line tool is: in the
+``py.test`` package name space. 
+
+What's the relation to ``nosetests``? 
+----------------------------------------
+
+py.test and nose_ share some basic philosophy when it comes
+to running Python tests.  In fact, 
+with py.test-1.0.1 it is easy to run many test suites 
+that currently work with ``nosetests``.  nose_ was created 
+as a clone of ``py.test`` when it was in the ``0.8`` release 
+cycle so some of the newer features_ introduced with py.test-1.0 
+have no counterpart in nose_.  
+
+.. _nose: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/
+.. _features: test/features.html
+
+What's all this "magic" with py.test? 
+----------------------------------------
+
+"All this magic" usually boils down to two issues: 
+
+* There is a special tweak to importing: `py/__init__.py`_ contains 
+  contains a dictionary which maps the ``py.*`` namespaces 
+  to objects in files.  When looking at the project source code 
+  you see imports like ``from py.__.test.session import Session``. The 
+  the double ``__`` underscore indicates the "normal" python 
+  filesystem/namespace coupled import, i.e. it points to 
+  ``py/test/session.py``'s ``Session`` object.  However, 
+  normal usage happens through the clean exported `py namespaces`_
+  so this distinction usually only shows up if you hack 
+  on internal code or see internal tracebacks. 
+ 
+* when an ``assert`` fails, py.test re-interprets the expression 
+  to show intermediate values.  This allows to use the plain ``assert`` 
+  statement instead of the many methods that you otherwise need 
+  to mimick this behaviour.  This means that in case of a failing 
+  assert, your expressions gets evaluated *twice*.  If your expression
+  has side effects the outcome may be different.  If the test suddenly
+  passes you will get a detailed message.  It is good practise, anyway, 
+  to not have asserts with side effects.  ``py.test --nomagic`` turns
+  off assert re-intepretation. 
+
+Other than that, ``py.test`` has bugs or quirks like any other computer
+software although it has a *strong* focus on running robustly and has
+over a thousand automated tests for its own code base. 
+
+.. _`py namespaces`: index.html
+.. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/1.0.x/py/__init__.py
+
+
+function arguments and parametrized tests 
+===============================================
+
+.. _`why pytest_pyfuncarg__ methods?`:
+
+Why the ``pytest_funcarg__*`` name for funcarg factories? 
+---------------------------------------------------------------
+
+When experimenting with funcargs an explicit registration mechanism
+was considered.  But lacking a good use case for this indirection and
+flexibility we decided to go for `Convention over Configuration`_ and
+allow to directly specify the factory.  Besides removing the need
+for an indirection it allows to "grep" for ``pytest_funcarg__MYARG`` 
+and will safely find all factory functions for the ``MYARG`` function 
+argument.  It helps to alleviates the de-coupling of function 
+argument usage and creation. 
+
+.. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
+
+Can i yield multiple values from a factory function? 
+-----------------------------------------------------
+
+There are two reasons why yielding from a factory function
+is not possible: 
+
+* Calling factories for obtaining test function arguments 
+  is part of setting up and running a test.  At that 
+  point it is not possible to add new test calls to
+  the test collection anymore. 
+
+* If multiple factories yielded values there would
+  be no natural place to determine the combination 
+  policy - in real-world examples some combinations
+  often should not run. 
+
+Use the `pytest_generate_tests`_ hook to solve both issues
+and implement the `parametrization scheme of your choice`_.
+
+.. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
+.. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
+
+

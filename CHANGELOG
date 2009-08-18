@@ -10,6 +10,8 @@ Changes between 1.0.0 and 1.0.1
   they are encoded as "utf8" by default, also terminalwriting 
   was adapted and somewhat unified between windows and linux 
 
+* improved documentation layout and content a lot
+
 * fix issue #27: better reporting on non-collectable items given on commandline 
   (e.g. pyc files)
 

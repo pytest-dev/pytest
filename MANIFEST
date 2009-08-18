@@ -14,6 +14,7 @@ doc/conftest.py
 doc/contact.txt
 doc/download.txt
 doc/execnet.txt
+doc/faq.txt
 doc/img/pylib.png
 doc/index.txt
 doc/io.txt
@@ -22,12 +23,15 @@ doc/misc.txt
 doc/path.txt
 doc/style.css
 doc/test/attic.txt
-doc/test/config.txt
+doc/test/config.html
+doc/test/customize.txt
 doc/test/dist.txt
 doc/test/examples.txt
-doc/test/extend.txt
+doc/test/extend.html
 doc/test/features.txt
 doc/test/funcargs.txt
+doc/test/index.txt
+doc/test/mission.txt
 doc/test/plugin/capture.txt
 doc/test/plugin/doctest.txt
 doc/test/plugin/figleaf.txt
@@ -49,7 +53,7 @@ doc/test/plugin/unittest.txt
 doc/test/plugin/xfail.txt
 doc/test/quickstart.txt
 doc/test/talks.txt
-doc/test/test.txt
+doc/test/test.html
 doc/test/xunit_setup.txt
 doc/xml.txt
 example/assertion/failure_demo.py

@@ -15,7 +15,7 @@ available on your command prompt.
 The ``py.test`` executable is the main entry point into the py-lib testing tool,
 see the `py.test documentation`_.
 
-.. _`py.test documentation`: test/test.html
+.. _`py.test documentation`: test/index.html
 
 ``py.cleanup``
 ==============
@@ -51,6 +51,7 @@ prepended.
 
 Usage: ``py.rest [PATHS] [options]``
 
+[deprecated in 1.0, will likely be separated]
 Loot recursively for .txt files starting from ``PATHS`` and convert them to
 html using docutils or to pdf files, if the ``--pdf`` option is used. For
 conversion to PDF you will need several command line tools, on Ubuntu Linux

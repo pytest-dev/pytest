@@ -14,7 +14,7 @@ Usage
 
     py.test --pastebin=failed 
 
-This will submit full failure information to a remote Paste service and
+This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
 for example ``-x`` if you only want to send one particular failure. 
 
@@ -35,12 +35,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-Do you find the above documentation or the plugin itself lacking? 
-
 1. Download `pytest_pastebin.py`_ plugin source code 
 2. put it somewhere as ``pytest_pastebin.py`` into your import path 
 3. a subsequent ``py.test`` run will use your local version
 
-Further information: extend_ documentation, other plugins_ or contact_.  
+Checkout customize_, other plugins_ or `get in contact`_. 
 
 .. include:: links.txt

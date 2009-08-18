@@ -7,12 +7,10 @@ xUnit style setup
 
 Note: 
 
-    Since version 1.0 py.test offers funcargs_ for both 
-    simple and complex test setup needs.  Especially 
-    for functional and integration, but also for unit testing, it is
-    highly recommended that you use this new method. 
+    Since version 1.0 funcargs_ present the recommended way
+    to manage flexible and scalable test setups. 
 
-Python, Java and other languages have a tradition
+Python, Java and many other languages have a tradition
 of using xUnit_ style testing. This typically 
 involves the call of a ``setup`` method before
 a test function is run and ``teardown`` after

@@ -11,6 +11,13 @@ def otherfunc_multi(a,b):
     assert (a == 
             b) 
 
+def test_generative(param1, param2):
+    assert param1 * 2 < param2
+
+def pytest_generate_tests(metafunc):
+    if 'param1' in metafunc.funcargnames:
+        metafunc.addcall(funcargs=dict(param1=3, param2=6))
+
 class TestFailing(object):
     def test_simple(self):
         def f():
@@ -96,14 +103,9 @@ class TestFailing(object):
         if namenotexi:
             pass
 
-    def test_generator(self):
-        yield None
-
     def func1(self):
         assert 41 == 42
 
-    def test_generator2(self):
-        yield self.func1
 
 # thanks to Matthew Scott for this test
 def test_dynamic_compile_shows_nicely():

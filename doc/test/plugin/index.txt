@@ -16,11 +16,13 @@ recwarn_ helpers for asserting deprecation and other warnings.
 Plugins for other testing styles and languages
 ==============================================
 
+oejskit_ run javascript tests in real life browsers
+
 unittest_ automatically discover and run traditional "unittest.py" style tests.
 
-doctest_ collect and execute doctests from modules and test files.
+nose_ nose-compatibility plugin: allow to run nose test suites natively.
 
-oejskit_ run javascript tests in real life browsers
+doctest_ collect and execute doctests from modules and test files.
 
 restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
 

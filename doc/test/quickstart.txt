@@ -7,27 +7,61 @@ Quickstart
 
 .. _here: ../download.html#no-setuptools
 
-This document assumes basic python knowledge and a working `setuptools
-installation`_ (otherwise see here_). You can install
-the py lib and py.test by typing::
+
+With a `setuptools installation`_  (otherwise see here_) you can type::
 
     easy_install -U py 
 
-Now open a file ``test_sample.py`` file and put the following
-example content into it::
+On Linux systems you may need to execute this as the superuser and
+on Windows you might need to write down the full path to ``easy_install``. 
+
+Now create a file ``test_sample.py`` with the following content: 
+
+.. sourcecode:: python 
 
     # content of test_sample.py 
+    def func(x):
+        return x + 1
     def test_answer():
-        assert 42 == 43 
+        assert f(3) == 5
 
 You can now run the test file like this::
 
-  py.test test_sample.py
+    py.test test_sample.py
 
-and will see an error report on the failing assert statement. 
-For further information please refer to `features`_ 
-or checkout the `tutorials`_ page for more introduction material. 
+and will see output like this:
 
+.. sourcecode:: python 
+
+    =========================== test session starts ============================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: test_sample.py
+
+    test_sample.py F
+
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+
+        def test_answer():
+    >       assert func(3) == 5
+    E       assert 4 == 5
+    E        +  where 4 = func(3)
+
+    test_sample.py:6: AssertionError
+    ========================= 1 failed in 0.08 seconds =========================
+
+This output contains Python interpreter information, a list of test objects, 
+a progress report and important details of the failure. 
+
+**Where to go from here**
+
+`tutorials`_: a collection of starting points with code examples
+
+`features`_: overview and description of test features
+
+`contact`_: many ways for feedback and questions 
+
+.. _`contact`: ../contact.html
 .. _`automatically collected`: features.html#autocollect
 .. _download: ../download.html
 .. _features: features.html

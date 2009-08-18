@@ -5,9 +5,14 @@ Contact and Communication points
 
 - #pylib on irc.freenode.net IRC channel for random questions. 
 
+
 - `tetamap`_: Holger Krekel's blog, often about testing and py.test related news. 
 
+- `Testing In Python`_: a mailing list for testing tools and discussion. 
+
 - `py-svn general commit mailing list`_ to follow development commits, 
+
+- http://twitter.com/pylibcommit for following commits via twitter
 
 - `bitbucket issue tracker`_ use this bitbucket issue tracker to report
   bugs or request features. 
@@ -33,6 +38,7 @@ Contact and Communication points
     you are new to the python developer community please come to the IRC 
     or the mailing list and ask questions, get involved. 
 
+.. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
 .. _us: http://codespeak.net/mailman/listinfo/py-dev
 .. _codespeak: http://codespeak.net/

@@ -7,7 +7,7 @@
 
     Latest Release, see `PyPI project page`_
 
-using setuptools / easy_install 
+using easy_install 
 ===================================================
 
 With a working `setuptools installation`_ you can type::
@@ -16,15 +16,10 @@ With a working `setuptools installation`_ you can type::
 
 to get the latest release of the py lib.  The ``-U`` switch
 will trigger an upgrade if you already have an older version installed. 
+On Linux systems you may need to execute the command as superuser and
+on Windows you might need to write down the full path to ``easy_install``. 
 The py lib and its tools are expected to work well on Linux,
 Windows and OSX, Python versions 2.3, 2.4, 2.5 and 2.6.
-
-We provide binary eggs for Windows machines. 
-
-On other systems you need a working C-compiler in order to
-install the full py lib.  If you don't have a compiler available 
-you can still install the py lib but without greenlets - look 
-below for the ``install_lib`` target. 
 
 **IMPORTANT NOTE**: if you are using Windows and have 
 0.8 versions of the py lib on your system, please download 
@@ -36,9 +31,11 @@ You can find out the py lib version with::
     print py.version
 
 
-.. _`checkout`:
+.. _mercurial: http://mercurial.selenic.com/wiki/
+.. _checkout:
+.. _tarball:
 
-Installing from version control / develop mode
+Working from version control or a tarball 
 =================================================
 
 To follow development or help with fixing things
@@ -47,41 +44,59 @@ and documentation source with mercurial_::
 
     hg clone https://bitbucket.org/hpk42/py-trunk/
 
-With a working `setuptools installation`_ you can then issue::
+This currrently contains a 1.0.x branch and the 
+default 'trunk' branch where mainline development 
+takes place.  There also is a readonly subversion
+checkout available::
+
+    svn co https://codespeak.net/svn/py/dist
+
+You can also go to the python package index and
+download and unpack a TAR file::
+
+    http://pypi.python.org/pypi/py/
+
+activating checkout with setuptools 
+--------------------------------------------
+
+With a working `setuptools installation`_ you can issue::
 
     python setup.py develop 
 
-in order to work with your checkout version. 
-
-For enhancing one of the plugins you may go to
-the ``py/test/plugin/`` sub directory. 
-
-.. _mercurial: http://mercurial.selenic.com/wiki/
+in order to work with the tools and the lib of your checkout. 
 
 .. _`no-setuptools`:
 
-Working without setuptools / from source
-==========================================
+activating a checkout or tarball without setuptools 
+-------------------------------------------------------------
 
-If you have a checkout_ or a tarball_ it is actually not neccessary to issue
-``setup.py`` commands in order to use py lib and its tools.  You can
-simply add the root directory to ``PYTHONPATH`` and ``py/bin`` or
-``py\bin\win32`` to your ``PATH`` settings. 
+To import the py lib the ``py`` package directory needs to
+be on the ``$PYTHONPATH``.  If you exexute scripts directly
+from ``py/bin/`` or ``py\bin\win32`` they will find their
+containing py lib automatically. 
 
-There are also helper scripts to set the environment
-on windows::
+It is usually a good idea to add the parent directory of the ``py`` package 
+directory to your ``PYTHONPATH`` and ``py/bin`` or ``py\bin\win32`` to your 
+system wide ``PATH`` settings.  There are helper scripts that set ``PYTHONPATH`` and ``PATH`` on your system: 
 
+on windows execute::
+
+    # inside autoexec.bat or shell startup
     c:\\path\to\checkout\py\env.cmd
 
-and on linux/osx you can add something like this to 
-your shell initialization::
+on linux/OSX add this to your shell initialization:: 
 
-    eval `python ~/path/to/checkout/py/env.py`
+    # inside .bashrc 
+    eval `python ~/path/to/checkout/py/env.py` 
 
 both of which which will get you good settings 
 for ``PYTHONPATH`` and ``PATH``.
 
-Note also that the command line scripts will look 
+
+note: scripts look for "nearby" py-lib 
+-----------------------------------------------------
+
+Note that the `command line scripts`_ will look 
 for "nearby" py libs, so if you have a layout like this::
 
     mypkg/
@@ -90,39 +105,26 @@ for "nearby" py libs, so if you have a layout like this::
         tests/
     py/ 
 
-then issuing ``py.test subpkg1`` will use the py lib
-from that projects root directory. 
+issuing ``py.test subpkg1`` will use the py lib
+from that projects root directory.  
+
+.. _`command line scripts`: bin.html
 
 Debian and RPM packages 
 ===================================
 
-As of July 2009 pytest/pylib 1.0 RPMs and Debian packages 
-are not yet available. So you will only find older
-versions. 
+As of August 2009 pytest/pylib 1.0 RPMs and Debian packages 
+are not available.  You will only find 0.9 versions - 
+on Debian systems look for ``python-codespeak-lib``
+and Dwayne Bailey has put together a Fedora `RPM`_. 
 
-On Debian systems look for ``python-codespeak-lib``.
-*But this package is probably outdated - if somebody 
-can help with bringing this up to date, 
-that would be very much appreciated.*
+If you can help with providing/upgrading distribution
+packages please use of the contact_ channels in case
+of questions or need for changes. 
 
-Dwayne Bailey has thankfully put together a Fedora `RPM`_. 
+.. _contact: contact.html
 
 .. _`RPM`: http://translate.sourceforge.net/releases/testing/fedora/pylib-0.9.2-1.fc9.noarch.rpm
 
 .. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
-
-.. _tarball:
-
-Installing from a TAR archive 
-===================================================
-
-You need a working `setuptools installation`_. 
-
-Go to the python package index (pypi) and download a tar file:
-
-    http://pypi.python.org/pypi/py/
-
-and unpack it to a directory, where you then type::
-
-    python setup.py install
 
