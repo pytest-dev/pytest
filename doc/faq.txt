@@ -6,7 +6,7 @@ Frequently Asked Questions
     :local:
     :depth: 2
 
-naming, nose and magic 
+On naming, nose and magic 
 ============================
 
 Why the ``py`` naming? what is it? 
@@ -34,7 +34,7 @@ for the ``py.test`` command line tool is: in the
 What's the relation to ``nosetests``? 
 ----------------------------------------
 
-py.test and nose_ share some basic philosophy when it comes
+py.test and nose_ share basic philosophy when it comes
 to running Python tests.  In fact, 
 with py.test-1.0.1 it is easy to run many test suites 
 that currently work with ``nosetests``.  nose_ was created 
@@ -51,13 +51,13 @@ What's all this "magic" with py.test?
 "All this magic" usually boils down to two issues: 
 
 * There is a special tweak to importing: `py/__init__.py`_ contains 
-  contains a dictionary which maps the ``py.*`` namespaces 
-  to objects in files.  When looking at the project source code 
+  a dictionary which maps the importable ``py.*`` namespaces to 
+  objects in files.  When looking at the project source code 
   you see imports like ``from py.__.test.session import Session``. The 
   the double ``__`` underscore indicates the "normal" python 
   filesystem/namespace coupled import, i.e. it points to 
   ``py/test/session.py``'s ``Session`` object.  However, 
-  normal usage happens through the clean exported `py namespaces`_
+  from the outside you use the "non-underscore" `py namespaces`_
   so this distinction usually only shows up if you hack 
   on internal code or see internal tracebacks. 
  
@@ -72,7 +72,7 @@ What's all this "magic" with py.test?
   off assert re-intepretation. 
 
 Other than that, ``py.test`` has bugs or quirks like any other computer
-software although it has a *strong* focus on running robustly and has
+software.  In fact, it has a *strong* focus on running robustly and has
 over a thousand automated tests for its own code base. 
 
 .. _`py namespaces`: index.html

@@ -10,9 +10,7 @@ Contact and Communication points
 
 - `Testing In Python`_: a mailing list for testing tools and discussion. 
 
-- `py-svn general commit mailing list`_ to follow development commits, 
-
-- http://twitter.com/pylibcommit for following commits via twitter
+- `commit mailing list`_ or `@pylibcommit`_ to follow development commits, 
 
 - `bitbucket issue tracker`_ use this bitbucket issue tracker to report
   bugs or request features. 
@@ -26,6 +24,8 @@ Contact and Communication points
 .. _`get an account`:  
 
 .. _tetamap: http://tetamap.wordpress.com
+
+.. _`@pylibcommit`: http://twitter.com/pylibcommit 
 
 
 .. 
@@ -45,8 +45,6 @@ Contact and Communication points
 .. _`py-dev`: 
 .. _`development mailing list`: 
 .. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev 
-.. _`subversion commit mailing list`: 
 .. _`py-svn`: 
-.. _`py-svn general commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn 
-.. _`development bug/feature tracker`: https://codespeak.net/issue/py-dev/ 
+.. _`commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn 
 
