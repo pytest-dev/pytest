@@ -59,6 +59,7 @@ pageTracker._trackPageview();
         items = [
             self.a_docref("install", "download.html"),
             self.a_docref("contact", "contact.html"),
+            self.a_docref("changelog", "changelog.html"),
             self.a_docref("faq", "faq.html"),
             html.div(
                 html.h3("py.test:"),
