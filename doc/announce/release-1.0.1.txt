@@ -1,17 +1,21 @@
 1.0.1: improved reporting, nose/unittest.py support, bug fixes
 -----------------------------------------------------------------------
 
-The py.test/pylib 1.0.1 release is a bugfix release, coming
-with improved documentation and many test reporting improvements. 
-It also allows to run more existing nose and unittest.py style test suites.  
-For a testing quickstart and general documentation: 
+This is a bugfix release of pylib/py.test also coming with: 
+
+* improved documentation, improved navigation 
+* test failure reporting improvements
+* support for directly running existing nose/unittest.py style tests
+
+visit here for more info, including quickstart and tutorials: 
 
     http://pytest.org and http://pylib.org
 
-Changes 1.0.0 to 1.0.1 
+
+Changelog 1.0.0 to 1.0.1 
 ------------------------
 
-* added a 'pytest_nose' plugin which handles nose.SkipTest, 
+* added a default 'pytest_nose' plugin which handles nose.SkipTest, 
   nose-style function/method/generator setup/teardown and 
   tries to report functions correctly.  
 
