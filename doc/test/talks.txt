@@ -9,25 +9,27 @@ tutorial examples and blog postings
 
 function arguments: 
 
-- `application setup in test functions with funcargs`_ (doc link)
+- `application setup in test functions with funcargs`_ 
+- `making funcargs dependendent on command line options`_ 
 - `monkey patching done right`_ (blog post, consult `monkeypatch
   plugin`_ for actual 1.0 API)
   
 test parametrization: 
 
-- `generating parametrized tests with funcargs`_ (doc link) 
-- `parametrizing tests, generalized`_ (blog entry) 
-- `putting test-hooks into local or global plugins`_ (blog entry) 
+- `generating parametrized tests with funcargs`_ 
+- `parametrizing tests, generalized`_ (blog post) 
+- `putting test-hooks into local or global plugins`_ (blog post) 
 
 distributed testing: 
 
 - `simultanously test your code on all platforms`_ (blog entry) 
  
-plugins: 
+plugin specific examples: 
 
-- usage examples are in most of the referenced `plugins`_ docs 
+- `many examples in the docs for plugins`_ 
 
-.. _plugins: plugin/index.html
+.. _`making funcargs dependendent on command line options`: funcargs.html#tut-cmdlineoption
+.. _`many examples in the docs for plugins`: plugin/index.html
 .. _`monkeypatch plugin`: plugin/monkeypatch.html
 .. _`application setup in test functions with funcargs`: funcargs.html#appsetup
 .. _`simultanously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/

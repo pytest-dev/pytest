@@ -209,10 +209,6 @@ class TestTerminal:
         item = testdir.getitem("def test_func(): pass")
         tr = TerminalReporter(item.config, file=linecomp.stringio)
         item.config.pluginmanager.register(tr)
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*ABCDE "
-        ])
         tr.config.option.verbose = True
         tr.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
@@ -227,14 +223,33 @@ class TestTerminal:
         item.config.pluginmanager.register(Plugin())             
         tr = TerminalReporter(item.config, file=linecomp.stringio)
         item.config.pluginmanager.register(tr)
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*FGHJ "
-        ])
         tr.config.option.verbose = True
         tr.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
             "*FGHJ:43: custom*"
+        ])
+
+    def test_itemreport_subclasses_show_subclassed_file(self, testdir):
+        p1 = testdir.makepyfile(test_p1="""
+            class BaseTests:
+                def test_p1(self):
+                    pass
+            class TestClass(BaseTests):
+                pass 
+        """)
+        p2 = testdir.makepyfile(test_p2="""
+            from test_p1 import BaseTests
+            class TestMore(BaseTests):
+                pass
+        """)
+        result = testdir.runpytest(p2)
+        assert result.stdout.fnmatch_lines([
+            "*test_p2.py .",
+            "*1 passed*",
+        ])
+        result = testdir.runpytest("-v", p2)
+        result.stdout.fnmatch_lines([
+            "*test_p2.py <- *test_p1.py:2: TestMore.test_p1*",
         ])
 
     def test_keyboard_interrupt_dist(self, testdir, option):

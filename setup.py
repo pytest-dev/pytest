@@ -105,8 +105,6 @@ def main():
                   'py.xmlobj.testing'],
         package_data={'py': ['LICENSE',
                              'bin/_findpy.py',
-                             'bin/_genscripts.py',
-                             'bin/gendoc.py',
                              'bin/py.cleanup',
                              'bin/py.countloc',
                              'bin/py.lookup',

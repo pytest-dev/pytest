@@ -7,7 +7,7 @@ import py
 import sys
 
 def pytest_addoption(parser):
-    group = parser.getgroup("test process debugging")
+    group = parser.getgroup("debugconfig")
     group.addoption('--collectonly',
         action="store_true", dest="collectonly",
         help="only collect tests, don't execute them."),
@@ -181,8 +181,8 @@ class TerminalReporter:
             else:
                 # ensure that the path is printed before the 
                 # 1st test of a module starts running
-                fspath, lineno, msg = self._getreportinfo(item)
-                self.write_fspath_result(fspath, "")
+
+                self.write_fspath_result(self._getfspath(item), "")
 
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
@@ -199,8 +199,7 @@ class TerminalReporter:
             markup = {}
         self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
-            fspath, lineno, msg = self._getreportinfo(rep.item)
-            self.write_fspath_result(fspath, letter)
+            self.write_fspath_result(self._getfspath(rep.item), letter)
         else:
             line = self._reportinfoline(rep.item)
             if not hasattr(rep, 'node'):
@@ -229,9 +228,9 @@ class TerminalReporter:
 
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "python: platform %s -- Python %s" % (sys.platform, verinfo)
-        if self.config.option.verbose or self.config.option.debug:
-            msg += " -- " + str(sys.executable)
+        if self.config.option.verbose or self.config.option.debug or getattr(self.config.option, 'pastebin', None):
             msg += " -- pytest-%s" % (py.__version__)
+            msg += " -- " + str(sys.executable)
         self.write_line(msg)
 
         if self.config.option.debug or self.config.option.traceconfig:
@@ -288,8 +287,13 @@ class TerminalReporter:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
 
     def _reportinfoline(self, item):
+        collect_fspath = self._getfspath(item)
         fspath, lineno, msg = self._getreportinfo(item)
-        if fspath:
+        if fspath and fspath != collect_fspath:
+            fspath = "%s <- %s" % (
+                self.curdir.bestrelpath(collect_fspath),
+                self.curdir.bestrelpath(fspath))
+        elif fspath:
             fspath = self.curdir.bestrelpath(fspath)
         if lineno is not None:
             lineno += 1
@@ -298,7 +302,7 @@ class TerminalReporter:
         elif fspath and msg:
             line = "%(fspath)s: %(msg)s"
         elif fspath and lineno:
-            line = "%(fspath)s:%(lineno)s"
+            line = "%(fspath)s:%(lineno)s %(extrapath)s"
         else:
             line = "[noreportinfo]"
         return line % locals() + " "
@@ -321,6 +325,13 @@ class TerminalReporter:
         # cache on item
         item.__reportinfo = reportinfo
         return reportinfo
+
+    def _getfspath(self, item):
+        try:
+            return item.fspath
+        except AttributeError:
+            fspath, lineno, msg = self._getreportinfo(item)
+            return fspath
 
     #
     # summaries for sessionfinish 

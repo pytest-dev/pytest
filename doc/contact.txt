@@ -5,9 +5,12 @@ Contact and Communication points
 
 - #pylib on irc.freenode.net IRC channel for random questions. 
 
+
 - `tetamap`_: Holger Krekel's blog, often about testing and py.test related news. 
 
-- `py-svn general commit mailing list`_ to follow development commits, 
+- `Testing In Python`_: a mailing list for testing tools and discussion. 
+
+- `commit mailing list`_ or `@pylibcommit`_ to follow development commits, 
 
 - `bitbucket issue tracker`_ use this bitbucket issue tracker to report
   bugs or request features. 
@@ -22,6 +25,8 @@ Contact and Communication points
 
 .. _tetamap: http://tetamap.wordpress.com
 
+.. _`@pylibcommit`: http://twitter.com/pylibcommit 
+
 
 .. 
     get an account on codespeak  
@@ -33,14 +38,13 @@ Contact and Communication points
     you are new to the python developer community please come to the IRC 
     or the mailing list and ask questions, get involved. 
 
+.. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
 .. _us: http://codespeak.net/mailman/listinfo/py-dev
 .. _codespeak: http://codespeak.net/
 .. _`py-dev`: 
 .. _`development mailing list`: 
 .. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev 
-.. _`subversion commit mailing list`: 
 .. _`py-svn`: 
-.. _`py-svn general commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn 
-.. _`development bug/feature tracker`: https://codespeak.net/issue/py-dev/ 
+.. _`commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn 
 

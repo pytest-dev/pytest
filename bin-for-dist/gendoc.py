@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+XXX
+
 import sys
 import os
 from _findpy import py

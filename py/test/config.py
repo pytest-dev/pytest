@@ -64,7 +64,7 @@ class Config(object):
                     val = eval(val)
                 opt.default = val 
             else:
-                name = "pytest_option_" + opt.dest
+                name = "option_" + opt.dest
                 try:
                     opt.default = self._conftest.rget(name)
                 except (ValueError, KeyError):

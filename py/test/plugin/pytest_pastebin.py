@@ -8,7 +8,7 @@ Usage
 
     py.test --pastebin=failed 
 
-This will submit full failure information to a remote Paste service and
+This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
 for example ``-x`` if you only want to send one particular failure. 
 

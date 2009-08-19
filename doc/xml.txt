@@ -166,4 +166,4 @@ complete the probably request-specific serialization of
 your Tags.  Hum, it's probably harder to explain this than to
 actually code it :-) 
 
-.. _`py.test`: test/test.html
+.. _`py.test`: test/index.html

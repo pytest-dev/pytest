@@ -4,14 +4,16 @@ import sys
 WIDTH = 75
 
 plugins = [
-    ('Plugins related to Python test functions and programs', 
+    ('plugins for Python test functions', 
             'xfail figleaf monkeypatch capture recwarn',),
-    ('Plugins for other testing styles and languages', 
+    ('plugins for other testing styles and languages', 
             'oejskit unittest nose doctest restdoc'),
-    ('Plugins for generic reporting and failure logging', 
+    ('plugins for generic reporting and failure logging', 
             'pastebin resultlog terminal',),
-    ('internal plugins / core functionality', 
-        'pdb keyword hooklog')
+    ('plugins for generic reporting and failure logging', 
+            'pastebin resultlog terminal',),
+    ('misc plugins / core functionality', 
+        'helpconfig pdb keyword hooklog')
     #('internal plugins / core functionality', 
     #    #'pdb keyword hooklog runner execnetcleanup # pytester',
     #    'pdb keyword hooklog runner execnetcleanup' # pytester',
@@ -194,24 +196,25 @@ class PluginDoc(RestWriter):
         #    basename))
         self.h1("Start improving this plugin in 30 seconds")
         self.para(py.code.Source("""
-            Do you find the above documentation or the plugin itself lacking? 
-
             1. Download `%s`_ plugin source code 
             2. put it somewhere as ``%s`` into your import path 
             3. a subsequent ``py.test`` run will use your local version
 
-            Further information: extend_ documentation, other plugins_ or contact_.  
+            Checkout customize_, other plugins_ or `get in contact`_. 
         """ % (basename, basename)))
         #    your work appreciated if you offer back your version.  In this case
         #    it probably makes sense if you `checkout the py.test 
         #    development version`_ and apply your changes to the plugin
         #    version in there. 
+        #self.links.append((basename, 
+        #    "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
+        #    "py/test/plugin/%s" %(hg_changeset, basename)))
         self.links.append((basename, 
             "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
-            "py/test/plugin/%s" %(hg_changeset, basename)))
-        self.links.append(('extend', '../extend.html'))
+            "py/test/plugin/%s" %(pyversion, basename)))
+        self.links.append(('customize', '../customize.html'))
         self.links.append(('plugins', 'index.html'))
-        self.links.append(('contact', '../../contact.html'))
+        self.links.append(('get in contact', '../../contact.html'))
         self.links.append(('checkout the py.test development version', 
             '../../download.html#checkout'))
        
@@ -269,6 +272,7 @@ if __name__ == "__main__":
     _config.pluginmanager.do_configure(_config)
 
     pydir = py.path.local(py.__file__).dirpath()
+    pyversion = py.version
 
     cmd = "hg tip --template '{node}'" 
     old = pydir.dirpath().chdir()

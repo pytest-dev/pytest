@@ -45,9 +45,9 @@ pageTracker._trackPageview();
 
     def a_docref(self, name, relhtmlpath):
         docpath = self.project.docpath
-        return html.a(name, class_="menu",
+        return html.div(html.a(name, class_="menu",
                       href=relpath(self.targetpath.strpath,
-                                   docpath.join(relhtmlpath).strpath))
+                                   docpath.join(relhtmlpath).strpath)))
 
     def a_apigenref(self, name, relhtmlpath):
         apipath = self.project.apigenpath
@@ -57,19 +57,30 @@ pageTracker._trackPageview();
         
     def fill_menubar(self):
         items = [
-            self.a_docref("pylib index", "index.html"),
-            self.a_docref("test doc-index", "test/test.html"),
-            self.a_docref("test quickstart", "test/quickstart.html"),
-            self.a_docref("test features", "test/features.html"),
-            self.a_docref("test plugins", "test/plugin/index.html"),
-            self.a_docref("py.execnet", "execnet.html"),
+            self.a_docref("install", "download.html"),
+            self.a_docref("contact", "contact.html"),
+            self.a_docref("faq", "faq.html"),
+            html.div(
+                html.h3("py.test:"),
+                self.a_docref("doc index", "test/index.html"),
+                self.a_docref("features", "test/features.html"),
+                self.a_docref("quickstart", "test/quickstart.html"),
+                self.a_docref("tutorials", "test/talks.html"),
+                self.a_docref("plugins", "test/plugin/index.html"),
+                self.a_docref("funcargs", "test/funcargs.html"),
+                self.a_docref("customize", "test/customize.html"),
+            ),
+            html.div(
+                html.h3("supporting APIs:"), 
+                self.a_docref("pylib index", "index.html"),
+                self.a_docref("py.execnet", "execnet.html"),
+                self.a_docref("py.path", "path.html"),
+                self.a_docref("py.code", "code.html"),
+            )
             #self.a_docref("py.code", "code.html"),
             #self.a_apigenref("api", "api/index.html"),
             #self.a_apigenref("source", "source/index.html"),
             #self.a_href("source", "http://bitbucket.org/hpk42/py-trunk/src/"),
-            self.a_href("issues", "http://bitbucket.org/hpk42/py-trunk/issues/"),
-            self.a_docref("contact", "contact.html"),
-            self.a_docref("install", "download.html"),
         ]
         self.menubar = html.div(id=css.menubar, *[
             html.div(item) for item in items])

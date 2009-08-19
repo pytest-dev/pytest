@@ -1,6 +1,7 @@
 from _findpy import py
 
-mydir = py.magic.autopath().dirpath()
+bindir = py.magic.autopath().dirpath().dirpath("py").join("bin")
+assert bindir.check(), bindir
 
 def getbasename(name):
     assert name[:2] == "py"
@@ -8,7 +9,7 @@ def getbasename(name):
 
 def genscript_unix(name):
     basename = getbasename(name)
-    path = mydir.join(basename)
+    path = bindir.join(basename)
     path.write(py.code.Source("""
         #!/usr/bin/env python
         from _findpy import py
@@ -19,7 +20,7 @@ def genscript_unix(name):
 def genscript_windows(name):
     basename = getbasename(name)
     winbasename = basename + ".cmd"
-    path = mydir.join("win32").join(winbasename)
+    path = bindir.join("win32").join(winbasename)
     path.write(py.code.Source("""
          @echo off
          python "%%~dp0\..\%s" %%*

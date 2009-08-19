@@ -5,10 +5,15 @@ Changes between 1.0.0 and 1.0.1
   nose-style function/method/generator setup/teardown and 
   tries to report functions correctly. 
 
-* unicode fixes: capturing and unicode writes to sys.stdout 
-  (through e.g a print statement) now work within tests, 
-  they are encoded as "utf8" by default, also terminalwriting 
-  was adapted and somewhat unified between windows and linux 
+* capturing of unicode writes or encoded strings to sys.stdout/err 
+  work better, also terminalwriting was adapted and somewhat 
+  unified between windows and linux. 
+
+* improved documentation layout and content a lot
+
+* added a "--help-config" option to show conftest.py / ENV-var names for
+  all longopt cmdline options, and some special conftest.py variables. 
+  renamed 'conf_capture' conftest setting to 'option_capture' accordingly. 
 
 * fix issue #27: better reporting on non-collectable items given on commandline 
   (e.g. pyc files)

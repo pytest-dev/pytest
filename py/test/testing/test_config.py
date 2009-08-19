@@ -42,7 +42,7 @@ class TestConfigCmdlineParsing:
 
     def test_parser_addoption_default_conftest(self, testdir, monkeypatch):
         import os
-        testdir.makeconftest("pytest_option_verbose=True")
+        testdir.makeconftest("option_verbose=True")
         config = testdir.parseconfig()
         assert config.option.verbose 
 

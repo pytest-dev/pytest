@@ -38,7 +38,7 @@ For the latest Release, see `PyPI project page`_
 .. _`py.io`: io.html
 .. _`py.path`: path.html
 .. _`py.code`: code.html
-.. _`py.test`: test/test.html 
+.. _`py.test`: test/index.html 
 .. _`py lib scripts`: bin.html
 .. _`py.xml`: xml.html 
 .. _`miscellaneous features`: misc.html 

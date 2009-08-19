@@ -61,13 +61,13 @@ def pytest_addoption(parser):
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no'],
                help="traceback verboseness (long/short/no).")
-    group._addoption('-p', action="append", dest="plugin", default = [],
+    group._addoption('-p', action="append", dest="plugins", default = [],
                help=("load the specified plugin after command line parsing. "))
     group._addoption('-f', '--looponfail',
                action="store_true", dest="looponfail", default=False,
                help="run tests, re-run failing test set until all pass.")
 
-    group = parser.addgroup("test process debugging")
+    group = parser.addgroup("debugconfig", "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
 
@@ -91,17 +91,10 @@ def pytest_addoption(parser):
                help="shortcut for '--dist=load --tx=NUM*popen'")
     group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
                help="add directory for rsyncing to remote tx nodes.")
-    group.addoption('--version', action="store_true",
-                    help="display version information")
 
 def pytest_configure(config):
     fixoptions(config)
     setsession(config)
-    if config.option.version:
-        p = py.path.local(py.__file__).dirpath()
-        print "This is py.test version %s, imported from %s" % (
-            py.__version__, p)
-        sys.exit(0)
     #xxxloadplugins(config)
 
 def fixoptions(config):
@@ -154,7 +147,7 @@ def test_plugin_specify(testdir):
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "default")
-    assert config.option.plugin == ['default']
+    assert config.option.plugins == ['default']
     config.pluginmanager.do_configure(config)
 
 

@@ -1,6 +1,6 @@
 
-Plugins related to Python test functions and programs
-=====================================================
+plugins for Python test functions
+=================================
 
 xfail_ mark python test functions as expected-to-fail and report them separately.
 
@@ -13,19 +13,21 @@ capture_ configurable per-test stdout/stderr capturing mechanisms.
 recwarn_ helpers for asserting deprecation and other warnings.
 
 
-Plugins for other testing styles and languages
+plugins for other testing styles and languages
 ==============================================
+
+oejskit_ run javascript tests in real life browsers
 
 unittest_ automatically discover and run traditional "unittest.py" style tests.
 
-doctest_ collect and execute doctests from modules and test files.
+nose_ nose-compatibility plugin: allow to run nose test suites natively.
 
-oejskit_ run javascript tests in real life browsers
+doctest_ collect and execute doctests from modules and test files.
 
 restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
 
 
-Plugins for generic reporting and failure logging
+plugins for generic reporting and failure logging
 =================================================
 
 pastebin_ submit failure or test session information to a pastebin service.
@@ -35,8 +37,20 @@ resultlog_ resultlog plugin for machine-readable logging of test results.
 terminal_ Implements terminal reporting of the full testing process.
 
 
-internal plugins / core functionality
-=====================================
+plugins for generic reporting and failure logging
+=================================================
+
+pastebin_ submit failure or test session information to a pastebin service.
+
+resultlog_ resultlog plugin for machine-readable logging of test results.
+
+terminal_ Implements terminal reporting of the full testing process.
+
+
+misc plugins / core functionality
+=================================
+
+helpconfig_ provide version info, conftest/environment config names.
 
 pdb_ interactive debugging with the Python Debugger.
 

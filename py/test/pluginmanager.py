@@ -233,8 +233,7 @@ def importplugin(importspec):
 
 def isgenerichook(name):
     return name == "pytest_plugins" or \
-           name.startswith("pytest_funcarg__") or \
-           name.startswith("pytest_option_")
+           name.startswith("pytest_funcarg__")
 
 def getargs(func):
     args = py.std.inspect.getargs(func.func_code)[0]

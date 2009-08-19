@@ -10,7 +10,7 @@ safely patch object attributes, dicts and environment variables.
 Usage
 ----------------
 
-Use the `monkeypatch funcarg`_ to safely patch the environment
+Use the `monkeypatch funcarg`_ to safely patch environment
 variables, object attributes or dictionaries.  For example, if you want
 to set the environment variable ``ENV1`` and patch the
 ``os.path.abspath`` function to return a particular value during a test
@@ -26,7 +26,16 @@ function execution you can write it down like this:
 The function argument will do the modifications and memorize the 
 old state.  After the test function finished execution all 
 modifications will be reverted.  See the `monkeypatch blog post`_ 
-for an extensive discussion. 
+for an extensive discussion.  
+
+To add to a possibly existing environment parameter you
+can use this example: 
+
+.. sourcecode:: python 
+
+    def test_mypath_finding(monkeypatch):
+        monkeypatch.setenv('PATH', 'x/y', prepend=":")
+        #  x/y will be at the beginning of $PATH 
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 
@@ -50,12 +59,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-Do you find the above documentation or the plugin itself lacking? 
-
 1. Download `pytest_monkeypatch.py`_ plugin source code 
 2. put it somewhere as ``pytest_monkeypatch.py`` into your import path 
 3. a subsequent ``py.test`` run will use your local version
 
-Further information: extend_ documentation, other plugins_ or contact_.  
+Checkout customize_, other plugins_ or `get in contact`_. 
 
 .. include:: links.txt
