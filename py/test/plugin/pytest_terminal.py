@@ -7,7 +7,7 @@ import py
 import sys
 
 def pytest_addoption(parser):
-    group = parser.getgroup("test process debugging")
+    group = parser.getgroup("debugconfig")
     group.addoption('--collectonly',
         action="store_true", dest="collectonly",
         help="only collect tests, don't execute them."),

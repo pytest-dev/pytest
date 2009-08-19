@@ -12,6 +12,10 @@ Changes between 1.0.0 and 1.0.1
 
 * improved documentation layout and content a lot
 
+* added a "--help-config" option to show conftest.py / ENV-var names for
+  all longopt cmdline options, and some special conftest.py variables. 
+  renamed 'conf_capture' conftest setting to 'option_capture' accordingly. 
+
 * fix issue #27: better reporting on non-collectable items given on commandline 
   (e.g. pyc files)
 

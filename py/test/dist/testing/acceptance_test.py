@@ -65,7 +65,7 @@ class TestDistribution:
             """, 
         )
         testdir.makeconftest("""
-            pytest_option_tx = 'popen popen popen'.split()
+            option_tx = 'popen popen popen'.split()
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([

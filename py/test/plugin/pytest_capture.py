@@ -32,7 +32,7 @@ You can influence output capturing mechanisms from the command line::
 If you set capturing values in a conftest file like this::
 
     # conftest.py
-    conf_capture = 'fd'
+    option_capture = 'fd'
 
 then all tests in that directory will execute with "fd" style capturing. 
 
@@ -131,7 +131,10 @@ class CaptureManager:
     def _getmethod(self, config, fspath):
         if config.option.capture:
             return config.option.capture
-        return config._conftest.rget("conf_capture", path=fspath)
+        try: 
+            return config._conftest.rget("option_capture", path=fspath)
+        except KeyError:
+            return "fd"
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)

@@ -38,7 +38,7 @@ You can influence output capturing mechanisms from the command line::
 If you set capturing values in a conftest file like this::
 
     # conftest.py
-    conf_capture = 'fd'
+    option_capture = 'fd'
 
 then all tests in that directory will execute with "fd" style capturing. 
 

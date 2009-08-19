@@ -12,7 +12,7 @@ class TestCaptureManager:
         for name in ('no', 'fd', 'sys'):
             sub = testdir.tmpdir.mkdir("dir" + name)
             sub.ensure("__init__.py")
-            sub.join("conftest.py").write('conf_capture = %r' % name)
+            sub.join("conftest.py").write('option_capture = %r' % name)
             assert capman._getmethod(config, sub.join("test_hello.py")) == name
 
     @py.test.mark.multi(method=['no', 'fd', 'sys'])

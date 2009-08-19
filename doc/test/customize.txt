@@ -17,85 +17,80 @@ You can see command line options by running::
     py.test -h 
 
 This will display all available command line options
-including the ones added by plugins `loaded at tool startup`_. 
-
+in your specific environment. 
 
 .. _`project-specific test configuration`: 
 .. _`collect_ignore`: 
 
-conftest.py: project specific test configuration
+conftest.py: project specific hooks and configuration
 --------------------------------------------------------
 
 A unique feature of py.test are its ``conftest.py`` files which
-allow to `set option defaults`_, `implement hooks`_, `specify funcargs`_
+allow to:
+
+* `set option defaults`_
+
+* `implement hooks`_
+
+* `specify funcargs`_
+
 or set particular variables to influence the testing process:
 
 * ``pytest_plugins``: list of named plugins to load 
 
-* ``collect_ignore``: list of paths to ignore during test collection (relative to the containing
-  ``conftest.py`` file) 
+* ``collect_ignore``: list of paths to ignore during test collection, relative to the containing ``conftest.py`` file 
 
 * ``rsyncdirs``: list of to-be-rsynced directories for distributed
-  testing 
+  testing, relative to the containing ``conftest.py`` file. 
 
 You may put a conftest.py files in your project root directory or into
 your package directory if you want to add project-specific test options. 
 
 ``py.test`` loads all ``conftest.py`` files upwards from the command
-line specified test files.  It will lookup configuration values
+line file arguments.  It usually looks up configuration values
 right-to-left, i.e. the closer conftest files will be checked first.
-You may have a ``conftest.py`` in your very home directory to have some
-global configuration values. 
-
-There is a flag that may help you debugging your conftest.py 
-configuration::
-
-    py.test --traceconfig 
+This means you can have a ``conftest.py`` in your very home directory to
+have some global configuration values. 
 
 .. _`specify funcargs`: funcargs.html#application-setup-tutorial-example
 
 .. _`set option defaults`: 
 
-setting option defaults 
--------------------------------
+setting persistent option defaults  
+------------------------------------
 
-py.test will lookup values of options in this order:
+py.test will lookup option values in this order: 
 
-* option value supplied at command line 
-* content of environment variable ``PYTEST_OPTION_NAME=...``
-* ``name = ...`` setting in the nearest ``conftest.py`` file.
+* command line
+* conftest.py files 
+* environment variables
 
-The name of an option usually is the one you find 
-in the longform of the option, i.e. the name 
-behind the ``--`` double-dash that you get with ``py.test -h``.
+To find out about the particular switches and type::
 
-IOW, you can set default values for options per project, per
-home-directoray, per shell session or per test-run. 
+    py.test --help-config
+
+This will print information about all options in your
+environment, including your local plugins. 
 
 .. _`basetemp`: 
 
 Temporary directories 
 -------------------------------------------
 
-``py.test`` runs provide means to create per-test session
-temporary (sub) directories through the config object.  
-You can create directories by calling a method
+You can create directories by calling one of two methods
 on the config object: 
 
-- ``config.mktemp(basename)``: create and returns a new tempdir 
+- ``config.mktemp(basename)``: create and return a new tempdir 
 
 - ``config.ensuretemp(basename)``: create or return a new tempdir 
 
-tempdirs are created as sub directories of a per-session testdir 
-and will keep around the directories of the last three 
-test runs.  You can also set the base temporary directory 
-with the `--basetemp`` option.  When distributing 
-tests on the same machine, ``py.test`` takes care to 
-pass around the basetemp directory such that all temporary
-files land below the same basetemp directory.  
-
-The config object is available when implementing `function arguments`_ 
-or `extensions`_ and can otherwise be globally accessed as ``py.test.config``. 
+temporary directories are created as sub directories of a per-session
+testdir and will keep around the directories of the last three test
+runs.  You can set the base temporary directory through the command line
+`--basetemp`` option.  When distributing tests on the same machine,
+``py.test`` takes care to configure a basetemp directory for the sub
+processes such that all temporary data lands below below a single
+per-test run basetemp directory.  
 
 .. _`function arguments`: funcargs.html
 .. _`extensions`: 

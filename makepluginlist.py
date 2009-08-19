@@ -4,14 +4,16 @@ import sys
 WIDTH = 75
 
 plugins = [
-    ('Plugins related to Python test functions and programs', 
+    ('plugins for Python test functions', 
             'xfail figleaf monkeypatch capture recwarn',),
-    ('Plugins for other testing styles and languages', 
+    ('plugins for other testing styles and languages', 
             'oejskit unittest nose doctest restdoc'),
-    ('Plugins for generic reporting and failure logging', 
+    ('plugins for generic reporting and failure logging', 
             'pastebin resultlog terminal',),
-    ('internal plugins / core functionality', 
-        'pdb keyword hooklog')
+    ('plugins for generic reporting and failure logging', 
+            'pastebin resultlog terminal',),
+    ('misc plugins / core functionality', 
+        'helpconfig pdb keyword hooklog')
     #('internal plugins / core functionality', 
     #    #'pdb keyword hooklog runner execnetcleanup # pytester',
     #    'pdb keyword hooklog runner execnetcleanup' # pytester',

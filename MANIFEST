@@ -36,6 +36,7 @@ doc/test/mission.txt
 doc/test/plugin/capture.txt
 doc/test/plugin/doctest.txt
 doc/test/plugin/figleaf.txt
+doc/test/plugin/helpconfig.txt
 doc/test/plugin/hooklog.txt
 doc/test/plugin/hookspec.txt
 doc/test/plugin/index.txt
@@ -349,6 +350,7 @@ py/test/plugin/pytest_default.py
 py/test/plugin/pytest_doctest.py
 py/test/plugin/pytest_execnetcleanup.py
 py/test/plugin/pytest_figleaf.py
+py/test/plugin/pytest_helpconfig.py
 py/test/plugin/pytest_hooklog.py
 py/test/plugin/pytest_keyword.py
 py/test/plugin/pytest_monkeypatch.py
@@ -366,6 +368,7 @@ py/test/plugin/pytest_tmpdir.py
 py/test/plugin/pytest_unittest.py
 py/test/plugin/pytest_xfail.py
 py/test/plugin/test_pytest_capture.py
+py/test/plugin/test_pytest_helpconfig.py
 py/test/plugin/test_pytest_nose.py
 py/test/plugin/test_pytest_runner.py
 py/test/plugin/test_pytest_runner_xunit.py

@@ -1,17 +1,12 @@
-1.0.1: bug fixes, nose/unittest.py support, improved reporting
---------------------------------------------------------------------
+1.0.1: improved reporting, nose/unittest.py support, bug fixes
+-----------------------------------------------------------------------
 
-The py.test/pylib 1.0.1 release is a bugfix release for 1.0.1, coming
-with improved documentation and more support for running existing
-nose/unittest.py style test suites.  Checkout:
+The py.test/pylib 1.0.1 release is a bugfix release, coming
+with improved documentation and many test reporting improvements. 
+It also allows to run more existing nose and unittest.py style test suites.  
+For a testing quickstart and general documentation: 
 
-    quickstart: http://codespeak.net/py/current/test/quickstart.html
-
-    pytest: http://pytest.org 
-
-    pylib: http://pylib.org 
-
-or read on for the changelog. 
+    http://pytest.org and http://pylib.org
 
 Changes 1.0.0 to 1.0.1 
 ------------------------
@@ -20,7 +15,11 @@ Changes 1.0.0 to 1.0.1
   nose-style function/method/generator setup/teardown and 
   tries to report functions correctly.  
 
-* much improved documentation layout: see http://pytest.org 
+* improved documentation, better navigation: see http://pytest.org 
+
+* added a "--help-config" option to show conftest.py / ENV-var names for
+  all longopt cmdline options, and some special conftest.py variables. 
+  renamed 'conf_capture' conftest setting to 'option_capture' accordingly. 
 
 * unicode fixes: capturing and unicode writes to sys.stdout 
   (through e.g a print statement) now work within tests, 
