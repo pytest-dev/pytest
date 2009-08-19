@@ -1,8 +1,7 @@
 import py, os, sys
-from py.__.test.plugin.pytest_capture import CaptureManager, ustream
+from py.__.test.plugin.pytest_capture import CaptureManager, EncodedFile
 
 class TestCaptureManager:
-
     def test_configure_per_fspath(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)
         assert config.getvalue("capture") is None
@@ -57,7 +56,7 @@ class TestCaptureManager:
 @py.test.mark.multi(method=['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
     testdir.makepyfile("""
-        # taken from issue 227 from nosests 
+        # taken from issue 227 from nosetests
         def test_unicode():
             import sys
             print sys.stdout
@@ -68,14 +67,27 @@ def test_capturing_unicode(testdir, method):
         "*1 passed*"
     ])
 
-def test_ustream_helper(testdir):
+@py.test.mark.multi(method=['fd', 'sys'])
+def test_capturing_bytes_in_utf8_encoding(testdir, method):
+    testdir.makepyfile("""
+        def test_unicode():
+            print '\\xe2'
+    """)
+    result = testdir.runpytest("--capture=%s" % method)
+    result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])
+
+def test_UnicodeFile(testdir):
     p = testdir.makepyfile("hello")
     f = p.open('w')
-    #f.encoding = "utf8"
-    x = ustream(f)
-    x.write(u'b\\00f6y')
-    x.close()
-    
+    pf = EncodedFile(f, "UTF-8")
+    pf.write(u'b\\00f6y\n')
+    pf.write('b\\00f6y\n')
+    pf.close()
+    assert f.closed
+    lines = p.readlines()
+    assert lines[0] == lines[1]
 
 def test_collect_capturing(testdir):
     p = testdir.makepyfile("""

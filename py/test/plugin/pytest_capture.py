@@ -110,8 +110,8 @@ class CaptureManager:
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
         newf = py.io.dupfile(f) 
-        f.close()
-        return ustream(newf)
+        encoding = getattr(newf, 'encoding', None) or "UTF-8"
+        return EncodedFile(newf, encoding)
 
     def _makestringio(self):
         return py.std.StringIO.StringIO() 
@@ -269,12 +269,21 @@ class CaptureFuncarg:
         self.capture.reset()
         del self.capture
 
-def ustream(f):
-    import codecs
-    encoding = getattr(f, 'encoding', None) or "UTF-8"
-    reader = codecs.getreader(encoding)
-    writer = codecs.getwriter(encoding)
-    srw = codecs.StreamReaderWriter(f, reader, writer)
-    srw.encoding = encoding
-    return srw 
+class EncodedFile(object):
+    def __init__(self, _stream, encoding):
+        self._stream = _stream 
+        self.encoding = encoding 
+       
+    def write(self, obj):
+        if isinstance(obj, unicode):
+            self._stream.write(obj.encode(self.encoding))
+        else:
+            self._stream.write(obj)
+
+    def writelines(self, linelist):
+        data = ''.join(linelist)
+        self.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
 

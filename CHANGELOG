@@ -5,10 +5,9 @@ Changes between 1.0.0 and 1.0.1
   nose-style function/method/generator setup/teardown and 
   tries to report functions correctly. 
 
-* unicode fixes: capturing and unicode writes to sys.stdout 
-  (through e.g a print statement) now work within tests, 
-  they are encoded as "utf8" by default, also terminalwriting 
-  was adapted and somewhat unified between windows and linux 
+* capturing of unicode writes to sys.stdout/err work better within
+  encoded as "utf8" by default, also terminalwriting was adapted 
+  and somewhat unified between windows and linux 
 
 * improved documentation layout and content a lot
 
