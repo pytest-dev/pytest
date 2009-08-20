@@ -9,12 +9,8 @@ from py.__.path import common
 iswin32 = sys.platform == "win32"
 
 class Stat(object):
-    pformat = "%s = property(lambda x: getattr(x._osstatresult, 'st_%s'))"
-
-    for name in ('atime blksize blocks ctime dev gid ' 
-                 'ino mode mtime nlink rdev size uid'.split()):
-        code = pformat.replace("%s", name)
-        exec code 
+    def __getattr__(self, name):
+        return getattr(self._osstatresult, "st_" + name)
 
     def __init__(self, path, osstatresult): 
         self.path = path 
@@ -37,7 +33,7 @@ class Stat(object):
         return entry[0]
     group = property(group) 
 
-class PosixPath(common.FSPathBase):
+class PosixPath(common.PathBase):
     def chown(self, user, group, rec=0):
         """ change ownership to the given user and group.
             user and group may be specified by a number or
@@ -89,14 +85,14 @@ def getgroupid(group):
         group = grp.getgrnam(group)[2]
     return group
 
-FSBase = not iswin32 and PosixPath or common.FSPathBase
+FSBase = not iswin32 and PosixPath or common.PathBase
 
 class LocalPath(FSBase):
     """ object oriented interface to os.path and other local filesystem 
         related information. 
     """
     sep = os.sep
-    class Checkers(common.FSCheckers):
+    class Checkers(common.Checkers):
         def _stat(self):
             try:
                 return self._statcache
@@ -129,7 +125,7 @@ class LocalPath(FSBase):
         Note also that passing in a local path object will simply return
         the exact same path object. Use new() to get a new copy.
         """
-        if isinstance(path, common.FSPathBase):
+        if isinstance(path, common.PathBase):
             if path.__class__ == cls:
                 return path
             path = path.strpath
@@ -154,18 +150,25 @@ class LocalPath(FSBase):
             if rec:
                 # force remove of readonly files on windows 
                 if iswin32: 
-                    self.chmod(0700, rec=1)
+                    self.chmod(448, rec=1) # octcal 0700
                 self._callex(py.std.shutil.rmtree, self.strpath)
             else:
                 self._callex(os.rmdir, self.strpath)
         else:
             if iswin32: 
-                self.chmod(0700)
+                self.chmod(448) # octcal 0700
             self._callex(os.remove, self.strpath)
 
     def computehash(self, hashtype="md5", chunksize=524288):
         """ return hexdigest of hashvalue for this file. """
-        hash = self._gethashinstance(hashtype)
+        try:
+            try:
+                import hashlib as mod
+            except ImportError:
+                mod = __import__(hashtype)
+            hash = getattr(mod, hashtype)()
+        except (AttributeError, ImportError):
+            raise ValueError("Don't know how to compute %r hash" %(hashtype,))
         f = self.open('rb')
         try:
             while 1:
@@ -247,7 +250,7 @@ class LocalPath(FSBase):
                     elif name == 'ext':
                         append(ext)
                     else:
-                        raise ValueError, "invalid part specification %r" % name
+                        raise ValueError("invalid part specification %r" % name)
         return res
 
     def join(self, *args, **kwargs):
@@ -297,7 +300,7 @@ class LocalPath(FSBase):
             and possibly sorted.
         """
         if isinstance(fil, str):
-            fil = common.fnmatch(fil)
+            fil = common.FNMatcher(fil)
         res = []
         for name in self._callex(os.listdir, self.strpath):
             childurl = self.join(name)
@@ -524,61 +527,6 @@ class LocalPath(FSBase):
                     del sys.modules[modname]
                     raise
                 return mod
-
-    def _getpymodule(self):
-        """resolve this path to a module python object. """
-        if self.ext != '.c':
-            return super(LocalPath, self)._getpymodule()
-        from py.__.misc.buildcmodule import make_module_from_c
-        mod = make_module_from_c(self)
-        return mod
-
-    def _getpycodeobj(self):
-        """ read the path and compile it to a code object. """
-        dotpy = self.ext == ".py"
-        if dotpy:
-            my_magic     = py.std.imp.get_magic()
-            my_timestamp = int(self.mtime())
-            if __debug__:
-                pycfile = self + 'c'
-            else:
-                pycfile = self + 'o'
-            try:
-                f = pycfile.open('rb')
-                try:
-                    header = f.read(8)
-                    if len(header) == 8:
-                        magic, timestamp = py.std.struct.unpack('<4si', header)
-                        if magic == my_magic and timestamp == my_timestamp:
-                            co = py.std.marshal.load(f)
-                            path1 = co.co_filename
-                            path2 = str(self)
-                            if path1 == path2:
-                                return co
-                            try:
-                                if os.path.samefile(path1, path2):
-                                    return co
-                            except (OSError,          # probably path1 not found
-                                    AttributeError):  # samefile() not available
-                                pass
-                finally:
-                    f.close()
-            except py.error.Error:
-                pass
-        s = self.read(mode='rU') + '\n'
-        codeobj = compile(s, str(self), 'exec', generators.compiler_flag)
-        if dotpy:
-            try:
-                f = pycfile.open('wb')
-                f.write(py.std.struct.pack('<4si', 'TEMP', -1))  # fixed below
-                py.std.marshal.dump(codeobj, f)
-                f.flush()
-                f.seek(0)
-                f.write(py.std.struct.pack('<4si', my_magic, my_timestamp))
-                f.close()
-            except py.error.Error:
-                pass
-        return codeobj
 
     def sysexec(self, *argv):
         """ return stdout-put from executing a system child process,

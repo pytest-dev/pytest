@@ -18,7 +18,7 @@ DEBUG = 0
 
 rex_blame = re.compile(r'\s*(\d+)\s*(\S+) (.*)')
 
-class SvnWCCommandPath(common.FSPathBase):
+class SvnWCCommandPath(common.PathBase):
     """ path implementation offering access/modification to svn working copies.
         It has methods similar to the functions in os.path and similar to the
         commands of the svn client.
@@ -416,7 +416,7 @@ recursively. """
         depending on implementation choices.
         """
         if isinstance(fil, str):
-            fil = common.fnmatch(fil)
+            fil = common.FNMatcher(fil)
         # XXX unify argument naming with LocalPath.listdir
         def notsvn(path):
             return path.basename != '.svn' 

@@ -29,7 +29,9 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         fn = self.tmpdir.join("testhashfile")
         fn.write("hello")
         assert fn.computehash("md5") == md5.md5("hello").hexdigest()
-        assert fn.computehash("sha") == sha.sha("hello").hexdigest()
+        #assert fn.computehash("sha") == sha.sha("hello").hexdigest()
+        if sys.version_info >= (2,4):
+            assert fn.computehash("sha1") == sha.sha("hello").hexdigest()
         py.test.raises(ValueError, fn.computehash, "asdasd")
 
     def test_remove_removes_readonly_file(self):

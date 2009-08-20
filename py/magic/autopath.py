@@ -1,6 +1,5 @@
 import os, sys
 from py.path import local
-from py.__.path.common import PathStr
 
 def autopath(globs=None, basefile='__init__.py'):
     """ return the (local) path of the "current" file pointed to by globals
@@ -20,21 +19,17 @@ def autopath(globs=None, basefile='__init__.py'):
             raise ValueError, "cannot compute autopath in interactive mode"
         __file__ = os.path.abspath(sys.argv[0])
 
-    custom__file__ = isinstance(__file__, PathStr)
-    if custom__file__:
-        ret = __file__.__path__
-    else:
-        ret = local(__file__)
-        if ret.ext in ('.pyc', '.pyo'):
-            ret = ret.new(ext='.py')
+    ret = local(__file__)
+    if ret.ext in ('.pyc', '.pyo'):
+        ret = ret.new(ext='.py')
     current = pkgdir = ret.dirpath()
     while 1:
-        if basefile in current:
+        if basefile in current.listdir():
             pkgdir = current
             current = current.dirpath()
             if pkgdir != current:
                 continue
-        elif not custom__file__ and str(current) not in sys.path:
+        elif str(current) not in sys.path:
             sys.path.insert(0, str(current))
         break
     ret.pkgdir = pkgdir

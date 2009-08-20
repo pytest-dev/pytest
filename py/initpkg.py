@@ -107,54 +107,6 @@ class Package(object):
         assert base.check()
         return base
 
-    def _iterfiles(self):
-        from py.__.path.common import checker
-        base = self.getpath()
-        for x in base.visit(checker(file=1, notext='.pyc'),
-                            rec=checker(dotfile=0)):
-            yield x
-
-    def shahexdigest(self, cache=[]):
-        """ return sha hexdigest for files contained in package. """
-        if cache:
-            return cache[0]
-        from sha import sha
-        sum = sha()
-        # XXX the checksum depends on the order in which visit() enumerates
-        # the files, and it doesn't depend on the file names and paths
-        for x in self._iterfiles():
-            sum.update(x.read())
-        cache.append(sum.hexdigest())
-        return cache[0]
-
-    def getzipdata(self):
-        """ return string representing a zipfile containing the package. """
-        import zipfile
-        import py
-        try:
-            from cStringIO import StringIO
-        except ImportError:
-            from StringIO import StringIO
-        base = py.__pkg__.getpath().dirpath()
-        outf = StringIO()
-        f = zipfile.ZipFile(outf, 'w', compression=zipfile.ZIP_DEFLATED)
-        try:
-            for x in self._iterfiles():
-                f.write(str(x), x.relto(base))
-        finally:
-            f.close()
-        return outf.getvalue()
-
-    def getrev(self):
-        import py
-        p = py.path.svnwc(self.module.__file__).dirpath()
-        try:
-            return p.info().rev
-        except (KeyboardInterrupt, MemoryError, SystemExit):
-            raise
-        except:
-            return 'unknown'
-
 def setmodule(modpath, module):
     #print "sys.modules[%r] = %r" % (modpath, module)
     sys.modules[modpath] = module

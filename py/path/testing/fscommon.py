@@ -207,8 +207,12 @@ class CommonFSTests(common.CommonPathTests):
             assert newp.check(file=1)
             assert not p.check()
         finally:
-            newp.move(p)
-        assert p.check()
+            dp = newp.dirpath()
+            if hasattr(dp, 'revert'):
+                dp.revert()
+            else:
+                newp.move(p)
+                assert p.check()
 
     def test_move_directory(self):
         source = self.root.join('sampledir') 
@@ -217,32 +221,3 @@ class CommonFSTests(common.CommonPathTests):
         assert dest.check(dir=1)
         assert dest.join('otherfile').check(file=1) 
         assert not source.join('sampledir').check()
-
-    def test__getpymodule(self):
-        obj = self.root.join('execfile')._getpymodule()
-        assert obj.x == 42
-
-    def test_not_has_resolve(self):
-        # because this would mean confusion with respect to
-        # py.path.extpy
-        assert not hasattr(self.root, 'resolve')
-
-    def test__getpymodule_a(self):
-        otherdir = self.root.join('otherdir')
-        mod = otherdir.join('a.py')._getpymodule()
-        assert mod.result == "got it"
-
-    def test__getpymodule_b(self):
-        otherdir = self.root.join('otherdir')
-        mod = otherdir.join('b.py')._getpymodule()
-        assert mod.stuff == "got it"
-
-    def test__getpymodule_c(self):
-        otherdir = self.root.join('otherdir')
-        mod = otherdir.join('c.py')._getpymodule()
-        assert mod.value == "got it"
-
-    def test__getpymodule_d(self):
-        otherdir = self.root.join('otherdir')
-        mod = otherdir.join('d.py')._getpymodule()
-        assert mod.value2 == "got it"

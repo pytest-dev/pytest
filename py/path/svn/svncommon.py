@@ -48,7 +48,7 @@ def checkbadchars(url):
 
 #_______________________________________________________________
 
-class SvnPathBase(common.FSPathBase):
+class SvnPathBase(common.PathBase):
     """ Base implementation for SvnPath implementations. """
     sep = '/'
 
@@ -168,7 +168,7 @@ class SvnPathBase(common.FSPathBase):
             and possibly sorted.
         """
         if isinstance(fil, str):
-            fil = common.fnmatch(fil)
+            fil = common.FNMatcher(fil)
         nameinfo_seq = self._listdir_nameinfo()
         if len(nameinfo_seq) == 1:
             name, info = nameinfo_seq[0]
@@ -244,7 +244,7 @@ class SvnPathBase(common.FSPathBase):
     #        raise IOError, "could not determine newest repo revision for %s" % self
     #    return rev
 
-    class Checkers(common.FSCheckers):
+    class Checkers(common.Checkers):
         def dir(self):
             try:
                 return self.path.info().kind == 'dir'

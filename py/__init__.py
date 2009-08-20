@@ -17,7 +17,7 @@ For questions please check out http://pylib.org/contact.html
 .. _`py.code`: http://pylib.org/code.html
  
 """
-from initpkg import initpkg
+from py.initpkg import initpkg
 trunk = "trunk"
 
 version = trunk or "1.0.1"

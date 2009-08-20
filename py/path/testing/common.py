@@ -1,4 +1,3 @@
-from py.__.path.common import checker
 import py
 
 class CommonPathTests(object):
@@ -99,9 +98,6 @@ class CommonPathTests(object):
         assert self.root.join('samplefile').check(notdir=1)
         assert not self.root.join("samplefile").check(dir=1)
 
-    def test_filter_dir(self):
-        assert checker(dir=1)(self.root.join("sampledir"))
-
     def test_fnmatch_file(self):
         assert self.root.join("samplefile").check(fnmatch='s*e')
         assert self.root.join("samplefile").check(notfnmatch='s*x')
@@ -151,12 +147,12 @@ class CommonPathTests(object):
         assert l[0], self.root.join('sampledir')
 
     def test_listdir_filter(self):
-        l = self.root.listdir(checker(dir=1))
+        l = self.root.listdir(lambda x: x.check(dir=1))
         assert self.root.join('sampledir') in l
         assert not self.root.join('samplefile') in l
 
     def test_listdir_sorted(self):
-        l = self.root.listdir(checker(basestarts="sample"), sort=True)
+        l = self.root.listdir(lambda x: x.check(basestarts="sample"), sort=True)
         assert self.root.join('sampledir') == l[0]
         assert self.root.join('samplefile') == l[1]
         assert self.root.join('samplepickle') == l[2]
@@ -189,7 +185,7 @@ class CommonPathTests(object):
 
     def test_visit_endswith(self):
         l = []
-        for i in self.root.visit(checker(endswith="file")):
+        for i in self.root.visit(lambda x: x.check(endswith="file")):
             l.append(i.relto(self.root))
         assert self.root.sep.join(["sampledir", "otherfile"]) in l
         assert "samplefile" in l
@@ -204,23 +200,6 @@ class CommonPathTests(object):
         path2 = self.root.join('samplefile2')
         assert cmp(path1, path2) == cmp('samplefile', 'samplefile2')
         assert cmp(path1, path1) == 0
-
-    def test_contains_path(self):
-        path1 = self.root.join('samplefile')
-        assert path1 in self.root
-        assert not self.root.join('not existing') in self.root
-
-    def test_contains_path_with_basename(self):
-        assert 'samplefile' in self.root
-        assert 'not_existing' not in self.root
-
-    def featuretest_check_docstring(self):
-        here = self.root.__class__
-        assert here.check.__doc__
-        doc = here.check.__doc__
-        for name in dir(local.Checkers):
-            if name[0] != '_':
-                assert name in doc
 
     def test_simple_read(self):
         x = self.root.join('samplefile').read('ru')

@@ -88,40 +88,6 @@ def check_import(modpath):
     print "checking import", modpath
     assert __import__(modpath) 
 
-def test_shahexdigest():
-    hex = py.__pkg__.shahexdigest()
-    assert len(hex) == 40
-
-def test_getzipdata():
-    s = py.__pkg__.getzipdata()
-
-def test_getrev():
-    if not py.path.local(py.__file__).dirpath('.svn').check():
-        py.test.skip("py package is not a svn checkout") 
-    d = py.__pkg__.getrev()
-    svnversion = py.path.local.sysfind('svnversion')
-    if svnversion is None:
-        py.test.skip("cannot test svnversion, 'svnversion' binary not found")
-    v = svnversion.sysexec(py.path.local(py.__file__).dirpath())
-    assert v.startswith(str(d))
-
-# the following test should abasically work in the future
-def XXXtest_virtual_on_the_fly():
-    py.initpkg('my', {
-        'x.abspath' : 'os.path.abspath',
-        'x.local'   : 'py.path.local',
-        'y'   : 'smtplib',
-        'z.cmdexec'   : 'py.process.cmdexec',
-    })
-    from my.x import abspath
-    from my.x import local
-    import smtplib
-    from my import y
-    assert y is smtplib
-    from my.z import cmdexec
-    from py.process import cmdexec as cmdexec2
-    assert cmdexec is cmdexec2
-
 #
 # test support for importing modules
 #

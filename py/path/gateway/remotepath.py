@@ -3,7 +3,7 @@ from py.__.path import common
 
 COUNTER = itertools.count()
 
-class RemotePath(common.FSPathBase):
+class RemotePath(common.PathBase):
     sep = '/'
 
     def __init__(self, channel, id, basename=None):
