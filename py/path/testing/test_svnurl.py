@@ -1,6 +1,6 @@
 import py
-from py.__.path.svn.urlcommand import InfoSvnCommand
-from py.__.path.svn.testing.svntestbase import CommonCommandAndBindingTests, \
+from py.__.path.svnurl import InfoSvnCommand
+from py.__.path.testing.svntestbase import CommonCommandAndBindingTests, \
                                                getrepowc, getsvnbin
 import datetime
 import time

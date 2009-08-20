@@ -1,9 +1,8 @@
 import py
 import sys
-from py.__.path.svn.testing.svntestbase import CommonSvnTests, getrepowc, getsvnbin
-from py.__.path.svn.wccommand import InfoSvnWCCommand, XMLWCStatus
-from py.__.path.svn.wccommand import parse_wcinfotime
-from py.__.path.svn import svncommon
+from py.__.path.testing.svntestbase import CommonSvnTests, getrepowc, getsvnbin, make_test_repo
+from py.__.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
+from py.__.path import svnwc as svncommon
 
 if sys.platform != 'win32':
     def normpath(p):
@@ -22,6 +21,27 @@ else:
 
 def setup_module(mod):
     getsvnbin()
+
+class TestMakeRepo(object):
+    def setup_class(cls):
+        cls.repo = make_test_repo()
+        cls.wc = py.path.svnwc(py.test.ensuretemp("test-wc").join("wc"))
+
+    def test_empty_checkout(self):
+        self.wc.checkout(self.repo)
+        assert len(self.wc.listdir()) == 0
+
+    def test_commit(self):
+        self.wc.checkout(self.repo)
+        p = self.wc.join("a_file")
+        p.write("test file")
+        p.add()
+        rev = self.wc.commit("some test")
+        assert p.info().rev == 1
+        assert rev == 1
+        rev = self.wc.commit()
+        assert rev is None
+        
 
 class TestWCSvnCommandPath(CommonSvnTests):
     def setup_class(cls): 
@@ -427,8 +447,8 @@ class TestInfoSvnWCCommand:
 
     def test_svn_1_2(self):
         output = """
-        Path: test_wccommand.py
-        Name: test_wccommand.py
+        Path: test_svnwc.py
+        Name: test_svnwc.py
         URL: http://codespeak.net/svn/py/dist/py/path/svn/wccommand.py
         Repository UUID: fd0d7bf2-dfb6-0310-8d31-b7ecfe96aada
         Revision: 28137
@@ -454,8 +474,8 @@ class TestInfoSvnWCCommand:
 
     def test_svn_1_3(self):
         output = """
-        Path: test_wccommand.py
-        Name: test_wccommand.py
+        Path: test_svnwc.py
+        Name: test_svnwc.py
         URL: http://codespeak.net/svn/py/dist/py/path/svn/wccommand.py
         Repository Root: http://codespeak.net/svn
         Repository UUID: fd0d7bf2-dfb6-0310-8d31-b7ecfe96aada

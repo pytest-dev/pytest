@@ -2,7 +2,7 @@ import sys
 import py
 from py import path, test, process
 from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
-from py.__.path.svn import cache, svncommon
+from py.__.path import svnwc as svncommon
 
 mypath = py.magic.autopath()
 repodump = mypath.dirpath('repotest.dump')
@@ -66,6 +66,7 @@ def restore_repowc((savedrepo, savedwc)):
 
 # create an empty repository for testing purposes and return the url to it
 def make_test_repo(name="test-repository"):
+    getsvnbin()
     repo = py.test.ensuretemp(name)
     try:
         py.process.cmdexec('svnadmin create %s' % repo)
@@ -149,14 +150,14 @@ class CommonCommandAndBindingTests(CommonSvnTests):
 
     # the following tests are easier if we have a path class
     def test_repocache_simple(self):
-        repocache = cache.RepoCache()
+        repocache = svncommon.RepoCache()
         repocache.put(self.root.strpath, 42)
         url, rev = repocache.get(self.root.join('test').strpath)
         assert rev == 42
         assert url == self.root.strpath
 
     def test_repocache_notimeout(self):
-        repocache = cache.RepoCache()
+        repocache = svncommon.RepoCache()
         repocache.timeout = 0
         repocache.put(self.root.strpath, self.root.rev)
         url, rev = repocache.get(self.root.strpath)
@@ -164,7 +165,7 @@ class CommonCommandAndBindingTests(CommonSvnTests):
         assert url == self.root.strpath
 
     def test_repocache_outdated(self):
-        repocache = cache.RepoCache()
+        repocache = svncommon.RepoCache()
         repocache.put(self.root.strpath, 42, timestamp=0)
         url, rev = repocache.get(self.root.join('test').strpath)
         assert rev == -1
@@ -172,7 +173,7 @@ class CommonCommandAndBindingTests(CommonSvnTests):
 
     def _test_getreporev(self):
         """ this test runs so slow it's usually disabled """
-        old = cache.repositories.repos
+        old = svncommon.repositories.repos
         try:
             _repocache.clear()
             root = self.root.new(rev=-1)

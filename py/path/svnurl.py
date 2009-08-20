@@ -1,16 +1,14 @@
 """
-
 module defining a subversion path object based on the external
 command 'svn'. This modules aims to work with svn 1.3 and higher
 but might also interact well with earlier versions. 
-
 """
 
-import os, sys, time, re, calendar
+import os, sys, time, re
 import py
 from py import path, process
 from py.__.path import common
-from py.__.path.svn import svncommon
+from py.__.path import svnwc as svncommon
 from py.__.misc.cache import BuildcostAccessCache, AgingCache
 
 DEBUG=False 
@@ -253,10 +251,10 @@ rev_end is the last revision (defaulting to HEAD).
 if verbose is True, then the LogEntry instances also know which files changed.
 """
         assert self.check() #make it simpler for the pipe
-        rev_start = rev_start is None and _Head or rev_start
-        rev_end = rev_end is None and _Head or rev_end
+        rev_start = rev_start is None and "HEAD" or rev_start
+        rev_end = rev_end is None and "HEAD" or rev_end
 
-        if rev_start is _Head and rev_end == 1:
+        if rev_start == "HEAD" and rev_end == 1:
             rev_opt = ""
         else:
             rev_opt = "-r %s:%s" % (rev_start, rev_end)
@@ -268,7 +266,7 @@ if verbose is True, then the LogEntry instances also know which files changed.
         result = []
         for logentry in filter(None, tree.firstChild.childNodes):
             if logentry.nodeType == logentry.ELEMENT_NODE:
-                result.append(LogEntry(logentry))
+                result.append(svncommon.LogEntry(logentry))
         return result
 
 #01234567890123456789012345678901234567890123467
@@ -313,6 +311,7 @@ def parse_time_with_missing_year(timestr):
     the svn output doesn't show the year makes the 'timestr'
     ambigous.
     """
+    import calendar
     t_now = time.gmtime()
 
     tparts = timestr.split()
@@ -340,32 +339,4 @@ class PathEntry:
             self.copyfrom_path = ppart.getAttribute('copyfrom-path').encode('UTF-8')
             if self.copyfrom_path:
                 self.copyfrom_rev = int(ppart.getAttribute('copyfrom-rev'))
-
-class LogEntry:
-    def __init__(self, logentry):
-        self.rev = int(logentry.getAttribute('revision'))
-        for lpart in filter(None, logentry.childNodes):
-            if lpart.nodeType == lpart.ELEMENT_NODE:
-                if lpart.nodeName == u'author':
-                    self.author = lpart.firstChild.nodeValue.encode('UTF-8')
-                elif lpart.nodeName == u'msg':
-                    if lpart.firstChild:
-                        self.msg = lpart.firstChild.nodeValue.encode('UTF-8')
-                    else:
-                        self.msg = ''
-                elif lpart.nodeName == u'date':
-                    #2003-07-29T20:05:11.598637Z
-                    timestr = lpart.firstChild.nodeValue.encode('UTF-8')
-                    self.date = svncommon.parse_apr_time(timestr)
-                elif lpart.nodeName == u'paths':
-                    self.strpaths = []
-                    for ppart in filter(None, lpart.childNodes):
-                        if ppart.nodeType == ppart.ELEMENT_NODE:
-                            self.strpaths.append(PathEntry(ppart))
-    def __repr__(self):
-        return '<Logentry rev=%d author=%s date=%s>' % (
-            self.rev, self.author, self.date)
-
-
-_Head = "HEAD" 
 
