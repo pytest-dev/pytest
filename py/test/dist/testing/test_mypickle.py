@@ -72,9 +72,6 @@ class TestPickleChannelFunctional:
         cls.gw = py.execnet.PopenGateway()
         cls.gw.remote_init_threads(5)
 
-    def teardown_class(cls):
-        cls.gw.exit()
-
     def test_popen_send_instance(self):
         channel = self.gw.remote_exec("""
             from py.__.test.dist.mypickle import PickleChannel

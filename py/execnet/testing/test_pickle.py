@@ -1,8 +1,8 @@
-from StringIO import StringIO
+import py
 
 def pickletest(mod):
-    f1 = StringIO()
-    f2 = StringIO()
+    f1 = py.io.TextIO()
+    f2 = py.io.TextIO()
 
     pickler1 = mod.Pickler(f1)
     unpickler1 = mod.Unpickler(f2)

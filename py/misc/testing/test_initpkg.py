@@ -170,61 +170,6 @@ class TestRealModule:
         import realtest.x.module
         assert realtest.x.module.__doc__ == 'test module'
 
-#class TestStdHook:
-#    """Tests imports for the standard Python library hook."""
-#
-#    def setup_method(self, *args):
-#        """Unload the test modules before each test."""
-#        module_names = ['py.std.StringIO', 'py.std', 'py']
-#        for modname in module_names:
-#            if modname in sys.modules:
-#                del sys.modules[modname]
-#
-#    def test_std_import_simple(self):
-#        import py
-#        StringIO = py.std.StringIO
-#        assert 'py' in sys.modules
-#        assert 'py.std' in sys.modules
-#        assert 'py.std.StringIO' in sys.modules
-#        assert hasattr(py.std.StringIO, 'StringIO')
-#
-#    def test_std_import0(self):
-#        """Testing 'import py.std.StringIO'."""
-#        import py.std.StringIO
-#        assert 'py' in sys.modules
-#        assert 'py.std' in sys.modules
-#        assert 'py.std.StringIO' in sys.modules
-#        assert hasattr(py.std.StringIO, 'StringIO')
-#
-#    def test_std_import1(self):
-#        """Testing 'from py import std'."""
-#        from py import std
-#        assert 'py' in sys.modules
-#        assert 'py.std' in sys.modules
-#
-#    def test_std_from(self):
-#        """Testing 'from py.std import StringIO'."""
-#        from py.std import StringIO
-#        assert getattr(StringIO, 'StringIO')
-#
-#    def test_std_star(self):
-#        "Test from py.std.string import *"
-#        """Testing 'from test.module import *'."""
-#        tmpdir = py.test.ensuretemp('test_initpkg')
-#        tfile = tmpdir.join('stdstartest.py')
-#        tfile.write(py.code.Source("""if True:
-#            from realtest.module import *
-#            globals()['mytest0']
-#            globals()['mytest1']
-#            globals()['MyTest']
-#        """))
-#        import stdstartest  # an exception will be raise if an error occurs
-
-##def test_help():
-#    help(std.path)
-#    #assert False
-
-
 def test_autoimport():
     from py.initpkg import autoimport
     py.std.os.environ['AUTOTEST_AUTOIMPORT'] = "nonexistmodule"

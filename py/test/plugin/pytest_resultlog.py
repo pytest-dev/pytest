@@ -90,7 +90,7 @@ class ResultLog(object):
 #
 # ===============================================================================
 
-import os, StringIO
+import os
 
 def test_generic_path():
     from py.__.test.collect import Node, Item, FSCollector
@@ -115,7 +115,7 @@ def test_generic_path():
 
 def test_write_log_entry():
     reslog = ResultLog(None)
-    reslog.logfile = StringIO.StringIO()
+    reslog.logfile = py.io.TextIO()
     reslog.write_log_entry('name', '.', '')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
@@ -123,7 +123,7 @@ def test_write_log_entry():
     assert len(entry_lines) == 1
     assert entry_lines[0] == '. name'
 
-    reslog.logfile = StringIO.StringIO()
+    reslog.logfile = py.io.TextIO()
     reslog.write_log_entry('name', 's', 'Skipped')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
@@ -132,7 +132,7 @@ def test_write_log_entry():
     assert entry_lines[0] == 's name'
     assert entry_lines[1] == ' Skipped'
 
-    reslog.logfile = StringIO.StringIO()
+    reslog.logfile = py.io.TextIO()
     reslog.write_log_entry('name', 's', 'Skipped\n')  
     entry = reslog.logfile.getvalue()
     assert entry[-1] == '\n'        
@@ -141,7 +141,7 @@ def test_write_log_entry():
     assert entry_lines[0] == 's name'
     assert entry_lines[1] == ' Skipped'
 
-    reslog.logfile = StringIO.StringIO()
+    reslog.logfile = py.io.TextIO()
     longrepr = ' tb1\n tb 2\nE tb3\nSome Error'
     reslog.write_log_entry('name', 'F', longrepr)
     entry = reslog.logfile.getvalue()
@@ -212,7 +212,7 @@ class TestWithFunctionIntegration:
             raise ValueError
         except ValueError:
             excinfo = py.code.ExceptionInfo()
-        reslog = ResultLog(StringIO.StringIO())        
+        reslog = ResultLog(py.io.TextIO())        
         reslog.pytest_internalerror(excinfo.getrepr())
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()

@@ -1,8 +1,100 @@
 import os
 import sys
 import py
-try: from cStringIO import StringIO
-except ImportError: from StringIO import StringIO
+import tempfile
+
+try: 
+    from io import StringIO
+except ImportError: 
+    from StringIO import StringIO
+
+class TextIO(StringIO):
+    def write(self, data):
+        if not isinstance(data, unicode):
+            data = unicode(data, getattr(self, '_encoding', 'UTF-8'))
+        StringIO.write(self, data)
+
+try:
+    from io import BytesIO
+except ImportError:
+    class BytesIO(StringIO):
+        def write(self, data):
+            if isinstance(data, unicode):
+                raise TypeError("not a byte value: %r" %(data,))
+            StringIO.write(self, data)
+
+class FDCapture: 
+    """ Capture IO to/from a given os-level filedescriptor. """
+    
+    def __init__(self, targetfd, tmpfile=None): 
+        self.targetfd = targetfd
+        if tmpfile is None: 
+            tmpfile = self.maketmpfile()
+        self.tmpfile = tmpfile 
+        self._savefd = os.dup(targetfd)
+        os.dup2(self.tmpfile.fileno(), targetfd) 
+        self._patched = []
+
+    def setasfile(self, name, module=sys): 
+        """ patch <module>.<name> to self.tmpfile
+        """
+        key = (module, name)
+        self._patched.append((key, getattr(module, name)))
+        setattr(module, name, self.tmpfile) 
+
+    def unsetfiles(self): 
+        """ unpatch all patched items
+        """
+        while self._patched: 
+            (module, name), value = self._patched.pop()
+            setattr(module, name, value) 
+
+    def done(self): 
+        """ unpatch and clean up, returns the self.tmpfile (file object)
+        """
+        os.dup2(self._savefd, self.targetfd) 
+        self.unsetfiles() 
+        os.close(self._savefd) 
+        self.tmpfile.seek(0)
+        return self.tmpfile 
+
+    def maketmpfile(self): 
+        """ create a temporary file
+        """
+        f = tempfile.TemporaryFile()
+        newf = dupfile(f) 
+        f.close()
+        return newf 
+
+    def writeorg(self, str):
+        """ write a string to the original file descriptor
+        """
+        tempfp = tempfile.TemporaryFile()
+        try:
+            os.dup2(self._savefd, tempfp.fileno())
+            tempfp.write(str)
+        finally:
+            tempfp.close()
+
+
+def dupfile(f, mode=None, buffering=0, raising=False): 
+    """ return a new open file object that's a duplicate of f
+
+        mode is duplicated if not given, 'buffering' controls 
+        buffer size (defaulting to no buffering) and 'raising'
+        defines whether an exception is raised when an incompatible
+        file object is passed in (if raising is False, the file
+        object itself will be returned)
+    """
+    try: 
+        fd = f.fileno() 
+    except AttributeError: 
+        if raising: 
+            raise 
+        return f
+    newfd = os.dup(fd) 
+    mode = mode and mode or f.mode
+    return os.fdopen(newfd, mode, buffering) 
 
 
 class Capture(object):
@@ -141,14 +233,14 @@ class StdCapture(Capture):
         if out: 
             self._oldout = sys.stdout
             if not hasattr(out, 'write'):
-                out = StringIO()
+                out = TextIO()
             sys.stdout = self.out = out
         if err: 
             self._olderr = sys.stderr
             if out and mixed: 
                 err = self.out 
             elif not hasattr(err, 'write'):
-                err = StringIO()
+                err = TextIO()
             sys.stderr = self.err = err
         if in_:
             self._oldin  = sys.stdin

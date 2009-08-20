@@ -12,7 +12,6 @@
 
 """
 
-from cStringIO import StringIO
 from pickle import Pickler, Unpickler
 import py
 from py.__.execnet.channel import Channel
@@ -58,14 +57,14 @@ class ImmutablePickler:
         # this is for feeding objects to ourselfes
         # which be the case e.g. if you want to pickle 
         # from a forked process back to the original 
-        f = StringIO()
+        f = py.io.BytesIO()
         pickler = MyPickler(f, self._protocol, uneven=self.uneven)
         pickler.memo = self._picklememo
         pickler.memoize(obj)
         self._updateunpicklememo()
 
     def dumps(self, obj):
-        f = StringIO()
+        f = py.io.BytesIO()
         pickler = MyPickler(f, self._protocol, uneven=self.uneven)
         pickler.memo = self._picklememo
         pickler.dump(obj)
@@ -76,7 +75,7 @@ class ImmutablePickler:
         return f.getvalue()
 
     def loads(self, string):
-        f = StringIO(string)
+        f = py.io.BytesIO(string)
         unpickler = Unpickler(f)
         unpickler.memo = self._unpicklememo
         res = unpickler.load()

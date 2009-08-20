@@ -117,7 +117,7 @@ class PluginManager(object):
         # =====================================================
         methods = collectattr(plugin)
         hooks = collectattr(hookspec)
-        stringio = py.std.StringIO.StringIO()
+        stringio = py.io.TextIO()
         def Print(*args):
             if args:
                 stringio.write(" ".join(map(str, args)))

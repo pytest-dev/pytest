@@ -224,7 +224,7 @@ class TestSvnURLAuth(object):
 
     def test_log(self):
         u = svnurl_no_svn('http://foo.bar/svn/foo', auth=self.auth)
-        u.popen_output = py.std.StringIO.StringIO('''\
+        u.popen_output = py.io.TextIO('''\
 <?xml version="1.0"?>
 <log>
 <logentry revision="51381">

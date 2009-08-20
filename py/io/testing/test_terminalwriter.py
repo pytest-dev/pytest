@@ -1,7 +1,6 @@
 import py
 import os, sys
 from py.__.io import terminalwriter 
-import StringIO
 
 def skip_win32():
     if sys.platform == 'win32':
@@ -23,11 +22,22 @@ def test_terminalwriter_default_instantiation():
 
 def test_terminalwriter_dumb_term_no_markup(monkeypatch):
     monkeypatch.setattr(os, 'environ', {'TERM': 'dumb', 'PATH': ''})
-    monkeypatch.setattr(sys, 'stdout', StringIO.StringIO())
-    monkeypatch.setattr(sys.stdout, 'isatty', lambda:True)
+    class MyFile:
+        def isatty(self):
+            return True
+    monkeypatch.setattr(sys, 'stdout', MyFile())
     assert sys.stdout.isatty()
     tw = py.io.TerminalWriter()
     assert not tw.hasmarkup
+
+def test_unicode_encoding():
+    l = []
+    msg = unicode('b\u00f6y', 'utf8')
+    for encoding in 'utf8', 'latin1':
+        tw = py.io.TerminalWriter(l.append)
+        tw._encoding = encoding
+        tw.line(msg)
+        assert l[0] == msg.encode(encoding)
 
 class BaseTests:
     def test_line(self):    
@@ -44,8 +54,7 @@ class BaseTests:
             msg = unicode('b\u00f6y', 'utf8')
             tw.line(msg)
             l = self.getlines()
-            assert not isinstance(l[0], unicode) 
-            assert unicode(l[0], encoding) == msg + "\n"
+            assert l[0] == msg + "\n"
 
     def test_sep_no_title(self):
         tw = self.getwriter()
@@ -105,7 +114,7 @@ class TestTmpfile(BaseTests):
         io.flush()
         return self.path.open('r').readlines()
 
-class TestStringIO(BaseTests):
+class TestWithStringIO(BaseTests):
     def getwriter(self):
         self.tw = py.io.TerminalWriter(stringio=True)
         return self.tw
@@ -120,7 +129,7 @@ class TestCallableFile(BaseTests):
         return py.io.TerminalWriter(self.writes.append)
 
     def getlines(self):
-        io = py.std.cStringIO.StringIO()
+        io = py.io.TextIO()
         io.write("".join(self.writes))
         io.seek(0)
         return io.readlines()

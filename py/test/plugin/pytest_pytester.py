@@ -445,7 +445,7 @@ def test_reportrecorder(testdir):
 
 class LineComp:
     def __init__(self):
-        self.stringio = py.std.StringIO.StringIO()
+        self.stringio = py.io.TextIO()
 
     def assert_contains_lines(self, lines2):
         """ assert that lines2 are contained (linearly) in lines1. 

@@ -139,7 +139,7 @@ class TestTerminal:
 
     def test_writeline(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
-        stringio = py.std.cStringIO.StringIO()
+        stringio = py.io.TextIO()
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.write_fspath_result(py.path.local("xy.py"), '.')
         rep.write_line("hello world")

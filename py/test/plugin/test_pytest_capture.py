@@ -71,7 +71,7 @@ def test_capturing_unicode(testdir, method):
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile("""
         def test_unicode():
-            print '\\xe2'
+            print 'b\\u00f6y'
     """)
     result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines([
@@ -227,8 +227,8 @@ class TestLoggingInteraction:
         p = testdir.makepyfile("""
             def test_logging():
                 import logging
-                import StringIO
-                stream = StringIO.StringIO()
+                import py
+                stream = py.io.TextIO()
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources
         """)

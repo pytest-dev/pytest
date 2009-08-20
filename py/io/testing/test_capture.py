@@ -1,14 +1,112 @@
 import os, sys
 import py
 
+class TestTextIO:
+    def test_text(self):
+        f = py.io.TextIO()
+        f.write("hello") 
+        s = f.getvalue()
+        assert s == "hello"
+        f.close()
+
+    def test_unicode_and_str_mixture(self):
+        f = py.io.TextIO()
+        f.write(u"\u00f6")
+        f.write(str("hello")) 
+        s = f.getvalue()
+        f.close()
+        assert isinstance(s, unicode) 
+
+def test_bytes_io():
+    f = py.io.BytesIO()
+    f.write("hello") 
+    py.test.raises(TypeError, "f.write(u'hello')")
+    s = f.getvalue()
+    assert s == "hello"
+
 def test_dontreadfrominput():
-    from py.__.io.stdcapture import  DontReadFromInput
+    from py.__.io.capture import  DontReadFromInput
     f = DontReadFromInput()
     assert not f.isatty() 
     py.test.raises(IOError, f.read)
     py.test.raises(IOError, f.readlines)
     py.test.raises(IOError, iter, f) 
     py.test.raises(ValueError, f.fileno)
+
+def test_dupfile(): 
+    somefile = py.std.os.tmpfile() 
+    flist = []
+    for i in range(5): 
+        nf = py.io.dupfile(somefile)
+        assert nf != somefile
+        assert nf.fileno() != somefile.fileno()
+        assert nf not in flist 
+        print >>nf, i,
+        flist.append(nf) 
+    for i in range(5): 
+        f = flist[i]
+        f.close()
+    somefile.seek(0)
+    s = somefile.read()
+    assert s.startswith("01234")
+    somefile.close()
+
+class TestFDCapture: 
+    def test_basic(self): 
+        tmpfile = py.std.os.tmpfile() 
+        fd = tmpfile.fileno()
+        cap = py.io.FDCapture(fd)
+        os.write(fd, "hello")
+        f = cap.done()
+        s = f.read()
+        assert s == "hello"
+
+    def test_stderr(self): 
+        cap = py.io.FDCapture(2)
+        cap.setasfile('stderr')
+        print >>sys.stderr, "hello"
+        f = cap.done()
+        s = f.read()
+        assert s == "hello\n"
+
+    def test_stdin(self): 
+        f = os.tmpfile()
+        print >>f, "3"
+        f.seek(0)
+        cap = py.io.FDCapture(0, tmpfile=f)
+        # check with os.read() directly instead of raw_input(), because
+        # sys.stdin itself may be redirected (as py.test now does by default)
+        x = os.read(0, 100).strip()
+        f = cap.done()
+        assert x == "3"
+
+    def test_writeorg(self):
+        tmppath = py.test.ensuretemp('test_writeorg').ensure('stderr',
+                                                             file=True)
+        tmpfp = tmppath.open('w+b')
+        try:
+            cap = py.io.FDCapture(tmpfp.fileno())
+            print >>tmpfp, 'foo'
+            cap.writeorg('bar\n')
+        finally:
+            tmpfp.close()
+        f = cap.done()
+        scap = f.read()
+        assert scap == 'foo\n'
+        stmp = tmppath.read()
+        assert stmp == "bar\n"
+
+    def test_writeorg_wrongtype(self):
+        tmppath = py.test.ensuretemp('test_writeorg').ensure('stdout',
+                                                             file=True)
+        tmpfp = tmppath.open('r')
+        try:
+            cap = py.io.FDCapture(tmpfp.fileno())
+            py.test.raises(IOError, "cap.writeorg('bar\\n')")
+        finally:
+            tmpfp.close()
+        f = cap.done()
+
 
 class TestStdCapture: 
     def getcapture(self, **kw):
@@ -64,8 +162,8 @@ class TestStdCapture:
         cap = self.getcapture()
         print "hello",
         print >>sys.stderr, "world",
-        sys.stdout = py.std.StringIO.StringIO() 
-        sys.stderr = py.std.StringIO.StringIO() 
+        sys.stdout = py.io.TextIO() 
+        sys.stderr = py.io.TextIO() 
         print "not seen" 
         print >>sys.stderr, "not seen"
         out, err = cap.reset()

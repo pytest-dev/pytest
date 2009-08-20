@@ -4,7 +4,6 @@ import py
 from py.__.execnet import gateway
 mypath = py.magic.autopath()
 
-from StringIO import StringIO
 from py.__.execnet.register import startup_modules, getsource 
 
 TESTTIMEOUT = 10.0 # seconds
@@ -43,9 +42,9 @@ def test_stdouterrin_setnull():
 class TestMessage:
     def test_wire_protocol(self):
         for cls in gateway.Message._types.values():
-            one = StringIO()
+            one = py.io.TextIO()
             cls(42, '23').writeto(one)
-            two = StringIO(one.getvalue())
+            two = py.io.TextIO(one.getvalue())
             msg = gateway.Message.readfrom(two)
             assert isinstance(msg, cls)
             assert msg.channelid == 42
@@ -317,7 +316,7 @@ class BasicRemoteExecution:
         assert str(err).find("ValueError") != -1
 
     def test_remote_redirect_stdout(self): 
-        out = py.std.StringIO.StringIO() 
+        out = py.io.TextIO() 
         handle = self.gw._remote_redirect(stdout=out) 
         c = self.gw.remote_exec("print 42")
         c.waitclose(TESTTIMEOUT)

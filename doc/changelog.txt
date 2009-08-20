@@ -1,6 +1,10 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* introduce py.io.TextIO and py.io.BytesIO for distinguishing between
+  text/unicode and byte-streams (uses underlying standard lib io.* 
+  if available) 
+ 
 * simplified internal localpath implementation 
 
 Changes between 1.0.0 and 1.0.1

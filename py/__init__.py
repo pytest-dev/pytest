@@ -154,10 +154,12 @@ initpkg(__name__,
 
     # input-output helping 
     'io.__doc__'             : ('./io/__init__.py', '__doc__'),
-    'io.dupfile'             : ('./io/dupfile.py', 'dupfile'), 
-    'io.FDCapture'           : ('./io/fdcapture.py', 'FDCapture'), 
-    'io.StdCapture'          : ('./io/stdcapture.py', 'StdCapture'), 
-    'io.StdCaptureFD'        : ('./io/stdcapture.py', 'StdCaptureFD'), 
+    'io.dupfile'             : ('./io/capture.py', 'dupfile'), 
+    'io.TextIO'              : ('./io/capture.py', 'TextIO'), 
+    'io.BytesIO'             : ('./io/capture.py', 'BytesIO'), 
+    'io.FDCapture'           : ('./io/capture.py', 'FDCapture'), 
+    'io.StdCapture'          : ('./io/capture.py', 'StdCapture'), 
+    'io.StdCaptureFD'        : ('./io/capture.py', 'StdCaptureFD'), 
     'io.TerminalWriter'      : ('./io/terminalwriter.py', 'TerminalWriter'), 
 
     # error module, defining all errno's as Classes

@@ -26,8 +26,8 @@ on tests that wait on reading something from stdin.
 You can influence output capturing mechanisms from the command line::
 
     py.test -s            # disable all capturing
-    py.test --capture=sys # set StringIO() to each of sys.stdout/stderr 
-    py.test --capture=fd  # capture stdout/stderr on Filedescriptors 1/2 
+    py.test --capture=sys # replace sys.stdout/stderr with in-mem files
+    py.test --capture=fd  # point filedescriptors 1 and 2 to temp file
 
 If you set capturing values in a conftest file like this::
 
@@ -40,7 +40,9 @@ sys-level capturing
 ------------------------------------------
 
 Capturing on 'sys' level means that ``sys.stdout`` and ``sys.stderr`` 
-will be replaced with StringIO() objects.   
+will be replaced with in-memory files (``py.io.TextIO`` to be precise)  
+that capture writes and decode non-unicode strings to a unicode object
+(using a default, usually, UTF-8, encoding). 
 
 FD-level capturing and subprocesses
 ------------------------------------------
@@ -114,7 +116,7 @@ class CaptureManager:
         return EncodedFile(newf, encoding)
 
     def _makestringio(self):
-        return py.std.StringIO.StringIO() 
+        return EncodedFile(py.io.TextIO(), 'UTF-8')
 
     def _startcapture(self, method):
         if method == "fd": 

@@ -70,7 +70,7 @@ if sys.platform == 'win32':
 def get_terminal_width():
     try:
         height, width = _getdimensions()
-    except (SystemExit, KeyboardInterrupt), e:
+    except (SystemExit, KeyboardInterrupt):
         raise
     except:
         # FALLBACK
@@ -144,7 +144,7 @@ class TerminalWriter(object):
     def __init__(self, file=None, stringio=False):
         if file is None:
             if stringio:
-                self.stringio = file = py.std.cStringIO.StringIO()
+                self.stringio = file = py.io.TextIO()
             else:
                 file = py.std.sys.stdout 
         elif callable(file):

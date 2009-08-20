@@ -143,7 +143,7 @@ class TestConfigPickling:
         testdir.makepyfile(hello="def test_x(): pass")
         config = testdir.parseconfig(tmpdir)
         col = config.getfsnode(config.topdir)
-        io = py.std.cStringIO.StringIO()
+        io = py.io.TextIO()
         pickler = Pickler(io)
         pickler.dump(col)
         io.seek(0) 
@@ -160,7 +160,7 @@ class TestConfigPickling:
         col = config.getfsnode(config.topdir)
         col1 = col.join(dir1.basename)
         assert col1.parent is col 
-        io = py.std.cStringIO.StringIO()
+        io = py.io.TextIO()
         pickler = Pickler(io)
         pickler.dump(col)
         pickler.dump(col1)
