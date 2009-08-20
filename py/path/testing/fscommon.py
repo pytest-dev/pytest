@@ -94,8 +94,6 @@ class CommonFSTests(common.CommonPathTests):
         assert not self.root.join("sampledir").check(file=1)
         assert self.root.join("sampledir").check(file=0)
 
-    #def test_fnmatch_dir(self):
-
     def test_non_existent(self):
         assert self.root.join("sampledir.nothere").check(dir=0)
         assert self.root.join("sampledir.nothere").check(file=0)
@@ -205,8 +203,12 @@ class CommonFSTests(common.CommonPathTests):
         p = self.root.join('samplefile')
         newp = p.dirpath('moved_samplefile')
         p.move(newp)
-        assert newp.check(file=1)
-        assert not p.check()
+        try:
+            assert newp.check(file=1)
+            assert not p.check()
+        finally:
+            newp.move(p)
+        assert p.check()
 
     def test_move_directory(self):
         source = self.root.join('sampledir') 

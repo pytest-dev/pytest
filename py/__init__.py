@@ -106,7 +106,7 @@ initpkg(__name__,
     'path.__doc__'           : ('./path/__init__.py', '__doc__'),
     'path.svnwc'             : ('./path/svn/wccommand.py', 'SvnWCCommandPath'),
     'path.svnurl'            : ('./path/svn/urlcommand.py', 'SvnCommandPath'),
-    'path.local'             : ('./path/local/local.py', 'LocalPath'),
+    'path.local'             : ('./path/local.py', 'LocalPath'),
     'path.SvnAuth'           : ('./path/svn/svncommon.py', 'SvnAuth'),
 
     # some nice slightly magic APIs

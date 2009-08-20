@@ -1,9 +1,5 @@
 """
-specialized local path implementation.
-
-This Path implementation offers some methods like chmod(), owner()
-and so on that may only make sense on unix.
-
+local path implementation.
 """
 from __future__ import generators
 import sys, os, stat, re, atexit
@@ -12,17 +8,93 @@ from py.__.path import common
 
 iswin32 = sys.platform == "win32"
 
-if iswin32: 
-    from py.__.path.local.win import WinMixin as PlatformMixin
-else:
-    from py.__.path.local.posix import PosixMixin as PlatformMixin
+class Stat(object):
+    pformat = "%s = property(lambda x: getattr(x._osstatresult, 'st_%s'))"
 
-class LocalPath(common.FSPathBase, PlatformMixin):
-    """ Local path implementation offering access/modification
-        methods similar to os.path.
+    for name in ('atime blksize blocks ctime dev gid ' 
+                 'ino mode mtime nlink rdev size uid'.split()):
+        code = pformat.replace("%s", name)
+        exec code 
+
+    def __init__(self, path, osstatresult): 
+        self.path = path 
+        self._osstatresult = osstatresult
+
+    def owner(self):
+        if iswin32:
+            raise NotImplementedError("XXX win32")
+        import pwd 
+        entry = self.path._callex(pwd.getpwuid, self.uid)
+        return entry[0]
+    owner = property(owner, None, None, "owner of path") 
+
+    def group(self):
+        """ return group name of file. """
+        if iswin32:
+            raise NotImplementedError("XXX win32")
+        import grp
+        entry = self.path._callex(grp.getgrgid, self.gid)
+        return entry[0]
+    group = property(group) 
+
+class PosixPath(common.FSPathBase):
+    def chown(self, user, group, rec=0):
+        """ change ownership to the given user and group.
+            user and group may be specified by a number or
+            by a name.  if rec is True change ownership
+            recursively.
+        """
+        uid = getuserid(user)
+        gid = getgroupid(group)
+        if rec:
+            for x in self.visit(rec=lambda x: x.check(link=0)): 
+                if x.check(link=0):
+                    self._callex(os.chown, str(x), uid, gid)
+        self._callex(os.chown, str(self), uid, gid)
+
+    def readlink(self):
+        """ return value of a symbolic link. """
+        return self._callex(os.readlink, self.strpath)
+
+    def mklinkto(self, oldname):
+        """ posix style hard link to another name. """
+        self._callex(os.link, str(oldname), str(self))
+
+    def mksymlinkto(self, value, absolute=1):
+        """ create a symbolic link with the given value (pointing to another name). """
+        if absolute:
+            self._callex(os.symlink, str(value), self.strpath)
+        else:
+            base = self.common(value)
+            # with posix local paths '/' is always a common base
+            relsource = self.__class__(value).relto(base)
+            reldest = self.relto(base)
+            n = reldest.count(self.sep)
+            target = self.sep.join(('..', )*n + (relsource, ))
+            self._callex(os.symlink, target, self.strpath)
+
+    def samefile(self, other):
+        """ return True if other refers to the same stat object as self. """
+        return py.std.os.path.samefile(str(self), str(other))
+
+def getuserid(user):
+    import pwd
+    if not isinstance(user, int):
+        user = pwd.getpwnam(user)[2]
+    return user
+
+def getgroupid(group):
+    import grp
+    if not isinstance(group, int):
+        group = grp.getgrnam(group)[2]
+    return group
+
+FSBase = not iswin32 and PosixPath or common.FSPathBase
+
+class LocalPath(FSBase):
+    """ object oriented interface to os.path and other local filesystem 
+        related information. 
     """
-    _path_cache = {}
-    
     sep = os.sep
     class Checkers(common.FSCheckers):
         def _stat(self):
@@ -75,6 +147,21 @@ class LocalPath(common.FSPathBase, PlatformMixin):
 
     def __hash__(self):
         return hash(self.strpath)
+
+    def remove(self, rec=1):
+        """ remove a file or directory (or a directory tree if rec=1).  """
+        if self.check(dir=1, link=0):
+            if rec:
+                # force remove of readonly files on windows 
+                if iswin32: 
+                    self.chmod(0700, rec=1)
+                self._callex(py.std.shutil.rmtree, self.strpath)
+            else:
+                self._callex(os.rmdir, self.strpath)
+        else:
+            if iswin32: 
+                self.chmod(0700)
+            self._callex(os.remove, self.strpath)
 
     def computehash(self, hashtype="md5", chunksize=524288):
         """ return hexdigest of hashvalue for this file. """
@@ -311,14 +398,12 @@ class LocalPath(common.FSPathBase, PlatformMixin):
 
     def stat(self):
         """ Return an os.stat() tuple. """
-        stat = self._callex(os.stat, self.strpath)
-        return self._makestat(stat)
+        return Stat(self, self._callex(os.stat, self.strpath))
 
     def lstat(self):
         """ Return an os.lstat() tuple. """
-        return self._makestat(self._callex(os.lstat, self.strpath))
+        return Stat(self, self._callex(os.lstat, self.strpath))
 
-    # xlocal implementation
     def setmtime(self, mtime=None):
         """ set modification time for the given path.  if 'mtime' is None
         (the default) then the file's mtime is set to current time.
@@ -379,6 +464,18 @@ class LocalPath(common.FSPathBase, PlatformMixin):
             #print "prepending to sys.path", s
             sys.path.insert(0, s)
 
+    def chmod(self, mode, rec=0):
+        """ change permissions to the given mode. If mode is an
+            integer it directly encodes the os-specific modes.
+            if rec is True perform recursively.
+        """
+        if not isinstance(mode, int):
+            raise TypeError("mode %r must be an integer" % (mode,))
+        if rec:
+            for x in self.visit(rec=rec):
+                self._callex(os.chmod, str(x), mode)
+        self._callex(os.chmod, str(self), mode)
+
     def pyimport(self, modname=None, ensuresyspath=True):
         """ return path as an imported python module.
             if modname is None, look for the containing package
@@ -438,7 +535,7 @@ class LocalPath(common.FSPathBase, PlatformMixin):
 
     def _getpycodeobj(self):
         """ read the path and compile it to a code object. """
-        dotpy = self.check(ext='.py')
+        dotpy = self.ext == ".py"
         if dotpy:
             my_magic     = py.std.imp.get_magic()
             my_timestamp = int(self.mtime())
