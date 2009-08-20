@@ -231,6 +231,7 @@ class Gateway(object):
         channel, (source, outid, errid) = item 
         try:
             loc = { 'channel' : channel, '__name__': '__channelexec__'}
+            #open("task.py", 'w').write(source)
             self._trace("execution starts:", repr(source)[:50])
             close = self._local_redirect_thread_output(outid, errid) 
             try:

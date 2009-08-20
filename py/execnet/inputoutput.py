@@ -6,15 +6,7 @@
 import socket, os, sys, thread
 
 class SocketIO:
-    server_stmt = """
-io = SocketIO(clientsock)
-import sys
-#try:
-#    sys.stdout = sys.stderr = open('/tmp/execnet-socket-debug.log', 'a', 0)
-#except (IOError, OSError):
-#    sys.stdout = sys.stderr = open('/dev/null', 'w')
-#print '='*60
-"""
+    server_stmt = "io = SocketIO(clientsock)"
 
     error = (socket.error, EOFError)
     def __init__(self, sock):
@@ -61,11 +53,6 @@ class Popen2IO:
 import os, sys, StringIO
 io = Popen2IO(sys.stdout, sys.stdin)
 sys.stdout = sys.stderr = StringIO.StringIO() 
-#try:
-#    sys.stdout = sys.stderr = open('/tmp/execnet-popen-debug.log', 'a', 0)
-#except (IOError, OSError):
-#    sys.stdout = sys.stderr = open('/dev/null', 'w')
-#print '='*60
 """
     error = (IOError, OSError, EOFError)
 

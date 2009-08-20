@@ -57,6 +57,7 @@ class InstallableGateway(gateway.Gateway):
                      ]
         source = "\n".join(bootstrap)
         self._trace("sending gateway bootstrap code")
+        #open("/tmp/bootstrap.py", 'w').write(source)
         io.write('%r\n' % source)
 
 class PopenCmdGateway(InstallableGateway):

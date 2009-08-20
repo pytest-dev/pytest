@@ -1,6 +1,6 @@
 pytest_plugins = '_pytest doctest pytester'.split()
 
-rsyncdirs = ['../doc']
+rsyncdirs = ['.', '../doc']
 
 import py
 def pytest_addoption(parser):

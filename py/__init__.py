@@ -18,7 +18,7 @@ For questions please check out http://pylib.org/contact.html
  
 """
 from initpkg import initpkg
-trunk = None
+trunk = "trunk"
 
 version = trunk or "1.0.1"
 

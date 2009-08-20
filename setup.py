@@ -25,13 +25,13 @@ For questions please check out http://pylib.org/contact.html
 
 
 """
-trunk = None
+trunk = 'trunk'
 def main():
     setup(
         name='py',
         description='py.test and pylib: advanced testing tool and networking lib',
         long_description = long_description, 
-        version= trunk or '1.0.1', 
+        version= trunk or 'trunk', 
         url='http://pylib.org', 
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'], 
