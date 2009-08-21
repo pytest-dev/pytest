@@ -185,8 +185,8 @@ def get_expr(s, char):
             pass
     raise SyntaxError       # We never found anything that worked.
 
-if __name__ == '__main__':
 
+def main():
     import sys
     import py
 
@@ -245,3 +245,5 @@ if __name__ == '__main__':
             outfile.write(s)
 
     
+if __name__ == '__main__':
+    main()

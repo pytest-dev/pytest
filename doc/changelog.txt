@@ -4,6 +4,10 @@ Changes between 1.0.x and 'trunk'
 * introduce py.io.TextIO and py.io.BytesIO for distinguishing between
   text/unicode and byte-streams (uses underlying standard lib io.* 
   if available) 
+
+* make py.unittest_convert helper script available which converts "unittest.py" 
+  style files into the simpler assert/direct-test-classes py.test/nosetests
+  style.  The script was written by Laura Creighton. 
  
 * simplified internal localpath implementation 
 

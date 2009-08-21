@@ -1,4 +1,5 @@
-from py.__.tool.utestconvert import rewrite_utest
+from py.__.cmdline.pyconvert_unittest import rewrite_utest
+
 
 class Test_UTestConvert:
     def testall(self):

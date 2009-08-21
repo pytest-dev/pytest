@@ -62,6 +62,7 @@ initpkg(__name__,
     'cmdline.pycleanup'      : ('./cmdline/pycleanup.py', 'main',),
     'cmdline.pywhich'        : ('./cmdline/pywhich.py', 'main',),
     'cmdline.pysvnwcrevert'  : ('./cmdline/pysvnwcrevert.py', 'main',),
+    'cmdline.pyconvert_unittest'  : ('./cmdline/pyconvert_unittest.py', 'main',),
 
     # helpers for use from test functions or collectors
     'test.__doc__'           : ('./test/__init__.py', '__doc__'),
