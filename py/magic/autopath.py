@@ -1,14 +1,13 @@
 import os, sys
 from py.path import local
 
-def autopath(globs=None, basefile='__init__.py'):
+def autopath(globs=None):
     """ return the (local) path of the "current" file pointed to by globals
         or - if it is none - alternatively the callers frame globals.
 
         the path will always point to a .py file  or to None.
         the path will have the following payload:
-        pkgdir   is the last parent directory path containing 'basefile'
-                 starting backwards from the current file.
+        pkgdir   is the last parent directory path containing __init__.py 
     """
     if globs is None:
         globs = sys._getframe(1).f_globals
@@ -24,7 +23,7 @@ def autopath(globs=None, basefile='__init__.py'):
         ret = ret.new(ext='.py')
     current = pkgdir = ret.dirpath()
     while 1:
-        if basefile in current.listdir():
+        if current.join('__init__.py').check():
             pkgdir = current
             current = current.dirpath()
             if pkgdir != current:
