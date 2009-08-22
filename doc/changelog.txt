@@ -1,6 +1,11 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* consolidate py.log implementation, remove old approach. 
+
+* introduce py.io.TextIO and py.io.BytesIO for distinguishing between
+  text/unicode and byte-streams (uses underlying standard lib io.* 
+  if available) 
 * introduce py.io.TextIO and py.io.BytesIO for distinguishing between
   text/unicode and byte-streams (uses underlying standard lib io.* 
   if available) 

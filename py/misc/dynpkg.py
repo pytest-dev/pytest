@@ -5,10 +5,10 @@
 import py
 import sys
 
-log = py.log.get("dynpkg", 
-                 info=py.log.STDOUT, 
-                 debug=py.log.STDOUT,
-                 command=None) # py.log.STDOUT)
+log = py.log.Logger("dynpkg", 
+            info=py.log.STDOUT, 
+            debug=py.log.STDOUT, 
+            command=None)
 
 from distutils import util
 

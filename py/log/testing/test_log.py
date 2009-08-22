@@ -1,24 +1,32 @@
 import py
 import sys
 
+from py.__.log.log import default_keywordmapper
+
 callcapture = py.io.StdCapture.call
 
 def setup_module(mod): 
     mod.tempdir = py.test.ensuretemp("py.log-test") 
-    mod.logstate = py.log._getstate()
+    mod._oldstate = default_keywordmapper.getstate()
 
 def teardown_module(mod): 
-    py.log._setstate(mod.logstate) 
+    default_keywordmapper.setstate(mod._oldstate)
 
 class TestLogProducer: 
     def setup_method(self, meth): 
-        self.state = py.log._getstate() 
+        default_keywordmapper.setstate(_oldstate)
 
-    def teardown_method(self, meth): 
-        py.log._setstate(self.state) 
+    def test_getstate_setstate(self):
+        state = py.log._getstate()
+        py.log.setconsumer("hello", [].append)
+        state2 = py.log._getstate()
+        assert state2 != state 
+        py.log._setstate(state)
+        state3 = py.log._getstate()
+        assert state3 == state 
 
     def test_producer_repr(self): 
-        d = py.log.default 
+        d = py.log.Producer("default")
         assert repr(d).find('default') != -1
 
     def test_produce_one_keyword(self): 
@@ -34,7 +42,7 @@ class TestLogProducer:
     def test_producer_class(self): 
         p = py.log.Producer('x1') 
         l = []
-        py.log.setconsumer(p.keywords, l.append) 
+        py.log.setconsumer(p._keywords, l.append) 
         p("hello") 
         assert len(l) == 1
         assert len(l[0].keywords) == 1
@@ -47,10 +55,7 @@ class TestLogProducer:
 
 class TestLogConsumer: 
     def setup_method(self, meth): 
-        self.state = py.log._getstate() 
-    def teardown_method(self, meth): 
-        py.log._setstate(self.state) 
-
+        default_keywordmapper.setstate(_oldstate)
     def test_log_none(self): 
         log = py.log.Producer("XXX")
         l = []
@@ -62,9 +67,9 @@ class TestLogConsumer:
         log("2")
         assert not l 
 
-    def test_log_default_stdout(self):
-        res, out, err = callcapture(py.log.default, "hello")
-        assert out.strip() == "[default] hello" 
+    def test_log_default_stderr(self):
+        res, out, err = callcapture(py.log.Producer("default"), "hello")
+        assert err.strip() == "[default] hello" 
 
     def test_simple_consumer_match(self): 
         l = []
@@ -77,7 +82,7 @@ class TestLogConsumer:
     def test_simple_consumer_match_2(self): 
         l = []
         p = py.log.Producer("x1 x2")
-        p.set_consumer(l.append) 
+        py.log.setconsumer(p._keywords, l.append)
         p("42")
         assert l
         assert l[0].content() == "42"
@@ -106,19 +111,19 @@ class TestLogConsumer:
         assert l[0].content() == "hello"
 
     def test_log_stderr(self):
-        py.log.setconsumer("default", py.log.STDERR) 
-        res, out, err = callcapture(py.log.default, "hello")
-        assert not out
-        assert err.strip() == '[default] hello'
+        py.log.setconsumer("xyz", py.log.STDOUT) 
+        res, out, err = callcapture(py.log.Producer("xyz"), "hello")
+        assert not err
+        assert out.strip() == '[xyz] hello'
 
     def test_log_file(self):
         custom_log = tempdir.join('log.out')
         py.log.setconsumer("default", open(str(custom_log), 'w', buffering=0))
-        py.log.default("hello world #1") 
+        py.log.Producer("default")("hello world #1") 
         assert custom_log.readlines() == ['[default] hello world #1\n']
 
         py.log.setconsumer("default", py.log.Path(custom_log, buffering=0))
-        py.log.default("hello world #2") 
+        py.log.Producer("default")("hello world #2") 
         assert custom_log.readlines() == ['[default] hello world #2\n'] # no append by default!
         
     def test_log_file_append_mode(self):
@@ -128,12 +133,12 @@ class TestLogConsumer:
         py.log.setconsumer("default", py.log.Path(logfilefn, append=True, 
                                                     buffering=0))
         assert logfilefn.check()
-        py.log.default("hello world #1") 
+        py.log.Producer("default")("hello world #1") 
         lines = logfilefn.readlines() 
         assert lines == ['[default] hello world #1\n']
         py.log.setconsumer("default", py.log.Path(logfilefn, append=True,
                                                     buffering=0))
-        py.log.default("hello world #1") 
+        py.log.Producer("default")("hello world #1") 
         lines = logfilefn.readlines() 
         assert lines == ['[default] hello world #1\n', 
                          '[default] hello world #1\n']
@@ -144,7 +149,7 @@ class TestLogConsumer:
         py.log.setconsumer("default", py.log.Path(logfilefn,
                                         delayed_create=True, buffering=0))
         assert not logfilefn.check()
-        py.log.default("hello world #1") 
+        py.log.Producer("default")("hello world #1") 
         lines = logfilefn.readlines() 
         assert lines == ['[default] hello world #1\n']
 
