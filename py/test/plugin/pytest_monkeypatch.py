@@ -34,18 +34,24 @@ can use this example:
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
 
-import os
+import py, os
 
 def pytest_funcarg__monkeypatch(request):
-    """The returned ``monkeypatch`` funcarg provides three 
+    """The returned ``monkeypatch`` funcarg provides these 
     helper methods to modify objects, dictionaries or os.environ::
 
         monkeypatch.setattr(obj, name, value)  
+        monkeypatch.delattr(obj, name, raising=True)
         monkeypatch.setitem(mapping, name, value) 
-        monkeypatch.setenv(name, value) 
+        monkeypatch.delitem(obj, name, raising=True)
+        monkeypatch.setenv(name, value, prepend=False) 
+        monkeypatch.delenv(name, value, raising=True)
 
-    All such modifications will be undone when the requesting 
-    test function finished its execution. 
+    All modifications will be undone when the requesting 
+    test function finished its execution.  For the ``del`` 
+    methods the ``raising`` parameter determines if a
+    KeyError or AttributeError will be raised if the
+    deletion has no target. 
     """
     monkeypatch = MonkeyPatch()
     request.addfinalizer(monkeypatch.finalize)
@@ -62,15 +68,34 @@ class MonkeyPatch:
         self._setattr.insert(0, (obj, name, getattr(obj, name, notset)))
         setattr(obj, name, value)
 
-    def setitem(self, dictionary, name, value):
-        self._setitem.insert(0, (dictionary, name, dictionary.get(name, notset)))
-        dictionary[name] = value
+    def delattr(self, obj, name, raising=True):
+        if not hasattr(obj, name):
+            if raising:
+                raise AttributeError(name) 
+        else:
+            self._setattr.insert(0, (obj, name, getattr(obj, name, notset)))
+            delattr(obj, name)
+
+    def setitem(self, dic, name, value):
+        self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+        dic[name] = value
+
+    def delitem(self, dic, name, raising=True):
+        if name not in dic:
+            if raising:
+                raise KeyError(name) 
+        else:    
+            self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+            del dic[name]
 
     def setenv(self, name, value, prepend=None):
         value = str(value)
         if prepend and name in os.environ:
             value = value + prepend + os.environ[name]
         self.setitem(os.environ, name, value)
+
+    def delenv(self, name, raising=True):
+        self.delitem(os.environ, name, raising=raising)
 
     def finalize(self):
         for obj, name, value in self._setattr:
@@ -101,6 +126,23 @@ def test_setattr():
     monkeypatch.finalize()
     assert not hasattr(A, 'y')
      
+def test_delattr():
+    class A:
+        x = 1
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delattr(A, 'x')
+    assert not hasattr(A, 'x')
+    monkeypatch.finalize()
+    assert A.x == 1
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delattr(A, 'x')
+    py.test.raises(AttributeError, "monkeypatch.delattr(A, 'y')")
+    monkeypatch.delattr(A, 'y', raising=False)
+    monkeypatch.setattr(A, 'x', 5)
+    assert A.x == 5
+    monkeypatch.finalize()
+    assert A.x == 1
 
 def test_setitem():
     d = {'x': 1}
@@ -115,6 +157,22 @@ def test_setitem():
     assert d['x'] == 1
     assert 'y' not in d
 
+def test_delitem():
+    d = {'x': 1}
+    monkeypatch = MonkeyPatch()
+    monkeypatch.delitem(d, 'x')
+    assert 'x' not in d
+    monkeypatch.delitem(d, 'y', raising=False)
+    py.test.raises(KeyError, "monkeypatch.delitem(d, 'y')")
+    assert not d
+    monkeypatch.setitem(d, 'y', 1700)
+    assert d['y'] == 1700
+    d['hello'] = 'world'
+    monkeypatch.setitem(d, 'x', 1500)
+    assert d['x'] == 1500
+    monkeypatch.finalize()
+    assert d == {'hello': 'world', 'x': 1}
+
 def test_setenv():
     monkeypatch = MonkeyPatch()
     monkeypatch.setenv('XYZ123', 2)
@@ -122,6 +180,26 @@ def test_setenv():
     assert os.environ['XYZ123'] == "2"
     monkeypatch.finalize()
     assert 'XYZ123' not in os.environ
+
+def test_delenv():
+    name = 'xyz1234'
+    assert name not in os.environ 
+    monkeypatch = MonkeyPatch()
+    py.test.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
+    monkeypatch.delenv(name, raising=False)
+    monkeypatch.finalize()
+    os.environ[name] = "1"
+    try:
+        monkeypatch = MonkeyPatch()
+        monkeypatch.delenv(name)
+        assert name not in os.environ 
+        monkeypatch.setenv(name, "3")
+        assert os.environ[name] == "3"
+        monkeypatch.finalize()
+        assert os.environ[name] == "1"
+    finally:
+        if name in os.environ:
+            del os.environ[name]
 
 def test_setenv_prepend():
     import os
