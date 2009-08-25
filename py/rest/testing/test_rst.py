@@ -4,7 +4,7 @@
 import py
 py.test.importorskip("docutils")
 from py.__.rest.rst import *
-from py.__.misc.rest import process as restcheck
+from py.__.rest.resthtml import process as restcheck
 import traceback
 
 tempdir = py.test.ensuretemp('rest')

@@ -1,5 +1,5 @@
 import py
-from py.__.misc.rest import convert_rest_html, strip_html_header 
+from py.__.rest.resthtml import convert_rest_html, strip_html_header 
 
 html = py.xml.html 
 

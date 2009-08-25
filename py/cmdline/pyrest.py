@@ -36,8 +36,7 @@ parser.add_option("--debug", action="store_true", dest="debug",
 
 def main():
     try:
-        from py.__.misc import rest
-        from py.__.rest import directive
+        from py.__.rest import directive, resthtml 
         from py.__.rest.latex import process_rest_file, process_configfile
     except ImportError, e:
         print str(e)
@@ -63,7 +62,7 @@ def main():
             return p.check(dotfile=0)
         if p.check(dir=1):
             for x in p.visit(fil, rec):
-                rest.process(x)
+                resthtml.process(x)
         elif p.check(file=1):
             if p.ext == ".rst2pdfconfig":
                 directive.set_backend_and_register_directives("latex")
@@ -79,5 +78,5 @@ def main():
                                           options.stylesheet,
                                       options.debug)
                 else:
-                    rest.process(p)
+                    resthtml.process(p)
 

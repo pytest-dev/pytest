@@ -2,8 +2,7 @@ import py
 
 from py.__.rest.testing.setup import getdata
 docutils = py.test.importorskip("docutils")
-from py.__.rest import directive
-from py.__.misc import rest
+from py.__.rest import directive, resthtml
 from py.__.rest.latex import process_rest_file
 
 def setup_module(mod):
@@ -20,7 +19,7 @@ class TestGraphviz(object):
         txt = datadir.join("graphviz.txt")
         html = txt.new(ext="html")
         png = datadir.join("example1.png")
-        rest.process(txt)
+        resthtml.process(txt)
         assert html.check()
         assert png.check()
         html_content = html.read()
@@ -57,7 +56,7 @@ def test_own_links():
 :foo:`whatever`
 """)
     html = txt.new(ext="html")
-    rest.process(txt)
+    resthtml.process(txt)
     assert html.check()
     htmlcontent = html.read()
     assert "http://codespeak.net/noclue" in htmlcontent

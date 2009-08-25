@@ -1,7 +1,7 @@
 from __future__ import generators
 
 import py
-from py.__.misc import rest
+from py.__.rest import resthtml
 from py.__.rest.testing.setup import getdata
 
 
@@ -18,5 +18,5 @@ def test_process_simple():
     def rec(p):
         return p.check(dotfile=0)
     for x in datadir.visit("*.txt", rec=rec):
-        yield rest.process, x
+        yield resthtml.process, x
 
