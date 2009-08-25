@@ -14,7 +14,7 @@ as well.
 """
 
 import py
-from py.__.code.excinfo import Repr, ReprFileLocation
+from py.__.code.code import TerminalRepr, ReprFileLocation
 
 def pytest_addoption(parser):
     group = parser.addgroup("doctest options")
@@ -30,7 +30,7 @@ def pytest_collect_file(path, parent):
     if path.check(fnmatch="test_*.txt"):
         return DoctestTextfile(path, parent)
 
-class ReprFailDoctest(Repr):
+class ReprFailDoctest(TerminalRepr):
     def __init__(self, reprlocation, lines):
         self.reprlocation = reprlocation
         self.lines = lines

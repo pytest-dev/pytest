@@ -1,5 +1,5 @@
 import py
-from py.__.code.excinfo import FormattedExcinfo, ReprExceptionInfo
+from py.__.code.code import FormattedExcinfo, ReprExceptionInfo
 
 class TWMock: 
     def __init__(self):

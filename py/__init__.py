@@ -124,9 +124,9 @@ initpkg(__name__,
     'code.compile'           : ('./code/source.py', 'compile_'),
     'code.Source'            : ('./code/source.py', 'Source'),
     'code.Code'              : ('./code/code.py', 'Code'),
-    'code.Frame'             : ('./code/frame.py', 'Frame'),
-    'code.ExceptionInfo'     : ('./code/excinfo.py', 'ExceptionInfo'),
-    'code.Traceback'         : ('./code/traceback2.py', 'Traceback'),
+    'code.Frame'             : ('./code/code.py', 'Frame'),
+    'code.ExceptionInfo'     : ('./code/code.py', 'ExceptionInfo'),
+    'code.Traceback'         : ('./code/code.py', 'Traceback'),
     'code.getfslineno'       : ('./code/source.py', 'getfslineno'),
 
     # backports and additions of builtins

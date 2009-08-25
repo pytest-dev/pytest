@@ -1,6 +1,7 @@
 from __future__ import generators
 import py
-import new
+import sys, new
+from py.__.code.code import safe_repr
 
 def test_newcode(): 
     source = "i = 3"
@@ -99,3 +100,69 @@ def test_code_source():
     expected = """def x():
     pass"""
     assert str(src) == expected
+
+def test_frame_getsourcelineno_myself():
+    def func():
+        return sys._getframe(0)
+    f = func()
+    f = py.code.Frame(f)
+    source, lineno = f.code.fullsource, f.lineno
+    assert source[lineno].startswith("        return sys._getframe(0)")
+
+def test_getstatement_empty_fullsource():
+    def func():
+        return sys._getframe(0)
+    f = func()
+    f = py.code.Frame(f)
+    prop = f.code.__class__.fullsource
+    try:
+        f.code.__class__.fullsource = None
+        assert f.statement == py.code.Source("")
+    finally:
+        f.code.__class__.fullsource = prop
+
+def test_code_from_func(): 
+    co = py.code.Code(test_frame_getsourcelineno_myself) 
+    assert co.firstlineno
+    assert co.path
+
+
+
+class TestSafeRepr:
+    def test_simple_repr(self):
+        assert safe_repr(1) == '1'
+        assert safe_repr(None) == 'None'
+    
+    def test_exceptions(self):
+        class BrokenRepr:
+            def __init__(self, ex):
+                self.ex = ex
+                foo = 0
+            def __repr__(self):
+                raise self.ex
+        class BrokenReprException(Exception):
+            __str__ = None 
+            __repr__ = None
+        assert 'Exception' in safe_repr(BrokenRepr(Exception("broken")))
+        s = safe_repr(BrokenReprException("really broken"))
+        assert 'TypeError' in s
+        if py.std.sys.version_info < (2,6):
+            assert 'unknown' in safe_repr(BrokenRepr("string"))
+        else:
+            assert 'TypeError' in safe_repr(BrokenRepr("string"))
+
+    def test_big_repr(self):
+        from py.__.code.code import SafeRepr
+        assert len(safe_repr(range(1000))) <= \
+               len('[' + SafeRepr().maxlist * "1000" + ']')
+
+    def test_repr_on_newstyle(self):
+        class Function(object):
+            def __repr__(self):
+                return "<%s>" %(self.name)
+        try:
+            s = safe_repr(Function())
+        except Exception, e:
+            py.test.fail("saferepr failed for newstyle class")
+   
+ 

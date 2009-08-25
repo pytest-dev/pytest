@@ -181,7 +181,8 @@ class Source(object):
         source = "\n".join(self.lines) + '\n'
         try:
             co = cpy_compile(source, filename, mode, flag)
-        except SyntaxError, ex:
+        except SyntaxError:
+            ex = sys.exc_info()[1]
             # re-represent syntax errors from parsing python strings
             msglines = self.lines[:ex.lineno]
             if ex.offset:

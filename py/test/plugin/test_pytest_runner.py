@@ -1,6 +1,6 @@
 import py
 from py.__.test.plugin import pytest_runner as runner
-from py.__.code.excinfo import ReprExceptionInfo
+from py.__.code.code import ReprExceptionInfo
 
 class TestSetupState:
     def test_setup(self, testdir):
