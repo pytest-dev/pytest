@@ -9,7 +9,7 @@ import py
 from py import path, process
 from py.__.path import common
 from py.__.path import svnwc as svncommon
-from py.__.misc.cache import BuildcostAccessCache, AgingCache
+from py.__.path.cacheutil import BuildcostAccessCache, AgingCache
 
 DEBUG=False 
 
