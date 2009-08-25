@@ -1,6 +1,8 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* cleanup py/misc, move tests to bin-for-dist 
+
 * introduce delattr/delitem/delenv methods to py.test's monkeypatch funcarg 
 
 * consolidate py.log implementation, remove old approach. 

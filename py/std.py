@@ -1,9 +1,8 @@
-
 import sys
 
 class Std(object):
-    """ makes all standard python modules available as a lazily 
-        computed attribute. 
+    """ makes top-level python modules available as an attribute, 
+        importing them on first access. 
     """ 
 
     def __init__(self):

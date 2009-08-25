@@ -1,4 +1,7 @@
+"""
+create errno-specific classes for IO or os calls. 
 
+"""
 import sys, os, errno
 
 class Error(EnvironmentError):

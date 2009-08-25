@@ -96,7 +96,7 @@ initpkg(__name__,
     '_thread.ThreadOut'       : ('./thread/io.py', 'ThreadOut'),
 
     # hook into the top-level standard library
-    'std'                    : ('./misc/std.py', 'std'),
+    'std'                    : ('./std.py', 'std'),
 
     'process.__doc__'        : ('./process/__init__.py', '__doc__'),
     'process.cmdexec'        : ('./process/cmdexec.py', 'cmdexec'),

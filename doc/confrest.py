@@ -1,6 +1,5 @@
 import py
 from py.__.misc.rest import convert_rest_html, strip_html_header 
-from py.__.misc.difftime import worded_time 
 
 html = py.xml.html 
 

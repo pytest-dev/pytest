@@ -113,7 +113,7 @@ Example (using the 'first' TracebackItem instance created above)::
   >>> frame = first.frame
   >>> isinstance(frame.code, py.code.Code)
   True
-  >>> isinstance(frame.eval('self'), py.__.path.local.local.LocalPath)
+  >>> isinstance(frame.eval('self'), py.path.local)
   True
   >>> [namevalue[0] for namevalue in frame.getargs()]
   ['cls', 'path']

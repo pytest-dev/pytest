@@ -82,12 +82,12 @@ system wide ``PATH`` settings.  There are helper scripts that set ``PYTHONPATH``
 on windows execute::
 
     # inside autoexec.bat or shell startup
-    c:\\path\to\checkout\py\env.cmd
+    c:\\path\to\checkout\py\bin\env.cmd
 
 on linux/OSX add this to your shell initialization:: 
 
     # inside .bashrc 
-    eval `python ~/path/to/checkout/py/env.py` 
+    eval `python ~/path/to/checkout/py/bin/env.py` 
 
 both of which which will get you good settings 
 for ``PYTHONPATH`` and ``PATH``.

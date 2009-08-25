@@ -1,17 +1,12 @@
 """
 This module contains multithread-safe cache implementations.
 
-Caches mainly have a
+All Caches have a
 
-    __getitem__  and  getorbuild() method
+    __getitem__  and  getorbuild(key, builder) method
 
 where the latter either just return a cached value or
 first builds the value.
-
-These are the current cache implementations:
-
-    BuildcostAccessCache  tracks building-time and accesses. Evicts
-              by product of num-accesses * build-time.
 
 """
 import py
@@ -74,10 +69,10 @@ class BasicCache(object):
         finally:
             self._lock.release()
 
-    def getorbuild(self, key, builder, *args, **kwargs):
+    def getorbuild(self, key, builder):
         entry = self.getentry(key)
         if entry is None:
-            entry = self.build(key, builder, *args, **kwargs)
+            entry = self.build(key, builder)
         return entry.value
 
     def _prunelowestweight(self):
@@ -107,9 +102,9 @@ class BuildcostAccessCache(BasicCache):
     # time function to use for measuring build-times
     _time = gettime
 
-    def build(self, key, builder, *args, **kwargs):
+    def build(self, key, builder):
         start = self._time()
-        val = builder(*args, **kwargs)
+        val = builder()
         end = self._time()
         entry = WeightedCountingEntry(val, end-start)
         self.putentry(key, entry)
@@ -137,9 +132,9 @@ class AgingCache(BasicCache):
         finally:
             self._lock.release()
 
-    def build(self, key, builder, *args, **kwargs):
+    def build(self, key, builder):
         ctime = gettime()
-        val = builder(*args, **kwargs)
+        val = builder()
         entry = AgingEntry(val, ctime + self.maxseconds)
         self.putentry(key, entry)
         return entry
