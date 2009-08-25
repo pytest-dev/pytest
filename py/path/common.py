@@ -75,7 +75,7 @@ class Checkers:
                             return False
         return True
 
-class _dummyclass: 
+class NeverRaised(Exception): 
     pass
 
 class PathBase(object):
@@ -136,7 +136,7 @@ newline will be removed from the end of each line. """
         f = self.open('rb')
         try:
             from cPickle import load
-            return self._callex(load, f)
+            return py.error.checked_call(load, f)
         finally:
             f.close()
 
@@ -253,7 +253,7 @@ newline will be removed from the end of each line. """
         except AttributeError:
             return cmp(str(self), str(other)) # self.path, other.path)
 
-    def visit(self, fil=None, rec=None, ignore=_dummyclass):
+    def visit(self, fil=None, rec=None, ignore=NeverRaised):
         """ yields all paths below the current one
 
             fil is a filter (glob pattern or callable), if not matching the
@@ -285,34 +285,6 @@ newline will be removed from the end of each line. """
                     yield p
                 if p.check(dir=1) and (rec is None or rec(p)):
                     reclist.append(p)
-
-    def _callex(self, func, *args):
-        """ call a function and raise errno-exception if applicable. """
-        __tracebackhide__ = True
-        try:
-            return func(*args)
-        except py.error.Error: 
-            raise
-        except EnvironmentError:
-            cls, value, tb = sys.exc_info()
-            if not hasattr(value, 'errno'):
-                raise
-            __tracebackhide__ = False
-            errno = value.errno 
-            try:
-                if not isinstance(value, WindowsError): 
-                    raise NameError
-            except NameError: 
-                # we are not on Windows, or we got a proper OSError
-                cls = py.error._geterrnoclass(errno)
-            else: 
-                try: 
-                    cls = py.error._getwinerrnoclass(errno)
-                except KeyError:    
-                    raise cls(value) # tb? 
-            value = cls("%s%r" % (func.__name__, args))
-            __tracebackhide__ = True
-            raise cls(value)
 
 class FNMatcher:
     def __init__(self, pattern):

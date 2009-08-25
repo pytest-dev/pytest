@@ -20,7 +20,7 @@ class Stat(object):
         if iswin32:
             raise NotImplementedError("XXX win32")
         import pwd 
-        entry = self.path._callex(pwd.getpwuid, self.uid)
+        entry = py.error.checked_call(pwd.getpwuid, self.uid)
         return entry[0]
     owner = property(owner, None, None, "owner of path") 
 
@@ -29,7 +29,7 @@ class Stat(object):
         if iswin32:
             raise NotImplementedError("XXX win32")
         import grp
-        entry = self.path._callex(grp.getgrgid, self.gid)
+        entry = py.error.checked_call(grp.getgrgid, self.gid)
         return entry[0]
     group = property(group) 
 
@@ -45,21 +45,21 @@ class PosixPath(common.PathBase):
         if rec:
             for x in self.visit(rec=lambda x: x.check(link=0)): 
                 if x.check(link=0):
-                    self._callex(os.chown, str(x), uid, gid)
-        self._callex(os.chown, str(self), uid, gid)
+                    py.error.checked_call(os.chown, str(x), uid, gid)
+        py.error.checked_call(os.chown, str(self), uid, gid)
 
     def readlink(self):
         """ return value of a symbolic link. """
-        return self._callex(os.readlink, self.strpath)
+        return py.error.checked_call(os.readlink, self.strpath)
 
     def mklinkto(self, oldname):
         """ posix style hard link to another name. """
-        self._callex(os.link, str(oldname), str(self))
+        py.error.checked_call(os.link, str(oldname), str(self))
 
     def mksymlinkto(self, value, absolute=1):
         """ create a symbolic link with the given value (pointing to another name). """
         if absolute:
-            self._callex(os.symlink, str(value), self.strpath)
+            py.error.checked_call(os.symlink, str(value), self.strpath)
         else:
             base = self.common(value)
             # with posix local paths '/' is always a common base
@@ -67,7 +67,7 @@ class PosixPath(common.PathBase):
             reldest = self.relto(base)
             n = reldest.count(self.sep)
             target = self.sep.join(('..', )*n + (relsource, ))
-            self._callex(os.symlink, target, self.strpath)
+            py.error.checked_call(os.symlink, target, self.strpath)
 
     def samefile(self, other):
         """ return True if other refers to the same stat object as self. """
@@ -151,13 +151,13 @@ class LocalPath(FSBase):
                 # force remove of readonly files on windows 
                 if iswin32: 
                     self.chmod(448, rec=1) # octcal 0700
-                self._callex(py.std.shutil.rmtree, self.strpath)
+                py.error.checked_call(py.std.shutil.rmtree, self.strpath)
             else:
-                self._callex(os.rmdir, self.strpath)
+                py.error.checked_call(os.rmdir, self.strpath)
         else:
             if iswin32: 
                 self.chmod(448) # octcal 0700
-            self._callex(os.remove, self.strpath)
+            py.error.checked_call(os.remove, self.strpath)
 
     def computehash(self, hashtype="md5", chunksize=524288):
         """ return hexdigest of hashvalue for this file. """
@@ -293,7 +293,7 @@ class LocalPath(FSBase):
 
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
-        return self._callex(open, self.strpath, mode)
+        return py.error.checked_call(open, self.strpath, mode)
 
     def listdir(self, fil=None, sort=None):
         """ list directory contents, possibly filter by the given fil func
@@ -302,7 +302,7 @@ class LocalPath(FSBase):
         if isinstance(fil, str):
             fil = common.FNMatcher(fil)
         res = []
-        for name in self._callex(os.listdir, self.strpath):
+        for name in py.error.checked_call(os.listdir, self.strpath):
             childurl = self.join(name)
             if fil is None or fil(childurl):
                 res.append(childurl)
@@ -344,20 +344,20 @@ class LocalPath(FSBase):
 
     def rename(self, target):
         """ rename this path to target. """
-        return self._callex(os.rename, str(self), str(target))
+        return py.error.checked_call(os.rename, str(self), str(target))
 
     def dump(self, obj, bin=1):
         """ pickle object into path location"""
         f = self.open('wb')
         try:
-            self._callex(py.std.cPickle.dump, obj, f, bin)
+            py.error.checked_call(py.std.cPickle.dump, obj, f, bin)
         finally:
             f.close()
 
     def mkdir(self, *args):
         """ create & return the directory joined with args. """
         p = self.join(*args)
-        self._callex(os.mkdir, str(p))
+        py.error.checked_call(os.mkdir, str(p))
         return p
 
     def write(self, content, mode='wb'):
@@ -401,11 +401,11 @@ class LocalPath(FSBase):
 
     def stat(self):
         """ Return an os.stat() tuple. """
-        return Stat(self, self._callex(os.stat, self.strpath))
+        return Stat(self, py.error.checked_call(os.stat, self.strpath))
 
     def lstat(self):
         """ Return an os.lstat() tuple. """
-        return Stat(self, self._callex(os.lstat, self.strpath))
+        return Stat(self, py.error.checked_call(os.lstat, self.strpath))
 
     def setmtime(self, mtime=None):
         """ set modification time for the given path.  if 'mtime' is None
@@ -414,16 +414,16 @@ class LocalPath(FSBase):
         Note that the resolution for 'mtime' is platform dependent.
         """
         if mtime is None:
-            return self._callex(os.utime, self.strpath, mtime)
+            return py.error.checked_call(os.utime, self.strpath, mtime)
         try:
-            return self._callex(os.utime, self.strpath, (-1, mtime))
+            return py.error.checked_call(os.utime, self.strpath, (-1, mtime))
         except py.error.EINVAL:
-            return self._callex(os.utime, self.strpath, (self.atime(), mtime))
+            return py.error.checked_call(os.utime, self.strpath, (self.atime(), mtime))
 
     def chdir(self):
         """ change directory to self and return old current directory """
         old = self.__class__()
-        self._callex(os.chdir, self.strpath)
+        py.error.checked_call(os.chdir, self.strpath)
         return old
 
     def realpath(self):
@@ -476,8 +476,8 @@ class LocalPath(FSBase):
             raise TypeError("mode %r must be an integer" % (mode,))
         if rec:
             for x in self.visit(rec=rec):
-                self._callex(os.chmod, str(x), mode)
-        self._callex(os.chmod, str(self), mode)
+                py.error.checked_call(os.chmod, str(x), mode)
+        py.error.checked_call(os.chmod, str(self), mode)
 
     def pyimport(self, modname=None, ensuresyspath=True):
         """ return path as an imported python module.

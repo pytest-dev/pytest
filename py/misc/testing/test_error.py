@@ -18,3 +18,9 @@ def test_unknown_error():
     cls2 = py.error._geterrnoclass(num)
     assert cls is cls2
 
+def test_error_conversion_ENOTDIR(testdir):
+    p = testdir.makepyfile("")
+    excinfo = py.test.raises(py.error.Error, py.error.checked_call, p.listdir)
+    assert isinstance(excinfo.value, EnvironmentError)
+    assert isinstance(excinfo.value, py.error.Error)
+    assert "ENOTDIR" in repr(excinfo.value) 

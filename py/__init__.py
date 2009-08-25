@@ -164,7 +164,7 @@ initpkg(__name__,
     'io.TerminalWriter'      : ('./io/terminalwriter.py', 'TerminalWriter'), 
 
     # error module, defining all errno's as Classes
-    'error'                  : ('./misc/error.py', 'error'),
+    'error'                  : ('./error.py', 'error'),
 
     # small and mean xml/html generation
     'xml.__doc__'            : ('./xmlobj/__init__.py', '__doc__'),
