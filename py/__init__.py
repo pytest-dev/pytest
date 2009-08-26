@@ -20,7 +20,7 @@ For questions please check out http://pylib.org/contact.html
 from py.initpkg import initpkg
 trunk = "trunk"
 
-version = trunk or "1.0.1"
+version = trunk or "1.0.2"
 
 initpkg(__name__,
     description = "py.test and pylib: advanced testing tool and networking lib", 
