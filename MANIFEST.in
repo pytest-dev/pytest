@@ -1,0 +1,16 @@
+include CHANGELOG
+include README.txt
+include setup.py
+include LICENSE 
+include py/LICENSE 
+include py/path/svn/testing/repotest.dump
+exclude *.orig 
+exclude *.rej 
+prune .svn 
+prune .hg 
+graft doc
+graft contrib
+graft example
+graft py/bin 
+graft py/rest/testing/data 
+graft py/misc/testing/data

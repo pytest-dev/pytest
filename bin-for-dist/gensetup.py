@@ -317,7 +317,7 @@ class SetupWriter(object):
         print "wrote",  targetfile
 
     def write_all(self):
-        self.write_manifest()
+        #self.write_manifest()
         self.write_setup()
 
 def parseargs():
