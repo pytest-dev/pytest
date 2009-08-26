@@ -31,7 +31,7 @@ def convert_rest_html(source, source_path, stylesheet=None, encoding='latin1'):
     source_path = os.path.abspath(str(source_path))
     prevdir = os.getcwd()
     try:
-        os.chdir(os.path.dirname(source_path))
+        #os.chdir(os.path.dirname(source_path))
         return publish_string(source, source_path, writer_name='html',
                               settings_overrides=kwargs)
     finally:

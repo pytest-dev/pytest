@@ -4,6 +4,7 @@ include setup.py
 include LICENSE 
 include py/LICENSE 
 include py/path/svn/testing/repotest.dump
+include py/rest/rest.sty.template
 exclude *.orig 
 exclude *.rej 
 prune .svn 
