@@ -1,9 +1,10 @@
 Changes between 1.0.1 and 1.0.2
 =====================================
 
-fixing packaging issues: adding doc, examples and contrib dirs 
-to tarball. 
+* fixing packaging issues, triggered by fedora redhat packaging, 
+  also added doc, examples and contrib dirs to the tarball. 
 
+* added a documentation link to the new pytest_django plugin. 
 
 Changes between 1.0.0 and 1.0.1
 =====================================

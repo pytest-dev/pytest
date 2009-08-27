@@ -22,6 +22,8 @@ unittest_ automatically discover and run traditional "unittest.py" style tests.
 
 nose_ nose-compatibility plugin: allow to run nose test suites natively.
 
+django_ support for testing django applications
+
 doctest_ collect and execute doctests from modules and test files.
 
 restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
