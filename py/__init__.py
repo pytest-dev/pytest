@@ -114,12 +114,12 @@ initpkg(__name__,
 
     # some nice slightly magic APIs
     'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),
-    'magic.invoke'           : ('./magic/invoke.py', 'invoke'),
-    'magic.revoke'           : ('./magic/invoke.py', 'revoke'),
-    'magic.patch'            : ('./magic/patch.py', 'patch'),
-    'magic.revert'           : ('./magic/patch.py', 'revert'),
+    'magic.invoke'           : ('./code/oldmagic.py', 'invoke'),
+    'magic.revoke'           : ('./code/oldmagic.py', 'revoke'),
+    'magic.patch'            : ('./code/oldmagic.py', 'patch'),
+    'magic.revert'           : ('./code/oldmagic.py', 'revert'),
     'magic.autopath'         : ('./magic/autopath.py', 'autopath'),
-    'magic.AssertionError'   : ('./magic/assertion.py', 'AssertionError'),
+    'magic.AssertionError'   : ('./code/oldmagic2.py', 'AssertionError'),
 
     # python inspection/code-generation API
     'code.__doc__'           : ('./code/__init__.py', '__doc__'),
@@ -130,6 +130,9 @@ initpkg(__name__,
     'code.ExceptionInfo'     : ('./code/code.py', 'ExceptionInfo'),
     'code.Traceback'         : ('./code/code.py', 'Traceback'),
     'code.getfslineno'       : ('./code/source.py', 'getfslineno'),
+    'code.patch_builtins'    : ('./code/code.py', 'patch_builtins'),
+    'code.unpatch_builtins'  : ('./code/code.py', 'unpatch_builtins'),
+    'code._AssertionError'   : ('./code/assertion.py', 'AssertionError'),
 
     # backports and additions of builtins
     'builtin.__doc__'        : ('./builtin/__init__.py', '__doc__'),

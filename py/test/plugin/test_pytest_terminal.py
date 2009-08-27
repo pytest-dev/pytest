@@ -564,36 +564,6 @@ class TestTerminalFunctional:
             "=* 1 passed in *.[0-9][0-9] seconds *=", 
         ])
 
-    def test_traceback_failure(self, testdir):
-        p1 = testdir.makepyfile("""
-            def g():
-                return 2
-            def f(x):
-                assert x == g()
-            def test_onefails():
-                f(3)
-        """)
-        result = testdir.runpytest(p1)
-        result.stdout.fnmatch_lines([
-            "*test_traceback_failure.py F", 
-            "====* FAILURES *====",
-            "____*____", 
-            "",
-            "    def test_onefails():",
-            ">       f(3)",
-            "",
-            "*test_*.py:6: ",
-            "_ _ _ *",
-            #"",
-            "    def f(x):",
-            ">       assert x == g()",
-            "E       assert 3 == 2",
-            "E        +  where 2 = g()",
-            "",
-            "*test_traceback_failure.py:4: AssertionError"
-        ])
-
-
     def test_showlocals(self, testdir): 
         p1 = testdir.makepyfile("""
             def test_showlocals():

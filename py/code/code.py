@@ -5,7 +5,9 @@ try:
 except ImportError:
     import reprlib as repr 
 
-from __builtin__ import repr as builtin_repr
+import __builtin__ as cpy_builtin 
+
+builtin_repr = cpy_builtin.repr
 
 class Code(object):
     """ wrapper around Python code objects """
@@ -194,9 +196,9 @@ class TracebackEntry(object):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
         if self.exprinfo is None:
-            from py.__.magic import exprinfo
+            from py.__.code import assertion 
             source = str(self.statement).strip()
-            x = exprinfo.interpret(source, self.frame, should_fail=True)
+            x = assertion.interpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
                 raise TypeError, "interpret returned non-string %r" % (x,)
             self.exprinfo = x 
@@ -355,7 +357,7 @@ class ExceptionInfo(object):
         #     ExceptionInfo-like classes may have different attributes.
         if tup is None:
             tup = sys.exc_info()
-            if exprinfo is None and isinstance(tup[1], py.magic.AssertionError):
+            if exprinfo is None and isinstance(tup[1], py.code._AssertionError):
                 exprinfo = tup[1].msg
                 if exprinfo and exprinfo.startswith('assert '):
                     self._striptext = 'AssertionError: '
@@ -371,7 +373,7 @@ class ExceptionInfo(object):
         """ return the exception as a string
         
             when 'tryshort' resolves to True, and the exception is a
-            py.magic.AssertionError, only the actual exception part of
+            py.code._AssertionError, only the actual exception part of
             the exception representation is returned (so 'AssertionError: ' is
             removed from the beginning)
         """
@@ -727,3 +729,24 @@ class SafeRepr(repr.Repr):
             return s
 
 safe_repr = SafeRepr().repr
+
+oldbuiltins = {}
+
+def patch_builtins(assertion=True, compile=True):
+    """ put compile and AssertionError builtins to Python's builtins. """
+    if assertion:
+        from py.__.code import assertion
+        l = oldbuiltins.setdefault('AssertionError', [])
+        l.append(cpy_builtin.AssertionError)
+        cpy_builtin.AssertionError = assertion.AssertionError
+    if compile: 
+        l = oldbuiltins.setdefault('compile', [])
+        l.append(cpy_builtin.compile)
+        cpy_builtin.compile = py.code.compile 
+
+def unpatch_builtins(assertion=True, compile=True):
+    """ remove compile and AssertionError builtins from Python builtins. """
+    if assertion:
+        cpy_builtin.AssertionError = oldbuiltins['AssertionError'].pop()
+    if compile: 
+        cpy_builtin.compile = oldbuiltins['compile'].pop()

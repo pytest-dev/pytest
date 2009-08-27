@@ -174,3 +174,14 @@ def test_autoimport():
     from py.initpkg import autoimport
     py.std.os.environ['AUTOTEST_AUTOIMPORT'] = "nonexistmodule"
     py.test.raises(ImportError, "autoimport('autotest')")
+
+
+def test_all_resolves():
+    seen = py.builtin.set([py])
+    lastlength = None
+    while len(seen) != lastlength:
+        lastlength = len(seen) 
+        for item in py.builtin.frozenset(seen):
+            for value in item.__dict__.values():
+                if isinstance(value, type(py.test)):
+                    seen.add(value)

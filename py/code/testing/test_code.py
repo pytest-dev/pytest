@@ -164,5 +164,18 @@ class TestSafeRepr:
             s = safe_repr(Function())
         except Exception, e:
             py.test.fail("saferepr failed for newstyle class")
-   
- 
+  
+def test_builtin_patch_unpatch(monkeypatch):
+    import __builtin__ as cpy_builtin
+    comp = cpy_builtin.compile 
+    def mycompile(*args, **kwargs):
+        return comp(*args, **kwargs)
+    monkeypatch.setattr(cpy_builtin, 'AssertionError', None)
+    monkeypatch.setattr(cpy_builtin, 'compile', mycompile)
+    py.code.patch_builtins()
+    assert cpy_builtin.AssertionError
+    assert cpy_builtin.compile != mycompile
+    py.code.unpatch_builtins()
+    assert cpy_builtin.AssertionError is None
+    assert cpy_builtin.compile == mycompile 
+

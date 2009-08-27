@@ -577,11 +577,11 @@ raise ValueError()
                 x = 1
                 assert x == 2
         """)
-        py.magic.invoke(assertion=True)
+        py.code.patch_builtins(assertion=True)
         try:
             excinfo = py.test.raises(AssertionError, mod.somefunc)
         finally:
-            py.magic.revoke(assertion=True)
+            py.code.unpatch_builtins(assertion=True)
             
         p = FormattedExcinfo()
         reprentry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)

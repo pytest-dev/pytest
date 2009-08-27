@@ -22,19 +22,6 @@ class TestModule:
         py.test.raises(SyntaxError, modcol.collect)
         py.test.raises(SyntaxError, modcol.run)
 
-    def test_module_assertion_setup(self, testdir, monkeypatch):
-        modcol = testdir.getmodulecol("pass")
-        from py.__.magic import assertion
-        l = []
-        monkeypatch.setattr(assertion, "invoke", lambda: l.append(None))
-        modcol.setup()
-        x = l.pop()
-        assert x is None
-        monkeypatch.setattr(assertion, "revoke", lambda: l.append(None))
-        modcol.teardown()
-        x = l.pop()
-        assert x is None
-
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         py.test.raises(ImportError, "modcol.obj")

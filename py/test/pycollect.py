@@ -183,21 +183,13 @@ class Module(py.test.collect.File, PyCollectorMixin):
     def setup(self): 
         if getattr(self.obj, 'disabled', 0):
             py.test.skip("%r is disabled" %(self.obj,))
-        if not self.config.option.nomagic:
-            #print "*" * 20, "INVOKE assertion", self
-            py.magic.invoke(assertion=1)
         mod = self.obj
-        #self.config.pluginmanager.register(mod)
         if hasattr(mod, 'setup_module'): 
             self.obj.setup_module(mod)
 
     def teardown(self): 
         if hasattr(self.obj, 'teardown_module'): 
             self.obj.teardown_module(self.obj) 
-        if not self.config.option.nomagic:
-            #print "*" * 20, "revoke assertion", self
-            py.magic.revoke(assertion=1)
-        #self.config.pluginmanager.unregister(self.obj)
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
