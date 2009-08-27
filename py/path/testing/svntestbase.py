@@ -4,8 +4,7 @@ from py import path, test, process
 from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
 from py.__.path import svnwc as svncommon
 
-mypath = py.magic.autopath()
-repodump = mypath.dirpath('repotest.dump')
+repodump = py.path.local(__file__).dirpath('repotest.dump')
 
 def getsvnbin():
     svnbin = py.path.local.sysfind('svn')

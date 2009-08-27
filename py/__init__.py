@@ -113,12 +113,12 @@ initpkg(__name__,
     'path.SvnAuth'           : ('./path/svnwc.py', 'SvnAuth'),
 
     # some nice slightly magic APIs
-    'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),
+    #'magic.__doc__'          : ('./magic/__init__.py', '__doc__'),
     'magic.invoke'           : ('./code/oldmagic.py', 'invoke'),
     'magic.revoke'           : ('./code/oldmagic.py', 'revoke'),
     'magic.patch'            : ('./code/oldmagic.py', 'patch'),
     'magic.revert'           : ('./code/oldmagic.py', 'revert'),
-    'magic.autopath'         : ('./magic/autopath.py', 'autopath'),
+    'magic.autopath'         : ('./path/local.py', 'autopath'),
     'magic.AssertionError'   : ('./code/oldmagic2.py', 'AssertionError'),
 
     # python inspection/code-generation API

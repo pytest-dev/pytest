@@ -71,7 +71,7 @@ def create_stylesheet(options, path):
     fill_in["heading"] = options.get("heading", "")
     template_file = path.join("rest.sty.template")
     if not template_file.check():
-        template_file = py.magic.autopath().dirpath().join("rest.sty.template")
+        template_file = py.path.local(__file__).dirpath("rest.sty.template")
     return template_file.read() % fill_in
 
 def process_configfile(configfile, debug=False):

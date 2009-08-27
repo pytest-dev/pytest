@@ -2,8 +2,6 @@ from __future__ import generators
 import os, sys, time, signal
 import py
 from py.__.execnet import gateway
-mypath = py.magic.autopath()
-
 from py.__.execnet.register import startup_modules, getsource 
 
 TESTTIMEOUT = 10.0 # seconds

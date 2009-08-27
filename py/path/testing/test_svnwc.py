@@ -461,9 +461,11 @@ class TestInfoSvnWCCommand:
         Properties Last Updated: 2006-05-23 11:54:59 +0200 (Tue, 23 May 2006)
         Checksum: 357e44880e5d80157cc5fbc3ce9822e3
         """
-        path = py.magic.autopath().dirpath().chdir()
-        info = InfoSvnWCCommand(output)
-        path.chdir()
+        path = py.path.local(__file__).dirpath().chdir()
+        try:    
+            info = InfoSvnWCCommand(output)
+        finally:
+            path.chdir()
         assert info.last_author == 'jan'
         assert info.kind == 'file'
         assert info.mtime == 1149021926.0
@@ -489,9 +491,11 @@ class TestInfoSvnWCCommand:
         Properties Last Updated: 2006-06-02 23:45:28 +0200 (Fri, 02 Jun 2006)
         Checksum: 357e44880e5d80157cc5fbc3ce9822e3
         """
-        path = py.magic.autopath().dirpath().chdir()
-        info = InfoSvnWCCommand(output)
-        path.chdir()
+        path = py.path.local(__file__).dirpath().chdir()
+        try:
+            info = InfoSvnWCCommand(output)
+        finally:
+            path.chdir()
         assert info.last_author == 'jan'
         assert info.kind == 'file'
         assert info.mtime == 1149021926.0

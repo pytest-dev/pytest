@@ -161,13 +161,3 @@ class TestView:
         assert codelines == ["4 + 5", "getitem('', 'join')", 
             "setattr('x', 'y', 3)", "12 - 1"]
 
-def test_AssertionError(testdir):
-    testdir.makepyfile("""
-        import py
-        def test_hello(recwarn):
-            err = py.magic.AssertionError
-            recwarn.pop(DeprecationWarning)
-            assert err is py.code._AssertionError
-    """)
-    result = testdir.runpytest() 
-    assert "1 passed" in result.stdout.str()

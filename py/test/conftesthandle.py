@@ -1,5 +1,5 @@
 import py
-defaultconftestpath = py.magic.autopath().dirpath('defaultconftest.py')
+defaultconftestpath = py.path.local(__file__).dirpath("defaultconftest.py")
 
 class Conftest(object):
     """ the single place for accessing values and interacting 

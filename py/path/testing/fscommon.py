@@ -28,12 +28,12 @@ def setuptestfs(path):
     module_b = otherdir.ensure('b.py')
     module_b.write('stuff="got it"\n')
     module_c = otherdir.ensure('c.py')
-    module_c.write('''import py; py.magic.autopath()
+    module_c.write('''import py; 
 import otherdir.a
 value = otherdir.a.result
 ''')
     module_d = otherdir.ensure('d.py')
-    module_d.write('''import py; py.magic.autopath()
+    module_d.write('''import py; 
 from otherdir import a
 value2 = a.result
 ''')

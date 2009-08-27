@@ -1,5 +1,5 @@
 import py
-mypath = py.magic.autopath()
+mypath = py.path.local(__file__).new(ext=".py")
 
 def test_forwarding_to_warnings_module():
     py.test.deprecated_call(py.log._apiwarn, "1.3", "..")

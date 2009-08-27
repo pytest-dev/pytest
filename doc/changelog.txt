@@ -1,6 +1,12 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* deprecate py.magic.autopath, remove py/magic directory 
+
+* move pytest assertion handling to py/code and a pytest_assertion
+  plugin, add "--no-assert" option, deprecate py.magic namespaces 
+  in favour of (less) py.code ones. 
+
 * consolidate and cleanup py/code classes and files 
 
 * cleanup py/misc, move tests to bin-for-dist 
