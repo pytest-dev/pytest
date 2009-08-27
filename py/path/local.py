@@ -165,6 +165,8 @@ class LocalPath(FSBase):
             try:
                 import hashlib as mod
             except ImportError:
+                if hashtype == "sha1":
+                    hashtype = "sha"
                 mod = __import__(hashtype)
             hash = getattr(mod, hashtype)()
         except (AttributeError, ImportError):
@@ -534,7 +536,7 @@ class LocalPath(FSBase):
             to be executed. Note that this process is directly
             invoked and not through a system shell.
         """
-        from py.compat.subprocess import Popen, PIPE
+        from subprocess import Popen, PIPE
         argv = map(str, argv)
         proc = Popen([str(self)] + list(argv), stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()

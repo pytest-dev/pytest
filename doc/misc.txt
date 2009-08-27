@@ -93,25 +93,9 @@ Cross-Python Version compatibility helpers
 
 sources: 
 
-  * :source:`py/compat/`
   * :source:`py/builtin/`
 
 The compat and builtin namespaces help to write code using newer python features on older python interpreters. 
-
-:api:`py.compat`
-----------------
-
-:api:`py.compat` provides fixed versions (currently taken from Python 2.4.4) of
-a few selected modules to be able to use them across python versions.  Currently these are: 
-
- * doctest
- * optparse
- * subprocess
- * textwrap
-
-Note that for example ``import doctest`` and ``from py.compat import doctest`` result
-into two different module objects no matter what Python version you are using.  
-So you should only use exactly one of these to avoid confusion in your program.  
 
 :api:`py.builtin`
 -----------------

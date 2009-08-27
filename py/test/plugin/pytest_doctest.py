@@ -15,6 +15,7 @@ as well.
 
 import py
 from py.__.code.code import TerminalRepr, ReprFileLocation
+import doctest
 
 def pytest_addoption(parser):
     group = parser.addgroup("doctest options")
@@ -46,7 +47,7 @@ class DoctestItem(py.test.collect.Item):
         self.fspath = path 
 
     def repr_failure(self, excinfo):
-        if excinfo.errisinstance(py.compat.doctest.DocTestFailure):
+        if excinfo.errisinstance(doctest.DocTestFailure):
             doctestfailure = excinfo.value
             example = doctestfailure.example
             test = doctestfailure.test
@@ -54,8 +55,8 @@ class DoctestItem(py.test.collect.Item):
             lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = py.compat.doctest.OutputChecker() 
-            REPORT_UDIFF = py.compat.doctest.REPORT_UDIFF
+            checker = doctest.OutputChecker() 
+            REPORT_UDIFF = doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
             i = max(test.lineno, max(0, lineno - 10)) # XXX? 
             lines = []
@@ -65,7 +66,7 @@ class DoctestItem(py.test.collect.Item):
             lines += checker.output_difference(example, 
                     doctestfailure.got, REPORT_UDIFF).split("\n")
             return ReprFailDoctest(reprlocation, lines)
-        elif excinfo.errisinstance(py.compat.doctest.UnexpectedException):
+        elif excinfo.errisinstance(doctest.UnexpectedException):
             excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
             return super(DoctestItem, self).repr_failure(excinfo)
         else: 
@@ -74,14 +75,14 @@ class DoctestItem(py.test.collect.Item):
 class DoctestTextfile(DoctestItem):
     def runtest(self):
         if not self._deprecated_testexecution():
-            failed, tot = py.compat.doctest.testfile(
+            failed, tot = doctest.testfile(
                 str(self.fspath), module_relative=False, 
                 raise_on_error=True, verbose=0)
 
 class DoctestModule(DoctestItem):
     def runtest(self):
         module = self.fspath.pyimport()
-        failed, tot = py.compat.doctest.testmod(
+        failed, tot = doctest.testmod(
             module, raise_on_error=True, verbose=0)
 
 

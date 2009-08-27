@@ -27,6 +27,32 @@ def test_stacklevel():
     warning = str(err)
     assert warning.find(":%s" % lno) != -1
 
+def test_stacklevel_initpkg_with_resolve(testdir):
+    mod = testdir.makepyfile(initpkg="""
+        import py
+        def __getattr__():
+            f()
+        def f():
+            py.log._apiwarn("x", "some", stacklevel="initpkg")
+    """).pyimport()
+    capture = py.io.StdCapture()
+    mod.__getattr__()
+    out, err = capture.reset()
+    lno = test_stacklevel_initpkg_with_resolve.func_code.co_firstlineno + 9
+    warning = str(err)
+    assert warning.find(":%s" % lno) != -1
+
+def test_stacklevel_initpkg_no_resolve():
+    def f():
+        py.log._apiwarn("x", "some", stacklevel="initpkg")
+    capture = py.io.StdCapture()
+    f()
+    out, err = capture.reset()
+    lno = test_stacklevel_initpkg_no_resolve.func_code.co_firstlineno + 2
+    warning = str(err)
+    assert warning.find(":%s" % lno) != -1
+
+
 def test_function():
     capture = py.io.StdCapture()
     py.log._apiwarn("x.y.z", "something", function=test_function)

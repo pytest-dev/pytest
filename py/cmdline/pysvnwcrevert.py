@@ -41,9 +41,8 @@ def svnwcrevert(path, root=None, precious=[]):
             svnwcrevert(p, root)
 
 # XXX add a functional test
-optparse = py.compat.optparse
 
-parser = optparse.OptionParser(usage=__doc__)
+parser = py.std.optparse.OptionParser(usage=__doc__)
 parser.add_option("-p", "--precious",
                   action="append", dest="precious", default=[],
                   help="preserve files with this name")

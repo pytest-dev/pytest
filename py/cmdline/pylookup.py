@@ -16,9 +16,7 @@ curdir = py.path.local()
 def rec(p):
     return p.check(dotfile=0)
 
-optparse = py.compat.optparse
-
-parser = optparse.OptionParser(usage=__doc__)
+parser = py.std.optparse.OptionParser(usage=__doc__)
 parser.add_option("-i", "--ignore-case", action="store_true", dest="ignorecase",
                   help="ignore case distinctions")
 parser.add_option("-C", "--context", action="store", type="int", dest="context",

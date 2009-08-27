@@ -22,9 +22,8 @@ else:
     def log(msg):
         pass
 
-optparse = py.compat.optparse
 
-parser = optparse.OptionParser(usage=__doc__)
+parser = py.std.optparse.OptionParser(usage=__doc__)
 parser.add_option("--topdf", action="store_true", dest="topdf", default=False,
                   help="generate pdf files")
 parser.add_option("--stylesheet", dest="stylesheet", default=None,

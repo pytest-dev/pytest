@@ -10,7 +10,7 @@ a ".".
 import py
 
 def main():
-    parser = py.compat.optparse.OptionParser(usage=__doc__)
+    parser = py.std.optparse.OptionParser(usage=__doc__)
     parser.add_option("-e", "--remove", dest="ext", default=".pyc", action="store",
         help="remove files with the given comma-separated list of extensions"
     )

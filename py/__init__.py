@@ -191,12 +191,12 @@ initpkg(__name__,
     'log.STDERR'             : ('./log/log.py', 'STDERR'),
     'log.Syslog'             : ('./log/log.py', 'Syslog'),
 
-    # compatibility modules (taken from 2.4.4) 
+    # compatibility modules (deprecated)
     'compat.__doc__'         : ('./compat/__init__.py', '__doc__'),
-    'compat.doctest'         : ('./compat/doctest.py', '*'),
-    'compat.optparse'        : ('./compat/optparse.py', '*'),
-    'compat.textwrap'        : ('./compat/textwrap.py', '*'),
-    'compat.subprocess'      : ('./compat/subprocess.py', '*'),
+    'compat.doctest'         : ('./compat/dep_doctest.py', 'doctest'),
+    'compat.optparse'        : ('./compat/dep_optparse.py', 'optparse'),
+    'compat.textwrap'        : ('./compat/dep_textwrap.py', 'textwrap'),
+    'compat.subprocess'      : ('./compat/dep_subprocess.py', 'subprocess'),
 })
 
 

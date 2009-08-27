@@ -13,6 +13,18 @@ class Warning(py.std.exceptions.DeprecationWarning):
 def _apiwarn(startversion, msg, stacklevel=1, function=None):
     # below is mostly COPIED from python2.4/warnings.py's def warn()
     # Get context information
+    if stacklevel == "initpkg":
+        frame = sys._getframe(1)
+        level = 2
+        while frame:
+            co = frame.f_code
+            if co.co_name == "__getattr__" and co.co_filename.find("initpkg") !=-1:
+                stacklevel = level 
+                break
+            level += 1
+            frame = frame.f_back
+        else:
+            stacklevel = 1
     msg = "%s (since version %s)" %(msg, startversion)
     warn(msg, stacklevel=stacklevel+1, function=function)
 

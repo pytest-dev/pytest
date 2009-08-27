@@ -23,7 +23,7 @@ class Config(object):
     """ test configuration object, provides access to config valueso, 
         the pluginmanager and plugin api. 
     """
-    Option = py.compat.optparse.Option # deprecated
+    Option = py.std.optparse.Option 
     Error = Error
     basetemp = None
     _sessionclass = None

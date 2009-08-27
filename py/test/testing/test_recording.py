@@ -1,8 +1,8 @@
 import py,sys
-py.test.skip("implementation missing: recording")
 
 class TestRecordingAccept:
     def test_recording_and_back(self, testdir):
+        py.test.skip("implementation missing: recording")
         p = testdir.makepyfile("""
             import py
             def test_fail():

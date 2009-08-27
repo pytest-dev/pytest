@@ -1,12 +1,8 @@
 
 import os, inspect, socket
 import sys
-from py.magic import autopath ; mypath = autopath()
-
-try:
-    from subprocess import Popen, PIPE
-except ImportError:
-    from py.__.compat.subprocess import Popen, PIPE
+import py
+from subprocess import Popen, PIPE
 
 import py
 if sys.platform == "win32":
@@ -128,8 +124,9 @@ class SocketGateway(InstallableGateway):
             host, port = ('', 0)  # XXX works on all platforms? 
         else:   
             host, port = hostport 
+        mydir = py.path.local(__file__).dirpath()
         socketserverbootstrap = py.code.Source(
-            mypath.dirpath('script', 'socketserver.py').read('rU'), """
+            mydir.join('script', 'socketserver.py').read('rU'), """
             import socket
             sock = bind_and_listen((%r, %r)) 
             port = sock.getsockname()

@@ -191,7 +191,7 @@ def main():
     import py
 
     usage = "usage: %prog [-s [filename ...] | [-i | -c filename ...]]"
-    optparser = py.compat.optparse.OptionParser(usage)
+    optparser = py.std.optparse.OptionParser(usage)
 
     def select_output (option, opt, value, optparser, **kw):
         if hasattr(optparser, 'output'):

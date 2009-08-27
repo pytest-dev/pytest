@@ -14,7 +14,7 @@ for options.  basic usage:
     
 """
 import py
-from py.compat import optparse
+import optparse 
 
 class Parser:
     """ Parser for command line arguments. """ 
@@ -76,11 +76,11 @@ class OptionGroup:
 
     def addoption(self, *optnames, **attrs):
         """ add an option to this group. """
-        option = py.compat.optparse.Option(*optnames, **attrs)
+        option = optparse.Option(*optnames, **attrs)
         self._addoption_instance(option, shortupper=False)
 
     def _addoption(self, *optnames, **attrs):
-        option = py.compat.optparse.Option(*optnames, **attrs)
+        option = optparse.Option(*optnames, **attrs)
         self._addoption_instance(option, shortupper=True)
 
     def _addoption_instance(self, option, shortupper=False):

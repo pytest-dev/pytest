@@ -12,10 +12,9 @@ current working directory). Distinguish between test files and normal ones and
 report them separately.
 """
 import py
-from py.compat import optparse
 
 def main():
-    parser = optparse.OptionParser(usage=__doc__)
+    parser = py.std.optparse.OptionParser(usage=__doc__)
     (options, args) = parser.parse_args()
     countloc(args)
    

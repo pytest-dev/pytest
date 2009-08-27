@@ -231,7 +231,7 @@ class DoctestText(py.test.collect.Item):
                 l.append(line)
         docstring = "\n".join(l)
         mod.__doc__ = docstring 
-        failed, tot = py.compat.doctest.testmod(mod, verbose=1)
+        failed, tot = py.std.doctest.testmod(mod, verbose=1)
         if failed: 
             py.test.fail("doctest %s: %s failed out of %s" %(
                          self.fspath, failed, tot))

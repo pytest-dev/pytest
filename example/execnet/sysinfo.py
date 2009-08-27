@@ -7,9 +7,8 @@ obtain system info from remote machine.
 import py
 import sys
 
-optparse = py.compat.optparse
 
-parser = optparse.OptionParser(usage=__doc__)
+parser = py.std.optparse.OptionParser(usage=__doc__)
 parser.add_option("-f", "--sshconfig", action="store", dest="ssh_config", default=None,
                   help="use given ssh config file, and add info all contained hosts for getting info")
 parser.add_option("-i", "--ignore", action="store", dest="ignores", default=None,

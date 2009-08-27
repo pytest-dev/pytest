@@ -1,6 +1,8 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* deprecate py.compat.doctest|subprocess|textwrap|optparse
+
 * deprecate py.magic.autopath, remove py/magic directory 
 
 * move pytest assertion handling to py/code and a pytest_assertion

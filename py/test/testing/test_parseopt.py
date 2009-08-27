@@ -1,5 +1,5 @@
 import py
-from py.__.test import parseopt 
+from py.__.test import parseopt
 
 class TestParser:
     def test_init(self, capsys):
@@ -30,7 +30,7 @@ class TestParser:
         group = parseopt.OptionGroup("hello")
         group.addoption("--option1", action="store_true")
         assert len(group.options) == 1
-        assert isinstance(group.options[0], py.compat.optparse.Option)
+        assert isinstance(group.options[0], parseopt.optparse.Option)
 
     def test_group_shortopt_lowercase(self):
         parser = parseopt.Parser()

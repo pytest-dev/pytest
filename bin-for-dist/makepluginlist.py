@@ -261,7 +261,7 @@ class PluginDoc(RestWriter):
             return
         self.h2("command line options")
         self.Print()
-        formatter = py.compat.optparse.IndentedHelpFormatter()
+        formatter = py.std.optparse.IndentedHelpFormatter()
         for opt in options:
             switches = formatter.format_option_strings(opt)
             self.Print("``%s``" % switches)
