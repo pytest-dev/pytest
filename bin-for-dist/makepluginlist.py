@@ -7,7 +7,7 @@ plugins = [
     ('plugins for Python test functions', 
             'xfail figleaf monkeypatch capture recwarn',),
     ('plugins for other testing styles and languages', 
-            'oejskit unittest nose doctest restdoc'),
+            'oejskit unittest nose django doctest restdoc'),
     ('plugins for generic reporting and failure logging', 
             'pastebin resultlog terminal',),
     ('plugins for generic reporting and failure logging', 
@@ -22,6 +22,7 @@ plugins = [
 
 externals = {
     'oejskit': 'run javascript tests in real life browsers',
+    'django': 'support for testing django applications', 
 
 }
                 

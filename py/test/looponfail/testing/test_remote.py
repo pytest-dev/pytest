@@ -17,7 +17,9 @@ class TestRemoteControl:
         assert failures 
         control.setup()
         item.fspath.write("def test_func(): assert 1\n")
-        (item.fspath + "c").remove()
+        pyc = item.fspath.new(ext=".pyc")
+        if pyc.check():
+            pyc.remove()
         failures = control.runsession(failures)
         assert not failures
 
@@ -37,7 +39,9 @@ class TestRemoteControl:
             def test_new():
                 assert 0
         """))
-        (modcol.fspath + "c").remove()
+        pyc = modcol.fspath.new(ext=".pyc")
+        if pyc.check():
+            pyc.remove()
         failures = control.runsession(failures)
         assert not failures
         control.setup()

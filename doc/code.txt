@@ -97,7 +97,7 @@ Example::
   >>> str(first.statement).strip().startswith('raise ValueError')
   True
 
-source: :source:`py/code/traceback2.py`
+source: :source:`py/code/code.py`
 
 :api:`py.code.Frame`
 --------------------
