@@ -55,7 +55,7 @@ class MarkerDecorator:
             self.kwargs = kwargs.copy()
             return self 
         else:
-            if not len(args) == 1 or not hasattr(args[0], 'func_dict'):
+            if not len(args) == 1 or not hasattr(args[0], '__dict__'):
                 raise TypeError("need exactly one function to decorate, "
                                 "got %r" %(args,))
             func = args[0]

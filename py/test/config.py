@@ -1,5 +1,5 @@
 import py, os
-from conftesthandle import Conftest
+from py.__.test.conftesthandle import Conftest
 
 from py.__.test import parseopt
 
@@ -289,7 +289,9 @@ def gettopdir(args):
         parent directory of the root package is returned. 
     """
     args = [py.path.local(arg) for arg in args]
-    p = reduce(py.path.local.common, args)
+    p = args and args[0] or None
+    for x in args[1:]:
+        p = p.common(x)
     assert p, "cannot determine common basedir of %s" %(args,)
     pkgdir = p.pypkgpath()
     if pkgdir is None:

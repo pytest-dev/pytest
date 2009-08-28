@@ -17,7 +17,7 @@ class Source(object):
                 partlines = []
             if isinstance(part, Source):
                 partlines = part.lines
-            elif isinstance(part, (unicode, str)):
+            elif isinstance(part, py.builtin.basestring):
                 partlines = part.split('\n')
                 if rstrip:
                     while partlines: 
@@ -164,7 +164,8 @@ class Source(object):
     def __str__(self):
         return "\n".join(self.lines)
 
-    def compile(self, filename=None, mode='exec', flag=generators.compiler_flag, 
+    def compile(self, filename=None, mode='exec', 
+                flag=generators.compiler_flag, 
                 dont_inherit=0, _genframe=None):
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
@@ -245,10 +246,7 @@ class MyStr(str):
     """ custom string which allows to add attributes. """
 
 def findsource(obj):
-    if hasattr(obj, 'func_code'):
-        obj = obj.func_code
-    elif hasattr(obj, 'f_code'):
-        obj = obj.f_code
+    obj = py.code.getrawcode(obj)
     try:
         fullsource = obj.co_filename.__source__
     except AttributeError:
@@ -259,7 +257,7 @@ def findsource(obj):
         except:
             return None, None
         source = Source()
-        source.lines = map(str.rstrip, sourcelines)
+        source.lines = [line.rstrip() for line in sourcelines]
         return source, lineno
     else:
         lineno = obj.co_firstlineno - 1        
@@ -267,10 +265,7 @@ def findsource(obj):
 
 
 def getsource(obj, **kwargs):
-    if hasattr(obj, 'func_code'):
-        obj = obj.func_code
-    elif hasattr(obj, 'f_code'):
-        obj = obj.f_code
+    obj = py.code.getrawcode(obj)
     try:
         fullsource = obj.co_filename.__source__
     except AttributeError:
@@ -304,8 +299,12 @@ def deindent(lines, offset=None):
             yield line + '\n'
         while True:
             yield ''
-            
-    readline = readline_generator(lines).next
+        
+    r = readline_generator(lines)
+    try: 
+        readline = r.next
+    except AttributeError:
+        readline = r.__next__
 
     try:
         for _, _, (sline, _), (eline, _), _ in tokenize.generate_tokens(readline):

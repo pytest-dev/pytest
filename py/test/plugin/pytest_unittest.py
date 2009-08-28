@@ -128,7 +128,6 @@ def test_teardown(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     passed, skipped, failed = reprec.countoutcomes()
-    print "COUNTS", passed, skipped, failed
     assert failed == 0, failed
     assert passed == 2
     assert passed + skipped + failed == 2

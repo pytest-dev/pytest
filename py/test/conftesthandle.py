@@ -64,7 +64,7 @@ class Conftest(object):
                 return mod, getattr(mod, name)
             except AttributeError:
                 continue
-        raise KeyError, name
+        raise KeyError(name)
 
     def importconftest(self, conftestpath):
         # Using caching here looks redundant since ultimately

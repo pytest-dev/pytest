@@ -58,7 +58,7 @@ class Checkers:
                 raise TypeError(
                     "no %r checker available for %r" % (name, self.path))
             try:
-                if meth.im_func.func_code.co_argcount > 1:
+                if py.code.getrawcode(meth).co_argcount > 1:
                     if (not meth(value)) ^ invert:
                         return False
                 else:

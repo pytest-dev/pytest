@@ -144,6 +144,20 @@ class LocalPath(FSBase):
     def __hash__(self):
         return hash(self.strpath)
 
+    def __eq__(self, other):
+        s1 = str(self)
+        s2 = str(other)
+        if iswin32: 
+            s1 = s1.lower()
+            s2 = s2.lower()
+        return s1 == s2
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        return str(self) < str(other)
+
     def remove(self, rec=1):
         """ remove a file or directory (or a directory tree if rec=1).  """
         if self.check(dir=1, link=0):
@@ -285,14 +299,6 @@ class LocalPath(FSBase):
         obj.strpath = os.path.normpath(strpath)
         return obj
 
-    def __eq__(self, other):
-        s1 = str(self)
-        s2 = str(other)
-        if iswin32: 
-            s1 = s1.lower()
-            s2 = s2.lower()
-        return s1 == s2
-
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
         return py.error.checked_call(open, self.strpath, mode)
@@ -308,7 +314,7 @@ class LocalPath(FSBase):
             childurl = self.join(name)
             if fil is None or fil(childurl):
                 res.append(childurl)
-        if callable(sort):
+        if hasattr(sort, '__call__'):
             res.sort(sort)
         elif sort:
             res.sort()
@@ -762,7 +768,7 @@ def autopath(globs=None):
         __file__ = globs['__file__']
     except KeyError:
         if not sys.argv[0]:
-            raise ValueError, "cannot compute autopath in interactive mode"
+            raise ValueError("cannot compute autopath in interactive mode")
         __file__ = os.path.abspath(sys.argv[0])
 
     ret = py.path.local(__file__)

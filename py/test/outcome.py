@@ -93,14 +93,13 @@ def raises(ExpectedException, *args, **kwargs):
         #print "raises frame scope: %r" % frame.f_locals
         try:
             code = py.code.Source(code).compile()
-            exec code in frame.f_globals, loc
+            py.builtin.exec_(code, frame.f_globals, loc)
             # XXX didn'T mean f_globals == f_locals something special?
             #     this is destroyed here ...
         except ExpectedException:
             return py.code.ExceptionInfo()
     else:
         func = args[0]
-        assert callable
         try:
             func(*args[1:], **kwargs)
         except ExpectedException:

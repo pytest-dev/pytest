@@ -1,4 +1,5 @@
 import py
+import sys
 
 #
 # main entry point
@@ -6,7 +7,7 @@ import py
 
 def main(args=None):
     if args is None:
-        args = py.std.sys.argv[1:]
+        args = sys.argv[1:]
     config = py.test.config
     try:
         config.parse(args) 
@@ -15,7 +16,8 @@ def main(args=None):
         exitstatus = session.main()
         config.pluginmanager.do_unconfigure(config)
         raise SystemExit(exitstatus)
-    except config.Error, e:
-        py.std.sys.stderr.write("ERROR: %s\n" %(e.args[0],))
+    except config.Error:
+        e = sys.exc_info()[1]
+        sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         raise SystemExit(3)
 

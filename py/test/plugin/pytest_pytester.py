@@ -6,8 +6,8 @@ import py
 import sys, os
 import inspect
 from py.__.test.config import Config as pytestConfig
-import hookspec
-import subprocess
+from py.__.test.plugin import hookspec
+from py.builtin import print_
 
 pytest_plugins = '_pytest'
 
@@ -94,7 +94,7 @@ class TmpTestdir:
             self._olddir = old 
 
     def _makefile(self, ext, args, kwargs):
-        items = kwargs.items()
+        items = list(kwargs.items())
         if args:
             source = "\n".join(map(str, args))
             basename = self.request.function.__name__
@@ -249,7 +249,7 @@ class TmpTestdir:
             p.write("import py ; pytest_plugins = %r" % plugins)
         else:
             if self.plugins:
-                print "warning, ignoring reusing existing con", p 
+                print ("warning, ignoring reusing existing %s" % p)
 
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
@@ -274,7 +274,7 @@ class TmpTestdir:
         cmdargs = map(str, cmdargs)
         p1 = py.path.local("stdout")
         p2 = py.path.local("stderr")
-        print "running", cmdargs, "curdir=", py.path.local()
+        print_("running", cmdargs, "curdir=", py.path.local())
         f1 = p1.open("w")
         f2 = p2.open("w")
         popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
@@ -480,17 +480,17 @@ class LineMatcher:
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
-                    print "exact match:", repr(line)
+                    print_("exact match:", repr(line))
                     break 
                 elif fnmatch(nextline, line):
-                    print "fnmatch:", repr(line)
-                    print "   with:", repr(nextline)
+                    print_("fnmatch:", repr(line))
+                    print_("   with:", repr(nextline))
                     break
                 else:
                     if not nomatchprinted:
-                        print "nomatch:", repr(line)
+                        print_("nomatch:", repr(line))
                         nomatchprinted = True
-                    print "    and:", repr(nextline)
+                    print_("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
                 if line != nextline:

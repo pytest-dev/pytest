@@ -1,19 +1,17 @@
 import py
 import sys
+
+builtin_repr = repr
 try:
     import repr
 except ImportError:
     import reprlib as repr 
 
-import __builtin__ as cpy_builtin 
-
-builtin_repr = cpy_builtin.repr
 
 class Code(object):
     """ wrapper around Python code objects """
     def __init__(self, rawcode):
-        rawcode = getattr(rawcode, 'im_func', rawcode)
-        rawcode = getattr(rawcode, 'func_code', rawcode)
+        rawcode = py.code.getrawcode(rawcode)
         self.raw = rawcode 
         try:
             self.filename = rawcode.co_filename
@@ -49,7 +47,7 @@ class Code(object):
         for name in names:
             if name not in kwargs:
                 kwargs[name] = getattr(self.raw, name)
-        return py.std.new.code(
+        arglist = [
                  kwargs['co_argcount'],
                  kwargs['co_nlocals'],
                  kwargs['co_stacksize'],
@@ -64,7 +62,10 @@ class Code(object):
                  kwargs['co_lnotab'],
                  kwargs['co_freevars'],
                  kwargs['co_cellvars'],
-        )
+        ]
+        if sys.version_info >= (3,0):
+            arglist.insert(1, kwargs['co_kwonlyargcount'])
+        return self.raw.__class__(*arglist)
 
     def path(self):
         """ return a py.path.local object pointing to the source code """
@@ -139,7 +140,7 @@ class Frame(object):
         """
         f_locals = self.f_locals.copy() 
         f_locals.update(vars)
-        exec code in self.f_globals, f_locals 
+        py.builtin.exec_(code, self.f_globals, f_locals )
 
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'
@@ -196,11 +197,11 @@ class TracebackEntry(object):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
         if self.exprinfo is None:
-            from py.__.code import assertion 
+            from py.__.code import _assertion 
             source = str(self.statement).strip()
-            x = assertion.interpret(source, self.frame, should_fail=True)
+            x = _assertion.interpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
-                raise TypeError, "interpret returned non-string %r" % (x,)
+                raise TypeError("interpret returned non-string %r" % (x,))
             self.exprinfo = x 
         return self.exprinfo
 
@@ -358,7 +359,9 @@ class ExceptionInfo(object):
         if tup is None:
             tup = sys.exc_info()
             if exprinfo is None and isinstance(tup[1], py.code._AssertionError):
-                exprinfo = tup[1].msg
+                exprinfo = getattr(tup[1], 'msg', None)
+                if exprinfo is None:
+                    exprinfo = str(tup[1])
                 if exprinfo and exprinfo.startswith('assert '):
                     self._striptext = 'AssertionError: '
         self._excinfo = tup
@@ -491,9 +494,10 @@ class FormattedExcinfo(object):
     def repr_locals(self, locals):
         if self.showlocals: 
             lines = []
-            items = locals.items()
-            items.sort()
-            for name, value in items:
+            keys = list(locals)
+            keys.sort()
+            for name in keys:
+                value = locals[name]
                 if name == '__builtins__': 
                     lines.append("__builtins__ = <builtins>")
                 else:
@@ -737,16 +741,25 @@ def patch_builtins(assertion=True, compile=True):
     if assertion:
         from py.__.code import assertion
         l = oldbuiltins.setdefault('AssertionError', [])
-        l.append(cpy_builtin.AssertionError)
-        cpy_builtin.AssertionError = assertion.AssertionError
+        l.append(py.builtin.builtins.AssertionError)
+        py.builtin.builtins.AssertionError = assertion.AssertionError
     if compile: 
         l = oldbuiltins.setdefault('compile', [])
-        l.append(cpy_builtin.compile)
-        cpy_builtin.compile = py.code.compile 
+        l.append(py.builtin.builtins.compile)
+        py.builtin.builtins.compile = py.code.compile
 
 def unpatch_builtins(assertion=True, compile=True):
     """ remove compile and AssertionError builtins from Python builtins. """
     if assertion:
-        cpy_builtin.AssertionError = oldbuiltins['AssertionError'].pop()
+        py.builtin.builtins.AssertionError = oldbuiltins['AssertionError'].pop()
     if compile: 
-        cpy_builtin.compile = oldbuiltins['compile'].pop()
+        py.builtin.builtins.compile = oldbuiltins['compile'].pop()
+
+def getrawcode(obj):
+    """ return code object for given function. """ 
+    obj = getattr(obj, 'im_func', obj)
+    obj = getattr(obj, 'func_code', obj)
+    obj = getattr(obj, 'f_code', obj)
+    obj = getattr(obj, '__code__', obj)
+    return obj
+    

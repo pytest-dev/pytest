@@ -19,7 +19,7 @@ def searchpy(current):
                 #    if p == current:
                 #        return True
                 if current != sys.path[0]:  # if we are already first, then ok
-                    print >>sys.stderr, "inserting into sys.path:", current
+                    sys.stderr.write("inserting into sys.path: %s\n" % current)
                     sys.path.insert(0, current)
                 return True
         current = opd(current)
@@ -34,4 +34,4 @@ if not searchpy(abspath(os.curdir)):
 import py
 
 if __name__ == '__main__': 
-    print "py lib is at", py.__file__
+    print ("py lib is at %s" % py.__file__)

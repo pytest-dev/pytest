@@ -1,9 +1,11 @@
 import py
 
 def getfuncargnames(function):
-    argnames = py.std.inspect.getargs(function.func_code)[0]
-    startindex = hasattr(function, 'im_self') and 1 or 0 
-    numdefaults = len(function.func_defaults or ()) 
+    argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
+    startindex = py.std.inspect.ismethod(function) and 1 or 0
+    defaults = getattr(function, 'func_defaults', 
+                       getattr(function, '__defaults__', None)) or ()
+    numdefaults = len(defaults)
     if numdefaults:
         return argnames[startindex:-numdefaults]
     return argnames[startindex:]

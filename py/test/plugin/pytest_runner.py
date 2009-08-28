@@ -249,7 +249,7 @@ class SetupState(object):
         if colitem is None, this will add a finalizer that 
         is called at the end of teardown_all(). 
         """
-        assert callable(finalizer)
+        assert hasattr(finalizer, '__call__')
         #assert colitem in self.stack
         self._finalizers.setdefault(colitem, []).append(finalizer)
 

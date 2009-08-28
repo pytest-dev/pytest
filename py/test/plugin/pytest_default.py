@@ -95,7 +95,6 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     fixoptions(config)
     setsession(config)
-    #xxxloadplugins(config)
 
 def fixoptions(config):
     if config.option.numprocesses:
@@ -103,11 +102,6 @@ def fixoptions(config):
         config.option.tx = ['popen'] * int(config.option.numprocesses)
     if config.option.distload:
         config.option.dist = "load"
-
-def xxxloadplugins(config):
-    for name in config.getvalue("plugin"):
-        print "importing", name
-        config.pluginmanager.import_plugin(name)
 
 def setsession(config):
     val = config.getvalue
@@ -156,7 +150,7 @@ class TestDistOptions:
         config = testdir.parseconfigure("--tx=popen", "--tx", "ssh=xyz")
         xspecs = config.getxspecs()
         assert len(xspecs) == 2
-        print xspecs
+        print(xspecs)
         assert xspecs[0].popen 
         assert xspecs[1].ssh == "xyz"
 

@@ -44,7 +44,7 @@ class PluginManager(object):
     def unregister(self, plugin):
         self.hook.pytest_plugin_unregistered(plugin=plugin)
         self.comregistry.unregister(plugin)
-        for name, value in self.impname2plugin.items():
+        for name, value in list(self.impname2plugin.items()):
             if value == plugin:
                 del self.impname2plugin[name]
 
@@ -100,7 +100,8 @@ class PluginManager(object):
             mod = importplugin(modname)
         except KeyboardInterrupt:
             raise
-        except Skipped, e:
+        except Skipped:
+            e = py.std.sys.exc_info()[1]
             self._warn("could not import plugin %r, reason: %r" %(
                 (modname, e.msg)))
         else:
@@ -109,7 +110,7 @@ class PluginManager(object):
             self.consider_module(mod)
 
     def _warn(self, msg):
-        print "===WARNING=== %s" % (msg,)
+        print ("===WARNING=== %s" % (msg,))
 
     def _checkplugin(self, plugin):
         # =====================================================
@@ -217,12 +218,14 @@ def canonical_importname(name):
 def importplugin(importspec):
     try:
         return __import__(importspec) 
-    except ImportError, e:
+    except ImportError:
+        e = py.std.sys.exc_info()[1]
         if str(e).find(importspec) == -1:
             raise
         try:
             return __import__("py.__.test.plugin.%s" %(importspec), None, None, '__doc__')
-        except ImportError, e:
+        except ImportError:
+            e = py.std.sys.exc_info()[1]
             if str(e).find(importspec) == -1:
                 raise
             #print "syspath:", py.std.sys.path
@@ -236,8 +239,8 @@ def isgenerichook(name):
            name.startswith("pytest_funcarg__")
 
 def getargs(func):
-    args = py.std.inspect.getargs(func.func_code)[0]
-    startindex = hasattr(func, 'im_self') and 1 or 0
+    args = py.std.inspect.getargs(py.code.getrawcode(func))[0]
+    startindex = py.std.inspect.ismethod(func) and 1 or 0
     return args[startindex:]
 
 def collectattr(obj, prefixes=("pytest_",)):
@@ -250,7 +253,7 @@ def collectattr(obj, prefixes=("pytest_",)):
 
 def formatdef(func):
     return "%s%s" %(
-        func.func_name, 
+        func.__name__, 
         py.std.inspect.formatargspec(*py.std.inspect.getargspec(func))
     )
 
@@ -277,7 +280,7 @@ if __name__ == "__main__":
         text = name2text[name]
         if name[0] == "_":
             continue
-        print "%-20s %s" % (name, text.split("\n")[0])
+        print ("%-20s %s" % (name, text.split("\n")[0]))
 
         #text = py.std.textwrap.wrap(name2text[name], 
         #    width = 80,

@@ -64,11 +64,11 @@ class HookRecorder:
         # errors on wrong input arguments, using
         # *args/**kwargs delays this and gives errors
         # elsewhere
-        exec py.code.compile("""
+        exec (py.code.compile("""
             def %(name)s%(fspec)s: 
                         self._recorder.calls.append(
                             ParsedCall(%(name)r, locals()))
-        """ % locals())
+        """ % locals()))
         return locals()[name]
 
     def getcalls(self, names):

@@ -52,7 +52,7 @@ class Pdb(py.std.pdb.Pdb):
                 else:
                     first = max(1, int(x) - 5)
             except:
-                print '*** Error in argument:', repr(arg)
+                print ('*** Error in argument: %s' % repr(arg))
                 return
         elif self.lineno is None:
             first = max(1, self.curframe.f_lineno - 5)
@@ -68,7 +68,7 @@ class Pdb(py.std.pdb.Pdb):
                 line = self._getline(filename, lineno)
                 # end difference from normal do_line
                 if not line:
-                    print '[EOF]'
+                    print ('[EOF]')
                     break
                 else:
                     s = repr(lineno).rjust(3)
@@ -77,7 +77,7 @@ class Pdb(py.std.pdb.Pdb):
                     else: s = s + ' '
                     if lineno == self.curframe.f_lineno:
                         s = s + '->'
-                    print s + '\t' + line,
+                    sys.stdout.write(s + '\t' + line)
                     self.lineno = lineno
         except KeyboardInterrupt:
             pass

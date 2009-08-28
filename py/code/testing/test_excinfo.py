@@ -29,12 +29,11 @@ def test_excinfo_getstatement():
         f()
     except ValueError:
         excinfo = py.code.ExceptionInfo()
-    linenumbers = [f.func_code.co_firstlineno-1+3,
-                   f.func_code.co_firstlineno-1+1,
-                   g.func_code.co_firstlineno-1+1,]
+    linenumbers = [py.code.getrawcode(f).co_firstlineno-1+3,
+                   py.code.getrawcode(f).co_firstlineno-1+1,
+                   py.code.getrawcode(g).co_firstlineno-1+1,]
     l = list(excinfo.traceback)
     foundlinenumbers = [x.lineno for x in l]
-    print l[0].frame.statement
     assert foundlinenumbers == linenumbers
     #for x in info:
     #    print "%s:%d  %s" %(x.path.relto(root), x.lineno, x.statement)
@@ -91,10 +90,10 @@ class TestTraceback_f_g_h:
             xyz()
         """) 
         try: 
-            exec source.compile()
+            exec (source.compile())
         except NameError: 
             tb = py.code.ExceptionInfo().traceback 
-            print tb[-1].getsource()
+            print (tb[-1].getsource())
             s = str(tb[-1].getsource())
             assert s.startswith("def xyz():\n    try:")
             assert s.endswith("except somenoname:") 
@@ -111,7 +110,6 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, testdir):
         p = testdir.makepyfile("def f(): raise ValueError")
         excinfo = py.test.raises(ValueError, "p.pyimport().f()")
-        print excinfo.traceback
         pydir = py.path.local(py.__file__).dirpath()
         newtraceback = excinfo.traceback.cut(excludepath=pydir)
         assert len(newtraceback) == 1
@@ -138,7 +136,7 @@ class TestTraceback_f_g_h:
         def reraise_me():
             import sys
             exc, val, tb = sys.exc_info()
-            raise exc, val, tb
+            py.builtin._reraise(exc, val, tb)
         def f(n):
             try:
                 do_stuff()
@@ -214,7 +212,6 @@ def test_excinfo_repr():
 def test_excinfo_str():
     excinfo = py.test.raises(ValueError, h)
     s = str(excinfo)
-    print s
     assert s.startswith(__file__[:-1]) # pyc file 
     assert s.endswith("ValueError")
     assert len(s.split(":")) >= 3 # on windows it's 4
@@ -225,7 +222,7 @@ def test_excinfo_errisinstance():
 
 def test_excinfo_no_sourcecode():
     try:
-        exec "raise ValueError()"
+        exec ("raise ValueError()")
     except ValueError: 
         excinfo = py.code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
@@ -273,7 +270,7 @@ class TestFormattedExcinfo:
     def excinfo_from_exec(self, source):
         source = py.code.Source(source).strip()
         try:
-            exec source.compile()
+            exec (source.compile())
         except KeyboardInterrupt:
             raise
         except:
@@ -303,7 +300,6 @@ class TestFormattedExcinfo:
         pr = FormattedExcinfo()
         source = pr._getentrysource(excinfo.traceback[-1])
         lines = pr.get_source(source, 1, excinfo)
-        print lines
         assert lines == [
             '    def f():', 
             '>       assert 0', 
@@ -315,7 +311,7 @@ class TestFormattedExcinfo:
         pr = FormattedExcinfo()
         co = compile("raise ValueError()", "", "exec")
         try:
-            exec co 
+            exec (co)
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
@@ -328,7 +324,7 @@ a = 1
 raise ValueError()
 """, "", "exec")
         try:
-            exec co 
+            exec (co)
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
@@ -387,7 +383,6 @@ raise ValueError()
         loc = {'y': 5, 'z': 7, 'x': 3, '__builtins__': __builtins__}
         reprlocals = p.repr_locals(loc) 
         assert reprlocals.lines 
-        print reprlocals.lines
         assert reprlocals.lines[0] == '__builtins__ = <builtins>'
         assert reprlocals.lines[1] == 'x          = 3'
         assert reprlocals.lines[2] == 'y          = 5'
@@ -402,7 +397,6 @@ raise ValueError()
         excinfo.traceback = excinfo.traceback.filter()
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
-        print reprtb
         
         # test as intermittent entry
         lines = reprtb.lines

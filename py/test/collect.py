@@ -40,7 +40,8 @@ class Node(object):
     # 
     def __getstate__(self):
         return (self.name, self.parent)
-    def __setstate__(self, (name, parent)):
+    def __setstate__(self, nameparent):
+        name, parent = nameparent
         try:
             colitems = parent._memocollect()
         except KeyboardInterrupt:
@@ -92,7 +93,7 @@ class Node(object):
         exattrname = "_ex_" + attrname 
         failure = getattr(self, exattrname, None)
         if failure is not None:
-            raise failure[0], failure[1], failure[2]
+            py.builtin._reraise(failure[0], failure[1], failure[2])
         if hasattr(self, attrname):
             return getattr(self, attrname)
         try:

@@ -2,7 +2,12 @@ import sys
 
 if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
+    import builtins
+    basestring = str 
+
 else:
+    basestring = basestring
+    import __builtin__ as builtins
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 
         sep = 'sep' in kwargs and kwargs.pop('sep') or ' '

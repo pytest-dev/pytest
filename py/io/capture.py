@@ -9,10 +9,11 @@ except ImportError:
     from StringIO import StringIO
 
 class TextIO(StringIO):
-    def write(self, data):
-        if not isinstance(data, unicode):
-            data = unicode(data, getattr(self, '_encoding', 'UTF-8'))
-        StringIO.write(self, data)
+    if sys.version_info < (3,0):
+        def write(self, data):
+            if not isinstance(data, unicode):
+                data = unicode(data, getattr(self, '_encoding', 'UTF-8'))
+            StringIO.write(self, data)
 
 try:
     from io import BytesIO

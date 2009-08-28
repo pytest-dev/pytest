@@ -1,5 +1,7 @@
 import py
-from py.__.code.assertion import View
+from py.__.code._assertion import View
+def exvalue():
+    return py.std.sys.exc_info()[1]
 
 def setup_module(mod):
     py.code.patch_builtins(assertion=True, compile=False)
@@ -13,14 +15,16 @@ def f():
 def test_assert():
     try:
         assert f() == 3
-    except AssertionError, e:
+    except AssertionError:
+        e = exvalue()
         s = str(e)
         assert s.startswith('assert 2 == 3\n')
 
 def test_assert_with_explicit_message():
     try:
         assert f() == 3, "hello"
-    except AssertionError, e:
+    except AssertionError:
+        e = exvalue()
         assert e.msg == 'hello'
 
 def test_assert_within_finally():
@@ -47,7 +51,8 @@ def test_assert_multiline_1():
     try:
         assert (f() ==
                 3)
-    except AssertionError, e:
+    except AssertionError:
+        e = exvalue()
         s = str(e)
         assert s.startswith('assert 2 == 3\n')
 
@@ -55,7 +60,8 @@ def test_assert_multiline_2():
     try:
         assert (f() == (4,
                    3)[-1])
-    except AssertionError, e:
+    except AssertionError:
+        e = exvalue()
         s = str(e)
         assert s.startswith('assert 2 ==')
 
@@ -65,7 +71,8 @@ def test_assert_non_string_message():
             return "hello"
     try:
         assert 0 == 1, A()
-    except AssertionError, e: 
+    except AssertionError:
+        e = exvalue()
         assert e.msg == "hello"
 
 
@@ -78,7 +85,8 @@ def bug_test_assert_repr():
     v = WeirdRepr()
     try: 
         assert v == 1
-    except AssertionError, e: 
+    except AssertionError:
+        e = exvalue()
         assert e.msg.find('WeirdRepr') != -1
         assert e.msg.find('second line') != -1
         assert 0
@@ -86,7 +94,8 @@ def bug_test_assert_repr():
 def test_assert_non_string():
     try: 
         assert 0, ['list']
-    except AssertionError, e: 
+    except AssertionError:
+        e = exvalue()
         assert e.msg.find("list") != -1 
 
 def test_assert_implicit_multiline():
@@ -94,7 +103,8 @@ def test_assert_implicit_multiline():
         x = [1,2,3]
         assert x != [1,
            2, 3]
-    except AssertionError, e:
+    except AssertionError:
+        e = exvalue()
         assert e.msg.find('assert [1, 2, 3] !=') != -1
 
 

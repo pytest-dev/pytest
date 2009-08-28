@@ -1,4 +1,5 @@
 import py
+import sys
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
@@ -7,14 +8,18 @@ def pytest_addoption(parser):
         help="disable python assert expression reinterpretation."),
 
 def pytest_configure(config):
+    # XXX
+    if sys.version_info >= (3,0):
+        return
+
     if not config.getvalue("noassert"):
         warn_about_missing_assertion()
-        config._oldassertion = py.std.__builtin__.AssertionError 
-        py.std.__builtin__.AssertionError = py.code._AssertionError 
+        config._oldassertion = py.builtin.builtins.AssertionError
+        py.builtin.builtins.AssertionError = py.code._AssertionError 
 
 def pytest_unconfigure(config):
     if hasattr(config, '_oldassertion'):
-        py.std.__builtin__.AssertionError = config._oldassertion
+        py.builtin.builtins.AssertionError = config._oldassertion
         del config._oldassertion
 
 def warn_about_missing_assertion():

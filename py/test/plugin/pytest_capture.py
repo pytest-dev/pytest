@@ -275,12 +275,16 @@ class EncodedFile(object):
     def __init__(self, _stream, encoding):
         self._stream = _stream 
         self.encoding = encoding 
-       
-    def write(self, obj):
-        if isinstance(obj, unicode):
+      
+    if py.std.sys.version_info < (3,0):
+        def write(self, obj):
+            if isinstance(obj, unicode):
+                self._stream.write(obj.encode(self.encoding))
+            else:
+                self._stream.write(obj)
+    else:
+        def write(self, obj):
             self._stream.write(obj.encode(self.encoding))
-        else:
-            self._stream.write(obj)
 
     def writelines(self, linelist):
         data = ''.join(linelist)

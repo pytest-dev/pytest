@@ -75,7 +75,7 @@ def test_print_simple():
     f = py.io.TextIO()
     print_("hello", "world", file=f)
     s = f.getvalue()
-    assert s == u"hello world\n"
+    assert s == "hello world\n"
     py.test.raises(TypeError, "print_(hello=3)")
 
 def test_reraise():

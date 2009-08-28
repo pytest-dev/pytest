@@ -3,6 +3,7 @@ py lib plugins and plugin call management
 """
 
 import py
+import inspect
  
 class MultiCall:
     """ execute a call into multiple python functions/methods.  """
@@ -39,10 +40,9 @@ class MultiCall:
                 pass # might be optional param
         return kwargs 
 
-def varnames(rawcode):
-    ismethod = hasattr(rawcode, 'im_self')
-    rawcode = getattr(rawcode, 'im_func', rawcode)
-    rawcode = getattr(rawcode, 'func_code', rawcode)
+def varnames(func):
+    ismethod = inspect.ismethod(func)
+    rawcode = py.code.getrawcode(func)
     try:
         return rawcode.co_varnames[ismethod:]
     except AttributeError:

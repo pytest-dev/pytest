@@ -19,10 +19,16 @@ def test_source_str_function():
     """, rstrip=True)
     assert str(x) == "\n3"
 
-def test_unicode(): 
+def test_unicode():
+    try:
+        unicode
+    except NameError:
+        return
     x = Source(unicode("4"))
     assert str(x) == "4"
-
+    co = py.code.compile(unicode('u"\xc3\xa5"', 'utf8'), mode='eval')
+    val = eval(co) 
+    assert isinstance(val, unicode)
 
 def test_source_from_function():
     source = py.code.Source(test_source_str_function)
@@ -119,17 +125,13 @@ class TestSourceParsingAndCompiling:
 
     def test_compile(self):
         co = py.code.compile("x=3")
-        exec co
-        assert x == 3
-
-    def test_compile_unicode(self): 
-        co = py.code.compile(unicode('u"\xc3\xa5"', 'utf8'), mode='eval')
-        val = eval(co) 
-        assert isinstance(val, unicode)
+        d = {}
+        exec (co, d)
+        assert d['x'] == 3
 
     def test_compile_and_getsource_simple(self):
         co = py.code.compile("x=3")
-        exec co
+        exec (co)
         source = py.code.Source(co)
         assert str(source) == "x=3"
 
@@ -191,7 +193,7 @@ class TestSourceParsingAndCompiling:
 
     def test_compile_and_getsource(self):
         co = self.source.compile()
-        exec co
+        py.builtin.exec_(co, globals())
         f(7)
         excinfo = py.test.raises(AssertionError, "f(6)")
         frame = excinfo.traceback[-1].frame 
@@ -267,7 +269,7 @@ def test_getfuncsource_dynamic():
         def g(): pass
     """
     co = py.code.compile(source)
-    exec co
+    py.builtin.exec_(co, globals())
     assert str(py.code.Source(f)).strip() == 'def f():\n    raise ValueError'
     assert str(py.code.Source(g)).strip() == 'def g(): pass'
 
@@ -369,7 +371,7 @@ def test_getfslineno():
         fname = fname[:-1]
 
     assert fspath == py.path.local(fname)
-    assert lineno == f.func_code.co_firstlineno-1 # see findsource
+    assert lineno == py.code.getrawcode(f).co_firstlineno-1 # see findsource
 
     class A(object):
         pass

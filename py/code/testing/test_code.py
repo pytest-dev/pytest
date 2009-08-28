@@ -1,6 +1,6 @@
 from __future__ import generators
 import py
-import sys, new
+import sys
 from py.__.code.code import safe_repr
 
 def test_newcode(): 
@@ -64,12 +64,17 @@ def test_new_code_object_carries_filename_through():
     filename = mystr("dummy")
     co = compile("hello\n", filename, 'exec')
     assert not isinstance(co.co_filename, mystr)
-    c2 = new.code(co.co_argcount, co.co_nlocals, co.co_stacksize,
+    args = [
+            co.co_argcount, co.co_nlocals, co.co_stacksize,
              co.co_flags, co.co_code, co.co_consts,
              co.co_names, co.co_varnames,
              filename,
              co.co_name, co.co_firstlineno, co.co_lnotab,
-             co.co_freevars, co.co_cellvars)
+             co.co_freevars, co.co_cellvars
+    ]
+    if sys.version_info > (3,0):
+        args.insert(1, co.co_kwonlyargcount)
+    c2 = py.std.types.CodeType(*args)
     assert c2.co_filename is filename
 
 def test_code_gives_back_name_for_not_existing_file():
@@ -162,20 +167,22 @@ class TestSafeRepr:
                 return "<%s>" %(self.name)
         try:
             s = safe_repr(Function())
-        except Exception, e:
+        except Exception:
             py.test.fail("saferepr failed for newstyle class")
   
 def test_builtin_patch_unpatch(monkeypatch):
-    import __builtin__ as cpy_builtin
+    cpy_builtin = py.builtin.builtins
     comp = cpy_builtin.compile 
     def mycompile(*args, **kwargs):
         return comp(*args, **kwargs)
-    monkeypatch.setattr(cpy_builtin, 'AssertionError', None)
+    class Sub(AssertionError):
+        pass
+    monkeypatch.setattr(cpy_builtin, 'AssertionError', Sub)
     monkeypatch.setattr(cpy_builtin, 'compile', mycompile)
     py.code.patch_builtins()
-    assert cpy_builtin.AssertionError
+    assert cpy_builtin.AssertionError != Sub
     assert cpy_builtin.compile != mycompile
     py.code.unpatch_builtins()
-    assert cpy_builtin.AssertionError is None
+    assert cpy_builtin.AssertionError is Sub 
     assert cpy_builtin.compile == mycompile 
 

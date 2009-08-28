@@ -147,7 +147,7 @@ class TerminalWriter(object):
                 self.stringio = file = py.io.TextIO()
             else:
                 file = py.std.sys.stdout 
-        elif callable(file):
+        elif hasattr(file, '__call__'):
             file = WriteFile(file)
         self._file = file
         self.fullwidth = get_terminal_width()
@@ -202,7 +202,7 @@ class TerminalWriter(object):
             self._file.flush()
 
     def _getbytestring(self, s):
-            if isinstance(s, unicode):
+            if sys.version_info < (3,0) and isinstance(s, unicode):
                 return s.encode(self._encoding)
             elif not isinstance(s, str):
                 return str(s)

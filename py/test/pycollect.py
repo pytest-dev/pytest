@@ -92,7 +92,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         if l is not None:
             return l
         name2items = self._buildname2items()
-        colitems = name2items.values()
+        colitems = list(name2items.values())
         colitems.sort(key=lambda item: item.reportinfo()[:2])
         return colitems
 
@@ -128,7 +128,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             if res is not None:
                 return res 
             return self.Class(name, parent=self)
-        elif self.funcnamefilter(name) and callable(obj): 
+        elif self.funcnamefilter(name) and hasattr(obj, '__call__'):
             res = self._deprecated_join(name)
             if res is not None:
                 return res 
@@ -237,7 +237,7 @@ class FunctionMixin(PyobjMixin):
 
     def setup(self): 
         """ perform setup for this test function. """
-        if hasattr(self.obj, 'im_self'):
+        if py.std.inspect.ismethod(self.obj):
             name = 'setup_method' 
         else: 
             name = 'setup_function' 
@@ -345,7 +345,8 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def readkeywords(self):
         d = super(Function, self).readkeywords()
-        d.update(self.obj.func_dict)
+        d.update(getattr(self.obj, '__dict__', 
+                         getattr(self.obj, 'func_dict', {})))
         return d
 
     def runtest(self):
@@ -372,7 +373,9 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def __ne__(self, other):
         return not self == other
-
+    
+    def __hash__(self):
+        return hash((self.parent, self.name))
 
 def hasinit(obj):
     init = getattr(obj, '__init__', None)
