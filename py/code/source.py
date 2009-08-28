@@ -4,6 +4,14 @@ import inspect, tokenize
 import py
 cpy_compile = compile 
 
+try:
+    import _ast
+    from _ast import PyCF_ONLY_AST as _AST_FLAG
+except ImportError:
+    _AST_FLAG = 0
+    _ast = None
+
+
 class Source(object):
     """ a mutable object holding a source code fragment,
         possibly deindenting it.
@@ -195,6 +203,8 @@ class Source(object):
             newex.text = ex.text
             raise newex
         else:
+            if flag & _AST_FLAG:
+                return co
             co_filename = MyStr(filename)
             co_filename.__source__ = self
             return py.code.Code(co).new(rec=1, co_filename=co_filename) 
@@ -213,6 +223,9 @@ def compile_(source, filename=None, mode='exec', flags=
         also have this special subclass-of-string
         filename.
     """
+    if _ast is not None and isinstance(source, _ast.AST):
+        # XXX should Source support having AST?
+        return cpy_compile(source, filename, mode, flags, dont_inherit)
     _genframe = sys._getframe(1) # the caller
     s = Source(source)
     co = s.compile(filename, mode, flags, _genframe=_genframe)
