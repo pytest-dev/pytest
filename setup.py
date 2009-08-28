@@ -74,8 +74,6 @@ def main():
                   'py.io.testing',
                   'py.log',
                   'py.log.testing',
-                  'py.magic',
-                  'py.magic.testing',
                   'py.path',
                   'py.path.gateway',
                   'py.path.testing',
