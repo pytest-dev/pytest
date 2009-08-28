@@ -93,10 +93,6 @@ class SessionTests:
                 foo=0
                 def __repr__(self):
                     raise Exception("Ha Ha fooled you, I'm a broken repr().")
-            class BrokenRepr2:
-                foo=0
-                def __repr__(self):
-                    raise "Ha Ha fooled you, I'm a broken repr()."
             
             class TestBrokenClass:
                 def test_explicit_bad_repr(self):
@@ -107,18 +103,12 @@ class SessionTests:
                     t = BrokenRepr1()
                     assert t.foo == 1
 
-                def test_implicit_bad_repr2(self):
-                    t = BrokenRepr2()
-                    assert t.foo == 1
         """)
         reprec = testdir.inline_run(p)
         passed, skipped, failed = reprec.listoutcomes()
-        assert len(failed) == 2
+        assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
         assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
-        out = failed[1].longrepr.reprcrash.message
-        assert (out.find("[unknown exception raised in repr()]") != -1  or
-                out.find("TypeError") != -1)
 
     def test_skip_by_conftest_directory(self, testdir):
         testdir.makepyfile(conftest="""
