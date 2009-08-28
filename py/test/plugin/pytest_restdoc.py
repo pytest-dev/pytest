@@ -54,7 +54,7 @@ def deindent(s, sep='\n'):
             leastspaces = spaces
     if leastspaces == -1:
         return s
-    for i, line in py.builtin.enumerate(lines):
+    for i, line in enumerate(lines):
         if not line.strip():
             lines[i] = ''
         else:
@@ -256,7 +256,7 @@ class LinkCheckerMaker(py.test.collect.Collector):
         path = self.fspath
         # generating functions + args as single tests 
         timeout = self.config.getvalue("urlcheck_timeout")
-        for lineno, line in py.builtin.enumerate(path.readlines()): 
+        for lineno, line in enumerate(path.readlines()): 
             line = line.strip()
             if line.startswith('.. _'): 
                 if line.startswith('.. _`'):

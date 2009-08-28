@@ -160,7 +160,7 @@ class Paragraph(AbstractNode):
     def __init__(self, *args, **kwargs):
         # make shortcut
         args = list(args)
-        for num, arg in py.builtin.enumerate(args):
+        for num, arg in enumerate(args):
             if isinstance(arg, str):
                 args[num] = Text(arg)
         super(Paragraph, self).__init__(*args, **kwargs)
@@ -255,7 +255,7 @@ class LiteralBlock(AbstractText):
         if not self._text.strip():
             return ''
         text = self.escape(self._text).split('\n')
-        for i, line in py.builtin.enumerate(text):
+        for i, line in enumerate(text):
             if line.strip():
                 text[i] = '  %s' % (line,)
         return self.start + '\n'.join(text)

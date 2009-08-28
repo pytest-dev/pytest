@@ -706,7 +706,7 @@ class SvnWCCommandPath(common.PathBase):
         result = []
         blamelines = out.splitlines()
         reallines = py.path.svnurl(self.url).readlines()
-        for i, (blameline, line) in py.builtin.enumerate(
+        for i, (blameline, line) in enumerate(
                 zip(blamelines, reallines)):
             m = rex_blame.match(blameline)
             if not m:

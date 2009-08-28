@@ -1,6 +1,9 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* consolidate builtins implementation to be compatible with >=2.3, 
+  add print_, exec_ and _reraise helpers for 2-3 compatible code
+
 * deprecate py.compat.doctest|subprocess|textwrap|optparse
 
 * deprecate py.magic.autopath, remove py/magic directory 

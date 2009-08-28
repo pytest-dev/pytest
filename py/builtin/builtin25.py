@@ -1,3 +1,4 @@
+
 try:
     BaseException = BaseException
 except NameError:

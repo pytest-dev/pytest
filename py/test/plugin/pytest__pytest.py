@@ -88,7 +88,7 @@ class HookRecorder:
         return l
 
     def popcall(self, name):
-        for i, call in py.builtin.enumerate(self.calls):
+        for i, call in enumerate(self.calls):
             if call._name == name:
                 del self.calls[i]
                 return call 

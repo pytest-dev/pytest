@@ -102,7 +102,7 @@ class WarningsRecorder:
 
     def pop(self, cls=Warning):
         """ pop the first recorded warning, raise exception if not exists."""
-        for i, w in py.builtin.enumerate(self.list):
+        for i, w in enumerate(self.list):
             if issubclass(w.category, cls):
                 return self.list.pop(i)
         __tracebackhide__ = True

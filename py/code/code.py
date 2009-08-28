@@ -329,7 +329,7 @@ class Traceback(list):
             originates if appropriate, None if no recursion occurred
         """
         cache = {}
-        for i, entry in py.builtin.enumerate(self):
+        for i, entry in enumerate(self):
             key = entry.frame.code.path, entry.lineno 
             #print "checking for recursion at", key
             l = cache.setdefault(key, [])
@@ -555,7 +555,7 @@ class FormattedExcinfo(object):
         last = traceback[-1]
         entries = []
         extraline = None
-        for index, entry in py.builtin.enumerate(traceback): 
+        for index, entry in enumerate(traceback): 
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
             entries.append(reprentry)

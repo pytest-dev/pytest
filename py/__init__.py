@@ -136,13 +136,16 @@ initpkg(__name__,
 
     # backports and additions of builtins
     'builtin.__doc__'        : ('./builtin/__init__.py', '__doc__'),
-    'builtin.enumerate'      : ('./builtin/enumerate.py', 'enumerate'),
-    'builtin.reversed'       : ('./builtin/reversed.py',  'reversed'),
-    'builtin.sorted'         : ('./builtin/sorted.py',    'sorted'),
-    'builtin.BaseException'  : ('./builtin/exception.py', 'BaseException'),
-    'builtin.GeneratorExit'  : ('./builtin/exception.py', 'GeneratorExit'),
-    'builtin.set'            : ('./builtin/set.py',       'set'),
-    'builtin.frozenset'      : ('./builtin/set.py',       'frozenset'),
+    'builtin.enumerate'      : ('./builtin/builtin24.py', 'enumerate'),
+    'builtin.reversed'       : ('./builtin/builtin24.py', 'reversed'),
+    'builtin.sorted'         : ('./builtin/builtin24.py', 'sorted'),
+    'builtin.set'            : ('./builtin/builtin24.py', 'set'),
+    'builtin.frozenset'      : ('./builtin/builtin24.py', 'frozenset'),
+    'builtin.BaseException'  : ('./builtin/builtin25.py', 'BaseException'),
+    'builtin.GeneratorExit'  : ('./builtin/builtin25.py', 'GeneratorExit'),
+    'builtin.print_'         : ('./builtin/builtin31.py', 'print_'),
+    'builtin._reraise'       : ('./builtin/builtin31.py', '_reraise'),
+    'builtin.exec_'          : ('./builtin/builtin31.py', 'exec_'),
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),

@@ -244,7 +244,7 @@ class TerminalReporter:
                 plugins.append(name)
             plugins = ", ".join(plugins) 
             self.write_line("active plugins: %s" %(plugins,))
-        for i, testarg in py.builtin.enumerate(self.config.args):
+        for i, testarg in enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
