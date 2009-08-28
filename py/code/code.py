@@ -739,10 +739,10 @@ oldbuiltins = {}
 def patch_builtins(assertion=True, compile=True):
     """ put compile and AssertionError builtins to Python's builtins. """
     if assertion:
-        from py.__.code import assertion
+        from py.__.code import _assertion
         l = oldbuiltins.setdefault('AssertionError', [])
         l.append(py.builtin.builtins.AssertionError)
-        py.builtin.builtins.AssertionError = assertion.AssertionError
+        py.builtin.builtins.AssertionError = _assertion.AssertionError
     if compile: 
         l = oldbuiltins.setdefault('compile', [])
         l.append(py.builtin.builtins.compile)

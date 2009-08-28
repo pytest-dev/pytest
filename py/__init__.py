@@ -133,7 +133,7 @@ initpkg(__name__,
     'code.getrawcode'        : ('./code/code.py', 'getrawcode'),
     'code.patch_builtins'    : ('./code/code.py', 'patch_builtins'),
     'code.unpatch_builtins'  : ('./code/code.py', 'unpatch_builtins'),
-    'code._AssertionError'   : ('./code/assertion.py', 'AssertionError'),
+    'code._AssertionError'   : ('./code/_assertion.py', 'AssertionError'),
 
     # backports and additions of builtins
     'builtin.__doc__'        : ('./builtin/__init__.py', '__doc__'),
