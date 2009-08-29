@@ -23,7 +23,8 @@ def interpret(source, frame, should_fail=False):
     visitor = DebugInterpreter(frame)
     try:
         visitor.visit(mod)
-    except Failure as failure:
+    except Failure:
+        failure = sys.exc_info()[1]
         return getfailure(failure)
     if should_fail:
         return ("(assertion failed, but when it was re-run for "
@@ -127,7 +128,7 @@ class DebugInterpreter(ast.NodeVisitor):
         co = self._compile(source)
         try:
             local = self.frame.eval(co)
-        except Exception as e:
+        except Exception:
             # have to assume it isn't
             local = False
         if not local:
