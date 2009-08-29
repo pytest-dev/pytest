@@ -1,6 +1,6 @@
 import py, sys
 
-class Warning(py.std.exceptions.DeprecationWarning):
+class Warning(DeprecationWarning):
     def __init__(self, msg, path, lineno):
         self.msg = msg
         self.path = path
