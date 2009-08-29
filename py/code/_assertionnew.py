@@ -123,7 +123,7 @@ class DebugInterpreter(ast.NodeVisitor):
         co = self._compile(source)
         try:
             local = self.frame.eval(co)
-        except Exception, e:
+        except Exception as e:
             # have to assume it isn't
             local = False
         if not local:
