@@ -348,8 +348,12 @@ class TestGenfuncFunctional:
                 def test_method(self, metafunc):
                     assert metafunc.config == py.test.config
                     assert metafunc.module.__name__ == __name__
+                    if py.std.sys.version_info > (3, 0):
+                        unbound = TestClass.test_method
+                    else:
+                        unbound = TestClass.test_method.im_func
                     # XXX actually have an unbound test function here?
-                    assert metafunc.function == TestClass.test_method.im_func
+                    assert metafunc.function == unbound
                     assert metafunc.cls == TestClass
         """)
         result = testdir.runpytest(p, "-v")
