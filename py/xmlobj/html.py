@@ -2,6 +2,7 @@
 
 
 """ 
+import sys
 from py.xml import Namespace, Tag
 from py.__.xmlobj.visit import SimpleUnicodeVisitor 
 

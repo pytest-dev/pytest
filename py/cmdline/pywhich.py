@@ -18,6 +18,6 @@ def main():
         try:
             location = mod.__file__ 
         except AttributeError:
-            sys.stderr.write("module (has no __file__): " + mod)
+            sys.stderr.write("module (has no __file__): " + str(mod))
         else:
             print(location)

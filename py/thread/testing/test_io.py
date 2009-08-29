@@ -34,7 +34,7 @@ class TestThreadOut:
             defaults = []
             def f(l):
                 out.setwritefunc(l.append)
-                print(id(l))
+                sys.stdout.write(str(id(l)))
                 out.delwritefunc()
                 print(1)
             out.setdefaultwriter(defaults.append)
@@ -46,7 +46,7 @@ class TestThreadOut:
                 pool.dispatch(f, l)
             pool.shutdown()
             for name, value in out.__dict__.items():
-                sys.stderr.write("%s: %s\n" %(name, value))
+                sys.stderr.write("%s: %s" %(name, value))
             pool.join(2.0)
             for i in range(num):
                 item = listlist[i]
