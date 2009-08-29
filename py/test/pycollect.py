@@ -305,7 +305,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         if not isinstance(obj, (tuple, list)):
             obj = (obj,)
         # explict naming
-        if isinstance(obj[0], basestring):
+        if isinstance(obj[0], py.builtin._basestring):
             name = obj[0]
             obj = obj[1:]
         else:

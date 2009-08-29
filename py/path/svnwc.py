@@ -201,7 +201,7 @@ class SvnPathBase(common.PathBase):
                 elif name == 'ext':
                     res.append(ext)
                 else:
-                    raise NameError, "Don't know part %r" % name
+                    raise NameError("Don't know part %r" % name)
         return res
 
     def __eq__(self, other):
@@ -251,7 +251,7 @@ class SvnPathBase(common.PathBase):
         if fil or sort:
             paths = filter(fil, paths)
             paths = isinstance(paths, list) and paths or list(paths)
-            if callable(sort):
+            if hasattr(sort, '__call__'):
                 paths.sort(sort)
             elif sort:
                 paths.sort()
@@ -345,7 +345,7 @@ class SvnPathBase(common.PathBase):
 def parse_apr_time(timestr):
     i = timestr.rfind('.')
     if i == -1:
-        raise ValueError, "could not parse %s" % timestr
+        raise ValueError("could not parse %s" % timestr)
     timestr = timestr[:i]
     parsedtime = time.strptime(timestr, "%Y-%m-%dT%H:%M:%S")
     return time.mktime(parsedtime)
@@ -469,7 +469,7 @@ class SvnWCCommandPath(common.PathBase):
         if getattr(self, '_url', None) is None:
             info = self.info()
             self._url = info.url #SvnPath(info.url, info.rev)
-        assert isinstance(self._url, str)
+        assert isinstance(self._url, py.builtin._basestring)
         return self._url
 
     url = property(_geturl, None, None, "url of this WC item")
@@ -520,7 +520,8 @@ class SvnWCCommandPath(common.PathBase):
                     os.environ[key] = hold
                 else:
                     del os.environ[key]
-        except py.process.cmdexec.Error, e:
+        except py.process.cmdexec.Error:
+            e = sys.exc_info()[1]
             strerr = e.err.lower()
             if strerr.find('file not found') != -1: 
                 raise py.error.ENOENT(self) 
@@ -577,21 +578,18 @@ class SvnWCCommandPath(common.PathBase):
             a file). if you specify a keyword argument 'directory=True'
             then the path is forced  to be a directory path.
         """
-        try:
-            p = self.join(*args)
-            if p.check():
-                if p.check(versioned=False):
-                    p.add()
-                return p 
-            if kwargs.get('dir', 0):
-                return p._ensuredirs()
-            parent = p.dirpath()
-            parent._ensuredirs()
-            p.write("")
-            p.add()
-            return p
-        except:
-            error_enhance(sys.exc_info())
+        p = self.join(*args)
+        if p.check():
+            if p.check(versioned=False):
+                p.add()
+            return p 
+        if kwargs.get('dir', 0):
+            return p._ensuredirs()
+        parent = p.dirpath()
+        parent._ensuredirs()
+        p.write("")
+        p.add()
+        return p
 
     def mkdir(self, *args):
         """ create & return the directory joined with args. """
@@ -762,7 +760,7 @@ If rec is True, then return a dictionary mapping sub-paths to such mappings.
         else:
             res = self._svn('proplist')
             lines = res.split('\n')
-            lines = map(str.strip, lines[1:])
+            lines = [x.strip() for x in lines[1:]]
             return PropListDict(self, lines)
 
     def revert(self, rec=0):
@@ -806,7 +804,8 @@ recursively. """
         if not info:
             try:
                 output = self._svn('info')
-            except py.process.cmdexec.Error, e:
+            except py.process.cmdexec.Error:
+                e = sys.exc_info()[1]
                 if e.err.find('Path is not a working copy directory') != -1:
                     raise py.error.ENOENT(self, e.err)
                 elif e.err.find("is not under version control") != -1:
@@ -849,7 +848,7 @@ recursively. """
         if fil or sort:
             paths = filter(fil, paths)
             paths = isinstance(paths, list) and paths or list(paths)
-            if callable(sort):
+            if hasattr(sort, '__call__'):
                 paths.sort(sort)
             elif sort:
                 paths.sort()
@@ -871,7 +870,8 @@ recursively. """
                 s = self.svnwcpath.info()
             except (py.error.ENOENT, py.error.EEXIST): 
                 return False 
-            except py.process.cmdexec.Error, e:
+            except py.process.cmdexec.Error:
+                e = sys.exc_info()[1]
                 if e.err.find('is not a working copy')!=-1:
                     return False
                 if e.err.lower().find('not a versioned resource') != -1:
@@ -1007,7 +1007,7 @@ class WCStatus:
                     # because of the way SVN presents external items
                     continue
                 # keep trying
-                raise ValueError, "could not parse line %r" % line
+                raise ValueError("could not parse line %r" % line)
             else:
                 rev, modrev, author, fn = m.groups()
             wcpath = rootwcpath.join(fn, abs=1)
@@ -1065,7 +1065,8 @@ class XMLWCStatus(WCStatus):
         minidom, ExpatError = importxml()
         try:
             doc = minidom.parseString(data)
-        except ExpatError, e:
+        except ExpatError:
+            e = sys.exc_info()[1]
             raise ValueError(str(e))
         urevels = doc.getElementsByTagName('against')
         if urevels:
@@ -1179,7 +1180,7 @@ class InfoSvnWCCommand:
         try:
             self.url = d['url']
         except KeyError:
-            raise  ValueError, "Not a versioned resource"
+            raise  ValueError("Not a versioned resource")
             #raise ValueError, "Not a versioned resource %r" % path
         self.kind = d['nodekind'] == 'directory' and 'dir' or d['nodekind']
         self.rev = int(d['revision'])
@@ -1201,7 +1202,7 @@ def parse_wcinfotime(timestr):
     # example: 2003-10-27 20:43:14 +0100 (Mon, 27 Oct 2003)
     m = re.match(r'(\d+-\d+-\d+ \d+:\d+:\d+) ([+-]\d+) .*', timestr)
     if not m:
-        raise ValueError, "timestring %r does not match" % timestr
+        raise ValueError("timestring %r does not match" % timestr)
     timestr, timezone = m.groups()
     # do not handle timezone specially, return value should be UTC
     parsedtime = time.strptime(timestr, "%Y-%m-%d %H:%M:%S")
@@ -1217,7 +1218,7 @@ def make_recursive_propdict(wcroot,
         line = lines.pop(0)
         m = rex.match(line)
         if not m:
-            raise ValueError, "could not parse propget-line: %r" % line
+            raise ValueError("could not parse propget-line: %r" % line)
         path = m.groups()[0]
         wcpath = wcroot.join(path, abs=1)
         propnames = []
@@ -1228,8 +1229,6 @@ def make_recursive_propdict(wcroot,
         pdict[wcpath] = PropListDict(wcpath, propnames)
     return pdict
 
-def error_enhance((cls, error, tb)):
-    raise cls, error, tb
 
 def importxml(cache=[]):
     if cache:
@@ -1244,18 +1243,18 @@ class LogEntry:
         self.rev = int(logentry.getAttribute('revision'))
         for lpart in filter(None, logentry.childNodes):
             if lpart.nodeType == lpart.ELEMENT_NODE:
-                if lpart.nodeName == u'author':
+                if lpart.nodeName == 'author':
                     self.author = lpart.firstChild.nodeValue.encode('UTF-8')
-                elif lpart.nodeName == u'msg':
+                elif lpart.nodeName == 'msg':
                     if lpart.firstChild:
                         self.msg = lpart.firstChild.nodeValue.encode('UTF-8')
                     else:
                         self.msg = ''
-                elif lpart.nodeName == u'date':
+                elif lpart.nodeName == 'date':
                     #2003-07-29T20:05:11.598637Z
                     timestr = lpart.firstChild.nodeValue.encode('UTF-8')
                     self.date = parse_apr_time(timestr)
-                elif lpart.nodeName == u'paths':
+                elif lpart.nodeName == 'paths':
                     self.strpaths = []
                     for ppart in filter(None, lpart.childNodes):
                         if ppart.nodeType == ppart.ELEMENT_NODE:

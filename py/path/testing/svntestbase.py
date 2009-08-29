@@ -3,6 +3,7 @@ import py
 from py import path, test, process
 from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
 from py.__.path import svnwc as svncommon
+from py.builtin import print_
 
 repodump = py.path.local(__file__).dirpath('repotest.dump')
 
@@ -26,15 +27,15 @@ def getrepowc(reponame='basetestrepo', wcname='wc'):
                 svncommon._escape_helper(repo))
         py.process.cmdexec('svnadmin load -q "%s" <"%s"' %
                 (svncommon._escape_helper(repo), repodump))
-        print "created svn repository", repo
+        print_("created svn repository", repo)
         wcdir.ensure(dir=1)
         wc = py.path.svnwc(wcdir)
         if py.std.sys.platform == 'win32':
             repo = '/' + str(repo).replace('\\', '/')
         wc.checkout(url='file://%s' % repo)
-        print "checked out new repo into", wc
+        print_("checked out new repo into", wc)
     else:
-        print "using repository at", repo
+        print_("using repository at", repo)
         wc = py.path.svnwc(wcdir)
     return ("file://%s" % repo, wc)
 
@@ -49,12 +50,13 @@ def save_repowc():
     wc.localpath.copy(savedwc.localpath)
     return savedrepo, savedwc 
 
-def restore_repowc((savedrepo, savedwc)): 
+def restore_repowc(obj):
+    savedrepo, savedwc = obj
     repo, wc = getrepowc() 
-    print repo
-    print repo[len("file://"):]
+    print (repo)
+    print (repo[len("file://"):])
     repo = py.path.local(repo[len("file://"):])
-    print repo
+    print (repo)
     assert repo.check() 
     # repositories have read only files on windows
     #repo.chmod(0777, rec=True)
@@ -79,7 +81,7 @@ def make_test_repo(name="test-repository"):
 class CommonSvnTests(CommonFSTests):
 
     def setup_method(self, meth):
-        bn = meth.func_name
+        bn = meth.__name__
         for x in 'test_remove', 'test_move', 'test_status_deleted':
             if bn.startswith(x):
                 self._savedrepowc = save_repowc() 

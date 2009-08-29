@@ -23,7 +23,7 @@ def posix_exec_cmd(cmd):
     the exception will provide an 'err' attribute containing
     the error-output from the command.
     """
-    __tracebackhide__ = True
+    #__tracebackhide__ = True
     try:
         from subprocess import Popen, PIPE
     except ImportError:
@@ -31,7 +31,6 @@ def posix_exec_cmd(cmd):
 
     import errno
 
-    #print "execing", cmd
     child = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE,
                                                                 close_fds=True)
     stdin, stdout, stderr = child.stdin, child.stdout, child.stderr
@@ -53,12 +52,13 @@ def posix_exec_cmd(cmd):
     import select
     out, err = [], []
     while 1:
-        r_list = filter(lambda x: x and not x.closed, [stdout, stderr])
+        r_list = [x for x in [stdout, stderr] if x and not x.closed]
         if not r_list:
             break
         try:
             r_list = select.select(r_list, [], [])[0]
-        except (select.error, IOError), se:
+        except (select.error, IOError):
+            se = sys.exc_info()[1]
             if se.args[0] == errno.EINTR:
                 continue
             else:
@@ -66,12 +66,14 @@ def posix_exec_cmd(cmd):
         for r  in r_list:
             try:
                 data = r.read()   # XXX see XXX above
-            except IOError, io:
+            except IOError:
+                io = sys.exc_info()[1]
                 if io.args[0] == errno.EAGAIN:
                     continue
                 # Connection Lost
                 raise
-            except OSError, ose:
+            except OSError:
+                ose = sys.exc_info()[1]
                 if ose.errno == errno.EPIPE:
                     # Connection Lost
                     raise
@@ -88,15 +90,19 @@ def posix_exec_cmd(cmd):
                 err.append(data)
     pid, systemstatus = os.waitpid(child.pid, 0)
     if pid != child.pid:
-        raise ExecutionFailed, "child process disappeared during: "+ cmd
+        raise ExecutionFailed("child process disappeared during: "+ cmd)
     if systemstatus:
         if os.WIFSIGNALED(systemstatus):
             status = os.WTERMSIG(systemstatus) + 128
         else:
             status = os.WEXITSTATUS(systemstatus)
         raise ExecutionFailed(status, systemstatus, cmd,
-                              ''.join(out), ''.join(err))
-    return "".join(out)
+                              joiner(out), joiner(err))
+    return joiner(out)
+
+def joiner(out):
+    encoding = sys.getdefaultencoding()
+    return "".join([py.builtin._totext(x, encoding) for x in out])
 
 #-----------------------------------------------------------
 # simple win32 external command execution

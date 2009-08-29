@@ -247,7 +247,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
 
     def test_status_wrong_xml(self):
         # testing for XML without author - this used to raise an exception
-        xml = u'<entry path="/home/jean/zope/venv/projectdb/parts/development-products/DataGridField">\n<wc-status item="incomplete" props="none" revision="784">\n</wc-status>\n</entry>'
+        xml = '<entry path="/home/jean/zope/venv/projectdb/parts/development-products/DataGridField">\n<wc-status item="incomplete" props="none" revision="784">\n</wc-status>\n</entry>'
         st = XMLWCStatus.fromstring(xml, self.root)
         assert len(st.incomplete) == 1
 

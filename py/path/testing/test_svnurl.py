@@ -78,7 +78,6 @@ class TestSvnURLCommandPath(CommonCommandAndBindingTests):
         bar = foo.join('bar').ensure(file=True)
         bar.write('bar\n')
         rev1 = foo.commit('testing something')
-        print 'rev1:', rev1
         baz = foo.join('baz').ensure(file=True)
         baz.write('baz\n')
         rev2 = foo.commit('testing more')

@@ -25,7 +25,7 @@ class Source(object):
                 partlines = []
             if isinstance(part, Source):
                 partlines = part.lines
-            elif isinstance(part, py.builtin.basestring):
+            elif isinstance(part, py.builtin._basestring):
                 partlines = part.split('\n')
                 if rstrip:
                     while partlines: 

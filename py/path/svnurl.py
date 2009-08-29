@@ -56,7 +56,7 @@ class SvnCommandPath(svncommon.SvnPathBase):
         # fixing the locale because we can't otherwise parse
         string = " ".join(l)
         if DEBUG:
-            print "execing", string
+            print("execing %s" % string)
         out = self._svncmdexecauth(string)
         return out
 
@@ -70,7 +70,8 @@ class SvnCommandPath(svncommon.SvnPathBase):
     def _cmdexec(self, cmd):
         try:
             out = process.cmdexec(cmd)
-        except py.process.cmdexec.Error, e:
+        except py.process.cmdexec.Error:
+            e = sys.exc_info()[1]
             if (e.err.find('File Exists') != -1 or
                             e.err.find('File already exists') != -1):
                 raise py.error.EEXIST(self)
@@ -207,7 +208,7 @@ checkin message msg."""
     def _proplist(self):
         res = self._svnwithrev('proplist')
         lines = res.split('\n')
-        lines = map(str.strip, lines[1:])
+        lines = [x.strip() for x in lines[1:]]
         return svncommon.PropListDict(self, lines)
 
     def _listdir_nameinfo(self):
@@ -215,7 +216,8 @@ checkin message msg."""
         def builder():
             try:
                 res = self._svnwithrev('ls', '-v')
-            except process.cmdexec.Error, e:
+            except process.cmdexec.Error:
+                e = sys.exc_info()[1]
                 if e.err.find('non-existent in that revision') != -1:
                     raise py.error.ENOENT(self, e.err)
                 elif e.err.find('File not found') != -1:

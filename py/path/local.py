@@ -133,7 +133,7 @@ class LocalPath(FSBase):
         self = object.__new__(cls)
         if not path:
             self.strpath = os.getcwd()
-        elif isinstance(path, str):
+        elif isinstance(path, py.builtin._basestring):
             self.strpath = os.path.abspath(os.path.normpath(str(path)))
         else:
             raise ValueError("can only pass None, Path instances "

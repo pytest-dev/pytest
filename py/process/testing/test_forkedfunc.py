@@ -69,7 +69,7 @@ def test_forkedfunc_huge_data():
 
 def test_box_seq():
     # we run many boxes with huge data, just one after another
-    for i in xrange(50):
+    for i in range(50):
         result = py.process.ForkedFunc(boxhuge).waitfinish()
         assert result.out
         assert result.exitstatus == 0
@@ -79,8 +79,8 @@ def test_box_seq():
 def test_box_in_a_box():
     def boxfun():
         result = py.process.ForkedFunc(boxf2).waitfinish()
-        print result.out
-        print >>sys.stderr, result.err
+        print (result.out)
+        sys.stderr.write(result.err + "\n")
         return result.retval
     
     result = py.process.ForkedFunc(boxfun).waitfinish()
@@ -114,25 +114,26 @@ def test_kill_func_forked():
 #
 
 def boxf1():
-    print "some out"
-    print >>sys.stderr, "some err"
+    sys.stdout.write("some out\n")
+    sys.stderr.write("some err\n")
     return 1
 
 def boxf2():
-    os.write(1, "someout")
-    os.write(2, "someerr")
+    os.write(1, "someout".encode('ascii'))
+    os.write(2, "someerr".encode('ascii'))
     return 2
 
 def boxseg():
     os.kill(os.getpid(), 11)
 
 def boxhuge():
-    os.write(1, " " * 10000)
-    os.write(2, " " * 10000)
-    os.write(1, " " * 10000)
+    s = " ".encode('ascii')
+    os.write(1, s * 10000)
+    os.write(2, s * 10000)
+    os.write(1, s * 10000)
     
-    os.write(1, " " * 10000)
-    os.write(2, " " * 10000)
-    os.write(2, " " * 10000)
-    os.write(1, " " * 10000)
+    os.write(1, s * 10000)
+    os.write(2, s * 10000)
+    os.write(2, s * 10000)
+    os.write(1, s * 10000)
     return 3

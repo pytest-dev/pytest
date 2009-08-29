@@ -147,7 +147,7 @@ initpkg(__name__,
     'builtin.print_'         : ('./builtin/builtin31.py', 'print_'),
     'builtin._reraise'       : ('./builtin/builtin31.py', '_reraise'),
     'builtin.exec_'          : ('./builtin/builtin31.py', 'exec_'),
-    'builtin.basestring'     : ('./builtin/builtin31.py', 'basestring'),
+    'builtin._basestring'    : ('./builtin/builtin31.py', '_basestring'),
     'builtin._totext'        : ('./builtin/builtin31.py', '_totext'),
     'builtin.builtins'       : ('./builtin/builtin31.py', 'builtins'),
 

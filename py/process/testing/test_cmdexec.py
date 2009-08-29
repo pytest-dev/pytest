@@ -1,6 +1,9 @@
 import py
 from py.process import cmdexec
 
+def exvalue():
+    return py.std.sys.exc_info()[1]
+
 class Test_exec_cmd:
     def test_simple(self):
         out = cmdexec('echo hallo')
@@ -12,14 +15,16 @@ class Test_exec_cmd:
     def test_simple_error_exact_status(self):
         try:
             cmdexec('exit 1')
-        except cmdexec.Error, e:
+        except cmdexec.Error:
+            e = exvalue()
             assert e.status == 1
 
     def test_err(self):
         try:
             cmdexec('echoqweqwe123 hallo')
-            raise AssertionError, "command succeeded but shouldn't"
-        except cmdexec.Error, e:
+            raise AssertionError("command succeeded but shouldn't")
+        except cmdexec.Error:
+            e = exvalue()
             assert hasattr(e, 'err')
             assert hasattr(e, 'out')
             assert e.err or e.out

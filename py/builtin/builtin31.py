@@ -3,7 +3,9 @@ import sys
 if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins
-    basestring = str 
+
+    # some backward compatibility helpers 
+    _basestring = str 
     def _totext(obj, encoding):
         if isinstance(obj, str):
             obj = obj.encode(encoding)
@@ -11,7 +13,8 @@ if sys.version_info >= (3, 0):
 
 else:
     _totext = unicode 
-    basestring = basestring
+    _basestring = basestring
+
     import __builtin__ as builtins
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 
