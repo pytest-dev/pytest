@@ -175,7 +175,7 @@ class TestTerminal:
                 g()  # --calling--
         """)
         for tbopt in ["long", "short", "no"]:
-            print 'testing --tb=%s...' % tbopt
+            print('testing --tb=%s...' % tbopt)
             result = testdir.runpytest('--tb=%s' % tbopt)
             s = result.stdout.str()
             if tbopt == "long":

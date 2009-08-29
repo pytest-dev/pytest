@@ -17,7 +17,7 @@ class EventQueue:
             except py.std.Queue.Empty:
                 #print "node channel", self.node.channel
                 #print "remoteerror", self.node.channel._getremoteerror()
-                print "seen events", events
+                py.builtin.print_("seen events", events)
                 raise IOError("did not see %r events" % (eventname))
             else:
                 name, args, kwargs = eventcall 
@@ -28,7 +28,7 @@ class EventQueue:
                     return kwargs
                 events.append(name)
                 if name == "pytest_internalerror":
-                    print str(kwargs["excrepr"])
+                    py.builtin.print_(str(kwargs["excrepr"]))
 
 class MySetup:
     def __init__(self, request):
@@ -55,7 +55,7 @@ class MySetup:
     def xfinalize(self):
         if hasattr(self, 'node'):
             gw = self.node.gateway
-            print "exiting:", gw
+            py.builtin.print_("exiting:", gw)
             gw.exit()
 
 def pytest_funcarg__mysetup(request):
@@ -117,7 +117,7 @@ class TestMasterSlaveConnection:
         kwargs = mysetup.geteventargs("pytest_runtest_logreport")
         rep = kwargs['report'] 
         assert rep.passed 
-        print rep
+        py.builtin.print_(rep)
         assert rep.item == item
 
     def test_send_some(self, testdir, mysetup):

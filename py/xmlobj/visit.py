@@ -2,7 +2,15 @@
 # a generic conversion serializer 
 #
 
+import sys
 from py.xml import escape 
+
+if sys.version_info > (3, 0):
+    def u(s):
+        return s
+else:
+    def u(s):
+        return unicode(s)
 
 class SimpleUnicodeVisitor(object):
     """ recursive visitor to write unicode. """
@@ -51,21 +59,21 @@ class SimpleUnicodeVisitor(object):
         self.visited[id(tag)] = 1
         tagname = getattr(tag, 'xmlname', tag.__class__.__name__)
         if self.curindent and not self._isinline(tagname):
-            self.write("\n" + u' ' * self.curindent) 
+            self.write("\n" + u(' ') * self.curindent) 
         if tag:
             self.curindent += self.indent 
-            self.write(u'<%s%s>' % (tagname, self.attributes(tag)))
+            self.write(u('<%s%s>') % (tagname, self.attributes(tag)))
             self.parents.append(tag) 
             map(self.visit, tag)
             self.parents.pop() 
-            self.write(u'</%s>' % tagname) 
+            self.write(u('</%s>') % tagname) 
             self.curindent -= self.indent 
         else:
             nameattr = tagname+self.attributes(tag) 
             if self._issingleton(tagname): 
-                self.write(u'<%s/>' % (nameattr,))
+                self.write(u('<%s/>') % (nameattr,))
             else: 
-                self.write(u'<%s></%s>' % (nameattr, tagname))
+                self.write(u('<%s></%s>') % (nameattr, tagname))
 
     def attributes(self, tag):
         # serialize attributes
@@ -77,14 +85,14 @@ class SimpleUnicodeVisitor(object):
             if res is not None: 
                 l.append(res) 
         l.extend(self.getstyle(tag))
-        return u"".join(l)
+        return u("").join(l)
 
     def repr_attribute(self, attrs, name): 
         if name[:2] != '__': 
             value = getattr(attrs, name) 
             if name.endswith('_'): 
                 name = name[:-1]
-            return u' %s="%s"' % (name, escape(unicode(value)))
+            return u(' %s="%s"') % (name, escape(unicode(value)))
 
     def getstyle(self, tag): 
         """ return attribute list suitable for styling. """ 
@@ -94,7 +102,7 @@ class SimpleUnicodeVisitor(object):
             return [] 
         else: 
             stylelist = [x+': ' + y for x,y in styledict.items()]
-            return [u' style="%s"' % u'; '.join(stylelist)]
+            return [u(' style="%s"') % u('; ').join(stylelist)]
 
     def _issingleton(self, tagname):
         """can (and will) be overridden in subclasses"""

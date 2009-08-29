@@ -50,4 +50,4 @@ class TestCompatAssertions(TestCase):
                             self.%(name)s, %(paramfail)s)
             """ % locals()
             co = py.code.Source(source).compile()
-            exec co
+            exec(co)

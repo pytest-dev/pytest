@@ -85,7 +85,7 @@ def test_importall():
                 yield check_import, modpath 
 
 def check_import(modpath): 
-    print "checking import", modpath
+    py.builtin.print_("checking import", modpath)
     assert __import__(modpath) 
 
 #

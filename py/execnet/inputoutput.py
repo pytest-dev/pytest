@@ -14,8 +14,9 @@ class SocketIO:
         try:
             sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
             sock.setsockopt(socket.SOL_IP, socket.IP_TOS, 0x10)  # IPTOS_LOWDELAY
-        except socket.error, e:
-            print "WARNING: Cannot set socket option:", str(e)
+        except socket.error:
+            e = sys.exc_info()[1]
+            py.builtin.print_("WARNING: Cannot set socket option:", str(e))
         self.readable = self.writeable = True
 
     def read(self, numbytes):

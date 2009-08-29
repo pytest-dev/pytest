@@ -62,4 +62,4 @@ if __name__ == '__main__':
     """)
     c.send(channel)
     c.send(srv.p2c(py.path.local('/tmp')))
-    print c.receive()
+    print(c.receive())

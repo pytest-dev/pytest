@@ -20,7 +20,7 @@ class TestNodeManager:
         nodemanager.rsync_roots()
         p, = nodemanager.gwmanager.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
         p = py.path.local(p)
-        print "remote curdir", p
+        py.builtin.print_("remote curdir", p)
         assert p == mysetup.dest.join(config.topdir.basename)
         assert p.join("dir1").check()
         assert p.join("dir1", "file1").check()

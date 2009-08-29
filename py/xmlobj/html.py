@@ -28,11 +28,16 @@ class HtmlVisitor(SimpleUnicodeVisitor):
     def _isinline(self, tagname):
         return tagname in self.inline
 
+if sys.version_info > (3, 0):
+    def u(s): return s
+else:
+    def u(s): return unicode(s)
+
 class HtmlTag(Tag): 
     def unicode(self, indent=2):
         l = []
         HtmlVisitor(l.append, indent, shortempty=False).visit(self) 
-        return u"".join(l) 
+        return u("").join(l) 
 
 # exported plain html namespace 
 class html(Namespace):

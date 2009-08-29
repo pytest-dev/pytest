@@ -36,8 +36,8 @@ def serve_bg(repopath):
                port, pidfile, repopath)
         try:
             py.process.cmdexec(cmd)
-        except py.process.cmdexec.Error, e:
-            pass
+        except py.process.cmdexec.Error:
+            e = sys.exc_info()[1]
         else:
             # XXX we assume here that the pid file gets written somewhere, I
             # guess this should be relatively safe... (I hope, at least?)
@@ -276,8 +276,8 @@ class SvnAuthFunctionalTestBase(object):
         make_repo_auth(self.repopath, {'johnny': ('foo', 'rw')})
         try:
             return serve_bg(self.repopath.dirpath())
-        except IOError, e:
-            py.test.skip(str(e))
+        except IOError:
+            py.test.skip(str(sys.exc_info()[1]))
 
 class TestSvnWCAuthFunctional(SvnAuthFunctionalTestBase):
     def test_checkout_constructor_arg(self):

@@ -57,7 +57,7 @@ class SessionTests:
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
         if not out.find("DID NOT RAISE") != -1: 
-            print out
+            print(out)
             py.test.fail("incorrect raises() output") 
 
     def test_generator_yields_None(self, testdir): 

@@ -53,7 +53,7 @@ def revert(namespace, name):
     )
     nref = (namespace, name)
     if nref not in patched or not patched[nref]:
-        raise ValueError, "No original value stored for %s.%s" % nref
+        raise ValueError("No original value stored for %s.%s" % nref)
     current = getattr(namespace, name)
     orig = patched[nref].pop()
     setattr(namespace, name, orig)

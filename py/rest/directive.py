@@ -26,7 +26,7 @@ else:
     class ImageClass(object):
         option_spec = images.image.options
         def run(self):
-            return images.image(u'image',
+            return images.image('image',
                                 self.arguments,
                                 self.options,
                                 self.content,
@@ -51,7 +51,7 @@ class GraphvizDirective(ImageClass):
                                self.state.document.settings._source)
         text = self.block_text.replace("graphviz", "image", 1)
         self.block_text = text.replace(self.arguments[0], newname, 1)
-        self.name = u'image'
+        self.name = 'image'
         self.arguments = [newname]
         return ImageClass.run(self)
     

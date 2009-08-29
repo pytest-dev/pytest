@@ -8,8 +8,8 @@ def test_apiwarn_functional():
     capture = py.io.StdCapture()
     py.log._apiwarn("x.y.z", "something")
     out, err = capture.reset()
-    print "out", out
-    print "err", err
+    py.builtin.print_("out", out)
+    py.builtin.print_("err", err)
     assert err.find("x.y.z") != -1
     lno = test_apiwarn_functional.func_code.co_firstlineno + 2
     exp = "%s:%s" % (mypath, lno)
@@ -57,8 +57,8 @@ def test_function():
     capture = py.io.StdCapture()
     py.log._apiwarn("x.y.z", "something", function=test_function)
     out, err = capture.reset()
-    print "out", out
-    print "err", err
+    py.builtin.print_("out", out)
+    py.builtin.print_("err", err)
     assert err.find("x.y.z") != -1
     lno = test_function.func_code.co_firstlineno 
     exp = "%s:%s" % (mypath, lno)

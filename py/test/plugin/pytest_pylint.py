@@ -29,8 +29,8 @@ class PylintItem(py.test.collect.Item):
         finally:
             out, err = capture.reset()
         rating = out.strip().split('\n')[-1]
-        print ">>>",
-        print rating
+        sys.stdout.write(">>>")
+        print(rating)
         assert 0
 
 

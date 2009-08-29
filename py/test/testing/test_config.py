@@ -132,7 +132,7 @@ class TestConfigAPI:
         config = py.test.config._reparse([p])
         assert config.getconftest_pathlist('notexist') is None
         pl = config.getconftest_pathlist('pathlist')
-        print pl
+        print(pl)
         assert len(pl) == 2
         assert pl[0] == tmpdir
         assert pl[1] == somepath
@@ -195,7 +195,7 @@ class TestConfigApi_getcolitems:
         config = py.test.config._reparse([x])
         col = config.getfsnode(x)
         assert isinstance(col, py.test.collect.Directory)
-        print col.listchain()
+        print(col.listchain())
         assert col.name == 'a'
         assert col.parent is None
         assert col.config is config 

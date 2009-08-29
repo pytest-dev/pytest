@@ -38,7 +38,7 @@ class StatRecorder:
                        if oldstat.mtime != curstat.mtime or \
                           oldstat.size != curstat.size:
                             changed = True
-                            print "# MODIFIED", path
+                            py.builtin.print_("# MODIFIED", path)
                             if removepycfiles and path.ext == ".py":
                                 pycfile = path + "c"
                                 if pycfile.check():

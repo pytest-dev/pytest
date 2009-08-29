@@ -23,7 +23,7 @@ class MockNode:
 
 def dumpqueue(queue):
     while queue.qsize():
-        print queue.get()
+        print(queue.get())
 
 class TestDSession:
     def test_add_remove_node(self, testdir):
@@ -184,7 +184,7 @@ class TestDSession:
             when = "call"
         session.queueevent("pytest_runtest_logreport", report=rep)
         reprec = testdir.getreportrecorder(session)
-        print session.item2nodes
+        print(session.item2nodes)
         loopstate = session._initloopstate([])
         assert len(session.item2nodes[item1]) == 2
         session.loop_once(loopstate)
@@ -215,7 +215,7 @@ class TestDSession:
         item1.config.option.dist = "load"
         session.queueevent("pytest_testnodedown", node=node, error="xyz")
         reprec = testdir.getreportrecorder(session)
-        print session.item2nodes
+        print(session.item2nodes)
         loopstate = session._initloopstate([])
         session.loop_once(loopstate)
 

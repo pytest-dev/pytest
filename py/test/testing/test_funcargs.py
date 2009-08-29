@@ -179,7 +179,7 @@ class TestRequest:
         ss = item.config._setupstate
         assert not teardownlist 
         ss.teardown_exact(item) 
-        print ss.stack
+        print(ss.stack)
         assert teardownlist == [1]
 
     def test_request_addfinalizer_partial_setup_failure(self, testdir):

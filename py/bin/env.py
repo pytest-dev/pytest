@@ -29,5 +29,5 @@ def setenv(name, value):
         assert False, 'Shell not supported.'
     return cmd
 
-print prepend_path('PATH', bindir)
-print prepend_path('PYTHONPATH', rootdir)
+print(prepend_path('PATH', bindir))
+print(prepend_path('PYTHONPATH', rootdir))

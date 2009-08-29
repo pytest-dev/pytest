@@ -88,7 +88,8 @@ class RSync(object):
 
     def _report_send_file(self, gateway, modified_rel_path):
         if self._verbose:
-            print '%s <= %s' % (gateway.remoteaddress, modified_rel_path)
+            py.builtin.print_('%s <= %s' % (gateway.remoteaddress,
+                                            modified_rel_path))
 
     def send(self, raises=True):
         """ Sends a sourcedir to all added targets. Flag indicates
@@ -194,7 +195,7 @@ class RSync(object):
         elif stat.S_ISLNK(st.st_mode):
             self._send_link_structure(path)
         else:
-            raise ValueError, "cannot sync %r" % (path,)
+            raise ValueError("cannot sync %r" % (path,))
 
 REMOTE_SOURCE = py.path.local(__file__).dirpath().\
                 join('rsync_remote.py').open().read() + "\nf()"

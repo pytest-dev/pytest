@@ -149,8 +149,8 @@ turpis. Etiam et ipsum. Quisque at lacus. Etiam pellentesque, enim porta
 pulvinar viverra, libero elit iaculis justo, vitae convallis pede purus vel
 arcu. Morbi aliquam lacus et urna. Donec commodo pellentesque mi."""
     txt = Paragraph(text, width=80).text()
-    print repr(txt)
-    print repr(expected)
+    print(repr(txt))
+    print(repr(expected))
     assert txt == expected
     checkrest(txt)
 
@@ -172,7 +172,7 @@ Paragraph
 """
     txt = Rest(Paragraph("Text"), LiteralBlock("def fun():\n some"), \
                Paragraph("Paragraph")).text()
-    print repr(txt)
+    print(repr(txt))
     assert txt == expected
     checkrest(txt)
 
@@ -183,7 +183,7 @@ Foo
 Bar
 """
     txt = Rest(Paragraph('Foo'), LiteralBlock(''), Paragraph('Bar')).text()
-    print repr(txt)
+    print(repr(txt))
     assert txt == expected
     checkrest(txt)
 
@@ -359,7 +359,7 @@ def test_nested_nested_lists():
 """
     txt = Rest(ListItem('foo', ListItem('bar', ListItem('baz')),
                                ListItem('qux')), ListItem('quux')).text()
-    print txt
+    print(txt)
     assert txt == expected
     checkrest(txt)
 

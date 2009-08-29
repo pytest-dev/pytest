@@ -237,7 +237,7 @@ class Gateway(object):
             try:
                 co = compile(source+'\n', '', 'exec',
                              __future__.CO_GENERATOR_ALLOWED)
-                exec co in loc
+                py.test.exec_(co, loc)
             finally:
                 close() 
                 self._trace("execution finished:", repr(source)[:50])

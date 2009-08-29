@@ -58,7 +58,7 @@ class Test_genitems:
 
         s = items[0].getmodpath(stopatmodule=False)
         assert s.endswith("test_example_items1.testone")
-        print s
+        print(s)
 
 
 class TestKeywordSelection:
@@ -98,7 +98,7 @@ class TestKeywordSelection:
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1', 
                         'TestClass test_2', 'xxx TestClass test_2',): 
             reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
-            print "keyword", repr(keyword)
+            py.builtin.print_("keyword", repr(keyword))
             passed, skipped, failed = reprec.listoutcomes()
             assert len(passed) == 1
             assert passed[0].item.name == "test_2"

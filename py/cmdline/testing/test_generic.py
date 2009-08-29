@@ -26,19 +26,20 @@ def checkprocess(script):
             cmd = "%s" %(script, )
             # XXX distributed testing's rsync does not support
             # syncing executable bits 
-            script.chmod(0777)
+            script.chmod(int("777", 8))
 
         if script.basename.startswith("py.lookup") or \
            script.basename.startswith("py.which"):
             cmd += " sys"
-        print "executing", script
+        py.builtin.print_("executing", script)
         try:
             old = script.dirpath().chdir()
             try:
                 py.process.cmdexec(cmd)
             finally:
                 old.chdir()
-        except py.process.cmdexec.Error, e:
+        except py.process.cmdexec.Error:
+            e = sys.exc_info()[1]
             if cmd.find("py.rest") != -1 and \
                e.out.find("module named") != -1:
                 return

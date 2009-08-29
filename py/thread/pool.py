@@ -2,6 +2,7 @@ import Queue
 import threading
 import time 
 import sys
+import py
 
 ERRORMARKER = object() 
 
@@ -52,7 +53,7 @@ class Reply(object):
         if result is ERRORMARKER: 
             self._queue = None
             excinfo = self._excinfo 
-            raise excinfo[0], excinfo[1], excinfo[2]
+            py.builtin._reraise(excinfo[0], excinfo[1], excinfo[2])
         return result 
 
 class WorkerThread(threading.Thread): 

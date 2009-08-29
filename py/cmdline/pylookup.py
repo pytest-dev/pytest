@@ -44,7 +44,7 @@ def main():
         if options.ignorecase:
             s = s.lower()
         if s.find(string) != -1:
-           print >>sys.stdout, "%s: filename matches %r" %(x, string)
+            sys.stdout.write("%s: filename matches %r" %(x, string) + "\n")
 
         try:
             s = x.read()
@@ -75,5 +75,5 @@ def main():
                 else:
                     context = (options.context)/2
                     for count in range(max(0, i-context), min(len(lines) - 1, i+context+1)):
-                        print "%s:%d:  %s" %(x.relto(curdir), count+1, lines[count].rstrip())
-                    print "-" * terminal_width
+                        print("%s:%d:  %s" %(x.relto(curdir), count+1, lines[count].rstrip()))
+                    print("-" * terminal_width)

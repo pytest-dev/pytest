@@ -22,12 +22,22 @@ if debug: #  and not os.isatty(sys.stdin.fileno()):
     #import py 
     #compile = py.code.compile 
 
+def print_(*args):
+    print(" ".join(args))
+
+if sys.version_info > (3, 0):
+    exec("""def exec_(source, locs):
+    exec(source, locs)""")
+else:
+    exec("""def exec_(source, locs):
+    exec source, locs""")
+
 def exec_from_one_connection(serversock):
-    print progname, 'Entering Accept loop', serversock.getsockname()
+    print_(progname, 'Entering Accept loop', serversock.getsockname())
     clientsock,address = serversock.accept()
-    print progname, 'got new connection from %s %s' % address
+    print_(progname, 'got new connection from %s %s' % address)
     clientfile = clientsock.makefile('r+',0)
-    print "reading line"
+    print_("reading line")
     # rstrip so that we can use \r\n for telnet testing
     source = clientfile.readline().rstrip()
     clientfile.close()
@@ -35,11 +45,11 @@ def exec_from_one_connection(serversock):
     source = eval(source)
     if source:
         co = compile(source+'\n', source, 'exec')
-        print progname, 'compiled source, executing'
+        print_(progname, 'compiled source, executing')
         try:
-            exec co in g
+            exec_(co, g)
         finally:
-            print progname, 'finished executing code'
+            print_(progname, 'finished executing code')
             # background thread might hold a reference to this (!?)
             #clientsock.close()
 
@@ -73,11 +83,11 @@ def startserver(serversock, loop=False):
                     traceback.print_exc()
                 else:
                     excinfo = sys.exc_info()
-                    print "got exception", excinfo[1]
+                    print_("got exception", excinfo[1])
             if not loop: 
                 break 
     finally:
-        print "leaving socketserver execloop"
+        print_("leaving socketserver execloop")
         serversock.shutdown(2)
 
 if __name__ == '__main__':

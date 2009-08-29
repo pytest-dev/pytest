@@ -19,7 +19,7 @@ the following 'svn up' won't just crash.
 import sys, py
 
 def kill(p, root):
-    print '<    %s' % (p.relto(root),)
+    print('<    %s' % (p.relto(root),))
     p.remove(rec=1)
 
 def svnwcrevert(path, root=None, precious=[]):

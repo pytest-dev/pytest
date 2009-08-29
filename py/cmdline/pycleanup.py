@@ -27,10 +27,10 @@ def main():
         
     for arg in args:
         path = py.path.local(arg)
-        print "cleaning path", path, "of extensions", ext
+        py.builtin.print_("cleaning path", path, "of extensions", ext)
         for x in path.visit(shouldremove, lambda x: x.check(dotfile=0, link=0)):
             if options.dryrun:
-                print "would remove", x
+                py.builtin.print_("would remove", x)
             else:
-                print "removing", x
+                py.builtin.print_("removing", x)
                 x.remove()

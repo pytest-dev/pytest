@@ -53,6 +53,6 @@ class TestCase(object):
             """ % locals() )
 
     source = "".join(items)
-    exec py.code.Source(source).compile()
+    exec(py.code.Source(source).compile())
 
 __all__ = ['TestCase']

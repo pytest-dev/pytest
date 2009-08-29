@@ -1,5 +1,6 @@
 import sys
 import os
+import py
 
 def setup_module(mod=None):
     if mod is None:
@@ -37,12 +38,12 @@ def test_import():
             if mod1 is not mod2:
                 bad_matches.append((name1, mod1, name2, mod2))
     for name1, mod1, name2, mod2 in bad_matches:
-        print "These modules should be identical:"
-        print "  %s:" % name1
-        print "   ", mod1
-        print "  %s:" % name2
-        print "   ", mod2
-        print
+        print("These modules should be identical:")
+        print("  %s:" % name1)
+        print("   ", mod1)
+        print("  %s:" % name2)
+        print("   ", mod2)
+        py.builtin.print_()
     if bad_matches:
         assert False
 

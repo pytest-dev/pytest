@@ -17,7 +17,7 @@ import py
 
 if hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno()):
     def log(msg):
-        print msg
+        print(msg)
 else:
     def log(msg):
         pass
@@ -37,8 +37,9 @@ def main():
     try:
         from py.__.rest import directive, resthtml 
         from py.__.rest.latex import process_rest_file, process_configfile
-    except ImportError, e:
-        print str(e)
+    except ImportError:
+        e = sys.exc_info()[1]
+        print(str(e))
         sys.exit(1)
 
     (options, args) = parser.parse_args()
@@ -70,7 +71,7 @@ def main():
                 if options.topdf:
                     cfg = p.new(ext=".rst2pdfconfig")
                     if cfg.check():
-                        print "using config file %s" % (cfg, )
+                        print("using config file %s" % (cfg, ))
                         process_configfile(cfg, options.debug)
                     else:
                         process_rest_file(p.localpath,

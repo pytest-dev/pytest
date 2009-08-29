@@ -81,9 +81,9 @@ class TestCollector:
 
     def test_listnames_and__getitembynames(self, testdir):
         modcol = testdir.getmodulecol("pass", withinit=True)
-        print modcol.config.pluginmanager.getplugins()
+        print(modcol.config.pluginmanager.getplugins())
         names = modcol.listnames()
-        print names
+        print(names)
         dircol = modcol.config.getfsnode(modcol.config.topdir)
         x = dircol._getitembynames(names)
         assert modcol.name == x.name 

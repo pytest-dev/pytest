@@ -78,7 +78,7 @@ class BaseFunctionalTests:
             def test_func():
                 pass
         """)
-        print reports
+        print(reports)
         rep = reports[0]
         assert not rep.failed 
         assert not rep.passed 
@@ -112,7 +112,7 @@ class BaseFunctionalTests:
             def test_func():
                 pass
         """)
-        print reports
+        print(reports)
         assert len(reports) == 3
         rep = reports[2]
         assert not rep.skipped 
@@ -159,7 +159,7 @@ class BaseFunctionalTests:
         """)
         assert len(reports) == 2
         rep = reports[0]
-        print rep
+        print(rep)
         assert not rep.skipped 
         assert not rep.passed 
         assert rep.failed 
@@ -206,7 +206,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
                 def test_func():
                     raise KeyboardInterrupt("fake")
             """)
-        except KeyboardInterrupt, e:
+        except KeyboardInterrupt:
             pass
         else: 
             py.test.fail("did not raise")

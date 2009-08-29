@@ -4,7 +4,7 @@ import re
 
 if hasattr(sys.stdout, 'fileno') and os.isatty(sys.stdout.fileno()):
     def log(msg):
-        print msg 
+        print(msg)
 else:
     def log(msg):
         pass
@@ -59,8 +59,14 @@ def process(txtpath, encoding='latin1'):
     #    info = txtpath.info()
     #    svninfopath.dump(info) 
 
-rex1 = re.compile(ur'.*<body>(.*)</body>.*', re.MULTILINE | re.DOTALL)
-rex2 = re.compile(ur'.*<div class="document">(.*)</div>.*', re.MULTILINE | re.DOTALL)
+if sys.version_info > (3, 0):
+    def _uni(s): return s
+else:
+    def _uni(s):
+        return unicode(s)
+
+rex1 = re.compile(r'.*<body>(.*)</body>.*', re.MULTILINE | re.DOTALL)
+rex2 = re.compile(r'.*<div class="document">(.*)</div>.*', re.MULTILINE | re.DOTALL)
 
 def strip_html_header(string, encoding='utf8'):
     """ return the content of the body-tag """ 

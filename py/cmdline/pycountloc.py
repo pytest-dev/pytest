@@ -85,10 +85,10 @@ def countloc(paths=None):
     items = counter.file2numlines.items()
     items.sort(lambda x,y: cmp(x[1], y[1]))
     for x, y in items:
-        print "%3d %30s" % (y,x) 
+        print("%3d %30s" % (y,x))
     
-    print "%30s %3d" %("number of testfiles", numtestfiles)
-    print "%30s %3d" %("number of non-empty testlines", numtestlines)
-    print "%30s %3d" %("number of files", numfiles)
-    print "%30s %3d" %("number of non-empty lines", numlines)
+    print("%30s %3d" %("number of testfiles", numtestfiles))
+    print("%30s %3d" %("number of non-empty testlines", numtestlines))
+    print("%30s %3d" %("number of files", numfiles))
+    print("%30s %3d" %("number of non-empty lines", numlines))
 

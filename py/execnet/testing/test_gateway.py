@@ -162,7 +162,8 @@ class BasicRemoteExecution:
         channel = self.gw.remote_exec('def foo():\n  return foobar()\nfoo()\n')
         try:
             channel.receive()
-        except channel.RemoteError, e:
+        except channel.RemoteError:
+            e = sys.exc_info()[1]
             assert str(e).startswith('Traceback (most recent call last):')
             assert str(e).find('NameError: global name \'foobar\' '
                                'is not defined') > -1
@@ -174,7 +175,8 @@ class BasicRemoteExecution:
         channel = self.gw.remote_exec('def foo()\n return 1\nfoo()\n')
         try:
             channel.receive()
-        except channel.RemoteError, e:
+        except channel.RemoteError:
+            e = sys.exc_info()[1]
             assert str(e).startswith('Traceback (most recent call last):')
             assert str(e).find('SyntaxError') > -1
 
@@ -274,7 +276,7 @@ class BasicRemoteExecution:
             if subchannel and subchannel.isclosed():
                 break
             counter -= 1
-            print counter
+            print(counter)
             if not counter:
                 py.test.fail("timed out waiting for the answer[%d]" % len(l))
             time.sleep(0.04)   # busy-wait

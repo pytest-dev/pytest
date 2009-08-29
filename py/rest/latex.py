@@ -132,15 +132,16 @@ def process_rest_file(restfile, stylesheet=None, debug=False, rest_options=None)
     while i < 10: # there should never be as many as five reruns, but to be sure
         try:
             latexoutput = py.process.cmdexec('pdflatex "%s"' % (tex, ))
-        except ExecutionFailed, e:
-            print "ERROR: pdflatex execution failed"
-            print "pdflatex stdout:"
-            print e.out
-            print "pdflatex stderr:"
-            print e.err
+        except ExecutionFailed:
+            e = py.std.sys.exc_info()[1]
+            print("ERROR: pdflatex execution failed")
+            print("pdflatex stdout:")
+            print(e.out)
+            print("pdflatex stderr:")
+            print(e.err)
             raise SystemExit
         if debug:
-            print latexoutput
+            print(latexoutput)
         if py.std.re.search("LaTeX Warning:.*Rerun", latexoutput) is None:
             break
         i += 1

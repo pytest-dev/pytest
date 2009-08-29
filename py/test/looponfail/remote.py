@@ -51,7 +51,7 @@ class RemoteControl(object):
     def trace(self, *args):
         if self.config.option.debug:
             msg = " ".join([str(x) for x in args])
-            print "RemoteControl:", msg 
+            py.builtin.print_("RemoteControl:", msg)
 
     def initgateway(self):
         return py.execnet.PopenGateway()
@@ -97,7 +97,8 @@ class RemoteControl(object):
             self.channel.send(trails)
             try:
                 return self.channel.receive()
-            except self.channel.RemoteError, e:
+            except self.channel.RemoteError:
+                e = sys.exc_info()[1]
                 self.trace("ERROR", e)
                 raise
         finally:
@@ -107,7 +108,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     """ we run this on the other side. """
     if config.option.debug:
         def DEBUG(*args): 
-            print " ".join(map(str, args))
+            print(" ".join(map(str, args)))
     else:
         def DEBUG(*args): pass
 
@@ -128,7 +129,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
         for trail in trails:
             try:
                 colitem = py.test.collect.Collector._fromtrail(trail, config)
-            except AssertionError, e:  
+            except AssertionError:  
                 #XXX send info for "test disappeared" or so
                 continue 
             colitems.append(colitem)

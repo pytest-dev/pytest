@@ -18,7 +18,7 @@ class Tag(list):
         from py.__.xmlobj.visit import SimpleUnicodeVisitor 
         l = []
         SimpleUnicodeVisitor(l.append, indent).visit(self) 
-        return u"".join(l) 
+        return "".join(l) 
 
     def __repr__(self):
         name = self.__class__.__name__ 

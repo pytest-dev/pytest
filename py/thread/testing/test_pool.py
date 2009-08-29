@@ -88,6 +88,6 @@ def test_pool_clean_shutdown():
     assert not pool._alive
     assert not pool._ready
     out, err = capture.reset()
-    print out
-    print >>sys.stderr, err
+    print(out)
+    sys.stderr.write(err + "\n")
     assert err == ''

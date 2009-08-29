@@ -42,7 +42,7 @@ class TestLocalPath(LocalSetup, CommonFSTests):
 
     def test_remove_removes_readonly_dir(self):
         readonly_dir = self.tmpdir.join('readonlydir').ensure(dir=1)
-        readonly_dir.chmod(0500)
+        readonly_dir.chmod(int("500", 8))
         readonly_dir.remove()
         assert not readonly_dir.check(exists=1)
 
@@ -223,7 +223,7 @@ class TestExecution(LocalSetup):
             
         finally:
             env['PATH'] = oldpath
-            noperm.chmod(0644)
+            noperm.chmod(int("644", 8))
             noperm.remove()
             
     def test_sysfind_absolute(self):
@@ -367,13 +367,13 @@ class TestWINLocalPath:
         py.test.raises(NotImplementedError, "self.root.stat().group")
 
     def test_chmod_simple_int(self):
-        print "self.root is", self.root
+        py.builtin.print_("self.root is", self.root)
         mode = self.root.stat().mode
         # Ensure that we actually change the mode to something different.
         self.root.chmod(mode == 0 and 1 or 0)
         try:
-            print self.root.stat().mode 
-            print mode
+            print(self.root.stat().mode)
+            print(mode)
             assert self.root.stat().mode != mode
         finally:
             self.root.chmod(mode)
@@ -553,7 +553,7 @@ class TestPOSIXLocalPath:
         assert self.root == nroot 
 
     def test_chmod_simple_int(self):
-        print "self.root is", self.root
+        py.builtin.print_("self.root is", self.root)
         mode = self.root.stat().mode
         self.root.chmod(mode/2)
         try:
@@ -564,15 +564,15 @@ class TestPOSIXLocalPath:
 
     def test_chmod_rec_int(self):
         # XXX fragile test
-        print "self.root is", self.root
+        py.builtin.print_("self.root is", self.root)
         recfilter = lambda x: x.check(dotfile=0, link=0)
         oldmodes = {}
         for x in self.root.visit(rec=recfilter):
             oldmodes[x] = x.stat().mode
-        self.root.chmod(0772, rec=recfilter)
+        self.root.chmod(int("772", 8), rec=recfilter)
         try:
             for x in self.root.visit(rec=recfilter):
-                assert x.stat().mode & 0777 == 0772
+                assert x.stat().mode & int("777", 8) == int("772", 8)
         finally:
             for x,y in oldmodes.items():
                 x.chmod(y)

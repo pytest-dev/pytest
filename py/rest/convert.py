@@ -50,7 +50,7 @@ def convert_dot(fn, new_extension):
     if not py.path.local.sysfind("dot"):
         raise SystemExit("ERROR: dot not found")
     result = fn.new(ext=new_extension)
-    print result
+    print(result)
     arg = "-T%s" % (format_to_dotargument[new_extension], )
     py.std.os.system('dot "%s" "%s" > "%s"' % (arg, fn, result))
     if new_extension == "eps":

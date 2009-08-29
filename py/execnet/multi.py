@@ -63,6 +63,6 @@ class MultiChannel:
                 if first is None:
                     first = py.std.sys.exc_info()
         if first:
-            raise first[0], first[1], first[2]
+            py.builtin._reraise(first[0], first[1], first[2])
 
 

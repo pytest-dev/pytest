@@ -128,8 +128,8 @@ class Rest(AbstractNode):
         outcome = []
         if (isinstance(self.children[0], Transition) or
                 isinstance(self.children[-1], Transition)):
-            raise ValueError, ('document must not begin or end with a '
-                               'transition')
+            raise ValueError('document must not begin or end with a '
+                             'transition')
         for child in self.children:
             outcome.append(child.text())
         

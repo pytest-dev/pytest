@@ -144,7 +144,7 @@ class Channel(object):
         """
         self._receiveclosed.wait(timeout=timeout)  # wait for non-"opened" state
         if not self._receiveclosed.isSet():
-            raise IOError, "Timeout"
+            raise IOError("Timeout")
         error = self._getremoteerror()
         if error:
             raise error
@@ -155,7 +155,7 @@ class Channel(object):
         Note that an item needs to be marshallable.
         """
         if self.isclosed(): 
-            raise IOError, "cannot send to %r" %(self,) 
+            raise IOError("cannot send to %r" %(self,))
         if isinstance(item, Channel):
             data = Message.CHANNEL_NEW(self.id, item.id)
         else:

@@ -135,7 +135,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
                     lexer = TextLexer()
                 # take an arbitrary option if more than one is given
                 formatter = options and VARIANTS[options.keys()[0]] or DEFAULT
-                parsed = highlight(u'\n'.join(content), lexer, formatter)
+                parsed = highlight('\n'.join(content), lexer, formatter)
                 return [nodes.raw('', parsed, format='html')]
 
             pygments_directive.options = dict([(key, directives.flag) for key in VARIANTS])
@@ -215,14 +215,15 @@ class DoctestText(py.test.collect.Item):
         for line in deindent(s).split('\n'):
             stripped = line.strip()
             if skipchunk and line.startswith(skipchunk):
-                print "skipping", line
+                py.builtin.print_("skipping", line)
                 continue
             skipchunk = False 
             if stripped.startswith(prefix):
                 try:
-                    exec py.code.Source(stripped[len(prefix):]).compile() in \
-                        mod.__dict__
-                except ValueError, e:
+                    py.builtin.exec_(py.code.Source(
+                            stripped[len(prefix):]).compile(),  mod.__dict__)
+                except ValueError:
+                    e = sys.exc_info()[1]
                     if e.args and e.args[0] == "skipchunk":
                         skipchunk = " " * (len(line) - len(line.lstrip()))
                     else:
@@ -301,11 +302,12 @@ def urlcheck(tryfn, path, lineno, TIMEOUT_URLOPEN):
     py.std.socket.setdefaulttimeout(TIMEOUT_URLOPEN)
     try:
         try: 
-            print "trying remote", tryfn
+            py.builtin.print_("trying remote", tryfn)
             py.std.urllib2.urlopen(tryfn)
         finally:
             py.std.socket.setdefaulttimeout(old)
-    except (py.std.urllib2.URLError, py.std.urllib2.HTTPError), e: 
+    except (py.std.urllib2.URLError, py.std.urllib2.HTTPError): 
+        e = sys.exc_info()[1]
         if getattr(e, 'code', None) in (401, 403): # authorization required, forbidden
             py.test.skip("%s: %s" %(tryfn, str(e)))
         else:
@@ -325,7 +327,7 @@ def localrefcheck(tryfn, path, lineno):
     fn = path.dirpath(tryfn) 
     ishtml = fn.ext == '.html' 
     fn = ishtml and fn.new(ext='.txt') or fn
-    print "filename is", fn 
+    py.builtin.print_("filename is", fn)
     if not fn.check(): # not ishtml or not fn.check(): 
         if not py.path.local(tryfn).check(): # the html could be there 
             py.test.fail("reference error %r in %s:%d" %(
@@ -338,7 +340,7 @@ def localrefcheck(tryfn, path, lineno):
         match2 = ".. _`%s`:" % anchor 
         match3 = ".. _%s:" % anchor 
         candidates = (anchor, match2, match3)
-        print "candidates", repr(candidates)
+        py.builtin.print_("candidates", repr(candidates))
         for line in source.split('\n'): 
             line = line.strip()
             if line in candidates: 

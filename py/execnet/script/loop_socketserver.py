@@ -8,6 +8,7 @@ if __name__ == '__main__':
     while 1:
         cmdlist = ["python", script]
         cmdlist.extend(sys.argv[1:])
-        print "starting subcommand:", " ".join(cmdlist)
+        text = "starting subcommand: " + " ".join(cmdlist)
+        print(text)
         process = subprocess.Popen(cmdlist)
         process.wait()

@@ -13,11 +13,11 @@ def main():
     try:
         mod = __import__(name)
     except ImportError:
-        print >>sys.stderr, "could not import:", name 
+        sys.stderr.write("could not import: " +  name + "\n")
     else:
         try:
             location = mod.__file__ 
         except AttributeError:
-            print >>sys.stderr, "module (has no __file__):", mod
+            sys.stderr.write("module (has no __file__): " + mod)
         else:
-            print location
+            print(location)

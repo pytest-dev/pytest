@@ -3,11 +3,11 @@ import py
 def setglobals(request):
     oldconfig = py.test.config 
     oldcom = py._com.comregistry 
-    print "setting py.test.config to None"
+    print("setting py.test.config to None")
     py.test.config = None
     py._com.comregistry = py._com.Registry()
     def resetglobals():
-        print "setting py.test.config to", oldconfig
+        py.builtin.print_("setting py.test.config to", oldconfig)
         py.test.config = oldconfig
         py._com.comregistry = oldcom
     request.addfinalizer(resetglobals)

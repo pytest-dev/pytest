@@ -66,7 +66,7 @@ class TXNode(object):
             raise 
         except:
             excinfo = py.code.ExceptionInfo()
-            print "!" * 20, excinfo
+            py.builtin.print_("!" * 20, excinfo)
             self.config.pluginmanager.notify_exception(excinfo)
 
     def send(self, item):

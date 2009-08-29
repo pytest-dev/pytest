@@ -169,7 +169,7 @@ class TestPytestPluginInteractions:
         """)
         config = Config() 
         config._conftest.importconftest(p)
-        print config.pluginmanager.getplugins()
+        print(config.pluginmanager.getplugins())
         config.parse([])
         assert not config.option.test123
 

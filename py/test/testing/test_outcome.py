@@ -32,7 +32,7 @@ def test_importorskip():
             py.test.importorskip("hello123", minversion="5.0")
         """)
     except Skipped:
-        print py.code.ExceptionInfo()
+        print(py.code.ExceptionInfo())
         py.test.fail("spurious skip")
 
 def test_pytest_exit():

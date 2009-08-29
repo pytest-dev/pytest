@@ -17,7 +17,7 @@ class TestThreadOut:
         try:
             l = []
             out.setwritefunc(l.append)
-            print 42,13,
+            py.builtin.print_(42,13)
             x = l.pop(0)
             assert x == '42'
             x = l.pop(0)
@@ -34,9 +34,9 @@ class TestThreadOut:
             defaults = []
             def f(l):
                 out.setwritefunc(l.append)
-                print id(l),
+                print(id(l))
                 out.delwritefunc()
-                print 1
+                print(1)
             out.setdefaultwriter(defaults.append)
             pool = WorkerPool()
             listlist = []
@@ -46,7 +46,7 @@ class TestThreadOut:
                 pool.dispatch(f, l)
             pool.shutdown()
             for name, value in out.__dict__.items():
-                print >>sys.stderr, "%s: %s" %(name, value)
+                sys.stderr.write("%s: %s\n" %(name, value))
             pool.join(2.0)
             for i in range(num):
                 item = listlist[i]
