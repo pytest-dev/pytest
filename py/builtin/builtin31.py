@@ -11,9 +11,25 @@ if sys.version_info >= (3, 0):
             obj = obj.encode(encoding)
         return str(obj, encoding)
 
+    def execfile(fn, globs=None, locs=None):
+        if globs is None:
+            back = sys._getframe(1)
+            globs = back.f_globals
+            locs = back.f_locals
+            del back
+        elif locs is None:
+            locs = globs
+        fp = open(fn, "rb")
+        try:
+            source = fp.read()
+        finally:
+            fp.close()
+        exec_(source, globs, locs)
+
 else:
     _totext = unicode 
     _basestring = basestring
+    execfile = execfile
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):

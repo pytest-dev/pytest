@@ -84,6 +84,18 @@ def test_print_simple():
     s = f.getvalue()
     assert s == "xyzabc"
 
+def test_execfile(tmpdir):
+    test_file = tmpdir.join("test.py")
+    test_file.write("x = y")
+    ns = {"y" : 42}
+    py.builtin.execfile(str(test_file), ns)
+    assert ns["x"] == 42
+    class A:
+        y = 3
+        x = 4
+        py.builtin.execfile(str(test_file))
+    assert A.x == 3
+
 def test_totext():
     py.builtin._totext("hello", "UTF-8")
 
