@@ -1,5 +1,5 @@
 import py
-from py.__.code._assertionold import View
+
 def exvalue():
     return py.std.sys.exc_info()[1]
 
@@ -117,10 +117,18 @@ def test_assert_with_brokenrepr_arg():
 
 
 class TestView:
+
+    def setup_class(cls):
+        try:
+            from py.__.code._assertionold import View
+        except ImportError:
+            py.test.skip("requires the compile package")
+        cls.View = View
+
     def test_class_dispatch(self):
         ### Use a custom class hierarchy with existing instances
 
-        class Picklable(View):
+        class Picklable(self.View):
             pass
 
         class Simple(Picklable):
@@ -156,7 +164,7 @@ class TestView:
                     Operation('setattr', 'x', 'y', 3),
                     Operation('-', 12, 1)]
 
-        class PyOp(View):
+        class PyOp(self.View):
             def __viewkey__(self):
                 return self.opname
             def generate(self):
