@@ -1,11 +1,7 @@
-try:
-    import __builtin__ as builtins
-except ImportError:
-    import builtins
 import sys
 import py
 
-BuiltinAssertionError = builtins.AssertionError
+BuiltinAssertionError = py.builtin.builtins.AssertionError
 
 
 def _format_explanation(explanation):
