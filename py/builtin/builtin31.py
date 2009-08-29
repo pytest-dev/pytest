@@ -28,8 +28,13 @@ else:
         if kwargs:
             args = ", ".join([str(x) for x in kwargs])
             raise TypeError("invalid keyword arguments: %s" % args)
-        out = sep.join([str(x) for x in args]) + end
-        file.write(out)
+        at_start = True
+        for x in args:
+            if not at_start:
+                file.write(sep)
+            file.write(str(x))
+            at_start = False
+        file.write(end)
 
     def exec_(obj, globals=None, locals=None):
         """ minimal backport of py3k exec statement. """ 
