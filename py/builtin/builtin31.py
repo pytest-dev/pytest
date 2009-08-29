@@ -10,8 +10,12 @@ else:
     import __builtin__ as builtins
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 
-        sep = 'sep' in kwargs and kwargs.pop('sep') or ' '
-        end = 'end' in kwargs and kwargs.pop('end') or '\n'
+        sep = ' '
+        if 'sep' in kwargs:
+            sep = kwargs.pop('sep')
+        end = '\n'
+        if 'end' in kwargs:
+            end = kwargs.pop('end')
         file = 'file' in kwargs and kwargs.pop('file') or sys.stdout
         if kwargs:
             args = ", ".join([str(x) for x in kwargs])

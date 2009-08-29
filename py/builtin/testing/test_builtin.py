@@ -16,24 +16,20 @@ def test_BaseException():
         pass
     assert not issubclass(MyRandomClass, py.builtin.BaseException)
 
-    assert py.builtin.BaseException.__module__ == 'exceptions'
+    assert py.builtin.BaseException.__module__ in ('exceptions', 'builtins')
     assert Exception.__name__ == 'Exception'
 
 
 def test_GeneratorExit():
-    assert py.builtin.GeneratorExit.__module__ == 'exceptions'
+    assert py.builtin.GeneratorExit.__module__ in ('exceptions', 'builtins')
     assert issubclass(py.builtin.GeneratorExit, py.builtin.BaseException)
 
 def test_reversed():
     reversed = py.builtin.reversed
     r = reversed("hello")
     assert iter(r) is r
-    assert r.next() == "o"
-    assert r.next() == "l"
-    assert r.next() == "l"
-    assert r.next() == "e"
-    assert r.next() == "h"
-    py.test.raises(StopIteration, r.next)
+    s = "".join(list(r))
+    assert s == "olleh"
     assert list(reversed(list(reversed("hello")))) == ['h','e','l','l','o']
     py.test.raises(TypeError, reversed, reversed("hello"))
 
@@ -72,11 +68,21 @@ def test_sorted():
 
 def test_print_simple():
     from py.builtin import print_
+    py.test.raises(TypeError, "print_(hello=3)")
     f = py.io.TextIO()
     print_("hello", "world", file=f)
     s = f.getvalue()
     assert s == "hello world\n"
-    py.test.raises(TypeError, "print_(hello=3)")
+
+    f = py.io.TextIO()
+    print_("hello", end="", file=f)
+    s = f.getvalue()
+    assert s == "hello"
+
+    f = py.io.TextIO()
+    print_("xyz", "abc", sep="", end="", file=f)
+    s = f.getvalue()
+    assert s == "xyzabc"
 
 def test_reraise():
     from py.builtin import _reraise 
