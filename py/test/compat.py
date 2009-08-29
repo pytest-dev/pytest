@@ -2,13 +2,18 @@ import py
 
 from py.test.collect import Function
 
+if py.std.sys.version_info > (3, 0):
+    _self = "__self__"
+else:
+    _self = "im_self"
+
 class TestCaseUnit(Function):
     """ compatibility Unit executor for TestCase methods
         honouring setUp and tearDown semantics.
     """
     def runtest(self, _deprecated=None):
         boundmethod = self.obj 
-        instance = boundmethod.im_self 
+        instance = getattr(boundmethod, _self)
         instance.setUp()
         try:
             boundmethod()
