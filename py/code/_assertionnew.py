@@ -68,6 +68,10 @@ operator_map = {
     ast.LtE : "<=",
     ast.Gt : ">",
     ast.GtE : ">=",
+    ast.Is : "is",
+    ast.IsNot : "is not",
+    ast.In : "in",
+    ast.NotIn : "not in"
 }
 
 unary_map = {
