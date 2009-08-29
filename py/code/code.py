@@ -197,9 +197,9 @@ class TracebackEntry(object):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
         if self.exprinfo is None:
-            from py.__.code import _assertion 
+            from py.__.code import assertion 
             source = str(self.statement).strip()
-            x = _assertion.interpret(source, self.frame, should_fail=True)
+            x = assertion.interpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
                 raise TypeError("interpret returned non-string %r" % (x,))
             self.exprinfo = x 
@@ -739,10 +739,10 @@ oldbuiltins = {}
 def patch_builtins(assertion=True, compile=True):
     """ put compile and AssertionError builtins to Python's builtins. """
     if assertion:
-        from py.__.code import _assertion
+        from py.__.code import assertion
         l = oldbuiltins.setdefault('AssertionError', [])
         l.append(py.builtin.builtins.AssertionError)
-        py.builtin.builtins.AssertionError = _assertion.AssertionError
+        py.builtin.builtins.AssertionError = assertion.AssertionError
     if compile: 
         l = oldbuiltins.setdefault('compile', [])
         l.append(py.builtin.builtins.compile)

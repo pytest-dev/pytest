@@ -7,7 +7,7 @@ import sys
 import ast
 
 import py
-from py.__.code._assertion import _format_explanation, BuiltinAssertionError
+from py.__.code.assertion import _format_explanation, BuiltinAssertionError
 
 
 class Failure(Exception):
@@ -40,6 +40,8 @@ def getfailure(failure):
     value = failure.cause[1]
     if str(value):
         lines = explanation.splitlines()
+        if not lines:
+            lines.append("")
         lines[0] += " << {0}".format(value)
         explanation = "\n".join(lines)
     text = "{0}: {1}".format(failure.cause[0].__name__, explanation)
@@ -97,7 +99,7 @@ class DebugInterpreter(ast.NodeVisitor):
             mod = ast.Module([node])
             co = self._compile(mod, "exec")
             try:
-                frame.exec_(co)
+                self.frame.exec_(co)
             except Exception:
                 raise Failure()
             return None, None
@@ -106,6 +108,9 @@ class DebugInterpreter(ast.NodeVisitor):
 
     def _compile(self, source, mode="eval"):
         return compile(source, "<assertion interpretation>", mode)
+
+    def visit_Expr(self, expr):
+        return self.visit(expr.value)
 
     def visit_Module(self, mod):
         for stmt in mod.body:
@@ -175,8 +180,8 @@ class DebugInterpreter(ast.NodeVisitor):
         left_explanation, left_result = self.visit(binop.left)
         right_explanation, right_result = self.visit(binop.right)
         symbol = operator_map[binop.op.__class__]
-        explanation = "{0} {1} {2}".format(left_explanation, symbol,
-                                           right_explanation)
+        explanation = "({0} {1} {2})".format(left_explanation, symbol,
+                                             right_explanation)
         source = "__exprinfo_left {0} __exprinfo_right".format(symbol)
         co = self._compile(source)
         try:

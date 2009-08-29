@@ -1,5 +1,5 @@
 import py
-from py.__.code._assertion import View
+from py.__.code._assertionold import View
 def exvalue():
     return py.std.sys.exc_info()[1]
 
