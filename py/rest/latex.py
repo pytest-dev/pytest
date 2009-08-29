@@ -81,7 +81,7 @@ def process_configfile(configfile, debug=False):
     path = configfile.dirpath()
     configfile_dic = {}
     py.std.sys.path.insert(0, str(path))
-    execfile(str(configfile), configfile_dic)
+    py.builtin.execfile(str(configfile), configfile_dic)
     pagebreak = configfile_dic.get("pagebreak", False)
     rest_sources = [py.path.local(p)
                     for p in configfile_dic['rest_sources']]

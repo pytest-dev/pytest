@@ -535,7 +535,7 @@ class LocalPath(FSBase):
                 mod.__file__ = str(self)
                 sys.modules[modname] = mod
                 try:
-                    execfile(str(self), mod.__dict__)
+                    py.builtin.execfile(str(self), mod.__dict__)
                 except:
                     del sys.modules[modname]
                     raise
