@@ -25,11 +25,11 @@ if 'ThreadOut' not in globals():
     ThreadOut = py._thread.ThreadOut 
 
 if sys.version_info > (3, 0):
-    exec """def do_exec(co, loc):
-    exec(co, loc)"""
+    exec("""def do_exec(co, loc):
+    exec(co, loc)""")
 else:
-    exec """def do_exec(co, loc):
-    exec co in loc"""
+    exec("""def do_exec(co, loc):
+    exec co in loc""")
 
 import os
 debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
