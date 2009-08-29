@@ -17,8 +17,9 @@ class TestCollector:
         assert isinstance(fn2, py.test.collect.Function)
 
         assert fn1 == fn2
-        assert fn1 != modcol 
-        assert cmp(fn1, fn2) == 0
+        assert fn1 != modcol
+        if py.std.sys.version_info < (3, 0):
+            assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2) 
 
         fn3 = modcol.collect_by_name("test_fail")
