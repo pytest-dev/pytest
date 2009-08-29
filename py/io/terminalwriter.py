@@ -139,16 +139,18 @@ class TerminalWriter(object):
                      Black=40, Red=41, Green=42, Yellow=43, 
                      Blue=44, Purple=45, Cyan=46, White=47,
                      bold=1, light=2, blink=5, invert=7)
-    _encoding = "utf-8"
 
-    def __init__(self, file=None, stringio=False):
+    # XXX deprecate stringio argument
+    def __init__(self, file=None, stringio=False, encoding=None):
+        self.encoding = encoding 
+
         if file is None:
             if stringio:
                 self.stringio = file = py.io.TextIO()
             else:
                 file = py.std.sys.stdout 
         elif hasattr(file, '__call__'):
-            file = WriteFile(file)
+            file = WriteFile(file, encoding=encoding)
         self._file = file
         self.fullwidth = get_terminal_width()
         self.hasmarkup = should_do_markup(file)
@@ -202,11 +204,12 @@ class TerminalWriter(object):
             self._file.flush()
 
     def _getbytestring(self, s):
-            if sys.version_info < (3,0) and isinstance(s, unicode):
-                return s.encode(self._encoding)
-            elif not isinstance(s, str):
-                return str(s)
-            return s
+        # XXX review this and the whole logic
+        if self.encoding and sys.version_info < (3,0) and isinstance(s, unicode):
+            return s.encode(self.encoding)
+        elif not isinstance(s, str):
+            return str(s)
+        return s
 
     def line(self, s='', **kw):
         self.write(s, **kw)
@@ -246,8 +249,15 @@ if sys.platform == 'win32':
     TerminalWriter = Win32ConsoleWriter
 
 class WriteFile(object): 
-    def __init__(self, writemethod): 
-        self.write = writemethod 
+    def __init__(self, writemethod, encoding=None): 
+        self.encoding = encoding 
+        self._writemethod = writemethod 
+
+    def write(self, data):
+        if self.encoding:
+            data = data.encode(self.encoding)
+        self._writemethod(data)
+
     def flush(self): 
         return 
 

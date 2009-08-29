@@ -8,12 +8,14 @@ try:
 except ImportError: 
     from StringIO import StringIO
 
-class TextIO(StringIO):
-    if sys.version_info < (3,0):
+if sys.version_info < (3,0):
+    class TextIO(StringIO):
         def write(self, data):
             if not isinstance(data, unicode):
                 data = unicode(data, getattr(self, '_encoding', 'UTF-8'))
             StringIO.write(self, data)
+else:
+    TextIO = StringIO
 
 try:
     from io import BytesIO
@@ -28,9 +30,16 @@ class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
     
     def __init__(self, targetfd, tmpfile=None): 
+        """ save targetfd descriptor, and open a new 
+            temporary file there.  If no tmpfile is 
+            specified a tempfile.Tempfile() will be opened
+            in text mode. 
+        """
         self.targetfd = targetfd
         if tmpfile is None: 
-            tmpfile = self.maketmpfile()
+            f = tempfile.TemporaryFile('wb+')
+            tmpfile = dupfile(f, encoding="UTF-8") 
+            f.close()
         self.tmpfile = tmpfile 
         self._savefd = os.dup(targetfd)
         os.dup2(self.tmpfile.fileno(), targetfd) 
@@ -59,26 +68,18 @@ class FDCapture:
         self.tmpfile.seek(0)
         return self.tmpfile 
 
-    def maketmpfile(self): 
-        """ create a temporary file
-        """
-        f = tempfile.TemporaryFile()
-        newf = dupfile(f) 
-        f.close()
-        return newf 
-
-    def writeorg(self, str):
+    def writeorg(self, data):
         """ write a string to the original file descriptor
         """
         tempfp = tempfile.TemporaryFile()
         try:
             os.dup2(self._savefd, tempfp.fileno())
-            tempfp.write(str)
+            tempfp.write(data)
         finally:
             tempfp.close()
 
 
-def dupfile(f, mode=None, buffering=0, raising=False): 
+def dupfile(f, mode=None, buffering=0, raising=False, encoding=None): 
     """ return a new open file object that's a duplicate of f
 
         mode is duplicated if not given, 'buffering' controls 
@@ -95,7 +96,12 @@ def dupfile(f, mode=None, buffering=0, raising=False):
         return f
     newfd = os.dup(fd) 
     mode = mode and mode or f.mode
-    return os.fdopen(newfd, mode, buffering) 
+    if encoding is not None and sys.version_info >= (3,0):
+        mode = mode.replace("b", "")
+        buffering = True
+        return os.fdopen(newfd, mode, buffering, encoding, closefd=False)
+    else:
+        return os.fdopen(newfd, mode, buffering) 
 
 
 class Capture(object):

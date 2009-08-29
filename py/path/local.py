@@ -372,6 +372,11 @@ class LocalPath(FSBase):
         """ write string content into path. """
         s = str(content)
         f = self.open(mode)
+        if not hasattr(s, 'decode'): # byte string 
+            encoding = getattr(f, 'encoding', None)
+            if not encoding:
+                encoding = sys.getdefaultencoding()
+            s = s.encode(encoding)
         try:
             f.write(s)
         finally:

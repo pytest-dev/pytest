@@ -84,6 +84,9 @@ def test_print_simple():
     s = f.getvalue()
     assert s == "xyzabc"
 
+def test_totext():
+    py.builtin._totext("hello", "UTF-8")
+
 def test_reraise():
     from py.builtin import _reraise 
     try:

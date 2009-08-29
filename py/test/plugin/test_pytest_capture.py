@@ -1,5 +1,5 @@
 import py, os, sys
-from py.__.test.plugin.pytest_capture import CaptureManager, EncodedFile
+from py.__.test.plugin.pytest_capture import CaptureManager
 
 class TestCaptureManager:
     def test_configure_per_fspath(self, testdir):
@@ -21,7 +21,7 @@ class TestCaptureManager:
         try:
             capman = CaptureManager()
             capman.resumecapture(method)
-            print "hello"
+            print ("hello")
             out, err = capman.suspendcapture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
@@ -41,12 +41,12 @@ class TestCaptureManager:
             capman.resumecapture("fd")
             py.test.raises(ValueError, 'capman.resumecapture("fd")')
             py.test.raises(ValueError, 'capman.resumecapture("sys")')
-            os.write(1, "hello\n")
+            os.write(1, "hello\n".encode('ascii'))
             out, err = capman.suspendcapture()
             assert out == "hello\n"
             capman.resumecapture("sys")
-            os.write(1, "hello\n")
-            print >>sys.stderr, "world"
+            os.write(1, "hello\n".encode('ascii'))
+            py.builtin.print_("world", file=sys.stderr)
             out, err = capman.suspendcapture()
             assert not out
             assert err == "world\n"
@@ -55,11 +55,13 @@ class TestCaptureManager:
 
 @py.test.mark.multi(method=['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
+    if sys.version_info >= (3,0):
+        py.test.skip("test not applicable on 3k") 
     testdir.makepyfile("""
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
-            print sys.stdout
+            print (sys.stdout)
             print u'b\\u00f6y'
     """)
     result = testdir.runpytest("--capture=%s" % method)
@@ -71,27 +73,16 @@ def test_capturing_unicode(testdir, method):
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile("""
         def test_unicode():
-            print 'b\\u00f6y'
+            print ('b\\u00f6y')
     """)
     result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
 
-def test_UnicodeFile(testdir):
-    p = testdir.makepyfile("hello")
-    f = p.open('w')
-    pf = EncodedFile(f, "UTF-8")
-    pf.write(u'b\\00f6y\n')
-    pf.write('b\\00f6y\n')
-    pf.close()
-    assert f.closed
-    lines = p.readlines()
-    assert lines[0] == lines[1]
-
 def test_collect_capturing(testdir):
     p = testdir.makepyfile("""
-        print "collect %s failure" % 13
+        print ("collect %s failure" % 13)
         import xyz42123
     """)
     result = testdir.runpytest(p)
@@ -104,14 +95,14 @@ class TestPerTestCapturing:
     def test_capture_and_fixtures(self, testdir):
         p = testdir.makepyfile("""
             def setup_module(mod):
-                print "setup module"
+                print ("setup module")
             def setup_function(function):
-                print "setup", function.__name__
+                print ("setup " + function.__name__)
             def test_func1():
-                print "in func1"
+                print ("in func1")
                 assert 0
             def test_func2():
-                print "in func2"
+                print ("in func2")
                 assert 0
         """)
         result = testdir.runpytest(p)
@@ -128,14 +119,14 @@ class TestPerTestCapturing:
         p = testdir.makepyfile("""
             import sys
             def setup_module(func):
-                print "module-setup"
+                print ("module-setup")
             def setup_function(func):
-                print "function-setup"
+                print ("function-setup")
             def test_func():
-                print "in function"
+                print ("in function")
                 assert 0
             def teardown_function(func):
-                print "in teardown"
+                print ("in teardown")
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
@@ -151,9 +142,9 @@ class TestPerTestCapturing:
     def test_no_carry_over(self, testdir):
         p = testdir.makepyfile("""
             def test_func1():
-                print "in func1"
+                print ("in func1")
             def test_func2():
-                print "in func2"
+                print ("in func2")
                 assert 0
         """)
         result = testdir.runpytest(p)
@@ -165,12 +156,12 @@ class TestPerTestCapturing:
     def test_teardown_capturing(self, testdir):
         p = testdir.makepyfile("""
             def setup_function(function):
-                print "setup func1"
+                print ("setup func1")
             def teardown_function(function):
-                print "teardown func1"
+                print ("teardown func1")
                 assert 0
             def test_func1(): 
-                print "in func1"
+                print ("in func1")
                 pass
         """)
         result = testdir.runpytest(p)
@@ -186,7 +177,7 @@ class TestPerTestCapturing:
     def test_teardown_final_capturing(self, testdir):
         p = testdir.makepyfile("""
             def teardown_module(mod):
-                print "teardown module"
+                print ("teardown module")
                 assert 0
             def test_func():
                 pass
@@ -203,11 +194,11 @@ class TestPerTestCapturing:
         p1 = testdir.makepyfile("""
             import sys 
             def test_capturing():
-                print 42
-                print >>sys.stderr, 23 
+                print (42)
+                sys.stderr.write(str(23))
             def test_capturing_error():
-                print 1
-                print >>sys.stderr, 2
+                print (1)
+                sys.stderr.write(str(2))
                 raise ValueError
         """)
         result = testdir.runpytest(p1)
@@ -246,7 +237,7 @@ class TestLoggingInteraction:
             logging.warn("hello1")
             outerr = cap.suspend()
 
-            print "suspeneded and captured", outerr
+            print ("suspeneded and captured %%s" %% (outerr,))
 
             logging.warn("hello2")
 
@@ -254,7 +245,7 @@ class TestLoggingInteraction:
             logging.warn("hello3")
 
             outerr = cap.suspend()
-            print "suspend2 and captured", outerr
+            print ("suspend2 and captured %%s" %% (outerr,))
         """ % rootdir)
         result = testdir.runpython(p)
         assert result.stdout.fnmatch_lines([
@@ -279,7 +270,7 @@ class TestLoggingInteraction:
                 assert 0
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
-            print optargs
+            print (optargs)
             result = testdir.runpytest(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
@@ -305,7 +296,7 @@ class TestLoggingInteraction:
                 assert 0
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
-            print optargs
+            print (optargs)
             result = testdir.runpytest(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
@@ -320,7 +311,7 @@ class TestCaptureFuncarg:
     def test_std_functional(self, testdir):        
         reprec = testdir.inline_runsource("""
             def test_hello(capsys):
-                print 42
+                print (42)
                 out, err = capsys.readouterr()
                 assert out.startswith("42")
         """)
@@ -330,7 +321,7 @@ class TestCaptureFuncarg:
         reprec = testdir.inline_runsource("""
             def test_hello(capfd):
                 import os
-                os.write(1, "42")
+                os.write(1, "42".encode('ascii'))
                 out, err = capfd.readouterr()
                 assert out.startswith("42")
                 capfd.close()
@@ -352,7 +343,7 @@ class TestCaptureFuncarg:
         p = testdir.makepyfile("""
             def test_hello(capfd):
                 import os
-                os.write(1, "42")
+                os.write(1, str(42).encode('ascii'))
                 raise KeyboardInterrupt()
         """)
         result = testdir.runpytest(p)

@@ -44,11 +44,10 @@ def test_terminalwriter_dumb_term_no_markup(monkeypatch):
     assert not tw.hasmarkup
 
 def test_unicode_encoding():
-    l = []
-    msg = unicode('b\u00f6y', 'utf8')
+    msg = py.builtin._totext('b\u00f6y', 'utf8')
     for encoding in 'utf8', 'latin1':
-        tw = py.io.TerminalWriter(l.append)
-        tw._encoding = encoding
+        l = []
+        tw = py.io.TerminalWriter(l.append, encoding=encoding)
         tw.line(msg)
         assert l[0] == msg.encode(encoding)
 
@@ -64,7 +63,7 @@ class BaseTests:
         tw = self.getwriter()
         for encoding in 'utf8', 'latin1':
             tw._encoding = encoding 
-            msg = unicode('b\u00f6y', 'utf8')
+            msg = py.builtin._totext('b\u00f6y', 'utf8')
             tw.line(msg)
             l = self.getlines()
             assert l[0] == msg + "\n"

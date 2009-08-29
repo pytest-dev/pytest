@@ -4,8 +4,13 @@ if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins
     basestring = str 
+    def _totext(obj, encoding):
+        if isinstance(obj, str):
+            obj = obj.encode(encoding)
+        return str(obj, encoding)
 
 else:
+    _totext = unicode 
     basestring = basestring
     import __builtin__ as builtins
     def print_(*args, **kwargs):

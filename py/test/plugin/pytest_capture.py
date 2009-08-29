@@ -111,12 +111,11 @@ class CaptureManager:
 
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
-        newf = py.io.dupfile(f) 
-        encoding = getattr(newf, 'encoding', None) or "UTF-8"
-        return EncodedFile(newf, encoding)
+        newf = py.io.dupfile(f, encoding="UTF-8") 
+        return newf
 
     def _makestringio(self):
-        return EncodedFile(py.io.TextIO(), 'UTF-8')
+        return py.io.TextIO() 
 
     def _startcapture(self, method):
         if method == "fd": 
@@ -270,26 +269,4 @@ class CaptureFuncarg:
     def close(self):
         self.capture.reset()
         del self.capture
-
-class EncodedFile(object):
-    def __init__(self, _stream, encoding):
-        self._stream = _stream 
-        self.encoding = encoding 
-      
-    if py.std.sys.version_info < (3,0):
-        def write(self, obj):
-            if isinstance(obj, unicode):
-                self._stream.write(obj.encode(self.encoding))
-            else:
-                self._stream.write(obj)
-    else:
-        def write(self, obj):
-            self._stream.write(obj.encode(self.encoding))
-
-    def writelines(self, linelist):
-        data = ''.join(linelist)
-        self.write(data)
-
-    def __getattr__(self, name):
-        return getattr(self._stream, name)
 

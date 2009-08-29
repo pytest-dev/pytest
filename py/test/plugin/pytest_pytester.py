@@ -271,7 +271,7 @@ class TmpTestdir:
             old.chdir()
 
     def _run(self, *cmdargs):
-        cmdargs = map(str, cmdargs)
+        cmdargs = [str(x) for x in cmdargs]
         p1 = py.path.local("stdout")
         p2 = py.path.local("stderr")
         print_("running", cmdargs, "curdir=", py.path.local())
@@ -285,10 +285,10 @@ class TmpTestdir:
         out, err = p1.readlines(cr=0), p2.readlines(cr=0)
         if err:
             for line in err: 
-                print >>py.std.sys.stderr, line
+                py.builtin.print_(line, file=sys.stderr)
         if out:
             for line in out: 
-                print >>py.std.sys.stdout, line
+                py.builtin.print_(line, file=sys.stdout)
         return RunResult(ret, out, err)
 
     def runpybin(self, scriptname, *args):
