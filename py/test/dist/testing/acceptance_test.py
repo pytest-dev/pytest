@@ -5,23 +5,23 @@ class TestDistribution:
         p1 = testdir.tmpdir.ensure("dir", 'p1.py')
         p1.dirpath("__init__.py").write("")
         p1.dirpath("conftest.py").write(py.code.Source("""
-            print "importing conftest", __file__
             import py
+            py.builtin.print_("importing conftest", __file__)
             Option = py.test.config.Option 
             option = py.test.config.addoptions("someopt", 
                 Option('--someopt', action="store_true", dest="someopt", default=False))
             dist_rsync_roots = ['../dir']
-            print "added options", option
-            print "config file seen from conftest", py.test.config
+            py.builtin.print_("added options", option)
+            py.builtin.print_("config file seen from conftest", py.test.config)
         """))
         p1.write(py.code.Source("""
             import py, conftest
             def test_1(): 
-                print "config from test_1", py.test.config
-                print "conftest from test_1", conftest.__file__
-                print "test_1: py.test.config.option.someopt", py.test.config.option.someopt
-                print "test_1: conftest", conftest
-                print "test_1: conftest.option.someopt", conftest.option.someopt
+                py.builtin.print_("config from test_1", py.test.config)
+                py.builtin.print_("conftest from test_1", conftest.__file__)
+                py.builtin.print_("test_1: py.test.config.option.someopt", py.test.config.option.someopt)
+                py.builtin.print_("test_1: conftest", conftest)
+                py.builtin.print_("test_1: conftest.option.someopt", conftest.option.someopt)
                 assert conftest.option.someopt 
         """))
         result = testdir.runpytest('-d', '--tx=popen', p1, '--someopt')
@@ -136,7 +136,7 @@ class TestDistribution:
         testdir.makepyfile(__init__="", test_one="""
             import sys
             def test_hello():
-                print "%s...%s" % sys.version_info[:2]
+                print("%s...%s" % sys.version_info[:2])
                 assert 0
         """)
         args = ["--dist=each"]
