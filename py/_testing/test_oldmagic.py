@@ -100,12 +100,12 @@ class Testautopath:
         d = {'__file__' : str(testpath)}
         oldsyspath = sys.path[:]
         try:
-            py.test.exec_(self.getauto, d)
+            py.builtin.exec_(self.getauto, d)
             conf = d['autopath']
             assert conf.dirpath() == self.initdir2
             assert conf.pkgdir == self.initdir
             assert str(self.root) in sys.path
-            py.test.exec_(self.getauto in d)
+            py.builtin.exec_(self.getauto, d)
             assert conf is not d['autopath']
         finally:
             sys.path[:] = oldsyspath
@@ -116,12 +116,12 @@ class Testautopath:
             d = {'__file__' : str(testpath)}
             oldsyspath = sys.path[:]
             try:
-                py.test.exec_(self.getauto, d)
+                py.builtin.exec_(self.getauto, d)
                 conf = d['autopath']
                 assert conf == self.initdir2.join('autoconfiguretest.py')
                 assert conf.pkgdir == self.initdir
                 assert str(self.root) in sys.path
-                py.test.exec_(self.getauto, d)
+                py.builtin.exec_(self.getauto, d)
                 assert conf is not d['autopath']
             finally:
                 sys.path[:] = oldsyspath
@@ -131,13 +131,13 @@ class Testautopath:
         d = {'__file__' : str(testpath)}
         oldsyspath = sys.path[:]
         try:
-            py.test.exec_(self.getauto, d)
+            py.builtin.exec_(self.getauto, d)
             conf = d['autopath']
             assert conf.dirpath() == self.root
             assert conf.pkgdir == self.root
             syspath = sys.path[:]
             assert str(self.root) in syspath
-            py.test.exec_(self.getauto, d)
+            py.builtin.exec_(self.getauto, d)
             assert conf is not d['autopath']
         finally:
             sys.path[:] = oldsyspath
@@ -149,7 +149,7 @@ class Testautopath:
         oldsyspath = sys.path[:]
         try:
             d = {}
-            py.test.exec_(self.getauto, d)
+            py.builtin.exec_(self.getauto, d)
             conf = d['autopath']
             assert conf.dirpath() == self.initdir2
             assert conf.pkgdir == self.initdir
@@ -167,7 +167,7 @@ class Testautopath:
         try:
             py.test.raises(ValueError,'''
                 d = {}
-                py.test.exec_(self.getauto, d)
+                py.builtin.exec_(self.getauto, d)
             ''')
         finally:
             sys.path[:] = oldsyspath
