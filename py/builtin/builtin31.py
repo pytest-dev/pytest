@@ -26,10 +26,14 @@ if sys.version_info >= (3, 0):
             fp.close()
         exec_(source, globs, locs)
 
+    def callable(obj):
+        return hasattr(obj, "__call__")
+
 else:
     _totext = unicode 
     _basestring = basestring
     execfile = execfile
+    callable = callable
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):

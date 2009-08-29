@@ -151,6 +151,7 @@ initpkg(__name__,
     'builtin._totext'        : ('./builtin/builtin31.py', '_totext'),
     'builtin.builtins'       : ('./builtin/builtin31.py', 'builtins'),
     'builtin.execfile'       : ('./builtin/builtin31.py', 'execfile'),
+    'builtin.callable'       : ('./builtin/builtin31.py', 'callable'),
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),

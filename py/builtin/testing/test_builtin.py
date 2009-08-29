@@ -96,6 +96,15 @@ def test_execfile(tmpdir):
         py.builtin.execfile(str(test_file))
     assert A.x == 3
 
+def test_callable():
+    class A: pass
+    assert py.builtin.callable(test_callable)
+    assert py.builtin.callable(A)
+    assert py.builtin.callable(list)
+    assert py.builtin.callable(id)
+    assert not py.builtin.callable(4)
+    assert not py.builtin.callable("hi")
+
 def test_totext():
     py.builtin._totext("hello", "UTF-8")
 
