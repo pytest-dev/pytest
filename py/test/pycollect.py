@@ -163,9 +163,14 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         return funcargs.FunctionCollector(name=name, 
             parent=self, calls=metafunc._calls)
 
+if py.std.sys.version_info > (3, 0):
+    _code_attr = "__code__"
+else:
+    _code_attr = "func_code"
+
 def is_generator(func):
     try:
-        return (func.func_code.co_flags & 32) # generator function 
+        return (getattr(func, _code_attr).co_flags & 32) # generator function 
     except AttributeError: # c / builtin functions have no func_code
         return False 
         
@@ -289,7 +294,7 @@ class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector):
         seen = {}
         for i, x in enumerate(self.obj()): 
             name, call, args = self.getcallargs(x)
-            if not callable(call): 
+            if not py.builtin.callable(call): 
                 raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
             if name is None:
                 name = "[%d]" % i

@@ -76,6 +76,11 @@ class TestDisabled:
         """)
         reprec.assertoutcome(skipped=2)
 
+if py.std.sys.version_info > (3, 0):
+    _func_name_attr = "__name__"
+else:
+    _func_name_attr = "func_name"
+
 class TestGenerator:
     def test_generative_functions(self, testdir): 
         modcol = testdir.getmodulecol("""
@@ -95,7 +100,7 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == '[0]'
-        assert gencolitems[0].obj.func_name == 'func1'
+        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
 
     def test_generative_methods(self, testdir): 
         modcol = testdir.getmodulecol("""
@@ -113,7 +118,7 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == '[0]'
-        assert gencolitems[0].obj.func_name == 'func1'
+        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
 
     def test_generative_functions_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -133,9 +138,9 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == "['seventeen']"
-        assert gencolitems[0].obj.func_name == 'func1'
+        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
         assert gencolitems[1].name == "['fortytwo']"
-        assert gencolitems[1].obj.func_name == 'func1'        
+        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'        
 
     def test_generative_functions_unique_explicit_names(self, testdir):
         # generative 
@@ -167,22 +172,23 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == "['m1']"
-        assert gencolitems[0].obj.func_name == 'func1'
+        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
         assert gencolitems[1].name == "['m2']"
-        assert gencolitems[1].obj.func_name == 'func1'        
+        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'        
 
     def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
         o = testdir.makepyfile("""
             def test_generative_order_of_execution():
+                import py
                 test_list = []
-                expected_list = range(6)
+                expected_list = list(range(6))
 
                 def list_append(item):
                     test_list.append(item)
                     
                 def assert_order_of_execution():
-                    print 'expected order', expected_list
-                    print 'but got       ', test_list
+                    py.builtin.print_('expected order', expected_list)
+                    py.builtin.print_('but got       ', test_list)
                     assert test_list == expected_list
                 
                 for i in expected_list:
@@ -197,8 +203,9 @@ class TestGenerator:
     def test_order_of_execution_generator_different_codeline(self, testdir):
         o = testdir.makepyfile("""
             def test_generative_tests_different_codeline():
+                import py
                 test_list = []
-                expected_list = range(3)
+                expected_list = list(range(3))
 
                 def list_append_2():
                     test_list.append(2)
@@ -210,8 +217,8 @@ class TestGenerator:
                     test_list.append(0)
 
                 def assert_order_of_execution():
-                    print 'expected order', expected_list
-                    print 'but got       ', test_list
+                    py.builtin.print_('expected order', expected_list)
+                    py.builtin.print_('but got       ', test_list)
                     assert test_list == expected_list
                     
                 yield list_append_0
@@ -236,11 +243,11 @@ class TestFunction:
         f1 = py.test.collect.Function(name="name", 
                                       args=(1,), callobj=isinstance)
         f2 = py.test.collect.Function(name="name",
-                                      args=(1,), callobj=callable)
+                                      args=(1,), callobj=py.builtin.callable)
         assert not f1 == f2
         assert f1 != f2
         f3 = py.test.collect.Function(name="name", 
-                                      args=(1,2), callobj=callable)
+                                      args=(1,2), callobj=py.builtin.callable)
         assert not f3 == f2
         assert f3 != f2
 
@@ -294,8 +301,9 @@ class TestSorting:
         assert isinstance(fn2, py.test.collect.Function)
 
         assert fn1 == fn2
-        assert fn1 != modcol 
-        assert cmp(fn1, fn2) == 0
+        assert fn1 != modcol
+        if py.std.sys.version_info < (3, 0):
+            assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2) 
 
         fn3 = modcol.collect_by_name("test_fail")
