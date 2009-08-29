@@ -78,14 +78,14 @@ class TestBootstrapping:
         testdir.syspathinsert()
         testdir.makepyfile(pytest_plug1="#")
         testdir.makepyfile(pytest_plug2="#")
-        mod = py.std.new.module("temp")
+        mod = py.std.types.ModuleType("temp")
         mod.pytest_plugins = ["pytest_plug1", "pytest_plug2"]
         pluginmanager.consider_module(mod)
         assert pluginmanager.getplugin("plug1").__name__ == "pytest_plug1"
         assert pluginmanager.getplugin("plug2").__name__ == "pytest_plug2"
 
     def test_consider_module_import_module(self, testdir):
-        mod = py.std.new.module("x")
+        mod = py.std.types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = PluginManager() 
@@ -131,12 +131,12 @@ class TestBootstrapping:
 
     def test_register_imported_modules(self):
         pp = PluginManager()
-        mod = py.std.new.module("x.y.pytest_hello")
+        mod = py.std.types.ModuleType("x.y.pytest_hello")
         pp.register(mod)
         assert pp.isregistered(mod)
         assert pp.getplugins() == [mod]
         py.test.raises(AssertionError, "pp.register(mod)")
-        mod2 = py.std.new.module("pytest_hello")
+        mod2 = py.std.types.ModuleType("pytest_hello")
         #pp.register(mod2) # double registry 
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)

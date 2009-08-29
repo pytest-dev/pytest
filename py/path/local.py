@@ -531,7 +531,7 @@ class LocalPath(FSBase):
                 return sys.modules[modname]
             except KeyError:
                 # we have a custom modname, do a pseudo-import
-                mod = py.std.new.module(modname)
+                mod = py.std.types.ModuleType(modname)
                 mod.__file__ = str(self)
                 sys.modules[modname] = mod
                 try:
