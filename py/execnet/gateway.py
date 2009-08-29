@@ -5,6 +5,7 @@ import traceback
 import atexit
 import weakref
 import __future__
+import sys
 
 # note that the whole code of this module (as well as some
 # other modules) execute not only on the local side but 
@@ -22,6 +23,13 @@ if 'ThreadOut' not in globals():
     from py.__.execnet.channel import ChannelFactory, Channel
     from py.__.execnet.message import Message
     ThreadOut = py._thread.ThreadOut 
+
+if sys.version_info > (3, 0):
+    exec """def do_exec(co, loc):
+    exec(co, loc)"""
+else:
+    exec """def do_exec(co, loc):
+    exec co in loc"""
 
 import os
 debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'wa')
@@ -237,7 +245,7 @@ class Gateway(object):
             try:
                 co = compile(source+'\n', '', 'exec',
                              __future__.CO_GENERATOR_ALLOWED)
-                py.test.exec_(co, loc)
+                do_exec(co, loc)
             finally:
                 close() 
                 self._trace("execution finished:", repr(source)[:50])

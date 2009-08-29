@@ -30,7 +30,7 @@ if sys.version_info > (3, 0):
     exec(source, locs)""")
 else:
     exec("""def exec_(source, locs):
-    exec source, locs""")
+    exec source in locs""")
 
 def exec_from_one_connection(serversock):
     print_(progname, 'Entering Accept loop', serversock.getsockname())
