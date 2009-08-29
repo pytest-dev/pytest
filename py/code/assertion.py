@@ -74,3 +74,6 @@ class AssertionError(BuiltinAssertionError):
                     self.args = (self.msg,)
             else:
                 self.msg = None
+
+if sys.version_info > (3, 0):
+    AssertionError.__module__ = "builtins"
