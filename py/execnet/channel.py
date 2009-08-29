@@ -1,5 +1,8 @@
 import threading, weakref, sys
-import Queue
+try:
+    import Queue as queue
+except ImportError:
+    import queue
 if 'Message' not in globals():
     from py.__.execnet.message import Message
 
@@ -30,7 +33,7 @@ class Channel(object):
         assert isinstance(id, int)
         self.gateway = gateway
         self.id = id
-        self._items = Queue.Queue()
+        self._items = queue.Queue()
         self._closed = False
         self._receiveclosed = threading.Event()
         self._remoteerrors = []
@@ -48,7 +51,7 @@ class Channel(object):
             while 1:
                 try:
                     olditem = queue.get(block=False)
-                except Queue.Empty:
+                except queue.Empty:
                     break
                 else:
                     if olditem is ENDMARKER:
