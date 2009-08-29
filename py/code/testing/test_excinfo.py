@@ -1,3 +1,8 @@
+try:
+    import Queue as queue
+except ImportError:
+    import queue
+
 import py
 from py.__.code.code import FormattedExcinfo, ReprExceptionInfo
 
@@ -232,10 +237,9 @@ def test_excinfo_no_sourcecode():
         assert s == "  File '<string>':1 in <module>\n  ???\n"
     
 def test_entrysource_Queue_example():
-    import Queue
     try:
-        Queue.Queue().get(timeout=0.001)
-    except Queue.Empty:
+        queue.Queue().get(timeout=0.001)
+    except queue.Empty:
         excinfo = py.code.ExceptionInfo()
     entry = excinfo.traceback[-1]
     source = entry.getsource()
@@ -244,15 +248,14 @@ def test_entrysource_Queue_example():
     assert s.startswith("def get")
 
 def test_codepath_Queue_example():
-    import Queue
     try:
-        Queue.Queue().get(timeout=0.001)
-    except Queue.Empty:
+        queue.Queue().get(timeout=0.001)
+    except queue.Empty:
         excinfo = py.code.ExceptionInfo()
     entry = excinfo.traceback[-1]
     path = entry.path
     assert isinstance(path, py.path.local)
-    assert path.basename == "Queue.py"
+    assert path.basename.lower() == "queue.py"
     assert path.check()
 
 class TestFormattedExcinfo: 
