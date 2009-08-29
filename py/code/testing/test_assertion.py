@@ -65,6 +65,22 @@ def test_assert_multiline_2():
         s = str(e)
         assert s.startswith('assert 2 ==')
 
+def test_in():
+    try:
+        assert "hi" in [1, 2]
+    except AssertionError:
+        e = exvalue()
+        s = str(e)
+        assert s.startswith("assert 'hi' in")
+
+def test_is():
+    try:
+        assert 1 is 2
+    except AssertionError:
+        e = exvalue()
+        s = str(e)
+        assert s.startswith("assert 1 is 2")
+
 def test_assert_non_string_message(): 
     class A: 
         def __str__(self): 

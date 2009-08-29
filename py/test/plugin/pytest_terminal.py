@@ -441,7 +441,7 @@ def folded_skips(skipped):
         key = entry.path, entry.lineno, entry.message
         d.setdefault(key, []).append(event)
     l = []
-    for key, events in d.iteritems(): 
+    for key, events in d.items(): 
         l.append((len(events),) + key)
     return l 
 

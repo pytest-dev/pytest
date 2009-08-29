@@ -120,7 +120,7 @@ class Rest(AbstractNode):
             return ""
         link_texts = []
         # XXX this could check for duplicates and remove them...
-        for link, target in self.links.iteritems():
+        for link, target in self.links.items():
             link_texts.append(".. _`%s`: %s" % (escape(link), target))
         return "\n" + "\n".join(link_texts) + "\n\n"
 
@@ -401,7 +401,7 @@ class Directive(Paragraph):
         txt = super(Directive, self).text()
         txt = '.. %s::%s' % (self.name, txt[namechunksize + 3:],)
         options = '\n'.join(['   :%s: %s' % (k, v) for (k, v) in
-                             self.options.iteritems()])
+                             self.options.items()])
         if options:
             txt += '\n%s' % (options,)
 
