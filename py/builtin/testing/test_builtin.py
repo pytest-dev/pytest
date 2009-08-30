@@ -84,6 +84,12 @@ def test_print_simple():
     s = f.getvalue()
     assert s == "xyzabc"
 
+    class X:
+        def __repr__(self): return "rep"
+    f = py.io.TextIO()
+    print_(X(), file=f)
+    assert f.getvalue() == "rep\n"
+
 def test_execfile(tmpdir):
     test_file = tmpdir.join("test.py")
     test_file.write("x = y")
