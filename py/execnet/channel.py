@@ -39,7 +39,7 @@ class Channel(object):
         self._remoteerrors = []
 
     def setcallback(self, callback, endmarker=NO_ENDMARKER_WANTED):
-        queue = self._items
+        items = self._items
         lock = self.gateway._channelfactory._receivelock
         lock.acquire()
         try:
@@ -50,12 +50,12 @@ class Channel(object):
             self._items = None
             while 1:
                 try:
-                    olditem = queue.get(block=False)
+                    olditem = items.get(block=False)
                 except queue.Empty:
                     break
                 else:
                     if olditem is ENDMARKER:
-                        queue.put(olditem)
+                        items.put(olditem)
                         break
                     else:
                         callback(olditem)
