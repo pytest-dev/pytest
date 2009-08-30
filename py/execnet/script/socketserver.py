@@ -23,7 +23,7 @@ if debug: #  and not os.isatty(sys.stdin.fileno()):
     #compile = py.code.compile 
 
 def print_(*args):
-    print(" ".join(args))
+    print(" ".join(str(arg) for arg in args))
 
 if sys.version_info > (3, 0):
     exec("""def exec_(source, locs):
