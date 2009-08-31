@@ -84,6 +84,7 @@ class PathBase(object):
 
     def __div__(self, other):
         return self.join(str(other))
+    __truediv__ = __div__ # py3k
 
     def basename(self):
         """ basename part of path. """
@@ -106,7 +107,7 @@ class PathBase(object):
         """
         return self.new(basename='').join(*args, **kwargs)
 
-    def read(self, mode='rb'):
+    def read(self, mode='r'):
         """ read and return a bytestring from reading the path. """
         if sys.version_info < (2,3):
             for x in 'u', 'U':
@@ -132,11 +133,10 @@ newline will be removed from the end of each line. """
                 f.close()
 
     def load(self):
-        """ return object unpickled from self.read() """
+        """ (deprecated) return object unpickled from self.read() """
         f = self.open('rb')
         try:
-            from cPickle import load
-            return py.error.checked_call(load, f)
+            return py.error.checked_call(py.builtin.pickle.load, f)
         finally:
             f.close()
 
@@ -253,6 +253,12 @@ newline will be removed from the end of each line. """
         except AttributeError:
             return cmp(str(self), str(other)) # self.path, other.path)
 
+    def __lt__(self, other):
+        try:
+            return self.strpath < other.strpath 
+        except AttributeError:
+            return str(self) < str(other)
+
     def visit(self, fil=None, rec=None, ignore=NeverRaised):
         """ yields all paths below the current one
 
@@ -271,7 +277,7 @@ newline will be removed from the end of each line. """
         if rec: 
             if isinstance(rec, str):
                 rec = fnmatch(fil)
-            elif not callable(rec): 
+            elif not py.builtin.callable(rec): 
                 rec = lambda x: True 
         reclist = [self]
         while reclist: 
@@ -285,6 +291,13 @@ newline will be removed from the end of each line. """
                     yield p
                 if p.check(dir=1) and (rec is None or rec(p)):
                     reclist.append(p)
+
+    def _sortlist(self, res, sort):
+        if sort:
+            if hasattr(sort, '__call__'):
+                res.sort(sort)
+            else:
+                res.sort()
 
 class FNMatcher:
     def __init__(self, pattern):

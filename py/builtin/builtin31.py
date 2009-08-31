@@ -3,13 +3,21 @@ import sys
 if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins
+    import pickle
 
     # some backward compatibility helpers 
     _basestring = str 
     def _totext(obj, encoding):
-        if isinstance(obj, str):
-            obj = obj.encode(encoding)
-        return str(obj, encoding)
+        if isinstance(obj, bytes):
+            obj = obj.decode(encoding)
+        elif not isinstance(obj, str):
+            obj = str(obj)
+        return obj
+
+    def _isbytes(x): 
+        return isinstance(x, bytes)
+    def _istext(x): 
+        return isinstance(x, str)
 
     def execfile(fn, globs=None, locs=None):
         if globs is None:
@@ -30,10 +38,18 @@ if sys.version_info >= (3, 0):
         return hasattr(obj, "__call__")
 
 else:
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import pickle 
     _totext = unicode 
     _basestring = basestring
     execfile = execfile
     callable = callable
+    def _isbytes(x): 
+        return isinstance(x, str)
+    def _istext(x): 
+        return isinstance(x, unicode)
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):

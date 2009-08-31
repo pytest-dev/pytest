@@ -166,7 +166,7 @@ class DebugInterpreter(ast.NodeVisitor):
             explanations.append(explanation)
             if result == is_or:
                 break
-        name = " or " if is_or else " and "
+        name = is_or and " or " or " and "
         explanation = "(" + name.join(explanations) + ")"
         return explanation, result
 

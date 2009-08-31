@@ -1,65 +1,54 @@
 import py
 import sys
-from py.__.path.testing.svntestbase import CommonSvnTests, getrepowc, getsvnbin, make_test_repo
+from py.__.path.testing.svntestbase import CommonSvnTests
 from py.__.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
 from py.__.path import svnwc as svncommon
 
-if sys.platform != 'win32':
+if sys.platform == 'win32':
     def normpath(p):
         return p
 else:
-    try:
-        import win32api
-    except ImportError:
-        def normpath(p):
-            py.test.skip('this test requires win32api to run on windows')
-    else:
-        import os
-        def normpath(p):
-            p = win32api.GetShortPathName(p)
-            return os.path.normpath(os.path.normcase(p))
+    def normpath(p):
+        p = py.test.importorskip("win32").GetShortPathName(p)
+        return os.path.normpath(os.path.normcase(p))
 
-def setup_module(mod):
-    getsvnbin()
+def test_make_repo(path1, tmpdir):
+    repo = tmpdir.join("repo")
+    py.process.cmdexec('svnadmin create %s' % repo)
+    if sys.platform == 'win32':
+        repo = '/' + str(repo).replace('\\', '/')
+    repo = py.path.svnurl("file://%s" % repo)
+    wc = py.path.svnwc(tmpdir.join("wc"))
+    wc.checkout(repo)
+    assert wc.info().rev == 0
+    assert len(wc.listdir()) == 0
+    p = wc.join("a_file")
+    p.write("test file")
+    p.add()
+    rev = wc.commit("some test")
+    assert p.info().rev == 1
+    assert rev == 1
+    rev = wc.commit()
+    assert rev is None
 
-class TestMakeRepo(object):
-    def setup_class(cls):
-        cls.repo = make_test_repo()
-        cls.wc = py.path.svnwc(py.test.ensuretemp("test-wc").join("wc"))
-
-    def test_empty_checkout(self):
-        self.wc.checkout(self.repo)
-        assert len(self.wc.listdir()) == 0
-
-    def test_commit(self):
-        self.wc.checkout(self.repo)
-        p = self.wc.join("a_file")
-        p.write("test file")
-        p.add()
-        rev = self.wc.commit("some test")
-        assert p.info().rev == 1
-        assert rev == 1
-        rev = self.wc.commit()
-        assert rev is None
-        
+def pytest_funcarg__path1(request):
+    repo, wc = request.getfuncargvalue("repowc1")
+    return wc
 
 class TestWCSvnCommandPath(CommonSvnTests):
-    def setup_class(cls): 
-        repo, cls.root = getrepowc()
-
-    def test_move_file(self):  # overrides base class
+    def test_move_file(self, path1):  # overrides base class
         try:
-            super(TestWCSvnCommandPath, self).test_move_file()
+            super(TestWCSvnCommandPath, self).test_move_file(path1)
         finally:
-            self.root.revert(rec=1)
+            path1.revert(rec=1)
 
-    def test_move_directory(self): # overrides base class
+    def test_move_directory(self, path1): # overrides base class
         try:
-            super(TestWCSvnCommandPath, self).test_move_directory()
+            super(TestWCSvnCommandPath, self).test_move_directory(path1)
         finally:
-            self.root.revert(rec=1)
+            path1.revert(rec=1)
 
-    def test_status_attributes_simple(self):
+    def test_status_attributes_simple(self, path1):
         def assert_nochange(p):
             s = p.status()
             assert not s.modified
@@ -68,12 +57,12 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert not s.deleted
             assert not s.replaced
 
-        dpath = self.root.join('sampledir')
-        assert_nochange(self.root.join('sampledir'))
-        assert_nochange(self.root.join('samplefile'))
+        dpath = path1.join('sampledir')
+        assert_nochange(path1.join('sampledir'))
+        assert_nochange(path1.join('samplefile'))
 
-    def test_status_added(self):
-        nf = self.root.join('newfile')
+    def test_status_added(self, path1):
+        nf = path1.join('newfile')
         nf.write('hello')
         nf.add()
         try:
@@ -85,8 +74,8 @@ class TestWCSvnCommandPath(CommonSvnTests):
         finally:
             nf.revert()
 
-    def test_status_change(self):
-        nf = self.root.join('samplefile')
+    def test_status_change(self, path1):
+        nf = path1.join('samplefile')
         try:
             nf.write(nf.read() + 'change')
             s = nf.status()
@@ -97,8 +86,8 @@ class TestWCSvnCommandPath(CommonSvnTests):
         finally:
             nf.revert()
 
-    def test_status_added_ondirectory(self):
-        sampledir = self.root.join('sampledir')
+    def test_status_added_ondirectory(self, path1):
+        sampledir = path1.join('sampledir')
         try:
             t2 = sampledir.mkdir('t2')
             t1 = t2.join('t1')
@@ -113,20 +102,20 @@ class TestWCSvnCommandPath(CommonSvnTests):
             t2.revert(rec=1)
             t2.localpath.remove(rec=1)
 
-    def test_status_unknown(self):
-        t1 = self.root.join('un1')
+    def test_status_unknown(self, path1):
+        t1 = path1.join('un1')
         try:
             t1.write('test')
-            s = self.root.status()
+            s = path1.status()
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
             assert t1.basename in [item.basename for item in s.unknown]
         finally:
             t1.localpath.remove()
 
-    def test_status_unchanged(self):
-        r = self.root
-        s = self.root.status(rec=1)
+    def test_status_unchanged(self, path1):
+        r = path1
+        s = path1.status(rec=1)
         # Comparing just the file names, because paths are unpredictable
         # on Windows. (long vs. 8.3 paths)
         assert r.join('samplefile').basename in [item.basename 
@@ -136,8 +125,8 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert r.join('sampledir/otherfile').basename in [item.basename 
                                                     for item in s.unchanged]
 
-    def test_status_update(self):
-        r = self.root
+    def test_status_update(self, path1):
+        r = path1
         try:
             r.update(rev=1)
             s = r.status(updates=1, rec=1)
@@ -149,20 +138,20 @@ class TestWCSvnCommandPath(CommonSvnTests):
         finally:
             r.update()
 
-    def test_status_replaced(self):
-        p = self.root.join("samplefile")
+    def test_status_replaced(self, path1):
+        p = path1.join("samplefile")
         p.remove()
         p.ensure(dir=0)
         p.add()
         try:
-            s = self.root.status()
+            s = path1.status()
             assert p.basename in [item.basename for item in s.replaced]
         finally:
-            self.root.revert(rec=1)
+            path1.revert(rec=1)
 
-    def test_status_ignored(self):
+    def test_status_ignored(self, path1):
         try:
-            d = self.root.join('sampledir')
+            d = path1.join('sampledir')
             p = py.path.local(d).join('ignoredfile')
             p.ensure(file=True)
             s = d.status()
@@ -173,15 +162,11 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert [x.basename for x in s.unknown] == []
             assert [x.basename for x in s.ignored] == ['ignoredfile']
         finally:
-            self.root.revert(rec=1)
+            path1.revert(rec=1)
 
-    def test_status_conflict(self):
-        if not py.test.config.option.runslowtests:
-            py.test.skip('skipping slow unit tests - use --runslowtests '
-                         'to override')
-        wc = self.root
-        wccopy = py.path.svnwc(
-            py.test.ensuretemp('test_status_conflict_wccopy'))
+    def test_status_conflict(self, path1, tmpdir):
+        wc = path1
+        wccopy = py.path.svnwc(tmpdir.join("conflict_copy"))
         wccopy.checkout(wc.url)
         p = wc.ensure('conflictsamplefile', file=1)
         p.write('foo')
@@ -195,12 +180,9 @@ class TestWCSvnCommandPath(CommonSvnTests):
         s = wccopy.status()
         assert [x.basename for x in s.conflict] == ['conflictsamplefile']
 
-    def test_status_external(self):
-        if not py.test.config.option.runslowtests:
-            py.test.skip('skipping slow unit tests - use --runslowtests '
-                         'to override')
-        otherrepo, otherwc = getrepowc('externalrepo', 'externalwc')
-        d = self.root.ensure('sampledir', dir=1)
+    def test_status_external(self, path1, repowc2):
+        otherrepo, otherwc = repowc2
+        d = path1.ensure('sampledir', dir=1)
         try:
             d.remove()
             d.add()
@@ -214,13 +196,13 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert [x.basename for x in s.external] == ['otherwc']
             assert 'otherwc' in [x.basename for x in s.unchanged]
         finally:
-            self.root.revert(rec=1)
+            path1.revert(rec=1)
 
-    def test_status_deleted(self):
-        d = self.root.ensure('sampledir', dir=1)
+    def test_status_deleted(self, path1):
+        d = path1.ensure('sampledir', dir=1)
         d.remove()
         d.add()
-        self.root.commit()
+        path1.commit()
         d.ensure('deletefile', dir=0)
         d.commit()
         s = d.status()
@@ -232,7 +214,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert 'deletefile' not in s.unchanged
         assert [x.basename for x in s.deleted] == ['deletefile']
 
-    def test_status_noauthor(self):
+    def test_status_noauthor(self, path1):
         # testing for XML without author - this used to raise an exception
         xml = '''\
         <entry path="/tmp/pytest-23/wc">
@@ -243,129 +225,129 @@ class TestWCSvnCommandPath(CommonSvnTests):
         </wc-status>
         </entry>
         '''
-        XMLWCStatus.fromstring(xml, self.root)
+        XMLWCStatus.fromstring(xml, path1)
 
-    def test_status_wrong_xml(self):
+    def test_status_wrong_xml(self, path1):
         # testing for XML without author - this used to raise an exception
         xml = '<entry path="/home/jean/zope/venv/projectdb/parts/development-products/DataGridField">\n<wc-status item="incomplete" props="none" revision="784">\n</wc-status>\n</entry>'
-        st = XMLWCStatus.fromstring(xml, self.root)
+        st = XMLWCStatus.fromstring(xml, path1)
         assert len(st.incomplete) == 1
 
-    def test_diff(self):
-        p = self.root / 'anotherfile'
+    def test_diff(self, path1):
+        p = path1 / 'anotherfile'
         out = p.diff(rev=2)
         assert out.find('hello') != -1
 
-    def test_blame(self):
-        p = self.root.join('samplepickle')
+    def test_blame(self, path1):
+        p = path1.join('samplepickle')
         lines = p.blame()
         assert sum([l[0] for l in lines]) == len(lines)
         for l1, l2 in zip(p.readlines(), [l[2] for l in lines]):
             assert l1 == l2
         assert [l[1] for l in lines] == ['hpk'] * len(lines)
-        p = self.root.join('samplefile')
+        p = path1.join('samplefile')
         lines = p.blame()
         assert sum([l[0] for l in lines]) == len(lines)
         for l1, l2 in zip(p.readlines(), [l[2] for l in lines]):
             assert l1 == l2
         assert [l[1] for l in lines] == ['hpk'] * len(lines)
 
-    def test_join_abs(self):
-        s = str(self.root.localpath)
-        n = self.root.join(s, abs=1)
-        assert self.root == n
+    def test_join_abs(self, path1):
+        s = str(path1.localpath)
+        n = path1.join(s, abs=1)
+        assert path1 == n
 
-    def test_join_abs2(self):
-        assert self.root.join('samplefile', abs=1) == self.root.join('samplefile')
+    def test_join_abs2(self, path1):
+        assert path1.join('samplefile', abs=1) == path1.join('samplefile')
 
-    def test_str_gives_localpath(self):
-        assert str(self.root) == str(self.root.localpath)
+    def test_str_gives_localpath(self, path1):
+        assert str(path1) == str(path1.localpath)
 
-    def test_versioned(self):
-        assert self.root.check(versioned=1)
+    def test_versioned(self, path1):
+        assert path1.check(versioned=1)
         # TODO: Why does my copy of svn think .svn is versioned?
-        #assert self.root.join('.svn').check(versioned=0) 
-        assert self.root.join('samplefile').check(versioned=1)
-        assert not self.root.join('notexisting').check(versioned=1)
-        notexisting = self.root.join('hello').localpath
+        #assert path1.join('.svn').check(versioned=0) 
+        assert path1.join('samplefile').check(versioned=1)
+        assert not path1.join('notexisting').check(versioned=1)
+        notexisting = path1.join('hello').localpath
         try:
             notexisting.write("")
-            assert self.root.join('hello').check(versioned=0)
+            assert path1.join('hello').check(versioned=0)
         finally:
             notexisting.remove()
 
-    def test_nonversioned_remove(self):
-        assert self.root.check(versioned=1)
-        somefile = self.root.join('nonversioned/somefile')
+    def test_nonversioned_remove(self, path1):
+        assert path1.check(versioned=1)
+        somefile = path1.join('nonversioned/somefile')
         nonwc = py.path.local(somefile)
         nonwc.ensure()
         assert somefile.check()
         assert not somefile.check(versioned=True)
         somefile.remove() # this used to fail because it tried to 'svn rm'
 
-    def test_properties(self):
+    def test_properties(self, path1):
         try:
-            self.root.propset('gaga', 'this')
-            assert self.root.propget('gaga') == 'this'
+            path1.propset('gaga', 'this')
+            assert path1.propget('gaga') == 'this'
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
-            assert self.root.basename in [item.basename for item in 
-                                        self.root.status().prop_modified]
-            assert 'gaga' in self.root.proplist()
-            assert self.root.proplist()['gaga'] == 'this'
+            assert path1.basename in [item.basename for item in 
+                                        path1.status().prop_modified]
+            assert 'gaga' in path1.proplist()
+            assert path1.proplist()['gaga'] == 'this'
 
         finally:
-            self.root.propdel('gaga')
+            path1.propdel('gaga')
 
-    def test_proplist_recursive(self):
-        s = self.root.join('samplefile')
+    def test_proplist_recursive(self, path1):
+        s = path1.join('samplefile')
         s.propset('gugu', 'that')
         try:
-            p = self.root.proplist(rec=1)
+            p = path1.proplist(rec=1)
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
-            assert (self.root / 'samplefile').basename in [item.basename 
+            assert (path1 / 'samplefile').basename in [item.basename 
                                                                 for item in p]
         finally:
             s.propdel('gugu')
 
-    def test_long_properties(self):
+    def test_long_properties(self, path1):
         value = """
         vadm:posix : root root 0100755
         Properties on 'chroot/dns/var/bind/db.net.xots':
                 """
         try:
-            self.root.propset('gaga', value)
-            backvalue = self.root.propget('gaga')
+            path1.propset('gaga', value)
+            backvalue = path1.propget('gaga')
             assert backvalue == value
             #assert len(backvalue.split('\n')) == 1
         finally:
-            self.root.propdel('gaga')
+            path1.propdel('gaga')
 
 
-    def test_ensure(self):
-        newpath = self.root.ensure('a', 'b', 'c')
+    def test_ensure(self, path1):
+        newpath = path1.ensure('a', 'b', 'c')
         try:
             assert newpath.check(exists=1, versioned=1)
             newpath.write("hello")
             newpath.ensure()
             assert newpath.read() == "hello"
         finally:
-            self.root.join('a').remove(force=1)
+            path1.join('a').remove(force=1)
 
-    def test_not_versioned(self):
-        p = self.root.localpath.mkdir('whatever')
-        f = self.root.localpath.ensure('testcreatedfile')
+    def test_not_versioned(self, path1):
+        p = path1.localpath.mkdir('whatever')
+        f = path1.localpath.ensure('testcreatedfile')
         try:
-            assert self.root.join('whatever').check(versioned=0)
-            assert self.root.join('testcreatedfile').check(versioned=0)
-            assert not self.root.join('testcreatedfile').check(versioned=1)
+            assert path1.join('whatever').check(versioned=0)
+            assert path1.join('testcreatedfile').check(versioned=0)
+            assert not path1.join('testcreatedfile').check(versioned=1)
         finally:
             p.remove(rec=1)
             f.remove()
 
-    def test_lock_unlock(self):
-        root = self.root
+    def test_lock_unlock(self, path1):
+        root = path1
         somefile = root.join('somefile')
         somefile.ensure(file=True)
         # not yet added to repo
@@ -388,9 +370,8 @@ class TestWCSvnCommandPath(CommonSvnTests):
         py.test.raises(Exception, 'somefile,unlock()')
         somefile.remove()
 
-    def test_commit_nonrecursive(self):
-        root = self.root
-        somedir = root.join('sampledir')
+    def test_commit_nonrecursive(self, path1):
+        somedir = path1.join('sampledir')
         somedir.mkdir("subsubdir")
         somedir.propset('foo', 'bar')
         status = somedir.status()
@@ -407,29 +388,28 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert len(status.prop_modified) == 0
         assert len(status.added) == 0
 
-    def test_commit_return_value(self):
-        root = self.root
-        testfile = root.join('test.txt').ensure(file=True)
+    def test_commit_return_value(self, path1):
+        testfile = path1.join('test.txt').ensure(file=True)
         testfile.write('test')
-        rev = root.commit('testing')
+        rev = path1.commit('testing')
         assert type(rev) == int
 
-        anotherfile = root.join('another.txt').ensure(file=True)
+        anotherfile = path1.join('another.txt').ensure(file=True)
         anotherfile.write('test')
-        rev2 = root.commit('testing more')
+        rev2 = path1.commit('testing more')
         assert type(rev2) == int
         assert rev2 == rev + 1
 
-    #def test_log(self):
-    #   l = self.root.log()
+    #def test_log(self, path1):
+    #   l = path1.log()
     #   assert len(l) == 3  # might need to be upped if more tests are added
 
 class XTestWCSvnCommandPathSpecial:
 
     rooturl = 'http://codespeak.net/svn/py.path/trunk/dist/py.path/test/data'
-    #def test_update_none_rev(self):
+    #def test_update_none_rev(self, path1):
     #    path = tmpdir.join('checkouttest')
-    #    wcpath = newpath(xsvnwc=str(path), url=self.rooturl)
+    #    wcpath = newpath(xsvnwc=str(path), url=path1url)
     #    try:
     #        wcpath.checkout(rev=2100)
     #        wcpath.update()
@@ -445,7 +425,7 @@ def test_parse_wcinfotime():
 
 class TestInfoSvnWCCommand:
 
-    def test_svn_1_2(self):
+    def test_svn_1_2(self, path1):
         output = """
         Path: test_svnwc.py
         Name: test_svnwc.py
@@ -474,7 +454,7 @@ class TestInfoSvnWCCommand:
         assert info.rev == 28137
 
 
-    def test_svn_1_3(self):
+    def test_svn_1_3(self, path1):
         output = """
         Path: test_svnwc.py
         Name: test_svnwc.py
@@ -503,28 +483,79 @@ class TestInfoSvnWCCommand:
         assert info.rev == 28124
         assert info.time == 1149021926000000.0
 
-class TestWCSvnCommandPathEmptyRepo(object):
-
-    def setup_class(cls):
-        repo = py.test.ensuretemp("emptyrepo")
-        wcdir = py.test.ensuretemp("emptywc")
-        py.process.cmdexec('svnadmin create "%s"' %
-                svncommon._escape_helper(repo))
-        wc = py.path.svnwc(wcdir)
-        repopath = repo.strpath
-        if py.std.sys.platform.startswith('win32'):
-            # strange win problem, paths become something like file:///c:\\foo
-            repourl = 'file:///%s' % (repopath.replace('\\', '/'),)
-        else:
-            repourl = 'file://%s' % (repopath,)
-        wc.checkout(url=repourl)
-        cls.wc = wc
-
-    def test_info(self):
-        self.wc.info().rev = 0
 
 def test_characters_at():
     py.test.raises(ValueError, "py.path.svnwc('/tmp/@@@:')")
 
 def test_characters_tilde():
     py.path.svnwc('/tmp/test~')
+
+
+class TestRepo:
+    def test_trailing_slash_is_stripped(self, path1):
+        # XXX we need to test more normalizing properties
+        url = path1.join("/")
+        assert path1 == url
+
+    #def test_different_revs_compare_unequal(self, path1):
+    #    newpath = path1.new(rev=1199)
+    #    assert newpath != path1
+
+    def test_exists_svn_root(self, path1):
+        assert path1.check()
+
+    #def test_not_exists_rev(self, path1):
+    #    url = path1.__class__(path1url, rev=500)
+    #    assert url.check(exists=0)
+
+    #def test_nonexisting_listdir_rev(self, path1):
+    #    url = path1.__class__(path1url, rev=500)
+    #    raises(py.error.ENOENT, url.listdir)
+
+    #def test_newrev(self, path1):
+    #    url = path1.new(rev=None)
+    #    assert url.rev == None
+    #    assert url.strpath == path1.strpath
+    #    url = path1.new(rev=10)
+    #    assert url.rev == 10
+
+    #def test_info_rev(self, path1):
+    #    url = path1.__class__(path1url, rev=1155)
+    #    url = url.join("samplefile")
+    #    res = url.info()
+    #    assert res.size > len("samplefile") and res.created_rev == 1155
+
+    # the following tests are easier if we have a path class
+    def test_repocache_simple(self, path1):
+        repocache = svncommon.RepoCache()
+        repocache.put(path1.strpath, 42)
+        url, rev = repocache.get(path1.join('test').strpath)
+        assert rev == 42
+        assert url == path1.strpath
+
+    def test_repocache_notimeout(self, path1):
+        repocache = svncommon.RepoCache()
+        repocache.timeout = 0
+        repocache.put(path1.strpath, path1.rev)
+        url, rev = repocache.get(path1.strpath)
+        assert rev == -1
+        assert url == path1.strpath
+
+    def test_repocache_outdated(self, path1):
+        repocache = svncommon.RepoCache()
+        repocache.put(path1.strpath, 42, timestamp=0)
+        url, rev = repocache.get(path1.join('test').strpath)
+        assert rev == -1
+        assert url == path1.strpath
+
+    def _test_getreporev(self):
+        """ this test runs so slow it's usually disabled """
+        old = svncommon.repositories.repos
+        try:
+            _repocache.clear()
+            root = path1.new(rev=-1)
+            url, rev = cache.repocache.get(root.strpath)
+            assert rev>=0
+            assert url == svnrepourl
+        finally:
+            repositories.repos = old

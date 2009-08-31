@@ -7,6 +7,7 @@ svn-Command based Implementation of a Subversion WorkingCopy Path.
 
 import os, sys, time, re, calendar
 import py
+import subprocess
 from py.__.path import common
 
 #-----------------------------------------------------------
@@ -234,29 +235,6 @@ class SvnPathBase(common.PathBase):
         content = self._proplist()
         return content
 
-    def listdir(self, fil=None, sort=None):
-        """ list directory contents, possibly filter by the given fil func
-            and possibly sorted.
-        """
-        if isinstance(fil, str):
-            fil = common.FNMatcher(fil)
-        nameinfo_seq = self._listdir_nameinfo()
-        if len(nameinfo_seq) == 1:
-            name, info = nameinfo_seq[0]
-            if name == self.basename and info.kind == 'file':
-                #if not self.check(dir=1):
-                raise py.error.ENOTDIR(self)
-        paths = self._make_path_tuple(nameinfo_seq)
-
-        if fil or sort:
-            paths = filter(fil, paths)
-            paths = isinstance(paths, list) and paths or list(paths)
-            if hasattr(sort, '__call__'):
-                paths.sort(sort)
-            elif sort:
-                paths.sort()
-        return paths
-
     def info(self):
         """ return an Info structure with svn-provided information. """
         parent = self.dirpath()
@@ -280,23 +258,13 @@ class SvnPathBase(common.PathBase):
     def _escape(self, cmd):
         return _escape_helper(cmd)
 
-    def _make_path_tuple(self, nameinfo_seq):
-        """ return a tuple of paths from a nameinfo-tuple sequence.
-        """
-        #assert self.rev is not None, "revision of %s should not be None here" % self
-        res = []
-        for name, info in nameinfo_seq:
-            child = self.join(name)
-            res.append(child)
-        return tuple(res)
 
-
-    def _childmaxrev(self):
-        """ return maximum revision number of childs (or self.rev if no childs) """
-        rev = self.rev
-        for name, info in self._listdir_nameinfo():
-            rev = max(rev, info.created_rev)
-        return rev
+    #def _childmaxrev(self):
+    #    """ return maximum revision number of childs (or self.rev if no childs) """
+    #    rev = self.rev
+    #    for name, info in self._listdir_nameinfo():
+    #        rev = max(rev, info.created_rev)
+    #    return rev
 
     #def _getlatestrevision(self):
     #    """ return latest repo-revision for this path. """
@@ -553,11 +521,11 @@ class SvnWCCommandPath(common.PathBase):
         args.append(url)
         self._authsvn('co', args)
 
-    def update(self, rev = 'HEAD'):
+    def update(self, rev='HEAD'):
         """ update working copy item to given revision. (None -> HEAD). """
-        self._authsvn('up', ['-r', rev])
+        self._authsvn('up', ['-r', rev, "--non-interactive"],)
 
-    def write(self, content, mode='wb'):
+    def write(self, content, mode='w'):
         """ write content into local filesystem wc. """
         self.localpath.write(content, mode)
 
@@ -840,18 +808,10 @@ recursively. """
         def notsvn(path):
             return path.basename != '.svn' 
 
-        paths = []
-        for localpath in self.localpath.listdir(notsvn):
-            p = self.__class__(localpath, auth=self.auth)
-            paths.append(p)
-
-        if fil or sort:
-            paths = filter(fil, paths)
-            paths = isinstance(paths, list) and paths or list(paths)
-            if hasattr(sort, '__call__'):
-                paths.sort(sort)
-            elif sort:
-                paths.sort()
+        paths = [self.__class__(p, auth=self.auth) 
+                    for p in self.localpath.listdir()
+                        if notsvn(p) and (not fil or fil(p))]
+        self._sortlist(paths, sort)
         return paths
 
     def open(self, mode='r'):
@@ -897,13 +857,23 @@ if verbose is True, then the LogEntry instances also know which files changed.
         locale_env = fixlocale()
         # some blather on stderr
         auth_opt = self._makeauthoptions()
-        stdin, stdout, stderr  = os.popen3(locale_env +
-                                           'svn log --xml %s %s %s "%s"' % (
-                                            rev_opt, verbose_opt, auth_opt,
-                                            self.strpath))
+        #stdin, stdout, stderr  = os.popen3(locale_env +
+        #                                   'svn log --xml %s %s %s "%s"' % (
+        #                                    rev_opt, verbose_opt, auth_opt,
+        #                                    self.strpath))
+        cmd = locale_env + 'svn log --xml %s %s %s "%s"' % (
+            rev_opt, verbose_opt, auth_opt, self.strpath)
+
+        popen = subprocess.Popen(cmd, 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE,  
+                    shell=True,
+        )
+        stdout, stderr = popen.communicate()
+        stdout = py.builtin._totext(stdout, sys.getdefaultencoding())
         minidom,ExpatError = importxml()
         try:
-            tree = minidom.parse(stdout)
+            tree = minidom.parseString(stdout)
         except ExpatError:
             raise ValueError('no such revision')
         result = []
@@ -1212,7 +1182,7 @@ def make_recursive_propdict(wcroot,
                             output,
                             rex = re.compile("Properties on '(.*)':")):
     """ Return a dictionary of path->PropListDict mappings. """
-    lines = filter(None, output.split('\n'))
+    lines = [x for x in output.split('\n') if x]
     pdict = {}
     while lines:
         line = lines.pop(0)
@@ -1244,15 +1214,15 @@ class LogEntry:
         for lpart in filter(None, logentry.childNodes):
             if lpart.nodeType == lpart.ELEMENT_NODE:
                 if lpart.nodeName == 'author':
-                    self.author = lpart.firstChild.nodeValue.encode('UTF-8')
+                    self.author = lpart.firstChild.nodeValue
                 elif lpart.nodeName == 'msg':
                     if lpart.firstChild:
-                        self.msg = lpart.firstChild.nodeValue.encode('UTF-8')
+                        self.msg = lpart.firstChild.nodeValue
                     else:
                         self.msg = ''
                 elif lpart.nodeName == 'date':
                     #2003-07-29T20:05:11.598637Z
-                    timestr = lpart.firstChild.nodeValue.encode('UTF-8')
+                    timestr = lpart.firstChild.nodeValue
                     self.date = parse_apr_time(timestr)
                 elif lpart.nodeName == 'paths':
                     self.strpaths = []

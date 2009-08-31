@@ -45,6 +45,8 @@ def test_frozenset():
     assert len(s) == 1
 
 def test_sorted():
+    if sys.version_info >= (2,5):
+        py.test.skip("python 2.5 needs no sorted tests")
     for s in [py.builtin.sorted]:
         def test():
             assert s([3, 2, 1]) == [1, 2, 3]

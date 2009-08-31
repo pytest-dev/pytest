@@ -1,53 +1,71 @@
 import py
 import sys
 from py.path import local
-from py.__.path.testing.fscommon import CommonFSTests, setuptestfs
+from py.__.path.testing import common
 
-class LocalSetup:
-    def setup_class(cls):
-        cls.root = py.test.ensuretemp(cls.__name__)
-        cls.root.ensure(dir=1)
-        setuptestfs(cls.root)
+def pytest_funcarg__path1(request):
+    def setup():
+        path1 = request.config.mktemp("path1")
+        common.setuptestfs(path1)
+        return path1
+    def teardown(path1):
+        # post check 
+        assert path1.join("samplefile").check()
+    return request.cached_setup(setup, teardown, scope="session")
 
-    def setup_method(self, method):
-        self.tmpdir = self.root.mkdir(method.__name__)
+def pytest_funcarg__tmpdir(request):
+    basedir = request.config.getbasetemp()
+    if request.cls:
+        try:
+            basedir = basedir.mkdir(request.cls.__name__)
+        except py.error.EEXIST: 
+            pass
+    for i in range(1000):
+        name = request.function.__name__ 
+        if i > 0:
+            name += str(i)
+        try:
+            return basedir.mkdir(name)
+        except py.error.EEXIST:
+            continue
+    raise ValueError("could not create tempdir")
 
-    def teardown_method(self, method):
-        assert self.root.join("samplefile").check()
+class TestLocalPath(common.CommonFSTests):
+    def test_join_normpath(self, tmpdir):
+        assert tmpdir.join(".") == tmpdir
+        p = tmpdir.join("../%s" % tmpdir.basename)
+        assert p == tmpdir
+        p = tmpdir.join("..//%s/" % tmpdir.basename)
+        assert p == tmpdir
 
-class TestLocalPath(LocalSetup, CommonFSTests):
-    def test_join_normpath(self):
-        assert self.tmpdir.join(".") == self.tmpdir
-        p = self.tmpdir.join("../%s" % self.tmpdir.basename)
-        assert p == self.tmpdir
-        p = self.tmpdir.join("..//%s/" % self.tmpdir.basename)
-        assert p == self.tmpdir
-
-    def test_gethash(self):
-        import md5
-        import sha
-        fn = self.tmpdir.join("testhashfile")
-        fn.write("hello")
-        assert fn.computehash("md5") == md5.md5("hello").hexdigest()
-        #assert fn.computehash("sha") == sha.sha("hello").hexdigest()
-        if sys.version_info >= (2,4):
-            assert fn.computehash("sha1") == sha.sha("hello").hexdigest()
+    def test_gethash(self, tmpdir):
+        try:
+            from md5 import md5
+            from sha import sha
+        except ImportError:
+            from hashlib import md5 as md5
+            from hashlib import sha1 as sha
+        fn = tmpdir.join("testhashfile")
+        data = 'hello'.encode('ascii')
+        fn.write(data, mode="wb")
+        assert fn.computehash("md5") == md5(data).hexdigest()
+        assert fn.computehash("sha1") == sha(data).hexdigest()
         py.test.raises(ValueError, fn.computehash, "asdasd")
 
-    def test_remove_removes_readonly_file(self):
-        readonly_file = self.tmpdir.join('readonly').ensure()
+    def test_remove_removes_readonly_file(self, tmpdir):
+        readonly_file = tmpdir.join('readonly').ensure()
         readonly_file.chmod(0)
         readonly_file.remove()
         assert not readonly_file.check(exists=1)
 
-    def test_remove_removes_readonly_dir(self):
-        readonly_dir = self.tmpdir.join('readonlydir').ensure(dir=1)
+    def test_remove_removes_readonly_dir(self, tmpdir):
+        readonly_dir = tmpdir.join('readonlydir').ensure(dir=1)
         readonly_dir.chmod(int("500", 8))
         readonly_dir.remove()
         assert not readonly_dir.check(exists=1)
 
-    def test_remove_removes_dir_and_readonly_file(self):
-        readonly_dir = self.tmpdir.join('readonlydir').ensure(dir=1)
+    def test_remove_removes_dir_and_readonly_file(self, tmpdir):
+        readonly_dir = tmpdir.join('readonlydir').ensure(dir=1)
         readonly_file = readonly_dir.join('readonlyfile').ensure()
         readonly_file.chmod(0)
         readonly_dir.remove()
@@ -56,42 +74,34 @@ class TestLocalPath(LocalSetup, CommonFSTests):
     def test_initialize_curdir(self):
         assert str(local()) == py.std.os.getcwd()
 
-    def test_initialize_reldir(self):
-        old = self.root.chdir()
+    def test_initialize_reldir(self, path1):
+        old = path1.chdir()
         try:
             p = local('samplefile')
             assert p.check()
         finally:
             old.chdir()
 
-    def test_eq_with_strings(self):
-        path1 = self.root.join('sampledir')
+    def test_eq_with_strings(self, path1):
+        path1 = path1.join('sampledir')
         path2 = str(path1)
         assert path1 == path2
         assert path2 == path1
-        path3 = self.root.join('samplefile')
+        path3 = path1.join('samplefile')
         assert path3 != path2
         assert path2 != path3
 
-    def test_dump(self):
-        import tempfile
-        for bin in 0, 1: 
-            try:
-                fd, name = tempfile.mkstemp()
-                f = py.std.os.fdopen(fd)
-            except AttributeError:
-                name = tempfile.mktemp()
-                f = open(name, 'w+')
-            try:
-                d = {'answer' : 42}
-                path = local(name)
-                path.dump(d, bin=bin)
-                from cPickle import load
-                dnew = load(f)
-                assert d == dnew
-            finally:
-                f.close()
-                py.std.os.remove(name)
+    @py.test.mark.multi(bin=(False, True))
+    def test_dump(self, tmpdir, bin):
+        path = tmpdir.join("dumpfile%s" % int(bin))
+        try:
+            d = {'answer' : 42}
+            path.dump(d, bin=bin)
+            f = path.open('rb+')
+            dnew = py.builtin.pickle.load(f)
+            assert d == dnew
+        finally:
+            f.close()
 
     def test_setmtime(self):
         import tempfile
@@ -113,9 +123,9 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         finally:
             py.std.os.remove(name)
 
-    def test_normpath(self):
-        new1 = self.root.join("/otherdir")
-        new2 = self.root.join("otherdir")
+    def test_normpath(self, path1):
+        new1 = path1.join("/otherdir")
+        new2 = path1.join("otherdir")
         assert str(new1) == str(new2)
 
     def test_mkdtemp_creation(self):
@@ -134,8 +144,7 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         finally:
             d.remove(rec=1)
 
-    def test_chdir(self):
-        tmpdir = self.tmpdir.realpath()
+    def test_chdir(self, tmpdir):
         old = local()
         try:
             res = tmpdir.chdir()
@@ -144,30 +153,28 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         finally:
             old.chdir()
 
-    def test_ensure_filepath_withdir(self):
-        tmpdir = self.tmpdir
+    def test_ensure_filepath_withdir(self, tmpdir):
         newfile = tmpdir.join('test1','test')
         newfile.ensure()
         assert newfile.check(file=1)
         newfile.write("42")
         newfile.ensure()
-        assert newfile.read() == "42"
+        s = newfile.read()
+        assert s == "42"
 
-    def test_ensure_filepath_withoutdir(self):
-        tmpdir = self.tmpdir
+    def test_ensure_filepath_withoutdir(self, tmpdir):
         newfile = tmpdir.join('test1file')
         t = newfile.ensure()
         assert t == newfile
         assert newfile.check(file=1)
 
-    def test_ensure_dirpath(self):
-        tmpdir = self.tmpdir
+    def test_ensure_dirpath(self, tmpdir):
         newfile = tmpdir.join('test1','testfile')
         t = newfile.ensure(dir=1)
         assert t == newfile
         assert newfile.check(dir=1)
 
-    def test_init_from_path(self):
+    def test_init_from_path(self, tmpdir):
         l = local()
         l2 = local(l)
         assert l2 is l
@@ -178,12 +185,11 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         assert l3.strpath == wc.strpath
         assert not hasattr(l3, 'commit')
 
-    def test_long_filenames(self):
+    def test_long_filenames(self, tmpdir):
         if sys.platform == "win32":
             py.test.skip("win32: work around needed for path length limit")
         # see http://codespeak.net/pipermail/py-dev/2008q2/000922.html
         
-        tmpdir = self.tmpdir
         # testing paths > 260 chars (which is Windows' limitation, but
         # depending on how the paths are used), but > 4096 (which is the
         # Linux' limitation) - the behaviour of paths with names > 4096 chars
@@ -195,7 +201,7 @@ class TestLocalPath(LocalSetup, CommonFSTests):
         l2 = tmpdir.join(newfilename)
         assert l2.read() == 'foo'
 
-class TestExecutionOnWindows(LocalSetup):
+class TestExecutionOnWindows:
     disabled = py.std.sys.platform != 'win32'
 
     def test_sysfind(self):
@@ -203,7 +209,7 @@ class TestExecutionOnWindows(LocalSetup):
         assert x.check(file=1)
         assert py.path.local.sysfind('jaksdkasldqwe') is None
 
-class TestExecution(LocalSetup):
+class TestExecution:
     disabled = py.std.sys.platform == 'win32'
 
     def test_sysfind(self):
@@ -211,20 +217,11 @@ class TestExecution(LocalSetup):
         assert x.check(file=1)
         assert py.path.local.sysfind('jaksdkasldqwe') is None
 
-    def test_sysfind_no_permisson(self):
-        dir = py.test.ensuretemp('sysfind') 
-        env = py.std.os.environ
-        oldpath = env['PATH']
-        try:
-            noperm = dir.ensure('noperm', dir=True)
-            env['PATH'] += ":%s" % (noperm)
-            noperm.chmod(0)
-            assert py.path.local.sysfind('a') is None
-            
-        finally:
-            env['PATH'] = oldpath
-            noperm.chmod(int("644", 8))
-            noperm.remove()
+    def test_sysfind_no_permisson_ignored(self, monkeypatch, tmpdir):
+        noperm = tmpdir.ensure('noperm', dir=True)
+        monkeypatch.setenv("PATH", noperm, prepend=":")
+        noperm.chmod(0)
+        assert py.path.local.sysfind('jaksdkasldqwe') is None
             
     def test_sysfind_absolute(self):
         x = py.path.local.sysfind('test')
@@ -233,23 +230,18 @@ class TestExecution(LocalSetup):
         assert y.check(file=1) 
         assert y == x 
 
-    def test_sysfind_multiple(self):
-        dir = py.test.ensuretemp('sysfind') 
-        env = py.std.os.environ
-        oldpath = env['PATH']
-        try:
-            env['PATH'] += ":%s:%s" % (dir.ensure('a'),
-                                       dir.join('b'))
-            dir.ensure('b', 'a')
-            checker = lambda x: x.dirpath().basename == 'b'
-            x = py.path.local.sysfind('a', checker=checker)
-            assert x.basename == 'a'
-            assert x.dirpath().basename == 'b'
-            checker = lambda x: None
-            assert py.path.local.sysfind('a', checker=checker) is None
-        finally:
-            env['PATH'] = oldpath
-            #dir.remove()
+    def test_sysfind_multiple(self, tmpdir, monkeypatch):
+        monkeypatch.setenv('PATH', 
+                          "%s:%s" % (tmpdir.ensure('a'),
+                                       tmpdir.join('b')),
+                          prepend=":")
+        tmpdir.ensure('b', 'a')
+        checker = lambda x: x.dirpath().basename == 'b'
+        x = py.path.local.sysfind('a', checker=checker)
+        assert x.basename == 'a'
+        assert x.dirpath().basename == 'b'
+        checker = lambda x: None
+        assert py.path.local.sysfind('a', checker=checker) is None
 
     def test_sysexec(self):
         x = py.path.local.sysfind('ls') 
@@ -263,11 +255,10 @@ class TestExecution(LocalSetup):
             x.sysexec('aksjdkasjd')
         """)
 
-    def test_make_numbered_dir(self):
-        root = self.tmpdir
-        root.ensure('base.not_an_int', dir=1)
+    def test_make_numbered_dir(self, tmpdir):
+        tmpdir.ensure('base.not_an_int', dir=1)
         for i in range(10):
-            numdir = local.make_numbered_dir(prefix='base.', rootdir=root,
+            numdir = local.make_numbered_dir(prefix='base.', rootdir=tmpdir,
                                              keep=2, lock_timeout=0)
             assert numdir.check()
             assert numdir.basename == 'base.%d' %i
@@ -278,62 +269,60 @@ class TestExecution(LocalSetup):
             if i>=3:
                 assert not numdir.new(ext=str(i-3)).check()
 
-    def test_locked_make_numbered_dir(self):
-        root = self.tmpdir
+    def test_locked_make_numbered_dir(self, tmpdir):
         for i in range(10):
-            numdir = local.make_numbered_dir(prefix='base2.', rootdir=root,
+            numdir = local.make_numbered_dir(prefix='base2.', rootdir=tmpdir,
                                              keep=2)
             assert numdir.check()
             assert numdir.basename == 'base2.%d' %i
             for j in range(i):
                 assert numdir.new(ext=str(j)).check()
 
-    def test_error_preservation(self):
-        py.test.raises (EnvironmentError, self.root.join('qwoeqiwe').mtime)
-        py.test.raises (EnvironmentError, self.root.join('qwoeqiwe').read)
+    def test_error_preservation(self, path1):
+        py.test.raises (EnvironmentError, path1.join('qwoeqiwe').mtime)
+        py.test.raises (EnvironmentError, path1.join('qwoeqiwe').read)
 
     #def test_parentdirmatch(self):
     #    local.parentdirmatch('std', startmodule=__name__)
     #
 
-    # importing tests 
-    def test_pyimport(self):
-        obj = self.root.join('execfile.py').pyimport()
+
+class TestImport: 
+    def test_pyimport(self, path1):
+        obj = path1.join('execfile.py').pyimport()
         assert obj.x == 42
         assert obj.__name__ == 'execfile' 
 
-    def test_pyimport_execfile_different_name(self):
-        obj = self.root.join('execfile.py').pyimport(modname="0x.y.z")
+    def test_pyimport_execfile_different_name(self, path1):
+        obj = path1.join('execfile.py').pyimport(modname="0x.y.z")
         assert obj.x == 42
         assert obj.__name__ == '0x.y.z' 
 
-    def test_pyimport_a(self):
-        otherdir = self.root.join('otherdir')
+    def test_pyimport_a(self, path1):
+        otherdir = path1.join('otherdir')
         mod = otherdir.join('a.py').pyimport()
         assert mod.result == "got it"
         assert mod.__name__ == 'otherdir.a' 
 
-    def test_pyimport_b(self):
-        otherdir = self.root.join('otherdir')
+    def test_pyimport_b(self, path1):
+        otherdir = path1.join('otherdir')
         mod = otherdir.join('b.py').pyimport()
         assert mod.stuff == "got it"
         assert mod.__name__ == 'otherdir.b' 
 
-    def test_pyimport_c(self):
-        otherdir = self.root.join('otherdir')
+    def test_pyimport_c(self, path1):
+        otherdir = path1.join('otherdir')
         mod = otherdir.join('c.py').pyimport()
         assert mod.value == "got it"
 
-    def test_pyimport_d(self):
-        otherdir = self.root.join('otherdir')
+    def test_pyimport_d(self, path1):
+        otherdir = path1.join('otherdir')
         mod = otherdir.join('d.py').pyimport()
         assert mod.value2 == "got it"
 
-    def test_pyimport_and_import(self):
-        # XXX maybe a bit of a fragile test ...
-        p = py.test.ensuretemp("pyimport") 
-        p.ensure('xxxpackage', '__init__.py') 
-        mod1path = p.ensure('xxxpackage', 'module1.py')
+    def test_pyimport_and_import(self, tmpdir):
+        tmpdir.ensure('xxxpackage', '__init__.py') 
+        mod1path = tmpdir.ensure('xxxpackage', 'module1.py')
         mod1 = mod1path.pyimport() 
         assert mod1.__name__ == 'xxxpackage.module1' 
         from xxxpackage import module1 
@@ -355,48 +344,41 @@ class TestWINLocalPath:
     #root = local(TestLocalPath.root)
     disabled = py.std.sys.platform != 'win32'
 
-    def setup_class(cls):
-        cls.root = py.test.ensuretemp(cls.__name__) 
-
-    def setup_method(self, method): 
-        name = method.im_func.func_name
-        self.tmpdir = self.root.ensure(name, dir=1) 
-
     def test_owner_group_not_implemented(self):
-        py.test.raises(NotImplementedError, "self.root.stat().owner")
-        py.test.raises(NotImplementedError, "self.root.stat().group")
+        py.test.raises(NotImplementedError, "path1.stat().owner")
+        py.test.raises(NotImplementedError, "path1.stat().group")
 
     def test_chmod_simple_int(self):
-        py.builtin.print_("self.root is", self.root)
-        mode = self.root.stat().mode
+        py.builtin.print_("path1 is", path1)
+        mode = path1.stat().mode
         # Ensure that we actually change the mode to something different.
-        self.root.chmod(mode == 0 and 1 or 0)
+        path1.chmod(mode == 0 and 1 or 0)
         try:
-            print(self.root.stat().mode)
+            print(path1.stat().mode)
             print(mode)
-            assert self.root.stat().mode != mode
+            assert path1.stat().mode != mode
         finally:
-            self.root.chmod(mode)
-            assert self.root.stat().mode == mode
+            path1.chmod(mode)
+            assert path1.stat().mode == mode
 
     def test_path_comparison_lowercase_mixed(self):
-        t1 = self.root.join("a_path")
-        t2 = self.root.join("A_path")
+        t1 = path1.join("a_path")
+        t2 = path1.join("A_path")
         assert t1 == t1
         assert t1 == t2
         
     def test_relto_with_mixed_case(self):
-        t1 = self.root.join("a_path", "fiLe")
-        t2 = self.root.join("A_path")
+        t1 = path1.join("a_path", "fiLe")
+        t2 = path1.join("A_path")
         assert t1.relto(t2) == "fiLe"
 
     def test_allow_unix_style_paths(self):
-        t1 = self.root.join('a_path')
-        assert t1 == str(self.root) + '\\a_path'
-        t1 = self.root.join('a_path/')
-        assert t1 == str(self.root) + '\\a_path'
-        t1 = self.root.join('dir/a_path')
-        assert t1 == str(self.root) + '\\dir\\a_path'
+        t1 = path1.join('a_path')
+        assert t1 == str(path1) + '\\a_path'
+        t1 = path1.join('a_path/')
+        assert t1 == str(path1) + '\\a_path'
+        t1 = path1.join('dir/a_path')
+        assert t1 == str(path1) + '\\dir\\a_path'
 
     def test_sysfind_in_currentdir(self):
         cmd = py.path.local.sysfind('cmd')
@@ -411,20 +393,12 @@ class TestWINLocalPath:
 class TestPOSIXLocalPath:
     disabled = py.std.sys.platform == 'win32'
 
-    def setup_class(cls):
-        cls.root = py.test.ensuretemp(cls.__name__) 
-
-    def setup_method(self, method): 
-        name = method.im_func.func_name
-        self.tmpdir = self.root.ensure(name, dir=1) 
-
-    def test_samefile(self):
-        assert self.tmpdir.samefile(self.tmpdir)
-        p = self.tmpdir.ensure("hello")
+    def test_samefile(self, tmpdir):
+        assert tmpdir.samefile(tmpdir)
+        p = tmpdir.ensure("hello")
         assert p.samefile(p) 
 
-    def test_hardlink(self):
-        tmpdir = self.tmpdir 
+    def test_hardlink(self, tmpdir):
         linkpath = tmpdir.join('test')
         filepath = tmpdir.join('file')
         filepath.write("Hello")
@@ -432,16 +406,14 @@ class TestPOSIXLocalPath:
         linkpath.mklinkto(filepath)
         assert filepath.stat().nlink == nlink + 1 
 
-    def test_symlink_are_identical(self):
-        tmpdir = self.tmpdir 
+    def test_symlink_are_identical(self, tmpdir):
         filepath = tmpdir.join('file')
         filepath.write("Hello")
         linkpath = tmpdir.join('test')
         linkpath.mksymlinkto(filepath)
         assert linkpath.readlink() == str(filepath) 
 
-    def test_symlink_isfile(self):
-        tmpdir = self.tmpdir 
+    def test_symlink_isfile(self, tmpdir):
         linkpath = tmpdir.join('test')
         filepath = tmpdir.join('file')
         filepath.write("")
@@ -449,8 +421,7 @@ class TestPOSIXLocalPath:
         assert linkpath.check(file=1)
         assert not linkpath.check(link=0, file=1)
 
-    def test_symlink_relative(self):
-        tmpdir = self.tmpdir 
+    def test_symlink_relative(self, tmpdir):
         linkpath = tmpdir.join('test')
         filepath = tmpdir.join('file')
         filepath.write("Hello")
@@ -458,40 +429,35 @@ class TestPOSIXLocalPath:
         assert linkpath.readlink() == "file"
         assert filepath.read() == linkpath.read()
 
-    def test_symlink_not_existing(self):
-        tmpdir = self.tmpdir 
+    def test_symlink_not_existing(self, tmpdir):
         linkpath = tmpdir.join('testnotexisting')
         assert not linkpath.check(link=1)
         assert linkpath.check(link=0)
 
-    def test_relto_with_root(self):
-        y = self.root.join('x').relto(py.path.local('/'))
-        assert y[0] == str(self.root)[1]
+    def test_relto_with_root(self, path1, tmpdir):
+        y = path1.join('x').relto(py.path.local('/'))
+        assert y[0] == str(path1)[1]
 
-    def test_visit_recursive_symlink(self):
-        tmpdir = self.tmpdir 
+    def test_visit_recursive_symlink(self, tmpdir):
         linkpath = tmpdir.join('test')
         linkpath.mksymlinkto(tmpdir)
         visitor = tmpdir.visit(None, lambda x: x.check(link=0))
         assert list(visitor) == [linkpath]
 
-    def test_symlink_isdir(self):
-        tmpdir = self.tmpdir 
+    def test_symlink_isdir(self, tmpdir):
         linkpath = tmpdir.join('test')
         linkpath.mksymlinkto(tmpdir)
         assert linkpath.check(dir=1)
         assert not linkpath.check(link=0, dir=1)
 
-    def test_symlink_remove(self):
-        tmpdir = self.tmpdir.realpath() 
+    def test_symlink_remove(self, tmpdir):
         linkpath = tmpdir.join('test')
         linkpath.mksymlinkto(linkpath) # point to itself
         assert linkpath.check(link=1)
         linkpath.remove()
         assert not linkpath.check()
 
-    def test_realpath_file(self):
-        tmpdir = self.tmpdir 
+    def test_realpath_file(self, tmpdir):
         linkpath = tmpdir.join('test')
         filepath = tmpdir.join('file')
         filepath.write("")
@@ -499,11 +465,11 @@ class TestPOSIXLocalPath:
         realpath = linkpath.realpath()
         assert realpath.basename == 'file'
 
-    def test_owner(self):
+    def test_owner(self, path1, tmpdir):
         from pwd import getpwuid
         from grp import getgrgid
-        stat = self.root.stat()
-        assert stat.path == self.root 
+        stat = path1.stat()
+        assert stat.path == path1 
 
         uid = stat.uid
         gid = stat.gid
@@ -515,9 +481,9 @@ class TestPOSIXLocalPath:
         assert gid == stat.gid 
         assert group == stat.group 
 
-    def test_atime(self):
+    def test_atime(self, tmpdir):
         import time
-        path = self.root.ensure('samplefile')
+        path = tmpdir.ensure('samplefile')
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very
@@ -527,72 +493,70 @@ class TestPOSIXLocalPath:
         duration = time.time() - now
         assert (atime2-atime1) <= duration
 
-    def test_commondir(self):
+    def test_commondir(self, path1):
         # XXX This is here in local until we find a way to implement this
         #     using the subversion command line api.
-        p1 = self.root.join('something')
-        p2 = self.root.join('otherthing')
-        assert p1.common(p2) == self.root
-        assert p2.common(p1) == self.root
+        p1 = path1.join('something')
+        p2 = path1.join('otherthing')
+        assert p1.common(p2) == path1
+        assert p2.common(p1) == path1
 
-    def test_commondir_nocommon(self):
+    def test_commondir_nocommon(self, path1):
         # XXX This is here in local until we find a way to implement this
         #     using the subversion command line api.
-        p1 = self.root.join('something')
-        p2 = py.path.local(self.root.sep+'blabla')
+        p1 = path1.join('something')
+        p2 = py.path.local(path1.sep+'blabla')
         assert p1.common(p2) == '/' 
 
-    def test_join_to_root(self): 
-        root = self.root.parts()[0]
+    def test_join_to_root(self, path1): 
+        root = path1.parts()[0]
         assert len(str(root)) == 1
         assert str(root.join('a')) == '/a'
 
-    def test_join_root_to_root_with_no_abs(self): 
-        nroot = self.root.join('/')
-        assert str(self.root) == str(nroot) 
-        assert self.root == nroot 
+    def test_join_root_to_root_with_no_abs(self, path1): 
+        nroot = path1.join('/')
+        assert str(path1) == str(nroot) 
+        assert path1 == nroot 
 
-    def test_chmod_simple_int(self):
-        py.builtin.print_("self.root is", self.root)
-        mode = self.root.stat().mode
-        self.root.chmod(mode/2)
+    def test_chmod_simple_int(self, path1):
+        mode = path1.stat().mode
+        path1.chmod(int(mode/2))
         try:
-            assert self.root.stat().mode != mode
+            assert path1.stat().mode != mode
         finally:
-            self.root.chmod(mode)
-            assert self.root.stat().mode == mode
+            path1.chmod(mode)
+            assert path1.stat().mode == mode
 
-    def test_chmod_rec_int(self):
+    def test_chmod_rec_int(self, path1):
         # XXX fragile test
-        py.builtin.print_("self.root is", self.root)
         recfilter = lambda x: x.check(dotfile=0, link=0)
         oldmodes = {}
-        for x in self.root.visit(rec=recfilter):
+        for x in path1.visit(rec=recfilter):
             oldmodes[x] = x.stat().mode
-        self.root.chmod(int("772", 8), rec=recfilter)
+        path1.chmod(int("772", 8), rec=recfilter)
         try:
-            for x in self.root.visit(rec=recfilter):
+            for x in path1.visit(rec=recfilter):
                 assert x.stat().mode & int("777", 8) == int("772", 8)
         finally:
             for x,y in oldmodes.items():
                 x.chmod(y)
 
-    def test_chown_identity(self):
-        owner = self.root.stat().owner
-        group = self.root.stat().group
-        self.root.chown(owner, group)
+    def test_chown_identity(self, path1):
+        owner = path1.stat().owner
+        group = path1.stat().group
+        path1.chown(owner, group)
 
-    def test_chown_dangling_link(self):
-        owner = self.root.stat().owner
-        group = self.root.stat().group
-        x = self.root.join('hello')
+    def test_chown_dangling_link(self, path1):
+        owner = path1.stat().owner
+        group = path1.stat().group
+        x = path1.join('hello')
         x.mksymlinkto('qlwkejqwlek')
         try:
-            self.root.chown(owner, group, rec=1)
+            path1.chown(owner, group, rec=1)
         finally:
             x.remove(rec=0)
 
-    def test_chown_identity_rec_mayfail(self):
-        owner = self.root.stat().owner
-        group = self.root.stat().group
-        self.root.chown(owner, group)
+    def test_chown_identity_rec_mayfail(self, path1):
+        owner = path1.stat().owner
+        group = path1.stat().group
+        path1.chown(owner, group)

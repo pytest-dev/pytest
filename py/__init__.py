@@ -149,9 +149,12 @@ initpkg(__name__,
     'builtin.exec_'          : ('./builtin/builtin31.py', 'exec_'),
     'builtin._basestring'    : ('./builtin/builtin31.py', '_basestring'),
     'builtin._totext'        : ('./builtin/builtin31.py', '_totext'),
+    'builtin._isbytes'       : ('./builtin/builtin31.py', '_isbytes'),
+    'builtin._istext'        : ('./builtin/builtin31.py', '_istext'),
     'builtin.builtins'       : ('./builtin/builtin31.py', 'builtins'),
     'builtin.execfile'       : ('./builtin/builtin31.py', 'execfile'),
     'builtin.callable'       : ('./builtin/builtin31.py', 'callable'),
+    'builtin.pickle'         : ('./builtin/builtin31.py', 'pickle'),
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),

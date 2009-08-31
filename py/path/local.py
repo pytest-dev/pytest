@@ -314,11 +314,8 @@ class LocalPath(FSBase):
             childurl = self.join(name)
             if fil is None or fil(childurl):
                 res.append(childurl)
-        if hasattr(sort, '__call__'):
-            res.sort(sort)
-        elif sort:
-            res.sort()
-        return res
+        self._sortlist(res, sort)
+        return res 
 
     def size(self):
         """ return size of the underlying file object """
@@ -358,7 +355,7 @@ class LocalPath(FSBase):
         """ pickle object into path location"""
         f = self.open('wb')
         try:
-            py.error.checked_call(py.std.cPickle.dump, obj, f, bin)
+            py.error.checked_call(py.builtin.pickle.dump, obj, f, bin)
         finally:
             f.close()
 
@@ -368,17 +365,20 @@ class LocalPath(FSBase):
         py.error.checked_call(os.mkdir, str(p))
         return p
 
-    def write(self, content, mode='wb'):
-        """ write string content into path. """
-        s = str(content)
+    def write(self, data, mode='w'):
+        """ write data into path. """
+        if 'b' in mode:
+            if not py.builtin._isbytes(data):
+                raise ValueError("can only process bytes")
+        else:
+            if not py.builtin._istext(data):
+                if not py.builtin._isbytes(data):
+                    data = str(data)
+                else:
+                    data = py.builtin._totext(data, sys.getdefaultencoding())
         f = self.open(mode)
-        if not hasattr(s, 'decode'): # byte string 
-            encoding = getattr(f, 'encoding', None)
-            if not encoding:
-                encoding = sys.getdefaultencoding()
-            s = s.encode(encoding)
         try:
-            f.write(s)
+            f.write(data)
         finally:
             f.close()
 
@@ -409,7 +409,7 @@ class LocalPath(FSBase):
         else:
             p.dirpath()._ensuredirs()
             if not p.check(file=1):
-                p.write("")
+                p.open('w').close()
             return p
 
     def stat(self):
@@ -542,10 +542,9 @@ class LocalPath(FSBase):
                 return mod
 
     def sysexec(self, *argv):
-        """ return stdout-put from executing a system child process,
-            where the self path points to the binary (XXX or script)
-            to be executed. Note that this process is directly
-            invoked and not through a system shell.
+        """ return stdout text from executing a system child process,
+            where the 'self' path points to executable. 
+            The process is directly invoked and not through a system shell. 
         """
         from subprocess import Popen, PIPE
         argv = map(str, argv)
@@ -555,6 +554,8 @@ class LocalPath(FSBase):
         if ret != 0:
             raise py.process.cmdexec.Error(ret, ret, str(self),
                                            stdout, stderr,)
+        if py.builtin._isbytes(stdout):
+            stdout = py.builtin._totext(stdout, sys.getdefaultencoding())
         return stdout
 
     def sysfind(cls, name, checker=None):

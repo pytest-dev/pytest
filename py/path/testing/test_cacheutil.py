@@ -32,14 +32,18 @@ class TestBuildcostAccess(BasicCacheAPITest):
         # result into time()-time() == 0 which makes the below
         # test fail randomly.  Let's rather use incrementing
         # numbers instead. 
-        monkeypatch.setattr(cacheutil, 'gettime', 
-                py.std.itertools.count().next)
+        l = [0]
+        def counter():
+            l[0] = l[0] + 1 
+            return l[0]
+        monkeypatch.setattr(cacheutil, 'gettime', counter)
         for x in range(cache.maxentries):
             y = cache.getorbuild(x, lambda: x)
             assert x == y
         for x in range(cache.maxentries):
             assert cache.getorbuild(x, None) == x
-        for x in range(cache.maxentries/2):
+        halfentries = int(cache.maxentries / 2)
+        for x in range(halfentries):
             assert cache.getorbuild(x, None) == x
             assert cache.getorbuild(x, None) == x
         # evict one entry 
@@ -47,7 +51,7 @@ class TestBuildcostAccess(BasicCacheAPITest):
         assert val == 42
         # check that recently used ones are still there
         # and are not build again
-        for x in range(cache.maxentries/2):
+        for x in range(halfentries):
             assert cache.getorbuild(x, None) == x
         assert cache.getorbuild(-1, None) == 42
 

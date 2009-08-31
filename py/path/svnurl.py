@@ -97,7 +97,8 @@ class SvnCommandPath(svncommon.SvnPathBase):
 
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
-        assert 'w' not in mode and 'a' not in mode, "XXX not implemented for svn cmdline"
+        if mode not in ("r", "rU",): 
+            raise ValueError("mode %r not supported" % (mode,))
         assert self.check(file=1) # svn cat returns an empty file otherwise
         if self.rev is None:
             return self._svnpopenauth('svn cat "%s"' % (
@@ -120,9 +121,10 @@ class SvnCommandPath(svncommon.SvnPathBase):
 
     # modifying methods (cache must be invalidated)
     def mkdir(self, *args, **kwargs):
-        """ create & return the directory joined with args. You can provide
-a checkin message by giving a keyword argument 'msg'"""
-        commit_msg=kwargs.get('msg', "mkdir by py lib invocation")
+        """ create & return the directory joined with args. 
+        pass a 'msg' keyword argument to set the commit message.
+        """
+        commit_msg = kwargs.get('msg', "mkdir by py lib invocation")
         createpath = self.join(*args)
         createpath._svnwrite('mkdir', '-m', commit_msg)
         self._norev_delentry(createpath.dirpath())
@@ -236,7 +238,7 @@ checkin message msg."""
                     info = InfoSvnCommand(lsline)
                     if info._name != '.':  # svn 1.5 produces '.' dirs, 
                         nameinfo_seq.append((info._name, info))
-                    
+            nameinfo_seq.sort()
             return nameinfo_seq
         auth = self.auth and self.auth.makecmdoptions() or None
         if self.rev is not None:
@@ -245,6 +247,25 @@ checkin message msg."""
         else:
             return self._lsnorevcache.getorbuild((self.strpath, auth),
                                                  builder)
+
+    def listdir(self, fil=None, sort=None):
+        """ list directory contents, possibly filter by the given fil func
+            and possibly sorted.
+        """
+        if isinstance(fil, str):
+            fil = common.FNMatcher(fil)
+        nameinfo_seq = self._listdir_nameinfo()
+        if len(nameinfo_seq) == 1:
+            name, info = nameinfo_seq[0]
+            if name == self.basename and info.kind == 'file':
+                #if not self.check(dir=1):
+                raise py.error.ENOTDIR(self)
+        paths = [self.join(name) for (name, info) in nameinfo_seq]
+        if fil:
+            paths = [x for x in paths if fil(x)]
+        self._sortlist(paths, sort)
+        return paths
+
 
     def log(self, rev_start=None, rev_end=1, verbose=False):
         """ return a list of LogEntry instances for this path.

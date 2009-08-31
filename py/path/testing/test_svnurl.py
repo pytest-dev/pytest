@@ -1,56 +1,56 @@
 import py
 from py.__.path.svnurl import InfoSvnCommand
-from py.__.path.testing.svntestbase import CommonCommandAndBindingTests, \
-                                               getrepowc, getsvnbin
+from py.__.path.testing.svntestbase import CommonSvnTests
 import datetime
 import time
 
-def setup_module(mod):
-    getsvnbin()
+def pytest_funcarg__path1(request):
+    repo, wc = request.getfuncargvalue("repowc1")
+    return py.path.svnurl(repo)
 
-class TestSvnURLCommandPath(CommonCommandAndBindingTests):
-    def setup_class(cls): 
-        repo, wc = getrepowc()
-        cls.root = py.path.svnurl(repo)
+class TestSvnURLCommandPath(CommonSvnTests):
+    @py.test.mark.xfail
+    def test_load(self, path1):
+        super(TestSvnURLCommandPath, self).test_load(path1)
 
-    def test_move_file(self):  # overrides base class
-        p = self.root.ensure('origfile')
+    def test_move_file(self, path1):  # overrides base class
+        p = path1.ensure('origfile')
         newp = p.dirpath('newfile')
         p.move(newp)
         assert newp.check(file=1)
         newp.remove()
         assert not p.check()
 
-    def test_move_dir(self):  # overrides base class
-        p = self.root.ensure('origdir', dir=1)
+    def test_move_dir(self, path1):  # overrides base class
+        p = path1.ensure('origdir', dir=1)
         newp = p.dirpath('newdir')
         p.move(newp)
         assert newp.check(dir=1)
         newp.remove()
         assert not p.check()
 
-    def test_svnurl_needs_arg(self):
+    def test_svnurl_needs_arg(self, path1):
         py.test.raises(TypeError, "py.path.svnurl()")
 
-    def test_svnurl_does_not_accept_None_either(self):
+    def test_svnurl_does_not_accept_None_either(self, path1):
         py.test.raises(Exception, "py.path.svnurl(None)")
 
-    def test_svnurl_characters_simple(self):
+    def test_svnurl_characters_simple(self, path1):
         py.path.svnurl("svn+ssh://hello/world")
 
-    def test_svnurl_characters_at_user(self):
+    def test_svnurl_characters_at_user(self, path1):
         py.path.svnurl("http://user@host.com/some/dir")
 
-    def test_svnurl_characters_at_path(self):
+    def test_svnurl_characters_at_path(self, path1):
         py.test.raises(ValueError, 'py.path.svnurl("http://host.com/foo@bar")')
 
-    def test_svnurl_characters_colon_port(self):
+    def test_svnurl_characters_colon_port(self, path1):
         py.path.svnurl("http://host.com:8080/some/dir")
 
-    def test_svnurl_characters_tilde_end(self):
+    def test_svnurl_characters_tilde_end(self, path1):
         py.path.svnurl("http://host.com/some/file~")
 
-    def test_svnurl_characters_colon_path(self):
+    def test_svnurl_characters_colon_path(self, path1):
         if py.std.sys.platform == 'win32':
             # colons are allowed on win32, because they're part of the drive
             # part of an absolute path... however, they shouldn't be allowed in
@@ -58,42 +58,22 @@ class TestSvnURLCommandPath(CommonCommandAndBindingTests):
             py.test.skip('XXX fixme win32')
         py.test.raises(ValueError, 'py.path.svnurl("http://host.com/foo:bar")')
 
-    def test_export(self):
-        repo, wc = getrepowc('test_export_repo', 'test_export_wc')
-        foo = wc.join('foo').ensure(dir=True)
-        bar = foo.join('bar').ensure(file=True)
-        bar.write('bar\n')
-        foo.commit('testing something')
-        exportpath = py.test.ensuretemp('test_export_exportdir')
-        url = py.path.svnurl(repo + '/foo')
-        foo = url.export(exportpath.join('foo'))
-        assert foo == exportpath.join('foo')
-        assert isinstance(foo, py.path.local)
-        assert foo.join('bar').check()
-        assert not foo.join('.svn').check()
-
-    def test_export_rev(self):
-        repo, wc = getrepowc('test_export_rev_repo', 'test_export_rev_wc')
-        foo = wc.join('foo').ensure(dir=True)
-        bar = foo.join('bar').ensure(file=True)
-        bar.write('bar\n')
-        rev1 = foo.commit('testing something')
-        baz = foo.join('baz').ensure(file=True)
-        baz.write('baz\n')
-        rev2 = foo.commit('testing more')
-        
-        exportpath = py.test.ensuretemp('test_export_rev_exportdir')
-        url = py.path.svnurl(repo + '/foo', rev=rev1)
-        foo1 = url.export(exportpath.join('foo1'))
-        assert foo1.check()
-        assert foo1.join('bar').check()
-        assert not foo1.join('baz').check()
-
-        url = py.path.svnurl(repo + '/foo', rev=rev2)
-        foo2 = url.export(exportpath.join('foo2'))
-        assert foo2.check()
-        assert foo2.join('bar').check()
-        assert foo2.join('baz').check()
+    def test_export(self, path1, tmpdir):
+        tmpdir = tmpdir.join("empty")
+        p = path1.export(tmpdir)
+        assert p == tmpdir # XXX should return None
+        n1 = [x.basename for x in tmpdir.listdir()]
+        n2 = [x.basename for x in path1.listdir()]
+        n1.sort()
+        n2.sort()
+        assert n1 == n2 
+        assert not p.join('.svn').check()
+        rev = path1.mkdir("newdir")
+        tmpdir.remove()
+        assert not tmpdir.check()
+        path1.new(rev=1).export(tmpdir)
+        for p in tmpdir.listdir():
+            assert p.basename in n2
 
 class TestSvnInfoCommand:
 
