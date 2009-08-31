@@ -8,11 +8,7 @@ def pytest_addoption(parser):
         help="disable python assert expression reinterpretation."),
 
 def pytest_configure(config):
-    # XXX
-    if sys.version_info >= (3,0):
-        return
-
-    if not config.getvalue("noassert"):
+    if not config.getvalue("noassert") and not config.getvalue("nomagic"):
         warn_about_missing_assertion()
         config._oldassertion = py.builtin.builtins.AssertionError
         py.builtin.builtins.AssertionError = py.code._AssertionError 

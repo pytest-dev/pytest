@@ -96,7 +96,7 @@ class TestFailing(object):
 
     def test_reinterpret_fails_with_print_for_the_fun_of_it(self):
         l = [1,2,3]
-        print "l is", l
+        print ("l is %r" % l)
         a,b = l.pop()
 
     def test_some_error(self):
@@ -113,7 +113,7 @@ def test_dynamic_compile_shows_nicely():
     name = 'abc-123'
     module = py.std.imp.new_module(name)
     code = py.code.compile(src, name, 'exec')
-    exec code in module.__dict__
+    py.builtin.exec_(code, module.__dict__)
     py.std.sys.modules[name] = module
     module.foo()
 
