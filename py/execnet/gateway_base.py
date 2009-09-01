@@ -181,6 +181,7 @@ class Message:
 
 
 def _setupmessages():
+    # XXX use metaclass for registering 
 
     class CHANNEL_OPEN(Message):
         def received(self, gateway):
@@ -211,14 +212,13 @@ def _setupmessages():
         def received(self, gateway):
             gateway._channelfactory._local_last_message(self.channelid)
 
-    classes = [x for x in locals().values() if hasattr(x, '__bases__')]
-    classes.sort(lambda x,y : cmp(x.__name__, y.__name__))
-    i = 0
-    for cls in classes:
+    classes = [CHANNEL_OPEN, CHANNEL_NEW, CHANNEL_DATA, 
+               CHANNEL_CLOSE, CHANNEL_CLOSE_ERROR, CHANNEL_LAST_MESSAGE]
+            
+    for i, cls in enumerate(classes):
         Message._types[i] = cls
         cls.msgtype = i
         setattr(Message, cls.__name__, cls)
-        i+=1
 
 _setupmessages()
 

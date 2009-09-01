@@ -151,7 +151,7 @@ class TmpTestdir:
         # used from runner functional tests 
         item = self.getitem(source)
         # the test class where we are called from wants to provide the runner 
-        testclassinstance = self.request.function.im_self
+        testclassinstance = py.builtin._getimself(self.request.function)
         runner = testclassinstance.getrunner()
         return runner(item)
 

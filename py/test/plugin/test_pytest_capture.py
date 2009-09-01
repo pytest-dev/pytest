@@ -56,14 +56,16 @@ class TestCaptureManager:
 @py.test.mark.multi(method=['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
     if sys.version_info >= (3,0):
-        py.test.skip("test not applicable on 3k") 
+        obj = "'b\u00f6y'"
+    else:
+        obj = "u'\u00f6y'"
     testdir.makepyfile("""
         # taken from issue 227 from nosetests
         def test_unicode():
             import sys
             print (sys.stdout)
-            print u'b\\u00f6y'
-    """)
+            print (%s)
+    """ % obj)
     result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines([
         "*1 passed*"

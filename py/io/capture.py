@@ -96,13 +96,37 @@ def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
         return f
     newfd = os.dup(fd) 
     mode = mode and mode or f.mode
-    if encoding is not None and sys.version_info >= (3,0):
-        mode = mode.replace("b", "")
-        buffering = True
+    if sys.version_info >= (3,0):
+        if encoding is not None:
+            mode = mode.replace("b", "")
+            buffering = True
         return os.fdopen(newfd, mode, buffering, encoding, closefd=False)
     else:
-        return os.fdopen(newfd, mode, buffering) 
+        f = os.fdopen(newfd, mode, buffering) 
+        if encoding is not None:
+            return EncodedFile(f, encoding)
+        return f
 
+class EncodedFile(object):
+    def __init__(self, _stream, encoding):
+        self._stream = _stream
+        self.encoding = encoding
+
+    def write(self, obj):
+        if isinstance(obj, unicode):
+            obj = obj.encode(self.encoding)
+        elif isinstance(obj, str):
+            pass
+        else:
+            obj = str(obj)
+        self._stream.write(obj)
+
+    def writelines(self, linelist):
+        data = ''.join(linelist)
+        self.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self._stream, name)
 
 class Capture(object):
     def call(cls, func, *args, **kwargs): 

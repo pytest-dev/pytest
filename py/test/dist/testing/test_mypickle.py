@@ -14,17 +14,24 @@ def pytest_generate_tests(metafunc):
         except ImportError:
             pass
         else:
-            metafunc.addcall(funcargs={'picklemod': cPpickle})
+            metafunc.addcall(funcargs={'picklemod': cPickle})
+    elif "obj" in metafunc.funcargnames and "proto" in metafunc.funcargnames:
+        a1 = A()
+        a2 = A()
+        a2.a1 = a1
+        for proto in (0,1,2, -1):
+            for obj in {1:2}, [1,2,3], a1, a2:
+                metafunc.addcall(funcargs=dict(obj=obj, proto=proto))
 
-def xxx_test_underlying_basic_pickling_mechanisms(picklemod):
+def test_underlying_basic_pickling_mechanisms(picklemod):
     f1 = py.io.TextIO()
     f2 = py.io.TextIO()
 
-    pickler1 = picklingmod.Pickler(f1)
-    unpickler1 = picklingmod.Unpickler(f2)
+    pickler1 = picklemod.Pickler(f1)
+    unpickler1 = picklemod.Unpickler(f2)
 
-    pickler2 = picklingmod.Pickler(f2)
-    unpickler2 = picklingmod.Unpickler(f1)
+    pickler2 = picklemod.Pickler(f2)
+    unpickler2 = picklemod.Unpickler(f1)
 
     #pickler1.memo = unpickler1.memo = {}
     #pickler2.memo = unpickler2.memo = {}
@@ -50,14 +57,6 @@ def xxx_test_underlying_basic_pickling_mechanisms(picklemod):
 class A: 
     pass
 
-def pytest_generate_tests(metafunc):
-    if "obj" in metafunc.funcargnames and "proto" in metafunc.funcargnames:
-        a1 = A()
-        a2 = A()
-        a2.a1 = a1
-        for proto in (0,1,2, -1):
-            for obj in {1:2}, [1,2,3], a1, a2:
-                metafunc.addcall(funcargs=dict(obj=obj, proto=proto))
         
 def test_pickle_and_back_IS_same(obj, proto):
     p1 = ImmutablePickler(uneven=False, protocol=proto)

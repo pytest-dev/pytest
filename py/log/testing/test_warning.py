@@ -11,7 +11,7 @@ def test_apiwarn_functional():
     py.builtin.print_("out", out)
     py.builtin.print_("err", err)
     assert err.find("x.y.z") != -1
-    lno = test_apiwarn_functional.func_code.co_firstlineno + 2
+    lno = py.code.getrawcode(test_apiwarn_functional).co_firstlineno + 2
     exp = "%s:%s" % (mypath, lno)
     assert err.find(exp) != -1
 
@@ -23,7 +23,7 @@ def test_stacklevel():
     capture = py.io.StdCapture()
     f()
     out, err = capture.reset()
-    lno = test_stacklevel.func_code.co_firstlineno + 6
+    lno = py.code.getrawcode(test_stacklevel).co_firstlineno + 6
     warning = str(err)
     assert warning.find(":%s" % lno) != -1
 
@@ -38,7 +38,7 @@ def test_stacklevel_initpkg_with_resolve(testdir):
     capture = py.io.StdCapture()
     mod.__getattr__()
     out, err = capture.reset()
-    lno = test_stacklevel_initpkg_with_resolve.func_code.co_firstlineno + 9
+    lno = py.code.getrawcode(test_stacklevel_initpkg_with_resolve).co_firstlineno + 9
     warning = str(err)
     assert warning.find(":%s" % lno) != -1
 
@@ -48,7 +48,7 @@ def test_stacklevel_initpkg_no_resolve():
     capture = py.io.StdCapture()
     f()
     out, err = capture.reset()
-    lno = test_stacklevel_initpkg_no_resolve.func_code.co_firstlineno + 2
+    lno = py.code.getrawcode(test_stacklevel_initpkg_no_resolve).co_firstlineno + 2
     warning = str(err)
     assert warning.find(":%s" % lno) != -1
 
@@ -60,7 +60,7 @@ def test_function():
     py.builtin.print_("out", out)
     py.builtin.print_("err", err)
     assert err.find("x.y.z") != -1
-    lno = test_function.func_code.co_firstlineno 
+    lno = py.code.getrawcode(test_function).co_firstlineno 
     exp = "%s:%s" % (mypath, lno)
     assert err.find(exp) != -1
 

@@ -83,8 +83,9 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         self.function = pyfuncitem.obj
         self.module = pyfuncitem.getparent(py.test.collect.Module).obj
-        self.cls = getattr(self.function, 'im_class', None)
-        self.instance = getattr(self.function, 'im_self', None)
+        clscol = pyfuncitem.getparent(py.test.collect.Class)
+        self.cls = clscol and clscol.obj or None
+        self.instance = py.builtin._getimself(self.function)
         self.config = pyfuncitem.config
         self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
@@ -99,7 +100,8 @@ class FuncargRequest:
     def _fillfuncargs(self):
         argnames = getfuncargnames(self.function)
         if argnames:
-            assert not getattr(self._pyfuncitem, '_args', None), "yielded functions cannot have funcargs" 
+            assert not getattr(self._pyfuncitem, '_args', None), (
+                "yielded functions cannot have funcargs")
         for argname in argnames:
             if argname not in self._pyfuncitem.funcargs:
                 self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)

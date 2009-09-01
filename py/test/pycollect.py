@@ -17,6 +17,7 @@ a tree of collectors and test items that this modules provides::
 
 """ 
 import py
+import inspect
 from py.__.test.collect import configproperty, warnoldcollect
 pydir = py.path.local(py.__file__).dirpath()
 from py.__.test import funcargs
@@ -100,7 +101,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         # NB. we avoid random getattrs and peek in the __dict__ instead
         d = {}
         dicts = [getattr(self.obj, '__dict__', {})]
-        for basecls in py.std.inspect.getmro(self.obj.__class__):
+        for basecls in inspect.getmro(self.obj.__class__):
             dicts.append(basecls.__dict__)
         seen = {}
         for dic in dicts:
@@ -140,7 +141,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
 
     def _istestclasscandidate(self, name, obj):
         if self.classnamefilter(name) and \
-           py.std.inspect.isclass(obj):
+           inspect.isclass(obj):
             if hasinit(obj):
                 # XXX WARN 
                 return False
@@ -149,8 +150,6 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
-        # due to _buildname2items funcobj is the raw function, we need
-        # to work to get at the class 
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         metafunc = funcargs.Metafunc(funcobj, config=self.config, 
@@ -163,15 +162,11 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         return funcargs.FunctionCollector(name=name, 
             parent=self, calls=metafunc._calls)
 
-if py.std.sys.version_info > (3, 0):
-    _code_attr = "__code__"
-else:
-    _code_attr = "func_code"
-
 def is_generator(func):
     try:
-        return (getattr(func, _code_attr).co_flags & 32) # generator function 
-    except AttributeError: # c / builtin functions have no func_code
+        return py.code.getrawcode(func).co_flags & 32 # generator function 
+    except AttributeError: # builtin functions have no bytecode
+        # assume them to not be generators
         return False 
         
 class Module(py.test.collect.File, PyCollectorMixin):
@@ -242,7 +237,7 @@ class FunctionMixin(PyobjMixin):
 
     def setup(self): 
         """ perform setup for this test function. """
-        if py.std.inspect.ismethod(self.obj):
+        if inspect.ismethod(self.obj):
             name = 'setup_method' 
         else: 
             name = 'setup_function' 
@@ -257,7 +252,7 @@ class FunctionMixin(PyobjMixin):
 
     def teardown(self): 
         """ perform teardown for this test function. """
-        if hasattr(self.obj, 'im_self'):
+        if inspect.ismethod(self.obj):
             name = 'teardown_method' 
         else: 
             name = 'teardown_function' 

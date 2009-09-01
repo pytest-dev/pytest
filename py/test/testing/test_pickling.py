@@ -153,7 +153,7 @@ class TestConfigPickling:
         assert col2.listnames() == col.listnames()
 
     def test_config_and_collector_pickling(self, testdir):
-        from cPickle import Pickler, Unpickler
+        from pickle import Pickler, Unpickler
         tmpdir = testdir.tmpdir
         dir1 = tmpdir.ensure("somedir", dir=1)
         config = testdir.parseconfig()

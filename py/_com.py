@@ -75,7 +75,8 @@ class Registry:
         l = []
         if plugins is None:
             plugins = self._plugins
-        for plugin in list(plugins) + list(extra):
+        candidates = list(plugins) + list(extra)
+        for plugin in candidates:
             try:
                 l.append(getattr(plugin, attrname))
             except AttributeError:
@@ -105,7 +106,7 @@ class HookRelay:
         return multicall.execute()
         
 class HookCaller:
-    def __init__(self, hookrelay, name, firstresult, extralookup=()):
+    def __init__(self, hookrelay, name, firstresult, extralookup=None):
         self.hookrelay = hookrelay 
         self.name = name 
         self.firstresult = firstresult 

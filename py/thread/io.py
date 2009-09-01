@@ -1,5 +1,8 @@
 
-import thread
+try:
+    from _thread import get_ident
+except ImportError:
+    from thread import get_ident
 
 class ThreadOut(object): 
     """ A file like object that diverts writing operations 
@@ -51,14 +54,13 @@ class ThreadOut(object):
             setattr(obj, attrname, self._oldout) 
         
     def setwritefunc(self, writefunc, tid=None): 
-        assert callable(writefunc)
         if tid is None: 
-            tid = thread.get_ident() 
+            tid = get_ident() 
         self._tid2out[tid] = [0, writefunc]
 
     def delwritefunc(self, tid=None, ignoremissing=True): 
         if tid is None: 
-            tid = thread.get_ident() 
+            tid = get_ident() 
         try: 
             del self._tid2out[tid] 
         except KeyError: 
@@ -66,7 +68,7 @@ class ThreadOut(object):
                 raise 
 
     def _get(self): 
-        tid = thread.get_ident() 
+        tid = get_ident() 
         try: 
             return self._tid2out[tid]
         except KeyError: 

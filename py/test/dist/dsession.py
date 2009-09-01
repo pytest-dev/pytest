@@ -8,8 +8,10 @@ import py
 from py.__.test.session import Session
 from py.__.test import outcome 
 from py.__.test.dist.nodemanage import NodeManager
-
-import Queue 
+try:
+    import queue 
+except ImportError:
+    import Queue as queue
 
 debug_file = None # open('/tmp/loop.log', 'w')
 def debug(*args):
@@ -72,7 +74,7 @@ class DSession(Session):
     MAXITEMSPERHOST = 15
     
     def __init__(self, config):
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.node2pending = {}
         self.item2nodes = {}
         super(DSession, self).__init__(config=config)
@@ -107,7 +109,7 @@ class DSession(Session):
             try:
                 eventcall = self.queue.get(timeout=2.0)
                 break
-            except Queue.Empty:
+            except queue.Empty:
                 continue
         loopstate.dowork = True 
           

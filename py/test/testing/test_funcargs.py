@@ -1,4 +1,4 @@
-import py
+import py, sys
 from py.__.test import funcargs
 
 def test_getfuncargnames():
@@ -14,7 +14,8 @@ def test_getfuncargnames():
         def f(self, arg1, arg2="hello"):
             pass
     assert funcargs.getfuncargnames(A().f) == ['arg1']
-    assert funcargs.getfuncargnames(A.f) == ['arg1']
+    if sys.version_info < (3,0):
+        assert funcargs.getfuncargnames(A.f) == ['arg1']
 
 class TestFillFuncArgs:
     def test_funcarg_lookupfails(self, testdir):
@@ -361,7 +362,7 @@ class TestGenfuncFunctional:
             "*2 passed in*",
         ])
 
-    def test_addcall_with_funcargs_two(self, testdir):
+    def test_addcall_with_two_funcargs_generators(self, testdir):
         testdir.makeconftest("""
             def pytest_generate_tests(metafunc):
                 assert "arg1" in metafunc.funcargnames 

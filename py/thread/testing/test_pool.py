@@ -1,13 +1,14 @@
 
 import py
 import sys
+from py.__.thread.pool import queue
 
 WorkerPool = py._thread.WorkerPool
 ThreadOut = py._thread.ThreadOut
 
 def test_some():
     pool = WorkerPool()
-    q = py.std.Queue.Queue()
+    q = queue.Queue()
     num = 4
 
     def f(i): 
@@ -66,7 +67,7 @@ def test_maxthreads():
 
 def test_join_timeout():
     pool = WorkerPool()
-    q = py.std.Queue.Queue()
+    q = queue.Queue()
     def f():
         q.get() 
     reply = pool.dispatch(f)

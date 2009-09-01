@@ -40,7 +40,7 @@ class UnitTestCaseInstance(py.test.collect.Instance):
         l = []
         for name in names:
             callobj = getattr(self.obj, name)
-            if callable(callobj):
+            if py.builtin.callable(callobj):
                 l.append(UnitTestFunction(name, parent=self))
         return l
 
@@ -65,11 +65,11 @@ class UnitTestFunction(py.test.collect.Function):
         target(*args)
 
     def setup(self):
-        instance = self.obj.im_self
+        instance = py.builtin._getimself(self.obj)
         instance.setUp()
 
     def teardown(self):
-        instance = self.obj.im_self
+        instance = py.builtin._getimself(self.obj)
         instance.tearDown()
 
 

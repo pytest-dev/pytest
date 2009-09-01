@@ -92,12 +92,12 @@ class KeywordMapper:
         """ set a consumer for a set of keywords. """ 
         # normalize to tuples 
         if isinstance(keywords, str): 
-            keywords = tuple(map(None, keywords.split()))
+            keywords = tuple(filter(None, keywords.split()))
         elif hasattr(keywords, '_keywords'): 
             keywords = keywords._keywords 
         elif not isinstance(keywords, tuple): 
             raise TypeError("key %r is not a string or tuple" % (keywords,))
-        if consumer is not None and not callable(consumer): 
+        if consumer is not None and not py.builtin.callable(consumer): 
             if not hasattr(consumer, 'write'): 
                 raise TypeError(
                     "%r should be None, callable or file-like" % (consumer,))
@@ -123,11 +123,10 @@ def getstate():
 #
 
 class File(object): 
-    """ log consumer wrapping a file(-like) object
-    """
+    """ log consumer wrapping a file(-like) object """
     def __init__(self, f): 
         assert hasattr(f, 'write')
-        assert isinstance(f, file) or not hasattr(f, 'open') 
+        #assert isinstance(f, file) or not hasattr(f, 'open') 
         self._file = f 
 
     def __call__(self, msg): 
@@ -135,19 +134,18 @@ class File(object):
         self._file.write(str(msg) + "\n")
 
 class Path(object): 
-    """ log consumer able to write log messages into
-    """
-    def __init__(self, filename, append=False, delayed_create=False,
-            buffering=1): 
+    """ log consumer that opens and writes to a Path """
+    def __init__(self, filename, append=False, 
+                 delayed_create=False, buffering=False):
         self._append = append
-        self._filename = filename
+        self._filename = str(filename)
         self._buffering = buffering
         if not delayed_create:
             self._openfile()
 
     def _openfile(self):
         mode = self._append and 'a' or 'w'
-        f = open(str(self._filename), mode, buffering=self._buffering)
+        f = open(self._filename, mode)
         self._file = f
 
     def __call__(self, msg):
@@ -155,6 +153,8 @@ class Path(object):
         if not hasattr(self, "_file"):
             self._openfile()
         self._file.write(str(msg) + "\n")
+        if not self._buffering:
+            self._file.flush()
 
 def STDOUT(msg): 
     """ consumer that writes to sys.stdout """
@@ -167,12 +167,6 @@ def STDERR(msg):
 class Syslog:
     """ consumer that writes to the syslog daemon """
 
-    for priority in "LOG_EMERG LOG_ALERT LOG_CRIT LOG_ERR LOG_WARNING LOG_NOTICE LOG_INFO LOG_DEBUG".split():
-        try:
-            exec("%s = py.std.syslog.%s" % (priority, priority))
-        except AttributeError:
-            pass
-    
     def __init__(self, priority = None):
         if priority is None:
             priority = self.LOG_INFO
@@ -181,3 +175,10 @@ class Syslog:
     def __call__(self, msg):
         """ write a message to the log """
         py.std.syslog.syslog(self.priority, str(msg))
+
+for _prio in "EMERG ALERT CRIT ERR WARNING NOTICE INFO DEBUG".split():
+    _prio = "LOG_" + _prio
+    try:
+        setattr(Syslog, _prio, getattr(py.std.syslog, _prio))
+    except AttributeError:
+        pass

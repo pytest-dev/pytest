@@ -117,14 +117,15 @@ class TestLogConsumer:
         assert out.strip() == '[xyz] hello'
 
     def test_log_file(self):
-        custom_log = tempdir.join('log.out')
-        py.log.setconsumer("default", open(str(custom_log), 'w', buffering=0))
+        customlog = tempdir.join('log.out')
+        py.log.setconsumer("default", open(str(customlog), 'w', buffering=1))
         py.log.Producer("default")("hello world #1") 
-        assert custom_log.readlines() == ['[default] hello world #1\n']
+        assert customlog.readlines() == ['[default] hello world #1\n']
 
-        py.log.setconsumer("default", py.log.Path(custom_log, buffering=0))
+        py.log.setconsumer("default", py.log.Path(customlog, buffering=False))
         py.log.Producer("default")("hello world #2") 
-        assert custom_log.readlines() == ['[default] hello world #2\n'] # no append by default!
+        res = customlog.readlines() 
+        assert res == ['[default] hello world #2\n'] # no append by default!
         
     def test_log_file_append_mode(self):
         logfilefn = tempdir.join('log_append.out')

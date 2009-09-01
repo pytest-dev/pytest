@@ -3,6 +3,7 @@
 """ 
 
 import py
+from py.builtin import print_
 
 def pytest_addoption(parser):
     group = parser.addgroup("resultlog", "resultlog plugin options")
@@ -51,9 +52,9 @@ class ResultLog(object):
         self.logfile = logfile # preferably line buffered
 
     def write_log_entry(self, testpath, shortrepr, longrepr):
-        print >>self.logfile, "%s %s" % (shortrepr, testpath)
+        print_("%s %s" % (shortrepr, testpath), file=self.logfile)
         for line in longrepr.splitlines():
-            print >>self.logfile, " %s" % line
+            print_(" %s" % line, file=self.logfile)
 
     def log_outcome(self, node, shortrepr, longrepr):
         testpath = generic_path(node)
@@ -161,7 +162,7 @@ class TestWithFunctionIntegration:
         testdir.plugins.append("resultlog")
         args = ["--resultlog=%s" % resultlog] + [arg]
         testdir.runpytest(*args)
-        return filter(None, resultlog.readlines(cr=0))
+        return [x for x in resultlog.readlines(cr=0) if x]
         
     def test_collection_report(self, testdir):
         ok = testdir.makepyfile(test_collection_ok="")

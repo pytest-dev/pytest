@@ -1,8 +1,11 @@
-import Queue 
 import threading
 import time 
 import sys
 import py
+try:
+    import queue 
+except ImportError:
+    import Queue as queue
 
 ERRORMARKER = object() 
 
@@ -14,7 +17,7 @@ class Reply(object):
     _excinfo = None 
     def __init__(self, task): 
         self.task = task 
-        self._queue = Queue.Queue() 
+        self._queue = queue.Queue() 
 
     def _set(self, result): 
         self._queue.put(result) 
@@ -31,7 +34,7 @@ class Reply(object):
         while 1:
             try: 
                 return self._queue.get_nowait() 
-            except Queue.Empty: 
+            except queue.Empty: 
                 remaining = endtime - time.time() 
                 if remaining <= 0:  #time is over and no element arrived
                     raise IOError("timeout waiting for task %r" %(self.task,))
@@ -59,7 +62,7 @@ class Reply(object):
 class WorkerThread(threading.Thread): 
     def __init__(self, pool): 
         threading.Thread.__init__(self) 
-        self._queue = Queue.Queue() 
+        self._queue = queue.Queue() 
         self._pool = pool 
         self.setDaemon(1) 
 
@@ -149,7 +152,7 @@ class WorkerPool(object):
         """
         if not self._shuttingdown: 
             self._shuttingdown = True 
-            for t in self._alive.keys(): 
+            for t in list(self._alive):
                 t.stop() 
 
     def join(self, timeout=None): 
@@ -158,7 +161,7 @@ class WorkerPool(object):
         deadline = delta = None 
         if timeout is not None: 
             deadline = time.time() + timeout 
-        for thread in self._alive.keys(): 
+        for thread in list(self._alive):
             if deadline: 
                 delta = deadline - time.time() 
                 if delta <= 0: 

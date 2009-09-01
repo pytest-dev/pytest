@@ -26,7 +26,7 @@ class Test_genitems:
        
     def test_subdir_conftest_error(self, testdir):
         tmp = testdir.tmpdir
-        tmp.ensure("sub", "conftest.py").write("raise SyntaxError\n")
+        tmp.ensure("sub", "conftest.py").write("raise SyntaxError()\n")
         items, reprec = testdir.inline_genitems(tmp)
         collectionfailures = reprec.getfailedcollections()
         assert len(collectionfailures) == 1

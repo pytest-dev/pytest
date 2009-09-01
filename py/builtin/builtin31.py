@@ -19,6 +19,9 @@ if sys.version_info >= (3, 0):
     def _istext(x): 
         return isinstance(x, str)
 
+    def _getimself(function):
+        return getattr(function, '__self__', None)
+
     def execfile(fn, globs=None, locs=None):
         if globs is None:
             back = sys._getframe(1)
@@ -50,6 +53,9 @@ else:
         return isinstance(x, str)
     def _istext(x): 
         return isinstance(x, unicode)
+
+    def _getimself(function):
+        return getattr(function, 'im_self', None)
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):

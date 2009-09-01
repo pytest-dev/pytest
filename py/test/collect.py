@@ -316,7 +316,7 @@ class Collector(Node):
         if method is not None and method != Collector.run:
             warnoldcollect(function=method)
             names = self.run()
-            return filter(None, [self.join(name) for name in names])
+            return [x for x in [self.join(name) for name in names] if x]
 
     def run(self):
         """ DEPRECATED: returns a list of names available from this collector.

@@ -31,7 +31,7 @@ def _apiwarn(startversion, msg, stacklevel=1, function=None):
 def warn(msg, stacklevel=1, function=None):
     if function is not None:
         filename = py.std.inspect.getfile(function)
-        lineno = function.func_code.co_firstlineno
+        lineno = py.code.getrawcode(function).co_firstlineno
     else:
         try:
             caller = sys._getframe(stacklevel)
