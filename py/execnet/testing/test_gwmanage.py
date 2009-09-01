@@ -80,13 +80,16 @@ class TestGatewayManagerPopen:
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello").realpath()
         hm.makegateways()
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
+        l = hm.multi_exec(
+                "import os ; channel.send(os.getcwd())").receive_each()
         paths = [x[1] for x in l]
         assert l == [str(hellopath)] * 2
-        py.test.raises(hm.RemoteError, 'hm.multi_chdir("world", inplacelocal=False)')
+        py.test.raises(hm.RemoteError, 
+            'hm.multi_chdir("world", inplacelocal=False)')
         worldpath = hellopath.mkdir("world")
         hm.multi_chdir("world", inplacelocal=False)
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
+        l = hm.multi_exec(
+            "import os ; channel.send(os.getcwd())").receive_each()
         assert len(l) == 2
         assert l[0] == l[1]
         curwd = os.getcwd()

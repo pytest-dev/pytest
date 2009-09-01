@@ -14,7 +14,7 @@
 
 from pickle import Pickler, Unpickler
 import py
-from py.__.execnet.channel import Channel
+from py.__.execnet.gateway_base import Channel
 import os
 #debug = open("log-mypickle-%d" % os.getpid(), 'w')
 

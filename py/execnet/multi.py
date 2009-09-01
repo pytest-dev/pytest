@@ -1,14 +1,11 @@
 """
-    Working with multiple channels and gateways
-
+    Support for working with multiple channels and gateways
 """
 import py
-from py.__.execnet.channel import RemoteError
 
 NO_ENDMARKER_WANTED = object()
 
 class MultiGateway:
-    RemoteError = RemoteError
     def __init__(self, gateways):
         self.gateways = gateways
     def remote_exec(self, source):

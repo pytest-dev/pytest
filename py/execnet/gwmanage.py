@@ -5,13 +5,12 @@
 
 import py
 import sys, os
-from py.__.execnet.channel import RemoteError
+from py.__.execnet.gateway_base import RemoteError
 
 NO_ENDMARKER_WANTED = object()
 
 class GatewayManager:
     RemoteError = RemoteError
-
     def __init__(self, specs, defaultchdir="pyexecnetcache"):
         self.gateways = []
         self.specs = []

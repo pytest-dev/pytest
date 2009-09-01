@@ -1,10 +1,23 @@
 from __future__ import generators
 import os, sys, time, signal
 import py
-from py.__.execnet import gateway
-from py.__.execnet.register import startup_modules, getsource 
+from py.__.execnet.gateway_base import Message, Channel, ChannelFactory
+from py.__.execnet.gateway_base import ExecnetAPI
+
+from py.__.execnet.gateway import startup_modules, getsource 
+pytest_plugins = "pytester"
 
 TESTTIMEOUT = 10.0 # seconds
+
+class TestExecnetEvents:
+    def test_popengateway(self, _pytest):
+        rec = _pytest.gethookrecorder(ExecnetAPI)
+        gw = py.execnet.PopenGateway()
+        call = rec.popcall("pyexecnet_gateway_init") 
+        assert call.gateway == gw
+        gw.exit()
+        call = rec.popcall("pyexecnet_gateway_exit")
+        assert call.gateway == gw
 
 def test_getsource_import_modules(): 
     for dottedname in startup_modules: 
@@ -25,7 +38,7 @@ def test_getsource_no_colision():
 
 def test_stdouterrin_setnull():
     cap = py.io.StdCaptureFD()
-    from py.__.execnet.register import stdouterrin_setnull
+    from py.__.execnet.gateway import stdouterrin_setnull
     stdouterrin_setnull()
     import os
     os.write(1, "hello")
@@ -39,11 +52,11 @@ def test_stdouterrin_setnull():
 
 class TestMessage:
     def test_wire_protocol(self):
-        for cls in gateway.Message._types.values():
+        for cls in Message._types.values():
             one = py.io.TextIO()
             cls(42, '23').writeto(one)
             two = py.io.TextIO(one.getvalue())
-            msg = gateway.Message.readfrom(two)
+            msg = Message.readfrom(two)
             assert isinstance(msg, cls)
             assert msg.channelid == 42
             assert msg.data == '23'
@@ -52,7 +65,7 @@ class TestMessage:
 
 class TestPureChannel:
     def setup_method(self, method):
-        self.fac = gateway.ChannelFactory(None)
+        self.fac = ChannelFactory(None)
 
     def test_factory_create(self):
         chan1 = self.fac.new()
@@ -654,5 +667,5 @@ def test_threads_twice():
     
 
 def test_nodebug():
-    from py.__.execnet import gateway
-    assert not gateway.debug
+    from py.__.execnet import gateway_base
+    assert not gateway_base.debug

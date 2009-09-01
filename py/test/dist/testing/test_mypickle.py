@@ -1,6 +1,51 @@
 
 import py
-from py.__.test.dist.mypickle import ImmutablePickler, PickleChannel, UnpickleError
+from py.__.test.dist.mypickle import ImmutablePickler, PickleChannel
+from py.__.test.dist.mypickle import UnpickleError
+
+# first let's test some basic functionality 
+
+def pytest_generate_tests(metafunc):
+    if 'picklemod' in metafunc.funcargnames:
+        import pickle
+        metafunc.addcall(funcargs={'picklemod': pickle})
+        try:
+            import cPickle
+        except ImportError:
+            pass
+        else:
+            metafunc.addcall(funcargs={'picklemod': cPpickle})
+
+def xxx_test_underlying_basic_pickling_mechanisms(picklemod):
+    f1 = py.io.TextIO()
+    f2 = py.io.TextIO()
+
+    pickler1 = picklingmod.Pickler(f1)
+    unpickler1 = picklingmod.Unpickler(f2)
+
+    pickler2 = picklingmod.Pickler(f2)
+    unpickler2 = picklingmod.Unpickler(f1)
+
+    #pickler1.memo = unpickler1.memo = {}
+    #pickler2.memo = unpickler2.memo = {}
+
+    d = {}
+
+    pickler1.dump(d)
+    f1.seek(0)
+    d_other = unpickler2.load()
+
+    # translate unpickler2 memo to pickler2
+    pickler2.memo = dict([(id(obj), (int(x), obj))
+                            for x, obj in unpickler2.memo.items()])
+
+    pickler2.dump(d_other)
+    f2.seek(0)
+
+    unpickler1.memo = dict([(str(x), y) for x, y in pickler1.memo.values()])
+    d_back = unpickler1.load()
+    assert d is d_back
+
 
 class A: 
     pass
@@ -210,4 +255,5 @@ class TestPickleChannelFunctional:
         assert not channel._getremoteerror()
         channel.send(2)
         channel.waitclose(timeout=2)
+
 
