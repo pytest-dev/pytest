@@ -3,11 +3,87 @@ import os, sys, time, signal
 import py
 from py.__.execnet.gateway_base import Message, Channel, ChannelFactory
 from py.__.execnet.gateway_base import ExecnetAPI, queue, Popen2IO
+from py.__.execnet import gateway_base, gateway
 
 from py.__.execnet.gateway import startup_modules, getsource 
 pytest_plugins = "pytester"
 
 TESTTIMEOUT = 10.0 # seconds
+
+def pytest_generate_tests(metafunc):
+    if 'pythonpath' in metafunc.funcargnames:
+        for name in 'python2.4', 'python2.5', 'python2.6', 'python3.1':
+            metafunc.addcall(id=name, param=name)
+
+def pytest_funcarg__pythonpath(request):
+    name = request.param  
+    executable = py.path.local.sysfind(name)
+    if executable is None:
+        py.test.skip("no %s found" % (name,))
+    return executable
+
+def test_io_message(pythonpath, tmpdir):
+    check = tmpdir.join("check.py")
+    check.write(py.code.Source(gateway_base, """
+        try:
+            from io import BytesIO 
+        except ImportError:
+            from StringIO import StringIO as BytesIO
+        import tempfile
+        temp_out = BytesIO()
+        temp_in = BytesIO()
+        io = Popen2IO(temp_out, temp_in)
+        for i, msg_cls in Message._types.items():
+            print ("checking %s %s" %(i, msg_cls))
+            for data in "hello", "hello".encode('ascii'):
+                msg1 = msg_cls(i, data)
+                msg1.writeto(io)
+                x = io.outfile.getvalue()
+                io.outfile.truncate(0)
+                io.outfile.seek(0)
+                io.infile.seek(0)
+                io.infile.write(x)
+                io.infile.seek(0)
+                msg2 = Message.readfrom(io)
+                assert msg1.channelid == msg2.channelid, (msg1, msg2)
+                assert msg1.data == msg2.data
+        print ("all passed")
+    """))
+    #out = py.process.cmdexec("%s %s" %(executable,check))
+    out = pythonpath.sysexec(check)
+    print (out)
+    assert "all passed" in out
+
+def test_popen_io(pythonpath, tmpdir):
+    check = tmpdir.join("check.py")
+    check.write(py.code.Source(gateway_base, """
+        do_exec(Popen2IO.server_stmt, globals())
+        io.write("hello".encode('ascii'))
+        s = io.read(1)
+        assert s == "x".encode('ascii')
+    """))
+    from subprocess import Popen, PIPE
+    args = [str(pythonpath), str(check)]
+    proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    proc.stdin.write("x".encode('ascii'))
+    stdout, stderr = proc.communicate()
+    print (stderr)
+    ret = proc.wait()
+    assert "hello".encode('ascii') in stdout
+
+def test_rinfo_source(pythonpath, tmpdir):
+    check = tmpdir.join("check.py")
+    check.write(py.code.Source("""
+        class Channel:
+            def send(self, data):
+                assert eval(repr(data), {}) == data
+        channel = Channel()
+        """, gateway.rinfo_source, """
+        print ('all passed')
+    """))
+    out = pythonpath.sysexec(check)
+    print (out)
+    assert "all passed" in out
 
 class TestExecnetEvents:
     def test_popengateway(self, _pytest):
@@ -112,7 +188,7 @@ class BasicRemoteExecution:
     def test_correct_setup_no_py(self):
         channel = self.gw.remote_exec("""
             import sys
-            channel.send(sys.modules.keys())
+            channel.send(list(sys.modules))
         """) 
         remotemodules = channel.receive() 
         assert 'py' not in remotemodules, (
@@ -201,7 +277,7 @@ class BasicRemoteExecution:
                 channel.send(x)
         """) 
         l = list(channel) 
-        assert l == range(3) 
+        assert l == [0, 1, 2]
 
     def test_channel_passing_over_channel(self):
         channel = self.gw.remote_exec('''
@@ -272,7 +348,11 @@ class BasicRemoteExecution:
         # with 'earlyfree==True', this tests the "sendonly" channel state.
         l = []
         channel = self.gw.remote_exec(source='''
-            import thread, time
+            try:
+                import thread
+            except ImportError:
+                import _thread as thread
+            import time
             def producer(subchannel):
                 for i in range(5):
                     time.sleep(0.15)
@@ -472,23 +552,6 @@ class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
     def test_cmdattr(self):
         assert hasattr(self.gw, '_cmd')
 
-def test_channel_endmarker_remote_killterm():
-    gw = py.execnet.PopenGateway()
-    try:
-        q = queue.Queue()
-        channel = gw.remote_exec('''
-            import os
-            os.kill(os.getpid(), 15)
-        ''') 
-        channel.setcallback(q.put, endmarker=999)
-        val = q.get(TESTTIMEOUT)
-        assert val == 999
-        err = channel._getremoteerror()
-    finally:
-        gw.exit()
-    py.test.skip("provide information on causes/signals "
-                 "of dying remote gateways")
-
 #class TestBlockingIssues: 
 #    def test_join_blocked_execution_gateway(self): 
 #        gateway = py.execnet.PopenGateway() 
@@ -656,3 +719,21 @@ def test_threads_twice():
 def test_nodebug():
     from py.__.execnet import gateway_base
     assert not gateway_base.debug
+
+def test_channel_endmarker_remote_killterm():
+    gw = py.execnet.PopenGateway()
+    try:
+        q = queue.Queue()
+        channel = gw.remote_exec('''
+            import os
+            os.kill(os.getpid(), 15)
+        ''') 
+        channel.setcallback(q.put, endmarker=999)
+        val = q.get(TESTTIMEOUT)
+        assert val == 999
+        err = channel._getremoteerror()
+    finally:
+        gw.exit()
+    py.test.skip("provide information on causes/signals "
+                 "of dying remote gateways")
+

@@ -27,18 +27,18 @@ if sys.version_info > (3, 0):
     exec("""def do_exec(co, loc):
     exec(co, loc)""")
     unicode = str
-    sysex = Exception 
 else:
     exec("""def do_exec(co, loc):
     exec co in loc""")
     bytes = str
-    sysex = (KeyboardInterrupt, SystemExit)
+
 
 def str(*args):
     raise EnvironmentError(
         "use unicode or bytes, not cross-python ambigous 'str'")
 
 default_encoding = "UTF-8"
+sysex = (KeyboardInterrupt, SystemExit)
 
 debug = 0 # open('/tmp/execnet-debug-%d' % os.getpid()  , 'w')
 
@@ -94,13 +94,15 @@ class SocketIO:
 class Popen2IO:
     server_stmt = """
 import os, sys, tempfile
+#io = Popen2IO(os.fdopen(1, 'wb'), os.fdopen(0, 'rb'))
 io = Popen2IO(sys.stdout, sys.stdin)
-sys.stdout = sys.stderr = tempfile.TemporaryFile()
+sys.stdout = tempfile.TemporaryFile()
+sys.stdin = tempfile.TemporaryFile()
 """
     error = (IOError, OSError, EOFError)
 
-    def __init__(self, infile, outfile):
-        self.outfile, self.infile = infile, outfile
+    def __init__(self, outfile, infile):
+        self.outfile, self.infile = outfile, infile
         if sys.platform == "win32":
             import msvcrt
             msvcrt.setmode(infile.fileno(), os.O_BINARY)
@@ -110,17 +112,22 @@ sys.stdout = sys.stderr = tempfile.TemporaryFile()
 
     def read(self, numbytes):
         """Read exactly 'bytes' bytes from the pipe. """
-        data = self.infile.read(numbytes)
+        infile = self.infile
+        if hasattr(infile, 'buffer'):
+            infile = infile.buffer
+        data = infile.read(numbytes)
         if len(data) < numbytes:
             raise EOFError
-        assert isinstance(data, bytes)
         return data
 
     def write(self, data):
         """write out all bytes to the pipe. """
         assert isinstance(data, bytes)
-        self.outfile.write(data)
-        self.outfile.flush()
+        outfile = self.outfile
+        if hasattr(outfile, 'buffer'):
+            outfile = outfile.buffer
+        outfile.write(data)
+        outfile.flush()
 
     def close_read(self):
         if self.readable:
@@ -169,7 +176,7 @@ class Message:
          senderid, stringlen) = struct.unpack(HDR_FORMAT, header)
         data = io.read(stringlen)
         if dataformat == 1:
-            pass
+            pass 
         elif dataformat == 2:
             data = data.decode(default_encoding)
             data = eval(data, {})   # reversed argh
@@ -178,9 +185,6 @@ class Message:
         msg = cls._types[msgtype](senderid, data)
         return msg
     readfrom = classmethod(readfrom)
-
-    def post_sent(self, gateway, excinfo=None):
-        pass
 
     def __repr__(self):
         r = repr(self.data)
@@ -193,8 +197,6 @@ class Message:
 
 
 def _setupmessages():
-    # XXX use metaclass for registering 
-
     class CHANNEL_OPEN(Message):
         def received(self, gateway):
             channel = gateway._channelfactory.new(self.channelid)
@@ -275,7 +277,7 @@ class Channel(object):
         # after having cleared the queue we register 
         # the callback only if the channel is not closed already.
         _callbacks = self.gateway._channelfactory._callbacks
-        _receivelock = self.gateway._channelfactory._receivelock
+        _receivelock = self.gateway._receivelock
         _receivelock.acquire()
         try:
             if self._items is None:
@@ -426,6 +428,7 @@ class Channel(object):
             return self.receive()
         except EOFError: 
             raise StopIteration 
+    __next__ = next
 
 ENDMARKER = object() 
 
@@ -436,7 +439,6 @@ class ChannelFactory(object):
         self._channels = weakref.WeakValueDictionary()
         self._callbacks = {}
         self._writelock = threading.Lock()
-        self._receivelock = threading.RLock()
         self.gateway = gateway
         self.count = startcount
         self.finished = False
@@ -596,6 +598,7 @@ class BaseGateway(object):
         """
         self._io = io
         self._channelfactory = ChannelFactory(self, _startcount)
+        self._receivelock = threading.RLock()
 
     def _initreceive(self, requestqueue=False):
         if requestqueue: 
@@ -605,18 +608,15 @@ class BaseGateway(object):
         self._receiverthread.setDaemon(1)
         self._receiverthread.start() 
 
-    def _trace(self, *args):
+    def _trace(self, msg):
         if debug:
             try:
-                l = "\n".join(args).split(os.linesep)
-                id = getid(self)
-                for x in l:
-                    debug.write(x+"\n")
+                debug.write(unicode(msg) + "\n")
                 debug.flush()
             except sysex:
                 raise
             except:
-                traceback.print_exc()
+                sys.stderr.write("exception during tracing\n")
 
     def _traceex(self, excinfo):
         try:
@@ -629,12 +629,13 @@ class BaseGateway(object):
 
     def _thread_receiver(self):
         """ thread to read and handle Messages half-sync-half-async. """
+        self._trace("starting to receive")
         try:
             while 1:
                 try:
                     msg = Message.readfrom(self._io)
                     self._trace("received <- %r" % msg)
-                    _receivelock = self._channelfactory._receivelock
+                    _receivelock = self._receivelock
                     _receivelock.acquire()
                     try:
                         msg.received(self)
@@ -669,10 +670,15 @@ class BaseGateway(object):
             except: 
                 excinfo = self.exc_info()
                 self._traceex(excinfo)
-                msg.post_sent(self, excinfo)
             else:
-                msg.post_sent(self)
                 self._trace('sent -> %r' % msg)
+
+    def _stopsend(self):
+        self._send(None)
+
+    def _stopexec(self):
+        if self._requestqueue is not None:
+            self._requestqueue.put(None)
 
     def _local_redirect_thread_output(self, outid, errid): 
         l = []
@@ -719,14 +725,14 @@ class BaseGateway(object):
         try:
             loc = { 'channel' : channel, '__name__': '__channelexec__'}
             #open("task.py", 'w').write(source)
-            self._trace("execution starts:", repr(source)[:50])
+            self._trace("execution starts: %s" % repr(source)[:50])
             close = self._local_redirect_thread_output(outid, errid) 
             try:
                 co = compile(source+'\n', '', 'exec')
                 do_exec(co, loc)
             finally:
                 close() 
-                self._trace("execution finished:", repr(source)[:50])
+                self._trace("execution finished")
         except sysex:
             pass 
         except self._StopExecLoop:
@@ -734,10 +740,10 @@ class BaseGateway(object):
             raise
         except:
             excinfo = self.exc_info()
+            self._trace("got exception %s" % excinfo[1])
             l = traceback.format_exception(*excinfo)
             errortext = "".join(l)
             channel.close(errortext)
-            self._trace(errortext)
         else:
             channel.close()
 
@@ -759,26 +765,4 @@ class BaseGateway(object):
         if self._receiverthread.isAlive():
             self._trace("joining receiver thread")
             self._receiverthread.join()
-
-    def exit(self):
-        """ Try to stop all exec and IO activity. """
-        self._cleanup.unregister(self)
-        self._stopexec()
-        self._stopsend()
-        self.hook.pyexecnet_gateway_exit(gateway=self)
-
-    def _stopsend(self):
-        self._send(None)
-
-    def _stopexec(self):
-        if self._requestqueue is not None:
-            self._requestqueue.put(None)
-
-def getid(gw, cache={}):
-    name = gw.__class__.__name__
-    try:
-        return cache.setdefault(name, {})[id(gw)]
-    except KeyError:
-        cache[name][id(gw)] = x = "%s:%s.%d" %(os.getpid(), gw.__class__.__name__, len(cache[name]))
-        return x
 

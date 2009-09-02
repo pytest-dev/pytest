@@ -35,7 +35,7 @@ class GatewayCleanup:
         if debug:
             debug.writeslines(["="*20, "cleaning up", "=" * 20])
             debug.flush()
-        for gw in self._activegateways.keys():
+        for gw in list(self._activegateways):
             gw.exit()
             #gw.join() # should work as well
 
@@ -70,6 +70,12 @@ class InitiatingGateway(BaseGateway):
         return "<%s%s %s/%s (%s active channels)>" %(
                 self.__class__.__name__, addr, r, s, i)
 
+    def exit(self):
+        """ Try to stop all exec and IO activity. """
+        self._cleanup.unregister(self)
+        self._stopexec()
+        self._stopsend()
+        self.hook.pyexecnet_gateway_exit(gateway=self)
 
     def _remote_bootstrap_gateway(self, io, extra=''):
         """ return Gateway with a asynchronously remotely
@@ -93,16 +99,8 @@ class InitiatingGateway(BaseGateway):
     def _rinfo(self, update=False):
         """ return some sys/env information from remote. """
         if update or not hasattr(self, '_cache_rinfo'):
-            self._cache_rinfo = RInfo(**self.remote_exec("""
-                import sys, os
-                channel.send(dict(
-                    executable = sys.executable, 
-                    version_info = sys.version_info, 
-                    platform = sys.platform,
-                    cwd = os.getcwd(),
-                    pid = os.getpid(),
-                ))
-            """).receive())
+            ch = self.remote_exec(rinfo_source)
+            self._cache_rinfo = RInfo(**ch.receive())
         return self._cache_rinfo
 
     def remote_exec(self, source, stdout=None, stderr=None): 
@@ -193,14 +191,24 @@ class RInfo:
                 for item in self.__dict__.items()])
         return "<RInfo %r>" % info
 
+rinfo_source = """
+import sys, os
+channel.send(dict(
+    executable = sys.executable, 
+    version_info = tuple([sys.version_info[i] for i in range(5)]),
+    platform = sys.platform,
+    cwd = os.getcwd(),
+    pid = os.getpid(),
+))
+"""
+
 class PopenCmdGateway(InitiatingGateway):
     def __init__(self, cmd):
         # on win close_fds=True does not work, not sure it'd needed
         #p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
         self._popen = p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE) 
-        infile, outfile = p.stdin, p.stdout
         self._cmd = cmd
-        io = Popen2IO(infile, outfile)
+        io = Popen2IO(p.stdin, p.stdout)
         super(PopenCmdGateway, self).__init__(io=io)
 
     def exit(self):
@@ -217,8 +225,8 @@ class PopenGateway(PopenCmdGateway):
         """
         if not python:
             python = sys.executable
-        cmd = '%s -u -c "exec input()"' % python
-        cmd = '%s -u -c "import sys ; exec(eval(sys.stdin.readline()))"' % python
+        cmd = ('%s -u -c "import sys ; '
+               'exec(eval(sys.stdin.readline()))"' % python)
         super(PopenGateway, self).__init__(cmd)
 
     def _remote_bootstrap_gateway(self, io, extra=''):
