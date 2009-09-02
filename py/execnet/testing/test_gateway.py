@@ -2,7 +2,7 @@ from __future__ import generators
 import os, sys, time, signal
 import py
 from py.__.execnet.gateway_base import Message, Channel, ChannelFactory
-from py.__.execnet.gateway_base import ExecnetAPI
+from py.__.execnet.gateway_base import ExecnetAPI, queue, Popen2IO
 
 from py.__.execnet.gateway import startup_modules, getsource 
 pytest_plugins = "pytester"
@@ -18,6 +18,7 @@ class TestExecnetEvents:
         gw.exit()
         call = rec.popcall("pyexecnet_gateway_exit")
         assert call.gateway == gw
+
 
 def test_getsource_import_modules(): 
     for dottedname in startup_modules: 
@@ -41,7 +42,7 @@ def test_stdouterrin_setnull():
     from py.__.execnet.gateway import stdouterrin_setnull
     stdouterrin_setnull()
     import os
-    os.write(1, "hello")
+    os.write(1, "hello".encode('ascii'))
     if os.name == "nt":
         os.write(2, "world")
     os.read(0, 1)
@@ -53,13 +54,14 @@ def test_stdouterrin_setnull():
 class TestMessage:
     def test_wire_protocol(self):
         for cls in Message._types.values():
-            one = py.io.TextIO()
-            cls(42, '23').writeto(one)
-            two = py.io.TextIO(one.getvalue())
+            one = py.io.BytesIO()
+            data = '23'.encode('ascii')
+            cls(42, data).writeto(one)
+            two = py.io.BytesIO(one.getvalue())
             msg = Message.readfrom(two)
             assert isinstance(msg, cls)
             assert msg.channelid == 42
-            assert msg.data == '23'
+            assert msg.data == data
             assert isinstance(repr(msg), str)
             # == "<Message.%s channelid=42 '23'>" %(msg.__class__.__name__, )
 
@@ -100,7 +102,7 @@ class BasicRemoteExecution:
         assert self.gw._receiverthread.isAlive()
 
     def test_repr_doesnt_crash(self):
-        assert isinstance(repr(self), str)
+        assert isinstance(repr(self.gw), str)
 
     def test_attribute__name__(self):
         channel = self.gw.remote_exec("channel.send(__name__)")
@@ -316,8 +318,7 @@ class BasicRemoteExecution:
         assert l[3] == 999
 
     def test_channel_endmarker_callback_error(self):
-        from Queue import Queue
-        q = Queue()
+        q = queue.Queue()
         channel = self.gw.remote_exec(source='''
             raise ValueError()
         ''') 
@@ -446,18 +447,6 @@ class BasicRemoteExecution:
         res = channel.receive()
         assert res == 42
 
-    def test_non_reverse_execution(self):
-        gw = self.gw
-        c1 = gw.remote_exec("""
-            c = channel.gateway.remote_exec("pass")
-            try:
-                c.waitclose()
-            except c.RemoteError, e: 
-                channel.send(str(e))
-        """)
-        text = c1.receive()
-        assert text.find("execution disallowed") != -1 
-
     def test__rinfo(self):
         rinfo = self.gw._rinfo()
         assert rinfo.executable 
@@ -486,9 +475,8 @@ class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
 def test_channel_endmarker_remote_killterm():
     gw = py.execnet.PopenGateway()
     try:
-        from Queue import Queue
-        q = Queue()
-        channel = gw.remote_exec(source='''
+        q = queue.Queue()
+        channel = gw.remote_exec('''
             import os
             os.kill(os.getpid(), 15)
         ''') 
@@ -581,8 +569,7 @@ def test_endmarker_delivery_on_remote_killterm():
         py.test.skip("no os.kill()")
     gw = py.execnet.PopenGateway()
     try:
-        from Queue import Queue
-        q = Queue()
+        q = queue.Queue()
         channel = gw.remote_exec(source='''
             import os
             os.kill(os.getpid(), 15)

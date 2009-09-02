@@ -123,4 +123,4 @@ class HostRSync(py.execnet.RSync):
             path = os.path.basename(self._sourcedir) + "/" + modified_rel_path
             remotepath = gateway.spec.chdir
             py.builtin.print_('%s:%s <= %s' %
-                              (gateway.remoteaddress, remotepath, path))
+                              (gateway.spec, remotepath, path))

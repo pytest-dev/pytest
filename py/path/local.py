@@ -551,11 +551,13 @@ class LocalPath(FSBase):
         proc = Popen([str(self)] + list(argv), stdout=PIPE, stderr=PIPE)
         stdout, stderr = proc.communicate()
         ret = proc.wait()
-        if ret != 0:
-            raise py.process.cmdexec.Error(ret, ret, str(self),
-                                           stdout, stderr,)
         if py.builtin._isbytes(stdout):
             stdout = py.builtin._totext(stdout, sys.getdefaultencoding())
+        if ret != 0:
+            if py.builtin._isbytes(stderr):
+                stderr = py.builtin._totext(stderr, sys.getdefaultencoding())
+            raise py.process.cmdexec.Error(ret, ret, str(self),
+                                           stdout, stderr,)
         return stdout
 
     def sysfind(cls, name, checker=None):

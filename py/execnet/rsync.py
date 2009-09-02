@@ -91,8 +91,7 @@ class RSync(object):
 
     def _report_send_file(self, gateway, modified_rel_path):
         if self._verbose:
-            py.builtin.print_('%s <= %s' % (gateway.remoteaddress,
-                                            modified_rel_path))
+            print("%s <= %s" %(gateway, modified_rel_path))
 
     def send(self, raises=True):
         """ Sends a sourcedir to all added targets. Flag indicates

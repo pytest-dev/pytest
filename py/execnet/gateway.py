@@ -1,7 +1,8 @@
-import sys, os, inspect, socket
+import sys, os, inspect, socket, atexit, weakref
 import py
 from subprocess import Popen, PIPE
-from py.__.execnet.gateway_base import BaseGateway, Popen2IO, SocketIO
+from py.__.execnet.gateway_base import BaseGateway, Message, Popen2IO, SocketIO
+from py.__.execnet.gateway_base import ExecnetAPI
 
 # the list of modules that must be send to the other side 
 # for bootstrapping gateways
@@ -12,18 +13,63 @@ startup_modules = [
     'py.__.execnet.gateway_base', 
 ]
 
+debug = False
+
 def getsource(dottedname): 
     mod = __import__(dottedname, None, None, ['__doc__'])
     return inspect.getsource(mod) 
+
+class GatewayCleanup:
+    def __init__(self): 
+        self._activegateways = weakref.WeakKeyDictionary()
+        atexit.register(self.cleanup_atexit)
+
+    def register(self, gateway):
+        assert gateway not in self._activegateways
+        self._activegateways[gateway] = True
+
+    def unregister(self, gateway):
+        del self._activegateways[gateway]
+
+    def cleanup_atexit(self):
+        if debug:
+            debug.writeslines(["="*20, "cleaning up", "=" * 20])
+            debug.flush()
+        for gw in self._activegateways.keys():
+            gw.exit()
+            #gw.join() # should work as well
+
     
 class InitiatingGateway(BaseGateway):
     """ initialize gateways on both sides of a inputoutput object. """
+    _cleanup = GatewayCleanup()
+
     def __init__(self, io):
         self._remote_bootstrap_gateway(io)
         super(InitiatingGateway, self).__init__(io=io, _startcount=1) 
         # XXX we dissallow execution form the other side
         self._initreceive(requestqueue=False) 
+        self.hook = py._com.HookRelay(ExecnetAPI, py._com.comregistry)
         self.hook.pyexecnet_gateway_init(gateway=self)
+        self._cleanup.register(self) 
+
+    def __repr__(self):
+        """ return string representing gateway type and status. """
+        if hasattr(self, 'remoteaddress'):
+            addr = '[%s]' % (self.remoteaddress,)
+        else:
+            addr = ''
+        try:
+            r = (self._receiverthread.isAlive() and "receiving" or 
+                 "not receiving")
+            s = "sending" # XXX
+            i = len(self._channelfactory.channels())
+        except AttributeError:
+            r = s = "uninitialized"
+            i = "no"
+        return "<%s%s %s/%s (%s active channels)>" %(
+                self.__class__.__name__, addr, r, s, i)
+
 
     def _remote_bootstrap_gateway(self, io, extra=''):
         """ return Gateway with a asynchronously remotely
@@ -41,7 +87,111 @@ class InitiatingGateway(BaseGateway):
         source = "\n".join(bootstrap)
         self._trace("sending gateway bootstrap code")
         #open("/tmp/bootstrap.py", 'w').write(source)
-        io.write('%r\n' % source)
+        repr_source = repr(source) + "\n"
+        io.write(repr_source.encode('ascii'))
+
+    def _rinfo(self, update=False):
+        """ return some sys/env information from remote. """
+        if update or not hasattr(self, '_cache_rinfo'):
+            self._cache_rinfo = RInfo(**self.remote_exec("""
+                import sys, os
+                channel.send(dict(
+                    executable = sys.executable, 
+                    version_info = sys.version_info, 
+                    platform = sys.platform,
+                    cwd = os.getcwd(),
+                    pid = os.getpid(),
+                ))
+            """).receive())
+        return self._cache_rinfo
+
+    def remote_exec(self, source, stdout=None, stderr=None): 
+        """ return channel object and connect it to a remote
+            execution thread where the given 'source' executes
+            and has the sister 'channel' object in its global 
+            namespace.  The callback functions 'stdout' and 
+            'stderr' get called on receival of remote 
+            stdout/stderr output strings. 
+        """
+        source = str(py.code.Source(source))
+        channel = self.newchannel() 
+        outid = self._newredirectchannelid(stdout) 
+        errid = self._newredirectchannelid(stderr) 
+        self._send(Message.CHANNEL_OPEN(
+                    channel.id, (source, outid, errid)))
+        return channel 
+
+    def remote_init_threads(self, num=None):
+        """ start up to 'num' threads for subsequent 
+            remote_exec() invocations to allow concurrent
+            execution. 
+        """
+        if hasattr(self, '_remotechannelthread'):
+            raise IOError("remote threads already running")
+        from py.__.thread import pool
+        source = py.code.Source(pool, """
+            execpool = WorkerPool(maxthreads=%r)
+            gw = channel.gateway
+            while 1:
+                task = gw._requestqueue.get()
+                if task is None:
+                    gw._stopsend()
+                    execpool.shutdown()
+                    execpool.join()
+                    raise gw._StopExecLoop
+                execpool.dispatch(gw._executetask, task)
+        """ % num)
+        self._remotechannelthread = self.remote_exec(source)
+
+    def _newredirectchannelid(self, callback): 
+        if callback is None: 
+            return  
+        if hasattr(callback, 'write'): 
+            callback = callback.write 
+        assert callable(callback) 
+        chan = self.newchannel()
+        chan.setcallback(callback)
+        return chan.id 
+
+    def _remote_redirect(self, stdout=None, stderr=None): 
+        """ return a handle representing a redirection of a remote 
+            end's stdout to a local file object.  with handle.close() 
+            the redirection will be reverted.   
+        """ 
+        clist = []
+        for name, out in ('stdout', stdout), ('stderr', stderr): 
+            if out: 
+                outchannel = self.newchannel()
+                outchannel.setcallback(getattr(out, 'write', out))
+                channel = self.remote_exec(""" 
+                    import sys
+                    outchannel = channel.receive() 
+                    outchannel.gateway._ThreadOut(sys, %r).setdefaultwriter(outchannel.send)
+                """ % name) 
+                channel.send(outchannel)
+                clist.append(channel)
+        for c in clist: 
+            c.waitclose() 
+        class Handle: 
+            def close(_): 
+                for name, out in ('stdout', stdout), ('stderr', stderr): 
+                    if out: 
+                        c = self.remote_exec("""
+                            import sys
+                            channel.gateway._ThreadOut(sys, %r).resetdefault()
+                        """ % name) 
+                        c.waitclose() 
+        return Handle()
+
+
+
+class RInfo:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+    def __repr__(self):
+        info = ", ".join(["%s=%s" % item 
+                for item in self.__dict__.items()])
+        return "<RInfo %r>" % info
 
 class PopenCmdGateway(InitiatingGateway):
     def __init__(self, cmd):
@@ -68,6 +218,7 @@ class PopenGateway(PopenCmdGateway):
         if not python:
             python = sys.executable
         cmd = '%s -u -c "exec input()"' % python
+        cmd = '%s -u -c "import sys ; exec(eval(sys.stdin.readline()))"' % python
         super(PopenGateway, self).__init__(cmd)
 
     def _remote_bootstrap_gateway(self, io, extra=''):
@@ -113,7 +264,7 @@ class SocketGateway(InitiatingGateway):
             host, port = hostport 
         mydir = py.path.local(__file__).dirpath()
         socketserverbootstrap = py.code.Source(
-            mydir.join('script', 'socketserver.py').read('rU'), """
+            mydir.join('script', 'socketserver.py').read('r'), """
             import socket
             sock = bind_and_listen((%r, %r)) 
             port = sock.getsockname()
@@ -187,18 +338,18 @@ def stdouterrin_setnull():
         else:
             devnull = '/dev/null'
     # stdin
-    sys.stdin  = os.fdopen(os.dup(0), 'rb', 0)
+    sys.stdin  = os.fdopen(os.dup(0), 'r', 1)
     fd = os.open(devnull, os.O_RDONLY)
     os.dup2(fd, 0)
     os.close(fd)
 
     # stdout
-    sys.stdout = os.fdopen(os.dup(1), 'wb', 0)
+    sys.stdout = os.fdopen(os.dup(1), 'w', 1)
     fd = os.open(devnull, os.O_WRONLY)
     os.dup2(fd, 1)
 
     # stderr for win32
     if os.name == 'nt':
-        sys.stderr = os.fdopen(os.dup(2), 'wb', 0)
+        sys.stderr = os.fdopen(os.dup(2), 'w', 1)
         os.dup2(fd, 2)
     os.close(fd)

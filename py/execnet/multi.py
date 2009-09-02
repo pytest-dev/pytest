@@ -2,6 +2,10 @@
     Support for working with multiple channels and gateways
 """
 import py
+try:
+    import queue 
+except ImportError:
+    import Queue as queue
 
 NO_ENDMARKER_WANTED = object()
 
@@ -40,7 +44,7 @@ class MultiChannel:
         try:
             return self._queue
         except AttributeError:
-            self._queue = py.std.Queue.Queue()
+            self._queue = queue.Queue()
             for ch in self._channels:
                 def putreceived(obj, channel=ch):
                     self._queue.put((channel, obj))
