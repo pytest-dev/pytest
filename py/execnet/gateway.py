@@ -9,7 +9,6 @@ from py.__.execnet.gateway_base import ExecnetAPI
 # XXX we'd like to have a leaner and meaner bootstrap mechanism 
 
 startup_modules = [
-    'py.__.thread.io', 
     'py.__.execnet.gateway_base', 
 ]
 
@@ -48,7 +47,7 @@ class InitiatingGateway(BaseGateway):
         self._remote_bootstrap_gateway(io)
         super(InitiatingGateway, self).__init__(io=io, _startcount=1) 
         # XXX we dissallow execution form the other side
-        self._initreceive(requestqueue=False) 
+        self._initreceive()
         self.hook = py._com.HookRelay(ExecnetAPI, py._com.comregistry)
         self.hook.pyexecnet_gateway_init(gateway=self)
         self._cleanup.register(self) 
@@ -103,20 +102,15 @@ class InitiatingGateway(BaseGateway):
             self._cache_rinfo = RInfo(**ch.receive())
         return self._cache_rinfo
 
-    def remote_exec(self, source, stdout=None, stderr=None): 
+    def remote_exec(self, source): 
         """ return channel object and connect it to a remote
             execution thread where the given 'source' executes
             and has the sister 'channel' object in its global 
-            namespace.  The callback functions 'stdout' and 
-            'stderr' get called on receival of remote 
-            stdout/stderr output strings. 
+            namespace.
         """
         source = str(py.code.Source(source))
         channel = self.newchannel() 
-        outid = self._newredirectchannelid(stdout) 
-        errid = self._newredirectchannelid(stderr) 
-        self._send(Message.CHANNEL_OPEN(
-                    channel.id, (source, outid, errid)))
+        self._send(Message.CHANNEL_OPEN(channel.id, source))
         return channel 
 
     def remote_init_threads(self, num=None):
@@ -131,7 +125,7 @@ class InitiatingGateway(BaseGateway):
             execpool = WorkerPool(maxthreads=%r)
             gw = channel.gateway
             while 1:
-                task = gw._requestqueue.get()
+                task = gw._execqueue.get()
                 if task is None:
                     gw._stopsend()
                     execpool.shutdown()
@@ -141,21 +135,13 @@ class InitiatingGateway(BaseGateway):
         """ % num)
         self._remotechannelthread = self.remote_exec(source)
 
-    def _newredirectchannelid(self, callback): 
-        if callback is None: 
-            return  
-        if hasattr(callback, 'write'): 
-            callback = callback.write 
-        assert callable(callback) 
-        chan = self.newchannel()
-        chan.setcallback(callback)
-        return chan.id 
-
     def _remote_redirect(self, stdout=None, stderr=None): 
         """ return a handle representing a redirection of a remote 
             end's stdout to a local file object.  with handle.close() 
             the redirection will be reverted.   
         """ 
+        # XXX implement a remote_exec_in_globals(...)
+        #     to send ThreadOut implementation over 
         clist = []
         for name, out in ('stdout', stdout), ('stderr', stderr): 
             if out: 
@@ -164,7 +150,7 @@ class InitiatingGateway(BaseGateway):
                 channel = self.remote_exec(""" 
                     import sys
                     outchannel = channel.receive() 
-                    outchannel.gateway._ThreadOut(sys, %r).setdefaultwriter(outchannel.send)
+                    ThreadOut(sys, %r).setdefaultwriter(outchannel.send)
                 """ % name) 
                 channel.send(outchannel)
                 clist.append(channel)

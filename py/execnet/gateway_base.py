@@ -18,11 +18,6 @@ try:
 except ImportError:
     import Queue as queue
 
-# XXX the following lines should not be here
-if 'ThreadOut' not in globals(): 
-    import py 
-    ThreadOut = py._thread.ThreadOut 
-
 if sys.version_info > (3, 0):
     exec("""def do_exec(co, loc):
     exec(co, loc)""")
@@ -594,14 +589,14 @@ class ExecnetAPI:
 
     def pyexecnet_gwmanage_rsyncfinish(self, source, gateways):
         """ called after rsyncing a directory to remote gateways takes place. """
+
         
 class BaseGateway(object):
     hook = ExecnetAPI()
     exc_info = sys.exc_info 
 
-    class _StopExecLoop(Exception): pass
-    _ThreadOut = ThreadOut 
-    _requestqueue = None
+    class _StopExecLoop(Exception): 
+        pass
 
     def __init__(self, io, _startcount=2): 
         """ initialize core gateway, using the given inputoutput object. 
@@ -610,9 +605,7 @@ class BaseGateway(object):
         self._channelfactory = ChannelFactory(self, _startcount)
         self._receivelock = threading.RLock()
 
-    def _initreceive(self, requestqueue=False):
-        if requestqueue: 
-            self._requestqueue = queue.Queue()
+    def _initreceive(self):
         self._receiverthread = threading.Thread(name="receiver", 
                                  target=self._thread_receiver)
         self._receiverthread.setDaemon(1)
@@ -678,36 +671,23 @@ class BaseGateway(object):
         self._send(None)
 
     def _stopexec(self):
-        if self._requestqueue is not None:
-            self._requestqueue.put(None)
-
-    def _local_redirect_thread_output(self, outid, errid): 
-        l = []
-        for name, id in ('stdout', outid), ('stderr', errid): 
-            if id: 
-                channel = self._channelfactory.new(outid)
-                out = self._ThreadOut(sys, name)
-                out.setwritefunc(channel.send) 
-                l.append((out, channel))
-        def close(): 
-            for out, channel in l: 
-                out.delwritefunc() 
-                channel.close() 
-        return close 
+        if hasattr(self, '_execqueue'):
+            self._execqueue.put(None)
 
     def _local_schedulexec(self, channel, sourcetask):
-        if self._requestqueue is not None:
-            self._requestqueue.put((channel, sourcetask)) 
+        if hasattr(self, '_execqueue'):
+            self._execqueue.put((channel, sourcetask)) 
         else:
             # we will not execute, let's send back an error
             # to inform the other side
             channel.close("execution disallowed")
 
     def _servemain(self, joining=True):
-        self._initreceive(requestqueue=True)
+        self._execqueue = queue.Queue()
+        self._initreceive()
         try:
             while 1:
-                item = self._requestqueue.get()
+                item = self._execqueue.get()
                 if item is None:
                     self._stopsend()
                     break
@@ -722,17 +702,15 @@ class BaseGateway(object):
 
     def _executetask(self, item):
         """ execute channel/source items. """
-        channel, (source, outid, errid) = item 
+        channel, source = item 
         try:
             loc = { 'channel' : channel, '__name__': '__channelexec__'}
             #open("task.py", 'w').write(source)
             self._trace("execution starts: %s" % repr(source)[:50])
-            close = self._local_redirect_thread_output(outid, errid) 
             try:
                 co = compile(source+'\n', '', 'exec')
                 do_exec(co, loc)
             finally:
-                close() 
                 self._trace("execution finished")
         except sysex:
             pass 

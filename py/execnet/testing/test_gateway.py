@@ -429,6 +429,7 @@ class BasicRemoteExecution:
         assert err
         assert str(err).find("ValueError") != -1
 
+    @py.test.mark.xfail
     def test_remote_redirect_stdout(self): 
         out = py.io.TextIO() 
         handle = self.gw._remote_redirect(stdout=out) 
@@ -438,6 +439,7 @@ class BasicRemoteExecution:
         s = out.getvalue() 
         assert s.strip() == "42" 
 
+    @py.test.mark.xfail
     def test_remote_exec_redirect_multi(self): 
         num = 3
         l = [[] for x in range(num)]
