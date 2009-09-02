@@ -7,7 +7,6 @@
 #
 
 progname = 'socket_readline_exec_server-1.2'
-debug = 0
 
 import sys, socket, os
 try:
@@ -15,8 +14,10 @@ try:
 except ImportError:
     fcntl = None
 
+debug = 0
+
 if debug: #  and not os.isatty(sys.stdin.fileno()):
-    f = open('/tmp/execnet-socket-pyout.log', 'a', 0)
+    f = open('/tmp/execnet-socket-pyout.log', 'w')
     old = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = f
     #import py 
@@ -36,7 +37,7 @@ def exec_from_one_connection(serversock):
     print_(progname, 'Entering Accept loop', serversock.getsockname())
     clientsock,address = serversock.accept()
     print_(progname, 'got new connection from %s %s' % address)
-    clientfile = clientsock.makefile('r+',0)
+    clientfile = clientsock.makefile('rb')
     print_("reading line")
     # rstrip so that we can use \r\n for telnet testing
     source = clientfile.readline().rstrip()

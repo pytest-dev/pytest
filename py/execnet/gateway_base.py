@@ -59,7 +59,7 @@ class SocketIO:
 
     def read(self, numbytes):
         "Read exactly 'bytes' bytes from the socket."
-        buf = ""
+        buf = bytes()
         while len(buf) < numbytes:
             t = self.sock.recv(numbytes - len(buf))
             if not t:
@@ -91,8 +91,8 @@ class Popen2IO:
 import os, sys, tempfile
 #io = Popen2IO(os.fdopen(1, 'wb'), os.fdopen(0, 'rb'))
 io = Popen2IO(sys.stdout, sys.stdin)
-sys.stdout = tempfile.TemporaryFile()
-sys.stdin = tempfile.TemporaryFile()
+sys.stdout = tempfile.TemporaryFile('w')
+sys.stdin = tempfile.TemporaryFile('r')
 """
     error = (IOError, OSError, EOFError)
 
@@ -143,6 +143,8 @@ sys.stdin = tempfile.TemporaryFile()
 HDR_FORMAT = "!hhii"
 HDR_SIZE   = struct.calcsize(HDR_FORMAT)
 
+is3k = sys.version_info >= (3,0)
+
 class Message:
     """ encapsulates Messages and their wire protocol. """
     _types = {}
@@ -152,15 +154,17 @@ class Message:
 
     def writeto(self, io):
         # XXX marshal.dumps doesn't work for exchanging data across Python
-        # version :-(((  There is no sane solution, short of a custom
-        # pure Python marshaller
+        # version :-(((  XXX check this statement wrt python2.4 through 3.1
         data = self.data
         if isinstance(data, bytes): 
-            dataformat = 1
+            dataformat = 1 + int(is3k)
         else:
-            data = repr(self.data)  # argh
+            if isinstance(data, unicode):
+                dataformat = 3
+            else:
+                data = repr(self.data)  # argh
+                dataformat = 4
             data = data.encode(default_encoding)
-            dataformat = 2
         header = struct.pack(HDR_FORMAT, self.msgtype, dataformat,
                                          self.channelid, len(data))
         io.write(header + data)
@@ -171,14 +175,21 @@ class Message:
          senderid, stringlen) = struct.unpack(HDR_FORMAT, header)
         data = io.read(stringlen)
         if dataformat == 1:
-            pass 
+            if is3k: 
+                # remote was python2-str, we are 3k-text 
+                data = data.decode(default_encoding)
         elif dataformat == 2:
-            data = data.decode(default_encoding)
-            data = eval(data, {})   # reversed argh
+            # remote was python3-bytes
+            pass
         else:
-            raise ValueError("bad data format")
-        msg = cls._types[msgtype](senderid, data)
-        return msg
+            data = data.decode(default_encoding)
+            if dataformat == 3:
+                pass 
+            elif dataformat == 4:
+                data = eval(data, {})   # reversed argh
+            else:
+                raise ValueError("bad data format")
+        return cls._types[msgtype](senderid, data)
     readfrom = classmethod(readfrom)
 
     def __repr__(self):
@@ -214,8 +225,7 @@ def _setupmessages():
 
     class CHANNEL_CLOSE_ERROR(Message):
         def received(self, gateway):
-            data = self.data.decode(default_encoding)
-            remote_error = gateway._channelfactory.RemoteError(data)
+            remote_error = gateway._channelfactory.RemoteError(self.data)
             gateway._channelfactory._local_close(self.channelid, remote_error)
 
     class CHANNEL_LAST_MESSAGE(Message):
@@ -367,8 +377,7 @@ class Channel(object):
             # but it's never damaging to send too many CHANNEL_CLOSE messages
             put = self.gateway._send 
             if error is not None:
-                put(Message.CHANNEL_CLOSE_ERROR(self.id, 
-                    error.encode(default_encoding)))
+                put(Message.CHANNEL_CLOSE_ERROR(self.id, error))
             else:
                 put(Message.CHANNEL_CLOSE(self.id))
             if isinstance(error, RemoteError):

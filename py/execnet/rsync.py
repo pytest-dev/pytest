@@ -20,7 +20,7 @@ class RSync(object):
     def __init__(self, sourcedir, callback=None, verbose=True): 
         self._sourcedir = str(sourcedir)
         self._verbose = verbose 
-        assert callback is None or callable(callback)
+        assert callback is None or py.builtin.callable(callback)
         self._callback = callback
         self._channels = {}
         self._receivequeue = Queue()

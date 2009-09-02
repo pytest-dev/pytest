@@ -233,9 +233,9 @@ class BasicRemoteExecution:
 
     def test_remote_exec_channel_anonymous(self):
         channel = self.gw.remote_exec('''
-                    obj = channel.receive()
-                    channel.send(obj)
-                  ''')
+           obj = channel.receive()
+           channel.send(obj)
+        ''')
         channel.send(42)
         result = channel.receive()
         assert result == 42
@@ -458,11 +458,11 @@ class BasicRemoteExecution:
     def test_channel_file_write(self): 
         channel = self.gw.remote_exec("""
             f = channel.makefile() 
-            print >>f, "hello world" 
+            f.write("hello world\\n")
             f.close() 
             channel.send(42) 
         """)
-        first = channel.receive() + channel.receive()
+        first = channel.receive() 
         assert first.strip() == 'hello world' 
         second = channel.receive() 
         assert second == 42 
@@ -476,11 +476,11 @@ class BasicRemoteExecution:
     def test_channel_file_proxyclose(self): 
         channel = self.gw.remote_exec("""
             f = channel.makefile(proxyclose=True) 
-            print >>f, "hello world" 
+            f.write("hello world")
             f.close() 
             channel.send(42) 
         """)
-        first = channel.receive() + channel.receive()
+        first = channel.receive() 
         assert first.strip() == 'hello world' 
         py.test.raises(EOFError, channel.receive)
 
@@ -524,7 +524,7 @@ class BasicRemoteExecution:
     def test_confusion_from_os_write_stdout(self):
         channel = self.gw.remote_exec("""
             import os
-            os.write(1, 'confusion!')
+            os.write(1, 'confusion!'.encode('ascii'))
             channel.send(channel.receive() * 6)
             channel.send(channel.receive() * 6)
         """)
@@ -538,7 +538,7 @@ class BasicRemoteExecution:
     def test_confusion_from_os_write_stderr(self):
         channel = self.gw.remote_exec("""
             import os
-            os.write(2, 'test')
+            os.write(2, 'test'.encode('ascii'))
             channel.send(channel.receive() * 6)
             channel.send(channel.receive() * 6)
         """)
@@ -592,14 +592,13 @@ class BasicCmdbasedRemoteExecution(BasicRemoteExecution):
 
 class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
     def test_rinfo_popen(self):
-        #rinfo = py.execnet.PopenGateway()._rinfo()
         rinfo = self.gw._rinfo()
         assert rinfo.executable == py.std.sys.executable 
         assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info == py.std.sys.version_info
 
-    def test_chdir_separation(self):
-        old = py.test.ensuretemp('chdirtest').chdir()
+    def test_chdir_separation(self, tmpdir):
+        old = tmpdir.chdir()
         try:
             gw = py.execnet.PopenGateway()
         finally:

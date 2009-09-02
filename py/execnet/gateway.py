@@ -71,7 +71,10 @@ class InitiatingGateway(BaseGateway):
 
     def exit(self):
         """ Try to stop all exec and IO activity. """
-        self._cleanup.unregister(self)
+        try:
+            self._cleanup.unregister(self)
+        except KeyError:
+            return # we assume it's already happened 
         self._stopexec()
         self._stopsend()
         self.hook.pyexecnet_gateway_exit(gateway=self)
@@ -87,6 +90,7 @@ class InitiatingGateway(BaseGateway):
         bootstrap = [extra]
         bootstrap += [getsource(x) for x in startup_modules]
         bootstrap += [io.server_stmt, 
+                      "io.write('1'.encode('ascii'))",
                       "BaseGateway(io=io, _startcount=2)._servemain()", 
                      ]
         source = "\n".join(bootstrap)
@@ -94,6 +98,8 @@ class InitiatingGateway(BaseGateway):
         #open("/tmp/bootstrap.py", 'w').write(source)
         repr_source = repr(source) + "\n"
         io.write(repr_source.encode('ascii'))
+        s = io.read(1)
+        assert s == "1".encode('ascii')
 
     def _rinfo(self, update=False):
         """ return some sys/env information from remote. """
@@ -242,11 +248,11 @@ class SocketGateway(InitiatingGateway):
         """
         self.host = host = str(host)
         self.port = port = int(port)
+        self.remoteaddress = '%s:%d' % (self.host, self.port)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
         io = SocketIO(sock)
         super(SocketGateway, self).__init__(io=io)
-        self.remoteaddress = '%s:%d' % (self.host, self.port)
 
     def new_remote(cls, gateway, hostport=None): 
         """ return a new (connected) socket gateway, instatiated
