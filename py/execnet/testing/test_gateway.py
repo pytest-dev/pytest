@@ -85,6 +85,26 @@ def test_rinfo_source(pythonpath, tmpdir):
     print (out)
     assert "all passed" in out
 
+def test_geterrortext(pythonpath, tmpdir):
+    check = tmpdir.join("check.py")
+    check.write(py.code.Source(gateway_base, """
+        class Arg:
+            pass
+        errortext = geterrortext((Arg, "1", 4))
+        assert "Arg" in errortext
+        import sys
+        try:
+            raise ValueError("17")
+        except ValueError:
+            excinfo = sys.exc_info()
+            s = geterrortext(excinfo)
+            assert "17" in s
+            print ("all passed")
+    """))
+    out = pythonpath.sysexec(check)
+    print (out)
+    assert "all passed" in out
+
 class TestExecnetEvents:
     def test_popengateway(self, _pytest):
         rec = _pytest.gethookrecorder(ExecnetAPI)

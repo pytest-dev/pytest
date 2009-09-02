@@ -237,6 +237,16 @@ def _setupmessages():
 
 _setupmessages()
 
+def geterrortext(excinfo):
+    try:
+        l = traceback.format_exception(*excinfo)
+        errortext = "".join(l)
+    except sysex:
+        raise
+    except:
+        errortext = '%s: %s' % (excinfo[0].__name__,
+                                excinfo[1])
+    return errortext
 
 class RemoteError(EOFError):
     """ Contains an Exceptions from the other side. """
@@ -618,15 +628,6 @@ class BaseGateway(object):
             except:
                 sys.stderr.write("exception during tracing\n")
 
-    def _traceex(self, excinfo):
-        try:
-            l = traceback.format_exception(*excinfo)
-            errortext = "".join(l)
-        except:
-            errortext = '%s: %s' % (excinfo[0].__name__,
-                                    excinfo[1])
-        self._trace(errortext)
-
     def _thread_receiver(self):
         """ thread to read and handle Messages half-sync-half-async. """
         self._trace("starting to receive")
@@ -646,7 +647,7 @@ class BaseGateway(object):
                 except EOFError:
                     break
                 except:
-                    self._traceex(self.exc_info())
+                    self._trace(geterrortext(self.exc_info()))
                     break 
         finally:
             # XXX we need to signal fatal error states to
@@ -669,7 +670,7 @@ class BaseGateway(object):
                 msg.writeto(self._io) 
             except: 
                 excinfo = self.exc_info()
-                self._traceex(excinfo)
+                self._trace(geterrortext(excinfo))
             else:
                 self._trace('sent -> %r' % msg)
 
@@ -741,8 +742,7 @@ class BaseGateway(object):
         except:
             excinfo = self.exc_info()
             self._trace("got exception %s" % excinfo[1])
-            l = traceback.format_exception(*excinfo)
-            errortext = "".join(l)
+            errortext = geterrortext(excinfo)
             channel.close(errortext)
         else:
             channel.close()
