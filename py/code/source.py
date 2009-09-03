@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Source(object):
-    """ a mutable object holding a source code fragment,
+    """ a immutable object holding a source code fragment,
         possibly deindenting it.
     """
     def __init__(self, *parts, **kwargs):
