@@ -105,6 +105,13 @@ def test_execfile(tmpdir):
         py.builtin.execfile(str(test_file))
     assert A.x == 3
 
+def test_getfuncdict():
+    def f():
+        pass
+    f.x = 4
+    assert py.builtin._getfuncdict(f)["x"] == 4
+    assert py.builtin._getfuncdict(2) is None
+
 def test_callable():
     class A: pass
     assert py.builtin.callable(test_callable)

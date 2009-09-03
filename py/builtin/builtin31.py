@@ -25,6 +25,9 @@ if sys.version_info >= (3, 0):
     def _getcode(function):
         return function.__code__
 
+    def _getfuncdict(function):
+        return getattr(function, "__dict__", None)
+
     def execfile(fn, globs=None, locs=None):
         if globs is None:
             back = sys._getframe(1)
@@ -63,6 +66,9 @@ else:
 
     def _getcode(function):
         return function.func_code
+
+    def _getfuncdict(function):
+        return getattr(function, "__dict__", None)
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):
