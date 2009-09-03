@@ -94,10 +94,11 @@ def test_print_simple():
 
 def test_execfile(tmpdir):
     test_file = tmpdir.join("test.py")
-    test_file.write("x = y")
+    test_file.write("x = y\ndef f(): pass")
     ns = {"y" : 42}
     py.builtin.execfile(str(test_file), ns)
     assert ns["x"] == 42
+    assert py.builtin._getcode(ns["f"]).co_filename == str(test_file)
     class A:
         y = 3
         x = 4

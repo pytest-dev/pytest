@@ -22,6 +22,9 @@ if sys.version_info >= (3, 0):
     def _getimself(function):
         return getattr(function, '__self__', None)
 
+    def _getcode(function):
+        return function.__code__
+
     def execfile(fn, globs=None, locs=None):
         if globs is None:
             back = sys._getframe(1)
@@ -35,7 +38,8 @@ if sys.version_info >= (3, 0):
             source = fp.read()
         finally:
             fp.close()
-        exec_(source, globs, locs)
+        co = compile(source, fn, "exec", dont_inherit=True)
+        exec_(co, globs, locs)
 
     def callable(obj):
         return hasattr(obj, "__call__")
@@ -56,6 +60,9 @@ else:
 
     def _getimself(function):
         return getattr(function, 'im_self', None)
+
+    def _getcode(function):
+        return function.func_code
 
     import __builtin__ as builtins
     def print_(*args, **kwargs):
