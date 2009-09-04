@@ -185,12 +185,12 @@ initpkg(__name__,
     'error'                  : ('./error.py', 'error'),
 
     # small and mean xml/html generation
-    'xml.__doc__'            : ('./xmlobj/__init__.py', '__doc__'),
-    'xml.html'               : ('./xmlobj/xmlgen.py', 'html'),
-    'xml.Tag'                : ('./xmlobj/xmlgen.py', 'Tag'),
-    'xml.raw'                : ('./xmlobj/xmlgen.py', 'raw'),
-    'xml.Namespace'          : ('./xmlobj/xmlgen.py', 'Namespace'),
-    'xml.escape'             : ('./xmlobj/xmlgen.py', 'escape'),
+    'xml.__doc__'            : ('./xmlgen.py', '__doc__'), 
+    'xml.html'               : ('./xmlgen.py', 'html'),
+    'xml.Tag'                : ('./xmlgen.py', 'Tag'),
+    'xml.raw'                : ('./xmlgen.py', 'raw'),
+    'xml.Namespace'          : ('./xmlgen.py', 'Namespace'),
+    'xml.escape'             : ('./xmlgen.py', 'escape'),
 
     # logging API ('producers' and 'consumers' connected via keywords)
     'log.__doc__'            : ('./log/__init__.py', '__doc__'),
