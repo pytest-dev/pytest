@@ -10,7 +10,7 @@ def setup_module(mod):
 
 def checkmain(name):
     main = getattr(py.cmdline, name)
-    assert callable(main)
+    assert py.builtin.callable(main)
     assert name[:2] == "py"
     scriptname = "py." + name[2:]
     assert binpath.join(scriptname).check()

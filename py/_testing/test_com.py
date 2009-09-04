@@ -10,7 +10,6 @@ def test_varnames():
         def f(self, y):
             pass
     assert varnames(f) == ("x",)
-    assert varnames(A.f) == ('y',)
     assert varnames(A().f) == ('y',)
     
 class TestMultiCall:
@@ -121,7 +120,7 @@ class TestRegistry:
         class api4: 
             x = 44
         l = list(plugins.listattr('x', extra=(api4,)))
-        assert l == range(41, 45)
+        assert l == [41,42,43,44]
         assert len(list(plugins)) == 3  # otherwise extra added
 
 def test_api_and_defaults():

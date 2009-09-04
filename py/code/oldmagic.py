@@ -1,7 +1,8 @@
 """ deprecated module for turning on/off some features. """ 
 
 import py 
-import __builtin__ as cpy_builtin
+
+from py.builtin import builtins as cpy_builtin
 
 def invoke(assertion=False, compile=False):
     """ (deprecated) invoke magic, currently you can specify:

@@ -8,7 +8,7 @@ def check_assertion():
         raise ValueError("assertion not enabled: got %s" % s)
 
 def test_invoke_assertion(recwarn, monkeypatch):
-    monkeypatch.setattr(py.std.__builtin__, 'AssertionError', None)
+    monkeypatch.setattr(py.builtin.builtins, 'AssertionError', None)
     py.magic.invoke(assertion=True)
     try:
         check_assertion()
@@ -17,7 +17,7 @@ def test_invoke_assertion(recwarn, monkeypatch):
     recwarn.pop(DeprecationWarning)
 
 def test_invoke_compile(recwarn, monkeypatch):
-    monkeypatch.setattr(py.std.__builtin__, 'compile', None)
+    monkeypatch.setattr(py.builtin.builtins, 'compile', None)
     py.magic.invoke(compile=True)
     try:
         co = compile("""if 1: 

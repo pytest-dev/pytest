@@ -46,7 +46,7 @@ class ForkedFunc(object):
         fdstderr = stderr.fileno()
         if fdstderr != 2:
             os.dup2(fdstderr, 2)
-        retvalf = self.RETVAL.open("w")
+        retvalf = self.RETVAL.open("wb")
         EXITSTATUS = 0
         try:
             if nice_level:
@@ -79,7 +79,7 @@ class ForkedFunc(object):
             exitstatus = 0
         signal = systemstatus & 0x7f
         if not exitstatus and not signal:
-            retval = self.RETVAL.open()
+            retval = self.RETVAL.open('rb')
             try:
                 retval_data = retval.read()
             finally:

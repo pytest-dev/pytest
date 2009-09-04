@@ -171,8 +171,8 @@ class ApiModule(ModuleType):
         dict = dictdescr.__get__(self)
         if dict is not None:
             if '*' not in self.__map__: 
-                for name in self.__map__.keys():
-                    hasattr(self, name)   # force attribute to be loaded, ignore errors
+                for name in list(self.__map__):
+                    hasattr(self, name)  # force attribute load, ignore errors
                 assert not self.__map__, "%r not empty" % self.__map__
             else: 
                 fsname = self.__map__['*'][0] 
