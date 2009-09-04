@@ -8,7 +8,7 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     hooklog = config.getvalue("hooklog")
     if hooklog:
-        config._hooklogfile = open(hooklog, 'w', 0)
+        config._hooklogfile = open(hooklog, 'w')
         config._hooklog_oldperformcall = config.hook._performcall
         config.hook._performcall = (lambda name, multicall: 
             logged_call(name=name, multicall=multicall, config=config))

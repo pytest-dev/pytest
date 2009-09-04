@@ -426,7 +426,7 @@ class TestDoctest:
 
                >>> assert abspath 
                >>> i=3
-               >>> print i
+               >>> print (i)
                3
 
             yes yes
@@ -450,7 +450,7 @@ class TestDoctest:
 
     def test_doctest_indentation(self, testdir):
         footxt = testdir.maketxtfile(foo=
-            '..\n  >>> print "foo\\n  bar"\n  foo\n    bar\n')
+            '..\n  >>> print ("foo\\n  bar")\n  foo\n    bar\n')
         reprec = testdir.inline_run(footxt)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 0

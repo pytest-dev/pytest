@@ -1,7 +1,8 @@
 
 import py
 from py.__.test.dist.txnode import TXNode
-Queue = py.builtin._tryimport("queue.Queue", "Queue.Queue")
+queue = py.builtin._tryimport("queue", "Queue")
+Queue = queue.Queue
 
 class EventQueue:
     def __init__(self, registry, queue=None):
@@ -15,7 +16,7 @@ class EventQueue:
         while 1:
             try:
                 eventcall = self.queue.get(timeout=timeout)
-            except py.std.Queue.Empty:
+            except queue.Empty:
                 #print "node channel", self.node.channel
                 #print "remoteerror", self.node.channel._getremoteerror()
                 py.builtin.print_("seen events", events)

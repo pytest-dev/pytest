@@ -1,8 +1,11 @@
 
 import py
-from py.__.test.dist.mypickle import ImmutablePickler, PickleChannel
-from py.__.test.dist.mypickle import UnpickleError
+import sys
 
+Queue = py.builtin._tryimport('queue', 'Queue').Queue
+
+from py.__.test.dist.mypickle import ImmutablePickler, PickleChannel
+from py.__.test.dist.mypickle import UnpickleError, makekey
 # first let's test some basic functionality 
 
 def pytest_generate_tests(metafunc):
@@ -24,8 +27,8 @@ def pytest_generate_tests(metafunc):
                 metafunc.addcall(funcargs=dict(obj=obj, proto=proto))
 
 def test_underlying_basic_pickling_mechanisms(picklemod):
-    f1 = py.io.TextIO()
-    f2 = py.io.TextIO()
+    f1 = py.io.BytesIO()
+    f2 = py.io.BytesIO()
 
     pickler1 = picklemod.Pickler(f1)
     unpickler1 = picklemod.Unpickler(f2)
@@ -48,8 +51,9 @@ def test_underlying_basic_pickling_mechanisms(picklemod):
 
     pickler2.dump(d_other)
     f2.seek(0)
-
-    unpickler1.memo = dict([(str(x), y) for x, y in pickler1.memo.values()])
+        
+    unpickler1.memo = dict([(makekey(x), y) 
+                                for x, y in pickler1.memo.values()])
     d_back = unpickler1.load()
     assert d is d_back
 
@@ -177,7 +181,7 @@ class TestPickleChannelFunctional:
             channel.send(a2 is a1)
         """)
         channel = PickleChannel(channel)
-        queue = py.std.Queue.Queue()
+        queue = Queue()
         channel.setcallback(queue.put)
         a_received = queue.get(timeout=TESTTIMEOUT)
         assert isinstance(a_received, A)
@@ -198,7 +202,7 @@ class TestPickleChannelFunctional:
             channel.send(a2 is a1)
         """)
         channel = PickleChannel(channel)
-        queue = py.std.Queue.Queue()
+        queue = Queue()
         channel.setcallback(queue.put, endmarker=-1)
           
         a_received = queue.get(timeout=TESTTIMEOUT)
@@ -220,7 +224,7 @@ class TestPickleChannelFunctional:
             channel.send(a1)
         """)
         channel = PickleChannel(channel)
-        queue = py.std.Queue.Queue()
+        queue = Queue()
         a = channel.receive()
         channel._ipickle._unpicklememo.clear()
         channel.setcallback(queue.put, endmarker=-1)

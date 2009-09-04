@@ -25,7 +25,9 @@ class Passed(OutcomeException):
     pass
 
 class Skipped(OutcomeException): 
-    pass
+    # XXX slighly hackish: on 3k we fake to live in the builtins 
+    # in order to have Skipped exception printing shorter/nicer
+    __module__ = 'builtins'
 
 class Failed(OutcomeException): 
     pass

@@ -171,7 +171,7 @@ class TestTerminal:
             def g():
                 raise IndexError
             def test_func():
-                print 6*7
+                print (6*7)
                 g()  # --calling--
         """)
         for tbopt in ["long", "short", "no"]:
@@ -179,9 +179,9 @@ class TestTerminal:
             result = testdir.runpytest('--tb=%s' % tbopt)
             s = result.stdout.str()
             if tbopt == "long":
-                assert 'print 6*7' in s
+                assert 'print (6*7)' in s
             else:
-                assert 'print 6*7' not in s
+                assert 'print (6*7)' not in s
             if tbopt != "no":
                 assert '--calling--' in s
                 assert 'IndexError' in s
@@ -411,7 +411,7 @@ class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):
         p = testdir.makepyfile("""
             def setup_function(function):
-                print "setup func"
+                print ("setup func")
                 assert 0
             def test_nada():
                 pass
@@ -431,7 +431,7 @@ class TestFixtureReporting:
             def test_nada():
                 pass
             def teardown_function(function):
-                print "teardown func"
+                print ("teardown func")
                 assert 0
         """)
         result = testdir.runpytest()
@@ -450,7 +450,7 @@ class TestFixtureReporting:
                 assert 0, "failingfunc"
 
             def teardown_function(function):
-                print "teardown func"
+                print ("teardown func")
                 assert False
         """)
         result = testdir.runpytest()

@@ -1,4 +1,5 @@
 import py
+import pickle
 
 def setglobals(request):
     oldconfig = py.test.config 
@@ -129,44 +130,41 @@ class TestConfigPickling:
         assert option.gdest == 11
 
     def test_config_picklability(self, testdir):
-        import cPickle
         config = testdir.parseconfig()
-        s = cPickle.dumps(config)
-        newconfig = cPickle.loads(s)
+        s = pickle.dumps(config)
+        newconfig = pickle.loads(s)
         assert hasattr(newconfig, "topdir")
         assert newconfig.topdir == py.path.local()
 
     def test_collector_implicit_config_pickling(self, testdir):
-        from cPickle import Pickler, Unpickler
         tmpdir = testdir.tmpdir
         testdir.chdir()
         testdir.makepyfile(hello="def test_x(): pass")
         config = testdir.parseconfig(tmpdir)
         col = config.getfsnode(config.topdir)
-        io = py.io.TextIO()
-        pickler = Pickler(io)
+        io = py.io.BytesIO()
+        pickler = pickle.Pickler(io)
         pickler.dump(col)
         io.seek(0) 
-        unpickler = Unpickler(io)
+        unpickler = pickle.Unpickler(io)
         col2 = unpickler.load()
         assert col2.name == col.name 
         assert col2.listnames() == col.listnames()
 
     def test_config_and_collector_pickling(self, testdir):
-        from pickle import Pickler, Unpickler
         tmpdir = testdir.tmpdir
         dir1 = tmpdir.ensure("somedir", dir=1)
         config = testdir.parseconfig()
         col = config.getfsnode(config.topdir)
         col1 = col.join(dir1.basename)
         assert col1.parent is col 
-        io = py.io.TextIO()
-        pickler = Pickler(io)
+        io = py.io.BytesIO()
+        pickler = pickle.Pickler(io)
         pickler.dump(col)
         pickler.dump(col1)
         pickler.dump(col)
         io.seek(0) 
-        unpickler = Unpickler(io)
+        unpickler = pickle.Unpickler(io)
         topdir = tmpdir.ensure("newtopdir", dir=1)
         topdir.ensure("somedir", dir=1)
         old = topdir.chdir()

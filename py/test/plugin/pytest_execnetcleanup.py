@@ -48,7 +48,7 @@ def test_execnetplugin(testdir):
             sys._gw = py.execnet.PopenGateway()
         def test_world():
             assert hasattr(sys, '_gw')
-            py.test.raises(KeyError, "sys._gw.exit()") # already closed 
+            assert sys._gw not in sys._gw._cleanup._activegateways
             
     """, "-s", "--debug")
     reprec.assertoutcome(passed=2)

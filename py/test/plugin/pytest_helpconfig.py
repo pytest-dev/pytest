@@ -30,7 +30,7 @@ def pytest_configure(__multicall__, config):
     tw.sep("-")
 
     options = [opt for opt in options if opt._long_opts]
-    options.sort(lambda x, y: cmp(x._long_opts, y._long_opts))
+    options.sort(key=lambda x: x._long_opts)
     for opt in options:
         if not opt._long_opts:
             continue

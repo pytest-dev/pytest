@@ -12,11 +12,21 @@
 
 """
 
-from pickle import Pickler, Unpickler
 import py
 from py.__.execnet.gateway_base import Channel
-import os
+import sys, os
 #debug = open("log-mypickle-%d" % os.getpid(), 'w')
+
+if sys.version_info >= (3,0):
+    makekey = lambda x: x
+    fromkey = lambda x: x 
+    from pickle import _Pickler as Pickler
+    from pickle import _Unpickler as Unpickler
+else:
+    makekey = str
+    fromkey = int
+    from pickle import Pickler, Unpickler
+
 
 class MyPickler(Pickler):
     """ Pickler with a custom memoize()
@@ -86,11 +96,11 @@ class ImmutablePickler:
 
     def _updatepicklememo(self):
         for x, obj in self._unpicklememo.items():
-            self._picklememo[id(obj)] = (int(x), obj)
+            self._picklememo[id(obj)] = (fromkey(x), obj)
 
     def _updateunpicklememo(self):
         for key,obj in self._picklememo.values():
-            key = str(key)
+            key = makekey(key) 
             if key in self._unpicklememo:
                 assert self._unpicklememo[key] is obj
             self._unpicklememo[key] = obj

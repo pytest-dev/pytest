@@ -379,7 +379,7 @@ class ReportRecorder(object):
         return passed, skipped, failed 
 
     def countoutcomes(self):
-        return map(len, self.listoutcomes())
+        return [len(x) for x in self.listoutcomes()]
 
     def assertoutcome(self, passed=0, skipped=0, failed=0):
         realpassed, realskipped, realfailed = self.listoutcomes()

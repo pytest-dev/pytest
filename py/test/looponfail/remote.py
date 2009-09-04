@@ -10,6 +10,7 @@
 
 from __future__ import generators
 import py
+import sys
 from py.__.test.session import Session
 from py.__.test.dist.mypickle import PickleChannel
 from py.__.test.looponfail import util
@@ -70,14 +71,19 @@ class RemoteControl(object):
         channel = self.gateway.remote_exec(source="""
             from py.__.test.dist.mypickle import PickleChannel
             from py.__.test.looponfail.remote import slave_runsession
+            outchannel = channel.gateway.newchannel()
+            channel.send(outchannel)
             channel = PickleChannel(channel)
             config, fullwidth, hasmarkup = channel.receive()
+            import sys
+            sys.stdout = sys.stderr = outchannel.makefile('w')
             slave_runsession(channel, config, fullwidth, hasmarkup) 
-        """, stdout=out, stderr=out)
-        channel = PickleChannel(channel)
+        """)
+        remote_outchannel = channel.receive()
+        remote_outchannel.setcallback(out._file.write)
+        channel = self.channel = PickleChannel(channel)
         channel.send((self.config, out.fullwidth, out.hasmarkup))
         self.trace("set up of slave session complete")
-        self.channel = channel
 
     def ensure_teardown(self):
         if hasattr(self, 'channel'):
