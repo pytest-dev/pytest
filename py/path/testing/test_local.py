@@ -98,7 +98,7 @@ class TestLocalPath(common.CommonFSTests):
             d = {'answer' : 42}
             path.dump(d, bin=bin)
             f = path.open('rb+')
-            dnew = py.builtin.pickle.load(f)
+            dnew = py.std.pickle.load(f)
             assert d == dnew
         finally:
             f.close()

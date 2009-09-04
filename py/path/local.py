@@ -355,7 +355,7 @@ class LocalPath(FSBase):
         """ pickle object into path location"""
         f = self.open('wb')
         try:
-            py.error.checked_call(py.builtin.pickle.dump, obj, f, bin)
+            py.error.checked_call(py.std.pickle.dump, obj, f, bin)
         finally:
             f.close()
 

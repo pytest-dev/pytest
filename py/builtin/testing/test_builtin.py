@@ -45,8 +45,8 @@ def test_frozenset():
     assert len(s) == 1
 
 def test_sorted():
-    if sys.version_info >= (2,5):
-        py.test.skip("python 2.5 needs no sorted tests")
+    if sorted == py.builtin.sorted:
+        return # don't test a real builtin
     for s in [py.builtin.sorted]:
         def test():
             assert s([3, 2, 1]) == [1, 2, 3]
@@ -98,7 +98,7 @@ def test_execfile(tmpdir):
     ns = {"y" : 42}
     py.builtin.execfile(str(test_file), ns)
     assert ns["x"] == 42
-    assert py.builtin._getcode(ns["f"]).co_filename == str(test_file)
+    assert py.code.getrawcode(ns["f"]).co_filename == str(test_file)
     class A:
         y = 3
         x = 4

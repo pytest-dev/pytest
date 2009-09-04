@@ -136,14 +136,15 @@ newline will be removed from the end of each line. """
         """ (deprecated) return object unpickled from self.read() """
         f = self.open('rb')
         try:
-            return py.error.checked_call(py.builtin.pickle.load, f)
+            return py.error.checked_call(py.std.pickle.load, f)
         finally:
             f.close()
 
     def move(self, target):
         """ move this path to target. """
         if target.relto(self):
-            raise py.error.EINVAL(target, "cannot move path into a subdirectory of itself")
+            raise py.error.EINVAL(target, 
+                "cannot move path into a subdirectory of itself")
         try:
             self.rename(target)
         except py.error.EXDEV:  # invalid cross-device link

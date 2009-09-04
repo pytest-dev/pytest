@@ -345,8 +345,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def readkeywords(self):
         d = super(Function, self).readkeywords()
-        d.update(getattr(self.obj, '__dict__', 
-                         getattr(self.obj, 'func_dict', {})))
+        d.update(py.builtin._getfuncdict(self.obj))
         return d
 
     def runtest(self):

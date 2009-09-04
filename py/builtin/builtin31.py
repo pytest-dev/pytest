@@ -1,9 +1,9 @@
+
 import sys
 
 if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins
-    import pickle
 
     # some backward compatibility helpers 
     _basestring = str 
@@ -21,9 +21,6 @@ if sys.version_info >= (3, 0):
 
     def _getimself(function):
         return getattr(function, '__self__', None)
-
-    def _getcode(function):
-        return function.__code__
 
     def _getfuncdict(function):
         return getattr(function, "__dict__", None)
@@ -48,10 +45,7 @@ if sys.version_info >= (3, 0):
         return hasattr(obj, "__call__")
 
 else:
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle 
+    import __builtin__ as builtins
     _totext = unicode 
     _basestring = basestring
     execfile = execfile
@@ -64,13 +58,9 @@ else:
     def _getimself(function):
         return getattr(function, 'im_self', None)
 
-    def _getcode(function):
-        return function.func_code
-
     def _getfuncdict(function):
         return getattr(function, "__dict__", None)
 
-    import __builtin__ as builtins
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 
         sep = ' '

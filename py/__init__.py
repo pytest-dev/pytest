@@ -152,12 +152,10 @@ initpkg(__name__,
     'builtin._isbytes'       : ('./builtin/builtin31.py', '_isbytes'),
     'builtin._istext'        : ('./builtin/builtin31.py', '_istext'),
     'builtin._getimself'     : ('./builtin/builtin31.py', '_getimself'),
-    'builtin._getcode'       : ('./builtin/builtin31.py', '_getcode'),
     'builtin._getfuncdict'   : ('./builtin/builtin31.py', '_getfuncdict'),
     'builtin.builtins'       : ('./builtin/builtin31.py', 'builtins'),
     'builtin.execfile'       : ('./builtin/builtin31.py', 'execfile'),
     'builtin.callable'       : ('./builtin/builtin31.py', 'callable'),
-    'builtin.pickle'         : ('./builtin/builtin31.py', 'pickle'),
 
     # gateways into remote contexts
     'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),
