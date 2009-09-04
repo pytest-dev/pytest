@@ -83,9 +83,6 @@ class RSync(object):
             if checksum is not None and checksum == md5(data).digest():
                 data = None     # not really modified
             else:
-                # ! there is a reason for the interning:
-                # sharing multiple copies of the file's data
-                data = intern(data)
                 self._report_send_file(channel.gateway, modified_rel_path)
         channel.send(data)
 
@@ -140,7 +137,7 @@ class RSync(object):
         """ Adds a remote target specified via a 'gateway'
             and a remote destination directory. 
         """
-        assert finishedcallback is None or callable(finishedcallback)
+        assert finishedcallback is None or py.builtin.callable(finishedcallback)
         for name in options:
             assert name in ('delete',)
         def itemcallback(req):

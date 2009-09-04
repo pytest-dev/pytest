@@ -63,26 +63,27 @@ class GatewayManager:
         """ perform rsync to all remote hosts. 
         """ 
         rsync = HostRSync(source, verbose=verbose, ignores=ignores)
-        seen = {}
+        seen = py.builtin.set()
+        gateways = []
         for gateway in self.gateways:
             spec = gateway.spec
             if not spec._samefilesystem():
-                if spec in seen:
-                    continue 
-                def finished():
-                    if notify:
-                        notify("rsyncrootready", spec, source)
-                rsync.add_target_host(gateway, finished=finished)
-                seen[spec] = gateway
+                if spec not in seen:
+                    def finished():
+                        if notify:
+                            notify("rsyncrootready", spec, source)
+                    rsync.add_target_host(gateway, finished=finished)
+                    seen.add(spec)
+                    gateways.append(gateway)
         if seen:
             self.hook.pyexecnet_gwmanage_rsyncstart(
                 source=source, 
-                gateways=seen.values(),
+                gateways=gateways, 
             )
             rsync.send()
             self.hook.pyexecnet_gwmanage_rsyncfinish(
                 source=source, 
-                gateways=seen.values()
+                gateways=gateways, 
             )
 
     def exit(self):

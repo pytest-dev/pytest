@@ -1,6 +1,10 @@
 
 def f():
-    import os, stat, shutil, md5
+    import os, stat, shutil
+    try:
+        from hashlib import md5
+    except ImportError:
+        from md5 import md5
     destdir, options = channel.receive() 
     modifiedfiles = []
 
@@ -43,7 +47,7 @@ def f():
                         pass
                     elif msg_mtime != st.st_mtime:
                         f = open(path, 'rb')
-                        checksum = md5.md5(f.read()).digest()
+                        checksum = md5(f.read()).digest()
                         f.close()
                     else:
                         return    # already fine

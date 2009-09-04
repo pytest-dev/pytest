@@ -13,7 +13,7 @@ def teardown_module(mod):
 
 class DirSetup:
     def setup_method(self, method):
-        name = "%s.%s" %(self.__class__.__name__, method.func_name)
+        name = "%s.%s" %(self.__class__.__name__, method.__name__)
         self.tmpdir = t = py.test.ensuretemp(name)
         self.source = t.join("source")
         self.dest1 = t.join("dest1")
