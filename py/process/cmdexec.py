@@ -12,6 +12,7 @@ Current list:
 
 import os, sys
 import py
+from subprocess import Popen, PIPE
 
 #-----------------------------------------------------------
 # posix external command execution
@@ -24,15 +25,10 @@ def posix_exec_cmd(cmd):
     the error-output from the command.
     """
     #__tracebackhide__ = True
-    try:
-        from subprocess import Popen, PIPE
-    except ImportError:
-        from py.__.compat.subprocess import Popen, PIPE
 
     import errno
 
-    child = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE,
-                                                                close_fds=True)
+    child = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
     stdin, stdout, stderr = child.stdin, child.stdout, child.stderr
 
     # XXX sometimes we get a blocked r.read() call (see below)

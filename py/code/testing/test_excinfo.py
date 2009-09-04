@@ -1,10 +1,7 @@
-try:
-    import Queue as queue
-except ImportError:
-    import queue
 
 import py
 from py.__.code.code import FormattedExcinfo, ReprExceptionInfo
+queue = py.builtin._tryimport('queue', 'Queue')
 
 class TWMock: 
     def __init__(self):

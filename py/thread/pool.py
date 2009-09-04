@@ -2,10 +2,8 @@ import threading
 import time 
 import sys
 import py
-try:
-    import queue 
-except ImportError:
-    import Queue as queue
+
+queue = py.builtin._tryimport('queue', 'Queue')
 
 ERRORMARKER = object() 
 

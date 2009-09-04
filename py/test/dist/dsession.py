@@ -8,10 +8,7 @@ import py
 from py.__.test.session import Session
 from py.__.test import outcome 
 from py.__.test.dist.nodemanage import NodeManager
-try:
-    import queue 
-except ImportError:
-    import Queue as queue
+queue = py.builtin._tryimport('queue', 'Queue')
 
 debug_file = None # open('/tmp/loop.log', 'w')
 def debug(*args):

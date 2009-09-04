@@ -1,11 +1,12 @@
 
 import py
 from py.__.test.dist.txnode import TXNode
+Queue = py.builtin._tryimport("queue.Queue", "Queue.Queue")
 
 class EventQueue:
     def __init__(self, registry, queue=None):
         if queue is None:
-            queue = py.std.Queue.Queue()
+            queue = Queue()
         self.queue = queue
         registry.register(self)
 
@@ -43,7 +44,7 @@ class MySetup:
         if config is None:
             config = py.test.config._reparse([])
         self.config = config
-        self.queue = py.std.Queue.Queue()
+        self.queue = Queue()
         self.xspec = py.execnet.XSpec("popen")
         self.gateway = py.execnet.makegateway(self.xspec)
         self.id += 1

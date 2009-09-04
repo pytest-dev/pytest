@@ -1,4 +1,4 @@
-
+import py
 import sys
 
 if sys.version_info >= (3, 0):
@@ -105,3 +105,13 @@ def _reraise(cls, val, tb):
 def exec2(obj, globals, locals):
     exec obj in globals, locals 
 """)
+
+def _tryimport(*names):
+    """ return the first successfully imported module. """ 
+    assert names
+    for name in names:
+        try:
+            return __import__(name, None, None, '__doc__')
+        except ImportError:
+            excinfo = sys.exc_info()
+    py.builtin._reraise(*excinfo)

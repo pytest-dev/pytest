@@ -39,12 +39,8 @@ class TestLocalPath(common.CommonFSTests):
         assert p == tmpdir
 
     def test_gethash(self, tmpdir):
-        try:
-            from md5 import md5
-            from sha import sha
-        except ImportError:
-            from hashlib import md5 as md5
-            from hashlib import sha1 as sha
+        md5 = py.builtin._tryimport('md5.md5', 'hashlib.md5')
+        sha = py.builtin._tryimport('sha.sha', 'hashlib.sha1')
         fn = tmpdir.join("testhashfile")
         data = 'hello'.encode('ascii')
         fn.write(data, mode="wb")

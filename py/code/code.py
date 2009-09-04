@@ -2,11 +2,8 @@ import py
 import sys
 
 builtin_repr = repr
-try:
-    import repr
-except ImportError:
-    import reprlib as repr 
 
+repr = py.builtin._tryimport('repr', 'reprlib')
 
 class Code(object):
     """ wrapper around Python code objects """

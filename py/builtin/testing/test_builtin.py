@@ -139,3 +139,10 @@ def test_exec():
     d = {}
     py.builtin.exec_("x=4", d)
     assert d['x'] == 4
+
+def test_tryimport():
+    py.test.raises(ImportError, py.builtin._tryimport, 'xqwe123')
+    x = py.builtin._tryimport('asldkajsdl', 'py')
+    assert x == py
+    x = py.builtin._tryimport('asldkajsdl', 'py.path')
+    assert x == py.path
