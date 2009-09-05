@@ -85,6 +85,7 @@ argument which offers the same interface.
 """
 
 import py
+import os
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -131,11 +132,15 @@ class CaptureManager:
 
     def _getmethod(self, config, fspath):
         if config.option.capture:
-            return config.option.capture
-        try: 
-            return config._conftest.rget("option_capture", path=fspath)
-        except KeyError:
-            return "fd"
+            method = config.option.capture
+        else:
+            try: 
+                method = config._conftest.rget("option_capture", path=fspath)
+            except KeyError:
+                method = "fd"
+        if method == "fd" and not hasattr(os, 'dup'): # e.g. jython 
+            method = "sys" 
+        return method
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)

@@ -2,6 +2,16 @@ import py, os, sys
 from py.__.test.plugin.pytest_capture import CaptureManager
 
 class TestCaptureManager:
+    def test_getmethod_default_no_fd(self, testdir, monkeypatch):
+        config = testdir.parseconfig(testdir.tmpdir)
+        assert config.getvalue("capture") is None
+        capman = CaptureManager()
+        monkeypatch.delattr(os, 'dup')
+        try:
+            assert capman._getmethod(config, None) == "sys" 
+        finally:
+            monkeypatch.finalize()
+
     def test_configure_per_fspath(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)
         assert config.getvalue("capture") is None

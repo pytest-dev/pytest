@@ -4,8 +4,8 @@ safely patch object attributes, dicts and environment variables.
 Usage
 ----------------
 
-Use the `monkeypatch funcarg`_ to safely patch environment
-variables, object attributes or dictionaries.  For example, if you want
+Use the `monkeypatch funcarg`_ to safely modify or delete environment
+variables, object attributes or dictionary values.  For example, if you want
 to set the environment variable ``ENV1`` and patch the
 ``os.path.abspath`` function to return a particular value during a test
 function execution you can write it down like this:
@@ -31,6 +31,20 @@ can use this example:
         monkeypatch.setenv('PATH', 'x/y', prepend=":")
         #  x/y will be at the beginning of $PATH 
 
+calling "undo" finalization explicitely
+-----------------------------------------
+
+Usually at the end of function execution py.test will invoke
+a teardown hook which undoes the changes.  If you cannot wait
+that long you can also call finalization explicitely::
+
+    monkeypatch.undo()  
+
+This will undo previous changes.  This call consumes the
+undo stack.  Calling it a second time has no effect. 
+Within a test you can continue to use the monkeypatch 
+object, however. 
+
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
 
@@ -54,7 +68,7 @@ def pytest_funcarg__monkeypatch(request):
     deletion has no target. 
     """
     monkeypatch = MonkeyPatch()
-    request.addfinalizer(monkeypatch.finalize)
+    request.addfinalizer(monkeypatch.undo)
     return monkeypatch
 
 notset = object()
@@ -97,17 +111,19 @@ class MonkeyPatch:
     def delenv(self, name, raising=True):
         self.delitem(os.environ, name, raising=raising)
 
-    def finalize(self):
+    def undo(self):
         for obj, name, value in self._setattr:
             if value is not notset:
                 setattr(obj, name, value)
             else:
                 delattr(obj, name)
+        self._setattr[:] = []
         for dictionary, name, value in self._setitem:
             if value is notset:
                 del dictionary[name]
             else:
                 dictionary[name] = value
+        self._setitem[:] = []
 
 
 def test_setattr():
@@ -118,12 +134,16 @@ def test_setattr():
     assert A.x == 2
     monkeypatch.setattr(A, 'x', 3)
     assert A.x == 3
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert A.x == 1
+
+    A.x = 5
+    monkeypatch.undo() # double-undo makes no modification
+    assert A.x == 5
 
     monkeypatch.setattr(A, 'y', 3)
     assert A.y == 3
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert not hasattr(A, 'y')
      
 def test_delattr():
@@ -132,7 +152,7 @@ def test_delattr():
     monkeypatch = MonkeyPatch()
     monkeypatch.delattr(A, 'x')
     assert not hasattr(A, 'x')
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert A.x == 1
 
     monkeypatch = MonkeyPatch()
@@ -141,7 +161,7 @@ def test_delattr():
     monkeypatch.delattr(A, 'y', raising=False)
     monkeypatch.setattr(A, 'x', 5)
     assert A.x == 5
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert A.x == 1
 
 def test_setitem():
@@ -153,9 +173,12 @@ def test_setitem():
     assert d['y'] == 1700
     monkeypatch.setitem(d, 'x', 3)
     assert d['x'] == 3
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert d['x'] == 1
     assert 'y' not in d
+    d['x'] = 5
+    monkeypatch.undo()
+    assert d['x'] == 5
 
 def test_delitem():
     d = {'x': 1}
@@ -170,7 +193,7 @@ def test_delitem():
     d['hello'] = 'world'
     monkeypatch.setitem(d, 'x', 1500)
     assert d['x'] == 1500
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert d == {'hello': 'world', 'x': 1}
 
 def test_setenv():
@@ -178,7 +201,7 @@ def test_setenv():
     monkeypatch.setenv('XYZ123', 2)
     import os
     assert os.environ['XYZ123'] == "2"
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert 'XYZ123' not in os.environ
 
 def test_delenv():
@@ -187,7 +210,7 @@ def test_delenv():
     monkeypatch = MonkeyPatch()
     py.test.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
     monkeypatch.delenv(name, raising=False)
-    monkeypatch.finalize()
+    monkeypatch.undo()
     os.environ[name] = "1"
     try:
         monkeypatch = MonkeyPatch()
@@ -195,7 +218,7 @@ def test_delenv():
         assert name not in os.environ 
         monkeypatch.setenv(name, "3")
         assert os.environ[name] == "3"
-        monkeypatch.finalize()
+        monkeypatch.undo()
         assert os.environ[name] == "1"
     finally:
         if name in os.environ:
@@ -208,7 +231,7 @@ def test_setenv_prepend():
     assert os.environ['XYZ123'] == "2"
     monkeypatch.setenv('XYZ123', 3, prepend="-")
     assert os.environ['XYZ123'] == "3-2"
-    monkeypatch.finalize()
+    monkeypatch.undo()
     assert 'XYZ123' not in os.environ
 
 def test_monkeypatch_plugin(testdir):
