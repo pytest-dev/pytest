@@ -15,7 +15,8 @@ For questions please check out http://pylib.org/contact.html
 .. _`py.execnet`: http://pylib.org/execnet.html
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
- 
+
+(c) Holger Krekel and others, 2009  
 """
 from py.initpkg import initpkg
 trunk = "trunk"

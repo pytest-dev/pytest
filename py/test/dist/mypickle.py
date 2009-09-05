@@ -14,7 +14,7 @@
 
 import py
 from py.__.execnet.gateway_base import Channel
-import sys, os
+import sys, os, struct
 #debug = open("log-mypickle-%d" % os.getpid(), 'w')
 
 if sys.version_info >= (3,0):
@@ -48,6 +48,12 @@ class MyPickler(Pickler):
         key = memo_len * 2 + self.uneven
         self.write(self.put(key))
         self.memo[id(obj)] = key, obj
+
+    #if sys.version_info < (3,0):
+    #    def save_string(self, obj, pack=struct.pack):
+    #        obj = unicode(obj)
+    #        self.save_unicode(obj, pack=pack)
+    #    Pickler.dispatch[str] = save_string 
 
 class ImmutablePickler:
     def __init__(self, uneven, protocol=0):

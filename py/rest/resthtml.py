@@ -53,7 +53,7 @@ def process(txtpath, encoding='latin1'):
         stylesheet = None
     content = unicode(txtpath.read(), encoding)
     doc = convert_rest_html(content, txtpath, stylesheet=stylesheet, encoding=encoding)
-    htmlpath.write(doc)
+    htmlpath.open('wb').write(doc)
     #log("wrote %r" % htmlpath)
     #if txtpath.check(svnwc=1, versioned=1): 
     #    info = txtpath.info()
