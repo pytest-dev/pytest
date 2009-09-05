@@ -6,6 +6,7 @@
 """
 
 import py
+import os
 from py.__.execnet.gwmanage import GatewayManager, HostRSync
 
 class TestGatewayManagerPopen:
@@ -75,7 +76,6 @@ class TestGatewayManagerPopen:
         call = rec.popcall("pyexecnet_gwmanage_rsyncfinish") 
 
     def test_multi_chdir_popen_with_path(self, testdir):
-        import os
         hm = GatewayManager(["popen//chdir=hello"] * 2)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello").realpath()
@@ -117,7 +117,7 @@ class TestGatewayManagerPopen:
 
 class pytest_funcarg__mysetup:
     def __init__(self, request):
-        tmp = request.config.mktemp(request.function.__name__, numbered=True)
+        tmp = request.getfuncargvalue('tmpdir')
         self.source = tmp.mkdir("source")
         self.dest = tmp.mkdir("dest")
         request.getfuncargvalue("_pytest") # to have patching of py._com.comregistry

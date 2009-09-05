@@ -10,8 +10,9 @@ def pytest_funcarg__repowc1(request):
         py.test.skip("svn binary not found")
 
     modname = request.module.__name__
+    tmpdir = request.getfuncargvalue("tmpdir")
     repo, wc = request.cached_setup(
-        setup=lambda: getrepowc("repo-"+modname, "wc-" + modname), 
+        setup=lambda: getrepowc(tmpdir, "repo-"+modname, "wc-" + modname), 
         scope="module", 
     )
     for x in ('test_remove', 'test_move', 'test_status_deleted'):
@@ -21,8 +22,9 @@ def pytest_funcarg__repowc1(request):
     return repo, wc
 
 def pytest_funcarg__repowc2(request):
+    tmpdir = request.getfuncargvalue("tmpdir")
     name = request.function.__name__
-    return getrepowc("%s-repo-2" % name, "%s-wc-2" % name)
+    return getrepowc(tmpdir, "%s-repo-2" % name, "%s-wc-2" % name)
 
 def getsvnbin():
     if svnbin is None:
@@ -32,9 +34,9 @@ def getsvnbin():
 # make a wc directory out of a given root url
 # cache previously obtained wcs!
 #
-def getrepowc(reponame='basetestrepo', wcname='wc'):
-    repo = py.test.ensuretemp(reponame)
-    wcdir = py.test.ensuretemp(wcname)
+def getrepowc(tmpdir, reponame='basetestrepo', wcname='wc'):
+    repo = tmpdir.mkdir(reponame)
+    wcdir = tmpdir.mkdir(wcname)
     repo.ensure(dir=1)
     py.process.cmdexec('svnadmin create "%s"' %
             svncommon._escape_helper(repo))

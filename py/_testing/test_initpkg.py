@@ -48,7 +48,7 @@ def test_virtual_module_identity():
 
 def test_importall():
     base = py.path.local(py.__file__).dirpath()
-    nodirs = (
+    nodirs = [
         base.join('test', 'testing', 'data'),
         base.join('test', 'web'),
         base.join('path', 'gateway',),
@@ -57,10 +57,14 @@ def test_importall():
         base.join('test', 'testing', 'import_test'),
         base.join('bin'),
         base.join('code', 'oldmagic.py'),
-        base.join('code', '_assertionold.py'),
         base.join('execnet', 'script'),
         base.join('compat', 'testing'),
-    )
+    ]
+    if sys.version_info >= (3,0):
+        nodirs.append(base.join('code', '_assertionold.py'))
+    else:
+        nodirs.append(base.join('code', '_assertionnew.py'))
+        
     def recurse(p):
         return p.check(dotfile=0) and p.basename != "attic"
 

@@ -325,9 +325,8 @@ class TestImport:
         from xxxpackage import module1 
         assert module1 is mod1
 
-def test_pypkgdir():
-    datadir = py.test.ensuretemp("pypkgdir")
-    pkg = datadir.ensure('pkg1', dir=1)
+def test_pypkgdir(tmpdir):
+    pkg = tmpdir.ensure('pkg1', dir=1)
     pkg.ensure("__init__.py")
     pkg.ensure("subdir/__init__.py")
     assert pkg.pypkgpath() == pkg

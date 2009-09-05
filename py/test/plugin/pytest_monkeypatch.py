@@ -48,7 +48,7 @@ object, however.
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
 
-import py, os
+import py, os, sys
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these 
@@ -60,6 +60,7 @@ def pytest_funcarg__monkeypatch(request):
         monkeypatch.delitem(obj, name, raising=True)
         monkeypatch.setenv(name, value, prepend=False) 
         monkeypatch.delenv(name, value, raising=True)
+        monkeypatch.syspath_prepend(path)
 
     All modifications will be undone when the requesting 
     test function finished its execution.  For the ``del`` 
@@ -111,6 +112,11 @@ class MonkeyPatch:
     def delenv(self, name, raising=True):
         self.delitem(os.environ, name, raising=raising)
 
+    def syspath_prepend(self, path):
+        if not hasattr(self, '_savesyspath'):
+            self._savesyspath = sys.path[:]
+        sys.path.insert(0, str(path))
+
     def undo(self):
         for obj, name, value in self._setattr:
             if value is not notset:
@@ -124,7 +130,8 @@ class MonkeyPatch:
             else:
                 dictionary[name] = value
         self._setitem[:] = []
-
+        if hasattr(self, '_savesyspath'):
+            sys.path[:] = self._savesyspath
 
 def test_setattr():
     class A:
@@ -242,4 +249,20 @@ def test_monkeypatch_plugin(testdir):
     """)
     res = reprec.countoutcomes()
     assert tuple(res) == (1, 0, 0), res
-        
+
+def test_syspath_prepend():
+    old = list(sys.path)
+    try:
+        monkeypatch = MonkeyPatch()
+        monkeypatch.syspath_prepend('world')
+        monkeypatch.syspath_prepend('hello')
+        assert sys.path[0] == "hello"
+        assert sys.path[1] == "world"
+        monkeypatch.undo()
+        assert sys.path == old 
+        monkeypatch.undo()
+        assert sys.path == old 
+    finally:
+        sys.path[:] = old
+
+            

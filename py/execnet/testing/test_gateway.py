@@ -689,8 +689,7 @@ class TestSshGateway(BasicRemoteExecution):
         cls.sshhost = getspecssh().ssh
         cls.gw = py.execnet.SshGateway(cls.sshhost)
 
-    def test_sshconfig_functional(self):
-        tmpdir = py.test.ensuretemp("test_sshconfig")
+    def test_sshconfig_functional(self, tmpdir):
         ssh_config = tmpdir.join("ssh_config") 
         ssh_config.write(
             "Host alias123\n"

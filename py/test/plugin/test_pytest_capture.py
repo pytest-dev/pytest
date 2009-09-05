@@ -10,7 +10,7 @@ class TestCaptureManager:
         try:
             assert capman._getmethod(config, None) == "sys" 
         finally:
-            monkeypatch.finalize()
+            monkeypatch.undo()
 
     def test_configure_per_fspath(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)
