@@ -10,8 +10,8 @@ safely patch object attributes, dicts and environment variables.
 Usage
 ----------------
 
-Use the `monkeypatch funcarg`_ to safely patch environment
-variables, object attributes or dictionaries.  For example, if you want
+Use the `monkeypatch funcarg`_ to safely modify or delete environment
+variables, object attributes or dictionary values.  For example, if you want
 to set the environment variable ``ENV1`` and patch the
 ``os.path.abspath`` function to return a particular value during a test
 function execution you can write it down like this:
@@ -37,6 +37,20 @@ can use this example:
         monkeypatch.setenv('PATH', 'x/y', prepend=":")
         #  x/y will be at the beginning of $PATH 
 
+calling "undo" finalization explicitely
+-----------------------------------------
+
+Usually at the end of function execution py.test will invoke
+a teardown hook which undoes the changes.  If you cannot wait
+that long you can also call finalization explicitely::
+
+    monkeypatch.undo()  
+
+This will undo previous changes.  This call consumes the
+undo stack.  Calling it a second time has no effect. 
+Within a test you can continue to use the monkeypatch 
+object, however. 
+
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 
 .. _`monkeypatch funcarg`:
@@ -45,15 +59,22 @@ can use this example:
 the 'monkeypatch' test function argument
 ----------------------------------------
 
-The returned ``monkeypatch`` funcarg provides three 
+The returned ``monkeypatch`` funcarg provides these 
 helper methods to modify objects, dictionaries or os.environ::
 
     monkeypatch.setattr(obj, name, value)  
+    monkeypatch.delattr(obj, name, raising=True)
     monkeypatch.setitem(mapping, name, value) 
-    monkeypatch.setenv(name, value) 
+    monkeypatch.delitem(obj, name, raising=True)
+    monkeypatch.setenv(name, value, prepend=False) 
+    monkeypatch.delenv(name, value, raising=True)
+    monkeypatch.syspath_prepend(path)
 
-All such modifications will be undone when the requesting 
-test function finished its execution. 
+All modifications will be undone when the requesting 
+test function finished its execution.  For the ``del`` 
+methods the ``raising`` parameter determines if a
+KeyError or AttributeError will be raised if the
+deletion has no target. 
 
 Start improving this plugin in 30 seconds
 =========================================
