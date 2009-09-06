@@ -157,12 +157,20 @@ class Source(object):
         """ return True if source is parseable, heuristically
             deindenting it by default. 
         """
+        try:
+            import parser
+        except ImportError:
+            syntax_checker = lambda x: compile(x, 'asd', 'exec')
+        else:
+            syntax_checker = parser.suite
+    
         if deindent:
             source = str(self.deindent())
         else:
             source = str(self)
         try:
-            compile(source+'\n', "x", "exec")
+            #compile(source+'\n', "x", "exec")
+            syntax_checker(source+'\n')
         except SyntaxError:
             return False
         else:
