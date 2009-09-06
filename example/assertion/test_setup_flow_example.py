@@ -9,7 +9,7 @@ class TestStateFullThing:
         cls.classcount -= 1
 
     def setup_method(self, method):
-        self.id = eval(method.func_name[5:])
+        self.id = eval(method.__name__[5:])
 
     def test_42(self):
         assert self.classcount == 1

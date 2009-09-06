@@ -3,7 +3,6 @@ collect and run test items and create reports.
 """
 
 import py
-
 from py.__.test.outcome import Skipped
 
 #

@@ -46,7 +46,7 @@ A quick example::
   >>> isinstance(c.source(), py.code.Source)
   True
   >>> str(c.source()).split('\n')[0]
-  "def read(self, mode='rb'):"
+  "def read(self, mode='r'):"
 
 source: :source:`py/code/code.py`
 

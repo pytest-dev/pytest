@@ -1,5 +1,5 @@
 import py
-from myapp import MyApp
+from mysetup2.myapp import MyApp
 
 def pytest_funcarg__mysetup(request):
     return MySetup(request)
