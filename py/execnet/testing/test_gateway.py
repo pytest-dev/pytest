@@ -1,190 +1,12 @@
 from __future__ import generators
-import os, sys, time, signal
+import os, sys, time
 import py
-from py.__.execnet.gateway_base import Message, Channel, ChannelFactory
-from py.__.execnet.gateway_base import ExecnetAPI, queue, Popen2IO
 from py.__.execnet import gateway_base, gateway
+queue = py.builtin._tryimport('queue', 'Queue')
 
-from py.__.execnet.gateway import startup_modules, getsource 
 pytest_plugins = "pytester"
 
 TESTTIMEOUT = 10.0 # seconds
-
-def pytest_generate_tests(metafunc):
-    if 'pythonpath' in metafunc.funcargnames:
-        for name in 'python2.4', 'python2.5', 'python2.6', 'python3.1':
-            metafunc.addcall(id=name, param=name)
-
-def pytest_funcarg__pythonpath(request):
-    name = request.param  
-    executable = py.path.local.sysfind(name)
-    if executable is None:
-        py.test.skip("no %s found" % (name,))
-    return executable
-
-def test_io_message(pythonpath, tmpdir):
-    check = tmpdir.join("check.py")
-    check.write(py.code.Source(gateway_base, """
-        try:
-            from io import BytesIO 
-        except ImportError:
-            from StringIO import StringIO as BytesIO
-        import tempfile
-        temp_out = BytesIO()
-        temp_in = BytesIO()
-        io = Popen2IO(temp_out, temp_in)
-        for i, msg_cls in Message._types.items():
-            print ("checking %s %s" %(i, msg_cls))
-            for data in "hello", "hello".encode('ascii'):
-                msg1 = msg_cls(i, data)
-                msg1.writeto(io)
-                x = io.outfile.getvalue()
-                io.outfile.truncate(0)
-                io.outfile.seek(0)
-                io.infile.seek(0)
-                io.infile.write(x)
-                io.infile.seek(0)
-                msg2 = Message.readfrom(io)
-                assert msg1.channelid == msg2.channelid, (msg1, msg2)
-                assert msg1.data == msg2.data
-        print ("all passed")
-    """))
-    #out = py.process.cmdexec("%s %s" %(executable,check))
-    out = pythonpath.sysexec(check)
-    print (out)
-    assert "all passed" in out
-
-def test_popen_io(pythonpath, tmpdir):
-    check = tmpdir.join("check.py")
-    check.write(py.code.Source(gateway_base, """
-        do_exec(Popen2IO.server_stmt, globals())
-        io.write("hello".encode('ascii'))
-        s = io.read(1)
-        assert s == "x".encode('ascii')
-    """))
-    from subprocess import Popen, PIPE
-    args = [str(pythonpath), str(check)]
-    proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    proc.stdin.write("x".encode('ascii'))
-    stdout, stderr = proc.communicate()
-    print (stderr)
-    ret = proc.wait()
-    assert "hello".encode('ascii') in stdout
-
-def test_rinfo_source(pythonpath, tmpdir):
-    check = tmpdir.join("check.py")
-    check.write(py.code.Source("""
-        class Channel:
-            def send(self, data):
-                assert eval(repr(data), {}) == data
-        channel = Channel()
-        """, gateway.rinfo_source, """
-        print ('all passed')
-    """))
-    out = pythonpath.sysexec(check)
-    print (out)
-    assert "all passed" in out
-
-def test_geterrortext(pythonpath, tmpdir):
-    check = tmpdir.join("check.py")
-    check.write(py.code.Source(gateway_base, """
-        class Arg:
-            pass
-        errortext = geterrortext((Arg, "1", 4))
-        assert "Arg" in errortext
-        import sys
-        try:
-            raise ValueError("17")
-        except ValueError:
-            excinfo = sys.exc_info()
-            s = geterrortext(excinfo)
-            assert "17" in s
-            print ("all passed")
-    """))
-    out = pythonpath.sysexec(check)
-    print (out)
-    assert "all passed" in out
-
-class TestExecnetEvents:
-    def test_popengateway(self, _pytest):
-        rec = _pytest.gethookrecorder(ExecnetAPI)
-        gw = py.execnet.PopenGateway()
-        call = rec.popcall("pyexecnet_gateway_init") 
-        assert call.gateway == gw
-        gw.exit()
-        call = rec.popcall("pyexecnet_gateway_exit")
-        assert call.gateway == gw
-
-
-def test_getsource_import_modules(): 
-    for dottedname in startup_modules: 
-        yield getsource, dottedname 
-
-def test_getsource_no_colision(): 
-    seen = {}
-    for dottedname in startup_modules: 
-        mod = __import__(dottedname, None, None, ['__doc__'])
-        for name, value in vars(mod).items(): 
-            if py.std.inspect.isclass(value): 
-                if name in seen: 
-                    olddottedname, oldval = seen[name]
-                    if oldval is not value: 
-                        py.test.fail("duplicate class %r in %s and %s" % 
-                                     (name, dottedname, olddottedname)) 
-                seen[name] = (dottedname, value) 
-
-def test_stdouterrin_setnull():
-    cap = py.io.StdCaptureFD()
-    from py.__.execnet.gateway import stdouterrin_setnull
-    stdouterrin_setnull()
-    import os
-    os.write(1, "hello".encode('ascii'))
-    if os.name == "nt":
-        os.write(2, "world")
-    os.read(0, 1)
-    out, err = cap.reset()
-    assert not out
-    assert not err
-
-
-class TestMessage:
-    def test_wire_protocol(self):
-        for cls in Message._types.values():
-            one = py.io.BytesIO()
-            data = '23'.encode('ascii')
-            cls(42, data).writeto(one)
-            two = py.io.BytesIO(one.getvalue())
-            msg = Message.readfrom(two)
-            assert isinstance(msg, cls)
-            assert msg.channelid == 42
-            assert msg.data == data
-            assert isinstance(repr(msg), str)
-            # == "<Message.%s channelid=42 '23'>" %(msg.__class__.__name__, )
-
-class TestPureChannel:
-    def setup_method(self, method):
-        self.fac = ChannelFactory(None)
-
-    def test_factory_create(self):
-        chan1 = self.fac.new()
-        assert chan1.id == 1
-        chan2 = self.fac.new()
-        assert chan2.id == 3
-
-    def test_factory_getitem(self):
-        chan1 = self.fac.new()
-        assert self.fac._channels[chan1.id] == chan1
-        chan2 = self.fac.new()
-        assert self.fac._channels[chan2.id] == chan2
-
-    def test_channel_timeouterror(self):
-        channel = self.fac.new()
-        py.test.raises(IOError, channel.waitclose, timeout=0.01)
-
-    def test_channel_makefile_incompatmode(self):
-        channel = self.fac.new()
-        py.test.raises(ValueError, 'channel.makefile("rw")')
-
 
 class PopenGatewayTestSetup:
     def setup_class(cls):
@@ -648,6 +470,7 @@ class TestPopenGateway(PopenGatewayTestSetup, BasicRemoteExecution):
         py.test.raises(EOFError, channel.send, None)
         py.test.raises(EOFError, channel.receive)
 
+@py.test.mark.xfail
 def test_endmarker_delivery_on_remote_killterm():
     if not hasattr(py.std.os, 'kill'):
         py.test.skip("no os.kill()")
@@ -664,8 +487,8 @@ def test_endmarker_delivery_on_remote_killterm():
         err = channel._getremoteerror()
     finally:
         gw.exit()
-    py.test.skip("provide information on causes/signals "
-                 "of dying remote gateways")
+    assert "killed" in str(err)
+    assert "15" in str(err)
 
 
 class SocketGatewaySetup:
@@ -675,6 +498,10 @@ class SocketGatewaySetup:
         cls.gw = py.execnet.SocketGateway.new_remote(cls.proxygw,
                                                      ("127.0.0.1", 0)
                                                      ) 
+    def test_host_not_found(self):
+        py.test.raises(py.execnet.HostNotFound, 
+                'py.execnet.SocketGateway("qowieuqowe", 9000)'
+        )
 
 ##    def teardown_class(cls):
 ##        cls.gw.exit()
@@ -695,26 +522,15 @@ class TestSshGateway(BasicRemoteExecution):
             "Host alias123\n"
             "   HostName %s\n" % self.sshhost)
         gw = py.execnet.SshGateway("alias123", ssh_config=ssh_config)
-        assert gw._cmd.find("-F") != -1
-        assert gw._cmd.find(str(ssh_config)) != -1
         pid = gw.remote_exec("import os ; channel.send(os.getpid())").receive()
         gw.exit()
 
     def test_sshaddress(self):
         assert self.gw.remoteaddress == self.sshhost
 
-    @py.test.mark.xfail # XXX ssh-gateway error handling
     def test_connexion_failes_on_non_existing_hosts(self):
-        py.test.raises(IOError, 
+        py.test.raises(py.execnet.HostNotFound, 
             "py.execnet.SshGateway('nowhere.codespeak.net')")
-
-    @py.test.mark.xfail # "XXX ssh-gateway error handling"
-    def test_deprecated_identity(self):
-        py.test.deprecated_call(
-            py.test.raises, IOError, 
-                py.execnet.SshGateway,
-                    'nowhere.codespeak.net', identity='qwe')
-
 
 def test_threads():
     gw = py.execnet.PopenGateway()
@@ -734,26 +550,17 @@ def test_threads_twice():
     gw.remote_init_threads(3)
     py.test.raises(IOError, gw.remote_init_threads, 3)
     gw.exit() 
-    
+
+class TestExecnetEvents:
+    def test_popengateway(self, _pytest):
+        rec = _pytest.gethookrecorder(gateway_base.ExecnetAPI)
+        gw = py.execnet.PopenGateway()
+        call = rec.popcall("pyexecnet_gateway_init") 
+        assert call.gateway == gw
+        gw.exit()
+        call = rec.popcall("pyexecnet_gateway_exit")
+        assert call.gateway == gw
 
 def test_nodebug():
     from py.__.execnet import gateway_base
     assert not gateway_base.debug
-
-def test_channel_endmarker_remote_killterm():
-    gw = py.execnet.PopenGateway()
-    try:
-        q = queue.Queue()
-        channel = gw.remote_exec('''
-            import os
-            os.kill(os.getpid(), 15)
-        ''') 
-        channel.setcallback(q.put, endmarker=999)
-        val = q.get(TESTTIMEOUT)
-        assert val == 999
-        err = channel._getremoteerror()
-    finally:
-        gw.exit()
-    py.test.skip("provide information on causes/signals "
-                 "of dying remote gateways")
-

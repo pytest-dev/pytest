@@ -195,11 +195,8 @@ channel.send(dict(
 """
 
 class PopenCmdGateway(InitiatingGateway):
-    def __init__(self, cmd):
-        # on win close_fds=True does not work, not sure it'd needed
-        #p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
-        self._popen = p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE) 
-        self._cmd = cmd
+    def __init__(self, args):
+        self._popen = p = Popen(args, stdin=PIPE, stdout=PIPE) 
         io = Popen2IO(p.stdin, p.stdout)
         super(PopenCmdGateway, self).__init__(io=io)
 
@@ -207,6 +204,7 @@ class PopenCmdGateway(InitiatingGateway):
         super(PopenCmdGateway, self).exit()
         self._popen.poll()
 
+popen_bootstrapline = "import sys ; exec(eval(sys.stdin.readline()))"
 class PopenGateway(PopenCmdGateway):
     """ This Gateway provides interaction with a newly started
         python subprocess. 
@@ -217,9 +215,8 @@ class PopenGateway(PopenCmdGateway):
         """
         if not python:
             python = sys.executable
-        cmd = ('%s -u -c "import sys ; '
-               'exec(eval(sys.stdin.readline()))"' % python)
-        super(PopenGateway, self).__init__(cmd)
+        args = [str(python), '-c', popen_bootstrapline]
+        super(PopenGateway, self).__init__(args)
 
     def _remote_bootstrap_gateway(self, io, extra=''):
         # have the subprocess use the same PYTHONPATH and py lib 
@@ -250,7 +247,10 @@ class SocketGateway(InitiatingGateway):
         self.port = port = int(port)
         self.remoteaddress = '%s:%d' % (self.host, self.port)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
+        try:
+            sock.connect((host, port))
+        except socket.gaierror:
+            raise HostNotFound(str(sys.exc_info()[1]))
         io = SocketIO(sock)
         super(SocketGateway, self).__init__(io=io)
 
@@ -280,36 +280,29 @@ class SocketGateway(InitiatingGateway):
         return py.execnet.SocketGateway(host, realport) 
     new_remote = classmethod(new_remote)
 
+class HostNotFound(Exception):
+    pass
     
 class SshGateway(PopenCmdGateway):
     """ This Gateway provides interaction with a remote Python process,
         established via the 'ssh' command line binary.  
         The remote side needs to have a Python interpreter executable. 
     """
-    def __init__(self, sshaddress, remotepython=None, 
-        identity=None, ssh_config=None): 
+
+    def __init__(self, sshaddress, remotepython=None, ssh_config=None): 
         """ instantiate a remote ssh process with the 
             given 'sshaddress' and remotepython version.
             you may specify an ssh_config file. 
-            DEPRECATED: you may specify an 'identity' filepath. 
         """
         self.remoteaddress = sshaddress
         if remotepython is None:
             remotepython = "python"
-        remotecmd = '%s -u -c "exec input()"' % (remotepython,)
-        cmdline = [sshaddress, remotecmd]
-        # XXX Unix style quoting
-        for i in range(len(cmdline)):
-            cmdline[i] = "'" + cmdline[i].replace("'", "'\\''") + "'"
-        cmd = 'ssh -C'
-        if identity is not None: 
-            py.log._apiwarn("1.0", "pass in 'ssh_config' file instead of identity")
-            cmd += ' -i %s' % (identity,)
+        args = ['ssh', '-C' ]
         if ssh_config is not None:
-            cmd += ' -F %s' % (ssh_config)
-        cmdline.insert(0, cmd) 
-        cmd = ' '.join(cmdline)
-        super(SshGateway, self).__init__(cmd)
+            args.extend(['-F', str(ssh_config)])
+        remotecmd = '%s -c "%s"' %(remotepython, popen_bootstrapline)
+        args.extend([sshaddress, remotecmd])
+        super(SshGateway, self).__init__(args)
        
     def _remote_bootstrap_gateway(self, io, s=""): 
         extra = "\n".join([
@@ -317,8 +310,12 @@ class SshGateway(PopenCmdGateway):
             "stdouterrin_setnull()",
             s, 
         ])
-        super(SshGateway, self)._remote_bootstrap_gateway(io, extra)
-
+        try:
+            super(SshGateway, self)._remote_bootstrap_gateway(io, extra)
+        except EOFError:
+            ret = self._popen.wait()
+            if ret == 255:
+                raise HostNotFound(self.remoteaddress)
 
 def stdouterrin_setnull():
     """ redirect file descriptors 0 and 1 (and possibly 2) to /dev/null. 
