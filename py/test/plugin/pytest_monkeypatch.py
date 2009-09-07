@@ -1,49 +1,54 @@
 """
 safely patch object attributes, dicts and environment variables. 
 
-Usage
+Usage 
 ----------------
 
-Use the `monkeypatch funcarg`_ to safely modify or delete environment
-variables, object attributes or dictionary values.  For example, if you want
-to set the environment variable ``ENV1`` and patch the
-``os.path.abspath`` function to return a particular value during a test
-function execution you can write it down like this:
+Use the `monkeypatch funcarg`_ to tweak your global test environment 
+for running a particular test.  You can safely set/del an attribute, 
+dictionary item or environment variable by respective methods
+on the monkeypatch funcarg.  If you want e.g. to set an ENV1 variable 
+and have os.path.expanduser return a particular directory, you can 
+write it down like this:
 
 .. sourcecode:: python 
 
     def test_mytest(monkeypatch):
         monkeypatch.setenv('ENV1', 'myval')
-        monkeypatch.setattr(os.path, 'abspath', lambda x: '/')
-        ... # your test code 
+        monkeypatch.setattr(os.path, 'expanduser', lambda x: '/tmp/xyz')
+        ... # your test code that uses those patched values implicitely
 
-The function argument will do the modifications and memorize the 
-old state.  After the test function finished execution all 
-modifications will be reverted.  See the `monkeypatch blog post`_ 
-for an extensive discussion.  
+After the test function finished all modifications will be undone, 
+because the ``monkeypatch.undo()`` method is registered as a finalizer. 
 
-To add to a possibly existing environment parameter you
-can use this example: 
+``monkeypatch.setattr/delattr/delitem/delenv()`` all 
+by default raise an Exception if the target does not exist. 
+Pass ``raising=False`` if you want to skip this check. 
+
+prepending to PATH or other environment variables 
+---------------------------------------------------------
+
+To prepend a value to an already existing environment parameter:
 
 .. sourcecode:: python 
 
     def test_mypath_finding(monkeypatch):
         monkeypatch.setenv('PATH', 'x/y', prepend=":")
-        #  x/y will be at the beginning of $PATH 
+        # in bash language: export PATH=x/y:$PATH 
 
 calling "undo" finalization explicitely
 -----------------------------------------
 
-Usually at the end of function execution py.test will invoke
-a teardown hook which undoes the changes.  If you cannot wait
-that long you can also call finalization explicitely::
+At the end of function execution py.test invokes
+a teardown hook which undoes all monkeypatch changes. 
+If you do not want to wait that long you can call 
+finalization explicitely::
 
     monkeypatch.undo()  
 
 This will undo previous changes.  This call consumes the
-undo stack.  Calling it a second time has no effect. 
-Within a test you can continue to use the monkeypatch 
-object, however. 
+undo stack.  Calling it a second time has no effect unless
+you  start monkeypatching after the undo call. 
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
@@ -54,7 +59,7 @@ def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these 
     helper methods to modify objects, dictionaries or os.environ::
 
-        monkeypatch.setattr(obj, name, value)  
+        monkeypatch.setattr(obj, name, value, raising=True)  
         monkeypatch.delattr(obj, name, raising=True)
         monkeypatch.setitem(mapping, name, value) 
         monkeypatch.delitem(obj, name, raising=True)
@@ -79,8 +84,11 @@ class MonkeyPatch:
         self._setattr = []
         self._setitem = []
 
-    def setattr(self, obj, name, value):
-        self._setattr.insert(0, (obj, name, getattr(obj, name, notset)))
+    def setattr(self, obj, name, value, raising=True):
+        oldval = getattr(obj, name, notset)
+        if raising and oldval is notset:
+            raise AttributeError("%r has no attribute %r" %(obj, name))
+        self._setattr.insert(0, (obj, name, oldval))
         setattr(obj, name, value)
 
     def delattr(self, obj, name, raising=True):

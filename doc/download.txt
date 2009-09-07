@@ -10,7 +10,8 @@
 using easy_install 
 ===================================================
 
-With a working `setuptools installation`_ you can type::
+With a working `setuptools installation`_ or `distribute installation`_ 
+you can type::
 
     easy_install -U py 
 
@@ -19,19 +20,11 @@ will trigger an upgrade if you already have an older version installed.
 On Linux systems you may need to execute the command as superuser and
 on Windows you might need to write down the full path to ``easy_install``. 
 The py lib and its tools are expected to work well on Linux,
-Windows and OSX, Python versions 2.3, 2.4, 2.5 and 2.6.
-
-**IMPORTANT NOTE**: if you are using Windows and have 
-0.8 versions of the py lib on your system, please download 
-and execute http://codespeak.net/svn/py/build/winpathclean.py
-This will check that no previous files are getting in the way. 
-You can find out the py lib version with::
-
-    import py
-    print py.version
-
+Windows and OSX, Python versions 2.4, 2.5, 2.6 through to
+the Python3 versions 3.0 and 3.1. 
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
+.. _`distribute installation`: http://pypi.python.org/pypi/distribute
 .. _checkout:
 .. _tarball:
 

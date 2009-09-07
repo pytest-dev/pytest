@@ -74,8 +74,7 @@ per-test capturing.  Here is an example test function:
 
     def test_myoutput(capsys):
         print ("hello")
-        sys.stderr.write("world
-")
+        sys.stderr.write("world\n")
         out, err = capsys.readouterr()
         assert out == "hello\n"
         assert err == "world\n"

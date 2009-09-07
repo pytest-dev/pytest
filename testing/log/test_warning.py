@@ -6,7 +6,7 @@ def test_forwarding_to_warnings_module():
 
 def test_apiwarn_functional():
     capture = py.io.StdCapture()
-    py.log._apiwarn("x.y.z", "something")
+    py.log._apiwarn("x.y.z", "something", stacklevel=1)
     out, err = capture.reset()
     py.builtin.print_("out", out)
     py.builtin.print_("err", err)

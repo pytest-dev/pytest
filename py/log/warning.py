@@ -10,11 +10,11 @@ class Warning(DeprecationWarning):
     def __str__(self):
         return self.msg 
 
-def _apiwarn(startversion, msg, stacklevel=1, function=None):
+def _apiwarn(startversion, msg, stacklevel=2, function=None):
     # below is mostly COPIED from python2.4/warnings.py's def warn()
     # Get context information
     if stacklevel == "initpkg":
-        frame = sys._getframe(1)
+        frame = sys._getframe(stacklevel == "initpkg" and 1 or stacklevel)
         level = 2
         while frame:
             co = frame.f_code

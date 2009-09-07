@@ -148,7 +148,7 @@ def getrealname(username):
     
 
 class Project:
-    mydir = py.magic.autopath().dirpath()
+    mydir = py.path.local(__file__).dirpath()
     title = "py lib"
     prefix_title = ""  # we have a logo already containing "py lib"
     encoding = 'latin1' 

@@ -6,6 +6,13 @@ def test_setattr():
     class A:
         x = 1
     monkeypatch = MonkeyPatch()
+    py.test.raises(AttributeError, "monkeypatch.setattr(A, 'notexists', 2)")
+    monkeypatch.setattr(A, 'y', 2, raising=False)
+    assert A.y == 2
+    monkeypatch.undo()
+    assert not hasattr(A, 'y')
+
+    monkeypatch = MonkeyPatch()
     monkeypatch.setattr(A, 'x', 2)
     assert A.x == 2
     monkeypatch.setattr(A, 'x', 3)
@@ -17,11 +24,6 @@ def test_setattr():
     monkeypatch.undo() # double-undo makes no modification
     assert A.x == 5
 
-    monkeypatch.setattr(A, 'y', 3)
-    assert A.y == 3
-    monkeypatch.undo()
-    assert not hasattr(A, 'y')
-     
 def test_delattr():
     class A:
         x = 1
@@ -35,7 +37,7 @@ def test_delattr():
     monkeypatch.delattr(A, 'x')
     py.test.raises(AttributeError, "monkeypatch.delattr(A, 'y')")
     monkeypatch.delattr(A, 'y', raising=False)
-    monkeypatch.setattr(A, 'x', 5)
+    monkeypatch.setattr(A, 'x', 5, raising=False)
     assert A.x == 5
     monkeypatch.undo()
     assert A.x == 1
@@ -44,6 +46,7 @@ def test_setitem():
     d = {'x': 1}
     monkeypatch = MonkeyPatch()
     monkeypatch.setitem(d, 'x', 2)
+    monkeypatch.setitem(d, 'y', 1700)
     monkeypatch.setitem(d, 'y', 1700)
     assert d['x'] == 2
     assert d['y'] == 1700
