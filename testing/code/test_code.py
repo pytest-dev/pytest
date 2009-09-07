@@ -53,7 +53,7 @@ def test_newcode_with_filename():
     filename = MyStr("hello") 
     filename.__source__ = py.code.Source(source) 
     newco = code.new(rec=True, co_filename=filename) 
-    assert newco.co_filename is filename 
+    assert newco.co_filename.__source__ == filename.__source__
     s = py.code.Source(newco) 
     assert str(s) == source 
 

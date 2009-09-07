@@ -327,6 +327,8 @@ def stdouterrin_setnull():
     # blocks there, while it works (sending to stderr if possible else
     # ignoring) on *nix
     import sys, os
+    if not hasattr(os, 'dup'): # jython
+        return 
     try:
         devnull = os.devnull
     except AttributeError:

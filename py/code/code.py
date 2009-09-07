@@ -32,7 +32,7 @@ class Code(object):
         for name in kwargs: 
             if name not in names: 
                 raise TypeError("unknown code attribute: %r" %(name, ))
-        if rec: 
+        if rec and hasattr(self.raw, 'co_consts'):  # jython 
             newconstlist = []
             co = self.raw
             cotype = type(co)
@@ -47,22 +47,24 @@ class Code(object):
         arglist = [
                  kwargs['co_argcount'],
                  kwargs['co_nlocals'],
-                 kwargs['co_stacksize'],
-                 kwargs['co_flags'],
-                 kwargs['co_code'],
-                 kwargs['co_consts'],
-                 kwargs['co_names'],
+                 kwargs.get('co_stacksize', 0), # jython
+                 kwargs.get('co_flags', 0), # jython
+                 kwargs.get('co_code', ''), # jython
+                 kwargs.get('co_consts', ()), # jython
+                 kwargs.get('co_names', []), # 
                  kwargs['co_varnames'],
                  kwargs['co_filename'],
                  kwargs['co_name'],
                  kwargs['co_firstlineno'],
-                 kwargs['co_lnotab'],
-                 kwargs['co_freevars'],
-                 kwargs['co_cellvars'],
+                 kwargs.get('co_lnotab', ''), #jython
+                 kwargs.get('co_freevars', None), #jython
+                 kwargs.get('co_cellvars', None), # jython
         ]
         if sys.version_info >= (3,0):
             arglist.insert(1, kwargs['co_kwonlyargcount'])
-        return self.raw.__class__(*arglist)
+            return self.raw.__class__(*arglist)
+        else:
+            return py.std.new.code(*arglist)
 
     def path(self):
         """ return a py.path.local object pointing to the source code """
