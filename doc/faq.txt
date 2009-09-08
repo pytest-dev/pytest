@@ -51,7 +51,7 @@ have no counterpart in nose_.
 Why did you choose a GPL-style license? 
 ----------------------------------------
 
-Older versions of the py lib and (up until 1.0.x) 
+Older versions of the py lib and py.test (up until 1.0.x) 
 were licensed under the MIT license.  Starting
 with the 1.1 series Holger Krekel - being the main maintainer
 and developer since several years - decided to go for 
@@ -66,23 +66,25 @@ a GPL-style license mainly for these reasons:
 Developers want to co-operate no matter what context they
 are in, commercial, free, whatever.  BSD-licenses sound like
 a fit because they minimize the need for checking for 
-constraints from the company or legal department. 
+constraints from the company or legal department. They allow
+to use and modify software for whatever purpose. 
 
-Developers wanting to produce free software for a living also
-want to connect to a sustainable revenue system, however.  When 
-releasing software for public use they want to seek means, 
-some security on getting something back: Contributions, 
-recognition or money.  The GPL license tries to foster a 
-universe of free software and force proprietary players 
-to contribute back.  
+However, developers wanting to produce free software for a living 
+often need to connect to a sustainable revenue system.  When 
+releasing software for public use they seek means, some security 
+on getting something back: Contributions, recognition or money.  
+The GPL license tries to foster a universe of free software and 
+force proprietary players to contribute back.  
 
-Choosing the Lesser GPL kind of strikes a balance - it allows
-the code to interact in proprietary contexts but increases
-likelyness of flow backs.  Practically it all does not make 
-much of a difference.  Anyway, if you do have actual practical 
-issues regarding the license please just get in contact.  
+The py lib choose the Lesser GPL.  It strikes a balance because it
+allows the code to interact in proprietary contexts and increases
+likelyness of flow backs.   
+
+If you do have or get actual practical issues regarding 
+licensing please get in contact_.  
 
 .. _fsf: http://www.fsf.org
+.. _contact: contact.html
 
 What's all this "magic" with py.test? 
 ----------------------------------------

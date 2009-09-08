@@ -1,6 +1,5 @@
 import sys, os, inspect, socket, atexit, weakref
 import py
-from subprocess import Popen, PIPE
 from py.__.execnet.gateway_base import BaseGateway, Message, Popen2IO, SocketIO
 from py.__.execnet.gateway_base import ExecnetAPI
 
@@ -196,6 +195,7 @@ channel.send(dict(
 
 class PopenCmdGateway(InitiatingGateway):
     def __init__(self, args):
+        from subprocess import Popen, PIPE
         self._popen = p = Popen(args, stdin=PIPE, stdout=PIPE) 
         io = Popen2IO(p.stdin, p.stdout)
         super(PopenCmdGateway, self).__init__(io=io)
