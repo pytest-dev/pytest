@@ -6,8 +6,9 @@ Frequently Asked Questions
     :local:
     :depth: 2
 
-On naming, nose and magic 
-============================
+
+On naming, nosetests, licensing and magic 
+===========================================
 
 Why the ``py`` naming? what is it? 
 ------------------------------------
@@ -31,8 +32,8 @@ was to make it obvious where testing functionality
 for the ``py.test`` command line tool is: in the
 ``py.test`` package name space. 
 
-What's the relation to ``nosetests``? 
-----------------------------------------
+What's py.test's relation to ``nosetests``? 
+---------------------------------------------
 
 py.test and nose_ share basic philosophy when it comes
 to running Python tests.  In fact, 
@@ -44,6 +45,44 @@ have no counterpart in nose_.
 
 .. _nose: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/
 .. _features: test/features.html
+
+.. _whygpl: 
+
+Why did you choose a GPL-style license? 
+----------------------------------------
+
+Older versions of the py lib and (up until 1.0.x) 
+were licensed under the MIT license.  Starting
+with the 1.1 series Holger Krekel - being the main maintainer
+and developer since several years - decided to go for 
+a GPL-style license mainly for these reasons: 
+
+1. increase likelyness of flow-back, contributions and publicity. 
+
+2. make use of the FSF_ efforts which produced a consistent and interoperable legal framework. 
+
+3. Potentially get some money from dual-licensing to companies. 
+
+Developers want to co-operate no matter what context they
+are in, commercial, free, whatever.  BSD-licenses sound like
+a fit because they minimize the need for checking for 
+constraints from the company or legal department. 
+
+Developers wanting to produce free software for a living also
+want to connect to a sustainable revenue system, however.  When 
+releasing software for public use they want to seek means, 
+some security on getting something back: Contributions, 
+recognition or money.  The GPL license tries to foster a 
+universe of free software and force proprietary players 
+to contribute back.  
+
+Choosing the Lesser GPL kind of strikes a balance - it allows
+the code to interact in proprietary contexts but increases
+likelyness of flow backs.  Practically it all does not make 
+much of a difference.  Anyway, if you do have actual practical 
+issues regarding the license please just get in contact.  
+
+.. _fsf: http://www.fsf.org
 
 What's all this "magic" with py.test? 
 ----------------------------------------
@@ -119,5 +158,3 @@ and implement the `parametrization scheme of your choice`_.
 
 .. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
 .. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
-
-
