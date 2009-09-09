@@ -1,7 +1,7 @@
 import py
 import sys, os
 from py.__.test.dist.txnode import TXNode
-from py.__.execnet.gwmanage import GatewayManager
+from py.__.test.dist.gwmanage import GatewayManager
 
     
 class NodeManager(object):
@@ -10,7 +10,7 @@ class NodeManager(object):
         if specs is None:
             specs = self.config.getxspecs()
         self.roots = self.config.getrsyncdirs()
-        self.gwmanager = GatewayManager(specs)
+        self.gwmanager = GatewayManager(specs, config.hook)
         self.nodes = []
         self._nodesready = py.std.threading.Event()
 

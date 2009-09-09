@@ -590,15 +590,6 @@ class ExecnetAPI:
     def pyexecnet_gateway_exit(self, gateway):
         """ signal exitting of gateway. """ 
 
-    def pyexecnet_gwmanage_newgateway(self, gateway, platinfo):
-        """ called when a manager has made a new gateway. """ 
-
-    def pyexecnet_gwmanage_rsyncstart(self, source, gateways):
-        """ called before rsyncing a directory to remote gateways takes place. """
-
-    def pyexecnet_gwmanage_rsyncfinish(self, source, gateways):
-        """ called after rsyncing a directory to remote gateways takes place. """
-
         
 class BaseGateway(object):
     hook = ExecnetAPI()

@@ -391,6 +391,7 @@ class TestChannelFile:
 def test_join_blocked_execution_gateway(): 
     gateway = py.execnet.PopenGateway() 
     channel = gateway.remote_exec("""
+        import time
         time.sleep(5.0)
     """)
     def doit(): 

@@ -123,16 +123,16 @@ class TestTerminal:
             platform = "xyz"
             cwd = "qwe"
         
-        rep.pyexecnet_gwmanage_newgateway(gw1, rinfo)
+        rep.pytest_gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
             "X1*popen*xyz*2.5*"
         ])
 
-        rep.pyexecnet_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
+        rep.pytest_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncstart: hello -> X1, X2"
         ])
-        rep.pyexecnet_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
+        rep.pytest_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
             "rsyncfinish: hello -> X1, X2"
         ])

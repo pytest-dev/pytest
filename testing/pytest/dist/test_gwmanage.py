@@ -7,36 +7,46 @@
 
 import py
 import os
-from py.__.execnet.gwmanage import GatewayManager, HostRSync
+from py.__.test.dist.gwmanage import GatewayManager, HostRSync
+from py.__.test.plugin import hookspec
+
+def pytest_funcarg__hookrecorder(request):
+    _pytest = request.getfuncargvalue('_pytest')
+    hook = request.getfuncargvalue('hook')
+    return _pytest.gethookrecorder(hook._hookspecs, hook._registry)
+
+def pytest_funcarg__hook(request):
+    registry = py._com.Registry()
+    return py._com.HookRelay(hookspec, registry)
 
 class TestGatewayManagerPopen:
-    def test_popen_no_default_chdir(self):
-        gm = GatewayManager(["popen"])
+    def test_popen_no_default_chdir(self, hook):
+        gm = GatewayManager(["popen"], hook)
         assert gm.specs[0].chdir is None
 
-    def test_default_chdir(self):
+    def test_default_chdir(self, hook):
         l = ["ssh=noco", "socket=xyz"]
-        for spec in GatewayManager(l).specs:
+        for spec in GatewayManager(l, hook).specs:
             assert spec.chdir == "pyexecnetcache"
-        for spec in GatewayManager(l, defaultchdir="abc").specs:
+        for spec in GatewayManager(l, hook, defaultchdir="abc").specs:
             assert spec.chdir == "abc"
         
-    def test_popen_makegateway_events(self, _pytest):
-        rec = _pytest.gethookrecorder(py.execnet._HookSpecs)
-        hm = GatewayManager(["popen"] * 2)
+    def test_popen_makegateway_events(self, hook, hookrecorder, _pytest):
+        hm = GatewayManager(["popen"] * 2, hook)
         hm.makegateways()
-        call = rec.popcall("pyexecnet_gwmanage_newgateway")
-        assert call.gateway.id == "[1]" 
+        call = hookrecorder.popcall("pytest_gwmanage_newgateway")
+        assert call.gateway.spec == py.execnet.XSpec("popen")
+        assert call.gateway.id == "[1]"
         assert call.platinfo.executable == call.gateway._rinfo().executable
-        call = rec.popcall("pyexecnet_gwmanage_newgateway")
+        call = hookrecorder.popcall("pytest_gwmanage_newgateway")
         assert call.gateway.id == "[2]" 
         assert len(hm.gateways) == 2
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_popens_rsync(self, mysetup):
+    def test_popens_rsync(self, hook, mysetup):
         source = mysetup.source
-        hm = GatewayManager(["popen"] * 2)
+        hm = GatewayManager(["popen"] * 2, hook)
         hm.makegateways()
         assert len(hm.gateways) == 2
         for gw in hm.gateways:
@@ -47,9 +57,9 @@ class TestGatewayManagerPopen:
         hm.exit()
         assert not len(hm.gateways) 
 
-    def test_rsync_popen_with_path(self, mysetup):
+    def test_rsync_popen_with_path(self, hook, mysetup):
         source, dest = mysetup.source, mysetup.dest 
-        hm = GatewayManager(["popen//chdir=%s" %dest] * 1)
+        hm = GatewayManager(["popen//chdir=%s" %dest] * 1, hook)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         l = []
@@ -62,21 +72,20 @@ class TestGatewayManagerPopen:
         assert dest.join("dir1", "dir2").check()
         assert dest.join("dir1", "dir2", 'hello').check()
 
-    def test_hostmanage_rsync_same_popen_twice(self, mysetup, _pytest):
+    def test_rsync_same_popen_twice(self, hook, mysetup, hookrecorder):
         source, dest = mysetup.source, mysetup.dest 
-        rec = _pytest.gethookrecorder(py.execnet._HookSpecs)
-        hm = GatewayManager(["popen//chdir=%s" %dest] * 2)
+        hm = GatewayManager(["popen//chdir=%s" %dest] * 2, hook)
         hm.makegateways()
         source.ensure("dir1", "dir2", "hello")
         hm.rsync(source)
-        call = rec.popcall("pyexecnet_gwmanage_rsyncstart") 
+        call = hookrecorder.popcall("pytest_gwmanage_rsyncstart") 
         assert call.source == source 
         assert len(call.gateways) == 1
         assert hm.gateways[0] == call.gateways[0]
-        call = rec.popcall("pyexecnet_gwmanage_rsyncfinish") 
+        call = hookrecorder.popcall("pytest_gwmanage_rsyncfinish") 
 
-    def test_multi_chdir_popen_with_path(self, testdir):
-        hm = GatewayManager(["popen//chdir=hello"] * 2)
+    def test_multi_chdir_popen_with_path(self, hook, testdir):
+        hm = GatewayManager(["popen//chdir=hello"] * 2, hook)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello").realpath()
         hm.makegateways()
@@ -96,9 +105,9 @@ class TestGatewayManagerPopen:
         assert l[0].startswith(curwd)
         assert l[0].endswith("world")
 
-    def test_multi_chdir_popen(self, testdir):
+    def test_multi_chdir_popen(self, testdir, hook):
         import os
-        hm = GatewayManager(["popen"] * 2)
+        hm = GatewayManager(["popen"] * 2, hook)
         testdir.tmpdir.chdir()
         hellopath = testdir.tmpdir.mkdir("hello")
         hm.makegateways()

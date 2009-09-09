@@ -1,27 +1,23 @@
 """
-    instantiating, managing and rsyncing to hosts
-
+    instantiating, managing and rsyncing to test hosts
 """
 
 import py
 import sys, os
 from py.__.execnet.gateway_base import RemoteError
 
-NO_ENDMARKER_WANTED = object()
-
 class GatewayManager:
     RemoteError = RemoteError
-    def __init__(self, specs, defaultchdir="pyexecnetcache"):
+    def __init__(self, specs, hook, defaultchdir="pyexecnetcache"):
         self.gateways = []
         self.specs = []
+        self.hook = hook
         for spec in specs:
             if not isinstance(spec, py.execnet.XSpec):
                 spec = py.execnet.XSpec(spec)
             if not spec.chdir and not spec.popen:
                 spec.chdir = defaultchdir
             self.specs.append(spec)
-        self.hook = py._com.HookRelay(
-            py.execnet._HookSpecs, py._com.comregistry)
 
     def makegateways(self):
         assert not self.gateways
@@ -29,7 +25,7 @@ class GatewayManager:
             gw = py.execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
-            self.hook.pyexecnet_gwmanage_newgateway(
+            self.hook.pytest_gwmanage_newgateway(
                 gateway=gw, platinfo=gw._rinfo())
 
     def getgateways(self, remote=True, inplacelocal=True):
@@ -76,12 +72,12 @@ class GatewayManager:
                     seen.add(spec)
                     gateways.append(gateway)
         if seen:
-            self.hook.pyexecnet_gwmanage_rsyncstart(
+            self.hook.pytest_gwmanage_rsyncstart(
                 source=source, 
                 gateways=gateways, 
             )
             rsync.send()
-            self.hook.pyexecnet_gwmanage_rsyncfinish(
+            self.hook.pytest_gwmanage_rsyncfinish(
                 source=source, 
                 gateways=gateways, 
             )

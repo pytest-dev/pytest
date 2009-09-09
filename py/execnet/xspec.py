@@ -57,7 +57,6 @@ def makegateway(spec):
         hostport = spec.socket.split(":")
         gw = py.execnet.SocketGateway(*hostport)
     gw.spec = spec 
-    # XXX events
     if spec.chdir or spec.nice:
         channel = gw.remote_exec("""
             import os

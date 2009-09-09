@@ -107,7 +107,7 @@ class TerminalReporter:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
 
-    def pyexecnet_gwmanage_newgateway(self, gateway, platinfo):
+    def pytest_gwmanage_newgateway(self, gateway, platinfo):
         #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
         d = {}
         d['version'] = repr_pythonversion(platinfo.version_info)
@@ -126,14 +126,14 @@ class TerminalReporter:
         self.write_line(infoline)
         self.gateway2info[gateway] = infoline
 
-    def pyexecnet_gwmanage_rsyncstart(self, source, gateways):
+    def pytest_gwmanage_rsyncstart(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         msg = "rsyncstart: %s -> %s" %(source, targets)
         if not self.config.option.verbose:
             msg += " # use --verbose to see rsync progress"
         self.write_line(msg)
 
-    def pyexecnet_gwmanage_rsyncfinish(self, source, gateways):
+    def pytest_gwmanage_rsyncfinish(self, source, gateways):
         targets = ", ".join([gw.id for gw in gateways])
         self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
