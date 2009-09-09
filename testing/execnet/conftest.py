@@ -10,7 +10,7 @@ def pytest_generate_tests(metafunc):
             metafunc.addcall(id=gwtype, param=gwtype)
 
 def pytest_funcarg__gw(request):
-    scope = "session" # XXX module causes problems with -n 3!
+    scope = "session"
     if request.param == "popen":
         return request.cached_setup(
                 setup=py.execnet.PopenGateway,

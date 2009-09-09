@@ -126,7 +126,10 @@ class FuncargRequest:
             val = setup()
             cache[cachekey] = val 
             if teardown is not None:
-                self._addfinalizer(lambda: teardown(val), scope=scope)
+                def finalizer():
+                    del cache[cachekey]
+                    teardown(val)
+                self._addfinalizer(finalizer, scope=scope)
         return val 
 
     def getfuncargvalue(self, argname):
@@ -157,7 +160,8 @@ class FuncargRequest:
 
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
-        self.config._setupstate.addfinalizer(finalizer=finalizer, colitem=colitem)
+        self.config._setupstate.addfinalizer(
+            finalizer=finalizer, colitem=colitem)
 
     def addfinalizer(self, finalizer):
         """ call the given finalizer after test function finished execution. """ 
@@ -179,6 +183,3 @@ class FuncargRequest:
         msg = "funcargument %r not found for: %s" %(argname, line)
         msg += "\n available funcargs: %s" %(", ".join(available),)
         raise self.Error(msg)
-
-
-        

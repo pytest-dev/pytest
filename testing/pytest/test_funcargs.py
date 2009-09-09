@@ -240,6 +240,24 @@ class TestRequestCachedSetup:
         assert ret1 == ret1b
         assert ret2 == ret2b
 
+    def test_request_cachedsetup_cache_deletion(self, testdir):
+        item1 = testdir.getitem("def test_func(): pass")
+        req1 = funcargs.FuncargRequest(item1)
+        l = []
+        def setup():
+            l.append("setup")
+        def teardown(val):
+            l.append("teardown")
+        ret1 = req1.cached_setup(setup, teardown, scope="function")
+        assert l == ['setup']
+        # artificial call of finalizer
+        req1.config._setupstate._callfinalizers(item1)
+        assert l == ["setup", "teardown"]
+        ret2 = req1.cached_setup(setup, teardown, scope="function")
+        assert l == ["setup", "teardown", "setup"]
+        req1.config._setupstate._callfinalizers(item1)
+        assert l == ["setup", "teardown", "setup", "teardown"]
+
     def test_request_cached_setup_functional(self, testdir):
         testdir.makepyfile(test_0="""
             l = []
