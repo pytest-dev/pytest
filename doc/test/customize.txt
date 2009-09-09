@@ -353,6 +353,26 @@ Python module.  The return value is a custom `collection node`_ or None.
 .. XXX or ``False`` if you want to indicate that the given item should not be collected. 
 
 
+Gateway initialization (distributed testing)
+----------------------------------------------------
+
+(alpha) For distributed testing it can be useful to prepare the
+remote environment.  For this you can implement the newgateway hook:
+
+.. sourcecode:: python
+
+    def pytest_gwmanage_newgateway(gateway, platinfo):
+        """ called after a gateway is instantiated. """
+
+The ``gateway`` object here has a ``spec`` attribute which is an ``py.execnet.XSpec`` 
+object, which has attributes that map key/values as specified from a ``--txspec``
+option. The platinfo object is a dictionary with information about the remote process: 
+
+* ``version``: remote python's ``sys.version_info`` 
+* ``platform``: remote ``sys.platform``
+* ``cwd``: remote ``os.getcwd``
+
+
 .. _`collection process`: 
 .. _`collection node`: 
 .. _`test collection`:
