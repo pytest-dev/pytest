@@ -449,7 +449,7 @@ class TestPopenGateway:
         assert rinfo.version_info == py.std.sys.version_info
 
     def test_gateway_init_event(self, _pytest):
-        rec = _pytest.gethookrecorder(gateway_base.ExecnetAPI)
+        rec = _pytest.gethookrecorder(gateway.ExecnetAPI)
         gw = py.execnet.PopenGateway()
         call = rec.popcall("pyexecnet_gateway_init") 
         assert call.gateway == gw

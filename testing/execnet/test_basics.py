@@ -143,23 +143,6 @@ def test_geterrortext(anypython, tmpdir):
     print (out)
     assert "all passed" in out
 
-def test_getsource_import_modules(): 
-    for dottedname in gateway.startup_modules: 
-        yield gateway.getsource, dottedname 
-
-def test_getsource_no_colision(): 
-    seen = {}
-    for dottedname in gateway.startup_modules: 
-        mod = __import__(dottedname, None, None, ['__doc__'])
-        for name, value in vars(mod).items(): 
-            if py.std.inspect.isclass(value): 
-                if name in seen: 
-                    olddottedname, oldval = seen[name]
-                    if oldval is not value: 
-                        py.test.fail("duplicate class %r in %s and %s" % 
-                                     (name, dottedname, olddottedname)) 
-                seen[name] = (dottedname, value) 
-
 def test_stdouterrin_setnull():
     cap = py.io.StdCaptureFD()
     from py.__.execnet.gateway import stdouterrin_setnull

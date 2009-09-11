@@ -1,4 +1,6 @@
-
+"""
+(c) 2008-2009, holger krekel 
+"""
 import py
 
 class XSpec:
@@ -9,7 +11,7 @@ class XSpec:
         * keys are not allowed to start with underscore 
         * if no "=value" is given, assume a boolean True value 
     """
-    # XXX for now we are very restrictive about actually allowed key-values 
+    # XXX allow customization, for only allow specific key names
     popen = ssh = socket = python = chdir = nice = None
 
     def __init__(self, string):

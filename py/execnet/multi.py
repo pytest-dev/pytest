@@ -1,5 +1,7 @@
 """
-    Support for working with multiple channels and gateways
+Support for working with multiple channels and gateways
+
+(c) 2008-2009, Holger Krekel and others
 """
 import py
 try:

@@ -1,4 +1,3 @@
-
 def f():
     import os, stat, shutil
     try:

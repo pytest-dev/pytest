@@ -1,21 +1,14 @@
+"""
+gateway code for initiating popen, socket and ssh connections. 
+(c) 2004-2009, Holger Krekel and others
+"""
+
 import sys, os, inspect, socket, atexit, weakref
 import py
-from py.__.execnet.gateway_base import BaseGateway, Message, Popen2IO, SocketIO
-from py.__.execnet.gateway_base import ExecnetAPI
-
-# the list of modules that must be send to the other side 
-# for bootstrapping gateways
-# XXX we'd like to have a leaner and meaner bootstrap mechanism 
-
-startup_modules = [
-    'py.__.execnet.gateway_base', 
-]
+from py.__.execnet.gateway_base import Message, Popen2IO, SocketIO
+from py.__.execnet import gateway_base 
 
 debug = False
-
-def getsource(dottedname): 
-    mod = __import__(dottedname, None, None, ['__doc__'])
-    return inspect.getsource(mod) 
 
 class GatewayCleanup:
     def __init__(self): 
@@ -37,15 +30,22 @@ class GatewayCleanup:
             gw.exit()
             #gw.join() # should work as well
 
+class ExecnetAPI:
+    def pyexecnet_gateway_init(self, gateway):
+        """ signal initialisation of new gateway. """ 
+    def pyexecnet_gateway_exit(self, gateway):
+        """ signal exitting of gateway. """ 
     
-class InitiatingGateway(BaseGateway):
+class InitiatingGateway(gateway_base.BaseGateway):
     """ initialize gateways on both sides of a inputoutput object. """
+    # XXX put the next two global variables into an Execnet object
+    #     which intiaties gateways and passes in appropriate values. 
     _cleanup = GatewayCleanup()
+    hook = ExecnetAPI()
 
     def __init__(self, io):
         self._remote_bootstrap_gateway(io)
         super(InitiatingGateway, self).__init__(io=io, _startcount=1) 
-        # XXX we dissallow execution form the other side
         self._initreceive()
         self.hook = py._com.HookRelay(ExecnetAPI, py._com.comregistry)
         self.hook.pyexecnet_gateway_init(gateway=self)
@@ -87,10 +87,10 @@ class InitiatingGateway(BaseGateway):
             uniquely identify channels across both sides.
         """
         bootstrap = [extra]
-        bootstrap += [getsource(x) for x in startup_modules]
+        bootstrap += [inspect.getsource(gateway_base)]
         bootstrap += [io.server_stmt, 
                       "io.write('1'.encode('ascii'))",
-                      "BaseGateway(io=io, _startcount=2)._servemain()", 
+                      "SlaveGateway(io=io, _startcount=2).serve()", 
                      ]
         source = "\n".join(bootstrap)
         self._trace("sending gateway bootstrap code")
@@ -136,7 +136,7 @@ class InitiatingGateway(BaseGateway):
                     execpool.shutdown()
                     execpool.join()
                     raise gw._StopExecLoop
-                execpool.dispatch(gw._executetask, task)
+                execpool.dispatch(gw.executetask, task)
         """ % num)
         self._remotechannelthread = self.remote_exec(source)
 

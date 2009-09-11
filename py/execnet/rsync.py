@@ -1,3 +1,8 @@
+"""
+1:N rsync implemenation on top of execnet. 
+
+(c) 2006-2009, Armin Rigo, Holger Krekel, Maciej Fijalkowski 
+"""
 import py, os, stat
 
 md5 = py.builtin._tryimport('hashlib', 'md5').md5
