@@ -3,7 +3,7 @@
 import sys, os, os.path
 
 progpath = sys.argv[0]
-packagedir = os.path.abspath(os.path.dirname(progpath))
+packagedir = os.path.dirname(os.path.dirname(os.path.abspath(progpath)))
 packagename = os.path.basename(packagedir)
 bindir = os.path.join(packagedir, 'bin')
 if sys.platform == 'win32':
