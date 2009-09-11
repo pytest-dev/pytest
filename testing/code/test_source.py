@@ -192,12 +192,12 @@ class TestSourceParsingAndCompiling:
         assert source.getstatementrange(5) == (0, 9)
 
     def test_compile_to_ast(self):
-        if sys.version_info < (2, 5):
-            py.test.skip("requires Python 2.5")
-        import _ast
+        if sys.version_info < (2, 6):
+            py.test.skip("requires Python 2.6")
+        import ast
         source = Source("x = 4")
-        mod = source.compile(flag=_ast.PyCF_ONLY_AST)
-        assert isinstance(mod, _ast.Module)
+        mod = source.compile(flag=ast.PyCF_ONLY_AST)
+        assert isinstance(mod, ast.Module)
         compile(mod, "<filename>", "exec")
 
     def test_compile_and_getsource(self):
