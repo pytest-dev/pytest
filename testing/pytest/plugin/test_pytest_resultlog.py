@@ -24,7 +24,7 @@ def test_generic_path():
     assert res == 'test/a:B().c[1]'
 
 def test_write_log_entry():
-    reslog = ResultLog(None)
+    reslog = ResultLog(None, None)
     reslog.logfile = py.io.TextIO()
     reslog.write_log_entry('name', '.', '')  
     entry = reslog.logfile.getvalue()
@@ -100,7 +100,13 @@ class TestWithFunctionIntegration:
             import py 
             def test_pass(): pass
             def test_skip(): py.test.skip("hello")
-            def test_fail(): raise ValueError("val")
+            def test_fail(): raise ValueError("FAIL")
+
+            @py.test.mark.xfail
+            def test_xfail(): raise ValueError("XFAIL")
+            @py.test.mark.xfail
+            def test_xpass(): pass            
+            
         """)
         lines = self.getresultlog(testdir, mod)
         assert len(lines) >= 3
@@ -112,8 +118,15 @@ class TestWithFunctionIntegration:
        
         assert lines[3].startswith("F ")
         assert lines[3].endswith("test_fail")
-        tb = "".join(lines[4:])
-        assert tb.find("ValueError") != -1 
+        tb = "".join(lines[4:8])
+        assert tb.find('raise ValueError("FAIL")') != -1
+
+        assert lines[8].startswith('x ')
+        tb = "".join(lines[8:14])
+        assert tb.find('raise ValueError("XFAIL")') != -1
+
+        assert lines[14].startswith('P ')
+        assert len(lines) == 15
 
     def test_internal_exception(self):
         # they are produced for example by a teardown failing
@@ -122,7 +135,7 @@ class TestWithFunctionIntegration:
             raise ValueError
         except ValueError:
             excinfo = py.code.ExceptionInfo()
-        reslog = ResultLog(py.io.TextIO())        
+        reslog = ResultLog(None, py.io.TextIO())        
         reslog.pytest_internalerror(excinfo.getrepr())
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
@@ -142,12 +155,16 @@ def test_generic(testdir, LineMatcher):
             assert 0
         def test_skip():
             py.test.skip("")
+        @py.test.mark.xfail
+        def test_xfail():
+            assert 0
     """)
     testdir.runpytest("--resultlog=result.log")
     lines = testdir.tmpdir.join("result.log").readlines(cr=0)
     LineMatcher(lines).fnmatch_lines([
         ". *:test_pass", 
         "F *:test_fail", 
-        "s *:test_skip", 
+        "s *:test_skip",
+        "x *:test_xfail", 
     ])
     

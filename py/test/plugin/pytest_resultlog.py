@@ -14,7 +14,7 @@ def pytest_configure(config):
     resultlog = config.option.resultlog
     if resultlog:
         logfile = open(resultlog, 'w', 1) # line buffered
-        config._resultlog = ResultLog(logfile) 
+        config._resultlog = ResultLog(config, logfile) 
         config.pluginmanager.register(config._resultlog)
 
 def pytest_unconfigure(config):
@@ -48,7 +48,8 @@ def generic_path(item):
     return ''.join(gpath)
         
 class ResultLog(object):
-    def __init__(self, logfile):
+    def __init__(self, config, logfile):
+        self.config = config
         self.logfile = logfile # preferably line buffered
 
     def write_log_entry(self, testpath, shortrepr, longrepr):
@@ -61,8 +62,16 @@ class ResultLog(object):
         self.write_log_entry(testpath, shortrepr, longrepr) 
 
     def pytest_runtest_logreport(self, report):
-        code = report.shortrepr 
-        if report.passed:
+        res = self.config.hook.pytest_report_teststatus(report=report)
+        if res is not None:
+            code = res[1]
+        else:
+            code = report.shortrepr
+        if code == 'x':
+            longrepr = str(report.longrepr)
+        elif code == 'P':
+            longrepr = ''
+        elif report.passed:
             longrepr = ""
         elif report.failed:
             longrepr = str(report.longrepr) 
