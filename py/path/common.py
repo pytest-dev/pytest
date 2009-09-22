@@ -278,20 +278,20 @@ newline will be removed from the end of each line. """
         if rec: 
             if isinstance(rec, str):
                 rec = fnmatch(fil)
-            elif not py.builtin.callable(rec): 
-                rec = lambda x: True 
-        reclist = [self]
-        while reclist: 
-            current = reclist.pop(0)
-            try:
-                dirlist = current.listdir() 
-            except ignore:
-                return
-            for p in dirlist:
-                if fil is None or fil(p):
-                    yield p
-                if p.check(dir=1) and (rec is None or rec(p)):
-                    reclist.append(p)
+            elif not hasattr(rec, '__call__'):
+                rec = None
+        try:
+            entries = self.listdir()
+        except ignore:
+            return
+        dirs = [p for p in entries 
+                    if p.check(dir=1) and (rec is None or rec(p))]
+        for subdir in dirs:
+            for p in subdir.visit(fil=fil, rec=rec, ignore=ignore):
+                yield p
+        for p in entries:
+            if fil is None or fil(p):
+                yield p
 
     def _sortlist(self, res, sort):
         if sort:

@@ -198,6 +198,15 @@ class TestLocalPath(common.CommonFSTests):
         l2 = tmpdir.join(newfilename)
         assert l2.read() == 'foo'
 
+    def test_visit_depth_first(self, tmpdir):
+        p1 = tmpdir.ensure("a","1")
+        p2 = tmpdir.ensure("b","2")
+        p3 = tmpdir.ensure("breadth")
+        l = list(tmpdir.visit(lambda x: x.check(file=1)))
+        assert l[0] == p1
+        assert l[1] == p2 
+        assert l[2] == p3
+
 class TestExecutionOnWindows:
     disabled = py.std.sys.platform != 'win32'
 

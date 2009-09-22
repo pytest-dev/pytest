@@ -334,12 +334,12 @@ class LocalPath(FSBase):
             assert self!=target
             copychunked(self, target)
         else:
-            target.ensure(dir=1)
             def rec(p):
                 return p.check(link=0)
             for x in self.visit(rec=rec):
                 relpath = x.relto(self)
                 newx = target.join(relpath)
+                newx.dirpath().ensure(dir=1)
                 if x.check(link=1):
                     newx.mksymlinkto(x.readlink())
                 elif x.check(file=1):
