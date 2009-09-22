@@ -119,10 +119,6 @@ sys.stdin = tempfile.TemporaryFile('r')
 
     def __init__(self, outfile, infile):
         # we need raw byte streams 
-        if hasattr(infile, 'buffer'):
-            infile = infile.buffer
-        if hasattr(outfile, 'buffer'):
-            outfile = outfile.buffer
         self.outfile, self.infile = outfile, infile
         if sys.platform == "win32":
             import msvcrt
@@ -132,7 +128,10 @@ sys.stdin = tempfile.TemporaryFile('r')
 
     def read(self, numbytes):
         """Read exactly 'numbytes' bytes from the pipe. """
-        data = self.infile.read(numbytes)
+        try:
+            data = self.infile.buffer.read(numbytes)
+        except AttributeError:
+            data = self.infile.read(numbytes)
         if len(data) < numbytes:
             raise EOFError
         return data
@@ -140,7 +139,10 @@ sys.stdin = tempfile.TemporaryFile('r')
     def write(self, data):
         """write out all data bytes. """ 
         assert isinstance(data, bytes)
-        self.outfile.write(data)
+        try:
+            self.outfile.buffer.write(data)
+        except AttributeError:
+            self.outfile.write(data)
         self.outfile.flush()
 
     def close_read(self):

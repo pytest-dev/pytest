@@ -9,7 +9,7 @@ class TestXSpec:
         assert spec.python == "c:/this/python2.5" 
         assert spec.chdir == "d:\hello"
         assert spec.nice is None
-        assert not hasattr(spec, 'xyz')
+        assert not hasattr(spec, '_xyz')
 
         py.test.raises(AttributeError, "spec._hello")
 
@@ -36,6 +36,14 @@ class TestXSpec:
         for x in ("popen", "popen//python=this"):
             assert XSpec(x)._spec == x
 
+    def test_samekeyword_twice_raises(self):
+        py.test.raises(ValueError, "XSpec('popen//popen')")
+        py.test.raises(ValueError, "XSpec('popen//popen=123')")
+
+    def test_unknown_keys_allowed(self):
+        xspec = XSpec("hello=3")
+        assert xspec.hello == '3'
+
     def test_repr_and_string(self):
         for x in ("popen", "popen//python=this"):
             assert repr(XSpec(x)).find("popen") != -1
@@ -48,6 +56,9 @@ class TestXSpec:
         assert hash(XSpec("socket=hello:8080")) != hash(XSpec("popen"))
 
 class TestMakegateway:
+    def test_no_type(self):
+        py.test.raises(ValueError, "py.execnet.makegateway('hello')")
+
     def test_popen(self):
         gw = py.execnet.makegateway("popen")
         assert gw.spec.python == None
@@ -76,20 +87,20 @@ class TestMakegateway:
         assert rinfo.cwd == py.std.os.getcwd()
         assert rinfo.version_info == py.std.sys.version_info
 
-    def test_popen_cpython24(self):
-        for trypath in ('python2.4', r'C:\Python24\python.exe'):
-            cpython24 = py.path.local.sysfind(trypath)
-            if cpython24 is not None:
-                cpython24 = cpython24.realpath()
+    def test_popen_cpython25(self):
+        for trypath in ('python2.5', r'C:\Python25\python.exe'):
+            cpython25 = py.path.local.sysfind(trypath)
+            if cpython25 is not None:
+                cpython25 = cpython25.realpath()
                 break
         else:
-            py.test.skip("cpython2.4 not found")
-        gw = py.execnet.makegateway("popen//python=%s" % cpython24)
+            py.test.skip("cpython2.5 not found")
+        gw = py.execnet.makegateway("popen//python=%s" % cpython25)
         rinfo = gw._rinfo()
         if py.std.sys.platform != "darwin": # it's confusing there 
-            assert rinfo.executable == cpython24  
+            assert rinfo.executable == cpython25  
         assert rinfo.cwd == py.std.os.getcwd()
-        assert rinfo.version_info[:2] == (2,4)
+        assert rinfo.version_info[:2] == (2,5)
 
     def test_popen_cpython26(self):
         for trypath in ('python2.6', r'C:\Python26\python.exe'):

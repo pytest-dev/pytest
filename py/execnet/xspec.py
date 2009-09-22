@@ -22,10 +22,16 @@ class XSpec:
                 key, value = keyvalue, True
             else:
                 key, value = keyvalue[:i], keyvalue[i+1:]
-            # XXX be restrictive for now
-            if key not in XSpec.__dict__:
+            if key[0] == "_":
                 raise AttributeError("%r not a valid XSpec key" % key)
+            if key in self.__dict__:
+                raise ValueError("duplicate key: %r in %r" %(key, string))
             setattr(self, key, value)
+
+    def __getattr__(self, name):
+        if name[0] == "_":
+            raise AttributeError(name)
+        return None
 
     def __repr__(self):
         return "<XSpec %r>" %(self._spec,)
@@ -38,11 +44,6 @@ class XSpec:
         return self._spec == getattr(other, '_spec', None)
     def __ne__(self, other):
         return self._spec != getattr(other, '_spec', None)
-
-    #def __getattr__(self, name):
-    #    if name[0] == "_":
-    #        raise AttributeError(name) 
-    #    return None
 
     def _samefilesystem(self):
         return bool(self.popen and not self.chdir)
@@ -58,6 +59,8 @@ def makegateway(spec):
         assert not spec.python, "socket: specifying python executables not supported"
         hostport = spec.socket.split(":")
         gw = py.execnet.SocketGateway(*hostport)
+    else:
+        raise ValueError("no gateway type found for %r" % (spec._spec,))
     gw.spec = spec 
     if spec.chdir or spec.nice:
         channel = gw.remote_exec("""

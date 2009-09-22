@@ -226,7 +226,7 @@ class PopenGateway(PopenCmdGateway):
         s = "\n".join([extra, 
             "import sys ; sys.path[:0] = %r" % (plist,), 
             "import os ; os.environ['PYTHONPATH'] = %r" % ppath, 
-            str(py.code.Source(stdouterrin_setnull)), 
+            inspect.getsource(stdouterrin_setnull), 
             "stdouterrin_setnull()", 
             ""
             ])
