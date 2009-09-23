@@ -1,6 +1,8 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* merge Jarko's fixes, issue #45 and #46
+
 * add the ability to specify a path for py.lookup to search in
 
 * fix a funcarg cached_setup bug probably only occuring 

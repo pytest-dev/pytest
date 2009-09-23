@@ -23,7 +23,7 @@ Now create a file ``test_sample.py`` with the following content:
     def func(x):
         return x + 1
     def test_answer():
-        assert f(3) == 5
+        assert func(3) == 5
 
 You can now run the test file like this::
 

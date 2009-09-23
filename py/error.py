@@ -74,7 +74,7 @@ class ErrorMaker(object):
                 cls = self._geterrnoclass(errno)
             else: 
                 try: 
-                    cls = self._geterrnoclass(_winerrnomap[eno]) 
+                    cls = self._geterrnoclass(_winerrnomap[errno]) 
                 except KeyError:    
                     raise value 
             raise cls("%s%r" % (func.__name__, args))
