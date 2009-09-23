@@ -12,7 +12,6 @@ import py
 from py.__.io.terminalwriter import ansi_print, terminal_width
 import re
 
-curdir = py.path.local()
 def rec(p):
     return p.check(dotfile=0)
 
@@ -35,12 +34,17 @@ def find_indexes(search_line, string):
 
 def main():
     (options, args) = parser.parse_args()
-    string = args[0]
+    if len(args) == 2:
+        search_dir, string = args
+        search_dir = py.path.local(search_dir)
+    else:
+        search_dir = py.path.local()
+        string = args[0]
     if options.ignorecase:
         string = string.lower()
-    for x in curdir.visit('*.py', rec):
+    for x in search_dir.visit('*.py', rec):
         # match filename directly
-        s = x.relto(curdir)
+        s = x.relto(search_dir)
         if options.ignorecase:
             s = s.lower()
         if s.find(string) != -1:
@@ -64,7 +68,7 @@ def main():
                 if not indexes:
                     continue
                 if not options.context:
-                    sys.stdout.write("%s:%d: " %(x.relto(curdir), i+1))
+                    sys.stdout.write("%s:%d: " %(x.relto(search_dir), i+1))
                     last_index = 0
                     for index in indexes:
                         sys.stdout.write(line[last_index: index])
@@ -75,5 +79,5 @@ def main():
                 else:
                     context = (options.context)/2
                     for count in range(max(0, i-context), min(len(lines) - 1, i+context+1)):
-                        print("%s:%d:  %s" %(x.relto(curdir), count+1, lines[count].rstrip()))
+                        print("%s:%d:  %s" %(x.relto(search_dir), count+1, lines[count].rstrip()))
                     print("-" * terminal_width)
