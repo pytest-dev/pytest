@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 """\
-py.lookup SEARCH_STRING [options]
+py.lookup [search_directory] SEARCH_STRING [options]
 
 Looks recursively at Python files for a SEARCH_STRING, starting from the
 present working directory. Prints the line, with the filename and line-number
