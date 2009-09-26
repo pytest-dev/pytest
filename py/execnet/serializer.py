@@ -5,8 +5,6 @@ Simple marshal format (based on pickle) designed to work across Python versions.
 import sys
 import struct
 
-import py
-
 _INPY3 = _REALLY_PY3 = sys.version_info > (3, 0)
 
 class SerializeError(Exception):
