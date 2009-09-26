@@ -30,14 +30,8 @@ class Corruption(UnserializationError):
 if _INPY3:
     def b(s):
         return s.encode("ascii")
-    _b = b
-    class _unicode(str):
-        pass
-    bytes = bytes
 else:
     b = str
-    _b = bytes
-    _unicode = unicode
 
 FOUR_BYTE_INT_MAX = 2147483647
 
