@@ -165,10 +165,8 @@ class _Stop(Exception):
 
 class Unserializer(object):
 
-    def __init__(self, stream, options=None):
+    def __init__(self, stream, options=UnserializationOptions()):
         self.stream = stream
-        if options is None:
-            options = UnserializationOptions()
         self.options = options
 
     def load(self):
