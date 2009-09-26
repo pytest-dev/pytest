@@ -34,6 +34,7 @@ else:
 FOUR_BYTE_INT_MAX = 2147483647
 
 _int4_format = struct.Struct("!i")
+_float_format = struct.Struct("!d")
 
 # Protocol constants
 VERSION_NUMBER = 1
@@ -47,6 +48,7 @@ BUILDTUPLE = b('T')
 SETITEM = b('m')
 NEWDICT = b('d')
 INT = b('i')
+FLOAT = b('f')
 STOP = b('S')
 
 class CrossVersionOptions(object):
@@ -107,6 +109,11 @@ class Serializer(object):
         self.stream.write(INT)
         self._write_int4(i)
     dispatch[int] = save_int
+
+    def save_float(self, flt):
+        self.stream.write(FLOAT)
+        self.stream.write(_float_format.pack(flt))
+    dispatch[float] = save_float
 
     def _write_int4(self, i, error="int must be less than %i" %
                     (FOUR_BYTE_INT_MAX,)):
@@ -195,6 +202,11 @@ class Unserializer(object):
         i = self._read_int4()
         self.stack.append(i)
     opcodes[INT] = load_int
+
+    def load_float(self):
+        binary = self.stream.read(_float_format.size)
+        self.stack.append(_float_format.unpack(binary)[0])
+    opcodes[FLOAT] = load_float
 
     def _read_int4(self):
         return _int4_format.unpack(self.stream.read(4))[0]

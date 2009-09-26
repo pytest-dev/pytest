@@ -94,6 +94,14 @@ class TestSerializer:
                        serializer.Serializer(py.io.BytesIO()).save,
                        123456678900)
 
+    def test_float(self, py2, py3):
+        for dump in py2.dump, py3.dump:
+            p = dump(3.25)
+            for load in py2.load, py3.load:
+                tp, v = load(p)
+                assert tp == "float"
+                assert v == "3.25"
+
     def test_bytes(self, py2, py3):
         p = py3.dump("b'hi'")
         tp, v = py2.load(p)
