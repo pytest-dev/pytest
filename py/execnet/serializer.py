@@ -35,8 +35,6 @@ if _INPY3:
         pass
     bytes = bytes
 else:
-    class bytes(str):
-        pass
     b = str
     _b = bytes
     _unicode = unicode
@@ -80,24 +78,27 @@ class Serializer(object):
             raise UnserializableType("can't serialize %s" % (tp,))
         dispatch(self, obj)
 
+    dispatch = {}
+
     def save_bytes(self, bytes_):
         self.stream.write(BYTES)
         self._write_byte_sequence(bytes_)
+    dispatch[bytes] = save_bytes
 
-    def save_unicode(self, s):
-        self.stream.write(UNICODE)
-        self._write_unicode_string(s)
-
-    def save_string(self, s):
-        if _INPY3:
+    if _INPY3:
+        def save_string(self, s):
             self.stream.write(PY3STRING)
             self._write_unicode_string(s)
-        else:
-            # Case for tests
-            if _REALLY_PY3 and isinstance(s, str):
-                s = s.encode("latin-1")
+    else:
+        def save_string(self, s):
             self.stream.write(PY2STRING)
             self._write_byte_sequence(s)
+
+        def save_unicode(self, s):
+            self.stream.write(UNICODE)
+            self._write_unicode_string(s)
+        dispatch[unicode] = save_unicode
+    dispatch[str] = save_string
 
     def _write_unicode_string(self, s):
         try:
@@ -113,6 +114,7 @@ class Serializer(object):
     def save_int(self, i):
         self.stream.write(INT)
         self._write_int4(i)
+    dispatch[int] = save_int
 
     def _write_int4(self, i, error="int must be less than %i" %
                     (FOUR_BYTE_INT_MAX,)):
@@ -125,6 +127,7 @@ class Serializer(object):
         self._write_int4(len(L), "list is too long")
         for i, item in enumerate(L):
             self._write_setitem(i, item)
+    dispatch[list] = save_list
 
     def _write_setitem(self, key, value):
         self._save(key)
@@ -135,12 +138,14 @@ class Serializer(object):
         self.stream.write(NEWDICT)
         for key, value in d.items():
             self._write_setitem(key, value)
+    dispatch[dict] = save_dict
 
     def save_tuple(self, tup):
         for item in tup:
             self._save(item)
         self.stream.write(BUILDTUPLE)
         self._write_int4(len(tup), "tuple is too long")
+    dispatch[tuple] = save_tuple
 
 
 class _UnserializationOptions(object):
@@ -156,35 +161,10 @@ class _Py3UnserializationOptions(_UnserializationOptions):
     def __init__(self, py2_strings_as_str=False):
         self.py2_strings_as_str = py2_strings_as_str
 
-
-_unchanging_dispatch = {}
-for tp in (dict, list, tuple, int):
-    name = "save_%s" % (tp.__name__,)
-    _unchanging_dispatch[tp] = getattr(Serializer, name)
-del tp, name
-
-def _setup_dispatch():
-    dispatch = _unchanging_dispatch.copy()
-    # This is sutble.  bytes is aliased to str in 2.6, so
-    # dispatch[bytes] is overwritten.  Additionally, we alias unicode
-    # to str in 3.x, so dispatch[unicode] is overwritten with
-    # save_string.
-    dispatch[bytes] = Serializer.save_bytes
-    dispatch[unicode] = Serializer.save_unicode
-    dispatch[str] = Serializer.save_string
-    Serializer.dispatch = dispatch
-
-def _setup_version_dependent_constants(leave_unicode_alone=False):
-    global unicode, UnserializationOptions
-    if _INPY3:
-        unicode = str
-        UnserializationOptions = _Py3UnserializationOptions
-    else:
-        UnserializationOptions = _Py2UnserializationOptions
-        unicode = _unicode
-    _setup_dispatch()
-_setup_version_dependent_constants()
-
+if _INPY3:
+    UnserializationOptions = _Py3UnserializationOptions
+else:
+    UnserializationOptions = _Py2UnserializationOptions
 
 class _Stop(Exception):
     pass
@@ -236,7 +216,7 @@ class Unserializer(object):
 
     def load_py3string(self):
         as_bytes = self._read_byte_string()
-        if (not _INPY3 and self.options.py3_strings_as_str) and not _REALLY_PY3:
+        if not _INPY3 and self.options.py3_strings_as_str:
             # XXX Should we try to decode into latin-1?
             self.stack.append(as_bytes)
         else:
@@ -245,8 +225,7 @@ class Unserializer(object):
 
     def load_py2string(self):
         as_bytes = self._read_byte_string()
-        if (_INPY3 and self.options.py2_strings_as_str) or \
-               (_REALLY_PY3 and not _INPY3):
+        if _INPY3 and self.options.py2_strings_as_str:
             s = as_bytes.decode("latin-1")
         else:
             s = as_bytes
@@ -254,7 +233,7 @@ class Unserializer(object):
     opcodes[PY2STRING] = load_py2string
 
     def load_bytes(self):
-        s = bytes(self._read_byte_string())
+        s = self._read_byte_string()
         self.stack.append(s)
     opcodes[BYTES] = load_bytes
 
