@@ -90,6 +90,8 @@ class TestSerializer:
                 tp, v = load(p)
                 assert tp == "int"
                 assert int(v) == 4
+
+    def test_bigint_should_fail(self):
         py.test.raises(serializer.SerializationError,
                        serializer.Serializer(py.io.BytesIO()).save,
                        123456678900)
