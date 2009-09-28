@@ -125,15 +125,14 @@ class TestSerializer:
         assert tp == "bytes"
         assert v == "b'hi'"
 
-    def check(self, val, tp_name, rep, dump, load):
+    def check_sequence(self, val, tp_name, rep, dump, load):
         p = dump(val)
         tp , v = load(p)
         assert tp == tp_name
         assert v == rep
 
-
     def test_list(self, dump, load):
-        self.check([1, 2, 3], "list", "[1, 2, 3]", dump, load)
+        self.check_sequence([1, 2, 3], "list", "[1, 2, 3]", dump, load)
 
     @py.test.mark.xfail
     # I'm not sure if we need the complexity.
@@ -145,7 +144,7 @@ class TestSerializer:
         assert tp == "list"
 
     def test_tuple(self, dump, load):
-        self.check((1, 2, 3), "tuple", "(1, 2, 3)", dump, load)
+        self.check_sequence((1, 2, 3), "tuple", "(1, 2, 3)", dump, load)
 
     def test_dict(self, dump, load):
         p = dump({6 : 2, (1, 2, 3) : 32})
