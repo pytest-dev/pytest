@@ -81,28 +81,40 @@ def pytest_funcarg__py2(request):
 def pytest_funcarg__py3(request):
     return _py3_wrapper
 
+def pytest_funcarg__dump(request):
+    py_dump = request.getfuncargvalue(request.param[0])
+    return py_dump.dump
+
+def pytest_funcarg__load(request):
+    py_dump = request.getfuncargvalue(request.param[1])
+    return py_dump.load
+
+def pytest_generate_tests(metafunc):
+    if 'dump' in metafunc.funcargnames and 'load' in metafunc.funcargnames:
+        pys = 'py2', 'py3'
+        for dump in pys:
+            for load in pys:
+                metafunc.addcall(id='%s to %s'%(dump, load), param=(dump, load))
+
+
 class TestSerializer:
 
-    def test_int(self, py2, py3):
-        for dump in py2.dump, py3.dump:
-            p = dump(4)
-            for load in py2.load, py3.load:
-                tp, v = load(p)
-                assert tp == "int"
-                assert int(v) == 4
+    def test_int(self, dump, load):
+        p = dump(4)
+        tp, v = load(p)
+        assert tp == "int"
+        assert int(v) == 4
 
     def test_bigint_should_fail(self):
         py.test.raises(serializer.SerializationError,
                        serializer.Serializer(py.io.BytesIO()).save,
                        123456678900)
 
-    def test_float(self, py2, py3):
-        for dump in py2.dump, py3.dump:
-            p = dump(3.25)
-            for load in py2.load, py3.load:
-                tp, v = load(p)
-                assert tp == "float"
-                assert v == "3.25"
+    def test_float(self, dump, load):
+        p = dump(3.25)
+        tp, v = load(p)
+        assert tp == "float"
+        assert v == "3.25"
 
     def test_bytes(self, py2, py3):
         p = py3.dump("b'hi'")
@@ -113,16 +125,15 @@ class TestSerializer:
         assert tp == "bytes"
         assert v == "b'hi'"
 
-    def check_sequence(self, seq, tp_name, rep, py2, py3):
-        for dump in py2.dump, py3.dump:
-            p = dump(seq)
-            for load in py2.load, py3.load:
-                tp, v = load(p)
-                assert tp == tp_name
-                assert v == rep
+    def check(self, val, tp_name, rep, dump, load):
+        p = dump(val)
+        tp , v = load(p)
+        assert tp == tp_name
+        assert v == rep
 
-    def test_list(self, py2, py3):
-        self.check_sequence([1, 2, 3], "list", "[1, 2, 3]", py2, py3)
+
+    def test_list(self, dump, load):
+        self.check([1, 2, 3], "list", "[1, 2, 3]", dump, load)
 
     @py.test.mark.xfail
     # I'm not sure if we need the complexity.
@@ -133,17 +144,15 @@ class TestSerializer:
         tp, rep = py2.load(l)
         assert tp == "list"
 
-    def test_tuple(self, py2, py3):
-        self.check_sequence((1, 2, 3), "tuple", "(1, 2, 3)", py2, py3)
+    def test_tuple(self, dump, load):
+        self.check((1, 2, 3), "tuple", "(1, 2, 3)", dump, load)
 
-    def test_dict(self, py2, py3):
-        for dump in py2.dump, py3.dump:
-            p = dump({6 : 2, (1, 2, 3) : 32})
-            for load in py2.load, py3.load:
-                tp, v = load(p)
-                assert tp == "dict"
-                # XXX comparing dict reprs
-                assert v == "{6: 2, (1, 2, 3): 32}"
+    def test_dict(self, dump, load):
+        p = dump({6 : 2, (1, 2, 3) : 32})
+        tp, v = load(p)
+        assert tp == "dict"
+        # XXX comparing dict reprs
+        assert v == "{6: 2, (1, 2, 3): 32}"
 
     def test_string(self, py2, py3):
         p = py2.dump("'xyz'")
