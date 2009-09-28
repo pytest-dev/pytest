@@ -94,93 +94,86 @@ def pytest_generate_tests(metafunc):
         pys = 'py2', 'py3'
         for dump in pys:
             for load in pys:
-                metafunc.addcall(id='%s to %s'%(dump, load), param=(dump, load))
+                param = (dump, load)
+                conversion = '%s to %s'%param
+                if 'repr' not in metafunc.funcargnames:
+                    metafunc.addcall(id=conversion, param=param)
+                else:
+                    for tp, repr in simple_tests.items():
+                        metafunc.addcall(
+                            id='%s:%s'%(tp, conversion),
+                            param=param,
+                            funcargs={'tp_name':tp, 'repr':repr},
+                            )
 
 
-class TestSerializer:
+simple_tests = {
+#   type: expected before/after repr
+    'int': '4',
+    'float':'3.25',
+    'list': '[1, 2, 3]',
+    'tuple': '(1, 2, 3)',
+    'dict': '{6: 2, (1, 2, 3): 32}',
+}
 
-    def test_int(self, dump, load):
-        p = dump(4)
-        tp, v = load(p)
-        assert tp == "int"
-        assert int(v) == 4
+def test_simple(tp_name, repr, dump, load):
+    p = dump(repr)
+    tp , v = load(p)
+    assert tp == tp_name
+    assert v == repr
 
-    def test_bigint_should_fail(self):
-        py.test.raises(serializer.SerializationError,
-                       serializer.Serializer(py.io.BytesIO()).save,
-                       123456678900)
 
-    def test_float(self, dump, load):
-        p = dump(3.25)
-        tp, v = load(p)
-        assert tp == "float"
-        assert v == "3.25"
+@py.test.mark.xfail
+# I'm not sure if we need the complexity.
+def test_recursive_list(py2, py3):
+    l = [1, 2, 3]
+    l.append(l)
+    p = py2.dump(l)
+    tp, rep = py2.load(l)
+    assert tp == "list"
 
-    def test_bytes(self, py2, py3):
-        p = py3.dump("b'hi'")
-        tp, v = py2.load(p)
-        assert tp == "str"
-        assert v == "'hi'"
-        tp, v = py3.load(p)
-        assert tp == "bytes"
-        assert v == "b'hi'"
+def test_bigint_should_fail():
+    py.test.raises(serializer.SerializationError,
+                   serializer.Serializer(py.io.BytesIO()).save,
+                   123456678900)
 
-    def check_sequence(self, val, tp_name, rep, dump, load):
-        p = dump(val)
-        tp , v = load(p)
-        assert tp == tp_name
-        assert v == rep
+def test_bytes(py2, py3):
+    p = py3.dump("b'hi'")
+    tp, v = py2.load(p)
+    assert tp == "str"
+    assert v == "'hi'"
+    tp, v = py3.load(p)
+    assert tp == "bytes"
+    assert v == "b'hi'"
 
-    def test_list(self, dump, load):
-        self.check_sequence([1, 2, 3], "list", "[1, 2, 3]", dump, load)
+def test_string(py2, py3):
+    p = py2.dump("'xyz'")
+    tp, s = py2.load(p)
+    assert tp == "str"
+    assert s == "'xyz'"
+    tp, s = py3.load(p)
+    assert tp == "bytes"
+    assert s == "b'xyz'"
+    tp, s = py3.load(p, "True")
+    assert tp == "str"
+    assert s == "'xyz'"
+    p = py3.dump("'xyz'")
+    tp, s = py2.load(p, True)
+    assert tp == "str"
+    assert s == "'xyz'"
 
-    @py.test.mark.xfail
-    # I'm not sure if we need the complexity.
-    def test_recursive_list(self, py2, py3):
-        l = [1, 2, 3]
-        l.append(l)
-        p = py2.dump(l)
-        tp, rep = py2.load(l)
-        assert tp == "list"
-
-    def test_tuple(self, dump, load):
-        self.check_sequence((1, 2, 3), "tuple", "(1, 2, 3)", dump, load)
-
-    def test_dict(self, dump, load):
-        p = dump({6 : 2, (1, 2, 3) : 32})
-        tp, v = load(p)
-        assert tp == "dict"
-        # XXX comparing dict reprs
-        assert v == "{6: 2, (1, 2, 3): 32}"
-
-    def test_string(self, py2, py3):
-        p = py2.dump("'xyz'")
-        tp, s = py2.load(p)
-        assert tp == "str"
-        assert s == "'xyz'"
-        tp, s = py3.load(p)
-        assert tp == "bytes"
-        assert s == "b'xyz'"
-        tp, s = py3.load(p, "True")
-        assert tp == "str"
-        assert s == "'xyz'"
-        p = py3.dump("'xyz'")
-        tp, s = py2.load(p, True)
-        assert tp == "str"
-        assert s == "'xyz'"
-
-    def test_unicode(self, py2, py3):
-        p = py2.dump("u'hi'")
-        tp, s = py2.load(p)
-        assert tp == "unicode"
-        assert s == "u'hi'"
-        tp, s = py3.load(p)
-        assert tp == "str"
-        assert s == "'hi'"
-        p = py3.dump("'hi'")
-        tp, s = py3.load(p)
-        assert tp == "str"
-        assert s == "'hi'"
-        tp, s = py2.load(p)
-        assert tp == "unicode"
-        assert s == "u'hi'"
+def test_unicode(py2, py3):
+    p = py2.dump("u'hi'")
+    tp, s = py2.load(p)
+    assert tp == "unicode"
+    assert s == "u'hi'"
+    tp, s = py3.load(p)
+    assert tp == "str"
+    assert s == "'hi'"
+    p = py3.dump("'hi'")
+    tp, s = py3.load(p)
+    assert tp == "str"
+    assert s == "'hi'"
+    tp, s = py2.load(p)
+    assert tp == "unicode"
+    assert s == "u'hi'"
