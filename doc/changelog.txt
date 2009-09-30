@@ -1,6 +1,9 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* fix issue50 - cached_setup now caches more to expectations 
+  for test functions with multiple arguments. 
+
 * merge Jarko's fixes, issue #45 and #46
 
 * add the ability to specify a path for py.lookup to search in

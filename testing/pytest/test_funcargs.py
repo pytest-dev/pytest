@@ -258,6 +258,35 @@ class TestRequestCachedSetup:
         req1.config._setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown", "setup", "teardown"]
 
+    def test_request_cached_setup_two_args(self, testdir):
+        testdir.makepyfile("""
+            def pytest_funcarg__arg1(request):
+                return request.cached_setup(lambda: 42)
+            def pytest_funcarg__arg2(request):
+                return request.cached_setup(lambda: 17)
+            def test_two_different_setups(arg1, arg2):
+                assert arg1 != arg2 
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
+    def test_request_cached_setup_getfuncargvalue(self, testdir):
+        testdir.makepyfile("""
+            def pytest_funcarg__arg1(request):
+                arg1 = request.getfuncargvalue("arg2")
+                return request.cached_setup(lambda: arg1 + 1)
+            def pytest_funcarg__arg2(request):
+                return request.cached_setup(lambda: 10)
+            def test_two_funcarg(arg1):
+                assert arg1 == 11
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
     def test_request_cached_setup_functional(self, testdir):
         testdir.makepyfile(test_0="""
             l = []

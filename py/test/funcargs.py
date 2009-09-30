@@ -96,6 +96,7 @@ class FuncargRequest:
             self._plugins.append(self.instance)
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._provider = {}
+        self._currentarg = None
 
     def _fillfuncargs(self):
         argnames = getfuncargnames(self.function)
@@ -109,16 +110,16 @@ class FuncargRequest:
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         """ cache and return result of calling setup().  
 
-        The scope and the ``extrakey`` determine the cache key. 
-        The scope also determines when teardown(result) 
-        will be called.  valid scopes are: 
+        The requested argument name, the scope and the ``extrakey`` 
+        determine the cache key.  The scope also determines when 
+        teardown(result) will be called.  valid scopes are: 
         scope == 'function': when the single test function run finishes. 
         scope == 'module': when tests in a different module are run
         scope == 'session': when tests of the session have run. 
         """
         if not hasattr(self.config, '_setupcache'):
             self.config._setupcache = {} # XXX weakref? 
-        cachekey = (self._getscopeitem(scope), extrakey)
+        cachekey = (self._currentarg, self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
         try:
             val = cache[cachekey]
@@ -146,7 +147,12 @@ class FuncargRequest:
         if not self._provider[argname]:
             self._raiselookupfailed(argname)
         funcargprovider = self._provider[argname].pop()
-        self._funcargs[argname] = res = funcargprovider(request=self)
+        oldarg = self._currentarg
+        self._currentarg = argname 
+        try:
+            self._funcargs[argname] = res = funcargprovider(request=self)
+        finally:
+            self._currentarg = oldarg
         return res
 
     def _getscopeitem(self, scope):
