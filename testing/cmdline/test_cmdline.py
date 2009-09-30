@@ -16,7 +16,7 @@ class TestPyLookup:
             ['*%s:*' %(p.basename)]
         )
 
-    def test_with_explicit_path(self, testxbdir):
+    def test_with_explicit_path(self, testdir):
         sub1 = testdir.mkdir("things")
         sub2 = testdir.mkdir("foo")
         sub1.join("pyfile.py").write("def stuff(): pass")
