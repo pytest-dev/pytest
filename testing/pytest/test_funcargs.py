@@ -115,7 +115,7 @@ class TestRequest:
         assert req.cls.__name__ == "TestB"
         assert req.instance.__class__ == req.cls
 
-    def XXXtest_request_contains_funcargs_provider(self, testdir):
+    def XXXtest_request_contains_funcarg_name2factory(self, testdir):
         modcol = testdir.getmodulecol("""
             def pytest_funcarg__something(request):
                 pass
@@ -125,9 +125,9 @@ class TestRequest:
         """)
         item1, = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        provider = funcargs.FuncargRequest(item1)._provider
-        assert len(provider) == 1
-        assert provider[0].__name__ == "pytest_funcarg__something"
+        name2factory = funcargs.FuncargRequest(item1)._name2factory
+        assert len(name2factory) == 1
+        assert name2factory[0].__name__ == "pytest_funcarg__something"
 
     def test_getfuncargvalue_recursive(self, testdir):
         testdir.makeconftest("""

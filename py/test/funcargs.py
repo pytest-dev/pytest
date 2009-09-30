@@ -95,7 +95,7 @@ class FuncargRequest:
         if self.instance is not None:
             self._plugins.append(self.instance)
         self._funcargs  = self._pyfuncitem.funcargs.copy()
-        self._provider = {}
+        self._name2factory = {}
         self._currentarg = None
 
     def _fillfuncargs(self):
@@ -138,19 +138,19 @@ class FuncargRequest:
             return self._funcargs[argname]
         except KeyError:
             pass
-        if argname not in self._provider:
-            self._provider[argname] = self.config.pluginmanager.listattr(
+        if argname not in self._name2factory:
+            self._name2factory[argname] = self.config.pluginmanager.listattr(
                     plugins=self._plugins, 
                     attrname=self._argprefix + str(argname)
             )
         #else: we are called recursively  
-        if not self._provider[argname]:
+        if not self._name2factory[argname]:
             self._raiselookupfailed(argname)
-        funcargprovider = self._provider[argname].pop()
+        funcargfactory = self._name2factory[argname].pop()
         oldarg = self._currentarg
         self._currentarg = argname 
         try:
-            self._funcargs[argname] = res = funcargprovider(request=self)
+            self._funcargs[argname] = res = funcargfactory(request=self)
         finally:
             self._currentarg = oldarg
         return res
