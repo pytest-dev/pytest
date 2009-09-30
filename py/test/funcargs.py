@@ -23,6 +23,9 @@ class CallSpec:
         self.id = id
         if param is not _notexists:
             self.param = param 
+    def __repr__(self):
+        return "<CallSpec id=%r param=%r funcargs=%r>" %(
+            self.id, getattr(self, 'param', '?'), self.funcargs)
 
 class Metafunc:
     def __init__(self, function, config=None, cls=None, module=None):

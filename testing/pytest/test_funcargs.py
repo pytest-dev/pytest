@@ -17,6 +17,12 @@ def test_getfuncargnames():
     if sys.version_info < (3,0):
         assert funcargs.getfuncargnames(A.f) == ['arg1']
 
+def test_callspec_repr():
+    cs = funcargs.CallSpec({}, 'hello', 1)
+    repr(cs) 
+    cs = funcargs.CallSpec({}, 'hello', funcargs._notexists)
+    repr(cs)
+
 class TestFillFuncArgs:
     def test_funcarg_lookupfails(self, testdir):
         testdir.makeconftest("""
@@ -313,7 +319,6 @@ class TestRequestCachedSetup:
         result.stdout.fnmatch_lines([
             "*3 passed*"
         ])
-
 
 class TestMetafunc:
     def test_no_funcargs(self, testdir):
