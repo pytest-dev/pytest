@@ -1,6 +1,6 @@
 import py
 import os, sys
-from py.__.io import terminalwriter 
+from _py.io import terminalwriter 
 
 def skip_win32():
     if sys.platform == 'win32':

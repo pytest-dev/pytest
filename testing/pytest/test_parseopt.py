@@ -1,5 +1,5 @@
 import py
-from py.__.test import parseopt
+from _py.test import parseopt
 
 class TestParser:
     def test_init(self, capsys):

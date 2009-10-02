@@ -1,6 +1,6 @@
 import sys
 import py
-from py.__.path import svnwc as svncommon
+from _py.path import svnwc as svncommon
 from testing.path.common import CommonFSTests
 
 class CommonSvnTests(CommonFSTests):

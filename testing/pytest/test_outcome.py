@@ -16,7 +16,7 @@ class TestRaises:
         py.test.raises(ValueError, int, 'hello')
 
 def test_importorskip():
-    from py.__.test.outcome import Skipped
+    from _py.test.outcome import Skipped
     try:
         sys = py.test.importorskip("sys")
         assert sys == py.std.sys

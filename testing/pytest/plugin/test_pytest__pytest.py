@@ -1,5 +1,5 @@
 import py
-from py.__.test.plugin.pytest__pytest import HookRecorder
+from _py.test.plugin.pytest__pytest import HookRecorder
 
 def test_hookrecorder_basic():
     comregistry = py._com.Registry() 

@@ -1,5 +1,5 @@
 import py
-from py.__.test.plugin.pytest_recwarn import WarningsRecorder
+from _py.test.plugin.pytest_recwarn import WarningsRecorder
 
 def test_WarningRecorder():
     showwarning = py.std.warnings.showwarning

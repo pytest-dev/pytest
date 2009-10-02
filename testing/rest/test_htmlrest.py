@@ -1,6 +1,6 @@
 
 import py
-from py.__.rest import resthtml
+from _py.rest import resthtml
 from testing.rest.setup import getdata
 
 def setup_module(mod):

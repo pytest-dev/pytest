@@ -1,7 +1,7 @@
 import py
 import sys
-from py.__.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
-from py.__.path import svnwc as svncommon
+from _py.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
+from _py.path import svnwc as svncommon
 from testing.path.svntestbase import CommonSvnTests
 
 if sys.platform == 'win32':

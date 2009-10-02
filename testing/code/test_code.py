@@ -1,7 +1,7 @@
 from __future__ import generators
 import py
 import sys
-from py.__.code.code import safe_repr
+from _py.code.code import safe_repr
 
 def test_newcode(): 
     source = "i = 3"
@@ -157,7 +157,7 @@ class TestSafeRepr:
             assert 'TypeError' in safe_repr(BrokenRepr("string"))
 
     def test_big_repr(self):
-        from py.__.code.code import SafeRepr
+        from _py.code.code import SafeRepr
         assert len(safe_repr(range(1000))) <= \
                len('[' + SafeRepr().maxlist * "1000" + ']')
 

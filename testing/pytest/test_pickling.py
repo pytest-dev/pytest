@@ -19,7 +19,7 @@ def pytest_funcarg__testdir(request):
 
 class ImmutablePickleTransport:
     def __init__(self, request):
-        from py.__.test.dist.mypickle import ImmutablePickler
+        from _py.test.dist.mypickle import ImmutablePickler
         self.p1 = ImmutablePickler(uneven=0)
         self.p2 = ImmutablePickler(uneven=1)
         setglobals(request)
@@ -69,7 +69,7 @@ class TestImmutablePickling:
 
 class TestConfigPickling:
     def test_config_getstate_setstate(self, testdir):
-        from py.__.test.config import Config
+        from _py.test.config import Config
         testdir.makepyfile(__init__="", conftest="x=1; y=2")
         hello = testdir.makepyfile(hello="")
         tmp = testdir.tmpdir
@@ -183,11 +183,11 @@ class TestConfigPickling:
 
 def test_config__setstate__wired_correctly_in_childprocess(testdir):
     execnet = py.test.importorskip("execnet")
-    from py.__.test.dist.mypickle import PickleChannel
+    from _py.test.dist.mypickle import PickleChannel
     gw = execnet.PopenGateway()
     channel = gw.remote_exec("""
         import py
-        from py.__.test.dist.mypickle import PickleChannel
+        from _py.test.dist.mypickle import PickleChannel
         channel = PickleChannel(channel)
         config = channel.receive()
         assert py.test.config.pluginmanager.comregistry == py._com.comregistry, "comregistry wrong"

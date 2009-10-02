@@ -1,4 +1,4 @@
-from py.__.cmdline.pyconvert_unittest import rewrite_utest
+from _py.cmdline.pyconvert_unittest import rewrite_utest
 
 
 class Test_UTestConvert:

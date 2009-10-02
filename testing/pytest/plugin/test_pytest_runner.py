@@ -1,6 +1,6 @@
 import py
-from py.__.test.plugin import pytest_runner as runner
-from py.__.code.code import ReprExceptionInfo
+from _py.test.plugin import pytest_runner as runner
+from _py.code.code import ReprExceptionInfo
 
 class TestSetupState:
     def test_setup(self, testdir):
@@ -181,10 +181,10 @@ class BaseFunctionalTests:
         assert rep.when == "call"
 
     def test_exit_propagates(self, testdir):
-        from py.__.test.outcome import Exit
+        from _py.test.outcome import Exit
         try:
             testdir.runitem("""
-                from py.__.test.outcome import Exit
+                from _py.test.outcome import Exit
                 def test_func():
                     raise Exit()
             """)
@@ -200,7 +200,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
         return f
 
     def test_keyboardinterrupt_propagates(self, testdir):
-        from py.__.test.outcome import Exit
+        from _py.test.outcome import Exit
         try:
             testdir.runitem("""
                 def test_func():

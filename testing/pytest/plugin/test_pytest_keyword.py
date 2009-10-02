@@ -1,5 +1,5 @@
 import py
-from py.__.test.plugin.pytest_keyword import Mark
+from _py.test.plugin.pytest_keyword import Mark
 
 def test_pytest_mark_api():
     mark = Mark()

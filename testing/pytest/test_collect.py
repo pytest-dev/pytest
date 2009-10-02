@@ -2,7 +2,7 @@ import py
 
 class TestCollector:
     def test_collect_versus_item(self):
-        from py.__.test.collect import Collector, Item
+        from _py.test.collect import Collector, Item
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 

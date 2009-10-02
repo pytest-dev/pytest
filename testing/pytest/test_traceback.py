@@ -2,7 +2,7 @@ import py
 
 class TestTracebackCutting:
     def test_skip_simple(self):
-        from py.__.test.outcome import Skipped
+        from _py.test.outcome import Skipped
         excinfo = py.test.raises(Skipped, 'py.test.skip("xxx")')
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()

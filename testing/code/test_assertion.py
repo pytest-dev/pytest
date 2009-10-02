@@ -136,7 +136,7 @@ class TestView:
 
     def setup_class(cls):
         try:
-            from py.__.code._assertionold import View
+            from _py.code._assertionold import View
         except ImportError:
             py.test.skip("requires the compile package")
         cls.View = View

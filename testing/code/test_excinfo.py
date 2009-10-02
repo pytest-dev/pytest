@@ -1,6 +1,6 @@
 
 import py
-from py.__.code.code import FormattedExcinfo, ReprExceptionInfo
+from _py.code.code import FormattedExcinfo, ReprExceptionInfo
 queue = py.builtin._tryimport('queue', 'Queue')
 
 class TWMock: 
@@ -112,8 +112,8 @@ class TestTraceback_f_g_h:
     def test_traceback_cut_excludepath(self, testdir):
         p = testdir.makepyfile("def f(): raise ValueError")
         excinfo = py.test.raises(ValueError, "p.pyimport().f()")
-        pydir = py.path.local(py.__file__).dirpath()
-        newtraceback = excinfo.traceback.cut(excludepath=pydir)
+        basedir = py.path.local(py._py.__file__).dirpath()
+        newtraceback = excinfo.traceback.cut(excludepath=basedir)
         assert len(newtraceback) == 1
         assert newtraceback[0].frame.code.path == p
 

@@ -1,8 +1,8 @@
 import py
 
 docutils = py.test.importorskip("docutils")
-from py.__.rest import directive, resthtml
-from py.__.rest.latex import process_rest_file
+from _py.rest import directive, resthtml
+from _py.rest.latex import process_rest_file
 from testing.rest.setup import getdata
 
 def setup_module(mod):

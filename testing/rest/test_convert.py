@@ -1,5 +1,5 @@
 import py
-from py.__.rest.convert import convert_dot, latexformula2png
+from _py.rest.convert import convert_dot, latexformula2png
 from testing.rest.setup import getdata
 
 def setup_module(mod):

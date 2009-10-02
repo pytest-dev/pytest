@@ -30,7 +30,7 @@ class Test_exec_cmd:
             assert e.err or e.out
 
 def test_cmdexec_selection():
-    from py.__.process import cmdexec 
+    from _py.process import cmdexec 
     if py.std.sys.platform == "win32":
         assert py.process.cmdexec == cmdexec.win32_exec_cmd
     elif hasattr(py.std.sys, 'pypy') or hasattr(py.std.sys, 'pypy_objspaceclass'):

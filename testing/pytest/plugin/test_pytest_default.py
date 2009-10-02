@@ -1,5 +1,5 @@
 import py
-from py.__.test.plugin.pytest_default import pytest_report_iteminfo
+from _py.test.plugin.pytest_default import pytest_report_iteminfo
 
 def test_implied_different_sessions(tmpdir):
     def x(*args):

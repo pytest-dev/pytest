@@ -1,5 +1,5 @@
-from py.__.test.dist.dsession import DSession
-from py.__.test import outcome
+from _py.test.dist.dsession import DSession
+from _py.test import outcome
 import py
 import execnet
 

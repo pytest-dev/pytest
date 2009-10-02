@@ -1,8 +1,8 @@
 import py
 
 pytest_plugins = "pytester"
-plugindir = py.path.local(py.__file__).dirpath('test', 'plugin')
-from py.__.test.defaultconftest import pytest_plugins as default_plugins
+plugindir = py.path.local(py._py.__file__).dirpath('test', 'plugin')
+from _py.test.defaultconftest import pytest_plugins as default_plugins
 
 def pytest_collect_file(path, parent):
     if path.basename.startswith("pytest_") and path.ext == ".py":

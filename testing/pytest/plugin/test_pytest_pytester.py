@@ -1,5 +1,5 @@
 import py
-from py.__.test.plugin.pytest_pytester import LineMatcher, LineComp
+from _py.test.plugin.pytest_pytester import LineMatcher, LineComp
 
 def test_reportrecorder(testdir):
     registry = py._com.Registry()

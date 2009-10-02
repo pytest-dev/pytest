@@ -1,7 +1,7 @@
 
 import py
 import sys
-from py.__.thread.pool import queue
+from _py.thread.pool import queue
 
 WorkerPool = py._thread.WorkerPool
 ThreadOut = py._thread.ThreadOut

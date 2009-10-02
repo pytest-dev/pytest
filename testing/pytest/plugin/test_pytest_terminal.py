@@ -13,9 +13,9 @@ except ImportError:
 #
 # ===============================================================================
 
-from py.__.test.plugin.pytest_terminal import TerminalReporter, \
+from _py.test.plugin.pytest_terminal import TerminalReporter, \
     CollectonlyReporter,  repr_pythonversion, folded_skips
-from py.__.test.plugin import pytest_runner as runner 
+from _py.test.plugin import pytest_runner as runner 
 
 def basic_run_report(item):
     return runner.call_and_report(item, "call", log=False)

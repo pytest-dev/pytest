@@ -1,4 +1,4 @@
-from py.__.test.plugin.pytest_restdoc import deindent
+from _py.test.plugin.pytest_restdoc import deindent
 
 def test_deindent():
     assert deindent('foo') == 'foo'
@@ -13,7 +13,7 @@ class TestApigenLinkRole:
 
     # these tests are moved here from the former py/doc/conftest.py
     def test_resolve_linkrole(self):
-        from py.__.doc.conftest import get_apigen_relpath
+        from _py.doc.conftest import get_apigen_relpath
         apigen_relpath = get_apigen_relpath()
 
         assert resolve_linkrole('api', 'py.foo.bar', False) == (
@@ -45,7 +45,7 @@ class TestDoctest:
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")
         assert request.module.__name__ == __name__
-        testdir.makepyfile(confrest="from py.__.rest.resthtml import Project")
+        testdir.makepyfile(confrest="from _py.rest.resthtml import Project")
         for p in testdir.plugins:
             if p == globals():
                 break

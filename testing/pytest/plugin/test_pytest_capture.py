@@ -1,5 +1,5 @@
 import py, os, sys
-from py.__.test.plugin.pytest_capture import CaptureManager
+from _py.test.plugin.pytest_capture import CaptureManager
 
 class TestCaptureManager:
     def test_getmethod_default_no_fd(self, testdir, monkeypatch):

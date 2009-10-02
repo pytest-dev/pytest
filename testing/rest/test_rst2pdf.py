@@ -1,5 +1,5 @@
 import py
-from py.__.rest.latex import process_configfile, process_rest_file
+from _py.rest.latex import process_configfile, process_rest_file
 from testing.rest.setup import getdata
 
 docutils = py.test.importorskip("docutils")

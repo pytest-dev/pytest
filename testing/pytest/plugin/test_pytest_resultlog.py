@@ -1,7 +1,7 @@
 import py
 import os
-from py.__.test.plugin.pytest_resultlog import generic_path, ResultLog
-from py.__.test.collect import Node, Item, FSCollector
+from _py.test.plugin.pytest_resultlog import generic_path, ResultLog
+from _py.test.collect import Node, Item, FSCollector
 
 def test_generic_path():
     p1 = Node('a')

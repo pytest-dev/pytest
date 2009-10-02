@@ -1,6 +1,6 @@
 
 import py
-from py.__.xmlgen import unicode, html
+from _py.xmlgen import unicode, html
 
 class ns(py.xml.Namespace): 
     pass 

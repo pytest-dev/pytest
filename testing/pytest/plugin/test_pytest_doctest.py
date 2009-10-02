@@ -1,4 +1,4 @@
-from py.__.test.plugin.pytest_doctest import DoctestModule, DoctestTextfile
+from _py.test.plugin.pytest_doctest import DoctestModule, DoctestTextfile
 
 class TestDoctests:
  
@@ -33,7 +33,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
-        from py.__.test.outcome import Failed 
+        from _py.test.outcome import Failed 
 
         p = testdir.maketxtfile("""
             >>> i = 0

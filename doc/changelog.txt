@@ -1,5 +1,8 @@
-Changes between 1.0.x and 'trunk'
+Changes between 1.0.2 and '1.1.0b1'
 =====================================
+
+* make bpython/help interaction work by adding an __all__ attribute 
+  to ApiModule, cleanup initpkg
 
 * use MIT license for pylib, add some contributors
 

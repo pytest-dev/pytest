@@ -292,7 +292,7 @@ def test_getfuncsource_with_multine_string():
     
 
 def test_deindent():
-    from py.__.code.source import deindent as deindent
+    from _py.code.source import deindent as deindent
     assert deindent(['\tfoo', '\tbar', ]) == ['foo', 'bar']
 
     def f():
@@ -331,27 +331,27 @@ if True:
         pass
 
 def test_getsource_fallback():
-    from py.__.code.source import getsource
+    from _py.code.source import getsource
     expected = """def x():
     pass"""
     src = getsource(x)
     assert src == expected
 
 def test_idem_compile_and_getsource():
-    from py.__.code.source import getsource
+    from _py.code.source import getsource
     expected = "def x(): pass"
     co = py.code.compile(expected)
     src = getsource(co)
     assert src == expected
 
 def test_findsource_fallback():
-    from py.__.code.source import findsource
+    from _py.code.source import findsource
     src, lineno = findsource(x)
     assert 'test_findsource_simple' in str(src)
     assert src[lineno] == '    def x():'
 
 def test_findsource___source__():
-    from py.__.code.source import findsource
+    from _py.code.source import findsource
     co = py.code.compile("""if 1:
     def x():
         pass

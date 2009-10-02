@@ -7,8 +7,8 @@
 
 import py
 import os
-from py.__.test.dist.gwmanage import GatewayManager, HostRSync
-from py.__.test.plugin import hookspec
+from _py.test.dist.gwmanage import GatewayManager, HostRSync
+from _py.test.plugin import hookspec
 import execnet
 
 def pytest_funcarg__hookrecorder(request):

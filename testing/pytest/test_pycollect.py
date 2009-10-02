@@ -1,6 +1,6 @@
 import py
 
-from py.__.test.outcome import Skipped
+from _py.test.outcome import Skipped
 
 class TestModule:
     def test_module_file_not_found(self, testdir):
