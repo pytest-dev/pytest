@@ -1,4 +1,5 @@
 import py
+py.test.importorskip("execnet")
 from py.__.test.looponfail.remote import LooponfailingSession, LoopState, RemoteControl 
 
 class TestRemoteControl:

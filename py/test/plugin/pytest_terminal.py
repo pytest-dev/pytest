@@ -165,7 +165,7 @@ class TerminalReporter:
         self.stats.setdefault('deselected', []).append(items)
 
     def pytest_itemstart(self, item, node=None):
-        if self.config.option.dist != "no":
+        if getattr(self.config.option, 'dist', 'no') != "no":
             # for dist-testing situations itemstart means we 
             # queued the item for sending, not interesting (unless debugging) 
             if self.config.option.debug:

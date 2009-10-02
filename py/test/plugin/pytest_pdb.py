@@ -4,6 +4,10 @@ interactive debugging with the Python Debugger.
 import py
 import pdb, sys, linecache
 from py.__.test.outcome import Skipped
+try:
+    import execnet
+except ImportError:
+    execnet = None
 
 def pytest_addoption(parser):
     group = parser.getgroup("general") 
@@ -14,10 +18,11 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     if config.option.usepdb:
-        if config.getvalue("looponfail"):
-            raise config.Error("--pdb incompatible with --looponfail.")
-        if config.option.dist != "no":
-            raise config.Error("--pdb incompatible with distributing tests.")
+        if execnet:
+            if config.getvalue("looponfail"):
+                raise config.Error("--pdb incompatible with --looponfail.")
+            if config.option.dist != "no":
+                raise config.Error("--pdb incompatible with distributing tests.")
         config.pluginmanager.register(PdbInvoke())
 
 class PdbInvoke:

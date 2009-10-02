@@ -3,6 +3,11 @@
 import sys
 import py
 
+try:
+    import execnet
+except ImportError:
+    execnet = None
+
 def pytest_pyfunc_call(__multicall__, pyfuncitem):
     if not __multicall__.execute():
         testfunction = pyfuncitem.obj 
@@ -63,14 +68,22 @@ def pytest_addoption(parser):
                help="traceback verboseness (long/short/no).")
     group._addoption('-p', action="append", dest="plugins", default = [],
                help=("load the specified plugin after command line parsing. "))
-    group._addoption('-f', '--looponfail',
-               action="store_true", dest="looponfail", default=False,
-               help="run tests, re-run failing test set until all pass.")
+    if execnet:
+        group._addoption('-f', '--looponfail',
+                   action="store_true", dest="looponfail", default=False,
+                   help="run tests, re-run failing test set until all pass.")
 
     group = parser.addgroup("debugconfig", "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
 
+    if execnet:
+        add_dist_options(parser)
+    else:
+        parser.epilog = (
+        "execnet missing: --looponfailing and distributed testing not available.")
+
+def add_dist_options(parser):
     group = parser.addgroup("dist", "distributed testing") #  see http://pytest.org/help/dist")
     group._addoption('--dist', metavar="distmode", 
                action="store", choices=['load', 'each', 'no'], 
@@ -97,18 +110,19 @@ def pytest_configure(config):
     setsession(config)
 
 def fixoptions(config):
-    if config.option.numprocesses:
-        config.option.dist = "load"
-        config.option.tx = ['popen'] * int(config.option.numprocesses)
-    if config.option.distload:
-        config.option.dist = "load"
+    if execnet:
+        if config.option.numprocesses:
+            config.option.dist = "load"
+            config.option.tx = ['popen'] * int(config.option.numprocesses)
+        if config.option.distload:
+            config.option.dist = "load"
 
 def setsession(config):
     val = config.getvalue
     if val("collectonly"):
         from py.__.test.session import Session
         config.setsessionclass(Session)
-    else:
+    elif execnet:
         if val("looponfail"):
             from py.__.test.looponfail.remote import LooponfailingSession
             config.setsessionclass(LooponfailingSession)

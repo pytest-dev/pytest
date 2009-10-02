@@ -11,10 +11,8 @@ synchronizes your program source code to the remote place.  All test results
 are reported back and displayed to your local test session.  You may 
 specify different Python versions and interpreters.
 
-Synchronisation and running of tests only requires
-a bare Python installation on the remote side.   No
-special software is installed - this is realized 
-by use of the **zero installation** `py.execnet`_ mechanisms.
+**Requirements**: you need to install the `execnet`_ package 
+to perform distributed test runs.  
 
 Speed up test runs by sending tests to multiple CPUs
 ----------------------------------------------------------
@@ -90,13 +88,13 @@ The basic command to run tests on multiple platforms is::
 If you specify a windows host, an OSX host and a Linux
 environment this command will send each tests to all 
 platforms - and report back failures from all platforms
-at once.   The provided specifications strings 
-use the `xspec syntax`_. 
+at once.   The specifications strings use the `xspec syntax`_. 
 
-.. _`xspec syntax`: ../execnet.html#xspec
+.. _`xspec syntax`: http://codespeak.net/execnet/trunk/basics.html#xspec
 
 .. _`socketserver.py`: http://codespeak.net/svn/py/dist/py/execnet/script/socketserver.py
-.. _`py.execnet`: ../execnet.html
+
+.. _`execnet`: http://codespeak.net/execnet
 
 Specifying test exec environments in a conftest.py
 -------------------------------------------------------------

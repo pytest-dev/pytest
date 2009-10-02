@@ -218,6 +218,7 @@ class TestOptionEffects:
         config = py.test.config._reparse([tmpdir])
         config.initsession()
         assert not config.option.boxed
+        py.test.importorskip("execnet")
         config = py.test.config._reparse(['-d', tmpdir])
         config.initsession()
         assert not config.option.boxed

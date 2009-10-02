@@ -10,6 +10,7 @@ def test_implied_different_sessions(tmpdir):
             return Exception
         return getattr(config._sessionclass, '__name__', None)
     assert x() == None
+    py.test.importorskip("execnet")
     assert x('-d') == 'DSession'
     assert x('--dist=each') == 'DSession'
     assert x('-n3') == 'DSession'
@@ -31,6 +32,8 @@ def test_plugin_already_exists(testdir):
 
 
 class TestDistOptions:
+    def setup_method(self, method):
+        py.test.importorskip("execnet")
     def test_getxspecs(self, testdir):
         config = testdir.parseconfigure("--tx=popen", "--tx", "ssh=xyz")
         xspecs = config.getxspecs()
@@ -64,13 +67,13 @@ class TestDistOptions:
         assert py.path.local('z') in roots 
         assert testdir.tmpdir.join('x') in roots 
 
-def test_dist_options(testdir):
-    config = testdir.parseconfigure("-n 2")
-    assert config.option.dist == "load"
-    assert config.option.tx == ['popen'] * 2
-    
-    config = testdir.parseconfigure("-d")
-    assert config.option.dist == "load"
+    def test_dist_options(self, testdir):
+        config = testdir.parseconfigure("-n 2")
+        assert config.option.dist == "load"
+        assert config.option.tx == ['popen'] * 2
+        
+        config = testdir.parseconfigure("-d")
+        assert config.option.dist == "load"
 
 def test_pytest_report_iteminfo():
     class FakeItem(object):

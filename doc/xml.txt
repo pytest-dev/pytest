@@ -15,7 +15,6 @@ The py lib strives to offer enough functionality to represent
 itself and especially its API in html or xml.  
 
 .. _xist: http://www.livinglogic.de/Python/xist/index.html
-.. _`exchange data`: execnet.html#exchange-data 
 
 a pythonic object model , please 
 ================================

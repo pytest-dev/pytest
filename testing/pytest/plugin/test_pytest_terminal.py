@@ -3,6 +3,10 @@ terminal reporting of the full testing process.
 """
 import py
 import sys
+try:
+    import execnet
+except ImportError:
+    execnet = None
 
 # ===============================================================================
 # plugin tests 
@@ -42,7 +46,7 @@ def pytest_generate_tests(metafunc):
             funcargs={'option': Option(verbose=True)}
         )
         nodist = getattr(metafunc.function, 'nodist', False)
-        if not nodist:
+        if execnet and not nodist:
             metafunc.addcall(
                 id="verbose-dist", 
                 funcargs={'option': Option(dist='each', verbose=True)}
@@ -602,9 +606,10 @@ class TestTerminalFunctional:
             "*test_verbose_reporting.py:10: test_gen*FAIL*",
         ])
         assert result.ret == 1
-        result = testdir.runpytest(p1, '-v', '-n 1')
-        result.stdout.fnmatch_lines([
-            "*FAIL*test_verbose_reporting.py:2: test_fail*", 
-        ])
-        assert result.ret == 1
+        if execnet:
+            result = testdir.runpytest(p1, '-v', '-n 1')
+            result.stdout.fnmatch_lines([
+                "*FAIL*test_verbose_reporting.py:2: test_fail*", 
+            ])
+            assert result.ret == 1
 

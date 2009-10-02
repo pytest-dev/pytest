@@ -246,7 +246,7 @@ on the `svn` command line, not on the bindings.
 It makes sense now to directly use the bindings. 
 
 Moreover, it would be good, also considering 
-`py.execnet`_ distribution of programs, to
+`execnet`_ distribution of programs, to
 be able to manipulate Windows Paths on Linux
 and vice versa.  So we'd like to consider
 refactoring the path implementations 
@@ -269,5 +269,5 @@ the quite full interface without requiring
 to know about all details of the full path 
 implementation. 
 
-.. _`py.execnet`: execnet.html
+.. _`execnet`: execnet.html
 

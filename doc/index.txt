@@ -7,8 +7,6 @@ documentation on the most interesting ones:
 
 `py.test`_ write and deploy unit- and functional tests to multiple machines. 
 
-`py.execnet`_ elastic distributed programming.
-
 `py.code`_: generate code and use advanced introspection/traceback support. 
 
 `py.path`_: use path objects to transparently access local and svn filesystems.
@@ -33,7 +31,6 @@ For the latest Release, see `PyPI project page`_
 
 .. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
-.. _`py.execnet`: execnet.html 
 .. _`py.log`: log.html
 .. _`py.io`: io.html
 .. _`py.path`: path.html

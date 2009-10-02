@@ -44,7 +44,8 @@ class TestPDB:
         if child.isalive(): 
             child.wait()
 
-    def test_incompatibility_messages(self, testdir):
+    def test_dist_incompatibility_messages(self, testdir):
+        py.test.importorskip("execnet")
         Error = py.test.config.Error
         py.test.raises(Error, "testdir.parseconfigure('--pdb', '--looponfail')")
         result = testdir.runpytest("--pdb", "-n", "3")

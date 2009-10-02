@@ -24,11 +24,15 @@ class Parser:
         self._groups = [self._anonymous]
         self._processopt = processopt
         self._usage = usage 
+        self.epilog = "" 
 
     def processoption(self, option):
         if self._processopt:
             if option.dest:
                 self._processopt(option)
+
+    def addnote(self, note):
+        self._notes.append(note)
 
     def addgroup(self, name, description=""):
         for group in self._groups:
@@ -51,6 +55,7 @@ class Parser:
     def parse(self, args):
         optparser = optparse.OptionParser(usage=self._usage)
         # make sure anaonymous group is at the end 
+        optparser.epilog = self.epilog
         groups = self._groups[1:] + [self._groups[0]]
         for group in groups:
             if group.options:

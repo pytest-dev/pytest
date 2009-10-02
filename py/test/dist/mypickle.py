@@ -13,7 +13,6 @@
 """
 
 import py
-from execnet.gateway_base import Channel
 import sys, os, struct
 #debug = open("log-mypickle-%d" % os.getpid(), 'w')
 
@@ -139,6 +138,7 @@ class PickleChannel(object):
         self.RemoteError = channel.RemoteError
 
     def send(self, obj):
+        from execnet.gateway_base import Channel
         if not isinstance(obj, Channel):
             pickled_obj = self._ipickle.dumps(obj)
             self._channel.send(pickled_obj)

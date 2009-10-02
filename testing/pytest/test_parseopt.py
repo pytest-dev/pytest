@@ -8,6 +8,12 @@ class TestParser:
         out, err = capsys.readouterr()
         assert out.find("xyz") != -1
 
+    def test_epilog(self):
+        parser = parseopt.Parser()
+        assert not parser.epilog 
+        parser.epilog += "hello"
+        assert parser.epilog == "hello"
+
     def test_group_add_and_get(self):
         parser = parseopt.Parser()
         group = parser.addgroup("hello", description="desc")
@@ -69,6 +75,15 @@ class TestParser:
         del option.hello
         args = parser.parse_setoption([], option)
         assert option.hello == "x"
+
+    def test_parser_epilog(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.epilog = "hello world"
+        """)
+        result = testdir.runpytest('--help')
+        #assert result.ret != 0
+        assert result.stdout.fnmatch_lines(["*hello world*"])
 
     def test_parse_setoption(self):
         parser = parseopt.Parser()
