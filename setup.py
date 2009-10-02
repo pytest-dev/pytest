@@ -24,13 +24,13 @@ For questions please check out http://pylib.org/contact.html
 (c) Holger Krekel and others, 2009
 
 """
-trunk = 'trunk'
+trunk = None
 def main():
     setup(
         name='py',
-        description='py.test and pylib: advanced testing tool and networking lib',
+        description='py.test and pylib: rapid testing and high-level path/code objects.',
         long_description = long_description, 
-        version= trunk or 'trunk', 
+        version= trunk or '1.1.0b1', 
         url='http://pylib.org', 
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'], 
@@ -45,7 +45,7 @@ def main():
                                           'py.svnwcrevert = py.cmdline:pysvnwcrevert',
                                           'py.test = py.cmdline:pytest',
                                           'py.which = py.cmdline:pywhich']},
-        classifiers=['Development Status :: 5 - Production/Stable',
+        classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',

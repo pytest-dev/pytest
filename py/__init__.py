@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 advanced testing and development support library:
@@ -17,14 +16,14 @@ For questions please check out http://pylib.org/contact.html
 (c) Holger Krekel and others, 2009
 """
 from py.initpkg import initpkg
-trunk = "trunk"
+trunk = "1.1.0b1"
 
 version = trunk or "1.0.x"
 
 del trunk 
 
 initpkg(__name__,
-    description = "py.test and pylib: advanced testing tool and networking lib", 
+    description = "py.test and pylib: rapid testing and high-level path/code objects.", 
     version = version, 
     url = "http://pylib.org", 
     license = "MIT license",
@@ -33,7 +32,7 @@ initpkg(__name__,
     author_email = "holger at merlinux.eu, py-dev at codespeak.net",
     long_description = globals()['__doc__'],
     classifiers = [
-        "Development Status :: 5 - Production/Stable", 
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers", 
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX",

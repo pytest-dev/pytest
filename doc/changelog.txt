@@ -1,6 +1,8 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* use MIT license for pylib, add some contributors
+
 * remove py.execnet code and substitute all usages with 'execnet' proper
 
 * fix issue50 - cached_setup now caches more to expectations 
