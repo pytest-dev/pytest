@@ -82,7 +82,7 @@ def get_svn_youngest(repo):
     return int(rev)
 
 def getgateway(host, keyfile=None):
-    return py.execnet.SshGateway(host, identity=keyfile)
+    return execnet.SshGateway(host, identity=keyfile)
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:

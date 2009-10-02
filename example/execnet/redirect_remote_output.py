@@ -10,7 +10,7 @@ showcasing features of the channel object:
 
 import py
 
-gw = py.execnet.PopenGateway()
+gw = execnet.PopenGateway()
 
 outchan = gw.remote_exec("""
     import sys

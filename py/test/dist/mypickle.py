@@ -13,7 +13,7 @@
 """
 
 import py
-from py.__.execnet.gateway_base import Channel
+from execnet.gateway_base import Channel
 import sys, os, struct
 #debug = open("log-mypickle-%d" % os.getpid(), 'w')
 

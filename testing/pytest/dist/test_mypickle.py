@@ -1,6 +1,7 @@
 
 import py
 import sys
+import execnet
 
 Queue = py.builtin._tryimport('queue', 'Queue').Queue
 
@@ -117,7 +118,7 @@ def test_self_memoize():
 TESTTIMEOUT = 2.0
 class TestPickleChannelFunctional:
     def setup_class(cls):
-        cls.gw = py.execnet.PopenGateway()
+        cls.gw = execnet.PopenGateway()
         cls.gw.remote_init_threads(5)
 
     def test_popen_send_instance(self):

@@ -105,6 +105,7 @@ class TestTerminal:
         ])
 
     def test_gwmanage_events(self, testdir, linecomp):
+        execnet = py.test.importorskip("execnet")
         modcol = testdir.getmodulecol("""
             def test_one():
                 pass
@@ -113,10 +114,10 @@ class TestTerminal:
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         class gw1:
             id = "X1"
-            spec = py.execnet.XSpec("popen")
+            spec = execnet.XSpec("popen")
         class gw2:
             id = "X2"
-            spec = py.execnet.XSpec("popen")
+            spec = execnet.XSpec("popen")
         class rinfo:
             version_info = (2, 5, 1, 'final', 0)
             executable = "hello"

@@ -9,7 +9,7 @@ NUM_PROCESSES = 5
 
 channels = []
 for i in range(NUM_PROCESSES):
-    gw = py.execnet.PopenGateway() # or use SSH or socket gateways 
+    gw = execnet.PopenGateway() # or use SSH or socket gateways 
     channel = gw.remote_exec("""
         import time
         secs = channel.receive()
@@ -19,7 +19,7 @@ for i in range(NUM_PROCESSES):
     channels.append(channel)
     print "*** instantiated subprocess", gw
 
-mc = py.execnet.MultiChannel(channels)
+mc = execnet.MultiChannel(channels)
 queue = mc.make_receive_queue()
 
 print "***", "verifying that timeout on receiving results from blocked subprocesses works"

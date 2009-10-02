@@ -17,15 +17,18 @@ def pytest_addoption(parser):
 
 def pytest_funcarg__specssh(request):
     return getspecssh(request.config)
-def pytest_funcarg__specsocket(request):
-    return getsocketspec(request.config)
+def getgspecs(config=None):
+    if config is None:
+        config = py.test.config
+    return [execnet.XSpec(spec)
+                for spec in config.getvalueorskip("gspecs")]
 
 
 # configuration information for tests 
 def getgspecs(config=None):
     if config is None:
         config = py.test.config
-    return [py.execnet.XSpec(spec) 
+    return [execnet.XSpec(spec) 
                 for spec in config.getvalueorskip("gspecs")]
 
 def getspecssh(config=None):

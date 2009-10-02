@@ -8,22 +8,20 @@ from setuptools import setup
             
 long_description = """
 
-advanced testing and development support library: 
+advanced testing and development support library:
 
 - `py.test`_: cross-project testing tool with many advanced features
-- `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
-- `py.path`_: path abstractions over local and subversion files 
+- `py.path`_: path abstractions over local and subversion files
 - `py.code`_: dynamic code compile and traceback printing support
 
-Compatibility: Linux, Win32, OSX, Python versions 2.3-2.6. 
+Compatibility: Linux, Win32, OSX, Python versions 2.4 through to 3.1.
 For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
-.. _`py.execnet`: http://pylib.org/execnet.html
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
 
-(c) Holger Krekel and others, 2009  
+(c) Holger Krekel and others, 2009
 
 """
 trunk = 'trunk'
@@ -63,8 +61,6 @@ def main():
                   'py.cmdline',
                   'py.code',
                   'py.compat',
-                  'py.execnet',
-                  'py.execnet.script',
                   'py.io',
                   'py.log',
                   'py.path',

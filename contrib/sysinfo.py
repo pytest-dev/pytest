@@ -95,7 +95,7 @@ def error(*args):
 def getinfo(sshname, ssh_config=None, loginfo=sys.stdout):
     debug("connecting to", sshname)
     try:
-        gw = py.execnet.SshGateway(sshname, ssh_config=ssh_config)
+        gw = execnet.SshGateway(sshname, ssh_config=ssh_config)
     except IOError:
         error("could not get sshagteway", sshname)
     else:

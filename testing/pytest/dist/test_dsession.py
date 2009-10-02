@@ -1,8 +1,9 @@
 from py.__.test.dist.dsession import DSession
 from py.__.test import outcome
 import py
+import execnet
 
-XSpec = py.execnet.XSpec
+XSpec = execnet.XSpec
 
 def run(item, node, excinfo=None):
     runner = item.config.pluginmanager.getplugin("runner")

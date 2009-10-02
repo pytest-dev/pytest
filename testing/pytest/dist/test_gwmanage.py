@@ -9,6 +9,7 @@ import py
 import os
 from py.__.test.dist.gwmanage import GatewayManager, HostRSync
 from py.__.test.plugin import hookspec
+import execnet
 
 def pytest_funcarg__hookrecorder(request):
     _pytest = request.getfuncargvalue('_pytest')
@@ -35,7 +36,7 @@ class TestGatewayManagerPopen:
         hm = GatewayManager(["popen"] * 2, hook)
         hm.makegateways()
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
-        assert call.gateway.spec == py.execnet.XSpec("popen")
+        assert call.gateway.spec == execnet.XSpec("popen")
         assert call.gateway.id == "[1]"
         assert call.platinfo.executable == call.gateway._rinfo().executable
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
@@ -149,7 +150,7 @@ class TestHRSync:
 
     def test_hrsync_one_host(self, mysetup):
         source, dest = mysetup.source, mysetup.dest
-        gw = py.execnet.makegateway("popen//chdir=%s" % dest)
+        gw = execnet.makegateway("popen//chdir=%s" % dest)
         finished = []
         rsync = HostRSync(source)
         rsync.add_target_host(gw, finished=lambda: finished.append(1))

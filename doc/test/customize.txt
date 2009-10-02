@@ -364,7 +364,7 @@ remote environment.  For this you can implement the newgateway hook:
     def pytest_gwmanage_newgateway(gateway, platinfo):
         """ called after a gateway is instantiated. """
 
-The ``gateway`` object here has a ``spec`` attribute which is an ``py.execnet.XSpec`` 
+The ``gateway`` object here has a ``spec`` attribute which is an ``execnet.XSpec`` 
 object, which has attributes that map key/values as specified from a ``--txspec``
 option. The platinfo object is a dictionary with information about the remote process: 
 

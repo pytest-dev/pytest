@@ -1,22 +1,20 @@
 
 # -*- coding: utf-8 -*-
 """
-advanced testing and development support library: 
+advanced testing and development support library:
 
 - `py.test`_: cross-project testing tool with many advanced features
-- `py.execnet`_: ad-hoc code distribution to SSH, Socket and local sub processes
-- `py.path`_: path abstractions over local and subversion files 
+- `py.path`_: path abstractions over local and subversion files
 - `py.code`_: dynamic code compile and traceback printing support
 
-Compatibility: Linux, Win32, OSX, Python versions 2.3-2.6. 
+Compatibility: Linux, Win32, OSX, Python versions 2.4 through to 3.1.
 For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
-.. _`py.execnet`: http://pylib.org/execnet.html
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
 
-(c) Holger Krekel and others, 2009  
+(c) Holger Krekel and others, 2009
 """
 from py.initpkg import initpkg
 trunk = "trunk"
@@ -158,21 +156,6 @@ initpkg(__name__,
     'builtin.builtins'       : ('./builtin/builtin31.py', 'builtins'),
     'builtin.execfile'       : ('./builtin/builtin31.py', 'execfile'),
     'builtin.callable'       : ('./builtin/builtin31.py', 'callable'),
-
-    # gateways into remote contexts
-    'execnet.__doc__'        : ('./execnet/__init__.py', '__doc__'),
-    'execnet._HookSpecs'     : ('./execnet/gateway_base.py', 'ExecnetAPI'),
-    'execnet.SocketGateway'  : ('./execnet/gateway.py', 'SocketGateway'),
-    'execnet.PopenGateway'   : ('./execnet/gateway.py', 'PopenGateway'),
-    'execnet.SshGateway'     : ('./execnet/gateway.py', 'SshGateway'),
-    'execnet.HostNotFound'   : ('./execnet/gateway.py', 'HostNotFound'),
-    'execnet.XSpec'          : ('./execnet/xspec.py', 'XSpec'),
-    'execnet.makegateway'    : ('./execnet/xspec.py', 'makegateway'),
-    'execnet.MultiGateway'   : ('./execnet/multi.py', 'MultiGateway'),
-    'execnet.MultiChannel'   : ('./execnet/multi.py', 'MultiChannel'),
-
-    # execnet scripts
-    'execnet.RSync'          : ('./execnet/rsync.py', 'RSync'),
 
     # input-output helping 
     'io.__doc__'             : ('./io/__init__.py', '__doc__'),

@@ -1,5 +1,6 @@
 
 import py
+import execnet
 from py.__.test.dist.txnode import TXNode
 queue = py.builtin._tryimport("queue", "Queue")
 Queue = queue.Queue
@@ -46,8 +47,8 @@ class MySetup:
             config = py.test.config._reparse([])
         self.config = config
         self.queue = Queue()
-        self.xspec = py.execnet.XSpec("popen")
-        self.gateway = py.execnet.makegateway(self.xspec)
+        self.xspec = execnet.XSpec("popen")
+        self.gateway = execnet.makegateway(self.xspec)
         self.id += 1
         self.gateway.id = str(self.id)
         self.node = TXNode(self.gateway, self.config, putevent=self.queue.put)

@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, sys.argv[1])
 import py
 
-toolpath = py.magic.autopath()
+toolpath = py.path.local(__file__)
 binpath = py.path.local(py.__file__).dirpath('bin')
 
 def error(msg):

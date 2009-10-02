@@ -78,7 +78,7 @@ class VirtualEnv(object):
 
     def makegateway(self):
         python = self._cmd('python')
-        return py.execnet.makegateway("popen//python=%s" %(python,))
+        return execnet.makegateway("popen//python=%s" %(python,))
 
     def pcall(self, cmd, *args, **kw):
         self.ensure()

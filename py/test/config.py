@@ -252,7 +252,8 @@ class Config(object):
                 xspeclist.extend([xspec[i+1:]] * num)
         if not xspeclist:
             raise self.Error("MISSING test execution (tx) nodes: please specify --tx")
-        return [py.execnet.XSpec(x) for x in xspeclist]
+        import execnet
+        return [execnet.XSpec(x) for x in xspeclist]
 
     def getrsyncdirs(self):
         config = self 

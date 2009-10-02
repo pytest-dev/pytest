@@ -4,7 +4,8 @@
 
 import py
 import sys, os
-from py.__.execnet.gateway_base import RemoteError
+import execnet
+from execnet.gateway_base import RemoteError
 
 class GatewayManager:
     RemoteError = RemoteError
@@ -13,8 +14,8 @@ class GatewayManager:
         self.specs = []
         self.hook = hook
         for spec in specs:
-            if not isinstance(spec, py.execnet.XSpec):
-                spec = py.execnet.XSpec(spec)
+            if not isinstance(spec, execnet.XSpec):
+                spec = execnet.XSpec(spec)
             if not spec.chdir and not spec.popen:
                 spec.chdir = defaultchdir
             self.specs.append(spec)
@@ -22,7 +23,7 @@ class GatewayManager:
     def makegateways(self):
         assert not self.gateways
         for spec in self.specs:
-            gw = py.execnet.makegateway(spec)
+            gw = execnet.makegateway(spec)
             self.gateways.append(gw)
             gw.id = "[%s]" % len(self.gateways)
             self.hook.pytest_gwmanage_newgateway(
@@ -39,7 +40,7 @@ class GatewayManager:
             else:
                 if remote:
                     l.append(gw)
-        return py.execnet.MultiGateway(gateways=l)
+        return execnet.MultiGateway(gateways=l)
 
     def multi_exec(self, source, inplacelocal=True):
         """ remote execute code on all gateways. 
@@ -87,7 +88,7 @@ class GatewayManager:
             gw = self.gateways.pop()
             gw.exit()
 
-class HostRSync(py.execnet.RSync):
+class HostRSync(execnet.RSync):
     """ RSyncer that filters out common files 
     """
     def __init__(self, sourcedir, *args, **kwargs):

@@ -7,10 +7,9 @@
     otherwise changes to source code can crash 
     the controlling process which should never happen. 
 """
-
-from __future__ import generators
 import py
 import sys
+import execnet
 from py.__.test.session import Session
 from py.__.test.dist.mypickle import PickleChannel
 from py.__.test.looponfail import util
@@ -55,7 +54,7 @@ class RemoteControl(object):
             py.builtin.print_("RemoteControl:", msg)
 
     def initgateway(self):
-        return py.execnet.PopenGateway()
+        return execnet.PopenGateway()
 
     def setup(self, out=None):
         if out is None:

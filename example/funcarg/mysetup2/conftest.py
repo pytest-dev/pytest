@@ -20,5 +20,5 @@ class MySetup:
         host = self.config.option.ssh
         if host is None:
             py.test.skip("specify ssh host with --ssh")
-        return py.execnet.SshGateway(host)
+        return execnet.SshGateway(host)
         

@@ -1,6 +1,8 @@
 Changes between 1.0.x and 'trunk'
 =====================================
 
+* remove py.execnet code and substitute all usages with 'execnet' proper
+
 * fix issue50 - cached_setup now caches more to expectations 
   for test functions with multiple arguments. 
 

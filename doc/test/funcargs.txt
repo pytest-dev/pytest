@@ -165,7 +165,7 @@ and to offer a new mysetup method:
             host = self.config.option.ssh
             if host is None:
                 py.test.skip("specify ssh host with --ssh")
-            return py.execnet.SshGateway(host)
+            return execnet.SshGateway(host)
 
 
 Now any test function can use the ``mysetup.getsshconnection()`` method like this:
