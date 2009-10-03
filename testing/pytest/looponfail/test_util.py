@@ -51,14 +51,11 @@ def test_pycremoval(tmpdir):
     assert not pycfile.check()
     
 
-def test_waitonchange(tmpdir):
+def test_waitonchange(tmpdir, monkeypatch):
     tmp = tmpdir
     sd = StatRecorder([tmp])
 
-    wp = py._thread.WorkerPool(1)
-    reply = wp.dispatch(sd.waitonchange, checkinterval=0.2)
-    py.std.time.sleep(0.05)
-    tmp.ensure("newfile.py")
-    reply.get(timeout=0.5)
-    wp.shutdown()
-   
+    l = [True, False]
+    monkeypatch.setattr(StatRecorder, 'check', lambda self: l.pop())
+    sd.waitonchange(checkinterval=0.2)
+    assert not l

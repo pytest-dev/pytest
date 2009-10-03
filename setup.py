@@ -65,9 +65,7 @@ def main():
                   '_py.test',
                   '_py.test.dist',
                   '_py.test.looponfail',
-                  '_py.test.plugin',
-                  '_py.test.web',
-                  '_py.thread'],
+                  '_py.test.plugin',],
         package_data={'py': ['bin/_findpy.py',
                              'bin/env.cmd',
                              'bin/env.py',
@@ -86,8 +84,8 @@ def main():
                              'bin/win32/py.rest.cmd',
                              'bin/win32/py.svnwcrevert.cmd',
                              'bin/win32/py.test.cmd',
-                             'bin/win32/py.which.cmd',
-                             'rest/rest.sty.template']},
+                             'bin/win32/py.which.cmd',],
+                        '_py': ['rest/rest.sty.template']},
         zip_safe=True,
     )
 
