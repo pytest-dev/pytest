@@ -12,6 +12,8 @@ syntax:glob
 *.swp
 *.html
 *.class
+*.orig
 
 build/
+dist/
 py.egg-info
