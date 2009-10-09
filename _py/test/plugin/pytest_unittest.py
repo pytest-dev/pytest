@@ -19,8 +19,13 @@ import sys
 def pytest_pycollect_makeitem(collector, name, obj):
     if 'unittest' not in sys.modules:
         return # nobody could have possibly derived a subclass 
-    if py.std.inspect.isclass(obj) and issubclass(obj, py.std.unittest.TestCase):
-        return UnitTestCase(name, parent=collector)
+    try:
+        isunit = issubclass(obj, py.std.unittest.TestCase)
+    except TypeError:
+        pass
+    else:
+        if isunit:
+            return UnitTestCase(name, parent=collector)
 
 class UnitTestCase(py.test.collect.Class):
     def collect(self):

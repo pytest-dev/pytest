@@ -1,6 +1,5 @@
 import py
 
-
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -14,6 +13,17 @@ def test_simple_unittest(testdir):
     reprec = testdir.inline_run(testpath)
     assert reprec.matchreport("testpassing").passed
     assert reprec.matchreport("test_failing").failed 
+
+def test_isclasscheck_issue53(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        class _E(object):
+            def __getattr__(self, tag):
+                pass
+        E = _E()
+    """)
+    result = testdir.runpytest(testpath)
+    assert result.ret == 0
 
 def test_setup(testdir):
     testpath = testdir.makepyfile(test_two="""
