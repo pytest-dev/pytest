@@ -26,3 +26,24 @@ class TestPyLookup:
         result.stdout.fnmatch_lines(
             ["%s:1: stuff = x" % (searched.basename,)]
         )
+
+class TestPyCleanup:
+    def test_basic(self, testdir, tmpdir):
+        p = tmpdir.ensure("hello.py")
+        result = testdir.runpybin("py.cleanup", tmpdir)
+        assert result.ret == 0
+        assert p.check()
+        pyc = p.new(ext='pyc')
+        pyc.ensure()
+        result = testdir.runpybin("py.cleanup", tmpdir)
+        assert not pyc.check()
+
+    def test_dir_remove(self, testdir, tmpdir):
+        p = tmpdir.mkdir("a")
+        result = testdir.runpybin("py.cleanup", tmpdir)
+        assert result.ret == 0
+        assert p.check()
+        result = testdir.runpybin("py.cleanup", tmpdir, '-d')
+        assert result.ret == 0
+        assert not p.check()
+        

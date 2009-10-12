@@ -18,6 +18,8 @@ def main():
         action="store_true", 
         help="display would-be-removed filenames"
     )
+    parser.add_option("-d", action="store_true", dest="removedir",
+                      help="remove empty directories")
     (options, args) = parser.parse_args()
     if not args:
         args = ["."]
@@ -29,8 +31,16 @@ def main():
         path = py.path.local(arg)
         py.builtin.print_("cleaning path", path, "of extensions", ext)
         for x in path.visit(shouldremove, lambda x: x.check(dotfile=0, link=0)):
-            if options.dryrun:
-                py.builtin.print_("would remove", x)
-            else:
-                py.builtin.print_("removing", x)
-                x.remove()
+            remove(x, options)
+    if options.removedir:
+        for x in path.visit(lambda x: x.check(dir=1), 
+                            lambda x: x.check(dotfile=0, link=0)):
+            remove(x, options)
+
+def remove(path, options):
+    if options.dryrun:
+        py.builtin.print_("would remove", path)
+    else:
+        py.builtin.print_("removing", path)
+        path.remove()
+                

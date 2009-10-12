@@ -1,6 +1,8 @@
 Changes between 1.0.2 and '1.1.0b1'
 =====================================
 
+* introduce and test "py.cleanup -d" to remove empty directories 
+
 * fix issue #59 - robustify unittest test collection
 
 * make bpython/help interaction work by adding an __all__ attribute 
