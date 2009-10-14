@@ -18,6 +18,8 @@ class Test_exec_cmd:
         except cmdexec.Error:
             e = exvalue()
             assert e.status == 1
+            assert py.builtin._istext(e.out)
+            assert py.builtin._istext(e.err)
 
     def test_err(self):
         try:
@@ -28,16 +30,3 @@ class Test_exec_cmd:
             assert hasattr(e, 'err')
             assert hasattr(e, 'out')
             assert e.err or e.out
-
-def test_cmdexec_selection():
-    from _py.process import cmdexec 
-    if py.std.sys.platform == "win32":
-        assert py.process.cmdexec == cmdexec.win32_exec_cmd
-    elif hasattr(py.std.sys, 'pypy') or hasattr(py.std.sys, 'pypy_objspaceclass'):
-        assert py.process.cmdexec == cmdexec.popen3_exec_cmd
-    else:
-        assert py.process.cmdexec == cmdexec.posix_exec_cmd
-        
-        
-        
-    
