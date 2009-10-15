@@ -53,7 +53,7 @@ def pytest_unconfigure(config):
         del config._pastebinfile
         proxyid = getproxy().newPaste("python", sessionlog)
         pastebinurl = "%s%s" % (url.show, proxyid)
-        sys.stderr.write("session-log: %s" % pastebinurl)
+        sys.stderr.write("pastebin session-log: %s\n" % pastebinurl)
         tr = config.pluginmanager.impname2plugin['terminalreporter']
         del tr._tw.__dict__['write']
         
