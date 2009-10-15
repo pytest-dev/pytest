@@ -2,19 +2,17 @@
 pytest_skipping plugin
 ======================
 
-mark python test functions, classes or modules for conditional
+advanced conditional skipping for python test functions, classes or modules.
 
 .. contents::
   :local:
 
-skipping (skipif) or as expected-to-fail (xfail).  Both declarations
-lead to special reporting and both can be systematically associated
-with functions, whole classes or modules. The difference between
-the two is that 'xfail' will still execute test functions
-but it will revert the outcome.  A passing test is now
-a failure and failing test is expected.  All skip conditions
-are reported at the end of test run through the terminal
-reporter.
+You can mark functions, classes or modules for for conditional
+skipping (skipif) or as expected-to-fail (xfail).  The difference
+between the two is that 'xfail' will still execute test functions
+but it will invert the outcome: a passing test becomes a failure and
+a failing test is a semi-passing one.  All skip conditions are 
+reported at the end of test run through the terminal reporter.
 
 .. _skipif:
 
@@ -27,14 +25,17 @@ Here is an example for skipping a test function on Python3::
     def test_function():
         ...
 
-Conditions are specified as python expressions
-and can access the ``sys`` module.  They can also
-access the config object and thus depend on command
-line or conftest options::
+The 'skipif' marker accepts an **arbitrary python expression** 
+as a condition.  When setting up the test function the condition
+is evaluated by calling ``eval(expr, namespace)``.  The namespace
+contains the  ``sys`` and ``os`` modules as well as the 
+test ``config`` object.  The latter allows you to skip based 
+on a test configuration value e.g. like this::
 
-    @py.test.mark.skipif("config.getvalue('db') is None")
+    @py.test.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
+
 
 conditionally mark a function as "expected to fail"
 -------------------------------------------------------
@@ -60,7 +61,7 @@ skip/xfail a whole test class or module
 -------------------------------------------
 
 Instead of marking single functions you can skip
-a whole class of tests when runnign on a specific
+a whole class of tests when running on a specific
 platform::
 
     class TestSomething:
@@ -82,12 +83,11 @@ You can use a helper to skip on a failing import::
 You can use this helper at module level or within
 a test or setup function.
 
-You can aslo skip if a library does not have the right version::
+You can also skip if a library does not come with a high enough version::
 
     docutils = py.test.importorskip("docutils", minversion="0.3")
 
 The version will be read from the specified module's ``__version__`` attribute.
-
 
 dynamically skip from within a test or setup
 -------------------------------------------------

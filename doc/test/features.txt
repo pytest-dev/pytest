@@ -123,14 +123,14 @@ command line.  Using the `--pdb`` option you can automatically activate
 a PDB `Python debugger`_ when a test fails. 
 
 advanced skipping of tests 
--------------------------------
+======================================
 
-py.test has builtin support for skipping tests or expecting
+py.test has `advanced support for skipping tests`_ or expecting
 failures on tests on certain platforms.  Apart from the 
 minimal py.test style also unittest- and nose-style tests 
 can make use of this feature.  
 
-
+.. _`advanced support for skipping tests`: plugin/skipping.html
 .. _`funcargs mechanism`: funcargs.html
 .. _`unittest.py`: http://docs.python.org/library/unittest.html
 .. _`doctest.py`: http://docs.python.org/library/doctest.html

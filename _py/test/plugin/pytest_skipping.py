@@ -1,13 +1,12 @@
 """
-mark python test functions, classes or modules for conditional
-skipping (skipif) or as expected-to-fail (xfail).  Both declarations
-lead to special reporting and both can be systematically associated
-with functions, whole classes or modules. The difference between
-the two is that 'xfail' will still execute test functions
-but it will revert the outcome.  A passing test is now
-a failure and failing test is expected.  All skip conditions
-are reported at the end of test run through the terminal
-reporter.
+advanced conditional skipping for python test functions, classes or modules.
+
+You can mark functions, classes or modules for for conditional
+skipping (skipif) or as expected-to-fail (xfail).  The difference
+between the two is that 'xfail' will still execute test functions
+but it will invert the outcome: a passing test becomes a failure and
+a failing test is a semi-passing one.  All skip conditions are 
+reported at the end of test run through the terminal reporter.
 
 .. _skipif:
 
@@ -20,14 +19,17 @@ Here is an example for skipping a test function on Python3::
     def test_function():
         ...
 
-Conditions are specified as python expressions
-and can access the ``sys`` module.  They can also
-access the config object and thus depend on command
-line or conftest options::
+The 'skipif' marker accepts an **arbitrary python expression** 
+as a condition.  When setting up the test function the condition
+is evaluated by calling ``eval(expr, namespace)``.  The namespace
+contains the  ``sys`` and ``os`` modules as well as the 
+test ``config`` object.  The latter allows you to skip based 
+on a test configuration value e.g. like this::
 
-    @py.test.mark.skipif("config.getvalue('db') is None")
+    @py.test.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
+
 
 conditionally mark a function as "expected to fail"
 -------------------------------------------------------
@@ -53,7 +55,7 @@ skip/xfail a whole test class or module
 -------------------------------------------
 
 Instead of marking single functions you can skip
-a whole class of tests when runnign on a specific
+a whole class of tests when running on a specific
 platform::
 
     class TestSomething:
@@ -75,12 +77,11 @@ You can use a helper to skip on a failing import::
 You can use this helper at module level or within
 a test or setup function.
 
-You can aslo skip if a library does not have the right version::
+You can also skip if a library does not come with a high enough version::
 
     docutils = py.test.importorskip("docutils", minversion="0.3")
 
 The version will be read from the specified module's ``__version__`` attribute.
-
 
 dynamically skip from within a test or setup
 -------------------------------------------------
@@ -96,15 +97,10 @@ If you want to skip the execution of a test you can call
 .. _`funcarg factory`: ../funcargs.html#factory
 
 """
-# XXX not all skip-related code is contained in
-# this plugin yet, some remains in outcome.py and
-# the Skipped Exception is imported here and there.
-
+# XXX py.test.skip, .importorskip and the Skipped class 
+# should also be defined in this plugin, requires thought/changes
 
 import py
-
-def pytest_namespace():
-    return {'importorskip': importorskip}
 
 def pytest_runtest_setup(item):
     expr, result = evalexpression(item, 'skipif')
@@ -117,14 +113,15 @@ def pytest_runtest_makereport(__multicall__, item, call):
     if hasattr(item, 'obj'):
         expr, result = evalexpression(item, 'xfail')
         if result:
-            res = __multicall__.execute()
+            rep = __multicall__.execute()
             if call.excinfo:
-                res.skipped = True
-                res.failed = res.passed = False
+                rep.skipped = True
+                rep.failed = rep.passed = False
             else:
-                res.skipped = res.passed = False
-                res.failed = True
-            return res
+                rep.skipped = rep.passed = False
+                rep.failed = True
+            rep.keywords['xfail'] = True # expr
+            return rep
 
 def pytest_report_teststatus(report):
     if 'xfail' in report.keywords:
@@ -157,24 +154,6 @@ def pytest_terminal_summary(terminalreporter):
             pos = "%s %s:%d: unexpectedly passing" %(modpath, fspath, lineno)
             tr._tw.line(pos)
 
-def importorskip(modname, minversion=None):
-    """ return imported module or perform a dynamic skip() """
-    compile(modname, '', 'eval') # to catch syntaxerrors
-    try:
-        mod = __import__(modname)
-    except ImportError:
-        py.test.skip("could not import %r" %(modname,))
-    if minversion is None:
-        return mod
-    verattr = getattr(mod, '__version__', None)
-    if isinstance(minversion, str):
-        minver = minversion.split(".")
-    else:
-        minver = list(minversion)
-    if verattr is None or verattr.split(".") < minver:
-        py.test.skip("module %r has __version__ %r, required is: %r" %(
-                     modname, verattr, minversion))
-    return mod
 
 def getexpression(item, keyword):
     if isinstance(item, py.test.collect.Function):
@@ -193,7 +172,7 @@ def evalexpression(item, keyword):
     result = None
     if expr:
         if isinstance(expr, str):
-            d = {'sys': py.std.sys, 'config': item.config}
+            d = {'os': py.std.os, 'sys': py.std.sys, 'config': item.config}
             result = eval(expr, d)
         else:
             result = expr

@@ -4,7 +4,8 @@ write and report coverage data with 'figleaf'.
 """
 import py
 
-figleaf = py.test.importorskip("figleaf.annotate_html")
+py.test.importorskip("figleaf.annotate_html")
+import figleaf
 
 def pytest_addoption(parser):
     group = parser.addgroup('figleaf options')

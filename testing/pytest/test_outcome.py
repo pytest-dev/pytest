@@ -29,3 +29,30 @@ def test_exception_printing_skip():
         excinfo = py.code.ExceptionInfo()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
+
+def test_importorskip():
+    from _py.test.outcome import Skipped, importorskip
+    assert importorskip == py.test.importorskip
+    try:
+        sys = importorskip("sys")
+        assert sys == py.std.sys
+        #path = py.test.importorskip("os.path")
+        #assert path == py.std.os.path
+        py.test.raises(Skipped, "py.test.importorskip('alskdj')")
+        py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
+        py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
+        path = importorskip("py", minversion=".".join(py.__version__))
+        mod = py.std.types.ModuleType("hello123")
+        mod.__version__ = "1.3"
+        py.test.raises(Skipped, """
+            py.test.importorskip("hello123", minversion="5.0")
+        """)
+    except Skipped:
+        print(py.code.ExceptionInfo())
+        py.test.fail("spurious skip")
+
+def test_importorskip_imports_last_module_part():
+    import os
+    ospath = py.test.importorskip("os.path")
+    assert os.path == ospath
+

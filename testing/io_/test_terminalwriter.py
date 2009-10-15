@@ -2,13 +2,6 @@ import py
 import os, sys
 from _py.io import terminalwriter 
 
-def skip_win32():
-    if sys.platform == 'win32':
-        py.test.skip('Not relevant on win32')
-
-import os
-import py
-
 def test_terminal_width_COLUMNS(monkeypatch):
     """ Dummy test for get_terminal_width
     """
@@ -82,14 +75,14 @@ class BaseTests:
         assert len(l) == 1
         assert l[0] == "-" * 26 + " hello " + "-" * 27 + "\n"
 
+    @py.test.mark.skipif("sys.platform == 'win32'")
     def test__escaped(self):
-        skip_win32()
         tw = self.getwriter()
         text2 = tw._escaped("hello", (31))
         assert text2.find("hello") != -1
 
+    @py.test.mark.skipif("sys.platform == 'win32'")
     def test_markup(self):
-        skip_win32()
         tw = self.getwriter()
         for bold in (True, False):
             for color in ("red", "green"):
@@ -104,9 +97,9 @@ class BaseTests:
         tw.line("x", bold=True)
         tw.write("x\n", red=True)
         l = self.getlines()
-        skip_win32()
-        assert len(l[0]) > 2, l
-        assert len(l[1]) > 2, l
+        if sys.platform != "win32":
+            assert len(l[0]) > 2, l
+            assert len(l[1]) > 2, l
 
     def test_attr_fullwidth(self):
         tw = self.getwriter()

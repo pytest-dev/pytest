@@ -21,11 +21,13 @@ plugins = [
 ]
 
 externals = {
-    'oejskit': 'run javascript tests in real life browsers',
-    'django': 'support for testing django applications', 
-
+    'oejskit': "run javascript tests in real life browsers",
+    'django': "support for testing django applications", 
+#    'coverage': "support for using Ned's coverage module", 
+#    'xmlresult': "support for generating xml reports "
+#            "and CruiseControl integration",
 }
-                
+
 def warn(*args):
     msg = " ".join(map(str, args))
     print >>sys.stderr, "WARN:", msg
@@ -123,7 +125,7 @@ class RestWriter:
         self.out.close()
         print "wrote", self.target
         del self.out
-     
+
 class PluginOverview(RestWriter):
     def makerest(self, config):
         plugindir = py.path.local(py.__file__).dirpath("test", "plugin")
@@ -145,7 +147,6 @@ class PluginOverview(RestWriter):
                 self.Print()
 
 class HookSpec(RestWriter):
-    
     def makerest(self, config):
         module = config.pluginmanager.hook._hookspecs
         source = py.code.Source(module)
@@ -212,7 +213,7 @@ class PluginDoc(RestWriter):
         #    "py/test/plugin/%s" %(hg_changeset, basename)))
         self.links.append((basename, 
             "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
-            "py/test/plugin/%s" %(pyversion, basename)))
+            "_py/test/plugin/%s" %(pyversion, basename)))
         self.links.append(('customize', '../customize.html'))
         self.links.append(('plugins', 'index.html'))
         self.links.append(('get in contact', '../../contact.html'))

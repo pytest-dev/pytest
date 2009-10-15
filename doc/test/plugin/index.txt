@@ -2,7 +2,7 @@
 plugins for Python test functions
 =================================
 
-skipping_ mark python test functions, classes or modules for conditional
+skipping_ advanced conditional skipping for python test functions, classes or modules.
 
 figleaf_ write and report coverage data with 'figleaf'.
 

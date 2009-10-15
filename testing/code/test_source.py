@@ -191,9 +191,8 @@ class TestSourceParsingAndCompiling:
         assert len(source) == 9
         assert source.getstatementrange(5) == (0, 9)
 
+    @py.test.mark.skipif("sys.version_info < (2,6)")
     def test_compile_to_ast(self):
-        if sys.version_info < (2, 6):
-            py.test.skip("requires Python 2.6")
         import ast
         source = Source("x = 4")
         mod = source.compile(flag=ast.PyCF_ONLY_AST)
@@ -257,7 +256,6 @@ def test_getstartingblock_multiline():
     assert len(l) == 4
 
 def test_getline_finally():
-    #py.test.skip("inner statements cannot be located yet.")
     def c(): pass
     excinfo = py.test.raises(TypeError, """
            teardown = None

@@ -218,9 +218,8 @@ class TestExecutionNonForked(BaseFunctionalTests):
             py.test.fail("did not raise")
 
 class TestExecutionForked(BaseFunctionalTests): 
+    skipif = "not hasattr(os, 'fork')"
     def getrunner(self):
-        if not hasattr(py.std.os, 'fork'):
-            py.test.skip("no os.fork available")
         return runner.forked_run_report
 
     def test_suicide(self, testdir):
@@ -262,10 +261,8 @@ class TestCollectionReports:
         assert not rep.passed 
         assert rep.skipped 
 
-
+@py.test.mark.skipif("not hasattr(os, 'fork')")
 def test_functional_boxed(testdir):
-    if not hasattr(py.std.os, 'fork'):
-        py.test.skip("needs os.fork")
     p1 = testdir.makepyfile("""
         import os
         def test_function():

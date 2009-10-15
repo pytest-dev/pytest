@@ -1,9 +1,6 @@
 import py, sys, os
 
-def setup_module(mod):
-    if not hasattr(os, 'fork'):
-        py.test.skip("forkedfunc requires os.fork")
-    mod.tmpdir = py.test.ensuretemp(mod.__file__)
+skipif = "not hasattr(os, 'fork')"
 
 def test_waitfinish_removes_tempdir():
     ff = py.process.ForkedFunc(boxf1)
@@ -56,7 +53,7 @@ def test_forkedfunc_on_fds():
 def test_forkedfunc_signal():
     result = py.process.ForkedFunc(boxseg).waitfinish()
     assert result.retval is None
-    if py.std.sys.version_info < (2,4):
+    if sys.version_info < (2,4):
         py.test.skip("signal detection does not work with python prior 2.4")
     assert result.signal == 11
 

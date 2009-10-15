@@ -21,6 +21,21 @@ def test_xfail_decorator(testdir):
     ])
     assert result.ret == 1
 
+def test_xfail_at_module(testdir):
+    p = testdir.makepyfile("""
+        xfail = 'True'
+
+        def test_intentional_xfail():
+            assert 0
+    """)
+    result = testdir.runpytest(p)
+    extra = result.stdout.fnmatch_lines([
+        "*expected failures*",
+        "*test_intentional_xfail*:4*",
+        "*1 xfailed*"
+    ])
+    assert result.ret == 0
+
 def test_skipif_decorator(testdir):
     p = testdir.makepyfile("""
         import py
@@ -84,26 +99,3 @@ def test_evalexpression_cls_config_example(testdir):
     x, y = evalexpression(item, 'skipif')
     assert x == 'config._hackxyz'
     assert y == 3
-
-def test_importorskip():
-    from _py.test.outcome import Skipped
-    from _py.test.plugin.pytest_skipping import importorskip
-    assert importorskip == py.test.importorskip
-    try:
-        sys = importorskip("sys")
-        assert sys == py.std.sys
-        #path = py.test.importorskip("os.path")
-        #assert path == py.std.os.path
-        py.test.raises(Skipped, "py.test.importorskip('alskdj')")
-        py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
-        py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
-        path = importorskip("py", minversion=".".join(py.__version__))
-        mod = py.std.types.ModuleType("hello123")
-        mod.__version__ = "1.3"
-        py.test.raises(Skipped, """
-            py.test.importorskip("hello123", minversion="5.0")
-        """)
-    except Skipped:
-        print(py.code.ExceptionInfo())
-        py.test.fail("spurious skip")
-

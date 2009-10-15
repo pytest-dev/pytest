@@ -94,6 +94,25 @@ def raises(ExpectedException, *args, **kwargs):
     raise ExceptionFailure(msg="DID NOT RAISE", 
                            expr=args, expected=ExpectedException) 
 
+def importorskip(modname, minversion=None):
+    """ return imported module or perform a dynamic skip() """
+    compile(modname, '', 'eval') # to catch syntaxerrors
+    try:
+        mod = __import__(modname, None, None, ['__doc__'])
+    except ImportError:
+        py.test.skip("could not import %r" %(modname,))
+    if minversion is None:
+        return mod
+    verattr = getattr(mod, '__version__', None)
+    if isinstance(minversion, str):
+        minver = minversion.split(".")
+    else:
+        minver = list(minversion)
+    if verattr is None or verattr.split(".") < minver:
+        py.test.skip("module %r has __version__ %r, required is: %r" %(
+                     modname, verattr, minversion))
+    return mod
+
 
 # exitcodes for the command line
 EXIT_OK = 0

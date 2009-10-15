@@ -53,6 +53,7 @@ _py.apipkg.initpkg(__name__, dict(
         '_PluginManager'    : '_py.test.pluginmanager:PluginManager',
         'raises'            : '_py.test.outcome:raises',
         'skip'              : '_py.test.outcome:skip',
+        'importorskip'      : '_py.test.outcome:importorskip',
         'fail'              : '_py.test.outcome:fail',
         'exit'              : '_py.test.outcome:exit',
         # configuration/initialization related test api
