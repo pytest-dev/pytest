@@ -2,7 +2,7 @@
 plugins for Python test functions
 =================================
 
-xfail_ mark python test functions as expected-to-fail and report them separately.
+skipping_ mark python test functions, classes or modules for conditional
 
 figleaf_ write and report coverage data with 'figleaf'.
 

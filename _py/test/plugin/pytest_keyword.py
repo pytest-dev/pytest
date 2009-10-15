@@ -8,22 +8,29 @@ By default, all filename parts and class/function names of a test
 function are put into the set of keywords for a given test.  You can
 specify additional kewords like this::
 
-    @py.test.mark.webtest 
+    @py.test.mark.webtest
     def test_send_http():
         ... 
 
-This will set an attribute 'webtest' on the given test function
-and by default all such attributes signal keywords.  You can 
-also set values in this attribute which you could read from
-a hook in order to do something special with respect to
-the test function::
+This will set an attribute 'webtest' to True on the given test function.
+You can read the value 'webtest' from the functions __dict__ later.
 
-    @py.test.mark.timeout(seconds=5)
+You can also set values for an attribute which are put on an empty
+dummy object::
+
+    @py.test.mark.webtest(firefox=30)
     def test_receive():
         ...
 
-This will set the "timeout" attribute with a Marker object 
-that has a 'seconds' attribute. 
+after which ``test_receive.webtest.firefox == 30`` holds true. 
+
+In addition to keyword arguments you can also use positional arguments::
+
+    @py.test.mark.webtest("triangular")
+    def test_receive():
+        ...
+
+after which ``test_receive.webtest._1 == 'triangular`` hold true.
 
 """
 import py
@@ -49,20 +56,20 @@ class MarkerDecorator:
         return "<MarkerDecorator %r %r>" %(name, d)
 
     def __call__(self, *args, **kwargs):
-        if not args:
-            if hasattr(self, 'kwargs'):
-                raise TypeError("double mark-keywords?") 
-            self.kwargs = kwargs.copy()
-            return self 
-        else:
-            if not len(args) == 1 or not hasattr(args[0], '__dict__'):
-                raise TypeError("need exactly one function to decorate, "
-                                "got %r" %(args,))
-            func = args[0]
-            mh = MarkHolder(getattr(self, 'kwargs', {}))
-            setattr(func, self.markname, mh)
-            return func
-
+        if args:
+            if hasattr(args[0], '__call__'):
+                func = args[0]
+                mh = MarkHolder(getattr(self, 'kwargs', {}))
+                setattr(func, self.markname, mh)
+                return func
+            # not a function so we memorize all args/kwargs settings
+            for i, arg in enumerate(args):
+                kwargs["_" + str(i)] = arg
+        if hasattr(self, 'kwargs'):
+            raise TypeError("double mark-keywords?")
+        self.kwargs = kwargs.copy()
+        return self
+        
 class MarkHolder:
     def __init__(self, kwargs):
         self.__dict__.update(kwargs)

@@ -1,6 +1,11 @@
 Changes between 1.0.2 and '1.1.0b1'
 =====================================
 
+* generalized skipping: a new way to mark python functions with skipif or xfail 
+  at function, class and modules level based on platform or sys-module attributes. 
+
+* extend py.test.mark decorator to allow for positional args
+
 * introduce and test "py.cleanup -d" to remove empty directories 
 
 * fix issue #59 - robustify unittest test collection

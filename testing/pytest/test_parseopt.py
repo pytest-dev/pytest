@@ -10,7 +10,7 @@ class TestParser:
 
     def test_epilog(self):
         parser = parseopt.Parser()
-        assert not parser.epilog 
+        assert not parser.epilog
         parser.epilog += "hello"
         assert parser.epilog == "hello"
 
@@ -76,15 +76,6 @@ class TestParser:
         args = parser.parse_setoption([], option)
         assert option.hello == "x"
 
-    def test_parser_epilog(self, testdir):
-        testdir.makeconftest("""
-            def pytest_addoption(parser):
-                parser.epilog = "hello world"
-        """)
-        result = testdir.runpytest('--help')
-        #assert result.ret != 0
-        assert result.stdout.fnmatch_lines(["*hello world*"])
-
     def test_parse_setoption(self):
         parser = parseopt.Parser()
         parser.addoption("--hello", dest="hello", action="store")
@@ -109,3 +100,14 @@ class TestParser:
         option, args = parser.parse([])
         assert option.hello == "world"
         assert option.this == 42
+
+@py.test.mark.skipif("sys.version_info < (2,5)")
+def test_addoption_parser_epilog(testdir):
+    testdir.makeconftest("""
+        def pytest_addoption(parser):
+            parser.epilog = "hello world"
+    """)
+    result = testdir.runpytest('--help')
+    #assert result.ret != 0
+    assert result.stdout.fnmatch_lines(["*hello world*"])
+

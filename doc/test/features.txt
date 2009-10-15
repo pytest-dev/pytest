@@ -125,22 +125,11 @@ a PDB `Python debugger`_ when a test fails.
 advanced skipping of tests 
 -------------------------------
 
-If you want to skip tests you can use ``py.test.skip`` within
-test or setup functions.  Example::
+py.test has builtin support for skipping tests or expecting
+failures on tests on certain platforms.  Apart from the 
+minimal py.test style also unittest- and nose-style tests 
+can make use of this feature.  
 
-    def test_hello():
-        if sys.platform != "win32":
-            py.test.skip("only win32 supported")
-
-You can also use a helper to skip on a failing import::
-
-    docutils = py.test.importorskip("docutils")
-
-or to skip if a library does not have the right version::
-
-    docutils = py.test.importorskip("docutils", minversion="0.3")
-
-The version will be read from the specified module's ``__version__`` attribute. 
 
 .. _`funcargs mechanism`: funcargs.html
 .. _`unittest.py`: http://docs.python.org/library/unittest.html

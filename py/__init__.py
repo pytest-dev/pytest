@@ -15,7 +15,7 @@ For questions please check out http://pylib.org/contact.html
 
 (c) Holger Krekel and others, 2009
 """
-version = "1.1.0b1"
+version = "trunk"
 
 __version__ = version = version or "1.1.x"
 import _py.apipkg
@@ -53,7 +53,6 @@ _py.apipkg.initpkg(__name__, dict(
         '_PluginManager'    : '_py.test.pluginmanager:PluginManager',
         'raises'            : '_py.test.outcome:raises',
         'skip'              : '_py.test.outcome:skip',
-        'importorskip'      : '_py.test.outcome:importorskip',
         'fail'              : '_py.test.outcome:fail',
         'exit'              : '_py.test.outcome:exit',
         # configuration/initialization related test api

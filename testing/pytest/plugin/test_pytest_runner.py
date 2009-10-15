@@ -27,6 +27,12 @@ class TestSetupState:
         ss.teardown_all()
         assert not l 
 
+    def test_teardown_exact_stack_empty(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.teardown_exact(item)
+        ss.teardown_exact(item)
+        ss.teardown_exact(item)
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):

@@ -14,12 +14,14 @@ def test_pytest_mark_api():
     assert f.world.x == 3
     assert f.world.y == 4
 
+    mark.world("hello")(f)
+    assert f.world._0 == "hello"
+
     py.test.raises(TypeError, "mark.some(x=3)(f=5)")
 
 def test_mark_plugin(testdir):
     p = testdir.makepyfile("""
         import py
-        pytest_plugins = "keyword" 
         @py.test.mark.hello
         def test_hello():
             assert hasattr(test_hello, 'hello')

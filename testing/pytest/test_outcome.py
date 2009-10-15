@@ -15,26 +15,6 @@ class TestRaises:
     def test_raises_function(self):
         py.test.raises(ValueError, int, 'hello')
 
-def test_importorskip():
-    from _py.test.outcome import Skipped
-    try:
-        sys = py.test.importorskip("sys")
-        assert sys == py.std.sys
-        #path = py.test.importorskip("os.path")
-        #assert path == py.std.os.path
-        py.test.raises(Skipped, "py.test.importorskip('alskdj')")
-        py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
-        py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
-        path = py.test.importorskip("py", minversion=".".join(py.__version__))
-        mod = py.std.types.ModuleType("hello123")
-        mod.__version__ = "1.3" 
-        py.test.raises(Skipped, """
-            py.test.importorskip("hello123", minversion="5.0")
-        """)
-    except Skipped:
-        print(py.code.ExceptionInfo())
-        py.test.fail("spurious skip")
-
 def test_pytest_exit():
     try:
         py.test.exit("hello")

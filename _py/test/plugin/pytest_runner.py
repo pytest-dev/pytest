@@ -276,7 +276,7 @@ class SetupState(object):
         assert not self._finalizers
 
     def teardown_exact(self, item):
-        if item == self.stack[-1]:
+        if self.stack and item == self.stack[-1]:
             self._pop_and_teardown()
         else:
             self._callfinalizers(item)

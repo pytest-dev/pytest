@@ -208,7 +208,7 @@ class TestLocalPath(common.CommonFSTests):
         assert l[2] == p3
 
 class TestExecutionOnWindows:
-    disabled = py.std.sys.platform != 'win32'
+    skipif = "sys.platform != 'win32'"
 
     def test_sysfind(self):
         x = py.path.local.sysfind('cmd')
@@ -216,7 +216,7 @@ class TestExecutionOnWindows:
         assert py.path.local.sysfind('jaksdkasldqwe') is None
 
 class TestExecution:
-    disabled = py.std.sys.platform == 'win32'
+    skipif = "sys.platform == 'win32'"
 
     def test_sysfind(self):
         x = py.path.local.sysfind('test')
@@ -346,8 +346,7 @@ def test_homedir():
     assert homedir.check(dir=1)
 
 class TestWINLocalPath:
-    #root = local(TestLocalPath.root)
-    disabled = py.std.sys.platform != 'win32'
+    skipif = "sys.platform != 'win32'"
 
     def test_owner_group_not_implemented(self):
         py.test.raises(NotImplementedError, "path1.stat().owner")
@@ -396,7 +395,7 @@ class TestWINLocalPath:
             old.chdir()    
 
 class TestPOSIXLocalPath:
-    disabled = py.std.sys.platform == 'win32'
+    skipif = "sys.platform == 'win32'"
 
     def test_samefile(self, tmpdir):
         assert tmpdir.samefile(tmpdir)

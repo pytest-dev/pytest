@@ -50,12 +50,11 @@ class TestSvnURLCommandPath(CommonSvnTests):
     def test_svnurl_characters_tilde_end(self, path1):
         py.path.svnurl("http://host.com/some/file~")
 
+    @py.test.mark.xfail("sys.platform == 'win32'")
     def test_svnurl_characters_colon_path(self, path1):
-        if py.std.sys.platform == 'win32':
-            # colons are allowed on win32, because they're part of the drive
-            # part of an absolute path... however, they shouldn't be allowed in
-            # other parts, I think
-            py.test.skip('XXX fixme win32')
+        # colons are allowed on win32, because they're part of the drive
+        # part of an absolute path... however, they shouldn't be allowed in
+        # other parts, I think
         py.test.raises(ValueError, 'py.path.svnurl("http://host.com/foo:bar")')
 
     def test_export(self, path1, tmpdir):

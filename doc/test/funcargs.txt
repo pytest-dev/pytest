@@ -276,6 +276,7 @@ methods in a convenient way.
 .. _`conftest plugin`: customize.html#conftestplugin
 
 .. _`funcarg factory`:
+.. _factory:
  
 funcarg factories: setting up test function arguments 
 ==============================================================

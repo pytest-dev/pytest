@@ -5,7 +5,7 @@ WIDTH = 75
 
 plugins = [
     ('plugins for Python test functions', 
-            'xfail figleaf monkeypatch capture recwarn',),
+            'skipping figleaf monkeypatch capture recwarn',),
     ('plugins for other testing styles and languages', 
             'oejskit unittest nose django doctest restdoc'),
     ('plugins for generic reporting and failure logging', 
@@ -252,7 +252,7 @@ class PluginDoc(RestWriter):
                 warn("missing docstring", func)
 
     def emit_options(self, plugin):
-        from py.__.test.parseopt import Parser
+        from _py.test.parseopt import Parser
         options = []
         parser = Parser(processopt=options.append)
         if hasattr(plugin, 'pytest_addoption'):
