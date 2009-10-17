@@ -1,6 +1,8 @@
 Changes between 1.0.2 and '1.1.0b1'
 =====================================
 
+* add --report command line option that allows to control showing of skipped/xfailed sections 
+
 * generalized skipping: a new way to mark python functions with skipif or xfail 
   at function, class and modules level based on platform or sys-module attributes. 
 

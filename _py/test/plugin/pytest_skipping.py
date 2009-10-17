@@ -132,9 +132,19 @@ def pytest_report_teststatus(report):
 
 # called by the terminalreporter instance/plugin
 def pytest_terminal_summary(terminalreporter):
+    show_xfailed(terminalreporter)
+    show_skipped(terminalreporter)
+
+def show_xfailed(terminalreporter):
     tr = terminalreporter
     xfailed = tr.stats.get("xfailed")
     if xfailed:
+        if not tr.hasopt('xfailed'):
+            if tr.config.getvalue("verbose"):
+                tr.write_line(
+                  "%d expected failures, use --report=xfailed for more info" %
+                  len(xfailed))
+            return
         tr.write_sep("_", "expected failures")
         for rep in xfailed:
             entry = rep.longrepr.reprcrash
@@ -178,3 +188,29 @@ def evalexpression(item, keyword):
             result = expr
     return expr, result
 
+def folded_skips(skipped):
+    d = {}
+    for event in skipped:
+        entry = event.longrepr.reprcrash 
+        key = entry.path, entry.lineno, entry.message
+        d.setdefault(key, []).append(event)
+    l = []
+    for key, events in d.items(): 
+        l.append((len(events),) + key)
+    return l 
+
+def show_skipped(terminalreporter):
+    tr = terminalreporter
+    skipped = tr.stats.get('skipped', [])
+    if skipped:
+        if not tr.hasopt('skipped'):
+            if tr.config.getvalue("verbose"):
+                tr.write_line(
+                    "%d skipped tests, use --report=skipped for more info" %
+                    len(skipped))
+            return
+        fskips = folded_skips(skipped)
+        if fskips:
+            tr.write_sep("_", "skipped test summary")
+            for num, fspath, lineno, reason in fskips:
+                tr._tw.line("%s:%d: [%d] %s" %(fspath, lineno, num, reason))

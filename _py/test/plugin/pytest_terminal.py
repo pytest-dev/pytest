@@ -23,6 +23,10 @@ def pytest_addoption(parser):
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="generate and show debugging information.")
+    group.addoption('--report',
+               action="store", dest="report", default=None, metavar="opts",
+               help="comma separated reporting options")
+
 
 def pytest_configure(config):
     if config.option.collectonly:
@@ -38,6 +42,18 @@ def pytest_configure(config):
             setattr(reporter._tw, name, getattr(config, attr))
     config.pluginmanager.register(reporter, 'terminalreporter')
 
+def getreportopt(optvalue):
+    d = {}
+    if optvalue:
+        for setting in optvalue.split(","):
+            setting = setting.strip()
+            val = True
+            if setting.startswith("no"):
+                val = False
+                setting = setting[2:]
+            d[setting] = val
+    return d
+
 class TerminalReporter:
     def __init__(self, config, file=None):
         self.config = config 
@@ -48,6 +64,10 @@ class TerminalReporter:
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None 
         self.gateway2info = {}
+        self._reportopt = getreportopt(config.getvalue('report'))
+
+    def hasopt(self, name):
+        return self._reportopt.get(name, False)
 
     def write_fspath_result(self, fspath, res):
         fspath = self.curdir.bestrelpath(fspath)
@@ -254,7 +274,6 @@ class TerminalReporter:
         if exitstatus in (0, 1, 2):
             self.summary_errors()
             self.summary_failures()
-            self.summary_skips()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == 2:
             self._report_keyboardinterrupt()
@@ -389,14 +408,6 @@ class TerminalReporter:
             self.write_sep("=", "%d tests deselected by %r" %(
                 len(self.stats['deselected']), self.config.option.keyword), bold=True)
 
-    def summary_skips(self):
-        if 'skipped' in self.stats:
-            if 'failed' not in self.stats: #  or self.config.option.showskipsummary:
-                fskips = folded_skips(self.stats['skipped'])
-                if fskips:
-                    self.write_sep("_", "skipped test summary")
-                    for num, fspath, lineno, reason in fskips:
-                        self._tw.line("%s:%d: [%d] %s" %(fspath, lineno, num, reason))
 
 class CollectonlyReporter:
     INDENT = "  "
@@ -435,16 +446,6 @@ class CollectonlyReporter:
         for rep in self._failed:
             rep.toterminal(self.out)
                 
-def folded_skips(skipped):
-    d = {}
-    for event in skipped:
-        entry = event.longrepr.reprcrash 
-        key = entry.path, entry.lineno, entry.message
-        d.setdefault(key, []).append(event)
-    l = []
-    for key, events in d.items(): 
-        l.append((len(events),) + key)
-    return l 
 
 def repr_pythonversion(v=None):
     if v is None:

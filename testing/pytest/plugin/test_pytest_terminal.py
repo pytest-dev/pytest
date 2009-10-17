@@ -14,7 +14,7 @@ except ImportError:
 # ===============================================================================
 
 from _py.test.plugin.pytest_terminal import TerminalReporter, \
-    CollectonlyReporter,  repr_pythonversion, folded_skips
+    CollectonlyReporter,  repr_pythonversion, getreportopt
 from _py.test.plugin import pytest_runner as runner 
 
 def basic_run_report(item):
@@ -289,28 +289,6 @@ class TestTerminal:
             ])
         result.stdout.fnmatch_lines(['*KEYBOARD INTERRUPT*'])
 
-    def test_skip_reasons_folding(self):
-        class longrepr:
-            class reprcrash:
-                path = 'xyz'
-                lineno = 3
-                message = "justso"
-
-        ev1 = runner.CollectReport(None, None)
-        ev1.when = "execute"
-        ev1.skipped = True
-        ev1.longrepr = longrepr 
-        
-        ev2 = runner.ItemTestReport(None, excinfo=longrepr)
-        ev2.skipped = True
-
-        l = folded_skips([ev1, ev2])
-        assert len(l) == 1
-        num, fspath, lineno, reason = l[0]
-        assert num == 2
-        assert fspath == longrepr.reprcrash.path
-        assert lineno == longrepr.reprcrash.lineno
-        assert reason == longrepr.reprcrash.message
 
 class TestCollectonly:
     def test_collectonly_basic(self, testdir, linecomp):
@@ -473,37 +451,6 @@ class TestFixtureReporting:
          ])
 
 class TestTerminalFunctional:
-    def test_skipped_reasons(self, testdir):
-        testdir.makepyfile(
-            test_one="""
-                from conftest import doskip
-                def setup_function(func):
-                    doskip()
-                def test_func():
-                    pass
-                class TestClass:
-                    def test_method(self):
-                        doskip()
-           """,
-           test_two = """
-                from conftest import doskip
-                doskip()
-           """,
-           conftest = """
-                import py
-                def doskip():
-                    py.test.skip('test')
-            """
-        )
-        result = testdir.runpytest() 
-        extra = result.stdout.fnmatch_lines([
-            "*test_one.py ss",
-            "*test_two.py S",
-            "___* skipped test summary *_", 
-            "*conftest.py:3: *3* Skipped: 'test'", 
-        ])
-        assert result.ret == 0
-
     def test_deselected(self, testdir):
         testpath = testdir.makepyfile("""
                 def test_one():
@@ -613,6 +560,27 @@ class TestTerminalFunctional:
             ])
             assert result.ret == 1
 
+
+def test_getreportopt():
+    assert getreportopt(None) == {}
+    assert getreportopt("hello") == {'hello': True}
+    assert getreportopt("hello, world") == dict(hello=True, world=True)
+    assert getreportopt("nohello") == dict(hello=False)
+
+def test_terminalreporter_reportopt_conftestsetting(testdir):
+    testdir.makeconftest("option_report = 'skipped'")
+    p = testdir.makepyfile("""
+        def pytest_funcarg__tr(request):
+            tr = request.config.pluginmanager.getplugin("terminalreporter")
+            return tr
+        def test_opt(tr):
+            assert tr.hasopt('skipped')
+            assert not tr.hasopt('qwe')
+    """)
+    result = testdir.runpytest()
+    assert result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])
     def test_trace_reporting(self, testdir):
         result = testdir.runpytest("--trace")
         assert result.stdout.fnmatch_lines([
