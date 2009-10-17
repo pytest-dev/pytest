@@ -613,3 +613,9 @@ class TestTerminalFunctional:
             ])
             assert result.ret == 1
 
+    def test_trace_reporting(self, testdir):
+        result = testdir.runpytest("--trace")
+        assert result.stdout.fnmatch_lines([
+            "*active plugins*"
+        ])
+        assert result.ret == 0

@@ -236,14 +236,15 @@ class TerminalReporter:
         if self.config.option.debug or self.config.option.traceconfig:
             self.write_line("using py lib: %s" % (py.path.local(py.__file__).dirpath()))
         if self.config.option.traceconfig:
+            self.write_line("active plugins:")
             plugins = []
-            for plugin in self.config.pluginmanager.comregistry:
-                name = getattr(plugin, '__name__', None)
-                if name is None:
-                    name = plugin.__class__.__name__
-                plugins.append(name)
-            plugins = ", ".join(plugins) 
-            self.write_line("active plugins: %s" %(plugins,))
+            items = self.config.pluginmanager._name2plugin.items()
+            for name, plugin in items:
+                repr_plugin = repr(plugin)
+                fullwidth = getattr(self._tw, 'fullwidth', sys.maxint)
+                if len(repr_plugin)+26 > fullwidth:
+                    repr_plugin = repr_plugin[:(fullwidth-30)] + '...'
+                self.write_line("    %-20s: %s" %(name, repr_plugin))
         for i, testarg in enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 

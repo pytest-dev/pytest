@@ -121,9 +121,10 @@ class TestBootstrapping:
         a1, a2 = A(), A()
         pp.register(a1)
         assert pp.isregistered(a1)
-        pp.register(a2)
+        pp.register(a2, "hello")
         assert pp.isregistered(a2)
         assert pp.getplugins() == [a1, a2]
+        assert pp.getplugin('hello') == a2
         pp.unregister(a1)
         assert not pp.isregistered(a1)
         pp.unregister(a2)
@@ -141,6 +142,15 @@ class TestBootstrapping:
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == [mod] # does not actually modify plugins 
+
+    def test_canonical_import(self, monkeypatch):
+        mod = py.std.types.ModuleType("pytest_xyz")
+        monkeypatch.setitem(py.std.sys.modules, 'pytest_xyz', mod)
+        pp = PluginManager()
+        pp.import_plugin('xyz')
+        assert pp.getplugin('xyz') == mod
+        assert pp.getplugin('pytest_xyz') == mod
+        assert pp.isregistered(mod)
 
     def test_register_mismatch_method(self):
         pp = PluginManager()

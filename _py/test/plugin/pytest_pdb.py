@@ -28,8 +28,8 @@ def pytest_configure(config):
 class PdbInvoke:
     def pytest_runtest_makereport(self, item, call):
         if call.excinfo and not call.excinfo.errisinstance(Skipped): 
-            # XXX hack hack hack to play well with capturing
-            capman = item.config.pluginmanager.impname2plugin['capturemanager']
+            # play well with capturing, slightly hackish
+            capman = item.config.pluginmanager.getplugin('capturemanager')
             capman.suspendcapture() 
 
             tw = py.io.TerminalWriter()
@@ -37,7 +37,6 @@ class PdbInvoke:
             repr.toterminal(tw) 
             post_mortem(call.excinfo._excinfo[2])
 
-            # XXX hack end 
             capman.resumecapture_item(item)
 
 class Pdb(py.std.pdb.Pdb):

@@ -38,7 +38,7 @@ def pytest_configure(__multicall__, config):
     __multicall__.execute()
     if config.option.pastebin == "all":
         config._pastebinfile = tempfile.TemporaryFile('w+')
-        tr = config.pluginmanager.impname2plugin['terminalreporter']
+        tr = config.pluginmanager.getplugin('terminalreporter')
         oldwrite = tr._tw.write 
         def tee_write(s, **kwargs):
             oldwrite(s, **kwargs)
@@ -54,7 +54,7 @@ def pytest_unconfigure(config):
         proxyid = getproxy().newPaste("python", sessionlog)
         pastebinurl = "%s%s" % (url.show, proxyid)
         sys.stderr.write("pastebin session-log: %s\n" % pastebinurl)
-        tr = config.pluginmanager.impname2plugin['terminalreporter']
+        tr = config.pluginmanager.getplugin('terminalreporter')
         del tr._tw.__dict__['write']
         
 def getproxy():

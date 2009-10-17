@@ -6,7 +6,7 @@ class TestPasting:
         class MockProxy:
             def newPaste(self, language, code):
                 pastebinlist.append((language, code))
-        plugin = request.config.pluginmanager.impname2plugin['pytest_pastebin']
+        plugin = request.config.pluginmanager.getplugin('pastebin')
         mp.setattr(plugin, 'getproxy', MockProxy) 
         return pastebinlist 
 

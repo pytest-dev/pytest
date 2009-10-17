@@ -189,7 +189,6 @@ class TmpTestdir:
                     plugin = PseudoPlugin(plugin) 
                 if not config.pluginmanager.isregistered(plugin):
                     config.pluginmanager.register(plugin)
-        #print "config.pluginmanager.impname2plugin", config.pluginmanager.impname2plugin
         return config
 
     def parseconfig(self, *args):

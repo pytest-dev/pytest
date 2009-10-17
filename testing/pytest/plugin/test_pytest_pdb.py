@@ -6,7 +6,7 @@ class TestPDB:
         pdblist = []
         def mypdb(*args):
             pdblist.append(args)
-        plugin = request.config.pluginmanager.impname2plugin['pytest_pdb']
+        plugin = request.config.pluginmanager.getplugin('pdb')
         monkeypatch.setattr(plugin, 'post_mortem', mypdb)
         return pdblist 
          

@@ -16,7 +16,7 @@ class PluginManager(object):
         if comregistry is None: 
             comregistry = py._com.Registry()
         self.comregistry = comregistry 
-        self.impname2plugin = {}
+        self._name2plugin = {}
 
         self.hook = py._com.HookRelay(
             hookspecs=hookspec, 
@@ -33,9 +33,9 @@ class PluginManager(object):
     def register(self, plugin, name=None):
         assert not self.isregistered(plugin)
         name = self._getpluginname(plugin, name)
-        if name in self.impname2plugin:
+        if name in self._name2plugin:
             return False
-        self.impname2plugin[name] = plugin
+        self._name2plugin[name] = plugin
         self.hook.pytest_plugin_registered(plugin=plugin)
         self._checkplugin(plugin)
         self.comregistry.register(plugin)
@@ -44,19 +44,26 @@ class PluginManager(object):
     def unregister(self, plugin):
         self.hook.pytest_plugin_unregistered(plugin=plugin)
         self.comregistry.unregister(plugin)
-        for name, value in list(self.impname2plugin.items()):
+        for name, value in list(self._name2plugin.items()):
             if value == plugin:
-                del self.impname2plugin[name]
+                del self._name2plugin[name]
 
     def isregistered(self, plugin, name=None):
-        return self._getpluginname(plugin, name) in self.impname2plugin
+        if self._getpluginname(plugin, name) in self._name2plugin:
+            return True
+        for val in self._name2plugin.values():
+            if plugin == val:
+                return True
 
     def getplugins(self):
         return list(self.comregistry)
 
-    def getplugin(self, importname):
-        impname = canonical_importname(importname)
-        return self.impname2plugin[impname]
+    def getplugin(self, name):
+        try:
+            return self._name2plugin[name]
+        except KeyError:
+            impname = canonical_importname(name)
+            return self._name2plugin[impname]
 
     # API for bootstrapping 
     #
@@ -94,7 +101,7 @@ class PluginManager(object):
     def import_plugin(self, spec):
         assert isinstance(spec, str)
         modname = canonical_importname(spec)
-        if modname in self.impname2plugin:
+        if modname in self._name2plugin:
             return
         try:
             mod = importplugin(modname)
