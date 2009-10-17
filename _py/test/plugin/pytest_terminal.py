@@ -7,6 +7,23 @@ import py
 import sys
 
 def pytest_addoption(parser):
+    group = parser.getgroup("terminal reporting", after="general")
+    group._addoption('-v', '--verbose', action="count", 
+               dest="verbose", default=0, help="increase verbosity."),
+    group._addoption('-l', '--showlocals',
+               action="store_true", dest="showlocals", default=False,
+               help="show locals in tracebacks (disabled by default).")
+    group.addoption('--report',
+               action="store", dest="report", default=None, metavar="opts",
+               help="comma separated reporting options")
+    group._addoption('--tb', metavar="style", 
+               action="store", dest="tbstyle", default='long',
+               type="choice", choices=['long', 'short', 'no'],
+               help="traceback verboseness (long/short/no).")
+    group._addoption('--fulltrace',
+               action="store_true", dest="fulltrace", default=False,
+               help="don't cut any tracebacks (default is to cut).")
+
     group = parser.getgroup("debugconfig")
     group.addoption('--collectonly',
         action="store_true", dest="collectonly",
@@ -17,15 +34,9 @@ def pytest_addoption(parser):
     group._addoption('--nomagic',
                action="store_true", dest="nomagic", default=False,
                help="don't reinterpret asserts, no traceback cutting. ")
-    group._addoption('--fulltrace',
-               action="store_true", dest="fulltrace", default=False,
-               help="don't cut any tracebacks (default is to cut).")
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
-               help="generate and show debugging information.")
-    group.addoption('--report',
-               action="store", dest="report", default=None, metavar="opts",
-               help="comma separated reporting options")
+               help="generate and show internal debugging information.")
 
 
 def pytest_configure(config):

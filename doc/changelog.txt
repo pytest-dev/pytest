@@ -1,6 +1,8 @@
 Changes between 1.0.2 and '1.1.0b1'
 =====================================
 
+* reshuffle / refine command line grouping
+
 * deprecate parser.addgroup in favour of getgroup which creates option group
 
 * add --report command line option that allows to control showing of skipped/xfailed sections 

@@ -44,9 +44,7 @@ def pytest_report_iteminfo(item):
     return item.reportinfo()
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general", "general testing options")
-    group._addoption('-v', '--verbose', action="count", 
-               dest="verbose", default=0, help="increase verbosity."),
+    group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst',
                action="store_true", dest="exitfirst", default=False,
                help="exit instantly on first error or failed test."),
@@ -56,16 +54,6 @@ def pytest_addoption(parser):
              "space separated keywords.  precede a keyword with '-' to negate. "
              "Terminate the expression with ':' to treat a match as a signal "
              "to run all subsequent tests. ")
-    group._addoption('-l', '--showlocals',
-               action="store_true", dest="showlocals", default=False,
-               help="show locals in tracebacks (disabled by default).")
-    #group._addoption('--showskipsummary',
-    #           action="store_true", dest="showskipsummary", default=False,
-    #           help="always show summary of skipped tests") 
-    group._addoption('--tb', metavar="style", 
-               action="store", dest="tbstyle", default='long',
-               type="choice", choices=['long', 'short', 'no'],
-               help="traceback verboseness (long/short/no).")
     group._addoption('-p', action="append", dest="plugins", default = [],
                help=("load the specified plugin after command line parsing. "))
     if execnet:
