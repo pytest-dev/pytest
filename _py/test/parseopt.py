@@ -21,7 +21,7 @@ class Parser:
 
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
-        self._groups = [self._anonymous]
+        self._groups = []
         self._processopt = processopt
         self._usage = usage 
         self.epilog = "" 
@@ -34,19 +34,21 @@ class Parser:
     def addnote(self, note):
         self._notes.append(note)
 
-    def addgroup(self, name, description=""):
-        for group in self._groups:
-            if group.name == name:
-                raise ValueError("group %r already exists" % name)
-        group = OptionGroup(name, description, parser=self)
-        self._groups.append(group)
-        return group 
-
-    def getgroup(self, name, description=""):
+    def getgroup(self, name, description="", after=None):
         for group in self._groups:
             if group.name == name:
                 return group
-        return self.addgroup(name, description)
+        group = OptionGroup(name, description, parser=self)
+        i = 0
+        for i, grp in enumerate(self._groups):
+            if grp.name == after:
+                break
+        self._groups.insert(i+1, group)
+        return group 
+
+    def addgroup(self, name, description=""):
+        py.log._apiwarn("1.1", "use getgroup() which gets-or-creates")
+        return self.getgroup(name, description)
 
     def addoption(self, *opts, **attrs):
         """ add an optparse-style option. """
@@ -56,7 +58,7 @@ class Parser:
         optparser = optparse.OptionParser(usage=self._usage)
         # make sure anaonymous group is at the end 
         optparser.epilog = self.epilog
-        groups = self._groups[1:] + [self._groups[0]]
+        groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name 

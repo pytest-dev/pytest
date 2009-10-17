@@ -4,7 +4,7 @@ rsyncdirs = ['conftest.py', 'py', 'doc', 'testing']
 
 import py
 def pytest_addoption(parser):
-    group = parser.addgroup("pylib", "py lib testing options")
+    group = parser.getgroup("pylib", "py lib testing options")
     group.addoption('--sshhost', 
            action="store", dest="sshhost", default=None,
            help=("ssh xspec for ssh functional tests. "))

@@ -19,11 +19,15 @@ class TestParser:
         group = parser.addgroup("hello", description="desc")
         assert group.name == "hello"
         assert group.description == "desc"
-        py.test.raises(ValueError, parser.addgroup, "hello")
-        group2 = parser.getgroup("hello")
-        assert group2 is group
 
-    def test_getgroup_addsgroup(self):
+    def test_addgroup_deprecation(self, recwarn):
+        parser = parseopt.Parser()
+        group = parser.addgroup("hello", description="desc")
+        assert recwarn.pop()
+        group2 = parser.getgroup("hello")
+        assert group == group2
+
+    def test_getgroup_simple(self):
         parser = parseopt.Parser()
         group = parser.getgroup("hello", description="desc")
         assert group.name == "hello"
@@ -31,6 +35,14 @@ class TestParser:
         group2 = parser.getgroup("hello")
         assert group2 is group
 
+    def test_group_ordering(self):
+        parser = parseopt.Parser()
+        group0 = parser.getgroup("1")
+        group1 = parser.getgroup("2")
+        group1 = parser.getgroup("3", after="1")
+        groups = parser._groups
+        groups_names = [x.name for x in groups]
+        assert groups_names == list("132")
 
     def test_group_addoption(self):
         group = parseopt.OptionGroup("hello")

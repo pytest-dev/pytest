@@ -73,7 +73,8 @@ def pytest_addoption(parser):
                    action="store_true", dest="looponfail", default=False,
                    help="run tests, re-run failing test set until all pass.")
 
-    group = parser.addgroup("debugconfig", "test process debugging and configuration")
+    group = parser.getgroup("debugconfig", 
+        "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
 
@@ -84,7 +85,8 @@ def pytest_addoption(parser):
         "execnet missing: --looponfailing and distributed testing not available.")
 
 def add_dist_options(parser):
-    group = parser.addgroup("dist", "distributed testing") #  see http://pytest.org/help/dist")
+    #  see http://pytest.org/help/dist")
+    group = parser.getgroup("dist", "distributed testing") 
     group._addoption('--dist', metavar="distmode", 
                action="store", choices=['load', 'each', 'no'], 
                type="choice", dest="dist", default="no", 

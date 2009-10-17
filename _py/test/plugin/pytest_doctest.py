@@ -18,7 +18,7 @@ from _py.code.code import TerminalRepr, ReprFileLocation
 import doctest
 
 def pytest_addoption(parser):
-    group = parser.addgroup("doctest options")
+    group = parser.getgroup("doctest options")
     group.addoption("--doctest-modules", 
         action="store_true", default=False,
         help="search all python files for doctests", 
