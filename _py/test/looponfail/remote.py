@@ -79,7 +79,10 @@ class RemoteControl(object):
             slave_runsession(channel, config, fullwidth, hasmarkup) 
         """)
         remote_outchannel = channel.receive()
-        remote_outchannel.setcallback(out._file.write)
+        def write(s):
+            out._file.write(s)
+            out._file.flush()
+        remote_outchannel.setcallback(write)
         channel = self.channel = PickleChannel(channel)
         channel.send((self.config, out.fullwidth, out.hasmarkup))
         self.trace("set up of slave session complete")
