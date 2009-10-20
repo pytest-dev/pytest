@@ -175,7 +175,8 @@ def getexpression(item, keyword):
         if cls and hasattr(cls.obj, keyword):
             return getattr(cls.obj, keyword)
         mod = item.getparent(py.test.collect.Module)
-        return getattr(mod.obj, keyword, None)
+        if mod:
+            return getattr(mod.obj, keyword, None)
 
 def evalexpression(item, keyword):
     expr = getexpression(item, keyword)

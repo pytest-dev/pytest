@@ -110,6 +110,9 @@ def test_getexpression(testdir):
 
     assert getexpression(item2, 'just')
 
+    item2.parent = None
+    assert not getexpression(item2, 'nada') 
+
 def test_evalexpression_cls_config_example(testdir):
     from _py.test.plugin.pytest_skipping import evalexpression
     item, = testdir.getitems("""
