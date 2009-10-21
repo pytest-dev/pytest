@@ -120,24 +120,8 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        res = self.config.hook.pytest_pycollect_makeitem(
+        return self.config.hook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
-        if res is not None:
-            return res
-        if self._istestclasscandidate(name, obj):
-            res = self._deprecated_join(name)
-            if res is not None:
-                return res 
-            return self.Class(name, parent=self)
-        elif self.funcnamefilter(name) and hasattr(obj, '__call__'):
-            res = self._deprecated_join(name)
-            if res is not None:
-                return res 
-            if is_generator(obj):
-                # XXX deprecation warning 
-                return self.Generator(name, parent=self)
-            else:
-                return self._genfunctions(name, obj) 
 
     def _istestclasscandidate(self, name, obj):
         if self.classnamefilter(name) and \
@@ -146,7 +130,6 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 # XXX WARN 
                 return False
             return True
-            
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
@@ -162,12 +145,6 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         return funcargs.FunctionCollector(name=name, 
             parent=self, calls=metafunc._calls)
 
-def is_generator(func):
-    try:
-        return py.code.getrawcode(func).co_flags & 32 # generator function 
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False 
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):

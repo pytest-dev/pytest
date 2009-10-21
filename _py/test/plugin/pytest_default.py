@@ -119,3 +119,31 @@ def setsession(config):
         elif val("dist") != "no":
             from _py.test.dist.dsession import  DSession
             config.setsessionclass(DSession)
+      
+# pycollect related hooks and code, should move to pytest_pycollect.py
+ 
+def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
+    res = __multicall__.execute()
+    if res is not None:
+        return res
+    if collector._istestclasscandidate(name, obj):
+        res = collector._deprecated_join(name)
+        if res is not None:
+            return res 
+        return collector.Class(name, parent=collector)
+    elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
+        res = collector._deprecated_join(name)
+        if res is not None:
+            return res 
+        if is_generator(obj):
+            # XXX deprecation warning 
+            return collector.Generator(name, parent=collector)
+        else:
+            return collector._genfunctions(name, obj) 
+
+def is_generator(func):
+    try:
+        return py.code.getrawcode(func).co_flags & 32 # generator function 
+    except AttributeError: # builtin functions have no bytecode
+        # assume them to not be generators
+        return False 
