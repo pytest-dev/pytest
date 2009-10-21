@@ -389,6 +389,14 @@ class TestConftestCustomization:
         assert len(colitems) == 1
         assert colitems[0].name == "check_method"
 
+    def test_makeitem_non_underscore(self, testdir, monkeypatch):
+        modcol = testdir.getmodulecol("def _hello(): pass")
+        l = []
+        monkeypatch.setattr(py.test.collect.Module, 'makeitem', 
+            lambda self, name, obj: l.append(name))
+        modcol._buildname2items()
+        assert '_hello' not in l
+
 
 class TestReportinfo:
         

@@ -109,9 +109,10 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 if name in seen:
                     continue
                 seen[name] = True
-                res = self.makeitem(name, obj)
-                if res is not None:
-                    d[name] = res 
+                if name[0] != "_":
+                    res = self.makeitem(name, obj)
+                    if res is not None:
+                        d[name] = res 
         return d
 
     def _deprecated_join(self, name):
