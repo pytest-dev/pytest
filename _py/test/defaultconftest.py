@@ -10,5 +10,5 @@ Generator = py.test.collect.Generator
 Function = py.test.collect.Function
 Instance = py.test.collect.Instance
 
-pytest_plugins = "default runner capture terminal keyword skipping tmpdir monkeypatch recwarn pdb pastebin unittest helpconfig nose assertion".split()
+pytest_plugins = "default runner capture terminal mark skipping tmpdir monkeypatch recwarn pdb pastebin unittest helpconfig nose assertion".split()
 

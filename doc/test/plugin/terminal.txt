@@ -13,16 +13,24 @@ command line options
 --------------------
 
 
+``-v, --verbose``
+    increase verbosity.
+``-l, --showlocals``
+    show locals in tracebacks (disabled by default).
+``--report=opts``
+    comma separated reporting options
+``--tb=style``
+    traceback verboseness (long/short/no).
+``--fulltrace``
+    don't cut any tracebacks (default is to cut).
 ``--collectonly``
     only collect tests, don't execute them.
 ``--traceconfig``
     trace considerations of conftest.py files.
 ``--nomagic``
     don't reinterpret asserts, no traceback cutting. 
-``--fulltrace``
-    don't cut any tracebacks (default is to cut).
 ``--debug``
-    generate and show debugging information.
+    generate and show internal debugging information.
 
 Start improving this plugin in 30 seconds
 =========================================

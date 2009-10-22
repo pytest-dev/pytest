@@ -113,10 +113,10 @@ command line options
 --------------------
 
 
-``-s``
-    shortcut for --capture=no.
 ``--capture=method``
     set capturing method during tests: fd (default)|sys|no.
+``-s``
+    shortcut for --capture=no.
 
 Start improving this plugin in 30 seconds
 =========================================

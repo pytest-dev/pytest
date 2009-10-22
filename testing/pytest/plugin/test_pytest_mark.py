@@ -1,5 +1,5 @@
 import py
-from _py.test.plugin.pytest_keyword import Mark
+from _py.test.plugin.pytest_mark import Mark
 
 class TestMark:
     def test_pytest_mark_notcallable(self):
@@ -31,14 +31,21 @@ class TestMark:
         assert f.world.y == 4
         mark.world(y=1)(f)
         assert f.world.y == 1
-        assert len(f.world._args) == 0
+        assert len(f.world.args) == 0
 
     def test_pytest_mark_positional(self):
         mark = Mark()
         def f(): pass
         mark.world("hello")(f)
-        assert f.world._args[0] == "hello"
+        assert f.world.args[0] == "hello"
         mark.world("world")(f)
+
+    def test_oldstyle_marker_access(self, recwarn):
+        mark = Mark()
+        def f(): pass
+        mark.world(x=1)(f)
+        assert f.world.x == 1
+        assert recwarn.pop()
 
 class TestFunctional:
     def test_mark_per_function(self, testdir):
@@ -89,10 +96,8 @@ class TestFunctional:
         item, = items
         keywords = item.readkeywords()
         marker = keywords['hello']
-        assert marker._args == ["pos0", "pos1"]
-        assert marker.x == 3
-        assert marker.y == 2
-        assert marker.z == 4
+        assert marker.args == ["pos0", "pos1"]
+        assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
 
     def test_mark_other(self, testdir):
         item = testdir.getitem("""

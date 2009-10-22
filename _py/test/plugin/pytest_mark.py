@@ -1,60 +1,70 @@
 """
-mark test functions with keywords that may hold values. 
+generic mechanism for marking python functions. 
 
-Marking functions by a decorator 
+By using the ``py.test.mark`` helper you can instantiate
+decorators that will set named meta data on test functions. 
+
+Marking a single function 
 ----------------------------------------------------
 
-By default, all filename parts and class/function names of a test
-function are put into the set of keywords for a given test.  You can
-specify additional kewords like this::
+You can "mark" a test function with meta data like this::
 
     @py.test.mark.webtest
     def test_send_http():
         ... 
 
-This will set an attribute 'webtest' to True on the given test function.
-You can read the value 'webtest' from the functions __dict__ later.
-
-You can also set values for an attribute which are put on an empty
-dummy object::
+This will set a "Marker" instance as a function attribute named "webtest". 
+You can also specify parametrized meta data like this::
 
     @py.test.mark.webtest(firefox=30)
     def test_receive():
         ...
 
-after which ``test_receive.webtest.firefox == 30`` holds true. 
+The named marker can be accessed like this later::
 
-In addition to keyword arguments you can also use positional arguments::
+    test_receive.webtest.kwargs['firefox'] == 30
+
+In addition to set key-value pairs you can also use positional arguments::
 
     @py.test.mark.webtest("triangular")
     def test_receive():
         ...
 
-after which ``test_receive.webtest._args[0] == 'triangular`` holds true.
-
+and later access it with ``test_receive.webtest.args[0] == 'triangular``.
 
 .. _`scoped-marking`:
 
 Marking classes or modules 
 ----------------------------------------------------
 
-To mark all methods of a class you can set a class-level attribute::
+To mark all methods of a class set a ``pytestmark`` attribute like this::
+
+    import py
 
     class TestClass:
         pytestmark = py.test.mark.webtest
 
-the marker function will be applied to all test methods. 
+You can re-use the same markers that you would use for decorating
+a function - in fact this marker decorator will be applied
+to all test methods of the class. 
 
-If you set a marker it inside a test module like this::
+You can also set a module level marker::
 
+    import py
     pytestmark = py.test.mark.webtest
 
-the marker will be applied to all functions and methods of 
-that module.  The module marker is applied last.  
+in which case then the marker decorator will be applied to all functions and 
+methods defined in the module.  
 
-Outer ``pytestmark`` keywords will overwrite inner keyword 
-values.   Positional arguments are all appeneded to the 
-same '_args' list. 
+The order in which marker functions are called is this::
+
+    per-function (upon import of module already) 
+    per-class
+    per-module 
+
+Later called markers may overwrite previous key-value settings. 
+Positional arguments are all appended to the same 'args' list 
+of the Marker object. 
 """
 import py
 
@@ -86,27 +96,32 @@ class MarkerDecorator:
                 func = args[0]
                 holder = getattr(func, self.markname, None)
                 if holder is None:
-                    holder = MarkHolder(self.markname, self.args, self.kwargs)
+                    holder = Marker(self.markname, self.args, self.kwargs)
                     setattr(func, self.markname, holder)
                 else:
-                    holder.__dict__.update(self.kwargs)
-                    holder._args.extend(self.args)
+                    holder.kwargs.update(self.kwargs)
+                    holder.args.extend(self.args)
                 return func
             else:
                 self.args.extend(args)
         self.kwargs.update(kwargs)
         return self
         
-class MarkHolder:
+class Marker:
     def __init__(self, name, args, kwargs):
         self._name = name
-        self._args = args
-        self._kwargs = kwargs
-        self.__dict__.update(kwargs)
+        self.args = args
+        self.kwargs = kwargs
+
+    def __getattr__(self, name):
+        if name[0] != '_' and name in self.kwargs:
+            py.log._apiwarn("1.1", "use .kwargs attribute to access key-values")
+            return self.kwargs[name]
+        raise AttributeError(name)
 
     def __repr__(self):
         return "<Marker %r args=%r kwargs=%r>" % (
-                self._name, self._args, self._kwargs)
+                self._name, self.args, self.kwargs)
             
 
 def pytest_pycollect_makeitem(__multicall__, collector, name, obj):

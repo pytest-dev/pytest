@@ -200,7 +200,7 @@ kewords like this::
 and then use those keywords to select tests.  See the `pytest_keyword`_
 plugin for more information. 
 
-.. _`pytest_keyword`: plugin/keyword.html
+.. _`pytest_keyword`: plugin/mark.html
 
 easy to extend 
 =========================================

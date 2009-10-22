@@ -3,7 +3,6 @@
 .. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_recwarn.py
 .. _`unittest`: unittest.html
 .. _`pytest_monkeypatch.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_monkeypatch.py
-.. _`pytest_keyword.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_keyword.py
 .. _`pastebin`: pastebin.html
 .. _`skipping`: skipping.html
 .. _`plugins`: index.html
@@ -13,6 +12,7 @@
 .. _`pytest_restdoc.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_restdoc.py
 .. _`restdoc`: restdoc.html
 .. _`pytest_pastebin.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_pastebin.py
+.. _`mark`: mark.html
 .. _`pytest_figleaf.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_figleaf.py
 .. _`pytest_hooklog.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_hooklog.py
 .. _`pytest_skipping.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_skipping.py
@@ -20,6 +20,7 @@
 .. _`pytest_helpconfig.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_helpconfig.py
 .. _`oejskit`: oejskit.html
 .. _`doctest`: doctest.html
+.. _`pytest_mark.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_mark.py
 .. _`get in contact`: ../../contact.html
 .. _`pytest_capture.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_capture.py
 .. _`figleaf`: figleaf.html
@@ -30,7 +31,6 @@
 .. _`pytest_pdb.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_pdb.py
 .. _`monkeypatch`: monkeypatch.html
 .. _`resultlog`: resultlog.html
-.. _`keyword`: keyword.html
 .. _`django`: django.html
 .. _`pytest_unittest.py`: http://bitbucket.org/hpk42/py-trunk/raw/trunk/_py/test/plugin/pytest_unittest.py
 .. _`nose`: nose.html

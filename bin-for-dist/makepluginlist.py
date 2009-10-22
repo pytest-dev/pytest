@@ -13,7 +13,7 @@ plugins = [
     ('plugins for generic reporting and failure logging', 
             'pastebin resultlog terminal',),
     ('misc plugins / core functionality', 
-        'helpconfig pdb keyword hooklog')
+        'helpconfig pdb mark hooklog')
     #('internal plugins / core functionality', 
     #    #'pdb keyword hooklog runner execnetcleanup # pytester',
     #    'pdb keyword hooklog runner execnetcleanup' # pytester',

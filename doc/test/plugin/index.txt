@@ -2,7 +2,7 @@
 plugins for Python test functions
 =================================
 
-skipping_ advanced conditional skipping for python test functions, classes or modules.
+skipping_ advanced skipping for python test functions, classes or modules.
 
 figleaf_ write and report coverage data with 'figleaf'.
 
@@ -56,7 +56,7 @@ helpconfig_ provide version info, conftest/environment config names.
 
 pdb_ interactive debugging with the Python Debugger.
 
-keyword_ mark test functions with keywords that may hold values.
+mark_ generic mechanism for marking python functions.
 
 hooklog_ log invocations of extension hooks to a file.
 

@@ -1,16 +1,22 @@
 """
-advanced conditional skipping for python test functions, classes or modules.
+advanced skipping for python test functions, classes or modules.
 
-You can mark functions, classes or modules for for conditional
-skipping (skipif) or as expected-to-fail (xfail).  The difference
-between the two is that 'xfail' will still execute test functions
-but it will invert the outcome: a passing test becomes a failure and
-a failing test is a semi-passing one.  All skip conditions are 
-reported at the end of test run through the terminal reporter.
+With this plugin you can mark test functions for conditional skipping 
+or as "xfail", expected-to-fail.  Skipping a test will avoid running it
+while xfail-marked tests will run and result in an inverted outcome:
+a pass becomes a failure and a fail becomes a semi-passing one. 
+
+The need for skipping a test is usually connected to a condition.  
+If a test fails under all conditions then it's probably better
+to mark your test as 'xfail'. 
+
+By passing ``--report=xfailed,skipped`` to the terminal reporter 
+you will see summary information on skips and xfail-run tests
+at the end of a test run. 
 
 .. _skipif:
 
-skip a test function conditionally
+mark a test function to be skipped
 -------------------------------------------
 
 Here is an example for skipping a test function when
@@ -19,6 +25,7 @@ running on Python3::
     @py.test.mark.skipif("sys.version_info >= (3,0)")
     def test_function():
         ...
+
 
 During test function setup the skipif condition is 
 evaluated by calling ``eval(expr, namespace)``.  The namespace
@@ -30,75 +37,74 @@ on a test configuration value e.g. like this::
     def test_function(...):
         ...
 
-Note that `test marking can be declared at whole class- or module level`_. 
 
-.. _`test marking can also be declared at whole class- or module level`: keyword.html#scoped-marking
+mark many test functions at once 
+--------------------------------------
+
+As with all metadata function marking you can do it at
+`whole class- or module level`_.  Here is an example 
+for skipping all methods of a test class based on platform::
+
+    class TestPosixCalls:
+        pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
+    
+        def test_function(self):
+            # will not be setup or run under 'win32' platform
+            #
 
 
-conditionally mark a function as "expected to fail"
+.. _`whole class- or module level`: mark.html#scoped-marking
+
+
+mark a test function as expected to fail 
 -------------------------------------------------------
 
-You can use the ``xfail`` keyword to mark your test functions as
-'expected to fail'::
+You can use the ``xfail`` marker to indicate that you
+expect the test to fail:: 
 
     @py.test.mark.xfail
-    def test_hello():
-        ...
-
-This test will be executed but no traceback will be reported
-when it fails. Instead terminal reporting will list it in the
-"expected to fail" or "unexpectedly passing" sections.
-As with skipif_ you may selectively expect a failure
-depending on platform::
-
-    @py.test.mark.xfail("sys.version_info >= (3,0)")
     def test_function():
         ...
 
-skip/xfail a whole test class or module
--------------------------------------------
+This test will be run but no traceback will be reported
+when it fails. Instead terminal reporting will list it in the
+"expected to fail" or "unexpectedly passing" sections.
 
-Instead of marking single functions you can skip
-a whole class of tests when running on a specific
-platform::
+Same as with skipif_ you can also selectively expect a failure
+depending on platform::
 
-    class TestSomething:
-        skipif = "sys.platform == 'win32'"
+    @py.test.mark.xfail(if"sys.version_info >= (3,0)")
 
-Or you can mark all test functions as expected
-to fail for a specific test configuration::
-
-    xfail = "config.getvalue('db') == 'mysql'"
+    def test_function():
+        ...
 
 
-skip if a dependency cannot be imported
----------------------------------------------
+skipping on a missing import dependency
+--------------------------------------------------
 
-You can use a helper to skip on a failing import::
+You can use the following import helper at module level 
+or within a test or setup function.
 
     docutils = py.test.importorskip("docutils")
 
-You can use this helper at module level or within
-a test or setup function.
-
-You can also skip if a library does not come with a high enough version::
+If ``docutils`` cannot be imported here, this will lead to a
+skip outcome of the test.  You can also skip dependeing if
+if a library does not come with a high enough version::
 
     docutils = py.test.importorskip("docutils", minversion="0.3")
 
 The version will be read from the specified module's ``__version__`` attribute.
 
-dynamically skip from within a test or setup
--------------------------------------------------
+imperative skip from within a test or setup function
+------------------------------------------------------
 
-If you want to skip the execution of a test you can call
-``py.test.skip()`` within a test, a setup or from a
-`funcarg factory`_ function.  Example::
+If for some reason you cannot declare skip-conditions
+you can also imperatively produce a Skip-outcome from 
+within test or setup code.  Example::
 
     def test_function():
         if not valid_config():
             py.test.skip("unsuppored configuration")
-
-.. _`funcarg factory`: ../funcargs.html#factory
 
 """
 # XXX py.test.skip, .importorskip and the Skipped class 
@@ -177,7 +183,7 @@ def evalexpression(item, keyword):
         if markholder:
             d = {'os': py.std.os, 'sys': py.std.sys, 'config': item.config}
             expr, result = None, True
-            for expr in markholder._args:
+            for expr in markholder.args:
                 if isinstance(expr, str):
                     result = eval(expr, d)
                 else:
