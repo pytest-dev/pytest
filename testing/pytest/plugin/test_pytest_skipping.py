@@ -46,8 +46,8 @@ def test_xfail_decorator(testdir):
 
 def test_xfail_at_module(testdir):
     p = testdir.makepyfile("""
-        xfail = 'True'
-
+        import py
+        pytestmark = py.test.mark.xfail('True')
         def test_intentional_xfail():
             assert 0
     """)
@@ -76,8 +76,9 @@ def test_skipif_decorator(testdir):
 def test_skipif_class(testdir):
     p = testdir.makepyfile("""
         import py
+        
         class TestClass:
-            skipif = "True"
+            pytestmark = py.test.mark.skipif("True")
             def test_that(self):
                 assert 0
             def test_though(self):
@@ -88,36 +89,12 @@ def test_skipif_class(testdir):
         "*2 skipped*"
     ])
 
-def test_getexpression(testdir):
-    from _py.test.plugin.pytest_skipping import getexpression
-    l = testdir.getitems("""
-        import py
-        mod = 5
-        class TestClass:
-            cls = 4
-            @py.test.mark.func(3)
-            def test_func(self):
-                pass
-            @py.test.mark.just
-            def test_other(self):
-                pass
-    """)
-    item, item2 = l
-    assert getexpression(item, 'xyz') is None
-    assert getexpression(item, 'func') == 3
-    assert getexpression(item, 'cls') == 4
-    assert getexpression(item, 'mod') == 5
-
-    assert getexpression(item2, 'just')
-
-    item2.parent = None
-    assert not getexpression(item2, 'nada') 
-
 def test_evalexpression_cls_config_example(testdir):
     from _py.test.plugin.pytest_skipping import evalexpression
     item, = testdir.getitems("""
+        import py
         class TestClass:
-            skipif = "config._hackxyz"
+            pytestmark = py.test.mark.skipif("config._hackxyz")
             def test_func(self):
                 pass
     """)

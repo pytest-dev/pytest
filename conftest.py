@@ -52,7 +52,7 @@ def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)
     if multi is None:
         return
-    assert len(multi.__dict__) == 1
-    for name, l in multi.__dict__.items():
+    assert len(multi._kwargs) == 1
+    for name, l in multi._kwargs.items():
         for val in l:
             metafunc.addcall(funcargs={name: val})

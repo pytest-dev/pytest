@@ -13,15 +13,15 @@ reported at the end of test run through the terminal reporter.
 skip a test function conditionally
 -------------------------------------------
 
-Here is an example for skipping a test function on Python3::
+Here is an example for skipping a test function when
+running on Python3::
 
     @py.test.mark.skipif("sys.version_info >= (3,0)")
     def test_function():
         ...
 
-The 'skipif' marker accepts an **arbitrary python expression** 
-as a condition.  When setting up the test function the condition
-is evaluated by calling ``eval(expr, namespace)``.  The namespace
+During test function setup the skipif condition is 
+evaluated by calling ``eval(expr, namespace)``.  The namespace
 contains the  ``sys`` and ``os`` modules as well as the 
 test ``config`` object.  The latter allows you to skip based 
 on a test configuration value e.g. like this::
@@ -29,6 +29,10 @@ on a test configuration value e.g. like this::
     @py.test.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
+
+Note that `test marking can be declared at whole class- or module level`_. 
+
+.. _`test marking can also be declared at whole class- or module level`: keyword.html#scoped-marking
 
 
 conditionally mark a function as "expected to fail"
@@ -123,6 +127,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
             rep.keywords['xfail'] = True # expr
             return rep
 
+# called by terminalreporter progress reporting
 def pytest_report_teststatus(report):
     if 'xfail' in report.keywords:
         if report.skipped:
@@ -165,29 +170,22 @@ def show_xfailed(terminalreporter):
             tr._tw.line(pos)
 
 
-def getexpression(item, keyword):
-    if isinstance(item, py.test.collect.Function):
-        val = getattr(item.obj, keyword, None)
-        val = getattr(val, '_0', val)
-        if val is not None:
-            return val
-        cls = item.getparent(py.test.collect.Class)
-        if cls and hasattr(cls.obj, keyword):
-            return getattr(cls.obj, keyword)
-        mod = item.getparent(py.test.collect.Module)
-        if mod:
-            return getattr(mod.obj, keyword, None)
-
 def evalexpression(item, keyword):
-    expr = getexpression(item, keyword)
-    result = None
-    if expr:
-        if isinstance(expr, str):
+    if isinstance(item, py.test.collect.Function):
+        markholder = getattr(item.obj, keyword, None)
+        result = False
+        if markholder:
             d = {'os': py.std.os, 'sys': py.std.sys, 'config': item.config}
-            result = eval(expr, d)
-        else:
-            result = expr
-    return expr, result
+            expr, result = None, True
+            for expr in markholder._args:
+                if isinstance(expr, str):
+                    result = eval(expr, d)
+                else:
+                    result = expr
+                if not result:
+                    break
+            return expr, result
+    return None, False
 
 def folded_skips(skipped):
     d = {}

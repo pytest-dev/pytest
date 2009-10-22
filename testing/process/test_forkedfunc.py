@@ -1,6 +1,6 @@
 import py, sys, os
 
-skipif = "not hasattr(os, 'fork')"
+pytestmark = py.test.mark.skipif("not hasattr(os, 'fork')")
 
 def test_waitfinish_removes_tempdir():
     ff = py.process.ForkedFunc(boxf1)

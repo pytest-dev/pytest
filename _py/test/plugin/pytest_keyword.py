@@ -33,6 +33,8 @@ In addition to keyword arguments you can also use positional arguments::
 after which ``test_receive.webtest._args[0] == 'triangular`` holds true.
 
 
+.. _`scoped-marking`:
+
 Marking classes or modules 
 ----------------------------------------------------
 
