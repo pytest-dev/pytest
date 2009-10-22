@@ -1,7 +1,7 @@
 """
 mark test functions with keywords that may hold values. 
 
-Marking functions and setting rich attributes
+Marking functions by a decorator 
 ----------------------------------------------------
 
 By default, all filename parts and class/function names of a test
@@ -30,8 +30,29 @@ In addition to keyword arguments you can also use positional arguments::
     def test_receive():
         ...
 
-after which ``test_receive.webtest._1 == 'triangular`` hold true.
+after which ``test_receive.webtest._args[0] == 'triangular`` holds true.
 
+
+Marking classes or modules 
+----------------------------------------------------
+
+To mark all methods of a class you can set a class-level attribute::
+
+    class TestClass:
+        pytestmark = py.test.mark.webtest
+
+the marker function will be applied to all test methods. 
+
+If you set a marker it inside a test module like this::
+
+    pytestmark = py.test.mark.webtest
+
+the marker will be applied to all functions and methods of 
+that module.  The module marker is applied last.  
+
+Outer ``pytestmark`` keywords will overwrite inner keyword 
+values.   Positional arguments are all appeneded to the 
+same '_args' list. 
 """
 import py
 
@@ -49,6 +70,8 @@ class MarkerDecorator:
     """ decorator for setting function attributes. """
     def __init__(self, name):
         self.markname = name
+        self.kwargs = {}
+        self.args = []
 
     def __repr__(self):
         d = self.__dict__.copy()
@@ -57,19 +80,41 @@ class MarkerDecorator:
 
     def __call__(self, *args, **kwargs):
         if args:
-            if hasattr(args[0], '__call__'):
+            if len(args) == 1 and hasattr(args[0], '__call__'):
                 func = args[0]
-                mh = MarkHolder(getattr(self, 'kwargs', {}))
-                setattr(func, self.markname, mh)
+                holder = getattr(func, self.markname, None)
+                if holder is None:
+                    holder = MarkHolder(self.markname, self.args, self.kwargs)
+                    setattr(func, self.markname, holder)
+                else:
+                    holder.__dict__.update(self.kwargs)
+                    holder._args.extend(self.args)
                 return func
-            # not a function so we memorize all args/kwargs settings
-            for i, arg in enumerate(args):
-                kwargs["_" + str(i)] = arg
-        if hasattr(self, 'kwargs'):
-            raise TypeError("double mark-keywords?")
-        self.kwargs = kwargs.copy()
+            else:
+                self.args.extend(args)
+        self.kwargs.update(kwargs)
         return self
         
 class MarkHolder:
-    def __init__(self, kwargs):
+    def __init__(self, name, args, kwargs):
+        self._name = name
+        self._args = args
+        self._kwargs = kwargs
         self.__dict__.update(kwargs)
+
+    def __repr__(self):
+        return "<Marker %r args=%r kwargs=%r>" % (
+                self._name, self._args, self._kwargs)
+            
+
+def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
+    item = __multicall__.execute()
+    if isinstance(item, py.test.collect.Function):
+        cls = collector.getparent(py.test.collect.Class)
+        mod = collector.getparent(py.test.collect.Module)
+        func = getattr(item.obj, 'im_func', item.obj)
+        for parent in [x for x in (mod, cls) if x]:
+            marker = getattr(parent.obj, 'pytestmark', None)
+            if isinstance(marker, MarkerDecorator):
+                marker(func)
+    return item
