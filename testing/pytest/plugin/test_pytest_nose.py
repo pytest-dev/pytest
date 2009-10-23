@@ -115,3 +115,24 @@ def test_module_level_setup(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
+
+def test_nose_style_setup_teardown(testdir):
+    testdir.makepyfile("""
+        l = []
+        def setup_module():
+            l.append(1)
+
+        def teardown_module():
+            del l[0]
+
+        def test_hello():
+            assert l == [1]
+
+        def test_world():
+            assert l == [1]
+        """)
+    result = testdir.runpytest('-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*2 passed*",
+    ])
+

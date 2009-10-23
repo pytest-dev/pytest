@@ -161,13 +161,24 @@ class Module(py.test.collect.File, PyCollectorMixin):
     def setup(self): 
         if getattr(self.obj, 'disabled', 0):
             py.test.skip("%r is disabled" %(self.obj,))
-        mod = self.obj
-        if hasattr(mod, 'setup_module'): 
-            self.obj.setup_module(mod)
+        if hasattr(self.obj, 'setup_module'): 
+            #XXX: nose compat hack, move to nose plugin
+            # if it takes a positional arg, its probably a py.test style one
+            # so we pass the current module object
+            if inspect.getargspec(self.obj.setup_module)[0]:
+                self.obj.setup_module(self.obj)
+            else:
+                self.obj.setup_module()
 
     def teardown(self): 
         if hasattr(self.obj, 'teardown_module'): 
-            self.obj.teardown_module(self.obj) 
+            #XXX: nose compat hack, move to nose plugin
+            # if it takes a positional arg, its probably a py.test style one
+            # so we pass the current module object
+            if inspect.getargspec(self.obj.teardown_module)[0]:
+                self.obj.teardown_module(self.obj)
+            else:
+                self.obj.teardown_module()
 
 class Class(PyCollectorMixin, py.test.collect.Collector): 
 
