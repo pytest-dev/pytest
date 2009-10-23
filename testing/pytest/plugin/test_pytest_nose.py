@@ -88,14 +88,30 @@ def test_nose_test_generator_fixtures(testdir):
 
 def test_module_level_setup(testdir):
     testdir.makepyfile("""
+        from nose.tools import with_setup
         items = {}
         def setup():
             items[1]=1
 
-        def test_setup_changed_stuff():
-            assert items
+        def teardown():
+            del items[1]
+
+        def setup2():
+            items[2] = 2
+
+        def teardown2():
+            del items[2]
+
+        def test_setup_module_setup():
+            assert items[1] == 1
+
+        @with_setup(setup2, teardown2)
+        def test_local_setup():
+            assert items[2] == 2
+            assert 1 not in items
+
     """)
     result = testdir.runpytest('-p', 'nose')
     result.stdout.fnmatch_lines([
-        "*1 passed*",
+        "*2 passed*",
     ])

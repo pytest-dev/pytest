@@ -72,7 +72,8 @@ def pytest_runtest_setup(item):
 
 def pytest_runtest_teardown(item):
     if isinstance(item, py.test.collect.Function):
-        call_optional(item.obj, 'teardown')
+        if not call_optional(item.obj, 'teardown'):
+            call_optional(item.parent.obj, 'teardown')
         #if hasattr(item.parent, '_nosegensetup'):
         #    #call_optional(item._nosegensetup, 'teardown')
         #    del item.parent._nosegensetup
