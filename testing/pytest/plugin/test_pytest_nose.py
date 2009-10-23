@@ -85,3 +85,17 @@ def test_nose_test_generator_fixtures(testdir):
     ])
 
 
+
+def test_module_level_setup(testdir):
+    testdir.makepyfile("""
+        items = {}
+        def setup():
+            items[1]=1
+
+        def test_setup_changed_stuff():
+            assert items
+    """)
+    result = testdir.runpytest('-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+    ])

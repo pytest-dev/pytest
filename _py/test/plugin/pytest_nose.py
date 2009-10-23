@@ -66,7 +66,9 @@ def pytest_runtest_setup(item):
                 if isinstance(gen.parent, py.test.collect.Instance):
                     call_optional(gen.parent.obj, 'setup')
                 gen._nosegensetup = True
-        call_optional(item.obj, 'setup')
+        if not call_optional(item.obj, 'setup'):
+            # call module level setup if there is no object level one
+            call_optional(item.parent.obj, 'setup')
 
 def pytest_runtest_teardown(item):
     if isinstance(item, py.test.collect.Function):
@@ -83,3 +85,6 @@ def call_optional(obj, name):
     method = getattr(obj, name, None)
     if method:
         method()
+        return True
+    else:
+        return False
