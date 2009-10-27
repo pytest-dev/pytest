@@ -8,8 +8,8 @@ def pytest_addoption(parser):
         help="disable python assert expression reinterpretation."),
 
 def pytest_configure(config):
-    if sys.platform.startswith("java"):
-        return # XXX assertions don't work yet with jython 2.5.1
+    #if sys.platform.startswith("java"):
+    #    return # XXX assertions don't work yet with jython 2.5.1
 
     if not config.getvalue("noassert") and not config.getvalue("nomagic"):
         warn_about_missing_assertion()

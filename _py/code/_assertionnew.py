@@ -109,7 +109,7 @@ class DebugInterpreter(ast.NodeVisitor):
                 raise Failure()
             return None, None
         else:
-            raise AssertionError("can't handle {0}".format(node))
+            raise AssertionError("can't handle %s" %(node,))
 
     def _compile(self, source, mode="eval"):
         return compile(source, "<assertion interpretation>", mode)

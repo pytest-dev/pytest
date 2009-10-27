@@ -1,6 +1,6 @@
 import py
 
-pytestmark = py.test.mark.skipif("sys.platform.startswith('java')")
+#pytestmark = py.test.mark.skipif("sys.platform.startswith('java')")
 
 def exvalue():
     return py.std.sys.exc_info()[1]
