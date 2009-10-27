@@ -73,7 +73,6 @@ pageTracker._trackPageview();
             html.div(
                 html.h3("supporting APIs:"), 
                 self.a_docref("pylib index", "index.html"),
-                self.a_docref("py.execnet", "execnet.html"),
                 self.a_docref("py.path", "path.html"),
                 self.a_docref("py.code", "code.html"),
             )
