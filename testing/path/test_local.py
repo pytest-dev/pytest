@@ -3,6 +3,8 @@ import sys
 from py.path import local
 from testing.path import common
 
+failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
+
 def pytest_funcarg__path1(request):
     def setup():
         path1 = request.config.mktemp("path1")
@@ -545,11 +547,13 @@ class TestPOSIXLocalPath:
             for x,y in oldmodes.items():
                 x.chmod(y)
 
+    @failsonjython
     def test_chown_identity(self, path1):
         owner = path1.stat().owner
         group = path1.stat().group
         path1.chown(owner, group)
 
+    @failsonjython
     def test_chown_dangling_link(self, path1):
         owner = path1.stat().owner
         group = path1.stat().group
@@ -560,6 +564,7 @@ class TestPOSIXLocalPath:
         finally:
             x.remove(rec=0)
 
+    @failsonjython
     def test_chown_identity_rec_mayfail(self, path1):
         owner = path1.stat().owner
         group = path1.stat().group

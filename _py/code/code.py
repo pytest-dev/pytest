@@ -28,6 +28,9 @@ class Code(object):
             if rec-cursive is true then dive into code 
             objects contained in co_consts. 
         """ 
+        if sys.platform.startswith("java"):
+            # XXX jython does not support the below co_filename hack
+            return self.raw 
         names = [x for x in dir(self.raw) if x[:3] == 'co_']
         for name in kwargs: 
             if name not in names: 

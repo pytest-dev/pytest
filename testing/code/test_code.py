@@ -3,6 +3,8 @@ import py
 import sys
 from _py.code.code import safe_repr
 
+failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
+
 def test_newcode(): 
     source = "i = 3"
     co = compile(source, '', 'exec') 
@@ -16,10 +18,12 @@ def test_ne():
     code2 = py.code.Code(compile('foo = "baz"', '', 'exec'))
     assert code2 != code1
 
+@failsonjython
 def test_newcode_unknown_args(): 
     code = py.code.Code(compile("", '', 'exec'))
     py.test.raises(TypeError, 'code.new(filename="hello")')
 
+@failsonjython
 def test_newcode_withfilename():
     source = py.code.Source("""
         def f():
@@ -44,6 +48,7 @@ def test_newcode_withfilename():
     assert 'f' in names
     assert 'g' in names
 
+@failsonjython
 def test_newcode_with_filename(): 
     source = "i = 3"
     co = compile(source, '', 'exec') 
@@ -58,6 +63,7 @@ def test_newcode_with_filename():
     assert str(s) == source 
 
 
+@failsonjython
 def test_new_code_object_carries_filename_through():
     class mystr(str):
         pass

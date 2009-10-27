@@ -50,6 +50,8 @@ def warn(msg, stacklevel=1, function=None):
         fnl = filename.lower()
         if fnl.endswith(".pyc") or fnl.endswith(".pyo"):
             filename = filename[:-1]
+        elif fnl.endswith("$py.class"):
+            filename = filename.replace('$py.class', '.py')
     else:
         if module == "__main__":
             try:

@@ -384,7 +384,7 @@ raise ValueError()
 
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)
-        loc = {'y': 5, 'z': 7, 'x': 3, '__builtins__': __builtins__}
+        loc = {'y': 5, 'z': 7, 'x': 3, '__builtins__': {}} # __builtins__}
         reprlocals = p.repr_locals(loc) 
         assert reprlocals.lines 
         assert reprlocals.lines[0] == '__builtins__ = <builtins>'

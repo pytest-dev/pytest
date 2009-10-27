@@ -1,12 +1,14 @@
 import py, os, sys
 from _py.test.plugin.pytest_capture import CaptureManager
 
+needsosdup = py.test.mark.xfail("not hasattr(os, 'dup')")
+
 class TestCaptureManager:
     def test_getmethod_default_no_fd(self, testdir, monkeypatch):
         config = testdir.parseconfig(testdir.tmpdir)
         assert config.getvalue("capture") is None
         capman = CaptureManager()
-        monkeypatch.delattr(os, 'dup')
+        monkeypatch.delattr(os, 'dup', raising=False)
         try:
             assert capman._getmethod(config, None) == "sys" 
         finally:
@@ -16,14 +18,21 @@ class TestCaptureManager:
         config = testdir.parseconfig(testdir.tmpdir)
         assert config.getvalue("capture") is None
         capman = CaptureManager()
-        assert capman._getmethod(config, None) == "fd" # default
+        hasfd = hasattr(os, 'dup')
+        if hasfd:
+            assert capman._getmethod(config, None) == "fd" 
+        else:
+            assert capman._getmethod(config, None) == "sys" 
 
         for name in ('no', 'fd', 'sys'):
+            if not hasfd and name == 'fd':
+                continue
             sub = testdir.tmpdir.mkdir("dir" + name)
             sub.ensure("__init__.py")
             sub.join("conftest.py").write('option_capture = %r' % name)
             assert capman._getmethod(config, sub.join("test_hello.py")) == name
 
+    @needsosdup
     @py.test.mark.multi(method=['no', 'fd', 'sys'])
     def test_capturing_basic_api(self, method):
         capouter = py.io.StdCaptureFD()
@@ -43,6 +52,7 @@ class TestCaptureManager:
         finally:
             capouter.reset()
       
+    @needsosdup
     def test_juggle_capturings(self, testdir):
         capouter = py.io.StdCaptureFD()
         try:
@@ -242,10 +252,13 @@ class TestLoggingInteraction:
         # here we check a fundamental feature 
         rootdir = str(py.path.local(py.__file__).dirpath().dirpath())
         p = testdir.makepyfile("""
-            import sys
+            import sys, os
             sys.path.insert(0, %r)
             import py, logging
-            cap = py.io.StdCaptureFD(out=False, in_=False)
+            if hasattr(os, 'dup'):
+                cap = py.io.StdCaptureFD(out=False, in_=False)
+            else:
+                cap = py.io.StdCapture(out=False, in_=False)
             logging.warn("hello1")
             outerr = cap.suspend()
 
@@ -328,7 +341,8 @@ class TestCaptureFuncarg:
                 assert out.startswith("42")
         """)
         reprec.assertoutcome(passed=1)
-        
+       
+    @needsosdup 
     def test_stdfd_functional(self, testdir):        
         reprec = testdir.inline_runsource("""
             def test_hello(capfd):
@@ -351,6 +365,7 @@ class TestCaptureFuncarg:
             "*1 error*",
         ])
 
+    @needsosdup
     def test_keyboardinterrupt_disables_capturing(self, testdir):        
         p = testdir.makepyfile("""
             def test_hello(capfd):

@@ -37,7 +37,7 @@ def _format_explanation(explanation):
     return '\n'.join(result)
 
 
-if sys.version_info >= (2, 6):
+if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
     from _py.code._assertionnew import interpret
 else:
     from _py.code._assertionold import interpret

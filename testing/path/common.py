@@ -132,6 +132,7 @@ class CommonFSTests(object):
         assert not l1.relto(l2)
         assert not l2.relto(l1)
 
+    @py.test.mark.xfail("sys.platform.startswith('java')")
     def test_listdir(self, path1):
         l = path1.listdir()
         assert path1.join('sampledir') in l
@@ -177,6 +178,7 @@ class CommonFSTests(object):
         assert "sampledir" in l
         assert "otherdir" in l
 
+    @py.test.mark.xfail("sys.platform.startswith('java')")
     def test_visit_ignore(self, path1):
         p = path1.join('nonexisting')
         assert list(p.visit(ignore=py.error.ENOENT)) == []

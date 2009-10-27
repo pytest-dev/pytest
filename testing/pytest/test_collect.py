@@ -189,7 +189,7 @@ class TestPrunetraceback:
         assert "__import__" not in result.stdout.str(), "too long traceback"
         result.stdout.fnmatch_lines([
             "*ERROR during collection*",
-            ">*import not_exists*"
+            "*mport*not_exists*"
         ])
 
 class TestCustomConftests:
