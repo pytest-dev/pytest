@@ -3,7 +3,7 @@ import py
 
 
 def pytest_addoption(parser):
-    grp = parser.addgroup("testserver options") 
+    grp = parser.getgroup("testserver options") 
     grp.addoption("--url", action="store", default=None,
         help="url for testserver") 
 

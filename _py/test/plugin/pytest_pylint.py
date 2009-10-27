@@ -7,7 +7,7 @@ import py
 pylint = py.test.importorskip("pylint.lint") 
 
 def pytest_addoption(parser):
-    group = parser.addgroup('pylint options')
+    group = parser.getgroup('pylint options')
     group.addoption('--pylint', action='store_true',
                     default=False, dest='pylint',
                     help='run pylint on python files.')

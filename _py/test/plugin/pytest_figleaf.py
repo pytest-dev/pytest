@@ -8,7 +8,7 @@ py.test.importorskip("figleaf.annotate_html")
 import figleaf
 
 def pytest_addoption(parser):
-    group = parser.addgroup('figleaf options')
+    group = parser.getgroup('figleaf options')
     group.addoption('-F', action='store_true', default=False,
             dest = 'figleaf',
             help=('trace python coverage with figleaf and write HTML '

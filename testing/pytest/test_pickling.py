@@ -89,7 +89,7 @@ class TestConfigPickling:
     def test_config_pickling_customoption(self, testdir):
         testdir.makeconftest("""
             def pytest_addoption(parser):
-                group = parser.addgroup("testing group")
+                group = parser.getgroup("testing group")
                 group.addoption('-G', '--glong', action="store", default=42, 
                     type="int", dest="gdest", help="g value.")
         """)
@@ -109,7 +109,7 @@ class TestConfigPickling:
         tmp.ensure("__init__.py")
         tmp.join("conftest.py").write(py.code.Source("""
             def pytest_addoption(parser):
-                group = parser.addgroup("testing group")
+                group = parser.getgroup("testing group")
                 group.addoption('-G', '--glong', action="store", default=42, 
                     type="int", dest="gdest", help="g value.")
         """))

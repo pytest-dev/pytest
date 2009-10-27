@@ -5,7 +5,7 @@ import py
 import sys
 
 def pytest_addoption(parser):
-    group = parser.addgroup("ReST", "ReST documentation check options")
+    group = parser.getgroup("ReST", "ReST documentation check options")
     group.addoption('-R', '--urlcheck',
            action="store_true", dest="urlcheck", default=False, 
            help="urlopen() remote links found in ReST text files.") 

@@ -6,7 +6,7 @@ import py
 from py.builtin import print_
 
 def pytest_addoption(parser):
-    group = parser.addgroup("resultlog", "resultlog plugin options")
+    group = parser.getgroup("resultlog", "resultlog plugin options")
     group.addoption('--resultlog', action="store", dest="resultlog", metavar="path", default=None,
            help="path for machine-readable result log.")
 

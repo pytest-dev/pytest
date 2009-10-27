@@ -23,7 +23,7 @@ class TestConfigCmdlineParsing:
     def test_parser_addoption_default_env(self, testdir, monkeypatch):
         import os
         config = testdir.Config()
-        group = config._parser.addgroup("hello")
+        group = config._parser.getgroup("hello")
 
         monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION1', 'True')
         group.addoption("--option1", action="store_true")
