@@ -66,9 +66,9 @@ def getfailure(failure):
         lines = explanation.splitlines()
         if not lines:
             lines.append("")
-        lines[0] += " << {0}".format(value)
+        lines[0] += " << %s" % (value,)
         explanation = "\n".join(lines)
-    text = "{0}: {1}".format(failure.cause[0].__name__, explanation)
+    text = "%s: %s" % (failure.cause[0].__name__, explanation)
     if text.startswith("AssertionError: assert "):
         text = text[16:]
     return text
@@ -99,10 +99,10 @@ operator_map = {
 }
 
 unary_map = {
-    ast.Not : "not {0}",
-    ast.Invert : "~{0}",
-    ast.USub : "-{0}",
-    ast.UAdd : "+{0}"
+    ast.Not : "not %s",
+    ast.Invert : "~%s",
+    ast.USub : "-%s",
+    ast.UAdd : "+%s"
 }
 
 
@@ -147,7 +147,7 @@ class DebugInterpreter(ast.NodeVisitor):
     def visit_Name(self, name):
         explanation, result = self.generic_visit(name)
         # See if the name is local.
-        source = "{0!r} in locals() is not globals()".format(name.id)
+        source = "%r in locals() is not globals()" % (name.id,)
         co = self._compile(source)
         try:
             local = self.frame.eval(co)
@@ -167,9 +167,9 @@ class DebugInterpreter(ast.NodeVisitor):
                 break
             next_explanation, next_result = self.visit(next_op)
             op_symbol = operator_map[op.__class__]
-            explanation = "{0} {1} {2}".format(left_explanation, op_symbol,
-                                               next_explanation)
-            source = "__exprinfo_left {0} __exprinfo_right".format(op_symbol)
+            explanation = "%s %s %s" % (left_explanation, op_symbol,
+                                        next_explanation)
+            source = "__exprinfo_left %s __exprinfo_right" % (op_symbol,)
             co = self._compile(source)
             try:
                 result = self.frame.eval(co, __exprinfo_left=left_result,
@@ -196,8 +196,8 @@ class DebugInterpreter(ast.NodeVisitor):
     def visit_UnaryOp(self, unary):
         pattern = unary_map[unary.op.__class__]
         operand_explanation, operand_result = self.visit(unary.operand)
-        explanation = pattern.format(operand_explanation)
-        co = self._compile(pattern.format("__exprinfo_expr"))
+        explanation = pattern % (operand_explanation,)
+        co = self._compile(pattern % ("__exprinfo_expr",))
         try:
             result = self.frame.eval(co, __exprinfo_expr=operand_result)
         except Exception:
@@ -208,9 +208,9 @@ class DebugInterpreter(ast.NodeVisitor):
         left_explanation, left_result = self.visit(binop.left)
         right_explanation, right_result = self.visit(binop.right)
         symbol = operator_map[binop.op.__class__]
-        explanation = "({0} {1} {2})".format(left_explanation, symbol,
-                                             right_explanation)
-        source = "__exprinfo_left {0} __exprinfo_right".format(symbol)
+        explanation = "(%s %s %s)" % (left_explanation, symbol,
+                                      right_explanation)
+        source = "__exprinfo_left %s __exprinfo_right" % (symbol,)
         co = self._compile(source)
         try:
             result = self.frame.eval(co, __exprinfo_left=left_result,
@@ -226,33 +226,33 @@ class DebugInterpreter(ast.NodeVisitor):
         arguments = []
         for arg in call.args:
             arg_explanation, arg_result = self.visit(arg)
-            arg_name = "__exprinfo_{0}".format(len(ns))
+            arg_name = "__exprinfo_%s" % (len(ns),)
             ns[arg_name] = arg_result
             arguments.append(arg_name)
             arg_explanations.append(arg_explanation)
         for keyword in call.keywords:
             arg_explanation, arg_result = self.visit(keyword.value)
-            arg_name = "__exprinfo_{0}".format(len(ns))
+            arg_name = "__exprinfo_%s" % (len(ns),)
             ns[arg_name] = arg_result
-            keyword_source = "{0}={{0}}".format(keyword.id)
-            arguments.append(keyword_source.format(arg_name))
-            arg_explanations.append(keyword_source.format(arg_explanation))
+            keyword_source = "%s=%%s" % (keyword.id)
+            arguments.append(keyword_source % (arg_name,))
+            arg_explanations.append(keyword_source % (arg_explanation,))
         if call.starargs:
             arg_explanation, arg_result = self.visit(call.starargs)
             arg_name = "__exprinfo_star"
             ns[arg_name] = arg_result
-            arguments.append("*{0}".format(arg_name))
-            arg_explanations.append("*{0}".format(arg_explanation))
+            arguments.append("*%s" % (arg_name,))
+            arg_explanations.append("*%s" % (arg_explanation,))
         if call.kwargs:
             arg_explanation, arg_result = self.visit(call.kwargs)
             arg_name = "__exprinfo_kwds"
             ns[arg_name] = arg_result
-            arguments.append("**{0}".format(arg_name))
-            arg_explanations.append("**{0}".format(arg_explanation))
+            arguments.append("**%s" % (arg_name,))
+            arg_explanations.append("**%s" % (arg_explanation,))
         args_explained = ", ".join(arg_explanations)
-        explanation = "{0}({1})".format(func_explanation, args_explained)
+        explanation = "%s(%s)" % (func_explanation, args_explained)
         args = ", ".join(arguments)
-        source = "__exprinfo_func({0})".format(args)
+        source = "__exprinfo_func(%s)" % (args,)
         co = self._compile(source)
         try:
             result = self.frame.eval(co, **ns)
@@ -269,14 +269,14 @@ class DebugInterpreter(ast.NodeVisitor):
             except Exception:
                 is_bool = False
             if not is_bool:
-                pattern = "{0}\n{{{0} = {1}\n}}"
+                pattern = "%s\n{%s = %s\n}"
                 rep = self.frame.repr(result)
-                explanation = pattern.format(rep, explanation)
+                explanation = pattern % (rep, rep, explanation)
         return explanation, result
 
     def _is_builtin_name(self, name):
-        pattern = "{0!r} not in globals() and {0!r} not in locals()"
-        source = pattern.format(name.id)
+        pattern = "%r not in globals() and %r not in locals()"
+        source = pattern % (name.id, name.id)
         co = self._compile(source)
         try:
             return self.frame.eval(co)
@@ -287,16 +287,16 @@ class DebugInterpreter(ast.NodeVisitor):
         if not isinstance(attr.ctx, ast.Load):
             return self.generic_visit(attr)
         source_explanation, source_result = self.visit(attr.value)
-        explanation = "{0}.{1}".format(source_explanation, attr.attr)
-        source = "__exprinfo_expr.{0}".format(attr.attr)
+        explanation = "%s.%s" % (source_explanation, attr.attr)
+        source = "__exprinfo_expr.%s" % (attr.attr,)
         co = self._compile(source)
         try:
             result = self.frame.eval(co, __exprinfo_expr=source_result)
         except Exception:
             raise Failure(explanation)
         # Check if the attr is from an instance.
-        source = "{0!r} in getattr(__exprinfo_expr, '__dict__', {{}})"
-        source = source.format(attr.attr)
+        source = "%r in getattr(__exprinfo_expr, '__dict__', {})"
+        source = source % (attr.attr,)
         co = self._compile(source)
         try:
             from_instance = self.frame.eval(co, __exprinfo_expr=source_result)
@@ -304,8 +304,8 @@ class DebugInterpreter(ast.NodeVisitor):
             from_instance = True
         if from_instance:
             rep = self.frame.repr(result)
-            pattern = "{0}\n{{{0} = {1}\n}}"
-            explanation = pattern.format(rep, explanation)
+            pattern = "%s\n{%s = %s\n}"
+            explanation = pattern % (rep, rep, explanation)
         return explanation, result
 
     def visit_Assert(self, assrt):
@@ -313,7 +313,7 @@ class DebugInterpreter(ast.NodeVisitor):
         if test_explanation.startswith("False\n{False =") and \
                 test_explanation.endswith("\n"):
             test_explanation = test_explanation[15:-2]
-        explanation = "assert {0}".format(test_explanation)
+        explanation = "assert %s" % (test_explanation,)
         if not test_result:
             try:
                 raise BuiltinAssertionError
@@ -323,7 +323,7 @@ class DebugInterpreter(ast.NodeVisitor):
 
     def visit_Assign(self, assign):
         value_explanation, value_result = self.visit(assign.value)
-        explanation = "... = {0}".format(value_explanation)
+        explanation = "... = %s" % (value_explanation,)
         name = ast.Name("__exprinfo_expr", ast.Load(), assign.value.lineno,
                         assign.value.col_offset)
         new_assign = ast.Assign(assign.targets, name, assign.lineno,
