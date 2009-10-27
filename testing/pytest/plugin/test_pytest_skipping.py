@@ -59,6 +59,20 @@ def test_xfail_at_module(testdir):
     ])
     assert result.ret == 0
 
+def test_xfail_evalfalse_but_fails(testdir):
+    p = testdir.makepyfile("""
+        import py
+        @py.test.mark.xfail('False')
+        def test_fail():
+            assert 0
+    """)
+    result = testdir.runpytest(p, '--report=xfailed')
+    extra = result.stdout.fnmatch_lines([
+        "*test_xfail_evalfalse_but_fails*:4*",
+        "*1 failed*"
+    ])
+    assert result.ret == 1
+
 def test_skipif_decorator(testdir):
     p = testdir.makepyfile("""
         import py

@@ -120,18 +120,20 @@ def pytest_runtest_setup(item):
 def pytest_runtest_makereport(__multicall__, item, call):
     if call.when != "call":
         return
-    if hasattr(item, 'obj'):
-        expr, result = evalexpression(item, 'xfail')
-        if result:
-            rep = __multicall__.execute()
-            if call.excinfo:
-                rep.skipped = True
-                rep.failed = rep.passed = False
-            else:
-                rep.skipped = rep.passed = False
-                rep.failed = True
-            rep.keywords['xfail'] = True # expr
-            return rep
+    expr, result = evalexpression(item, 'xfail')
+    rep = __multicall__.execute()
+    if result:
+        if call.excinfo:
+            rep.skipped = True
+            rep.failed = rep.passed = False
+        else:
+            rep.skipped = rep.passed = False
+            rep.failed = True
+        rep.keywords['xfail'] = expr 
+    else:
+        if 'xfail' in rep.keywords:
+            del rep.keywords['xfail']
+    return rep
 
 # called by terminalreporter progress reporting
 def pytest_report_teststatus(report):
