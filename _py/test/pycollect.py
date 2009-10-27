@@ -19,7 +19,6 @@ a tree of collectors and test items that this modules provides::
 import py
 import inspect
 from _py.test.collect import configproperty, warnoldcollect
-pydir = py.path.local(py._py.__file__).dirpath()
 from _py.test import funcargs
 
 class PyobjMixin(object):
@@ -258,7 +257,7 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.cut(excludepath=pydir)
+                    ntraceback = ntraceback.cut(excludepath=py._impldir)
             traceback = ntraceback.filter()
         return traceback 
 

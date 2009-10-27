@@ -261,8 +261,8 @@ class Config(object):
         conftestroots = config.getconftest_pathlist("rsyncdirs")
         if conftestroots:
             roots.extend(conftestroots)
-        pydirs = [py.path.local(x).dirpath() 
-                    for x in (py.__file__, py._py.__file__)]
+        pydirs = [py.path.local(py.__file__).dirpath(), 
+                  py._impldir]
         roots = [py.path.local(root) for root in roots]
         for root in roots:
             if not root.check():

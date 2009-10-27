@@ -1,7 +1,7 @@
 import py
 
 pytest_plugins = "pytester"
-plugindir = py.path.local(py._py.__file__).dirpath('test', 'plugin')
+plugindir = py._impldir.join('test', 'plugin')
 from _py.test.defaultconftest import pytest_plugins as default_plugins
 
 def pytest_collect_file(path, parent):

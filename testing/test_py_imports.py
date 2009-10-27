@@ -7,6 +7,7 @@ def checksubpackage(name):
     if hasattr(obj, '__map__'): # isinstance(obj, Module):
         keys = dir(obj)
         assert len(keys) > 0
+        print (obj.__map__)
         assert getattr(obj, '__map__')  == {}
 
 def test_dir():

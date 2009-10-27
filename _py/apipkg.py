@@ -5,18 +5,21 @@ see http://pypi.python.org/pypi/apipkg
 
 (c) holger krekel, 2009 - MIT license
 """
-import os, sys
+import sys
 from types import ModuleType
 
-__version__ = "1.0b1"
+__version__ = "1.0b2"
 
 def initpkg(pkgname, exportdefs):
-    """ initialize given package from the export definitions. """
-    pkgmodule = sys.modules[pkgname]
+    """ initialize given package from the export definitions.
+        replace it in sys.modules
+    """
     mod = ApiModule(pkgname, exportdefs)
-    for name, value in mod.__dict__.items():
-         if name[:2] != "__" or name == "__all__":
-            setattr(pkgmodule, name, value)
+    oldmod = sys.modules[pkgname]
+    mod.__file__ = getattr(oldmod, '__file__', None)
+    mod.__version__ = getattr(oldmod, '__version__', None)
+    mod.__path__ = getattr(oldmod, '__path__', None)
+    sys.modules[pkgname]  = mod
 
 def importobj(importspec):
     """ return object specified by importspec."""
@@ -29,26 +32,24 @@ class ApiModule(ModuleType):
         self.__name__ = name
         self.__all__ = list(importspec)
         self.__map__ = {}
-        if parent:
-            fullname = parent.__fullname__ + "." + name
-            setattr(parent, name, self)
-        else:
-            fullname = name
-        self.__fullname__ = fullname
         for name, importspec in importspec.items():
             if isinstance(importspec, dict):
-                apimod = ApiModule(name, importspec, parent=self)
-                sys.modules[apimod.__fullname__] = apimod
+                package = '%s.%s'%(self.__name__, name)
+                apimod = ApiModule(package, importspec, parent=self)
+                sys.modules[package] = apimod
+                setattr(self, name, apimod)
             else:
                 if not importspec.count(":") == 1:
                     raise ValueError("invalid importspec %r" % (importspec,))
                 if name == '__doc__':
                     self.__doc__ = importobj(importspec)
                 else:
+                    if importspec[0] == '.':
+                        importspec = self.__name__ + importspec
                     self.__map__[name] = importspec
 
     def __repr__(self):
-        return '<ApiModule %r>' % (self.__fullname__,)
+        return '<ApiModule %r>' % (self.__name__,)
 
     def __getattr__(self, name):
         try:

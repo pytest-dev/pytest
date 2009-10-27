@@ -26,6 +26,9 @@ _py.apipkg.initpkg(__name__, dict(
     # access to all posix errno's as classes
     error = '_py.error:error',
 
+    _impldir = '_py._metainfo:impldir',
+    version = 'py:__version__', # backward compatibility
+
     _com = {
         'Registry': '_py._com:Registry',
         'MultiCall':  '_py._com:MultiCall',

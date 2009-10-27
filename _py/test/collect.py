@@ -4,7 +4,6 @@ Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
-pydir = py.path.local(py._py.__file__).dirpath()
 
 def configproperty(name):
     def fget(self):
@@ -336,7 +335,7 @@ class Collector(Node):
             path = self.fspath 
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:
-                ntraceback = ntraceback.cut(excludepath=pydir)
+                ntraceback = ntraceback.cut(excludepath=py._impldir)
             traceback = ntraceback.filter()
         return traceback 
 
