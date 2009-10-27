@@ -1,7 +1,7 @@
 """nose-compatibility plugin: allow to run nose test suites natively. 
 
 This is an experimental plugin for allowing to run tests written 
-in 'nosetests' style with py.test.  
+in 'nosetests style with py.test.   
 
 Usage
 -------------
@@ -10,26 +10,32 @@ type::
 
     py.test  # instead of 'nosetests'
 
-and you should be able to run nose style tests.  You will of course 
-get py.test style reporting and its feature set. 
+and you should be able to run nose style tests and at the same
+time can make full use of py.test's capabilities.  
 
-Issues? 
-----------------
+Supported nose Idioms
+----------------------
 
-If you find issues or have suggestions please run:: 
+* setup and teardown at module/class/method level
+* SkipTest exceptions and markers 
+* setup/teardown decorators
+* yield-based tests and their setup 
+* general usage of nose utilities 
 
-    py.test --pastebin=all 
-
-and send the resulting URL to a some contact channel. 
-
-Known issues 
-------------------
+Unsupported idioms / issues
+----------------------------------
 
 - nose-style doctests are not collected and executed correctly,
   also fixtures don't work. 
 
 - no nose-configuration is recognized 
 
+If you find other issues or have suggestions please run:: 
+
+    py.test --pastebin=all 
+
+and send the resulting URL to a py.test contact channel,
+at best to the mailing list. 
 """
 import py
 import inspect
@@ -66,11 +72,14 @@ def pytest_runtest_setup(item):
                 if isinstance(gen.parent, py.test.collect.Instance):
                     call_optional(gen.parent.obj, 'setup')
                 gen._nosegensetup = True
-        call_optional(item.obj, 'setup')
+        if not call_optional(item.obj, 'setup'):
+            # call module level setup if there is no object level one
+            call_optional(item.parent.obj, 'setup')
 
 def pytest_runtest_teardown(item):
     if isinstance(item, py.test.collect.Function):
-        call_optional(item.obj, 'teardown')
+        if not call_optional(item.obj, 'teardown'):
+            call_optional(item.parent.obj, 'teardown')
         #if hasattr(item.parent, '_nosegensetup'):
         #    #call_optional(item._nosegensetup, 'teardown')
         #    del item.parent._nosegensetup
@@ -82,4 +91,9 @@ def pytest_make_collect_report(collector):
 def call_optional(obj, name):
     method = getattr(obj, name, None)
     if method:
-        method()
+        argspec = inspect.getargspec(method)
+        if argspec[0] == ['self']:
+            argspec = argspec[1:]
+        if not any(argspec):
+            method()
+            return True

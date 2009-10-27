@@ -1,6 +1,5 @@
 
-import py
-import sys
+import os, sys
 WIDTH = 75
 
 plugins = [
@@ -269,6 +268,9 @@ class PluginDoc(RestWriter):
             self.Print(opt.help, indent=4)
 
 if __name__ == "__main__":
+    if os.path.exists("py"):
+        sys.path.insert(0, os.getcwd())
+    import py
     _config = py.test.config
     _config.parse([])
     _config.pluginmanager.do_configure(_config)
