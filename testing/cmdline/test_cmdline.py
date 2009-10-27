@@ -38,12 +38,14 @@ class TestPyCleanup:
         result = testdir.runpybin("py.cleanup", tmpdir)
         assert not pyc.check()
 
-    def test_dir_remove(self, testdir, tmpdir):
-        p = tmpdir.mkdir("a")
-        result = testdir.runpybin("py.cleanup", tmpdir)
+    def test_dir_remove_simple(self, testdir, tmpdir):
+        subdir = tmpdir.mkdir("subdir")
+        p = subdir.ensure("file")
+        result = testdir.runpybin("py.cleanup", "-d", tmpdir)
         assert result.ret == 0
-        assert p.check()
+        assert subdir.check()
+        p.remove()
+        p = tmpdir.mkdir("hello")
         result = testdir.runpybin("py.cleanup", tmpdir, '-d')
         assert result.ret == 0
-        assert not p.check()
-        
+        assert not subdir.check()

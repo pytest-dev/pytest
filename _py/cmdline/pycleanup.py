@@ -35,7 +35,8 @@ def main():
     if options.removedir:
         for x in path.visit(lambda x: x.check(dir=1), 
                             lambda x: x.check(dotfile=0, link=0)):
-            remove(x, options)
+            if not x.listdir():
+                remove(x, options)
 
 def remove(path, options):
     if options.dryrun:
