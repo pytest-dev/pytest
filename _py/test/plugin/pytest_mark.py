@@ -129,7 +129,9 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     if isinstance(item, py.test.collect.Function):
         cls = collector.getparent(py.test.collect.Class)
         mod = collector.getparent(py.test.collect.Module)
-        func = getattr(item.obj, 'im_func', item.obj)
+        func = item.obj
+        func = getattr(func, '__func__', func) # py3
+        func = getattr(func, 'im_func', func)  # py2
         for parent in [x for x in (mod, cls) if x]:
             marker = getattr(parent.obj, 'pytestmark', None)
             if isinstance(marker, MarkerDecorator):

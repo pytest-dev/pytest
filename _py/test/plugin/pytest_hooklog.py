@@ -29,3 +29,5 @@ def pytest_unconfigure(config):
         del config.hook.__dict__['_performcall'] 
     except KeyError:
         pass
+    else:
+        config._hooklogfile.close()

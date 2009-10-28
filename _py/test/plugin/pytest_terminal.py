@@ -272,7 +272,7 @@ class TerminalReporter:
             items = self.config.pluginmanager._name2plugin.items()
             for name, plugin in items:
                 repr_plugin = repr(plugin)
-                fullwidth = getattr(self._tw, 'fullwidth', sys.maxint)
+                fullwidth = getattr(self._tw, 'fullwidth', 65000)
                 if len(repr_plugin)+26 > fullwidth:
                     repr_plugin = repr_plugin[:(fullwidth-30)] + '...'
                 self.write_line("    %-20s: %s" %(name, repr_plugin))
