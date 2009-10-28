@@ -120,6 +120,11 @@ class TestPickleChannelFunctional:
     def setup_class(cls):
         cls.gw = execnet.PopenGateway()
         cls.gw.remote_init_threads(5)
+        # we need the remote test code to import 
+        # the same test module here
+        cls.gw.remote_exec(
+            "import py ; py.path.local(%r).pyimport()" %(__file__)
+        )
 
     def test_popen_send_instance(self):
         channel = self.gw.remote_exec("""
