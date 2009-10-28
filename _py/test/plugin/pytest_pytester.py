@@ -70,6 +70,12 @@ class TmpTestdir:
             py.std.sys.path.remove(p)
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
+        # delete modules that have been loaded from tmpdir
+        for name, mod in list(sys.modules.items()):
+            if mod:
+                fn = getattr(mod, '__file__', None)
+                if fn and fn.startswith(str(self.tmpdir)):
+                    del sys.modules[name]
 
     def getreportrecorder(self, obj):
         if isinstance(obj, py._com.Registry):

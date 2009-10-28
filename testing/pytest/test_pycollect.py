@@ -16,6 +16,18 @@ class TestModule:
         py.test.raises(ImportError, modcol.collect)
         py.test.raises(ImportError, modcol.run)
 
+    def test_import_duplicate(self, testdir):
+        a = testdir.mkdir("a")
+        b = testdir.mkdir("b")
+        p = a.ensure("test_whatever.py")
+        p.pyimport()
+        del py.std.sys.modules['test_whatever']
+        b.ensure("test_whatever.py")
+        result = testdir.runpytest()
+        s = result.stdout.str()
+        assert 'mismatch' in s
+        assert 'test_whatever' in s
+
     def test_syntax_error_in_module(self, testdir):
         modcol = testdir.getmodulecol("this is a syntax error") 
         py.test.raises(SyntaxError, modcol.collect)

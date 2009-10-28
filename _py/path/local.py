@@ -516,7 +516,16 @@ class LocalPath(FSBase):
                     self._prependsyspath(self.dirpath())
                 modname = self.purebasename
             mod = __import__(modname, None, None, ['__doc__'])
-            #self._module = mod
+            modfile = mod.__file__
+            if modfile[-4:] in ('.pyc', '.pyo'):
+                modfile = modfile[:-1]
+            elif modfile.endswith('$py.class'):
+                modfile = modfile[:-9] + '.py'
+            if not self.samefile(modfile):
+                raise EnvironmentError("mismatch:\n"
+                "imported module %r\n"
+                "does not stem from %r\n" 
+                "maybe __init__.py files are missing?" % (mod, str(self)))
             return mod
         else:
             try:

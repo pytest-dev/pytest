@@ -336,6 +336,27 @@ class TestImport:
         from xxxpackage import module1 
         assert module1 is mod1
 
+    def test_pyimport_check_filepath_consistency(self, monkeypatch, tmpdir):
+        name = 'pointsback123'
+        ModuleType = type(py.std.sys)
+        p = tmpdir.ensure(name + '.py')
+        for ending in ('.pyc', '$py.class', '.pyo'):
+            mod = ModuleType(name)
+            pseudopath = tmpdir.ensure(name+ending)
+            mod.__file__ = str(pseudopath)
+            monkeypatch.setitem(sys.modules, name, mod)
+            newmod = p.pyimport()
+            assert mod == newmod
+        monkeypatch.undo()
+        mod = ModuleType(name)
+        pseudopath = tmpdir.ensure(name+"123.py")
+        mod.__file__ = str(pseudopath)
+        monkeypatch.setitem(sys.modules, name, mod)
+        excinfo = py.test.raises(EnvironmentError, "p.pyimport()")
+        s = str(excinfo.value)
+        assert "mismatch" in s 
+        assert name+"123" in s 
+
 def test_pypkgdir(tmpdir):
     pkg = tmpdir.ensure('pkg1', dir=1)
     pkg.ensure("__init__.py")
