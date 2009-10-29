@@ -11,54 +11,51 @@ from types import ModuleType
 __version__ = "1.0b2"
 
 def initpkg(pkgname, exportdefs):
-    """ initialize given package from the export definitions.
-        replace it in sys.modules
-    """
-    mod = ApiModule(pkgname, exportdefs)
+    """ initialize given package from the export definitions. """
+    mod = ApiModule(pkgname, exportdefs, implprefix=pkgname)
     oldmod = sys.modules[pkgname]
     mod.__file__ = getattr(oldmod, '__file__', None)
     mod.__version__ = getattr(oldmod, '__version__', None)
     mod.__path__ = getattr(oldmod, '__path__', None)
     sys.modules[pkgname]  = mod
 
-def importobj(importspec):
-    """ return object specified by importspec."""
-    modpath, attrname = importspec.split(":")
+def importobj(modpath, attrname):
     module = __import__(modpath, None, None, ['__doc__'])
     return getattr(module, attrname)
 
 class ApiModule(ModuleType):
-    def __init__(self, name, importspec, parent=None):
+    def __init__(self, name, importspec, implprefix=None):
         self.__name__ = name
         self.__all__ = list(importspec)
         self.__map__ = {}
+        self.__implprefix__ = implprefix or name
         for name, importspec in importspec.items():
             if isinstance(importspec, dict):
-                package = '%s.%s'%(self.__name__, name)
-                apimod = ApiModule(package, importspec, parent=self)
-                sys.modules[package] = apimod
+                subname = '%s.%s'%(self.__name__, name)
+                apimod = ApiModule(subname, importspec, implprefix)
+                sys.modules[subname] = apimod
                 setattr(self, name, apimod)
             else:
-                if not importspec.count(":") == 1:
-                    raise ValueError("invalid importspec %r" % (importspec,))
+                modpath, attrname = importspec.split(':')
+                if modpath[0] == '.':
+                    modpath = implprefix + modpath
                 if name == '__doc__':
-                    self.__doc__ = importobj(importspec)
+                    self.__doc__ = importobj(modpath, attrname)
                 else:
-                    if importspec[0] == '.':
-                        importspec = self.__name__ + importspec
-                    self.__map__[name] = importspec
+                    self.__map__[name] = (modpath, attrname)
 
     def __repr__(self):
         return '<ApiModule %r>' % (self.__name__,)
 
     def __getattr__(self, name):
         try:
-            importspec = self.__map__.pop(name)
+            modpath, attrname = self.__map__[name]
         except KeyError:
             raise AttributeError(name)
         else:
-            result = importobj(importspec)
+            result = importobj(modpath, attrname)
             setattr(self, name, result)
+            del self.__map__[name]
             return result
 
     def __dict__(self):
