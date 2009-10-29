@@ -70,7 +70,7 @@ class PosixPath(common.PathBase):
 
     def samefile(self, other):
         """ return True if other refers to the same stat object as self. """
-        return py.std.os.path.samefile(str(self), str(other))
+        return py.error.checked_call(os.path.samefile, str(self), str(other))
 
 def getuserid(user):
     import pwd

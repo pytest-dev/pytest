@@ -42,7 +42,7 @@ def test_unicode_encoding():
         l = []
         tw = py.io.TerminalWriter(l.append, encoding=encoding)
         tw.line(msg)
-        assert l[0] == msg.encode(encoding)
+        assert l[0].strip() == msg.encode(encoding)
 
 class BaseTests:
     def test_line(self):    

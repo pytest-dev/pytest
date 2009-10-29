@@ -368,14 +368,19 @@ def test_homedir():
     homedir = py.path.local._gethomedir()
     assert homedir.check(dir=1)
 
+def test_samefile(tmpdir):
+    assert tmpdir.samefile(tmpdir)
+    p = tmpdir.ensure("hello")
+    assert p.samefile(p) 
+
 class TestWINLocalPath:
     pytestmark = py.test.mark.skipif("sys.platform != 'win32'")
 
-    def test_owner_group_not_implemented(self):
+    def test_owner_group_not_implemented(self, path1):
         py.test.raises(NotImplementedError, "path1.stat().owner")
         py.test.raises(NotImplementedError, "path1.stat().group")
 
-    def test_chmod_simple_int(self):
+    def test_chmod_simple_int(self, path1):
         py.builtin.print_("path1 is", path1)
         mode = path1.stat().mode
         # Ensure that we actually change the mode to something different.
@@ -388,18 +393,18 @@ class TestWINLocalPath:
             path1.chmod(mode)
             assert path1.stat().mode == mode
 
-    def test_path_comparison_lowercase_mixed(self):
+    def test_path_comparison_lowercase_mixed(self, path1):
         t1 = path1.join("a_path")
         t2 = path1.join("A_path")
         assert t1 == t1
         assert t1 == t2
         
-    def test_relto_with_mixed_case(self):
+    def test_relto_with_mixed_case(self, path1):
         t1 = path1.join("a_path", "fiLe")
         t2 = path1.join("A_path")
         assert t1.relto(t2) == "fiLe"
 
-    def test_allow_unix_style_paths(self):
+    def test_allow_unix_style_paths(self, path1):
         t1 = path1.join('a_path')
         assert t1 == str(path1) + '\\a_path'
         t1 = path1.join('a_path/')
@@ -407,7 +412,7 @@ class TestWINLocalPath:
         t1 = path1.join('dir/a_path')
         assert t1 == str(path1) + '\\dir\\a_path'
 
-    def test_sysfind_in_currentdir(self):
+    def test_sysfind_in_currentdir(self, path1):
         cmd = py.path.local.sysfind('cmd')
         root = cmd.new(dirname='', basename='') # c:\ in most installations
         old = root.chdir()
@@ -419,11 +424,6 @@ class TestWINLocalPath:
 
 class TestPOSIXLocalPath:
     pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
-
-    def test_samefile(self, tmpdir):
-        assert tmpdir.samefile(tmpdir)
-        p = tmpdir.ensure("hello")
-        assert p.samefile(p) 
 
     def test_hardlink(self, tmpdir):
         linkpath = tmpdir.join('test')

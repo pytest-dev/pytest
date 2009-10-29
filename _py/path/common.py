@@ -300,6 +300,10 @@ newline will be removed from the end of each line. """
             else:
                 res.sort()
 
+    def samefile(self, other):
+        """ return True if other refers to the same stat object as self. """
+        return self.strpath == str(other)
+
 class FNMatcher:
     def __init__(self, pattern):
         self.pattern = pattern

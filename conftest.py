@@ -1,6 +1,15 @@
+import py
+
 pytest_plugins = '_pytest doctest pytester'.split()
 
-rsyncdirs = ['conftest.py', 'py', 'doc', 'testing']
+
+rsyncdirs = ['conftest.py', 'bin', 'py', 'doc', 'testing']
+try:
+    import execnet
+except ImportError:
+    pass
+else:
+    rsyncdirs.append(str(py.path.local(execnet.__file__).dirpath()))
 
 import py
 def pytest_addoption(parser):
