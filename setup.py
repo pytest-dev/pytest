@@ -1,15 +1,19 @@
 """py lib / py.test setup.py file"""
 import os, sys
+if sys.version_info >= (3,0):
+    from distribute_setup import use_setuptools
+    use_setuptools()
 from setuptools import setup
-long_description = """
 
+long_description = """
 py.test and pylib: rapid testing and development utils
 
 - `py.test`_: cross-project testing tool with many advanced features
 - `py.path`_: path abstractions over local and subversion files
 - `py.code`_: dynamic code compile and traceback printing support
 
-Compatibility: Linux, Win32, OSX, Python versions 2.4 through to 3.1.
+Platforms: Linux, Win32, OSX
+Interpreters: Python versions 2.4 through to 3.1, Jython 2.5.1. 
 For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pylib.org/test.html
@@ -17,7 +21,6 @@ For questions please check out http://pylib.org/contact.html
 .. _`py.code`: http://pylib.org/code.html
 
 (c) Holger Krekel and others, 2009
-
 """
 trunk = None
 def main():
@@ -58,30 +61,12 @@ def main():
                   '_py.io',
                   '_py.log',
                   '_py.path',
-                  '_py.path.gateway',
                   '_py.process',
                   '_py.test',
                   '_py.test.dist',
                   '_py.test.looponfail',
                   '_py.test.plugin',],
-        package_data={'py': ['bin/_findpy.py',
-                             'bin/env.cmd',
-                             'bin/env.py',
-                             'bin/py.cleanup',
-                             'bin/py.convert_unittest',
-                             'bin/py.countloc',
-                             'bin/py.lookup',
-                             'bin/py.svnwcrevert',
-                             'bin/py.test',
-                             'bin/py.which',
-                             'bin/win32/py.cleanup.cmd',
-                             'bin/win32/py.convert_unittest.cmd',
-                             'bin/win32/py.countloc.cmd',
-                             'bin/win32/py.lookup.cmd',
-                             'bin/win32/py.svnwcrevert.cmd',
-                             'bin/win32/py.test.cmd',
-                             'bin/win32/py.which.cmd',],
-        zip_safe=True,
+        zip_safe=False,
     )
 
 if __name__ == '__main__':
