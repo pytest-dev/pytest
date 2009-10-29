@@ -37,11 +37,9 @@ _py.apipkg.initpkg(__name__, dict(
     },
     cmdline = {
         'pytest':     '_py.cmdline.pytest:main',
-        'pyrest':     '_py.cmdline.pyrest:main',
         'pylookup':   '_py.cmdline.pylookup:main',
         'pycountloc': '_py.cmdline.pycountlog:main',
         'pytest':     '_py.test.cmdline:main',
-        'pyrest':     '_py.cmdline.pyrest:main',
         'pylookup':   '_py.cmdline.pylookup:main',
         'pycountloc': '_py.cmdline.pycountloc:main',
         'pycleanup':  '_py.cmdline.pycleanup:main',

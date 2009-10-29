@@ -1,5 +1,6 @@
 import py
-from _py.rest.resthtml import convert_rest_html, strip_html_header 
+
+from _py.test.plugin.pytest_restdoc import convert_rest_html, strip_html_header
 
 html = py.xml.html 
 
@@ -284,5 +285,3 @@ def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
     if tolist_diff:
         return sep.join([back,]*(backcount-1) + tolist_diff)
     return sep.join([back,]*(backcount) + tolist[commonindex:])
-
-

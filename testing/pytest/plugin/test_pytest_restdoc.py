@@ -45,7 +45,8 @@ class TestDoctest:
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")
         assert request.module.__name__ == __name__
-        testdir.makepyfile(confrest="from _py.rest.resthtml import Project")
+        testdir.makepyfile(confrest=
+            "from _py.test.plugin.pytest_restdoc import Project")
         for p in testdir.plugins:
             if p == globals():
                 break

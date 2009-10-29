@@ -1,6 +1,11 @@
 Changes between 1.0.2 and '1.1.0b1'
 =====================================
 
+* remove py.rest tool and internal namespace - it was
+  never really advertised and can still be used with
+  the old release if needed.  If there is interest 
+  it could be revived into its own tool i guess.
+
 * fix issue48 and issue59: raise an Error if the module
   from an imported test file does not seem to come from 
   the filepath - avoids "same-name" confusion that has
