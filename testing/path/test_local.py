@@ -338,7 +338,7 @@ class TestImport:
 
     def test_pyimport_check_filepath_consistency(self, monkeypatch, tmpdir):
         name = 'pointsback123'
-        ModuleType = type(py.std.sys)
+        ModuleType = type(py.std.os)
         p = tmpdir.ensure(name + '.py')
         for ending in ('.pyc', '$py.class', '.pyo'):
             mod = ModuleType(name)

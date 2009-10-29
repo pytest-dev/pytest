@@ -542,14 +542,15 @@ class LocalPath(FSBase):
                     raise
                 return mod
 
-    def sysexec(self, *argv):
+    def sysexec(self, *argv, **popen_opts):
         """ return stdout text from executing a system child process,
             where the 'self' path points to executable. 
             The process is directly invoked and not through a system shell. 
         """
         from subprocess import Popen, PIPE
         argv = map(str, argv)
-        proc = Popen([str(self)] + list(argv), stdout=PIPE, stderr=PIPE)
+        popen_opts['stdout'] = popen_opts['stderr'] = PIPE
+        proc = Popen([str(self)] + list(argv), **popen_opts)
         stdout, stderr = proc.communicate()
         ret = proc.wait()
         if py.builtin._isbytes(stdout):
