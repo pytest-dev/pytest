@@ -1,10 +1,12 @@
 import py
 import sys
 
-binpath = py.path.local(py.__file__).dirpath("bin")
-binwinpath = binpath.join("win32")
 
 def setup_module(mod):
+    mod.binpath = py._impldir.dirpath('bin')
+    if not mod.binpath.check():
+        py.test.skip("bin-source scripts not installed")
+    mod.binwinpath = binpath.join("win32")
     mod.tmpdir = py.test.ensuretemp(__name__)
     mod.iswin32 = sys.platform == "win32"
 
