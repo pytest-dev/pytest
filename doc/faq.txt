@@ -125,7 +125,7 @@ and implement the `parametrization scheme of your choice`_.
 py.test interaction with other packages
 ===============================================
 
-What's up with multiprocess on Windows? 
+Issues with py.test, multiprocess and setuptools? 
 ------------------------------------------------------------
 
 On windows the multiprocess package will instantiate sub processes 
@@ -133,13 +133,22 @@ by pickling and thus implicitely re-import a lot of local modules.
 Unfortuantely, setuptools-0.6.11 does not ``if __name__=='__main__'`` 
 protect its generated command line script.  This leads to infinite
 recursion when running a test that instantiates Processes.
-There are two workarounds: 
+There are these workarounds: 
 
 * `install Distribute`_ as a drop-in replacement for setuptools 
-  and re-install py.test 
+  and install py.test 
 
 * `directly use a checkout`_ which avoids all setuptools/Distribute
   installation 
+
+If those options are not available to you, you may also manually
+fix the script that is created by setuptools by inserting an
+``if __name__ == '__main__'``.  Or you can create a "pytest.py" 
+script with this content and invoke that with the python version::
+
+    import py
+    if __name__ == '__main__':
+        py.cmdline.pytest()
 
 .. _`directly use a checkout`: install.html#directly-use-a-checkout
 
