@@ -17,3 +17,4 @@ syntax:glob
 build/
 dist/
 py.egg-info
+issue/

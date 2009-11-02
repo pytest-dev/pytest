@@ -3,17 +3,17 @@ py.path
 =======
 
 The 'py' lib provides a uniform high-level api to deal with filesystems
-and filesystem-like interfaces: :api:`py.path`.  It aims to offer a central
+and filesystem-like interfaces: ``py.path``.  It aims to offer a central
 object to fs-like object trees (reading from and writing to files, adding
 files/directories, examining the types and structure, etc.), and out-of-the-box
 provides a number of implementations of this API.
 
-Path implementations provided by :api:`py.path`
+Path implementations provided by ``py.path``
 ===============================================
 
 .. _`local`: 
 
-:api:`py.path.local`
+``py.path.local``
 --------------------
 
 The first and most obvious of the implementations is a wrapper around a local
@@ -21,8 +21,8 @@ filesystem. It's just a bit nicer in usage than the regular Python APIs, and
 of course all the functionality is bundled together rather than spread over a
 number of modules.
 
-Example usage, here we use the :api:`py.test.ensuretemp()` function to create
-a :api:`py.path.local` object for us (which wraps a directory):
+Example usage, here we use the ``py.test.ensuretemp()`` function to create
+a ``py.path.local`` object for us (which wraps a directory):
 
 .. sourcecode:: pycon
 
@@ -40,17 +40,17 @@ a :api:`py.path.local` object for us (which wraps a directory):
   >>> foofile.read(1)
   'b'
 
-:api:`py.path.svnurl` and :api:`py.path.svnwc`
+``py.path.svnurl` and :api:`py.path.svnwc``
 ----------------------------------------------
 
-Two other :api:`py.path` implementations that the py lib provides wrap the
+Two other ``py.path`` implementations that the py lib provides wrap the
 popular `Subversion`_ revision control system: the first (called 'svnurl')
 by interfacing with a remote server, the second by wrapping a local checkout.
 Both allow you to access relatively advanced features such as metadata and
 versioning, and both in a way more user-friendly manner than existing other
 solutions.
 
-Some example usage of :api:`py.path.svnurl`:
+Some example usage of ``py.path.svnurl``:
 
 .. sourcecode:: pycon
 
@@ -65,7 +65,7 @@ Some example usage of :api:`py.path.svnurl`:
   >>> time.strftime('%Y-%m-%d', time.gmtime(firstentry.date))
   '2004-10-02'
 
-Example usage of :api:`py.path.svnwc`:
+Example usage of ``py.path.svnwc``:
 
 .. sourcecode:: pycon
 
@@ -125,7 +125,7 @@ specific directory.
 Working with Paths 
 .......................
 
-This example shows the :api:`py.path` features to deal with
+This example shows the ``py.path`` features to deal with
 filesystem paths Note that the filesystem is never touched,
 all operations are performed on a string level (so the paths
 don't have to exist, either):
@@ -154,7 +154,7 @@ don't have to exist, either):
   >>> p4.purebasename == "bar"
   True
 
-This should be possible on every implementation of :api:`py.path`, so
+This should be possible on every implementation of ``py.path``, so
 regardless of whether the implementation wraps a UNIX filesystem, a Windows
 one, or a database or object tree, these functions should be available (each
 with their own notion of path seperators and dealing with conversions, etc.).
@@ -189,7 +189,7 @@ Setting svn-properties
 .......................
 
 As an example of 'uncommon' methods, we'll show how to read and write
-properties in an :api:`py.path.svnwc` instance:
+properties in an ``py.path.svnwc`` instance:
 
 .. sourcecode:: pycon
 
@@ -254,7 +254,7 @@ to provide this choice (and getting rid
 of platform-dependencies as much as possible). 
 
 There is some experimental small approach 
-(:source:`py/path/gateway/`) aiming at having
+(``py/path/gateway/``) aiming at having
 a convenient Remote Path implementation. 
 
 There are various hacks out there to have

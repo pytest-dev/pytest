@@ -5,15 +5,11 @@
 Quickstart
 ==================
 
-.. _here: ../download.html#no-setuptools
+.. _here: ../install.html
 
-
-With a `setuptools installation`_  (otherwise see here_) you can type::
+If you have a version of ``easy_install`` (otherwise see here_) just type::
 
     easy_install -U py 
-
-On Linux systems you may need to execute this as the superuser and
-on Windows you might need to write down the full path to ``easy_install``. 
 
 Now create a file ``test_sample.py`` with the following content: 
 
@@ -63,7 +59,7 @@ a progress report and important details of the failure.
 
 .. _`contact`: ../contact.html
 .. _`automatically collected`: features.html#autocollect
-.. _download: ../download.html
+.. _install: ../install.html
 .. _features: features.html
 .. _tutorials: talks.html
 

@@ -7,23 +7,29 @@
 
     Latest Release, see `PyPI project page`_
 
-using easy_install 
+using easy_install (via Distribute or setuptools)
 ===================================================
 
-With a working `setuptools installation`_ or `distribute installation`_ 
+It is recommended to use `Distribute for installation`_ as a drop-in
+replacement for setuptools_. While setuptools should work well on
+Python2 versions, `Distribute`_ allows to install py.test on Python3 
+and it avoids issue on Windows.  With either packaging system 
 you can type::
 
     easy_install -U py 
 
-to get the latest release of the py lib.  The ``-U`` switch
+to get the latest release of the py lib and py.test.  The ``-U`` switch
 will trigger an upgrade if you already have an older version installed. 
 On Linux systems you may need to execute the command as superuser and
 on Windows you might need to write down the full path to ``easy_install``. 
+
 The py lib and its tools are expected to work well on Linux,
 Windows and OSX, Python versions 2.4, 2.5, 2.6 through to
-the Python3 versions 3.0 and 3.1. 
+the Python3 versions 3.0 and 3.1.  Jython 
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
+.. _`Distribute`: 
+.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
 .. _`distribute installation`: http://pypi.python.org/pypi/distribute
 .. _checkout:
 .. _tarball:
@@ -39,20 +45,22 @@ and documentation source with mercurial_::
 
 This currrently contains a 1.0.x branch and the 
 default 'trunk' branch where mainline development 
-takes place.  There also is a readonly subversion
-checkout available::
+takes place. 
 
-    svn co https://codespeak.net/svn/py/dist
+.. There also is a readonly subversion
+   checkout available which contains the latest release::
+   svn co https://codespeak.net/svn/py/dist
 
-You can also go to the python package index and
+You can go to the python package index and
 download and unpack a TAR file::
 
     http://pypi.python.org/pypi/py/
 
-activating checkout with setuptools 
+
+activating a checkout with setuptools 
 --------------------------------------------
 
-With a working `setuptools installation`_ you can issue::
+With a working `Distribute`_ or setuptools_ installation you can type::
 
     python setup.py develop 
 
@@ -60,14 +68,13 @@ in order to work with the tools and the lib of your checkout.
 
 .. _`no-setuptools`:
 
-activating a checkout or tarball without setuptools 
+.. _`directly use a checkout`: 
+
+directly use a checkout or tarball
 -------------------------------------------------------------
 
-To import the py lib the ``py`` package directory needs to
-be on the ``$PYTHONPATH``.  If you exexute scripts directly
-from ``py/bin/`` or ``py\bin\win32`` they will find their
-containing py lib automatically. 
-
+Once you got yourself a checkout_ or tarball_ you only need to 
+set ``PYTHONPATH`` and ``PATH`` environment variables. 
 It is usually a good idea to add the parent directory of the ``py`` package 
 directory to your ``PYTHONPATH`` and ``py/bin`` or ``py\bin\win32`` to your 
 system wide ``PATH`` settings.  There are helper scripts that set ``PYTHONPATH`` and ``PATH`` on your system: 
@@ -75,12 +82,12 @@ system wide ``PATH`` settings.  There are helper scripts that set ``PYTHONPATH``
 on windows execute::
 
     # inside autoexec.bat or shell startup
-    c:\\path\to\checkout\py\bin\env.cmd
+    c:\\path\to\checkout\bin\env.cmd
 
 on linux/OSX add this to your shell initialization:: 
 
     # inside .bashrc 
-    eval `python ~/path/to/checkout/py/bin/env.py` 
+    eval `python ~/path/to/checkout/bin/env.py` 
 
 both of which which will get you good settings 
 for ``PYTHONPATH`` and ``PATH``.
@@ -89,7 +96,7 @@ for ``PYTHONPATH`` and ``PATH``.
 note: scripts look for "nearby" py-lib 
 -----------------------------------------------------
 
-Note that the `command line scripts`_ will look 
+Note that all `command line scripts`_ will look 
 for "nearby" py libs, so if you have a layout like this::
 
     mypkg/
@@ -119,5 +126,5 @@ of questions or need for changes.
 
 .. _`RPM`: http://translate.sourceforge.net/releases/testing/fedora/pylib-0.9.2-1.fc9.noarch.rpm
 
-.. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
+.. _`setuptools`: http://pypi.python.org/pypi/setuptools
 

@@ -5,7 +5,7 @@ Miscellaneous features of the py lib
 Mapping the standard python library into py 
 ===========================================
 
-The :api:`py.std` object allows lazy access to 
+The ``py.std`` object allows lazy access to 
 standard library modules.  For example, to get to the print-exception
 functionality of the standard library you can write:: 
 
@@ -21,9 +21,9 @@ Support for interaction with system utilities/binaries
 ======================================================
 
 Currently, the py lib offers two ways to interact with
-system executables. :api:`py.process.cmdexec()` invokes
+system executables. ``py.process.cmdexec()`` invokes
 the shell in order to execute a string.  The other
-one, :api:`py.path.local`'s 'sysexec()' method lets you 
+one, ``py.path.local``'s 'sysexec()' method lets you 
 directly execute a binary. 
 
 Both approaches will raise an exception in case of a return-
@@ -87,28 +87,7 @@ right version::
     binsvn = py.path.local.sysfind('svn', checker=mysvn) 
 
 
-
 Cross-Python Version compatibility helpers
 =============================================
 
-sources: 
-
-  * :source:`py/builtin/`
-
-The compat and builtin namespaces help to write code using newer python features on older python interpreters. 
-
-:api:`py.builtin`
------------------
-
-:api:`py.builtin` provides builtin functions/types that were added in later Python
-versions. If the used Python version used does not provide these builtins the
-py lib provides some reimplementations. These currently are:
-
- * enumerate
- * reversed
- * sorted
- * BaseException
- * set and frozenset (using either the builtin, if available, or the sets
-   module)
-
-:api:`py.builtin.BaseException` is just ``Exception`` before Python 2.5.
+The ``py.builtin`` namespace provides a number of helpers that help to write python code compatible across Python interpreters, mainly Python2 and Python3.  Type ``help(py.builtin)`` on a Python prompt for a the selection of builtins.

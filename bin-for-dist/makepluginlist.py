@@ -217,7 +217,7 @@ class PluginDoc(RestWriter):
         self.links.append(('plugins', 'index.html'))
         self.links.append(('get in contact', '../../contact.html'))
         self.links.append(('checkout the py.test development version', 
-            '../../download.html#checkout'))
+            '../../install.html#checkout'))
        
         if 0: # this breaks the page layout and makes large doc files
             #self.h2("plugin source code") 

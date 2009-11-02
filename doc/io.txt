@@ -9,10 +9,10 @@ execution of a program.
 IO Capturing examples
 ===============================================
 
-:api:`py.io.StdCapture`
+``py.io.StdCapture``
 ---------------------------
 
-Basic Example: 
+Basic Example::
 
   >>> import py
   >>> capture = py.io.StdCapture()
@@ -21,7 +21,7 @@ Basic Example:
   >>> out.strip() == "hello"
   True
 
-For calling functions you may use a shortcut: 
+For calling functions you may use a shortcut:: 
 
   >>> import py
   >>> def f(): print "hello"
@@ -29,14 +29,14 @@ For calling functions you may use a shortcut:
   >>> out.strip() == "hello"
   True
 
-:api:`py.io.StdCaptureFD`
+``py.io.StdCaptureFD``
 ---------------------------
 
 If you also want to capture writes to the stdout/stderr
-filedescriptors you may invoke: 
+filedescriptors you may invoke::
 
   >>> import py, sys
-  >>> capture = py.io.StdCaptureFD()
+  >>> capture = py.io.StdCaptureFD(out=False, in_=False)
   >>> sys.stderr.write("world")
   >>> out,err = capture.reset()
   >>> err
