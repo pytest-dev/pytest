@@ -137,7 +137,7 @@ def test_assert_with_brokenrepr_arg():
 class TestView:
 
     def setup_class(cls):
-        cls.View = py.test.importorskip("_py.code._assertionold").View
+        cls.View = py.test.importorskip("py.impl.code._assertionold").View
 
     def test_class_dispatch(self):
         ### Use a custom class hierarchy with existing instances

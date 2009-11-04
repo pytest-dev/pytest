@@ -1,5 +1,5 @@
 import py, sys
-from _py.test import funcargs
+from py.impl.test import funcargs
 
 def test_getfuncargnames():
     def f(): pass

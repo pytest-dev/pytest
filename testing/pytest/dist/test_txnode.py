@@ -1,7 +1,7 @@
 
 import py
 import execnet
-from _py.test.dist.txnode import TXNode
+from py.impl.test.dist.txnode import TXNode
 queue = py.builtin._tryimport("queue", "Queue")
 Queue = queue.Queue
 

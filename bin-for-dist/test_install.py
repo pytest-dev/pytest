@@ -110,3 +110,4 @@ def test_make_sdist_and_run_it(py_setup, venv):
     ch = gw.remote_exec("import py ; channel.send(py.__version__)")
     version = ch.receive()
     assert version == py.__version__
+    ch = gw.remote_exec("import py ; channel.send(py.__version__)")

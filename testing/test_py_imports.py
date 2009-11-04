@@ -25,7 +25,7 @@ def test_virtual_module_identity():
     assert local1 is local2
 
 def test_importall():
-    base = py.path.local(py.__file__).dirpath()
+    base = py._impldir
     nodirs = [
         base.join('test', 'testing', 'data'),
         base.join('test', 'web'),
@@ -56,7 +56,7 @@ def test_importall():
                     break
             else:
                 relpath = relpath.replace(base.sep, '.')
-                modpath = '_py.%s' % relpath
+                modpath = 'py.impl.%s' % relpath
                 check_import(modpath)
 
 def check_import(modpath):

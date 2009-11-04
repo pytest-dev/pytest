@@ -1,5 +1,5 @@
 import py
-from _py.test.looponfail.util import StatRecorder
+from py.impl.test.looponfail.util import StatRecorder
 
 def test_filechange(tmpdir):
     tmp = tmpdir

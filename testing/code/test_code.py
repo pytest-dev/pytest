@@ -1,7 +1,7 @@
 from __future__ import generators
 import py
 import sys
-from _py.code.code import safe_repr
+from py.impl.code.code import safe_repr
 
 failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
 
@@ -163,7 +163,7 @@ class TestSafeRepr:
             assert 'TypeError' in safe_repr(BrokenRepr("string"))
 
     def test_big_repr(self):
-        from _py.code.code import SafeRepr
+        from py.impl.code.code import SafeRepr
         assert len(safe_repr(range(1000))) <= \
                len('[' + SafeRepr().maxlist * "1000" + ']')
 

@@ -5,8 +5,8 @@ import execnet
 
 Queue = py.builtin._tryimport('queue', 'Queue').Queue
 
-from _py.test.dist.mypickle import ImmutablePickler, PickleChannel
-from _py.test.dist.mypickle import UnpickleError, makekey
+from py.impl.test.dist.mypickle import ImmutablePickler, PickleChannel
+from py.impl.test.dist.mypickle import UnpickleError, makekey
 # first let's test some basic functionality 
 
 def pytest_generate_tests(metafunc):
@@ -119,16 +119,16 @@ TESTTIMEOUT = 2.0
 class TestPickleChannelFunctional:
     def setup_class(cls):
         cls.gw = execnet.PopenGateway()
-        cls.gw.remote_init_threads(5)
-        # we need the remote test code to import 
-        # the same test module here
         cls.gw.remote_exec(
             "import py ; py.path.local(%r).pyimport()" %(__file__)
         )
+        cls.gw.remote_init_threads(5)
+        # we need the remote test code to import 
+        # the same test module here
 
     def test_popen_send_instance(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             from testing.pytest.dist.test_mypickle import A
             a1 = A()
@@ -147,7 +147,7 @@ class TestPickleChannelFunctional:
 
     def test_send_concurrent(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             from testing.pytest.dist.test_mypickle import A
             l = [A() for i in range(10)]
@@ -177,7 +177,7 @@ class TestPickleChannelFunctional:
         
     def test_popen_with_callback(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             from testing.pytest.dist.test_mypickle import A
             a1 = A()
@@ -198,7 +198,7 @@ class TestPickleChannelFunctional:
 
     def test_popen_with_callback_with_endmarker(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             from testing.pytest.dist.test_mypickle import A
             a1 = A()
@@ -222,7 +222,7 @@ class TestPickleChannelFunctional:
 
     def test_popen_with_callback_with_endmarker_and_unpickling_error(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             from testing.pytest.dist.test_mypickle import A
             a1 = A()
@@ -241,7 +241,7 @@ class TestPickleChannelFunctional:
 
     def test_popen_with_newchannel(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             newchannel = channel.receive()
             newchannel.send(42)
@@ -255,7 +255,7 @@ class TestPickleChannelFunctional:
 
     def test_popen_with_various_methods(self):
         channel = self.gw.remote_exec("""
-            from _py.test.dist.mypickle import PickleChannel
+            from py.impl.test.dist.mypickle import PickleChannel
             channel = PickleChannel(channel)
             channel.receive()
         """)

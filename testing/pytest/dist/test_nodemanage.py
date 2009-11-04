@@ -1,5 +1,5 @@
 import py
-from _py.test.dist.nodemanage import NodeManager
+from py.impl.test.dist.nodemanage import NodeManager
 
 class pytest_funcarg__mysetup:
     def __init__(self, request):

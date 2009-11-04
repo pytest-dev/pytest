@@ -1,7 +1,7 @@
 
 import py
 import os
-from _py._com import Registry, MultiCall, HookRelay, varnames
+from py.impl._com import Registry, MultiCall, HookRelay, varnames
 
 def test_varnames():
     def f(x):

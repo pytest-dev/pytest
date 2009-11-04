@@ -31,7 +31,7 @@ def test_exception_printing_skip():
         assert s.startswith("Skipped")
 
 def test_importorskip():
-    from _py.test.outcome import Skipped, importorskip
+    from py.impl.test.outcome import Skipped, importorskip
     assert importorskip == py.test.importorskip
     try:
         sys = importorskip("sys")

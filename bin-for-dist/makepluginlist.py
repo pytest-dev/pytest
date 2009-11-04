@@ -127,7 +127,7 @@ class RestWriter:
 
 class PluginOverview(RestWriter):
     def makerest(self, config):
-        plugindir = py.path.local(py.__file__).dirpath("test", "plugin")
+        plugindir = py._dir.join('plugin')
         for cat, specs in plugins:
             pluginlist = specs.split()
             self.h1(cat)
@@ -252,7 +252,7 @@ class PluginDoc(RestWriter):
                 warn("missing docstring", func)
 
     def emit_options(self, plugin):
-        from _py.test.parseopt import Parser
+        from py.impl.test.parseopt import Parser
         options = []
         parser = Parser(processopt=options.append)
         if hasattr(plugin, 'pytest_addoption'):

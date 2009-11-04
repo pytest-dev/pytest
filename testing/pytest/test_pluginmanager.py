@@ -1,5 +1,5 @@
 import py, os
-from _py.test.pluginmanager import PluginManager, canonical_importname, collectattr
+from py.impl.test.pluginmanager import PluginManager, canonical_importname, collectattr
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
@@ -172,7 +172,7 @@ class TestBootstrapping:
 
 class TestPytestPluginInteractions:
     def test_do_option_conftestplugin(self, testdir):
-        from _py.test.config import Config 
+        from py.impl.test.config import Config 
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true")
@@ -200,7 +200,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        from _py.test.config import Config 
+        from py.impl.test.config import Config 
         config = Config() 
         config.parse([])
         config.pluginmanager.do_configure(config=config)
