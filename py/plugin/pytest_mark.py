@@ -65,6 +65,15 @@ The order in which marker functions are called is this::
 Later called markers may overwrite previous key-value settings. 
 Positional arguments are all appended to the same 'args' list 
 of the Marker object. 
+
+Using "-k MARKNAME" to select tests
+----------------------------------------------------
+
+You can use the ``-k`` command line option to select
+tests::
+
+    py.test -k webtest  # will only run tests marked as webtest
+
 """
 import py
 

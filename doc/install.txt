@@ -3,29 +3,77 @@
     Downloading
     ==============
 
-    .. _`PyPI project page`: http://pypi.python.org/pypi/py/
+.. _`PyPI project page`: http://pypi.python.org/pypi/py/
 
-    Latest Release, see `PyPI project page`_
 
-using easy_install (via Distribute or setuptools)
+py.test/pylib compat/install info in a nutshell
 ===================================================
 
-It is recommended to use `Distribute for installation`_ as a drop-in
-replacement for setuptools_. While setuptools should work well on
-Python2 versions, `Distribute`_ allows to install py.test on Python3 
-and it avoids issue on Windows.  With either packaging system 
-you can type::
+PyPI Pyckage name: "**py**", see `PyPI project page`_ for latest version
+
+Installers: easy_install_ and pip_, setuptools_ or Distribute_
+
+Pythons: 2.4, 2.5, 2.6, 3.0, 3.1, Jython-2.5.1, PyPy-1.1
+
+Operating systems: Linux, Windows and OSX + probably many others
+
+
+Best practise: install tool and dependencies virtually
+===========================================================
+
+It is recommended to work with virtual environments 
+(e.g. virtualenv_ or buildout_ based) and use easy_install_
+(or pip_) for installing py.test/pylib and any dependencies 
+you need to run your tests.  Local virtual Python environments 
+(as opposed to system-wide "global" environments) make for a more 
+reproducible and reliable test environment. 
+
+Note: as of November 2009 pytest/pylib 1.1 RPMs and DEB packages 
+are not available.  If you want to easy_install the newest py.test
+and pylib do everyone a favour and uninstall older versions 
+from the global system e.g. like this on Ubuntu::
+
+    sudo apt-get remove --purge python-codespeak-lib
+
+.. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
+.. _`buildout`: http://www.buildout.org/
+.. _pip: http://pypi.python.org/pypi/pip
+.. _`easy_install`:
+
+using easy_install (from setuptools or Distribute)
+===================================================
+
+Both `Distribute`_ and setuptools_ provide the ``easy_install``
+installation tool.  While setuptools should work ok with 
+Python2 interpreters, `Distribute`_ also works with Python3 
+and it avoids some issues on Windows.  In both cases you
+can open a command line window and then type::
 
     easy_install -U py 
 
-to get the latest release of the py lib and py.test.  The ``-U`` switch
+to install the latest release of the py lib and py.test.  The ``-U`` switch
 will trigger an upgrade if you already have an older version installed. 
-On Linux systems you may need to execute the command as superuser and
-on Windows you might need to write down the full path to ``easy_install``. 
 
-The py lib and its tools are expected to work well on Linux,
-Windows and OSX, Python versions 2.4, 2.5, 2.6 through to
-the Python3 versions 3.0 and 3.1 and Jython 
+If you now type::
+
+    py.test --version
+
+you should see the version number and the import location of the tool.
+Maybe you want to head on with the `quickstart`_ now? 
+
+.. _quickstart: test/quickstart.html
+
+Troubleshooting
+========================
+
+**On Linux**: If ``easy_install`` fails because it needs to run
+as the superuser you are trying to install things globally 
+and need to put ``sudo`` in front of the command. 
+
+**On Windows**: If "easy_install" or "py.test" are not found
+please see here: `How do i run a Python program under Windows?`_
+
+.. _`How do i run a Python program under Windows?`: http://www.python.org/doc/faq/windows/#how-do-i-run-a-python-program-under-windows  
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`Distribute`: 
@@ -37,9 +85,8 @@ the Python3 versions 3.0 and 3.1 and Jython
 Working from version control or a tarball 
 =================================================
 
-To follow development or help with fixing things
-for the next release, checkout the complete code
-and documentation source with mercurial_::
+To follow development or start experiments, checkout the 
+complete code and documentation source with mercurial_::
 
     hg clone https://bitbucket.org/hpk42/py-trunk/
 
@@ -68,14 +115,14 @@ in order to work inline with the tools and the lib of your checkout.
 
 .. _`directly use a checkout`: 
 
-directly use a checkout or tarball
+directly use a checkout or tarball 
 -------------------------------------------------------------
 
-Once you got yourself a checkout_ or tarball_ you only need to 
-set ``PYTHONPATH`` and ``PATH`` environment variables. 
-It is usually a good idea to add the parent directory of the ``py`` package 
-directory to your ``PYTHONPATH`` and ``py/bin`` or ``py\bin\win32`` to your 
-system wide ``PATH`` settings.  There are helper scripts that set ``PYTHONPATH`` and ``PATH`` on your system: 
+Once you got yourself a checkout_ or tarball_ it is usually a good 
+idea to add the parent directory of the ``py`` package directory 
+to your ``PYTHONPATH`` and ``py/bin`` or ``py\bin\win32`` to your 
+system wide ``PATH`` settings.  There are helper scripts that 
+set ``PYTHONPATH`` and ``PATH`` on your system: 
 
 on windows execute::
 
@@ -90,6 +137,9 @@ on linux/OSX add this to your shell initialization::
 both of which which will get you good settings 
 for ``PYTHONPATH`` and ``PATH``.
 
+If you install ``py.test`` this way you can easily
+``hg pull && hg up`` your checkout to follow the
+development tree.
 
 note: scripts look for "nearby" py-lib 
 -----------------------------------------------------
@@ -104,22 +154,15 @@ for "nearby" py libs, so if you have a layout like this::
     py/ 
 
 issuing ``py.test subpkg1`` will use the py lib
-from that projects root directory.  
+from that projects root directory.   Giving the
+state of Python packaging there can be confusion
+in which case issuing::
+
+    py.test --version
+
+tells you both version and import location of the tool.
 
 .. _`command line scripts`: bin.html
-
-Debian and RPM packages 
-===================================
-
-As of August 2009 pytest/pylib 1.0 RPMs and Debian packages 
-are not available.  You will only find 0.9 versions - 
-on Debian systems look for ``python-codespeak-lib``
-and Dwayne Bailey has put together a Fedora `RPM`_. 
-
-If you can help with providing/upgrading distribution
-packages please use of the contact_ channels in case
-of questions or need for changes. 
-
 .. _contact: contact.html
 
 .. _`RPM`: http://translate.sourceforge.net/releases/testing/fedora/pylib-0.9.2-1.fc9.noarch.rpm

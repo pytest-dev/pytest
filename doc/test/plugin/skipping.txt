@@ -9,7 +9,7 @@ advanced skipping for python test functions, classes or modules.
 
 With this plugin you can mark test functions for conditional skipping 
 or as "xfail", expected-to-fail.  Skipping a test will avoid running it
-while xfail-marked tests will run and result in an inverted outcome:
+at all while xfail-marked tests will run and result in an inverted outcome:
 a pass becomes a failure and a fail becomes a semi-passing one. 
 
 The need for skipping a test is usually connected to a condition.  
@@ -22,29 +22,37 @@ at the end of a test run.
 
 .. _skipif:
 
-mark a test function to be skipped
+Skipping a single function 
 -------------------------------------------
 
-Here is an example for skipping a test function when
-running on Python3::
+Here is an example for marking a test function to be skipped
+when run on a Python3 interpreter::
 
     @py.test.mark.skipif("sys.version_info >= (3,0)")
     def test_function():
         ...
 
-
 During test function setup the skipif condition is 
 evaluated by calling ``eval(expr, namespace)``.  The namespace
-contains the  ``sys`` and ``os`` modules as well as the 
-test ``config`` object.  The latter allows you to skip based 
+contains the  ``sys`` and ``os`` modules and the test 
+``config`` object.  The latter allows you to skip based 
 on a test configuration value e.g. like this::
 
     @py.test.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
 
+Create a shortcut for your conditional skip decorator 
+at module level like this::
 
-mark many test functions at once 
+    win32only = py.test.mark.skipif("sys.platform != 'win32'")
+
+    @win32only
+    def test_function():
+        ...
+
+
+skip groups of test functions 
 --------------------------------------
 
 As with all metadata function marking you can do it at
@@ -58,11 +66,12 @@ for skipping all methods of a test class based on platform::
             # will not be setup or run under 'win32' platform
             #
 
+The ``pytestmark`` decorator will be applied to each test function.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
 
-mark a test function as expected to fail 
+mark a test function as **expected to fail**
 -------------------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
@@ -79,7 +88,7 @@ when it fails. Instead terminal reporting will list it in the
 Same as with skipif_ you can also selectively expect a failure
 depending on platform::
 
-    @py.test.mark.xfail(if"sys.version_info >= (3,0)")
+    @py.test.mark.xfail("sys.version_info >= (3,0)")
 
     def test_function():
         ...
@@ -89,7 +98,7 @@ skipping on a missing import dependency
 --------------------------------------------------
 
 You can use the following import helper at module level 
-or within a test or setup function.
+or within a test or test setup function::
 
     docutils = py.test.importorskip("docutils")
 

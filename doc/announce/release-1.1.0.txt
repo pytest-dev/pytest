@@ -3,30 +3,30 @@ py.test/pylib 1.1.0: Python3, Jython, advanced skipping, cleanups ...
 
 Features:
 
-* compatible to Python3 (single py2/py3 source), works with Distribute
+* compatible to Python3 (single py2/py3 source), `easy to install`_
 * generalized marking_: mark tests one a whole-class or whole-module basis
 * conditional skipping_: skip/xfail based on platform/dependencies
 
 Fixes:
 
 * code reduction and "de-magification" (e.g. 23 KLoc -> 11 KLOC)
-* distribute testing requires the now separately released 'execnet' package 
+* distribute testing requires the now separately released execnet_ package 
 * funcarg-setup/caching, "same-name" test modules now cause an exlicit error
-* de-cluttered reporting, --report option for skipped/xfail details 
+* de-cluttered reporting options, --report for skipped/xfail details 
 
 Compatibilities
 
 1.1.0 should allow running test code that already worked well with 1.0.2 
 plus some more due to improved unittest/nose compatibility.  
 
-More information:
-
-    http://pytest.org 
+More information: http://pytest.org 
 
 thanks and have fun,
 
 holger (http://twitter.com/hpk42)
 
+.. _execnet: http://codespeak.net/execnet
+.. _`easy to install`: ../install.html
 .. _marking: ../test/plugin/mark.html
 .. _skipping: ../test/plugin/skipping.html
 
