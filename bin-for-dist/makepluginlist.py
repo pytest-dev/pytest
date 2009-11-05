@@ -3,28 +3,29 @@ import os, sys
 WIDTH = 75
 
 plugins = [
-    ('plugins for Python test functions', 
-            'skipping figleaf monkeypatch capture recwarn',),
-    ('plugins for other testing styles and languages', 
-            'oejskit unittest nose django doctest restdoc'),
-    ('plugins for generic reporting and failure logging', 
-            'pastebin resultlog terminal',),
-    ('plugins for generic reporting and failure logging', 
-            'pastebin resultlog terminal',),
-    ('misc plugins / core functionality', 
-        'helpconfig pdb mark hooklog')
+    ('advanced python testing', 
+            'skipping mark pdb figleaf coverage '
+            'monkeypatch capture recwarn tmpdir',),
+    ('testing domains', 
+            'oejskit django'),
+    ('reporting and failure logging', 
+            'pastebin xmlresult resultlog terminal',),
+    ('other testing conventions',
+            'unittest nose doctest restdoc'),
+    ('core debugging / help functionality', 
+          'helpconfig hooklog')
     #('internal plugins / core functionality', 
-    #    #'pdb keyword hooklog runner execnetcleanup # pytester',
-    #    'pdb keyword hooklog runner execnetcleanup' # pytester',
+    #    #'runner execnetcleanup # pytester',
+    #    'runner execnetcleanup' # pytester',
     #)
 ]
 
 externals = {
-    'oejskit': "run javascript tests in real life browsers",
-    'django': "support for testing django applications", 
-#    'coverage': "support for using Ned's coverage module", 
-#    'xmlresult': "support for generating xml reports "
-#            "and CruiseControl integration",
+    'oejskit': "run javascript tests in real life browsers", 
+    'django': "for testing django applications", 
+    'coverage': "for testing with Ned's coverage module ", 
+    'xmlresult': "for generating xml reports " 
+                 "and CruiseControl integration",
 }
 
 def warn(*args):
@@ -136,7 +137,7 @@ class PluginOverview(RestWriter):
                 docpath = self.target.dirpath(name).new(ext=".txt")
                 if oneliner is not None:
                     htmlpath = docpath.new(ext='.html')
-                    self.para("%s_ %s" %(name, oneliner))
+                    self.para("%s_ (3rd) %s" %(name, oneliner))
                     self.add_internal_link(name, htmlpath)
                 else:
                     doc = PluginDoc(docpath)
@@ -212,7 +213,7 @@ class PluginDoc(RestWriter):
         #    "py/test/plugin/%s" %(hg_changeset, basename)))
         self.links.append((basename, 
             "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
-            "_py/test/plugin/%s" %(pyversion, basename)))
+            "py/plugin/%s" %(pyversion, basename)))
         self.links.append(('customize', '../customize.html'))
         self.links.append(('plugins', 'index.html'))
         self.links.append(('get in contact', '../../contact.html'))

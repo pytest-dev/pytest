@@ -1,0 +1,10 @@
+pytest_xmlresult plugin (EXTERNAL)
+==========================================
+
+This plugin allows to write results in an XML format
+compatible to CruiseControl_, see here for download:
+
+    http://github.com/rozza/py.test-plugins
+
+.. _CruiseControl: http://cruisecontrol.sourceforge.net/
+

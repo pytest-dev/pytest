@@ -1,43 +1,301 @@
-==========================================================
-**funcargs**: test function arguments FTW
-==========================================================
+==============================================================
+**funcargs**: advanced test setup and parametrization
+==============================================================
 
 .. contents:: 
     :local:
     :depth: 2
 
-Goals of the "funcarg" mechanism 
-==========================================
+what are "funcargs" and what are they good for?
+=================================================
 
-Since version 1.0 py.test features the "funcarg" mechanism which
-allows a Python test function to take arguments independently provided 
-by factory functions.  Factory functions allow to encapsulate 
-all setup and fixture glue code into nicely separated objects
-and provide a natural way for writing python test functions.  
-Compared to `xUnit style`_ the new mechanism is meant to:
-
-* make test functions easier to write and to read 
-* isolate test fixture creation to a single place 
-* bring new flexibility and power to test state management 
-* naturally extend towards parametrizing test functions
-  with multiple argument sets 
-* enable creation of zero-boilerplate test helper objects that 
-  interact with the execution of a test function, see the 
-  `blog post about the monkeypatch funcarg`_. 
-
-If you find issues or have further suggestions for improving
-the mechanism you are welcome to checkout `contact possibilities`_ page. 
+Named parameters of a test function are called *funcargs* for short.
+A Funcarg can be a simple number of a complex object.  To perform a 
+test function call each parameter is setup by a factory function.
+To call a test function repeatedly with different funcargs sets 
+test parameters can be generated. 
 
 .. _`contact possibilities`: ../contact.html
+.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
 
 .. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`xUnit style`: xunit_setup.html 
+
+
+.. _`funcarg factory`:
+.. _factory:
+ 
+funcarg factories: setting up test function arguments 
+==============================================================
+
+Test functions can specify one ore more arguments ("funcargs") 
+and a test module or plugin can define factory functions that provide
+the function argument.  Let's look at a simple self-contained 
+example that you can put into a test module: 
+
+.. sourcecode:: python
+
+    # ./test_simplefactory.py 
+    def pytest_funcarg__myfuncarg(request):
+        return 42
+
+    def test_function(myfuncarg):
+        assert myfuncarg == 17
+
+If you run this with ``py.test test_simplefactory.py`` you see something like this:
+
+.. sourcecode:: python
+
+    =========================== test session starts ============================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simplefactory.py
+
+    test_simplefactory.py F
+
+    ================================ FAILURES ==================================
+    ______________________________ test_function _______________________________
+
+    myfuncarg = 42
+
+        def test_function(myfuncarg):
+    >       assert myfuncarg == 17
+    E       assert 42 == 17
+
+    test_simplefactory.py:6: AssertionError
+    ======================== 1 failed in 0.11 seconds ==========================
+
+
+This means that the test function was called with a ``myfuncarg`` value
+of ``42`` and the assert fails accordingly.  Here is how py.test 
+calls the test function: 
+
+1. py.test discovers the ``test_function`` because of the ``test_`` prefix. 
+   The test function needs a function argument named ``myfuncarg``.  
+   A matching factory function is discovered by looking for the 
+   name ``pytest_funcarg__myfuncarg``. 
+
+2. ``pytest_funcarg__myfuncarg(request)`` is called and 
+   returns the value for ``myfuncarg``.   
+
+3. ``test_function(42)`` call is executed. 
+
+Note that if you misspell a function argument or want
+to use one that isn't available, you'll see an error 
+with a list of available function arguments.
+
+factory functions receive a `request object`_ 
+which they can use to register setup/teardown 
+functions or access meta data about a test. 
+
+.. _`request object`: 
+
+funcarg factory request objects
+------------------------------------------
+
+Request objects are passed to funcarg factories and allow 
+to access test configuration, test context and `useful caching
+and finalization helpers`_. Here is a list of attributes: 
+
+``request.function``: python function object requesting the argument
+
+``request.cls``: class object where the test function is defined in or None. 
+
+``request.module``: module object where the test function is defined in. 
+
+``request.config``: access to command line opts and general config
+
+``request.param``: if exists was passed by a previous `metafunc.addcall`_
+
+.. _`useful caching and finalization helpers`: 
+
+
+registering funcarg related finalizers/cleanup 
+----------------------------------------------------
+
+.. sourcecode:: python 
+
+    def addfinalizer(func):
+        """ call a finalizer function when test function finishes. """ 
+     
+Calling ``request.addfinalizer()`` is useful for scheduling teardown 
+functions.  Here is an example for providing a ``myfile`` 
+object that is to be closed when the execution of a 
+test function finishes. 
+
+.. sourcecode:: python
+
+    def pytest_funcarg__myfile(self, request):
+        # ... create and open a unique per-function "myfile" object ...
+        request.addfinalizer(lambda: myfile.close())
+        return myfile
+
+
+managing fixtures across test modules and test runs
+----------------------------------------------------------
+
+.. sourcecode:: python 
+
+    def cached_setup(setup, teardown=None, scope="module", extrakey=None):
+        """ cache and return result of calling setup().  
+
+        The requested argument name, the scope and the ``extrakey`` 
+        determine the cache key.  The scope also determines when 
+        teardown(result) will be called.  valid scopes are: 
+        scope == 'function': when the single test function run finishes. 
+        scope == 'module': when tests in a different module are run
+        scope == 'session': when tests of the session have run. 
+        """
+
+Calling ``request.cached_setup()`` helps you to manage fixture 
+objects across several scopes.  For example, for creating a Database object 
+that is to be setup only once during a test session you can use the helper
+like this:
+
+.. sourcecode:: python 
+  
+    def pytest_funcarg__database(request):
+        return request.cached_setup(
+                 setup=lambda: Database("..."), 
+                 teardown=lambda val: val.close(), 
+                 scope="session"
+        )
+
+
+requesting values of other funcargs 
+---------------------------------------------
+
+.. sourcecode:: python 
+
+    def getfuncargvalue(name): 
+        """ Lookup and call function argument factory for the given name. 
+        Each function argument is only created once per function setup. 
+        """ 
+
+``request.getfuncargvalue(name)`` calls another funcarg factory function. 
+You can use this function if you want to `decorate a funcarg`_, i.e. 
+you want to provide the "normal" value but add something
+extra.  If a factory cannot be found a ``request.Error`` 
+exception will be raised. 
+
+.. _`test generators`: 
+.. _`parametrizing-tests`:
+
+generating parametrized tests 
+===========================================================
+
+You can parametrize multiple runs of the same test 
+function by adding new test function calls with different
+function argument values. Let's look at a simple self-contained 
+example: 
+
+.. sourcecode:: python
+
+    # ./test_example.py 
+    def pytest_generate_tests(metafunc):
+        if "numiter" in metafunc.funcargnames: 
+            for i in range(10):
+                metafunc.addcall(funcargs=dict(numiter=i))
+
+    def test_func(numiter):
+        assert numiter < 9
+
+If you run this with ``py.test test_example.py`` you'll get:
+
+.. sourcecode:: python
+
+    ============================= test session starts ==========================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/test_example.py
+
+    test_example.py .........F
+
+    ================================ FAILURES ==================================
+    __________________________ test_func.test_func[9] __________________________
+
+    numiter = 9
+
+        def test_func(numiter):
+    >       assert numiter < 9
+    E       assert 9 < 9
+
+    /home/hpk/hg/py/trunk/test_example.py:10: AssertionError
+
+
+Here is what happens in detail:
+
+1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
+   function.  It adds ten new function calls with explicit function arguments. 
+
+2. **execute tests**: ``test_func(numiter)`` is called ten times with 
+   ten different arguments. 
+
+.. _`metafunc object`:
+
+test generators and metafunc objects
+-------------------------------------------
+
+metafunc objects are passed to the ``pytest_generate_tests`` hook. 
+They help to inspect a testfunction and to generate tests 
+according to test configuration or values specified 
+in the class or module where a test function is defined: 
+
+``metafunc.funcargnames``: set of required function arguments for given function
+
+``metafunc.function``: underlying python test function 
+
+``metafunc.cls``: class object where the test function is defined in or None. 
+
+``metafunc.module``: the module object where the test function is defined in. 
+
+``metafunc.config``: access to command line opts and general config
+
+
+.. _`metafunc.addcall`: 
+
+the ``metafunc.addcall()`` method 
+-----------------------------------------------
+
+.. sourcecode:: python
+
+    def addcall(funcargs={}, id=None, param=None):
+        """ trigger a new test function call. """ 
+
+``funcargs`` can be a dictionary of argument names
+mapped to values - providing it is called *direct parametrization*. 
+
+If you provide an `id`` it will be used for reporting
+and identification purposes.  If you don't supply an `id` 
+the stringified counter of the list of added calls will be used. 
+``id`` values needs to be unique between all 
+invocations for a given test function. 
+
+``param`` if specified will be seen by any 
+`funcarg factory`_ as a ``request.param`` attribute. 
+Setting it is called *indirect parametrization*.  
+
+Indirect parametrization is preferable if test values are 
+expensive to setup or can only be created in certain environments.  
+Test generators and thus ``addcall()`` invocations are performed 
+during test collection which is separate from the actual test 
+setup and test run phase.  With distributed testing collection 
+and test setup/run happens in different process.  
+
+
 
 .. _`tutorial examples`: 
 
 Tutorial Examples
 =======================================
 
+To see how you can implement custom paramtrization schemes, 
+see  e.g.  `parametrizing tests, generalized`_ (blog post).
+
+To enable creation of test support code that can flexibly
+register setup/teardown functions see the `blog post about 
+the monkeypatch funcarg`_. 
+
+If you find issues or have further suggestions for improving
+the mechanism you are welcome to checkout `contact possibilities`_ page. 
 
 .. _`application setup tutorial example`: 
 .. _appsetup:
@@ -274,262 +532,3 @@ methods in a convenient way.
 
 .. _`py.path.local`: ../path.html#local
 .. _`conftest plugin`: customize.html#conftestplugin
-
-.. _`funcarg factory`:
-.. _factory:
- 
-funcarg factories: setting up test function arguments 
-==============================================================
-
-Test functions can specify one ore more arguments ("funcargs") 
-and a test module or plugin can define functions that provide
-the function argument.  Let's look at a simple self-contained 
-example that you can put into a test module: 
-
-.. sourcecode:: python
-
-    # ./test_simplefactory.py 
-    def pytest_funcarg__myfuncarg(request):
-        return 42
-
-    def test_function(myfuncarg):
-        assert myfuncarg == 17
-
-If you run this with ``py.test test_simplefactory.py`` you see something like this:
-
-.. sourcecode:: python
-
-    =========================== test session starts ============================
-    python: platform linux2 -- Python 2.6.2
-    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simplefactory.py
-
-    test_simplefactory.py F
-
-    ================================ FAILURES ==================================
-    ______________________________ test_function _______________________________
-
-    myfuncarg = 42
-
-        def test_function(myfuncarg):
-    >       assert myfuncarg == 17
-    E       assert 42 == 17
-
-    test_simplefactory.py:6: AssertionError
-    ======================== 1 failed in 0.11 seconds ==========================
-
-
-This means that the test function got executed and the assertion failed. 
-Here is how py.test comes to execute this test function: 
-
-1. py.test discovers the ``test_function`` because of the ``test_`` prefix. 
-   The test function needs a function argument named ``myfuncarg``.  
-   A matching factory function is discovered by looking for the special 
-   name ``pytest_funcarg__myfuncarg``. 
-
-2. ``pytest_funcarg__myfuncarg(request)`` is called and 
-   returns the value for ``myfuncarg``.   
-
-3. ``test_function(42)`` call is executed. 
-
-Note that if you misspell a function argument or want
-to use one that isn't available, an error with a list of
-available function argument is provided. 
-
-For more interesting factory functions that make good use of the 
-`request object`_ please see the `application setup tutorial example`_. 
-
-.. _`request object`: 
-
-funcarg factory request objects
-------------------------------------------
-
-Request objects are passed to funcarg factories and allow 
-to access test configuration, test context and `useful caching
-and finalization helpers`_. Here is a list of attributes: 
-
-``request.function``: python function object requesting the argument
-
-``request.cls``: class object where the test function is defined in or None. 
-
-``request.module``: module object where the test function is defined in. 
-
-``request.config``: access to command line opts and general config
-
-``request.param``: if exists was passed by a previous `metafunc.addcall`_
-
-.. _`useful caching and finalization helpers`: 
-
-
-registering funcarg related finalizers/cleanup 
-----------------------------------------------------
-
-.. sourcecode:: python 
-
-    def addfinalizer(func):
-        """ call a finalizer function when test function finishes. """ 
-     
-Calling ``request.addfinalizer()`` is useful for scheduling teardown 
-functions.  Here is an example for providing a ``myfile`` 
-object that is to be closed when the execution of a 
-test function finishes. 
-
-.. sourcecode:: python
-
-    def pytest_funcarg__myfile(self, request):
-        # ... create and open a unique per-function "myfile" object ...
-        request.addfinalizer(lambda: myfile.close())
-        return myfile
-
-
-managing fixtures across test modules and test runs
-----------------------------------------------------------
-
-.. sourcecode:: python 
-
-    def cached_setup(setup, teardown=None, scope="module", extrakey=None):
-        """ cache and return result of calling setup().  
-
-        The requested argument name, the scope and the ``extrakey`` 
-        determine the cache key.  The scope also determines when 
-        teardown(result) will be called.  valid scopes are: 
-        scope == 'function': when the single test function run finishes. 
-        scope == 'module': when tests in a different module are run
-        scope == 'session': when tests of the session have run. 
-        """
-
-Calling ``request.cached_setup()`` helps you to manage fixture 
-objects across several scopes.  For example, for creating a Database object 
-that is to be setup only once during a test session you can use the helper
-like this:
-
-.. sourcecode:: python 
-  
-    def pytest_funcarg__database(request):
-        return request.cached_setup(
-                 setup=lambda: Database("..."), 
-                 teardown=lambda val: val.close(), 
-                 scope="session"
-        )
-
-
-requesting values of other funcargs 
----------------------------------------------
-
-.. sourcecode:: python 
-
-    def getfuncargvalue(name): 
-        """ Lookup and call function argument factory for the given name. 
-        Each function argument is only created once per function setup. 
-        """ 
-
-``request.getfuncargvalue(name)`` calls another funcarg factory function. 
-You can use this function if you want to `decorate a funcarg`_, i.e. 
-you want to provide the "normal" value but add something
-extra.  If a factory cannot be found a ``request.Error`` 
-exception will be raised. 
-
-.. _`test generators`: 
-.. _`parametrizing-tests`:
-
-generating parametrized tests 
-===========================================================
-
-You can parametrize multiple runs of the same test 
-function by adding new test function calls with different
-function argument values. Let's look at a simple self-contained 
-example: 
-
-.. sourcecode:: python
-
-    # ./test_example.py 
-    def pytest_generate_tests(metafunc):
-        if "numiter" in metafunc.funcargnames: 
-            for i in range(10):
-                metafunc.addcall(funcargs=dict(numiter=i))
-
-    def test_func(numiter):
-        assert numiter < 9
-
-If you run this with ``py.test test_example.py`` you'll get:
-
-.. sourcecode:: python
-
-    ============================= test session starts ==========================
-    python: platform linux2 -- Python 2.6.2
-    test object 1: /home/hpk/hg/py/trunk/test_example.py
-
-    test_example.py .........F
-
-    ================================ FAILURES ==================================
-    __________________________ test_func.test_func[9] __________________________
-
-    numiter = 9
-
-        def test_func(numiter):
-    >       assert numiter < 9
-    E       assert 9 < 9
-
-    /home/hpk/hg/py/trunk/test_example.py:10: AssertionError
-
-
-Here is what happens in detail:
-
-1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
-   function.  It adds ten new function calls with explicit function arguments. 
-
-2. **execute tests**: ``test_func(numiter)`` is called ten times with 
-   ten different arguments. 
-
-.. _`metafunc object`:
-
-test generators and metafunc objects
--------------------------------------------
-
-metafunc objects are passed to the ``pytest_generate_tests`` hook. 
-They help to inspect a testfunction and to generate tests 
-according to test configuration or values specified 
-in the class or module where a test function is defined: 
-
-``metafunc.funcargnames``: set of required function arguments for given function
-
-``metafunc.function``: underlying python test function 
-
-``metafunc.cls``: class object where the test function is defined in or None. 
-
-``metafunc.module``: the module object where the test function is defined in. 
-
-``metafunc.config``: access to command line opts and general config
-
-
-.. _`metafunc.addcall`: 
-
-the ``metafunc.addcall()`` method 
------------------------------------------------
-
-.. sourcecode:: python
-
-    def addcall(funcargs={}, id=None, param=None):
-        """ trigger a new test function call. """ 
-
-``funcargs`` can be a dictionary of argument names
-mapped to values - providing it is called *direct parametrization*. 
-
-If you provide an `id`` it will be used for reporting
-and identification purposes.  If you don't supply an `id` 
-the stringified counter of the list of added calls will be used. 
-``id`` values needs to be unique between all 
-invocations for a given test function. 
-
-``param`` if specified will be seen by any 
-`funcarg factory`_ as a ``request.param`` attribute. 
-Setting it is called *indirect parametrization*.  
-
-Indirect parametrization is preferable if test values are 
-expensive to setup or can only be created in certain environments.  
-Test generators and thus ``addcall()`` invocations are performed 
-during test collection which is separate from the actual test 
-setup and test run phase.  With distributed testing collection 
-and test setup/run happens in different process.  
-
-
-

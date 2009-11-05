@@ -1,0 +1,39 @@
+
+pytest_tmpdir plugin
+====================
+
+provide temporary directories to test functions.
+
+.. contents::
+  :local:
+
+usage example::
+
+    def test_plugin(tmpdir):
+        tmpdir.join("hello").write("hello")
+
+.. _`py.path.local`: ../../path.html
+
+.. _`tmpdir funcarg`:
+
+
+the 'tmpdir' test function argument
+-----------------------------------
+
+return a temporary directory path object
+unique to each test function invocation,
+created as a sub directory of the base temporary
+directory.  The returned object is a `py.path.local`_
+path object. 
+
+Start improving this plugin in 30 seconds
+=========================================
+
+
+1. Download `pytest_tmpdir.py`_ plugin source code 
+2. put it somewhere as ``pytest_tmpdir.py`` into your import path 
+3. a subsequent ``py.test`` run will use your local version
+
+Checkout customize_, other plugins_ or `get in contact`_. 
+
+.. include:: links.txt

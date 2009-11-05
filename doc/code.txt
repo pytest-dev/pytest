@@ -18,7 +18,7 @@ Contents of the library
 Every object in the ``py.code`` library wraps a code Python object related
 to code objects, source code, frames and tracebacks: the ``py.code.Code``
 class wraps code objects, ``py.code.Source`` source snippets,
-``py.code.Traceback` exception tracebacks, :api:`py.code.Frame`` frame 
+``py.code.Traceback` exception tracebacks, ``py.code.Frame`` frame 
 objects (as found in e.g. tracebacks) and ``py.code.ExceptionInfo`` the
 tuple provided by sys.exc_info() (containing exception and traceback
 information when an exception occurs). Also in the library is a helper function

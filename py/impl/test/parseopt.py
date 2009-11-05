@@ -46,6 +46,7 @@ class Parser:
         self._groups.insert(i+1, group)
         return group 
 
+    addgroup = getgroup 
     def addgroup(self, name, description=""):
         py.log._apiwarn("1.1", "use getgroup() which gets-or-creates")
         return self.getgroup(name, description)

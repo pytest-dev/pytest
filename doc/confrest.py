@@ -1,6 +1,6 @@
 import py
 
-from _py.test.plugin.pytest_restdoc import convert_rest_html, strip_html_header
+from py.plugin.pytest_restdoc import convert_rest_html, strip_html_header
 
 html = py.xml.html 
 
@@ -57,23 +57,23 @@ pageTracker._trackPageview();
         
     def fill_menubar(self):
         items = [
-            self.a_docref("install", "install.html"),
-            self.a_docref("contact", "contact.html"),
-            self.a_docref("changelog", "changelog.html"),
-            self.a_docref("faq", "faq.html"),
+            self.a_docref("INSTALL", "install.html"),
+            self.a_docref("CONTACT", "contact.html"),
+            self.a_docref("CHANGELOG", "changelog.html"),
+            self.a_docref("FAQ", "faq.html"),
             html.div(
                 html.h3("py.test:"),
-                self.a_docref("doc index", "test/index.html"),
-                self.a_docref("features", "test/features.html"),
-                self.a_docref("quickstart", "test/quickstart.html"),
-                self.a_docref("tutorials", "test/talks.html"),
-                self.a_docref("plugins", "test/plugin/index.html"),
-                self.a_docref("funcargs", "test/funcargs.html"),
-                self.a_docref("customize", "test/customize.html"),
+                self.a_docref("Index", "test/index.html"),
+                self.a_docref("Quickstart", "test/quickstart.html"),
+                self.a_docref("Features", "test/features.html"),
+                self.a_docref("Plugins", "test/plugin/index.html"),
+                self.a_docref("Funcargs", "test/funcargs.html"),
+                self.a_docref("Customize", "test/customize.html"),
+                self.a_docref("Tutorials", "test/talks.html"),
             ),
             html.div(
                 html.h3("supporting APIs:"), 
-                self.a_docref("pylib index", "index.html"),
+                self.a_docref("Index", "index.html"),
                 self.a_docref("py.path", "path.html"),
                 self.a_docref("py.code", "code.html"),
             )
@@ -85,9 +85,10 @@ pageTracker._trackPageview();
         self.menubar = html.div(id=css.menubar, *[
             html.div(item) for item in items])
         version = py.version
+        announcelink = self.a_docref("%s ANN" % version, 
+            "announce/release-%s.html" %(version,))
         self.menubar.insert(0, 
-            html.div("%s" % (py.version), style="font-style: italic;")
-        )
+            html.div(announcelink))
             #self.a_href("%s-%s" % (self.title, py.version), 
             #    "http://pypi.python.org/pypi/py/%s" % version, 
             #id="versioninfo",

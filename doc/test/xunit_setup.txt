@@ -1,14 +1,20 @@
 ====================================
-xUnit style setup
+extended xUnit style setup
 ====================================
 
 .. _`funcargs`: funcargs.html
+.. _`test parametrization`: funcargs.html#parametrizing-tests
+.. _`unittest plugin`: plugin/unittest.html
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 
 Note: 
 
-    Since version 1.0 funcargs_ present the recommended way
-    to manage flexible and scalable test setups. 
+    Since version 1.0 funcargs_ present the new and 
+    more powerful way to manage test setups with larger
+    test suites.  *funcargs* also provide flexible 
+    `test parametrization`_ which goes way beyond
+    what you can do with the xUnit setup/teardown-method 
+    patter. 
 
 Python, Java and many other languages have a tradition
 of using xUnit_ style testing. This typically 
@@ -19,6 +25,10 @@ scopes for which you can provide setup/teardown
 hooks to provide test fixtures: per-module, per-class 
 and per-method/function. ``py.test`` will 
 discover and call according methods automatically. 
+
+The `unittest plugin`_  also will intregate ``unittest.TestCase`` 
+instances into a test run and call respective setup/teardown methods.
+
 All setup/teardown methods are optional.  
 
 The following methods are called at module level if they exist:

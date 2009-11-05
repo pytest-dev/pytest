@@ -118,7 +118,7 @@ class TestLogConsumer:
 
     def test_log_file(self):
         customlog = tempdir.join('log.out')
-        py.log.setconsumer("default", open(str(customlog), 'w', buffering=0))
+        py.log.setconsumer("default", open(str(customlog), 'w', buffering=1))
         py.log.Producer("default")("hello world #1") 
         assert customlog.readlines() == ['[default] hello world #1\n']
 

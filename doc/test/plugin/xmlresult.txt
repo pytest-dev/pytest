@@ -1,0 +1,6 @@
+pytest_coverage plugin (EXTERNAL)
+==========================================
+
+This plugin allows to use Ned's coverage package, see
+
+    http://github.com/rozza/py.test-plugins

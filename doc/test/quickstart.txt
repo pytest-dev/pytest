@@ -7,7 +7,7 @@ Quickstart
 
 .. _here: ../install.html
 
-If you have a version of ``easy_install`` (otherwise see here_) just type::
+If you have any ``easy_install`` (otherwise see here_) just type::
 
     easy_install -U py 
 

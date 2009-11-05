@@ -1,5 +1,7 @@
-Changes between 1.0.2 and '1.1.0b1'
+Changes between 1.1.0 and 1.0.2
 =====================================
+
+* adjust and improve docs
 
 * remove py.rest tool and internal namespace - it was
   never really advertised and can still be used with
@@ -48,6 +50,9 @@ Changes between 1.0.2 and '1.1.0b1'
 
 * fix a funcarg cached_setup bug probably only occuring 
   in distributed testing and "module" scope with teardown. 
+
+* many fixes and changes for making the code base python3 compatible,
+  many thanks to Benjamin Peterson for helping with this. 
 
 * consolidate builtins implementation to be compatible with >=2.3, 
   add helpers to ease keeping 2 and 3k compatible code

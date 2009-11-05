@@ -70,7 +70,7 @@ def pytest_addoption(parser):
         add_dist_options(parser)
     else:
         parser.epilog = (
-        "execnet missing: --looponfailing and distributed testing not available.")
+        "'execnet' package required for --looponfailing / distributed testing.")
 
 def add_dist_options(parser):
     #  see http://pytest.org/help/dist")

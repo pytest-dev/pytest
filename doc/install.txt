@@ -25,7 +25,7 @@ on Windows you might need to write down the full path to ``easy_install``.
 
 The py lib and its tools are expected to work well on Linux,
 Windows and OSX, Python versions 2.4, 2.5, 2.6 through to
-the Python3 versions 3.0 and 3.1.  Jython 
+the Python3 versions 3.0 and 3.1 and Jython 
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`Distribute`: 
@@ -43,15 +43,13 @@ and documentation source with mercurial_::
 
     hg clone https://bitbucket.org/hpk42/py-trunk/
 
-This currrently contains a 1.0.x branch and the 
-default 'trunk' branch where mainline development 
-takes place. 
+Development usually takes place on the 'trunk' branch.
 
 .. There also is a readonly subversion
    checkout available which contains the latest release::
    svn co https://codespeak.net/svn/py/dist
 
-You can go to the python package index and
+You can also go to the python package index and
 download and unpack a TAR file::
 
     http://pypi.python.org/pypi/py/
@@ -64,7 +62,7 @@ With a working `Distribute`_ or setuptools_ installation you can type::
 
     python setup.py develop 
 
-in order to work with the tools and the lib of your checkout. 
+in order to work inline with the tools and the lib of your checkout. 
 
 .. _`no-setuptools`:
 

@@ -26,7 +26,7 @@ naming patterns.  As ``py.test`` operates as a separate
 cmdline tool you can easily have a command line utility and
 some tests in the same file.  
 
-supports many testing practises and methods 
+supports several testing practises and methods 
 ==================================================================
 
 py.test supports many testing methods conventionally used in 

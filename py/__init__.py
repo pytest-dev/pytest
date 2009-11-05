@@ -2,20 +2,14 @@
 """
 py.test and pylib: rapid testing and development utils
 
-- `py.test`_: cross-project testing tool with many advanced features
-- `py.path`_: path abstractions over local and subversion files
-- `py.code`_: dynamic code compile and traceback printing support
-
-Compatibility: Linux, Win32, OSX, Python versions 2.4 through to 3.1.
-For questions please check out http://pylib.org/contact.html
-
-.. _`py.test`: http://pylib.org/test.html
-.. _`py.path`: http://pylib.org/path.html
-.. _`py.code`: http://pylib.org/html
+this module uses apipkg.py for lazy-loading sub modules
+and classes.  The initpkg-dictionary  below specifies
+name->value mappings where value can be another namespace
+dictionary or an import path.  
 
 (c) Holger Krekel and others, 2009
 """
-version = "trunk"
+version = "1.1.0"
 
 __version__ = version = version or "1.1.x"
 import py.apipkg

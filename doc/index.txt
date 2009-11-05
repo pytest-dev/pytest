@@ -29,7 +29,6 @@ Other (minor) support functionality
 
 For the latest Release, see `PyPI project page`_
 
-.. _`download and installation`: download.html
 .. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev 
 .. _`py.log`: log.html
 .. _`py.io`: io.html

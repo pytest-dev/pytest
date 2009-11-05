@@ -83,7 +83,7 @@ skipping on a missing import dependency
 --------------------------------------------------
 
 You can use the following import helper at module level 
-or within a test or setup function.
+or within a test or test setup function::
 
     docutils = py.test.importorskip("docutils")
 
