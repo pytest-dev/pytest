@@ -7,9 +7,10 @@ def test_functional_deprecation(testdir):
                 check(recwarn, name)
         def check(recwarn, name):
             x = getattr(py.compat, name)
-            recwarn.pop(DeprecationWarning)
+            warn = recwarn.pop(DeprecationWarning)
             recwarn.clear()
             assert x == getattr(py.std, name)
+            assert warn.filename.find("test_functional_deprecation.py") != -1
     """)
     result = testdir.runpytest()
     assert result.ret == 0

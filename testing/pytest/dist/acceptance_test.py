@@ -147,6 +147,6 @@ class TestDistribution:
         args += ["--tx", "popen//python=%s" % interpreters[0]]
         args += ["--tx", "popen//python=%s" % interpreters[1]]
         result = testdir.runpytest(*args)
-        result.stdout.fnmatch_lines(["2...4"])
-        result.stdout.fnmatch_lines(["2...5"])
-
+        s = result.stdout.str()
+        assert "2.4" in s
+        assert "2.5" in s
