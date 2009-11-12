@@ -28,12 +28,7 @@ def test_importall():
     base = py._impldir
     nodirs = [
         base.join('test', 'testing', 'data'),
-        base.join('test', 'web'),
         base.join('path', 'gateway',),
-        base.join('doc',),
-        base.join('rest', 'directive.py'),
-        base.join('test', 'testing', 'import_test'),
-        base.join('bin'),
         base.join('code', 'oldmagic.py'),
         base.join('execnet', 'script'),
         base.join('compat', 'testing'),
@@ -46,6 +41,11 @@ def test_importall():
     def recurse(p):
         return p.check(dotfile=0) and p.basename != "attic"
 
+    try:
+        import execnet
+    except ImportError:
+        execnet = None
+
     for p in base.visit('*.py', recurse):
         if p.basename == '__init__.py':
             continue
@@ -57,6 +57,10 @@ def test_importall():
             else:
                 relpath = relpath.replace(base.sep, '.')
                 modpath = 'py.impl.%s' % relpath
+                if modpath.startswith("py.impl.test.dist") or \
+                   modpath.startswith("py.impl.test.looponfail"):
+                    if not execnet:
+                        continue
                 check_import(modpath)
 
 def check_import(modpath):

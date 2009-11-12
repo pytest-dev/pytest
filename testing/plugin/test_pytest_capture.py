@@ -133,8 +133,8 @@ class TestPerTestCapturing:
             "setup test_func1*",
             "in func1*",
             "setup test_func2*",
-            "in func2*", 
-        ]) 
+            "in func2*",
+        ])
 
     @py.test.mark.xfail
     def test_capture_scope_cache(self, testdir):

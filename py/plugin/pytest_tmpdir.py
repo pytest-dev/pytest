@@ -18,4 +18,5 @@ def pytest_funcarg__tmpdir(request):
     path object. 
     """
     name = request.function.__name__ 
-    return request.config.mktemp(name, numbered=True)
+    x = request.config.mktemp(name, numbered=True)
+    return x.realpath()

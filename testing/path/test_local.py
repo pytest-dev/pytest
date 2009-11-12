@@ -15,23 +15,6 @@ def pytest_funcarg__path1(request):
         assert path1.join("samplefile").check()
     return request.cached_setup(setup, teardown, scope="session")
 
-def pytest_funcarg__tmpdir(request):
-    basedir = request.config.getbasetemp()
-    if request.cls:
-        try:
-            basedir = basedir.mkdir(request.cls.__name__)
-        except py.error.EEXIST: 
-            pass
-    for i in range(1000):
-        name = request.function.__name__ 
-        if i > 0:
-            name += str(i)
-        try:
-            return basedir.mkdir(name)
-        except py.error.EEXIST:
-            continue
-    raise ValueError("could not create tempdir")
-
 class TestLocalPath(common.CommonFSTests):
     def test_join_normpath(self, tmpdir):
         assert tmpdir.join(".") == tmpdir

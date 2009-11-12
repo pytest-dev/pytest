@@ -18,3 +18,4 @@ build/
 dist/
 py.egg-info
 issue/
+3rdparty/
