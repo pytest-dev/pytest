@@ -808,9 +808,11 @@ recursively. """
         def notsvn(path):
             return path.basename != '.svn' 
 
-        paths = [self.__class__(p, auth=self.auth) 
-                    for p in self.localpath.listdir()
-                        if notsvn(p) and (not fil or fil(p))]
+        paths = []
+        for localpath in self.localpath.listdir(notsvn):
+            p = self.__class__(localpath, auth=self.auth)
+            if notsvn(p) and (not fil or fil(p)):
+                paths.append(p)
         self._sortlist(paths, sort)
         return paths
 

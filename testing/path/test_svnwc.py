@@ -276,6 +276,13 @@ class TestWCSvnCommandPath(CommonSvnTests):
         finally:
             notexisting.remove()
 
+    def test_listdir_versioned(self, path1):
+        assert path1.check(versioned=1)
+        p = path1.localpath.ensure("not_a_versioned_file")
+        l = [x.localpath
+                for x in path1.listdir(lambda x: x.check(versioned=True))]
+        assert p not in l 
+
     def test_nonversioned_remove(self, path1):
         assert path1.check(versioned=1)
         somefile = path1.join('nonversioned/somefile')
