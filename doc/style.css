@@ -744,6 +744,7 @@ td.toplist {
 
 img#pyimg {
     float: left;
+    padding-bottom: 1em;
 }
     
 div#navspace {
