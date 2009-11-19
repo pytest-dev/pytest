@@ -176,7 +176,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         p.write('bar')
         wc.commit('wrote some data')
         wccopy.join('conflictsamplefile').write('baz')
-        wccopy.update()
+        wccopy.update(interactive=False)
         s = wccopy.status()
         assert [x.basename for x in s.conflict] == ['conflictsamplefile']
 

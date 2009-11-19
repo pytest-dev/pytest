@@ -521,9 +521,12 @@ class SvnWCCommandPath(common.PathBase):
         args.append(url)
         self._authsvn('co', args)
 
-    def update(self, rev='HEAD'):
+    def update(self, rev='HEAD', interactive=True):
         """ update working copy item to given revision. (None -> HEAD). """
-        self._authsvn('up', ['-r', rev, "--non-interactive"],)
+        opts = ['-r', rev]
+        if not interactive:
+            opts.append("--non-interactive")
+        self._authsvn('up', opts)
 
     def write(self, content, mode='w'):
         """ write content into local filesystem wc. """
