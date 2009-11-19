@@ -37,26 +37,26 @@ class TestGatewayManagerPopen:
         hm.makegateways()
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
         assert call.gateway.spec == execnet.XSpec("popen")
-        assert call.gateway.id == "[1]"
+        assert call.gateway.id == "1"
         assert call.platinfo.executable == call.gateway._rinfo().executable
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
-        assert call.gateway.id == "[2]" 
-        assert len(hm.gateways) == 2
+        assert call.gateway.id == "2" 
+        assert len(hm.group) == 2
         hm.exit()
-        assert not len(hm.gateways) 
+        assert not len(hm.group) 
 
     def test_popens_rsync(self, hook, mysetup):
         source = mysetup.source
         hm = GatewayManager(["popen"] * 2, hook)
         hm.makegateways()
-        assert len(hm.gateways) == 2
-        for gw in hm.gateways:
+        assert len(hm.group) == 2
+        for gw in hm.group:
             gw.remote_exec = None
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert not l
         hm.exit()
-        assert not len(hm.gateways) 
+        assert not len(hm.group) 
 
     def test_rsync_popen_with_path(self, hook, mysetup):
         source, dest = mysetup.source, mysetup.dest 
@@ -66,7 +66,7 @@ class TestGatewayManagerPopen:
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert len(l) == 1
-        assert l[0] == ("rsyncrootready", hm.gateways[0].spec, source)
+        assert l[0] == ("rsyncrootready", hm.group['1'].spec, source)
         hm.exit()
         dest = dest.join(source.basename)
         assert dest.join("dir1").check()
@@ -82,48 +82,8 @@ class TestGatewayManagerPopen:
         call = hookrecorder.popcall("pytest_gwmanage_rsyncstart") 
         assert call.source == source 
         assert len(call.gateways) == 1
-        assert hm.gateways[0] == call.gateways[0]
+        assert hm.group["1"] == call.gateways[0]
         call = hookrecorder.popcall("pytest_gwmanage_rsyncfinish") 
-
-    def test_multi_chdir_popen_with_path(self, hook, testdir):
-        hm = GatewayManager(["popen//chdir=hello"] * 2, hook)
-        testdir.tmpdir.chdir()
-        hellopath = testdir.tmpdir.mkdir("hello").realpath()
-        hm.makegateways()
-        l = hm.multi_exec(
-                "import os ; channel.send(os.getcwd())").receive_each()
-        paths = [x[1] for x in l]
-        assert l == [str(hellopath)] * 2
-        py.test.raises(hm.RemoteError, 
-            'hm.multi_chdir("world", inplacelocal=False)')
-        worldpath = hellopath.mkdir("world")
-        hm.multi_chdir("world", inplacelocal=False)
-        l = hm.multi_exec(
-            "import os ; channel.send(os.getcwd())").receive_each()
-        assert len(l) == 2
-        assert l[0] == l[1]
-        curwd = os.getcwd()
-        assert l[0].startswith(curwd)
-        assert l[0].endswith("world")
-
-    def test_multi_chdir_popen(self, testdir, hook):
-        import os
-        hm = GatewayManager(["popen"] * 2, hook)
-        testdir.tmpdir.chdir()
-        hellopath = testdir.tmpdir.mkdir("hello")
-        hm.makegateways()
-        hm.multi_chdir("hello", inplacelocal=False)
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
-        assert len(l) == 2
-        curwd = os.path.realpath(os.getcwd())
-        assert l == [curwd] * 2
-
-        hm.multi_chdir("hello")
-        l = hm.multi_exec("import os ; channel.send(os.getcwd())").receive_each()
-        assert len(l) == 2
-        assert l[0] == l[1]
-        assert l[0].startswith(curwd)
-        assert l[0].endswith("hello")
 
 class pytest_funcarg__mysetup:
     def __init__(self, request):

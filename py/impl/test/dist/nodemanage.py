@@ -57,7 +57,7 @@ class NodeManager(object):
     def setup_nodes(self, putevent):
         self.rsync_roots()
         self.trace("setting up nodes")
-        for gateway in self.gwmanager.gateways:
+        for gateway in self.gwmanager.group:
             node = TXNode(gateway, self.config, putevent, slaveready=self._slaveready)
             gateway.node = node  # to keep node alive 
             self.trace("started node %r" % node)
@@ -67,7 +67,7 @@ class NodeManager(object):
         #assert node.gateway.node == node
         self.nodes.append(node)
         self.trace("%s slave node ready %r" % (node.gateway.id, node))
-        if len(self.nodes) == len(self.gwmanager.gateways):
+        if len(self.nodes) == len(list(self.gwmanager.group)):
             self._nodesready.set()
    
     def wait_nodesready(self, timeout=None):

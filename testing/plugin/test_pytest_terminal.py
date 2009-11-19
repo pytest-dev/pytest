@@ -130,16 +130,16 @@ class TestTerminal:
         
         rep.pytest_gwmanage_newgateway(gw1, rinfo)
         linecomp.assert_contains_lines([
-            "X1*popen*xyz*2.5*"
+            "*X1*popen*xyz*2.5*"
         ])
 
         rep.pytest_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
-            "rsyncstart: hello -> X1, X2"
+            "rsyncstart: hello -> [X1], [X2]"
         ])
         rep.pytest_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
         linecomp.assert_contains_lines([
-            "rsyncfinish: hello -> X1, X2"
+            "rsyncfinish: hello -> [X1], [X2]"
         ])
 
     def test_writeline(self, testdir, linecomp):

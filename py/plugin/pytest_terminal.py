@@ -150,7 +150,7 @@ class TerminalReporter:
         else:
             d['extra'] = ""
         d['cwd'] = platinfo.cwd
-        infoline = ("%(id)s %(spec)s -- platform %(platform)s, "
+        infoline = ("[%(id)s] %(spec)s -- platform %(platform)s, "
                         "Python %(version)s "
                         "cwd: %(cwd)s"
                         "%(extra)s" % d)
@@ -158,14 +158,14 @@ class TerminalReporter:
         self.gateway2info[gateway] = infoline
 
     def pytest_gwmanage_rsyncstart(self, source, gateways):
-        targets = ", ".join([gw.id for gw in gateways])
+        targets = ", ".join(["[%s]" % gw.id for gw in gateways])
         msg = "rsyncstart: %s -> %s" %(source, targets)
         if not self.config.option.verbose:
             msg += " # use --verbose to see rsync progress"
         self.write_line(msg)
 
     def pytest_gwmanage_rsyncfinish(self, source, gateways):
-        targets = ", ".join([gw.id for gw in gateways])
+        targets = ", ".join(["[%s]" % gw.id for gw in gateways])
         self.write_line("rsyncfinish: %s -> %s" %(source, targets))
 
     def pytest_plugin_registered(self, plugin):
@@ -177,11 +177,11 @@ class TerminalReporter:
             self.write_line(msg)
 
     def pytest_testnodeready(self, node):
-        self.write_line("%s txnode ready to receive tests" %(node.gateway.id,))
+        self.write_line("[%s] txnode ready to receive tests" %(node.gateway.id,))
 
     def pytest_testnodedown(self, node, error):
         if error:
-            self.write_line("%s node down, error: %s" %(node.gateway.id, error))
+            self.write_line("[%s] node down, error: %s" %(node.gateway.id, error))
 
     def pytest_trace(self, category, msg):
         if self.config.option.debug or \
@@ -203,7 +203,7 @@ class TerminalReporter:
                 line = self._reportinfoline(item)
                 extra = ""
                 if node:
-                    extra = "-> " + str(node.gateway.id)
+                    extra = "-> [%s]" % node.gateway.id
                 self.write_ensure_prefix(line, extra)
         else:
             if self.config.option.verbose:
@@ -238,7 +238,7 @@ class TerminalReporter:
             else:
                 self.ensure_newline()
                 if hasattr(rep, 'node'):
-                    self._tw.write("%s " % rep.node.gateway.id)
+                    self._tw.write("[%s] " % rep.node.gateway.id)
                 self._tw.write(word, **markup)
                 self._tw.write(" " + line)
                 self.currentfspath = -2
