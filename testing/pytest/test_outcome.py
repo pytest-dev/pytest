@@ -56,3 +56,16 @@ def test_importorskip_imports_last_module_part():
     ospath = py.test.importorskip("os.path")
     assert os.path == ospath
 
+
+def test_pytest_cmdline_main(testdir):
+    p = testdir.makepyfile("""
+        import sys
+        sys.path.insert(0, %r)
+        import py
+        def test_hello():
+            assert 1
+        if __name__ == '__main__':
+           py.test.cmdline.main([__file__])
+    """ % (str(py._dir.dirpath())))
+    import subprocess
+    subprocess.check_call([sys.executable, str(p)])

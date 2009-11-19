@@ -1,11 +1,12 @@
 Changes between 1.1.1 and 1.1.0
 =====================================
 
+- re-introduce py.test.cmdline.main for backward compatibility 
+
 - fix a bug with path.check(versioned=True) for svn paths
 
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location
-
 
 Changes between 1.1.0 and 1.0.2
 =====================================

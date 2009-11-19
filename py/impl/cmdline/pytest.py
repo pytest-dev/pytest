@@ -1,5 +1,5 @@
 #!/usr/bin/env python 
 import py
 
-def main():
-    py.test.cmdline.main() 
+def main(args):
+    py.test.cmdline.main(args) 

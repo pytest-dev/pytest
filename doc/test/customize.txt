@@ -429,13 +429,3 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 * perform ``sys.path.insert(0, basedir)``.
 
 * import the root package as ``root``
-
-* determine the fully qualified name for ``fspath`` by either:
-
-  * calling ``root.__pkg__.getimportname(fspath)`` if the
-    ``__pkg__`` exists.` or 
-
-  * otherwise use the relative path of the module path to
-    the base dir and turn slashes into dots and strike
-    the trailing ``.py``. 
-

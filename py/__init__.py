@@ -68,6 +68,9 @@ py.apipkg.initpkg(__name__, dict(
             'Function'  : '.impl.test.pycollect:Function',
             '_fillfuncargs' : '.impl.test.funcargs:fillfuncargs',
         },
+        'cmdline': {
+            'main' : '.impl.test.cmdline:main', # backward compat
+        },
     },
 
     # hook into the top-level standard library
