@@ -15,7 +15,7 @@ def pytest_addoption(parser):
                help="show locals in tracebacks (disabled by default).")
     group.addoption('--report',
                action="store", dest="report", default=None, metavar="opts",
-               help="comma separated reporting options")
+               help="comma separated options, valid: skipped,xfailed")
     group._addoption('--tb', metavar="style", 
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no'],

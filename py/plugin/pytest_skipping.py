@@ -162,10 +162,9 @@ def show_xfailed(terminalreporter):
     xfailed = tr.stats.get("xfailed")
     if xfailed:
         if not tr.hasopt('xfailed'):
-            if tr.config.getvalue("verbose"):
-                tr.write_line(
-                  "%d expected failures, use --report=xfailed for more info" %
-                  len(xfailed))
+            tr.write_line(
+              "%d expected failures, use --report=xfailed for more info" %
+              len(xfailed))
             return
         tr.write_sep("_", "expected failures")
         for rep in xfailed:
@@ -220,10 +219,9 @@ def show_skipped(terminalreporter):
     skipped = tr.stats.get('skipped', [])
     if skipped:
         if not tr.hasopt('skipped'):
-            if tr.config.getvalue("verbose"):
-                tr.write_line(
-                    "%d skipped tests, use --report=skipped for more info" %
-                    len(skipped))
+            tr.write_line(
+                "%d skipped tests, use --report=skipped for more info" %
+                len(skipped))
             return
         fskips = folded_skips(skipped)
         if fskips:
