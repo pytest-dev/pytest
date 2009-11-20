@@ -1,14 +1,13 @@
 Changes between 1.1.1 and 1.1.0
 =====================================
 
-- fix py.test to work correctly with execnet >= 1.0.0b4
+- fix py.test dist-testing to work with execnet >= 1.0.0b4 (required)
 
-- re-introduce py.test.cmdline.main for better backward compatibility 
+- re-introduce py.test.cmdline.main() for better backward compatibility 
 
-- make svnwc.update() default to interactive mode like in 1.0.x 
-  and add svnwc.update(interactive=False) to inhibit interaction.
-
-- fix a bug with path.check(versioned=True) for svn paths
+- svn paths: fix a bug with path.check(versioned=True) for svn paths,
+  allow '%' in svn paths, make svnwc.update() default to interactive mode 
+  like in 1.0.x and add svnwc.update(interactive=False) to inhibit interaction.
 
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location

@@ -77,7 +77,7 @@ repositories = RepoCache()
 
 # svn support code 
 
-ALLOWED_CHARS = "_ -/\\=$.~+" #add characters as necessary when tested
+ALLOWED_CHARS = "_ -/\\=$.~+%" #add characters as necessary when tested
 if sys.platform == "win32":
     ALLOWED_CHARS += ":"
 ALLOWED_CHARS_HOST = ALLOWED_CHARS + '@:'
