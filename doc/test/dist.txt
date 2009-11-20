@@ -12,9 +12,9 @@ are reported back and displayed to your local test session.  You may
 specify different Python versions and interpreters.
 
 **Requirements**: you need to install the `execnet`_ package 
-to perform distributed test runs.  
+(at least version 1.0.0b4) to perform distributed test runs.  
 
-**NOTE**: Version 1.1.0 is not able to distribute tests across Python3/Python2 barriers. 
+**NOTE**: Version 1.1.x is not able to distribute tests across Python3/Python2 barriers. 
 
 Speed up test runs by sending tests to multiple CPUs
 ----------------------------------------------------------
