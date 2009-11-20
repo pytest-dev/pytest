@@ -82,7 +82,7 @@ class TestGatewayManagerPopen:
         call = hookrecorder.popcall("pytest_gwmanage_rsyncstart") 
         assert call.source == source 
         assert len(call.gateways) == 1
-        assert hm.group["1"] == call.gateways[0]
+        assert call.gateways[0] in hm.group
         call = hookrecorder.popcall("pytest_gwmanage_rsyncfinish") 
 
 class pytest_funcarg__mysetup:
