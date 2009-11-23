@@ -4,8 +4,8 @@ py.test/pylib 1.1.0: Python3, Jython, advanced skipping, cleanups ...
 Features:
 
 * compatible to Python3 (single py2/py3 source), `easy to install`_
-* generalized marking_: mark tests one a whole-class or whole-module basis
 * conditional skipping_: skip/xfail based on platform/dependencies
+* generalized marking_: mark tests one a whole-class or whole-module basis
 
 Fixes:
 

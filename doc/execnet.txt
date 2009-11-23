@@ -2,11 +2,11 @@
 py.execnet: *elastic* distributed programming 
 ==============================================================================
 
-Since pylib 1.1 "py.execnet" is separated out of hte lib and now 
-available through the standalone `execnet standalone package`_.
+Since pylib 1.1 "py.execnet" ceased to exist and is now available
+as a separately developed `execnet standalone package`_.
 
-If you have usages of the "py.execnet.*" 1.0 API you can likely
-rename all occurences of the string ``py.execnet.`` with the 
-string ``execnet.``.  
+If you have previosly used "py.execnet.*" and the 1.0 API just 
+rename all occurences of the string "``py.execnet.``" with the 
+string "``execnet.``" as execnet-1.0 is API compatible.
 
 .. _`execnet standalone package`: http://codespeak.net/execnet 
