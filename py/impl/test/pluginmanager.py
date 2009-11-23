@@ -77,6 +77,14 @@ class PluginManager(object):
         for spec in self._envlist("PYTEST_PLUGINS"):
             self.import_plugin(spec)
 
+    def consider_setuptools_entrypoints(self):
+        from pkg_resources import iter_entry_points
+        for ep in iter_entry_points('pytest11'):
+            if ep.name in self._name2plugin:
+                continue
+            plugin = ep.load()
+            self.register(plugin, name=ep.name)
+
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
             if opt1 == "-p": 

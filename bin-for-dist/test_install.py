@@ -88,6 +88,16 @@ class VirtualEnv(object):
             ] + list(args),
             **kw)
 
+    def pytest_getouterr(self, *args):
+        self.ensure()
+        args = [self._cmd("python"), self._cmd("py.test")] + list(args)
+        popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out, err = popen.communicate()
+        return out
+
+    def setup_develop(self):
+        self.ensure()
+        return self.pcall("python", "setup.py", "develop")
 
     def easy_install(self, *packages, **kw):
         args = []
@@ -110,4 +120,25 @@ def test_make_sdist_and_run_it(py_setup, venv):
     ch = gw.remote_exec("import py ; channel.send(py.__version__)")
     version = ch.receive()
     assert version == py.__version__
-    ch = gw.remote_exec("import py ; channel.send(py.__version__)")
+
+def test_plugin_setuptools_entry_point_integration(py_setup, venv, tmpdir):
+    sdist = py_setup.make_sdist(venv.path)
+    venv.easy_install(str(sdist)) 
+    # create a sample plugin
+    basedir = tmpdir.mkdir("testplugin")
+    basedir.join("setup.py").write("""if 1:
+        from setuptools import setup
+        setup(name="testplugin",
+            entry_points = {'pytest11': ['testplugin=tp1']},
+            py_modules = ['tp1'],
+        )
+    """)
+    basedir.join("tp1.py").write(py.code.Source("""
+        def pytest_addoption(parser):
+            parser.addoption("--testpluginopt", action="store_true")
+    """))
+    basedir.chdir()
+    print ("created sample plugin in %s" %basedir)
+    venv.setup_develop()
+    out = venv.pytest_getouterr("-h")
+    assert "testpluginopt" in out

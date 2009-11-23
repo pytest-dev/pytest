@@ -1,10 +1,10 @@
-py.test/pylib 1.1.1: bugfix release, improved 1.0.x backward compat
+py.test/pylib 1.1.1: bugfix release, setuptools plugin registration
 --------------------------------------------------------------------------------
 
 This is a compatibility fixing release of pylib/py.test to work
-better with previous 1.0.x code bases.  It also contains fixes
-and changes to work with `execnet>=1.0.0b4`_ which is now required
-(but is not installed automatically, issue "easy_install -U execnet").
+better with previous 1.0.x test code bases.  It also contains fixes
+and changes to work with `execnet>=1.0.0b4`_.  1.1.1 also introduces
+a new mechanism for registering plugins via setuptools. 
 Last but not least, documentation has been improved.
 
 What is pylib/py.test? 
@@ -17,7 +17,7 @@ existing common Python test suites without modification.  Moreover,
 it offers some unique features not found in other
 testing tools.  See http://pytest.org for more info.
 
-The pylib contains a localpath and svnpath implementation 
+The pylib also contains a localpath and svnpath implementation 
 and some developer-oriented command line tools. See
 http://pylib.org for more info.
 
@@ -31,7 +31,10 @@ holger (http://twitter.com/hpk42)
 Changes between 1.1.1 and 1.1.0
 =====================================
 
-- fix py.test dist-testing to work with execnet >= 1.0.0b4 (required)
+- introduce automatic lookup of 'pytest11' entrypoints
+  via setuptools' pkg_resources.iter_entry_points
+
+- fix py.test dist-testing to work with execnet >= 1.0.0b4 
 
 - re-introduce py.test.cmdline.main() for better backward compatibility 
 

@@ -42,6 +42,24 @@ class TestBootstrapping:
         l3 = len(pluginmanager.getplugins())
         assert l2 == l3
 
+    def test_consider_setuptools_instantiation(self, monkeypatch):
+        pkg_resources = py.test.importorskip("pkg_resources")
+        def my_iter(name):
+            assert name == "pytest11"
+            class EntryPoint:
+                name = "mytestplugin"
+                def load(self):
+                    class PseudoPlugin:
+                        x = 42
+                    return PseudoPlugin()
+            return iter([EntryPoint()])
+        
+        monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+        pluginmanager = PluginManager()
+        pluginmanager.consider_setuptools_entrypoints()
+        plugin = pluginmanager.getplugin("mytestplugin")
+        assert plugin.x == 42
+
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
         x500 = testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""

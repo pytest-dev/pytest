@@ -74,6 +74,7 @@ class Config(object):
 
     def _preparse(self, args):
         self._conftest.setinitial(args) 
+        self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_env()
         self.pluginmanager.do_addoption(self._parser)

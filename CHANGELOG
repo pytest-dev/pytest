@@ -1,7 +1,10 @@
 Changes between 1.1.1 and 1.1.0
 =====================================
 
-- fix py.test dist-testing to work with execnet >= 1.0.0b4 (required)
+- introduce automatic lookup of 'pytest11' entrypoints
+  via setuptools' pkg_resources.iter_entry_points
+
+- fix py.test dist-testing to work with execnet >= 1.0.0b4 
 
 - re-introduce py.test.cmdline.main() for better backward compatibility 
 

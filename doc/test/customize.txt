@@ -125,6 +125,8 @@ Plugin discovery at tool startup
 
 py.test loads plugin modules at tool startup in the following way:
 
+* by loading all plugins registered through `setuptools entry points`_. 
+
 * by reading the ``PYTEST_PLUGINS`` environment variable 
   and importing the comma-separated list of named plugins. 
 
@@ -132,16 +134,12 @@ py.test loads plugin modules at tool startup in the following way:
   and loading the specified plugin before actual command line parsing. 
 
 * by loading all `conftest.py plugin`_ files as inferred by the command line
-  invocation 
+  invocation (test files and all of its parent directories).  
+  Note that ``conftest.py`` files from sub directories are loaded
+  during test collection and not at tool startup. 
 
 * by recursively loading all plugins specified by the 
   ``pytest_plugins`` variable in a ``conftest.py`` file 
-
-Note that at tool startup only ``conftest.py`` files in
-the directory of the specified test modules (or the current dir if None) 
-or any of the parent directories are found.  There is no try to 
-pre-scan all subdirectories to find ``conftest.py`` files or test 
-modules.  
 
 Specifying plugins in a test module or plugin
 -----------------------------------------------
@@ -160,8 +158,8 @@ must be lowercase.
 .. _`conftest.py plugin`:
 .. _`conftestplugin`:
 
-conftest.py as anonymous per-project plugins 
---------------------------------------------------
+Writing per-project plugins (conftest.py)
+------------------------------------------------------
 
 The purpose of ``conftest.py`` files is to allow `project-specific 
 test configuration`_.  They thus make for a good place to implement 
@@ -181,6 +179,55 @@ by defining the following hook in a ``conftest.py`` file:
         if config.getvalue("runall"):
             collect_ignore[:] = []
 
+.. _`setuptools entry points`:
+
+Writing setuptools-registered plugins 
+------------------------------------------------------
+
+.. _`Distribute`: http://pypi.python.org/pypi/distribute
+.. _`setuptools`: http://pypi.python.org/pypi/setuptools
+
+If you want to make your plugin publically available, you
+can use `setuptools`_ or `Distribute`_ which both allow
+to register an entry point.  ``py.test`` will register
+all objects with the ``pytest11`` entry point. 
+To make your plugin available you may insert the following
+lines in your setuptools/distribute-based setup-invocation:
+
+.. sourcecode:: python
+
+    # sample ./setup.py file 
+    from setuptools import setup
+
+    setup(
+        name="myproject",
+        packages = ['myproject']
+
+        # the following makes a plugin available to py.test
+        entry_points = { 
+            'pytest11': [
+                'name_of_plugin = myproject.pluginmodule',
+            ]
+        },
+    )
+
+If a package is installed with this setup, py.test will load 
+``myproject.pluginmodule`` under the ``name_of_plugin`` name
+and use it as a plugin. 
+
+Accessing another plugin by name
+--------------------------------------------
+
+If a plugin wants to collaborate with code from
+another plugin it can obtain a reference through
+the plugin manager like this:
+
+.. sourcecode:: python
+
+    plugin = config.pluginmanager.getplugin("name_of_plugin")
+
+If you want to look at the names of existing plugins, use 
+the ``--traceconfig`` option.
 
 .. _`well specified hooks`: 
 .. _`implement hooks`: 
