@@ -54,7 +54,7 @@ class RemoteControl(object):
             py.builtin.print_("RemoteControl:", msg)
 
     def initgateway(self):
-        return execnet.PopenGateway()
+        return execnet.makegateway("popen")
 
     def setup(self, out=None):
         if out is None:

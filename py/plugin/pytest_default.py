@@ -7,6 +7,9 @@ try:
     import execnet
 except ImportError:
     execnet = None
+else:
+    if not hasattr(execnet, 'Group'):
+        execnet = None
 
 def pytest_pyfunc_call(__multicall__, pyfuncitem):
     if not __multicall__.execute():
@@ -70,7 +73,7 @@ def pytest_addoption(parser):
         add_dist_options(parser)
     else:
         parser.epilog = (
-        "'execnet' package required for --looponfailing / distributed testing.")
+        "'execnet>=1.0.0b4' package required for --looponfailing / distributed testing.")
 
 def add_dist_options(parser):
     #  see http://pytest.org/help/dist")
