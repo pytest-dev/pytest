@@ -60,6 +60,13 @@ class TestBootstrapping:
         plugin = pluginmanager.getplugin("mytestplugin")
         assert plugin.x == 42
 
+    def test_consider_setuptools_not_installed(self, monkeypatch):
+        monkeypatch.setitem(py.std.sys.modules, 'pkg_resources', 
+            py.std.types.ModuleType("pkg_resources"))
+        pluginmanager = PluginManager()
+        pluginmanager.consider_setuptools_entrypoints()
+        # ok, we did not explode
+
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
         x500 = testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""

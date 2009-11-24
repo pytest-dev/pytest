@@ -78,7 +78,10 @@ class PluginManager(object):
             self.import_plugin(spec)
 
     def consider_setuptools_entrypoints(self):
-        from pkg_resources import iter_entry_points
+        try:
+            from pkg_resources import iter_entry_points
+        except ImportError:
+            return # XXX issue a warning 
         for ep in iter_entry_points('pytest11'):
             if ep.name in self._name2plugin:
                 continue
