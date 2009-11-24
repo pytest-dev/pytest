@@ -132,6 +132,8 @@ class File(object):
     def __call__(self, msg): 
         """ write a message to the log """
         self._file.write(str(msg) + "\n")
+        if hasattr(self._file, 'flush'):
+            self._file.flush()
 
 class Path(object): 
     """ log consumer that opens and writes to a Path """
