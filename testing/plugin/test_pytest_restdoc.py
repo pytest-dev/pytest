@@ -47,6 +47,9 @@ class TestDoctest:
         assert request.module.__name__ == __name__
         testdir.makepyfile(confrest=
             "from py.plugin.pytest_restdoc import Project")
+        # we scope our confrest file so that it doesn't
+        # conflict with another global confrest.py 
+        testdir.makepyfile(__init__="")
         for p in testdir.plugins:
             if p == globals():
                 break

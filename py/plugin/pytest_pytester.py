@@ -319,7 +319,7 @@ class TmpTestdir:
         return self.runpybin("py.test", *args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
-        pexpect = py.test.importorskip("pexpect", "2.3")
+        pexpect = py.test.importorskip("pexpect", "2.4")
         basetemp = self.tmpdir.mkdir("pexpect")
         invoke = "%s %s" % self._getpybinargs("py.test")
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)

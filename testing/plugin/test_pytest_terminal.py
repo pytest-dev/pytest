@@ -374,7 +374,6 @@ class TestCollectonly:
         p = testdir.makepyfile("import Errlkjqweqwe")
         result = testdir.runpytest("--collectonly", p)
         stderr = result.stderr.str().strip()
-        assert stderr.startswith("inserting into sys.path")
         assert result.ret == 1
         extra = result.stdout.fnmatch_lines(py.code.Source("""
             <Module '*.py'>

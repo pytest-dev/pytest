@@ -4,6 +4,8 @@ from py.path import SvnAuth
 import time
 import sys
 
+svnbin = py.path.local.sysfind('svn')
+
 def make_repo_auth(repo, userdata):
     """ write config to repo
     
@@ -257,6 +259,8 @@ class TestSvnURLAuth(object):
 
 class pytest_funcarg__setup:
     def __init__(self, request):
+        if not svnbin:
+            py.test.skip("svn binary required")
         if not request.config.option.runslowtests:
             py.test.skip('use --runslowtests to run these tests')
 

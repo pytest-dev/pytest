@@ -3,9 +3,9 @@ py.test/pylib 1.1.1: bugfix release, setuptools plugin registration
 
 This is a compatibility fixing release of pylib/py.test to work
 better with previous 1.0.x test code bases.  It also contains fixes
-and changes to work with `execnet>=1.0.0b4`_.  1.1.1 also introduces
+and changes to work with `execnet>=1.0.0`_ to provide distributed
+testing and looponfailing testing modes.  py-1.1.1 also introduces
 a new mechanism for registering plugins via setuptools. 
-Last but not least, documentation has been improved.
 
 What is pylib/py.test? 
 -----------------------
@@ -26,13 +26,13 @@ have fun,
 
 holger (http://twitter.com/hpk42)
 
-.. _`execnet>=1.0.0b4`: http://codespeak.net/execnet
+.. _`execnet>=1.0.0`: http://codespeak.net/execnet
 
 Changes between 1.1.1 and 1.1.0
 =====================================
 
-- introduce automatic lookup of 'pytest11' entrypoints
-  via setuptools' pkg_resources.iter_entry_points
+- introduce automatic plugin registration via 'pytest11' 
+  entrypoints via setuptools' pkg_resources.iter_entry_points
 
 - fix py.test dist-testing to work with execnet >= 1.0.0b4 
 
@@ -42,6 +42,7 @@ Changes between 1.1.1 and 1.1.0
   allow '%' in svn paths, make svnwc.update() default to interactive mode 
   like in 1.0.x and add svnwc.update(interactive=False) to inhibit interaction.
 
+- refine distributed tarball to contain test and no pyc files
+
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location
-
