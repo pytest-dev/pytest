@@ -1,0 +1,18 @@
+
+consider conftest hooks only for items below the dir
+---------------------------------------------------------
+tags: bug
+
+currently conftest hooks remain registered throughout 
+the whole testing process.  Consider to only have them
+called if their filesystem location is below a test item.
+
+
+introduce py.test.mark.ignoretest 
+-------------------------------------------------------
+tags: feature
+
+for not considering a function for test collection at all. 
+maybe also introduce a py.test.mark.test to explicitely
+mark a function to become a tested one.  Lookup 
+Java JUnit recent strategies/syntax.
