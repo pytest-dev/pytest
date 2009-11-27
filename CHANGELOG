@@ -1,3 +1,8 @@
+Changes between 1.1.2 and 1.1.1
+=====================================
+
+- fix assert reinterpreation that sees a call containing "keyword=..."
+
 Changes between 1.1.1 and 1.1.0
 =====================================
 

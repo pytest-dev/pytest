@@ -93,6 +93,14 @@ def test_assert_non_string_message():
         e = exvalue()
         assert e.msg == "hello"
 
+def test_assert_keyword_arg():
+    def f(x=3):
+        return False
+    try:
+        assert f(x=5)
+    except AssertionError:
+        e = exvalue()
+        assert "x=5" in e.msg
 
 # These tests should both fail, but should fail nicely...
 class WeirdRepr:

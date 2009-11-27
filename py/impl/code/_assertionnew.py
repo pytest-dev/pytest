@@ -234,7 +234,7 @@ class DebugInterpreter(ast.NodeVisitor):
             arg_explanation, arg_result = self.visit(keyword.value)
             arg_name = "__exprinfo_%s" % (len(ns),)
             ns[arg_name] = arg_result
-            keyword_source = "%s=%%s" % (keyword.id)
+            keyword_source = "%s=%%s" % (keyword.arg)
             arguments.append(keyword_source % (arg_name,))
             arg_explanations.append(keyword_source % (arg_explanation,))
         if call.starargs:
