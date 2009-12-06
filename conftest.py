@@ -2,6 +2,8 @@ import py
 
 pytest_plugins = '_pytest doctest pytester'.split()
 
+collect_ignore = ['build', 'doc/_build']
+
 
 rsyncdirs = ['conftest.py', 'bin', 'py', 'doc', 'testing']
 try:
