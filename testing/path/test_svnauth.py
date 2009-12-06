@@ -234,7 +234,7 @@ class TestSvnURLAuth(object):
 
     def test_log(self):
         u = svnurl_no_svn('http://foo.bar/svn/foo', auth=self.auth)
-        u.popen_output = py.io.TextIO('''\
+        u.popen_output = py.io.TextIO(py.builtin._totext('''\
 <?xml version="1.0"?>
 <log>
 <logentry revision="51381">
@@ -244,7 +244,7 @@ class TestSvnURLAuth(object):
 </msg>
 </logentry>
 </log>
-''')
+''', 'ascii'))
         u.check = lambda *args, **kwargs: True
         ret = u.log(10, 20, verbose=True)
         assert '--username="foo" --password="bar"' in u.commands[0]
