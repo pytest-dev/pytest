@@ -1,7 +1,7 @@
 
 consider conftest hooks only for items below the dir
 ---------------------------------------------------------
-tags: bug
+tags: bug 1.1.2
 
 currently conftest hooks remain registered throughout 
 the whole testing process.  Consider to only have them
@@ -16,3 +16,20 @@ for not considering a function for test collection at all.
 maybe also introduce a py.test.mark.test to explicitely
 mark a function to become a tested one.  Lookup 
 Java JUnit recent strategies/syntax.
+
+make node._checkcollectable more robust
+-------------------------------------------------
+tags: bug 1.1.2
+
+currently node._checkcollectable() can raise
+exceptions for all kinds of reasons ('conftest.py' loading
+problems, missing rsync-dirs, platform-skip-at-import-level 
+issues, ...).  It should just return True/False and cause 
+a good error message.
+
+call termination with small timeout
+-------------------------------------------------
+tags: feature 1.1.2
+
+Call gateway group termination with a small timeout if available. 
+Should make dist-testing less likely to leave lost processes.
