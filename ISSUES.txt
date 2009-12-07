@@ -44,3 +44,12 @@ it cannot call os.dup on setup.  Should cause a skip.
 
 introduce multi-install, i.e. py.test3, py.test-pypy, py.test-jython
 and maybe a commandline-"suffix" override? 
+
+fix dist-testing: execnet needs to be rsynced over automatically
+------------------------------------------------------------------
+
+tags: bug 1.1.2
+bb: http://bitbucket.org/hpk42/py-trunk/issue/65/
+
+execnet is not rsynced so fails if run in an ssh-situation. 
+write test and fix.
