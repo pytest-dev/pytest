@@ -33,3 +33,14 @@ tags: feature 1.1.2
 
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
+
+make capfd skip if 'dup' is not available
+-------------------------------------------------------
+
+tags: feature 1.1.2
+
+currently, using 'capfd' as a funcarg will fail because
+it cannot call os.dup on setup.  Should cause a skip.
+
+introduce multi-install, i.e. py.test3, py.test-pypy, py.test-jython
+and maybe a commandline-"suffix" override? 
