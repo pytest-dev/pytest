@@ -53,3 +53,14 @@ bb: http://bitbucket.org/hpk42/py-trunk/issue/65/
 
 execnet is not rsynced so fails if run in an ssh-situation. 
 write test and fix.
+
+
+relax requirement to have tests/testing contain an __init__
+----------------------------------------------------------------
+tags: feature 1.1.2
+bb: http://bitbucket.org/hpk42/py-trunk/issue/64
+
+A local test run of a "tests" directory may work 
+but a remote one fail because the tests directory
+does not contain an "__init__.py". Either give
+an error or make it work without the __init__.py
