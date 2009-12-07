@@ -62,6 +62,13 @@ and send them to remote places for execution.
 You can specify multiple ``--rsyncdir`` directories 
 to be sent to the remote side. 
 
+**NOTE:** For py.test to collect and send tests correctly
+you not only need to make sure all code and tests
+directories are rsynced, but that any test (sub) directory
+also has an ``__init__.py`` file because internally
+py.test references tests as a fully qualified python
+module path.  **You will otherwise get strange errors** 
+during setup of the remote side.
 
 Sending tests to remote Socket Servers
 ----------------------------------------
