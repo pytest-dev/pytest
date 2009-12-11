@@ -340,7 +340,7 @@ A ``report`` object contains status and reporting information:
     report.failed = True or False
     report.skipped = True or False
 
-The `pytest_terminal plugin`_ uses this hook to print information
+The `terminal plugin`_ uses this hook to print information
 about a test run. 
     
 The whole protocol described here is implemented via this hook:
@@ -359,8 +359,8 @@ The call object contains information about a performed call:
     call.when = "setup", "call" or "teardown" 
     call.outerr = None or tuple of strings representing captured stdout/stderr 
 
-.. _`pytest_pdb plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_pdb.py
-.. _`pytest_terminal plugin`: http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/pytest_terminal.py
+.. _`pytest_pdb plugin`: plugin/pdb.html
+.. _`terminal plugin`: plugin/terminal.html
 
 
 generic collection hooks 

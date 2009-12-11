@@ -18,7 +18,7 @@ command line options
 ``-l, --showlocals``
     show locals in tracebacks (disabled by default).
 ``--report=opts``
-    comma separated reporting options
+    comma separated options, valid: skipped,xfailed
 ``--tb=style``
     traceback verboseness (long/short/no).
 ``--fulltrace``
