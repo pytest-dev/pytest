@@ -273,6 +273,8 @@ for example:
 
 When the test run finishes this corresponding finalizer hook is called:
 
+.. sourcecode:: python
+
     def pytest_unconfigure(config): 
         ... 
 
@@ -281,7 +283,9 @@ adding global py.test helpers and functionality
 --------------------------------------------------------------------
 
 If you want to make global helper functions or objects available 
-to your test code you can implement: 
+to your test code you can implement:
+
+.. sourcecode:: python
 
     def pytest_namespace():
         """ return dictionary with items to be made available on py.test. namespace """

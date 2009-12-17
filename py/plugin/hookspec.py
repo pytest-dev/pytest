@@ -56,7 +56,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 pytest_pycollect_makeitem.firstresult = True
 
 def pytest_pyfunc_call(pyfuncitem):
-    """ perform function call to the with the given function arguments. """ 
+    """ call underlying test function. """
 pytest_pyfunc_call.firstresult = True
 
 def pytest_generate_tests(metafunc):
@@ -67,7 +67,7 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 
 def pytest_runtest_protocol(item):
-    """ implement fixture, run and report protocol. """
+    """ implement fixture, run and report about the given test item. """
 pytest_runtest_protocol.firstresult = True
 
 def pytest_runtest_setup(item):
@@ -80,7 +80,7 @@ def pytest_runtest_teardown(item):
     """ called after pytest_runtest_call(). """ 
 
 def pytest_runtest_makereport(item, call):
-    """ make ItemTestReport for the given item and call outcome. """ 
+    """ make a test report for the given item and call outcome. """
 pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(report):
