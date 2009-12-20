@@ -26,8 +26,11 @@ distributed testing:
  
 plugin specific examples: 
 
+- `skipping slow tests by default in py.test`_ (blog entry)
+
 - `many examples in the docs for plugins`_ 
 
+.. _`skipping slow tests by default in py.test`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 .. _`making funcargs dependendent on command line options`: funcargs.html#tut-cmdlineoption
 .. _`many examples in the docs for plugins`: plugin/index.html
 .. _`monkeypatch plugin`: plugin/monkeypatch.html
