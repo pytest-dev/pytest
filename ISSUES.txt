@@ -8,7 +8,7 @@ the whole testing process.  Consider to only have them
 called if their filesystem location is below a test item.
 
 
-introduce py.test.mark.ignoretest 
+introduce py.test.mark.nocollect
 -------------------------------------------------------
 tags: feature
 
@@ -16,6 +16,43 @@ for not considering a function for test collection at all.
 maybe also introduce a py.test.mark.test to explicitely
 mark a function to become a tested one.  Lookup 
 Java JUnit recent strategies/syntax.
+
+capture plugin: skip on missing os.dup for 'capfd'
+--------------------------------------------------------
+
+tags: feature
+
+Currrently for Jython one needs do an explicit skip like this:
+
+    @py.test.mark.skipif("not hasattr(os, 'dup')")
+
+to avoid a failure when 'capfd' is used. Instead
+provide an automatic skip.
+
+
+have imported module mismatch honour relative paths
+--------------------------------------------------------
+tags: bug
+
+With 1.1.1 py.test fails at least on windows if an import 
+is relative and compared against an absolute conftest.py 
+path. Normalize.
+
+allow plugins/conftests to show extra header information
+--------------------------------------------------------
+tags: feature
+
+The test-report header should optionally show information
+about the under-test package and versions/locations of
+involved packages.
+
+install py.test with interpreter-specific prefixes 
+--------------------------------------------------------
+tags: feature
+
+When installing under python3, jython or pypy-c it is 
+desirable to (additionally?) install py.test with
+respective suffixes. 
 
 make node._checkcollectable more robust
 -------------------------------------------------
