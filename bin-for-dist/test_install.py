@@ -143,3 +143,29 @@ def test_plugin_setuptools_entry_point_integration(py_setup, venv, tmpdir):
     venv.setup_develop()
     out = venv.pytest_getouterr("-h")
     assert "testpluginopt" in out
+
+def test_cmdline_entrypoints():
+    from setup import cmdline_entrypoints
+    versioned_scripts = ['py.test', 'py.which']
+    unversioned_scripts = versioned_scripts + [ 'py.cleanup', 
+        'py.convert_unittest', 'py.countloc', 'py.lookup', 'py.svnwcrevert']
+    for ver in [(2,4,0), (2,5,0), (2,6,0), (2,7,0), (3,0,1), (3,1,1)]:
+        for platform in ('posix', 'win32'):
+            points = cmdline_entrypoints(ver, "posix", 'python')
+            for script in versioned_scripts:
+                script_ver = script + "-%s.%s" % ver[:2]
+                assert script_ver in points
+            for script in unversioned_scripts:
+                assert script in points
+    points = cmdline_entrypoints((2,5,1), "java1.6.123", 'jython')
+    for script in versioned_scripts:
+        expected = "%s-jython" % script
+        assert expected in points
+    for script in unversioned_scripts:
+        assert script in points
+    points = cmdline_entrypoints((2,5,1), "xyz", 'pypy-c-XYZ')
+    for script in versioned_scripts:
+        expected = "%s-pypy-c-XYZ" % script
+        assert expected in points
+    for script in unversioned_scripts:
+        assert script in points

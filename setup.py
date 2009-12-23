@@ -28,20 +28,13 @@ def main():
         name='py',
         description='py.test and pylib: rapid testing and development utils.',
         long_description = long_description,
-        version= trunk or '1.1.1',
+        version= trunk or '1.1.2',
         url='http://pylib.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
         author_email='holger at merlinux.eu',
-        entry_points={'console_scripts': [
-            'py.cleanup = py.cmdline:pycleanup',
-            'py.convert_unittest = py.cmdline:pyconvert_unittest',
-            'py.countloc = py.cmdline:pycountloc',
-            'py.lookup = py.cmdline:pylookup',
-            'py.svnwcrevert = py.cmdline:pysvnwcrevert',
-            'py.test = py.cmdline:pytest',
-            'py.which = py.cmdline:pywhich']},
+        entry_points= make_entry_points(),
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
@@ -68,6 +61,31 @@ def main():
         ],
         zip_safe=False,
     )
+
+def cmdline_entrypoints(versioninfo, platform, basename):
+    if basename.startswith("pypy"):
+        points = {'py.test-%s' % basename: 'py.cmdline:pytest', 
+                  'py.which-%s' % basename: 'py.cmdline:pywhich',}
+    elif platform.startswith('java'):
+        points = {'py.test-jython': 'py.cmdline:pytest', 
+                  'py.which-jython': 'py.cmdline:pywhich'}
+    else: # cpython
+        points = {
+          'py.test-%s.%s' % versioninfo[:2] : 'py.cmdline:pytest',
+          'py.which-%s.%s' % versioninfo[:2] : 'py.cmdline:pywhich'
+        }
+    for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc', 
+              'py.lookup', 'py.svnwcrevert', 'py.which', 'py.test']:
+        points[x] = "py.cmdline:%s" % x.replace('.','')
+    return points
+
+def make_entry_points():
+    basename = os.path.basename(sys.executable)
+    points = cmdline_entrypoints(sys.version_info, sys.platform, basename)
+    keys = list(points.keys())
+    keys.sort()
+    l = ["%s = %s" % (x, points[x]) for x in keys]
+    return {'console_scripts': l}
 
 if __name__ == '__main__':
     main()

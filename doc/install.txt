@@ -3,19 +3,30 @@
     Downloading
     ==============
 
-.. _`PyPI project page`: http://pypi.python.org/pypi/py/
+.. _`index page`: http://pypi.python.org/pypi/py/
 
 
-py.test/pylib compat/install info in a nutshell
+py.test/pylib installation info in a nutshell
 ===================================================
 
-PyPI Pyckage name: "**py**", see `PyPI project page`_ for latest version
+**Pythons**: 2.4, 2.5, 2.6, 3.0, 3.1, Jython-2.5.1, PyPy-1.1
 
-Installers: easy_install_ and pip_, setuptools_ or Distribute_
+**Operating systems**: Linux, Windows, OSX, Unix 
 
-Pythons: 2.4, 2.5, 2.6, 3.0, 3.1, Jython-2.5.1, PyPy-1.1
+**Requirements**: setuptools_ or Distribute_ 
 
-Operating systems: Linux, Windows and OSX + probably many others
+**Installers**: easy_install_ and pip_
+
+**Distribution names**:
+
+* PyPI name: ``py`` (see `index page`_ for versions)
+* redhat fedora: ``pylib``
+* debian: ``python-codespeak-lib``
+* gentoo: ``pylib``
+
+**Installed scripts**: see `bin`_ for which scripts are installed. 
+
+.. _`bin`: bin.html
 
 
 Best practise: install tool and dependencies virtually
@@ -28,12 +39,6 @@ you need to run your tests.  Local virtual Python environments
 (as opposed to system-wide "global" environments) make for a more 
 reproducible and reliable test environment. 
 
-Note: as of November 2009 pytest/pylib 1.1 RPMs and DEB packages 
-are not available.  If you want to easy_install the newest py.test
-and pylib do everyone a favour and uninstall older versions 
-from the global system e.g. like this on Ubuntu::
-
-    sudo apt-get remove --purge python-codespeak-lib
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/

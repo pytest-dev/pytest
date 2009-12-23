@@ -1,21 +1,39 @@
 ======================
-``py/bin/`` scripts 
+pylib scripts 
 ======================
 
-The py-lib contains some scripts, most of which are 
-small ones (apart from ``py.test``) that help during
-the python development process.  If working
-from a svn-checkout of py lib you may add ``py/bin`` 
-to your shell ``PATH`` which should make the scripts
-available on your command prompt. 
+The pylib installs several scripts to support testing and (python)
+development.  If working from a checkout you may also add ``bin`` to
+your ``PATH`` environment variable which makes the scripts available on
+your shell prompt. 
 
-``py.test``
-===========
+``py.test`` and ``py.test-$VERSION``
+============================================
 
-The ``py.test`` executable is the main entry point into the py-lib testing tool,
-see the `py.test documentation`_.
+The ``py.test`` executable is the main tool that the py lib offers;
+in fact most code in the py lib is geared towards supporting the
+testing process.  See the `py.test documentation`_ for extensive
+documentation.  The ``py.test-$VERSION`` is the same script with
+an interpreter specific suffix appended to make 
+several versions of py.test for using specific interpreters
+accessible:
+
+* CPython2.4: py.test-2.4 
+* CPython2.5: py.test-2.5
+* ... 
+* CPython3.1: py.test-3.1
+* Jython-2.5.1: py.test-jython
+* pypy-$SUFFIX: py.test-pypy-$SUFFIX 
 
 .. _`py.test documentation`: test/index.html
+
+``py.which`` and ``py.which-$VERSION``
+=========================================
+
+Usage: ``py.which modulename``
+
+Print the ``__file__`` of the module that is imported via ``import modulename``.
+The version-suffix is the same as with ``py.test`` above. 
 
 ``py.cleanup``
 ==============
@@ -25,7 +43,6 @@ Usage: ``py.cleanup [PATH]``
 Delete pyc file recursively, starting from ``PATH`` (which defaults to the
 current working directory). Don't follow links and don't recurse into
 directories with a ".".
-
 
 ``py.countloc``
 ===============
@@ -46,25 +63,3 @@ Looks recursively at Python files for a ``SEARCH_STRING``, starting from the
 present working directory. Prints the line, with the filename and line-number
 prepended.
 
-``py.rest``
-===========
-
-Usage: ``py.rest [PATHS] [options]``
-
-[deprecated in 1.0, will likely be separated]
-Loot recursively for .txt files starting from ``PATHS`` and convert them to
-html using docutils or to pdf files, if the ``--pdf`` option is used. For
-conversion to PDF you will need several command line tools, on Ubuntu Linux
-this is **texlive** and **texlive-extra-utils**. 
-
-``py.rest`` has some extra features over rst2html (which is shipped with
-docutils). Most of these are still experimental, the one which is most likely
-not going to change is the `graphviz`_ directive. With that you can embed .dot
-files into your document and have them be converted to png (when outputting
-html) and to eps (when outputting pdf). Otherwise the directive works mostly
-like the image directive::
-
-    .. graphviz:: example.dot
-       :scale: 90
-
-.. _`graphviz`: http://www.graphviz.org
