@@ -1,7 +1,9 @@
 #!/usr/bin/env python 
 
 #
-# find and import a version of 'py'
+# find and import a version of 'py' that exists in a parent dir
+# of the current working directory. fall back to import a 
+# globally available version
 #
 import sys
 import os

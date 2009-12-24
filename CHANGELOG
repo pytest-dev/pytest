@@ -8,6 +8,9 @@ Changes between 1.1.2 and 1.1.1
 
 - skip some install-tests if no execnet is available
 
+- fix docs, fix internal bin/ script generation
+
+
 Changes between 1.1.1 and 1.1.0
 =====================================
 

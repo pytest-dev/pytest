@@ -63,6 +63,15 @@ issues where people have used the term "magic" in the past:
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
 
+Where does my ``py.test`` come/import from? 
+----------------------------------------------
+
+You can issue::
+
+    py.test --version
+
+which tells you both version and import location of the tool.
+
 
 function arguments, parametrized tests and setup
 ====================================================

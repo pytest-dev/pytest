@@ -116,52 +116,47 @@ in order to work inline with the tools and the lib of your checkout.
 
 .. _`directly use a checkout`: 
 
-directly use a checkout or tarball 
+directly use a checkout or tarball / avoid setuptools 
 -------------------------------------------------------------
 
-Once you got yourself a checkout_ or tarball_ it is usually a good 
-idea to add the parent directory of the ``py`` package directory 
-to your ``PYTHONPATH`` and ``py/bin`` or ``py\bin\win32`` to your 
-system wide ``PATH`` settings.  There are helper scripts that 
-set ``PYTHONPATH`` and ``PATH`` on your system: 
+Get a checkout_ or tarball_ and add paths to your environment variables:
 
-on windows execute::
+* ``PYTHONPATH`` needs to contain the root directory (where ``py`` resides)
+* ``PATH`` needs to contain ``ROOT/bin`` or ``ROOT\bin\win32`` respectively. 
+
+There also are helper scripts that set the variables accordingly.  On windows 
+execute::
 
     # inside autoexec.bat or shell startup
     c:\\path\to\checkout\bin\env.cmd
 
 on linux/OSX add this to your shell initialization:: 
 
-    # inside .bashrc 
+    # inside e.g. .bashrc 
     eval `python ~/path/to/checkout/bin/env.py` 
 
-both of which which will get you good settings 
-for ``PYTHONPATH`` and ``PATH``.
+both of which which will get you good settings.  If you install 
+the pylib this way you can easily ``hg pull && hg up`` or download
+a new tarball_ to follow the development tree.
 
-If you install ``py.test`` this way you can easily
-``hg pull && hg up`` your checkout to follow the
-development tree.
 
-note: scripts look for "nearby" py-lib 
------------------------------------------------------
-
-Note that all `command line scripts`_ will look 
-for "nearby" py libs, so if you have a layout like this::
+Note that the scripts manually added like this will look for 
+py libs in the chain of parent directories of the current working dir.  
+For example, if you have a layout like this::
 
     mypkg/
         subpkg1/
             tests/
         tests/
-    py/ 
+    py/
 
 issuing ``py.test subpkg1`` will use the py lib
-from that projects root directory.   Giving the
-state of Python packaging there can be confusion
-in which case issuing::
+from that projects root directory.   If in doubt over where
+the pylib comes from you can always do::
 
     py.test --version
 
-tells you both version and import location of the tool.
+to see where py.test is imported from. 
 
 .. _`command line scripts`: bin.html
 .. _contact: contact.html

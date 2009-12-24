@@ -1,6 +1,6 @@
-from _findpy import py
+import py
 
-bindir = py.magic.autopath().dirpath().dirpath("py").join("bin")
+bindir = py.path.local(__file__).dirpath().dirpath("bin")
 assert bindir.check(), bindir
 
 def getbasename(name):
@@ -31,5 +31,3 @@ if __name__ == "__main__":
         if name[0] != "_":
             genscript_unix(name)
             genscript_windows(name)
-        
-        
