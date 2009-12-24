@@ -36,8 +36,8 @@ class TestPDB:
                 assert i == 1
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*def test_1.*")
-        child.expect(".*i = 0.*")
+        child.expect(".*def test_1")
+        child.expect(".*i = 0")
         child.expect("(Pdb)")
         child.sendeof()
         child.expect("1 failed")
@@ -50,7 +50,7 @@ class TestPDB:
         py.test.raises(Error, "testdir.parseconfigure('--pdb', '--looponfail')")
         result = testdir.runpytest("--pdb", "-n", "3")
         assert result.ret != 0
-        assert "incompatible" in result.stdout.str()
+        assert "incompatible" in result.stderr.str()
         result = testdir.runpytest("--pdb", "-d", "--tx", "popen")
         assert result.ret != 0
-        assert "incompatible" in result.stdout.str()
+        assert "incompatible" in result.stderr.str()

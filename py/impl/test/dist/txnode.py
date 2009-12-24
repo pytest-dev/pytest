@@ -42,7 +42,7 @@ class TXNode(object):
             if eventcall == self.ENDMARK:
                 err = self.channel._getremoteerror()
                 if not self._down:
-                    if not err:
+                    if not err or isinstance(err, EOFError):
                         err = "Not properly terminated"
                     self.notify("pytest_testnodedown", node=self, error=err)
                     self._down = True

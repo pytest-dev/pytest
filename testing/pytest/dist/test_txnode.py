@@ -79,7 +79,7 @@ class TestMasterSlaveConnection:
         node.send(123) # invalid item 
         kwargs = mysetup.geteventargs("pytest_testnodedown")
         assert kwargs['node'] is node 
-        assert str(kwargs['error']).find("AttributeError") != -1
+        assert "Not properly terminated" in str(kwargs['error'])
 
     def test_crash_killed(self, testdir, mysetup):
         if not hasattr(py.std.os, 'kill'):
@@ -87,13 +87,13 @@ class TestMasterSlaveConnection:
         item = testdir.getitem("""
             def test_func():
                 import os
-                os.kill(os.getpid(), 15)
+                os.kill(os.getpid(), 9)
         """)
         node = mysetup.makenode(item.config)
         node.send(item) 
         kwargs = mysetup.geteventargs("pytest_testnodedown")
         assert kwargs['node'] is node 
-        assert str(kwargs['error']).find("Not properly terminated") != -1
+        assert "Not properly terminated" in str(kwargs['error'])
 
     def test_node_down(self, mysetup):
         node = mysetup.makenode()

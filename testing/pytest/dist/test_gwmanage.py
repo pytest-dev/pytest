@@ -37,10 +37,10 @@ class TestGatewayManagerPopen:
         hm.makegateways()
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
         assert call.gateway.spec == execnet.XSpec("popen")
-        assert call.gateway.id == "1"
+        assert call.gateway.id == "gw0"
         assert call.platinfo.executable == call.gateway._rinfo().executable
         call = hookrecorder.popcall("pytest_gwmanage_newgateway")
-        assert call.gateway.id == "2" 
+        assert call.gateway.id == "gw1" 
         assert len(hm.group) == 2
         hm.exit()
         assert not len(hm.group) 
@@ -66,7 +66,7 @@ class TestGatewayManagerPopen:
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert len(l) == 1
-        assert l[0] == ("rsyncrootready", hm.group['1'].spec, source)
+        assert l[0] == ("rsyncrootready", hm.group['gw0'].spec, source)
         hm.exit()
         dest = dest.join(source.basename)
         assert dest.join("dir1").check()

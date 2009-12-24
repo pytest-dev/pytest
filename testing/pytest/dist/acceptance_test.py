@@ -49,8 +49,8 @@ class TestDistribution:
         )
         result = testdir.runpytest(p1, '-d', '--tx=popen', '--tx=popen')
         result.stdout.fnmatch_lines([
+            "*0*popen*Python*",
             "*1*popen*Python*",
-            "*2*popen*Python*",
             "*2 failed, 1 passed, 1 skipped*",
         ])
         assert result.ret == 1
@@ -73,9 +73,9 @@ class TestDistribution:
         """)
         result = testdir.runpytest(p1, '-d')
         result.stdout.fnmatch_lines([
+            "*0*popen*Python*",
             "*1*popen*Python*",
             "*2*popen*Python*",
-            "*3*popen*Python*",
             "*2 failed, 1 passed, 1 skipped*",
         ])
         assert result.ret == 1
@@ -122,7 +122,7 @@ class TestDistribution:
             "--tx=popen//chdir=%(dest)s" % locals(), p)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*1* *popen*platform*",
+            "*0* *popen*platform*",
             #"RSyncStart: [G1]",
             #"RSyncFinished: [G1]",
             "*1 passed*"

@@ -215,15 +215,16 @@ class DSession(Session):
         for node, pending in self.node2pending.items():
             room = min(self.MAXITEMSPERHOST - len(pending), room)
         sending = tosend[:room]
-        for node, pending in self.node2pending.items():
-            node.sendlist(sending)
-            pending.extend(sending)
-            for item in sending:
-                nodes = self.item2nodes.setdefault(item, [])
-                assert node not in nodes
-                nodes.append(node)
-                self.config.hook.pytest_itemstart(item=item, node=node)
-        tosend[:] = tosend[room:]  # update inplace
+        if sending:
+            for node, pending in self.node2pending.items():
+                node.sendlist(sending)
+                pending.extend(sending)
+                for item in sending:
+                    nodes = self.item2nodes.setdefault(item, [])
+                    assert node not in nodes
+                    nodes.append(node)
+                    self.config.hook.pytest_itemstart(item=item, node=node)
+            tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
             self.queueevent("pytest_rescheduleitems", items=tosend)

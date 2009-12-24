@@ -16,9 +16,10 @@ def pytest_addoption(parser):
                help="start pdb (the Python debugger) on errors.")
 
 
-def pytest_configure(config):
+def pytest_configure(__multicall__, config):
     if config.option.usepdb:
         if execnet:
+            __multicall__.execute()
             if config.getvalue("looponfail"):
                 raise config.Error("--pdb incompatible with --looponfail.")
             if config.option.dist != "no":
