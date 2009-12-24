@@ -112,7 +112,7 @@ argument usage and creation.
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 
-Can i yield multiple values from a factory function? 
+Can I yield multiple values from a factory function? 
 -----------------------------------------------------
 
 There are two reasons why yielding from a factory function
