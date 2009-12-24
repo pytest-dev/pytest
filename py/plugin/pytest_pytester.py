@@ -4,6 +4,7 @@ funcargs and support code for testing py.test's own functionality.
 
 import py
 import sys, os
+import re
 import inspect
 from py.impl.test.config import Config as pytestConfig
 from py.plugin import hookspec
@@ -26,6 +27,7 @@ def pytest_funcarg__reportrecorder(request):
     request.addfinalizer(lambda: reprec.comregistry.unregister(reprec))
     return reprec
 
+rex_outcome = re.compile("(\d+) (\w+)")
 class RunResult:
     def __init__(self, ret, outlines, errlines):
         self.ret = ret
@@ -33,6 +35,15 @@ class RunResult:
         self.errlines = errlines
         self.stdout = LineMatcher(outlines)
         self.stderr = LineMatcher(errlines)
+    def parseoutcomes(self):
+        for line in reversed(self.outlines):
+            if 'seconds' in line:
+                outcomes = rex_outcome.findall(line)
+                if outcomes:
+                    d = {}
+                    for num, cat in outcomes:
+                        d[cat] = int(num)
+                    return d
 
 class TmpTestdir:
     def __init__(self, request):
@@ -245,17 +256,6 @@ class TmpTestdir:
 
         return self.config.getfsnode(path)
 
-    def prepare(self):
-        p = self.tmpdir.join("conftest.py") 
-        if not p.check():
-            plugins = [x for x in self.plugins if isinstance(x, str)]
-            if not plugins:
-                return
-            p.write("import py ; pytest_plugins = %r" % plugins)
-        else:
-            if self.plugins:
-                print ("warning, ignoring reusing existing %s" % p)
-
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")
@@ -267,7 +267,6 @@ class TmpTestdir:
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):
-        self.prepare()
         old = self.tmpdir.chdir()
         #print "chdir", self.tmpdir
         try:
@@ -316,6 +315,9 @@ class TmpTestdir:
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 
             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args 
+        plugins = [x for x in self.plugins if isinstance(x, str)]
+        if plugins:
+            args = ('-p', plugins[0]) + args
         return self.runpybin("py.test", *args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):

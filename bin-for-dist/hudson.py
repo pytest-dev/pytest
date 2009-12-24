@@ -13,9 +13,10 @@ def bincall(*args):
     args[0] = os.path.join(BIN, args[0])
     call(*args)
 
-call("virtualenv", BUILDNAME, '--no-site-packages')
+call("virtualenv", os.path.abspath(BUILDNAME), '--no-site-packages')
 bincall("python", "setup.py", "develop", "-q")
 bincall("pip", "install", "-r", "testing/pip-reqs1.txt", 
                "-q", "--download-cache=download")
-bincall("py.test", "-p", "xmlresult", "--xmlresult=junit.xml", 
-        "--report=skipped", "--runslowtest")
+bincall("py.test", "--ignore", BUILDNAME, 
+        "-p", "xmlresult", "--xmlresult=junit.xml", 
+        "--report=skipped", "--runslowtest", *sys.argv[1:])
