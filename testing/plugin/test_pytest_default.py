@@ -30,6 +30,15 @@ def test_plugin_already_exists(testdir):
     assert config.option.plugins == ['default']
     config.pluginmanager.do_configure(config)
 
+def test_exclude(testdir):
+    hellodir = testdir.mkdir("hello")
+    hellodir.join("test_hello.py").write("x y syntaxerror")
+    hello2dir = testdir.mkdir("hello2")
+    hello2dir.join("test_hello2.py").write("x y syntaxerror")
+    testdir.makepyfile(test_ok="def test_pass(): pass")
+    result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
+    assert result.ret == 0
+    assert result.stdout.fnmatch_lines(["*1 passed*"])
 
 class TestDistOptions:
     def setup_method(self, method):

@@ -51,6 +51,8 @@ def pytest_addoption(parser):
     group._addoption('-x', '--exitfirst',
                action="store_true", dest="exitfirst", default=False,
                help="exit instantly on first error or failed test."),
+    group.addoption("--ignore", action="append", metavar="path", 
+        help="ignore path during collection (multi-allowed).")
     group._addoption('-k',
         action="store", dest="keyword", default='',
         help="only run test items matching the given "
