@@ -1,6 +1,6 @@
 import py
 import subprocess
-import os
+import os, sys
 
 execnet = py.test.importorskip("execnet")
 
