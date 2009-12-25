@@ -94,7 +94,7 @@ class VirtualEnv(object):
 
     def pytest_getouterr(self, *args):
         self.ensure()
-        args = [self._cmd("python"), self._cmd("py.test")] + list(args)
+        args = [self._cmd("py.test")] + list(args)
         popen = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, err = popen.communicate()
         return out
