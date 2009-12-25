@@ -292,7 +292,7 @@ class TerminalReporter:
         self.summary_stats()
 
     def pytest_keyboard_interrupt(self, excinfo):
-        self._keyboardinterrupt_memo = excinfo.getrepr()
+        self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def _report_keyboardinterrupt(self):
         self.write_sep("!", "KEYBOARD INTERRUPT")

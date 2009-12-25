@@ -9,6 +9,11 @@ class Test_exec_cmd:
         out = cmdexec('echo hallo')
         assert out.strip() == 'hallo'
 
+    def test_simple_newline(self):
+        import sys
+        out = cmdexec(r"""%s -c "print ('hello')" """ % sys.executable)
+        assert out == 'hello\n'
+
     def test_simple_error(self):
         py.test.raises (cmdexec.Error, cmdexec, 'exit 1')
 

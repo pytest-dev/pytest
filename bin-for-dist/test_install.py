@@ -66,7 +66,10 @@ class VirtualEnv(object):
         return "<VirtualEnv at %r>" %(self.path)
 
     def _cmd(self, name):
-        return os.path.join(self.path, 'bin', name)
+        if sys.platform == "win32":
+            return os.path.join(self.path, 'Scripts', name)
+        else:
+            return os.path.join(self.path, 'bin', name)
 
     def ensure(self):
         if not os.path.exists(self._cmd('python')):

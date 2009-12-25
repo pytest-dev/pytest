@@ -14,7 +14,9 @@ def cmdexec(cmd):
     the exception will provide an 'err' attribute containing
     the error-output from the command.
     """
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=True, 
+            universal_newlines=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = process.communicate()
     out = py.builtin._totext(out, sys.getdefaultencoding())
     err = py.builtin._totext(err, sys.getdefaultencoding())
