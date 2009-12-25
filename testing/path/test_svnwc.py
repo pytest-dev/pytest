@@ -1,16 +1,8 @@
 import py
-import sys
+import os, sys
 from py.impl.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
 from py.impl.path import svnwc as svncommon
 from testing.path.svntestbase import CommonSvnTests
-
-if sys.platform == 'win32':
-    def normpath(p):
-        return p
-else:
-    def normpath(p):
-        p = py.test.importorskip("win32").GetShortPathName(p)
-        return os.path.normpath(os.path.normcase(p))
 
 def test_make_repo(path1, tmpdir):
     repo = tmpdir.join("repo")
@@ -32,7 +24,7 @@ def test_make_repo(path1, tmpdir):
     assert rev is None
 
 def pytest_funcarg__path1(request):
-    repo, wc = request.getfuncargvalue("repowc1")
+    repo, repourl, wc = request.getfuncargvalue("repowc1")
     return wc
 
 class TestWCSvnCommandPath(CommonSvnTests):
@@ -181,7 +173,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         assert [x.basename for x in s.conflict] == ['conflictsamplefile']
 
     def test_status_external(self, path1, repowc2):
-        otherrepo, otherwc = repowc2
+        otherrepo, otherrepourl, otherwc = repowc2
         d = path1.ensure('sampledir', dir=1)
         try:
             d.remove()
@@ -366,7 +358,8 @@ class TestWCSvnCommandPath(CommonSvnTests):
         try:
             locked = root.status().locked
             assert len(locked) == 1
-            assert normpath(str(locked[0])) == normpath(str(somefile))
+            assert locked[0].basename == somefile.basename
+            assert locked[0].dirpath().basename == somefile.dirpath().basename
             #assert somefile.locked()
             py.test.raises(Exception, 'somefile.lock()')
         finally:

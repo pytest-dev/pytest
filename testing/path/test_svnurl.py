@@ -5,8 +5,8 @@ import time
 from testing.path.svntestbase import CommonSvnTests
 
 def pytest_funcarg__path1(request):
-    repo, wc = request.getfuncargvalue("repowc1")
-    return py.path.svnurl(repo)
+    repo, repourl, wc = request.getfuncargvalue("repowc1")
+    return py.path.svnurl(repourl)
 
 class TestSvnURLCommandPath(CommonSvnTests):
     @py.test.mark.xfail

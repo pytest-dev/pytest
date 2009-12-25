@@ -11,7 +11,7 @@ def pytest_funcarg__repowc1(request):
 
     modname = request.module.__name__
     tmpdir = request.getfuncargvalue("tmpdir")
-    repo, wc = request.cached_setup(
+    repo, repourl, wc = request.cached_setup(
         setup=lambda: getrepowc(tmpdir, "repo-"+modname, "wc-" + modname), 
         scope="module", 
     )
@@ -19,12 +19,13 @@ def pytest_funcarg__repowc1(request):
         if request.function.__name__.startswith(x):
             _savedrepowc = save_repowc(repo, wc) 
             request.addfinalizer(lambda: restore_repowc(_savedrepowc))
-    return repo, wc
+    return repo, repourl, wc
 
 def pytest_funcarg__repowc2(request):
     tmpdir = request.getfuncargvalue("tmpdir")
     name = request.function.__name__
-    return getrepowc(tmpdir, "%s-repo-2" % name, "%s-wc-2" % name)
+    repo, url, wc = getrepowc(tmpdir, "%s-repo-2" % name, "%s-wc-2" % name)
+    return repo, url, wc 
 
 def getsvnbin():
     if svnbin is None:
@@ -46,14 +47,16 @@ def getrepowc(tmpdir, reponame='basetestrepo', wcname='wc'):
     wcdir.ensure(dir=1)
     wc = py.path.svnwc(wcdir)
     if py.std.sys.platform == 'win32':
-        repo = '/' + str(repo).replace('\\', '/')
-    wc.checkout(url='file://%s' % repo)
+        repourl = "file://" + '/' + str(repo).replace('\\', '/')
+    else:
+        repourl = "file://%s" % repo
+    wc.checkout(repourl)
     print_("checked out new repo into", wc)
-    return ("file://%s" % repo, wc)
+    return (repo, repourl, wc)
 
 
 def save_repowc(repo, wc):
-    repo = py.path.local(repo[len("file://"):])
+    assert not str(repo).startswith("file://"), repo
     assert repo.check() 
     savedrepo = repo.dirpath(repo.basename+".1")
     savedwc = wc.dirpath(wc.basename+".1")
