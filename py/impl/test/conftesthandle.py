@@ -41,7 +41,12 @@ class Conftest(object):
             if path is None:
                 raise ValueError("missing default conftest.")
             dp = path.dirpath()
-            if dp == path: 
+            if dp == path:
+                if not defaultconftestpath.check(): # zip file, single-file py.test?
+                    import defaultconftest
+                    if self._onimport:
+                        self._onimport(defaultconftest)
+                    return [defaultconftest]
                 return [self.importconftest(defaultconftestpath)]
             clist = self.getconftestmodules(dp)
             conftestpath = path.join("conftest.py")
