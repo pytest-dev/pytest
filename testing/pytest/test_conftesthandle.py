@@ -17,6 +17,11 @@ def pytest_funcarg__basedir(request):
         return d 
     return request.cached_setup(lambda: basedirmaker(request), extrakey=request.param)
 
+def ConftestWithSetinitial(path):
+    conftest = Conftest()
+    conftest.setinitial([path])
+    return conftest
+
 class TestConftestValueAccessGlobal:
     def test_basic_init(self, basedir):
         conftest = Conftest()
@@ -45,22 +50,22 @@ class TestConftestValueAccessGlobal:
 
     def test_default_Module_setting_is_visible_always(self, basedir):
         for path in basedir.parts():
-            conftest = Conftest(path) 
+            conftest = ConftestWithSetinitial(path) 
             #assert conftest.lget("Module") == py.test.collect.Module
             assert conftest.rget("Module") == py.test.collect.Module
 
     def test_default_has_lower_prio(self, basedir):
-        conftest = Conftest(basedir.join("adir"))
+        conftest = ConftestWithSetinitial(basedir.join("adir"))
         assert conftest.rget('Directory') == 3
         #assert conftest.lget('Directory') == py.test.collect.Directory 
         
     def test_value_access_not_existing(self, basedir):
-        conftest = Conftest(basedir)
+        conftest = ConftestWithSetinitial(basedir)
         py.test.raises(KeyError, "conftest.rget('a')")
         #py.test.raises(KeyError, "conftest.lget('a')")
 
     def test_value_access_by_path(self, basedir):
-        conftest = Conftest(basedir)
+        conftest = ConftestWithSetinitial(basedir)
         assert conftest.rget("a", basedir.join('adir')) == 1
         #assert conftest.lget("a", basedir.join('adir')) == 1
         assert conftest.rget("a", basedir.join('adir', 'b')) == 1.5 
@@ -71,12 +76,12 @@ class TestConftestValueAccessGlobal:
         #)
 
     def test_value_access_with_init_one_conftest(self, basedir):
-        conftest = Conftest(basedir.join('adir'))
+        conftest = ConftestWithSetinitial(basedir.join('adir'))
         assert conftest.rget("a") == 1
         #assert conftest.lget("a") == 1
 
     def test_value_access_with_init_two_conftests(self, basedir):
-        conftest = Conftest(basedir.join("adir", "b"))
+        conftest = ConftestWithSetinitial(basedir.join("adir", "b"))
         conftest.rget("a") == 1.5
         #conftest.lget("a") == 1
         #conftest.lget("b") == 1
@@ -84,7 +89,7 @@ class TestConftestValueAccessGlobal:
     def test_value_access_with_confmod(self, basedir):
         topdir = basedir.join("adir", "b")
         topdir.ensure("xx", dir=True)
-        conftest = Conftest(topdir)
+        conftest = ConftestWithSetinitial(topdir)
         mod, value = conftest.rget_with_confmod("a", topdir)
         assert  value == 1.5
         path = py.path.local(mod.__file__)

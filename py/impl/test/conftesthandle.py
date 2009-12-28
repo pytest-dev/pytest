@@ -1,19 +1,17 @@
 import py
-defaultconftestpath = py.path.local(__file__).dirpath("defaultconftest.py")
+from py.impl.test import defaultconftest 
 
 class Conftest(object):
     """ the single place for accessing values and interacting 
         towards conftest modules from py.test objects. 
 
+        (deprecated)
         Note that triggering Conftest instances to import 
         conftest.py files may result in added cmdline options. 
-        XXX
     """ 
-    def __init__(self, path=None, onimport=None):
+    def __init__(self, onimport=None):
         self._path2confmods = {}
         self._onimport = onimport
-        if path is not None:
-            self.setinitial([path])
 
     def setinitial(self, args):
         """ try to find a first anchor path for looking up global values
@@ -42,17 +40,13 @@ class Conftest(object):
                 raise ValueError("missing default conftest.")
             dp = path.dirpath()
             if dp == path:
-                if not defaultconftestpath.check(): # zip file, single-file py.test?
-                    import defaultconftest
-                    if self._onimport:
-                        self._onimport(defaultconftest)
-                    return [defaultconftest]
-                return [self.importconftest(defaultconftestpath)]
-            clist = self.getconftestmodules(dp)
-            conftestpath = path.join("conftest.py")
-            if conftestpath.check(file=1):
-                clist.append(self.importconftest(conftestpath))
-            self._path2confmods[path] = clist
+                clist = [self._postimport(defaultconftest)]
+            else:
+                clist = self.getconftestmodules(dp)
+                conftestpath = path.join("conftest.py")
+                if conftestpath.check(file=1):
+                    clist.append(self.importconftest(conftestpath))
+                self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
         # affect us by always returning a copy of the actual list 
         return clist[:]
@@ -82,6 +76,9 @@ class Conftest(object):
             mod = conftestpath.pyimport(modname=modname)
         else:
             mod = conftestpath.pyimport()
+        return self._postimport(mod)
+
+    def _postimport(self, mod):
         if self._onimport:
             self._onimport(mod)
         return mod
