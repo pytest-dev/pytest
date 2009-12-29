@@ -62,22 +62,22 @@ class RemoteControl(object):
         if hasattr(self, 'gateway'):
             raise ValueError("already have gateway %r" % self.gateway)
         self.trace("setting up slave session")
-        old = self.config.topdir.chdir()
-        try:
-            self.gateway = self.initgateway()
-        finally:
-            old.chdir()
-        channel = self.gateway.remote_exec(source="""
+        self.gateway = self.initgateway()
+        channel = self.gateway.remote_exec("""
+            import os
             from py.impl.test.dist.mypickle import PickleChannel
             from py.impl.test.looponfail.remote import slave_runsession
+            chdir = channel.receive()
             outchannel = channel.gateway.newchannel()
             channel.send(outchannel)
             channel = PickleChannel(channel)
+            os.chdir(chdir) # unpickling config uses cwd as topdir
             config, fullwidth, hasmarkup = channel.receive()
             import sys
             sys.stdout = sys.stderr = outchannel.makefile('w')
             slave_runsession(channel, config, fullwidth, hasmarkup) 
         """)
+        channel.send(str(self.config.topdir))
         remote_outchannel = channel.receive()
         def write(s):
             out._file.write(s)

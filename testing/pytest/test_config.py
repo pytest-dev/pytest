@@ -16,7 +16,6 @@ class TestConfigCmdlineParsing:
                         help='t value'),
                 )
             """)
-        testdir.chdir() 
         config = testdir.reparseconfig(['-G', '17'])
         assert config.option.gdest == 17 
 
@@ -45,19 +44,6 @@ class TestConfigCmdlineParsing:
         testdir.makeconftest("option_verbose=True")
         config = testdir.parseconfig()
         assert config.option.verbose 
-
-    def test_config_cmdline_options_only_lowercase(self, testdir): 
-        testdir.makepyfile(conftest="""
-            import py
-            Option = py.test.config.Option
-            options = py.test.config.addoptions("testing group", 
-                Option('-g', '--glong', action="store", default=42,
-                       type="int", dest="gdest", help="g value."), 
-                )
-        """)
-        py.test.raises(ValueError, """
-            testdir.reparseconfig(['-g', '17'])
-        """)
 
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
