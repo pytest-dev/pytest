@@ -227,19 +227,6 @@ class Config(object):
         self.trace("instantiated session %r" % session)
         return session
 
-    def _reparse(self, args):
-        """ this is used from tests that want to re-invoke parse(). """
-        #assert args # XXX should not be empty
-        global config_per_process
-        oldconfig = py.test.config
-        try:
-            config_per_process = py.test.config = Config()
-            config_per_process.basetemp = self.mktemp("reparse", numbered=True)
-            config_per_process.parse(args) 
-            return config_per_process
-        finally: 
-            config_per_process = py.test.config = oldconfig 
-
     def getxspecs(self):
         xspeclist = []
         for xspec in self.getvalue("tx"):

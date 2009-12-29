@@ -250,8 +250,8 @@ class TestFunction:
         assert isinstance(modcol, py.test.collect.Module)
         assert hasattr(modcol.obj, 'test_func')
         
-    def test_function_equality(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_function_equality(self, testdir, tmpdir):
+        config = testdir.reparseconfig()
         f1 = py.test.collect.Function(name="name", 
                                       args=(1,), callobj=isinstance)
         f2 = py.test.collect.Function(name="name",
@@ -271,8 +271,8 @@ class TestFunction:
         assert f1 == f1_b
         assert not f1 != f1_b
 
-    def test_function_equality_with_callspec(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_function_equality_with_callspec(self, testdir, tmpdir):
+        config = testdir.reparseconfig()
         class callspec1:
             param = 1
             funcargs = {}

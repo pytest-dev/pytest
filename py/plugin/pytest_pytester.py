@@ -205,6 +205,20 @@ class TmpTestdir:
         config.parse(args)
         return config 
 
+    def reparseconfig(self, args=None):
+        """ this is used from tests that want to re-invoke parse(). """
+        if not args:
+            args = [self.tmpdir]
+        from py.impl.test import config 
+        oldconfig = py.test.config
+        try:
+            c = config.config_per_process = py.test.config = pytestConfig()
+            c.basetemp = oldconfig.mktemp("reparse", numbered=True)
+            c.parse(args) 
+            return c
+        finally: 
+            config.config_per_process = py.test.config = oldconfig 
+
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)

@@ -52,11 +52,11 @@ class TestCollector:
         parent = fn.getparent(py.test.collect.Class)
         assert parent is cls     
 
-    def test_totrail_and_back(self, tmpdir):
+    def test_totrail_and_back(self, testdir, tmpdir):
         a = tmpdir.ensure("a", dir=1)
         tmpdir.ensure("a", "__init__.py")
         x = tmpdir.ensure("a", "trail.py")
-        config = py.test.config._reparse([x])
+        config = testdir.reparseconfig([x])
         col = config.getfsnode(x)
         trail = col._totrail()
         assert len(trail) == 2
@@ -65,8 +65,8 @@ class TestCollector:
         col2 = py.test.collect.Collector._fromtrail(trail, config)
         assert col2.listnames() == col.listnames()
        
-    def test_totrail_topdir_and_beyond(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
+        config = testdir.reparseconfig()
         col = config.getfsnode(config.topdir)
         trail = col._totrail()
         assert len(trail) == 2

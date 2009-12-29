@@ -1,9 +1,9 @@
 import py
 from py.plugin.pytest_default import pytest_report_iteminfo
 
-def test_implied_different_sessions(tmpdir):
+def test_implied_different_sessions(testdir, tmpdir):
     def x(*args):
-        config = py.test.config._reparse([tmpdir] + list(args))
+        config = testdir.reparseconfig([tmpdir] + list(args))
         try:
             config.pluginmanager.do_configure(config)
         except ValueError:

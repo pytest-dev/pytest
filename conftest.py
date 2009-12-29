@@ -28,21 +28,17 @@ def pytest_addoption(parser):
 
 def pytest_funcarg__specssh(request):
     return getspecssh(request.config)
-def getgspecs(config=None):
-    if config is None:
-        config = py.test.config
+def getgspecs(config):
     return [execnet.XSpec(spec)
                 for spec in config.getvalueorskip("gspecs")]
 
 
 # configuration information for tests 
-def getgspecs(config=None):
-    if config is None:
-        config = py.test.config
+def getgspecs(config):
     return [execnet.XSpec(spec) 
                 for spec in config.getvalueorskip("gspecs")]
 
-def getspecssh(config=None):
+def getspecssh(config):
     xspecs = getgspecs(config)
     for spec in xspecs:
         if spec.ssh:
@@ -51,7 +47,7 @@ def getspecssh(config=None):
             return spec
     py.test.skip("need '--gx ssh=...'")
 
-def getsocketspec(config=None):
+def getsocketspec(config):
     xspecs = getgspecs(config)
     for spec in xspecs:
         if spec.socket:

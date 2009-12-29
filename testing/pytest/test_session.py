@@ -1,8 +1,8 @@
 import py
 
 class SessionTests:
-    def test_initsession(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_initsession(self, testdir, tmpdir):
+        config = testdir.reparseconfig()
         session = config.initsession()
         assert session.config is config 
     

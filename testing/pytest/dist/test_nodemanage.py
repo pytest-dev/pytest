@@ -12,9 +12,9 @@ class pytest_funcarg__mysetup:
 
 class TestNodeManager:
     @py.test.mark.xfail
-    def test_rsync_roots_no_roots(self, mysetup):
+    def test_rsync_roots_no_roots(self, testdir, mysetup):
         mysetup.source.ensure("dir1", "file1").write("hello")
-        config = py.test.config._reparse([source])
+        config = testdir.reparseconfig([source])
         nodemanager = NodeManager(config, ["popen//chdir=%s" % mysetup.dest])
         assert nodemanager.config.topdir == source == config.topdir
         nodemanager.rsync_roots()
@@ -53,7 +53,7 @@ class TestNodeManager:
             assert dest.join("dir1", "dir2", 'hello').check()
             nodemanager.gwmanager.exit()
 
-    def test_init_rsync_roots(self, mysetup):
+    def test_init_rsync_roots(self, testdir, mysetup):
         source, dest = mysetup.source, mysetup.dest
         dir2 = source.ensure("dir1", "dir2", dir=1)
         source.ensure("dir1", "somefile", dir=1)
@@ -62,14 +62,14 @@ class TestNodeManager:
         source.join("conftest.py").write(py.code.Source("""
             rsyncdirs = ['dir1/dir2']
         """))
-        session = py.test.config._reparse([source]).initsession()
+        session = testdir.reparseconfig([source]).initsession()
         nodemanager = NodeManager(session.config, ["popen//chdir=%s" % dest])
         nodemanager.rsync_roots()
         assert dest.join("dir2").check()
         assert not dest.join("dir1").check()
         assert not dest.join("bogus").check()
 
-    def test_rsyncignore(self, mysetup):
+    def test_rsyncignore(self, testdir, mysetup):
         source, dest = mysetup.source, mysetup.dest
         dir2 = source.ensure("dir1", "dir2", dir=1)
         dir5 = source.ensure("dir5", "dir6", "bogus")
@@ -79,7 +79,7 @@ class TestNodeManager:
             rsyncdirs = ['dir1', 'dir5']
             rsyncignore = ['dir1/dir2', 'dir5/dir6']
         """))
-        session = py.test.config._reparse([source]).initsession()
+        session = testdir.reparseconfig([source]).initsession()
         nodemanager = NodeManager(session.config,
                          ["popen//chdir=%s" % dest])
         nodemanager.rsync_roots()
@@ -88,12 +88,12 @@ class TestNodeManager:
         assert dest.join("dir5","file").check()
         assert not dest.join("dir6").check()
 
-    def test_optimise_popen(self, mysetup):
+    def test_optimise_popen(self, testdir, mysetup):
         source, dest = mysetup.source, mysetup.dest
         specs = ["popen"] * 3
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
-        config = py.test.config._reparse([source])
+        config = testdir.reparseconfig([source])
         nodemanager = NodeManager(config, specs)
         nodemanager.rsync_roots()
         for gwspec in nodemanager.gwmanager.specs:
@@ -105,7 +105,7 @@ class TestNodeManager:
         specs = ["popen"] * 2
         source.join("conftest.py").write("rsyncdirs = ['a']")
         source.ensure('a', dir=1)
-        config = py.test.config._reparse([source, '--debug'])
+        config = testdir.reparseconfig([source, '--debug'])
         assert config.option.debug
         nodemanager = NodeManager(config, specs)
         reprec = testdir.getreportrecorder(config).hookrecorder

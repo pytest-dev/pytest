@@ -17,7 +17,7 @@ class TestConfigCmdlineParsing:
                 )
             """)
         testdir.chdir() 
-        config = py.test.config._reparse(['-G', '17'])
+        config = testdir.reparseconfig(['-G', '17'])
         assert config.option.gdest == 17 
 
     def test_parser_addoption_default_env(self, testdir, monkeypatch):
@@ -56,11 +56,11 @@ class TestConfigCmdlineParsing:
                 )
         """)
         py.test.raises(ValueError, """
-            py.test.config._reparse(['-g', '17'])
+            testdir.reparseconfig(['-g', '17'])
         """)
 
-    def test_parsing_again_fails(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_parsing_again_fails(self, testdir):
+        config = testdir.reparseconfig([testdir.tmpdir])
         py.test.raises(AssertionError, "config.parse([])")
 
 
@@ -82,13 +82,11 @@ class TestConfigTmpdir:
         assert tmp2 != tmp
 
     def test_reparse(self, testdir):
-        config = testdir.Config()
-        config.basetemp = testdir.mkdir("my")
-        config2 = config._reparse([])
-        assert config2.getbasetemp().relto(config.basetemp)
-        config3 = config._reparse([])
-        assert config3.getbasetemp().relto(config.basetemp)
-        assert config2.basetemp != config3.basetemp
+        config2 = testdir.reparseconfig([])
+        config3 = testdir.reparseconfig([])
+        assert config2.getbasetemp() != config3.getbasetemp()
+        assert not config2.getbasetemp().relto(config3.getbasetemp())
+        assert not config3.getbasetemp().relto(config2.getbasetemp())
 
 class TestConfigAPI: 
 
@@ -100,7 +98,7 @@ class TestConfigAPI:
         assert config.getvalue("x") == 1
         assert config.getvalue("x", o.join('sub')) == 2
         py.test.raises(KeyError, "config.getvalue('y')")
-        config = py.test.config._reparse([str(o.join('sub'))])
+        config = testdir.reparseconfig([str(o.join('sub'))])
         assert config.getvalue("x") == 2
         assert config.getvalue("y") == 3
         assert config.getvalue("x", o) == 1
@@ -118,18 +116,18 @@ class TestConfigAPI:
     def test_config_overwrite(self, testdir):
         o = testdir.tmpdir
         o.ensure("conftest.py").write("x=1")
-        config = py.test.config._reparse([str(o)])
+        config = testdir.reparseconfig([str(o)])
         assert config.getvalue('x') == 1
         config.option.x = 2
         assert config.getvalue('x') == 2
-        config = py.test.config._reparse([str(o)])
+        config = testdir.reparseconfig([str(o)])
         assert config.getvalue('x') == 1
 
-    def test_getconftest_pathlist(self, tmpdir):
+    def test_getconftest_pathlist(self, testdir, tmpdir):
         somepath = tmpdir.join("x", "y", "z")
         p = tmpdir.join("conftest.py")
         p.write("pathlist = ['.', %r]" % str(somepath))
-        config = py.test.config._reparse([p])
+        config = testdir.reparseconfig([p])
         assert config.getconftest_pathlist('notexist') is None
         pl = config.getconftest_pathlist('pathlist')
         print(pl)
@@ -150,8 +148,8 @@ class TestConfigAPI:
 
 
 class TestConfigApi_getcolitems:
-    def test_getcolitems_onedir(self, tmpdir):
-        config = py.test.config._reparse([tmpdir])
+    def test_getcolitems_onedir(self, testdir):
+        config = testdir.reparseconfig([testdir.tmpdir])
         colitems = config.getcolitems()
         assert len(colitems) == 1
         col = colitems[0]
@@ -159,17 +157,17 @@ class TestConfigApi_getcolitems:
         for col in col.listchain():
             assert col.config is config 
 
-    def test_getcolitems_twodirs(self, tmpdir):
-        config = py.test.config._reparse([tmpdir, tmpdir])
+    def test_getcolitems_twodirs(self, testdir, tmpdir):
+        config = testdir.reparseconfig([tmpdir, tmpdir])
         colitems = config.getcolitems()
         assert len(colitems) == 2
         col1, col2 = colitems 
         assert col1.name == col2.name 
         assert col1.parent == col2.parent 
 
-    def test_getcolitems_curdir_and_subdir(self, tmpdir):
+    def test_getcolitems_curdir_and_subdir(self, testdir, tmpdir):
         a = tmpdir.ensure("a", dir=1)
-        config = py.test.config._reparse([tmpdir, a])
+        config = testdir.reparseconfig([tmpdir, a])
         colitems = config.getcolitems()
         assert len(colitems) == 2
         col1, col2 = colitems 
@@ -179,9 +177,9 @@ class TestConfigApi_getcolitems:
             for subcol in col.listchain():
                 assert col.config is config 
 
-    def test__getcol_global_file(self, tmpdir):
+    def test__getcol_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
-        config = py.test.config._reparse([x])
+        config = testdir.reparseconfig([x])
         col = config.getfsnode(x)
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
@@ -190,9 +188,9 @@ class TestConfigApi_getcolitems:
         for col in col.listchain():
             assert col.config is config 
 
-    def test__getcol_global_dir(self, tmpdir):
+    def test__getcol_global_dir(self, testdir, tmpdir):
         x = tmpdir.ensure("a", dir=1)
-        config = py.test.config._reparse([x])
+        config = testdir.reparseconfig([x])
         col = config.getfsnode(x)
         assert isinstance(col, py.test.collect.Directory)
         print(col.listchain())
@@ -200,10 +198,10 @@ class TestConfigApi_getcolitems:
         assert col.parent is None
         assert col.config is config 
 
-    def test__getcol_pkgfile(self, tmpdir):
+    def test__getcol_pkgfile(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         tmpdir.ensure("__init__.py")
-        config = py.test.config._reparse([x])
+        config = testdir.reparseconfig([x])
         col = config.getfsnode(x)
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
@@ -215,16 +213,16 @@ class TestConfigApi_getcolitems:
 class TestOptionEffects:
     def test_boxed_option_default(self, testdir):
         tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
-        config = py.test.config._reparse([tmpdir])
+        config = testdir.reparseconfig()
         config.initsession()
         assert not config.option.boxed
         py.test.importorskip("execnet")
-        config = py.test.config._reparse(['-d', tmpdir])
+        config = testdir.reparseconfig(['-d', tmpdir])
         config.initsession()
         assert not config.option.boxed
 
     def test_is_not_boxed_by_default(self, testdir):
-        config = py.test.config._reparse([testdir.tmpdir])
+        config = testdir.reparseconfig([testdir.tmpdir])
         assert not config.option.boxed
 
 class TestConfig_gettopdir:

@@ -44,7 +44,8 @@ class MySetup:
 
     def makenode(self, config=None):
         if config is None:
-            config = py.test.config._reparse([])
+            testdir = self.request.getfuncargvalue("testdir")
+            config = testdir.reparseconfig([])
         self.config = config
         self.queue = Queue()
         self.xspec = execnet.XSpec("popen")

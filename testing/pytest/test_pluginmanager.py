@@ -273,7 +273,6 @@ class TestPytestPluginInteractions:
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
 
-@py.test.mark.xfail
 def test_namespace_has_default_and_env_plugins(testdir):
     p = testdir.makepyfile("""
         import py
