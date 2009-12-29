@@ -5,6 +5,10 @@ import py
 from py.plugin import hookspec
 from py.impl.test.outcome import Skipped
 
+default_plugins = (
+    "default runner capture terminal mark skipping tmpdir monkeypatch "
+    "recwarn pdb pastebin unittest helpconfig nose assertion").split()
+
 def check_old_use(mod, modname):
     clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
     assert not hasattr(mod, clsname), (mod, clsname)
@@ -21,6 +25,9 @@ class PluginManager(object):
         self.hook = py._com.HookRelay(
             hookspecs=hookspec, 
             registry=self.comregistry) 
+        self.register(self)
+        for spec in default_plugins:
+            self.import_plugin(spec) 
 
     def _getpluginname(self, plugin, name):
         if name is None:
@@ -31,7 +38,8 @@ class PluginManager(object):
         return name 
 
     def register(self, plugin, name=None):
-        assert not self.isregistered(plugin)
+        assert not self.isregistered(plugin), plugin
+        assert not self.comregistry.isregistered(plugin), plugin
         name = self._getpluginname(plugin, name)
         if name in self._name2plugin:
             return False
@@ -191,31 +199,24 @@ class PluginManager(object):
         mc.execute()
 
     def pytest_plugin_registered(self, plugin):
+        dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
+        for name, value in dic.items():
+            setattr(py.test, name, value)
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption", 
                 {'parser': self._config._parser})
             self.call_plugin(plugin, "pytest_configure", 
                 {'config': self._config})
-            #dic = self.call_plugin(plugin, "pytest_namespace")
-            #self._updateext(dic)
 
     def call_plugin(self, plugin, methname, kwargs):
         return py._com.MultiCall(
                 methods=self.listattr(methname, plugins=[plugin]), 
                 kwargs=kwargs, firstresult=True).execute()
 
-    def _updateext(self, dic):
-        if dic:
-            for name, value in dic.items():
-                setattr(py.test, name, value)
-
     def do_configure(self, config):
         assert not hasattr(self, '_config')
-        config.pluginmanager.register(self)
         self._config = config
         config.hook.pytest_configure(config=self._config)
-        for dic in config.hook.pytest_namespace() or []:
-            self._updateext(dic)
 
     def do_unconfigure(self, config):
         config = self._config 

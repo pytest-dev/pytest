@@ -8,7 +8,7 @@ import py
 def configproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
-        return self.config.getvalue(name, self.fspath) 
+        return self.config._getcollectclass(name, self.fspath)
     return property(fget)
 
 class Node(object): 

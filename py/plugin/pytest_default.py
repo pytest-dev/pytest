@@ -40,7 +40,7 @@ def pytest_collect_directory(path, parent):
                 break
         else:
             return 
-    Directory = parent.config.getvalue('Directory', path) 
+    Directory = parent.config._getcollectclass('Directory', path) 
     return Directory(path, parent=parent)
 
 def pytest_report_iteminfo(item):

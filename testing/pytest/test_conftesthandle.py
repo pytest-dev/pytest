@@ -32,10 +32,10 @@ class TestConftestValueAccessGlobal:
         l = []
         conftest = Conftest(onimport=l.append)
         conftest.setinitial([basedir.join("adir")])
-        assert len(l) == 2 # default + the one 
+        assert len(l) == 1 
         assert conftest.rget("a") == 1
         assert conftest.rget("b", basedir.join("adir", "b")) == 2
-        assert len(l) == 3
+        assert len(l) == 2
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = Conftest()
@@ -48,11 +48,11 @@ class TestConftestValueAccessGlobal:
         conftest.getconftestmodules(basedir.join('b'))
         assert len(conftest._path2confmods) == snap1 + 2
 
-    def test_default_Module_setting_is_visible_always(self, basedir):
-        for path in basedir.parts():
-            conftest = ConftestWithSetinitial(path) 
-            #assert conftest.lget("Module") == py.test.collect.Module
-            assert conftest.rget("Module") == py.test.collect.Module
+    def test_default_Module_setting_is_visible_always(self, basedir, testdir):
+        basedir.copy(testdir.tmpdir)
+        config = testdir.Config()
+        colclass = config._getcollectclass("Module", testdir.tmpdir)
+        assert colclass == py.test.collect.Module
 
     def test_default_has_lower_prio(self, basedir):
         conftest = ConftestWithSetinitial(basedir.join("adir"))

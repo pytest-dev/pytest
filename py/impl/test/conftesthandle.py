@@ -1,5 +1,4 @@
 import py
-from py.impl.test import defaultconftest 
 
 class Conftest(object):
     """ the single place for accessing values and interacting 
@@ -40,7 +39,7 @@ class Conftest(object):
                 raise ValueError("missing default conftest.")
             dp = path.dirpath()
             if dp == path:
-                clist = [self._postimport(defaultconftest)]
+                clist = self._path2confmods[path] = []
             else:
                 clist = self.getconftestmodules(dp)
                 conftestpath = path.join("conftest.py")

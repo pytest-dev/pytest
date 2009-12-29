@@ -184,7 +184,7 @@ class TestConfigPickling:
 def test_config__setstate__wired_correctly_in_childprocess(testdir):
     execnet = py.test.importorskip("execnet")
     from py.impl.test.dist.mypickle import PickleChannel
-    gw = execnet.PopenGateway()
+    gw = execnet.makegateway()
     channel = gw.remote_exec("""
         import py
         from py.impl.test.dist.mypickle import PickleChannel

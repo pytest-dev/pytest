@@ -148,7 +148,9 @@ class TestBootstrapping:
         assert pp.isregistered(a1)
         pp.register(a2, "hello")
         assert pp.isregistered(a2)
-        assert pp.getplugins() == [a1, a2]
+        l = pp.getplugins()
+        assert a1 in l 
+        assert a2 in l
         assert pp.getplugin('hello') == a2
         pp.unregister(a1)
         assert not pp.isregistered(a1)
@@ -160,13 +162,14 @@ class TestBootstrapping:
         mod = py.std.types.ModuleType("x.y.pytest_hello")
         pp.register(mod)
         assert pp.isregistered(mod)
-        assert pp.getplugins() == [mod]
+        l = pp.getplugins()
+        assert mod in l 
         py.test.raises(AssertionError, "pp.register(mod)")
         mod2 = py.std.types.ModuleType("pytest_hello")
         #pp.register(mod2) # double registry 
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
-        assert pp.getplugins() == [mod] # does not actually modify plugins 
+        assert pp.getplugins() == l
 
     def test_canonical_import(self, monkeypatch):
         mod = py.std.types.ModuleType("pytest_xyz")

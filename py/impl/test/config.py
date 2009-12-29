@@ -107,6 +107,7 @@ class Config(object):
         # warning global side effects:
         # * registering to py lib plugins 
         # * setting py.test.config 
+        py._com.comregistry = py._com.Registry()
         self.__init__(
             pluginmanager=py.test._PluginManager(py._com.comregistry),
             topdir=py.path.local(),
@@ -155,10 +156,16 @@ class Config(object):
         pkgpath = path.pypkgpath()
         if pkgpath is None:
             pkgpath = path.check(file=1) and path.dirpath() or path
-        Dir = self._conftest.rget("Directory", pkgpath)
+        Dir = self._getcollectclass("Directory", pkgpath)
         col = Dir(pkgpath)
         col.config = self 
         return col._getfsnode(path)
+
+    def _getcollectclass(self, name, path):
+        try:
+            return self.getvalue(name, path)
+        except KeyError:
+            return getattr(py.test.collect, name)
 
     def getconftest_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence
