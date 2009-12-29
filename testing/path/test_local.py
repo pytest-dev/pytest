@@ -499,7 +499,9 @@ class TestPOSIXLocalPath:
         # we could wait here but timer resolution is very
         # system dependent 
         path.read()
+        time.sleep(0.01) 
         atime2 = path.atime()
+        time.sleep(0.01)
         duration = time.time() - now
         assert (atime2-atime1) <= duration
 

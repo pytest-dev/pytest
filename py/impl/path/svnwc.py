@@ -429,6 +429,7 @@ class SvnWCCommandPath(common.PathBase):
         return self
 
     strpath = property(lambda x: str(x.localpath), None, None, "string path")
+    rev = property(lambda x: x.info(usecache=0).rev, None, None, "revision")
 
     def __eq__(self, other):
         return self.localpath == getattr(other, 'localpath', None)
@@ -796,7 +797,6 @@ recursively. """
                     raise py.error.ENOENT(self, "not a versioned resource:" + 
                             " %s != %s" % (info.path, self.localpath)) 
             cache.info[self] = info
-        self.rev = info.rev
         return info
 
     def listdir(self, fil=None, sort=None):

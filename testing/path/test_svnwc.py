@@ -12,7 +12,7 @@ def test_make_repo(path1, tmpdir):
     repo = py.path.svnurl("file://%s" % repo)
     wc = py.path.svnwc(tmpdir.join("wc"))
     wc.checkout(repo)
-    assert wc.info().rev == 0
+    assert wc.rev == 0
     assert len(wc.listdir()) == 0
     p = wc.join("a_file")
     p.write("test file")

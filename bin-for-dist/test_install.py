@@ -147,7 +147,8 @@ def test_plugin_setuptools_entry_point_integration(py_setup, venv, tmpdir):
     out = venv.pytest_getouterr("-h")
     assert "testpluginopt" in out
 
-def test_cmdline_entrypoints():
+def test_cmdline_entrypoints(monkeypatch):
+    monkeypatch.syspath_prepend(py.path.local(__file__).dirpath().dirpath())
     from setup import cmdline_entrypoints
     versioned_scripts = ['py.test', 'py.which']
     unversioned_scripts = versioned_scripts + [ 'py.cleanup', 
