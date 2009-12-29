@@ -1,4 +1,4 @@
-import py
+import sys, py
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
@@ -74,3 +74,18 @@ class TestGeneralUsage:
         assert result.stderr.fnmatch_lines([
             "*ERROR: can't collect: %s" %(p2,)
         ])
+
+
+    def test_earlyinit(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            assert hasattr(py.test, 'mark')
+        """)
+        result = testdir._run(sys.executable, p)
+        assert result.ret == 0
+
+    def test_pydoc(self, testdir):
+        result = testdir._run(sys.executable, "-c", "import py ; help(py.test)")
+        assert result.ret == 0
+        s = result.stdout.str()
+        assert 'MarkGenerator' in s

@@ -3,7 +3,7 @@ advanced skipping for python test functions, classes or modules.
 
 With this plugin you can mark test functions for conditional skipping 
 or as "xfail", expected-to-fail.  Skipping a test will avoid running it
-at all while xfail-marked tests will run and result in an inverted outcome:
+while xfail-marked tests will run and result in an inverted outcome:
 a pass becomes a failure and a fail becomes a semi-passing one. 
 
 The need for skipping a test is usually connected to a condition.  
@@ -120,6 +120,7 @@ within test or setup code.  Example::
 # should also be defined in this plugin, requires thought/changes
 
 import py
+
 
 def pytest_runtest_setup(item):
     expr, result = evalexpression(item, 'skipif')

@@ -223,6 +223,7 @@ class TestPytestPluginInteractions:
             import py
             def test_hello():
                 assert hello == "world" 
+                assert 'hello' in py.test.__all__
         """)
         result = testdir.runpytest(p) 
         result.stdout.fnmatch_lines([

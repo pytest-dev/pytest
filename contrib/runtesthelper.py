@@ -14,5 +14,4 @@ def pytest(argv=None):
     except SystemExit:
         pass
     # we need to reset the global py.test.config object
-    py.test.config = py.test.config.__class__(
-        pluginmanager=py.test._PluginManager())
+    py.test.config = py.test.config.__class__()

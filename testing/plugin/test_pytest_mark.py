@@ -1,10 +1,10 @@
 import py
-from py.plugin.pytest_mark import Mark
+from py.plugin.pytest_mark import MarkGenerator as Mark
 
 class TestMark:
     def test_pytest_mark_notcallable(self):
         mark = Mark()
-        py.test.raises(TypeError, "mark()")
+        py.test.raises((AttributeError, TypeError), "mark()")
 
     def test_pytest_mark_bare(self):
         mark = Mark()

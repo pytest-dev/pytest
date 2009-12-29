@@ -47,23 +47,33 @@ class Exit(KeyboardInterrupt):
 # exposed helper methods 
 
 def exit(msg): 
-    """ exit testing process immediately. """ 
+    """ exit testing process as if KeyboardInterrupt was triggered. """ 
     __tracebackhide__ = True
     raise Exit(msg)
 
 def skip(msg=""):
-    """ skip with the given message. """
+    """ skip an executing test with the given message.  Note: it's usually
+    better use the py.test.mark.skipif marker to declare a test to be
+    skipped under certain conditions like mismatching platforms or 
+    dependencies.  See the pytest_skipping plugin for details. 
+    """
     __tracebackhide__ = True
     raise Skipped(msg=msg) 
 
-def fail(msg="unknown failure"):
-    """ fail with the given Message. """
+def fail(msg=""):
+    """ explicitely fail this executing test with the given Message. """
     __tracebackhide__ = True
     raise Failed(msg=msg) 
 
 def raises(ExpectedException, *args, **kwargs):
-    """ raise AssertionError, if target code does not raise the expected
-        exception.
+    """ if args[0] is callable: raise AssertionError if calling it with 
+        the remaining arguments does not raise the expected exception.  
+        if args[0] is a string: raise AssertionError if executing the
+        the string in the calling scope does not raise expected exception. 
+        for examples:
+        x = 5
+        raises(TypeError, lambda x: x + 'hello', x=x)
+        raises(TypeError, "x + 'hello'")
     """
     __tracebackhide__ = True 
     assert args
@@ -95,7 +105,10 @@ def raises(ExpectedException, *args, **kwargs):
                            expr=args, expected=ExpectedException) 
 
 def importorskip(modname, minversion=None):
-    """ return imported module or perform a dynamic skip() """
+    """ return imported module if it has a higher __version__ than the 
+    optionally specified 'minversion' - otherwise call py.test.skip() 
+    with a message detailing the mismatch. 
+    """
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:
         mod = __import__(modname, None, None, ['__doc__'])
@@ -112,6 +125,7 @@ def importorskip(modname, minversion=None):
         py.test.skip("module %r has __version__ %r, required is: %r" %(
                      modname, verattr, minversion))
     return mod
+
 
 
 # exitcodes for the command line

@@ -78,16 +78,18 @@ tests::
 import py
 
 def pytest_namespace():
-    return {'mark': Mark()}
+    return {'mark': MarkGenerator()}
 
-
-class Mark(object):
+class MarkGenerator:
+    """ non-underscore attributes of this object can be used as decorators for 
+    marking test functions. Example: @py.test.mark.slowtest in front of a 
+    function will set the 'slowtest' marker object on it. """
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
-        return MarkerDecorator(name)
+        return MarkDecorator(name)
 
-class MarkerDecorator:
+class MarkDecorator:
     """ decorator for setting function attributes. """
     def __init__(self, name):
         self.markname = name
@@ -97,15 +99,17 @@ class MarkerDecorator:
     def __repr__(self):
         d = self.__dict__.copy()
         name = d.pop('markname')
-        return "<MarkerDecorator %r %r>" %(name, d)
+        return "<MarkDecorator %r %r>" %(name, d)
 
     def __call__(self, *args, **kwargs):
+        """ if passed a single callable argument: decorate it with mark info. 
+            otherwise add *args/**kwargs in-place to mark information. """
         if args:
             if len(args) == 1 and hasattr(args[0], '__call__'):
                 func = args[0]
                 holder = getattr(func, self.markname, None)
                 if holder is None:
-                    holder = Marker(self.markname, self.args, self.kwargs)
+                    holder = MarkInfo(self.markname, self.args, self.kwargs)
                     setattr(func, self.markname, holder)
                 else:
                     holder.kwargs.update(self.kwargs)
@@ -116,7 +120,7 @@ class MarkerDecorator:
         self.kwargs.update(kwargs)
         return self
         
-class Marker:
+class MarkInfo:
     def __init__(self, name, args, kwargs):
         self._name = name
         self.args = args
@@ -129,7 +133,7 @@ class Marker:
         raise AttributeError(name)
 
     def __repr__(self):
-        return "<Marker %r args=%r kwargs=%r>" % (
+        return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)
             
 
@@ -143,6 +147,6 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         func = getattr(func, 'im_func', func)  # py2
         for parent in [x for x in (mod, cls) if x]:
             marker = getattr(parent.obj, 'pytestmark', None)
-            if isinstance(marker, MarkerDecorator):
+            if isinstance(marker, MarkDecorator):
                 marker(func)
     return item

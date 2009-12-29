@@ -15,8 +15,6 @@ def check_old_use(mod, modname):
     assert not hasattr(mod, clsname), (mod, clsname)
 
 class PluginManager(object):
-    class Error(Exception):
-        """signals a plugin specific error."""
     def __init__(self):
         self.registry = Registry()
         self._name2plugin = {}
@@ -157,6 +155,7 @@ class PluginManager(object):
         dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
         for name, value in dic.items():
             setattr(py.test, name, value)
+            py.test.__all__.append(name)
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption", 
                 {'parser': self._config._parser})

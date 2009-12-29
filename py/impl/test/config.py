@@ -1,11 +1,14 @@
 import py, os
 from py.impl.test.conftesthandle import Conftest
-
+from py.impl.test.pluginmanager import PluginManager
 from py.impl.test import parseopt
 
 def ensuretemp(string, dir=1): 
-    """ return temporary directory path with
-        the given string as the trailing part. 
+    """ (deprecated) return temporary directory path with
+        the given string as the trailing part.  It is usually 
+        better to use the 'tmpdir' function argument which will
+        take care to provide empty unique directories for each 
+        test call even if the test is called multiple times. 
     """ 
     return py.test.config.ensuretemp(string, dir=dir)
   
@@ -33,7 +36,7 @@ class Config(object):
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
         )
-        self.pluginmanager = py.test._PluginManager()
+        self.pluginmanager = PluginManager()
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
 
@@ -178,7 +181,7 @@ class Config(object):
             This function gets invoked during testing session initialization. 
         """ 
         py.log._apiwarn("1.0", "define plugins to add options", stacklevel=2)
-        group = self._parser.addgroup(groupname)
+        group = self._parser.getgroup(groupname)
         for opt in specs:
             group._addoption_instance(opt)
         return self.option 
@@ -296,6 +299,11 @@ def gettopdir(args):
     else:
         return pkgdir.dirpath()
 
+def onpytestaccess():
+    # it's enough to have our containing module loaded as 
+    # it initializes a per-process config instance
+    # which loads default plugins which add to py.test.*
+    pass 
 
-# this is default per-process instance of py.test configuration 
+# a default per-process instance of py.test configuration 
 config_per_process = Config()

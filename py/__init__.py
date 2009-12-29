@@ -40,8 +40,8 @@ py.apipkg.initpkg(__name__, dict(
 
     test = {
         # helpers for use from test functions or collectors
+        '__onfirstaccess__' : '.impl.test.config:onpytestaccess',
         '__doc__'           : '.impl.test:__doc__',
-        '_PluginManager'    : '.impl.test.pluginmanager:PluginManager',
         'raises'            : '.impl.test.outcome:raises',
         'skip'              : '.impl.test.outcome:skip',
         'importorskip'      : '.impl.test.outcome:importorskip',

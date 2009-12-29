@@ -1,1 +1,1 @@
-""" versatile unit-testing tool + libraries """
+""" assertion and py.test helper API."""
