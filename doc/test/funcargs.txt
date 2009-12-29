@@ -1,19 +1,15 @@
 ==============================================================
-**funcargs**: advanced test setup and parametrization
+**funcargs**: advanced test parametrization
 ==============================================================
 
 .. contents:: 
     :local:
     :depth: 2
 
-what are "funcargs" and what are they good for?
+what is a "funcarg"? 
 =================================================
 
-Named parameters of a test function are called *funcargs* for short.
-A Funcarg can be a simple number of a complex object.  To perform a 
-test function call each parameter is setup by a factory function.
-To call a test function repeatedly with different funcargs sets 
-test parameters can be generated. 
+A *funcarg* is the short name for "test function argument".  Each python test function invocation may receive one or multiple function arguments.  Function argument values can be created next to the test code or in separate test configuration files which allows test functions to remain ignorant of how its base test values are created.  A test function can also be called multiple times with different sets of function arguments, allowing for arbitrary parametrization.  A Funcarg parameter can be any value, a simple number or an application object.  
 
 .. _`contact possibilities`: ../contact.html
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
@@ -25,7 +21,7 @@ test parameters can be generated.
 .. _`funcarg factory`:
 .. _factory:
  
-funcarg factories: setting up test function arguments 
+funcarg factories: creating test function arguments 
 ==============================================================
 
 Test functions can specify one ore more arguments ("funcargs") 
@@ -92,9 +88,7 @@ functions or access meta data about a test.
 funcarg factory request objects
 ------------------------------------------
 
-Request objects are passed to funcarg factories and allow 
-to access test configuration, test context and `useful caching
-and finalization helpers`_. Here is a list of attributes: 
+Request objects represents a handle on a specific python test function call.  A request object is passed to a funcarg factory and provides access to test configuration and context as well as some `useful caching and finalization helpers`_. Here is a list of attributes: 
 
 ``request.function``: python function object requesting the argument
 
