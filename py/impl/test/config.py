@@ -20,27 +20,22 @@ class Error(Exception):
     """ Test Configuration Error. """
 
 class Config(object): 
-    """ test configuration object, provides access to config valueso, 
-        the pluginmanager and plugin api. 
-    """
+    """ access to config values, pluginmanager and plugin hooks.  """
     Option = py.std.optparse.Option 
     Error = Error
     basetemp = None
     _sessionclass = None
 
-    def __init__(self, pluginmanager=None, topdir=None): 
+    def __init__(self, topdir=None): 
         self.option = CmdOptions()
         self.topdir = topdir
         self._parser = parseopt.Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
         )
-        if pluginmanager is None:
-            pluginmanager = py.test._PluginManager()
-        assert isinstance(pluginmanager, py.test._PluginManager)
-        self.pluginmanager = pluginmanager
+        self.pluginmanager = py.test._PluginManager()
         self._conftest = Conftest(onimport=self._onimportconftest)
-        self.hook = pluginmanager.hook
+        self.hook = self.pluginmanager.hook
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
@@ -104,17 +99,12 @@ class Config(object):
         return l, self.option
 
     def __setstate__(self, repr):
-        # warning global side effects:
-        # * registering to py lib plugins 
-        # * setting py.test.config 
-        self.__init__(
-            pluginmanager=py.test._PluginManager(),
-            topdir=py.path.local(),
-        )
-        # we have to set py.test.config because preparse()
-        # might load conftest files which have
-        # py.test.config.addoptions() lines in them 
+        # we have to set py.test.config because loading 
+        # of conftest files may use it (deprecated) 
+        # mainly by py.test.config.addoptions() 
         py.test.config = self 
+        # next line will registers default plugins 
+        self.__init__(topdir=py.path.local())
         args, cmdlineopts = repr 
         args = [self.topdir.join(x) for x in args]
         self.option = cmdlineopts
@@ -307,8 +297,5 @@ def gettopdir(args):
         return pkgdir.dirpath()
 
 
-# this is the one per-process instance of py.test configuration 
-config_per_process = Config(
-    pluginmanager=py.test._PluginManager()
-)
-
+# this is default per-process instance of py.test configuration 
+config_per_process = Config()

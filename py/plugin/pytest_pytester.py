@@ -66,10 +66,10 @@ class TmpTestdir:
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
-    def Config(self, registry=None, topdir=None):
+    def Config(self, topdir=None):
         if topdir is None:
             topdir = self.tmpdir.dirpath()
-        return pytestConfig(registry, topdir=topdir)
+        return pytestConfig(topdir=topdir)
 
     def finalize(self):
         for p in self._syspathremove:
