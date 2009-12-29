@@ -2,10 +2,9 @@ import py
 from py.plugin.pytest_pytester import LineMatcher, LineComp
 
 def test_reportrecorder(testdir):
-    registry = py._com.Registry()
-    recorder = testdir.getreportrecorder(registry)
-    assert not recorder.getfailures()
     item = testdir.getitem("def test_func(): pass")
+    recorder = testdir.getreportrecorder(item.config)
+    assert not recorder.getfailures()
     class rep:
         excinfo = None
         passed = False

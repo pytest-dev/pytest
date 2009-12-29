@@ -2,6 +2,7 @@
 managing loading and interacting with pytest plugins. 
 """
 import py
+import inspect
 from py.plugin import hookspec
 from py.impl.test.outcome import Skipped
 
@@ -16,15 +17,10 @@ def check_old_use(mod, modname):
 class PluginManager(object):
     class Error(Exception):
         """signals a plugin specific error."""
-    def __init__(self, comregistry=None):
-        if comregistry is None: 
-            comregistry = py._com.Registry()
-        self.comregistry = comregistry 
+    def __init__(self):
+        self.registry = Registry()
         self._name2plugin = {}
-
-        self.hook = py._com.HookRelay(
-            hookspecs=hookspec, 
-            registry=self.comregistry) 
+        self.hook = HookRelay(hookspecs=hookspec, registry=self.registry) 
         self.register(self)
         for spec in default_plugins:
             self.import_plugin(spec) 
@@ -39,18 +35,18 @@ class PluginManager(object):
 
     def register(self, plugin, name=None):
         assert not self.isregistered(plugin), plugin
-        assert not self.comregistry.isregistered(plugin), plugin
+        assert not self.registry.isregistered(plugin), plugin
         name = self._getpluginname(plugin, name)
         if name in self._name2plugin:
             return False
         self._name2plugin[name] = plugin
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
-        self.comregistry.register(plugin)
+        self.registry.register(plugin)
         return True
 
     def unregister(self, plugin):
         self.hook.pytest_plugin_unregistered(plugin=plugin)
-        self.comregistry.unregister(plugin)
+        self.registry.unregister(plugin)
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
@@ -63,7 +59,7 @@ class PluginManager(object):
                 return True
 
     def getplugins(self):
-        return list(self.comregistry)
+        return list(self.registry)
 
     def getplugin(self, name):
         try:
@@ -143,7 +139,7 @@ class PluginManager(object):
     #
     # 
     def listattr(self, attrname, plugins=None, extra=()):
-        return self.comregistry.listattr(attrname, plugins=plugins, extra=extra)
+        return self.registry.listattr(attrname, plugins=plugins, extra=extra)
 
     def notify_exception(self, excinfo=None):
         if excinfo is None:
@@ -153,8 +149,8 @@ class PluginManager(object):
 
     def do_addoption(self, parser):
         mname = "pytest_addoption"
-        methods = self.comregistry.listattr(mname, reverse=True)
-        mc = py._com.MultiCall(methods, {'parser': parser})
+        methods = self.registry.listattr(mname, reverse=True)
+        mc = MultiCall(methods, {'parser': parser})
         mc.execute()
 
     def pytest_plugin_registered(self, plugin):
@@ -168,7 +164,7 @@ class PluginManager(object):
                 {'config': self._config})
 
     def call_plugin(self, plugin, methname, kwargs):
-        return py._com.MultiCall(
+        return MultiCall(
                 methods=self.listattr(methname, plugins=[plugin]), 
                 kwargs=kwargs, firstresult=True).execute()
 
@@ -210,3 +206,118 @@ def importplugin(importspec):
 
 
 
+class MultiCall:
+    """ execute a call into multiple python functions/methods.  """
+
+    def __init__(self, methods, kwargs, firstresult=False):
+        self.methods = methods[:]
+        self.kwargs = kwargs.copy()
+        self.kwargs['__multicall__'] = self
+        self.results = []
+        self.firstresult = firstresult
+
+    def __repr__(self):
+        status = "%d results, %d meths" % (len(self.results), len(self.methods))
+        return "<MultiCall %s, kwargs=%r>" %(status, self.kwargs)
+
+    def execute(self):
+        while self.methods:
+            method = self.methods.pop()
+            kwargs = self.getkwargs(method)
+            res = method(**kwargs)
+            if res is not None:
+                self.results.append(res) 
+                if self.firstresult:
+                    return res
+        if not self.firstresult:
+            return self.results 
+
+    def getkwargs(self, method):
+        kwargs = {}
+        for argname in varnames(method):
+            try:
+                kwargs[argname] = self.kwargs[argname]
+            except KeyError:
+                pass # might be optional param
+        return kwargs 
+
+def varnames(func):
+    ismethod = inspect.ismethod(func)
+    rawcode = py.code.getrawcode(func)
+    try:
+        return rawcode.co_varnames[ismethod:]
+    except AttributeError:
+        return ()
+
+class Registry:
+    """
+        Manage Plugins: register/unregister call calls to plugins. 
+    """
+    def __init__(self, plugins=None):
+        if plugins is None:
+            plugins = []
+        self._plugins = plugins
+
+    def register(self, plugin):
+        assert not isinstance(plugin, str)
+        assert not plugin in self._plugins
+        self._plugins.append(plugin)
+
+    def unregister(self, plugin):
+        self._plugins.remove(plugin)
+
+    def isregistered(self, plugin):
+        return plugin in self._plugins 
+
+    def __iter__(self):
+        return iter(self._plugins)
+
+    def listattr(self, attrname, plugins=None, extra=(), reverse=False):
+        l = []
+        if plugins is None:
+            plugins = self._plugins
+        candidates = list(plugins) + list(extra)
+        for plugin in candidates:
+            try:
+                l.append(getattr(plugin, attrname))
+            except AttributeError:
+                continue 
+        if reverse:
+            l.reverse()
+        return l
+
+class HookRelay: 
+    def __init__(self, hookspecs, registry):
+        self._hookspecs = hookspecs
+        self._registry = registry
+        for name, method in vars(hookspecs).items():
+            if name[:1] != "_":
+                setattr(self, name, self._makecall(name))
+
+    def _makecall(self, name, extralookup=None):
+        hookspecmethod = getattr(self._hookspecs, name)
+        firstresult = getattr(hookspecmethod, 'firstresult', False)
+        return HookCaller(self, name, firstresult=firstresult,
+            extralookup=extralookup)
+
+    def _getmethods(self, name, extralookup=()):
+        return self._registry.listattr(name, extra=extralookup)
+
+    def _performcall(self, name, multicall):
+        return multicall.execute()
+        
+class HookCaller:
+    def __init__(self, hookrelay, name, firstresult, extralookup=None):
+        self.hookrelay = hookrelay 
+        self.name = name 
+        self.firstresult = firstresult 
+        self.extralookup = extralookup and [extralookup] or ()
+
+    def __repr__(self):
+        return "<HookCaller %r>" %(self.name,)
+
+    def __call__(self, **kwargs):
+        methods = self.hookrelay._getmethods(self.name, self.extralookup)
+        mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
+        return self.hookrelay._performcall(self.name, mc)
+   

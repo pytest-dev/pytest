@@ -25,12 +25,6 @@ py.apipkg.initpkg(__name__, dict(
     _pydirs = '.impl._metainfo:pydirs',
     version = 'py:__version__', # backward compatibility
 
-    _com = {
-        'Registry': '.impl._com:Registry',
-        'MultiCall':  '.impl._com:MultiCall',
-        'comregistry': '.impl._com:comregistry',
-        'HookRelay': '.impl._com:HookRelay',
-    },
     cmdline = {
         'pytest':     '.impl.cmdline.pytest:main',
         'pylookup':   '.impl.cmdline.pylookup:main',

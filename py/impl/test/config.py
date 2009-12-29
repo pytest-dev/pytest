@@ -107,9 +107,8 @@ class Config(object):
         # warning global side effects:
         # * registering to py lib plugins 
         # * setting py.test.config 
-        py._com.comregistry = py._com.Registry()
         self.__init__(
-            pluginmanager=py.test._PluginManager(py._com.comregistry),
+            pluginmanager=py.test._PluginManager(),
             topdir=py.path.local(),
         )
         # we have to set py.test.config because preparse()
@@ -310,6 +309,6 @@ def gettopdir(args):
 
 # this is the one per-process instance of py.test configuration 
 config_per_process = Config(
-    pluginmanager=py.test._PluginManager(py._com.comregistry)
+    pluginmanager=py.test._PluginManager()
 )
 

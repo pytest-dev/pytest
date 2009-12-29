@@ -1,21 +1,17 @@
 import py
 
+from py.impl.test.pluginmanager import HookRelay
+
 def pytest_funcarg___pytest(request):
     return PytestArg(request)
 
 class PytestArg:
     def __init__(self, request):
         self.request = request 
-        self.monkeypatch = self.request.getfuncargvalue("monkeypatch")
-        self.comregistry = py._com.Registry()
-        self.monkeypatch.setattr(py._com, 'comregistry', self.comregistry)
 
-    def gethookrecorder(self, hookspecs, registry=None):
-        if registry is not None:
-            self.monkeypatch.setattr(py._com, 'comregistry', registry) 
-            self.comregistry = registry 
-        hookrecorder = HookRecorder(self.comregistry) 
-        hookrecorder.start_recording(hookspecs)
+    def gethookrecorder(self, hook):
+        hookrecorder = HookRecorder(hook._registry)
+        hookrecorder.start_recording(hook._hookspecs)
         self.request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder 
 
@@ -32,8 +28,8 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 class HookRecorder:
-    def __init__(self, comregistry):
-        self._comregistry = comregistry
+    def __init__(self, registry):
+        self._registry = registry
         self.calls = []
         self._recorders = {}
         
@@ -46,12 +42,12 @@ class HookRecorder:
                 setattr(RecordCalls, name, self._makecallparser(method))
         recorder = RecordCalls()
         self._recorders[hookspecs] = recorder
-        self._comregistry.register(recorder)
-        self.hook = py._com.HookRelay(hookspecs, registry=self._comregistry)
+        self._registry.register(recorder)
+        self.hook = HookRelay(hookspecs, registry=self._registry)
 
     def finish_recording(self):
         for recorder in self._recorders.values():
-            self._comregistry.unregister(recorder)
+            self._registry.unregister(recorder)
         self._recorders.clear()
 
     def _makecallparser(self, method):

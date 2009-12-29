@@ -22,11 +22,6 @@ def pytest_funcarg__testdir(request):
     tmptestdir = TmpTestdir(request)
     return tmptestdir
 
-def pytest_funcarg__reportrecorder(request):
-    reprec = ReportRecorder(py._com.comregistry)
-    request.addfinalizer(lambda: reprec.comregistry.unregister(reprec))
-    return reprec
-
 rex_outcome = re.compile("(\d+) (\w+)")
 class RunResult:
     def __init__(self, ret, outlines, errlines):
@@ -71,10 +66,10 @@ class TmpTestdir:
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
-    def Config(self, comregistry=None, topdir=None):
+    def Config(self, registry=None, topdir=None):
         if topdir is None:
             topdir = self.tmpdir.dirpath()
-        return pytestConfig(comregistry, topdir=topdir)
+        return pytestConfig(registry, topdir=topdir)
 
     def finalize(self):
         for p in self._syspathremove:
@@ -89,19 +84,13 @@ class TmpTestdir:
                     del sys.modules[name]
 
     def getreportrecorder(self, obj):
-        if isinstance(obj, py._com.Registry):
-            registry = obj
-        elif hasattr(obj, 'comregistry'):
-            registry = obj.comregistry
-        elif hasattr(obj, 'pluginmanager'):
-            registry = obj.pluginmanager.comregistry
-        elif hasattr(obj, 'config'):
-            registry = obj.config.pluginmanager.comregistry
-        else:
-            raise ValueError("obj %r provides no comregistry" %(obj,))
-        assert isinstance(registry, py._com.Registry)
-        reprec = ReportRecorder(registry)
-        reprec.hookrecorder = self._pytest.gethookrecorder(hookspec, registry)
+        if hasattr(obj, 'config'):
+            obj = obj.config
+        if hasattr(obj, 'hook'):
+            obj = obj.hook
+        assert hasattr(obj, '_hookspecs'), obj
+        reprec = ReportRecorder(obj)
+        reprec.hookrecorder = self._pytest.gethookrecorder(obj)
         reprec.hook = reprec.hookrecorder.hook
         return reprec
 
@@ -334,9 +323,10 @@ class PseudoPlugin:
         self.__dict__.update(vars) 
 
 class ReportRecorder(object):
-    def __init__(self, comregistry):
-        self.comregistry = comregistry
-        comregistry.register(self)
+    def __init__(self, hook):
+        self.hook = hook
+        self.registry = hook._registry
+        self.registry.register(self)
 
     def getcall(self, name):
         return self.hookrecorder.getcall(name)
@@ -401,7 +391,7 @@ class ReportRecorder(object):
         self.hookrecorder.calls[:] = []
 
     def unregister(self):
-        self.comregistry.unregister(self)
+        self.registry.unregister(self)
         self.hookrecorder.finish_recording()
 
 class LineComp:

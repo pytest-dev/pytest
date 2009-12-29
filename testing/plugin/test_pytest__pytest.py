@@ -1,9 +1,10 @@
 import py
+import sys
 from py.plugin.pytest__pytest import HookRecorder
+from py.impl.test.pluginmanager import Registry
 
 def test_hookrecorder_basic():
-    comregistry = py._com.Registry() 
-    rec = HookRecorder(comregistry)
+    rec = HookRecorder(Registry())
     class ApiClass:
         def xyz(self, arg):
             pass
@@ -15,9 +16,7 @@ def test_hookrecorder_basic():
     py.test.raises(ValueError, "rec.popcall('abc')")
 
 def test_hookrecorder_basic_no_args_hook():
-    import sys
-    comregistry = py._com.Registry() 
-    rec = HookRecorder(comregistry)
+    rec = HookRecorder(Registry())
     apimod = type(sys)('api')
     def xyz():
         pass
@@ -27,23 +26,20 @@ def test_hookrecorder_basic_no_args_hook():
     call = rec.popcall("xyz")
     assert call._name == "xyz"
 
-reg = py._com.comregistry
-def test_functional_default(testdir, _pytest):
-    assert _pytest.comregistry == py._com.comregistry 
-    assert _pytest.comregistry != reg
-
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
         import py
+        from py.impl.test.pluginmanager import HookRelay, Registry
         pytest_plugins="_pytest"
         def test_func(_pytest):
             class ApiClass:
                 def xyz(self, arg):  pass 
-            rec = _pytest.gethookrecorder(ApiClass)
+            hook = HookRelay(ApiClass, Registry())
+            rec = _pytest.gethookrecorder(hook)
             class Plugin:
                 def xyz(self, arg):
                     return arg + 1
-            rec._comregistry.register(Plugin())
+            rec._registry.register(Plugin())
             res = rec.hook.xyz(arg=41)
             assert res == [42]
     """)

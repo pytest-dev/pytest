@@ -3,14 +3,11 @@ import pickle
 
 def setglobals(request):
     oldconfig = py.test.config 
-    oldcom = py._com.comregistry 
     print("setting py.test.config to None")
     py.test.config = None
-    py._com.comregistry = py._com.Registry()
     def resetglobals():
         py.builtin.print_("setting py.test.config to", oldconfig)
         py.test.config = oldconfig
-        py._com.comregistry = oldcom
     request.addfinalizer(resetglobals)
 
 def pytest_funcarg__testdir(request):
@@ -190,7 +187,7 @@ def test_config__setstate__wired_correctly_in_childprocess(testdir):
         from py.impl.test.dist.mypickle import PickleChannel
         channel = PickleChannel(channel)
         config = channel.receive()
-        assert py.test.config.pluginmanager.comregistry == py._com.comregistry, "comregistry wrong"
+        assert py.test.config == config 
     """)
     channel = PickleChannel(channel)
     config = testdir.parseconfig()

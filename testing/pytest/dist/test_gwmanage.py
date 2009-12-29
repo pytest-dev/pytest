@@ -8,17 +8,17 @@
 import py
 import os
 from py.impl.test.dist.gwmanage import GatewayManager, HostRSync
+from py.impl.test.pluginmanager import HookRelay, Registry
 from py.plugin import hookspec
 import execnet
 
 def pytest_funcarg__hookrecorder(request):
     _pytest = request.getfuncargvalue('_pytest')
     hook = request.getfuncargvalue('hook')
-    return _pytest.gethookrecorder(hook._hookspecs, hook._registry)
+    return _pytest.gethookrecorder(hook)
 
 def pytest_funcarg__hook(request):
-    registry = py._com.Registry()
-    return py._com.HookRelay(hookspec, registry)
+    return HookRelay(hookspec, Registry())
 
 class TestGatewayManagerPopen:
     def test_popen_no_default_chdir(self, hook):
@@ -90,7 +90,6 @@ class pytest_funcarg__mysetup:
         tmp = request.getfuncargvalue('tmpdir')
         self.source = tmp.mkdir("source")
         self.dest = tmp.mkdir("dest")
-        request.getfuncargvalue("_pytest") # to have patching of py._com.comregistry
 
 class TestHRSync:
     def test_hrsync_filter(self, mysetup):
