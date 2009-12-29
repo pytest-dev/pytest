@@ -379,3 +379,15 @@ class TestCaptureFuncarg:
         ])
         assert result.ret == 2
 
+def test_setup_failure_does_not_kill_capturing(testdir):
+    sub1 = testdir.mkpydir("sub1")
+    sub1.join("conftest.py").write(py.code.Source("""
+        def pytest_runtest_setup(item):
+            raise ValueError(42)
+    """))
+    sub1.join("test_mod.py").write("def test_func1(): pass")
+    result = testdir.runpytest(testdir.tmpdir, '--traceconfig')
+    result.stdout.fnmatch_lines([
+        "*ValueError(42)*",
+        "*1 error*"
+    ])

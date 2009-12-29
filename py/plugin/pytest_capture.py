@@ -161,16 +161,20 @@ class CaptureManager:
                 cap.resume()
         self._capturing = method 
 
-    def suspendcapture(self):
+    def suspendcapture(self, item=None):
         self.deactivate_funcargs()
-        method = self._capturing
-        if method != "no":
-            cap = self._method2capture[method]
-            outerr = cap.suspend()
-        else:
-            outerr = "", ""
-        del self._capturing
-        return outerr 
+        if hasattr(self, '_capturing'):
+            method = self._capturing
+            if method != "no":
+                cap = self._method2capture[method]
+                outerr = cap.suspend()
+            else:
+                outerr = "", ""
+            del self._capturing
+            if item:
+                outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
+            return outerr 
+        return "", ""
 
     def activate_funcargs(self, pyfuncitem):
         if not hasattr(pyfuncitem, 'funcargs'):
@@ -210,9 +214,6 @@ class CaptureManager:
     def pytest_runtest_teardown(self, item):
         self.resumecapture_item(item)
 
-    def pytest_runtest_teardown(self, item):
-        self.resumecapture_item(item)
-
     def pytest__teardown_final(self, __multicall__, session):
         method = self._getmethod(session.config, None)
         self.resumecapture(method)
@@ -231,8 +232,7 @@ class CaptureManager:
     def pytest_runtest_makereport(self, __multicall__, item, call):
         self.deactivate_funcargs()
         rep = __multicall__.execute()
-        outerr = self.suspendcapture()
-        outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
+        outerr = self.suspendcapture(item)
         if not rep.passed:
             addouterr(rep, outerr)
         if not rep.passed or rep.when == "teardown":

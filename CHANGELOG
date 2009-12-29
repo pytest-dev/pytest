@@ -9,6 +9,9 @@ Changes between 1.X and 1.1.1
 
 - new "pytestconfig" funcarg allows access to test config object
 
+- robustify capturing to survive if custom pytest_runtest_setup 
+  code failed and prevented the capturing setup code from running. 
+
 - make py.test.* helpers provided by default plugins visible early -
   works transparently both for pydoc and for interactive sessions
   which will regularly see e.g. py.test.mark and py.test.importorskip. 
