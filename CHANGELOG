@@ -7,6 +7,8 @@ Changes between 1.X and 1.1.1
 - install 'py.test' and `py.which` with a ``-$VERSION`` suffix to
   disambiguate between Python3, python2.X, Jython and PyPy installed versions. 
 
+- new "pytestconfig" funcarg allows access to test config object
+
 - make py.test.* helpers provided by default plugins visible early -
   works transparently both for pydoc and for interactive sessions
   which will regularly see e.g. py.test.mark and py.test.importorskip. 

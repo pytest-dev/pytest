@@ -28,6 +28,9 @@ def pytest_collect_file(path, parent):
         if ext == ".py":
             return parent.Module(path, parent=parent) 
 
+def pytest_funcarg__pytestconfig(request):
+    return request.config
+
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment 
     # not use parent.Directory here as we generally 

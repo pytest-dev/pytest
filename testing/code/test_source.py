@@ -310,10 +310,9 @@ def test_deindent():
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
 @py.test.mark.xfail
-def test_source_of_class_at_eof_without_newline():
+def test_source_of_class_at_eof_without_newline(tmpdir):
     # this test fails because the implicit inspect.getsource(A) below 
     # does not return the "x = 1" last line. 
-    tmpdir = py.test.ensuretemp("source_write_read")
     source = py.code.Source('''
         class A(object):
             def method(self):

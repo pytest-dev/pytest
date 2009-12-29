@@ -10,6 +10,7 @@ def ensuretemp(string, dir=1):
         take care to provide empty unique directories for each 
         test call even if the test is called multiple times. 
     """ 
+    #py.log._apiwarn(">1.1", "use tmpdir function argument")
     return py.test.config.ensuretemp(string, dir=dir)
   
 class CmdOptions(object):

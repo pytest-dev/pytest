@@ -1,5 +1,16 @@
+import sys, py
 
 pytest_plugins = "pytest_pytester"
+
+@py.test.mark.multi(name=[x for x in dir(py.cmdline) if x[0] != "_"])
+def test_cmdmain(name):
+    main = getattr(py.cmdline, name)
+    assert py.builtin.callable(main)
+    assert name[:2] == "py"
+    scriptname = "py." + name[2:]
+    if sys.platform == "win32":
+        scriptname += ".exe"
+    assert py.path.local.sysfind(scriptname), scriptname
 
 class TestPyLookup:
     def test_basic(self, testdir):

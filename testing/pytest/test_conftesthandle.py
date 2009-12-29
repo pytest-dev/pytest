@@ -8,7 +8,7 @@ def pytest_generate_tests(metafunc):
 
 def pytest_funcarg__basedir(request): 
     def basedirmaker(request):
-        basedir = d = request.config.ensuretemp(request.param) 
+        basedir = d = request.getfuncargvalue("tmpdir")
         d.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
         d.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
         if request.param == "inpackage": 

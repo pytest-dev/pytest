@@ -32,12 +32,12 @@ class TestGeneralUsage:
         mytemp = testdir.tmpdir.mkdir("mytemp")
         p = testdir.makepyfile("""
             import py
-            def test_1(): 
-                py.test.ensuretemp('xyz')
+            def test_1(pytestconfig):
+                pytestconfig.getbasetemp().ensure("hello")
         """)
         result = testdir.runpytest(p, '--basetemp=%s' %mytemp)
         assert result.ret == 0
-        assert mytemp.join('xyz').check(dir=1)
+        assert mytemp.join('hello').check()
                 
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile("""

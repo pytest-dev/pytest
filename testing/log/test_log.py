@@ -6,7 +6,6 @@ from py.impl.log.log import default_keywordmapper
 callcapture = py.io.StdCapture.call
 
 def setup_module(mod): 
-    mod.tempdir = py.test.ensuretemp("py.log-test") 
     mod._oldstate = default_keywordmapper.getstate()
 
 def teardown_module(mod): 
@@ -116,8 +115,8 @@ class TestLogConsumer:
         assert not err
         assert out.strip() == '[xyz] hello'
 
-    def test_log_file(self):
-        customlog = tempdir.join('log.out')
+    def test_log_file(self, tmpdir):
+        customlog = tmpdir.join('log.out')
         py.log.setconsumer("default", open(str(customlog), 'w', buffering=1))
         py.log.Producer("default")("hello world #1") 
         assert customlog.readlines() == ['[default] hello world #1\n']
@@ -127,8 +126,8 @@ class TestLogConsumer:
         res = customlog.readlines() 
         assert res == ['[default] hello world #2\n'] # no append by default!
         
-    def test_log_file_append_mode(self):
-        logfilefn = tempdir.join('log_append.out')
+    def test_log_file_append_mode(self, tmpdir):
+        logfilefn = tmpdir.join('log_append.out')
 
         # The append mode is on by default, so we don't need to specify it for File
         py.log.setconsumer("default", py.log.Path(logfilefn, append=True, 
@@ -144,8 +143,8 @@ class TestLogConsumer:
         assert lines == ['[default] hello world #1\n', 
                          '[default] hello world #1\n']
 
-    def test_log_file_delayed_create(self):
-        logfilefn = tempdir.join('log_create.out')
+    def test_log_file_delayed_create(self, tmpdir):
+        logfilefn = tmpdir.join('log_create.out')
 
         py.log.setconsumer("default", py.log.Path(logfilefn,
                                         delayed_create=True, buffering=0))
@@ -154,11 +153,11 @@ class TestLogConsumer:
         lines = logfilefn.readlines() 
         assert lines == ['[default] hello world #1\n']
 
-    def test_keyword_based_log_files(self):
+    def test_keyword_based_log_files(self, tmpdir):
         logfiles = []
         keywords = 'k1 k2 k3'.split()
         for key in keywords: 
-            path = tempdir.join(key)
+            path = tmpdir.join(key)
             py.log.setconsumer(key, py.log.Path(path, buffering=0))
       
         py.log.Producer('k1')('1')
@@ -166,7 +165,7 @@ class TestLogConsumer:
         py.log.Producer('k3')('3')
 
         for key in keywords: 
-            path = tempdir.join(key)
+            path = tmpdir.join(key)
             assert path.read().strip() == '[%s] %s' % (key, key[-1])
 
     # disabled for now; the syslog log file can usually be read only by root

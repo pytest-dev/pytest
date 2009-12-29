@@ -46,14 +46,6 @@ The test-report header should optionally show information
 about the under-test package and versions/locations of
 involved packages.
 
-install py.test with interpreter-specific prefixes 
---------------------------------------------------------
-tags: feature
-
-When installing under python3, jython or pypy-c it is 
-desirable to (additionally?) install py.test with
-respective suffixes. 
-
 make node._checkcollectable more robust
 -------------------------------------------------
 tags: bug 1.1.2
@@ -101,3 +93,12 @@ A local test run of a "tests" directory may work
 but a remote one fail because the tests directory
 does not contain an "__init__.py". Either give
 an error or make it work without the __init__.py
+
+deprecate ensuretemp / introduce funcargs to setup method
+--------------------------------------------------------------
+tags: wish 1.1.2
+
+The remaining uses of py.test.ensuretemp within the py-test base
+itself are for setup methods.  Also users have expressed the
+wish to have funcargs available to setup functions.  Experiment
+with allowing funcargs there and finalizing deprecating py.test.ensuretemp.

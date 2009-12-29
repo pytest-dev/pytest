@@ -256,16 +256,15 @@ def test_codepath_Queue_example():
     assert path.check()
 
 class TestFormattedExcinfo: 
-    def setup_method(self, method):
-        self.tmpdir = py.test.ensuretemp("%s_%s" %(
-            self.__class__.__name__, method.__name__))
-
-    def importasmod(self, source):
-        source = py.code.Source(source)
-        modpath = self.tmpdir.join("mod.py")
-        self.tmpdir.ensure("__init__.py")
-        modpath.write(source)
-        return modpath.pyimport()
+    def pytest_funcarg__importasmod(self, request):
+        def importasmod(source):
+            source = py.code.Source(source)
+            tmpdir = request.getfuncargvalue("tmpdir")
+            modpath = tmpdir.join("mod.py")
+            tmpdir.ensure("__init__.py")
+            modpath.write(source)
+            return modpath.pyimport()
+        return importasmod
 
     def excinfo_from_exec(self, source):
         source = py.code.Source(source).strip()
@@ -392,8 +391,8 @@ raise ValueError()
         assert reprlocals.lines[2] == 'y          = 5'
         assert reprlocals.lines[3] == 'z          = 7'
 
-    def test_repr_tracebackentry_lines(self):
-        mod = self.importasmod("""
+    def test_repr_tracebackentry_lines(self, importasmod):
+        mod = importasmod("""
             def func1():
                 raise ValueError("hello\\nworld")
         """)
@@ -423,8 +422,8 @@ raise ValueError()
         assert loc.lineno == 3
         #assert loc.message == "ValueError: hello"
 
-    def test_repr_tracebackentry_lines(self):
-        mod = self.importasmod("""
+    def test_repr_tracebackentry_lines(self, importasmod):
+        mod = importasmod("""
             def func1(m, x, y, z):
                 raise ValueError("hello\\nworld")
         """)
@@ -447,8 +446,8 @@ raise ValueError()
         assert tw.lines[1] == "x = 5, y = 13"
         assert tw.lines[2] == "z = " + repr('z' * 120)
 
-    def test_repr_tracebackentry_short(self):
-        mod = self.importasmod("""
+    def test_repr_tracebackentry_short(self, importasmod):
+        mod = importasmod("""
             def func1():
                 raise ValueError("hello")
             def entry():
@@ -470,8 +469,8 @@ raise ValueError()
         assert lines[1] == '    raise ValueError("hello")'
         assert lines[2] == 'E   ValueError: hello'
 
-    def test_repr_tracebackentry_no(self):
-        mod = self.importasmod("""
+    def test_repr_tracebackentry_no(self, importasmod):
+        mod = importasmod("""
             def func1():
                 raise ValueError("hello")
             def entry():
@@ -487,8 +486,8 @@ raise ValueError()
         assert lines[0] == 'E   ValueError: hello'
         assert not lines[1:] 
 
-    def test_repr_traceback_tbfilter(self):
-        mod = self.importasmod("""
+    def test_repr_traceback_tbfilter(self, importasmod):
+        mod = importasmod("""
             def f(x):
                 raise ValueError(x)
             def entry():
@@ -502,8 +501,8 @@ raise ValueError()
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 3
 
-    def test_repr_traceback_and_excinfo(self):
-        mod = self.importasmod("""
+    def test_repr_traceback_and_excinfo(self, importasmod):
+        mod = importasmod("""
             def f(x):
                 raise ValueError(x)
             def entry():
@@ -523,8 +522,8 @@ raise ValueError()
             assert repr.reprcrash.path.endswith("mod.py")
             assert repr.reprcrash.message == "ValueError: 0"
 
-    def test_repr_excinfo_addouterr(self):
-        mod = self.importasmod("""
+    def test_repr_excinfo_addouterr(self, importasmod):
+        mod = importasmod("""
             def entry():
                 raise ValueError()
         """)
@@ -536,8 +535,8 @@ raise ValueError()
         assert twmock.lines[-1] == "content"
         assert twmock.lines[-2] == ("-", "title")
 
-    def test_repr_excinfo_reprcrash(self):
-        mod = self.importasmod("""
+    def test_repr_excinfo_reprcrash(self, importasmod):
+        mod = importasmod("""
             def entry():
                 raise ValueError()
         """)
@@ -548,8 +547,8 @@ raise ValueError()
         assert repr.reprcrash.message == "ValueError"
         assert str(repr.reprcrash).endswith("mod.py:3: ValueError")
 
-    def test_repr_traceback_recursion(self):
-        mod = self.importasmod("""
+    def test_repr_traceback_recursion(self, importasmod):
+        mod = importasmod("""
             def rec2(x):
                 return rec1(x+1)
             def rec1(x):
@@ -565,12 +564,12 @@ raise ValueError()
             assert reprtb.extraline == "!!! Recursion detected (same locals & position)"
             assert str(reprtb)
 
-    def test_tb_entry_AssertionError(self):
+    def test_tb_entry_AssertionError(self, importasmod):
         # probably this test is a bit redundant 
         # as py/magic/testing/test_assertion.py
         # already tests correctness of
         # assertion-reinterpretation  logic 
-        mod = self.importasmod("""
+        mod = importasmod("""
             def somefunc():
                 x = 1
                 assert x == 2
@@ -586,8 +585,8 @@ raise ValueError()
         lines = reprentry.lines
         assert lines[-1] == "E       assert 1 == 2"
 
-    def test_reprexcinfo_getrepr(self):
-        mod = self.importasmod("""
+    def test_reprexcinfo_getrepr(self, importasmod):
+        mod = importasmod("""
             def f(x):
                 raise ValueError(x)
             def entry():
@@ -601,8 +600,8 @@ raise ValueError()
                 assert isinstance(repr, ReprExceptionInfo)
                 assert repr.reprtraceback.style == style 
          
-    def test_toterminal_long(self):
-        mod = self.importasmod("""
+    def test_toterminal_long(self, importasmod):
+        mod = importasmod("""
             def g(x):
                 raise ValueError(x)
             def f():
@@ -627,8 +626,8 @@ raise ValueError()
         assert tw.lines[9] == ""
         assert tw.lines[10].endswith("mod.py:3: ValueError")
 
-    def test_toterminal_long_filenames(self):
-        mod = self.importasmod("""
+    def test_toterminal_long_filenames(self, importasmod):
+        mod = importasmod("""
             def f():
                 raise ValueError()
         """)
@@ -651,31 +650,22 @@ raise ValueError()
         finally:
             old.chdir()
 
-    def test_format_excinfo(self):
-        mod = self.importasmod("""
+    @py.test.mark.multi(reproptions=[
+        {'style': style, 'showlocals': showlocals, 
+         'funcargs': funcargs, 'tbfilter': tbfilter
+        } for style in ("long", "short", "no")
+            for showlocals in (True, False) 
+                for tbfilter in (True, False)
+                    for funcargs in (True, False)])
+    def test_format_excinfo(self, importasmod, reproptions):
+        mod = importasmod("""
             def g(x):
                 raise ValueError(x)
             def f():
                 g(3)
         """)
         excinfo = py.test.raises(ValueError, mod.f)
-        def format_and_str(kw):
-            tw = py.io.TerminalWriter(stringio=True)
-            repr = excinfo.getrepr(**kw)
-            repr.toterminal(tw)
-            assert tw.stringio.getvalue()
-           
-        for combo in self.allcombos():
-            yield format_and_str, combo
-
-    def allcombos(self): 
-        for style in ("long", "short", "no"):
-            for showlocals in (True, False):
-                for tbfilter in (True, False):
-                    for funcargs in (True, False):
-                        kw = {'style': style, 
-                              'showlocals': showlocals, 
-                              'funcargs': funcargs, 
-                              'tbfilter': tbfilter
-                        }
-                        yield kw
+        tw = py.io.TerminalWriter(stringio=True)
+        repr = excinfo.getrepr(**reproptions)
+        repr.toterminal(tw)
+        assert tw.stringio.getvalue()
