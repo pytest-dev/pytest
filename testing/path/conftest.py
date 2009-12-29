@@ -1,4 +1,5 @@
 import py
+import sys
 from py.impl.path import svnwc as svncommon
 
 svnbin = py.path.local.sysfind('svn')
@@ -9,14 +10,14 @@ def pytest_funcarg__repowc1(request):
     if svnbin is None:
         py.test.skip("svn binary not found")
 
-    modname = request.module.__name__
     tmpdir = request.getfuncargvalue("tmpdir")
     repo, repourl, wc = request.cached_setup(
-        setup=lambda: getrepowc(tmpdir, "repo-"+modname, "wc-" + modname), 
+        setup=lambda: getrepowc(tmpdir, "path1repo", "path1wc"),
         scope="module", 
     )
     for x in ('test_remove', 'test_move', 'test_status_deleted'):
         if request.function.__name__.startswith(x):
+            print >>sys.stderr, ("saving repo", repo, "for", request.function)
             _savedrepowc = save_repowc(repo, wc) 
             request.addfinalizer(lambda: restore_repowc(_savedrepowc))
     return repo, repourl, wc
@@ -66,6 +67,7 @@ def save_repowc(repo, wc):
 
 def restore_repowc(obj):
     savedrepo, savedwc = obj
+    print >>sys.stderr, ("restoring", savedrepo)
     repo = savedrepo.new(basename=savedrepo.basename[:-2])
     assert repo.check()
     wc = savedwc.new(basename=savedwc.basename[:-2])
