@@ -1,7 +1,7 @@
 """ provide version info, conftest/environment config names. 
 """
 import py
-import sys
+import inspect, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
@@ -61,3 +61,73 @@ conftest_options = (
     ('collect_ignore', '(relative) paths ignored during collection'), 
     ('rsyncdirs', 'to-be-rsynced directories for dist-testing'), 
 )
+
+# =====================================================
+# validate plugin syntax and hooks 
+# =====================================================
+
+def pytest_plugin_registered(manager, plugin):
+    hookspec = manager.hook._hookspecs
+    methods = collectattr(plugin)
+    hooks = collectattr(hookspec)
+    stringio = py.io.TextIO()
+    def Print(*args):
+        if args:
+            stringio.write(" ".join(map(str, args)))
+        stringio.write("\n")
+
+    fail = False
+    while methods:
+        name, method = methods.popitem()
+        #print "checking", name
+        if isgenerichook(name):
+            continue
+        if name not in hooks: 
+            Print("found unknown hook:", name)
+            fail = True
+        else:
+            method_args = getargs(method)
+            if '__multicall__' in method_args:
+                method_args.remove('__multicall__')
+            hook = hooks[name]
+            hookargs = getargs(hook)
+            for arg in method_args:
+                if arg not in hookargs:
+                    Print("argument %r not available"  %(arg, ))
+                    Print("actual definition: %s" %(formatdef(method)))
+                    Print("available hook arguments: %s" % 
+                            ", ".join(hookargs))
+                    fail = True
+                    break 
+            #if not fail:
+            #    print "matching hook:", formatdef(method)
+        if fail:
+            name = getattr(plugin, '__name__', plugin)
+            raise PluginValidationError("%s:\n%s" %(name, stringio.getvalue()))
+
+class PluginValidationError(Exception):
+    """ plugin failed validation. """
+
+def isgenerichook(name):
+    return name == "pytest_plugins" or \
+           name.startswith("pytest_funcarg__")
+
+def getargs(func):
+    args = inspect.getargs(py.code.getrawcode(func))[0]
+    startindex = inspect.ismethod(func) and 1 or 0
+    return args[startindex:]
+
+def collectattr(obj, prefixes=("pytest_",)):
+    methods = {}
+    for apiname in dir(obj):
+        for prefix in prefixes:
+            if apiname.startswith(prefix):
+                methods[apiname] = getattr(obj, apiname) 
+    return methods 
+
+def formatdef(func):
+    return "%s%s" %(
+        func.__name__, 
+        inspect.formatargspec(*inspect.getargspec(func))
+    )
+

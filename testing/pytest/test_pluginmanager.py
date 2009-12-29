@@ -1,5 +1,5 @@
 import py, os
-from py.impl.test.pluginmanager import PluginManager, canonical_importname, collectattr
+from py.impl.test.pluginmanager import PluginManager, canonical_importname
 
 class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
@@ -185,14 +185,14 @@ class TestBootstrapping:
         class hello:
             def pytest_gurgel(self):
                 pass
-        py.test.raises(pp.Error, "pp.register(hello())")
+        py.test.raises(Exception, "pp.register(hello())")
 
     def test_register_mismatch_arg(self):
         pp = PluginManager()
         class hello:
             def pytest_configure(self, asd):
                 pass
-        excinfo = py.test.raises(pp.Error, "pp.register(hello())")
+        excinfo = py.test.raises(Exception, "pp.register(hello())")
 
     def test_canonical_importname(self):
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
@@ -269,18 +269,6 @@ class TestPytestPluginInteractions:
         pluginmanager.register(My2())
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
-
-def test_collectattr():
-    class A:
-        def pytest_hello(self):
-            pass
-    class B(A):
-        def pytest_world(self):
-            pass
-    methods = py.builtin.sorted(collectattr(B))
-    assert list(methods) == ['pytest_hello', 'pytest_world']
-    methods = py.builtin.sorted(collectattr(B()))
-    assert list(methods) == ['pytest_hello', 'pytest_world']
 
 @py.test.mark.xfail
 def test_namespace_has_default_and_env_plugins(testdir):

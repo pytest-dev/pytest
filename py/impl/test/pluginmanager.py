@@ -44,8 +44,7 @@ class PluginManager(object):
         if name in self._name2plugin:
             return False
         self._name2plugin[name] = plugin
-        self.hook.pytest_plugin_registered(plugin=plugin)
-        self._checkplugin(plugin)
+        self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
         self.comregistry.register(plugin)
         return True
 
@@ -138,46 +137,6 @@ class PluginManager(object):
     def _warn(self, msg):
         print ("===WARNING=== %s" % (msg,))
 
-    def _checkplugin(self, plugin):
-        # =====================================================
-        # check plugin hooks 
-        # =====================================================
-        methods = collectattr(plugin)
-        hooks = collectattr(hookspec)
-        stringio = py.io.TextIO()
-        def Print(*args):
-            if args:
-                stringio.write(" ".join(map(str, args)))
-            stringio.write("\n")
-
-        fail = False
-        while methods:
-            name, method = methods.popitem()
-            #print "checking", name
-            if isgenerichook(name):
-                continue
-            if name not in hooks: 
-                Print("found unknown hook:", name)
-                fail = True
-            else:
-                method_args = getargs(method)
-                if '__multicall__' in method_args:
-                    method_args.remove('__multicall__')
-                hook = hooks[name]
-                hookargs = getargs(hook)
-                for arg in method_args:
-                    if arg not in hookargs:
-                        Print("argument %r not available"  %(arg, ))
-                        Print("actual definition: %s" %(formatdef(method)))
-                        Print("available hook arguments: %s" % 
-                                ", ".join(hookargs))
-                        fail = True
-                        break 
-                #if not fail:
-                #    print "matching hook:", formatdef(method)
-            if fail:
-                name = getattr(plugin, '__name__', plugin)
-                raise self.Error("%s:\n%s" %(name, stringio.getvalue()))
     # 
     #
     # API for interacting with registered and instantiated plugin objects 
@@ -224,9 +183,6 @@ class PluginManager(object):
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
-# 
-#  XXX old code to automatically load classes
-#
 def canonical_importname(name):
     name = name.lower()
     modprefix = "pytest_"
@@ -253,60 +209,4 @@ def importplugin(importspec):
             return __import__(importspec)  # show the original exception
 
 
-
-def isgenerichook(name):
-    return name == "pytest_plugins" or \
-           name.startswith("pytest_funcarg__")
-
-def getargs(func):
-    args = py.std.inspect.getargs(py.code.getrawcode(func))[0]
-    startindex = py.std.inspect.ismethod(func) and 1 or 0
-    return args[startindex:]
-
-def collectattr(obj, prefixes=("pytest_",)):
-    methods = {}
-    for apiname in dir(obj):
-        for prefix in prefixes:
-            if apiname.startswith(prefix):
-                methods[apiname] = getattr(obj, apiname) 
-    return methods 
-
-def formatdef(func):
-    return "%s%s" %(
-        func.__name__, 
-        py.std.inspect.formatargspec(*py.std.inspect.getargspec(func))
-    )
-
-if __name__ == "__main__":
-    import py.plugin
-    basedir = py._dir.join('_plugin')
-    name2text = {}
-    for p in basedir.listdir("pytest_*"):
-        if p.ext == ".py" or (
-           p.check(dir=1) and p.join("__init__.py").check()):
-            impname = p.purebasename 
-            if impname.find("__") != -1:
-                continue
-            try:
-                plugin = importplugin(impname)
-            except (ImportError, py.impl.test.outcome.Skipped):
-                name2text[impname] = "IMPORT ERROR"
-            else:
-                doc = plugin.__doc__ or ""
-                doc = doc.strip()
-                name2text[impname] = doc
-           
-    for name in sorted(name2text.keys()):
-        text = name2text[name]
-        if name[0] == "_":
-            continue
-        print ("%-20s %s" % (name, text.split("\n")[0]))
-
-        #text = py.std.textwrap.wrap(name2text[name], 
-        #    width = 80,
-        #    initial_indent="%s: " % name, 
-        #    replace_whitespace = False)
-        #for line in text:
-        #    print line
-     
 

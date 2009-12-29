@@ -159,7 +159,7 @@ def pytest_looponfailinfo(failreports, rootdirs):
 # error handling and internal debugging hooks 
 # -------------------------------------------------------------------------
 
-def pytest_plugin_registered(plugin):
+def pytest_plugin_registered(plugin, manager):
     """ a new py lib plugin got registered. """
 
 def pytest_plugin_unregistered(plugin):
