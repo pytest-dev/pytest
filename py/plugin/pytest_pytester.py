@@ -6,6 +6,7 @@ import py
 import sys, os
 import re
 import inspect
+import time
 from py.impl.test.config import Config as pytestConfig
 from py.plugin import hookspec
 from py.builtin import print_
@@ -24,12 +25,14 @@ def pytest_funcarg__testdir(request):
 
 rex_outcome = re.compile("(\d+) (\w+)")
 class RunResult:
-    def __init__(self, ret, outlines, errlines):
+    def __init__(self, ret, outlines, errlines, duration):
         self.ret = ret
         self.outlines = outlines
         self.errlines = errlines
         self.stdout = LineMatcher(outlines)
         self.stderr = LineMatcher(errlines)
+        self.duration = duration
+
     def parseoutcomes(self):
         for line in reversed(self.outlines):
             if 'seconds' in line:
@@ -284,6 +287,7 @@ class TmpTestdir:
         print_("running", cmdargs, "curdir=", py.path.local())
         f1 = p1.open("w")
         f2 = p2.open("w")
+        now = time.time()
         popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
             close_fds=(sys.platform != "win32"))
         ret = popen.wait()
@@ -296,7 +300,7 @@ class TmpTestdir:
         if out:
             for line in out: 
                 py.builtin.print_(line, file=sys.stdout)
-        return RunResult(ret, out, err)
+        return RunResult(ret, out, err, time.time()-now)
 
     def runpybin(self, scriptname, *args):
         fullargs = self._getpybinargs(scriptname) + args

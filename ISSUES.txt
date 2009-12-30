@@ -1,16 +1,16 @@
 
 introduce py.test.mark.nocollect
 -------------------------------------------------------
-tags: feature
+tags: feature 1.2
 
 for not considering a function for test collection at all. 
 maybe also introduce a py.test.mark.test to explicitely
-mark a function to become a tested one.  Lookup 
-
+mark a function to become a tested one.  Lookup JUnit 
+ways of tagging tests. 
 
 have imported module mismatch honour relative paths
 --------------------------------------------------------
-tags: bug
+tags: bug 1.2
 
 With 1.1.1 py.test fails at least on windows if an import 
 is relative and compared against an absolute conftest.py 
@@ -18,7 +18,7 @@ path. Normalize.
 
 allow plugins/conftests to show extra header information
 --------------------------------------------------------
-tags: feature
+tags: feature 1.2
 
 The test-report header should optionally show information
 about the under-test package and versions/locations of
@@ -26,7 +26,7 @@ involved packages.
 
 make node._checkcollectable more robust
 -------------------------------------------------
-tags: bug 1.1.2
+tags: bug 1.2
 
 currently node._checkcollectable() can raise
 exceptions for all kinds of reasons ('conftest.py' loading
@@ -36,35 +36,41 @@ a good error message.
 
 call termination with small timeout
 -------------------------------------------------
-tags: feature 1.1.2
+tags: feature 1.2
+test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
 
-make capfd skip if 'dup' is not available
--------------------------------------------------------
-
-tags: feature 1.1.2
-
-currently, using 'capfd' as a funcarg will fail because
-it cannot call os.dup on setup.  Should cause a skip.
-
-introduce multi-install, i.e. py.test3, py.test-pypy, py.test-jython
-and maybe a commandline-"suffix" override? 
-
 fix dist-testing: execnet needs to be rsynced over automatically
 ------------------------------------------------------------------
 
-tags: bug 1.1.2
+tags: bug 1.2
 bb: http://bitbucket.org/hpk42/py-trunk/issue/65/
 
 execnet is not rsynced so fails if run in an ssh-situation. 
 write test and fix.
 
+dist-testing: fix session hook / setup calling
+-----------------------------------------------------
+tags: bug 1.2
+
+Currently pytest_sessionstart and finish are called 
+on the master node and not on the slaves.  Call
+it on slaves and provide a session.nodeid which defaults
+to None for the master and contains the gateway id 
+for slaves. 
+
+have --report=xfailed[-detail] report the actual tracebacks 
+------------------------------------------------------------------
+tags: feature
+
+there is no way to induce py.test to display the full tracebacks
+of the expected failure.  Introduce one.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
-tags: feature 1.1.2
+tags: feature 1.2
 bb: http://bitbucket.org/hpk42/py-trunk/issue/64
 
 A local test run of a "tests" directory may work 
@@ -74,7 +80,7 @@ an error or make it work without the __init__.py
 
 deprecate ensuretemp / introduce funcargs to setup method
 --------------------------------------------------------------
-tags: wish 1.1.2
+tags: experimental-wish 1.2
 
 The remaining uses of py.test.ensuretemp within the py-test base
 itself are for setup methods.  Also users have expressed the

@@ -440,4 +440,19 @@ def test_teardownfails_one_function(testdir):
         "*1 passed*1 error*"
     ])
 
+@py.test.mark.xfail 
+def test_terminate_on_hangingnode(testdir):
+    p = testdir.makeconftest("""
+        def pytest__teardown_final(session):
+            if session.nodeid: # running on slave
+                import time
+                time.sleep(2)
+    """)
+    result = testdir.runpytest(p, '--dist=each', '--tx=popen')
+    assert result.duration < 2.0 
+    result.stdout.fnmatch_lines([
+        "*0 passed*",
+    ])
+
+
 
