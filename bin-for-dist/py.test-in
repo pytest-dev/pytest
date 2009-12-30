@@ -47,6 +47,14 @@ class DictImporter(object):
         do_exec(co, module.__dict__)
         return sys.modules[fullname]
 
+    def get_source(self, name):
+        res = self.sources.get(name)
+        if res is None:
+            res = self.sources.get(name+'.__init__')
+        return res
+
+
+
 importer = DictImporter()
 
 sys.meta_path.append(importer)

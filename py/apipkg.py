@@ -17,6 +17,7 @@ def initpkg(pkgname, exportdefs):
     mod.__file__ = getattr(oldmod, '__file__', None)
     mod.__version__ = getattr(oldmod, '__version__', None)
     mod.__path__ = getattr(oldmod, '__path__', None)
+    mod.__loader__ = getattr(oldmod, '__loader__', None)
     sys.modules[pkgname]  = mod
 
 def importobj(modpath, attrname):
