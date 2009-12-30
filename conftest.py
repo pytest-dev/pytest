@@ -1,4 +1,5 @@
 import py
+import sys
 
 pytest_plugins = '_pytest doctest pytester'.split()
 
@@ -57,12 +58,15 @@ def getsocketspec(config):
 
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)
-    if multi is None:
-        return
-    assert len(multi.kwargs) == 1
-    for name, l in multi.kwargs.items():
-        for val in l:
-            metafunc.addcall(funcargs={name: val})
+    if multi is not None:
+        assert len(multi.kwargs) == 1
+        for name, l in multi.kwargs.items():
+            for val in l:
+                metafunc.addcall(funcargs={name: val})
+    elif 'anypython' in metafunc.funcargnames:
+        for name in ('python2.4', 'python2.5', 'python2.6', 
+                     'python2.7', 'python3.1', 'pypy-c', 'jython'):
+            metafunc.addcall(id=name, param=name)
 
 # XXX copied from execnet's conftest.py - needs to be merged 
 winpymap = {
@@ -72,12 +76,6 @@ winpymap = {
     'python2.4': r'C:\Python24\python.exe',
     'python3.1': r'C:\Python31\python.exe',
 }
-
-def pytest_generate_tests(metafunc):
-    if 'anypython' in metafunc.funcargnames:
-        for name in ('python2.4', 'python2.5', 'python2.6', 
-                     'python2.7', 'python3.1', 'pypy-c', 'jython'):
-            metafunc.addcall(id=name, param=name)
 
 def getexecutable(name, cache={}):
     try:
