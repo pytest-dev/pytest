@@ -120,7 +120,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
             return self.join(name)
 
     def makeitem(self, name, obj):
-        return self.config.hook.pytest_pycollect_makeitem(
+        return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
 
     def _istestclasscandidate(self, name, obj):
@@ -137,9 +137,9 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         cls = clscol and clscol.obj or None
         metafunc = funcargs.Metafunc(funcobj, config=self.config, 
             cls=cls, module=module)
-        gentesthook = self.config.hook._makecall(
-            "pytest_generate_tests", extralookup=module)
-        gentesthook(metafunc=metafunc)
+        gentesthook = self.config.hook.pytest_generate_tests
+        plugins = self.config.getmatchingplugins(self.fspath) + [module]
+        gentesthook.pcall(plugins, metafunc=metafunc)
         if not metafunc._calls:
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
@@ -338,7 +338,7 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def runtest(self):
         """ execute the underlying test function. """
-        self.config.hook.pytest_pyfunc_call(pyfuncitem=self)
+        self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self):
         super(Function, self).setup()

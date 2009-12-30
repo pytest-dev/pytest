@@ -45,6 +45,13 @@ class Config(object):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
         self.pluginmanager.consider_conftest(conftestmodule)
 
+    def getmatchingplugins(self, fspath):
+        conftests = self._conftest._conftestpath2mod.values()
+        plugins = [x for x in self.pluginmanager.getplugins() 
+                        if x not in conftests]
+        plugins += self._conftest.getconftestmodules(fspath)
+        return plugins
+
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
             self.hook.pytest_trace(category="config", msg=msg)

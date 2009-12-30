@@ -482,3 +482,25 @@ class TestGenfuncFunctional:
             "*test_myfunc*world*FAIL*", 
             "*1 failed, 1 passed*"
         ])
+
+
+def test_conftest_funcargs_only_available_in_subdir(testdir):
+    sub1 = testdir.mkpydir("sub1")
+    sub2 = testdir.mkpydir("sub2")
+    sub1.join("conftest.py").write(py.code.Source("""
+        import py
+        def pytest_funcarg__arg1(request):
+            py.test.raises(Exception, "request.getfuncargvalue('arg2')")
+    """))
+    sub2.join("conftest.py").write(py.code.Source("""
+        import py
+        def pytest_funcarg__arg2(request):
+            py.test.raises(Exception, "request.getfuncargvalue('arg1')")
+    """))
+
+    sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
+    sub2.join("test_in_sub2.py").write("def test_2(arg2): pass")
+    result = testdir.runpytest("-v")
+    result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])

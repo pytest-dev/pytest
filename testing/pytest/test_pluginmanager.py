@@ -395,12 +395,6 @@ class TestRegistry:
         l = list(plugins.listattr('x', reverse=True))
         assert l == [43, 42, 41]
 
-        class api4: 
-            x = 44
-        l = list(plugins.listattr('x', extra=(api4,)))
-        assert l == [41,42,43,44]
-        assert len(list(plugins)) == 3  # otherwise extra added
-
 class TestHookRelay:
     def test_happypath(self):
         registry = Registry()
@@ -441,23 +435,3 @@ class TestHookRelay:
         res = mcm.hello(arg=3)
         assert res == 4
 
-    def test_hooks_extra_plugins(self):
-        registry = Registry()
-        class Api:
-            def hello(self, arg):
-                pass
-        hookrelay = HookRelay(hookspecs=Api, registry=registry)
-        hook_hello = hookrelay.hello
-        class Plugin:
-            def hello(self, arg):
-                return arg + 1
-        registry.register(Plugin())
-        class Plugin2:
-            def hello(self, arg):
-                return arg + 2
-        newhook = hookrelay._makecall("hello", extralookup=Plugin2())
-        l = newhook(arg=3)
-        assert l == [5, 4]
-        l2 = hook_hello(arg=3)
-        assert l2 == [4]
-        

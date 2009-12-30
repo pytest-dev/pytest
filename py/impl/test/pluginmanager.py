@@ -136,8 +136,8 @@ class PluginManager(object):
     # API for interacting with registered and instantiated plugin objects 
     #
     # 
-    def listattr(self, attrname, plugins=None, extra=()):
-        return self.registry.listattr(attrname, plugins=plugins, extra=extra)
+    def listattr(self, attrname, plugins=None):
+        return self.registry.listattr(attrname, plugins=plugins)
 
     def notify_exception(self, excinfo=None):
         if excinfo is None:
@@ -271,12 +271,11 @@ class Registry:
     def __iter__(self):
         return iter(self._plugins)
 
-    def listattr(self, attrname, plugins=None, extra=(), reverse=False):
+    def listattr(self, attrname, plugins=None, reverse=False):
         l = []
         if plugins is None:
             plugins = self._plugins
-        candidates = list(plugins) + list(extra)
-        for plugin in candidates:
+        for plugin in plugins:
             try:
                 l.append(getattr(plugin, attrname))
             except AttributeError:
@@ -291,32 +290,29 @@ class HookRelay:
         self._registry = registry
         for name, method in vars(hookspecs).items():
             if name[:1] != "_":
-                setattr(self, name, self._makecall(name))
-
-    def _makecall(self, name, extralookup=None):
-        hookspecmethod = getattr(self._hookspecs, name)
-        firstresult = getattr(hookspecmethod, 'firstresult', False)
-        return HookCaller(self, name, firstresult=firstresult,
-            extralookup=extralookup)
-
-    def _getmethods(self, name, extralookup=()):
-        return self._registry.listattr(name, extra=extralookup)
+                firstresult = getattr(method, 'firstresult', False)
+                hc = HookCaller(self, name, firstresult=firstresult)
+                setattr(self, name, hc)
 
     def _performcall(self, name, multicall):
         return multicall.execute()
         
 class HookCaller:
-    def __init__(self, hookrelay, name, firstresult, extralookup=None):
+    def __init__(self, hookrelay, name, firstresult):
         self.hookrelay = hookrelay 
         self.name = name 
         self.firstresult = firstresult 
-        self.extralookup = extralookup and [extralookup] or ()
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
 
     def __call__(self, **kwargs):
-        methods = self.hookrelay._getmethods(self.name, self.extralookup)
+        methods = self.hookrelay._registry.listattr(self.name)
+        mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
+        return self.hookrelay._performcall(self.name, mc)
+
+    def pcall(self, plugins, **kwargs):
+        methods = self.hookrelay._registry.listattr(self.name, plugins=plugins)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         return self.hookrelay._performcall(self.name, mc)
    

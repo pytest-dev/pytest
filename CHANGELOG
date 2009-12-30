@@ -9,6 +9,10 @@ Changes between 1.X and 1.1.1
 
 - new "pytestconfig" funcarg allows access to test config object
 
+- collection/item node specific runtest/collect hooks are only called exactly
+  on matching conftest.py files, i.e. ones which are exactly below
+  the filesystem path of an item
+
 - robustify capturing to survive if custom pytest_runtest_setup 
   code failed and prevented the capturing setup code from running. 
 

@@ -223,7 +223,7 @@ class DSession(Session):
                     nodes = self.item2nodes.setdefault(item, [])
                     assert node not in nodes
                     nodes.append(node)
-                    self.config.hook.pytest_itemstart(item=item, node=node)
+                    item.ihook.pytest_itemstart(item=item, node=node)
             tosend[:] = tosend[room:]  # update inplace
         if tosend:
             # we have some left, give it to the main loop
@@ -242,7 +242,7 @@ class DSession(Session):
                     #    "sending same item %r to multiple "
                     #    "not implemented" %(item,))
                     self.item2nodes.setdefault(item, []).append(node)
-                    self.config.hook.pytest_itemstart(item=item, node=node)
+                    item.ihook.pytest_itemstart(item=item, node=node)
                 pending.extend(sending)
                 tosend[:] = tosend[room:]  # update inplace
                 if not tosend:
@@ -267,7 +267,7 @@ class DSession(Session):
         info = "!!! Node %r crashed during running of test %r" %(node, item)
         rep = runner.ItemTestReport(item=item, excinfo=info, when="???")
         rep.node = node
-        self.config.hook.pytest_runtest_logreport(report=rep)
+        item.ihook.pytest_runtest_logreport(report=rep)
 
     def setup(self):
         """ setup any neccessary resources ahead of the test run. """

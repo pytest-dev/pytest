@@ -11,6 +11,18 @@ def configproperty(name):
         return self.config._getcollectclass(name, self.fspath)
     return property(fget)
 
+class HookProxy:
+    def __init__(self, node):
+        self.node = node
+    def __getattr__(self, name):
+        if name[0] == "_":
+            raise AttributeError(name)
+        hookmethod = getattr(self.node.config.hook, name)
+        def call_matching_hooks(**kwargs):
+            plugins = self.node.config.getmatchingplugins(self.node.fspath)
+            return hookmethod.pcall(plugins, **kwargs)
+        return call_matching_hooks
+
 class Node(object): 
     """ base class for Nodes in the collection tree.  
         Collector nodes have children and 
@@ -29,6 +41,7 @@ class Node(object):
         self.parent = parent
         self.config = getattr(parent, 'config', None)
         self.fspath = getattr(parent, 'fspath', None) 
+        self.ihook = HookProxy(self)
 
     def _checkcollectable(self):
         if not hasattr(self, 'fspath'):
@@ -426,13 +439,12 @@ class Directory(FSCollector):
         return res
 
     def consider_file(self, path):
-        return self.config.hook.pytest_collect_file(path=path, parent=self)
+        return self.ihook.pytest_collect_file(path=path, parent=self)
 
     def consider_dir(self, path, usefilters=None):
         if usefilters is not None:
             py.log._apiwarn("0.99", "usefilters argument not needed")
-        return self.config.hook.pytest_collect_directory(
-            path=path, parent=self)
+        return self.ihook.pytest_collect_directory(path=path, parent=self)
 
 class Item(Node): 
     """ a basic test item. """

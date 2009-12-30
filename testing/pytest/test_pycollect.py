@@ -461,3 +461,49 @@ class TestReportinfo:
                 def test_method(self):
                     pass
        """
+
+def test_setup_only_available_in_subdir(testdir):
+    sub1 = testdir.mkpydir("sub1")
+    sub2 = testdir.mkpydir("sub2")
+    sub1.join("conftest.py").write(py.code.Source("""
+        import py
+        def pytest_runtest_setup(item):
+            assert item.fspath.purebasename == "test_in_sub1"
+        def pytest_runtest_call(item):
+            assert item.fspath.purebasename == "test_in_sub1"
+        def pytest_runtest_teardown(item):
+            assert item.fspath.purebasename == "test_in_sub1"
+    """))
+    sub2.join("conftest.py").write(py.code.Source("""
+        import py
+        def pytest_runtest_setup(item):
+            assert item.fspath.purebasename == "test_in_sub2"
+        def pytest_runtest_call(item):
+            assert item.fspath.purebasename == "test_in_sub2"
+        def pytest_runtest_teardown(item):
+            assert item.fspath.purebasename == "test_in_sub2"
+    """))
+    sub1.join("test_in_sub1.py").write("def test_1(): pass")
+    sub2.join("test_in_sub2.py").write("def test_2(): pass")
+    result = testdir.runpytest("-v", "-s")
+    result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])
+
+def test_generate_tests_only_done_in_subdir(testdir):
+    sub1 = testdir.mkpydir("sub1")
+    sub2 = testdir.mkpydir("sub2")
+    sub1.join("conftest.py").write(py.code.Source("""
+        def pytest_generate_tests(metafunc):
+            assert metafunc.function.__name__ == "test_1"
+    """))
+    sub2.join("conftest.py").write(py.code.Source("""
+        def pytest_generate_tests(metafunc):
+            assert metafunc.function.__name__ == "test_2"
+    """))
+    sub1.join("test_in_sub1.py").write("def test_1(): pass")
+    sub2.join("test_in_sub2.py").write("def test_2(): pass")
+    result = testdir.runpytest("-v", "-s", sub1, sub2, sub1)
+    result.stdout.fnmatch_lines([
+        "*3 passed*"
+    ])

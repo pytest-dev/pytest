@@ -11,6 +11,7 @@ class Conftest(object):
     def __init__(self, onimport=None):
         self._path2confmods = {}
         self._onimport = onimport
+        self._conftestpath2mod = {}
 
     def setinitial(self, args):
         """ try to find a first anchor path for looking up global values
@@ -65,17 +66,20 @@ class Conftest(object):
         raise KeyError(name)
 
     def importconftest(self, conftestpath):
-        # Using caching here looks redundant since ultimately
-        # sys.modules caches already 
         assert conftestpath.check(), conftestpath
-        if not conftestpath.dirpath('__init__.py').check(file=1): 
-            # HACK: we don't want any "globally" imported conftest.py, 
-            #       prone to conflicts and subtle problems 
-            modname = str(conftestpath).replace('.', conftestpath.sep)
-            mod = conftestpath.pyimport(modname=modname)
-        else:
-            mod = conftestpath.pyimport()
-        return self._postimport(mod)
+        try:
+            return self._conftestpath2mod[conftestpath]
+        except KeyError:
+            if not conftestpath.dirpath('__init__.py').check(file=1): 
+                # HACK: we don't want any "globally" imported conftest.py, 
+                #       prone to conflicts and subtle problems 
+                modname = str(conftestpath).replace('.', conftestpath.sep)
+                mod = conftestpath.pyimport(modname=modname)
+            else:
+                mod = conftestpath.pyimport()
+            self._postimport(mod)
+            self._conftestpath2mod[conftestpath] = mod
+            return mod
 
     def _postimport(self, mod):
         if self._onimport:

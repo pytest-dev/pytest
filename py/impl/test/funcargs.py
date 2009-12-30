@@ -93,7 +93,7 @@ class FuncargRequest:
         self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam 
-        self._plugins = self.config.pluginmanager.getplugins()
+        self._plugins = self.config.getmatchingplugins(self.fspath)
         self._plugins.append(self.module)
         if self.instance is not None:
             self._plugins.append(self.instance)
