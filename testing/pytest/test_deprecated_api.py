@@ -1,5 +1,6 @@
 
 import py
+from py.impl.test.outcome import Skipped
 
 class TestCollectDeprecated:
         
@@ -167,3 +168,45 @@ class TestCollectDeprecated:
         config = testdir.parseconfig(testme)
         col = config.getfsnode(testme)
         assert col.collect() == []
+
+    
+class TestDisabled:
+    def test_disabled_module(self, recwarn, testdir):
+        modcol = testdir.getmodulecol("""
+            disabled = True
+            def setup_module(mod):
+                raise ValueError
+            def test_method():
+                pass
+        """)
+        l = modcol.collect()
+        assert len(l) == 1
+        recwarn.clear()
+        py.test.raises(Skipped, "modcol.setup()")
+        recwarn.pop(DeprecationWarning)
+
+    def test_disabled_class(self, recwarn, testdir):
+        modcol = testdir.getmodulecol("""
+            class TestClass:
+                disabled = True
+                def test_method(self):
+                    pass
+        """)
+        l = modcol.collect()
+        assert len(l) == 1
+        modcol = l[0]
+        assert isinstance(modcol, py.test.collect.Class)
+        l = modcol.collect()
+        assert len(l) == 1
+        recwarn.clear()
+        py.test.raises(Skipped, "modcol.setup()")
+        recwarn.pop(DeprecationWarning)
+
+    def test_disabled_class_functional(self, testdir):
+        reprec = testdir.inline_runsource("""
+            class TestSimpleClassSetup:
+                disabled = True
+                def test_classlevel(self): pass
+                def test_classlevel2(self): pass
+        """)
+        reprec.assertoutcome(skipped=2)

@@ -1,7 +1,5 @@
 import py
 
-from py.impl.test.outcome import Skipped
-
 class TestModule:
     def test_module_file_not_found(self, testdir):
         tmpdir = testdir.tmpdir
@@ -50,43 +48,6 @@ class TestClass:
         """)
         l = modcol.collect() 
         assert len(l) == 0
-    
-class TestDisabled:
-    def test_disabled_module(self, testdir):
-        modcol = testdir.getmodulecol("""
-            disabled = True
-            def setup_module(mod):
-                raise ValueError
-            def test_method():
-                pass
-        """)
-        l = modcol.collect() 
-        assert len(l) == 1
-        py.test.raises(Skipped, "modcol.setup()")
-
-    def test_disabled_class(self, testdir):
-        modcol = testdir.getmodulecol("""
-            class TestClass:
-                disabled = True
-                def test_method(self):
-                    pass
-        """)
-        l = modcol.collect()
-        assert len(l) == 1
-        modcol = l[0]
-        assert isinstance(modcol, py.test.collect.Class)
-        l = modcol.collect() 
-        assert len(l) == 1
-        py.test.raises(Skipped, "modcol.setup()")
-
-    def test_disabled_class_functional(self, testdir):
-        reprec = testdir.inline_runsource("""
-            class TestSimpleClassSetup:
-                disabled = True
-                def test_classlevel(self): pass
-                def test_classlevel2(self): pass
-        """)
-        reprec.assertoutcome(skipped=2)
 
 if py.std.sys.version_info > (3, 0):
     _func_name_attr = "__name__"

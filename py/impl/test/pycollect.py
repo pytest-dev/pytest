@@ -167,6 +167,8 @@ class Module(py.test.collect.File, PyCollectorMixin):
 
     def setup(self): 
         if getattr(self.obj, 'disabled', 0):
+            py.log._apiwarn(">1.1.1", "%r uses 'disabled' which is deprecated, "
+                "use pytestmark=..., see pytest_skipping plugin" % (self.obj,))
             py.test.skip("%r is disabled" %(self.obj,))
         if hasattr(self.obj, 'setup_module'): 
             #XXX: nose compat hack, move to nose plugin
@@ -197,6 +199,8 @@ class Class(PyCollectorMixin, py.test.collect.Collector):
 
     def setup(self): 
         if getattr(self.obj, 'disabled', 0):
+            py.log._apiwarn(">1.1.1", "%r uses 'disabled' which is deprecated, "
+                "use pytestmark=..., see pytest_skipping plugin" % (self.obj,))
             py.test.skip("%r is disabled" %(self.obj,))
         setup_class = getattr(self.obj, 'setup_class', None)
         if setup_class is not None: 

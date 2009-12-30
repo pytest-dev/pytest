@@ -13,6 +13,8 @@ Changes between 1.X and 1.1.1
 
 - allow pytest_generate_tests to be defined in classes as well 
 
+- deprecate usage of 'disabled' attribute in favour of pytestmark 
+
 - collection/item node specific runtest/collect hooks are only called exactly
   on matching conftest.py files, i.e. ones which are exactly below
   the filesystem path of an item
