@@ -5,9 +5,9 @@ def test_version(testdir):
     assert py.version == py.__version__ 
     result = testdir.runpytest("--version")
     assert result.ret == 0
-    p = py.path.local(py.__file__).dirpath()
+    #p = py.path.local(py.__file__).dirpath()
     assert result.stderr.fnmatch_lines([
-        '*py.test*%s*imported from*%s*' % (py.version, p)
+        '*py.test*%s*imported from*' % (py.version, )
     ])
 
 def test_helpconfig(testdir):

@@ -537,8 +537,9 @@ class FormattedExcinfo(object):
         else: 
             if self.style == "short":
                 line = source[line_index].lstrip()
+                trybasename = getattr(entry.path, 'basename', entry.path)
                 lines.append('  File "%s", line %d, in %s' % (
-                    entry.path.basename, entry.lineno+1, entry.name))
+                    trybasename, entry.lineno+1, entry.name))
                 lines.append("    " + line) 
             if excinfo: 
                 lines.extend(self.get_exconly(excinfo, indent=4))

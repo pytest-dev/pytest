@@ -6,8 +6,8 @@ import zlib
 import base64
 import sys
 
-def main(pydir, outfile, infile):
-    os.chdir(os.path.dirname(str(pydir)))
+def main(pybasedir, outfile, infile):
+    os.chdir(str(pybasedir))
     outfile = str(outfile)
     infile = str(infile)
     files = []
@@ -37,7 +37,7 @@ def main(pydir, outfile, infile):
 
 if __name__=="__main__":
     dn = os.path.dirname
-    pydir = os.path.join(dn(dn(os.path.abspath(__file__))), 'py')
+    pybasedir = dn(dn(os.path.abspath(__file__)))
     outfile = os.path.join(dn(__file__), "py.test")
     infile = outfile+"-in"
-    main(pydir, outfile, infile)
+    main(pybasedir, outfile, infile)

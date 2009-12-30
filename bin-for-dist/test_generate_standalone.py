@@ -2,6 +2,8 @@ import py, os, sys
 import generate_standalone_pytest
 import subprocess
 mydir = py.path.local(__file__).dirpath()
+pybasedir = mydir.join("..")
+assert pybasedir.join("py").check()
 
 def pytest_funcarg__standalone(request):
     return request.cached_setup(scope="module", setup=lambda: Standalone(request))
@@ -11,7 +13,7 @@ class Standalone:
         self.testdir = request.getfuncargvalue("testdir")
         infile = mydir.join("py.test-in")
         self.script = self.testdir.tmpdir.join("mypytest")
-        generate_standalone_pytest.main(pydir=os.path.dirname(py.__file__),
+        generate_standalone_pytest.main(pybasedir=pybasedir,
             infile=infile, outfile=self.script)
 
     def run(self, anypython, testdir, *args):
@@ -34,6 +36,6 @@ def test_rundist(testdir, standalone):
     """)
     result = standalone.run(sys.executable, testdir, '-n', '3')
     assert result.ret == 0
-    result.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
