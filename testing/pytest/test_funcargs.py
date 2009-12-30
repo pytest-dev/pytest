@@ -519,3 +519,26 @@ def test_conftest_funcargs_only_available_in_subdir(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
+
+def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
+    testdir.makeconftest("""
+        import py
+        def pytest_pycollect_makeitem(collector, name, obj):
+            if name == "MyClass":
+                return MyCollector(name, parent=collector)
+        class MyCollector(py.test.collect.Collector):
+            def reportinfo(self):
+                return self.fspath, 3, "xyz"
+    """)
+    modcol = testdir.getmodulecol("""
+        def pytest_funcarg__arg1(request):
+            return 42
+        class MyClass:
+            pass
+    """)
+    clscol = modcol.collect()[0]
+    clscol.obj = lambda arg1: None
+    clscol.funcargs = {}
+    funcargs.fillfuncargs(clscol)
+    assert clscol.funcargs['arg1'] == 42 
+

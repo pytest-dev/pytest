@@ -15,6 +15,16 @@ def fillfuncargs(function):
     request = FuncargRequest(pyfuncitem=function)
     request._fillfuncargs()
 
+def getplugins(node, withpy=False): # might by any node
+    plugins = node.config._getmatchingplugins(node.fspath)
+    if withpy:
+        mod = node.getparent(py.test.collect.Module)
+        if mod is not None:
+            plugins.append(mod.obj)
+        inst = node.getparent(py.test.collect.Instance)
+        if inst is not None:
+            plugins.append(inst.obj)
+    return plugins
 
 _notexists = object()
 class CallSpec:
@@ -93,7 +103,7 @@ class FuncargRequest:
         self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam 
-        self._plugins = pyfuncitem._getplugins(withpy=True)
+        self._plugins = getplugins(pyfuncitem, withpy=True)
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
         self._currentarg = None
