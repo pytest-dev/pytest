@@ -45,7 +45,7 @@ class Config(object):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
         self.pluginmanager.consider_conftest(conftestmodule)
 
-    def getmatchingplugins(self, fspath):
+    def _getmatchingplugins(self, fspath):
         conftests = self._conftest._conftestpath2mod.values()
         plugins = [x for x in self.pluginmanager.getplugins() 
                         if x not in conftests]

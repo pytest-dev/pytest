@@ -34,6 +34,15 @@ class PyobjMixin(object):
         return property(fget, fset, None, "underlying python object") 
     obj = obj()
 
+    def _getplugins(self, withpy=False):
+        plugins = self.config._getmatchingplugins(self.fspath)
+        if withpy:
+            plugins.append(self.getparent(py.test.collect.Module).obj)
+            inst = self.getparent(py.test.collect.Instance)
+            if inst is not None:
+                plugins.append(inst.obj)
+        return plugins
+
     def _getobj(self):
         return getattr(self.parent.obj, self.name)
 
@@ -138,8 +147,7 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         metafunc = funcargs.Metafunc(funcobj, config=self.config, 
             cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
-        plugins = self.config.getmatchingplugins(self.fspath) + [module]
-        gentesthook.pcall(plugins, metafunc=metafunc)
+        gentesthook.pcall(self._getplugins(withpy=True), metafunc=metafunc)
         if not metafunc._calls:
             return self.Function(name, parent=self)
         return funcargs.FunctionCollector(name=name, 
@@ -327,6 +335,7 @@ class Function(FunctionMixin, py.test.collect.Item):
                 self.funcargs = {}
         if callobj is not _dummy: 
             self._obj = callobj 
+        self.function = getattr(self.obj, 'im_func', self.obj)
 
     def _isyieldedfunction(self):
         return self._args is not None

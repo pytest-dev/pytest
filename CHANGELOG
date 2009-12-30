@@ -9,6 +9,8 @@ Changes between 1.X and 1.1.1
 
 - new "pytestconfig" funcarg allows access to test config object
 
+- allow pytest_generate_tests to be defined in classes as well 
+
 - collection/item node specific runtest/collect hooks are only called exactly
   on matching conftest.py files, i.e. ones which are exactly below
   the filesystem path of an item

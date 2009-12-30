@@ -285,3 +285,34 @@ def test_callinfo():
     assert not hasattr(ci, 'result')
     assert ci.excinfo 
     assert "exc" in repr(ci)
+
+# design question: do we want general hooks in python files? 
+# following passes if withpy defaults to True in pycoll.PyObjMix._getplugins()
+@py.test.mark.xfail
+def test_runtest_in_module_ordering(testdir):
+    p1 = testdir.makepyfile("""
+        def pytest_runtest_setup(item): # runs after class-level!
+            item.function.mylist.append("module")
+        class TestClass:
+            def pytest_runtest_setup(self, item):
+                assert not hasattr(item.function, 'mylist')
+                item.function.mylist = ['class']
+            def pytest_funcarg__mylist(self, request):
+                return request.function.mylist
+            def pytest_runtest_call(self, item, __multicall__):
+                try:
+                    __multicall__.execute()
+                except ValueError:
+                    pass
+            def test_hello1(self, mylist):
+                assert mylist == ['class', 'module'], mylist
+                raise ValueError()
+            def test_hello2(self, mylist):
+                assert mylist == ['class', 'module'], mylist
+        def pytest_runtest_teardown(item):
+            del item.function.mylist 
+    """)
+    result = testdir.runpytest(p1)
+    assert result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])

@@ -483,6 +483,21 @@ class TestGenfuncFunctional:
             "*1 failed, 1 passed*"
         ])
 
+    def test_generate_tests_in_class(self, testdir):
+        p = testdir.makepyfile("""
+            class TestClass:
+                def pytest_generate_tests(self, metafunc):
+                    metafunc.addcall(funcargs={'hello': 'world'}, id="hello")
+
+                def test_myfunc(self, hello):
+                    assert hello == "world"
+        """)
+        result = testdir.runpytest("-v", p)
+        assert result.stdout.fnmatch_lines([
+            "*test_myfunc*hello*PASS*", 
+            "*1 passed*"
+        ])
+
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

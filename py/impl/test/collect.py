@@ -19,7 +19,7 @@ class HookProxy:
             raise AttributeError(name)
         hookmethod = getattr(self.node.config.hook, name)
         def call_matching_hooks(**kwargs):
-            plugins = self.node.config.getmatchingplugins(self.node.fspath)
+            plugins = self.node._getplugins()
             return hookmethod.pcall(plugins, **kwargs)
         return call_matching_hooks
 
@@ -42,6 +42,9 @@ class Node(object):
         self.config = getattr(parent, 'config', None)
         self.fspath = getattr(parent, 'fspath', None) 
         self.ihook = HookProxy(self)
+
+    def _getplugins(self):
+        return self.config._getmatchingplugins(self.fspath)
 
     def _checkcollectable(self):
         if not hasattr(self, 'fspath'):
