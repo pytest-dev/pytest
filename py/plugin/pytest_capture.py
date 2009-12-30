@@ -182,6 +182,8 @@ class CaptureManager:
         assert not hasattr(self, '_capturing_funcargs')
         l = []
         for name, obj in pyfuncitem.funcargs.items():
+            if name == 'capfd' and not hasattr(os, 'dup'):
+                py.test.skip("capfd funcarg needs os.dup")
             if name in ('capsys', 'capfd'):
                 obj._start()
                 l.append(obj)
@@ -250,7 +252,9 @@ def pytest_funcarg__capsys(request):
 def pytest_funcarg__capfd(request):
     """captures writes to file descriptors 1 and 2 and makes 
     snapshotted ``(out, err)`` string tuples available 
-    via the ``capsys.readouterr()`` method. 
+    via the ``capsys.readouterr()`` method.  If the underlying
+    platform does not have ``os.dup`` (e.g. Jython) tests using
+    this funcarg will automatically skip. 
     """ 
     return CaptureFuncarg(request, py.io.StdCaptureFD)
 

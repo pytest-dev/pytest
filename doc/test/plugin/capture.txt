@@ -107,7 +107,9 @@ the 'capfd' test function argument
 
 captures writes to file descriptors 1 and 2 and makes 
 snapshotted ``(out, err)`` string tuples available 
-via the ``capsys.readouterr()`` method. 
+via the ``capsys.readouterr()`` method.  If the underlying
+platform does not have ``os.dup`` (e.g. Jython) tests using
+this funcarg will automatically skip. 
 
 command line options
 --------------------

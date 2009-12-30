@@ -391,3 +391,16 @@ def test_setup_failure_does_not_kill_capturing(testdir):
         "*ValueError(42)*",
         "*1 error*"
     ])
+
+def test_fdfuncarg_skips_on_no_osdup(testdir):
+    testdir.makepyfile("""
+        import os
+        del os.dup
+        def test_hello(capfd):
+            pass
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*1 skipped*"
+    ])
+    

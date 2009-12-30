@@ -1,13 +1,4 @@
 
-consider conftest hooks only for items below the dir
----------------------------------------------------------
-tags: bug 1.1.2
-
-currently conftest hooks remain registered throughout 
-the whole testing process.  Consider to only have them
-called if their filesystem location is below a test item.
-
-
 introduce py.test.mark.nocollect
 -------------------------------------------------------
 tags: feature
@@ -15,19 +6,6 @@ tags: feature
 for not considering a function for test collection at all. 
 maybe also introduce a py.test.mark.test to explicitely
 mark a function to become a tested one.  Lookup 
-Java JUnit recent strategies/syntax.
-
-capture plugin: skip on missing os.dup for 'capfd'
---------------------------------------------------------
-
-tags: feature
-
-Currrently for Jython one needs do an explicit skip like this:
-
-    @py.test.mark.skipif("not hasattr(os, 'dup')")
-
-to avoid a failure when 'capfd' is used. Instead
-provide an automatic skip.
 
 
 have imported module mismatch honour relative paths
