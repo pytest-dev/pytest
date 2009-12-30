@@ -266,7 +266,10 @@ class Config(object):
             if not root.check():
                 raise config.Error("rsyncdir doesn't exist: %r" %(root,))
             if pydirs is not None and root.basename in ("py", "_py"):
-                pydirs.remove(root) # otherwise it's a conflict
+                try:
+                    pydirs.remove(root) # otherwise it's a conflict
+                except ValueError: # we run as standalone py.test 
+                    pass
         roots.extend(pydirs)
         return roots
 
