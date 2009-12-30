@@ -2,23 +2,6 @@ import py
 
 
 class TestConfigCmdlineParsing:
-    def test_config_cmdline_options(self, testdir):
-        testdir.makepyfile(conftest="""
-            import py
-            def _callback(option, opt_str, value, parser, *args, **kwargs):
-                option.tdest = True
-            Option = py.test.config.Option
-            option = py.test.config.addoptions("testing group", 
-                Option('-G', '--glong', action="store", default=42,
-                       type="int", dest="gdest", help="g value."), 
-                # XXX note: special case, option without a destination
-                Option('-T', '--tlong', action="callback", callback=_callback,
-                        help='t value'),
-                )
-            """)
-        config = testdir.reparseconfig(['-G', '17'])
-        assert config.option.gdest == 17 
-
     def test_parser_addoption_default_env(self, testdir, monkeypatch):
         import os
         config = testdir.Config()

@@ -188,7 +188,7 @@ class Config(object):
         """ add a named group of options to the current testing session. 
             This function gets invoked during testing session initialization. 
         """ 
-        py.log._apiwarn("1.0", "define plugins to add options", stacklevel=2)
+        py.log._apiwarn("1.0", "define pytest_addoptions(parser) to add options", stacklevel=2)
         group = self._parser.getgroup(groupname)
         for opt in specs:
             group._addoption_instance(opt)

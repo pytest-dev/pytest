@@ -1,6 +1,6 @@
 import py, sys
 
-class Warning(DeprecationWarning):
+class DeprecationWarning(DeprecationWarning):
     def __init__(self, msg, path, lineno):
         self.msg = msg
         self.path = path
@@ -66,7 +66,7 @@ def warn(msg, stacklevel=1, function=None):
         if not filename:
             filename = module
     path = py.path.local(filename)
-    warning = Warning(msg, path, lineno)
+    warning = DeprecationWarning(msg, path, lineno)
     py.std.warnings.warn_explicit(warning, category=Warning, 
         filename=str(warning.path), 
         lineno=warning.lineno,
