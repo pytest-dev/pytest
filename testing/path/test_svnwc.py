@@ -28,18 +28,6 @@ def pytest_funcarg__path1(request):
     return wc
 
 class TestWCSvnCommandPath(CommonSvnTests):
-    def test_move_file(self, path1):  # overrides base class
-        try:
-            super(TestWCSvnCommandPath, self).test_move_file(path1)
-        finally:
-            path1.revert(rec=1)
-
-    def test_move_directory(self, path1): # overrides base class
-        try:
-            super(TestWCSvnCommandPath, self).test_move_directory(path1)
-        finally:
-            path1.revert(rec=1)
-
     def test_status_attributes_simple(self, path1):
         def assert_nochange(p):
             s = p.status()

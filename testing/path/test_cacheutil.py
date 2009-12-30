@@ -22,6 +22,9 @@ class BasicCacheAPITest:
         self.cache.delentry(100)
         py.test.raises(KeyError, "self.cache.delentry(100, raising=True)")
 
+    def test_clear(self):
+        self.cache.clear()
+
 class TestBuildcostAccess(BasicCacheAPITest):
     cache = cacheutil.BuildcostAccessCache(maxentries=128)
 

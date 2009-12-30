@@ -76,3 +76,5 @@ def restore_repowc(obj):
     repo.remove()
     savedrepo.move(repo)
     savedwc.localpath.move(wc.localpath)
+    py.path.svnurl._lsnorevcache.clear()
+    py.path.svnurl._lsrevcache.clear()

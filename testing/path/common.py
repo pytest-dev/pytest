@@ -378,7 +378,7 @@ class CommonFSTests(object):
                 newp.move(p)
                 assert p.check()
 
-    def test_move_directory(self, path1):
+    def test_move_dir(self, path1):
         source = path1.join('sampledir') 
         dest = path1.join('moveddir') 
         source.move(dest)

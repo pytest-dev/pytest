@@ -213,6 +213,17 @@ checkin message msg."""
         lines = [x.strip() for x in lines[1:]]
         return svncommon.PropListDict(self, lines)
 
+    def info(self):
+        """ return an Info structure with svn-provided information. """
+        parent = self.dirpath()
+        nameinfo_seq = parent._listdir_nameinfo()
+        bn = self.basename
+        for name, info in nameinfo_seq:
+            if name == bn:
+                return info
+        raise py.error.ENOENT(self)
+
+
     def _listdir_nameinfo(self):
         """ return sequence of name-info directory entries of self """
         def builder():

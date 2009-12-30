@@ -16,6 +16,9 @@ class BasicCache(object):
         self.prunenum = int(maxentries - maxentries/8)
         self._dict = {}
 
+    def clear(self):
+        self._dict.clear()
+
     def _getentry(self, key):
         return self._dict[key]
 

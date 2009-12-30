@@ -13,22 +13,6 @@ class TestSvnURLCommandPath(CommonSvnTests):
     def test_load(self, path1):
         super(TestSvnURLCommandPath, self).test_load(path1)
 
-    def test_move_file(self, path1):  # overrides base class
-        p = path1.ensure('origfile')
-        newp = p.dirpath('newfile')
-        p.move(newp)
-        assert newp.check(file=1)
-        newp.remove()
-        assert not p.check()
-
-    def test_move_dir(self, path1):  # overrides base class
-        p = path1.ensure('origdir', dir=1)
-        newp = p.dirpath('newdir')
-        p.move(newp)
-        assert newp.check(dir=1)
-        newp.remove()
-        assert not p.check()
-
     def test_svnurl_needs_arg(self, path1):
         py.test.raises(TypeError, "py.path.svnurl()")
 

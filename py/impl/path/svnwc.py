@@ -235,16 +235,6 @@ class SvnPathBase(common.PathBase):
         content = self._proplist()
         return content
 
-    def info(self):
-        """ return an Info structure with svn-provided information. """
-        parent = self.dirpath()
-        nameinfo_seq = parent._listdir_nameinfo()
-        bn = self.basename
-        for name, info in nameinfo_seq:
-            if name == bn:
-                return info
-        raise py.error.ENOENT(self)
-
     def size(self):
         """ Return the size of the file content of the Path. """
         return self.info().size
