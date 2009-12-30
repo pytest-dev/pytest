@@ -12,11 +12,11 @@ if sys.version_info >= (3,0):
     exec("def do_exec(co, loc): exec(co, loc)\n")
     import pickle
     sources = sources.encode("ascii") # ensure bytes 
+    sources = pickle.loads(zlib.decompress(base64.decodebytes(sources)))
 else:
     import cPickle as pickle
     exec("def do_exec(co, loc): exec co in loc\n")
-
-sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
+    sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
 
 class DictImporter(object):
     sources = sources

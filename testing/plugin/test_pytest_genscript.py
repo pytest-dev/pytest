@@ -1,9 +1,5 @@
 import py, os, sys
-import generate_standalone_pytest
 import subprocess
-mydir = py.path.local(__file__).dirpath()
-pybasedir = mydir.join("..")
-assert pybasedir.join("py").check()
 
 def pytest_funcarg__standalone(request):
     return request.cached_setup(scope="module", setup=lambda: Standalone(request))
@@ -11,10 +7,8 @@ def pytest_funcarg__standalone(request):
 class Standalone:
     def __init__(self, request):
         self.testdir = request.getfuncargvalue("testdir")
-        infile = mydir.join("py.test-in")
         self.script = self.testdir.tmpdir.join("mypytest")
-        generate_standalone_pytest.main(pybasedir=pybasedir,
-            infile=infile, outfile=self.script)
+        self.testdir.runpytest("--genscript=%s" % self.script)
 
     def run(self, anypython, testdir, *args):
         testdir.chdir()

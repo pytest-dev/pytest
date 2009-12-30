@@ -8,7 +8,7 @@
 import time
 
 def pytest_addoption(parser):
-    group = parser.addgroup("xmlresult", "xmlresult plugin options")
+    group = parser.getgroup("xmlresult", "xmlresult plugin options")
     group.addoption('--xmlresult', action="store", dest="xmlresult", metavar="path", default=None,
            help="path for machine-readable xml result log.")
 

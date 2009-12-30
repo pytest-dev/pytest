@@ -1,6 +1,9 @@
 Changes between 1.X and 1.1.1
 =====================================
 
+- new option: --genscript=path will generate a standalone py.test script
+  which will not need any libraries installed.  thanks to Ralf Schmitt. 
+
 - new option: --ignore will prevent specified path from collection. 
   Can be specified multiple times. 
 
