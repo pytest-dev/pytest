@@ -156,16 +156,20 @@ class Config(object):
         pkgpath = path.pypkgpath()
         if pkgpath is None:
             pkgpath = path.check(file=1) and path.dirpath() or path
-        Dir = self._getcollectclass("Directory", pkgpath)
-        col = Dir(pkgpath)
-        col.config = self 
+        tmpcol = py.test.collect.Directory(pkgpath, config=self)
+        col = tmpcol.ihook.pytest_collect_directory(path=pkgpath, parent=tmpcol)
+        col.parent = None
         return col._getfsnode(path)
 
     def _getcollectclass(self, name, path):
         try:
-            return self.getvalue(name, path)
+            cls = self.getvalue(name, path)
         except KeyError:
             return getattr(py.test.collect, name)
+        else:
+            py.log._apiwarn(">1.1", "%r was found in a conftest.py file, "
+                "use pytest_collect hooks instead." % (cls,))
+            return cls
 
     def getconftest_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence

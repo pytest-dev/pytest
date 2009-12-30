@@ -26,6 +26,7 @@ def pytest_unconfigure(config):
 
 def pytest_collect_directory(path, parent):
     """ return Collection node or None for the given path. """
+pytest_collect_directory.firstresult = True
 
 def pytest_collect_file(path, parent):
     """ return Collection node or None for the given path. """

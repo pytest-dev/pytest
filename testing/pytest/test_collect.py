@@ -193,31 +193,6 @@ class TestPrunetraceback:
         ])
 
 class TestCustomConftests:
-    def test_non_python_files(self, testdir):
-        testdir.makepyfile(conftest="""
-            import py
-            class CustomItem(py.test.collect.Item): 
-                def run(self):
-                    pass
-            class Directory(py.test.collect.Directory):
-                def consider_file(self, fspath):
-                    if fspath.ext == ".xxx":
-                        return CustomItem(fspath.basename, parent=self)
-        """)
-        checkfile = testdir.makefile(ext="xxx", hello="world")
-        testdir.makepyfile(x="")
-        testdir.maketxtfile(x="")
-        config = testdir.parseconfig()
-        dircol = config.getfsnode(checkfile.dirpath())
-        colitems = dircol.collect()
-        assert len(colitems) == 1
-        assert colitems[0].name == "hello.xxx"
-        assert colitems[0].__class__.__name__ == "CustomItem"
-
-        item = config.getfsnode(checkfile)
-        assert item.name == "hello.xxx"
-        assert item.__class__.__name__ == "CustomItem"
-
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest("""
             collect_ignore = ['hello', 'test_world.py']
@@ -237,3 +212,23 @@ class TestCustomConftests:
         names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' in names 
         assert 'test_world.py' in names 
+
+    def test_pytest_fs_collect_hooks_are_seen(self, testdir):
+        testdir.makeconftest("""
+            import py
+            class MyDirectory(py.test.collect.Directory):
+                pass
+            class MyModule(py.test.collect.Module):
+                pass
+            def pytest_collect_directory(path, parent):
+                return MyDirectory(path, parent)
+            def pytest_collect_file(path, parent):
+                return MyModule(path, parent)
+        """)
+        testdir.makepyfile("def test_x(): pass")
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*MyDirectory*",
+            "*MyModule*",
+            "*test_x*"
+        ])

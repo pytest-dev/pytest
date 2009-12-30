@@ -4,7 +4,7 @@ class TestModule:
     def test_module_file_not_found(self, testdir):
         tmpdir = testdir.tmpdir
         fn = tmpdir.join('nada','no')
-        col = py.test.collect.Module(fn)
+        col = py.test.collect.Module(fn, config=testdir.Config())
         col.config = testdir.parseconfig(tmpdir)
         py.test.raises(py.error.ENOENT, col.collect) 
 
@@ -213,13 +213,13 @@ class TestFunction:
         
     def test_function_equality(self, testdir, tmpdir):
         config = testdir.reparseconfig()
-        f1 = py.test.collect.Function(name="name", 
+        f1 = py.test.collect.Function(name="name", config=config,
                                       args=(1,), callobj=isinstance)
-        f2 = py.test.collect.Function(name="name",
+        f2 = py.test.collect.Function(name="name",config=config, 
                                       args=(1,), callobj=py.builtin.callable)
         assert not f1 == f2
         assert f1 != f2
-        f3 = py.test.collect.Function(name="name", 
+        f3 = py.test.collect.Function(name="name", config=config, 
                                       args=(1,2), callobj=py.builtin.callable)
         assert not f3 == f2
         assert f3 != f2
@@ -227,7 +227,7 @@ class TestFunction:
         assert not f3 == f1
         assert f3 != f1
 
-        f1_b = py.test.collect.Function(name="name", 
+        f1_b = py.test.collect.Function(name="name", config=config, 
                                       args=(1,), callobj=isinstance)
         assert f1 == f1_b
         assert not f1 != f1_b
@@ -242,9 +242,9 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
-        f5 = py.test.collect.Function(name="name", 
+        f5 = py.test.collect.Function(name="name", config=config, 
                                       callspec=callspec1, callobj=isinstance)
-        f5b = py.test.collect.Function(name="name", 
+        f5b = py.test.collect.Function(name="name", config=config, 
                                       callspec=callspec2, callobj=isinstance)
         assert f5 != f5b
         assert not (f5 == f5b)
@@ -313,55 +313,21 @@ class TestSorting:
 
 
 class TestConftestCustomization:
-    def test_extra_python_files_and_functions(self, testdir):
-        testdir.makepyfile(conftest="""
+    def test_pytest_pycollect_makeitem(self, testdir):
+        testdir.makeconftest("""
             import py
             class MyFunction(py.test.collect.Function):
                 pass
-            class Directory(py.test.collect.Directory):
-                def consider_file(self, path):
-                    if path.check(fnmatch="check_*.py"):
-                        return self.Module(path, parent=self)
-                    return super(Directory, self).consider_file(path)
-            class myfuncmixin: 
-                Function = MyFunction
-                def funcnamefilter(self, name): 
-                    return name.startswith('check_') 
-            class Module(myfuncmixin, py.test.collect.Module):
-                def classnamefilter(self, name): 
-                    return name.startswith('CustomTestClass') 
-            class Instance(myfuncmixin, py.test.collect.Instance):
-                pass 
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == "some":
+                    return MyFunction(name, collector)
         """)
-        checkfile = testdir.makepyfile(check_file="""
-            def check_func():
-                assert 42 == 42
-            class CustomTestClass:
-                def check_method(self):
-                    assert 23 == 23
-        """)
-        # check that directory collects "check_" files 
-        config = testdir.parseconfig()
-        col = config.getfsnode(checkfile.dirpath())
-        colitems = col.collect()
-        assert len(colitems) == 1
-        assert isinstance(colitems[0], py.test.collect.Module)
-
-        # check that module collects "check_" functions and methods
-        config = testdir.parseconfig(checkfile)
-        col = config.getfsnode(checkfile)
-        assert isinstance(col, py.test.collect.Module)
-        colitems = col.collect()
-        assert len(colitems) == 2
-        funccol = colitems[0]
-        assert isinstance(funccol, py.test.collect.Function)
-        assert funccol.name == "check_func"
-        clscol = colitems[1]
-        assert isinstance(clscol, py.test.collect.Class)
-        colitems = clscol.collect()[0].collect()
-        assert len(colitems) == 1
-        assert colitems[0].name == "check_method"
-
+        testdir.makepyfile("def some(): pass")
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*MyFunction*some*",
+        ])
+        
     def test_makeitem_non_underscore(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("def _hello(): pass")
         l = []

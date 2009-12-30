@@ -48,12 +48,6 @@ class TestConftestValueAccessGlobal:
         conftest.getconftestmodules(basedir.join('b'))
         assert len(conftest._path2confmods) == snap1 + 2
 
-    def test_default_Module_setting_is_visible_always(self, basedir, testdir):
-        basedir.copy(testdir.tmpdir)
-        config = testdir.Config()
-        colclass = config._getcollectclass("Module", testdir.tmpdir)
-        assert colclass == py.test.collect.Module
-
     def test_default_has_lower_prio(self, basedir):
         conftest = ConftestWithSetinitial(basedir.join("adir"))
         assert conftest.rget('Directory') == 3

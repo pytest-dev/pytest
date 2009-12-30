@@ -36,10 +36,10 @@ class Node(object):
         - configuration/options for setup/teardown 
           stdout/stderr capturing and execution of test items 
     """
-    def __init__(self, name, parent=None):
+    def __init__(self, name, parent=None, config=None):
         self.name = name 
         self.parent = parent
-        self.config = getattr(parent, 'config', None)
+        self.config = config or parent.config
         self.fspath = getattr(parent, 'fspath', None) 
         self.ihook = HookProxy(self)
 
@@ -353,9 +353,9 @@ class Collector(Node):
         return traceback 
 
 class FSCollector(Collector): 
-    def __init__(self, fspath, parent=None):
+    def __init__(self, fspath, parent=None, config=None):
         fspath = py.path.local(fspath) 
-        super(FSCollector, self).__init__(fspath.basename, parent)
+        super(FSCollector, self).__init__(fspath.basename, parent, config=config)
         self.fspath = fspath 
 
     def __getstate__(self):

@@ -315,9 +315,9 @@ class Function(FunctionMixin, py.test.collect.Item):
         and executing a Python callable test object.
     """
     _genid = None
-    def __init__(self, name, parent=None, args=None, 
+    def __init__(self, name, parent=None, args=None, config=None,
                  callspec=None, callobj=_dummy):
-        super(Function, self).__init__(name, parent)
+        super(Function, self).__init__(name, parent, config=config)
         self._args = args 
         if self._isyieldedfunction():
             assert not callspec, "yielded functions (deprecated) cannot have funcargs" 

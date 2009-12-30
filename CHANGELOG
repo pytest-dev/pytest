@@ -14,10 +14,15 @@ Changes between 1.X and 1.1.1
 - allow pytest_generate_tests to be defined in classes as well 
 
 - deprecate usage of 'disabled' attribute in favour of pytestmark 
+- deprecate definition of Directory, Module, Class and Function nodes
+  in conftest.py files.  Use pytest collect hooks instead.
 
 - collection/item node specific runtest/collect hooks are only called exactly
   on matching conftest.py files, i.e. ones which are exactly below
   the filesystem path of an item
+
+- change: the first pytest_collect_directory hook to return something
+  will now prevent further hooks to be called.
 
 - robustify capturing to survive if custom pytest_runtest_setup 
   code failed and prevented the capturing setup code from running. 

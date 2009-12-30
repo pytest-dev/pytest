@@ -37,15 +37,19 @@ class TestCollectDeprecated:
                 def join(self, name):
                     if name == "somefile.py":
                         return self.Module(self.fspath.join(name), parent=self)
-            Directory = MyDirectory
+
+            def pytest_collect_directory(path, parent):
+                return MyDirectory(path, parent)
         """)
-        p = testdir.makepyfile(somefile="""
+        subconf = testdir.mkpydir("subconf")
+        somefile = subconf.join("somefile.py")
+        somefile.write(py.code.Source("""
             def check(): pass
             class Cls:
                 def check2(self): pass 
-        """)
-        config = testdir.parseconfig()
-        dirnode = config.getfsnode(p.dirpath())
+        """))
+        config = testdir.parseconfig(somefile)
+        dirnode = config.getfsnode(somefile.dirpath())
         colitems = dirnode.collect()
         w = recwarn.pop(DeprecationWarning)
         assert w.filename.find("conftest.py") != -1
@@ -120,6 +124,7 @@ class TestCollectDeprecated:
         """)
         modcol = testdir.getmodulecol("def test_func2(): pass")
         funcitem = modcol.collect()[0]
+        w = recwarn.pop(DeprecationWarning) # for defining conftest.Function
         assert funcitem.name == 'test_func2'
         funcitem._deprecated_testexecution()
         w = recwarn.pop(DeprecationWarning)
@@ -136,6 +141,8 @@ class TestCollectDeprecated:
         """)
         modcol = testdir.getmodulecol("def test_some2(): pass")
         funcitem = modcol.collect()[0]
+        w = recwarn.pop(DeprecationWarning)
+        assert "conftest.py" in str(w.message) 
 
         recwarn.clear()
         funcitem._deprecated_testexecution()
@@ -168,6 +175,7 @@ class TestCollectDeprecated:
         config = testdir.parseconfig(testme)
         col = config.getfsnode(testme)
         assert col.collect() == []
+
 
     
 class TestDisabled:
@@ -211,6 +219,31 @@ class TestDisabled:
         """)
         reprec.assertoutcome(skipped=2)
 
+    @py.test.mark.multi(name="Directory Module Class Function".split())
+    def test_function_deprecated_run_execute(self, name, testdir, recwarn):
+        testdir.makeconftest("""
+            import py
+            class %s(py.test.collect.%s):
+                pass
+        """ % (name, name))
+        p = testdir.makepyfile("""
+            class TestClass:
+                def test_method(self):
+                    pass
+            def test_function():
+                pass
+        """)
+        config = testdir.parseconfig()
+        if name == "Directory":
+            config.getfsnode(testdir.tmpdir)
+        elif name in ("Module", "File"):
+            config.getfsnode(p)
+        else:
+            fnode = config.getfsnode(p) 
+            recwarn.clear()
+            fnode.collect()
+        w = recwarn.pop(DeprecationWarning)
+        assert "conftest.py" in str(w.message)
 
 def test_config_cmdline_options(recwarn, testdir):
     testdir.makepyfile(conftest="""
@@ -266,4 +299,81 @@ def test_dist_conftest_options(testdir):
     result.stdout.fnmatch_lines([
         "*1 passed*", 
     ])
+
+def test_conftest_non_python_items(recwarn, testdir):
+    testdir.makepyfile(conftest="""
+        import py
+        class CustomItem(py.test.collect.Item): 
+            def run(self):
+                pass
+        class Directory(py.test.collect.Directory):
+            def consider_file(self, fspath):
+                if fspath.ext == ".xxx":
+                    return CustomItem(fspath.basename, parent=self)
+    """)
+    checkfile = testdir.makefile(ext="xxx", hello="world")
+    testdir.makepyfile(x="")
+    testdir.maketxtfile(x="")
+    config = testdir.parseconfig()
+    recwarn.clear()
+    dircol = config.getfsnode(checkfile.dirpath())
+    w = recwarn.pop(DeprecationWarning)
+    assert str(w.message).find("conftest.py") != -1
+    colitems = dircol.collect()
+    assert len(colitems) == 1
+    assert colitems[0].name == "hello.xxx"
+    assert colitems[0].__class__.__name__ == "CustomItem"
+
+    item = config.getfsnode(checkfile)
+    assert item.name == "hello.xxx"
+    assert item.__class__.__name__ == "CustomItem"
+
+def test_extra_python_files_and_functions(testdir):
+    testdir.makepyfile(conftest="""
+        import py
+        class MyFunction(py.test.collect.Function):
+            pass
+        class Directory(py.test.collect.Directory):
+            def consider_file(self, path):
+                if path.check(fnmatch="check_*.py"):
+                    return self.Module(path, parent=self)
+                return super(Directory, self).consider_file(path)
+        class myfuncmixin: 
+            Function = MyFunction
+            def funcnamefilter(self, name): 
+                return name.startswith('check_') 
+        class Module(myfuncmixin, py.test.collect.Module):
+            def classnamefilter(self, name): 
+                return name.startswith('CustomTestClass') 
+        class Instance(myfuncmixin, py.test.collect.Instance):
+            pass 
+    """)
+    checkfile = testdir.makepyfile(check_file="""
+        def check_func():
+            assert 42 == 42
+        class CustomTestClass:
+            def check_method(self):
+                assert 23 == 23
+    """)
+    # check that directory collects "check_" files 
+    config = testdir.parseconfig()
+    col = config.getfsnode(checkfile.dirpath())
+    colitems = col.collect()
+    assert len(colitems) == 1
+    assert isinstance(colitems[0], py.test.collect.Module)
+
+    # check that module collects "check_" functions and methods
+    config = testdir.parseconfig(checkfile)
+    col = config.getfsnode(checkfile)
+    assert isinstance(col, py.test.collect.Module)
+    colitems = col.collect()
+    assert len(colitems) == 2
+    funccol = colitems[0]
+    assert isinstance(funccol, py.test.collect.Function)
+    assert funccol.name == "check_func"
+    clscol = colitems[1]
+    assert isinstance(clscol, py.test.collect.Class)
+    colitems = clscol.collect()[0].collect()
+    assert len(colitems) == 1
+    assert colitems[0].name == "check_method"
 
