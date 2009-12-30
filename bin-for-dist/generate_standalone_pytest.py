@@ -6,13 +6,10 @@ import zlib
 import base64
 import sys
 
-def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    outfile = os.path.join(here, "py.test")
-    infile = outfile+"-in"
-    
-    os.chdir(os.path.dirname(here))
-
+def main(pydir, outfile, infile):
+    os.chdir(os.path.dirname(str(pydir)))
+    outfile = str(outfile)
+    infile = str(infile)
     files = []
     for dirpath, dirnames, filenames in os.walk("py"):
         for f in filenames:
@@ -39,4 +36,8 @@ def main():
     sys.stdout.write("generated %s\n" % outfile)
 
 if __name__=="__main__":
-    main()
+    dn = os.path.dirname
+    pydir = os.path.join(dn(dn(os.path.abspath(__file__))), 'py')
+    outfile = os.path.join(dn(__file__), "py.test")
+    infile = outfile+"-in"
+    main(pydir, outfile, infile)
