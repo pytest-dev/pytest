@@ -22,5 +22,5 @@ bincall("python", "setup.py", "develop", "-q")
 bincall("pip", "install", "-r", "testing/pip-reqs1.txt", 
                "-q", "--download-cache=download")
 bincall("py.test", "--ignore", BUILDNAME, 
-        "-p", "xmlresult", "--xmlresult=junit.xml", 
+        "--xml=junit.xml", 
         "--report=skipped", "--runslowtest", *sys.argv[1:])
