@@ -307,13 +307,8 @@ class TmpTestdir:
         return self.run(*fullargs)
 
     def _getpybinargs(self, scriptname):
-        bindir = py._dir.dirpath('bin')
-        if not bindir.check():
-            script = py.path.local.sysfind(scriptname)
-        else:
-            script = bindir.join(scriptname)
-        assert script.check()
-        return py.std.sys.executable, script
+        script = py.path.local.sysfind(scriptname)
+        return script, 
 
     def runpython(self, script):
         return self.run(py.std.sys.executable, script)
