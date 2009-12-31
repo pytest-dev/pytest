@@ -78,6 +78,19 @@ but a remote one fail because the tests directory
 does not contain an "__init__.py". Either give
 an error or make it work without the __init__.py
 
+introduce a "RootCollector" 
+----------------------------------------------------------------
+tags: feature 1.2
+
+Currently the top collector is a Directory node and
+there also is the notion of a "topdir".  See to refine
+internal handling such that there is a RootCollector 
+which holds this topdir (or do away with topdirs?).
+Make sure this leads to an improvement in how 
+tests are shown in hudson which currently sometimes
+shows "workspace" and sometimes not as the leading 
+name. 
+
 deprecate ensuretemp / introduce funcargs to setup method
 --------------------------------------------------------------
 tags: experimental-wish 1.2
