@@ -8,10 +8,11 @@ class Conftest(object):
         Note that triggering Conftest instances to import 
         conftest.py files may result in added cmdline options. 
     """ 
-    def __init__(self, onimport=None):
+    def __init__(self, onimport=None, confcutdir=None):
         self._path2confmods = {}
         self._onimport = onimport
         self._conftestpath2mod = {}
+        self._confcutdir = confcutdir
 
     def setinitial(self, args):
         """ try to find a first anchor path for looking up global values
@@ -23,6 +24,17 @@ class Conftest(object):
             bootstrapped ... 
         """
         current = py.path.local()
+        opt = '--confcutdir'
+        for i in range(len(args)):
+            opt1 = str(args[i])
+            if opt1.startswith(opt):
+                if opt1 == opt:
+                    if len(args) > i:
+                        p = current.join(args[i+1], abs=True)
+                elif opt1.startswith(opt + "="):
+                    p = current.join(opt1[len(opt)+1:], abs=1)
+                self._confcutdir = p 
+                break
         for arg in args + [current]:
             anchor = current.join(arg, abs=1)
             if anchor.check(): # we found some file object 
@@ -37,16 +49,20 @@ class Conftest(object):
             clist = self._path2confmods[path]
         except KeyError:
             if path is None:
-                raise ValueError("missing default conftest.")
+                raise ValueError("missing default confest.")
             dp = path.dirpath()
             if dp == path:
-                clist = self._path2confmods[path] = []
+                clist = []
             else:
+                cutdir = self._confcutdir
                 clist = self.getconftestmodules(dp)
-                conftestpath = path.join("conftest.py")
-                if conftestpath.check(file=1):
-                    clist.append(self.importconftest(conftestpath))
-                self._path2confmods[path] = clist
+                if cutdir and path != cutdir and not path.relto(cutdir):
+                    pass
+                else:
+                    conftestpath = path.join("conftest.py")
+                    if conftestpath.check(file=1):
+                        clist.append(self.importconftest(conftestpath))
+            self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
         # affect us by always returning a copy of the actual list 
         return clist[:]
@@ -77,8 +93,14 @@ class Conftest(object):
                 mod = conftestpath.pyimport(modname=modname)
             else:
                 mod = conftestpath.pyimport()
-            self._postimport(mod)
             self._conftestpath2mod[conftestpath] = mod
+            dirpath = conftestpath.dirpath()
+            if dirpath in self._path2confmods:
+                for path, mods in self._path2confmods.items():
+                    if path and path.relto(dirpath) or path == dirpath:
+                        assert mod not in mods
+                        mods.append(mod)
+            self._postimport(mod)
             return mod
 
     def _postimport(self, mod):

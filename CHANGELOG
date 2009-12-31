@@ -10,6 +10,9 @@ Changes between 1.X and 1.1.1
 - new option: --ignore will prevent specified path from collection. 
   Can be specified multiple times. 
 
+- new option: --confcutdir=dir will make py.test only consider conftest 
+  files that are relative to the specified dir.  
+
 - install 'py.test' and `py.which` with a ``-$VERSION`` suffix to
   disambiguate between Python3, python2.X, Jython and PyPy installed versions. 
 

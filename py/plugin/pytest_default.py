@@ -73,7 +73,9 @@ def pytest_addoption(parser):
         "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
-
+    group.addoption('--confcutdir', dest="confcutdir", default=None, 
+        metavar="dir",
+        help="only load conftest.py's relative to specified dir.")
     if execnet:
         add_dist_options(parser)
     else:

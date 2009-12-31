@@ -92,3 +92,14 @@ def test_pytest_report_iteminfo():
 
     res = pytest_report_iteminfo(FakeItem())
     assert res == "-reportinfo-"
+
+
+def test_conftest_confcutdir(testdir):
+    testdir.makeconftest("assert 0")
+    x = testdir.mkdir("x")
+    x.join("conftest.py").write(py.code.Source("""
+        def pytest_addoption(parser):
+            parser.addoption("--xyz", action="store_true")
+    """))
+    result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
+    assert result.stdout.fnmatch_lines(["*--xyz*"])

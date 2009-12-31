@@ -89,3 +89,46 @@ class TestConftestValueAccessGlobal:
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")
         assert path.purebasename == "conftest"
+
+def test_conftestcutdir(testdir):
+    conf = testdir.makeconftest("")
+    p = testdir.mkdir("x")
+    conftest = Conftest(confcutdir=p)
+    conftest.setinitial([testdir.tmpdir])
+    l = conftest.getconftestmodules(p)
+    assert len(l) == 0
+    l = conftest.getconftestmodules(conf.dirpath())
+    assert len(l) == 0
+    assert conf not in conftest._conftestpath2mod
+    # but we can still import a conftest directly 
+    conftest.importconftest(conf)
+    l = conftest.getconftestmodules(conf.dirpath())
+    assert l[0].__file__.startswith(str(conf))
+    # and all sub paths get updated properly
+    l = conftest.getconftestmodules(p)
+    assert len(l) == 1
+    assert l[0].__file__.startswith(str(conf))
+
+def test_conftestcutdir_inplace_considered(testdir):
+    conf = testdir.makeconftest("")
+    conftest = Conftest(confcutdir=conf.dirpath())
+    conftest.setinitial([conf.dirpath()])
+    l = conftest.getconftestmodules(conf.dirpath())
+    assert len(l) == 1
+    assert l[0].__file__.startswith(str(conf))
+
+def test_setinitial_confcut(testdir):
+    conf = testdir.makeconftest("")
+    sub = testdir.mkdir("sub")
+    sub.chdir()
+    for opts in (["--confcutdir=%s" % sub, sub],
+                [sub, "--confcutdir=%s" % sub],
+                ["--confcutdir=.", sub],
+                [sub, "--confcutdir", sub],
+                [str(sub), "--confcutdir", "."],
+    ):
+        conftest = Conftest()
+        conftest.setinitial(opts)
+        assert conftest._confcutdir == sub
+        assert conftest.getconftestmodules(sub) == []
+        assert conftest.getconftestmodules(conf.dirpath()) == []
