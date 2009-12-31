@@ -28,7 +28,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret 
         node = dom.getElementsByTagName("testsuite")[0]
-        assert_attr(node, errors=0, failures=1, skips=1, tests=3)
+        assert_attr(node, errors=0, failures=1, skips=1, tests=2)
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
@@ -89,6 +89,19 @@ class TestPython:
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="collection failure")
         assert "invalid syntax" in fnode.toxml()
+
+    def test_collect_skipped(self, testdir):
+        testdir.makepyfile("import py ; py.test.skip('xyz')")
+        result, dom = runandparse(testdir)
+        assert not result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, skips=1, tests=0)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            #classname="test_collect_error",
+            name="test_collect_skipped")
+        fnode = tnode.getElementsByTagName("skipped")[0]
+        assert_attr(fnode, message="collection skipped")
 
 class TestNonPython:
     def test_summing_simple(self, testdir):

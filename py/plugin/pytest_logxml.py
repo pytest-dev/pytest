@@ -76,6 +76,15 @@ class LogXML(object):
         self._closetestcase()
         self.errors += 1
 
+    def append_collect_skipped(self, report):
+        self._opentestcase_collectfailure(report)
+        s = py.xml.escape(str(report.longrepr))
+        #msg = str(report.longrepr.reprtraceback.extraline)
+        self.test_logs.append(
+            '<skipped message="collection skipped">%s</skipped>' % (s))
+        self._closetestcase()
+        self.skipped += 1
+
     def append_error(self, report):
         self._opentestcase(report)
         s = py.xml.escape(str(report.longrepr))
@@ -130,7 +139,7 @@ class LogXML(object):
         logfile = open(self.logfile, 'w', 1) # line buffered
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
-        numtests = self.passed + self.skipped + self.failed
+        numtests = self.passed + self.failed
         logfile.write('<testsuite ')
         logfile.write('name="" ')
         logfile.write('errors="%i" ' % self.errors)
