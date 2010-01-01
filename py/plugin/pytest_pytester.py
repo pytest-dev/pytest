@@ -11,6 +11,13 @@ from py.impl.test.config import Config as pytestConfig
 from py.plugin import hookspec
 from py.builtin import print_
 
+def pytest_addoption(parser):
+    group = parser.getgroup("pylib")
+    group.addoption('--tools-on-path',
+           action="store_true", dest="toolsonpath", default=False,
+           help=("discover tools on PATH instead of going through py.cmdline.")
+    )
+
 pytest_plugins = '_pytest'
 
 def pytest_funcarg__linecomp(request):
@@ -307,8 +314,15 @@ class TmpTestdir:
         return self.run(*fullargs)
 
     def _getpybinargs(self, scriptname):
-        script = py.path.local.sysfind(scriptname)
-        return script, 
+        if self.request.config.getvalue("toolsonpath"):
+            script = py.path.local.sysfind(scriptname)
+            assert script, "script %r not found" % scriptname
+            return (script,)
+        else:
+            cmdlinename = scriptname.replace(".", "")
+            assert hasattr(py.cmdline, cmdlinename), cmdlinename
+            source = "import py ; py.cmdline.%s()" % cmdlinename
+            return (sys.executable, "-c", source,)
 
     def runpython(self, script):
         return self.run(py.std.sys.executable, script)
