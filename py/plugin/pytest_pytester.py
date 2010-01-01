@@ -284,8 +284,8 @@ class TmpTestdir:
 
     def _run(self, *cmdargs):
         cmdargs = [str(x) for x in cmdargs]
-        p1 = py.path.local("stdout")
-        p2 = py.path.local("stderr")
+        p1 = self.tmpdir.join("stdout")
+        p2 = self.tmpdir.join("stderr")
         print_("running", cmdargs, "curdir=", py.path.local())
         f1 = p1.open("w")
         f2 = p2.open("w")

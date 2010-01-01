@@ -1,20 +1,5 @@
 """
-Python related collection nodes.  Here is an example of 
-a tree of collectors and test items that this modules provides:: 
-
-        Module                  # File
-            Class 
-                Instance   
-                    Function  
-                    Generator 
-                        ... 
-            Function 
-            Generator 
-                Function 
-
-        DoctestFile              # File
-            DoctestFileContent   # acts as Item 
-
+Python related collection nodes.  
 """ 
 import py
 import inspect

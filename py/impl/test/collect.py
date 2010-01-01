@@ -1,6 +1,5 @@
 """
-base test collection objects.  
-Collectors and test Items form a tree
+base test collection objects.  Collectors and test Items form a tree
 that is usually built iteratively.  
 """ 
 import py
@@ -24,17 +23,8 @@ class HookProxy:
         return call_matching_hooks
 
 class Node(object): 
-    """ base class for Nodes in the collection tree.  
-        Collector nodes have children and 
-        Item nodes are terminal. 
-
-        All nodes of the collection tree carry a _config 
-        attribute for these reasons: 
-        - to access custom Collection Nodes from a project 
-          (defined in conftest's)
-        - to pickle themselves relatively to the "topdir" 
-        - configuration/options for setup/teardown 
-          stdout/stderr capturing and execution of test items 
+    """ base class for all Nodes in the collection tree.  
+        Collector subclasses have children, Items are terminal nodes. 
     """
     def __init__(self, name, parent=None, config=None):
         self.name = name 
@@ -262,12 +252,10 @@ class Node(object):
         return col._getitembynames(names)
     _fromtrail = staticmethod(_fromtrail)
 
-    def _repr_failure_py(self, excinfo, outerr=None):
-        assert outerr is None, "XXX deprecated"
+    def _repr_failure_py(self, excinfo):
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
-        # XXX temporary hack: getrepr() should not take a 'style' argument
-        # at all; it should record all data in all cases, and the style
-        # should be parametrized in toterminal().
+        # XXX should excinfo.getrepr record all data and toterminal()
+        # process it? 
         if self.config.option.tbstyle == "short":
             style = "short"
         else:
