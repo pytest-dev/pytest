@@ -4,11 +4,15 @@ import subprocess
 def pytest_funcarg__standalone(request):
     return request.cached_setup(scope="module", setup=lambda: Standalone(request))
 
+pytestmark = py.test.mark.nochdir
+
 class Standalone:
     def __init__(self, request):
         self.testdir = request.getfuncargvalue("testdir")
         self.script = self.testdir.tmpdir.join("mypytest")
-        self.testdir.runpytest("--genscript=%s" % self.script)
+        result = self.testdir.runpytest("--genscript=%s" % self.script)
+        assert result.ret == 0
+        assert self.script.check()
 
     def run(self, anypython, testdir, *args):
         testdir.chdir()

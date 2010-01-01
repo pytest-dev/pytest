@@ -69,8 +69,8 @@ class TmpTestdir:
         self.tmpdir = tmpdir.mkdir(name)
         self.plugins = []
         self._syspathremove = []
-        self.chdir() # always chdir
-        assert hasattr(self, '_olddir')
+        if not hasattr(request.function, "nochdir"):
+            self.chdir() # always chdir
         self.request.addfinalizer(self.finalize)
 
     def __repr__(self):
@@ -280,12 +280,7 @@ class TmpTestdir:
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):
-        old = self.tmpdir.chdir()
-        #print "chdir", self.tmpdir
-        try:
-            return self._run(*cmdargs)
-        finally:
-            old.chdir()
+        return self._run(*cmdargs)
 
     def _run(self, *cmdargs):
         cmdargs = [str(x) for x in cmdargs]

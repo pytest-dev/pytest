@@ -40,7 +40,7 @@ def main(pybasedir, outfile, infile):
 
     name2src = {}
     for f in files:
-        k = f.replace("/", ".")[:-3]
+        k = f.replace(os.sep, ".")[:-3]
         name2src[k] = open(f, "rb").read()
 
     data = pickle.dumps(name2src, 2)
