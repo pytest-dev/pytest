@@ -338,8 +338,10 @@ class TmpTestdir:
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         pexpect = py.test.importorskip("pexpect", "2.4")
+        if not self.request.config.getvalue("toolsonpath"):
+            py.test.skip("need --tools-on-path to run py.test script")
         basetemp = self.tmpdir.mkdir("pexpect")
-        invoke = "%s %s" % self._getpybinargs("py.test")
+        invoke = self._getpybinargs("py.test")[0]
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         child = pexpect.spawn(cmd, logfile=basetemp.join("spawn.out").open("w"))
         child.timeout = expect_timeout

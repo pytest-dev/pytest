@@ -3,14 +3,13 @@ import sys, py
 pytest_plugins = "pytest_pytester"
 
 @py.test.mark.multi(name=[x for x in dir(py.cmdline) if x[0] != "_"])
-def test_cmdmain(name):
+def test_cmdmain(name, pytestconfig):
     main = getattr(py.cmdline, name)
     assert py.builtin.callable(main)
     assert name[:2] == "py"
-    scriptname = "py." + name[2:]
-    if sys.platform == "win32":
-        scriptname += ".exe"
-    assert py.path.local.sysfind(scriptname), scriptname
+    if pytestconfig.getvalue("toolsonpath"):
+        scriptname = "py." + name[2:]
+        assert py.path.local.sysfind(scriptname), scriptname
 
 class TestPyLookup:
     def test_basic(self, testdir):

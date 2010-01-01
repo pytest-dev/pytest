@@ -29,6 +29,7 @@ def pytest_collect_file(path, parent):
             return parent.Module(path, parent=parent) 
 
 def pytest_funcarg__pytestconfig(request):
+    """ the pytest config object with access to command line opts."""
     return request.config
 
 def pytest_collect_directory(path, parent):
