@@ -85,10 +85,11 @@ class PluginManager(object):
         except ImportError:
             return # XXX issue a warning 
         for ep in iter_entry_points('pytest11'):
-            if ep.name in self._name2plugin:
+            name = canonical_importname(ep.name)
+            if name in self._name2plugin:
                 continue
             plugin = ep.load()
-            self.register(plugin, name=ep.name)
+            self.register(plugin, name=name)
 
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):

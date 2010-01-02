@@ -237,3 +237,24 @@ def test_ensuretemp(recwarn):
     d2 = py.test.ensuretemp('hello') 
     assert d1 == d2
     assert d1.check(dir=1) 
+
+def test_preparse_ordering(testdir, monkeypatch):
+    pkg_resources = py.test.importorskip("pkg_resources")
+    def my_iter(name):
+        assert name == "pytest11"
+        class EntryPoint:
+            name = "mytestplugin"
+            def load(self):
+                class PseudoPlugin:
+                    x = 42
+                return PseudoPlugin()
+        return iter([EntryPoint()])
+    monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+    testdir.makeconftest("""
+        pytest_plugins = "mytestplugin",
+    """)
+    monkeypatch.setenv("PYTEST_PLUGINS", "mytestplugin")
+    config = testdir.parseconfig()
+    plugin = config.pluginmanager.getplugin("mytestplugin")
+    assert plugin.x == 42
+

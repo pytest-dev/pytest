@@ -61,6 +61,8 @@ class TestBootstrapping:
         pluginmanager.consider_setuptools_entrypoints()
         plugin = pluginmanager.getplugin("mytestplugin")
         assert plugin.x == 42
+        plugin2 = pluginmanager.getplugin("pytest_mytestplugin")
+        assert plugin2 == plugin
 
     def test_consider_setuptools_not_installed(self, monkeypatch):
         monkeypatch.setitem(py.std.sys.modules, 'pkg_resources', 

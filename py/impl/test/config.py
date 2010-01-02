@@ -79,10 +79,10 @@ class Config(object):
                 setattr(self.option, opt.dest, opt.default)
 
     def _preparse(self, args):
-        self._conftest.setinitial(args) 
         self.pluginmanager.consider_setuptools_entrypoints()
-        self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_env()
+        self.pluginmanager.consider_preparse(args)
+        self._conftest.setinitial(args) 
         self.pluginmanager.do_addoption(self._parser)
 
     def parse(self, args): 
