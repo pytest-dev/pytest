@@ -30,7 +30,7 @@ class TestNodeManager:
             "--tx", "3*popen"))
         
         nodemanager.setup_nodes([].append)
-        nodemanager.wait_nodesready(timeout=2.0)
+        nodemanager.wait_nodesready(timeout=10.0)
 
     def test_popen_rsync_subdir(self, testdir, mysetup):
         source, dest = mysetup.source, mysetup.dest 
