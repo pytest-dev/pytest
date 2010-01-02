@@ -4,8 +4,6 @@ import subprocess
 def pytest_funcarg__standalone(request):
     return request.cached_setup(scope="module", setup=lambda: Standalone(request))
 
-pytestmark = py.test.mark.nochdir
-
 class Standalone:
     def __init__(self, request):
         self.testdir = request.getfuncargvalue("testdir")

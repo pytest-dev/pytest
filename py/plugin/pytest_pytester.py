@@ -69,8 +69,7 @@ class TmpTestdir:
         self.tmpdir = tmpdir.mkdir(name)
         self.plugins = []
         self._syspathremove = []
-        if not hasattr(request.function, "nochdir"):
-            self.chdir() # always chdir
+        self.chdir() # always chdir
         self.request.addfinalizer(self.finalize)
 
     def __repr__(self):
@@ -316,7 +315,9 @@ class TmpTestdir:
         else:
             cmdlinename = scriptname.replace(".", "")
             assert hasattr(py.cmdline, cmdlinename), cmdlinename
-            source = "import py ; py.cmdline.%s()" % cmdlinename
+            source = ("import sys ; sys.path.insert(0, %r); "
+                      "import py ; py.cmdline.%s()" % 
+                (str(py._dir.dirpath()), cmdlinename))
             return (sys.executable, "-c", source,)
 
     def runpython(self, script):
