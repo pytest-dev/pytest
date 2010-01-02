@@ -16,18 +16,17 @@ class TestBootstrapping:
         """)
 
     def test_plugin_skip(self, testdir, monkeypatch):
-        testdir.makepyfile(pytest_skipping1="""
+        p = testdir.makepyfile(pytest_skipping1="""
             import py
             py.test.skip("hello")
         """)
-        result = testdir.runpytest("-p", "skipping1")
+        p.copy(p.dirpath("pytest_skipping2.py"))
+        monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
+        result = testdir.runpytest("-p", "skipping1", "--traceconfig")
+        assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*WARNING*could not import plugin*skipping1*hello*"
-        ])
-        monkeypatch.setenv("PYTEST_PLUGINS", "skipping1")
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "*WARNING*could not import plugin*skipping1*hello*"
+            "*hint*skipping2*hello*",
+            "*hint*skipping1*hello*",
         ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):

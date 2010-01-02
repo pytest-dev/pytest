@@ -9,7 +9,7 @@ from py.impl.test.outcome import Skipped
 default_plugins = (
     "default runner capture terminal mark skipping tmpdir monkeypatch "
     "recwarn pdb pastebin unittest helpconfig nose assertion genscript "
-    "logxml").split()
+    "logxml figleaf").split()
 
 def check_old_use(mod, modname):
     clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
@@ -19,10 +19,11 @@ class PluginManager(object):
     def __init__(self):
         self.registry = Registry()
         self._name2plugin = {}
+        self._hints = []
         self.hook = HookRelay(hookspecs=hookspec, registry=self.registry) 
         self.register(self)
         for spec in default_plugins:
-            self.import_plugin(spec) 
+            self.import_plugin(spec)
 
     def _getpluginname(self, plugin, name):
         if name is None:
@@ -123,15 +124,17 @@ class PluginManager(object):
             raise
         except Skipped:
             e = py.std.sys.exc_info()[1]
-            self._warn("could not import plugin %r, reason: %r" %(
-                (modname, e.msg)))
+            self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:
             check_old_use(mod, modname) 
             self.register(mod)
             self.consider_module(mod)
 
-    def _warn(self, msg):
-        print ("===WARNING=== %s" % (msg,))
+    def pytest_terminal_summary(self, terminalreporter):
+        tw = terminalreporter._tw
+        if terminalreporter.config.option.traceconfig:
+            for hint in self._hints:
+                tw.line("hint: %s" % hint)
 
     # 
     #
@@ -201,10 +204,8 @@ def importplugin(importspec):
             e = py.std.sys.exc_info()[1]
             if str(e).find(importspec) == -1:
                 raise
-            #print "syspath:", py.std.sys.path
-            #print "curdir:", py.std.os.getcwd()
-            return __import__(importspec)  # show the original exception
-
+            # show the original exception, not the failing internal one
+            return __import__(importspec)  
 
 
 class MultiCall:

@@ -24,7 +24,7 @@ class Parser:
         self._groups = []
         self._processopt = processopt
         self._usage = usage 
-        self.epilog = "" 
+        self.hints = []
 
     def processoption(self, option):
         if self._processopt:
@@ -56,9 +56,7 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
-        optparser = optparse.OptionParser(usage=self._usage)
-        # make sure anaonymous group is at the end 
-        optparser.epilog = self.epilog
+        optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -100,4 +98,15 @@ class OptionGroup:
             self.parser.processoption(option)
         self.options.append(option)
 
-        
+
+class MyOptionParser(optparse.OptionParser):
+    def __init__(self, parser):
+        self._parser = parser 
+        optparse.OptionParser.__init__(self, usage=parser._usage)
+    def format_epilog(self, formatter):
+        hints = self._parser.hints 
+        if hints:
+            s = "\n".join(["hint: " + x for x in hints]) + "\n"
+            s = "\n" + s + "\n"
+            return s
+        return ""

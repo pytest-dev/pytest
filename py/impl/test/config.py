@@ -92,6 +92,7 @@ class Config(object):
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
+        self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())

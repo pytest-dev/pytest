@@ -80,8 +80,9 @@ def pytest_addoption(parser):
     if execnet:
         add_dist_options(parser)
     else:
-        parser.epilog = (
-        "'execnet>=1.0.0b4' package required for --looponfailing / distributed testing.")
+        parser.hints.append(
+        "'execnet>=1.0.0b4' required for --looponfailing / distributed testing."
+        )
 
 def add_dist_options(parser):
     #  see http://pytest.org/help/dist")

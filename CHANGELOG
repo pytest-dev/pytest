@@ -40,6 +40,10 @@ Changes between 1.X and 1.1.1
 - change: the first pytest_collect_directory hook to return something
   will now prevent further hooks to be called.
 
+- change: pytest figleaf now requires --figleaf to run and is turned 
+  on by default (requires the 'figleaf' package though).  Change
+  long command line options to be a bit shorter (see py.test -h).
+
 - robustify capturing to survive if custom pytest_runtest_setup 
   code failed and prevented the capturing setup code from running. 
 
