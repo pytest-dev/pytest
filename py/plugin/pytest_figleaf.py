@@ -17,7 +17,7 @@ def pytest_addoption(parser):
             help='set tracing file, default: ".figleaf".')
     group.addoption('--fig-html', action='store', default='html',
             dest='figleafhtml', metavar="dir",
-            help='set html reporting dir, default "html").')
+            help='set html reporting dir, default "html".')
 
 def pytest_configure(config):
     if config.getvalue("figleaf"):

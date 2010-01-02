@@ -9,7 +9,7 @@ from py.impl.test.outcome import Skipped
 default_plugins = (
     "default runner capture terminal mark skipping tmpdir monkeypatch "
     "recwarn pdb pastebin unittest helpconfig nose assertion genscript "
-    "logxml figleaf").split()
+    "logxml figleaf doctest").split()
 
 def check_old_use(mod, modname):
     clsname = modname[len('pytest_'):].capitalize() + "Plugin" 

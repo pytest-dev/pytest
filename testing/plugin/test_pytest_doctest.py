@@ -14,14 +14,14 @@ class TestDoctests:
         """)
         for x in (testdir.tmpdir, checkfile): 
             #print "checking that %s returns custom items" % (x,) 
-            items, reprec = testdir.inline_genitems(x, '-p', 'doctest')
+            items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestTextfile)
 
     def test_collect_module(self, testdir):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir): 
-            items, reprec = testdir.inline_genitems(p, '-p', 'doctest', 
+            items, reprec = testdir.inline_genitems(p, 
                 '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestModule)
@@ -32,7 +32,16 @@ class TestDoctests:
             >>> x == 1
             False
         """)
-        reprec = testdir.inline_run(p, '-p', 'doctest')
+        reprec = testdir.inline_run(p, )
+        reprec.assertoutcome(failed=1)
+
+    def test_new_pattern(self, testdir):
+        p = testdir.maketxtfile(xdoc ="""
+            >>> x = 1
+            >>> x == 1
+            False
+        """)
+        reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
@@ -44,7 +53,7 @@ class TestDoctests:
             >>> x
             2
         """)
-        reprec = testdir.inline_run(p, '-p', 'doctest')
+        reprec = testdir.inline_run(p)
         call = reprec.getcall("pytest_runtest_logreport")
         assert call.report.failed
         assert call.report.longrepr 
@@ -63,7 +72,7 @@ class TestDoctests:
 
             '''
         """)
-        reprec = testdir.inline_run(p, '-p', 'doctest', "--doctest-modules")
+        reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1) 
 
     def test_doctestmodule_external(self, testdir):
@@ -76,7 +85,7 @@ class TestDoctests:
                     2
                 '''
         """)
-        result = testdir.runpytest(p, '-p', 'doctest', "--doctest-modules")
+        result = testdir.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines([
             '004 *>>> i = 0',
             '005 *>>> i + 1',
@@ -94,7 +103,7 @@ class TestDoctests:
             >>> i + 1
             2
         """)
-        result = testdir.runpytest(p, '-p', 'doctest')
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             '001 >>> i = 0',
             '002 >>> i + 1',

@@ -44,6 +44,9 @@ Changes between 1.X and 1.1.1
   on by default (requires the 'figleaf' package though).  Change
   long command line options to be a bit shorter (see py.test -h).
 
+- change: pytest doctest plugin is now enabled by default and has a
+  new option --doctest-glob to set a pattern for file matches. 
+
 - robustify capturing to survive if custom pytest_runtest_setup 
   code failed and prevented the capturing setup code from running. 
 

@@ -4,13 +4,22 @@ collect and execute doctests from modules and test files.
 Usage
 -------------
 
-By default all files matching the ``test_*.txt`` pattern will 
-be run with the ``doctest`` module.  If you issue::
+By default all files matching the ``test*.txt`` pattern will 
+be run through the python standard ``doctest`` module.  Issue::
+
+    py.test --doctest-glob='*.rst'
+
+to change the pattern.  Additionally you can trigger running of
+tests in all python modules (including regular python test modules)::
 
     py.test --doctest-modules
 
-all python files in your projects will be doctest-run 
-as well. 
+You can also make these changes permanent in your project by 
+putting them into a conftest.py file like this::
+
+    # content of conftest.py 
+    option_doctestmodules = True
+    option_doctestglob = "*.rst"
 """
 
 import py
@@ -20,15 +29,20 @@ import doctest
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption("--doctest-modules", 
-        action="store_true", default=False,
-        help="search all python files for doctests", 
+        action="store_true", default=False, 
+        help="run doctests in all .py modules",
         dest="doctestmodules")
-    
+    group.addoption("--doctest-glob",
+        action="store", default="test*.txt", metavar="pat",
+        help="doctests file matching pattern, default: test*.txt",
+        dest="doctestglob")
+
 def pytest_collect_file(path, parent):
+    config = parent.config
     if path.ext == ".py":
-        if parent.config.getvalue("doctestmodules"):
+        if config.getvalue("doctestmodules"):
             return DoctestModule(path, parent)
-    if path.check(fnmatch="test_*.txt"):
+    elif path.check(fnmatch=config.getvalue("doctestglob")):
         return DoctestTextfile(path, parent)
 
 class ReprFailDoctest(TerminalRepr):

@@ -13,12 +13,12 @@ command line options
 --------------------
 
 
-``-F``
+``--figleaf``
     trace python coverage with figleaf and write HTML for files below the current working dir
-``--figleaf-data=FIGLEAFDATA``
-    path to coverage tracing file.
-``--figleaf-html=FIGLEAFHTML``
-    path to the coverage html dir.
+``--fig-data=dir``
+    set tracing file, default: ".figleaf".
+``--fig-html=dir``
+    set html reporting dir, default "html").
 
 Start improving this plugin in 30 seconds
 =========================================
