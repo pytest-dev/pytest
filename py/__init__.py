@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 py.test and pylib: rapid testing and development utils
 

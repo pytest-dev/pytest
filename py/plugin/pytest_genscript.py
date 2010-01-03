@@ -44,16 +44,17 @@ def main(pybasedir, outfile, infile):
     name2src = {}
     for f in files:
         k = f.replace(os.sep, ".")[:-3]
-        name2src[k] = open(f, "rb").read()
+        name2src[k] = open(f, "r").read()
 
     data = pickle.dumps(name2src, 2)
     data = zlib.compress(data, 9)
     data = base64.encodestring(data)
+    data = data.decode("ascii")
 
-    exe = open(infile, "rb").read()
+    exe = open(infile, "r").read()
     exe = exe.replace("@SOURCES@", data)
 
-    open(outfile, "wb").write(exe)
+    open(outfile, "w").write(exe)
     os.chmod(outfile, 493)  # 0755
     sys.stdout.write("generated standalone py.test at %r, have fun!\n" % outfile)
 

@@ -1,3 +1,4 @@
+import py
 from py.plugin.pytest_restdoc import deindent
 
 def test_deindent():
@@ -9,6 +10,9 @@ def test_deindent():
     assert deindent('  foo\n bar\n') == ' foo\nbar\n'
 
 class TestDoctest:
+    def setup_class(cls):
+        py.test.importorskip("docutils")
+
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")
         testdir.plugins.append("restdoc")

@@ -17,7 +17,7 @@ def pytest_funcarg__repowc1(request):
     )
     for x in ('test_remove', 'test_move', 'test_status_deleted'):
         if request.function.__name__.startswith(x):
-            print >>sys.stderr, ("saving repo", repo, "for", request.function)
+            #print >>sys.stderr, ("saving repo", repo, "for", request.function)
             _savedrepowc = save_repowc(repo, wc) 
             request.addfinalizer(lambda: restore_repowc(_savedrepowc))
     return repo, repourl, wc
@@ -67,7 +67,7 @@ def save_repowc(repo, wc):
 
 def restore_repowc(obj):
     savedrepo, savedwc = obj
-    print >>sys.stderr, ("restoring", savedrepo)
+    #print >>sys.stderr, ("restoring", savedrepo)
     repo = savedrepo.new(basename=savedrepo.basename[:-2])
     assert repo.check()
     wc = savedwc.new(basename=savedwc.basename[:-2])
