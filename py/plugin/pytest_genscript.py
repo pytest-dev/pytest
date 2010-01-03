@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+"""
+generate standalone test script to be distributed along with an application. 
+"""
 
 import os
 import zlib
@@ -10,7 +13,7 @@ except Importerror:
     import cPickle as pickle
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general")
+    group = parser.getgroup("debugconfig")
     group.addoption("--genscript", action="store", default=None, 
         dest="genscript", metavar="path", 
         help="create standalone py.test script at given target path.")

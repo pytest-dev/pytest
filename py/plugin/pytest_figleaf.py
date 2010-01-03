@@ -1,6 +1,7 @@
 """
-write and report coverage data with 'figleaf'. 
+report python test coverage using the 'figleaf' package.
 
+Not enabled by default (use "-p" or conftest settings to do so). 
 """
 import py
 py.test.importorskip("figleaf")

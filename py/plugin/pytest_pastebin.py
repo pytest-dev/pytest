@@ -27,7 +27,7 @@ class url:
     show = base + "/show/"
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general")
+    group = parser.getgroup("terminal reporting")
     group._addoption('--pastebin', metavar="mode",
         action='store', dest="pastebin", default=None, 
         type="choice", choices=['failed', 'all'], 

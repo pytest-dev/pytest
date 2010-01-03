@@ -13,7 +13,7 @@ def pytest_addoption(parser):
     group = parser.getgroup("general") 
     group._addoption('--pdb',
                action="store_true", dest="usepdb", default=False,
-               help="start pdb (the Python debugger) on errors.")
+               help="start the interactive Python debugger on errors.")
 
 
 def pytest_configure(__multicall__, config):

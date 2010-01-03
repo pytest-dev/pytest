@@ -13,10 +13,12 @@ command line options
 --------------------
 
 
-``--help-config``
-    show available conftest.py and ENV-variable names.
 ``--version``
     display py lib version and import information.
+``-p name``
+    early-load given plugin (multi-allowed).
+``--help-config``
+    show available conftest.py and ENV-variable names.
 
 Start improving this plugin in 30 seconds
 =========================================

@@ -1,5 +1,9 @@
-"""resultlog plugin for machine-readable logging of test results. 
-   Useful for buildbot integration code. 
+"""non-xml machine-readable logging of test results. 
+   Useful for buildbot integration code.  See the `PyPy-test`_ 
+   web page for post-processing. 
+
+.. _`PyPy-test`: http://codespeak.net:8099/summary
+ 
 """ 
 
 import py

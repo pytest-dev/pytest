@@ -14,7 +14,7 @@ command line options
 
 
 ``--pdb``
-    start pdb (the Python debugger) on errors.
+    start the interactive Python debugger on errors.
 
 Start improving this plugin in 30 seconds
 =========================================

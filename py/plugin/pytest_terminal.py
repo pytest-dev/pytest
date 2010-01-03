@@ -7,7 +7,7 @@ import py
 import sys
 
 def pytest_addoption(parser):
-    group = parser.getgroup("terminal reporting", after="general")
+    group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count", 
                dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-l', '--showlocals',
@@ -15,7 +15,7 @@ def pytest_addoption(parser):
                help="show locals in tracebacks (disabled by default).")
     group.addoption('--report',
                action="store", dest="report", default=None, metavar="opts",
-               help="comma separated options, valid: skipped,xfailed")
+               help="show more info, valid: skipped,xfailed")
     group._addoption('--tb', metavar="style", 
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no'],
@@ -25,9 +25,6 @@ def pytest_addoption(parser):
                help="don't cut any tracebacks (default is to cut).")
 
     group = parser.getgroup("debugconfig")
-    group.addoption('--collectonly',
-        action="store_true", dest="collectonly",
-        help="only collect tests, don't execute them."),
     group.addoption('--traceconfig',
                action="store_true", dest="traceconfig", default=False,
                help="trace considerations of conftest.py files."),

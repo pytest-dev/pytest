@@ -18,13 +18,11 @@ command line options
 ``-l, --showlocals``
     show locals in tracebacks (disabled by default).
 ``--report=opts``
-    comma separated options, valid: skipped,xfailed
+    show more info, valid: skipped,xfailed
 ``--tb=style``
     traceback verboseness (long/short/no).
 ``--fulltrace``
     don't cut any tracebacks (default is to cut).
-``--collectonly``
-    only collect tests, don't execute them.
 ``--traceconfig``
     trace considerations of conftest.py files.
 ``--nomagic``

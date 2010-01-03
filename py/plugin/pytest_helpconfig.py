@@ -5,10 +5,13 @@ import inspect, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
-    group.addoption("--help-config", action="store_true", dest="helpconfig", 
-            help="show available conftest.py and ENV-variable names.")
     group.addoption('--version', action="store_true", 
             help="display py lib version and import information.")
+    group._addoption('-p', action="append", dest="plugins", default = [],
+               metavar="name", 
+               help="early-load given plugin (multi-allowed).")
+    group.addoption("--help-config", action="store_true", dest="helpconfig", 
+            help="show available conftest.py and ENV-variable names.")
 
 def pytest_configure(__multicall__, config):
     if config.option.version:

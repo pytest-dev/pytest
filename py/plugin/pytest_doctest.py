@@ -27,7 +27,7 @@ from py.impl.code.code import TerminalRepr, ReprFileLocation
 import doctest
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general")
+    group = parser.getgroup("collect")
     group.addoption("--doctest-modules", 
         action="store_true", default=False, 
         help="run doctests in all .py modules",

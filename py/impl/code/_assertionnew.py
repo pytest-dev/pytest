@@ -52,7 +52,7 @@ def interpret(source, frame, should_fail=False):
     if should_fail:
         return ("(assertion failed, but when it was re-run for "
                 "printing intermediate values, it did not fail.  Suggestions: "
-                "compute assert expression before the assert or use --nomagic)")
+                "compute assert expression before the assert or use --no-assert)")
 
 def run(offending_line, frame=None):
     if frame is None:

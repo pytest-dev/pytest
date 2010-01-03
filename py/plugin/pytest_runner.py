@@ -12,7 +12,7 @@ def pytest_addoption(parser):
     group = parser.getgroup("general") 
     group.addoption('--boxed',
                action="store_true", dest="boxed", default=False,
-               help="box each test run in a separate process") 
+               help="box each test run in a separate process (unix)") 
 
 # XXX move to pytest_sessionstart and fix py.test owns tests 
 def pytest_configure(config):

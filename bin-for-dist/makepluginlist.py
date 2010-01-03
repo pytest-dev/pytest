@@ -7,9 +7,9 @@ plugins = [
             'skipping mark pdb figleaf coverage '
             'monkeypatch capture recwarn tmpdir',),
     ('testing domains', 
-            'oejskit django'),
+            'oejskit django genscript'),
     ('reporting and failure logging', 
-            'pastebin xmlresult resultlog terminal',),
+            'pastebin logxml xmlresult resultlog terminal',),
     ('other testing conventions',
             'unittest nose doctest restdoc'),
     ('core debugging / help functionality', 

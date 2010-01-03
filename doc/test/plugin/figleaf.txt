@@ -2,12 +2,12 @@
 pytest_figleaf plugin
 =====================
 
-write and report coverage data with 'figleaf'.
+report python test coverage using the 'figleaf' package.
 
 .. contents::
   :local:
 
-
+Not enabled by default (use "-p" or conftest settings to do so).
 
 command line options
 --------------------
@@ -18,7 +18,7 @@ command line options
 ``--fig-data=dir``
     set tracing file, default: ".figleaf".
 ``--fig-html=dir``
-    set html reporting dir, default "html").
+    set html reporting dir, default "html".
 
 Start improving this plugin in 30 seconds
 =========================================

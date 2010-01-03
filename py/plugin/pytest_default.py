@@ -55,28 +55,31 @@ def pytest_addoption(parser):
     group._addoption('-x', '--exitfirst',
                action="store_true", dest="exitfirst", default=False,
                help="exit instantly on first error or failed test."),
-    group.addoption("--ignore", action="append", metavar="path", 
-        help="ignore path during collection (multi-allowed).")
     group._addoption('-k',
         action="store", dest="keyword", default='',
         help="only run test items matching the given "
              "space separated keywords.  precede a keyword with '-' to negate. "
              "Terminate the expression with ':' to treat a match as a signal "
              "to run all subsequent tests. ")
-    group._addoption('-p', action="append", dest="plugins", default = [],
-               help=("load the specified plugin after command line parsing. "))
     if execnet:
         group._addoption('-f', '--looponfail',
                    action="store_true", dest="looponfail", default=False,
                    help="run tests, re-run failing test set until all pass.")
 
+    group = parser.getgroup("collect", "collection")
+    group.addoption('--collectonly',
+        action="store_true", dest="collectonly",
+        help="only collect tests, don't execute them."),
+    group.addoption("--ignore", action="append", metavar="path", 
+        help="ignore path during collection (multi-allowed).")
+    group.addoption('--confcutdir', dest="confcutdir", default=None, 
+        metavar="dir",
+        help="only load conftest.py's relative to specified dir.")
+
     group = parser.getgroup("debugconfig", 
         "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
-    group.addoption('--confcutdir', dest="confcutdir", default=None, 
-        metavar="dir",
-        help="only load conftest.py's relative to specified dir.")
     if execnet:
         add_dist_options(parser)
     else:

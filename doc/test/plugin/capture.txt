@@ -116,7 +116,7 @@ command line options
 
 
 ``--capture=method``
-    set capturing method during tests: fd (default)|sys|no.
+    per-test capturing method: one of fd (default)|sys|no.
 ``-s``
     shortcut for --capture=no.
 

@@ -1,13 +1,13 @@
 """
-   logxml plugin for machine-readable logging of test results. 
-   Based on initial code from Ross Lawley.
+   logging of test results in JUnit-XML format, for use with Hudson 
+   and build integration servers.  Based on initial code from Ross Lawley.
 """
 
 import py
 import time
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general")
+    group = parser.getgroup("terminal reporting")
     group.addoption('--xml', action="store", dest="xmlpath", 
            metavar="path", default=None,
            help="create junit-xml style report file at the given path.")
