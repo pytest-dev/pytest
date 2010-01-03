@@ -1,10 +1,5 @@
-.. 
-    ==============
-    Downloading
-    ==============
 
 .. _`index page`: http://pypi.python.org/pypi/py/
-
 
 py.test/pylib installation info in a nutshell
 ===================================================
@@ -15,7 +10,7 @@ py.test/pylib installation info in a nutshell
 
 **Requirements**: setuptools_ or Distribute_ 
 
-**Installers**: easy_install_ and pip_
+**Installers**: easy_install_ and pip_ or `standalone`_ (new for 1.2)
 
 **Distribution names**:
 
@@ -24,7 +19,7 @@ py.test/pylib installation info in a nutshell
 * debian: ``python-codespeak-lib``
 * gentoo: ``pylib``
 
-**Installed scripts**: see `bin`_ for which scripts are installed. 
+**Installed scripts**: see `bin`_ for which and how scripts are installed. 
 
 .. _`bin`: bin.html
 
@@ -67,6 +62,25 @@ you should see the version number and the import location of the tool.
 Maybe you want to head on with the `quickstart`_ now? 
 
 .. _quickstart: test/quickstart.html
+
+.. _standalone:
+
+Generating a py.test standalone Script
+============================================
+
+If you are a maintainer or application developer and want users 
+to run tests you can use a facility to generate a standalone
+"py.test" script that you can tell users to run::
+
+    py.test --genscript=mytest 
+
+will generate a ``mytest`` script that is, in fact, a ``py.test`` under
+disguise.  You can tell people to download and then e.g. run it like this::
+
+    python mytest --pastebin=all 
+
+and ask them to send you the resulting URL.  The resulting script has 
+all core features and runs unchanged under Python2 and Python3 interpreters. 
 
 Troubleshooting
 ========================
