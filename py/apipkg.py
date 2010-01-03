@@ -8,7 +8,7 @@ see http://pypi.python.org/pypi/apipkg
 import sys
 from types import ModuleType
 
-__version__ = "1.0b3"
+__version__ = "1.0b4"
 
 def initpkg(pkgname, exportdefs):
     """ initialize given package from the export definitions. """
