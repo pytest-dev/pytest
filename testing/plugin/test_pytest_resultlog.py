@@ -4,9 +4,9 @@ from py.plugin.pytest_resultlog import generic_path, ResultLog
 from py.impl.test.collect import Node, Item, FSCollector
 
 def test_generic_path(testdir):
-    config = testdir.Config()
-    p1 = Node('a', config=config)
-    assert p1.fspath is None
+    config = testdir.parseconfig()
+    p1 = Node('a', parent=config._rootcol)
+    #assert p1.fspath is None
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)
     item = Item('c', parent = p3)
@@ -14,7 +14,7 @@ def test_generic_path(testdir):
     res = generic_path(item)
     assert res == 'a.B().c'
 
-    p0 = FSCollector('proj/test', config=config)
+    p0 = FSCollector('proj/test', parent=config._rootcol)
     p1 = FSCollector('proj/test/a', parent=p0)
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)

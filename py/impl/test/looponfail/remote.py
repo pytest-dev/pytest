@@ -136,8 +136,8 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
         colitems = []
         for trail in trails:
             try:
-                colitem = py.test.collect.Collector._fromtrail(trail, config)
-            except AssertionError:  
+                colitem = config._rootcol.fromtrail(trail)
+            except ValueError:
                 #XXX send info for "test disappeared" or so
                 continue 
             colitems.append(colitem)
@@ -159,4 +159,5 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
     session.config.hook.pytest_looponfailinfo(
         failreports=list(failreports), 
         rootdirs=[config.topdir])
-    channel.send([rep.getnode()._totrail() for rep in failreports])
+    rootcol = session.config._rootcol
+    channel.send([rootcol.totrail(rep.getnode()) for rep in failreports])

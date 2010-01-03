@@ -434,3 +434,9 @@ def test_generate_tests_only_done_in_subdir(testdir):
     result.stdout.fnmatch_lines([
         "*3 passed*"
     ])
+
+def test_modulecol_roundtrip(testdir):
+    modcol = testdir.getmodulecol("pass", withinit=True)
+    trail = modcol.config._rootcol.totrail(modcol)
+    newcol = modcol.config._rootcol.fromtrail(trail)
+    assert modcol.name == newcol.name

@@ -55,6 +55,7 @@ Changes between 1.X and 1.1.1
   which will regularly see e.g. py.test.mark and py.test.importorskip. 
 
 - simplify internal plugin manager machinery 
+- simplify internal collection tree by introducing a RootCollector node
 
 - fix assert reinterpreation that sees a call containing "keyword=..."
 

@@ -52,44 +52,8 @@ class TestCollector:
         parent = fn.getparent(py.test.collect.Class)
         assert parent is cls     
 
-    def test_totrail_and_back(self, testdir, tmpdir):
-        a = tmpdir.ensure("a", dir=1)
-        tmpdir.ensure("a", "__init__.py")
-        x = tmpdir.ensure("a", "trail.py")
-        config = testdir.reparseconfig([x])
-        col = config.getfsnode(x)
-        trail = col._totrail()
-        assert len(trail) == 2
-        assert trail[0] == a.relto(config.topdir)
-        assert trail[1] == ('trail.py',)
-        col2 = py.test.collect.Collector._fromtrail(trail, config)
-        assert col2.listnames() == col.listnames()
-       
-    def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
-        config = testdir.reparseconfig()
-        col = config.getfsnode(config.topdir)
-        trail = col._totrail()
-        assert len(trail) == 2
-        assert trail[0] == '.'
-        assert trail[1] == ()
-        col2 = py.test.collect.Collector._fromtrail(trail, config)
-        assert col2.fspath == config.topdir
-        assert len(col2.listchain()) == 1
-        col3 = config.getfsnode(config.topdir.dirpath())
-        py.test.raises(ValueError, 
-              "col3._totrail()")
-        
 
-    def test_listnames_and__getitembynames(self, testdir):
-        modcol = testdir.getmodulecol("pass", withinit=True)
-        print(modcol.config.pluginmanager.getplugins())
-        names = modcol.listnames()
-        print(names)
-        dircol = modcol.config.getfsnode(modcol.config.topdir)
-        x = dircol._getitembynames(names)
-        assert modcol.name == x.name 
-
-    def test_listnames_getitembynames_custom(self, testdir):
+    def test_getcustomfile_roundtrip(self, testdir):
         hello = testdir.makefile(".xxx", hello="world")
         testdir.makepyfile(conftest="""
             import py
@@ -98,15 +62,15 @@ class TestCollector:
             class MyDirectory(py.test.collect.Directory):
                 def collect(self):
                     return [CustomFile(self.fspath.join("hello.xxx"), parent=self)]
-            Directory = MyDirectory
+            def pytest_collect_directory(path, parent):
+                return MyDirectory(path, parent=parent)
         """)
         config = testdir.parseconfig(hello)
         node = config.getfsnode(hello)
         assert isinstance(node, py.test.collect.File)
         assert node.name == "hello.xxx"
-        names = node.listnames()[1:]
-        dircol = config.getfsnode(config.topdir) 
-        node = dircol._getitembynames(names)
+        names = config._rootcol.totrail(node)
+        node = config._rootcol.getbynames(names)
         assert isinstance(node, py.test.collect.File)
 
 class TestCollectFS:
@@ -232,3 +196,27 @@ class TestCustomConftests:
             "*MyModule*",
             "*test_x*"
         ])
+
+class TestRootCol:
+    def test_totrail_and_back(self, testdir, tmpdir):
+        a = tmpdir.ensure("a", dir=1)
+        tmpdir.ensure("a", "__init__.py")
+        x = tmpdir.ensure("a", "trail.py")
+        config = testdir.reparseconfig([x])
+        col = config.getfsnode(x)
+        trail = config._rootcol.totrail(col)
+        col2 = config._rootcol.fromtrail(trail)
+        assert col2 == col 
+       
+    def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
+        config = testdir.reparseconfig()
+        col = config.getfsnode(config.topdir)
+        trail = config._rootcol.totrail(col)
+        col2 = config._rootcol.fromtrail(trail)
+        assert col2.fspath == config.topdir
+        assert len(col2.listchain()) == 1
+        py.test.raises(config.Error, "config.getfsnode(config.topdir.dirpath())")
+        #col3 = config.getfsnode(config.topdir.dirpath())
+        #py.test.raises(ValueError, 
+        #      "col3._totrail()")
+        

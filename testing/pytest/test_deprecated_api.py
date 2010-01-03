@@ -5,7 +5,7 @@ from py.impl.test.outcome import Skipped
 class TestCollectDeprecated:
         
     def test_collect_with_deprecated_run_and_join(self, testdir, recwarn):
-        testdir.makepyfile(conftest="""
+        testdir.makeconftest("""
             import py
 
             class MyInstance(py.test.collect.Instance):
@@ -39,7 +39,8 @@ class TestCollectDeprecated:
                         return self.Module(self.fspath.join(name), parent=self)
 
             def pytest_collect_directory(path, parent):
-                return MyDirectory(path, parent)
+                if path.basename == "subconf": 
+                    return MyDirectory(path, parent)
         """)
         subconf = testdir.mkpydir("subconf")
         somefile = subconf.join("somefile.py")

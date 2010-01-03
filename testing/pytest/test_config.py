@@ -1,4 +1,5 @@
 import py
+from py.impl.test.collect import RootCollector
 
 
 class TestConfigCmdlineParsing:
@@ -153,7 +154,7 @@ class TestConfigApi_getcolitems:
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == tmpdir.basename 
-        assert col.parent.parent is None
+        assert isinstance(col.parent.parent, RootCollector)
         for col in col.listchain():
             assert col.config is config 
 
@@ -164,7 +165,7 @@ class TestConfigApi_getcolitems:
         assert isinstance(col, py.test.collect.Directory)
         print(col.listchain())
         assert col.name == 'a'
-        assert col.parent is None
+        assert isinstance(col.parent, RootCollector)
         assert col.config is config 
 
     def test__getcol_pkgfile(self, testdir, tmpdir):
@@ -175,7 +176,7 @@ class TestConfigApi_getcolitems:
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == x.dirpath().basename 
-        assert col.parent.parent is None
+        assert isinstance(col.parent.parent.parent, RootCollector)
         for col in col.listchain():
             assert col.config is config 
 

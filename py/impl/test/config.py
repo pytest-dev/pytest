@@ -2,6 +2,7 @@ import py, os
 from py.impl.test.conftesthandle import Conftest
 from py.impl.test.pluginmanager import PluginManager
 from py.impl.test import parseopt
+from py.impl.test.collect import RootCollector
 
 def ensuretemp(string, dir=1): 
     """ (deprecated) return temporary directory path with
@@ -97,6 +98,7 @@ class Config(object):
         if not args:
             args.append(py.std.os.getcwd())
         self.topdir = gettopdir(args)
+        self._rootcol = RootCollector(config=self)
         self.args = [py.path.local(x) for x in args]
 
     # config objects are usually pickled across system
@@ -117,6 +119,7 @@ class Config(object):
         py.test.config = self 
         # next line will registers default plugins 
         self.__init__(topdir=py.path.local())
+        self._rootcol = RootCollector(config=self)
         args, cmdlineopts = repr 
         args = [self.topdir.join(x) for x in args]
         self.option = cmdlineopts
@@ -150,17 +153,7 @@ class Config(object):
         return [self.getfsnode(arg) for arg in self.args]
 
     def getfsnode(self, path):
-        path = py.path.local(path)
-        if not path.check():
-            raise self.Error("file not found: %s" %(path,))
-        # we want our possibly custom collection tree to start at pkgroot 
-        pkgpath = path.pypkgpath()
-        if pkgpath is None:
-            pkgpath = path.check(file=1) and path.dirpath() or path
-        tmpcol = py.test.collect.Directory(pkgpath, config=self)
-        col = tmpcol.ihook.pytest_collect_directory(path=pkgpath, parent=tmpcol)
-        col.parent = None
-        return col._getfsnode(path)
+        return self._rootcol.getfsnode(path)
 
     def _getcollectclass(self, name, path):
         try:
