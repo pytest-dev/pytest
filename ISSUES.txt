@@ -94,3 +94,14 @@ tags: 1.2
 Packages with external dependencies should be moved out
 of the core distribution.   Also figleaf could serve as
 another prototype for an external plugin. 
+
+consider pytest_addsyspath hook
+-----------------------------------------
+tags: 1.2
+
+py.test could call a new pytest_addsyspath() in order to systematically
+allow manipulation of sys.path and to inhibit it via --no-addsyspath
+in order to more easily run against installed packages. 
+
+Alternatively it could also be done via the config object 
+and pytest_configure. 
