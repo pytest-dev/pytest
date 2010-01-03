@@ -99,3 +99,11 @@ The remaining uses of py.test.ensuretemp within the py-test base
 itself are for setup methods.  Also users have expressed the
 wish to have funcargs available to setup functions.  Experiment
 with allowing funcargs there and finalizing deprecating py.test.ensuretemp.
+
+outsource figleaf plugin 
+---------------------------------------
+tags: 1.2 
+
+Packages with external dependencies should be moved out
+of the core distribution.   Also figleaf could serve as
+another prototype for an external plugin. 

@@ -40,9 +40,8 @@ Changes between 1.X and 1.1.1
 - change: the first pytest_collect_directory hook to return something
   will now prevent further hooks to be called.
 
-- change: pytest figleaf now requires --figleaf to run and is turned 
-  on by default (requires the 'figleaf' package though).  Change
-  long command line options to be a bit shorter (see py.test -h).
+- change: figleaf plugin now requires --figleaf to run.  Also
+  change its long command line options to be a bit shorter (see py.test -h).
 
 - change: pytest doctest plugin is now enabled by default and has a
   new option --doctest-glob to set a pattern for file matches. 
