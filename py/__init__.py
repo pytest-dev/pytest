@@ -7,9 +7,9 @@ and classes.  The initpkg-dictionary  below specifies
 name->value mappings where value can be another namespace
 dictionary or an import path.  
 
-(c) Holger Krekel and others, 2009
+(c) Holger Krekel and others, 2004-2010
 """
-version = "1.1.1post1"
+version = "1.2.0a1"
 
 __version__ = version = version or "1.1.x"
 import py.apipkg
