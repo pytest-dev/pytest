@@ -188,9 +188,9 @@ class TestLocalPath(common.CommonFSTests):
         p2 = tmpdir.ensure("b","2")
         p3 = tmpdir.ensure("breadth")
         l = list(tmpdir.visit(lambda x: x.check(file=1)))
-        assert l[0] == p1
-        assert l[1] == p2 
-        assert l[2] == p3
+        assert len(l) == 3
+        # check that breadth comes last
+        assert l[2] == p3 
 
 class TestExecutionOnWindows:
     pytestmark = py.test.mark.skipif("sys.platform != 'win32'")
