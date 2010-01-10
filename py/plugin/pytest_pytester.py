@@ -321,7 +321,21 @@ class TmpTestdir:
             return (sys.executable, "-c", source,)
 
     def runpython(self, script):
-        return self.run(py.std.sys.executable, script)
+        s = self._getsysprepend()
+        if s:
+            script.write(s + "\n" + script.read())
+        return self.run(sys.executable, script)
+
+    def _getsysprepend(self):
+        if not self.request.config.getvalue("toolsonpath"):
+            s = "import sys ; sys.path.insert(0, %r) ; " % str(py._dir.dirpath())
+        else:
+            s = ""
+        return s
+
+    def runpython_c(self, command):
+        command = self._getsysprepend() + command
+        return self.run(py.std.sys.executable, "-c", command)
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 

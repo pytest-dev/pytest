@@ -31,7 +31,7 @@ def test_rundist(testdir, standalone):
             pass
     """)
     result = standalone.run(sys.executable, testdir, '-n', '3')
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*1 passed*"
+    assert result.ret == 2
+    result.stderr.fnmatch_lines([
+        "*no such option*"
     ])

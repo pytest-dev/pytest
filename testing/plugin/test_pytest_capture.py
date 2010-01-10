@@ -250,10 +250,8 @@ class TestLoggingInteraction:
 
     def test_capturing_and_logging_fundamentals(self, testdir):
         # here we check a fundamental feature 
-        rootdir = str(py.path.local(py.__file__).dirpath().dirpath())
         p = testdir.makepyfile("""
             import sys, os
-            sys.path.insert(0, %r)
             import py, logging
             if hasattr(os, 'dup'):
                 cap = py.io.StdCaptureFD(out=False, in_=False)
@@ -262,7 +260,7 @@ class TestLoggingInteraction:
             logging.warn("hello1")
             outerr = cap.suspend()
 
-            print ("suspeneded and captured %%s" %% (outerr,))
+            print ("suspeneded and captured %s" % (outerr,))
 
             logging.warn("hello2")
 
@@ -270,8 +268,8 @@ class TestLoggingInteraction:
             logging.warn("hello3")
 
             outerr = cap.suspend()
-            print ("suspend2 and captured %%s" %% (outerr,))
-        """ % rootdir)
+            print ("suspend2 and captured %s" % (outerr,))
+        """)
         result = testdir.runpython(p)
         assert result.stdout.fnmatch_lines([
             "suspeneded and captured*hello1*",

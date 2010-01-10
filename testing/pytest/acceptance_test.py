@@ -81,11 +81,11 @@ class TestGeneralUsage:
             import py
             assert hasattr(py.test, 'mark')
         """)
-        result = testdir._run(sys.executable, p)
+        result = testdir.runpython(p)
         assert result.ret == 0
 
     def test_pydoc(self, testdir):
-        result = testdir._run(sys.executable, "-c", "import py ; help(py.test)")
+        result = testdir.runpython_c("import py ; help(py.test)")
         assert result.ret == 0
         s = result.stdout.str()
         assert 'MarkGenerator' in s

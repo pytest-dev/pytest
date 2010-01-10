@@ -5,6 +5,8 @@ import py
 
 try:
     import execnet
+    if not py.path.local(py.__file__).check():
+        raise ImportError("")
 except ImportError:
     execnet = None
 else:
