@@ -166,8 +166,8 @@ class Config(object):
             raise self.Error("path %r is not relative to %r" %
                 (str(path), str(topdir)))
         # assumtion: pytest's fs-collector tree follows the filesystem tree
-        names = filter(None, path.relto(topdir).split(path.sep)) 
-        names.extend(parts)
+        names = list(filter(None, path.relto(topdir).split(path.sep)))
+        names += parts
         try:
             return self._rootcol.getbynames(names)
         except ValueError:

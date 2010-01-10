@@ -138,12 +138,8 @@ class PickleChannel(object):
         self.RemoteError = channel.RemoteError
 
     def send(self, obj):
-        from execnet.gateway_base import Channel
-        if not isinstance(obj, Channel):
-            pickled_obj = self._ipickle.dumps(obj)
-            self._channel.send(pickled_obj)
-        else:
-            self._channel.send(obj)
+        pickled_obj = self._ipickle.dumps(obj)
+        self._channel.send(pickled_obj)
 
     def receive(self):
         pickled_obj = self._channel.receive()

@@ -174,3 +174,52 @@ def test_cmdline_entrypoints(monkeypatch):
         assert expected in points
     for script in unversioned_scripts:
         assert script in points
+
+def test_slave_popen_needs_no_pylib(testdir, venv):
+    venv.ensure()
+    #xxx execnet optimizes popen
+    #ch = venv.makegateway().remote_exec("import execnet")
+    #py.test.raises(ch.RemoteError, ch.waitclose)
+    python = venv._cmd("python")
+    p = testdir.makepyfile("""
+        import py
+        def test_func():
+            pass
+     """)
+    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p), 
+            '--dist=each', '--tx=popen//python=%s' % python)
+    result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])
+
+def test_slave_needs_no_execnet(testdir, specssh):
+    gw = execnet.makegateway(specssh)
+    ch = gw.remote_exec("""
+        import os, subprocess
+        subprocess.call(["virtualenv", "--no-site-packages", "subdir"])
+        channel.send(os.path.join(os.path.abspath("subdir"), 'bin', 'python'))
+        channel.send(os.path.join(os.path.abspath("subdir")))
+    """)
+    try:
+        path = ch.receive()
+        chdir = ch.receive()
+    except ch.RemoteError:
+        e = sys.exc_info()[1]
+        py.test.skip("could not prepare ssh slave:%s" % str(e))
+    gw.exit()
+    newspec = "%s//python=%s//chdir=%s" % (specssh, path, chdir)
+    gw = execnet.makegateway(newspec)
+    ch = gw.remote_exec("import execnet")
+    py.test.raises(ch.RemoteError, ch.waitclose)
+    gw.exit()
+    
+    p = testdir.makepyfile("""
+        import py
+        def test_func():
+            pass
+     """)
+    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p), 
+            '--dist=each', '--tx=%s' % newspec)
+    result.stdout.fnmatch_lines([
+        "*1 passed*"
+    ])

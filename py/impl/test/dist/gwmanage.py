@@ -35,14 +35,15 @@ class GatewayManager:
         gateways = []
         for gateway in self.group:
             spec = gateway.spec
-            if not spec._samefilesystem():
-                if spec not in seen:
-                    def finished():
-                        if notify:
-                            notify("rsyncrootready", spec, source)
-                    rsync.add_target_host(gateway, finished=finished)
-                    seen.add(spec)
-                    gateways.append(gateway)
+            if spec.popen and not spec.chdir and not spec.python:
+                continue
+            if spec not in seen:
+                def finished():
+                    if notify:
+                        notify("rsyncrootready", spec, source)
+                rsync.add_target_host(gateway, finished=finished)
+                seen.add(spec)
+                gateways.append(gateway)
         if seen:
             self.hook.pytest_gwmanage_rsyncstart(
                 source=source, 

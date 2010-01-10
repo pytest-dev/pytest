@@ -1,9 +1,3 @@
-""" 
-
-    EXPERIMENTAL dsession session  (for dist/non-dist unification)
-
-"""
-
 import py
 from py.impl.test.session import Session
 from py.impl.test import outcome 

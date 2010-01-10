@@ -239,20 +239,6 @@ class TestPickleChannelFunctional:
         error = channel._getremoteerror()
         assert isinstance(error, UnpickleError)
 
-    def test_popen_with_newchannel(self):
-        channel = self.gw.remote_exec("""
-            from py.impl.test.dist.mypickle import PickleChannel
-            channel = PickleChannel(channel)
-            newchannel = channel.receive()
-            newchannel.send(42)
-        """)
-        channel = PickleChannel(channel)
-        newchannel = self.gw.newchannel()
-        channel.send(newchannel)
-        channel.waitclose()
-        res = newchannel.receive()
-        assert res == 42
-
     def test_popen_with_various_methods(self):
         channel = self.gw.remote_exec("""
             from py.impl.test.dist.mypickle import PickleChannel

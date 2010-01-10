@@ -86,10 +86,12 @@ def install_slave(gateway, config):
         sys.path.insert(0, os.getcwd()) 
         from py.impl.test.dist.mypickle import PickleChannel
         from py.impl.test.dist.txnode import SlaveNode
+        channel.send("basicimport")
         channel = PickleChannel(channel)
         slavenode = SlaveNode(channel)
         slavenode.run()
     """)
+    channel.receive()
     channel = PickleChannel(channel)
     basetemp = None
     if gateway.spec.popen:

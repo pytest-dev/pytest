@@ -62,6 +62,9 @@ Changes between 1.X and 1.1.1
 
 - fix assert reinterpreation that sees a call containing "keyword=..."
 
+- fix issue65: properly handle dist-testing if no 
+  execnet/py lib installed remotely. 
+
 - skip some install-tests if no execnet is available
 
 - fix docs, fix internal bin/ script generation

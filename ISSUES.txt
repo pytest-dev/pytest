@@ -42,15 +42,6 @@ test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
 
-fix dist-testing: execnet needs to be rsynced over automatically
-------------------------------------------------------------------
-
-tags: bug 1.2
-bb: http://bitbucket.org/hpk42/py-trunk/issue/65/
-
-execnet is not rsynced so fails if run in an ssh-situation. 
-write test and fix.
-
 dist-testing: fix session hook / setup calling
 -----------------------------------------------------
 tags: bug 1.2
