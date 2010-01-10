@@ -75,8 +75,10 @@ class TestConfigPickling:
         config2 = Config()
         config2.__setstate__(config1.__getstate__())
         assert config2.topdir == py.path.local()
-        config2_relpaths = [x.relto(config2.topdir) for x in config2.args]
-        config1_relpaths = [x.relto(config1.topdir) for x in config1.args]
+        config2_relpaths = [py.path.local(x).relto(config2.topdir) 
+                                for x in config2.args]
+        config1_relpaths = [py.path.local(x).relto(config1.topdir) 
+                                for x in config1.args]
 
         assert config2_relpaths == config1_relpaths
         for name, value in config1.option.__dict__.items():
@@ -138,7 +140,7 @@ class TestConfigPickling:
         testdir.chdir()
         testdir.makepyfile(hello="def test_x(): pass")
         config = testdir.parseconfig(tmpdir)
-        col = config.getfsnode(config.topdir)
+        col = config.getnode(config.topdir)
         io = py.io.BytesIO()
         pickler = pickle.Pickler(io)
         pickler.dump(col)
@@ -152,7 +154,7 @@ class TestConfigPickling:
         tmpdir = testdir.tmpdir
         dir1 = tmpdir.ensure("somedir", dir=1)
         config = testdir.parseconfig()
-        col = config.getfsnode(config.topdir)
+        col = config.getnode(config.topdir)
         col1 = col.join(dir1.basename)
         assert col1.parent is col 
         io = py.io.BytesIO()

@@ -99,7 +99,11 @@ class Config(object):
             args.append(py.std.os.getcwd())
         self.topdir = gettopdir(args)
         self._rootcol = RootCollector(config=self)
-        self.args = [py.path.local(x) for x in args]
+        self._setargs(args)
+
+    def _setargs(self, args):
+        self.args = list(args)
+        self._argfspaths = [py.path.local(decodearg(x)[0]) for x in args]
 
     # config objects are usually pickled across system
     # barriers but they contain filesystem paths. 
@@ -121,10 +125,10 @@ class Config(object):
         self.__init__(topdir=py.path.local())
         self._rootcol = RootCollector(config=self)
         args, cmdlineopts = repr 
-        args = [self.topdir.join(x) for x in args]
+        args = [str(self.topdir.join(x)) for x in args]
         self.option = cmdlineopts
         self._preparse(args)
-        self.args = args 
+        self._setargs(args)
 
     def ensuretemp(self, string, dir=True):
         return self.getbasetemp().ensure(string, dir=dir) 
@@ -149,11 +153,26 @@ class Config(object):
             return py.path.local.make_numbered_dir(prefix=basename + "-", 
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
-    def getcolitems(self):
-        return [self.getfsnode(arg) for arg in self.args]
+    def getinitialnodes(self):
+        return [self.getnode(arg) for arg in self.args]
 
-    def getfsnode(self, path):
-        return self._rootcol.getfsnode(path)
+    def getnode(self, arg):
+        parts = decodearg(arg)
+        path = py.path.local(parts.pop(0))
+        if not path.check():
+            raise self.Error("file not found: %s" %(path,))
+        topdir = self.topdir
+        if path != topdir and not path.relto(topdir):
+            raise self.Error("path %r is not relative to %r" %
+                (str(path), str(topdir)))
+        # assumtion: pytest's fs-collector tree follows the filesystem tree
+        names = filter(None, path.relto(topdir).split(path.sep)) 
+        names.extend(parts)
+        try:
+            return self._rootcol.getbynames(names)
+        except ValueError:
+            e = py.std.sys.exc_info()[1]
+            raise self.Error("can't collect: %s\n%s" % (arg, e.args[0]))
 
     def _getcollectclass(self, name, path):
         try:
@@ -282,11 +301,11 @@ def gettopdir(args):
         if the common base dir resides in a python package 
         parent directory of the root package is returned. 
     """
-    args = [py.path.local(arg) for arg in args]
-    p = args and args[0] or None
-    for x in args[1:]:
+    fsargs = [py.path.local(decodearg(arg)[0]) for arg in args]
+    p = fsargs and fsargs[0] or None
+    for x in fsargs[1:]:
         p = p.common(x)
-    assert p, "cannot determine common basedir of %s" %(args,)
+    assert p, "cannot determine common basedir of %s" %(fsargs,)
     pkgdir = p.pypkgpath()
     if pkgdir is None:
         if p.check(file=1):
@@ -294,6 +313,10 @@ def gettopdir(args):
         return p
     else:
         return pkgdir.dirpath()
+
+def decodearg(arg):
+    arg = str(arg)
+    return arg.split("::")
 
 def onpytestaccess():
     # it's enough to have our containing module loaded as 

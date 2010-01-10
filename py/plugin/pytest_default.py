@@ -26,7 +26,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext 
     pb = path.purebasename
     if pb.startswith("test_") or pb.endswith("_test") or \
-       path in parent.config.args:
+       path in parent.config._argfspaths:
         if ext == ".py":
             return parent.Module(path, parent=parent) 
 
@@ -41,7 +41,7 @@ def pytest_collect_directory(path, parent):
     # define Directory(dir) already 
     if not parent.recfilter(path): # by default special ".cvs", ... 
         # check if cmdline specified this dir or a subdir directly
-        for arg in parent.config.args:
+        for arg in parent.config._argfspaths:
             if path == arg or arg.relto(path):
                 break
         else:

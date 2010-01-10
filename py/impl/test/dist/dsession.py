@@ -85,8 +85,7 @@ class DSession(Session):
     #        raise config.Error("dist mode %r needs test execution environments, "
     #                           "none found." %(config.option.dist))
 
-    def main(self, colitems=None):
-        colitems = self.getinitialitems(colitems)
+    def main(self, colitems):
         self.sessionstarts()
         self.setup()
         exitstatus = self.loop(colitems)

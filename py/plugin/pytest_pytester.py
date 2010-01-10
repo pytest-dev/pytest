@@ -158,7 +158,7 @@ class TmpTestdir:
         config = self.parseconfig(*args)
         session = config.initsession()
         rec = self.getreportrecorder(config)
-        colitems = [config.getfsnode(arg) for arg in config.args]
+        colitems = [config.getnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
         return items, rec 
 
@@ -190,7 +190,8 @@ class TmpTestdir:
         config.pluginmanager.do_configure(config)
         session = config.initsession()
         reprec = self.getreportrecorder(config)
-        session.main()
+        colitems = config.getinitialnodes()
+        session.main(colitems)
         config.pluginmanager.do_unconfigure(config)
         return reprec 
 
@@ -251,7 +252,7 @@ class TmpTestdir:
     def getfscol(self,  path, configargs=()):
         self.config = self.parseconfig(path, *configargs)
         self.session = self.config.initsession()
-        return self.config.getfsnode(path)
+        return self.config.getnode(path)
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
         kw = {self.request.function.__name__: py.code.Source(source).strip()}
@@ -266,7 +267,7 @@ class TmpTestdir:
         plugin = self.config.pluginmanager.getplugin("runner") 
         plugin.pytest_configure(config=self.config)
 
-        return self.config.getfsnode(path)
+        return self.config.getnode(path)
 
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):

@@ -93,15 +93,8 @@ class Session(object):
             exitstatus=exitstatus, 
         )
 
-    def getinitialitems(self, colitems):
-        if colitems is None:
-            colitems = [self.config.getfsnode(arg) 
-                            for arg in self.config.args]
-        return colitems
-
-    def main(self, colitems=None):
+    def main(self, colitems):
         """ main loop for running tests. """
-        colitems = self.getinitialitems(colitems)
         self.shouldstop = False 
         self.sessionstarts()
         exitstatus = outcome.EXIT_OK

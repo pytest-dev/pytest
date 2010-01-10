@@ -142,7 +142,7 @@ def slave_runsession(channel, config, fullwidth, hasmarkup):
                 continue 
             colitems.append(colitem)
     else:
-        colitems = None
+        colitems = config.getinitialnodes()
     session.shouldclose = channel.isclosed 
    
     class Failures(list):

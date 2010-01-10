@@ -396,7 +396,7 @@ class TestDSession:
         config = testdir.parseconfig('-d', p1, '--tx=popen')
         dsession = DSession(config)
         hookrecorder = testdir.getreportrecorder(config).hookrecorder
-        dsession.main([config.getfsnode(p1)])
+        dsession.main([config.getnode(p1)])
         rep = hookrecorder.popcall("pytest_runtest_logreport").report
         assert rep.passed
         rep = hookrecorder.popcall("pytest_runtest_logreport").report

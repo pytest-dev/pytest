@@ -117,28 +117,28 @@ class TestConfigAPI:
         py.test.raises(ValueError, "config.setsessionclass(Session1)")
 
 
-class TestConfigApi_getcolitems:
-    def test_getcolitems_onedir(self, testdir):
+class TestConfigApi_getinitialnodes:
+    def test_onedir(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
-        colitems = config.getcolitems()
+        colitems = config.getinitialnodes()
         assert len(colitems) == 1
         col = colitems[0]
         assert isinstance(col, py.test.collect.Directory)
         for col in col.listchain():
             assert col.config is config 
 
-    def test_getcolitems_twodirs(self, testdir, tmpdir):
+    def test_twodirs(self, testdir, tmpdir):
         config = testdir.reparseconfig([tmpdir, tmpdir])
-        colitems = config.getcolitems()
+        colitems = config.getinitialnodes()
         assert len(colitems) == 2
         col1, col2 = colitems 
         assert col1.name == col2.name 
         assert col1.parent == col2.parent 
 
-    def test_getcolitems_curdir_and_subdir(self, testdir, tmpdir):
+    def test_curdir_and_subdir(self, testdir, tmpdir):
         a = tmpdir.ensure("a", dir=1)
         config = testdir.reparseconfig([tmpdir, a])
-        colitems = config.getcolitems()
+        colitems = config.getinitialnodes()
         assert len(colitems) == 2
         col1, col2 = colitems 
         assert col1.name == tmpdir.basename
@@ -147,10 +147,10 @@ class TestConfigApi_getcolitems:
             for subcol in col.listchain():
                 assert col.config is config 
 
-    def test__getcol_global_file(self, testdir, tmpdir):
+    def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         config = testdir.reparseconfig([x])
-        col = config.getfsnode(x)
+        col, = config.getinitialnodes()
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == tmpdir.basename 
@@ -158,21 +158,21 @@ class TestConfigApi_getcolitems:
         for col in col.listchain():
             assert col.config is config 
 
-    def test__getcol_global_dir(self, testdir, tmpdir):
+    def test_global_dir(self, testdir, tmpdir):
         x = tmpdir.ensure("a", dir=1)
         config = testdir.reparseconfig([x])
-        col = config.getfsnode(x)
+        col, = config.getinitialnodes()
         assert isinstance(col, py.test.collect.Directory)
         print(col.listchain())
         assert col.name == 'a'
         assert isinstance(col.parent, RootCollector)
         assert col.config is config 
 
-    def test__getcol_pkgfile(self, testdir, tmpdir):
+    def test_pkgfile(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         tmpdir.ensure("__init__.py")
         config = testdir.reparseconfig([x])
-        col = config.getfsnode(x)
+        col, = config.getinitialnodes()
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == x.dirpath().basename 
@@ -214,7 +214,9 @@ class TestConfig_gettopdir:
         Z = tmp.ensure('Z', dir=1)
         assert gettopdir([c]) == a
         assert gettopdir([c, Z]) == tmp 
-
+        assert gettopdir(["%s::xyc" % c]) == a
+        assert gettopdir(["%s::xyc::abc" % c]) == a
+        assert gettopdir(["%s::xyc" % c, "%s::abc" % Z]) == tmp
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):

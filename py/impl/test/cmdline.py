@@ -13,7 +13,8 @@ def main(args=None):
         config.parse(args) 
         config.pluginmanager.do_configure(config)
         session = config.initsession()
-        exitstatus = session.main()
+        colitems = config.getinitialnodes()
+        exitstatus = session.main(colitems)
         config.pluginmanager.do_unconfigure(config)
         raise SystemExit(exitstatus)
     except config.Error:

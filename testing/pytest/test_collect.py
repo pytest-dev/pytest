@@ -66,7 +66,7 @@ class TestCollector:
                 return MyDirectory(path, parent=parent)
         """)
         config = testdir.parseconfig(hello)
-        node = config.getfsnode(hello)
+        node = config.getnode(hello)
         assert isinstance(node, py.test.collect.File)
         assert node.name == "hello.xxx"
         names = config._rootcol.totrail(node)
@@ -84,7 +84,7 @@ class TestCollectFS:
         tmpdir.ensure("normal", 'test_found.py')
         tmpdir.ensure('test_found.py')
 
-        col = testdir.parseconfig(tmpdir).getfsnode(tmpdir)
+        col = testdir.parseconfig(tmpdir).getnode(tmpdir)
         items = col.collect()
         names = [x.name for x in items]
         assert len(items) == 2
@@ -93,7 +93,7 @@ class TestCollectFS:
 
     def test_found_certain_testfiles(self, testdir): 
         p1 = testdir.makepyfile(test_found = "pass", found_test="pass")
-        col = testdir.parseconfig(p1).getfsnode(p1.dirpath())
+        col = testdir.parseconfig(p1).getnode(p1.dirpath())
         items = col.collect() # Directory collect returns files sorted by name
         assert len(items) == 2
         assert items[1].name == 'test_found.py'
@@ -106,7 +106,7 @@ class TestCollectFS:
         testdir.makepyfile(test_two="hello")
         p1.dirpath().mkdir("dir2")
         config = testdir.parseconfig()
-        col = config.getfsnode(p1.dirpath())
+        col = config.getnode(p1.dirpath())
         names = [x.name for x in col.collect()]
         assert names == ["dir1", "dir2", "test_one.py", "test_two.py", "x"]
 
@@ -120,7 +120,7 @@ class TestCollectPluginHookRelay:
         config = testdir.Config()
         config.pluginmanager.register(Plugin())
         config.parse([tmpdir])
-        col = config.getfsnode(tmpdir)
+        col = config.getnode(tmpdir)
         testdir.makefile(".abc", "xyz")
         res = col.collect()
         assert len(wascalled) == 1
@@ -203,20 +203,36 @@ class TestRootCol:
         tmpdir.ensure("a", "__init__.py")
         x = tmpdir.ensure("a", "trail.py")
         config = testdir.reparseconfig([x])
-        col = config.getfsnode(x)
+        col = config.getnode(x)
         trail = config._rootcol.totrail(col)
         col2 = config._rootcol.fromtrail(trail)
         assert col2 == col 
        
     def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
         config = testdir.reparseconfig()
-        col = config.getfsnode(config.topdir)
+        col = config.getnode(config.topdir)
         trail = config._rootcol.totrail(col)
         col2 = config._rootcol.fromtrail(trail)
         assert col2.fspath == config.topdir
         assert len(col2.listchain()) == 1
-        py.test.raises(config.Error, "config.getfsnode(config.topdir.dirpath())")
-        #col3 = config.getfsnode(config.topdir.dirpath())
+        py.test.raises(config.Error, "config.getnode(config.topdir.dirpath())")
+        #col3 = config.getnode(config.topdir.dirpath())
         #py.test.raises(ValueError, 
         #      "col3._totrail()")
         
+    def test_argid(self, testdir, tmpdir):
+        cfg = testdir.parseconfig()
+        p = testdir.makepyfile("def test_func(): pass")
+        item = cfg.getnode("%s::test_func" % p)
+        assert item.name == "test_func"
+
+    def test_argid_with_method(self, testdir, tmpdir):
+        cfg = testdir.parseconfig()
+        p = testdir.makepyfile("""
+            class TestClass:
+                def test_method(self): pass
+        """)
+        item = cfg.getnode("%s::TestClass::()::test_method" % p)
+        assert item.name == "test_method"
+        item = cfg.getnode("%s::TestClass::test_method" % p)
+        assert item.name == "test_method"

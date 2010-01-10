@@ -50,7 +50,7 @@ class TestCollectDeprecated:
                 def check2(self): pass 
         """))
         config = testdir.parseconfig(somefile)
-        dirnode = config.getfsnode(somefile.dirpath())
+        dirnode = config.getnode(somefile.dirpath())
         colitems = dirnode.collect()
         w = recwarn.pop(DeprecationWarning)
         assert w.filename.find("conftest.py") != -1
@@ -174,7 +174,7 @@ class TestCollectDeprecated:
         """)
         testme = testdir.makefile('xxx', testme="hello")
         config = testdir.parseconfig(testme)
-        col = config.getfsnode(testme)
+        col = config.getnode(testme)
         assert col.collect() == []
 
 
@@ -236,11 +236,11 @@ class TestDisabled:
         """)
         config = testdir.parseconfig()
         if name == "Directory":
-            config.getfsnode(testdir.tmpdir)
+            config.getnode(testdir.tmpdir)
         elif name in ("Module", "File"):
-            config.getfsnode(p)
+            config.getnode(p)
         else:
-            fnode = config.getfsnode(p) 
+            fnode = config.getnode(p) 
             recwarn.clear()
             fnode.collect()
         w = recwarn.pop(DeprecationWarning)
@@ -317,7 +317,7 @@ def test_conftest_non_python_items(recwarn, testdir):
     testdir.maketxtfile(x="")
     config = testdir.parseconfig()
     recwarn.clear()
-    dircol = config.getfsnode(checkfile.dirpath())
+    dircol = config.getnode(checkfile.dirpath())
     w = recwarn.pop(DeprecationWarning)
     assert str(w.message).find("conftest.py") != -1
     colitems = dircol.collect()
@@ -325,7 +325,7 @@ def test_conftest_non_python_items(recwarn, testdir):
     assert colitems[0].name == "hello.xxx"
     assert colitems[0].__class__.__name__ == "CustomItem"
 
-    item = config.getfsnode(checkfile)
+    item = config.getnode(checkfile)
     assert item.name == "hello.xxx"
     assert item.__class__.__name__ == "CustomItem"
 
@@ -358,14 +358,14 @@ def test_extra_python_files_and_functions(testdir):
     """)
     # check that directory collects "check_" files 
     config = testdir.parseconfig()
-    col = config.getfsnode(checkfile.dirpath())
+    col = config.getnode(checkfile.dirpath())
     colitems = col.collect()
     assert len(colitems) == 1
     assert isinstance(colitems[0], py.test.collect.Module)
 
     # check that module collects "check_" functions and methods
     config = testdir.parseconfig(checkfile)
-    col = config.getfsnode(checkfile)
+    col = config.getnode(checkfile)
     assert isinstance(col, py.test.collect.Module)
     colitems = col.collect()
     assert len(colitems) == 2

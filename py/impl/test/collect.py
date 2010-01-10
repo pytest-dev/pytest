@@ -383,24 +383,10 @@ class RootCollector(Directory):
         Directory.__init__(self, config.topdir, parent=None, config=config)
         self.name = None
         
-    def getfsnode(self, path):
-        path = py.path.local(path)
-        if not path.check():
-            raise self.config.Error("file not found: %s" %(path,))
-        topdir = self.config.topdir
-        if path != topdir and not path.relto(topdir):
-            raise self.config.Error("path %r is not relative to %r" %
-                (str(path), str(self.fspath)))
-        # assumtion: pytest's fs-collector tree follows the filesystem tree
-        basenames = filter(None, path.relto(topdir).split(path.sep)) 
-        try:
-            return self.getbynames(basenames)
-        except ValueError:
-            raise self.config.Error("can't collect: %s" % str(path))
-       
     def getbynames(self, names):
         current = self.consider(self.config.topdir)
-        for name in names:
+        while names:
+            name = names.pop(0)
             if name == ".": # special "identity" name
                 continue 
             l = []
@@ -409,8 +395,12 @@ class RootCollector(Directory):
                     l.append(x)
                 elif x.fspath == current.fspath.join(name):
                     l.append(x)
+                elif x.name == "()":
+                    names.insert(0, name)
+                    l.append(x)
+                    break
             if not l:
-                raise ValueError("no node named %r in %r" %(name, current))
+                raise ValueError("no node named %r below %r" %(name, current))
             current = l[0]
         return current
 
