@@ -55,7 +55,8 @@ class ApiModule(ModuleType):
             return '<ApiModule %r %s>' % (self.__name__, " ".join(l))
         return '<ApiModule %r>' % (self.__name__,)
 
-    def __getattr__(self, name):
+    def __makeattr(self, name):
+        """lazily compute value for name or raise AttributeError if unknown."""
         target = None
         if '__onfirstaccess__' in self.__map__:
             target = self.__map__.pop('__onfirstaccess__')
@@ -73,6 +74,8 @@ class ApiModule(ModuleType):
             del self.__map__[name]
             return result
 
+    __getattr__ = __makeattr
+
     def __dict__(self):
         # force all the content of the module to be loaded when __dict__ is read
         dictdescr = ModuleType.__dict__['__dict__']
@@ -80,6 +83,9 @@ class ApiModule(ModuleType):
         if dict is not None:
             hasattr(self, 'some')
             for name in self.__all__:
-                hasattr(self, name)  # force attribute load, ignore errors
+                try:
+                    self.__makeattr(name)
+                except AttributeError:
+                    pass
         return dict
     __dict__ = property(__dict__)
