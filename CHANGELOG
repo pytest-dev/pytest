@@ -21,6 +21,10 @@ Changes between 1.X and 1.1.1
 
 - new "pytestconfig" funcarg allows access to test config object
 
+- (experimental) allow "py.test path::name1::name2::..." for pointing
+  to a test within a test collection directly.  This might eventually
+  evolve as a full substitute to "-k" specifications. 
+
 - streamlined plugin loading: order is now as documented in
   customize.html: setuptools, ENV, commandline, conftest. 
   also setuptools entry point names are turned to canonical namees ("pytest_*")

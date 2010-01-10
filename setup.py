@@ -1,4 +1,3 @@
-"""py lib / py.test setup.py file"""
 import os, sys
 if sys.version_info >= (3,0):
     from distribute_setup import use_setuptools
@@ -16,7 +15,7 @@ Platforms: Linux, Win32, OSX
 Interpreters: Python versions 2.4 through to 3.1, Jython 2.5.1. 
 For questions please check out http://pylib.org/contact.html
 
-.. _`py.test`: http://pylib.org/test.html
+.. _`py.test`: http://pytest.org
 .. _`py.path`: http://pylib.org/path.html
 .. _`py.code`: http://pylib.org/code.html
 
