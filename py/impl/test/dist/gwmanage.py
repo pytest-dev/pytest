@@ -3,7 +3,7 @@
 """
 
 import py
-import sys, os
+import sys, os.path
 import execnet
 from execnet.gateway_base import RemoteError
 
@@ -35,7 +35,12 @@ class GatewayManager:
         gateways = []
         for gateway in self.group:
             spec = gateway.spec
-            if spec.popen and not spec.chdir and not spec.python:
+            if spec.popen and not spec.chdir:
+                # XXX this assumes that sources are python-packages
+                # and that adding the basedir does not hurt 
+                gateway.remote_exec("""
+                    import sys ; sys.path.insert(0, %r)
+                """ % os.path.dirname(str(source))).waitclose()
                 continue
             if spec not in seen:
                 def finished():

@@ -128,7 +128,7 @@ class RestWriter:
 
 class PluginOverview(RestWriter):
     def makerest(self, config):
-        plugindir = py._dir.join('plugin')
+        plugindir = py._pydir.join('plugin')
         for cat, specs in plugins:
             pluginlist = specs.split()
             self.h1(cat)

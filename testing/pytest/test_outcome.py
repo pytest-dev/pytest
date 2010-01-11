@@ -66,6 +66,6 @@ def test_pytest_cmdline_main(testdir):
             assert 1
         if __name__ == '__main__':
            py.test.cmdline.main([__file__])
-    """ % (str(py._dir.dirpath())))
+    """ % (str(py._pydir.dirpath())))
     import subprocess
     subprocess.check_call([sys.executable, str(p)])

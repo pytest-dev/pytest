@@ -246,7 +246,7 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.cut(excludepath=py._dir)
+                    ntraceback = ntraceback.cut(excludepath=py._pydir)
             traceback = ntraceback.filter()
         return traceback 
 

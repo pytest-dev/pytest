@@ -269,21 +269,17 @@ class Config(object):
 
     def getrsyncdirs(self):
         config = self
-        roots = config.option.rsyncdir
+        candidates = [py._pydir] + config.option.rsyncdir
         conftestroots = config.getconftest_pathlist("rsyncdirs")
         if conftestroots:
-            roots.extend(conftestroots)
-        pydirs = [x.realpath() for x in py._pydirs]
-        roots = [py.path.local(root) for root in roots]
-        for root in roots:
+            candidates.extend(conftestroots)
+        roots = []
+        for root in candidates:
+            root = py.path.local(root).realpath()
             if not root.check():
                 raise config.Error("rsyncdir doesn't exist: %r" %(root,))
-            if pydirs is not None and root.basename in ("py", "_py"):
-                try:
-                    pydirs.remove(root) # otherwise it's a conflict
-                except ValueError: # we run as standalone py.test 
-                    pass
-        roots.extend(pydirs)
+            if root not in roots:
+                roots.append(root)
         return roots
 
 #

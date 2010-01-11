@@ -174,7 +174,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
                                             'to the py package') % (text,)
             relpath = '/'.join(text.split('/')[1:])
             if check:
-                pkgroot = py._impldir
+                pkgroot = py._pydir
                 abspath = pkgroot.join(relpath)
                 assert pkgroot.join(relpath).check(), (
                         'problem with linkrole :source:`%s`: '

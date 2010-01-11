@@ -51,12 +51,19 @@ class TestGatewayManagerPopen:
         hm.makegateways()
         assert len(hm.group) == 2
         for gw in hm.group:
-            gw.remote_exec = None
+            class pseudoexec:
+                args = []
+                def __init__(self, *args):
+                    self.args.extend(args)
+                def waitclose(self):
+                    pass
+            gw.remote_exec = pseudoexec
         l = []
         hm.rsync(source, notify=lambda *args: l.append(args))
         assert not l
         hm.exit()
         assert not len(hm.group) 
+        assert "sys.path.insert" in gw.remote_exec.args[0] 
 
     def test_rsync_popen_with_path(self, hook, mysetup):
         source, dest = mysetup.source, mysetup.dest 

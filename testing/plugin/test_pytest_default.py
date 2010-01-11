@@ -59,7 +59,7 @@ class TestDistOptions:
     def test_getrsyncdirs(self, testdir):
         config = testdir.parseconfigure('--rsyncdir=' + str(testdir.tmpdir))
         roots = config.getrsyncdirs()
-        assert len(roots) == 1 + len(py._pydirs)
+        assert len(roots) == 1 + 1 # pylib itself
         assert testdir.tmpdir in roots
 
     def test_getrsyncdirs_with_conftest(self, testdir):
@@ -71,7 +71,7 @@ class TestDistOptions:
         """)
         config = testdir.parseconfigure(testdir.tmpdir, '--rsyncdir=y', '--rsyncdir=z')
         roots = config.getrsyncdirs()
-        assert len(roots) == 3 + len(py._pydirs)
+        assert len(roots) == 3 + 1 # pylib itself
         assert py.path.local('y') in roots 
         assert py.path.local('z') in roots 
         assert testdir.tmpdir.join('x') in roots 

@@ -19,9 +19,7 @@ py.apipkg.initpkg(__name__, dict(
     # access to all posix errno's as classes
     error = '.impl.error:error',
 
-    _impldir = '.impl._metainfo:impldir',
-    _dir = '.impl._metainfo:pydir',
-    _pydirs = '.impl._metainfo:pydirs',
+    _pydir = '.impl._metainfo:pydir',
     version = 'py:__version__', # backward compatibility
 
     cmdline = {

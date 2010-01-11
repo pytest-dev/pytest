@@ -257,7 +257,7 @@ class Collector(Node):
             path = self.fspath 
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:
-                ntraceback = ntraceback.cut(excludepath=py._dir)
+                ntraceback = ntraceback.cut(excludepath=py._pydir)
             traceback = ntraceback.filter()
         return traceback 
 

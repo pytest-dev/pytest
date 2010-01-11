@@ -25,7 +25,7 @@ def test_virtual_module_identity():
     assert local1 is local2
 
 def test_importall():
-    base = py._impldir
+    base = py._pydir.join("impl")
     nodirs = [
         base.join('test', 'testing', 'data'),
         base.join('path', 'gateway',),

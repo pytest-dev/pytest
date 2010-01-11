@@ -318,7 +318,7 @@ class TmpTestdir:
             assert hasattr(py.cmdline, cmdlinename), cmdlinename
             source = ("import sys ; sys.path.insert(0, %r); "
                       "import py ; py.cmdline.%s()" % 
-                (str(py._dir.dirpath()), cmdlinename))
+                (str(py._pydir.dirpath()), cmdlinename))
             return (sys.executable, "-c", source,)
 
     def runpython(self, script):
@@ -329,7 +329,7 @@ class TmpTestdir:
 
     def _getsysprepend(self):
         if not self.request.config.getvalue("toolsonpath"):
-            s = "import sys ; sys.path.insert(0, %r) ; " % str(py._dir.dirpath())
+            s = "import sys ; sys.path.insert(0, %r) ; " % str(py._pydir.dirpath())
         else:
             s = ""
         return s
