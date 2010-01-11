@@ -440,19 +440,66 @@ def test_teardownfails_one_function(testdir):
         "*1 passed*1 error*"
     ])
 
-@py.test.mark.xfail 
+@py.test.mark.xfail
 def test_terminate_on_hangingnode(testdir):
     p = testdir.makeconftest("""
         def pytest__teardown_final(session):
-            if session.nodeid: # running on slave
+            if session.nodeid == "my": # running on slave
                 import time
-                time.sleep(2)
+                time.sleep(3)
     """)
-    result = testdir.runpytest(p, '--dist=each', '--tx=popen')
+    result = testdir.runpytest(p, '--dist=each', '--tx=popen//id=my')
     assert result.duration < 2.0 
     result.stdout.fnmatch_lines([
-        "*0 passed*",
+        "*killed*my*",
     ])
 
 
 
+def test_session_hooks(testdir):
+    testdir.makeconftest("""
+        import sys
+        def pytest_sessionstart(session):
+            sys.pytestsessionhooks = session
+        def pytest_sessionfinish(session):
+            f = open(session.nodeid or "master", 'w')
+            f.write("xy")
+            f.close()
+            # let's fail on the slave
+            if session.nodeid: 
+                raise ValueError(42)
+    """) 
+    p = testdir.makepyfile("""
+        import sys
+        def test_hello():
+            assert hasattr(sys, 'pytestsessionhooks')
+    """)
+    result = testdir.runpytest(p, "--dist=each", "--tx=popen//id=my1")
+    result.stdout.fnmatch_lines([
+        "*ValueError*",
+        "*1 passed*",
+    ])
+    assert result.ret 
+    d = result.parseoutcomes()
+    assert d['passed'] == 1
+    assert testdir.tmpdir.join("my1").check()
+    assert testdir.tmpdir.join("master").check()
+
+def test_funcarg_teardown_failure(testdir):
+    p = testdir.makepyfile("""
+        def pytest_funcarg__myarg(request):
+            def teardown(val):
+                raise ValueError(val)
+            return request.cached_setup(setup=lambda: 42, teardown=teardown, 
+                scope="module")
+        def test_hello(myarg):
+            pass
+    """)
+    result = testdir.runpytest(p, "-n1")
+    assert result.ret
+    result.stdout.fnmatch_lines([
+        "*ValueError*42*",
+        "*1 passed*1 error*",
+    ])
+
+    

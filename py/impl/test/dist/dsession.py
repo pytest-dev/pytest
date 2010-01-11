@@ -127,6 +127,12 @@ class DSession(Session):
         elif eventname == "pytest_runtest_logreport":
             # might be some teardown report
             self.config.hook.pytest_runtest_logreport(**kwargs)
+        elif eventname == "pytest_internalerror":
+            self.config.hook.pytest_internalerror(**kwargs)
+            loopstate.exitstatus = outcome.EXIT_INTERNALERROR
+        elif eventname == "pytest__teardown_final_logerror":
+            self.config.hook.pytest__teardown_final_logerror(**kwargs)
+            loopstate.exitstatus = outcome.EXIT_TESTSFAILED
         if not self.node2pending:
             # finished
             if loopstate.testsfailed:

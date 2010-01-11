@@ -68,6 +68,8 @@ def pytest_runtest_teardown(item):
 def pytest__teardown_final(session):
     call = CallInfo(session.config._setupstate.teardown_all, when="teardown")
     if call.excinfo:
+        ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
+        call.excinfo.traceback = ntraceback.filter()
         rep = TeardownErrorReport(call.excinfo)
         return rep 
 

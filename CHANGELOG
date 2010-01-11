@@ -64,6 +64,10 @@ Changes between 1.X and 1.1.1
 
 - fix assert reinterpreation that sees a call containing "keyword=..."
 
+- fix issue66: invoke pytest_sessionstart and pytest_sessionfinish 
+  hooks on slaves during dist-testing, report module/session teardown 
+  hooks correctly.
+
 - fix issue65: properly handle dist-testing if no 
   execnet/py lib installed remotely. 
 

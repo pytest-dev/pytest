@@ -13,10 +13,7 @@ Item = py.test.collect.Item
 Collector = py.test.collect.Collector
 
 class Session(object): 
-    """ 
-        Session drives the collection and running of tests
-        and generates test events for reporters. 
-    """ 
+    nodeid = ""
     def __init__(self, config):
         self.config = config
         self.pluginmanager = config.pluginmanager # shortcut 

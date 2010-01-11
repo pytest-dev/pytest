@@ -3,6 +3,7 @@
 """
 import py
 from py.impl.test.dist.mypickle import PickleChannel
+from py.impl.test import outcome
 
 class TXNode(object):
     """ Represents a Test Execution environment in the controlling process. 
@@ -55,12 +56,12 @@ class TXNode(object):
             elif eventname == "slavefinished":
                 self._down = True
                 self.notify("pytest_testnodedown", error=None, node=self)
-            elif eventname == "pytest_runtest_logreport":
-                rep = kwargs['report']
-                rep.node = self
-                self.notify("pytest_runtest_logreport", report=rep)
+            elif eventname in ("pytest_runtest_logreport", 
+                               "pytest__teardown_final_logerror"):
+                kwargs['report'].node = self
+                self.notify(eventname, **kwargs)
             else:
-                self.notify(eventname, *args, **kwargs)
+                self.notify(eventname, **kwargs)
         except KeyboardInterrupt: 
             # should not land in receiver-thread
             raise 
@@ -99,7 +100,7 @@ def install_slave(gateway, config):
         basetemp = py.path.local.make_numbered_dir(prefix="slave-", 
             keep=0, rootdir=popenbase)
         basetemp = str(basetemp)
-    channel.send((config, basetemp))
+    channel.send((config, basetemp, gateway.id))
     return channel
 
 class SlaveNode(object):
@@ -115,9 +116,12 @@ class SlaveNode(object):
     def pytest_runtest_logreport(self, report):
         self.sendevent("pytest_runtest_logreport", report=report)
 
+    def pytest__teardown_final_logerror(self, report):
+        self.sendevent("pytest__teardown_final_logerror", report=report)
+
     def run(self):
         channel = self.channel
-        self.config, basetemp = channel.receive()
+        self.config, basetemp, self.nodeid = channel.receive()
         if basetemp:
             self.config.basetemp = py.path.local(basetemp)
         self.config.pluginmanager.do_configure(self.config)
@@ -125,22 +129,27 @@ class SlaveNode(object):
         self.runner = self.config.pluginmanager.getplugin("pytest_runner")
         self.sendevent("slaveready")
         try:
+            self.config.hook.pytest_sessionstart(session=self)
             while 1:
                 task = channel.receive()
                 if task is None: 
-                    self.sendevent("slavefinished")
                     break
                 if isinstance(task, list):
                     for item in task:
                         self.run_single(item=item)
                 else:
                     self.run_single(item=task)
+            self.config.hook.pytest_sessionfinish(
+                session=self, 
+                exitstatus=outcome.EXIT_OK)
         except KeyboardInterrupt:
             raise
         except:
             er = py.code.ExceptionInfo().getrepr(funcargs=True, showlocals=True)
             self.sendevent("pytest_internalerror", excrepr=er)
             raise
+        else:
+            self.sendevent("slavefinished")
 
     def run_single(self, item):
         call = self.runner.CallInfo(item._checkcollectable, when='setup')

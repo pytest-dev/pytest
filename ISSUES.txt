@@ -42,16 +42,6 @@ test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
 
-dist-testing: fix session hook / setup calling
------------------------------------------------------
-tags: bug 1.2
-
-Currently pytest_sessionstart and finish are called 
-on the master node and not on the slaves.  Call
-it on slaves and provide a session.nodeid which defaults
-to None for the master and contains the gateway id 
-for slaves. 
-
 have --report=xfailed[-detail] report the actual tracebacks 
 ------------------------------------------------------------------
 tags: feature
