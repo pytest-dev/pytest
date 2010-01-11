@@ -40,7 +40,7 @@ a ``py.path.local`` object for us (which wraps a directory):
   >>> foofile.read(1)
   'b'
 
-``py.path.svnurl` and ``py.path.svnwc``
+``py.path.svnurl`` and ``py.path.svnwc``
 ----------------------------------------------
 
 Two other ``py.path`` implementations that the py lib provides wrap the
