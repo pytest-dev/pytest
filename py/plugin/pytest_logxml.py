@@ -35,7 +35,7 @@ class LogXML(object):
     def _opentestcase(self, report):
         node = report.item 
         d = {'time': self._durations.pop(report.item, "0")}
-        names = [x.replace(".py", "") for x in node.listnames()]
+        names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
         d['classname'] = ".".join(names[:-1])
         d['name'] = names[-1]
         attrs = ['%s="%s"' % item for item in sorted(d.items())]
@@ -61,7 +61,7 @@ class LogXML(object):
     def _opentestcase_collectfailure(self, report):
         node = report.collector
         d = {'time': '???'}
-        names = [x.replace(".py", "") for x in node.listnames()]
+        names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
         d['classname'] = ".".join(names[:-1])
         d['name'] = names[-1]
         attrs = ['%s="%s"' % item for item in sorted(d.items())]

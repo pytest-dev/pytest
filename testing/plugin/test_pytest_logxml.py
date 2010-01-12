@@ -49,6 +49,21 @@ class TestPython:
         assert_attr(fnode, message="test setup failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_classname_instance(self, testdir):
+        testdir.makepyfile("""
+            class TestClass:
+                def test_method(self):
+                    assert 0
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, failures=1)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            classname="test_classname_instance.test_classname_instance.TestClass",
+            name="test_method")
+
     def test_internal_error(self, testdir):
         testdir.makeconftest("def pytest_runtest_protocol(): 0 / 0")
         testdir.makepyfile("def test_function(): pass")
