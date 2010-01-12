@@ -10,8 +10,18 @@ def pytest_addoption(parser):
     group._addoption('-p', action="append", dest="plugins", default = [],
                metavar="name", 
                help="early-load given plugin (multi-allowed).")
+    group.addoption('--traceconfig',
+               action="store_true", dest="traceconfig", default=False,
+               help="trace considerations of conftest.py files."),
+    group._addoption('--nomagic',
+               action="store_true", dest="nomagic", default=False,
+               help="don't reinterpret asserts, no traceback cutting. ")
+    group.addoption('--debug',
+               action="store_true", dest="debug", default=False,
+               help="generate and show internal debugging information.")
     group.addoption("--help-config", action="store_true", dest="helpconfig", 
             help="show available conftest.py and ENV-variable names.")
+
 
 def pytest_configure(__multicall__, config):
     if config.option.version:
@@ -64,6 +74,19 @@ conftest_options = (
     ('collect_ignore', '(relative) paths ignored during collection'), 
     ('rsyncdirs', 'to-be-rsynced directories for dist-testing'), 
 )
+
+def pytest_report_header(config):
+    lines = []
+    if config.option.debug or config.option.traceconfig:
+        lines.append("using py lib: %s" % (py.path.local(py.__file__).dirpath()))
+    if config.option.traceconfig:
+        lines.append("active plugins:")
+        plugins = []
+        items = config.pluginmanager._name2plugin.items()
+        for name, plugin in items:
+            lines.append("    %-20s: %s" %(name, repr(plugin)))
+    return lines
+
 
 # =====================================================
 # validate plugin syntax and hooks 

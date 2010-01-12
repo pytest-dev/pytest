@@ -21,6 +21,9 @@ Changes between 1.X and 1.1.1
 
 - new "pytestconfig" funcarg allows access to test config object
 
+- new "pytest_report_header" hook can return additional lines 
+  to be displayed at the header of a test run. 
+
 - (experimental) allow "py.test path::name1::name2::..." for pointing
   to a test within a test collection directly.  This might eventually
   evolve as a full substitute to "-k" specifications. 

@@ -109,6 +109,9 @@ def pytest_sessionfinish(session, exitstatus):
 # hooks for influencing reporting (invoked from pytest_terminal)
 # -------------------------------------------------------------------------
 
+def pytest_report_header(config):
+    """ return a string to be displayed as header info for terminal reporting."""
+
 def pytest_report_teststatus(report):
     """ return result-category, shortletter and verbose word for reporting."""
 pytest_report_teststatus.firstresult = True

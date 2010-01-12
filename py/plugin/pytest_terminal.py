@@ -24,17 +24,6 @@ def pytest_addoption(parser):
                action="store_true", dest="fulltrace", default=False,
                help="don't cut any tracebacks (default is to cut).")
 
-    group = parser.getgroup("debugconfig")
-    group.addoption('--traceconfig',
-               action="store_true", dest="traceconfig", default=False,
-               help="trace considerations of conftest.py files."),
-    group._addoption('--nomagic',
-               action="store_true", dest="nomagic", default=False,
-               help="don't reinterpret asserts, no traceback cutting. ")
-    group.addoption('--debug',
-               action="store_true", dest="debug", default=False,
-               help="generate and show internal debugging information.")
-
 
 def pytest_configure(config):
     if config.option.collectonly:
@@ -260,19 +249,10 @@ class TerminalReporter:
         if self.config.option.verbose or self.config.option.debug or getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
-
-        if self.config.option.debug or self.config.option.traceconfig:
-            self.write_line("using py lib: %s" % (py.path.local(py.__file__).dirpath()))
-        if self.config.option.traceconfig:
-            self.write_line("active plugins:")
-            plugins = []
-            items = self.config.pluginmanager._name2plugin.items()
-            for name, plugin in items:
-                repr_plugin = repr(plugin)
-                fullwidth = getattr(self._tw, 'fullwidth', 65000)
-                if len(repr_plugin)+26 > fullwidth:
-                    repr_plugin = repr_plugin[:(fullwidth-30)] + '...'
-                self.write_line("    %-20s: %s" %(name, repr_plugin))
+        lines = self.config.hook.pytest_report_header(config=self.config)
+        lines.reverse()
+        for line in flatten(lines):
+            self.write_line(line)
         for i, testarg in enumerate(self.config.args):
             self.write_line("test object %d: %s" %(i+1, testarg))
 
@@ -463,3 +443,10 @@ def repr_pythonversion(v=None):
     except (TypeError, ValueError):
         return str(v)
 
+def flatten(l):
+    for x in l:
+        if isinstance(x, (list, tuple)):
+            for y in flatten(x):
+                yield y
+        else:
+            yield x

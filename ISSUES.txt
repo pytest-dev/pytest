@@ -16,14 +16,6 @@ With 1.1.1 py.test fails at least on windows if an import
 is relative and compared against an absolute conftest.py 
 path. Normalize.
 
-allow plugins/conftests to show extra header information
---------------------------------------------------------
-tags: feature 1.2
-
-The test-report header should optionally show information
-about the under-test package and versions/locations of
-involved packages.
-
 make node._checkcollectable more robust
 -------------------------------------------------
 tags: bug 1.2
