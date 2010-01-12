@@ -1,0 +1,4 @@
+docutils
+pexpect
+figleaf
+hg+http://bitbucket.org/hpk42/execnet#egg=execnet
