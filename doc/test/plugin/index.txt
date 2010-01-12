@@ -8,9 +8,9 @@ mark_ generic mechanism for marking python functions.
 
 pdb_ interactive debugging with the Python Debugger.
 
-figleaf_ report python test coverage using the 'figleaf' package.
+figleaf_ (external) for testing with Titus' figleaf coverage module
 
-coverage_ (3rd) for testing with Ned's coverage module 
+coverage_ (external) for testing with Ned's coverage module 
 
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
@@ -24,9 +24,9 @@ tmpdir_ provide temporary directories to test functions.
 testing domains
 ===============
 
-oejskit_ (3rd) run javascript tests in real life browsers
+oejskit_ (external) run javascript tests in real life browsers
 
-django_ (3rd) for testing django applications
+django_ (external) for testing django applications
 
 genscript_ generate standalone test script to be distributed along with an application.
 
@@ -38,7 +38,7 @@ pastebin_ submit failure or test session information to a pastebin service.
 
 logxml_ logging of test results in JUnit-XML format, for use with Hudson
 
-xmlresult_ (3rd) for generating xml reports and CruiseControl integration
+xmlresult_ (external) for generating xml reports and CruiseControl integration
 
 resultlog_ non-xml machine-readable logging of test results.
 

@@ -1,5 +1,5 @@
 .. _`pytest_logxml.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_logxml.py
-.. _`terminal`: terminal.html
+.. _`helpconfig`: helpconfig.html
 .. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_recwarn.py
 .. _`unittest`: unittest.html
 .. _`pytest_monkeypatch.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_monkeypatch.py
@@ -17,10 +17,9 @@
 .. _`restdoc`: restdoc.html
 .. _`pytest_pastebin.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_pastebin.py
 .. _`pytest_tmpdir.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_tmpdir.py
-.. _`pytest_figleaf.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_figleaf.py
+.. _`terminal`: terminal.html
 .. _`pytest_hooklog.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_hooklog.py
 .. _`logxml`: logxml.html
-.. _`helpconfig`: helpconfig.html
 .. _`pytest_skipping.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_skipping.py
 .. _`checkout the py.test development version`: ../../install.html#checkout
 .. _`pytest_helpconfig.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0a1/py/plugin/pytest_helpconfig.py

@@ -22,6 +22,7 @@ plugins = [
 
 externals = {
     'oejskit': "run javascript tests in real life browsers", 
+    'figleaf': "for testing with Titus' figleaf coverage module",
     'django': "for testing django applications", 
     'coverage': "for testing with Ned's coverage module ", 
     'xmlresult': "for generating xml reports " 
@@ -137,7 +138,7 @@ class PluginOverview(RestWriter):
                 docpath = self.target.dirpath(name).new(ext=".txt")
                 if oneliner is not None:
                     htmlpath = docpath.new(ext='.html')
-                    self.para("%s_ (3rd) %s" %(name, oneliner))
+                    self.para("%s_ (external) %s" %(name, oneliner))
                     self.add_internal_link(name, htmlpath)
                 else:
                     doc = PluginDoc(docpath)

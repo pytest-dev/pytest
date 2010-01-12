@@ -23,12 +23,6 @@ command line options
     traceback verboseness (long/short/no).
 ``--fulltrace``
     don't cut any tracebacks (default is to cut).
-``--traceconfig``
-    trace considerations of conftest.py files.
-``--nomagic``
-    don't reinterpret asserts, no traceback cutting. 
-``--debug``
-    generate and show internal debugging information.
 
 Start improving this plugin in 30 seconds
 =========================================

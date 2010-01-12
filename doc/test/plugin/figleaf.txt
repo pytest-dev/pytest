@@ -1,33 +1,17 @@
-
 pytest_figleaf plugin
 =====================
 
-report python test coverage using the 'figleaf' package.
+add options to drive and report python test coverage using the 'figleaf' package.
 
-.. contents::
-  :local:
+Install the `pytest-figleaf`_ plugin to use figleaf coverage testing::
 
-Not enabled by default (use "-p" or conftest settings to do so).
+    easy_install pytest-figleaf
 
-command line options
---------------------
+or::
+    
+    pip install pytest-figleaf
 
+This will make py.test have figleaf related options.
 
-``--figleaf``
-    trace python coverage with figleaf and write HTML for files below the current working dir
-``--fig-data=dir``
-    set tracing file, default: ".figleaf".
-``--fig-html=dir``
-    set html reporting dir, default "html".
+.. _`pytest-figleaf`: http://bitbucket.org/hpk42/pytest-figleaf/
 
-Start improving this plugin in 30 seconds
-=========================================
-
-
-1. Download `pytest_figleaf.py`_ plugin source code 
-2. put it somewhere as ``pytest_figleaf.py`` into your import path 
-3. a subsequent ``py.test`` run will use your local version
-
-Checkout customize_, other plugins_ or `get in contact`_. 
-
-.. include:: links.txt
