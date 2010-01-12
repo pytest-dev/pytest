@@ -114,7 +114,7 @@ class Config(object):
         for path in self.args:
             path = py.path.local(path)
             l.append(path.relto(self.topdir)) 
-        return l, self.option
+        return l, vars(self.option)
 
     def __setstate__(self, repr):
         # we have to set py.test.config because loading 
@@ -126,7 +126,8 @@ class Config(object):
         self._rootcol = RootCollector(config=self)
         args, cmdlineopts = repr 
         args = [str(self.topdir.join(x)) for x in args]
-        self.option = cmdlineopts
+        self.option = CmdOptions()
+        self.option.__dict__.update(cmdlineopts)
         self._preparse(args)
         self._setargs(args)
 

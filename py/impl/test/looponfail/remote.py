@@ -11,7 +11,6 @@ import py
 import sys
 import execnet
 from py.impl.test.session import Session
-from py.impl.test.dist.mypickle import PickleChannel
 from py.impl.test.looponfail import util
 
 class LooponfailingSession(Session):
@@ -63,19 +62,22 @@ class RemoteControl(object):
             raise ValueError("already have gateway %r" % self.gateway)
         self.trace("setting up slave session")
         self.gateway = self.initgateway()
-        channel = self.gateway.remote_exec("""
+        self.channel = channel = self.gateway.remote_exec("""
             import os
-            from py.impl.test.dist.mypickle import PickleChannel
-            from py.impl.test.looponfail.remote import slave_runsession
+            import py
             chdir = channel.receive()
             outchannel = channel.gateway.newchannel()
             channel.send(outchannel)
-            channel = PickleChannel(channel)
             os.chdir(chdir) # unpickling config uses cwd as topdir
-            config, fullwidth, hasmarkup = channel.receive()
+            config_state = channel.receive()
+            fullwidth, hasmarkup = channel.receive()
+            py.test.config.__setstate__(config_state)
+
             import sys
             sys.stdout = sys.stderr = outchannel.makefile('w')
-            slave_runsession(channel, config, fullwidth, hasmarkup) 
+
+            from py.impl.test.looponfail.remote import slave_runsession
+            slave_runsession(channel, py.test.config, fullwidth, hasmarkup) 
         """)
         channel.send(str(self.config.topdir))
         remote_outchannel = channel.receive()
@@ -83,8 +85,8 @@ class RemoteControl(object):
             out._file.write(s)
             out._file.flush()
         remote_outchannel.setcallback(write)
-        channel = self.channel = PickleChannel(channel)
-        channel.send((self.config, out.fullwidth, out.hasmarkup))
+        channel.send(self.config.__getstate__())
+        channel.send((out.fullwidth, out.hasmarkup))
         self.trace("set up of slave session complete")
 
     def ensure_teardown(self):
