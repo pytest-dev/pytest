@@ -22,9 +22,9 @@ class LooponfailingSession(Session):
         self.remotecontrol = RemoteControl(self.config)
         self.out = py.io.TerminalWriter()
 
-    def main(self, initialitems=None):
+    def main(self, initialitems):
         try:
-            self.loopstate = loopstate = LoopState(initialitems)
+            self.loopstate = loopstate = LoopState([])
             self.remotecontrol.setup()
             while 1:
                 self.loop_once(loopstate)

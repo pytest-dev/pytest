@@ -127,3 +127,25 @@ class TestLooponFailing:
 
         session.loop_once(loopstate)
         assert len(loopstate.colitems) == 1
+
+
+    def test_looponfail_functional_fail_to_ok(self, testdir):
+        p = testdir.makepyfile("""
+            def test_one():
+                x = 0
+                assert x == 1
+        """)
+        child = testdir.spawn_pytest("-f %s" % p)
+        child.expect("def test_one")
+        child.expect("x == 1")
+        child.expect("1 failed")
+        child.expect("### LOOPONFAILING ####")
+        child.expect("waiting for changes")
+        p.write(py.code.Source("""
+            def test_one():
+                x = 1
+                assert x == 1
+        """))
+        child.expect(".*1 passed.*")
+        child.kill(15)
+
