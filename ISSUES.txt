@@ -97,3 +97,13 @@ have docs living with the plugin and require them to
 be available on doc generation time, at least when 
 the target is the website?  Or rather go for interactive help? 
 
+improved reporting on funcarg usage / name mismatches
+----------------------------------------------------------------
+tags: feature 1.2
+
+see to improve help and support for funcarg usage, 
+i.e. when a funcarg does not match any provided one. 
+Also consider implementing py.test --funcargs to
+show available funcargs - it should honour the 
+path::TestClass syntax so one can easily inspect
+where funcargs come from or which are available. 
