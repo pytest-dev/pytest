@@ -41,16 +41,6 @@ tags: feature
 there is no way to induce py.test to display the full tracebacks
 of the expected failure.  Introduce one.
 
-relax requirement to have tests/testing contain an __init__
-----------------------------------------------------------------
-tags: feature 1.2
-bb: http://bitbucket.org/hpk42/py-trunk/issue/64
-
-A local test run of a "tests" directory may work 
-but a remote one fail because the tests directory
-does not contain an "__init__.py". Either give
-an error or make it work without the __init__.py
-
 consider globals: py.test.ensuretemp and config 
 --------------------------------------------------------------
 tags: experimental-wish 1.2
@@ -68,15 +58,6 @@ Users have expressed the wish to have funcargs available to setup
 functions.  Experiment with allowing funcargs there - it might
 also help to make the py.test.ensuretemp and config deprecation.
 
-
-outsource figleaf plugin 
----------------------------------------
-tags: 1.2 
-
-Packages with external dependencies should be moved out
-of the core distribution.   Also figleaf could serve as
-another prototype for an external plugin. 
-
 consider pytest_addsyspath hook
 -----------------------------------------
 tags: 1.2
@@ -87,3 +68,32 @@ in order to more easily run against installed packages.
 
 Alternatively it could also be done via the config object 
 and pytest_configure. 
+
+relax requirement to have tests/testing contain an __init__
+----------------------------------------------------------------
+tags: feature 1.2
+bb: http://bitbucket.org/hpk42/py-trunk/issue/64
+
+A local test run of a "tests" directory may work 
+but a remote one fail because the tests directory
+does not contain an "__init__.py". Either give
+an error or make it work without the __init__.py
+
+
+show plugin information in test header 
+----------------------------------------------------------------
+tags: feature 1.2
+
+Now that external plugins are becoming more numerous 
+it would be useful to have external plugins along with
+their versions displayed as a header line. 
+
+generate/deal with plugin docs 
+----------------------------------------------------------------
+tags: feature 1.2
+
+review and prepare docs for 1.2.0 release.  Probably
+have docs living with the plugin and require them to
+be available on doc generation time, at least when 
+the target is the website?  Or rather go for interactive help? 
+
