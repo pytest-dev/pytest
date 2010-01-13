@@ -1,8 +1,7 @@
 
-pytest_recwarn plugin
-=====================
-
 helpers for asserting deprecation and other warnings.
+=====================================================
+
 
 .. contents::
   :local:

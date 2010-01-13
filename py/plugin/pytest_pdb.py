@@ -4,10 +4,6 @@ interactive debugging with the Python Debugger.
 import py
 import pdb, sys, linecache
 from py.impl.test.outcome import Skipped
-try:
-    import execnet
-except ImportError:
-    execnet = None
 
 def pytest_addoption(parser):
     group = parser.getgroup("general") 
@@ -15,16 +11,9 @@ def pytest_addoption(parser):
                action="store_true", dest="usepdb", default=False,
                help="start the interactive Python debugger on errors.")
 
-
-def pytest_configure(__multicall__, config):
-    if config.option.usepdb:
-        if execnet:
-            __multicall__.execute()
-            if config.getvalue("looponfail"):
-                raise config.Error("--pdb incompatible with --looponfail.")
-            if config.option.dist != "no":
-                raise config.Error("--pdb incompatible with distributing tests.")
-        config.pluginmanager.register(PdbInvoke())
+def pytest_configure(config):
+    if config.getvalue("usepdb"):
+        config.pluginmanager.register(PdbInvoke(), 'pdb')
 
 class PdbInvoke:
     def pytest_runtest_makereport(self, item, call):

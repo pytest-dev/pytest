@@ -55,8 +55,6 @@ def main():
                   'py.impl.path',
                   'py.impl.process',
                   'py.impl.test',
-                  'py.impl.test.dist',
-                  'py.impl.test.looponfail',
         ],
         zip_safe=False,
     )

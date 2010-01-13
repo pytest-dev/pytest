@@ -1,8 +1,7 @@
 
-pytest_logxml plugin
-====================
-
 logging of test results in JUnit-XML format, for use with Hudson
+================================================================
+
 
 .. contents::
   :local:

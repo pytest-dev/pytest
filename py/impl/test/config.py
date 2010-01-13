@@ -198,8 +198,10 @@ class Config(object):
         modpath = py.path.local(mod.__file__).dirpath()
         l = []
         for relroot in relroots:
-            relroot = relroot.replace("/", py.path.local.sep)
-            l.append(modpath.join(relroot, abs=True))
+            if not isinstance(relroot, py.path.local):
+                relroot = relroot.replace("/", py.path.local.sep)
+                relroot = modpath.join(relroot, abs=True)
+            l.append(relroot)
         return l 
              
     def addoptions(self, groupname, *specs): 
@@ -253,45 +255,9 @@ class Config(object):
         self.trace("instantiated session %r" % session)
         return session
 
-    def getxspecs(self):
-        xspeclist = []
-        for xspec in self.getvalue("tx"):
-            i = xspec.find("*")
-            try:
-                num = int(xspec[:i])
-            except ValueError:
-                xspeclist.append(xspec)
-            else:
-                xspeclist.extend([xspec[i+1:]] * num)
-        if not xspeclist:
-            raise self.Error("MISSING test execution (tx) nodes: please specify --tx")
-        import execnet
-        return [execnet.XSpec(x) for x in xspeclist]
-
-    def getrsyncdirs(self):
-        config = self
-        candidates = [py._pydir] + config.option.rsyncdir
-        conftestroots = config.getconftest_pathlist("rsyncdirs")
-        if conftestroots:
-            candidates.extend(conftestroots)
-        roots = []
-        for root in candidates:
-            root = py.path.local(root).realpath()
-            if not root.check():
-                raise config.Error("rsyncdir doesn't exist: %r" %(root,))
-            if root not in roots:
-                roots.append(root)
-        return roots
-
 #
 # helpers
 #
-
-def checkmarshal(name, value):
-    try:
-        py.std.marshal.dumps(value)
-    except ValueError:
-        raise ValueError("%s=%r is not marshallable" %(name, value))
 
 def gettopdir(args): 
     """ return the top directory for the given paths.

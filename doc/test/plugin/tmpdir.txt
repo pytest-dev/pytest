@@ -1,8 +1,7 @@
 
-pytest_tmpdir plugin
-====================
-
 provide temporary directories to test functions.
+================================================
+
 
 .. contents::
   :local:

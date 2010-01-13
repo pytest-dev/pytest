@@ -43,14 +43,3 @@ class TestPDB:
         child.expect("1 failed")
         if child.isalive(): 
             child.wait()
-
-    def test_dist_incompatibility_messages(self, testdir):
-        py.test.importorskip("execnet")
-        Error = py.test.config.Error
-        py.test.raises(Error, "testdir.parseconfigure('--pdb', '--looponfail')")
-        result = testdir.runpytest("--pdb", "-n", "3")
-        assert result.ret != 0
-        assert "incompatible" in result.stderr.str()
-        result = testdir.runpytest("--pdb", "-d", "--tx", "popen")
-        assert result.ret != 0
-        assert "incompatible" in result.stderr.str()

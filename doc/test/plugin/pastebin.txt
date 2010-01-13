@@ -1,8 +1,7 @@
 
-pytest_pastebin plugin
-======================
-
 submit failure or test session information to a pastebin service.
+=================================================================
+
 
 .. contents::
   :local:

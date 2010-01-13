@@ -8,7 +8,7 @@ mark_ generic mechanism for marking python functions.
 
 pdb_ interactive debugging with the Python Debugger.
 
-figleaf_ (external) for testing with Titus' figleaf coverage module
+figleaf_ report test coverage using the 'figleaf' package.
 
 coverage_ (external) for testing with Ned's coverage module 
 
@@ -21,12 +21,14 @@ recwarn_ helpers for asserting deprecation and other warnings.
 tmpdir_ provide temporary directories to test functions.
 
 
-testing domains
-===============
+other testing domains, misc
+===========================
 
 oejskit_ (external) run javascript tests in real life browsers
 
 django_ (external) for testing django applications
+
+xdist_ loop on failing tests, distribute test runs to CPUs and hosts.
 
 genscript_ generate standalone test script to be distributed along with an application.
 

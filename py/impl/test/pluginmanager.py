@@ -61,6 +61,18 @@ class PluginManager(object):
     def getplugins(self):
         return list(self.registry)
 
+    def skipifmissing(self, name):
+        if not self.hasplugin(name):
+            py.test.skip("plugin %r is missing" % name)
+
+    def hasplugin(self, name):
+        try:
+            self.getplugin(name)
+        except KeyError:
+            return False
+        else:
+            return True
+
     def getplugin(self, name):
         try:
             return self._name2plugin[name]

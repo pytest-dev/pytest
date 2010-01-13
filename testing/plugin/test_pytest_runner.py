@@ -221,7 +221,9 @@ class TestExecutionForked(BaseFunctionalTests):
     pytestmark = py.test.mark.skipif("not hasattr(os, 'fork')")
 
     def getrunner(self):
-        return runner.forked_run_report
+        # XXX re-arrange this test to live in pytest-xdist
+        xplugin = py.test.importorskip("xdist.plugin")
+        return xplugin.forked_run_report
 
     def test_suicide(self, testdir):
         reports = testdir.runitem("""
@@ -261,19 +263,6 @@ class TestCollectionReports:
         assert not rep.failed 
         assert not rep.passed 
         assert rep.skipped 
-
-@py.test.mark.skipif("not hasattr(os, 'fork')")
-def test_functional_boxed(testdir):
-    p1 = testdir.makepyfile("""
-        import os
-        def test_function():
-            os.kill(os.getpid(), 15)
-    """)
-    result = testdir.runpytest(p1, "--boxed")
-    assert result.stdout.fnmatch_lines([
-        "*CRASHED*",
-        "*1 failed*"
-    ])
 
 def test_callinfo():
     ci = runner.CallInfo(lambda: 0, '123')

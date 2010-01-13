@@ -1,8 +1,7 @@
 
-pytest_unittest plugin
-======================
-
 automatically discover and run traditional "unittest.py" style tests.
+=====================================================================
+
 
 .. contents::
   :local:

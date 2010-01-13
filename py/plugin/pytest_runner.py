@@ -8,12 +8,6 @@ from py.impl.test.outcome import Skipped
 #
 # pytest plugin hooks 
 
-def pytest_addoption(parser):
-    group = parser.getgroup("general") 
-    group.addoption('--boxed',
-               action="store_true", dest="boxed", default=False,
-               help="box each test run in a separate process (unix)") 
-
 # XXX move to pytest_sessionstart and fix py.test owns tests 
 def pytest_configure(config):
     config._setupstate = SetupState()
@@ -36,12 +30,7 @@ def pytest_make_collect_report(collector):
     return CollectReport(collector, result, excinfo)
 
 def pytest_runtest_protocol(item):
-    if item.config.getvalue("boxed"):
-        reports = forked_run_report(item) 
-        for rep in reports:
-            item.ihook.pytest_runtest_logreport(report=rep)
-    else:
-        runtestprotocol(item)
+    runtestprotocol(item)
     return True
 
 def runtestprotocol(item, log=True):
@@ -115,38 +104,6 @@ class CallInfo:
         else:
             status = "result: %r" % (self.result,)
         return "<CallInfo when=%r %s>" % (self.when, status)
-
-def forked_run_report(item):
-    # for now, we run setup/teardown in the subprocess 
-    # XXX optionally allow sharing of setup/teardown 
-    EXITSTATUS_TESTEXIT = 4
-    from py.impl.test.dist.mypickle import ImmutablePickler
-    ipickle = ImmutablePickler(uneven=0)
-    ipickle.selfmemoize(item.config)
-    # XXX workaround the issue that 2.6 cannot pickle 
-    # instances of classes defined in global conftest.py files
-    ipickle.selfmemoize(item) 
-    def runforked():
-        try:
-            reports = runtestprotocol(item, log=False)
-        except KeyboardInterrupt: 
-            py.std.os._exit(EXITSTATUS_TESTEXIT)
-        return ipickle.dumps(reports)
-
-    ff = py.process.ForkedFunc(runforked)
-    result = ff.waitfinish()
-    if result.retval is not None:
-        return ipickle.loads(result.retval)
-    else:
-        if result.exitstatus == EXITSTATUS_TESTEXIT:
-            py.test.exit("forked test item %s raised Exit" %(item,))
-        return [report_process_crash(item, result)]
-
-def report_process_crash(item, result):
-    path, lineno = item._getfslineno()
-    info = "%s:%s: running the test CRASHED with signal %d" %(
-            path, lineno, result.signal)
-    return ItemTestReport(item, excinfo=info, when="???")
 
 class BaseReport(object):
     def __repr__(self):

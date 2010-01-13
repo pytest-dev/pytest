@@ -1,8 +1,7 @@
 
-pytest_resultlog plugin
-=======================
-
 non-xml machine-readable logging of test results.
+=================================================
+
 
 .. contents::
   :local:

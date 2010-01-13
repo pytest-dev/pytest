@@ -1,8 +1,7 @@
 
-pytest_restdoc plugin
-=====================
-
 perform ReST syntax, local and remote reference tests on .rst/.txt files.
+=========================================================================
+
 
 .. contents::
   :local:

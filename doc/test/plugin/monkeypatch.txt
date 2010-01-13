@@ -1,8 +1,7 @@
 
-pytest_monkeypatch plugin
-=========================
-
 safely patch object attributes, dicts and environment variables.
+================================================================
+
 
 .. contents::
   :local:

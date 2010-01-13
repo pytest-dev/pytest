@@ -3,16 +3,6 @@
 import sys
 import py
 
-try:
-    import execnet
-    if not py.path.local(py.__file__).check():
-        raise ImportError("")
-except ImportError:
-    execnet = None
-else:
-    if not hasattr(execnet, 'Group'):
-        execnet = None
-
 def pytest_pyfunc_call(__multicall__, pyfuncitem):
     if not __multicall__.execute():
         testfunction = pyfuncitem.obj 
@@ -63,10 +53,6 @@ def pytest_addoption(parser):
              "space separated keywords.  precede a keyword with '-' to negate. "
              "Terminate the expression with ':' to treat a match as a signal "
              "to run all subsequent tests. ")
-    if execnet:
-        group._addoption('-f', '--looponfail',
-                   action="store_true", dest="looponfail", default=False,
-                   help="run tests, re-run failing test set until all pass.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly',
@@ -82,60 +68,15 @@ def pytest_addoption(parser):
         "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
-    if execnet:
-        add_dist_options(parser)
-    else:
-        parser.hints.append(
-        "'execnet>=1.0.0b4' required for --looponfailing / distributed testing."
-        )
-
-def add_dist_options(parser):
-    #  see http://pytest.org/help/dist")
-    group = parser.getgroup("dist", "distributed testing") 
-    group._addoption('--dist', metavar="distmode", 
-               action="store", choices=['load', 'each', 'no'], 
-               type="choice", dest="dist", default="no", 
-               help=("set mode for distributing tests to exec environments.\n\n"
-                     "each: send each test to each available environment.\n\n"
-                     "load: send each test to available environment.\n\n"
-                     "(default) no: run tests inprocess, don't distribute."))
-    group._addoption('--tx', dest="tx", action="append", default=[], metavar="xspec",
-               help=("add a test execution environment. some examples: "
-                     "--tx popen//python=python2.5 --tx socket=192.168.1.102:8888 "
-                     "--tx ssh=user@codespeak.net//chdir=testcache"))
-    group._addoption('-d', 
-               action="store_true", dest="distload", default=False,
-               help="load-balance tests.  shortcut for '--dist=load'")
-    group._addoption('-n', dest="numprocesses", metavar="numprocesses", 
-               action="store", type="int", 
-               help="shortcut for '--dist=load --tx=NUM*popen'")
-    group.addoption('--rsyncdir', action="append", default=[], metavar="dir1", 
-               help="add directory for rsyncing to remote tx nodes.")
 
 def pytest_configure(config):
-    fixoptions(config)
     setsession(config)
-
-def fixoptions(config):
-    if execnet:
-        if config.option.numprocesses:
-            config.option.dist = "load"
-            config.option.tx = ['popen'] * int(config.option.numprocesses)
-        if config.option.distload:
-            config.option.dist = "load"
 
 def setsession(config):
     val = config.getvalue
     if val("collectonly"):
         from py.impl.test.session import Session
         config.setsessionclass(Session)
-    elif execnet:
-        if val("looponfail"):
-            from py.impl.test.looponfail.remote import LooponfailingSession
-            config.setsessionclass(LooponfailingSession)
-        elif val("dist") != "no":
-            from py.impl.test.dist.dsession import  DSession
-            config.setsessionclass(DSession)
       
 # pycollect related hooks and code, should move to pytest_pycollect.py
  

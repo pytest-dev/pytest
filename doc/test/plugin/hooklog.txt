@@ -1,8 +1,7 @@
 
-pytest_hooklog plugin
-=====================
-
 log invocations of extension hooks to a file.
+=============================================
+
 
 .. contents::
   :local:

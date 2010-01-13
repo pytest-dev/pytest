@@ -1,8 +1,7 @@
 
-pytest_mark plugin
-==================
-
 generic mechanism for marking python functions.
+===============================================
+
 
 .. contents::
   :local:

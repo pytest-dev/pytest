@@ -6,8 +6,8 @@ plugins = [
     ('advanced python testing', 
             'skipping mark pdb figleaf coverage '
             'monkeypatch capture recwarn tmpdir',),
-    ('testing domains', 
-            'oejskit django genscript'),
+    ('other testing domains, misc', 
+            'oejskit django xdist genscript'),
     ('reporting and failure logging', 
             'pastebin logxml xmlresult resultlog terminal',),
     ('other testing conventions',
@@ -22,7 +22,6 @@ plugins = [
 
 externals = {
     'oejskit': "run javascript tests in real life browsers", 
-    'figleaf': "for testing with Titus' figleaf coverage module",
     'django': "for testing django applications", 
     'coverage': "for testing with Ned's coverage module ", 
     'xmlresult': "for generating xml reports " 
@@ -159,7 +158,7 @@ class PluginDoc(RestWriter):
         config.pluginmanager.import_plugin(name)
         plugin = config.pluginmanager.getplugin(name)
         assert plugin is not None, plugin
-
+        print plugin
         doc = plugin.__doc__.strip()
         i = doc.find("\n")
         if i == -1:
@@ -169,12 +168,13 @@ class PluginDoc(RestWriter):
             oneliner = doc[:i].strip()
             moduledoc = doc[i+1:].strip()
 
-        self.name = plugin.__name__.split(".")[-1]
+        self.name = oneliner # plugin.__name__.split(".")[-1]
         self.oneliner = oneliner 
         self.moduledoc = moduledoc
        
-        self.h1("%s plugin" % self.name) # : %s" %(self.name, self.oneliner))
-        self.Print(self.oneliner)
+        #self.h1("%s plugin" % self.name) # : %s" %(self.name, self.oneliner))
+        self.h1(oneliner)
+        #self.Print(self.oneliner)
         self.Print()
         self.Print(".. contents::")
         self.Print("  :local:")

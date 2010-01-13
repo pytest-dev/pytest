@@ -180,21 +180,6 @@ class TestConfigApi_getinitialnodes:
         for col in col.listchain():
             assert col.config is config 
 
-class TestOptionEffects:
-    def test_boxed_option_default(self, testdir):
-        tmpdir = testdir.tmpdir.ensure("subdir", dir=1)
-        config = testdir.reparseconfig()
-        config.initsession()
-        assert not config.option.boxed
-        py.test.importorskip("execnet")
-        config = testdir.reparseconfig(['-d', tmpdir])
-        config.initsession()
-        assert not config.option.boxed
-
-    def test_is_not_boxed_by_default(self, testdir):
-        config = testdir.reparseconfig([testdir.tmpdir])
-        assert not config.option.boxed
-
 class TestConfig_gettopdir:
     def test_gettopdir(self, testdir):
         from py.impl.test.config import gettopdir

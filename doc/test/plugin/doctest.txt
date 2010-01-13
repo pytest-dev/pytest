@@ -1,8 +1,7 @@
 
-pytest_doctest plugin
-=====================
-
 collect and execute doctests from modules and test files.
+=========================================================
+
 
 .. contents::
   :local:

@@ -1,8 +1,7 @@
 
-pytest_terminal plugin
-======================
-
 Implements terminal reporting of the full testing process.
+==========================================================
+
 
 .. contents::
   :local:

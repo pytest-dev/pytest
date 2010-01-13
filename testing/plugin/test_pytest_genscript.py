@@ -25,13 +25,14 @@ def test_gen(testdir, anypython, standalone):
         "*imported from*mypytest"
     ])
 
-def test_rundist(testdir, standalone):
+def test_rundist(testdir, pytestconfig, standalone):
+    pytestconfig.pluginmanager.skipifmissing("xdist")
     testdir.makepyfile("""
         def test_one():
             pass
     """)
     result = standalone.run(sys.executable, testdir, '-n', '3')
-    assert result.ret == 2
-    result.stderr.fnmatch_lines([
-        "*no such option*"
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
     ])

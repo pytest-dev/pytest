@@ -1,8 +1,7 @@
 
-pytest_genscript plugin
-=======================
-
 generate standalone test script to be distributed along with an application.
+============================================================================
+
 
 .. contents::
   :local:

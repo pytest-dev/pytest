@@ -5,14 +5,7 @@ pytest_plugins = '_pytest doctest pytester'.split()
 
 collect_ignore = ['build', 'doc/_build']
 
-
 rsyncdirs = ['conftest.py', 'bin', 'py', 'doc', 'testing']
-try:
-    import execnet
-except ImportError:
-    pass
-else:
-    rsyncdirs.append(str(py.path.local(execnet.__file__).dirpath()))
 
 import py
 def pytest_addoption(parser):
@@ -20,42 +13,16 @@ def pytest_addoption(parser):
     group.addoption('--sshhost', 
            action="store", dest="sshhost", default=None,
            help=("ssh xspec for ssh functional tests. "))
-    group.addoption('--gx', 
-           action="append", dest="gspecs", default=None,
-           help=("add a global test environment, XSpec-syntax. "))
     group.addoption('--runslowtests',
            action="store_true", dest="runslowtests", default=False,
            help=("run slow tests"))
 
-def pytest_funcarg__specssh(request):
-    return getspecssh(request.config)
-def getgspecs(config):
-    return [execnet.XSpec(spec)
-                for spec in config.getvalueorskip("gspecs")]
 
-
-# configuration information for tests 
-def getgspecs(config):
-    return [execnet.XSpec(spec) 
-                for spec in config.getvalueorskip("gspecs")]
-
-def getspecssh(config):
-    xspecs = getgspecs(config)
-    for spec in xspecs:
-        if spec.ssh:
-            if not py.path.local.sysfind("ssh"):
-                py.test.skip("command not found: ssh")
-            return spec
-    py.test.skip("need '--gx ssh=...'")
-
-def getsocketspec(config):
-    xspecs = getgspecs(config)
-    for spec in xspecs:
-        if spec.socket:
-            return spec
-    py.test.skip("need '--gx socket=...'")
-
-
+def pytest_funcarg__sshhost(request):
+    val = request.config.getvalue("sshhost")
+    if val:
+        return val
+    py.test.skip("need --sshhost option") 
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)
     if multi is not None:

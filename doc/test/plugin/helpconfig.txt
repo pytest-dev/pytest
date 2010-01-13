@@ -1,8 +1,7 @@
 
-pytest_helpconfig plugin
-========================
-
 provide version info, conftest/environment config names.
+========================================================
+
 
 .. contents::
   :local:

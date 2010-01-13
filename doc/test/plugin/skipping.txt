@@ -1,8 +1,7 @@
 
-pytest_skipping plugin
-======================
-
 advanced skipping for python test functions, classes or modules.
+================================================================
+
 
 .. contents::
   :local:

@@ -1,8 +1,7 @@
 
-pytest_pdb plugin
-=================
-
 interactive debugging with the Python Debugger.
+===============================================
+
 
 .. contents::
   :local:

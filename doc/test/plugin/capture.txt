@@ -1,8 +1,7 @@
 
-pytest_capture plugin
-=====================
-
 configurable per-test stdout/stderr capturing mechanisms.
+=========================================================
+
 
 .. contents::
   :local:
