@@ -1,8 +1,8 @@
 import py, os
-from py.impl.test.conftesthandle import Conftest
-from py.impl.test.pluginmanager import PluginManager
-from py.impl.test import parseopt
-from py.impl.test.collect import RootCollector
+from py._test.conftesthandle import Conftest
+from py._test.pluginmanager import PluginManager
+from py._test import parseopt
+from py._test.collect import RootCollector
 
 def ensuretemp(string, dir=1): 
     """ (deprecated) return temporary directory path with
@@ -249,7 +249,7 @@ class Config(object):
         """ return an initialized session object. """
         cls = self._sessionclass 
         if cls is None:
-            from py.impl.test.session import Session
+            from py._test.session import Session
             cls = Session
         session = cls(self)
         self.trace("instantiated session %r" % session)

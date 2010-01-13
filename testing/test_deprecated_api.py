@@ -1,6 +1,6 @@
 
 import py
-from py.impl.test.outcome import Skipped
+from py._test.outcome import Skipped
 
 class TestCollectDeprecated:
         

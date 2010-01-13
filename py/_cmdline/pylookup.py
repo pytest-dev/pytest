@@ -9,7 +9,7 @@ prepended."""
 
 import sys, os
 import py
-from py.impl.io.terminalwriter import ansi_print, terminal_width
+from py._io.terminalwriter import ansi_print, terminal_width
 import re
 
 def rec(p):

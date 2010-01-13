@@ -1,7 +1,7 @@
 from __future__ import generators
 import py
-from py.impl.test.compat import TestCase
-from py.impl.test.outcome import Failed
+from py._test.compat import TestCase
+from py._test.outcome import Failed
 
 class TestCompatTestCaseSetupSemantics(TestCase):
     globlist = []

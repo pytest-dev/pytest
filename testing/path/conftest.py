@@ -1,6 +1,6 @@
 import py
 import sys
-from py.impl.path import svnwc as svncommon
+from py._path import svnwc as svncommon
 
 svnbin = py.path.local.sysfind('svn')
 repodump = py.path.local(__file__).dirpath('repotest.dump')

@@ -1,7 +1,7 @@
 import py
 import sys
 
-from py.impl.log.log import default_keywordmapper
+from py._log.log import default_keywordmapper
 
 callcapture = py.io.StdCapture.call
 

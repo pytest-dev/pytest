@@ -87,7 +87,7 @@ class Code(object):
     def fullsource(self):
         """ return a py.code.Source object for the full source file of the code
         """
-        from py.impl.code import source
+        from py._code import source
         full, _ = source.findsource(self.raw)
         return full
     fullsource = property(fullsource, None, None,
@@ -199,7 +199,7 @@ class TracebackEntry(object):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
         if self.exprinfo is None:
-            from py.impl.code import assertion 
+            from py._code import assertion 
             source = str(self.statement).strip()
             x = assertion.interpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
@@ -742,7 +742,7 @@ oldbuiltins = {}
 def patch_builtins(assertion=True, compile=True):
     """ put compile and AssertionError builtins to Python's builtins. """
     if assertion:
-        from py.impl.code import assertion
+        from py._code import assertion
         l = oldbuiltins.setdefault('AssertionError', [])
         l.append(py.builtin.builtins.AssertionError)
         py.builtin.builtins.AssertionError = assertion.AssertionError

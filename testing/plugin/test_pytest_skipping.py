@@ -104,7 +104,7 @@ def test_skipif_class(testdir):
     ])
 
 def test_evalexpression_cls_config_example(testdir):
-    from py.plugin.pytest_skipping import evalexpression
+    from py._plugin.pytest_skipping import evalexpression
     item, = testdir.getitems("""
         import py
         class TestClass:
@@ -118,8 +118,8 @@ def test_evalexpression_cls_config_example(testdir):
     assert y == 3
 
 def test_skip_reasons_folding():
-    from py.plugin import pytest_runner as runner 
-    from py.plugin.pytest_skipping import folded_skips
+    from py._plugin import pytest_runner as runner 
+    from py._plugin.pytest_skipping import folded_skips
     class longrepr:
         class reprcrash:
             path = 'xyz'

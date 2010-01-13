@@ -1,5 +1,5 @@
 import py, os
-from py.plugin.pytest_helpconfig import collectattr
+from py._plugin.pytest_helpconfig import collectattr
 
 def test_version(testdir):
     assert py.version == py.__version__ 

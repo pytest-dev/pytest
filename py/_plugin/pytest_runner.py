@@ -3,7 +3,7 @@ collect and run test items and create reports.
 """
 
 import py
-from py.impl.test.outcome import Skipped
+from py._test.outcome import Skipped
 
 #
 # pytest plugin hooks 

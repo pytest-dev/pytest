@@ -1,7 +1,7 @@
 import py
 import sys
-from py.plugin.pytest__pytest import HookRecorder
-from py.impl.test.pluginmanager import Registry
+from py._plugin.pytest__pytest import HookRecorder
+from py._test.pluginmanager import Registry
 
 def test_hookrecorder_basic():
     rec = HookRecorder(Registry())
@@ -29,7 +29,7 @@ def test_hookrecorder_basic_no_args_hook():
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
         import py
-        from py.impl.test.pluginmanager import HookRelay, Registry
+        from py._test.pluginmanager import HookRelay, Registry
         pytest_plugins="_pytest"
         def test_func(_pytest):
             class ApiClass:

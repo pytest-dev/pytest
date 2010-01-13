@@ -7,8 +7,7 @@ import sys, os
 import re
 import inspect
 import time
-from py.impl.test.config import Config as pytestConfig
-from py.plugin import hookspec
+from py._test.config import Config as pytestConfig
 from py.builtin import print_
 
 def pytest_addoption(parser):
@@ -219,7 +218,7 @@ class TmpTestdir:
         """ this is used from tests that want to re-invoke parse(). """
         if not args:
             args = [self.tmpdir]
-        from py.impl.test import config 
+        from py._test import config 
         oldconfig = py.test.config
         try:
             c = config.config_per_process = py.test.config = pytestConfig()

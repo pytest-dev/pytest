@@ -8,7 +8,7 @@ svn-Command based Implementation of a Subversion WorkingCopy Path.
 import os, sys, time, re, calendar
 import py
 import subprocess
-from py.impl.path import common
+from py._path import common
 
 #-----------------------------------------------------------
 # Caching latest repository revision and repo-paths

@@ -3,8 +3,8 @@ managing loading and interacting with pytest plugins.
 """
 import py
 import inspect
-from py.plugin import hookspec
-from py.impl.test.outcome import Skipped
+from py._plugin import hookspec
+from py._test.outcome import Skipped
 
 default_plugins = (
     "default runner capture terminal mark skipping tmpdir monkeypatch "
@@ -210,7 +210,7 @@ def importplugin(importspec):
         if str(e).find(importspec) == -1:
             raise
         try:
-            return __import__("py.plugin.%s" %(importspec), 
+            return __import__("py._plugin.%s" %(importspec), 
                 None, None, '__doc__')
         except ImportError:
             e = py.std.sys.exc_info()[1]

@@ -1,5 +1,5 @@
 import py
-from py.impl.path import cacheutil 
+from py._path import cacheutil 
 
 class BasicCacheAPITest:
     cache = None

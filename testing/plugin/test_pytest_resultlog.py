@@ -1,7 +1,7 @@
 import py
 import os
-from py.plugin.pytest_resultlog import generic_path, ResultLog
-from py.impl.test.collect import Node, Item, FSCollector
+from py._plugin.pytest_resultlog import generic_path, ResultLog
+from py._test.collect import Node, Item, FSCollector
 
 def test_generic_path(testdir):
     config = testdir.parseconfig()

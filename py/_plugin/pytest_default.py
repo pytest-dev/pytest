@@ -75,7 +75,7 @@ def pytest_configure(config):
 def setsession(config):
     val = config.getvalue
     if val("collectonly"):
-        from py.impl.test.session import Session
+        from py._test.session import Session
         config.setsessionclass(Session)
       
 # pycollect related hooks and code, should move to pytest_pycollect.py

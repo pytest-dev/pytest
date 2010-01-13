@@ -1,7 +1,7 @@
 import py
 import sys, inspect
 from compiler import parse, ast, pycodegen
-from py.impl.code.assertion import BuiltinAssertionError, _format_explanation
+from py._code.assertion import BuiltinAssertionError, _format_explanation
 
 passthroughex = (KeyboardInterrupt, SystemExit, MemoryError)
 

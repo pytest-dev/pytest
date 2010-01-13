@@ -1,6 +1,6 @@
 import py
 
-from py.plugin.pytest_restdoc import convert_rest_html, strip_html_header
+from py._plugin.pytest_restdoc import convert_rest_html, strip_html_header
 
 html = py.xml.html 
 

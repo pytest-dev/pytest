@@ -1,6 +1,6 @@
 import py, os
-from py.impl.test.pluginmanager import PluginManager, canonical_importname
-from py.impl.test.pluginmanager import Registry, MultiCall, HookRelay, varnames
+from py._test.pluginmanager import PluginManager, canonical_importname
+from py._test.pluginmanager import Registry, MultiCall, HookRelay, varnames
 
 
 class TestBootstrapping:
@@ -203,7 +203,7 @@ class TestBootstrapping:
 
 class TestPytestPluginInteractions:
     def test_do_option_conftestplugin(self, testdir):
-        from py.impl.test.config import Config 
+        from py._test.config import Config 
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true")
@@ -232,7 +232,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        from py.impl.test.config import Config 
+        from py._test.config import Config 
         config = Config() 
         config.parse([])
         config.pluginmanager.do_configure(config=config)

@@ -23,7 +23,7 @@ putting them into a conftest.py file like this::
 """
 
 import py
-from py.impl.code.code import TerminalRepr, ReprFileLocation
+from py._code.code import TerminalRepr, ReprFileLocation
 import doctest
 
 def pytest_addoption(parser):

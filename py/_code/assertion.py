@@ -38,9 +38,9 @@ def _format_explanation(explanation):
 
 
 if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
-    from py.impl.code._assertionnew import interpret
+    from py._code._assertionnew import interpret
 else:
-    from py.impl.code._assertionold import interpret
+    from py._code._assertionold import interpret
 
 
 class AssertionError(BuiltinAssertionError):

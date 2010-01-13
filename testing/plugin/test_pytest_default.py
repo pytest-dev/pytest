@@ -1,5 +1,5 @@
 import py
-from py.plugin.pytest_default import pytest_report_iteminfo
+from py._plugin.pytest_default import pytest_report_iteminfo
 
 def test_plugin_specify(testdir):
     testdir.chdir()

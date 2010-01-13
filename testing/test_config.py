@@ -1,5 +1,5 @@
 import py
-from py.impl.test.collect import RootCollector
+from py._test.collect import RootCollector
 
 
 class TestConfigCmdlineParsing:
@@ -75,7 +75,7 @@ class TestConfigAPI:
         py.test.raises(KeyError, 'config.getvalue("y", o)')
 
     def test_config_getvalueorskip(self, testdir):
-        from py.impl.test.outcome import Skipped
+        from py._test.outcome import Skipped
         config = testdir.parseconfig()
         py.test.raises(Skipped, "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
@@ -182,7 +182,7 @@ class TestConfigApi_getinitialnodes:
 
 class TestConfig_gettopdir:
     def test_gettopdir(self, testdir):
-        from py.impl.test.config import gettopdir
+        from py._test.config import gettopdir
         tmp = testdir.tmpdir
         assert gettopdir([tmp]) == tmp
         topdir = gettopdir([tmp.join("hello"), tmp.join("world")])
@@ -191,7 +191,7 @@ class TestConfig_gettopdir:
         assert gettopdir([somefile]) == tmp
 
     def test_gettopdir_pypkg(self, testdir):
-        from py.impl.test.config import gettopdir
+        from py._test.config import gettopdir
         tmp = testdir.tmpdir
         a = tmp.ensure('a', dir=1)
         b = tmp.ensure('a', 'b', '__init__.py')

@@ -3,7 +3,7 @@ local path implementation.
 """
 import sys, os, stat, re, atexit
 import py
-from py.impl.path import common
+from py._path import common
 
 iswin32 = sys.platform == "win32"
 

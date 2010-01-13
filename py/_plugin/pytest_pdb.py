@@ -3,7 +3,7 @@ interactive debugging with the Python Debugger.
 """
 import py
 import pdb, sys, linecache
-from py.impl.test.outcome import Skipped
+from py._test.outcome import Skipped
 
 def pytest_addoption(parser):
     group = parser.getgroup("general") 

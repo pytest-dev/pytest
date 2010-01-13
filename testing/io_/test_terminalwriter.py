@@ -1,6 +1,6 @@
 import py
 import os, sys
-from py.impl.io import terminalwriter 
+from py._io import terminalwriter 
 
 def test_terminal_width_COLUMNS(monkeypatch):
     """ Dummy test for get_terminal_width

@@ -1,5 +1,5 @@
 import py
-from py.plugin.pytest_pytester import LineMatcher, LineComp
+from py._plugin.pytest_pytester import LineMatcher, LineComp
 
 def test_reportrecorder(testdir):
     item = testdir.getitem("def test_func(): pass")

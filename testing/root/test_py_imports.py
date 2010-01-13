@@ -25,17 +25,16 @@ def test_virtual_module_identity():
     assert local1 is local2
 
 def test_importall():
-    base = py._pydir.join("impl")
+    base = py._pydir
     nodirs = [
-        base.join('test', 'testing', 'data'),
-        base.join('path', 'gateway',),
-        base.join('code', 'oldmagic.py'),
-        base.join('compat', 'testing'),
+        base.join('_path', 'gateway',),
+        base.join('_code', 'oldmagic.py'),
+        base.join('_compat', 'testing'),
     ]
     if sys.version_info >= (3,0):
-        nodirs.append(base.join('code', '_assertionold.py'))
+        nodirs.append(base.join('_code', '_assertionold.py'))
     else:
-        nodirs.append(base.join('code', '_assertionnew.py'))
+        nodirs.append(base.join('_code', '_assertionnew.py'))
 
     def recurse(p):
         return p.check(dotfile=0) and p.basename != "attic"
@@ -50,7 +49,7 @@ def test_importall():
                     break
             else:
                 relpath = relpath.replace(base.sep, '.')
-                modpath = 'py.impl.%s' % relpath
+                modpath = 'py.%s' % relpath
                 check_import(modpath)
 
 def check_import(modpath):

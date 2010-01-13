@@ -3,8 +3,8 @@ Python related collection nodes.
 """ 
 import py
 import inspect
-from py.impl.test.collect import configproperty, warnoldcollect
-from py.impl.test import funcargs
+from py._test.collect import configproperty, warnoldcollect
+from py._test import funcargs
 
 class PyobjMixin(object):
     def obj(): 

@@ -1,5 +1,5 @@
 import py
-from py.impl.path.svnurl import InfoSvnCommand
+from py._path.svnurl import InfoSvnCommand
 import datetime
 import time
 from testing.path.svntestbase import CommonSvnTests

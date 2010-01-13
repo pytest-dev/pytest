@@ -1,5 +1,5 @@
 import py, itertools
-from py.impl.path import common
+from py._path import common
 
 COUNTER = itertools.count()
 

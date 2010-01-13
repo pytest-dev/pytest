@@ -1,5 +1,5 @@
 import py
-from py.plugin.pytest_restdoc import deindent
+from py._plugin.pytest_restdoc import deindent
 
 def test_deindent():
     assert deindent('foo') == 'foo'
@@ -18,7 +18,7 @@ class TestDoctest:
         testdir.plugins.append("restdoc")
         assert request.module.__name__ == __name__
         testdir.makepyfile(confrest=
-            "from py.plugin.pytest_restdoc import Project")
+            "from py._plugin.pytest_restdoc import Project")
         # we scope our confrest file so that it doesn't
         # conflict with another global confrest.py 
         testdir.makepyfile(__init__="")

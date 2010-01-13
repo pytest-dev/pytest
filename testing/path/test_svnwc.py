@@ -1,7 +1,7 @@
 import py
 import os, sys
-from py.impl.path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
-from py.impl.path import svnwc as svncommon
+from py._path.svnwc import InfoSvnWCCommand, XMLWCStatus, parse_wcinfotime
+from py._path import svnwc as svncommon
 from testing.path.svntestbase import CommonSvnTests
 
 def test_make_repo(path1, tmpdir):

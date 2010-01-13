@@ -58,7 +58,7 @@ def test_bytes_io():
     assert s == tobytes("hello")
 
 def test_dontreadfrominput():
-    from py.impl.io.capture import  DontReadFromInput
+    from py._io.capture import  DontReadFromInput
     f = DontReadFromInput()
     assert not f.isatty() 
     py.test.raises(IOError, f.read)
