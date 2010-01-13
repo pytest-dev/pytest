@@ -391,15 +391,15 @@ class TestGenfuncFunctional:
                 assert request._pyfuncitem._genid == "0"
                 return request.param 
 
-            def test_function(metafunc):
-                assert metafunc.config == py.test.config
+            def test_function(metafunc, pytestconfig):
+                assert metafunc.config == pytestconfig
                 assert metafunc.module.__name__ == __name__
                 assert metafunc.function == test_function
                 assert metafunc.cls is None
 
             class TestClass:
-                def test_method(self, metafunc):
-                    assert metafunc.config == py.test.config
+                def test_method(self, metafunc, pytestconfig):
+                    assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
                     if py.std.sys.version_info > (3, 0):
                         unbound = TestClass.test_method

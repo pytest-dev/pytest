@@ -74,8 +74,8 @@ class TestBootstrapping:
         x500 = testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""
             import py
-            def test_hello():
-                plugin = py.test.config.pluginmanager.getplugin('x500')
+            def test_hello(pytestconfig):
+                plugin = pytestconfig.pluginmanager.getplugin('x500')
                 assert plugin is not None
         """)
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")

@@ -51,14 +51,23 @@ but a remote one fail because the tests directory
 does not contain an "__init__.py". Either give
 an error or make it work without the __init__.py
 
-deprecate ensuretemp / introduce funcargs to setup method
+consider globals: py.test.ensuretemp and config 
 --------------------------------------------------------------
 tags: experimental-wish 1.2
 
-The remaining uses of py.test.ensuretemp within the py-test base
-itself are for setup methods.  Also users have expressed the
-wish to have funcargs available to setup functions.  Experiment
-with allowing funcargs there and finalizing deprecating py.test.ensuretemp.
+consider deprecating py.test.ensuretemp and py.test.config 
+to further reduce py.test globality.  Also consider 
+having py.test.config and ensuretemp coming from
+a plugin rather than being there from the start.
+
+consider allowing funcargs to setup methods
+--------------------------------------------------------------
+tags: experimental-wish 1.2
+
+Users have expressed the wish to have funcargs available to setup 
+functions.  Experiment with allowing funcargs there - it might
+also help to make the py.test.ensuretemp and config deprecation.
+
 
 outsource figleaf plugin 
 ---------------------------------------

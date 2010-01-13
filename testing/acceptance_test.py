@@ -19,8 +19,8 @@ class TestGeneralUsage:
         """)
         testdir.makepyfile(test_one="""
             import py
-            def test_option():
-                assert py.test.config.option.xyz == "123"
+            def test_option(pytestconfig):
+                assert pytestconfig.option.xyz == "123"
         """)
         result = testdir.runpytest("-p", "xyz", "--xyz=123")
         assert result.ret == 0

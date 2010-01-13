@@ -44,46 +44,69 @@ def test_unicode_encoding():
         tw.line(msg)
         assert l[0].strip() == msg.encode(encoding)
 
-class BaseTests:
-    def test_line(self):    
-        tw = self.getwriter()
+class TestTerminalWriter:
+    def pytest_generate_tests(self, metafunc):
+        if "tw" in metafunc.funcargnames:
+            metafunc.addcall(id="path", param="path")
+            metafunc.addcall(id="stringio", param="stringio")
+            metafunc.addcall(id="callable", param="callable")
+    def pytest_funcarg__tw(self, request):
+        if request.param == "path":
+            tmpdir = request.getfuncargvalue("tmpdir")
+            p = tmpdir.join("tmpfile")
+            tw = py.io.TerminalWriter(p.open('w+'))
+            def getlines():
+                tw._file.flush()
+                return p.open('r').readlines()
+        elif request.param == "stringio":
+            tw = py.io.TerminalWriter(stringio=True)
+            def getlines():
+                tw.stringio.seek(0)
+                return tw.stringio.readlines()
+        elif request.param == "callable":
+            writes = []
+            tw = py.io.TerminalWriter(writes.append)
+            def getlines():
+                io = py.io.TextIO()
+                io.write("".join(writes))
+                io.seek(0)
+                return io.readlines()
+        tw.getlines = getlines
+        return tw
+
+    def test_line(self, tw):    
         tw.line("hello")
-        l = self.getlines()
+        l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "hello\n"
 
-    def test_line_unicode(self):    
-        tw = self.getwriter()
+    def test_line_unicode(self, tw):    
         for encoding in 'utf8', 'latin1':
             tw._encoding = encoding 
             msg = py.builtin._totext('b\u00f6y', 'utf8')
             tw.line(msg)
-            l = self.getlines()
+            l = tw.getlines()
             assert l[0] == msg + "\n"
 
-    def test_sep_no_title(self):
-        tw = self.getwriter()
+    def test_sep_no_title(self, tw):
         tw.sep("-", fullwidth=60) 
-        l = self.getlines()
+        l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "-" * 60 + "\n"
 
-    def test_sep_with_title(self):
-        tw = self.getwriter()
+    def test_sep_with_title(self, tw):
         tw.sep("-", "hello", fullwidth=60) 
-        l = self.getlines()
+        l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "-" * 26 + " hello " + "-" * 27 + "\n"
 
     @py.test.mark.skipif("sys.platform == 'win32'")
-    def test__escaped(self):
-        tw = self.getwriter()
+    def test__escaped(self, tw):
         text2 = tw._escaped("hello", (31))
         assert text2.find("hello") != -1
 
     @py.test.mark.skipif("sys.platform == 'win32'")
-    def test_markup(self):
-        tw = self.getwriter()
+    def test_markup(self, tw):
         for bold in (True, False):
             for color in ("red", "green"):
                 text2 = tw.markup("hello", **{color: True, 'bold': bold})
@@ -91,53 +114,22 @@ class BaseTests:
         py.test.raises(ValueError, "tw.markup('x', wronkw=3)")
         py.test.raises(ValueError, "tw.markup('x', wronkw=0)")
 
-    def test_line_write_markup(self):
-        tw = self.getwriter()
+    def test_line_write_markup(self, tw):
         tw.hasmarkup = True
         tw.line("x", bold=True)
         tw.write("x\n", red=True)
-        l = self.getlines()
+        l = tw.getlines()
         if sys.platform != "win32":
             assert len(l[0]) > 2, l
             assert len(l[1]) > 2, l
 
-    def test_attr_fullwidth(self):
-        tw = self.getwriter()
+    def test_attr_fullwidth(self, tw):
         tw.sep("-", "hello", fullwidth=70)
         tw.fullwidth = 70
         tw.sep("-", "hello")
-        l = self.getlines()
+        l = tw.getlines()
         assert len(l[0]) == len(l[1])
 
-class TestTmpfile(BaseTests):
-    def getwriter(self):
-        self.path = py.test.config.ensuretemp("terminalwriter").ensure("tmpfile")
-        self.tw = py.io.TerminalWriter(self.path.open('w+'))
-        return self.tw
-    def getlines(self):
-        io = self.tw._file
-        io.flush()
-        return self.path.open('r').readlines()
-
-class TestWithStringIO(BaseTests):
-    def getwriter(self):
-        self.tw = py.io.TerminalWriter(stringio=True)
-        return self.tw
-    def getlines(self):
-        io = self.tw.stringio
-        io.seek(0)
-        return io.readlines()
-
-class TestCallableFile(BaseTests):    
-    def getwriter(self):
-        self.writes = []
-        return py.io.TerminalWriter(self.writes.append)
-
-    def getlines(self):
-        io = py.io.TextIO()
-        io.write("".join(self.writes))
-        io.seek(0)
-        return io.readlines()
 
 def test_attr_hasmarkup():
     tw = py.io.TerminalWriter(stringio=True)
@@ -146,6 +138,3 @@ def test_attr_hasmarkup():
     tw.line("hello", bold=True)
     s = tw.stringio.getvalue()
     assert len(s) > len("hello")
-
-    
-
