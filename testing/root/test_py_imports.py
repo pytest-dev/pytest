@@ -1,6 +1,7 @@
 import py
 import types
 import sys
+from py._test.outcome import Skipped
 
 def checksubpackage(name):
     obj = getattr(py, name)
@@ -29,7 +30,6 @@ def test_importall():
     nodirs = [
         base.join('_path', 'gateway',),
         base.join('_code', 'oldmagic.py'),
-        base.join('_compat', 'testing'),
     ]
     if sys.version_info >= (3,0):
         nodirs.append(base.join('_code', '_assertionold.py'))
@@ -50,7 +50,10 @@ def test_importall():
             else:
                 relpath = relpath.replace(base.sep, '.')
                 modpath = 'py.%s' % relpath
-                check_import(modpath)
+                try:
+                    check_import(modpath)
+                except Skipped:
+                    pass
 
 def check_import(modpath):
     py.builtin.print_("checking import", modpath)

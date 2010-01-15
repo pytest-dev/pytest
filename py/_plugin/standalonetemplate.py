@@ -8,18 +8,10 @@ import base64
 import zlib
 import imp
 
-if sys.version_info >= (3,0):
-    exec("def do_exec(co, loc): exec(co, loc)\n")
-    import pickle
-    sources = sources.encode("ascii") # ensure bytes 
-    sources = pickle.loads(zlib.decompress(base64.decodebytes(sources)))
-else:
-    import cPickle as pickle
-    exec("def do_exec(co, loc): exec co in loc\n")
-    sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
-
 class DictImporter(object):
-    sources = sources
+    def __init__(self, sources):
+        self.sources = sources
+
     def find_module(self, fullname, path=None):
         if fullname in self.sources:
             return self
@@ -53,12 +45,19 @@ class DictImporter(object):
             res = self.sources.get(name+'.__init__')
         return res
 
-
-
-importer = DictImporter()
-
-sys.meta_path.append(importer)
-
 if __name__ == "__main__":
+    if sys.version_info >= (3,0):
+        exec("def do_exec(co, loc): exec(co, loc)\n")
+        import pickle
+        sources = sources.encode("ascii") # ensure bytes 
+        sources = pickle.loads(zlib.decompress(base64.decodebytes(sources)))
+    else:
+        import cPickle as pickle
+        exec("def do_exec(co, loc): exec co in loc\n")
+        sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
+
+    importer = DictImporter(sources)
+    sys.meta_path.append(importer)
+
     import py
     py.cmdline.pytest()
