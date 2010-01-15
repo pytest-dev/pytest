@@ -76,18 +76,12 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         l = self._deprecated_collect()
         if l is not None:
             return l
-        name2items = self._buildname2items()
-        colitems = list(name2items.values())
-        colitems.sort(key=lambda item: item.reportinfo()[:2])
-        return colitems
-
-    def _buildname2items(self): 
         # NB. we avoid random getattrs and peek in the __dict__ instead
-        d = {}
         dicts = [getattr(self.obj, '__dict__', {})]
         for basecls in inspect.getmro(self.obj.__class__):
             dicts.append(basecls.__dict__)
         seen = {}
+        l = []
         for dic in dicts:
             for name, obj in dic.items():
                 if name in seen:
@@ -96,8 +90,9 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 if name[0] != "_":
                     res = self.makeitem(name, obj)
                     if res is not None:
-                        d[name] = res 
-        return d
+                        l.append(res)
+        l.sort(key=lambda item: item.reportinfo()[:2])
+        return l
 
     def _deprecated_join(self, name):
         if self.__class__.join != py.test.collect.Collector.join:

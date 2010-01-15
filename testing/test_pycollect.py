@@ -333,7 +333,7 @@ class TestConftestCustomization:
         l = []
         monkeypatch.setattr(py.test.collect.Module, 'makeitem', 
             lambda self, name, obj: l.append(name))
-        modcol._buildname2items()
+        l = modcol.collect()
         assert '_hello' not in l
 
 
