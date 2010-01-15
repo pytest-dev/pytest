@@ -498,6 +498,24 @@ class TestGenfuncFunctional:
             "*1 passed*"
         ])
 
+    def test_two_functions_not_same_instance(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall({'arg1': 10})
+                metafunc.addcall({'arg1': 20})
+
+            class TestClass:
+                def test_func(self, arg1):
+                    assert not hasattr(self, 'x')
+                    self.x = 1
+        """)
+        result = testdir.runpytest("-v", p)
+        assert result.stdout.fnmatch_lines([
+            "*test_func*0*PASS*", 
+            "*test_func*1*PASS*", 
+            "*2 pass*",
+        ])
+
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

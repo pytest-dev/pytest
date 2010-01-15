@@ -60,31 +60,6 @@ class Metafunc:
         self._ids.add(id)
         self._calls.append(CallSpec(funcargs, id, param))
 
-class FunctionCollector(py.test.collect.Collector):
-    def __init__(self, name, parent, calls):
-        super(FunctionCollector, self).__init__(name, parent)
-        self.calls = calls 
-        self.obj = getattr(self.parent.obj, name) 
-       
-    def collect(self):
-        l = []
-        for callspec in self.calls:
-            name = "%s[%s]" %(self.name, callspec.id)
-            function = self.parent.Function(name=name, parent=self, 
-                callspec=callspec, callobj=self.obj)
-            l.append(function)
-        return l
-
-    def reportinfo(self):
-        try:
-            return self._fslineno, self.name
-        except AttributeError:
-            pass        
-        fspath, lineno = py.code.getfslineno(self.obj)
-        self._fslineno = fspath, lineno
-        return fspath, lineno, self.name
-    
-
 class FuncargRequest:
     _argprefix = "pytest_funcarg__"
     _argname = None

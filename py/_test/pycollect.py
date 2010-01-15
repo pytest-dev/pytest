@@ -89,8 +89,11 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
                 seen[name] = True
                 if name[0] != "_":
                     res = self.makeitem(name, obj)
-                    if res is not None:
-                        l.append(res)
+                    if res is None:
+                        continue
+                    if not isinstance(res, list):
+                        res = [res]
+                    l.extend(res)
         l.sort(key=lambda item: item.reportinfo()[:2])
         return l
 
@@ -122,9 +125,13 @@ class PyCollectorMixin(PyobjMixin, py.test.collect.Collector):
         gentesthook.pcall(plugins, metafunc=metafunc)
         if not metafunc._calls:
             return self.Function(name, parent=self)
-        return funcargs.FunctionCollector(name=name, 
-            parent=self, calls=metafunc._calls)
-
+        l = []
+        for callspec in metafunc._calls:
+            subname = "%s[%s]" %(name, callspec.id)
+            function = self.Function(name=subname, parent=self, 
+                callspec=callspec, callobj=funcobj)
+            l.append(function)
+        return l
         
 class Module(py.test.collect.File, PyCollectorMixin):
     def _getobj(self):
@@ -312,6 +319,13 @@ class Function(FunctionMixin, py.test.collect.Item):
         if callobj is not _dummy: 
             self._obj = callobj 
         self.function = getattr(self.obj, 'im_func', self.obj)
+
+    def _getobj(self):
+        name = self.name
+        i = name.find("[") # parametrization
+        if i != -1:
+            name = name[:i]
+        return getattr(self.parent.obj, name)
 
     def _isyieldedfunction(self):
         return self._args is not None

@@ -11,4 +11,4 @@ def test_failure_demo_fails_properly(testdir):
     assert failed == 20, failed
     colreports = reprec.getreports("pytest_collectreport")
     failed = len([x.failed for x in colreports])
-    assert failed == 4
+    assert failed == 3
