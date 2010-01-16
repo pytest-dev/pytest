@@ -9,7 +9,7 @@ plugins = [
     ('other testing domains, misc', 
             'oejskit django xdist genscript'),
     ('reporting and failure logging', 
-            'pastebin logxml xmlresult resultlog terminal',),
+            'pastebin junitxml xmlresult resultlog terminal',),
     ('other testing conventions',
             'unittest nose doctest restdoc'),
     ('core debugging / help functionality', 

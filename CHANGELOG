@@ -4,8 +4,8 @@ Changes between 1.X and 1.1.1
 - moved dist/looponfailing from py.test core into a new 
   separately released pytest-xdist plugin.
 
-- new junitxml plugin: --xml=path will generate a junit style xml file
-  which is parseable e.g. by the hudson continous integration server.
+- new junitxml plugin: --junitxml=path will generate a junit style xml file
+  which is processable e.g. by the Hudson CI system. 
 
 - new option: --genscript=path will generate a standalone py.test script
   which will not need any libraries installed.  thanks to Ralf Schmitt. 

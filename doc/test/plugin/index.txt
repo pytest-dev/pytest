@@ -38,7 +38,7 @@ reporting and failure logging
 
 pastebin_ submit failure or test session information to a pastebin service.
 
-logxml_ logging of test results in JUnit-XML format, for use with Hudson
+junitxml_ logging of test results in JUnit-XML format, for use with Hudson
 
 xmlresult_ (external) for generating xml reports and CruiseControl integration
 

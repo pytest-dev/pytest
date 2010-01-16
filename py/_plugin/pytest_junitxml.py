@@ -8,9 +8,9 @@ import time
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
-    group.addoption('--xml', action="store", dest="xmlpath", 
+    group.addoption('--junitxml', action="store", dest="xmlpath", 
            metavar="path", default=None,
-           help="create junit-xml style report file at the given path.")
+           help="create junit-xml style report file at given path.")
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath

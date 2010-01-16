@@ -3,7 +3,7 @@ from xml.dom import minidom
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
-    result = testdir.runpytest("--xml=%s" % resultpath, *args)
+    result = testdir.runpytest("--junitxml=%s" % resultpath, *args)
     xmldoc = minidom.parse(str(resultpath))
     return result, xmldoc
 
