@@ -1,6 +1,6 @@
 
 import py
-failure_demo = py.magic.autopath().dirpath('failure_demo.py')
+failure_demo = py.path.local(__file__).dirpath('failure_demo.py')
 
 pytest_plugins = "pytest_pytester"
 

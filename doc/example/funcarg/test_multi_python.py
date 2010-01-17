@@ -11,7 +11,7 @@ pythonlist = ['python2.3', 'python2.4', 'python2.5', 'python2.6']
 def pytest_generate_tests(metafunc):
     if 'python1' in metafunc.funcargnames:
         assert 'python2' in metafunc.funcargnames
-        for obj in metafunc.function.multiarg.obj:
+        for obj in metafunc.function.multiarg.kwargs['obj']:
             for py1 in pythonlist:
                 for py2 in pythonlist:
                     metafunc.addcall(id="%s-%s-%s" % (py1, py2, obj), 
@@ -61,5 +61,5 @@ class Python:
             if not res:
                 raise SystemExit(1)
         """ % (str(self.picklefile), expression)))
-        print loadfile
+        print (loadfile)
         py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
