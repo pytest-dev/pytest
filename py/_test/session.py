@@ -24,6 +24,8 @@ class Session(object):
 
     def genitems(self, colitems, keywordexpr=None):
         """ yield Items from iterating over the given colitems. """
+        if colitems:
+            colitems = list(colitems)
         while colitems: 
             next = colitems.pop(0)
             if isinstance(next, (tuple, list)):

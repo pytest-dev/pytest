@@ -15,9 +15,9 @@ def ensuretemp(string, dir=1):
     return py.test.config.ensuretemp(string, dir=dir)
   
 class CmdOptions(object):
-    """ pure container instance for holding cmdline options 
-        as attributes. 
-    """
+    """ holds cmdline options as attributes."""
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
@@ -31,8 +31,8 @@ class Config(object):
     basetemp = None
     _sessionclass = None
 
-    def __init__(self, topdir=None): 
-        self.option = CmdOptions()
+    def __init__(self, topdir=None, option=None): 
+        self.option = option or CmdOptions()
         self.topdir = topdir
         self._parser = parseopt.Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
@@ -47,9 +47,9 @@ class Config(object):
         self.pluginmanager.consider_conftest(conftestmodule)
 
     def _getmatchingplugins(self, fspath):
-        conftests = self._conftest._conftestpath2mod.values()
+        allconftests = self._conftest._conftestpath2mod.values()
         plugins = [x for x in self.pluginmanager.getplugins() 
-                        if x not in conftests]
+                        if x not in allconftests]
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
 
@@ -114,20 +114,20 @@ class Config(object):
         for path in self.args:
             path = py.path.local(path)
             l.append(path.relto(self.topdir)) 
-        return l, vars(self.option)
+        return l, self.option.__dict__
 
     def __setstate__(self, repr):
         # we have to set py.test.config because loading 
         # of conftest files may use it (deprecated) 
         # mainly by py.test.config.addoptions() 
-        py.test.config = self 
-        # next line will registers default plugins 
-        self.__init__(topdir=py.path.local())
-        self._rootcol = RootCollector(config=self)
+        global config_per_process
+        py.test.config = config_per_process = self 
         args, cmdlineopts = repr 
+        cmdlineopts = CmdOptions(**cmdlineopts)
+        # next line will registers default plugins 
+        self.__init__(topdir=py.path.local(), option=cmdlineopts)
+        self._rootcol = RootCollector(config=self)
         args = [str(self.topdir.join(x)) for x in args]
-        self.option = CmdOptions()
-        self.option.__dict__.update(cmdlineopts)
         self._preparse(args)
         self._setargs(args)
 
@@ -177,7 +177,7 @@ class Config(object):
 
     def _getcollectclass(self, name, path):
         try:
-            cls = self.getvalue(name, path)
+            cls = self._conftest.rget(name, path)
         except KeyError:
             return getattr(py.test.collect, name)
         else:

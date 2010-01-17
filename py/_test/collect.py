@@ -1,6 +1,5 @@
 """
-base test collection objects.  Collectors and test Items form a tree
-that is usually built iteratively.  
+test collection nodes, forming a tree, Items are leafs.
 """ 
 import py
 
@@ -33,9 +32,9 @@ class Node(object):
         self.fspath = getattr(parent, 'fspath', None) 
         self.ihook = HookProxy(self)
 
-    def _checkcollectable(self):
-        if not hasattr(self, 'fspath'):
-            self.parent._memocollect() # to reraise exception
+    def _reraiseunpicklingproblem(self):
+        if hasattr(self, '_unpickle_exc'):
+            py.builtin._reraise(*self._unpickle_exc)
             
     # 
     # note to myself: Pickling is uh.
@@ -46,23 +45,25 @@ class Node(object):
         name, parent = nameparent
         try:
             colitems = parent._memocollect()
-        except KeyboardInterrupt:
-            raise
-        except Exception:
-            # seems our parent can't collect us 
-            # so let's be somewhat operable 
-            # _checkcollectable() is to tell outsiders about the fact
-            self.name = name 
-            self.parent = parent 
-            self.config = parent.config
-            #self._obj = "could not unpickle" 
-        else:
             for colitem in colitems:
                 if colitem.name == name:
                     # we are a copy that will not be returned
                     # by our parent 
                     self.__dict__ = colitem.__dict__
                     break
+            else:
+                raise ValueError("item %r not found in parent collection %r" %(
+                    name, [x.name for x in colitems]))
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            # our parent can't collect us but we want unpickling to
+            # otherwise continue - self._reraiseunpicklingproblem() will
+            # reraise the problem 
+            self._unpickle_exc = py.std.sys.exc_info()
+            self.name = name 
+            self.parent = parent 
+            self.config = parent.config
 
     def __repr__(self): 
         if getattr(self.config.option, 'debug', False):
@@ -268,15 +269,12 @@ class FSCollector(Collector):
         self.fspath = fspath 
 
     def __getstate__(self):
-        if isinstance(self.parent, RootCollector):
-            relpath = self.parent._getrelpath(self.fspath)
-            return (relpath, self.parent)
-        else:
-            return (self.name, self.parent)
-
-    def __setstate__(self, picklestate):
-        name, parent = picklestate
-        self.__init__(parent.fspath.join(name), parent=parent)
+        # RootCollector.getbynames() inserts a directory which we need
+        # to throw out here for proper re-instantiation
+        if isinstance(self.parent.parent, RootCollector):
+            assert self.parent.fspath == self.parent.parent.fspath, self.parent
+            return (self.name, self.parent.parent) # shortcut
+        return super(Collector, self).__getstate__()
 
 class File(FSCollector):
     """ base class for collecting tests from a file. """
@@ -382,6 +380,9 @@ class RootCollector(Directory):
     def __init__(self, config):
         Directory.__init__(self, config.topdir, parent=None, config=config)
         self.name = None
+
+    def __repr__(self):
+        return "<RootCollector fspath=%r>" %(self.fspath,)
         
     def getbynames(self, names):
         current = self.consider(self.config.topdir)

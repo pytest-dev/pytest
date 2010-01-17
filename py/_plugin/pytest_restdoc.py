@@ -30,16 +30,13 @@ def getproject(path):
             return Project(parent)
 
 class ReSTFile(py.test.collect.File):
-    def __init__(self, fspath, parent, project=None):
+    def __init__(self, fspath, parent, project):
         super(ReSTFile, self).__init__(fspath=fspath, parent=parent)
-        if project is None:
-            project = getproject(fspath)
-            assert project is not None
         self.project = project
 
     def collect(self):
         return [
-            ReSTSyntaxTest(self.project, "ReSTSyntax", parent=self),
+            ReSTSyntaxTest("ReSTSyntax", parent=self, project=self.project),
             LinkCheckerMaker("checklinks", parent=self),
             DoctestText("doctest", parent=self),
         ]
@@ -63,8 +60,8 @@ def deindent(s, sep='\n'):
     return sep.join(lines)
 
 class ReSTSyntaxTest(py.test.collect.Item): 
-    def __init__(self, project, *args, **kwargs):
-        super(ReSTSyntaxTest, self).__init__(*args, **kwargs)
+    def __init__(self, name, parent, project):
+        super(ReSTSyntaxTest, self).__init__(name=name, parent=parent)
         self.project = project
 
     def reportinfo(self):

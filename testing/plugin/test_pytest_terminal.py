@@ -33,21 +33,16 @@ class Option:
 
 def pytest_generate_tests(metafunc):
     if "option" in metafunc.funcargnames:
-        metafunc.addcall(
-            id="default", 
-            funcargs={'option': Option(verbose=False)}
-        )
-        metafunc.addcall(
-            id="verbose", 
-            funcargs={'option': Option(verbose=True)}
-        )
-        if metafunc.config.pluginmanager.hasplugin("xdist"):
-            nodist = getattr(metafunc.function, 'nodist', False)
-            if not nodist:
-                metafunc.addcall(
-                    id="verbose-dist", 
-                    funcargs={'option': Option(dist='each', verbose=True)}
-                )
+        metafunc.addcall(id="default", param=Option(verbose=False))
+        metafunc.addcall(id="verbose", param=Option(verbose=True))
+        if not getattr(metafunc.function, 'nodist', False):
+            metafunc.addcall(id="verbose-dist", 
+                             param=Option(dist='each', verbose=True))
+
+def pytest_funcarg__option(request):
+    if request.param.dist:
+        request.config.pluginmanager.skipifmissing("xdist")
+    return request.param
 
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
@@ -255,12 +250,19 @@ class TestTerminal:
         ])
 
     def test_keyboard_interrupt_dist(self, testdir, option):
+        # xxx could be refined to check for return code 
         p = testdir.makepyfile("""
-            raise KeyboardInterrupt
+            def test_sleep():
+                import time
+                time.sleep(10)
         """)
-        result = testdir.runpytest(*option._getcmdargs())
-        assert result.ret == 2
-        result.stdout.fnmatch_lines(['*KEYBOARD INTERRUPT*'])
+        child = testdir.spawn_pytest(" ".join(option._getcmdargs()))
+        child.expect(".*test session starts.*")
+        child.kill(2) # keyboard interrupt
+        child.expect(".*KeyboardInterrupt.*")
+        #child.expect(".*seconds.*")
+        child.close()
+        #assert ret == 2 
 
     @py.test.mark.nodist
     def test_keyboard_interrupt(self, testdir, option):
@@ -593,9 +595,10 @@ def test_terminalreporter_reportopt_conftestsetting(testdir):
     assert result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
-    def test_trace_reporting(self, testdir):
-        result = testdir.runpytest("--trace")
-        assert result.stdout.fnmatch_lines([
-            "*active plugins*"
-        ])
-        assert result.ret == 0
+
+def test_trace_reporting(testdir):
+    result = testdir.runpytest("--traceconfig")
+    assert result.stdout.fnmatch_lines([
+        "*active plugins*"
+    ])
+    assert result.ret == 0

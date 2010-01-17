@@ -193,8 +193,3 @@ class TestNewSession(SessionTests):
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
-class TestNewSessionDSession(SessionTests):
-    def parseconfig(self, *args):
-        args = ('-n1',) + args
-        return SessionTests.parseconfig(self, *args)
-    

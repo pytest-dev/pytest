@@ -219,7 +219,7 @@ class TmpTestdir:
         if not args:
             args = [self.tmpdir]
         from py._test import config 
-        oldconfig = py.test.config
+        oldconfig = config.config_per_process # py.test.config
         try:
             c = config.config_per_process = py.test.config = pytestConfig()
             c.basetemp = oldconfig.mktemp("reparse", numbered=True)

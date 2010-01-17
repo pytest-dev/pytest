@@ -246,3 +246,132 @@ def test_preparse_ordering(testdir, monkeypatch):
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin.x == 42
 
+
+import pickle
+class TestConfigPickling:
+    def pytest_funcarg__testdir(self, request):
+        oldconfig = py.test.config 
+        print("setting py.test.config to None")
+        py.test.config = None
+        def resetglobals():
+            py.builtin.print_("setting py.test.config to", oldconfig)
+            py.test.config = oldconfig
+        request.addfinalizer(resetglobals)
+        return request.getfuncargvalue("testdir")
+
+    def test_config_getstate_setstate(self, testdir):
+        from py._test.config import Config
+        testdir.makepyfile(__init__="", conftest="x=1; y=2")
+        hello = testdir.makepyfile(hello="")
+        tmp = testdir.tmpdir
+        testdir.chdir()
+        config1 = testdir.parseconfig(hello)
+        config2 = Config()
+        config2.__setstate__(config1.__getstate__())
+        assert config2.topdir == py.path.local()
+        config2_relpaths = [py.path.local(x).relto(config2.topdir) 
+                                for x in config2.args]
+        config1_relpaths = [py.path.local(x).relto(config1.topdir) 
+                                for x in config1.args]
+
+        assert config2_relpaths == config1_relpaths
+        for name, value in config1.option.__dict__.items():
+            assert getattr(config2.option, name) == value
+        assert config2.getvalue("x") == 1
+
+    def test_config_pickling_customoption(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                group = parser.getgroup("testing group")
+                group.addoption('-G', '--glong', action="store", default=42, 
+                    type="int", dest="gdest", help="g value.")
+        """)
+        config = testdir.parseconfig("-G", "11")
+        assert config.option.gdest == 11
+        repr = config.__getstate__()
+
+        config = testdir.Config()
+        py.test.raises(AttributeError, "config.option.gdest")
+
+        config2 = testdir.Config()
+        config2.__setstate__(repr) 
+        assert config2.option.gdest == 11
+
+    def test_config_pickling_and_conftest_deprecated(self, testdir):
+        tmp = testdir.tmpdir.ensure("w1", "w2", dir=1)
+        tmp.ensure("__init__.py")
+        tmp.join("conftest.py").write(py.code.Source("""
+            def pytest_addoption(parser):
+                group = parser.getgroup("testing group")
+                group.addoption('-G', '--glong', action="store", default=42, 
+                    type="int", dest="gdest", help="g value.")
+        """))
+        config = testdir.parseconfig(tmp, "-G", "11")
+        assert config.option.gdest == 11
+        repr = config.__getstate__()
+
+        config = testdir.Config()
+        py.test.raises(AttributeError, "config.option.gdest")
+
+        config2 = testdir.Config()
+        config2.__setstate__(repr) 
+        assert config2.option.gdest == 11
+       
+        option = config2.addoptions("testing group", 
+                config2.Option('-G', '--glong', action="store", default=42,
+                       type="int", dest="gdest", help="g value."))
+        assert option.gdest == 11
+
+    def test_config_picklability(self, testdir):
+        config = testdir.parseconfig()
+        s = pickle.dumps(config)
+        newconfig = pickle.loads(s)
+        assert hasattr(newconfig, "topdir")
+        assert newconfig.topdir == py.path.local()
+
+    def test_collector_implicit_config_pickling(self, testdir):
+        tmpdir = testdir.tmpdir
+        testdir.chdir()
+        testdir.makepyfile(hello="def test_x(): pass")
+        config = testdir.parseconfig(tmpdir)
+        col = config.getnode(config.topdir)
+        io = py.io.BytesIO()
+        pickler = pickle.Pickler(io)
+        pickler.dump(col)
+        io.seek(0) 
+        unpickler = pickle.Unpickler(io)
+        col2 = unpickler.load()
+        assert col2.name == col.name 
+        assert col2.listnames() == col.listnames()
+
+    def test_config_and_collector_pickling(self, testdir):
+        tmpdir = testdir.tmpdir
+        dir1 = tmpdir.ensure("sourcedir", "somedir", dir=1)
+        config = testdir.parseconfig()
+        assert config.topdir == tmpdir
+        col = config.getnode(dir1.dirpath())
+        col1 = config.getnode(dir1)
+        assert col1.parent == col 
+        io = py.io.BytesIO()
+        pickler = pickle.Pickler(io)
+        pickler.dump(col)
+        pickler.dump(col1)
+        pickler.dump(col)
+        io.seek(0) 
+        unpickler = pickle.Unpickler(io)
+        newtopdir = tmpdir.ensure("newtopdir", dir=1)
+        newtopdir.mkdir("sourcedir").mkdir("somedir")
+        old = newtopdir.chdir()
+        try:
+            newcol = unpickler.load()
+            newcol2 = unpickler.load()
+            newcol3 = unpickler.load()
+            assert newcol2.config is newcol.config
+            assert newcol2.parent == newcol 
+            assert newcol2.config.topdir.realpath() == newtopdir.realpath()
+            newsourcedir = newtopdir.join("sourcedir")
+            assert newcol.fspath.realpath() == newsourcedir.realpath()
+            assert newcol2.fspath.basename == dir1.basename
+            assert newcol2.fspath.relto(newcol2.config.topdir)
+        finally:
+            old.chdir() 

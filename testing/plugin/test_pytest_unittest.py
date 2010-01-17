@@ -51,7 +51,7 @@ def test_new_instances(testdir):
     reprec.assertoutcome(passed=2)
 
 def test_teardown(testdir):
-    testpath = testdir.makepyfile(test_three="""
+    testpath = testdir.makepyfile("""
         import unittest
         pytest_plugins = "pytest_unittest" # XXX 
         class MyTestCase(unittest.TestCase):
