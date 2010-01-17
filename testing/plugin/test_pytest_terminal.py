@@ -100,40 +100,6 @@ class TestTerminal:
             "INTERNALERROR> *raise ValueError*"
         ])
 
-    def test_gwmanage_events(self, testdir, linecomp):
-        execnet = py.test.importorskip("execnet")
-        modcol = testdir.getmodulecol("""
-            def test_one():
-                pass
-        """, configargs=("-v",))
-
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        class gw1:
-            id = "X1"
-            spec = execnet.XSpec("popen")
-        class gw2:
-            id = "X2"
-            spec = execnet.XSpec("popen")
-        class rinfo:
-            version_info = (2, 5, 1, 'final', 0)
-            executable = "hello"
-            platform = "xyz"
-            cwd = "qwe"
-        
-        rep.pytest_gwmanage_newgateway(gw1, rinfo)
-        linecomp.assert_contains_lines([
-            "*X1*popen*xyz*2.5*"
-        ])
-
-        rep.pytest_gwmanage_rsyncstart(source="hello", gateways=[gw1, gw2])
-        linecomp.assert_contains_lines([
-            "rsyncstart: hello -> [X1], [X2]"
-        ])
-        rep.pytest_gwmanage_rsyncfinish(source="hello", gateways=[gw1, gw2])
-        linecomp.assert_contains_lines([
-            "rsyncfinish: hello -> [X1], [X2]"
-        ])
-
     def test_writeline(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         stringio = py.io.TextIO()

@@ -143,17 +143,6 @@ class TerminalReporter:
         self.write_line(infoline)
         self.gateway2info[gateway] = infoline
 
-    def pytest_gwmanage_rsyncstart(self, source, gateways):
-        targets = ", ".join(["[%s]" % gw.id for gw in gateways])
-        msg = "rsyncstart: %s -> %s" %(source, targets)
-        if not self.config.option.verbose:
-            msg += " # use --verbose to see rsync progress"
-        self.write_line(msg)
-
-    def pytest_gwmanage_rsyncfinish(self, source, gateways):
-        targets = ", ".join(["[%s]" % gw.id for gw in gateways])
-        self.write_line("rsyncfinish: %s -> %s" %(source, targets))
-
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig: 
             msg = "PLUGIN registered: %s" %(plugin,)
