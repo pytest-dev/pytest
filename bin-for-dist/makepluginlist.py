@@ -10,8 +10,8 @@ plugins = [
         'xdist pastebin junitxml resultlog genscript',),
     ('testing domains and conventions',
             'oejskit django unittest nose doctest restdoc'),
-    ('core debugging / help functionality', 
-          'helpconfig hooklog')
+    ('internal, debugging, help functionality', 
+          'helpconfig terminal hooklog')
     #('internal plugins / core functionality', 
     #    #'runner execnetcleanup # pytester',
     #    'runner execnetcleanup' # pytester',

@@ -1,4 +1,5 @@
 .. _`helpconfig`: helpconfig.html
+.. _`terminal`: terminal.html
 .. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_recwarn.py
 .. _`unittest`: unittest.html
 .. _`pytest_monkeypatch.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_monkeypatch.py
@@ -14,6 +15,7 @@
 .. _`pytest_nose.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_nose.py
 .. _`pytest_restdoc.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_restdoc.py
 .. _`restdoc`: restdoc.html
+.. _`xdist`: xdist.html
 .. _`pytest_pastebin.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_pastebin.py
 .. _`pytest_tmpdir.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_tmpdir.py
 .. _`pytest_figleaf.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_figleaf.py
@@ -31,8 +33,8 @@
 .. _`figleaf`: figleaf.html
 .. _`customize`: ../customize.html
 .. _`hooklog`: hooklog.html
+.. _`pytest_terminal.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_terminal.py
 .. _`recwarn`: recwarn.html
-.. _`xdist`: xdist.html
 .. _`pytest_pdb.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.0/py/plugin/pytest_pdb.py
 .. _`monkeypatch`: monkeypatch.html
 .. _`coverage`: coverage.html

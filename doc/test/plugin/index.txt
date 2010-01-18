@@ -51,10 +51,12 @@ doctest_ collect and execute doctests from modules and test files.
 restdoc_ perform ReST syntax, local and remote reference tests on .rst/.txt files.
 
 
-core debugging / help functionality
-===================================
+internal, debugging, help functionality
+=======================================
 
 helpconfig_ provide version info, conftest/environment config names.
+
+terminal_ Implements terminal reporting of the full testing process.
 
 hooklog_ log invocations of extension hooks to a file.
 
