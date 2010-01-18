@@ -8,9 +8,9 @@ dictionary or an import path.
 
 (c) Holger Krekel and others, 2004-2010
 """
-version = "1.2.0a1"
+version = "1.2.0"
 
-__version__ = version = version or "1.1.x"
+__version__ = version = version or "1.2.x"
 import py.apipkg
 
 py.apipkg.initpkg(__name__, dict(
