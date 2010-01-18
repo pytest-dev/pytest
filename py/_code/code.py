@@ -293,8 +293,8 @@ class Traceback(list):
             code = x.frame.code
             codepath = code.path
             if ((path is None or codepath == path) and
-                (excludepath is None or (hasattr(codepath, 'relto') and
-                 not codepath.relto(excludepath))) and 
+                (excludepath is None or not hasattr(codepath, 'relto') or
+                 not codepath.relto(excludepath)) and 
                 (lineno is None or x.lineno == lineno) and
                 (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
                 return Traceback(x._rawentry)

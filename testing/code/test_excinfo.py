@@ -114,8 +114,10 @@ class TestTraceback_f_g_h:
         excinfo = py.test.raises(ValueError, "p.pyimport().f()")
         basedir = py._pydir
         newtraceback = excinfo.traceback.cut(excludepath=basedir)
-        assert len(newtraceback) == 1
-        assert newtraceback[0].frame.code.path == p
+        for x in newtraceback:
+            if hasattr(x, 'path'):
+                assert not py.path.local(x.path).relto(basedir)
+        assert newtraceback[-1].frame.code.path == p
 
     def test_traceback_filter(self):
         traceback = self.excinfo.traceback
