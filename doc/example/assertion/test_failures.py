@@ -5,10 +5,11 @@ failure_demo = py.path.local(__file__).dirpath('failure_demo.py')
 pytest_plugins = "pytest_pytester"
 
 def test_failure_demo_fails_properly(testdir): 
-    reprec = testdir.inline_run(failure_demo)
-    passed, skipped, failed = reprec.countoutcomes() 
-    assert passed == 0 
-    assert failed == 20, failed
-    colreports = reprec.getreports("pytest_collectreport")
-    failed = len([x.failed for x in colreports])
-    assert failed == 3
+    target = testdir.tmpdir.join(failure_demo.basename)
+    failure_demo.copy(target)
+    failure_demo.copy(testdir.tmpdir.join(failure_demo.basename))
+    result = testdir.runpytest(target)
+    result.stdout.fnmatch_lines([
+        "*20 failed*"
+    ])
+    assert result.ret != 0
