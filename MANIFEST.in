@@ -8,11 +8,11 @@ graft doc
 graft contrib
 graft bin 
 graft testing
-exclude *.orig 
-exclude *.rej 
+#exclude *.orig 
+#exclude *.rej 
 exclude .hginore
-exclude *.pyc
-recursive-exclude testing *.pyc *.orig *.rej *$py.class
-prune .pyc
-prune .svn 
-prune .hg 
+#exclude *.pyc
+#recursive-exclude testing *.pyc *.orig *.rej *$py.class
+#prune .pyc
+#prune .svn 
+#prune .hg 

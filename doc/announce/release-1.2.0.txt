@@ -14,16 +14,17 @@ py.test 1.2.0 brings many bug fixes and interesting new abilities:
 * --genscript=path creates a standalone py.test-equivalent test-script 
 * --ignore=path prevents collection of anything below that path
 * --confcutdir=path only lookup conftest.py test configs below that path
-* a new "pytestconfig" function argument gives direct access to option values
-* parametrized tests can now be specified per-class as well 
-* on CPython py.test additionally installs as "py.test-VERSION" 
+* a 'pytest_report_header' hook to add info to the terminal report header 
+* a 'pytestconfig' function argument gives direct access to option values
+* 'pytest_generate_tests' can now be put into a class as well 
+* on CPython py.test additionally installs as "py.test-VERSION", on
+  Jython as py.test-jython and on PyPy as py.test-pypy-XYZ
 
-Apart from many bug fixes 1.2.0 also has better pluginization. 
-Distributed testing and looponfailing testing have been moved
-out into its own "pytest-xdist" plugin which can be installed separately. 
-The same is true for "pytest-figleaf" for doing coverage reporting. 
-Those can also serve well now as blue prints for doing your own. 
-separately released plugins. 
+Apart from many bug fixes 1.2.0 also has better pluginization: 
+Distributed testing and looponfailing testing now live in the
+separately installable 'pytest-xdist' plugin.  The same is true for
+'pytest-figleaf' for doing coverage reporting.  Those two plugins
+can serve well now as blue prints for doing your own.  
 
 thanks to all who helped and gave feedback,
 have fun,
