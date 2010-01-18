@@ -9,22 +9,40 @@ py.test feature overview
 mature command line testing tool 
 ====================================================
 
-py.test is a command line tool to collect and run automated tests.  It
-runs well on Linux, Windows and OSX Python 2.4 through to 2.6 versions.
-It can distribute a single test run to multiple machines.  It is used in
-many projects, ranging from running 10 thousands of tests integrated
-with buildbot to a few inlined tests on a command line script. 
+py.test is a command line tool to collect, run and report about automated tests.  It runs well on Linux, Windows and OSX and on Python 2.4 through to 3.1 versions.
+It is used in many projects, ranging from running 10 thousands of tests 
+to a few inlined tests on a command line script.  As of version 1.2 you can also
+generate a no-dependency py.test-equivalent standalone script that you
+can distribute along with your application.  
 
-.. _`autocollect`:
+extensive easy plugin system 
+======================================================
 
-automatically collects and executes tests 
-===============================================
+.. _`suprisingly easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 
-py.test discovers tests automatically by looking at 
-specified directories and its files for common 
-naming patterns.  As ``py.test`` operates as a separate 
-cmdline tool you can easily have a command line utility and
-some tests in the same file.  
+py.test delegates almost all aspects of its operation to plugins_.
+It is `suprisingly easy`_ to add command line options or
+do other kind of add-ons and customizations.  This can 
+be done per-project or by distributing a global plugin. 
+One can can thus modify or add aspects for purposes such as: 
+
+* reporting extensions
+* customizing collection and execution of tests 
+* running and managing non-python tests
+* managing domain-specific test state setup 
+* adding non-python tests into the run, e.g. driven by data files
+
+.. _`plugins`: plugin/index.html
+
+distributing tests to your CPUs and SSH accounts
+==========================================================
+
+.. _`pytest-xdist`: plugin/xdist.html
+
+Through the use of the separately released `pytest-xdist`_ plugin you
+can seemlessly distribute runs to multiple CPUs or remote computers
+through SSH and sockets.  This plugin also offers a ``--looponfailing``
+mode which will continously re-run only failing tests in a subprocess.  
 
 supports several testing practises and methods 
 ==================================================================
@@ -40,8 +58,19 @@ with figleaf`_ or `Javasript unit- and functional testing`_.
 .. _`Javasript unit- and functional testing`: plugin/oejskit.html
 .. _`coverage testing with figleaf`: plugin/figleaf.html
 
+integrates well with CI systems
+====================================================
+
+py.test can produce JUnitXML style output as well as formatted
+"resultlog" files that can be postprocessed by Continous Integration
+systems such as Hudson or Buildbot easily.  It also provides command 
+line options to control test configuration lookup behaviour or ignoring 
+certain tests or directories. 
+
 no-boilerplate test functions with Python 
 ===================================================
+
+.. _`autocollect`:
 
 automatic Python test discovery 
 ------------------------------------
@@ -53,13 +82,18 @@ filename are inspected for finding tests:
 * classes with a leading ``Test`` name and ``test`` prefixed methods.   
 * ``unittest.TestCase`` subclasses
 
-test functions can run with different argument sets 
------------------------------------------------------------
+parametrizing test functions and advanced functional testing
+--------------------------------------------------------------
 
 py.test offers the unique `funcargs mechanism`_ for setting up
 and passing project-specific objects to Python test functions.  
 Test Parametrization happens by triggering a call to the same test 
-functions with different argument values. 
+function with different argument values.  For doing fixtures 
+using the funcarg mechanism makes your test and setup code 
+more efficient and more readable. This is especially true
+for functional tests which might depend on command line
+options and a setup that needs to be shared across 
+a whole test run. 
 
 per-test capturing of output, including subprocesses
 ----------------------------------------------------
@@ -137,30 +171,6 @@ can make use of this feature.
 .. _`xUnit style setup`: xunit_setup.html
 .. _`pytest_nose`: plugin/nose.html
 
-load-balance test runs to multiple CPUs
-========================================
-
-For large test suites you can distribute your 
-tests to multiple CPUs by issuing for example::
-
-    py.test -n 3 
-
-Read more on `distributed testing`_. 
-
-.. _`distributed testing`: dist.html
-
-ad-hoc run tests cross-platform 
-==================================================
-
-py.test supports the sending of tests to 
-remote ssh-accounts, socket servers. 
-It can `ad-hoc run your test on multiple
-platforms one a single test run`. Ad-hoc
-means that there are **no installation 
-requirements whatsoever** on the remote side. 
-
-.. _`ad-hoc run your test on multiple platforms one a single test run`: dist.html#atonce
-
 advanced test selection and running modes 
 =========================================================
 
@@ -202,21 +212,6 @@ plugin for more information.
 
 .. _`pytest_keyword`: plugin/mark.html
 
-easy to extend 
-=========================================
-
-py.test has advanced `extension mechanisms`_
-with a growing `list of default plugins`_. 
-One can can easily modify or add aspects for for 
-purposes such as: 
-
-* reporting extensions
-* customizing collection and execution of tests 
-* running and managing non-python tests
-* managing domain-specific test state setup 
-
-.. _`list of default plugins`: plugin/index.html
-.. _`extension mechanisms`: customize.html#extensions
 
 .. _`reStructured Text`: http://docutils.sourceforge.net
 .. _`Python debugger`: http://docs.python.org/lib/module-pdb.html

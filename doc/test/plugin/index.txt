@@ -8,7 +8,7 @@ mark_ generic mechanism for marking python functions.
 
 pdb_ interactive debugging with the Python Debugger.
 
-figleaf_ report test coverage using the 'figleaf' package.
+figleaf_ (external) report test coverage using the 'figleaf' package.
 
 coverage_ (external) for testing with Ned's coverage module 
 
@@ -21,34 +21,26 @@ recwarn_ helpers for asserting deprecation and other warnings.
 tmpdir_ provide temporary directories to test functions.
 
 
-other testing domains, misc
-===========================
+distributed testing, CI and deployment
+======================================
 
-oejskit_ (external) run javascript tests in real life browsers
-
-django_ (external) for testing django applications
-
-xdist_ loop on failing tests, distribute test runs to CPUs and hosts.
-
-genscript_ generate standalone test script to be distributed along with an application.
-
-
-reporting and failure logging
-=============================
+xdist_ (external) loop on failing tests, distribute test runs to CPUs and hosts.
 
 pastebin_ submit failure or test session information to a pastebin service.
 
 junitxml_ logging of test results in JUnit-XML format, for use with Hudson
 
-xmlresult_ (external) for generating xml reports and CruiseControl integration
-
 resultlog_ non-xml machine-readable logging of test results.
 
-terminal_ Implements terminal reporting of the full testing process.
+genscript_ generate standalone test script to be distributed along with an application.
 
 
-other testing conventions
-=========================
+testing domains and conventions
+===============================
+
+oejskit_ (external) run javascript tests in real life browsers
+
+django_ (external) for testing django applications
 
 unittest_ automatically discover and run traditional "unittest.py" style tests.
 

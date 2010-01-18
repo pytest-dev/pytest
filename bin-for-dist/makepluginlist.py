@@ -6,12 +6,10 @@ plugins = [
     ('advanced python testing', 
             'skipping mark pdb figleaf coverage '
             'monkeypatch capture recwarn tmpdir',),
-    ('other testing domains, misc', 
-            'oejskit django xdist genscript'),
-    ('reporting and failure logging', 
-            'pastebin junitxml xmlresult resultlog terminal',),
-    ('other testing conventions',
-            'unittest nose doctest restdoc'),
+    ('distributed testing, CI and deployment',
+        'xdist pastebin junitxml resultlog genscript',),
+    ('testing domains and conventions',
+            'oejskit django unittest nose doctest restdoc'),
     ('core debugging / help functionality', 
           'helpconfig hooklog')
     #('internal plugins / core functionality', 
@@ -22,6 +20,8 @@ plugins = [
 
 externals = {
     'oejskit': "run javascript tests in real life browsers", 
+    'xdist': None,
+    'figleaf': None,
     'django': "for testing django applications", 
     'coverage': "for testing with Ned's coverage module ", 
     'xmlresult': "for generating xml reports " 
@@ -143,7 +143,10 @@ class PluginOverview(RestWriter):
                     doc = PluginDoc(docpath)
                     doc.make(config=config, name=name) 
                     self.add_internal_link(name, doc.target)
-                    self.para("%s_ %s" %(name, doc.oneliner))
+                    if name in externals:
+                        self.para("%s_ (external) %s" %(name, doc.oneliner))
+                    else:
+                        self.para("%s_ %s" %(name, doc.oneliner))
                 self.Print()
 
 class HookSpec(RestWriter):
