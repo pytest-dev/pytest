@@ -68,4 +68,5 @@ def test_pytest_cmdline_main(testdir):
            py.test.cmdline.main([__file__])
     """ % (str(py._pydir.dirpath())))
     import subprocess
-    subprocess.check_call([sys.executable, str(p)])
+    ret = subprocess.call([sys.executable, str(p)])
+    assert ret == 0
