@@ -7,9 +7,10 @@ def pytest_funcarg__standalone(request):
 class Standalone:
     def __init__(self, request):
         self.testdir = request.getfuncargvalue("testdir")
-        self.script = self.testdir.tmpdir.join("mypytest")
-        result = self.testdir.runpytest("--genscript=%s" % self.script)
+        script = "mypytest"
+        result = self.testdir.runpytest("--genscript=%s" % script)
         assert result.ret == 0
+        self.script = self.testdir.tmpdir.join(script)
         assert self.script.check()
 
     def run(self, anypython, testdir, *args):

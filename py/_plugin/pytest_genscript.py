@@ -25,13 +25,15 @@ def pytest_configure(config):
         mydir = py.path.local(__file__).dirpath()
         infile = mydir.join("standalonetemplate.py")
         pybasedir = py.path.local(py.__file__).dirpath().dirpath()
+        genscript = py.path.local(genscript)
         main(pybasedir, outfile=genscript, infile=infile)
         raise SystemExit(0)
 
 def main(pybasedir, outfile, infile):
-    os.chdir(str(pybasedir))
     outfile = str(outfile)
     infile = str(infile)
+    assert os.path.isabs(outfile)
+    os.chdir(str(pybasedir))
     files = []
     for dirpath, dirnames, filenames in os.walk("py"):
         for f in filenames:
