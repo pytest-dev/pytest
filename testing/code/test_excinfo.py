@@ -503,6 +503,32 @@ raise ValueError()
         reprtb = p.repr_traceback(excinfo)
         assert len(reprtb.reprentries) == 3
 
+    def test_traceback_short_no_source(self, importasmod, monkeypatch):
+        mod = importasmod("""
+            def func1():
+                raise ValueError("hello")
+            def entry():
+                func1()
+        """)
+        excinfo = py.test.raises(ValueError, mod.entry)
+        from py._code.code import Code
+        monkeypatch.setattr(Code, 'path', 'bogus')
+        excinfo.traceback[0].frame.code.path = "bogus"
+        p = FormattedExcinfo(style="short")
+        reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
+        lines = reprtb.lines
+        last_p = FormattedExcinfo(style="short")
+        last_reprtb = last_p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
+        last_lines = last_reprtb.lines
+        monkeypatch.undo()
+        basename = py.path.local(mod.__file__).basename
+        assert lines[0] == '  File "%s", line 5, in entry' % basename
+        assert lines[1] == '    func1()' 
+
+        assert last_lines[0] == '  File "%s", line 3, in func1' % basename
+        assert last_lines[1] == '    raise ValueError("hello")'
+        assert last_lines[2] == 'E   ValueError: hello'
+
     def test_repr_traceback_and_excinfo(self, importasmod):
         mod = importasmod("""
             def f(x):

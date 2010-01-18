@@ -1,5 +1,5 @@
 import py
-import sys
+import sys, os.path
 
 builtin_repr = repr
 
@@ -70,13 +70,13 @@ class Code(object):
             return py.std.new.code(*arglist)
 
     def path(self):
-        """ return a py.path.local object pointing to the source code """
+        """ return a path object pointing to source code"""
         fn = self.raw.co_filename 
         try:
             return fn.__path__
         except AttributeError:
             p = py.path.local(self.raw.co_filename)
-            if not p.check(file=1):
+            if not p.check():
                 # XXX maybe try harder like the weird logic 
                 # in the standard lib [linecache.updatecache] does? 
                 p = self.raw.co_filename
@@ -537,9 +537,9 @@ class FormattedExcinfo(object):
         else: 
             if self.style == "short":
                 line = source[line_index].lstrip()
-                trybasename = getattr(entry.path, 'basename', entry.path)
+                basename = os.path.basename(entry.frame.code.filename)
                 lines.append('  File "%s", line %d, in %s' % (
-                    trybasename, entry.lineno+1, entry.name))
+                    basename, entry.lineno+1, entry.name))
                 lines.append("    " + line) 
             if excinfo: 
                 lines.extend(self.get_exconly(excinfo, indent=4))
