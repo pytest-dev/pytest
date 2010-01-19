@@ -74,9 +74,11 @@ def get_terminal_width():
         raise
     except:
         # FALLBACK
-        width = int(os.environ.get('COLUMNS', 80))-1
-    # XXX the windows getdimensions may be bogus, let's sanify a bit 
-    width = max(width, 40) # we alaways need 40 chars
+        width = int(os.environ.get('COLUMNS', 80))
+    else:
+        # XXX the windows getdimensions may be bogus, let's sanify a bit 
+        if width < 40:
+            width = 80
     return width
 
 terminal_width = get_terminal_width()

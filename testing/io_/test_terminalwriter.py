@@ -8,14 +8,20 @@ def test_terminal_width_COLUMNS(monkeypatch):
     fcntl = py.test.importorskip("fcntl") 
     monkeypatch.setattr(fcntl, 'ioctl', lambda *args: int('x'))
     monkeypatch.setenv('COLUMNS', '42')
-    assert terminalwriter.get_terminal_width() == 41
+    assert terminalwriter.get_terminal_width() == 42
     monkeypatch.delenv('COLUMNS', raising=False)
 
 def test_terminalwriter_defaultwidth_80(monkeypatch):
     monkeypatch.setattr(terminalwriter, '_getdimensions', lambda: 0/0)
     monkeypatch.delenv('COLUMNS', raising=False)
     tw = py.io.TerminalWriter()  
-    assert tw.fullwidth == 80-1
+    assert tw.fullwidth == 80
+
+def test_terminalwriter_getdimensions_bogus(monkeypatch):
+    monkeypatch.setattr(terminalwriter, '_getdimensions', lambda: (10,10))
+    monkeypatch.delenv('COLUMNS', raising=False)
+    tw = py.io.TerminalWriter()  
+    assert tw.fullwidth == 80
 
 def test_terminalwriter_computes_width(monkeypatch):
     monkeypatch.setattr(terminalwriter, 'get_terminal_width', lambda: 42)
