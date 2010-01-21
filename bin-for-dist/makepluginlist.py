@@ -217,7 +217,7 @@ class PluginDoc(RestWriter):
         #    "py/test/plugin/%s" %(hg_changeset, basename)))
         self.links.append((basename, 
             "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
-            "py/plugin/%s" %(pyversion, basename)))
+            "py/_plugin/%s" %(pyversion, basename)))
         self.links.append(('customize', '../customize.html'))
         self.links.append(('plugins', 'index.html'))
         self.links.append(('get in contact', '../../contact.html'))

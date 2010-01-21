@@ -21,6 +21,8 @@ py.test/pylib installation info in a nutshell
 
 **Installed scripts**: see `bin`_ for which and how scripts are installed. 
 
+**hg repository**: https://bitbucket.org/hpk42/py-trunk 
+
 .. _`bin`: bin.html
 
 
