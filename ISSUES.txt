@@ -107,3 +107,4 @@ Also consider implementing py.test --funcargs to
 show available funcargs - it should honour the 
 path::TestClass syntax so one can easily inspect
 where funcargs come from or which are available. 
+
