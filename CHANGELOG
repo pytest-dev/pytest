@@ -1,6 +1,9 @@
 Changes between 1.2.1 and 1.2.0
 =====================================
 
+- fix issue78: always call python-level teardown functions even if the
+  according setup failed - but make sure that setup is called repeatedly 
+  and no teardown if the setup raises a Skipped (as sone by py.test.skip()).
 - fix issue63: assume <40 columns to be a bogus terminal width, default to 80
 - update apipkg.py to fix an issue where recursive imports might
   unnecessarily break importing 

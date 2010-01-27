@@ -249,5 +249,9 @@ class SetupState(object):
                 break 
             self._pop_and_teardown()
         for col in needed_collectors[len(self.stack):]: 
-            col.setup() 
             self.stack.append(col) 
+            try:
+                col.setup() 
+            except Skipped:
+                self.stack.pop()
+                raise 

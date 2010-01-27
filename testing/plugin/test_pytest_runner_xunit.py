@@ -134,3 +134,38 @@ def test_method_setup_uses_fresh_instances(testdir):
     """)
     reprec.assertoutcome(passed=2, failed=0)
 
+def test_failing_setup_calls_teardown(testdir):
+    p = testdir.makepyfile("""
+        def setup_module(mod):
+            raise ValueError(42)
+        def test_function():
+            assert 0
+        def teardown_module(mod):
+            raise ValueError(43)
+    """)
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines([
+        "*42*",
+        "*43*",
+        "*2 error*"
+    ])
+
+def test_setup_that_skips_calledagain_and_no_teardown(testdir):
+    p = testdir.makepyfile("""
+        import py
+        def setup_module(mod):
+            py.test.skip("x") 
+        def test_function1():
+            pass
+        def test_function2():
+            pass
+        def teardown_module(mod):
+            raise ValueError(43)
+    """)
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines([
+        "*2 skipped*",
+    ])
+    assert "43" not in result.stdout.str()
+
+
