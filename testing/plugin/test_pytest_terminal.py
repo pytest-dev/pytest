@@ -153,6 +153,26 @@ class TestTerminal:
                 assert '--calling--' not in s
                 assert 'IndexError' not in s
 
+    def test_tb_crashline(self, testdir, option):
+        p = testdir.makepyfile("""
+            import py
+            def g():
+                raise IndexError
+            def test_func1():
+                print (6*7)
+                g()  # --calling--
+            def test_func2():
+                assert 0, "hello"
+        """)
+        result = testdir.runpytest("--tb=line")
+        bn = p.basename
+        result.stdout.fnmatch_lines([
+            "*%s:3: IndexError*" % bn,
+            "*%s:8: AssertionError: hello*" % bn,
+        ])
+        s = result.stdout.str()
+        assert "def test_func2" not in s
+
     def test_show_path_before_running_test(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
         tr = TerminalReporter(item.config, file=linecomp.stringio)

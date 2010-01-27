@@ -1,6 +1,7 @@
 Changes between 1.2.1 and 1.2.0
 =====================================
 
+- fix issue67: new super-short traceback-printing option: "--tb=line" will print a single line for each failing (python) test indicating its filename, lineno and the failure value
 - fix issue78: always call python-level teardown functions even if the
   according setup failed - but make sure that setup is called repeatedly 
   and no teardown if the setup raises a Skipped (as sone by py.test.skip()).

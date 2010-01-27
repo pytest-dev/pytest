@@ -18,8 +18,8 @@ def pytest_addoption(parser):
                help="show more info, valid: skipped,xfailed")
     group._addoption('--tb', metavar="style", 
                action="store", dest="tbstyle", default='long',
-               type="choice", choices=['long', 'short', 'no'],
-               help="traceback verboseness (long/short/no).")
+               type="choice", choices=['long', 'short', 'no', 'line'],
+               help="traceback print mode (long/short/line/no).")
     group._addoption('--fulltrace',
                action="store_true", dest="fulltrace", default=False,
                help="don't cut any tracebacks (default is to cut).")
@@ -272,14 +272,17 @@ class TerminalReporter:
         if failreports:
             self.write_sep("#", "LOOPONFAILING", red=True)
             for report in failreports:
-                try:
-                    loc = report.longrepr.reprcrash
-                except AttributeError:
-                    loc = str(report.longrepr)[:50]
+                loc = self._getcrashline(report)
                 self.write_line(loc, red=True)
         self.write_sep("#", "waiting for changes")
         for rootdir in rootdirs:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
+
+    def _getcrashline(self, report):
+        try:
+            return report.longrepr.reprcrash
+        except AttributeError:
+            return str(report.longrepr)[:50]
 
     def _reportinfoline(self, item):
         collect_fspath = self._getfspath(item)
@@ -333,13 +336,18 @@ class TerminalReporter:
     #
 
     def summary_failures(self):
-        if 'failed' in self.stats and self.config.option.tbstyle != "no":
+        tbstyle = self.config.getvalue("tbstyle")
+        if 'failed' in self.stats and tbstyle != "no":
             self.write_sep("=", "FAILURES")
             for rep in self.stats['failed']:
-                msg = self._getfailureheadline(rep)
-                self.write_sep("_", msg)
-                self.write_platinfo(rep)
-                rep.toterminal(self._tw)
+                if tbstyle == "line":
+                    line = self._getcrashline(rep)
+                    self.write_line(line)
+                else:    
+                    msg = self._getfailureheadline(rep)
+                    self.write_sep("_", msg)
+                    self.write_platinfo(rep)
+                    rep.toterminal(self._tw)
 
     def summary_errors(self):
         if 'error' in self.stats and self.config.option.tbstyle != "no":
