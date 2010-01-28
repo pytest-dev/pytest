@@ -3,8 +3,10 @@ Changes between 1.2.1 and 1.2.0
 
 - fix issue67: new super-short traceback-printing option: "--tb=line" will print a single line for each failing (python) test indicating its filename, lineno and the failure value
 - fix issue78: always call python-level teardown functions even if the
-  according setup failed - but make sure that setup is called repeatedly 
-  and no teardown if the setup raises a Skipped (as sone by py.test.skip()).
+  according setup failed.  This includes refinements for calling setup_module/class functions 
+  which will now only be called once instead of the previous behaviour where they'd be called
+  multiple times if they raise an exception (including a Skipped exception).  Any exception
+  will be re-corded and associated with all tests in the according module/class scope.
 - fix issue63: assume <40 columns to be a bogus terminal width, default to 80
 - update apipkg.py to fix an issue where recursive imports might
   unnecessarily break importing 

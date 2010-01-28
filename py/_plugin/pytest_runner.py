@@ -2,7 +2,7 @@
 collect and run test items and create reports. 
 """
 
-import py
+import py, sys
 from py._test.outcome import Skipped
 
 #
@@ -252,6 +252,10 @@ class SetupState(object):
             self.stack.append(col) 
             try:
                 col.setup() 
-            except Skipped:
-                self.stack.pop()
-                raise 
+            except Exception:
+                col._prepare_exc = sys.exc_info()
+                raise
+        # check if the last collection node has raised an error 
+        for col in self.stack:
+            if hasattr(col, '_prepare_exc'):
+                py.builtin._reraise(*col._prepare_exc) 

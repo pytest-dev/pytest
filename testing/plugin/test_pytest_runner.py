@@ -34,6 +34,16 @@ class TestSetupState:
         ss.teardown_exact(item)
         ss.teardown_exact(item)
 
+    def test_setup_fails_and_failure_is_cached(self, testdir):
+        item = testdir.getitem("""
+            def setup_module(mod):
+                raise ValueError(42)
+            def test_func(): pass
+        """)
+        ss = runner.SetupState()
+        py.test.raises(ValueError, "ss.prepare(item)")
+        py.test.raises(ValueError, "ss.prepare(item)")
+
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):
         reports = testdir.runitem("""

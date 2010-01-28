@@ -150,7 +150,7 @@ def test_failing_setup_calls_teardown(testdir):
         "*2 error*"
     ])
 
-def test_setup_that_skips_calledagain_and_no_teardown(testdir):
+def test_setup_that_skips_calledagain_and_teardown(testdir):
     p = testdir.makepyfile("""
         import py
         def setup_module(mod):
@@ -164,8 +164,27 @@ def test_setup_that_skips_calledagain_and_no_teardown(testdir):
     """)
     result = testdir.runpytest(p)
     result.stdout.fnmatch_lines([
-        "*2 skipped*",
+        "*ValueError*43*",
+        "*2 skipped*1 error*",
     ])
-    assert "43" not in result.stdout.str()
+
+def test_setup_fails_again_on_all_tests(testdir):
+    p = testdir.makepyfile("""
+        import py
+        def setup_module(mod):
+            raise ValueError(42)
+        def test_function1():
+            pass
+        def test_function2():
+            pass
+        def teardown_module(mod):
+            raise ValueError(43)
+    """)
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines([
+        "*3 error*"
+    ])
+    assert "passed" not in result.stdout.str()
+
 
 
