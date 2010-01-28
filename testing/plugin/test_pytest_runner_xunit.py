@@ -186,5 +186,27 @@ def test_setup_fails_again_on_all_tests(testdir):
     ])
     assert "passed" not in result.stdout.str()
 
+def test_setup_funcarg_setup_not_called_if_outer_scope_fails(testdir):
+    p = testdir.makepyfile("""
+        import py
+        def setup_module(mod):
+            raise ValueError(42)
+        def pytest_funcarg__hello(request):
+            raise ValueError(43)
+        def test_function1(hello):
+            pass
+        def test_function2(hello):
+            pass
+    """)
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines([
+        "*function1*",
+        "*ValueError*42*",
+        "*function2*",
+        "*ValueError*42*",
+        "*2 error*"
+    ])
+    assert "43" not in result.stdout.str()
+
 
 

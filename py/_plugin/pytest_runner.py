@@ -248,6 +248,10 @@ class SetupState(object):
             if self.stack == needed_collectors[:len(self.stack)]: 
                 break 
             self._pop_and_teardown()
+        # check if the last collection node has raised an error 
+        for col in self.stack:
+            if hasattr(col, '_prepare_exc'):
+                py.builtin._reraise(*col._prepare_exc) 
         for col in needed_collectors[len(self.stack):]: 
             self.stack.append(col) 
             try:
@@ -255,7 +259,3 @@ class SetupState(object):
             except Exception:
                 col._prepare_exc = sys.exc_info()
                 raise
-        # check if the last collection node has raised an error 
-        for col in self.stack:
-            if hasattr(col, '_prepare_exc'):
-                py.builtin._reraise(*col._prepare_exc) 
