@@ -1,9 +1,9 @@
-py lib: testing and distributed programming library 
+py lib: testing and filesystem abstraction 
 ====================================================
 
-The ``py`` lib has several namespaces which help with testing,
-generating and distributing code across machines.  Here is 
-documentation on the most interesting ones:
+The ``py`` lib has several namespaces which help with automated testing,
+and with accessing filesystems.  Here is some documentation on the 
+core namespaces:
 
 `py.test`_ write and deploy unit- and functional tests to multiple machines. 
 
