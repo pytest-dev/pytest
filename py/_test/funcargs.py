@@ -64,7 +64,7 @@ class FuncargRequest:
     _argprefix = "pytest_funcarg__"
     _argname = None
 
-    class Error(LookupError):
+    class LookupError(LookupError):
         """ error on performing funcarg request. """ 
 
     def __init__(self, pyfuncitem):
@@ -170,7 +170,6 @@ class FuncargRequest:
                     if name not in available:
                         available.append(name) 
         fspath, lineno, msg = self._pyfuncitem.reportinfo()
-        line = "%s:%s" %(fspath, lineno)
-        msg = "funcargument %r not found for: %s" %(argname, line)
+        msg = "LookupError: no factory found for function argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)
-        raise self.Error(msg)
+        raise self.LookupError(msg)

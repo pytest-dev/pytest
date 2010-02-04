@@ -30,7 +30,8 @@ class TestFillFuncArgs:
                 return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
-        exc = py.test.raises(LookupError, "funcargs.fillfuncargs(item)")
+        exc = py.test.raises(funcargs.FuncargRequest.LookupError, 
+            "funcargs.fillfuncargs(item)")
         s = str(exc.value)
         assert s.find("xyzsomething") != -1
 
@@ -560,3 +561,18 @@ def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
     funcargs.fillfuncargs(clscol)
     assert clscol.funcargs['arg1'] == 42 
 
+
+def test_funcarg_lookup_error(testdir):
+    p = testdir.makepyfile("""
+        def test_lookup_error(unknown):
+            pass
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*ERROR at setup of test_lookup_error*",
+        "*def test_lookup_error(unknown):*",
+        "*LookupError: no factory found*unknown*",
+        "*available funcargs*",
+        "*1 error*",
+    ])
+    assert "INTERNAL" not in result.stdout.str() 

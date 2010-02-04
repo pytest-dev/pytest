@@ -5,6 +5,7 @@ import py
 import inspect
 from py._test.collect import configproperty, warnoldcollect
 from py._test import funcargs
+from py._code.code import TerminalRepr
 
 class PyobjMixin(object):
     def obj(): 
@@ -252,11 +253,37 @@ class FunctionMixin(PyobjMixin):
             traceback = ntraceback.filter()
         return traceback 
 
+    def _repr_failure_py(self, excinfo):
+        if excinfo.errisinstance(funcargs.FuncargRequest.LookupError):
+            fspath, lineno, msg = self.reportinfo()
+            lines, _ = inspect.getsourcelines(self.obj)
+            for i, line in enumerate(lines):
+                if line.strip().startswith('def'):
+                    return FuncargLookupErrorRepr(fspath, lineno,
+            lines[:i+1], str(excinfo.value))
+        return super(FunctionMixin, self)._repr_failure_py(excinfo)
+
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
         return self._repr_failure_py(excinfo)
 
     shortfailurerepr = "F"
+
+class FuncargLookupErrorRepr(TerminalRepr):
+    def __init__(self, filename, firstlineno, deflines, errorstring):
+        self.deflines = deflines
+        self.errorstring = errorstring
+        self.filename = filename
+        self.firstlineno = firstlineno
+
+    def toterminal(self, tw):
+        tw.line()
+        for line in self.deflines:
+            tw.line("    " + line.strip())
+        for line in self.errorstring.split("\n"):
+            tw.line("        " + line.strip(), red=True)
+        tw.line()
+        tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
 class Generator(FunctionMixin, PyCollectorMixin, py.test.collect.Collector): 
     def collect(self):
