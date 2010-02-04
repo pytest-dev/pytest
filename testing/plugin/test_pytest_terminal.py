@@ -588,3 +588,12 @@ def test_trace_reporting(testdir):
         "*active plugins*"
     ])
     assert result.ret == 0
+
+@py.test.mark.nodist
+def test_show_funcarg(testdir, option):
+    result = testdir.runpytest(*option._getcmdargs())
+    assert result.stdout.fnmatch_lines([
+            "*tmpdir*",
+            "*temporary directory*",
+        ]
+    ])

@@ -23,21 +23,27 @@ def pytest_addoption(parser):
     group._addoption('--fulltrace',
                action="store_true", dest="fulltrace", default=False,
                help="don't cut any tracebacks (default is to cut).")
-
+    group._addoption('--funcargs',
+               action="store_true", dest="showfuncargs", default=False,
+               help="show available function arguments, sorted by plugin")
 
 def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
+    elif config.option.showfuncargs:
+        config.setsessionclass(ShowFuncargSession)
+        reporter = None
     else:
         reporter = TerminalReporter(config)
-    # XXX see remote.py's XXX 
-    for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
-        if hasattr(config, attr):
-            #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
-            name = attr.split("_")[-1]
-            assert hasattr(self.reporter._tw, name), name
-            setattr(reporter._tw, name, getattr(config, attr))
-    config.pluginmanager.register(reporter, 'terminalreporter')
+    if reporter:
+        # XXX see remote.py's XXX 
+        for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
+            if hasattr(config, attr):
+                #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
+                name = attr.split("_")[-1]
+                assert hasattr(self.reporter._tw, name), name
+                setattr(reporter._tw, name, getattr(config, attr))
+        config.pluginmanager.register(reporter, 'terminalreporter')
 
 def getreportopt(optvalue):
     d = {}
@@ -447,3 +453,42 @@ def flatten(l):
                 yield y
         else:
             yield x
+
+from py._test.session import Session
+class ShowFuncargSession(Session):
+    def main(self, colitems):
+        self.sessionstarts()
+        try:
+            self.showargs(colitems[0])
+        finally:
+            self.sessionfinishes(exitstatus=1)
+
+    def showargs(self, colitem):
+        tw = py.io.TerminalWriter()
+        from py._test.funcargs import getplugins
+        from py._test.funcargs import FuncargRequest
+        plugins = getplugins(colitem, withpy=True)
+        verbose = self.config.getvalue("verbose")
+        for plugin in plugins:
+            available = []
+            for name, factory in vars(plugin).items():
+                if name.startswith(FuncargRequest._argprefix):
+                    name = name[len(FuncargRequest._argprefix):]
+                    if name not in available:
+                        available.append([name, factory]) 
+            if available:
+                pluginname = plugin.__name__
+                for name, factory in available:
+                    if verbose:
+                        funcargspec = "%s -- from %s" %(name, plugin,)
+                    else:
+                        funcargspec = name
+                    tw.line(funcargspec, green=True)
+                    doc = factory.__doc__ or ""
+                    if doc:
+                        for line in doc.split("\n"):
+                            tw.line("    " + line.strip())
+                    else:
+                        tw.line("    no docstring available", red=True)
+                        tw.line(factory, red=True)
+                        tw.line(plugin, red=True)
