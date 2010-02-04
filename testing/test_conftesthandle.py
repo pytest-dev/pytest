@@ -132,3 +132,19 @@ def test_setinitial_confcut(testdir):
         assert conftest._confcutdir == sub
         assert conftest.getconftestmodules(sub) == []
         assert conftest.getconftestmodules(conf.dirpath()) == []
+
+def test_setinitial_not_considers_conftest_in_non_test_dirs(testdir):
+    sub = testdir.mkdir("sub")
+    sub.ensure("conftest.py")
+    conftest = Conftest()
+    conftest.setinitial([sub.dirpath()])
+    assert not conftest._conftestpath2mod
+
+@py.test.mark.multi(name='test tests testing'.split())
+def test_setinitial_considers_conftest_in_test_dirs(testdir, name):
+    sub = testdir.mkdir(name)
+    subconftest = sub.ensure("conftest.py")
+    conftest = Conftest()
+    conftest.setinitial([sub.dirpath()])
+    assert  subconftest in conftest._conftestpath2mod
+    assert len(conftest._conftestpath2mod) == 1

@@ -39,6 +39,10 @@ class Conftest(object):
             anchor = current.join(arg, abs=1)
             if anchor.check(): # we found some file object 
                 self._path2confmods[None] = self.getconftestmodules(anchor)
+                # let's also consider test* dirs 
+                if anchor.check(dir=1):
+                    for x in anchor.listdir("test*"):
+                        self.getconftestmodules(x)
                 break
         else:
             assert 0, "no root of filesystem?"

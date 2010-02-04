@@ -1,6 +1,9 @@
 Changes between 1.2.1 and 1.2.0
 =====================================
 
+- early-load "test*/conftest.py" files, i.e. conftest.py files in
+  directories starting with 'test'.  allows to conveniently keep and access
+  test-related options without having to put a conftest.py into the package root dir.
 - fix issue67: new super-short traceback-printing option: "--tb=line" will print a single line for each failing (python) test indicating its filename, lineno and the failure value
 - fix issue78: always call python-level teardown functions even if the
   according setup failed.  This includes refinements for calling setup_module/class functions 
