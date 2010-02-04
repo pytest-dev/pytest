@@ -160,7 +160,7 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
-        py.test.raises(req.Error, req.getfuncargvalue, "notexists")
+        py.test.raises(req.LookupError, req.getfuncargvalue, "notexists")
         val = req.getfuncargvalue("something") 
         assert val == 1
         val = req.getfuncargvalue("something") 
