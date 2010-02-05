@@ -591,9 +591,10 @@ def test_trace_reporting(testdir):
 
 @py.test.mark.nodist
 def test_show_funcarg(testdir, option):
-    result = testdir.runpytest(*option._getcmdargs())
+    args = option._getcmdargs() + ["--funcargs"]
+    result = testdir.runpytest(*args)
     assert result.stdout.fnmatch_lines([
             "*tmpdir*",
             "*temporary directory*",
         ]
-    ])
+    )
