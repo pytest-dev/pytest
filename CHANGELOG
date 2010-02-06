@@ -15,9 +15,9 @@ Changes between 1.2.1 and 1.2.0
 
 - display a short and concise traceback if a funcarg lookup fails 
 
-- early-load "test*/conftest.py" files, i.e. conftest.py files in
-  directories starting with 'test'.  allows to conveniently keep and access
-  test-related options without having to put a conftest.py into the package root dir.
+- early-load "conftest.py" files in non-dot first-level sub directories. 
+  allows to conveniently keep and access test-related options without 
+  having to put a conftest.py into the package root dir.
 
 - fix issue67: new super-short traceback-printing option: "--tb=line" will print a single line for each failing (python) test indicating its filename, lineno and the failure value
 

@@ -32,7 +32,7 @@ class TestConftestValueAccessGlobal:
         l = []
         conftest = Conftest(onimport=l.append)
         conftest.setinitial([basedir.join("adir")])
-        assert len(l) == 1 
+        assert len(l) == 2 
         assert conftest.rget("a") == 1
         assert conftest.rget("b", basedir.join("adir", "b")) == 2
         assert len(l) == 2
@@ -133,18 +133,15 @@ def test_setinitial_confcut(testdir):
         assert conftest.getconftestmodules(sub) == []
         assert conftest.getconftestmodules(conf.dirpath()) == []
 
-def test_setinitial_not_considers_conftest_in_non_test_dirs(testdir):
-    sub = testdir.mkdir("sub")
-    sub.ensure("conftest.py")
-    conftest = Conftest()
-    conftest.setinitial([sub.dirpath()])
-    assert not conftest._conftestpath2mod
-
-@py.test.mark.multi(name='test tests testing'.split())
-def test_setinitial_considers_conftest_in_test_dirs(testdir, name):
+@py.test.mark.multi(name='test tests whatever .dotdir'.split())
+def test_setinitial_conftest_subdirs(testdir, name):
     sub = testdir.mkdir(name)
     subconftest = sub.ensure("conftest.py")
     conftest = Conftest()
     conftest.setinitial([sub.dirpath()])
-    assert  subconftest in conftest._conftestpath2mod
-    assert len(conftest._conftestpath2mod) == 1
+    if name != ".dotdir":
+        assert  subconftest in conftest._conftestpath2mod
+        assert len(conftest._conftestpath2mod) == 1
+    else:
+        assert  subconftest not in conftest._conftestpath2mod
+        assert len(conftest._conftestpath2mod) == 0

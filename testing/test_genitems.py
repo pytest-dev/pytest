@@ -24,15 +24,6 @@ class Test_genitems:
         p = testdir.makepyfile(conftest="raise SyntaxError\n")
         py.test.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
        
-    def test_subdir_conftest_error(self, testdir):
-        tmp = testdir.tmpdir
-        tmp.ensure("sub", "conftest.py").write("raise SyntaxError('x')\n")
-        items, reprec = testdir.inline_genitems(tmp)
-        collectionfailures = reprec.getfailedcollections()
-        assert len(collectionfailures) == 1
-        ev = collectionfailures[0] 
-        assert "SyntaxError: x" in ev.longrepr.reprcrash.message
-
     def test_example_items1(self, testdir):
         p = testdir.makepyfile('''
             def testone():
