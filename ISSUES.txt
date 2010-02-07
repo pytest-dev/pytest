@@ -8,6 +8,44 @@ maybe also introduce a py.test.mark.test to explicitely
 mark a function to become a tested one.  Lookup JUnit 
 ways of tagging tests. 
 
+introduce py.test.mark registration
+-----------------------------------------
+tags: feature 1.3
+
+introduce a hook that allows to register a named mark decorator
+with documentation and add "py.test --marks" to get
+a list of available marks.  Deprecate "dynamic" mark
+definitions. 
+
+consider introducing py.test.mark.skip_[not]win32/jython/pyXY
+-------------------------------------------------------------
+tags: feature 1.3 
+
+conveniently introduce markers for platforms to 
+have a shorter form for skipping. 
+
+generalize parametrized testing to generate combinations
+-------------------------------------------------------------
+tags: feature 1.3 
+
+think about extending metafunc.addcall or add a new method to allow to
+generate tests with combinations of all generated versions - what to do
+about "id" and "param" in such combinations though? 
+
+introduce py.test.mark.multi 
+-----------------------------------------
+tags: feature 1.3
+
+introduce py.test.mark.multi to specify a number
+of values for a given function argument. 
+
+introduce py.test.mark.multi 
+-----------------------------------------
+tags: feature 1.3
+
+introduce py.test.mark.multi to specify a number
+of values for a given function argument. 
+
 have imported module mismatch honour relative paths
 --------------------------------------------------------
 tags: bug 1.2
@@ -107,4 +145,6 @@ Also consider implementing py.test --funcargs to
 show available funcargs - it should honour the 
 path::TestClass syntax so one can easily inspect
 where funcargs come from or which are available. 
+
+
 
