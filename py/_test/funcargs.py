@@ -172,4 +172,5 @@ class FuncargRequest:
         fspath, lineno, msg = self._pyfuncitem.reportinfo()
         msg = "LookupError: no factory found for function argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)
+        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         raise self.LookupError(msg)
