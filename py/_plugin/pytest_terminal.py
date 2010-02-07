@@ -457,6 +457,7 @@ def flatten(l):
 from py._test.session import Session
 class ShowFuncargSession(Session):
     def main(self, colitems):
+        self.fspath = py.path.local()
         self.sessionstarts()
         try:
             self.showargs(colitems[0])
@@ -479,8 +480,9 @@ class ShowFuncargSession(Session):
             if available:
                 pluginname = plugin.__name__
                 for name, factory in available:
+                    loc = self.getlocation(factory)
                     if verbose:
-                        funcargspec = "%s -- from %s" %(name, plugin,)
+                        funcargspec = "%s -- %s" %(name, loc,)
                     else:
                         funcargspec = name
                     tw.line(funcargspec, green=True)
@@ -489,6 +491,13 @@ class ShowFuncargSession(Session):
                         for line in doc.split("\n"):
                             tw.line("    " + line.strip())
                     else:
-                        tw.line("    no docstring available", red=True)
-                        tw.line(factory, red=True)
-                        tw.line(plugin, red=True)
+                        tw.line("    %s: no docstring available" %(loc,), 
+                            red=True)
+
+    def getlocation(self, function):
+        import inspect
+        fn = py.path.local(inspect.getfile(function))
+        lineno = function.func_code.co_firstlineno
+        if fn.relto(self.fspath):
+            fn = fn.relto(self.fspath)
+        return "%s:%d" %(fn, lineno+1)
