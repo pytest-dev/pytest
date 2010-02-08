@@ -1,7 +1,8 @@
 Changes between 1.2.1 and 1.2.0
 =====================================
 
-- refined usage and options for "py.cleanup":
+- refined usage and options for "py.cleanup"::
+
     py.cleanup     # remove "*.pyc" and "*$py.class" (jython) files
     py.cleanup -e .swp -e .cache # also remove files with these extensions
     py.cleanup -s  # remove "build" and "dist" directory next to setup.py files
@@ -16,8 +17,8 @@ Changes between 1.2.1 and 1.2.0
 - display a short and concise traceback if a funcarg lookup fails 
 
 - early-load "conftest.py" files in non-dot first-level sub directories. 
-  allows to conveniently keep and access test-related options without 
-  having to put a conftest.py into the package root dir.
+  allows to conveniently keep and access test-related options in a ``test`` 
+  subdir and still add command line options. 
 
 - fix issue67: new super-short traceback-printing option: "--tb=line" will print a single line for each failing (python) test indicating its filename, lineno and the failure value
 
