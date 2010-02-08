@@ -91,10 +91,11 @@ class Pdb(py.std.pdb.Pdb):
         stack, i = pdb.Pdb.get_stack(self, f, t)
         if f is None:
             i = max(0, len(stack) - 1)
+            while i and stack[i][0].f_locals.get("__tracebackhide__", False):
+                i-=1
         return stack, i
 
 def post_mortem(t):
-    # modified from pdb.py for the new get_stack() implementation
     p = Pdb()
     p.reset()
     p.interaction(None, t)

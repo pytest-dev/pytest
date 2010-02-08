@@ -43,3 +43,22 @@ class TestPDB:
         child.expect("1 failed")
         if child.isalive(): 
             child.wait()
+
+    def test_pdb_interaction_exception(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def globalfunc():
+                pass
+            def test_1():
+                py.test.raises(ValueError, globalfunc)
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect(".*def test_1")
+        child.expect(".*py.test.raises.*globalfunc")
+        child.expect("(Pdb)")
+        child.sendline("globalfunc")
+        child.expect(".*function")
+        child.sendeof()
+        child.expect("1 failed")
+        if child.isalive(): 
+            child.wait()
