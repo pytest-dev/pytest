@@ -17,6 +17,26 @@ with documentation and add "py.test --marks" to get
 a list of available marks.  Deprecate "dynamic" mark
 definitions. 
 
+do early-teardown of test modules 
+-----------------------------------------
+tags: feature 1.3
+
+currently teardowns are called when the next tests is setup
+except for the function/method level where interally 
+"teardown_exact" tears down immediately.  Generalize
+this to perform the "neccessary" teardown compared to
+the "next" test item during teardown - this should
+get rid of some irritations because otherwise e.g. 
+prints of teardown-code appear in the setup of the next test. 
+
+do recursive walk of conftest.py files? 
+-----------------------------------------
+tags: feature 1.3
+
+it maybe makes sense to generally do a recursive search of conftest.py 
+files before command line parsing - this would help to offer the
+full list of options as applicable to a given test project. 
+
 consider introducing py.test.mark.skip_[not]win32/jython/pyXY
 -------------------------------------------------------------
 tags: feature 1.3 

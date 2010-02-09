@@ -7,6 +7,13 @@ Talks and Tutorials
 tutorial examples and blog postings
 ---------------------------------------------
 
+.. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
+.. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
+
+basic usage and funcargs: 
+
+- `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
+
 function arguments: 
 
 - `application setup in test functions with funcargs`_ 
