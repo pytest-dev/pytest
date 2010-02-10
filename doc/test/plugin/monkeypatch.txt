@@ -75,10 +75,9 @@ helper methods to modify objects, dictionaries or os.environ::
     monkeypatch.syspath_prepend(path)
 
 All modifications will be undone when the requesting 
-test function finished its execution.  For the ``del`` 
-methods the ``raising`` parameter determines if a
-KeyError or AttributeError will be raised if the
-deletion has no target. 
+test function finished its execution.  The ``raising`` 
+parameter determines if a KeyError or AttributeError 
+will be raised if the set/deletion operation has no target. 
 
 Start improving this plugin in 30 seconds
 =========================================

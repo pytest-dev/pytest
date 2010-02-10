@@ -17,6 +17,13 @@ customize_: configuration, customization, extensions
 
 changelog_: history of changes covering last releases
 
+**Continous Integration of py.test's own tests and plugins with Hudson**:
+
+    `http://hudson.testrun.org/view/pytest`_
+
+.. _`http://hudson.testrun.org/view/pytest`: http://hudson.testrun.org/view/pytest/
+
+
 .. _changelog: ../changelog.html
 .. _`plugins`: plugin/index.html
 .. _`talks, tutorials, examples`: talks.html

@@ -66,10 +66,11 @@ pageTracker._trackPageview();
                 self.a_docref("Index", "test/index.html"),
                 self.a_docref("Quickstart", "test/quickstart.html"),
                 self.a_docref("Features", "test/features.html"),
-                self.a_docref("Plugins", "test/plugin/index.html"),
                 self.a_docref("Funcargs", "test/funcargs.html"),
+                self.a_docref("Plugins", "test/plugin/index.html"),
                 self.a_docref("Customize", "test/customize.html"),
                 self.a_docref("Tutorials", "test/talks.html"),
+                self.a_href("hudson-tests", "http://hudson.testrun.org")
             ),
             html.div(
                 html.h3("supporting APIs:"), 

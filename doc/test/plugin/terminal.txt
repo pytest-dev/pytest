@@ -19,9 +19,11 @@ command line options
 ``--report=opts``
     show more info, valid: skipped,xfailed
 ``--tb=style``
-    traceback verboseness (long/short/no).
+    traceback print mode (long/short/line/no).
 ``--fulltrace``
     don't cut any tracebacks (default is to cut).
+``--funcargs``
+    show available function arguments, sorted by plugin
 
 Start improving this plugin in 30 seconds
 =========================================

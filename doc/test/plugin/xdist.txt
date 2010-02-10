@@ -28,6 +28,18 @@ You may specify different Python versions and interpreters.
 
 .. _`pytest-xdist`: http://pypi.python.org/pypi/pytest-xdist
 
+Install / Uninstall
+---------------------
+
+To install the xdist plugin simply type::
+
+    easy_install pytest-xdist  # or
+    pip install pytest-xdist 
+
+and to uninstall::
+
+    pip uninstall pytest-xdist 
+
 Usage examples
 ---------------------
 
@@ -168,15 +180,5 @@ command line options
     load-balance tests.  shortcut for '--dist=load'
 ``--rsyncdir=dir1``
     add directory for rsyncing to remote tx nodes.
-
-Start improving this plugin in 30 seconds
-=========================================
-
-
-1. Download `plugin.py`_ plugin source code 
-2. put it somewhere as ``plugin.py`` into your import path 
-3. a subsequent ``py.test`` run will use your local version
-
-Checkout customize_, other plugins_ or `get in contact`_. 
 
 .. include:: links.txt

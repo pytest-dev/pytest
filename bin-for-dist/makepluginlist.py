@@ -187,7 +187,8 @@ class PluginDoc(RestWriter):
     
         self.emit_funcargs(plugin)
         self.emit_options(plugin)
-        self.emit_source(plugin, config.hg_changeset)
+        if name not in externals:
+            self.emit_source(plugin, config.hg_changeset)
         #self.sourcelink = (purename, 
         #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" + 
         #    purename + ".py")

@@ -1,5 +1,5 @@
 ==============================================================
-**funcargs**: advanced test parametrization
+**funcargs**: advanced test fixtures and parametrization
 ==============================================================
 
 .. contents:: 
@@ -77,9 +77,15 @@ calls the test function:
 
 Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error 
-with a list of available function arguments.
+with a list of available function arguments. You can 
+also issue::
 
-factory functions receive a `request object`_ 
+    py.test --funcargs test_simplefactory.py
+
+to see available function arguments (which you can also
+think of as "resources"). 
+
+Factory functions receive a `request object`_ 
 which they can use to register setup/teardown 
 functions or access meta data about a test. 
 
