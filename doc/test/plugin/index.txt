@@ -10,8 +10,6 @@ pdb_ interactive debugging with the Python Debugger.
 
 figleaf_ (external) report test coverage using the 'figleaf' package.
 
-coverage_ (external) for testing with Ned's coverage module 
-
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
 capture_ configurable per-test stdout/stderr capturing mechanisms.

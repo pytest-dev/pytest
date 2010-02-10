@@ -35,7 +35,6 @@
 .. _`recwarn`: recwarn.html
 .. _`pytest_pdb.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.1/py/_plugin/pytest_pdb.py
 .. _`monkeypatch`: monkeypatch.html
-.. _`coverage`: coverage.html
 .. _`resultlog`: resultlog.html
 .. _`pytest_junitxml.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.2.1/py/_plugin/pytest_junitxml.py
 .. _`django`: django.html

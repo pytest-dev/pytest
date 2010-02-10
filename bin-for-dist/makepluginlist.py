@@ -4,7 +4,7 @@ WIDTH = 75
 
 plugins = [
     ('advanced python testing', 
-            'skipping mark pdb figleaf coverage '
+            'skipping mark pdb figleaf '
             'monkeypatch capture recwarn tmpdir',),
     ('distributed testing, CI and deployment',
         'xdist pastebin junitxml resultlog genscript',),
@@ -23,9 +23,6 @@ externals = {
     'xdist': None,
     'figleaf': None,
     'django': "for testing django applications", 
-    'coverage': "for testing with Ned's coverage module ", 
-    'xmlresult': "for generating xml reports " 
-                 "and CruiseControl integration",
 }
 
 def warn(*args):
