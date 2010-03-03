@@ -1,5 +1,5 @@
 """
-Like _assertion.py but using builtin AST.  It should replace _assertion.py
+Like _assertion.py but using builtin AST.  It should replace _assertionold.py
 eventually.
 """
 
