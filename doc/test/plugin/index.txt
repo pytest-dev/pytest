@@ -12,7 +12,11 @@ figleaf_ (external) report test coverage using the 'figleaf' package.
 
 monkeypatch_ safely patch object attributes, dicts and environment variables.
 
+coverage_ (external) Write and report coverage data with the 'coverage' package.
+
 capture_ configurable per-test stdout/stderr capturing mechanisms.
+
+capturelog_ (external) capture output of logging module.
 
 recwarn_ helpers for asserting deprecation and other warnings.
 
@@ -33,8 +37,8 @@ resultlog_ non-xml machine-readable logging of test results.
 genscript_ generate standalone test script to be distributed along with an application.
 
 
-testing domains and conventions
-===============================
+testing domains and conventions codecheckers
+============================================
 
 oejskit_ (external) run javascript tests in real life browsers
 

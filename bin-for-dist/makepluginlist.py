@@ -5,10 +5,10 @@ WIDTH = 75
 plugins = [
     ('advanced python testing', 
             'skipping mark pdb figleaf '
-            'monkeypatch capture recwarn tmpdir',),
+            'monkeypatch coverage capture capturelog recwarn tmpdir',),
     ('distributed testing, CI and deployment',
         'xdist pastebin junitxml resultlog genscript',),
-    ('testing domains and conventions',
+    ('testing domains and conventions codecheckers',
             'oejskit django unittest nose doctest restdoc'),
     ('internal, debugging, help functionality', 
           'helpconfig terminal hooklog')
@@ -22,6 +22,9 @@ externals = {
     'oejskit': "run javascript tests in real life browsers", 
     'xdist': None,
     'figleaf': None,
+    'capturelog': None, 
+    'coverage': None, 
+    'codecheckers': None, 
     'django': "for testing django applications", 
 }
 
