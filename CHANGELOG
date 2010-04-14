@@ -2,6 +2,8 @@ Changes between 1.2.1 and XXX
 =====================================
 
 - added links to the new capturelog and coverage plugins 
+- (issue87) fix unboundlocal error in assertionold code 
+- (issue86) improve documentation for looponfailing
 
 
 Changes between 1.2.1 and 1.2.0

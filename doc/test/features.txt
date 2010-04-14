@@ -176,7 +176,8 @@ advanced test selection and running modes
 
 .. _`selection by keyword`: 
 
-``py.test --looponfailing`` allows to run a test suite, 
+``py.test --looponfailing`` (implemented through the external
+`pytest-xdist`_ plugin) allows to run a test suite, 
 memorize all failures and then loop over the failing set
 of tests until they all pass.  It will re-start running
 the tests when it detects file changes in your project. 
