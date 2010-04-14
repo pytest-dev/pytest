@@ -447,7 +447,6 @@ def report_failure(e):
 
 def check(s, frame=None):
     if frame is None:
-        import sys
         frame = sys._getframe(1)
         frame = py.code.Frame(frame)
     expr = parse(s, 'eval')
@@ -518,7 +517,6 @@ def getfailure(e):
 
 def run(s, frame=None):
     if frame is None:
-        import sys
         frame = sys._getframe(1)
         frame = py.code.Frame(frame)
     module = Interpretable(parse(s, 'exec').node)
