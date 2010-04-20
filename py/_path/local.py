@@ -5,7 +5,7 @@ import sys, os, stat, re, atexit
 import py
 from py._path import common
 
-iswin32 = sys.platform == "win32" or (os._name == 'nt')
+iswin32 = sys.platform == "win32" or (getattr(os, '_name', False) == 'nt')
 
 class Stat(object):
     def __getattr__(self, name):
