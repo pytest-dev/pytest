@@ -133,7 +133,8 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
 
 def should_do_markup(file):
     return hasattr(file, 'isatty') and file.isatty() \
-           and os.environ.get('TERM') != 'dumb'
+           and os.environ.get('TERM') != 'dumb' \
+           and not (os._name == 'nt' and sys.platform.startswith('java'))
 
 class TerminalWriter(object):
     _esctable = dict(black=30, red=31, green=32, yellow=33, 

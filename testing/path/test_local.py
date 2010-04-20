@@ -193,7 +193,7 @@ class TestLocalPath(common.CommonFSTests):
         assert l[2] == p3 
 
 class TestExecutionOnWindows:
-    pytestmark = py.test.mark.skipif("sys.platform != 'win32'")
+    pytestmark = py.test.mark.skipif("not (sys.platform == 'win32' or os._name == 'nt')")
 
     def test_sysfind(self):
         x = py.path.local.sysfind('cmd')
@@ -201,7 +201,7 @@ class TestExecutionOnWindows:
         assert py.path.local.sysfind('jaksdkasldqwe') is None
 
 class TestExecution:
-    pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
+    pytestmark = py.test.mark.skipif("sys.platform == 'win32' or os._name == 'nt'")
 
     def test_sysfind(self):
         x = py.path.local.sysfind('test')
@@ -357,7 +357,7 @@ def test_samefile(tmpdir):
     assert p.samefile(p) 
 
 class TestWINLocalPath:
-    pytestmark = py.test.mark.skipif("sys.platform != 'win32'")
+    pytestmark = py.test.mark.skipif("sys.platform != 'win32' and os._name != 'win32'")
 
     def test_owner_group_not_implemented(self, path1):
         py.test.raises(NotImplementedError, "path1.stat().owner")
@@ -406,7 +406,7 @@ class TestWINLocalPath:
             old.chdir()    
 
 class TestPOSIXLocalPath:
-    pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
+    pytestmark = py.test.mark.skipif("sys.platform == 'win32' or os._name == 'nt'")
 
     def test_hardlink(self, tmpdir):
         linkpath = tmpdir.join('test')
