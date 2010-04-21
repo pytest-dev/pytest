@@ -13,6 +13,7 @@ syntax:glob
 *.html
 *.class
 *.orig
+*~
 
 build/
 dist/
