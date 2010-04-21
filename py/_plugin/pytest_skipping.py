@@ -196,13 +196,25 @@ def evalexpression(item, keyword):
             expr, result = None, True
             for expr in markholder.args:
                 if isinstance(expr, str):
-                    result = eval(expr, d)
+                    result = cached_eval(item.config, expr, d)
                 else:
                     result = expr
                 if not result:
                     break
             return expr, result
     return None, False
+
+def cached_eval(config, expr, d):
+    if not hasattr(config, '_evalcache'):
+        config._evalcache = {}
+    try:
+        return config._evalcache[expr]
+    except KeyError:
+        #import sys
+        #print >>sys.stderr, ("cache-miss: %r" % expr)
+        config._evalcache[expr] = x = eval(expr, d)
+        return x
+
 
 def folded_skips(skipped):
     d = {}

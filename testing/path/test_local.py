@@ -4,9 +4,11 @@ from py.path import local
 from testing.path import common
 
 failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
+failsonjywin32 = py.test.mark.xfail("sys.platform.startswith('java') "
+        "and getattr(os, '_name', None) == 'nt'")
 win32only = py.test.mark.skipif(
         "not (sys.platform == 'win32' or getattr(os, '_name', None) == 'nt')")
-failsonwin32 = py.test.mark.skipif(
+skiponwin32 = py.test.mark.skipif(
         "sys.platform == 'win32' or getattr(os, '_name', None) == 'nt'")
 
 
@@ -90,6 +92,7 @@ class TestLocalPath(common.CommonFSTests):
         finally:
             f.close()
 
+    @failsonjywin32
     def test_setmtime(self):
         import tempfile
         import time
@@ -206,7 +209,7 @@ class TestExecutionOnWindows:
         assert py.path.local.sysfind('jaksdkasldqwe') is None
 
 class TestExecution:
-    pytestmark = failsonwin32
+    pytestmark = skiponwin32
 
     def test_sysfind(self):
         x = py.path.local.sysfind('test')
@@ -411,7 +414,7 @@ class TestWINLocalPath:
             old.chdir()    
 
 class TestPOSIXLocalPath:
-    pytestmark = failsonwin32
+    pytestmark = skiponwin32
 
     def test_hardlink(self, tmpdir):
         linkpath = tmpdir.join('test')

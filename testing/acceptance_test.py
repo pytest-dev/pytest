@@ -85,7 +85,7 @@ class TestGeneralUsage:
         assert result.ret == 0
 
     def test_pydoc(self, testdir):
-        result = testdir.runpython_c("import py ; help(py.test)")
+        result = testdir.runpython_c("import py;help(py.test)")
         assert result.ret == 0
         s = result.stdout.str()
         assert 'MarkGenerator' in s
