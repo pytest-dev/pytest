@@ -192,7 +192,7 @@ def test_setup_funcarg_setup_not_called_if_outer_scope_fails(testdir):
         def setup_module(mod):
             raise ValueError(42)
         def pytest_funcarg__hello(request):
-            raise ValueError(43)
+            raise ValueError("xyz43")
         def test_function1(hello):
             pass
         def test_function2(hello):
@@ -206,7 +206,7 @@ def test_setup_funcarg_setup_not_called_if_outer_scope_fails(testdir):
         "*ValueError*42*",
         "*2 error*"
     ])
-    assert "43" not in result.stdout.str()
+    assert "xyz43" not in result.stdout.str()
 
 
 
