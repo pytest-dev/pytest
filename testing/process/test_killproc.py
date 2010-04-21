@@ -1,6 +1,7 @@
 
 import py, sys
 
+@py.test.mark.skipif("sys.platform.startswith('java')")
 def test_kill(tmpdir):
     subprocess = py.test.importorskip("subprocess")
     t = tmpdir.join("t.py")

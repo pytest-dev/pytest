@@ -1,7 +1,7 @@
 import py
 import os, sys
 
-if sys.platform == "win32":
+if sys.platform == "win32" or getattr(os, '_name', '') == 'nt':
     try:
         import ctypes
     except ImportError:
