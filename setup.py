@@ -21,13 +21,12 @@ For questions please check out http://pylib.org/contact.html
 
 (c) Holger Krekel and others, 2004-2010
 """
-trunk = None
 def main():
     setup(
         name='py',
         description='py.test and pylib: rapid testing and development utils.',
         long_description = long_description,
-        version= trunk or '1.2.2',
+        version= '1.2.2',
         url='http://pylib.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
