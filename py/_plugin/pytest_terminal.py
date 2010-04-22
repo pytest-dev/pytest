@@ -6,6 +6,8 @@ This is a good source for looking at the various reporting hooks.
 import py
 import sys
 
+optionalhook = py.test.mark.optionalhook
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count", 
@@ -130,6 +132,15 @@ class TerminalReporter:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
 
+    def pytest_plugin_registered(self, plugin):
+        if self.config.option.traceconfig: 
+            msg = "PLUGIN registered: %s" %(plugin,)
+            # XXX this event may happen during setup/teardown time 
+            #     which unfortunately captures our output here 
+            #     which garbles our output if we use self.write_line 
+            self.write_line(msg)
+
+    @optionalhook
     def pytest_gwmanage_newgateway(self, gateway, platinfo):
         #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
         d = {}
@@ -149,29 +160,36 @@ class TerminalReporter:
         self.write_line(infoline)
         self.gateway2info[gateway] = infoline
 
-    def pytest_plugin_registered(self, plugin):
-        if self.config.option.traceconfig: 
-            msg = "PLUGIN registered: %s" %(plugin,)
-            # XXX this event may happen during setup/teardown time 
-            #     which unfortunately captures our output here 
-            #     which garbles our output if we use self.write_line 
-            self.write_line(msg)
-
+    @optionalhook
     def pytest_testnodeready(self, node):
         self.write_line("[%s] txnode ready to receive tests" %(node.gateway.id,))
 
+    @optionalhook
     def pytest_testnodedown(self, node, error):
         if error:
             self.write_line("[%s] node down, error: %s" %(node.gateway.id, error))
+
+    @optionalhook
+    def pytest_rescheduleitems(self, items):
+        if self.config.option.debug:
+            self.write_sep("!", "RESCHEDULING %s " %(items,))
+
+    @optionalhook
+    def pytest_looponfailinfo(self, failreports, rootdirs):
+        if failreports:
+            self.write_sep("#", "LOOPONFAILING", red=True)
+            for report in failreports:
+                loc = self._getcrashline(report)
+                self.write_line(loc, red=True)
+        self.write_sep("#", "waiting for changes")
+        for rootdir in rootdirs:
+            self.write_line("### Watching:   %s" %(rootdir,), bold=True)
+
 
     def pytest_trace(self, category, msg):
         if self.config.option.debug or \
            self.config.option.traceconfig and category.find("config") != -1:
             self.write_line("[%s] %s" %(category, msg))
-
-    def pytest_rescheduleitems(self, items):
-        if self.config.option.debug:
-            self.write_sep("!", "RESCHEDULING %s " %(items,))
 
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).append(items)
@@ -273,16 +291,6 @@ class TerminalReporter:
             excrepr.toterminal(self._tw)
         else:
             excrepr.reprcrash.toterminal(self._tw)
-
-    def pytest_looponfailinfo(self, failreports, rootdirs):
-        if failreports:
-            self.write_sep("#", "LOOPONFAILING", red=True)
-            for report in failreports:
-                loc = self._getcrashline(report)
-                self.write_line(loc, red=True)
-        self.write_sep("#", "waiting for changes")
-        for rootdir in rootdirs:
-            self.write_line("### Watching:   %s" %(rootdir,), bold=True)
 
     def _getcrashline(self, report):
         try:

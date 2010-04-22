@@ -34,7 +34,7 @@ def test_functional(testdir, linecomp):
         def test_func(_pytest):
             class ApiClass:
                 def xyz(self, arg):  pass 
-            hook = HookRelay(ApiClass, Registry())
+            hook = HookRelay([ApiClass], Registry())
             rec = _pytest.gethookrecorder(hook)
             class Plugin:
                 def xyz(self, arg):

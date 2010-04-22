@@ -7,7 +7,7 @@ from py._plugin import hookspec
 from py._test.outcome import Skipped
 
 default_plugins = (
-    "default runner capture terminal mark skipping tmpdir monkeypatch "
+    "default runner capture mark terminal skipping tmpdir monkeypatch "
     "recwarn pdb pastebin unittest helpconfig nose assertion genscript "
     "junitxml doctest").split()
 
@@ -20,7 +20,7 @@ class PluginManager(object):
         self.registry = Registry()
         self._name2plugin = {}
         self._hints = []
-        self.hook = HookRelay(hookspecs=hookspec, registry=self.registry) 
+        self.hook = HookRelay([hookspec], registry=self.registry) 
         self.register(self)
         for spec in default_plugins:
             self.import_plugin(spec)
@@ -40,6 +40,8 @@ class PluginManager(object):
         if name in self._name2plugin:
             return False
         self._name2plugin[name] = plugin
+        self.call_plugin(plugin, "pytest_registerhooks", 
+            {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
         self.registry.register(plugin)
         return True
@@ -57,6 +59,9 @@ class PluginManager(object):
         for val in self._name2plugin.values():
             if plugin == val:
                 return True
+
+    def registerhooks(self, spec):
+        self.hook._registerhooks(spec)
 
     def getplugins(self):
         return list(self.registry)
@@ -301,13 +306,21 @@ class Registry:
 
 class HookRelay: 
     def __init__(self, hookspecs, registry):
-        self._hookspecs = hookspecs
+        if not isinstance(hookspecs, list):
+            hookspecs = [hookspecs]
+        self._hookspecs = []
         self._registry = registry
+        for hookspec in hookspecs:
+            self._registerhooks(hookspec)
+
+    def _registerhooks(self, hookspecs):
+        self._hookspecs.append(hookspecs)
         for name, method in vars(hookspecs).items():
             if name[:1] != "_":
                 firstresult = getattr(method, 'firstresult', False)
                 hc = HookCaller(self, name, firstresult=firstresult)
                 setattr(self, name, hc)
+                #print ("setting new hook", name)
 
     def _performcall(self, name, multicall):
         return multicall.execute()

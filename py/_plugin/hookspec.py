@@ -9,6 +9,9 @@ hook specifications for py.test plugins
 def pytest_addoption(parser):
     """ called before commandline parsing.  """
 
+def pytest_registerhooks(pluginmanager):
+    """ called after commandline parsing before pytest_configure.  """
+
 def pytest_namespace():
     """ return dict of name->object which will get stored at py.test. namespace"""
 
@@ -132,31 +135,6 @@ pytest_report_iteminfo.firstresult = True
 def pytest_doctest_prepare_content(content):
     """ return processed content for a given doctest"""
 pytest_doctest_prepare_content.firstresult = True
-
-# -------------------------------------------------------------------------
-# distributed testing 
-# -------------------------------------------------------------------------
-
-def pytest_gwmanage_newgateway(gateway, platinfo):
-    """ called on new raw gateway creation. """ 
-
-def pytest_gwmanage_rsyncstart(source, gateways):
-    """ called before rsyncing a directory to remote gateways takes place. """
-
-def pytest_gwmanage_rsyncfinish(source, gateways):
-    """ called after rsyncing a directory to remote gateways takes place. """
-
-def pytest_testnodeready(node):
-    """ Test Node is ready to operate. """
-
-def pytest_testnodedown(node, error):
-    """ Test Node is down. """
-
-def pytest_rescheduleitems(items):
-    """ reschedule Items from a node that went down. """
-
-def pytest_looponfailinfo(failreports, rootdirs):
-    """ info for repeating failing tests. """
 
 
 # -------------------------------------------------------------------------

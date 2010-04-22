@@ -93,9 +93,11 @@ def pytest_report_header(config):
 # =====================================================
 
 def pytest_plugin_registered(manager, plugin):
-    hookspec = manager.hook._hookspecs
     methods = collectattr(plugin)
-    hooks = collectattr(hookspec)
+    hooks = {}
+    for hookspec in manager.hook._hookspecs:
+        hooks.update(collectattr(hookspec))
+    
     stringio = py.io.TextIO()
     def Print(*args):
         if args:
@@ -109,10 +111,13 @@ def pytest_plugin_registered(manager, plugin):
         if isgenerichook(name):
             continue
         if name not in hooks: 
-            Print("found unknown hook:", name)
-            fail = True
+            if not getattr(method, 'optionalhook', False):
+                Print("found unknown hook:", name)
+                fail = True
         else:
+            #print "checking", method
             method_args = getargs(method)
+            #print "method_args", method_args
             if '__multicall__' in method_args:
                 method_args.remove('__multicall__')
             hook = hooks[name]

@@ -29,3 +29,24 @@ def test_collectattr():
     methods = py.builtin.sorted(collectattr(B()))
     assert list(methods) == ['pytest_hello', 'pytest_world']
 
+def test_hookvalidation_unknown(testdir):
+    testdir.makeconftest("""
+        def pytest_hello(xyz):
+            pass
+    """)
+    result = testdir.runpytest()
+    assert result.ret != 0
+    assert result.stderr.fnmatch_lines([
+        '*unknown hook*pytest_hello*'
+    ])
+
+def test_hookvalidation_optional(testdir):
+    testdir.makeconftest("""
+        import py
+        @py.test.mark.optionalhook 
+        def pytest_hello(xyz):
+            pass
+    """)
+    result = testdir.runpytest()
+    assert result.ret == 0
+

@@ -34,15 +34,18 @@ class HookRecorder:
         self._recorders = {}
         
     def start_recording(self, hookspecs):
-        assert hookspecs not in self._recorders 
-        class RecordCalls: 
-            _recorder = self 
-        for name, method in vars(hookspecs).items():
-            if name[0] != "_":
-                setattr(RecordCalls, name, self._makecallparser(method))
-        recorder = RecordCalls()
-        self._recorders[hookspecs] = recorder
-        self._registry.register(recorder)
+        if not isinstance(hookspecs, (list, tuple)):
+            hookspecs = [hookspecs]
+        for hookspec in hookspecs:
+            assert hookspec not in self._recorders 
+            class RecordCalls: 
+                _recorder = self 
+            for name, method in vars(hookspec).items():
+                if name[0] != "_":
+                    setattr(RecordCalls, name, self._makecallparser(method))
+            recorder = RecordCalls()
+            self._recorders[hookspec] = recorder
+            self._registry.register(recorder)
         self.hook = HookRelay(hookspecs, registry=self._registry)
 
     def finish_recording(self):
