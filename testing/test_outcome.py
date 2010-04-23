@@ -68,5 +68,7 @@ def test_pytest_cmdline_main(testdir):
            py.test.cmdline.main([__file__])
     """ % (str(py._pydir.dirpath())))
     import subprocess
-    ret = subprocess.call([sys.executable, str(p)])
+    popen = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE)
+    s = popen.stdout.read()
+    ret = popen.wait()
     assert ret == 0

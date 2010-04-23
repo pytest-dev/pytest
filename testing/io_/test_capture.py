@@ -1,6 +1,8 @@
 import os, sys
 import py
 
+needsdup = py.test.mark.skipif("not hasattr(os, 'dup')")
+
 from py.builtin import print_
 
 if sys.version_info >= (3,0):
@@ -72,6 +74,7 @@ def pytest_funcarg__tmpfile(request):
     request.addfinalizer(f.close)
     return f
 
+@needsdup
 def test_dupfile(tmpfile):
     somefile = tmpfile
     flist = []
@@ -91,6 +94,8 @@ def test_dupfile(tmpfile):
     somefile.close()
 
 class TestFDCapture: 
+    pytestmark = needsdup 
+
     def test_stdout(self, tmpfile):
         fd = tmpfile.fileno()
         cap = py.io.FDCapture(fd)
@@ -261,6 +266,8 @@ class TestStdCapture:
         assert not err 
 
 class TestStdCaptureFD(TestStdCapture): 
+    pytestmark = needsdup
+
     def getcapture(self, **kw): 
         return py.io.StdCaptureFD(**kw)
 
@@ -289,6 +296,7 @@ class TestStdCaptureFD(TestStdCapture):
         assert out.startswith("3") 
         assert err.startswith("4") 
 
+@needsdup
 def test_capture_no_sys(): 
     capsys = py.io.StdCapture()
     try:
@@ -303,6 +311,7 @@ def test_capture_no_sys():
     finally:
         capsys.reset()
 
+@needsdup
 def test_callcapture_nofd(): 
     def func(x, y): 
         oswritebytes(1, "hello")

@@ -38,9 +38,12 @@ def test_terminalwriter_dumb_term_no_markup(monkeypatch):
         def isatty(self):
             return True
     monkeypatch.setattr(sys, 'stdout', MyFile())
-    assert sys.stdout.isatty()
-    tw = py.io.TerminalWriter()
-    assert not tw.hasmarkup
+    try:
+        assert sys.stdout.isatty()
+        tw = py.io.TerminalWriter()
+        assert not tw.hasmarkup
+    finally:
+        monkeypatch.undo()
 
 def test_unicode_encoding():
     msg = py.builtin._totext('b\u00f6y', 'utf8')
