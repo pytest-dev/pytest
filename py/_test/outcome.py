@@ -100,7 +100,7 @@ def raises(ExpectedException, *args, **kwargs):
         k = ", ".join(["%s=%r" % x for x in kwargs.items()])
         if k:
             k = ', ' + k
-        expr = '%s(%r%s)' %(func.__name__, args, k)
+        expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
     raise ExceptionFailure(msg="DID NOT RAISE", 
                            expr=args, expected=ExpectedException) 
 
