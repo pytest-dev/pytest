@@ -82,7 +82,7 @@ class TestTerminal:
         ])
 
     def test_collect_fail(self, testdir, option):
-        p = testdir.makepyfile("import xyz")
+        p = testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option._getcmdargs())
         result.stdout.fnmatch_lines([
             "*test_collect_fail.py E*",

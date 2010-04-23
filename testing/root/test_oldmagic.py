@@ -1,8 +1,10 @@
 import py
 import sys, os
 
+def fass():
+    assert 1 == 2
 def check_assertion():
-    excinfo = py.test.raises(AssertionError, "assert 1 == 2")
+    excinfo = py.test.raises(AssertionError, fass)
     s = excinfo.exconly(tryshort=True)
     if not s == "assert 1 == 2":
         raise ValueError("assertion not enabled: got %s" % s)
@@ -16,6 +18,7 @@ def test_invoke_assertion(recwarn, monkeypatch):
         py.magic.revoke(assertion=True)
     recwarn.pop(DeprecationWarning)
 
+@py.test.mark.skipif("sys.platform.startswith('java')")
 def test_invoke_compile(recwarn, monkeypatch):
     monkeypatch.setattr(py.builtin.builtins, 'compile', None)
     py.magic.invoke(compile=True)

@@ -1,3 +1,5 @@
+import py
+py.test.importorskip("parser")
 from py._cmdline.pyconvert_unittest import rewrite_utest
 
 

@@ -1,5 +1,5 @@
 import py
-import sys
+import os, sys
 from py._plugin.pytest__pytest import HookRecorder
 from py._test.pluginmanager import Registry
 
@@ -17,7 +17,7 @@ def test_hookrecorder_basic():
 
 def test_hookrecorder_basic_no_args_hook():
     rec = HookRecorder(Registry())
-    apimod = type(sys)('api')
+    apimod = type(os)('api')
     def xyz():
         pass
     apimod.xyz = xyz
