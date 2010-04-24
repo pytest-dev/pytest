@@ -523,7 +523,8 @@ class FormattedExcinfo(object):
             source = py.code.Source("???")
             line_index = 0
         else:
-            line_index = entry.lineno - entry.getfirstlinesource()
+            # entry.getfirstlinesource() can be -1, should be 0 on jython
+            line_index = entry.lineno - max(entry.getfirstlinesource(), 0)
 
         lines = []
         if self.style == "long":

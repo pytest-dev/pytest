@@ -6,6 +6,7 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
 - fix jython/win32 issues
+- ship distribute_setup.py version 0.6.10 
 
 
 Changes between 1.2.1 and 1.2.0

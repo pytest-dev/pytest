@@ -46,19 +46,21 @@ except ImportError:
             args = [quote(arg) for arg in args]
         return os.spawnl(os.P_WAIT, sys.executable, *args) == 0
 
-DEFAULT_VERSION = "0.6.6"
+DEFAULT_VERSION = "0.6.10"
 DEFAULT_URL = "http://pypi.python.org/packages/source/d/distribute/"
+SETUPTOOLS_FAKED_VERSION = "0.6c11"
+
 SETUPTOOLS_PKG_INFO = """\
 Metadata-Version: 1.0
 Name: setuptools
-Version: 0.6c9
+Version: %s
 Summary: xxxx
 Home-page: xxx
 Author: xxx
 Author-email: xxx
 License: xxx
 Description: xxx
-"""
+""" % SETUPTOOLS_FAKED_VERSION
 
 
 def _install(tarball):
@@ -79,12 +81,14 @@ def _install(tarball):
 
         # installing
         log.warn('Installing Distribute')
-        assert _python_cmd('setup.py', 'install')
+        if not _python_cmd('setup.py', 'install'):
+            log.warn('Something went wrong during the installation.')
+            log.warn('See the error message above.')
     finally:
         os.chdir(old_wd)
 
 
-def _build_egg(tarball, to_dir):
+def _build_egg(egg, tarball, to_dir):
     # extracting the tarball
     tmpdir = tempfile.mkdtemp()
     log.warn('Extracting in %s', tmpdir)
@@ -104,27 +108,28 @@ def _build_egg(tarball, to_dir):
         log.warn('Building a Distribute egg in %s', to_dir)
         _python_cmd('setup.py', '-q', 'bdist_egg', '--dist-dir', to_dir)
 
-        # returning the result
-        for file in os.listdir(to_dir):
-            if fnmatch.fnmatch(file, 'distribute-%s*.egg' % DEFAULT_VERSION):
-                return os.path.join(to_dir, file)
-
-        raise IOError('Could not build the egg.')
     finally:
         os.chdir(old_wd)
+    # returning the result
+    log.warn(egg)
+    if not os.path.exists(egg):
+        raise IOError('Could not build the egg.')
 
 
 def _do_download(version, download_base, to_dir, download_delay):
-    tarball = download_setuptools(version, download_base,
-                                  to_dir, download_delay)
-    egg = _build_egg(tarball, to_dir)
+    egg = os.path.join(to_dir, 'distribute-%s-py%d.%d.egg'
+                       % (version, sys.version_info[0], sys.version_info[1]))
+    if not os.path.exists(egg):
+        tarball = download_setuptools(version, download_base,
+                                      to_dir, download_delay)
+        _build_egg(egg, tarball, to_dir)
     sys.path.insert(0, egg)
     import setuptools
     setuptools.bootstrap_install_from = egg
 
 
 def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
-                   to_dir=os.curdir, download_delay=15, no_fake=False):
+                   to_dir=os.curdir, download_delay=15, no_fake=True):
     # making sure we use the absolute path
     to_dir = os.path.abspath(to_dir)
     was_imported = 'pkg_resources' in sys.modules or \
@@ -134,7 +139,7 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
             import pkg_resources
             if not hasattr(pkg_resources, '_distribute'):
                 if not no_fake:
-                    fake_setuptools()
+                    _fake_setuptools()
                 raise ImportError
         except ImportError:
             return _do_download(version, download_base, to_dir, download_delay)
@@ -159,7 +164,8 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
             return _do_download(version, download_base, to_dir,
                                 download_delay)
     finally:
-        _create_fake_setuptools_pkg_info(to_dir)
+        if not no_fake:
+            _create_fake_setuptools_pkg_info(to_dir)
 
 def download_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
                         to_dir=os.curdir, delay=15):
@@ -218,21 +224,33 @@ def _patch_file(path, content):
 def _same_content(path, content):
     return open(path).read() == content
 
+def _no_sandbox(function):
+    def __no_sandbox(*args, **kw):
+        try:
+            from setuptools.sandbox import DirectorySandbox
+            def violation(*args):
+                pass
+            DirectorySandbox._old = DirectorySandbox._violation
+            DirectorySandbox._violation = violation
+            patched = True
+        except ImportError:
+            patched = False
 
+        try:
+            return function(*args, **kw)
+        finally:
+            if patched:
+                DirectorySandbox._violation = DirectorySandbox._old
+                del DirectorySandbox._old
+
+    return __no_sandbox
+
+@_no_sandbox
 def _rename_path(path):
     new_name = path + '.OLD.%s' % time.time()
     log.warn('Renaming %s into %s', path, new_name)
-    try:
-        from setuptools.sandbox import DirectorySandbox
-        def _violation(*args):
-            pass
-        DirectorySandbox._violation = _violation
-    except ImportError:
-        pass
-
     os.rename(path, new_name)
     return new_name
-
 
 def _remove_flat_installation(placeholder):
     if not os.path.isdir(placeholder):
@@ -273,22 +291,26 @@ def _after_install(dist):
     placeholder = dist.get_command_obj('install').install_purelib
     _create_fake_setuptools_pkg_info(placeholder)
 
+@_no_sandbox
 def _create_fake_setuptools_pkg_info(placeholder):
     if not placeholder or not os.path.exists(placeholder):
         log.warn('Could not find the install location')
         return
     pyver = '%s.%s' % (sys.version_info[0], sys.version_info[1])
-    setuptools_file = 'setuptools-0.6c9-py%s.egg-info' % pyver
+    setuptools_file = 'setuptools-%s-py%s.egg-info' % \
+            (SETUPTOOLS_FAKED_VERSION, pyver)
     pkg_info = os.path.join(placeholder, setuptools_file)
     if os.path.exists(pkg_info):
         log.warn('%s already exists', pkg_info)
         return
+
     log.warn('Creating %s', pkg_info)
     f = open(pkg_info, 'w')
     try:
         f.write(SETUPTOOLS_PKG_INFO)
     finally:
         f.close()
+
     pth_file = os.path.join(placeholder, 'setuptools.pth')
     log.warn('Creating %s', pth_file)
     f = open(pth_file, 'w')
@@ -296,7 +318,6 @@ def _create_fake_setuptools_pkg_info(placeholder):
         f.write(os.path.join(os.curdir, setuptools_file))
     finally:
         f.close()
-
 
 def _patch_egg_dir(path):
     # let's check if it's already patched
@@ -319,7 +340,7 @@ def _patch_egg_dir(path):
 
 def _before_install():
     log.warn('Before install bootstrap.')
-    fake_setuptools()
+    _fake_setuptools()
 
 
 def _under_prefix(location):
@@ -340,7 +361,7 @@ def _under_prefix(location):
     return True
 
 
-def fake_setuptools():
+def _fake_setuptools():
     log.warn('Scanning installed packages')
     try:
         import pkg_resources

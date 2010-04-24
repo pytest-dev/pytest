@@ -3,6 +3,8 @@ import py
 from py._code.code import FormattedExcinfo, ReprExceptionInfo
 queue = py.builtin._tryimport('queue', 'Queue')
 
+failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
+
 class TWMock: 
     def __init__(self):
         self.lines = []
@@ -82,6 +84,7 @@ class TestTraceback_f_g_h:
         assert s.startswith("def f():")
         assert s.endswith("raise ValueError") 
 
+    @failsonjython
     def test_traceback_entry_getsource_in_construct(self):
         source = py.code.Source("""\
             def xyz():
@@ -216,7 +219,7 @@ def test_excinfo_repr():
 def test_excinfo_str():
     excinfo = py.test.raises(ValueError, h)
     s = str(excinfo)
-    assert s.startswith(__file__[:-1]) # pyc file 
+    assert s.startswith(__file__[:-9]) # pyc file and $py.class
     assert s.endswith("ValueError")
     assert len(s.split(":")) >= 3 # on windows it's 4
 
@@ -290,6 +293,7 @@ class TestFormattedExcinfo:
         assert lines[0] == "|   def f(x):"
         assert lines[1] == "        pass"
 
+    @failsonjython
     def test_repr_source_excinfo(self):
         """ check if indentation is right """
         pr = FormattedExcinfo()

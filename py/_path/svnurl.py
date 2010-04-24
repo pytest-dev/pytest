@@ -353,6 +353,8 @@ def parse_time_with_missing_year(timestr):
     day = time.strptime(tparts.pop(0), '%d')[2]
     last = tparts.pop(0) # year or hour:minute
     try:
+        if ":" in last:
+            raise ValueError()
         year = time.strptime(last, '%Y')[0]
         hour = minute = 0
     except ValueError:

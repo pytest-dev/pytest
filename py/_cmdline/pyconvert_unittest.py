@@ -1,6 +1,10 @@
 import re
 import sys
-import parser
+
+try:
+    import parser
+except ImportError:
+    parser = None
 
 d={}
 #  d is the dictionary of unittest changes, keyed to the old name

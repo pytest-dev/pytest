@@ -13,6 +13,12 @@ class TestSvnURLCommandPath(CommonSvnTests):
     def test_load(self, path1):
         super(TestSvnURLCommandPath, self).test_load(path1)
 
+    # the following two work on jython but not in local/svnwc
+    def test_listdir(self, path1):
+        super(TestSvnURLCommandPath, self).test_listdir(path1)
+    def test_visit_ignore(self, path1):
+        super(TestSvnURLCommandPath, self).test_visit_ignore(path1)
+
     def test_svnurl_needs_arg(self, path1):
         py.test.raises(TypeError, "py.path.svnurl()")
 

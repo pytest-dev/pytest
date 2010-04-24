@@ -9,7 +9,7 @@ def checksubpackage(name):
         keys = dir(obj)
         assert len(keys) > 0
         print (obj.__map__)
-        for name in obj.__map__:
+        for name in list(obj.__map__):
             assert hasattr(obj, name), (obj, name)
 
 def test_dir():

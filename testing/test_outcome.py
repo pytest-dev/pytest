@@ -15,6 +15,16 @@ class TestRaises:
     def test_raises_function(self):
         py.test.raises(ValueError, int, 'hello')
 
+    def test_raises_callable_no_exception(self):
+        from py._test.outcome import ExceptionFailure
+        class A:
+            def __call__(self):
+                pass
+        try:
+            py.test.raises(ValueError, A())
+        except ExceptionFailure:
+            pass
+
 def test_pytest_exit():
     try:
         py.test.exit("hello")
@@ -68,5 +78,7 @@ def test_pytest_cmdline_main(testdir):
            py.test.cmdline.main([__file__])
     """ % (str(py._pydir.dirpath())))
     import subprocess
-    ret = subprocess.call([sys.executable, str(p)])
+    popen = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE)
+    s = popen.stdout.read()
+    ret = popen.wait()
     assert ret == 0
