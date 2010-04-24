@@ -279,10 +279,9 @@ class TestTerminal:
             def pytest_report_header(config):
                 return "hello: info" 
         """)
-        testdir.mkdir("a").join("conftest.py").write("""if 1:
-            def pytest_report_header(config):
-                return ["line1", "line2"]
-        """)
+        testdir.mkdir("a").join("conftest.py").write("""
+def pytest_report_header(config):
+    return ["line1", "line2"]""")
         result = testdir.runpytest("a")
         result.stdout.fnmatch_lines([
             "*hello: info*",
