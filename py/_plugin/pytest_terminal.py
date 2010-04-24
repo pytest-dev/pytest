@@ -505,7 +505,7 @@ class ShowFuncargSession(Session):
     def getlocation(self, function):
         import inspect
         fn = py.path.local(inspect.getfile(function))
-        lineno = function.func_code.co_firstlineno
+        lineno = py.builtin._getcode(function).co_firstlineno
         if fn.relto(self.fspath):
             fn = fn.relto(self.fspath)
         return "%s:%d" %(fn, lineno+1)
