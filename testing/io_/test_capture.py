@@ -76,7 +76,7 @@ def test_dupfile(tmpfile):
     somefile = tmpfile
     flist = []
     for i in range(5): 
-        nf = py.io.dupfile(somefile)
+        nf = py.io.dupfile(somefile, encoding="utf-8")
         assert nf != somefile
         assert nf.fileno() != somefile.fileno()
         assert nf not in flist 
