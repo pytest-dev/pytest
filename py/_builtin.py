@@ -111,6 +111,9 @@ if sys.version_info >= (3, 0):
     def _getfuncdict(function):
         return getattr(function, "__dict__", None)
 
+    def _getcode(function):
+        return getattr(function, "__code__", None)
+
     def execfile(fn, globs=None, locs=None):
         if globs is None:
             back = sys._getframe(1)
@@ -146,6 +149,9 @@ else:
 
     def _getfuncdict(function):
         return getattr(function, "__dict__", None)
+
+    def _getcode(function):
+        return getattr(function, "func_code", None)
 
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 

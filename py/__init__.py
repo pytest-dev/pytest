@@ -125,6 +125,7 @@ py.apipkg.initpkg(__name__, dict(
         '_istext'        : '._builtin:_istext',
         '_getimself'     : '._builtin:_getimself',
         '_getfuncdict'   : '._builtin:_getfuncdict',
+        '_getcode'       : '._builtin:_getcode',
         'builtins'       : '._builtin:builtins',
         'execfile'       : '._builtin:execfile',
         'callable'       : '._builtin:callable',

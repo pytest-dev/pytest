@@ -1,4 +1,5 @@
 import sys
+import types
 import py
 from py.builtin import set, frozenset, reversed, sorted
 
@@ -146,3 +147,8 @@ def test_tryimport():
     assert x == py
     x = py.builtin._tryimport('asldkajsdl', 'py.path')
     assert x == py.path
+
+def test_getcode():
+    code = py.builtin._getcode(test_getcode)
+    assert isinstance(code, types.CodeType)
+    assert py.builtin._getcode(4) is None
