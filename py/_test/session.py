@@ -97,22 +97,26 @@ class Session(object):
         self.shouldstop = False 
         self.sessionstarts()
         exitstatus = outcome.EXIT_OK
-        captured_excinfo = None
         try:
-            for item in self.collect(colitems): 
-                if self.shouldstop: 
-                    break 
-                if not self.config.option.collectonly: 
-                    item.config.hook.pytest_runtest_protocol(item=item)
+            self._mainloop(colitems)
+            if self._testsfailed:
+                exitstatus = outcome.EXIT_TESTSFAILED
+            self.sessionfinishes(exitstatus=exitstatus)
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
             self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             exitstatus = outcome.EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
-            self.config.pluginmanager.notify_exception(captured_excinfo)
+            self.config.pluginmanager.notify_exception(excinfo)
             exitstatus = outcome.EXIT_INTERNALERROR
-        if exitstatus == 0 and self._testsfailed:
-            exitstatus = outcome.EXIT_TESTSFAILED
-        self.sessionfinishes(exitstatus=exitstatus)
+        if exitstatus in (outcome.EXIT_INTERNALERROR, outcome.EXIT_INTERRUPTED):
+            self.sessionfinishes(exitstatus=exitstatus)
         return exitstatus
+
+    def _mainloop(self, colitems):
+        for item in self.collect(colitems): 
+            if self.shouldstop: 
+                break 
+            if not self.config.option.collectonly: 
+                item.config.hook.pytest_runtest_protocol(item=item)
