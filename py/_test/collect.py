@@ -110,17 +110,15 @@ class Node(object):
         setattr(self, attrname, res)
         return res 
 
-    def listchain(self, rootfirst=False):
+    def listchain(self):
         """ return list of all parent collectors up to self, 
-            starting form root of collection tree. """ 
+            starting from root of collection tree. """ 
         l = [self]
         while 1: 
-            x = l[-1]
+            x = l[0]
             if x.parent is not None and x.parent.parent is not None:
-                l.append(x.parent) 
+                l.insert(0, x.parent)
             else: 
-                if not rootfirst:
-                    l.reverse() 
                 return l 
 
     def listnames(self): 
