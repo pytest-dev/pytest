@@ -192,3 +192,10 @@ def test_builtin_patch_unpatch(monkeypatch):
     assert cpy_builtin.AssertionError is Sub 
     assert cpy_builtin.compile == mycompile 
 
+
+def test_unicode_handling(testdir):
+    value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
+    def f():
+        raise Exception(value)
+    excinfo = py.test.raises(Exception, f)
+    s = str(excinfo)

@@ -581,7 +581,10 @@ class TerminalRepr:
     def __str__(self):
         tw = py.io.TerminalWriter(stringio=True)
         self.toterminal(tw)
-        return tw.stringio.getvalue().strip()
+        s = tw.stringio.getvalue().strip()
+        if sys.version_info[0] < 3:
+            s = s.encode('utf-8')
+        return s
 
     def __repr__(self):
         return "<%s instance at %0x>" %(self.__class__, id(self))
