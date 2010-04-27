@@ -802,4 +802,8 @@ def autopath(globs=None):
 
 
 def isimportable(name):
-    return name[0].isalpha() and name.isalnum()
+    if name:
+        if not (name[0].isalpha() or name[0] == '_'):
+            return False
+        name= name.replace("_", '')
+        return not name or name.isalnum()

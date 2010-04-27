@@ -151,7 +151,7 @@ class Config(object):
         if not numbered:
             return basetemp.mkdir(basename)
         else:
-            return py.path.local.make_numbered_dir(prefix=basename + "-", 
+            return py.path.local.make_numbered_dir(prefix=basename,
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
     def getinitialnodes(self):

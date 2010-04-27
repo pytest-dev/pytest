@@ -363,6 +363,17 @@ def test_pypkgdir_unimportable(tmpdir):
     assert subdir.ensure("xyz.py").pypkgpath() == subdir
     assert not pkg.pypkgpath() 
 
+def test_isimportable():
+    from py._path.local import isimportable
+    assert not isimportable("")
+    assert isimportable("x")
+    assert isimportable("x1")
+    assert isimportable("x_1")
+    assert isimportable("_")
+    assert isimportable("_1")
+    assert not isimportable("x-1")
+    assert not isimportable("x:1")
+
 def test_homedir():
     homedir = py.path.local._gethomedir()
     assert homedir.check(dir=1)
