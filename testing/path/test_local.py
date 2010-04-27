@@ -355,6 +355,14 @@ def test_pypkgdir(tmpdir):
     assert pkg.pypkgpath() == pkg
     assert pkg.join('subdir', '__init__.py').pypkgpath() == pkg
 
+def test_pypkgdir_unimportable(tmpdir):
+    pkg = tmpdir.ensure('pkg1-1', dir=1) # unimportable
+    pkg.ensure("__init__.py")
+    subdir = pkg.ensure("subdir/__init__.py").dirpath()
+    assert subdir.pypkgpath() == subdir
+    assert subdir.ensure("xyz.py").pypkgpath() == subdir
+    assert not pkg.pypkgpath() 
+
 def test_homedir():
     homedir = py.path.local._gethomedir()
     assert homedir.check(dir=1)

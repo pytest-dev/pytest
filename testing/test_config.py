@@ -169,6 +169,7 @@ class TestConfigApi_getinitialnodes:
         assert col.config is config 
 
     def test_pkgfile(self, testdir, tmpdir):
+        tmpdir = tmpdir.join("subdir")
         x = tmpdir.ensure("x.py")
         tmpdir.ensure("__init__.py")
         config = testdir.reparseconfig([x])

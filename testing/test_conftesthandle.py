@@ -90,6 +90,13 @@ class TestConftestValueAccessGlobal:
         assert path.dirpath() == basedir.join("adir", "b")
         assert path.purebasename == "conftest"
 
+def test_conftest_in_nonpkg_with_init(tmpdir):
+    tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
+    tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
+    tmpdir.ensure("adir-1.0/b/__init__.py")
+    tmpdir.ensure("adir-1.0/__init__.py")
+    conftest = ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
+
 def test_conftestcutdir(testdir):
     conf = testdir.makeconftest("")
     p = testdir.mkdir("x")

@@ -456,7 +456,8 @@ class LocalPath(FSBase):
     def pypkgpath(self, pkgname=None):
         """ return the path's package path by looking for the given
             pkgname.  If pkgname is None then look for the last
-            directory upwards which still contains an __init__.py.
+            directory upwards which still contains an __init__.py
+            and whose basename is python-importable.
             Return None if a pkgpath can not be determined.
         """
         pkgpath = None
@@ -464,6 +465,8 @@ class LocalPath(FSBase):
             if pkgname is None:
                 if parent.check(file=1):
                     continue
+                if not isimportable(parent.basename):
+                    break
                 if parent.join('__init__.py').check():
                     pkgpath = parent
                     continue
@@ -797,3 +800,6 @@ def autopath(globs=None):
     ret.pkgdir = pkgdir
     return ret
 
+
+def isimportable(name):
+    return name[0].isalpha() and name.isalnum()
