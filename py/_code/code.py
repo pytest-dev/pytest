@@ -417,6 +417,12 @@ class ExceptionInfo(object):
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return str(loc)
 
+    def __unicode__(self):
+        entry = self.traceback[-1]
+        loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
+        return unicode(loc)
+        
+
 class FormattedExcinfo(object):
     """ presenting information about failing Functions and Generators. """ 
     # for traceback entries 
@@ -579,11 +585,15 @@ class FormattedExcinfo(object):
 
 class TerminalRepr:
     def __str__(self):
+        s = self.__unicode__()
+        if sys.version_info[0] < 3:
+            s = s.encode('utf-8')
+        return s
+
+    def __unicode__(self):
         tw = py.io.TerminalWriter(stringio=True)
         self.toterminal(tw)
         s = tw.stringio.getvalue().strip()
-        if sys.version_info[0] < 3:
-            s = s.encode('utf-8')
         return s
 
     def __repr__(self):

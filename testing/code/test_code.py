@@ -199,3 +199,5 @@ def test_unicode_handling(testdir):
         raise Exception(value)
     excinfo = py.test.raises(Exception, f)
     s = str(excinfo)
+    if sys.version_info[0] < 3:
+        u = unicode(excinfo)

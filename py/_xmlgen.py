@@ -238,6 +238,7 @@ class _escape:
 
     def __call__(self, ustring):
         """ xml-escape the given unicode string. """
+        ustring = unicode(ustring)
         return self.charef_rex.sub(self._replacer, ustring)
 
 escape = _escape()

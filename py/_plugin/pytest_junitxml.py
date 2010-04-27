@@ -43,6 +43,10 @@ class LogXML(object):
 
     def _closetestcase(self):
         self.test_logs.append("</testcase>")
+
+    def appendlog(self, fmt, *args):
+        args = tuple([py.xml.escape(arg) for arg in args])
+        self.test_logs.append(fmt % args)
          
     def append_pass(self, report):
         self.passed += 1
@@ -51,10 +55,9 @@ class LogXML(object):
 
     def append_failure(self, report):
         self._opentestcase(report)
-        s = py.xml.escape(str(report.longrepr))
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.test_logs.append(
-            '<failure message="test failure">%s</failure>' % (s))
+        self.appendlog('<failure message="test failure">%s</failure>', 
+            report.longrepr)
         self._closetestcase()
         self.failed += 1
 
@@ -69,33 +72,30 @@ class LogXML(object):
 
     def append_collect_failure(self, report):
         self._opentestcase_collectfailure(report)
-        s = py.xml.escape(str(report.longrepr))
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.test_logs.append(
-            '<failure message="collection failure">%s</failure>' % (s))
+        self.appendlog('<failure message="collection failure">%s</failure>', 
+            report.longrepr)
         self._closetestcase()
         self.errors += 1
 
     def append_collect_skipped(self, report):
         self._opentestcase_collectfailure(report)
-        s = py.xml.escape(str(report.longrepr))
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.test_logs.append(
-            '<skipped message="collection skipped">%s</skipped>' % (s))
+        self.appendlog('<skipped message="collection skipped">%s</skipped>',
+            report.longrepr)
         self._closetestcase()
         self.skipped += 1
 
     def append_error(self, report):
         self._opentestcase(report)
-        s = py.xml.escape(str(report.longrepr))
-        self.test_logs.append(
-            '<error message="test setup failure">%s</error>' % s)
+        self.appendlog('<error message="test setup failure">%s</error>', 
+            report.longrepr)
         self._closetestcase()
         self.errors += 1
 
     def append_skipped(self, report):
         self._opentestcase(report)
-        self.test_logs.append("<skipped/>")
+        self.appendlog("<skipped/>")
         self._closetestcase()
         self.skipped += 1
 
@@ -126,7 +126,7 @@ class LogXML(object):
 
     def pytest_internalerror(self, excrepr):
         self.errors += 1
-        data = py.xml.escape(str(excrepr))
+        data = py.xml.escape(excrepr)
         self.test_logs.append(
             '\n<testcase classname="pytest" name="internal">'
             '    <error message="internal error">'
@@ -136,7 +136,11 @@ class LogXML(object):
         self.suite_start_time = time.time()
 
     def pytest_sessionfinish(self, session, exitstatus, __multicall__):
-        logfile = open(self.logfile, 'w', 1) # line buffered
+        if py.std.sys.version_info[0] < 3:
+            logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
+        else:
+            logfile = open(self.logfile, 'w', encoding='utf-8')
+            
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
         numtests = self.passed + self.failed

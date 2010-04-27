@@ -2,6 +2,7 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 ==================================================
 
 - new mechanism to allow plugins to register new hooks 
+- (issue85) fix junitxml plugin to handle tests with non-ascii output
 - fixes for handling of unicode exception values
 - added links to the new capturelog and coverage plugins 
 - (issue87) fix unboundlocal error in assertionold code 

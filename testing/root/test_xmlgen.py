@@ -5,6 +5,25 @@ from py._xmlgen import unicode, html
 class ns(py.xml.Namespace): 
     pass 
 
+def test_escape():
+    uvalue = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8')
+    class A:
+        def __unicode__(self):
+            return uvalue
+        def __str__(self):
+            x = self.__unicode__()
+            if py.std.sys.version_info[0] < 3:
+                return x.encode('utf-8')
+            return x
+    y = py.xml.escape(uvalue)
+    assert y == uvalue 
+    x = py.xml.escape(A())
+    assert x == uvalue 
+    if py.std.sys.version_info[0] < 3:
+        assert isinstance(x, unicode)
+        assert isinstance(y, unicode)
+    
+
 def test_tag_with_text(): 
     x = ns.hello("world") 
     u = unicode(x) 

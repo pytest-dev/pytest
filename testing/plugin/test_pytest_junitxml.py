@@ -1,5 +1,6 @@
 
 from xml.dom import minidom
+import py
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -117,6 +118,19 @@ class TestPython:
             name="test_collect_skipped")
         fnode = tnode.getElementsByTagName("skipped")[0]
         assert_attr(fnode, message="collection skipped")
+
+    def test_unicode(self, testdir):
+        value = 'hx\xc4\x85\xc4\x87\n'
+        testdir.makepyfile("""
+            def test_hello():
+                print (%r)
+                assert 0
+        """ % value)
+        result, dom = runandparse(testdir)
+        assert result.ret == 1
+        tnode = dom.getElementsByTagName("testcase")[0]
+        fnode = tnode.getElementsByTagName("failure")[0]
+        assert "hx" in fnode.toxml()
 
 class TestNonPython:
     def test_summing_simple(self, testdir):
