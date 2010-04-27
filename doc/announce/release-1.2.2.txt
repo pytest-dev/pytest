@@ -1,0 +1,34 @@
+py.test/pylib 1.2.2: bugfixes and per-plugin hooks
+--------------------------------------------------------------------------------
+
+py.test-1.2.2 is a minor release with brings a number of 
+bug fixes and improved compatibility with Python3 and Jython-2.5.1 on Windows.  
+It also is the first release that allows plugins to dynamically register 
+new hooks (which might be implemented by yet other plugins) allowing plugins to 
+interoperate without requiring a new core release. 
+
+py.test is an advanced automated testing tool working with
+Python2, Python3 and Jython versions on all major operating
+systems.  It has a simple plugin architecture and can run many 
+existing common Python test suites without modification.  It offers 
+some unique features not found in other testing tools.  
+See http://pytest.org for more info.
+
+For more detailed information see the changelog below. 
+
+cheers and have fun,
+
+holger 
+
+Changes between 1.2.1 and 1.2.2 (release pending)
+==================================================
+
+- new mechanism to allow plugins to register new hooks 
+- (issue85) fix junitxml plugin to handle tests with non-ascii output
+- fix some python3 compatibility issues (thanks Benjamin Peterson)
+- fixes for making the jython/win32 combination work
+- fixes for handling of unicode exception values
+- added links to the new capturelog and coverage plugins 
+- (issue87) fix unboundlocal error in assertionold code 
+- (issue86) improve documentation for looponfailing
+- ship distribute_setup.py version 0.6.10 

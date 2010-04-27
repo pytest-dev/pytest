@@ -3,11 +3,12 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 
 - new mechanism to allow plugins to register new hooks 
 - (issue85) fix junitxml plugin to handle tests with non-ascii output
+- fix some python3 compatibility issues (thanks Benjamin Peterson)
+- fixes for making the jython/win32 combination work
 - fixes for handling of unicode exception values
 - added links to the new capturelog and coverage plugins 
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
-- fixes for making jython/win32 work more properly 
 - ship distribute_setup.py version 0.6.10 
 
 
