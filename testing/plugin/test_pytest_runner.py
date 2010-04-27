@@ -197,14 +197,13 @@ class BaseFunctionalTests:
         assert rep.when == "call"
 
     def test_exit_propagates(self, testdir):
-        from py._test.outcome import Exit
         try:
             testdir.runitem("""
-                from py._test.outcome import Exit
+                import py
                 def test_func():
-                    raise Exit()
+                    raise py.test.exc.Exit()
             """)
-        except Exit:
+        except py.test.exc.Exit:
             pass
         else: 
             py.test.fail("did not raise")
@@ -216,7 +215,6 @@ class TestExecutionNonForked(BaseFunctionalTests):
         return f
 
     def test_keyboardinterrupt_propagates(self, testdir):
-        from py._test.outcome import Exit
         try:
             testdir.runitem("""
                 def test_func():

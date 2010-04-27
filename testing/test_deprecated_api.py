@@ -1,6 +1,5 @@
 
 import py
-from py._test.outcome import Skipped
 
 class TestCollectDeprecated:
         
@@ -191,7 +190,7 @@ class TestDisabled:
         l = modcol.collect()
         assert len(l) == 1
         recwarn.clear()
-        py.test.raises(Skipped, "modcol.setup()")
+        py.test.raises(py.test.exc.Skipped, "modcol.setup()")
         recwarn.pop(DeprecationWarning)
 
     def test_disabled_class(self, recwarn, testdir):
@@ -208,7 +207,7 @@ class TestDisabled:
         l = modcol.collect()
         assert len(l) == 1
         recwarn.clear()
-        py.test.raises(Skipped, "modcol.setup()")
+        py.test.raises(py.test.exc.Skipped, "modcol.setup()")
         recwarn.pop(DeprecationWarning)
 
     def test_disabled_class_functional(self, testdir):

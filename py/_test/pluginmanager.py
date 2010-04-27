@@ -4,7 +4,6 @@ managing loading and interacting with pytest plugins.
 import py
 import inspect
 from py._plugin import hookspec
-from py._test.outcome import Skipped
 
 default_plugins = (
     "default runner capture mark terminal skipping tmpdir monkeypatch "
@@ -139,7 +138,7 @@ class PluginManager(object):
             mod = importplugin(modname)
         except KeyboardInterrupt:
             raise
-        except Skipped:
+        except py.test.exc.Skipped:
             e = py.std.sys.exc_info()[1]
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:

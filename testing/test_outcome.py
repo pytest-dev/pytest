@@ -16,13 +16,12 @@ class TestRaises:
         py.test.raises(ValueError, int, 'hello')
 
     def test_raises_callable_no_exception(self):
-        from py._test.outcome import ExceptionFailure
         class A:
             def __call__(self):
                 pass
         try:
             py.test.raises(ValueError, A())
-        except ExceptionFailure:
+        except py.test.exc.ExceptionFailure:
             pass
 
 def test_pytest_exit():
@@ -41,23 +40,23 @@ def test_exception_printing_skip():
         assert s.startswith("Skipped")
 
 def test_importorskip():
-    from py._test.outcome import Skipped, importorskip
-    assert importorskip == py.test.importorskip
+    importorskip = py.test.importorskip
     try:
         sys = importorskip("sys")
         assert sys == py.std.sys
         #path = py.test.importorskip("os.path")
         #assert path == py.std.os.path
-        py.test.raises(Skipped, "py.test.importorskip('alskdj')")
+        py.test.raises(py.test.exc.Skipped, 
+            "py.test.importorskip('alskdj')")
         py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
         py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
         path = importorskip("py", minversion=".".join(py.__version__))
         mod = py.std.types.ModuleType("hello123")
         mod.__version__ = "1.3"
-        py.test.raises(Skipped, """
+        py.test.raises(py.test.exc.Skipped, """
             py.test.importorskip("hello123", minversion="5.0")
         """)
-    except Skipped:
+    except py.test.exc.Skipped:
         print(py.code.ExceptionInfo())
         py.test.fail("spurious skip")
 

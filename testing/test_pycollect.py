@@ -444,8 +444,7 @@ def test_modulecol_roundtrip(testdir):
 
 class TestTracebackCutting:
     def test_skip_simple(self):
-        from py._test.outcome import Skipped
-        excinfo = py.test.raises(Skipped, 'py.test.skip("xxx")')
+        excinfo = py.test.raises(py.test.exc.Skipped, 'py.test.skip("xxx")')
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()
 

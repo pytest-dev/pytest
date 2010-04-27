@@ -6,7 +6,13 @@
 """
 
 import py
-from py._test import outcome
+
+# exitcodes for the command line
+EXIT_OK = 0
+EXIT_TESTSFAILED = 1
+EXIT_INTERRUPTED = 2
+EXIT_INTERNALERROR = 3
+EXIT_NOHOSTS = 4
 
 # imports used for genitems()
 Item = py.test.collect.Item
@@ -96,21 +102,21 @@ class Session(object):
         """ main loop for running tests. """
         self.shouldstop = False 
         self.sessionstarts()
-        exitstatus = outcome.EXIT_OK
+        exitstatus = EXIT_OK
         try:
             self._mainloop(colitems)
             if self._testsfailed:
-                exitstatus = outcome.EXIT_TESTSFAILED
+                exitstatus = EXIT_TESTSFAILED
             self.sessionfinishes(exitstatus=exitstatus)
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
             self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
-            exitstatus = outcome.EXIT_INTERRUPTED
+            exitstatus = EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
             self.config.pluginmanager.notify_exception(excinfo)
-            exitstatus = outcome.EXIT_INTERNALERROR
-        if exitstatus in (outcome.EXIT_INTERNALERROR, outcome.EXIT_INTERRUPTED):
+            exitstatus = EXIT_INTERNALERROR
+        if exitstatus in (EXIT_INTERNALERROR, EXIT_INTERRUPTED):
             self.sessionfinishes(exitstatus=exitstatus)
         return exitstatus
 

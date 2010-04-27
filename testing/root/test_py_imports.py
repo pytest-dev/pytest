@@ -1,7 +1,6 @@
 import py
 import types
 import sys
-from py._test.outcome import Skipped
 
 def checksubpackage(name):
     obj = getattr(py, name)
@@ -52,7 +51,7 @@ def test_importall():
                 modpath = 'py.%s' % relpath
                 try:
                     check_import(modpath)
-                except Skipped:
+                except py.test.exc.Skipped:
                     pass
 
 def check_import(modpath):

@@ -75,13 +75,14 @@ class TestConfigAPI:
         py.test.raises(KeyError, 'config.getvalue("y", o)')
 
     def test_config_getvalueorskip(self, testdir):
-        from py._test.outcome import Skipped
         config = testdir.parseconfig()
-        py.test.raises(Skipped, "config.getvalueorskip('hello')")
+        py.test.raises(py.test.exc.Skipped, 
+            "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
         config.option.hello = None
-        py.test.raises(Skipped, "config.getvalueorskip('hello')")
+        py.test.raises(py.test.exc.Skipped, 
+            "config.getvalueorskip('hello')")
 
     def test_config_overwrite(self, testdir):
         o = testdir.tmpdir

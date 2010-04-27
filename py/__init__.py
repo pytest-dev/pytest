@@ -38,11 +38,6 @@ py.apipkg.initpkg(__name__, dict(
         # helpers for use from test functions or collectors
         '__onfirstaccess__' : '._test.config:onpytestaccess',
         '__doc__'           : '._test:__doc__',
-        'raises'            : '._test.outcome:raises',
-        'skip'              : '._test.outcome:skip',
-        'importorskip'      : '._test.outcome:importorskip',
-        'fail'              : '._test.outcome:fail',
-        'exit'              : '._test.outcome:exit',
         # configuration/initialization related test api
         'config'            : '._test.config:config_per_process',
         'ensuretemp'        : '._test.config:ensuretemp',

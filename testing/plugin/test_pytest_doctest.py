@@ -45,8 +45,6 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
-        from py._test.outcome import Failed 
-
         p = testdir.maketxtfile("""
             >>> i = 0
             >>> i = 1 

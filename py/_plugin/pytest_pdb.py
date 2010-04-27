@@ -3,7 +3,6 @@ interactive debugging with the Python Debugger.
 """
 import py
 import pdb, sys, linecache
-from py._test.outcome import Skipped
 
 def pytest_addoption(parser):
     group = parser.getgroup("general") 
@@ -17,7 +16,8 @@ def pytest_configure(config):
 
 class PdbInvoke:
     def pytest_runtest_makereport(self, item, call):
-        if call.excinfo and not call.excinfo.errisinstance(Skipped): 
+        if call.excinfo and not \
+           call.excinfo.errisinstance(py.test.exc.Skipped): 
             # play well with capturing, slightly hackish
             capman = item.config.pluginmanager.getplugin('capturemanager')
             capman.suspendcapture() 
