@@ -37,12 +37,6 @@ def _format_explanation(explanation):
     return '\n'.join(result)
 
 
-if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
-    from py._code._assertionnew import interpret
-else:
-    from py._code._assertionold import interpret
-
-
 class AssertionError(BuiltinAssertionError):
 
     def __init__(self, *args):
@@ -65,7 +59,7 @@ class AssertionError(BuiltinAssertionError):
                 # this can also occur during reinterpretation, when the
                 # co_filename is set to "<run>".
             if source:
-                self.msg = interpret(source, f, should_fail=True)
+                self.msg = reinterpret(source, f, should_fail=True)
                 if not self.args:
                     self.args = (self.msg,)
             else:
@@ -73,3 +67,11 @@ class AssertionError(BuiltinAssertionError):
 
 if sys.version_info > (3, 0):
     AssertionError.__module__ = "builtins"
+    reinterpret_old = "old reinterpretation not available for py3"
+else:
+    from py._code._assertionold import interpret as reinterpret_old
+if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
+    from py._code._assertionnew import interpret as reinterpret
+else:
+    reinterpret = reinterpret_old
+    

@@ -199,9 +199,8 @@ class TracebackEntry(object):
         """Reinterpret the failing statement and returns a detailed information
            about what operations are performed."""
         if self.exprinfo is None:
-            from py._code import assertion 
             source = str(self.statement).strip()
-            x = assertion.interpret(source, self.frame, should_fail=True)
+            x = py.code._reinterpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
                 raise TypeError("interpret returned non-string %r" % (x,))
             self.exprinfo = x 

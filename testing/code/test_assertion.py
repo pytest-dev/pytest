@@ -1,7 +1,5 @@
 import py
 
-#pytestmark = py.test.mark.skipif("sys.platform.startswith('java')")
-
 def exvalue():
     return py.std.sys.exc_info()[1]
 
@@ -201,3 +199,7 @@ class TestView:
         assert codelines == ["4 + 5", "getitem('', 'join')", 
             "setattr('x', 'y', 3)", "12 - 1"]
 
+def test_underscore_api():
+    py.code._AssertionError
+    py.code._reinterpret_old # used by pypy
+    py.code._reinterpret
