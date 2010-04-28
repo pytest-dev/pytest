@@ -116,8 +116,8 @@ class TmpTestdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
-            source = py.code.Source(value)
-            p.write(str(py.code.Source(value)).lstrip())
+            source = str(py.code.Source(value)).lstrip()
+            p.write(source.encode("utf-8"), "wb")
             if ret is None:
                 ret = p
         return ret 
@@ -286,20 +286,21 @@ class TmpTestdir:
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print_("running", cmdargs, "curdir=", py.path.local())
-        f1 = p1.open("w")
-        f2 = p2.open("w")
+        f1 = p1.open("wb")
+        f2 = p2.open("wb")
         now = time.time()
         popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
             close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()
         f2.close()
-        out, err = p1.readlines(cr=0), p2.readlines(cr=0)
+        out = p1.read("rb").decode("utf-8").splitlines()
+        err = p2.read("rb").decode("utf-8").splitlines()
         if err:
-            for line in err: 
+            for line in err:
                 py.builtin.print_(line, file=sys.stderr)
         if out:
-            for line in out: 
+            for line in out:
                 py.builtin.print_(line, file=sys.stdout)
         return RunResult(ret, out, err, time.time()-now)
 
@@ -462,10 +463,10 @@ class LineMatcher:
             lines2 = lines2.strip().lines
 
         from fnmatch import fnmatch
-        __tracebackhide__ = True
         lines1 = self.lines[:]
         nextline = None
         extralines = []
+        __tracebackhide__ = True
         for line in lines2:
             nomatchprinted = False
             while lines1:
@@ -484,8 +485,5 @@ class LineMatcher:
                     print_("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                if line != nextline:
-                    #__tracebackhide__ = True
-                    raise AssertionError("expected line not found: %r" % line)
-        extralines.extend(lines1)
-        return extralines 
+                assert line == nextline
+        return True
