@@ -5,15 +5,7 @@ collect and run test items and create reports.
 import py, sys
 
 def pytest_namespace():
-    class exc:
-        """ namespace holding py.test runner exceptions. """
-        Skipped = Skipped
-        ExceptionFailure = ExceptionFailure
-        Failed = Failed
-        Exit = Exit
-
     return {
-        'exc'          : exc, 
         'raises'       : raises, 
         'skip'         : skip,
         'importorskip' : importorskip,
@@ -157,7 +149,7 @@ class ItemTestReport(BaseReport):
                 self.failed = True
                 shortrepr = "?"
                 longrepr = excinfo 
-            elif excinfo.errisinstance(py.test.exc.Skipped):
+            elif excinfo.errisinstance(py.test.skip.Exception):
                 self.skipped = True 
                 shortrepr = "s"
                 longrepr = self.item._repr_failure_py(excinfo)
@@ -196,7 +188,7 @@ class CollectReport(BaseReport):
             self.result = result 
         else:
             self.longrepr = self.collector._repr_failure_py(excinfo)
-            if excinfo.errisinstance(py.test.exc.Skipped):
+            if excinfo.errisinstance(py.test.skip.Exception):
                 self.skipped = True
                 self.reason = str(excinfo.value)
             else:
@@ -322,6 +314,8 @@ def exit(msg):
     __tracebackhide__ = True
     raise Exit(msg)
 
+exit.Exception = Exit
+
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
     better use the py.test.mark.skipif marker to declare a test to be
@@ -331,10 +325,14 @@ def skip(msg=""):
     __tracebackhide__ = True
     raise Skipped(msg=msg) 
 
+skip.Exception = Skipped
+
 def fail(msg=""):
     """ explicitely fail an currently-executing test with the given Message. """
     __tracebackhide__ = True
     raise Failed(msg=msg) 
+
+fail.Exception = Failed
 
 def raises(ExpectedException, *args, **kwargs):
     """ if args[0] is callable: raise AssertionError if calling it with 
@@ -374,6 +372,8 @@ def raises(ExpectedException, *args, **kwargs):
         expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
     raise ExceptionFailure(msg="DID NOT RAISE", 
                            expr=args, expected=ExpectedException) 
+
+raises.Exception = ExceptionFailure
 
 def importorskip(modname, minversion=None):
     """ return imported module if it has a higher __version__ than the 

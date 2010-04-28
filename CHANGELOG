@@ -9,8 +9,9 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 - added links to the new capturelog and coverage plugins 
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
-- expose some internal test running exceptions under py.test.exc.*
-  and shift raises/importorskip etc. helper definitions to runner plugin .
+- expose test outcome related exceptions as py.test.skip.Exception, 
+  py.test.raises.Exception etc., useful mostly for plugins
+  doing special outcome interpreteration/tweaking
 - ship distribute_setup.py version 0.6.10 
 
 

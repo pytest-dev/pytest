@@ -51,7 +51,7 @@ def test_importall():
                 modpath = 'py.%s' % relpath
                 try:
                     check_import(modpath)
-                except py.test.exc.Skipped:
+                except py.test.skip.Exception:
                     pass
 
 def check_import(modpath):

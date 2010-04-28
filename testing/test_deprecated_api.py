@@ -190,7 +190,7 @@ class TestDisabled:
         l = modcol.collect()
         assert len(l) == 1
         recwarn.clear()
-        py.test.raises(py.test.exc.Skipped, "modcol.setup()")
+        py.test.raises(py.test.skip.Exception, "modcol.setup()")
         recwarn.pop(DeprecationWarning)
 
     def test_disabled_class(self, recwarn, testdir):
@@ -207,7 +207,7 @@ class TestDisabled:
         l = modcol.collect()
         assert len(l) == 1
         recwarn.clear()
-        py.test.raises(py.test.exc.Skipped, "modcol.setup()")
+        py.test.raises(py.test.skip.Exception, "modcol.setup()")
         recwarn.pop(DeprecationWarning)
 
     def test_disabled_class_functional(self, testdir):

@@ -138,7 +138,7 @@ class PluginManager(object):
             mod = importplugin(modname)
         except KeyboardInterrupt:
             raise
-        except py.test.exc.Skipped:
+        except py.test.skip.Exception:
             e = py.std.sys.exc_info()[1]
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:

@@ -17,7 +17,7 @@ def pytest_configure(config):
 class PdbInvoke:
     def pytest_runtest_makereport(self, item, call):
         if call.excinfo and not \
-           call.excinfo.errisinstance(py.test.exc.Skipped): 
+           call.excinfo.errisinstance(py.test.skip.Exception): 
             # play well with capturing, slightly hackish
             capman = item.config.pluginmanager.getplugin('capturemanager')
             capman.suspendcapture() 

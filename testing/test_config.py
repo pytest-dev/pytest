@@ -76,12 +76,12 @@ class TestConfigAPI:
 
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
-        py.test.raises(py.test.exc.Skipped, 
+        py.test.raises(py.test.skip.Exception, 
             "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
         config.option.hello = None
-        py.test.raises(py.test.exc.Skipped, 
+        py.test.raises(py.test.skip.Exception, 
             "config.getvalueorskip('hello')")
 
     def test_config_overwrite(self, testdir):
