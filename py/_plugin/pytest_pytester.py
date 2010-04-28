@@ -296,12 +296,14 @@ class TmpTestdir:
         f2.close()
         out = p1.read("rb").decode("utf-8").splitlines()
         err = p2.read("rb").decode("utf-8").splitlines()
-        if err:
-            for line in err:
-                py.builtin.print_(line, file=sys.stderr)
-        if out:
-            for line in out:
-                py.builtin.print_(line, file=sys.stdout)
+        def dump_lines(lines, fp):
+            try:
+                for line in lines:
+                    py.builtin.print_(line, file=fp)
+            except UnicodeEncodeError:
+                print("couldn't print to %s because of encoding" % (fp,))
+        dump_lines(out, sys.stdout)
+        dump_lines(err, sys.stderr)
         return RunResult(ret, out, err, time.time()-now)
 
     def runpybin(self, scriptname, *args):
