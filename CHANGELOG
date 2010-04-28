@@ -5,14 +5,14 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 - (issue85) fix junitxml plugin to handle tests with non-ascii output
 - fix some python3 compatibility issues (thanks Benjamin Peterson)
 - fixes for making the jython/win32 combination work
-- fixes for handling of unicode exception values
-- added links to the new capturelog and coverage plugins 
+- fixes for handling of unicode exception values and unprintable objects
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
 - expose test outcome related exceptions as py.test.skip.Exception, 
   py.test.raises.Exception etc., useful mostly for plugins
   doing special outcome interpreteration/tweaking
 - ship distribute_setup.py version 0.6.10 
+- added links to the new capturelog and coverage plugins 
 
 
 Changes between 1.2.1 and 1.2.0

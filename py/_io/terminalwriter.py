@@ -145,15 +145,17 @@ class TerminalWriter(object):
 
     # XXX deprecate stringio argument
     def __init__(self, file=None, stringio=False, encoding=None):
-        self.encoding = encoding 
 
         if file is None:
             if stringio:
                 self.stringio = file = py.io.TextIO()
             else:
                 file = py.std.sys.stdout 
+                if hasattr(file, 'encoding'):
+                    encoding = file.encoding
         elif hasattr(file, '__call__'):
             file = WriteFile(file, encoding=encoding)
+        self.encoding = encoding 
         self._file = file
         self.fullwidth = get_terminal_width()
         self.hasmarkup = should_do_markup(file)
@@ -200,18 +202,22 @@ class TerminalWriter(object):
 
     def write(self, s, **kw):
         if s:
-            s = self._getbytestring(s)
-            if self.hasmarkup and kw:
-                s = self.markup(s, **kw)
+            if not isinstance(self._file, WriteFile):
+                s = self._getbytestring(s)
+                if self.hasmarkup and kw:
+                    s = self.markup(s, **kw)
             self._file.write(s)
             self._file.flush()
 
     def _getbytestring(self, s):
         # XXX review this and the whole logic
-        if self.encoding and sys.version_info < (3,0) and isinstance(s, unicode):
+        if self.encoding and sys.version_info[0] < 3 and isinstance(s, unicode):
             return s.encode(self.encoding)
         elif not isinstance(s, str):
-            return str(s)
+            try:
+                return str(s)
+            except UnicodeEncodeError:
+                return "<print-error '%s' object>" % type(s).__name__
         return s
 
     def line(self, s='', **kw):

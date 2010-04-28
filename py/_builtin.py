@@ -93,7 +93,7 @@ if sys.version_info >= (3, 0):
 
     # some backward compatibility helpers 
     _basestring = str 
-    def _totext(obj, encoding):
+    def _totext(obj, encoding=None):
         if isinstance(obj, bytes):
             obj = obj.decode(encoding)
         elif not isinstance(obj, str):

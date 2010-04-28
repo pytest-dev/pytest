@@ -129,8 +129,8 @@ class TestTerminalWriter:
         tw.write("x\n", red=True)
         l = tw.getlines()
         if sys.platform != "win32":
-            assert len(l[0]) > 2, l
-            assert len(l[1]) > 2, l
+            assert len(l[0]) >= 2, l
+            assert len(l[1]) >= 2, l
 
     def test_attr_fullwidth(self, tw):
         tw.sep("-", "hello", fullwidth=70)

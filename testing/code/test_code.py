@@ -193,7 +193,7 @@ def test_builtin_patch_unpatch(monkeypatch):
     assert cpy_builtin.compile == mycompile 
 
 
-def test_unicode_handling(testdir):
+def test_unicode_handling():
     value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
     def f():
         raise Exception(value)
@@ -201,3 +201,19 @@ def test_unicode_handling(testdir):
     s = str(excinfo)
     if sys.version_info[0] < 3:
         u = unicode(excinfo)
+
+def test_unicode_or_repr():
+    from py._code.code import unicode_or_repr 
+    assert unicode_or_repr('hello') == "hello"
+    if sys.version_info[0] < 3:
+        s = unicode_or_repr('\xf6\xc4\x85')
+    else:
+        s = eval("unicode_or_repr(b'\\f6\\xc4\\x85')")
+    assert 'print-error' in s
+    assert 'c4' in s
+    class A:
+        def __repr__(self):
+            raise ValueError()
+    s = unicode_or_repr(A())
+    assert 'print-error' in s
+    assert 'ValueError' in s

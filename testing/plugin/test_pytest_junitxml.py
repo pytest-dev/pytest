@@ -1,6 +1,6 @@
 
 from xml.dom import minidom
-import py
+import py, sys
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -104,7 +104,7 @@ class TestPython:
             name="test_collect_error")
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="collection failure")
-        assert "invalid syntax" in fnode.toxml()
+        assert "SyntaxError" in fnode.toxml()
 
     def test_collect_skipped(self, testdir):
         testdir.makepyfile("import py ; py.test.skip('xyz')")
@@ -130,7 +130,8 @@ class TestPython:
         assert result.ret == 1
         tnode = dom.getElementsByTagName("testcase")[0]
         fnode = tnode.getElementsByTagName("failure")[0]
-        assert "hx" in fnode.toxml()
+        if not sys.platform.startswith("java"):
+            assert "hx" in fnode.toxml()
 
 class TestNonPython:
     def test_summing_simple(self, testdir):

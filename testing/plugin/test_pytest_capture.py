@@ -393,7 +393,8 @@ def test_setup_failure_does_not_kill_capturing(testdir):
 def test_fdfuncarg_skips_on_no_osdup(testdir):
     testdir.makepyfile("""
         import os
-        del os.dup
+        if hasattr(os, 'dup'):
+            del os.dup
         def test_hello(capfd):
             pass
     """)

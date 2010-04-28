@@ -21,7 +21,9 @@ def pytest_pycollect_makeitem(collector, name, obj):
         return # nobody derived unittest.TestCase
     try:
         isunit = issubclass(obj, py.std.unittest.TestCase)
-    except TypeError:
+    except KeyboardInterrupt:
+        raise
+    except Exception:
         pass
     else:
         if isunit:

@@ -3,7 +3,7 @@ import sys, os.path
 
 builtin_repr = repr
 
-repr = py.builtin._tryimport('repr', 'reprlib')
+reprlib = py.builtin._tryimport('repr', 'reprlib')
 
 class Code(object):
     """ wrapper around Python code objects """
@@ -510,7 +510,7 @@ class FormattedExcinfo(object):
                     lines.append("__builtins__ = <builtins>")
                 else:
                     # This formatting could all be handled by the
-                    # _repr() function, which is only repr.Repr in
+                    # _repr() function, which is only reprlib.Repr in
                     # disguise, so is very configurable.
                     str_repr = self._saferepr(value)
                     #if len(str_repr) < 70 or not isinstance(value,
@@ -591,13 +591,22 @@ class TerminalRepr:
         return s
 
     def __unicode__(self):
-        tw = py.io.TerminalWriter(stringio=True)
+        l = []
+        tw = py.io.TerminalWriter(l.append)
         self.toterminal(tw)
-        s = tw.stringio.getvalue().strip()
-        return s
+        l = map(unicode_or_repr, l)
+        return "".join(l).strip()
 
     def __repr__(self):
         return "<%s instance at %0x>" %(self.__class__, id(self))
+
+def unicode_or_repr(obj):
+    try:
+        return py.builtin._totext(obj)
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        return "<print-error: %r>" % safe_repr(obj)
 
 class ReprExceptionInfo(TerminalRepr):
     def __init__(self, reprtraceback, reprcrash):
@@ -709,17 +718,17 @@ class ReprFuncArgs(TerminalRepr):
 
 
 
-class SafeRepr(repr.Repr):
+class SafeRepr(reprlib.Repr):
     """ subclass of repr.Repr that limits the resulting size of repr() 
         and includes information on exceptions raised during the call. 
     """ 
     def __init__(self, *args, **kwargs):
-        repr.Repr.__init__(self, *args, **kwargs)
+        reprlib.Repr.__init__(self, *args, **kwargs)
         self.maxstring = 240   # 3 * 80 chars
         self.maxother = 160    # 2 * 80 chars
 
     def repr(self, x):
-        return self._callhelper(repr.Repr.repr, self, x)
+        return self._callhelper(reprlib.Repr.repr, self, x)
 
     def repr_instance(self, x, level):
         return self._callhelper(builtin_repr, x)

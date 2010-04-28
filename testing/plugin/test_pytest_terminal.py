@@ -97,7 +97,7 @@ class TestTerminal:
         excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
         rep.pytest_internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines([
-            "INTERNALERROR> *raise ValueError*"
+            "INTERNALERROR> *ValueError*hello*"
         ])
 
     def test_writeline(self, testdir, linecomp):

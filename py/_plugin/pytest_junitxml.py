@@ -144,6 +144,7 @@ class LogXML(object):
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
         numtests = self.passed + self.failed
+        logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write('<testsuite ')
         logfile.write('name="" ')
         logfile.write('errors="%i" ' % self.errors)

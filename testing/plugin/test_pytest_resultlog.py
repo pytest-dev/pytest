@@ -142,7 +142,7 @@ class TestWithFunctionIntegration:
         entry_lines = entry.splitlines()
 
         assert entry_lines[0].startswith('! ')
-        assert os.path.basename(__file__)[:-1] in entry_lines[0] #.py/.pyc
+        assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry  
 
