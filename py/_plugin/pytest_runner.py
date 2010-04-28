@@ -287,12 +287,13 @@ class OutcomeException(Exception):
     __str__ = __repr__
 
 class Skipped(OutcomeException): 
-    # XXX slighly hackish: on 3k we fake to live in the builtins 
+    # XXX hackish: on 3k we fake to live in the builtins 
     # in order to have Skipped exception printing shorter/nicer
     __module__ = 'builtins'
 
 class Failed(OutcomeException): 
     """ raised from an explicit call to py.test.fail() """
+    __module__ = 'builtins'
 
 class ExceptionFailure(Failed): 
     """ raised by py.test.raises on an exception-assertion mismatch. """

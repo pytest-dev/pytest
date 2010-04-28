@@ -310,9 +310,11 @@ class StdCapture(Capture):
         if self._out:
             out = sys.stdout.getvalue()
             sys.stdout.truncate(0)
+            sys.stdout.seek(0)
         if self._err:
             err = sys.stderr.getvalue()
             sys.stderr.truncate(0)
+            sys.stderr.seek(0)
         return out, err 
 
 class DontReadFromInput:

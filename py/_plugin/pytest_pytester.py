@@ -443,7 +443,8 @@ class LineComp:
         """
         __tracebackhide__ = True
         val = self.stringio.getvalue()
-        self.stringio.truncate(0)  # remove what we got 
+        self.stringio.truncate(0)
+        self.stringio.seek(0)
         lines1 = val.split("\n")
         return LineMatcher(lines1).fnmatch_lines(lines2)
             
