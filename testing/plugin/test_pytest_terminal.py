@@ -226,7 +226,7 @@ class TestTerminal:
                 pass
         """)
         result = testdir.runpytest(p2)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_p2.py .",
             "*1 passed*",
         ])
@@ -461,7 +461,7 @@ class TestTerminalFunctional:
            """
         )
         result = testdir.runpytest("-k", "test_two:", testpath)
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_deselected.py ..", 
             "=* 1 test*deselected by 'test_two:'*=", 
         ])
@@ -494,7 +494,7 @@ class TestTerminalFunctional:
             result = testdir.runpytest()
         finally:
             old.chdir()
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "test_passes.py ..", 
             "* 2 pass*",
         ])
@@ -507,7 +507,7 @@ class TestTerminalFunctional:
         """)
         result = testdir.runpytest()
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
             "python: platform %s -- Python %s*" %(
                     py.std.sys.platform, verinfo), # , py.std.sys.executable),
@@ -577,13 +577,13 @@ def test_terminalreporter_reportopt_conftestsetting(testdir):
             assert not tr.hasopt('qwe')
     """)
     result = testdir.runpytest()
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
 
 def test_trace_reporting(testdir):
     result = testdir.runpytest("--traceconfig")
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*active plugins*"
     ])
     assert result.ret == 0
@@ -592,7 +592,7 @@ def test_trace_reporting(testdir):
 def test_show_funcarg(testdir, option):
     args = option._getcmdargs() + ["--funcargs"]
     result = testdir.runpytest(*args)
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
             "*tmpdir*",
             "*temporary directory*",
         ]

@@ -187,7 +187,7 @@ class TestPerTestCapturing:
                 pass
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             '*teardown_function*',
             '*Captured stdout*',
             "setup func1*",
@@ -205,7 +205,7 @@ class TestPerTestCapturing:
                 pass
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*def teardown_module(mod):*", 
             "*Captured stdout*", 
             "*teardown module*", 
@@ -271,7 +271,7 @@ class TestLoggingInteraction:
             print ("suspend2 and captured %s" % (outerr,))
         """)
         result = testdir.runpython(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "suspeneded and captured*hello1*",
             "suspend2 and captured*hello2*WARNING:root:hello3*",
         ])
@@ -358,7 +358,7 @@ class TestCaptureFuncarg:
                 pass
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_partial_setup_failure*",
             "*1 error*",
         ])

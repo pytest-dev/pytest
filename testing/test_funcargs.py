@@ -83,7 +83,7 @@ class TestFillFuncArgs:
                     assert something is self 
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
 
@@ -201,7 +201,7 @@ class TestRequest:
                 assert len(l) == 1
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*1 passed*1 error*"
             ])
 
@@ -430,7 +430,7 @@ class TestGenfuncFunctional:
                     assert arg1 == arg2 
         """)
         result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_myfunc*0*PASS*", 
             "*test_myfunc*1*FAIL*", 
             "*1 failed, 1 passed*"
@@ -451,7 +451,7 @@ class TestGenfuncFunctional:
                 assert arg1 in (10, 20)
         """)
         result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_func1*0*PASS*", 
             "*test_func1*1*FAIL*", 
             "*test_func2*PASS*",
@@ -478,7 +478,7 @@ class TestGenfuncFunctional:
                     assert arg1 == arg2 
         """)
         result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_myfunc*hello*PASS*", 
             "*test_myfunc*world*FAIL*", 
             "*1 failed, 1 passed*"
@@ -494,7 +494,7 @@ class TestGenfuncFunctional:
                     assert hello == "world"
         """)
         result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_myfunc*hello*PASS*", 
             "*1 passed*"
         ])
@@ -511,7 +511,7 @@ class TestGenfuncFunctional:
                     self.x = 1
         """)
         result = testdir.runpytest("-v", p)
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*test_func*0*PASS*", 
             "*test_func*1*PASS*", 
             "*2 pass*",

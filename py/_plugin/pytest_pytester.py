@@ -486,4 +486,3 @@ class LineMatcher:
                 extralines.append(nextline)
             else:
                 assert line == nextline
-        return True

@@ -23,7 +23,7 @@ def test_exclude(testdir):
     testdir.makepyfile(test_ok="def test_pass(): pass")
     result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
-    assert result.stdout.fnmatch_lines(["*1 passed*"])
+    result.stdout.fnmatch_lines(["*1 passed*"])
 
 def test_pytest_report_iteminfo():
     class FakeItem(object):
@@ -43,4 +43,4 @@ def test_conftest_confcutdir(testdir):
             parser.addoption("--xyz", action="store_true")
     """))
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
-    assert result.stdout.fnmatch_lines(["*--xyz*"])
+    result.stdout.fnmatch_lines(["*--xyz*"])

@@ -6,14 +6,14 @@ def test_version(testdir):
     result = testdir.runpytest("--version")
     assert result.ret == 0
     #p = py.path.local(py.__file__).dirpath()
-    assert result.stderr.fnmatch_lines([
+    result.stderr.fnmatch_lines([
         '*py.test*%s*imported from*' % (py.version, )
     ])
 
 def test_helpconfig(testdir):
     result = testdir.runpytest("--help-config")
     assert result.ret == 0
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*cmdline*conftest*ENV*",
     ])
 
@@ -36,7 +36,7 @@ def test_hookvalidation_unknown(testdir):
     """)
     result = testdir.runpytest()
     assert result.ret != 0
-    assert result.stderr.fnmatch_lines([
+    result.stderr.fnmatch_lines([
         '*unknown hook*pytest_hello*'
     ])
 

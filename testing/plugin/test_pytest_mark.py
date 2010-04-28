@@ -56,7 +56,7 @@ class TestFunctional:
                 assert hasattr(test_hello, 'hello')
         """)
         result = testdir.runpytest(p)
-        assert result.stdout.fnmatch_lines(["*passed*"])
+        result.stdout.fnmatch_lines(["*passed*"])
 
     def test_mark_per_module(self, testdir):
         item = testdir.getitem("""

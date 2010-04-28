@@ -63,7 +63,7 @@ def test_testdir_runs_with_plugin(testdir):
             assert 1
     """)
     result = testdir.runpytest()
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
 

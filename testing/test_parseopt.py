@@ -115,5 +115,5 @@ def test_addoption_parser_epilog(testdir):
     """)
     result = testdir.runpytest('--help')
     #assert result.ret != 0
-    assert result.stdout.fnmatch_lines(["*hint: hello world*"])
+    result.stdout.fnmatch_lines(["*hint: hello world*"])
 

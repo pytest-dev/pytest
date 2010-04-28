@@ -8,7 +8,7 @@ def test_xfail_not_report_default(testdir):
             assert 0
     """)
     result = testdir.runpytest(p, '-v')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*1 expected failures*--report=xfailed*",
     ])
 
@@ -19,7 +19,7 @@ def test_skip_not_report_default(testdir):
             py.test.skip("hello")
     """)
     result = testdir.runpytest(p, '-v')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*1 skipped*--report=skipped*",
     ])
 
@@ -35,7 +35,7 @@ def test_xfail_decorator(testdir):
             assert 1
     """)
     result = testdir.runpytest(p, '--report=xfailed')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*expected failures*",
         "*test_one.test_this*test_one.py:4*",
         "*UNEXPECTEDLY PASSING*",
@@ -52,7 +52,7 @@ def test_xfail_at_module(testdir):
             assert 0
     """)
     result = testdir.runpytest(p, '--report=xfailed')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*expected failures*",
         "*test_intentional_xfail*:4*",
         "*1 xfailed*"
@@ -67,7 +67,7 @@ def test_xfail_evalfalse_but_fails(testdir):
             assert 0
     """)
     result = testdir.runpytest(p, '--report=xfailed')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*test_xfail_evalfalse_but_fails*:4*",
         "*1 failed*"
     ])
@@ -81,7 +81,7 @@ def test_skipif_decorator(testdir):
             assert 0
     """)
     result = testdir.runpytest(p, '--report=skipped')
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*Skipped*platform*",
         "*1 skipped*"
     ])
@@ -99,7 +99,7 @@ def test_skipif_class(testdir):
                 assert 0
     """)
     result = testdir.runpytest(p)
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*2 skipped*"
     ])
 
@@ -165,7 +165,7 @@ def test_skipped_reasons_functional(testdir):
         """
     )
     result = testdir.runpytest('--report=skipped') 
-    extra = result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*test_one.py ss",
         "*test_two.py S",
         "___* skipped test summary *_", 

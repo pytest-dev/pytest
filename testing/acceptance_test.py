@@ -8,7 +8,7 @@ class TestGeneralUsage:
         """)
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret != 0
-        assert result.stderr.fnmatch_lines([
+        result.stderr.fnmatch_lines([
             '*ERROR: hello'
         ])
 
@@ -24,7 +24,7 @@ class TestGeneralUsage:
         """)
         result = testdir.runpytest("-p", "xyz", "--xyz=123")
         assert result.ret == 0
-        assert result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             '*1 passed*',
         ])
 
@@ -46,7 +46,7 @@ class TestGeneralUsage:
                 assert x
         """)
         result = testdir.runpytest(p)
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             ">       assert x", 
             "E       assert 0",
         ])
@@ -60,7 +60,7 @@ class TestGeneralUsage:
         """)
         testdir.makepyfile(import_fails="import does_not_work")
         result = testdir.runpytest(p)
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             #XXX on jython this fails:  ">   import import_fails",
             "E   ImportError: No module named does_not_work",
         ])
@@ -71,7 +71,7 @@ class TestGeneralUsage:
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
         assert result.ret != 0
-        assert result.stderr.fnmatch_lines([
+        result.stderr.fnmatch_lines([
             "*ERROR: can't collect: %s" %(p2,)
         ])
 

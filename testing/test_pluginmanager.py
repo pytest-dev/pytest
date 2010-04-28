@@ -81,7 +81,7 @@ class TestBootstrapping:
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        extra = result.stdout.fnmatch_lines(["*1 passed in*"])
+        result.stdout.fnmatch_lines(["*1 passed in*"])
 
     def test_import_plugin_importname(self, testdir):
         pluginmanager = PluginManager()

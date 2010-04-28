@@ -310,7 +310,7 @@ def test_runtest_in_module_ordering(testdir):
             del item.function.mylist 
     """)
     result = testdir.runpytest(p1)
-    assert result.stdout.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
 
