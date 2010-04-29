@@ -313,6 +313,23 @@ class TestSorting:
 
 
 class TestConftestCustomization:
+    def test_pytest_pycollect_module(self, testdir):
+        testdir.makeconftest("""
+            import py
+            class MyModule(py.test.collect.Module):
+                pass
+            def pytest_pycollect_makemodule(path, parent):
+                if path.basename == "test_xyz.py":
+                    return MyModule(path, parent)
+        """)
+        testdir.makepyfile("def some(): pass")
+        testdir.makepyfile(test_xyz="")
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*<Module*test_pytest*",
+            "*<MyModule*xyz*",
+        ])
+
     def test_pytest_pycollect_makeitem(self, testdir):
         testdir.makeconftest("""
             import py

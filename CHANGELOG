@@ -14,6 +14,9 @@ Changes between 1.2.1 and 1.2.2 (release pending)
         def pytest_ignore_collect_path(path):
             return path.check(link=1)
   to prevent even a collection try of any tests in symlinked dirs. 
+- introduce new pytest_pycollect_makemodule(path, parent) hook for
+  allowing customization of the Module collection object for a 
+  matching test module.
 - expose previously internal commonly useful methods: 
   py.io.get_terminal_with() -> return terminal width
   py.io.ansi_print(...) -> print colored/bold text on linux/win32

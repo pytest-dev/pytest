@@ -62,6 +62,14 @@ def pytest_itemstart(item, node=None):
 # Python test function related hooks
 # -------------------------------------------------------------------------
 
+def pytest_pycollect_makemodule(path, parent):
+    """ return a Module collector or None for the given path. 
+    This hook will be called for each matching test module path. 
+    The pytest_collect_file hook needs to be used if you want to 
+    create test modules for files that do not match as a test module.
+    """
+pytest_pycollect_makemodule.firstresult = True
+
 def pytest_pycollect_makeitem(collector, name, obj):
     """ return custom item/collector for a python object in a module, or None.  """
 pytest_pycollect_makeitem.firstresult = True

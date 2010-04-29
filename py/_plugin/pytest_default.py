@@ -18,7 +18,11 @@ def pytest_collect_file(path, parent):
     if pb.startswith("test_") or pb.endswith("_test") or \
        path in parent.config._argfspaths:
         if ext == ".py":
-            return parent.Module(path, parent=parent) 
+            return parent.ihook.pytest_pycollect_makemodule(
+                path=path, parent=parent)
+
+def pytest_pycollect_makemodule(path, parent):
+    return parent.Module(path, parent)
 
 def pytest_funcarg__pytestconfig(request):
     """ the pytest config object with access to command line opts."""
