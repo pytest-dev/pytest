@@ -9,7 +9,7 @@ prepended."""
 
 import sys, os
 import py
-from py._io.terminalwriter import ansi_print, terminal_width
+from py.io import ansi_print, get_terminal_width
 import re
 
 def rec(p):
@@ -20,6 +20,8 @@ parser.add_option("-i", "--ignore-case", action="store_true", dest="ignorecase",
                   help="ignore case distinctions")
 parser.add_option("-C", "--context", action="store", type="int", dest="context",
             default=0, help="How many lines of output to show")
+
+terminal_width = get_terminal_width()
 
 def find_indexes(search_line, string):
     indexes = []

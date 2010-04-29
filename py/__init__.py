@@ -138,6 +138,8 @@ py.apipkg.initpkg(__name__, dict(
         'StdCapture'          : '._io.capture:StdCapture',
         'StdCaptureFD'        : '._io.capture:StdCaptureFD',
         'TerminalWriter'      : '._io.terminalwriter:TerminalWriter',
+        'ansi_print'          : '._io.terminalwriter:ansi_print', 
+        'get_terminal_width'  : '._io.terminalwriter:get_terminal_width',
     },
 
     # small and mean xml/html generation

@@ -2,6 +2,10 @@ import py
 import os, sys
 from py._io import terminalwriter 
 
+def test_get_terminal_width():
+    x = py.io.get_terminal_width
+    assert x == terminalwriter.get_terminal_width
+
 def test_terminal_width_COLUMNS(monkeypatch):
     """ Dummy test for get_terminal_width
     """
@@ -147,3 +151,13 @@ def test_attr_hasmarkup():
     tw.line("hello", bold=True)
     s = tw.stringio.getvalue()
     assert len(s) > len("hello")
+
+def test_ansi_print():
+    # we have no easy way to construct a file that
+    # represents a terminal 
+    f = py.io.TextIO()
+    f.isatty = lambda: True
+    py.io.ansi_print("hello", 0x32, file=f)
+    text2 = f.getvalue()
+    assert text2.find("hello") != -1
+    assert len(text2) >= len("hello")
