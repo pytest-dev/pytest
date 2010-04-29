@@ -1,7 +1,6 @@
 from __future__ import generators
 import py
 import sys
-from py._code.code import safe_repr
 
 failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
 
@@ -139,43 +138,6 @@ def test_code_from_func():
 
 
 
-class TestSafeRepr:
-    def test_simple_repr(self):
-        assert safe_repr(1) == '1'
-        assert safe_repr(None) == 'None'
-    
-    def test_exceptions(self):
-        class BrokenRepr:
-            def __init__(self, ex):
-                self.ex = ex
-                foo = 0
-            def __repr__(self):
-                raise self.ex
-        class BrokenReprException(Exception):
-            __str__ = None 
-            __repr__ = None
-        assert 'Exception' in safe_repr(BrokenRepr(Exception("broken")))
-        s = safe_repr(BrokenReprException("really broken"))
-        assert 'TypeError' in s
-        if py.std.sys.version_info < (2,6):
-            assert 'unknown' in safe_repr(BrokenRepr("string"))
-        else:
-            assert 'TypeError' in safe_repr(BrokenRepr("string"))
-
-    def test_big_repr(self):
-        from py._code.code import SafeRepr
-        assert len(safe_repr(range(1000))) <= \
-               len('[' + SafeRepr().maxlist * "1000" + ']')
-
-    def test_repr_on_newstyle(self):
-        class Function(object):
-            def __repr__(self):
-                return "<%s>" %(self.name)
-        try:
-            s = safe_repr(Function())
-        except Exception:
-            py.test.fail("saferepr failed for newstyle class")
-  
 def test_builtin_patch_unpatch(monkeypatch):
     cpy_builtin = py.builtin.builtins
     comp = cpy_builtin.compile 

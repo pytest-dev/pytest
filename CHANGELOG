@@ -8,6 +8,10 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 - fixes for handling of unicode exception values and unprintable objects
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
+- expose previously internal commonly useful methods: 
+  py.io.get_terminal_with() -> return terminal width
+  py.io.ansi_print(...) -> print colored/bold text on linux/win32
+  py.io.saferepr(obj) -> return limited representation string
 - expose test outcome related exceptions as py.test.skip.Exception, 
   py.test.raises.Exception etc., useful mostly for plugins
   doing special outcome interpreteration/tweaking

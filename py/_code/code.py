@@ -147,7 +147,7 @@ class Frame(object):
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'
         """
-        return safe_repr(object)
+        return py.io.saferepr(object)
 
     def is_true(self, object):
         return object
@@ -457,7 +457,7 @@ class FormattedExcinfo(object):
         return source
     
     def _saferepr(self, obj):
-        return safe_repr(obj)
+        return py.io.saferepr(obj)
 
     def repr_args(self, entry):
         if self.funcargs:
@@ -605,7 +605,7 @@ def unicode_or_repr(obj):
     except KeyboardInterrupt:
         raise
     except Exception:
-        return "<print-error: %r>" % safe_repr(obj)
+        return "<print-error: %r>" % py.io.saferepr(obj)
 
 class ReprExceptionInfo(TerminalRepr):
     def __init__(self, reprtraceback, reprcrash):
@@ -716,48 +716,6 @@ class ReprFuncArgs(TerminalRepr):
             tw.line("")
 
 
-
-class SafeRepr(reprlib.Repr):
-    """ subclass of repr.Repr that limits the resulting size of repr() 
-        and includes information on exceptions raised during the call. 
-    """ 
-    def __init__(self, *args, **kwargs):
-        reprlib.Repr.__init__(self, *args, **kwargs)
-        self.maxstring = 240   # 3 * 80 chars
-        self.maxother = 160    # 2 * 80 chars
-
-    def repr(self, x):
-        return self._callhelper(reprlib.Repr.repr, self, x)
-
-    def repr_instance(self, x, level):
-        return self._callhelper(builtin_repr, x)
-        
-    def _callhelper(self, call, x, *args):
-        try:
-            # Try the vanilla repr and make sure that the result is a string
-            s = call(x, *args)
-        except (KeyboardInterrupt, MemoryError, SystemExit):
-            raise
-        except:
-            cls, e, tb = sys.exc_info()
-            try:
-                exc_name = cls.__name__
-            except:
-                exc_name = 'unknown'
-            try:
-                exc_info = str(e)
-            except:
-                exc_info = 'unknown'
-            return '<[%s("%s") raised in repr()] %s object at 0x%x>' % (
-                exc_name, exc_info, x.__class__.__name__, id(x))
-        else:
-            if len(s) > self.maxstring:
-                i = max(0, (self.maxstring-3)//2)
-                j = max(0, self.maxstring-3-i)
-                s = s[:i] + '...' + s[len(s)-j:]
-            return s
-
-safe_repr = SafeRepr().repr
 
 oldbuiltins = {}
 

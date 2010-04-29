@@ -140,6 +140,7 @@ py.apipkg.initpkg(__name__, dict(
         'TerminalWriter'      : '._io.terminalwriter:TerminalWriter',
         'ansi_print'          : '._io.terminalwriter:ansi_print', 
         'get_terminal_width'  : '._io.terminalwriter:get_terminal_width',
+        'saferepr'            : '._io.saferepr:saferepr',
     },
 
     # small and mean xml/html generation
