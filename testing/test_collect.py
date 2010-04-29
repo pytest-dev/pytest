@@ -157,6 +157,21 @@ class TestPrunetraceback:
         ])
 
 class TestCustomConftests:
+    def test_ignore_collect_path(self, testdir):
+        testdir.makeconftest("""
+            def pytest_ignore_collect_path(path, config):
+                return path.basename.startswith("x") or \
+                       path.basename == "test_one.py"
+        """)
+        testdir.mkdir("xy123").ensure("test_hello.py").write(
+            "syntax error"
+        )
+        testdir.makepyfile("def test_hello(): pass")
+        testdir.makepyfile(test_one="syntax error")
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest("""
             collect_ignore = ['hello', 'test_world.py']

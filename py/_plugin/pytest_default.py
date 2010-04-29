@@ -24,6 +24,20 @@ def pytest_funcarg__pytestconfig(request):
     """ the pytest config object with access to command line opts."""
     return request.config
 
+def pytest_ignore_collect_path(path, config):
+    ignore_paths = config.getconftest_pathlist("collect_ignore", path=path) 
+    ignore_paths = ignore_paths or []
+    excludeopt = config.getvalue("ignore")
+    if excludeopt:
+        ignore_paths.extend([py.path.local(x) for x in excludeopt])
+    return path in ignore_paths
+    # XXX more refined would be: 
+    if ignore_paths:
+        for p in ignore_paths:
+            if path == p or path.relto(p):
+                return True
+
+
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment 
     # not use parent.Directory here as we generally 

@@ -296,28 +296,15 @@ class Directory(FSCollector):
                     l.append(res)
         return l
 
-    def _ignore(self, path):
-        ignore_paths = self.config.getconftest_pathlist("collect_ignore", 
-            path=path) or []
-        excludeopt = self.config.getvalue("ignore")
-        if excludeopt:
-            ignore_paths.extend([py.path.local(x) for x in excludeopt])
-        return path in ignore_paths
-        # XXX more refined would be: 
-        if ignore_paths:
-            for p in ignore_paths:
-                if path == p or path.relto(p):
-                    return True
-
     def consider(self, path):
-        if self._ignore(path):
-            return
+        if self.ihook.pytest_ignore_collect_path(path=path, config=self.config):
+           return
         if path.check(file=1):
             res = self.consider_file(path)
         elif path.check(dir=1):
             res = self.consider_dir(path)
         else:
-            res = None            
+            res = None
         if isinstance(res, list):
             # throw out identical results
             l = []
