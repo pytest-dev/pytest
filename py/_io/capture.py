@@ -334,6 +334,8 @@ class DontReadFromInput:
         raise ValueError("redirected Stdin is pseudofile, has no fileno()") 
     def isatty(self):
         return False
+    def close(self):
+        pass
 
 try:
     devnullpath = os.devnull

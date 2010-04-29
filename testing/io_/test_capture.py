@@ -66,6 +66,7 @@ def test_dontreadfrominput():
     py.test.raises(IOError, f.readlines)
     py.test.raises(IOError, iter, f) 
     py.test.raises(ValueError, f.fileno)
+    f.close() # just for completeness
 
 def pytest_funcarg__tmpfile(request):
     testdir = request.getfuncargvalue("testdir")
