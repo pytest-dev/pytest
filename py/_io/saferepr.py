@@ -52,4 +52,5 @@ def saferepr(obj, maxsize=240):
     srepr = SafeRepr()
     srepr.maxstring = maxsize
     srepr.maxsize = maxsize
+    srepr.maxother = 160
     return srepr.repr(obj)
