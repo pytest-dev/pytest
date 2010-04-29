@@ -43,8 +43,7 @@ class TestTextIO:
         f = py.io.TextIO()
         if sys.version_info >= (3,0):
             f.write("\u00f6")
-            py.test.skip("3k IO beahviour?")
-            f.write(bytes("hello", 'UTF-8'))
+            py.test.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
         else:
             f.write(unicode("\u00f6", 'UTF-8'))
             f.write("hello") # bytes 
