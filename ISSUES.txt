@@ -1,3 +1,16 @@
+refine session initialization / fix custom collect crash  
+---------------------------------------------------------------
+tags: bug 1.2 core xdist 
+
+When calling "py.test path/X" py.test can crash if the collection 
+of that directory is skipped.  Calling "py.test path" will give
+proper output.  The reason is that for the very first colitems 
+getinitialnodes() and a collection is done before the fully 
+controlled session and pytest_make_collect_report protocol takes over. 
+Try to remove the redundant getinitialnodes related logic and amend
+the session collect logic to care for this "initial" case as well. 
+Apart from simplification a side effect the dsession's session
+and the core session probably converge some more. 
 
 introduce py.test.mark.nocollect
 -------------------------------------------------------
@@ -115,6 +128,10 @@ tags: experimental-wish 1.2
 Users have expressed the wish to have funcargs available to setup 
 functions.  Experiment with allowing funcargs there - it might
 also help to make the py.test.ensuretemp and config deprecation.
+For filling funcargs for setup methods, we could call funcarg 
+factories with a request object that not have a cls/function 
+attributes.  However, how to handle parametrized test functions
+and funcargs? 
 
 consider pytest_addsyspath hook
 -----------------------------------------
@@ -146,7 +163,7 @@ Now that external plugins are becoming more numerous
 it would be useful to have external plugins along with
 their versions displayed as a header line. 
 
-generate/deal with plugin docs 
+generate/refine plugin doc generation 
 ----------------------------------------------------------------
 tags: feature 1.2
 
@@ -154,17 +171,4 @@ review and prepare docs for 1.2.0 release.  Probably
 have docs living with the plugin and require them to
 be available on doc generation time, at least when 
 the target is the website?  Or rather go for interactive help? 
-
-improved reporting on funcarg usage / name mismatches
-----------------------------------------------------------------
-tags: feature 1.2
-
-see to improve help and support for funcarg usage, 
-i.e. when a funcarg does not match any provided one. 
-Also consider implementing py.test --funcargs to
-show available funcargs - it should honour the 
-path::TestClass syntax so one can easily inspect
-where funcargs come from or which are available. 
-
-
 
