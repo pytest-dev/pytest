@@ -3,7 +3,7 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 
 - new mechanism to allow plugins to register new hooks 
 - (issue85) fix junitxml plugin to handle tests with non-ascii output
-- fix some python3 compatibility issues (thanks Benjamin Peterson)
+- fix/refine python3 compatibility (thanks Benjamin Peterson)
 - fixes for making the jython/win32 combination work
 - fixes for handling of unicode exception values and unprintable objects
 - (issue87) fix unboundlocal error in assertionold code 
@@ -14,7 +14,7 @@ Changes between 1.2.1 and 1.2.2 (release pending)
         def pytest_ignore_collect_path(path):
             return path.check(link=1)
   to prevent even a collection try of any tests in symlinked dirs. 
-- introduce new pytest_pycollect_makemodule(path, parent) hook for
+- new pytest_pycollect_makemodule(path, parent) hook for
   allowing customization of the Module collection object for a 
   matching test module.
 - expose previously internal commonly useful methods: 
@@ -23,7 +23,8 @@ Changes between 1.2.1 and 1.2.2 (release pending)
   py.io.saferepr(obj) -> return limited representation string
 - expose test outcome related exceptions as py.test.skip.Exception, 
   py.test.raises.Exception etc., useful mostly for plugins
-  doing special outcome interpreteration/tweaking
+  doing special outcome interpretation/tweaking
+- refine IO capturing: stdin-redirect pseudo-file now has a NOP close() method
 - ship distribute_setup.py version 0.6.10 
 - added links to the new capturelog and coverage plugins 
 
