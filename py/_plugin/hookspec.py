@@ -6,14 +6,14 @@ hook specifications for py.test plugins
 # Command line and configuration 
 # -------------------------------------------------------------------------
 
-def pytest_addoption(parser):
-    """ called before commandline parsing.  """
-
-def pytest_registerhooks(pluginmanager):
-    """ called after commandline parsing before pytest_configure.  """
-
 def pytest_namespace():
-    """ return dict of name->object which will get stored at py.test. namespace"""
+    "return dict of name->object which will get stored at py.test. namespace"
+
+def pytest_addoption(parser):
+    "add optparse-style options via parser.addoption."
+
+def pytest_addhooks(pluginmanager):
+    "add hooks via pluginmanager.registerhooks(module)"
 
 def pytest_configure(config):
     """ called after command line options have been parsed. 

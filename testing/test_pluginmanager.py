@@ -202,6 +202,58 @@ class TestBootstrapping:
             impname = canonical_importname(name)
 
 class TestPytestPluginInteractions:
+
+    def test_addhooks_conftestplugin(self, testdir):
+        from py._test.config import Config 
+        newhooks = testdir.makepyfile(newhooks="""
+            def pytest_myhook(xyz):
+                "new hook"
+        """)
+        conf = testdir.makeconftest("""
+            import sys ; sys.path.insert(0, '.')
+            import newhooks
+            def pytest_addhooks(pluginmanager):
+                pluginmanager.addhooks(newhooks)
+            def pytest_myhook(xyz):
+                return xyz + 1
+        """)
+        config = Config() 
+        config._conftest.importconftest(conf)
+        print(config.pluginmanager.getplugins())
+        res = config.hook.pytest_myhook(xyz=10)
+        assert res == [11]
+
+    def test_addhooks_docstring_error(self, testdir):
+        newhooks = testdir.makepyfile(newhooks="""
+            class A: # no pytest_ prefix
+                pass
+            def pytest_myhook(xyz):
+                pass
+        """)
+        conf = testdir.makeconftest("""
+            import sys ; sys.path.insert(0, '.')
+            import newhooks
+            def pytest_addhooks(pluginmanager):
+                pluginmanager.addhooks(newhooks)
+        """)
+        res = testdir.runpytest()
+        assert res.ret != 0
+        res.stderr.fnmatch_lines([
+            "*docstring*pytest_myhook*newhooks*"
+        ])
+
+    def test_addhooks_nohooks(self, testdir):
+        conf = testdir.makeconftest("""
+            import sys 
+            def pytest_addhooks(pluginmanager):
+                pluginmanager.addhooks(sys)
+        """)
+        res = testdir.runpytest()
+        assert res.ret != 0
+        res.stderr.fnmatch_lines([
+            "*did not find*sys*"
+        ])
+
     def test_do_option_conftestplugin(self, testdir):
         from py._test.config import Config 
         p = testdir.makepyfile("""
@@ -401,9 +453,9 @@ class TestHookRelay:
         registry = Registry()
         class Api:
             def hello(self, arg):
-                pass
+                "api hook 1"
 
-        mcm = HookRelay(hookspecs=Api, registry=registry)
+        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
         assert hasattr(mcm, 'hello')
         assert repr(mcm.hello).find("hello") != -1
         class Plugin:
@@ -418,17 +470,18 @@ class TestHookRelay:
         registry = Registry()
         class Api:
             def hello(self, arg):
-                pass
-        mcm = HookRelay(hookspecs=Api, registry=registry)
+                "api hook 1"
+        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
         py.test.raises(TypeError, "mcm.hello(3)")
 
     def test_firstresult_definition(self):
         registry = Registry()
         class Api:
-            def hello(self, arg): pass
+            def hello(self, arg): 
+                "api hook 1"
             hello.firstresult = True
 
-        mcm = HookRelay(hookspecs=Api, registry=registry)
+        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
         class Plugin:
             def hello(self, arg):
                 return arg + 1

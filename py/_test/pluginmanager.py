@@ -39,8 +39,7 @@ class PluginManager(object):
         if name in self._name2plugin:
             return False
         self._name2plugin[name] = plugin
-        self.call_plugin(plugin, "pytest_registerhooks", 
-            {'pluginmanager': self})
+        self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
         self.registry.register(plugin)
         return True
@@ -59,8 +58,8 @@ class PluginManager(object):
             if plugin == val:
                 return True
 
-    def registerhooks(self, spec):
-        self.hook._registerhooks(spec)
+    def addhooks(self, spec):
+        self.hook._addhooks(spec, prefix="pytest_")
 
     def getplugins(self):
         return list(self.registry)
@@ -304,22 +303,31 @@ class Registry:
         return l
 
 class HookRelay: 
-    def __init__(self, hookspecs, registry):
+    def __init__(self, hookspecs, registry, prefix="pytest_"):
         if not isinstance(hookspecs, list):
             hookspecs = [hookspecs]
         self._hookspecs = []
         self._registry = registry
         for hookspec in hookspecs:
-            self._registerhooks(hookspec)
+            self._addhooks(hookspec, prefix)
 
-    def _registerhooks(self, hookspecs):
+    def _addhooks(self, hookspecs, prefix):
         self._hookspecs.append(hookspecs)
+        added = False
         for name, method in vars(hookspecs).items():
-            if name[:1] != "_":
+            if name.startswith(prefix):
+                if not method.__doc__:
+                    raise ValueError("docstring required for hook %r, in %r"
+                        % (method, hookspecs))
                 firstresult = getattr(method, 'firstresult', False)
                 hc = HookCaller(self, name, firstresult=firstresult)
                 setattr(self, name, hc)
+                added = True
                 #print ("setting new hook", name)
+        if not added:
+            raise ValueError("did not find new %r hooks in %r" %(
+                prefix, hookspecs,))
+            
 
     def _performcall(self, name, multicall):
         return multicall.execute()

@@ -21,4 +21,3 @@ def main(args=None):
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         raise SystemExit(3)
-
