@@ -14,6 +14,9 @@ Changes between 1.2.1 and 1.3.0 (release pending)
 - new pytest_pycollect_makemodule(path, parent) hook for
   allowing customization of the Module collection object for a 
   matching test module. 
+- extend py.test.mark.xfail to accept two more keyword arg parameters:
+  ``xfail(run=False)`` will not run the decorated test 
+  ``xfail(reason="...")`` will print the reason string when reporting 
 - expose (previously internal) commonly useful methods: 
   py.io.get_terminal_with() -> return terminal width
   py.io.ansi_print(...) -> print colored/bold text on linux/win32

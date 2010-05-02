@@ -159,6 +159,9 @@ def test_generic(testdir, LineMatcher):
         @py.test.mark.xfail
         def test_xfail():
             assert 0
+        @py.test.mark.xfail(run=False)
+        def test_xfail_norun():
+            assert 0
     """)
     testdir.runpytest("--resultlog=result.log")
     lines = testdir.tmpdir.join("result.log").readlines(cr=0)
@@ -167,5 +170,6 @@ def test_generic(testdir, LineMatcher):
         "F *:test_fail", 
         "s *:test_skip",
         "x *:test_xfail", 
+        "x *:test_xfail_norun", 
     ])
     

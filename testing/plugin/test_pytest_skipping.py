@@ -12,6 +12,30 @@ def test_xfail_not_report_default(testdir):
         "*1 expected failures*--report=xfailed*",
     ])
 
+def test_xfail_not_run(testdir):
+    p = testdir.makepyfile(test_one="""
+        import py
+        @py.test.mark.xfail(run=False, reason="noway")
+        def test_this():
+            assert 0
+        @py.test.mark.xfail("True", run=False, reason="noway")
+        def test_this_true():
+            assert 0
+        @py.test.mark.xfail("False", run=True, reason="huh")
+        def test_this_false():
+            assert 1
+    """)
+    result = testdir.runpytest(p, '-v')
+    result.stdout.fnmatch_lines([
+        "*2 expected failures*--report=xfailed*",
+        "*1 passed*",
+    ])
+    result = testdir.runpytest(p, '--report=xfailed', )
+    result.stdout.fnmatch_lines([
+        "*test_one*test_this*not run*noway",
+        "*test_one*test_this_true*not run*noway",
+    ])
+
 def test_skip_not_report_default(testdir):
     p = testdir.makepyfile(test_one="""
         import py
