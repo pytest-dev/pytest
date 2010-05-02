@@ -84,8 +84,15 @@ disguise.  You can tell people to download and then e.g. run it like this::
 and ask them to send you the resulting URL.  The resulting script has 
 all core features and runs unchanged under Python2 and Python3 interpreters. 
 
-Troubleshooting
-========================
+Troubleshooting / known issues
+===============================
+
+.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
+
+**Jython2.5.1 on XP**: `Jython does not create command line launchers`_
+so ``py.test`` will not work correctly.  You may install py.test on 
+CPython and type ``py.test --genscript=mytest`` and then use 
+``jython mytest`` to run py.test for your tests to run in Jython. 
 
 **On Linux**: If ``easy_install`` fails because it needs to run
 as the superuser you are trying to install things globally 

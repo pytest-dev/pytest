@@ -1,10 +1,15 @@
-Changes between 1.2.1 and 1.2.2 (release pending)
+Changes between 1.2.1 and 1.3.0 (release pending)
 ==================================================
 
-- new mechanism to allow plugins to register new hooks 
+- new mechanism to allow external plugins to register new hooks 
+  (a recent pytest-xdist plugin for distributed and looponfailing 
+  testing requires this feature)
 - (issue85) fix junitxml plugin to handle tests with non-ascii output
 - fix/refine python3 compatibility (thanks Benjamin Peterson)
-- fixes for making the jython/win32 combination work
+- fixes for making the jython/win32 combination work, note however: 
+  jython2.5.1/win32 does not provide a command line launcher, see
+  http://bugs.jython.org/issue1491 . See pylib install documentation
+  for how to work around. 
 - fixes for handling of unicode exception values and unprintable objects
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
@@ -17,7 +22,7 @@ Changes between 1.2.1 and 1.2.2 (release pending)
 - new pytest_pycollect_makemodule(path, parent) hook for
   allowing customization of the Module collection object for a 
   matching test module.
-- expose previously internal commonly useful methods: 
+- expose (previously internal) commonly useful methods: 
   py.io.get_terminal_with() -> return terminal width
   py.io.ansi_print(...) -> print colored/bold text on linux/win32
   py.io.saferepr(obj) -> return limited representation string
