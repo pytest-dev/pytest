@@ -46,7 +46,8 @@ class HookRecorder:
             recorder = RecordCalls()
             self._recorders[hookspec] = recorder
             self._registry.register(recorder)
-        self.hook = HookRelay(hookspecs, registry=self._registry)
+        self.hook = HookRelay(hookspecs, registry=self._registry, 
+            prefix="pytest_")
 
     def finish_recording(self):
         for recorder in self._recorders.values():
