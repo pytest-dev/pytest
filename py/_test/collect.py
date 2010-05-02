@@ -297,7 +297,7 @@ class Directory(FSCollector):
         return l
 
     def consider(self, path):
-        if self.ihook.pytest_ignore_collect_path(path=path, config=self.config):
+        if self.ihook.pytest_ignore_collect(path=path, config=self.config):
            return
         if path.check(file=1):
             res = self.consider_file(path)

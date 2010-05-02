@@ -13,10 +13,10 @@ Changes between 1.2.1 and 1.3.0 (release pending)
 - fixes for handling of unicode exception values and unprintable objects
 - (issue87) fix unboundlocal error in assertionold code 
 - (issue86) improve documentation for looponfailing
-- add a new pytest_ignore_collect_path(path, config) hook to allow projects and
+- add a new pytest_ignore_collect(path, config) hook to allow projects and
   plugins to define exclusion behaviour for their directory structure - 
   for example you may define in a conftest.py this method:
-        def pytest_ignore_collect_path(path):
+        def pytest_ignore_collect(path):
             return path.check(link=1)
   to prevent even a collection try of any tests in symlinked dirs. 
 - new pytest_pycollect_makemodule(path, parent) hook for

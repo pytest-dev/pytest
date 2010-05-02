@@ -27,12 +27,12 @@ def pytest_unconfigure(config):
 # collection hooks
 # -------------------------------------------------------------------------
 
-def pytest_ignore_collect_path(path, config):
+def pytest_ignore_collect(path, config):
     """ return true value to prevent considering this path for collection. 
     This hook is consulted for all files and directories prior to considering
     collection hooks. 
     """
-pytest_ignore_collect_path.firstresult = True
+pytest_ignore_collect.firstresult = True
 
 def pytest_collect_directory(path, parent):
     """ return Collection node or None for the given path. """

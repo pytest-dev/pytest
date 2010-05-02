@@ -159,7 +159,7 @@ class TestPrunetraceback:
 class TestCustomConftests:
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest("""
-            def pytest_ignore_collect_path(path, config):
+            def pytest_ignore_collect(path, config):
                 return path.basename.startswith("x") or \
                        path.basename == "test_one.py"
         """)

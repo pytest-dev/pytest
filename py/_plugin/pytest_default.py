@@ -28,7 +28,7 @@ def pytest_funcarg__pytestconfig(request):
     """ the pytest config object with access to command line opts."""
     return request.config
 
-def pytest_ignore_collect_path(path, config):
+def pytest_ignore_collect(path, config):
     ignore_paths = config.getconftest_pathlist("collect_ignore", path=path) 
     ignore_paths = ignore_paths or []
     excludeopt = config.getvalue("ignore")

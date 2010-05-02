@@ -95,8 +95,8 @@ per-test run basetemp directory.
 .. _`function arguments`: funcargs.html
 .. _`extensions`: 
 
-Plugin basics
-=========================
+Plugin basics and project configuration 
+=============================================
 
 .. _`local plugin`:
 
