@@ -96,6 +96,21 @@ class TestXFail:
         expl = callreport.keywords['xfail']
         assert expl == "condition: True"
 
+    def test_xfail_run_anyway(self, testdir):
+        testdir.makepyfile("""
+            import py 
+            @py.test.mark.xfail
+            def test_func(): 
+                assert 0
+        """)
+        result = testdir.runpytest("--runxfail")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*def test_func():*",
+            "*assert 0*",
+            "*1 failed*",
+        ])
+
     def test_xfail_evalfalse_but_fails(self, testdir):
         item = testdir.getitem("""
             import py

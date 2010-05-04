@@ -126,6 +126,12 @@ within test or setup code.  Example::
 
 import py
 
+def pytest_addoption(parser):
+    group = parser.getgroup("general")
+    group.addoption('--runxfail', 
+           action="store_true", dest="runxfail", default=False,
+           help="run tests even if they are marked xfail")
+
 class MarkEvaluator:
     def __init__(self, item, name):
         self.item = item
@@ -172,9 +178,10 @@ def pytest_runtest_setup(item):
     if evalskip.istrue():
         py.test.skip(evalskip.getexplanation())
     item._evalxfail = MarkEvaluator(item, 'xfail')
-    if item._evalxfail.istrue():
-        if not item._evalxfail.get('run', True):
-            py.test.skip("xfail")
+    if not item.config.getvalue("runxfail"):
+        if item._evalxfail.istrue():
+            if not item._evalxfail.get('run', True):
+                py.test.skip("xfail")
 
 def pytest_runtest_makereport(__multicall__, item, call):
     if not isinstance(item, py.test.collect.Function):
@@ -192,7 +199,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
         return rep
     elif call.when == "call":
         rep = __multicall__.execute()
-        if evalxfail.istrue():
+        if not item.config.getvalue("runxfail") and evalxfail.istrue():
             if call.excinfo:
                 rep.skipped = True
                 rep.failed = rep.passed = False
