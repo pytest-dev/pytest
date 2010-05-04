@@ -111,6 +111,22 @@ class TestTerminal:
         assert lines[1].endswith("xy.py .")
         assert lines[2] == "hello world"
 
+    def test_testid(self, testdir, linecomp):
+        func,method = testdir.getitems("""
+            def test_func():
+                pass
+            class TestClass:
+                def test_method(self):
+                    pass
+        """)
+        tr = TerminalReporter(func.config, file=linecomp.stringio)
+        id = tr.gettestid(func)
+        assert id.endswith("test_testid.py::test_func")
+        fspath = py.path.local(id.split("::")[0])
+        assert fspath.check()
+        id = tr.gettestid(method)
+        assert id.endswith("test_testid.py::TestClass::test_method")
+
     def test_looponfailreport(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""
             def test_fail():
