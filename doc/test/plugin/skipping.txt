@@ -15,9 +15,8 @@ The need for skipping a test is usually connected to a condition.
 If a test fails under all conditions then it's probably better
 to mark your test as 'xfail'. 
 
-By passing ``--report=xfailed,skipped`` to the terminal reporter 
-you will see summary information on skips and xfail-run tests
-at the end of a test run. 
+By passing ``-rxs`` to the terminal reporter you will see extra
+summary information on skips and xfail-run tests at the end of a test run. 
 
 .. _skipif:
 
@@ -88,9 +87,16 @@ Same as with skipif_ you can also selectively expect a failure
 depending on platform::
 
     @py.test.mark.xfail("sys.version_info >= (3,0)")
-
     def test_function():
         ...
+
+To not run a test and still regard it as "xfailed"::
+
+    @py.test.mark.xfail(..., run=False)
+
+To specify an explicit reason to be shown with xfailure detail::
+
+    @py.test.mark.xfail(..., reason="my reason")
 
 
 skipping on a missing import dependency
@@ -119,6 +125,13 @@ within test or setup code.  Example::
     def test_function():
         if not valid_config():
             py.test.skip("unsuppored configuration")
+
+command line options
+--------------------
+
+
+``--runxfail``
+    run tests even if they are marked xfail
 
 Start improving this plugin in 30 seconds
 =========================================

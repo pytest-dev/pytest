@@ -151,10 +151,10 @@ class PluginOverview(RestWriter):
 
 class HookSpec(RestWriter):
     def makerest(self, config):
-        module = config.pluginmanager.hook._hookspecs
-        source = py.code.Source(module)
-        self.h1("hook specification sourcecode")
-        self.sourcecode(source)
+        for module in config.pluginmanager.hook._hookspecs:
+            source = py.code.Source(module)
+            self.h1("hook specification sourcecode")
+            self.sourcecode(source)
 
 class PluginDoc(RestWriter):
     def makerest(self, config, name):

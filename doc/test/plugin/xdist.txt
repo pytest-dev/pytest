@@ -28,18 +28,6 @@ You may specify different Python versions and interpreters.
 
 .. _`pytest-xdist`: http://pypi.python.org/pypi/pytest-xdist
 
-Install / Uninstall
----------------------
-
-To install the xdist plugin simply type::
-
-    easy_install pytest-xdist  # or
-    pip install pytest-xdist 
-
-and to uninstall::
-
-    pip uninstall pytest-xdist 
-
 Usage examples
 ---------------------
 

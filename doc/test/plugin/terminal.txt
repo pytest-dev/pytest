@@ -14,10 +14,12 @@ command line options
 
 ``-v, --verbose``
     increase verbosity.
+``-r chars``
+    show extra test summary info as specified by chars (f)ailed, (s)skipped, (x)failed, (X)passed.
 ``-l, --showlocals``
     show locals in tracebacks (disabled by default).
 ``--report=opts``
-    show more info, valid: skipped,xfailed
+    (deprecated, use -r)
 ``--tb=style``
     traceback print mode (long/short/line/no).
 ``--fulltrace``

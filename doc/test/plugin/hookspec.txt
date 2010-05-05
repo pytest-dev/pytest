@@ -12,11 +12,14 @@ hook specification sourcecode
     # Command line and configuration 
     # -------------------------------------------------------------------------
     
-    def pytest_addoption(parser):
-        """ called before commandline parsing.  """
-    
     def pytest_namespace():
-        """ return dict of name->object which will get stored at py.test. namespace"""
+        "return dict of name->object which will get stored at py.test. namespace"
+    
+    def pytest_addoption(parser):
+        "add optparse-style options via parser.addoption."
+    
+    def pytest_addhooks(pluginmanager):
+        "add hooks via pluginmanager.registerhooks(module)"
     
     def pytest_configure(config):
         """ called after command line options have been parsed. 
@@ -29,6 +32,13 @@ hook specification sourcecode
     # -------------------------------------------------------------------------
     # collection hooks
     # -------------------------------------------------------------------------
+    
+    def pytest_ignore_collect(path, config):
+        """ return true value to prevent considering this path for collection. 
+        This hook is consulted for all files and directories prior to considering
+        collection hooks. 
+        """
+    pytest_ignore_collect.firstresult = True
     
     def pytest_collect_directory(path, parent):
         """ return Collection node or None for the given path. """
@@ -57,6 +67,14 @@ hook specification sourcecode
     # -------------------------------------------------------------------------
     # Python test function related hooks
     # -------------------------------------------------------------------------
+    
+    def pytest_pycollect_makemodule(path, parent):
+        """ return a Module collector or None for the given path. 
+        This hook will be called for each matching test module path. 
+        The pytest_collect_file hook needs to be used if you want to 
+        create test modules for files that do not match as a test module.
+        """
+    pytest_pycollect_makemodule.firstresult = True
     
     def pytest_pycollect_makeitem(collector, name, obj):
         """ return custom item/collector for a python object in a module, or None.  """
@@ -139,31 +157,6 @@ hook specification sourcecode
         """ return processed content for a given doctest"""
     pytest_doctest_prepare_content.firstresult = True
     
-    # -------------------------------------------------------------------------
-    # distributed testing 
-    # -------------------------------------------------------------------------
-    
-    def pytest_gwmanage_newgateway(gateway, platinfo):
-        """ called on new raw gateway creation. """ 
-    
-    def pytest_gwmanage_rsyncstart(source, gateways):
-        """ called before rsyncing a directory to remote gateways takes place. """
-    
-    def pytest_gwmanage_rsyncfinish(source, gateways):
-        """ called after rsyncing a directory to remote gateways takes place. """
-    
-    def pytest_testnodeready(node):
-        """ Test Node is ready to operate. """
-    
-    def pytest_testnodedown(node, error):
-        """ Test Node is down. """
-    
-    def pytest_rescheduleitems(items):
-        """ reschedule Items from a node that went down. """
-    
-    def pytest_looponfailinfo(failreports, rootdirs):
-        """ info for repeating failing tests. """
-    
     
     # -------------------------------------------------------------------------
     # error handling and internal debugging hooks 
@@ -183,5 +176,35 @@ hook specification sourcecode
     
     def pytest_trace(category, msg):
         """ called for debug info. """ 
+
+hook specification sourcecode
+=============================
+
+.. sourcecode:: python
+
+    
+    def pytest_gwmanage_newgateway(gateway, platinfo):
+        """ called on new raw gateway creation. """ 
+    
+    def pytest_gwmanage_rsyncstart(source, gateways):
+        """ called before rsyncing a directory to remote gateways takes place. """
+    
+    def pytest_gwmanage_rsyncfinish(source, gateways):
+        """ called after rsyncing a directory to remote gateways takes place. """
+    
+    def pytest_configure_node(node):
+        """ configure node information before it gets instantiated. """
+    
+    def pytest_testnodeready(node):
+        """ Test Node is ready to operate. """
+    
+    def pytest_testnodedown(node, error):
+        """ Test Node is down. """
+    
+    def pytest_rescheduleitems(items):
+        """ reschedule Items from a node that went down. """
+    
+    def pytest_looponfailinfo(failreports, rootdirs):
+        """ info for repeating failing tests. """
 
 .. include:: links.txt
