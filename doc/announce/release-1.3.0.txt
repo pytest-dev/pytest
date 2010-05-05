@@ -1,7 +1,7 @@
 py.test/pylib 1.3.0: new options, per-plugin hooks, fixes ... 
 ===========================================================================
 
-The 1.3.0 release introces new options, bug fixes and improved compatibility 
+The 1.3.0 release introduces new options, bug fixes and improved compatibility 
 with Python3 and Jython-2.5.1 on Windows.   If you already use py-1.2 chances
 are you can use py-1.3.0.  See the below CHANGELOG for more details and 
 http://pylib.org/install.html for installation instructions. 
