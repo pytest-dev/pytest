@@ -49,10 +49,13 @@ Changes between 1.2.1 and 1.3.0
   allowing customization of the Module collection object for a 
   matching test module. 
 
-- extend and refine xfail mechanism: 
-  ``@py.test.mark.xfail(run=False)`` do not run the decorated test
-  ``@py.test.mark.xfail(reason="...")`` prints the reason string in xfail summaries
-  specifiying ``--runxfail`` on command line virtually ignores xfail markers
+- extend and refine xfail mechanism::
+
+    @py.test.mark.xfail(run=False) do not run the decorated test
+    @py.test.mark.xfail(reason="...") prints the reason string in xfail summaries
+
+  specifiying ``--runxfail`` on command line ignores xfail markers to show
+  you the underlying traceback. 
 
 - expose (previously internal) commonly useful methods: 
   py.io.get_terminal_with() -> return terminal width
