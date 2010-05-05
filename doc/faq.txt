@@ -10,15 +10,17 @@ Frequently Asked Questions
 On naming, nosetests, licensing and magic 
 ===========================================
 
-Why the ``py`` naming? what is it? 
-------------------------------------
+Why the ``py`` naming?  Why not ``pytest``? 
+----------------------------------------------------
 
-Because the name was available and there was the
-idea to have the package evolve into a "standard" library 
-kind of thing that works cross-python versions and is
-not tied to a particular CPython revision or its release
-cycle.  Clearly, this was ambitious and the naming
-has maybe haunted the project rather than helping it. 
+This mostly has historic reasons - the aim is 
+to get away from the somewhat questionable 'py' name
+at some point.  These days (2010) the 'py' library
+almost completely comprises APIs that are used
+by the ``py.test`` tool.  There also are some
+other uses, e.g. of the ``py.path.local()`` and
+other path implementations.  So it requires some
+work to factor them out and do the shift. 
 
 Why the ``py.test`` naming? 
 ------------------------------------
@@ -115,7 +117,7 @@ argument usage and creation.
 Can I yield multiple values from a factory function? 
 -----------------------------------------------------
 
-There are two reasons why yielding from a factory function
+There are two conceptual reasons why yielding from a factory function
 is not possible: 
 
 * Calling factories for obtaining test function arguments 
