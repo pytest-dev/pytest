@@ -1,41 +1,65 @@
-Changes between 1.2.1 and 1.3.0 (release pending)
+Changes between 1.2.1 and 1.3.0
 ==================================================
+
+- deprecate --report option in favour of a new shorter and easier to
+  remember -r option: it takes a string argument consisting of any
+  combination of 'xfsX' characters.  They relate to the single chars
+  you see during the dotted progress printing and will print an extra line 
+  per test at the end of the test run.  This extra line indicates the exact
+  position or test ID that you directly paste to the py.test cmdline in order
+  to re-run a particular test. 
 
 - allow external plugins to register new hooks via the new 
   pytest_addhooks(pluginmanager) hook.  The new release of
   the pytest-xdist plugin for distributed and looponfailing 
   testing requires this feature. 
+
 - add a new pytest_ignore_collect(path, config) hook to allow projects and
   plugins to define exclusion behaviour for their directory structure - 
-  for example you may define in a conftest.py this method:
+  for example you may define in a conftest.py this method::
+
         def pytest_ignore_collect(path):
             return path.check(link=1)
+
   to prevent even a collection try of any tests in symlinked dirs. 
+
 - new pytest_pycollect_makemodule(path, parent) hook for
   allowing customization of the Module collection object for a 
   matching test module. 
+
 - extend and refine xfail mechanism: 
   ``@py.test.mark.xfail(run=False)`` do not run the decorated test
   ``@py.test.mark.xfail(reason="...")`` prints the reason string in xfail summaries
   specifiying ``--runxfail`` on command line virtually ignores xfail markers
+
 - expose (previously internal) commonly useful methods: 
   py.io.get_terminal_with() -> return terminal width
   py.io.ansi_print(...) -> print colored/bold text on linux/win32
   py.io.saferepr(obj) -> return limited representation string
+
 - expose test outcome related exceptions as py.test.skip.Exception, 
   py.test.raises.Exception etc., useful mostly for plugins
   doing special outcome interpretation/tweaking
+
 - (issue85) fix junitxml plugin to handle tests with non-ascii output
+
 - fix/refine python3 compatibility (thanks Benjamin Peterson)
+
 - fixes for making the jython/win32 combination work, note however: 
   jython2.5.1/win32 does not provide a command line launcher, see
   http://bugs.jython.org/issue1491 . See pylib install documentation
   for how to work around. 
+
 - fixes for handling of unicode exception values and unprintable objects
+
 - (issue87) fix unboundlocal error in assertionold code 
+
 - (issue86) improve documentation for looponfailing
+
 - refine IO capturing: stdin-redirect pseudo-file now has a NOP close() method
+
 - ship distribute_setup.py version 0.6.10 
+
 - added links to the new capturelog and coverage plugins 
 
 

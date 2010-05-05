@@ -12,7 +12,7 @@ py.test and pylib: rapid testing and development utils
 - `py.code`_: dynamic code compile and traceback printing support
 
 Platforms: Linux, Win32, OSX
-Interpreters: Python versions 2.4 through to 3.1, Jython 2.5.1. 
+Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy
 For questions please check out http://pylib.org/contact.html
 
 .. _`py.test`: http://pytest.org

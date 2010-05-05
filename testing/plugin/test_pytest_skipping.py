@@ -22,7 +22,7 @@ class TestEvaluator:
         assert ev
         assert ev.istrue()
         expl = ev.getexplanation()
-        assert expl == "condition: True"
+        assert expl == ""
         assert not ev.get("run", False)
 
     def test_marked_one_arg(self, testdir):
@@ -80,7 +80,7 @@ class TestXFail:
         callreport = reports[1]
         assert callreport.skipped 
         expl = callreport.keywords['xfail']
-        assert expl == "condition: True"
+        assert expl == ""
 
     def test_xfail_xpassed(self, testdir):
         item = testdir.getitem("""
@@ -94,7 +94,7 @@ class TestXFail:
         callreport = reports[1]
         assert callreport.failed
         expl = callreport.keywords['xfail']
-        assert expl == "condition: True"
+        assert expl == ""
 
     def test_xfail_run_anyway(self, testdir):
         testdir.makepyfile("""
@@ -131,9 +131,9 @@ class TestXFail:
                 assert 0
         """)
         result = testdir.runpytest(p, '-v')
-        result.stdout.fnmatch_lines([
-            "*1 expected failures*--report=xfailed*",
-        ])
+        #result.stdout.fnmatch_lines([
+        #    "*HINT*use*-r*"
+        #])
 
     def test_xfail_not_run_xfail_reporting(self, testdir):
         p = testdir.makepyfile(test_one="""
@@ -162,10 +162,9 @@ class TestXFail:
             def test_that():
                 assert 1
         """)
-        result = testdir.runpytest(p, '--report=xfailed')
+        result = testdir.runpytest(p, '-rX')
         result.stdout.fnmatch_lines([
-            "*UNEXPECTEDLY PASSING*",
-            "*test_that*",
+            "*XPASS*test_that*",
             "*1 xpassed*"
         ])
         assert result.ret == 1
@@ -189,9 +188,9 @@ class TestSkipif:
             def test_that():
                 assert 0
         """)
-        result = testdir.runpytest(p, '-s', '--report=skipped')
+        result = testdir.runpytest(p, '-s', '-rs')
         result.stdout.fnmatch_lines([
-            "*Skipped*platform*",
+            "*SKIP*1*platform*",
             "*1 skipped*"
         ])
         assert result.ret == 0
@@ -204,7 +203,8 @@ def test_skip_not_report_default(testdir):
     """)
     result = testdir.runpytest(p, '-v')
     result.stdout.fnmatch_lines([
-        "*1 skipped*--report=skipped*",
+        #"*HINT*use*-r*",
+        "*1 skipped*",
     ])
 
 
@@ -276,8 +276,7 @@ def test_skipped_reasons_functional(testdir):
     result.stdout.fnmatch_lines([
         "*test_one.py ss",
         "*test_two.py S",
-        "___* skipped test summary *_", 
-        "*conftest.py:3: *3* Skipped: 'test'", 
+        "*SKIP*3*conftest.py:3: 'test'", 
     ])
     assert result.ret == 0
 

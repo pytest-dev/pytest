@@ -575,12 +575,41 @@ class TestTerminalFunctional:
         ])
         assert result.ret == 1
 
+def test_fail_extra_reporting(testdir):
+    p = testdir.makepyfile("def test_this(): assert 0")
+    result = testdir.runpytest(p)
+    assert 'short test summary' not in result.stdout.str()
+    result = testdir.runpytest(p, '-rf')
+    result.stdout.fnmatch_lines([
+        "*test summary*",
+        "FAIL*test_fail_extra_reporting*",
+    ])
+
+def test_fail_reporting_on_pass(testdir):
+    p = testdir.makepyfile("def test_this(): assert 1")
+    result = testdir.runpytest(p, '-rf')
+    assert 'short test summary' not in result.stdout.str()
 
 def test_getreportopt():
-    assert getreportopt(None) == {}
-    assert getreportopt("hello") == {'hello': True}
-    assert getreportopt("hello, world") == dict(hello=True, world=True)
-    assert getreportopt("nohello") == dict(hello=False)
+    testdict = {}
+    class Config:
+        def getvalue(self, name):
+            return testdict.get(name, None)
+    config = Config()
+    testdict.update(dict(report="xfailed"))
+    assert getreportopt(config) == "x"
+
+    testdict.update(dict(report="xfailed,skipped"))
+    assert getreportopt(config) == "xs"
+
+    testdict.update(dict(report="skipped,xfailed"))
+    assert getreportopt(config) == "sx"
+
+    testdict.update(dict(report="skipped", reportchars="sf"))
+    assert getreportopt(config) == "sf"
+
+    testdict.update(dict(reportchars="sfx"))
+    assert getreportopt(config) == "sfx"
 
 def test_terminalreporter_reportopt_conftestsetting(testdir):
     testdir.makeconftest("option_report = 'skipped'")

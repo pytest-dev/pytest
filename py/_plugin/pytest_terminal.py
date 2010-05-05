@@ -12,12 +12,16 @@ def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count", 
                dest="verbose", default=0, help="increase verbosity."),
+    group._addoption('-r',
+         action="store", dest="reportchars", default=None, metavar="chars",
+         help="show extra test summary info as specified by chars (f)ailed, "
+              "(s)skipped, (x)failed, (X)passed.")
     group._addoption('-l', '--showlocals',
-               action="store_true", dest="showlocals", default=False,
-               help="show locals in tracebacks (disabled by default).")
-    group.addoption('--report',
-               action="store", dest="report", default=None, metavar="opts",
-               help="show more info, valid: skipped,xfailed")
+         action="store_true", dest="showlocals", default=False,
+         help="show locals in tracebacks (disabled by default).")
+    group._addoption('--report',
+         action="store", dest="report", default=None, metavar="opts",
+         help="(deprecated, use -r)")
     group._addoption('--tb', metavar="style", 
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no', 'line'],
@@ -47,17 +51,25 @@ def pytest_configure(config):
                 setattr(reporter._tw, name, getattr(config, attr))
         config.pluginmanager.register(reporter, 'terminalreporter')
 
-def getreportopt(optvalue):
-    d = {}
+def getreportopt(config):
+    reportopts = ""
+    optvalue = config.getvalue("report")
     if optvalue:
-        for setting in optvalue.split(","):
-            setting = setting.strip()
-            val = True
-            if setting.startswith("no"):
-                val = False
-                setting = setting[2:]
-            d[setting] = val
-    return d
+        py.builtin.print_("DEPRECATED: use -r instead of --report option.", 
+            file=py.std.sys.stderr)
+        if optvalue:
+            for setting in optvalue.split(","):
+                setting = setting.strip()
+                if setting == "skipped":
+                    reportopts += "s"
+                elif setting == "xfailed":
+                    reportopts += "x"
+    reportchars = config.getvalue("reportchars")
+    if reportchars:
+        for char in reportchars:
+            if char not in reportopts:
+                reportopts += char
+    return reportopts
 
 class TerminalReporter:
     def __init__(self, config, file=None):
@@ -69,10 +81,11 @@ class TerminalReporter:
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None 
         self.gateway2info = {}
-        self._reportopt = getreportopt(config.getvalue('report'))
+        self.reportchars = getreportopt(config)
 
-    def hasopt(self, name):
-        return self._reportopt.get(name, False)
+    def hasopt(self, char):
+        char = {'xfailed': 'x', 'skipped': 's'}.get(char,char)
+        return char in self.reportchars
 
     def write_fspath_result(self, fspath, res):
         fspath = self.curdir.bestrelpath(fspath)

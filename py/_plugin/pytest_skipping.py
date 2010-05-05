@@ -10,9 +10,8 @@ The need for skipping a test is usually connected to a condition.
 If a test fails under all conditions then it's probably better
 to mark your test as 'xfail'. 
 
-By passing ``--report=xfailed,skipped`` to the terminal reporter 
-you will see summary information on skips and xfail-run tests
-at the end of a test run. 
+By passing ``-rxs`` to the terminal reporter you will see extra
+summary information on skips and xfail-run tests at the end of a test run. 
 
 .. _skipif:
 
@@ -165,7 +164,7 @@ class MarkEvaluator:
         expl = self.get('reason', None)
         if not expl:
             if not hasattr(self, 'expr'):
-                return "condition: True"
+                return ""
             else:
                 return "condition: " + self.expr
         return expl
@@ -222,31 +221,53 @@ def pytest_report_teststatus(report):
 
 # called by the terminalreporter instance/plugin
 def pytest_terminal_summary(terminalreporter):
-    show_xfailed(terminalreporter)
-    show_skipped(terminalreporter)
-
-def show_xfailed(terminalreporter):
     tr = terminalreporter
-    xfailed = tr.stats.get("xfailed")
+    if not tr.reportchars:
+        #for name in "xfailed skipped failed xpassed":
+        #    if not tr.stats.get(name, 0):
+        #        tr.write_line("HINT: use '-r' option to see extra "
+        #              "summary info about tests")
+        #        break
+        return
+
+    lines = []
+    for char in tr.reportchars:
+        if char == "x":
+            show_xfailed(terminalreporter, lines)
+        elif char == "X":
+            show_xpassed(terminalreporter, lines)
+        elif char == "f":
+            show_failed(terminalreporter, lines)
+        elif char == "s":
+            show_skipped(terminalreporter, lines)
+    if lines:
+        tr._tw.sep("=", "short test summary info")
+        for line in lines:
+            tr._tw.line(line)
+
+def show_failed(terminalreporter, lines):
+    tw = terminalreporter._tw
+    failed = terminalreporter.stats.get("failed")
+    if failed:
+        for rep in failed:
+            pos = terminalreporter.gettestid(rep.item)
+            lines.append("FAIL %s" %(pos, ))
+
+def show_xfailed(terminalreporter, lines):
+    xfailed = terminalreporter.stats.get("xfailed")
     if xfailed:
-        if not tr.hasopt('xfailed'):
-            tr.write_line(
-              "%d expected failures, use --report=xfailed for more info" %
-              len(xfailed))
-            return
-        tr.write_sep("_", "expected failures")
         for rep in xfailed:
             pos = terminalreporter.gettestid(rep.item)
             reason = rep.keywords['xfail']
-            tr._tw.line("%s %s" %(pos, reason))
+            lines.append("XFAIL %s %s" %(pos, reason))
 
+def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
-        tr.write_sep("_", "UNEXPECTEDLY PASSING TESTS")
         for rep in xpassed:
             pos = terminalreporter.gettestid(rep.item)
             reason = rep.keywords['xfail']
-            tr._tw.line("%s %s" %(pos, reason))
+            lines.append("XPASS %s %s" %(pos, reason))
 
 def cached_eval(config, expr, d):
     if not hasattr(config, '_evalcache'):
@@ -271,17 +292,20 @@ def folded_skips(skipped):
         l.append((len(events),) + key)
     return l 
 
-def show_skipped(terminalreporter):
+def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get('skipped', [])
     if skipped:
-        if not tr.hasopt('skipped'):
-            tr.write_line(
-                "%d skipped tests, use --report=skipped for more info" %
-                len(skipped))
-            return
+        #if not tr.hasopt('skipped'):
+        #    tr.write_line(
+        #        "%d skipped tests, specify -rs for more info" %
+        #        len(skipped))
+        #    return
         fskips = folded_skips(skipped)
         if fskips:
-            tr.write_sep("_", "skipped test summary")
+            #tr.write_sep("_", "skipped test summary")
             for num, fspath, lineno, reason in fskips:
-                tr._tw.line("%s:%d: [%d] %s" %(fspath, lineno, num, reason))
+                if reason.startswith("Skipped: "):
+                    reason = reason[9:]
+                lines.append("SKIP [%d] %s:%d: %s" %
+                    (num, fspath, lineno, reason))
