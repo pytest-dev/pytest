@@ -1,6 +1,6 @@
 refine session initialization / fix custom collect crash  
 ---------------------------------------------------------------
-tags: bug 1.2 core xdist 
+tags: bug 1.4 core xdist 
 
 When calling "py.test path/X" py.test can crash if the collection 
 of that directory is skipped.  Calling "py.test path" will give
@@ -14,7 +14,7 @@ and the core session probably converge some more.
 
 introduce py.test.mark.nocollect
 -------------------------------------------------------
-tags: feature 1.2
+tags: feature 1.4
 
 for not considering a function for test collection at all. 
 maybe also introduce a py.test.mark.test to explicitely
@@ -72,16 +72,9 @@ tags: feature 1.3
 introduce py.test.mark.multi to specify a number
 of values for a given function argument. 
 
-introduce py.test.mark.multi 
------------------------------------------
-tags: feature 1.3
-
-introduce py.test.mark.multi to specify a number
-of values for a given function argument. 
-
 have imported module mismatch honour relative paths
 --------------------------------------------------------
-tags: bug 1.2
+tags: bug 1.4
 
 With 1.1.1 py.test fails at least on windows if an import 
 is relative and compared against an absolute conftest.py 
@@ -89,7 +82,7 @@ path. Normalize.
 
 make node._checkcollectable more robust
 -------------------------------------------------
-tags: bug 1.2
+tags: bug 1.4
 
 currently node._checkcollectable() can raise
 exceptions for all kinds of reasons ('conftest.py' loading
@@ -99,22 +92,15 @@ a good error message.
 
 call termination with small timeout
 -------------------------------------------------
-tags: feature 1.2
+tags: feature 1.4
 test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
 
-have --report=xfailed[-detail] report the actual tracebacks 
-------------------------------------------------------------------
-tags: feature
-
-there is no way to induce py.test to display the full tracebacks
-of the expected failure.  Introduce one.
-
 consider globals: py.test.ensuretemp and config 
 --------------------------------------------------------------
-tags: experimental-wish 1.2
+tags: experimental-wish 1.4
 
 consider deprecating py.test.ensuretemp and py.test.config 
 to further reduce py.test globality.  Also consider 
@@ -123,7 +109,7 @@ a plugin rather than being there from the start.
 
 consider allowing funcargs to setup methods
 --------------------------------------------------------------
-tags: experimental-wish 1.2
+tags: experimental-wish 1.4
 
 Users have expressed the wish to have funcargs available to setup 
 functions.  Experiment with allowing funcargs there - it might
@@ -135,7 +121,7 @@ and funcargs?
 
 consider pytest_addsyspath hook
 -----------------------------------------
-tags: 1.2
+tags: 1.4
 
 py.test could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
@@ -146,7 +132,7 @@ and pytest_configure.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
-tags: feature 1.2
+tags: feature 1.4
 bb: http://bitbucket.org/hpk42/py-trunk/issue/64
 
 A local test run of a "tests" directory may work 
@@ -157,7 +143,7 @@ an error or make it work without the __init__.py
 
 show plugin information in test header 
 ----------------------------------------------------------------
-tags: feature 1.2
+tags: feature 1.4
 
 Now that external plugins are becoming more numerous 
 it would be useful to have external plugins along with
@@ -165,9 +151,9 @@ their versions displayed as a header line.
 
 generate/refine plugin doc generation 
 ----------------------------------------------------------------
-tags: feature 1.2
+tags: feature 1.4
 
-review and prepare docs for 1.2.0 release.  Probably
+review and prepare docs for 1.4.0 release.  Probably
 have docs living with the plugin and require them to
 be available on doc generation time, at least when 
 the target is the website?  Or rather go for interactive help? 
