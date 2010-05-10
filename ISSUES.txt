@@ -158,3 +158,12 @@ have docs living with the plugin and require them to
 be available on doc generation time, at least when 
 the target is the website?  Or rather go for interactive help? 
 
+deprecate global py.test.config usage 
+----------------------------------------------------------------
+tags: feature 1.4
+
+py.test.ensuretemp and py.test.config are probably the last 
+objects containing global state.  Often using them is not 
+neccessary.  This is about trying to get rid of them, i.e. 
+deprecating them and checking with PyPy's usages as well 
+as others. 
