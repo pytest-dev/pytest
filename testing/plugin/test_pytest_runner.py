@@ -316,7 +316,11 @@ def test_runtest_in_module_ordering(testdir):
 
 class TestRaises:
     def test_raises(self):
-        py.test.raises(ValueError, "int('qwe')")
+        source = "int('qwe')"
+        excinfo = py.test.raises(ValueError, source)
+        code = excinfo.traceback[-1].frame.code
+        s = str(code.fullsource)
+        assert s == source 
 
     def test_raises_exec(self):
         py.test.raises(ValueError, "a,x = []") 

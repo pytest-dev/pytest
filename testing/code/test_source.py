@@ -80,11 +80,10 @@ def test_source_strip_multiline():
     source2 = source.strip() 
     assert source2.lines == [" hello"]
 
-@failsonjython
 def test_syntaxerror_rerepresentation():
-    ex = py.test.raises(SyntaxError, py.code.compile, 'x x')
+    ex = py.test.raises(SyntaxError, py.code.compile, 'xyz xyz')
     assert ex.value.lineno == 1
-    assert ex.value.offset == 3
+    assert ex.value.offset in (4,7) # XXX pypy/jython versus cpython? 
     assert ex.value.text.strip(), 'x x'
 
 def test_isparseable():
@@ -132,7 +131,6 @@ class TestSourceParsingAndCompiling:
         exec (co, d)
         assert d['x'] == 3
 
-    @failsonjython
     def test_compile_and_getsource_simple(self):
         co = py.code.compile("x=3")
         exec (co)
@@ -203,7 +201,6 @@ class TestSourceParsingAndCompiling:
         assert isinstance(mod, ast.Module)
         compile(mod, "<filename>", "exec")
 
-    @failsonjython
     def test_compile_and_getsource(self):
         co = self.source.compile()
         py.builtin.exec_(co, globals())
@@ -260,7 +257,6 @@ def test_getstartingblock_multiline():
     l = [i for i in x.source.lines if i.strip()]
     assert len(l) == 4
 
-@failsonjython
 def test_getline_finally():
     def c(): pass
     excinfo = py.test.raises(TypeError, """
@@ -274,7 +270,6 @@ def test_getline_finally():
     source = excinfo.traceback[-1].statement
     assert str(source).strip() == 'c(1)'
 
-@failsonjython
 def test_getfuncsource_dynamic():
     source = """
         def f():
@@ -341,7 +336,6 @@ def test_getsource_fallback():
     src = getsource(x)
     assert src == expected
 
-@failsonjython
 def test_idem_compile_and_getsource():
     from py._code.source import getsource
     expected = "def x(): pass"
@@ -355,8 +349,7 @@ def test_findsource_fallback():
     assert 'test_findsource_simple' in str(src)
     assert src[lineno] == '    def x():'
 
-@failsonjython
-def test_findsource___source__():
+def test_findsource():
     from py._code.source import findsource
     co = py.code.compile("""if 1:
     def x():
@@ -373,7 +366,6 @@ def test_findsource___source__():
     assert src[lineno] == "    def x():"
     
 
-@failsonjython
 def test_getfslineno():
     from py.code import getfslineno
 

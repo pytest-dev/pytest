@@ -212,10 +212,10 @@ class Source(object):
         else:
             if flag & _AST_FLAG:
                 return co
-            co_filename = MyStr(filename)
-            co_filename.__source__ = self
-            return py.code.Code(co).new(rec=1, co_filename=co_filename) 
-            #return newcode_withfilename(co, co_filename)
+            from types import ModuleType
+            lines = [(x + "\n") for x in self.lines]
+            py.std.linecache.cache[filename] = (1, None, lines, filename)
+            return co
 
 #
 # public API shortcut functions
@@ -224,11 +224,9 @@ class Source(object):
 def compile_(source, filename=None, mode='exec', flags=
             generators.compiler_flag, dont_inherit=0):
     """ compile the given source to a raw code object,
-        which points back to the source code through
-        "co_filename.__source__".  All code objects
-        contained in the code object will recursively
-        also have this special subclass-of-string
-        filename.
+        and maintain an internal cache which allows later
+        retrieval of the source code for the code object 
+        and any recursively created code objects. 
     """
     if _ast is not None and isinstance(source, _ast.AST):
         # XXX should Source support having AST?
@@ -262,44 +260,26 @@ def getfslineno(obj):
 #
 # helper functions
 #
-class MyStr(str):
-    """ custom string which allows to add attributes. """
 
 def findsource(obj):
-    obj = py.code.getrawcode(obj)
     try:
-        fullsource = obj.co_filename.__source__
-    except AttributeError:
-        try:
-            sourcelines, lineno = py.std.inspect.findsource(obj)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except:
-            return None, None
-        source = Source()
-        source.lines = [line.rstrip() for line in sourcelines]
-        return source, lineno
-    else:
-        lineno = obj.co_firstlineno - 1        
-        return fullsource, lineno
-
+        sourcelines, lineno = py.std.inspect.findsource(obj)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except:
+        return None, None
+    source = Source()
+    source.lines = [line.rstrip() for line in sourcelines]
+    return source, lineno
 
 def getsource(obj, **kwargs):
     obj = py.code.getrawcode(obj)
     try:
-        fullsource = obj.co_filename.__source__
-    except AttributeError:
-        try:
-            strsrc = inspect.getsource(obj)
-        except IndentationError:
-            strsrc = "\"Buggy python version consider upgrading, cannot get source\""
-        assert isinstance(strsrc, str)
-        return Source(strsrc, **kwargs)
-    else:
-        lineno = obj.co_firstlineno - 1
-        end = fullsource.getblockend(lineno)
-        return Source(fullsource[lineno:end+1], deident=True)
-
+        strsrc = inspect.getsource(obj)
+    except IndentationError:
+        strsrc = "\"Buggy python version consider upgrading, cannot get source\""
+    assert isinstance(strsrc, str)
+    return Source(strsrc, **kwargs)
 
 def deindent(lines, offset=None):
     if offset is None:

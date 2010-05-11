@@ -23,64 +23,14 @@ class Code(object):
     def __ne__(self, other):
         return not self == other
 
-    def new(self, rec=False, **kwargs): 
-        """ return new code object with modified attributes. 
-            if rec-cursive is true then dive into code 
-            objects contained in co_consts. 
-        """ 
-        if sys.platform.startswith("java"):
-            # XXX jython does not support the below co_filename hack
-            return self.raw 
-        names = [x for x in dir(self.raw) if x[:3] == 'co_']
-        for name in kwargs: 
-            if name not in names: 
-                raise TypeError("unknown code attribute: %r" %(name, ))
-        if rec and hasattr(self.raw, 'co_consts'):  # jython 
-            newconstlist = []
-            co = self.raw
-            cotype = type(co)
-            for c in co.co_consts:
-                if isinstance(c, cotype):
-                    c = self.__class__(c).new(rec=True, **kwargs) 
-                newconstlist.append(c)
-            return self.new(rec=False, co_consts=tuple(newconstlist), **kwargs) 
-        for name in names:
-            if name not in kwargs:
-                kwargs[name] = getattr(self.raw, name)
-        arglist = [
-                 kwargs['co_argcount'],
-                 kwargs['co_nlocals'],
-                 kwargs.get('co_stacksize', 0), # jython
-                 kwargs.get('co_flags', 0), # jython
-                 kwargs.get('co_code', ''), # jython
-                 kwargs.get('co_consts', ()), # jython
-                 kwargs.get('co_names', []), # 
-                 kwargs['co_varnames'],
-                 kwargs['co_filename'],
-                 kwargs['co_name'],
-                 kwargs['co_firstlineno'],
-                 kwargs.get('co_lnotab', ''), #jython
-                 kwargs.get('co_freevars', None), #jython
-                 kwargs.get('co_cellvars', None), # jython
-        ]
-        if sys.version_info >= (3,0):
-            arglist.insert(1, kwargs['co_kwonlyargcount'])
-            return self.raw.__class__(*arglist)
-        else:
-            return py.std.new.code(*arglist)
-
     def path(self):
         """ return a path object pointing to source code"""
-        fn = self.raw.co_filename 
-        try:
-            return fn.__path__
-        except AttributeError:
-            p = py.path.local(self.raw.co_filename)
-            if not p.check():
-                # XXX maybe try harder like the weird logic 
-                # in the standard lib [linecache.updatecache] does? 
-                p = self.raw.co_filename
-            return p
+        p = py.path.local(self.raw.co_filename)
+        if not p.check():
+            # XXX maybe try harder like the weird logic 
+            # in the standard lib [linecache.updatecache] does? 
+            p = self.raw.co_filename
+        return p
                 
     path = property(path, None, None, "path of this code object")
 
