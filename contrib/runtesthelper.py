@@ -1,7 +1,10 @@
 """
 this little helper allows to run tests multiple times
 in the same process.  useful for running tests from 
-a console.
+a console.  
+
+NOTE: since 1.3.1 you can just call py.test.cmdline.main() 
+multiple times - no special logic needed. 
 """
 import py, sys
 

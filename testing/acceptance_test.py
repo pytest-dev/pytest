@@ -89,3 +89,19 @@ class TestGeneralUsage:
         assert result.ret == 0
         s = result.stdout.str()
         assert 'MarkGenerator' in s
+
+    def test_double_pytestcmdline(self, testdir):
+        p = testdir.makepyfile(run="""
+            import py
+            py.test.cmdline.main()
+            py.test.cmdline.main()
+        """)
+        testdir.makepyfile("""
+            def test_hello():
+                pass
+        """)
+        result = testdir.runpython(p)
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+            "*1 passed*",
+        ])

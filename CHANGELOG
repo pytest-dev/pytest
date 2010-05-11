@@ -1,7 +1,14 @@
 Changes between 1.3.0 and 1.3.1
 ==================================================
 
-- improve tracebacks showing:
+- make py.test.cmdline.main() return the exitstatus 
+  instead of raising (which is still done by py.cmdline.pytest())
+  and make it so that py.test.cmdline.main() can be called
+  multiple times, at least as far as py.test's internal 
+  state is concerned - previously it would raise an exception
+  on the second time. 
+
+- improve tracebacks presentation: 
   - raises shows shorter more relevant tracebacks
 
 Changes between 1.2.1 and 1.3.0

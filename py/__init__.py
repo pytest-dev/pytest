@@ -25,7 +25,6 @@ py.apipkg.initpkg(__name__, dict(
         'pytest':     '._cmdline.pytest:main',
         'pylookup':   '._cmdline.pylookup:main',
         'pycountloc': '._cmdline.pycountlog:main',
-        'pytest':     '._test.cmdline:main',
         'pylookup':   '._cmdline.pylookup:main',
         'pycountloc': '._cmdline.pycountloc:main',
         'pycleanup':  '._cmdline.pycleanup:main',
