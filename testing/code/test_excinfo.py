@@ -293,7 +293,6 @@ class TestFormattedExcinfo:
         assert lines[0] == "|   def f(x):"
         assert lines[1] == "        pass"
 
-    @failsonjython
     def test_repr_source_excinfo(self):
         """ check if indentation is right """
         pr = FormattedExcinfo()

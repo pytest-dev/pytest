@@ -16,8 +16,9 @@ def main(args=None):
         colitems = config.getinitialnodes()
         exitstatus = session.main(colitems)
         config.pluginmanager.do_unconfigure(config)
-        raise SystemExit(exitstatus)
     except config.Error:
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
-        raise SystemExit(3)
+        exitstatus = 3
+    py.test.config = py.test.config.__class__()
+    return exitstatus

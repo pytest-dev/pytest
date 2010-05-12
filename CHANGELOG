@@ -1,3 +1,21 @@
+Changes between 1.3.0 and 1.3.1
+==================================================
+
+- make py.test.cmdline.main() return the exitstatus 
+  instead of raising (which is still done by py.cmdline.pytest())
+  and make it so that py.test.cmdline.main() can be called
+  multiple times, at least as far as py.test's internal 
+  state is concerned - previously it would raise an exception
+  on the second time. 
+
+- improve tracebacks presentation: 
+  - raises shows shorter more relevant tracebacks
+
+- improve support for raises and other dynamically compiled code by
+  manipulating python's linecache.cache instead of the previous
+  rather hacky way of creating custom code objects.  This makes 
+  it seemlessly work on Jython and PyPy at least. 
+
 Changes between 1.2.1 and 1.3.0
 ==================================================
 

@@ -8,7 +8,7 @@ dictionary or an import path.
 
 (c) Holger Krekel and others, 2004-2010
 """
-__version__ = version = "1.3.0"
+__version__ = version = "1.3.1a1"
 
 import py.apipkg
 
@@ -25,7 +25,6 @@ py.apipkg.initpkg(__name__, dict(
         'pytest':     '._cmdline.pytest:main',
         'pylookup':   '._cmdline.pylookup:main',
         'pycountloc': '._cmdline.pycountlog:main',
-        'pytest':     '._test.cmdline:main',
         'pylookup':   '._cmdline.pylookup:main',
         'pycountloc': '._cmdline.pycountloc:main',
         'pycleanup':  '._cmdline.pycleanup:main',

@@ -393,5 +393,5 @@ class Function(FunctionMixin, py.test.collect.Item):
 def hasinit(obj):
     init = getattr(obj, '__init__', None)
     if init:
-        if not isinstance(init, type(object.__init__)):
+        if init != object.__init__:
             return True

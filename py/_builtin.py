@@ -151,7 +151,10 @@ else:
         return getattr(function, "__dict__", None)
 
     def _getcode(function):
-        return getattr(function, "func_code", None)
+        try:
+            return getattr(function, "__code__")
+        except AttributeError:
+            return getattr(function, "func_code", None)
 
     def print_(*args, **kwargs):
         """ minimal backport of py3k print statement. """ 
@@ -175,6 +178,7 @@ else:
 
     def exec_(obj, globals=None, locals=None):
         """ minimal backport of py3k exec statement. """ 
+        __tracebackhide__ = True
         if globals is None: 
             frame = sys._getframe(1)
             globals = frame.f_globals 
@@ -187,14 +191,17 @@ else:
 if sys.version_info >= (3,0):
     exec ("""
 def _reraise(cls, val, tb):
+    __tracebackhide__ = True
     assert hasattr(val, '__traceback__')
     raise val
 """)
 else:
     exec ("""
 def _reraise(cls, val, tb):
+    __tracebackhide__ = True
     raise cls, val, tb
 def exec2(obj, globals, locals):
+    __tracebackhide__ = True
     exec obj in globals, locals 
 """)
 
