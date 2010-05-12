@@ -375,8 +375,7 @@ def test_getfslineno():
     fspath, lineno = getfslineno(f)
 
     fname = __file__
-    if fname.lower().endswith('.pyc'):
-        fname = fname[:-1]
+    fname = fname[:fname.find('.py')] + '.py'
 
     assert fspath == py.path.local(fname)
     assert lineno == py.code.getrawcode(f).co_firstlineno-1 # see findsource
