@@ -72,13 +72,6 @@ tags: feature 1.3
 introduce py.test.mark.multi to specify a number
 of values for a given function argument. 
 
-introduce py.test.mark.multi 
------------------------------------------
-tags: feature 1.3
-
-introduce py.test.mark.multi to specify a number
-of values for a given function argument. 
-
 have imported module mismatch honour relative paths
 --------------------------------------------------------
 tags: bug 1.2
@@ -104,13 +97,6 @@ test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 
 Call gateway group termination with a small timeout if available. 
 Should make dist-testing less likely to leave lost processes.
-
-have --report=xfailed[-detail] report the actual tracebacks 
-------------------------------------------------------------------
-tags: feature
-
-there is no way to induce py.test to display the full tracebacks
-of the expected failure.  Introduce one.
 
 consider globals: py.test.ensuretemp and config 
 --------------------------------------------------------------
