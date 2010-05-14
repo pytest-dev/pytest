@@ -105,3 +105,45 @@ class TestGeneralUsage:
             "*1 passed*",
             "*1 passed*",
         ])
+
+
+    @py.test.mark.xfail
+    def test_early_skip(self, testdir):
+        testdir.mkdir("xyz")
+        testdir.makeconftest("""
+            import py
+            def pytest_collect_directory():
+                py.test.skip("early")
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 skip*"
+        ])
+           
+
+    @py.test.mark.xfail
+    def test_issue88_initial_file_multinodes(self, testdir):
+        testdir.makeconftest("""
+            import py
+            class MyFile(py.test.collect.File):
+                def collect(self):
+                    return
+            def pytest_collect_file(path, parent):
+                return MyFile(path, parent)
+        """)
+        p = testdir.makepyfile("def test_hello(): pass")
+        result = testdir.runpytest(p, "--collectonly")
+        result.stdout.fnmatch_lines([
+            "*MyFile*test_issue88*", 
+            "*Module*test_issue88*", 
+        ])
+
+    @py.test.mark.xfail
+    def test_issue93_initialnode_importing_capturing(self, testdir):
+        testdir.makeconftest("""
+            print "should not be seen"
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        assert "should not be seen" not in result.stdout.str()
