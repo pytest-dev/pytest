@@ -374,10 +374,7 @@ def test_getfslineno():
 
     fspath, lineno = getfslineno(f)
 
-    fname = __file__
-    fname = fname[:fname.find('.py')] + '.py'
-
-    assert fspath == py.path.local(fname)
+    assert fspath.basename == "test_source.py"
     assert lineno == py.code.getrawcode(f).co_firstlineno-1 # see findsource
 
     class A(object):
@@ -386,5 +383,5 @@ def test_getfslineno():
     fspath, lineno = getfslineno(A)
 
     _, A_lineno = py.std.inspect.findsource(A)
-    assert fspath == py.path.local(fname)
+    assert fspath.basename == "test_source.py"
     assert lineno == A_lineno
