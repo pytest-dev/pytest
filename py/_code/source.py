@@ -2,6 +2,7 @@ from __future__ import generators
 import sys
 import inspect, tokenize
 import py
+from types import ModuleType
 cpy_compile = compile 
 
 try:
@@ -212,8 +213,15 @@ class Source(object):
         else:
             if flag & _AST_FLAG:
                 return co
-            from types import ModuleType
             lines = [(x + "\n") for x in self.lines]
+            if sys.version_info[0] >= 3:
+                # XXX py3's inspect.getsourcefile() checks for a module
+                # and a pep302 __loader__ ... we don't have a module
+                # at code compile-time so we need to fake it here
+                m = ModuleType("_pycodecompile_pseudo_module")
+                py.std.inspect.modulesbyfile[filename] = None
+                py.std.sys.modules[None] = m
+                m.__loader__ = 1
             py.std.linecache.cache[filename] = (1, None, lines, filename)
             return co
 
