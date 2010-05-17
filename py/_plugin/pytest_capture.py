@@ -106,6 +106,14 @@ def addouterr(rep, outerr):
 def pytest_configure(config):
     config.pluginmanager.register(CaptureManager(), 'capturemanager')
 
+class NoCapture:
+    def startall(self):
+        pass
+    def resume(self):
+        pass
+    def suspend(self):
+        return "", ""
+
 class CaptureManager:
     def __init__(self):
         self._method2capture = {}
@@ -118,15 +126,17 @@ class CaptureManager:
     def _makestringio(self):
         return py.io.TextIO() 
 
-    def _startcapture(self, method):
+    def _getcapture(self, method):
         if method == "fd": 
-            return py.io.StdCaptureFD(
+            return py.io.StdCaptureFD(now=False,
                 out=self._maketempfile(), err=self._maketempfile()
             )
         elif method == "sys":
-            return py.io.StdCapture(
+            return py.io.StdCapture(now=False,
                 out=self._makestringio(), err=self._makestringio()
             )
+        elif method == "no":
+            return NoCapture()
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
@@ -152,27 +162,25 @@ class CaptureManager:
         if hasattr(self, '_capturing'):
             raise ValueError("cannot resume, already capturing with %r" % 
                 (self._capturing,))
-        if method != "no":
-            cap = self._method2capture.get(method)
-            if cap is None:
-                cap = self._startcapture(method)
-                self._method2capture[method] = cap 
-            else:
-                cap.resume()
+        cap = self._method2capture.get(method)
         self._capturing = method 
+        if cap is None:
+            self._method2capture[method] = cap = self._getcapture(method)
+            cap.startall()
+        else:
+            cap.resume()
 
     def suspendcapture(self, item=None):
         self.deactivate_funcargs()
         if hasattr(self, '_capturing'):
             method = self._capturing
-            if method != "no":
-                cap = self._method2capture[method]
+            cap = self._method2capture.get(method)
+            if cap is not None:
                 outerr = cap.suspend()
-            else:
-                outerr = "", ""
             del self._capturing
             if item:
-                outerr = (item.outerr[0] + outerr[0], item.outerr[1] + outerr[1])
+                outerr = (item.outerr[0] + outerr[0], 
+                          item.outerr[1] + outerr[1])
             return outerr 
         return "", ""
 
@@ -180,19 +188,17 @@ class CaptureManager:
         if not hasattr(pyfuncitem, 'funcargs'):
             return
         assert not hasattr(self, '_capturing_funcargs')
-        l = []
-        for name, obj in pyfuncitem.funcargs.items():
-            if name == 'capfd' and not hasattr(os, 'dup'):
-                py.test.skip("capfd funcarg needs os.dup")
+        self._capturing_funcargs = capturing_funcargs = []
+        for name, capfuncarg in pyfuncitem.funcargs.items():
             if name in ('capsys', 'capfd'):
-                obj._start()
-                l.append(obj)
-        if l:
-            self._capturing_funcargs = l
+                capturing_funcargs.append(capfuncarg)
+                capfuncarg._start()
 
     def deactivate_funcargs(self):
-        if hasattr(self, '_capturing_funcargs'):
-            for capfuncarg in self._capturing_funcargs:
+        capturing_funcargs = getattr(self, '_capturing_funcargs', None)
+        if capturing_funcargs is not None:
+            while capturing_funcargs:
+                capfuncarg = capturing_funcargs.pop()
                 capfuncarg._finalize()
             del self._capturing_funcargs
 
@@ -256,16 +262,19 @@ def pytest_funcarg__capfd(request):
     platform does not have ``os.dup`` (e.g. Jython) tests using
     this funcarg will automatically skip. 
     """ 
+    if not hasattr(os, 'dup'):
+        py.test.skip("capfd funcarg needs os.dup")
     return CaptureFuncarg(request, py.io.StdCaptureFD)
 
 
 class CaptureFuncarg:
     def __init__(self, request, captureclass):
         self._cclass = captureclass
+        self.capture = self._cclass(now=False)
         #request.addfinalizer(self._finalize)
 
     def _start(self):
-        self.capture = self._cclass()
+        self.capture.startall()
 
     def _finalize(self):
         if hasattr(self, 'capture'):
@@ -276,6 +285,4 @@ class CaptureFuncarg:
         return self.capture.readouterr()
 
     def close(self):
-        self.capture.reset()
-        del self.capture
-
+        self._finalize()

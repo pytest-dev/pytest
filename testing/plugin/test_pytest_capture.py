@@ -39,6 +39,10 @@ class TestCaptureManager:
         old = sys.stdout, sys.stderr, sys.stdin
         try:
             capman = CaptureManager()
+            # call suspend without resume or start
+            outerr = capman.suspendcapture()
+            outerr = capman.suspendcapture()
+            assert outerr == ("", "")
             capman.resumecapture(method)
             print ("hello")
             out, err = capman.suspendcapture()

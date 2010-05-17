@@ -96,6 +96,21 @@ def test_dupfile(tmpfile):
 class TestFDCapture: 
     pytestmark = needsdup 
 
+    def test_not_now(self, tmpfile):
+        fd = tmpfile.fileno()
+        cap = py.io.FDCapture(fd, now=False)
+        data = tobytes("hello")
+        os.write(fd, data)
+        f = cap.done()
+        s = f.read()
+        assert not s 
+        cap = py.io.FDCapture(fd, now=False)
+        cap.start()
+        os.write(fd, data)
+        f = cap.done()
+        s = f.read()
+        assert s == "hello"
+
     def test_stdout(self, tmpfile):
         fd = tmpfile.fileno()
         cap = py.io.FDCapture(fd)
@@ -185,8 +200,11 @@ class TestStdCapture:
     def test_capturing_twice_error(self):
         cap = self.getcapture() 
         print ("hello")
-        cap.reset()
-        py.test.raises(Exception, "cap.reset()")
+        out, err = cap.reset()
+        print ("world")
+        out2, err = cap.reset()
+        assert out == "hello\n"
+        assert not err
 
     def test_capturing_modify_sysouterr_in_between(self):
         oldout = sys.stdout 
@@ -210,7 +228,6 @@ class TestStdCapture:
         cap2 = self.getcapture() 
         print ("cap2")
         out2, err2 = cap2.reset()
-        py.test.raises(Exception, "cap2.reset()")
         out1, err1 = cap1.reset() 
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
@@ -265,6 +282,13 @@ class TestStdCapture:
         assert out == "after\n"
         assert not err 
 
+class TestStdCaptureNotNow(TestStdCapture):
+    def getcapture(self, **kw):
+        kw['now'] = False
+        cap = py.io.StdCapture(**kw)
+        cap.startall()
+        return cap
+
 class TestStdCaptureFD(TestStdCapture): 
     pytestmark = needsdup
 
@@ -295,6 +319,22 @@ class TestStdCaptureFD(TestStdCapture):
         assert res == 42 
         assert out.startswith("3") 
         assert err.startswith("4") 
+
+class TestStdCaptureFDNotNow(TestStdCaptureFD):
+    pytestmark = needsdup
+
+    def getcapture(self, **kw): 
+        kw['now'] = False
+        cap = py.io.StdCaptureFD(**kw)
+        cap.startall()
+        return cap
+
+def test_capture_not_started_but_reset(): 
+    capsys = py.io.StdCapture(now=False)
+    capsys.done()
+    capsys.done()
+    capsys.reset()
+    capsys.reset()
 
 @needsdup
 def test_capture_no_sys(): 

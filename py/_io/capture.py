@@ -29,21 +29,25 @@ except ImportError:
 class FDCapture: 
     """ Capture IO to/from a given os-level filedescriptor. """
     
-    def __init__(self, targetfd, tmpfile=None): 
+    def __init__(self, targetfd, tmpfile=None, now=True):
         """ save targetfd descriptor, and open a new 
             temporary file there.  If no tmpfile is 
             specified a tempfile.Tempfile() will be opened
             in text mode. 
         """
         self.targetfd = targetfd
+        self._patched = []
         if tmpfile is None: 
             f = tempfile.TemporaryFile('wb+')
             tmpfile = dupfile(f, encoding="UTF-8") 
             f.close()
         self.tmpfile = tmpfile 
-        self._savefd = os.dup(targetfd)
-        os.dup2(self.tmpfile.fileno(), targetfd) 
-        self._patched = []
+        if now:
+            self.start()
+
+    def start(self):
+        self._savefd = os.dup(self.targetfd)
+        os.dup2(self.tmpfile.fileno(), self.targetfd) 
 
     def setasfile(self, name, module=sys): 
         """ patch <module>.<name> to self.tmpfile
@@ -62,10 +66,13 @@ class FDCapture:
     def done(self): 
         """ unpatch and clean up, returns the self.tmpfile (file object)
         """
-        os.dup2(self._savefd, self.targetfd) 
+        try:
+            os.dup2(self._savefd, self.targetfd) 
+            os.close(self._savefd) 
+            self.tmpfile.seek(0)
+        except (AttributeError, ValueError, OSError):
+            pass
         self.unsetfiles() 
-        os.close(self._savefd) 
-        self.tmpfile.seek(0)
         return self.tmpfile 
 
     def writeorg(self, data):
@@ -146,36 +153,21 @@ class Capture(object):
 
     def reset(self):
         """ reset sys.stdout/stderr and return captured output as strings. """
-        if hasattr(self, '_suspended'):
-            outfile = self._kwargs['out']
-            errfile = self._kwargs['err']
-            del self._kwargs
-        else:
-            outfile, errfile = self.done() 
+        outfile, errfile = self.done() 
         out, err = "", ""
-        if outfile:
+        if outfile and not outfile.closed:
             out = outfile.read()
             outfile.close()
-        if errfile and errfile != outfile:
+        if errfile and errfile != outfile and not errfile.closed:
             err = errfile.read()
             errfile.close()
         return out, err
 
     def suspend(self):
         """ return current snapshot captures, memorize tempfiles. """
-        assert not hasattr(self, '_suspended')
-        self._suspended = True
         outerr = self.readouterr()
         outfile, errfile = self.done()
-        self._kwargs['out'] = outfile
-        self._kwargs['err'] = errfile
         return outerr
-
-    def resume(self):
-        """ resume capturing with original temp files. """
-        assert self._suspended
-        self._initialize(**self._kwargs)
-        del self._suspended
 
 
 class StdCaptureFD(Capture): 
@@ -183,52 +175,70 @@ class StdCaptureFD(Capture):
         and may connect a NULL file to FD0 (and prevent
         reads from sys.stdin)
     """
-    def __init__(self, out=True, err=True, 
-                 mixed=False, in_=True, patchsys=True): 
-        self._kwargs = locals().copy()
-        del self._kwargs['self']
-        self._initialize(**self._kwargs)
-
-    def _initialize(self, out=True, err=True, 
-                    mixed=False, in_=True, patchsys=True): 
+    def __init__(self, out=True, err=True, mixed=False, 
+        in_=True, patchsys=True, now=True):
+        self.in_ = in_
         if in_:
             self._oldin = (sys.stdin, os.dup(0))
-            sys.stdin  = DontReadFromInput()
-            fd = os.open(devnullpath, os.O_RDONLY)
-            os.dup2(fd, 0)
-            os.close(fd)
-        if out: 
+        if out:
             tmpfile = None
             if hasattr(out, 'write'):
-                tmpfile = out
-            self.out = py.io.FDCapture(1, tmpfile=tmpfile)
-            if patchsys: 
-                self.out.setasfile('stdout')
-        if err: 
-            if mixed and out:
+                tmpfile = None
+            self.out = py.io.FDCapture(1, tmpfile=tmpfile, now=False)
+            self.out_tmpfile = tmpfile
+        if err:
+            if out and mixed:
                 tmpfile = self.out.tmpfile 
             elif hasattr(err, 'write'):
                 tmpfile = err
             else:
                 tmpfile = None
-            self.err = py.io.FDCapture(2, tmpfile=tmpfile) 
-            if patchsys: 
-                self.err.setasfile('stderr')
+            self.err = py.io.FDCapture(2, tmpfile=tmpfile, now=False) 
+            self.err_tmpfile = tmpfile
+        self.patchsys = patchsys
+        if now:
+            self.startall()
+
+    def startall(self):
+        if self.in_:
+            sys.stdin  = DontReadFromInput()
+            fd = os.open(devnullpath, os.O_RDONLY)
+            os.dup2(fd, 0)
+            os.close(fd)
+       
+        out = getattr(self, 'out', None) 
+        if out:
+            out.start()
+            if self.patchsys:
+                out.setasfile('stdout')
+        err = getattr(self, 'err', None)
+        if err:
+            err.start()
+            if self.patchsys:
+                err.setasfile('stderr')
+
+    def resume(self):
+        """ resume capturing with original temp files. """
+        #if hasattr(self, 'out'):
+        #    self.out.restart()
+        #if hasattr(self, 'err'):
+        #    self.err.restart()
+        self.startall()
 
     def done(self):
         """ return (outfile, errfile) and stop capturing. """
+        outfile = errfile = None
         if hasattr(self, 'out'): 
             outfile = self.out.done() 
-        else:
-            outfile = None
         if hasattr(self, 'err'): 
             errfile = self.err.done() 
-        else:
-            errfile = None 
         if hasattr(self, '_oldin'):
             oldsys, oldfd = self._oldin 
-            os.dup2(oldfd, 0)
-            os.close(oldfd)
+            try:
+                os.dup2(oldfd, 0)
+                os.close(oldfd)
+            except OSError:
+                pass
             sys.stdin = oldsys 
         return outfile, errfile 
 
@@ -252,69 +262,61 @@ class StdCapture(Capture):
         modifies sys.stdout|stderr|stdin attributes and does not 
         touch underlying File Descriptors (use StdCaptureFD for that). 
     """
-    def __init__(self, out=True, err=True, in_=True, mixed=False):
-        self._kwargs = locals().copy()
-        del self._kwargs['self']
-        self._initialize(**self._kwargs)
-
-    def _initialize(self, out, err, in_, mixed):
-        self._out = out
-        self._err = err 
-        self._in = in_
-        if out: 
-            self._oldout = sys.stdout
-            if not hasattr(out, 'write'):
-                out = TextIO()
-            sys.stdout = self.out = out
-        if err: 
-            self._olderr = sys.stderr
-            if out and mixed: 
-                err = self.out 
+    def __init__(self, out=True, err=True, in_=True, mixed=False, now=True):
+        self._oldout = sys.stdout
+        self._olderr = sys.stderr
+        self._oldin  = sys.stdin
+        if out and not hasattr(out, 'file'):
+            out = TextIO()
+        self.out = out
+        if err:
+            if mixed:
+                err = out
             elif not hasattr(err, 'write'):
                 err = TextIO()
-            sys.stderr = self.err = err
-        if in_:
-            self._oldin  = sys.stdin
-            sys.stdin  = self.newin  = DontReadFromInput()
+        self.err = err
+        self.in_ = in_
+        if now:
+            self.startall()
+
+    def startall(self):
+        if self.out: 
+            sys.stdout = self.out
+        if self.err: 
+            sys.stderr = self.err
+        if self.in_:
+            sys.stdin  = self.in_  = DontReadFromInput()
 
     def done(self): 
         """ return (outfile, errfile) and stop capturing. """
-        o,e = sys.stdout, sys.stderr
-        if self._out: 
-            try:
-                sys.stdout = self._oldout 
-            except AttributeError:
-                raise IOError("stdout capturing already reset")
-            del self._oldout
+        outfile = errfile = None
+        if self.out and not self.out.closed:
+            sys.stdout = self._oldout 
             outfile = self.out
             outfile.seek(0)
-        else:
-            outfile = None
-        if self._err: 
-            try:
-                sys.stderr = self._olderr 
-            except AttributeError:
-                raise IOError("stderr capturing already reset")
-            del self._olderr 
+        if self.err and not self.err.closed: 
+            sys.stderr = self._olderr 
             errfile = self.err 
             errfile.seek(0)
-        else:
-            errfile = None
-        if self._in:
+        if self.in_:
             sys.stdin = self._oldin 
         return outfile, errfile
+
+    def resume(self):
+        """ resume capturing with original temp files. """
+        self.startall()
 
     def readouterr(self):
         """ return snapshot value of stdout/stderr capturings. """
         out = err = ""
-        if self._out:
-            out = sys.stdout.getvalue()
-            sys.stdout.truncate(0)
-            sys.stdout.seek(0)
-        if self._err:
-            err = sys.stderr.getvalue()
-            sys.stderr.truncate(0)
-            sys.stderr.seek(0)
+        if self.out:
+            out = self.out.getvalue()
+            self.out.truncate(0)
+            self.out.seek(0)
+        if self.err:
+            err = self.err.getvalue()
+            self.err.truncate(0)
+            self.err.seek(0)
         return out, err 
 
 class DontReadFromInput:
@@ -344,5 +346,3 @@ except AttributeError:
         devnullpath = 'NUL'
     else:
         devnullpath = '/dev/null'
-
-
