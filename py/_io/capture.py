@@ -38,7 +38,7 @@ class FDCapture:
             in text mode. 
         """
         self.targetfd = targetfd
-        if tmpfile is None: 
+        if tmpfile is None and targetfd != 0:
             f = tempfile.TemporaryFile('wb+')
             tmpfile = dupfile(f, encoding="UTF-8") 
             f.close()
@@ -55,16 +55,24 @@ class FDCapture:
         except OSError:
             raise ValueError("saved filedescriptor not valid, "
                 "did you call start() twice?")
-        os.dup2(self.tmpfile.fileno(), self.targetfd) 
-        if hasattr(self, '_oldsys'):
-            setattr(sys, patchsysdict[self.targetfd], self.tmpfile)
+        if self.targetfd == 0 and not self.tmpfile:
+            fd = os.open(devnullpath, os.O_RDONLY)
+            os.dup2(fd, 0)
+            if hasattr(self, '_oldsys'):
+                setattr(sys, patchsysdict[self.targetfd], DontReadFromInput())
+        else:
+            fd = self.tmpfile.fileno()
+            os.dup2(self.tmpfile.fileno(), self.targetfd) 
+            if hasattr(self, '_oldsys'):
+                setattr(sys, patchsysdict[self.targetfd], self.tmpfile)
 
     def done(self): 
         """ unpatch and clean up, returns the self.tmpfile (file object)
         """
         os.dup2(self._savefd, self.targetfd) 
         os.close(self._savefd) 
-        self.tmpfile.seek(0)
+        if self.targetfd != 0:
+            self.tmpfile.seek(0)
         if hasattr(self, '_oldsys'):
             setattr(sys, patchsysdict[self.targetfd], self._oldsys)
         return self.tmpfile 
@@ -184,15 +192,9 @@ class StdCaptureFD(Capture):
         mixed = self._options['mixed']
         patchsys = self._options['patchsys']
         if in_:
-            if hasattr(in_, 'read'):
-                tmpfile = in_
-            else:
-                fd = os.open(devnullpath, os.O_RDONLY)
-                tmpfile = os.fdopen(fd)
             try:
-                self.in_ = FDCapture(0, tmpfile=tmpfile, now=False,
+                self.in_ = FDCapture(0, tmpfile=None, now=False,
                     patchsys=patchsys)
-                self._options['in_'] = self.in_.tmpfile
             except OSError:
                 pass 
         if out:
@@ -222,14 +224,10 @@ class StdCaptureFD(Capture):
     def startall(self):
         if hasattr(self, 'in_'):
             self.in_.start()
-            sys.stdin  = DontReadFromInput()
-       
-        out = getattr(self, 'out', None) 
-        if out:
-            out.start()
-        err = getattr(self, 'err', None)
-        if err:
-            err.start()
+        if hasattr(self, 'out'):
+            self.out.start()
+        if hasattr(self, 'err'):
+            self.err.start()
 
     def resume(self):
         """ resume capturing with original temp files. """
