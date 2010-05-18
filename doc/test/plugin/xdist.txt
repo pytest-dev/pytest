@@ -126,11 +126,11 @@ Specifying test exec environments in a conftest.py
 Instead of specifying command line options, you can 
 put options values in a ``conftest.py`` file like this::
 
-    pytest_option_tx = ['ssh=myhost//python=python2.5', 'popen//python=python2.5']
-    pytest_option_dist = True
+    option_tx = ['ssh=myhost//python=python2.5', 'popen//python=python2.5']
+    option_dist = True
 
-Any commandline ``--tx`` specifictions  will add to the list of available execution
-environments. 
+Any commandline ``--tx`` specifictions  will add to the list of
+available execution environments. 
 
 Specifying "rsync" dirs in a conftest.py
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
