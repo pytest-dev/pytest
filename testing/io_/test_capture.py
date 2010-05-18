@@ -144,8 +144,7 @@ class TestFDCapture:
         f.close()
 
     def test_stderr(self): 
-        cap = py.io.FDCapture(2)
-        cap.setasfile('stderr')
+        cap = py.io.FDCapture(2, patchsys=True)
         print_("hello", file=sys.stderr)
         f = cap.done()
         s = f.read()
