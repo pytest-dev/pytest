@@ -42,11 +42,16 @@ class FDCapture:
             tmpfile = dupfile(f, encoding="UTF-8") 
             f.close()
         self.tmpfile = tmpfile 
+        self._savefd = os.dup(self.targetfd)
         if now:
             self.start()
 
     def start(self):
-        self._savefd = os.dup(self.targetfd)
+        try:
+            os.fstat(self._savefd)
+        except OSError:
+            raise ValueError("saved filedescriptor not valid, "
+                "did you call start() twice?")
         os.dup2(self.tmpfile.fileno(), self.targetfd) 
 
     def setasfile(self, name, module=sys): 
@@ -66,12 +71,9 @@ class FDCapture:
     def done(self): 
         """ unpatch and clean up, returns the self.tmpfile (file object)
         """
-        try:
-            os.dup2(self._savefd, self.targetfd) 
-            os.close(self._savefd) 
-            self.tmpfile.seek(0)
-        except (AttributeError, ValueError, OSError):
-            pass
+        os.dup2(self._savefd, self.targetfd) 
+        os.close(self._savefd) 
+        self.tmpfile.seek(0)
         self.unsetfiles() 
         return self.tmpfile 
 
@@ -107,7 +109,7 @@ def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
         if encoding is not None:
             mode = mode.replace("b", "")
             buffering = True
-        return os.fdopen(newfd, mode, buffering, encoding, closefd=False)
+        return os.fdopen(newfd, mode, buffering, encoding, closefd=True)
     else:
         f = os.fdopen(newfd, mode, buffering) 
         if encoding is not None:
@@ -177,15 +179,26 @@ class StdCaptureFD(Capture):
     """
     def __init__(self, out=True, err=True, mixed=False, 
         in_=True, patchsys=True, now=True):
+        self._options = locals()
+        self._save()
+        self.patchsys = patchsys
+        if now:
+            self.startall()
+
+    def _save(self):
+        in_ = self._options['in_']
+        out = self._options['out']
+        err = self._options['err']
+        mixed = self._options['mixed']
         self.in_ = in_
         if in_:
             self._oldin = (sys.stdin, os.dup(0))
         if out:
             tmpfile = None
             if hasattr(out, 'write'):
-                tmpfile = None
+                tmpfile = out
             self.out = py.io.FDCapture(1, tmpfile=tmpfile, now=False)
-            self.out_tmpfile = tmpfile
+            self._options['out'] = self.out.tmpfile
         if err:
             if out and mixed:
                 tmpfile = self.out.tmpfile 
@@ -194,10 +207,7 @@ class StdCaptureFD(Capture):
             else:
                 tmpfile = None
             self.err = py.io.FDCapture(2, tmpfile=tmpfile, now=False) 
-            self.err_tmpfile = tmpfile
-        self.patchsys = patchsys
-        if now:
-            self.startall()
+            self._options['err'] = self.err.tmpfile
 
     def startall(self):
         if self.in_:
@@ -219,27 +229,21 @@ class StdCaptureFD(Capture):
 
     def resume(self):
         """ resume capturing with original temp files. """
-        #if hasattr(self, 'out'):
-        #    self.out.restart()
-        #if hasattr(self, 'err'):
-        #    self.err.restart()
         self.startall()
 
     def done(self):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
-        if hasattr(self, 'out'): 
+        if hasattr(self, 'out') and not self.out.tmpfile.closed:
             outfile = self.out.done() 
-        if hasattr(self, 'err'): 
+        if hasattr(self, 'err') and not self.err.tmpfile.closed:
             errfile = self.err.done() 
         if hasattr(self, '_oldin'):
             oldsys, oldfd = self._oldin 
-            try:
-                os.dup2(oldfd, 0)
-                os.close(oldfd)
-            except OSError:
-                pass
+            os.dup2(oldfd, 0)
+            os.close(oldfd)
             sys.stdin = oldsys 
+        self._save()
         return outfile, errfile 
 
     def readouterr(self):

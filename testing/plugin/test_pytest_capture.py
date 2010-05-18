@@ -251,36 +251,6 @@ class TestLoggingInteraction:
         """)
         result = testdir.runpytest(p)
         result.stderr.str().find("atexit") == -1
-
-    def test_capturing_and_logging_fundamentals(self, testdir):
-        # here we check a fundamental feature 
-        p = testdir.makepyfile("""
-            import sys, os
-            import py, logging
-            if hasattr(os, 'dup'):
-                cap = py.io.StdCaptureFD(out=False, in_=False)
-            else:
-                cap = py.io.StdCapture(out=False, in_=False)
-            logging.warn("hello1")
-            outerr = cap.suspend()
-
-            print ("suspeneded and captured %s" % (outerr,))
-
-            logging.warn("hello2")
-
-            cap.resume()
-            logging.warn("hello3")
-
-            outerr = cap.suspend()
-            print ("suspend2 and captured %s" % (outerr,))
-        """)
-        result = testdir.runpython(p)
-        result.stdout.fnmatch_lines([
-            "suspeneded and captured*hello1*",
-            "suspend2 and captured*hello2*WARNING:root:hello3*",
-        ])
-        assert "atexit" not in result.stderr.str()
-        
            
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile("""
@@ -402,7 +372,7 @@ def test_fdfuncarg_skips_on_no_osdup(testdir):
         def test_hello(capfd):
             pass
     """)
-    result = testdir.runpytest()
+    result = testdir.runpytest("--capture=no")
     result.stdout.fnmatch_lines([
         "*1 skipped*"
     ])

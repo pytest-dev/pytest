@@ -76,22 +76,21 @@ def pytest_funcarg__tmpfile(request):
 
 @needsdup
 def test_dupfile(tmpfile):
-    somefile = tmpfile
     flist = []
     for i in range(5): 
-        nf = py.io.dupfile(somefile, encoding="utf-8")
-        assert nf != somefile
-        assert nf.fileno() != somefile.fileno()
+        nf = py.io.dupfile(tmpfile, encoding="utf-8")
+        assert nf != tmpfile
+        assert nf.fileno() != tmpfile.fileno()
         assert nf not in flist 
         print_(i, end="", file=nf)
         flist.append(nf) 
     for i in range(5): 
         f = flist[i]
         f.close()
-    somefile.seek(0)
-    s = somefile.read()
+    tmpfile.seek(0)
+    s = tmpfile.read()
     assert "01234" in repr(s)
-    somefile.close()
+    tmpfile.close()
 
 class TestFDCapture: 
     pytestmark = needsdup 
@@ -111,7 +110,7 @@ class TestFDCapture:
         s = f.read()
         assert s == "hello"
 
-    def test_stdout(self, tmpfile):
+    def test_simple(self, tmpfile):
         fd = tmpfile.fileno()
         cap = py.io.FDCapture(fd)
         data = tobytes("hello")
@@ -119,6 +118,30 @@ class TestFDCapture:
         f = cap.done()
         s = f.read()
         assert s == "hello"
+        f.close()
+
+    def test_simple_many(self, tmpfile):
+        for i in range(10):
+            self.test_simple(tmpfile)
+
+    def test_simple_many_check_open_files(self, tmpfile):
+        pid = os.getpid()
+        try:
+            out = py.process.cmdexec("lsof -p %d" % pid)
+        except py.process.cmdexec.Error:
+            py.test.skip("could not run 'lsof'")
+        self.test_simple_many(tmpfile)
+        out2 = py.process.cmdexec("lsof -p %d" % pid)
+        len1 = len([x for x in out.split("\n") if "REG" in x])
+        len2 = len([x for x in out2.split("\n") if "REG" in x])
+        assert len2 < len1 + 3, out2
+
+    def test_simple_fail_second_start(self, tmpfile):
+        fd = tmpfile.fileno()
+        cap = py.io.FDCapture(fd)
+        f = cap.done()
+        py.test.raises(ValueError, cap.start)
+        f.close()
 
     def test_stderr(self): 
         cap = py.io.FDCapture(2)
@@ -329,6 +352,14 @@ class TestStdCaptureFDNotNow(TestStdCaptureFD):
         cap.startall()
         return cap
 
+@needsdup
+def test_stdcapture_fd_tmpfile(tmpfile):
+    capfd = py.io.StdCaptureFD(out=tmpfile)
+    os.write(1, "hello".encode("ascii"))
+    os.write(2, "world".encode("ascii"))
+    outf, errf = capfd.done()
+    assert outf == tmpfile
+
 def test_capture_not_started_but_reset(): 
     capsys = py.io.StdCapture(now=False)
     capsys.done()
@@ -368,3 +399,45 @@ def test_callcapture_nofd():
     assert res == 42 
     assert out.startswith("3") 
     assert err.startswith("4") 
+
+@needsdup
+@py.test.mark.multi(use=[True, False])
+def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
+    if not use:
+        tmpfile = True
+    cap = py.io.StdCaptureFD(out=False, err=tmpfile, now=False)
+    cap.startall()
+    capfile = cap.err.tmpfile
+    cap.suspend()
+    cap.resume()
+    capfile2 = cap.err.tmpfile
+    assert capfile2 == capfile
+
+@py.test.mark.multi(method=['StdCapture', 'StdCaptureFD'])
+def test_capturing_and_logging_fundamentals(testdir, method):
+    if method == "StdCaptureFD" and not hasattr(os, 'dup'):
+        py.test.skip("need os.dup")
+    # here we check a fundamental feature 
+    p = testdir.makepyfile("""
+        import sys, os
+        import py, logging
+        cap = py.io.%s(out=False, in_=False)
+
+        logging.warn("hello1")
+        outerr = cap.suspend()
+        print ("suspend, captured %%s" %%(outerr,))
+        logging.warn("hello2")
+
+        cap.resume()
+        logging.warn("hello3")
+
+        outerr = cap.suspend()
+        print ("suspend2, captured %%s" %% (outerr,))
+    """ % (method,))
+    result = testdir.runpython(p)
+    result.stdout.fnmatch_lines([
+        "suspend, captured*hello1*",
+        "suspend2, captured*hello2*WARNING:root:hello3*",
+    ])
+    assert "atexit" not in result.stderr.str()
+    
