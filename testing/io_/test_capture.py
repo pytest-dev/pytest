@@ -360,6 +360,28 @@ def test_stdcapture_fd_tmpfile(tmpfile):
     outf, errf = capfd.done()
     assert outf == tmpfile
 
+class TestStdCaptureFDinvalidFD:
+    pytestmark = needsdup
+    def test_stdcapture_fd_invalid_fd(self, testdir):
+        testdir.makepyfile("""
+            import py, os
+            def test_stdout():
+                os.close(1)
+                cap = py.io.StdCaptureFD(out=True, err=False, in_=False)
+                cap.done()
+            def test_stderr():
+                os.close(2)
+                cap = py.io.StdCaptureFD(out=False, err=True, in_=False)
+                cap.done()
+            def test_stdin():
+                os.close(0)
+                cap = py.io.StdCaptureFD(out=False, err=False, in_=True)
+                cap.done()
+        """)
+        result = testdir.runpytest("--capture=fd")
+        assert result.ret == 0
+        assert result.parseoutcomes()['passed'] == 3
+
 def test_capture_not_started_but_reset(): 
     capsys = py.io.StdCapture(now=False)
     capsys.done()

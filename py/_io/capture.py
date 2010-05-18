@@ -175,7 +175,8 @@ class Capture(object):
 class StdCaptureFD(Capture): 
     """ This class allows to capture writes to FD1 and FD2 
         and may connect a NULL file to FD0 (and prevent
-        reads from sys.stdin)
+        reads from sys.stdin).  If any of the 0,1,2 file descriptors 
+        is invalid it will not be captured. 
     """
     def __init__(self, out=True, err=True, mixed=False, 
         in_=True, patchsys=True, now=True):
@@ -192,13 +193,19 @@ class StdCaptureFD(Capture):
         mixed = self._options['mixed']
         self.in_ = in_
         if in_:
-            self._oldin = (sys.stdin, os.dup(0))
+            try:
+                self._oldin = (sys.stdin, os.dup(0))
+            except OSError:
+                pass 
         if out:
             tmpfile = None
             if hasattr(out, 'write'):
                 tmpfile = out
-            self.out = py.io.FDCapture(1, tmpfile=tmpfile, now=False)
-            self._options['out'] = self.out.tmpfile
+            try:
+                self.out = FDCapture(1, tmpfile=tmpfile, now=False)
+                self._options['out'] = self.out.tmpfile
+            except OSError:
+                pass 
         if err:
             if out and mixed:
                 tmpfile = self.out.tmpfile 
@@ -206,8 +213,11 @@ class StdCaptureFD(Capture):
                 tmpfile = err
             else:
                 tmpfile = None
-            self.err = py.io.FDCapture(2, tmpfile=tmpfile, now=False) 
-            self._options['err'] = self.err.tmpfile
+            try:
+                self.err = FDCapture(2, tmpfile=tmpfile, now=False) 
+                self._options['err'] = self.err.tmpfile
+            except OSError:
+                pass 
 
     def startall(self):
         if self.in_:
