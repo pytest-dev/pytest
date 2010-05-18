@@ -58,6 +58,7 @@ class FDCapture:
         if self.targetfd == 0 and not self.tmpfile:
             fd = os.open(devnullpath, os.O_RDONLY)
             os.dup2(fd, 0)
+            os.close(fd)
             if hasattr(self, '_oldsys'):
                 setattr(sys, patchsysdict[self.targetfd], DontReadFromInput())
         else:
