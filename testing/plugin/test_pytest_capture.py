@@ -358,7 +358,7 @@ class TestCaptureFuncarg:
 
     def test_partial_setup_failure(self, testdir):        
         p = testdir.makepyfile("""
-            def test_hello(capfd, missingarg):
+            def test_hello(capsys, missingarg):
                 pass
         """)
         result = testdir.runpytest(p)
