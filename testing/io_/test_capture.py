@@ -372,6 +372,15 @@ class TestStdCaptureFDinvalidFD:
                 os.close(2)
                 cap = py.io.StdCaptureFD(out=False, err=True, in_=False)
                 cap.done()
+        """)
+        result = testdir.runpytest("--capture=fd")
+        assert result.ret == 0
+        assert result.parseoutcomes()['passed'] == 2
+
+    @py.test.mark.xfail("sys.platform == 'win32'", run=False)
+    def test_stdcapture_fd_invalid_fd_null(self, testdir):
+        testdir.makepyfile("""
+            import py, os
             def test_stdin():
                 os.close(0)
                 cap = py.io.StdCaptureFD(out=False, err=False, in_=True)
@@ -379,7 +388,8 @@ class TestStdCaptureFDinvalidFD:
         """)
         result = testdir.runpytest("--capture=fd")
         assert result.ret == 0
-        assert result.parseoutcomes()['passed'] == 3
+        assert result.parseoutcomes()['passed'] == 1
+                   
 
 def test_capture_not_started_but_reset(): 
     capsys = py.io.StdCapture(now=False)
