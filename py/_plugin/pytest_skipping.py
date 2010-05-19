@@ -234,7 +234,7 @@ def pytest_terminal_summary(terminalreporter):
     for char in tr.reportchars:
         if char == "x":
             show_xfailed(terminalreporter, lines)
-        elif char == "X":
+        elif char == "P":
             show_xpassed(terminalreporter, lines)
         elif char == "f":
             show_failed(terminalreporter, lines)

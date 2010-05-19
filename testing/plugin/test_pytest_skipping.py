@@ -280,3 +280,24 @@ def test_skipped_reasons_functional(testdir):
     ])
     assert result.ret == 0
 
+def test_reportchars(testdir):
+    testdir.makepyfile("""
+        import py
+        def test_1():
+            assert 0
+        @py.test.mark.xfail
+        def test_2():
+            assert 0
+        @py.test.mark.xfail
+        def test_3():
+            pass
+        def test_4():
+            py.test.skip("four")
+    """)
+    result = testdir.runpytest("-rfxPs")
+    result.stdout.fnmatch_lines([
+        "FAIL*test_1*",
+        "XFAIL*test_2*",
+        "XPASS*test_3*",
+        "SKIP*four*",
+    ])
