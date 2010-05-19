@@ -37,4 +37,3 @@ def test_rundist(testdir, pytestconfig, standalone):
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
-

@@ -4,14 +4,7 @@ generate standalone test script to be distributed along with an application.
 """
 
 import os
-import zlib
-import base64
 import sys
-try:
-    import pickle
-except Importerror:
-    import cPickle as pickle
-
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption("--genscript", action="store", default=None, 
@@ -30,6 +23,13 @@ def pytest_configure(config):
         raise SystemExit(0)
 
 def main(pybasedir, outfile, infile):
+    import base64
+    import zlib
+    try:
+        import pickle
+    except Importerror:
+        import cPickle as pickle
+
     outfile = str(outfile)
     infile = str(infile)
     assert os.path.isabs(outfile)

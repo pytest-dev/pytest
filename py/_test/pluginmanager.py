@@ -140,13 +140,6 @@ class PluginManager(object):
         except py.test.skip.Exception:
             e = py.std.sys.exc_info()[1]
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
-        except ImportError:
-            e = py.std.sys.exc_info()[1]
-            if "zlib" in str(e) and modname == "pytest_genscript":
-                self._hints.append("skipped plugin %r: failed to import %r" %(
-                    (modname, str(e))))
-            else:
-                raise
         else:
             check_old_use(mod, modname) 
             self.register(mod)

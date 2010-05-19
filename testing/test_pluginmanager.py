@@ -489,29 +489,3 @@ class TestHookRelay:
         res = mcm.hello(arg=3)
         assert res == 4
 
-def test_pluginmanager_import_error_zlib(testdir):
-    p = testdir.makepyfile("""
-        try:
-            import builtins
-        except ImportError:
-            import __builtin__ as builtins
-        oldimport = builtins.__import__
-
-        def import_(name, *args):
-            #print "import", name, "start"
-            if name == "zlib":
-                raise ImportError("zlib")
-            mod = oldimport(name, *args)
-            #print "import", name, "successful"
-            return mod
-
-        if __name__ == "__main__":
-            builtins.__import__ = import_
-            import py
-            py.test.cmdline.main(["--traceconfig"])
-    """)
-    result = testdir.runpython(p)
-    result.stdout.fnmatch_lines([
-        "*skipped plugin*genscript*import*zlib*",
-    ])
-
