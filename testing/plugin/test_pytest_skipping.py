@@ -162,7 +162,7 @@ class TestXFail:
             def test_that():
                 assert 1
         """)
-        result = testdir.runpytest(p, '-rX')
+        result = testdir.runpytest(p, '-rP')
         result.stdout.fnmatch_lines([
             "*XPASS*test_that*",
             "*1 xpassed*"
