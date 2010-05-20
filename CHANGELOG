@@ -17,6 +17,17 @@ Changes between 1.3.0 and 1.3.1
   declarative approach with the @py.test.mark.xfail cannot
   be used as it would mark all configurations as xfail. 
 
+- improve and refine letter reporting in the progress bar:
+  .  pass
+  f  failed test
+  s  skipped tests (reminder: use for dependency/platform mismatch only)
+  x  xfailed test (test that was expected to fail)
+  X  xpassed test (test that was expected to fail but passed)
+
+  You can use any combination of 'fsxX' with the '-r' extended
+  reporting option. The xfail/xpass results will show up as 
+  skipped tests in the junitxml output. 
+
 - make py.test.cmdline.main() return the exitstatus 
   instead of raising (which is still done by py.cmdline.pytest())
   and make it so that py.test.cmdline.main() can be called

@@ -126,7 +126,7 @@ class TestWithFunctionIntegration:
         tb = "".join(lines[8:14])
         assert tb.find('raise ValueError("XFAIL")') != -1
 
-        assert lines[14].startswith('P ')
+        assert lines[14].startswith('X ')
         assert len(lines) == 15
 
     def test_internal_exception(self):

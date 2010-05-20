@@ -162,7 +162,7 @@ class TestXFail:
             def test_that():
                 assert 1
         """)
-        result = testdir.runpytest(p, '-rP')
+        result = testdir.runpytest(p, '-rX')
         result.stdout.fnmatch_lines([
             "*XPASS*test_that*",
             "*1 xpassed*"
@@ -331,7 +331,7 @@ def test_reportchars(testdir):
         def test_4():
             py.test.skip("four")
     """)
-    result = testdir.runpytest("-rfxPs")
+    result = testdir.runpytest("-rfxXs")
     result.stdout.fnmatch_lines([
         "FAIL*test_1*",
         "XFAIL*test_2*",

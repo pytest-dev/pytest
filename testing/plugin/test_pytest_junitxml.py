@@ -25,11 +25,17 @@ class TestPython:
                 assert 0
             def test_skip():
                 py.test.skip("")
+            @py.test.mark.xfail
+            def test_xfail():
+                assert 0
+            @py.test.mark.xfail
+            def test_xpass():
+                assert 1
         """)
         result, dom = runandparse(testdir)
         assert result.ret 
         node = dom.getElementsByTagName("testsuite")[0]
-        assert_attr(node, errors=0, failures=1, skips=1, tests=2)
+        assert_attr(node, errors=0, failures=1, skips=3, tests=2)
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
@@ -91,6 +97,43 @@ class TestPython:
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
         assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_function(self, testdir):
+        testdir.makepyfile("""
+            import py
+            def test_xfail():
+                py.test.xfail("42")
+        """)
+        result, dom = runandparse(testdir)
+        assert not result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, skips=1, tests=0)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            classname="test_xfailure_function.test_xfailure_function",
+            name="test_xfail")
+        fnode = tnode.getElementsByTagName("skipped")[0]
+        assert_attr(fnode, message="expected test failure")
+        #assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_xpass(self, testdir):
+        testdir.makepyfile("""
+            import py
+            @py.test.mark.xfail
+            def test_xpass():
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        #assert result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, skips=1, tests=0)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            classname="test_xfailure_xpass.test_xfailure_xpass",
+            name="test_xpass")
+        fnode = tnode.getElementsByTagName("skipped")[0]
+        assert_attr(fnode, message="xfail-marked test passes unexpectedly")
+        #assert "ValueError" in fnode.toxml()
 
     def test_collect_error(self, testdir):
         testdir.makepyfile("syntax error")

@@ -225,7 +225,7 @@ def pytest_report_teststatus(report):
         if report.skipped:
             return "xfailed", "x", "xfail"
         elif report.failed:
-            return "xpassed", "P", "XPASS"
+            return "xpassed", "X", "XPASS"
 
 # called by the terminalreporter instance/plugin
 def pytest_terminal_summary(terminalreporter):
@@ -242,7 +242,7 @@ def pytest_terminal_summary(terminalreporter):
     for char in tr.reportchars:
         if char == "x":
             show_xfailed(terminalreporter, lines)
-        elif char == "P":
+        elif char == "X":
             show_xpassed(terminalreporter, lines)
         elif char == "f":
             show_failed(terminalreporter, lines)

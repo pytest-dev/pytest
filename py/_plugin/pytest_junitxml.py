@@ -56,10 +56,15 @@ class LogXML(object):
     def append_failure(self, report):
         self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.appendlog('<failure message="test failure">%s</failure>', 
-            report.longrepr)
+        if "xfail" in report.keywords:
+            self.appendlog(
+                '<skipped message="xfail-marked test passes unexpectedly"/>')
+            self.skipped += 1
+        else:
+            self.appendlog('<failure message="test failure">%s</failure>', 
+                report.longrepr)
+            self.failed += 1
         self._closetestcase()
-        self.failed += 1
 
     def _opentestcase_collectfailure(self, report):
         node = report.collector
@@ -95,7 +100,12 @@ class LogXML(object):
 
     def append_skipped(self, report):
         self._opentestcase(report)
-        self.appendlog("<skipped/>")
+        if "xfail" in report.keywords:
+            self.appendlog(
+                '<skipped message="expected test failure">%s</skipped>', 
+                report.keywords['xfail'])
+        else:
+            self.appendlog("<skipped/>")
         self._closetestcase()
         self.skipped += 1
 

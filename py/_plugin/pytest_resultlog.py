@@ -73,7 +73,7 @@ class ResultLog(object):
             code = report.shortrepr
         if code == 'x':
             longrepr = str(report.longrepr)
-        elif code == 'P':
+        elif code == 'X':
             longrepr = ''
         elif report.passed:
             longrepr = ""
