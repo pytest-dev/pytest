@@ -10,6 +10,7 @@ def pytest_namespace():
         'skip'         : skip,
         'importorskip' : importorskip,
         'fail'         : fail, 
+        'xfail'        : xfail, 
         'exit'         : exit, 
     }
 
@@ -295,6 +296,10 @@ class Failed(OutcomeException):
     """ raised from an explicit call to py.test.fail() """
     __module__ = 'builtins'
 
+class XFailed(OutcomeException): 
+    """ raised from an explicit call to py.test.xfail() """
+    __module__ = 'builtins'
+
 class ExceptionFailure(Failed): 
     """ raised by py.test.raises on an exception-assertion mismatch. """
     def __init__(self, expr, expected, msg=None, excinfo=None): 
@@ -334,6 +339,14 @@ def fail(msg=""):
     raise Failed(msg=msg) 
 
 fail.Exception = Failed
+
+def xfail(reason=""):
+    """ xfail an executing test or setup functions, taking an optional 
+    reason string.
+    """
+    __tracebackhide__ = True
+    raise XFailed(reason)
+xfail.Exception = XFailed
 
 def raises(ExpectedException, *args, **kwargs):
     """ if args[0] is callable: raise AssertionError if calling it with 

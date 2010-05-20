@@ -169,6 +169,43 @@ class TestXFail:
         ])
         assert result.ret == 1
 
+    def test_xfail_imperative(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            def test_this():
+                py.test.xfail("hello")
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 xfailed*",
+        ])
+        result = testdir.runpytest(p, "-rx")
+        result.stdout.fnmatch_lines([
+            "*XFAIL*test_this*reason:*hello*",
+        ])
+
+    def test_xfail_imperative_in_setup_function(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            def setup_function(function):
+                py.test.xfail("hello")
+            
+            def test_this():
+                assert 0
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 xfailed*",
+        ])
+        result = testdir.runpytest(p, "-rx")
+        result.stdout.fnmatch_lines([
+            "*XFAIL*test_this*reason:*hello*",
+        ])
+
+
+
+
+
 class TestSkipif:
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem("""

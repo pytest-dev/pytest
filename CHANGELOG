@@ -9,6 +9,14 @@ Changes between 1.3.0 and 1.3.1
 - fix issue95: late-import zlib so that it's not required 
   for general py.test startup. 
 
+- fix issue91: introduce new py.test.xfail(reason) helper 
+  to imperatively mark a test as expected to fail. Can 
+  be used from within setup and test functions. This is
+  useful especially for parametrized tests when certain 
+  configurations are expected-to-fail.  In this case the
+  declarative approach with the @py.test.mark.xfail cannot
+  be used as it would mark all configurations as xfail. 
+
 - make py.test.cmdline.main() return the exitstatus 
   instead of raising (which is still done by py.cmdline.pytest())
   and make it so that py.test.cmdline.main() can be called
