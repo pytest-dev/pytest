@@ -106,6 +106,17 @@ To specify an explicit reason to be shown with xfailure detail::
 
     @py.test.mark.xfail(..., reason="my reason")
 
+imperative xfail from within a test or setup function
+------------------------------------------------------
+
+If you cannot declare xfail-conditions at import time
+you can also imperatively produce an XFail-outcome from 
+within test or setup code.  Example::
+
+    def test_function():
+        if not valid_config():
+            py.test.xfail("unsuppored configuration")
+
 
 skipping on a missing import dependency
 --------------------------------------------------
