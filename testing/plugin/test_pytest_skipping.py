@@ -52,6 +52,39 @@ class TestEvaluator:
         assert expl == "hello world"
         assert ev.get("attr") == 2
 
+    def test_marked_one_arg_twice(self, testdir):
+        lines = [
+            '''@py.test.mark.skipif("not hasattr(os, 'murks')")''',
+            '''@py.test.mark.skipif("hasattr(os, 'murks')")'''
+        ]
+        for i in range(0, 2):
+            item = testdir.getitem("""
+                import py 
+                %s
+                %s
+                def test_func(): 
+                    pass
+            """ % (lines[i], lines[(i+1) %2]))
+            ev = MarkEvaluator(item, 'skipif')
+            assert ev
+            assert ev.istrue()
+            expl = ev.getexplanation()
+            assert expl == "condition: not hasattr(os, 'murks')"
+
+    def test_marked_one_arg_twice2(self, testdir):
+        item = testdir.getitem("""
+            import py 
+            @py.test.mark.skipif("hasattr(os, 'murks')")
+            @py.test.mark.skipif("not hasattr(os, 'murks')")
+            def test_func(): 
+                pass
+        """)
+        ev = MarkEvaluator(item, 'skipif')
+        assert ev
+        assert ev.istrue()
+        expl = ev.getexplanation()
+        assert expl == "condition: not hasattr(os, 'murks')"
+
     def test_skipif_class(self, testdir):
         item, = testdir.getitems("""
             import py

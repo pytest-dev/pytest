@@ -60,6 +60,19 @@ for skipping all methods of a test class based on platform::
             #
 
 The ``pytestmark`` decorator will be applied to each test function.
+If your code targets python2.6 or above you can equivalently use 
+the skipif decorator on classes::
+
+    @py.test.mark.skipif("sys.platform == 'win32'")
+    class TestPosixCalls:
+    
+        def test_function(self):
+            # will not be setup or run under 'win32' platform
+            #
+
+It is fine in general to apply multiple "skipif" decorators
+on a single function - this means that if any of the conditions
+apply the function will be skipped. 
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
@@ -144,17 +157,20 @@ class MarkEvaluator:
     def istrue(self):
         if self.holder:
             d = {'os': py.std.os, 'sys': py.std.sys, 'config': self.item.config}
-            self.result = True
-            for expr in self.holder.args:
-                self.expr = expr
-                if isinstance(expr, str):
-                    result = cached_eval(self.item.config, expr, d)
-                else:
-                    result = expr
-                if not result:
-                    self.result = False
+            if self.holder.args:
+                self.result = False
+                for expr in self.holder.args:
                     self.expr = expr
-                    break
+                    if isinstance(expr, str):
+                        result = cached_eval(self.item.config, expr, d)
+                    else:
+                        result = expr
+                    if result:
+                        self.result = True
+                        self.expr = expr
+                        break
+            else:
+                self.result = True
         return getattr(self, 'result', False)
 
     def get(self, attr, default=None):

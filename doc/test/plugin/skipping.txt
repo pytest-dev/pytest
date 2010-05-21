@@ -65,6 +65,18 @@ for skipping all methods of a test class based on platform::
             #
 
 The ``pytestmark`` decorator will be applied to each test function.
+If your code targets python2.6 or above you can also use the
+skipif decorator with classes::
+
+    @py.test.mark.skipif("sys.platform == 'win32'")
+    class TestPosixCalls:
+    
+        def test_function(self):
+            # will not be setup or run under 'win32' platform
+            #
+
+It is fine in both situations to use multiple "skipif" decorators
+on a single function. 
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 

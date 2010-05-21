@@ -68,11 +68,41 @@ class TestFunctional:
         keywords = item.readkeywords()
         assert 'hello' in keywords
 
-    def test_mark_per_class(self, testdir):
+    def test_marklist_per_class(self, testdir):
         modcol = testdir.getmodulecol("""
             import py
             class TestClass:
-                pytestmark = py.test.mark.hello
+                pytestmark = [py.test.mark.hello, py.test.mark.world]
+                def test_func(self):
+                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.world
+        """)
+        clscol = modcol.collect()[0]
+        item = clscol.collect()[0].collect()[0]
+        keywords = item.readkeywords()
+        assert 'hello' in keywords
+
+    def test_marklist_per_module(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import py
+            pytestmark = [py.test.mark.hello, py.test.mark.world]
+            class TestClass:
+                def test_func(self):
+                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.world
+        """)
+        clscol = modcol.collect()[0]
+        item = clscol.collect()[0].collect()[0]
+        keywords = item.readkeywords()
+        assert 'hello' in keywords
+        assert 'world' in keywords
+
+    @py.test.mark.skipif("sys.version_info < (2,6)")
+    def test_mark_per_class_decorator(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import py
+            @py.test.mark.hello
+            class TestClass:
                 def test_func(self):
                     assert TestClass.test_func.hello  
         """)
@@ -80,6 +110,23 @@ class TestFunctional:
         item = clscol.collect()[0].collect()[0]
         keywords = item.readkeywords()
         assert 'hello' in keywords
+
+    @py.test.mark.skipif("sys.version_info < (2,6)")
+    def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import py
+            @py.test.mark.hello
+            class TestClass:
+                pytestmark = py.test.mark.world
+                def test_func(self):
+                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.world
+        """)
+        clscol = modcol.collect()[0]
+        item = clscol.collect()[0].collect()[0]
+        keywords = item.readkeywords()
+        assert 'hello' in keywords
+        assert 'world' in keywords
 
     def test_merging_markers(self, testdir):
         p = testdir.makepyfile("""

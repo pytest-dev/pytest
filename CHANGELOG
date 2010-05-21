@@ -6,6 +6,14 @@ Changes between 1.3.0 and 1.3.1
   to the underlying capturing functionality to avoid race 
   conditions).
 
+- fix issue89 - allow py.test.mark decorators to be used on classes
+  (class decorators were introduced with python2.6)
+  also allow to have multiple markers applied at class/module level
+
+- fix chaining of conditional skipif/xfail decorators - so it works now 
+  as expected to use multiple @py.test.mark.skipif(condition) decorators,
+  including specific reporting which of the conditions lead to skipping. 
+
 - fix issue95: late-import zlib so that it's not required 
   for general py.test startup. 
 

@@ -34,37 +34,42 @@ and later access it with ``test_receive.webtest.args[0] == 'triangular``.
 
 .. _`scoped-marking`:
 
-Marking classes or modules 
+Marking whole classes or modules 
 ----------------------------------------------------
 
-To mark all methods of a class set a ``pytestmark`` attribute like this::
+If you are programming with Python2.6 you may use ``py.test.mark`` decorators
+with classes to apply markers to all its test methods::
+
+    @py.test.mark.webtest
+    class TestClass:
+        def test_startup(self):
+            ...
+
+This is equivalent to directly applying the decorator to the
+``test_startup`` function. 
+
+To remain compatible with Python2.5 you can instead set a 
+``pytestmark`` attribute on a TestClass like this::
 
     import py
 
     class TestClass:
         pytestmark = py.test.mark.webtest
 
-You can re-use the same markers that you would use for decorating
-a function - in fact this marker decorator will be applied
-to all test methods of the class. 
+or if you need to use multiple markers::
+
+    import py
+
+    class TestClass:
+        pytestmark = [py.test.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
 
     import py
     pytestmark = py.test.mark.webtest
 
-in which case then the marker decorator will be applied to all functions and 
+in which case then it will be applied to all functions and 
 methods defined in the module.  
-
-The order in which marker functions are called is this::
-
-    per-function (upon import of module already) 
-    per-class
-    per-module 
-
-Later called markers may overwrite previous key-value settings. 
-Positional arguments are all appended to the same 'args' list 
-of the Marker object. 
 
 Using "-k MARKNAME" to select tests
 ----------------------------------------------------
@@ -105,15 +110,23 @@ class MarkDecorator:
         """ if passed a single callable argument: decorate it with mark info. 
             otherwise add *args/**kwargs in-place to mark information. """
         if args:
-            if len(args) == 1 and hasattr(args[0], '__call__'):
-                func = args[0]
-                holder = getattr(func, self.markname, None)
-                if holder is None:
-                    holder = MarkInfo(self.markname, self.args, self.kwargs)
-                    setattr(func, self.markname, holder)
+            func = args[0]
+            if len(args) == 1 and hasattr(func, '__call__') or \
+               hasattr(func, '__bases__'):
+                if hasattr(func, '__bases__'):
+                    l = func.__dict__.setdefault("pytestmark", [])
+                    if not isinstance(l, list):
+                       func.pytestmark = [l, self]
+                    else: 
+                       l.append(self)
                 else:
-                    holder.kwargs.update(self.kwargs)
-                    holder.args.extend(self.args)
+                    holder = getattr(func, self.markname, None)
+                    if holder is None:
+                        holder = MarkInfo(self.markname, self.args, self.kwargs)
+                        setattr(func, self.markname, holder)
+                    else:
+                        holder.kwargs.update(self.kwargs)
+                        holder.args.extend(self.args)
                 return func
             else:
                 self.args.extend(args)
@@ -147,6 +160,10 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         func = getattr(func, 'im_func', func)  # py2
         for parent in [x for x in (mod, cls) if x]:
             marker = getattr(parent.obj, 'pytestmark', None)
-            if isinstance(marker, MarkDecorator):
-                marker(func)
+            if marker is not None:
+                if not isinstance(marker, list):
+                    marker = [marker]
+                for mark in marker:
+                    if isinstance(mark, MarkDecorator):
+                        mark(func)
     return item
