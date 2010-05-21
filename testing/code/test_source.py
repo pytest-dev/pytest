@@ -36,6 +36,19 @@ def test_source_from_function():
     source = py.code.Source(test_source_str_function)
     assert str(source).startswith('def test_source_str_function():')
 
+def test_source_from_method():
+    class TestClass:
+        def test_method(self):
+            pass
+    source = py.code.Source(TestClass().test_method)
+    assert source.lines == ["def test_method(self):",
+                            "    pass"]
+
+def test_source_from_lines():
+    lines = ["a \n", "b\n", "c"]
+    source = py.code.Source(lines)
+    assert source.lines == ['a ', 'b', 'c']
+
 def test_source_from_inner_function():
     def f():
         pass
@@ -92,6 +105,7 @@ def test_isparseable():
     assert Source(" \nif 1:\n  pass").isparseable()
     assert not Source("if 1:\n").isparseable() 
     assert not Source(" \nif 1:\npass").isparseable()
+    assert not Source(chr(0)).isparseable()
 
 class TestAccesses:
     source = Source("""\

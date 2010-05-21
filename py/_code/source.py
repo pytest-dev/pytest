@@ -26,6 +26,8 @@ class Source(object):
                 partlines = []
             if isinstance(part, Source):
                 partlines = part.lines
+            elif isinstance(part, (tuple, list)):
+                partlines = [x.rstrip("\n") for x in part]
             elif isinstance(part, py.builtin._basestring):
                 partlines = part.split('\n')
                 if rstrip:
@@ -172,7 +174,9 @@ class Source(object):
         try:
             #compile(source+'\n', "x", "exec")
             syntax_checker(source+'\n')
-        except SyntaxError:
+        except KeyboardInterrupt:
+            raise
+        except Exception:
             return False
         else:
             return True

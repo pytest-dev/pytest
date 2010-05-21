@@ -110,7 +110,7 @@ class TmpTestdir:
     def _makefile(self, ext, args, kwargs):
         items = list(kwargs.items())
         if args:
-            source = "\n".join(map(str, args))
+            source = "\n".join(map(str, args)) + "\n"
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
         ret = None
@@ -294,8 +294,10 @@ class TmpTestdir:
         ret = popen.wait()
         f1.close()
         f2.close()
-        out = p1.read("rb").decode("utf-8").splitlines()
-        err = p2.read("rb").decode("utf-8").splitlines()
+        out = p1.read("rb")
+        out = getdecoded(out).splitlines()
+        err = p2.read("rb")
+        err = getdecoded(err).splitlines()
         def dump_lines(lines, fp):
             try:
                 for line in lines:
@@ -359,6 +361,13 @@ class TmpTestdir:
         child = pexpect.spawn(cmd, logfile=basetemp.join("spawn.out").open("w"))
         child.timeout = expect_timeout
         return child
+
+def getdecoded(out):
+        try:
+            return out.decode("utf-8")
+        except UnicodeDecodeError:
+            return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
+                    py.io.saferepr(out),)
 
 class PseudoPlugin:
     def __init__(self, vars):
