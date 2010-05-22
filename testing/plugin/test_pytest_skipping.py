@@ -216,6 +216,11 @@ class TestXFail:
         result.stdout.fnmatch_lines([
             "*XFAIL*test_this*reason:*hello*",
         ])
+        result = testdir.runpytest(p, "--runxfail")
+        result.stdout.fnmatch_lines([
+            "*def test_this():*",
+            "*py.test.xfail*",
+        ])
 
     def test_xfail_imperative_in_setup_function(self, testdir):
         p = testdir.makepyfile("""
@@ -233,6 +238,11 @@ class TestXFail:
         result = testdir.runpytest(p, "-rx")
         result.stdout.fnmatch_lines([
             "*XFAIL*test_this*reason:*hello*",
+        ])
+        result = testdir.runpytest(p, "--runxfail")
+        result.stdout.fnmatch_lines([
+            "*def setup_function(function):*",
+            "*py.test.xfail*",
         ])
 
 

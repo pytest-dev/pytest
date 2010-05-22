@@ -218,11 +218,12 @@ def pytest_runtest_makereport(__multicall__, item, call):
         if not evalxfail:
             return
     if call.excinfo and call.excinfo.errisinstance(py.test.xfail.Exception):
-        rep = __multicall__.execute()
-        rep.keywords['xfail'] = "reason: " + call.excinfo.value.msg
-        rep.skipped = True
-        rep.failed = False
-        return rep
+        if not item.config.getvalue("runxfail"):
+            rep = __multicall__.execute()
+            rep.keywords['xfail'] = "reason: " + call.excinfo.value.msg
+            rep.skipped = True
+            rep.failed = False
+            return rep
     if call.when == "setup":
         rep = __multicall__.execute()
         if rep.skipped and evalxfail.istrue():
