@@ -626,6 +626,35 @@ def test_terminalreporter_reportopt_conftestsetting(testdir):
         "*1 passed*"
     ])
 
+def test_tbstyle_short(testdir):
+    p = testdir.makepyfile("""
+        def pytest_funcarg__arg(request):
+            return 42
+        def test_opt(arg):
+            x = 0
+            assert x
+    """)
+    result = testdir.runpytest("--tb=short")
+    s = result.stdout.str()
+    assert 'arg = 42' not in s
+    assert 'x = 0' not in s
+    result.stdout.fnmatch_lines([
+        "*%s:5*" % p.basename,
+        ">*assert x",
+        "E*assert*",
+    ])
+    result = testdir.runpytest()
+    s = result.stdout.str()
+    assert 'x = 0' in s
+    assert 'assert x' in s
+
+def test_trace_reporting(testdir):
+    result = testdir.runpytest("--traceconfig")
+    result.stdout.fnmatch_lines([
+        "*active plugins*"
+    ])
+    assert result.ret == 0
+
 def test_trace_reporting(testdir):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines([

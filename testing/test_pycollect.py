@@ -484,3 +484,28 @@ class TestTracebackCutting:
         assert out.find("conftest.py:2: ValueError") != -1
         numentries = out.count("_ _ _ _") # separator for traceback entries
         assert numentries >3
+
+    def test_traceback_error_during_import(self, testdir):
+        testdir.makepyfile("""
+            x = 1
+            x = 2
+            x = 17
+            asd 
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        out = result.stdout.str()
+        assert "x = 1" not in out
+        assert "x = 2" not in out
+        result.stdout.fnmatch_lines([
+            ">*asd*",
+            "E*NameError*",
+        ])
+        result = testdir.runpytest("--fulltrace")
+        out = result.stdout.str()
+        assert "x = 1" in out
+        assert "x = 2" in out
+        result.stdout.fnmatch_lines([
+            ">*asd*",
+            "E*NameError*",
+        ])

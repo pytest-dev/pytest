@@ -37,7 +37,9 @@ New features
 Fixes / Maintenance 
 ++++++++++++++++++++++
 
-- improve tracebacks presentation: 
+- improved traceback presentation: 
+  - improved and unified reporting for "--tb=short" option
+  - Errors during test module imports are much shorter, (using --tb=short style)
   - raises shows shorter more relevant tracebacks
 
 - improve support for raises and other dynamically compiled code by

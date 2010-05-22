@@ -463,16 +463,18 @@ raise ValueError()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-2])
         lines = reprtb.lines
         basename = py.path.local(mod.__file__).basename
-        assert lines[0] == '  File "%s", line 5, in entry' % basename 
-        assert lines[1] == '    func1()' 
+        assert lines[0] == '>       func1()'
+        assert basename in str(reprtb.reprfileloc.path)
+        assert reprtb.reprfileloc.lineno == 5
 
         # test last entry 
         p = FormattedExcinfo(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprtb.lines
-        assert lines[0] == '  File "%s", line 3, in func1' % basename 
-        assert lines[1] == '    raise ValueError("hello")'
-        assert lines[2] == 'E   ValueError: hello'
+        assert lines[0] == '>       raise ValueError("hello")'
+        assert lines[1] == 'E       ValueError: hello'
+        assert basename in str(reprtb.reprfileloc.path)
+        assert reprtb.reprfileloc.lineno == 3
 
     def test_repr_tracebackentry_no(self, importasmod):
         mod = importasmod("""
@@ -525,12 +527,10 @@ raise ValueError()
         last_lines = last_reprtb.lines
         monkeypatch.undo()
         basename = py.path.local(mod.__file__).basename
-        assert lines[0] == '  File "%s", line 5, in entry' % basename
-        assert lines[1] == '    func1()' 
+        assert lines[0] == '>       func1()'
 
-        assert last_lines[0] == '  File "%s", line 3, in func1' % basename
-        assert last_lines[1] == '    raise ValueError("hello")'
-        assert last_lines[2] == 'E   ValueError: hello'
+        assert last_lines[0] == '>       raise ValueError("hello")'
+        assert last_lines[1] == 'E       ValueError: hello'
 
     def test_repr_traceback_and_excinfo(self, importasmod):
         mod = importasmod("""

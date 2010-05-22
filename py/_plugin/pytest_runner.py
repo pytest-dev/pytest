@@ -188,7 +188,11 @@ class CollectReport(BaseReport):
             self.passed = True
             self.result = result 
         else:
-            self.longrepr = self.collector._repr_failure_py(excinfo)
+            style = "short"
+            if collector.config.getvalue("fulltrace"):
+                style = "long"
+            self.longrepr = self.collector._repr_failure_py(excinfo, 
+                style=style)
             if excinfo.errisinstance(py.test.skip.Exception):
                 self.skipped = True
                 self.reason = str(excinfo.value)

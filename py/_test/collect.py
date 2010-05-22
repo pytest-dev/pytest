@@ -172,14 +172,15 @@ class Node(object):
     def _prunetraceback(self, traceback):
         return traceback 
 
-    def _repr_failure_py(self, excinfo):
+    def _repr_failure_py(self, excinfo, style=None):
         excinfo.traceback = self._prunetraceback(excinfo.traceback)
         # XXX should excinfo.getrepr record all data and toterminal()
         # process it? 
-        if self.config.option.tbstyle == "short":
-            style = "short"
-        else:
-            style = "long"
+        if style is None:
+            if self.config.option.tbstyle == "short":
+                style = "short"
+            else:
+                style = "long"
         return excinfo.getrepr(funcargs=True, 
                                showlocals=self.config.option.showlocals,
                                style=style)
