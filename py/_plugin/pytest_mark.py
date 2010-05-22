@@ -44,11 +44,13 @@ with classes to apply markers to all its test methods::
     class TestClass:
         def test_startup(self):
             ...
+        def test_startup_and_more(self):
+            ...
 
 This is equivalent to directly applying the decorator to the
-``test_startup`` function. 
+two test functions. 
 
-To remain compatible with Python2.5 you can instead set a 
+To remain compatible with Python2.5 you can also set a 
 ``pytestmark`` attribute on a TestClass like this::
 
     import py
@@ -56,7 +58,7 @@ To remain compatible with Python2.5 you can instead set a
     class TestClass:
         pytestmark = py.test.mark.webtest
 
-or if you need to use multiple markers::
+or if you need to use multiple markers you can use a list::
 
     import py
 
@@ -68,7 +70,7 @@ You can also set a module level marker::
     import py
     pytestmark = py.test.mark.webtest
 
-in which case then it will be applied to all functions and 
+in which case it will be applied to all functions and 
 methods defined in the module.  
 
 Using "-k MARKNAME" to select tests
@@ -114,11 +116,14 @@ class MarkDecorator:
             if len(args) == 1 and hasattr(func, '__call__') or \
                hasattr(func, '__bases__'):
                 if hasattr(func, '__bases__'):
-                    l = func.__dict__.setdefault("pytestmark", [])
-                    if not isinstance(l, list):
-                       func.pytestmark = [l, self]
-                    else: 
-                       l.append(self)
+                    if hasattr(func, 'pytestmark'):
+                        l = func.pytestmark
+                        if not isinstance(l, list):
+                           func.pytestmark = [l, self]
+                        else: 
+                           l.append(self)
+                    else:
+                       func.pytestmark = [self]
                 else:
                     holder = getattr(func, self.markname, None)
                     if holder is None:
