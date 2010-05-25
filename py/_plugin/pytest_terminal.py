@@ -312,12 +312,14 @@ class TerminalReporter:
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
 
     def _report_keyboardinterrupt(self):
-        self.write_sep("!", "KEYBOARD INTERRUPT")
         excrepr = self._keyboardinterrupt_memo
-        if self.config.option.verbose:
-            excrepr.toterminal(self._tw)
-        else:
-            excrepr.reprcrash.toterminal(self._tw)
+        msg = excrepr.reprcrash.message
+        self.write_sep("!", msg)
+        if "KeyboardInterrupt" in msg:
+            if self.config.getvalue("fulltrace"):
+                excrepr.toterminal(self._tw)
+            else:
+                excrepr.reprcrash.toterminal(self._tw)
 
     def _getcrashline(self, report):
         try:

@@ -12,6 +12,12 @@ New features
   declarative approach with the @py.test.mark.xfail cannot
   be used as it would mark all configurations as xfail. 
 
+- issue102: introduce new --maxfail=NUM option to stop
+  test runs after NUM failures.  This is a generalization
+  of the '-x' or '--exitfirst' option which is now equivalent
+  to '--maxfail=1'.  Both '-x' and '--maxfail' will 
+  now also print a line near the end indicating the Interruption. 
+
 - issue89: allow py.test.mark decorators to be used on classes
   (class decorators were introduced with python2.6) and 
   also allow to have multiple markers applied at class/module level
@@ -41,6 +47,7 @@ Fixes / Maintenance
   - improved and unified reporting for "--tb=short" option
   - Errors during test module imports are much shorter, (using --tb=short style)
   - raises shows shorter more relevant tracebacks
+  - --fulltrace now more systematically makes traces longer / inhibits cutting
 
 - improve support for raises and other dynamically compiled code by
   manipulating python's linecache.cache instead of the previous

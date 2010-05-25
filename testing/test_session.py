@@ -86,6 +86,16 @@ class SessionTests:
         assert failed == 1
         assert passed == skipped == 0
 
+    def test_maxfail(self, testdir): 
+        reprec = testdir.inline_runsource("""
+            def test_one(): assert 0
+            def test_two(): assert 0
+            def test_three(): assert 0
+        """, '--maxfail=2')
+        passed, skipped, failed = reprec.countoutcomes()
+        assert failed == 2
+        assert passed == skipped == 0
+
     def test_broken_repr(self, testdir):
         p = testdir.makepyfile("""
             import py

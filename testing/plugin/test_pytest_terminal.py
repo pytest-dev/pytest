@@ -17,9 +17,10 @@ def basic_run_report(item):
     return runner.call_and_report(item, "call", log=False)
 
 class Option:
-    def __init__(self, verbose=False, dist=None):
+    def __init__(self, verbose=False, dist=None, fulltrace=False):
         self.verbose = verbose
         self.dist = dist
+        self.fulltrace = fulltrace
     def _getcmdargs(self):
         l = []
         if self.verbose:
@@ -27,6 +28,8 @@ class Option:
         if self.dist:
             l.append('--dist=%s' % self.dist)
             l.append('--tx=popen')
+        if self.fulltrace:
+            l.append('--fulltrace')
         return l
     def _getcmdstring(self):
         return " ".join(self._getcmdargs())
@@ -35,6 +38,7 @@ def pytest_generate_tests(metafunc):
     if "option" in metafunc.funcargnames:
         metafunc.addcall(id="default", param=Option(verbose=False))
         metafunc.addcall(id="verbose", param=Option(verbose=True))
+        metafunc.addcall(id="fulltrace", param=Option(fulltrace=True))
         if not getattr(metafunc.function, 'nodist', False):
             metafunc.addcall(id="verbose-dist", 
                              param=Option(dist='each', verbose=True))
@@ -284,11 +288,28 @@ class TestTerminal:
             "E       assert 0",
             "*_keyboard_interrupt.py:6: KeyboardInterrupt*", 
         ])
-        if option.verbose:
+        if option.fulltrace:
             result.stdout.fnmatch_lines([
                 "*raise KeyboardInterrupt   # simulating the user*",
             ])
-        result.stdout.fnmatch_lines(['*KEYBOARD INTERRUPT*'])
+        result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
+
+    def test_maxfailures(self, testdir, option):
+        p = testdir.makepyfile("""
+            def test_1():
+                assert 0
+            def test_2():
+                assert 0
+            def test_3():
+                assert 0
+        """)
+        result = testdir.runpytest("--maxfail=2", *option._getcmdargs())
+        result.stdout.fnmatch_lines([
+            "*def test_1():*",
+            "*def test_2():*",
+            "*!! Interrupted: stopping after 2 failures*!!*",
+            "*2 failed*",
+        ])
 
     def test_pytest_report_header(self, testdir):
         testdir.makeconftest("""

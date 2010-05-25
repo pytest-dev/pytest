@@ -62,9 +62,12 @@ def pytest_report_iteminfo(item):
 
 def pytest_addoption(parser):
     group = parser.getgroup("general", "running and selection options")
-    group._addoption('-x', '--exitfirst',
-               action="store_true", dest="exitfirst", default=False,
+    group._addoption('-x', '--exitfirst', action="store_true", default=False,
+               dest="exitfirst", 
                help="exit instantly on first error or failed test."),
+    group._addoption('--maxfail', metavar="num",
+               action="store", type="int", dest="maxfail", default=0,
+               help="exit after first num failures or errors.")
     group._addoption('-k',
         action="store", dest="keyword", default='',
         help="only run test items matching the given "
@@ -89,6 +92,9 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     setsession(config)
+    # compat
+    if config.getvalue("exitfirst"):
+        config.option.maxfail = 1
 
 def setsession(config):
     val = config.getvalue

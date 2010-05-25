@@ -45,7 +45,7 @@ def pytest_configure(__multicall__, config):
     options = [opt for opt in options if opt._long_opts]
     options.sort(key=lambda x: x._long_opts)
     for opt in options:
-        if not opt._long_opts:
+        if not opt._long_opts or not opt.dest:
             continue
         optstrings = list(opt._long_opts) # + list(opt._short_opts)
         optstrings = filter(None, optstrings)

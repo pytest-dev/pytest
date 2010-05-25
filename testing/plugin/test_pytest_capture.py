@@ -347,7 +347,7 @@ class TestCaptureFuncarg:
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            "*KEYBOARD INTERRUPT*"
+            "*KeyboardInterrupt*"
         ])
         assert result.ret == 2
 
