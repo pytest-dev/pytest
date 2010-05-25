@@ -185,6 +185,7 @@ class TmpTestdir:
         return reports[0]
 
     def inline_run(self, *args):
+        args = ("-s", ) + args # otherwise FD leakage
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
         session = config.initsession()
