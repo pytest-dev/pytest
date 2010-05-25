@@ -7,7 +7,9 @@ collect_ignore = ['build', 'doc/_build']
 
 rsyncdirs = ['conftest.py', 'bin', 'py', 'doc', 'testing']
 
-import py
+import os, py
+pid = os.getpid()
+
 def pytest_addoption(parser):
     group = parser.getgroup("pylib", "py lib testing options")
     group.addoption('--sshhost', 
@@ -16,7 +18,26 @@ def pytest_addoption(parser):
     group.addoption('--runslowtests',
            action="store_true", dest="runslowtests", default=False,
            help=("run slow tests"))
+    group.addoption('--lsof',
+           action="store_true", dest="lsof", default=False,
+           help=("run FD checks if lsof is available"))
 
+def pytest_configure(config):
+    if config.getvalue("lsof"):
+        try:
+            out = py.process.cmdexec("lsof -p %d" % pid)
+        except py.process.cmdexec.Error:
+            pass
+        else:
+            config._numfiles = len([x for x in out.split("\n") if "REG" in x])
+
+def pytest_unconfigure(config, __multicall__):
+    if not hasattr(config, '_numfiles'):
+        return
+    __multicall__.execute()
+    out2 = py.process.cmdexec("lsof -p %d" % pid)
+    len2 = len([x for x in out2.split("\n") if "REG" in x])
+    assert len2 < config._numfiles + 7, out2
 
 def pytest_funcarg__sshhost(request):
     val = request.config.getvalue("sshhost")
