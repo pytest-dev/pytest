@@ -22,6 +22,7 @@ class Session(object):
     nodeid = ""
     class Interrupted(KeyboardInterrupt):
         """ signals an interrupted test run. """
+        __module__ = 'builtins' # for py3
         
     def __init__(self, config):
         self.config = config
