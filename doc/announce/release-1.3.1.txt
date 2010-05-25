@@ -1,19 +1,23 @@
 py.test/pylib 1.3.1: new py.test.xfail, --maxfail, better reporting
 ===========================================================================
 
-The 1.3.1 release introduces a new imperative way to "xfail" a test 
-and a new option --maxfail=NUM to limit the number of executed tests
-in case of failures.  This backward-compatible release also brings shorter, 
-more concise tracebacks in several cases.  The underlying code has been 
-simplified and now is compatible to Jython and PyPy, along with some bug 
-fixes and refinemnts that have been applied to CPython's code base. 
-If you used older versions of py.test you should be able to upgrade 
-to 1.3.1 without changes to your test source code.  
+The pylib/py.test 1.3.1 release brings: 
+
+- the new imperative ``py.test.xfail()`` helper in order to have a test or 
+  setup function result in an "expected failure"
+- a new option ``--maxfail=NUM`` to stop the test run after some failures
+- markers/decorators are now applicable to test classes (>=Python2.6)
+- improved reporting, shorter tracebacks in several cases
+- some simplified internals, more compatibility with Jython and PyPy 
+- bug fixes and various refinements
 
 See the below CHANGELOG entry below for more details and
 http://pylib.org/install.html for installation instructions. 
 
-py.test is an advanced automated testing tool working with Python2,
+If you used older versions of py.test you should be able to upgrade 
+to 1.3.1 without changes to your test source code.  
+
+py.test is an automated testing tool working with Python2,
 Python3, Jython and PyPy versions on all major operating systems.  It
 offers a no-boilerplate testing approach and has inspired other testing
 tools and enhancements in the standard Python library for more than five

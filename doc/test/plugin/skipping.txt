@@ -65,8 +65,8 @@ for skipping all methods of a test class based on platform::
             #
 
 The ``pytestmark`` decorator will be applied to each test function.
-If your code targets python2.6 or above you can also use the
-skipif decorator with classes::
+If your code targets python2.6 or above you can equivalently use 
+the skipif decorator on classes::
 
     @py.test.mark.skipif("sys.platform == 'win32'")
     class TestPosixCalls:
@@ -75,8 +75,9 @@ skipif decorator with classes::
             # will not be setup or run under 'win32' platform
             #
 
-It is fine in both situations to use multiple "skipif" decorators
-on a single function. 
+It is fine in general to apply multiple "skipif" decorators
+on a single function - this means that if any of the conditions
+apply the function will be skipped. 
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
@@ -109,6 +110,17 @@ To not run a test and still regard it as "xfailed"::
 To specify an explicit reason to be shown with xfailure detail::
 
     @py.test.mark.xfail(..., reason="my reason")
+
+imperative xfail from within a test or setup function
+------------------------------------------------------
+
+If you cannot declare xfail-conditions at import time
+you can also imperatively produce an XFail-outcome from 
+within test or setup code.  Example::
+
+    def test_function():
+        if not valid_config():
+            py.test.xfail("unsuppored configuration")
 
 
 skipping on a missing import dependency
