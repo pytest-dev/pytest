@@ -38,6 +38,7 @@
 .. _`monkeypatch`: monkeypatch.html
 .. _`coverage`: coverage.html
 .. _`resultlog`: resultlog.html
+.. _`cov`: cov.html
 .. _`pytest_junitxml.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.1/py/_plugin/pytest_junitxml.py
 .. _`django`: django.html
 .. _`pytest_unittest.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.1/py/_plugin/pytest_unittest.py

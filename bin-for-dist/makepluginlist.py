@@ -5,7 +5,7 @@ WIDTH = 75
 plugins = [
     ('advanced python testing', 
             'skipping mark pdb figleaf '
-            'monkeypatch coverage capture capturelog recwarn tmpdir',),
+            'monkeypatch coverage cov capture capturelog recwarn tmpdir',),
     ('distributed testing, CI and deployment',
         'xdist pastebin junitxml resultlog genscript',),
     ('testing domains and conventions codecheckers',
@@ -24,6 +24,7 @@ externals = {
     'figleaf': None,
     'capturelog': None, 
     'coverage': None, 
+    'cov': None, 
     'codecheckers': None, 
     'django': "for testing django applications", 
 }

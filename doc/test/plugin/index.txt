@@ -14,6 +14,8 @@ monkeypatch_ safely patch object attributes, dicts and environment variables.
 
 coverage_ (external) Write and report coverage data with the 'coverage' package.
 
+cov_ (external) produce code coverage reports using the 'coverage' package, including support for distributed testing.
+
 capture_ configurable per-test stdout/stderr capturing mechanisms.
 
 capturelog_ (external) capture output of logging module.
