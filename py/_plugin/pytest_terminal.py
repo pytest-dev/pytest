@@ -207,7 +207,8 @@ class TerminalReporter:
             self.write_sep("#", "LOOPONFAILING", red=True)
             for report in failreports:
                 loc = self._getcrashline(report)
-                self.write_line(loc, red=True)
+                if loc:
+                    self.write_line(loc, red=True)
         self.write_sep("#", "waiting for changes")
         for rootdir in rootdirs:
             self.write_line("### Watching:   %s" %(rootdir,), bold=True)
@@ -325,7 +326,10 @@ class TerminalReporter:
         try:
             return report.longrepr.reprcrash
         except AttributeError:
-            return str(report.longrepr)[:50]
+            try:
+                return str(report.longrepr)[:50]
+            except AttributeError:
+                return ""
 
     def _reportinfoline(self, item):
         collect_fspath = self._getfspath(item)

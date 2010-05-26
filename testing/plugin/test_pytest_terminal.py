@@ -133,17 +133,24 @@ class TestTerminal:
 
     def test_looponfailreport(self, testdir, linecomp):
         modcol = testdir.getmodulecol("""
+            import py
             def test_fail():
                 assert 0
             def test_fail2():
                 raise ValueError()
+            @py.test.mark.xfail
+            def test_xfail():
+                assert 0
+            @py.test.mark.xfail
+            def test_xpass():
+                assert 1
         """)
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         reports = [basic_run_report(x) for x in modcol.collect()]
         rep.pytest_looponfailinfo(reports, [modcol.config.topdir])
         linecomp.assert_contains_lines([
-            "*test_looponfailreport.py:2: assert 0",
-            "*test_looponfailreport.py:4: ValueError*",
+            "*test_looponfailreport.py:3: assert 0",
+            "*test_looponfailreport.py:5: ValueError*",
             "*waiting*", 
             "*%s*" % (modcol.config.topdir),
         ])
