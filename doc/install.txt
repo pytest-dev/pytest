@@ -15,7 +15,7 @@ py.test/pylib installation info in a nutshell
 **Distribution names**:
 
 * PyPI name: ``py`` (see `index page`_ for versions)
-* redhat fedora: ``pylib``
+* redhat fedora: ``python-py``
 * debian: ``python-codespeak-lib``
 * gentoo: ``pylib``
 
