@@ -524,6 +524,8 @@ class LocalPath(FSBase):
                 modfile = modfile[:-1]
             elif modfile.endswith('$py.class'):
                 modfile = modfile[:-9] + '.py'
+            if modfile.endswith("__init__.py"):
+                modfile = modfile[:-12]
             if not self.samefile(modfile):
                 raise EnvironmentError("mismatch:\n"
                 "imported module %r\n"
