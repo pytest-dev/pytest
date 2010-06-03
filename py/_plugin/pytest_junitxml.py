@@ -166,6 +166,7 @@ class LogXML(object):
         logfile.writelines(self.test_logs)
         logfile.write('</testsuite>')
         logfile.close()
-        tw = session.config.pluginmanager.getplugin("terminalreporter")._tw
-        tw.line()
-        tw.sep("-", "generated xml file: %s" %(self.logfile))
+
+    def pytest_terminal_summary(self, terminalreporter):
+        tw = terminalreporter._tw
+        terminalreporter.write_sep("-", "generated xml file: %s" %(self.logfile))
