@@ -2,7 +2,7 @@ import py
 from py._path.svnurl import InfoSvnCommand
 import datetime
 import time
-from testing.path.svntestbase import CommonSvnTests
+from svntestbase import CommonSvnTests
 
 def pytest_funcarg__path1(request):
     repo, repourl, wc = request.getfuncargvalue("repowc1")

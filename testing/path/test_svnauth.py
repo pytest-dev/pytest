@@ -1,5 +1,5 @@
 import py
-from testing.path import svntestbase
+import svntestbase
 from py.path import SvnAuth
 import time
 import sys

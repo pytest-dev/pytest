@@ -1,7 +1,7 @@
 import py
 import sys
 from py.path import local
-from testing.path import common
+import common
 
 failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
 failsonjywin32 = py.test.mark.xfail("sys.platform.startswith('java') "
