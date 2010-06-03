@@ -633,16 +633,7 @@ class LocalPath(FSBase):
             (which we created ourself).
         """
         import tempfile
-        tries = 10
-        for i in range(tries):
-            dname = tempfile.mktemp()
-            dpath = cls(tempfile.mktemp())
-            try:
-                dpath.mkdir()
-            except (py.error.EEXIST, py.error.EPERM, py.error.EACCES):
-                continue
-            return dpath
-        raise py.error.ENOENT(dpath, "could not create tempdir, %d tries" % tries)
+        return cls(py.error.checked_call(tempfile.mkdtemp))
     mkdtemp = classmethod(mkdtemp)
 
     def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
