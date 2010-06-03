@@ -389,6 +389,10 @@ def test_samefile(tmpdir):
     p = tmpdir.ensure("hello")
     assert p.samefile(p) 
 
+def test_mkdtemp_rootdir(tmpdir):
+    dtmp = local.mkdtemp(rootdir=tmpdir)
+    assert tmpdir.listdir() == [dtmp]
+
 class TestWINLocalPath:
     pytestmark = win32only
 

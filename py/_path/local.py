@@ -628,12 +628,14 @@ class LocalPath(FSBase):
         return py.path.local(py.std.tempfile.gettempdir())
     get_temproot = classmethod(get_temproot)
 
-    def mkdtemp(cls):
+    def mkdtemp(cls, rootdir=None):
         """ return a Path object pointing to a fresh new temporary directory
             (which we created ourself).
         """
         import tempfile
-        return cls(py.error.checked_call(tempfile.mkdtemp))
+        if rootdir is None:
+            rootdir = cls.get_temproot()
+        return cls(py.error.checked_call(tempfile.mkdtemp, dir=str(rootdir)))
     mkdtemp = classmethod(mkdtemp)
 
     def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
