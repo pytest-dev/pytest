@@ -4,11 +4,12 @@ Changes between 1.3.1 and 1.3.x
 New features 
 ++++++++++++++++++
 
-Bug fixes 
-++++++++++++++++++
+Bug fixes / Maintenance
+++++++++++++++++++++++++++
 
 - fix issue57 -f|--looponfail to work with xpassing tests
 - fix pyimport() to work with directories
+- streamline py.path.local.mkdtemp implementation and usage
 
 Changes between 1.3.0 and 1.3.1
 ==================================================
