@@ -53,11 +53,11 @@ class ErrorMaker(object):
             self._errno2class[eno] = errorcls
             return errorcls
 
-    def checked_call(self, func, *args):
+    def checked_call(self, func, *args, **kwargs):
         """ call a function and raise an errno-exception if applicable. """
         __tracebackhide__ = True
         try:
-            return func(*args)
+            return func(*args, **kwargs)
         except self.Error:
             raise
         except EnvironmentError:

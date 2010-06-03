@@ -24,3 +24,8 @@ def test_error_conversion_ENOTDIR(testdir):
     assert isinstance(excinfo.value, EnvironmentError)
     assert isinstance(excinfo.value, py.error.Error)
     assert "ENOTDIR" in repr(excinfo.value) 
+
+
+def test_checked_call_supports_kwargs(tmpdir):
+    import tempfile
+    py.error.checked_call(tempfile.mkdtemp, dir=str(tmpdir))
