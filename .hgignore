@@ -19,4 +19,6 @@ build/
 dist/
 py.egg-info
 issue/
+env/
 3rdparty/
+.tox
