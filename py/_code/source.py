@@ -17,6 +17,7 @@ class Source(object):
     """ a immutable object holding a source code fragment,
         possibly deindenting it.
     """
+    _compilecounter = 0
     def __init__(self, *parts, **kwargs):
         self.lines = lines = []
         de = kwargs.get('deindent', True)
@@ -195,10 +196,12 @@ class Source(object):
             if _genframe is None:
                 _genframe = sys._getframe(1) # the caller
             fn,lineno = _genframe.f_code.co_filename, _genframe.f_lineno
+            base = "<%d-codegen " % self._compilecounter
+            self.__class__._compilecounter += 1
             if not filename:
-                filename = '<codegen %s:%d>' % (fn, lineno)
+                filename = base + '%s:%d>' % (fn, lineno)
             else:
-                filename = '<codegen %r %s:%d>' % (filename, fn, lineno)
+                filename = base + '%r %s:%d>' % (filename, fn, lineno)
         source = "\n".join(self.lines) + '\n'
         try:
             co = cpy_compile(source, filename, mode, flag)

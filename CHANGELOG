@@ -11,6 +11,7 @@ Bug fixes / Maintenance
 - fix pyimport() to work with directories
 - streamline py.path.local.mkdtemp implementation and usage
 - don't print empty lines when showing junitxml-filename
+- fix py.code.compile(source) to generate unique filenames
 
 Changes between 1.3.0 and 1.3.1
 ==================================================

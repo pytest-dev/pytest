@@ -151,6 +151,22 @@ class TestSourceParsingAndCompiling:
         source = py.code.Source(co)
         assert str(source) == "x=3"
 
+    def test_compile_and_getsource_through_same_function(self):
+        def gensource(source):
+            return py.code.compile(source)
+        co1 = gensource("""
+            def f():
+                raise KeyError()
+        """) 
+        co2 = gensource("""
+            def f():
+                raise ValueError()
+        """) 
+        source1 = py.std.inspect.getsource(co1)
+        assert 'KeyError' in source1
+        source2 = py.std.inspect.getsource(co2)
+        assert 'ValueError' in source2
+
     def test_getstatement(self):
         #print str(self.source)
         ass = str(self.source[1:])
@@ -229,11 +245,11 @@ class TestSourceParsingAndCompiling:
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "<codegen %s:%d>" %(mypath, mylineno+2+1)
+                expected = "codegen %s:%d>" %(mypath, mylineno+2+1)
             else:
-                expected = "<codegen %r %s:%d>" % (name, mypath, mylineno+2+1)
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno+2+1)
             fn = co.co_filename
-            assert fn == expected 
+            assert fn.endswith(expected)
 
         mycode = py.code.Code(self.test_compilefuncs_and_path_sanity)
         mylineno = mycode.firstlineno
