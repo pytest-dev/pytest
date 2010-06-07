@@ -347,6 +347,11 @@ class TmpTestdir:
         p = py.path.local.make_numbered_dir(prefix="runpytest-", 
             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args 
+        for x in args:
+            if '--confcutdir' in str(x):
+                break
+        else:
+            args = ('--confcutdir=.',) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ('-p', plugins[0]) + args
