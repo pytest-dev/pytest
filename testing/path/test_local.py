@@ -60,6 +60,17 @@ class TestLocalPath(common.CommonFSTests):
         readonly_dir.remove()
         assert not readonly_dir.check(exists=1)
 
+    def test_remove_routes_ignore_errors(self, tmpdir, monkeypatch):
+        l = []
+        monkeypatch.setattr(py.std.shutil, 'rmtree', 
+            lambda *args, **kwargs: l.append(kwargs))
+        tmpdir.remove()
+        assert not l[0]['ignore_errors'] 
+        for val in (True, False):
+            l[:] = []
+            tmpdir.remove(ignore_errors=val)
+            assert l[0]['ignore_errors'] == val
+
     def test_initialize_curdir(self):
         assert str(local()) == py.std.os.getcwd()
 

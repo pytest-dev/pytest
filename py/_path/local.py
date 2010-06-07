@@ -157,14 +157,18 @@ class LocalPath(FSBase):
     def __lt__(self, other):
         return str(self) < str(other)
 
-    def remove(self, rec=1):
-        """ remove a file or directory (or a directory tree if rec=1).  """
+    def remove(self, rec=1, ignore_errors=False):
+        """ remove a file or directory (or a directory tree if rec=1). 
+        if ignore_errors is True, errors while removing directories will 
+        be ignored.
+        """
         if self.check(dir=1, link=0):
             if rec:
                 # force remove of readonly files on windows 
                 if iswin32: 
                     self.chmod(448, rec=1) # octcal 0700
-                py.error.checked_call(py.std.shutil.rmtree, self.strpath)
+                py.error.checked_call(py.std.shutil.rmtree, self.strpath,
+                    ignore_errors=ignore_errors)
             else:
                 py.error.checked_call(os.rmdir, self.strpath)
         else:
