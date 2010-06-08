@@ -348,6 +348,7 @@ class Function(FunctionMixin, py.test.collect.Item):
         if callobj is not _dummy: 
             self._obj = callobj 
         self.function = getattr(self.obj, 'im_func', self.obj)
+        self.keywords.update(py.builtin._getfuncdict(self.obj) or {})
 
     def _getobj(self):
         name = self.name
@@ -358,11 +359,6 @@ class Function(FunctionMixin, py.test.collect.Item):
 
     def _isyieldedfunction(self):
         return self._args is not None
-
-    def readkeywords(self):
-        d = super(Function, self).readkeywords()
-        d.update(py.builtin._getfuncdict(self.obj))
-        return d
 
     def runtest(self):
         """ execute the underlying test function. """

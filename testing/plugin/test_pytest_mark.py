@@ -65,7 +65,7 @@ class TestFunctional:
             def test_func():
                 pass
         """)
-        keywords = item.readkeywords()
+        keywords = item.keywords
         assert 'hello' in keywords
 
     def test_marklist_per_class(self, testdir):
@@ -79,7 +79,7 @@ class TestFunctional:
         """)
         clscol = modcol.collect()[0]
         item = clscol.collect()[0].collect()[0]
-        keywords = item.readkeywords()
+        keywords = item.keywords
         assert 'hello' in keywords
 
     def test_marklist_per_module(self, testdir):
@@ -93,7 +93,7 @@ class TestFunctional:
         """)
         clscol = modcol.collect()[0]
         item = clscol.collect()[0].collect()[0]
-        keywords = item.readkeywords()
+        keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
 
@@ -108,7 +108,7 @@ class TestFunctional:
         """)
         clscol = modcol.collect()[0]
         item = clscol.collect()[0].collect()[0]
-        keywords = item.readkeywords()
+        keywords = item.keywords
         assert 'hello' in keywords
 
     @py.test.mark.skipif("sys.version_info < (2,6)")
@@ -124,7 +124,7 @@ class TestFunctional:
         """)
         clscol = modcol.collect()[0]
         item = clscol.collect()[0].collect()[0]
-        keywords = item.readkeywords()
+        keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
 
@@ -141,7 +141,7 @@ class TestFunctional:
         """)
         items, rec = testdir.inline_genitems(p)
         item, = items
-        keywords = item.readkeywords()
+        keywords = item.keywords
         marker = keywords['hello']
         assert marker.args == ["pos0", "pos1"]
         assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
@@ -154,4 +154,22 @@ class TestFunctional:
             def test_func():
                 pass
         """)
-        keywords = item.readkeywords()
+        keywords = item.keywords
+
+    def test_mark_dynamically_in_funcarg(self, testdir):
+        testdir.makeconftest("""
+            import py
+            def pytest_funcarg__arg(request):
+                request.applymarker(py.test.mark.hello)
+            def pytest_terminal_summary(terminalreporter):
+                l = terminalreporter.stats['passed'] 
+                terminalreporter._tw.line("keyword: %s" % l[0].keywords)
+        """)
+        testdir.makepyfile("""
+            def test_func(arg):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "keyword: *hello*"
+        ])

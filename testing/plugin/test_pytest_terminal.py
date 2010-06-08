@@ -14,6 +14,7 @@ from py._plugin.pytest_terminal import TerminalReporter, \
 from py._plugin import pytest_runner as runner 
 
 def basic_run_report(item):
+    runner.call_and_report(item, "setup", log=False)
     return runner.call_and_report(item, "call", log=False)
 
 class Option:

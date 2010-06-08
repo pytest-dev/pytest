@@ -4,6 +4,17 @@ Changes between 1.3.1 and 1.3.x
 New features 
 ++++++++++++++++++
 
+- Funcarg factories can now dynamically apply a marker to a 
+  test invocation.  This is particularly useful if a factory
+  provides parameters to a test which you expect-to-fail:
+
+    def pytest_funcarg__arg(request):
+        request.applymarker(py.test.mark.xfail(reason="flaky config"))
+        ...
+
+    def test_function(arg):
+        ...
+
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 

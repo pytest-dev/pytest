@@ -188,6 +188,21 @@ class TestXFail:
             "*1 passed*",
         ])
 
+    def test_xfail_not_run_no_setup_run(self, testdir):
+        p = testdir.makepyfile(test_one="""
+            import py
+            @py.test.mark.xfail(run=False, reason="hello")
+            def test_this():
+                assert 0
+            def setup_module(mod):
+                raise ValueError(42)
+        """)
+        result = testdir.runpytest(p, '--report=xfailed', )
+        result.stdout.fnmatch_lines([
+            "*test_one*test_this*NOTRUN*hello",
+            "*1 xfailed*",
+        ])
+
     def test_xfail_xpass(self, testdir):
         p = testdir.makepyfile(test_one="""
             import py
@@ -245,8 +260,47 @@ class TestXFail:
             "*py.test.xfail*",
         ])
 
+    def xtest_dynamic_xfail_set_during_setup(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            def setup_function(function):
+                py.test.mark.xfail(function)
+            def test_this():
+                assert 0
+            def test_that():
+                assert 1
+        """)
+        result = testdir.runpytest(p, '-rxX')
+        result.stdout.fnmatch_lines([
+            "*XFAIL*test_this*",
+            "*XPASS*test_that*",
+        ])
 
+    def test_dynamic_xfail_no_run(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            def pytest_funcarg__arg(request):
+                request.applymarker(py.test.mark.xfail(run=False))
+            def test_this(arg):
+                assert 0
+        """)
+        result = testdir.runpytest(p, '-rxX')
+        result.stdout.fnmatch_lines([
+            "*XFAIL*test_this*NOTRUN*",
+        ])
 
+    def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            def pytest_funcarg__arg(request):
+                request.applymarker(py.test.mark.xfail)
+            def test_this2(arg):
+                assert 0
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 xfailed*",
+        ])
 
 
 class TestSkipif:

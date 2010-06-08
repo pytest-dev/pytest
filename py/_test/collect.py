@@ -31,6 +31,7 @@ class Node(object):
         self.config = config or parent.config
         self.fspath = getattr(parent, 'fspath', None) 
         self.ihook = HookProxy(self)
+        self.keywords = self.readkeywords()
 
     def _reraiseunpicklingproblem(self):
         if hasattr(self, '_unpickle_exc'):
@@ -153,7 +154,7 @@ class Node(object):
     def _matchonekeyword(self, key, chain):
         elems = key.split(".")
         # XXX O(n^2), anyone cares?
-        chain = [item.readkeywords() for item in chain if item._keywords()]
+        chain = [item.keywords for item in chain if item.keywords]
         for start, _ in enumerate(chain):
             if start + len(elems) > len(chain):
                 return False

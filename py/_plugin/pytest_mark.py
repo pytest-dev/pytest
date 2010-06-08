@@ -171,4 +171,6 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
                 for mark in marker:
                     if isinstance(mark, MarkDecorator):
                         mark(func)
+                item.keywords.update(py.builtin._getfuncdict(func) or {})
+                        
     return item

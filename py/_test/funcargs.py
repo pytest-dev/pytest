@@ -92,6 +92,16 @@ class FuncargRequest:
             if argname not in self._pyfuncitem.funcargs:
                 self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
 
+
+    def applymarker(self, marker):
+        """ apply a marker to a test function invocation. 
+
+        The 'marker' must be created with py.test.mark.* XYZ. 
+        """
+        if not isinstance(marker, py.test.mark.XYZ.__class__):
+            raise ValueError("%r is not a py.test.mark.* object")
+        self._pyfuncitem.keywords[marker.markname] = marker 
+
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         """ cache and return result of calling setup().  
 

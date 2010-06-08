@@ -211,6 +211,23 @@ class TestRequest:
         req = funcargs.FuncargRequest(item)
         assert req.fspath == modcol.fspath 
 
+def test_applymarker(testdir):
+    item1,item2 = testdir.getitems("""
+        class TestClass:
+            def test_func1(self, something): 
+                pass
+            def test_func2(self, something): 
+                pass
+    """)
+    req1 = funcargs.FuncargRequest(item1)
+    assert 'xfail' not in item1.keywords 
+    req1.applymarker(py.test.mark.xfail)
+    assert 'xfail' in item1.keywords 
+    assert 'skipif' not in item1.keywords 
+    req1.applymarker(py.test.mark.skipif)
+    assert 'skipif' in item1.keywords 
+    py.test.raises(ValueError, "req1.applymarker(42)")
+
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
         item1,item2 = testdir.getitems("""

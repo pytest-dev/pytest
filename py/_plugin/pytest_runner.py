@@ -134,7 +134,7 @@ class ItemTestReport(BaseReport):
         self.item = item 
         self.when = when
         if item and when != "setup":
-            self.keywords = item.readkeywords() 
+            self.keywords = item.keywords
         else:
             # if we fail during setup it might mean 
             # we are not able to access the underlying object

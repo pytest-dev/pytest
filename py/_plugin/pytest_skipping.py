@@ -159,8 +159,10 @@ class MarkEvaluator:
     def __init__(self, item, name):
         self.item = item
         self.name = name
-        self.holder = getattr(item.obj, name, None)
 
+    @property
+    def holder(self):
+        return self.item.keywords.get(self.name, None)
     def __bool__(self):
         return bool(self.holder)
     __nonzero__ = __bool__
@@ -204,10 +206,17 @@ def pytest_runtest_setup(item):
     if evalskip.istrue():
         py.test.skip(evalskip.getexplanation())
     item._evalxfail = MarkEvaluator(item, 'xfail')
+    check_xfail_no_run(item)
+
+def pytest_pyfunc_call(pyfuncitem):
+    check_xfail_no_run(pyfuncitem)
+
+def check_xfail_no_run(item):
     if not item.config.getvalue("runxfail"):
-        if item._evalxfail.istrue():
-            if not item._evalxfail.get('run', True):
-                py.test.skip("xfail")
+        evalxfail = item._evalxfail
+        if evalxfail.istrue():
+            if not evalxfail.get('run', True):
+                py.test.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 def pytest_runtest_makereport(__multicall__, item, call):
     if not isinstance(item, py.test.collect.Function):
@@ -224,16 +233,9 @@ def pytest_runtest_makereport(__multicall__, item, call):
             rep.skipped = True
             rep.failed = False
             return rep
-    if call.when == "setup":
+    if call.when == "call":
         rep = __multicall__.execute()
-        if rep.skipped and evalxfail.istrue():
-            expl = evalxfail.getexplanation()
-            if not evalxfail.get("run", True):
-                expl = "[NOTRUN] " + expl
-            rep.keywords['xfail'] = expl
-        return rep
-    elif call.when == "call":
-        rep = __multicall__.execute()
+        evalxfail = getattr(item, '_evalxfail')
         if not item.config.getvalue("runxfail") and evalxfail.istrue():
             if call.excinfo:
                 rep.skipped = True

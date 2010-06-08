@@ -160,6 +160,25 @@ like this:
                  scope="session"
         )
 
+dynamically applying a marker
+---------------------------------------------
+
+.. sourcecode:: python 
+
+    def applymarker(self, marker):
+        """ apply a marker to a test function invocation. 
+
+        The 'marker' must be created with py.test.mark.* XYZ. 
+        """
+
+``request.applymarker(marker)`` will mark the test invocation
+with the given marker.  For example, if your funcarg factory provides 
+values which may cause a test function to fail you can call
+``request.applymarker(py.test.mark.xfail(reason='flaky config'))``
+and this will cause the test to not show tracebacks. See xfail_
+for details. 
+
+.. _`xfail`: plugin/skipping.html#xfail
 
 requesting values of other funcargs 
 ---------------------------------------------
