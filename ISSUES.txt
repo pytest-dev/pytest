@@ -21,6 +21,23 @@ maybe also introduce a py.test.mark.test to explicitely
 mark a function to become a tested one.  Lookup JUnit 
 ways of tagging tests. 
 
+introduce py.test.mark.platform 
+-------------------------------------------------------
+tags: feature 1.4
+
+Introduce nice-to-spell platform-skipping, examples: 
+
+    @py.test.mark.platform("python3")
+    @py.test.mark.platform("not python3")
+    @py.test.mark.platform("win32 and not python3")
+    @py.test.mark.platform("darwin")
+    @py.test.mark.platform("not (jython and win32)")
+    @py.test.mark.platform("not (jython and win32)", xfail=True)
+
+etc. Idea is to allow Python expressions which can operate
+on common spellings for operating systems and python 
+interpreter versions. 
+
 introduce py.test.mark registration
 -----------------------------------------
 tags: feature 1.3
