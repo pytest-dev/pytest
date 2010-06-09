@@ -340,6 +340,37 @@ class TestRaises:
         except py.test.raises.Exception:
             pass
 
+    @py.test.mark.skipif('sys.version < "2.5"')
+    def test_raises_as_contextmanager(self, testdir):
+        testdir.makepyfile("""
+            from __future__ import with_statement
+            import py
+
+            def test_simple():
+                with py.test.raises(ZeroDivisionError) as ctx:
+                    1/0
+
+                print ctx.excinfo
+                assert ctx.excinfo.type is ZeroDivisionError
+
+
+            def test_noraise():
+                with py.test.raises(py.test.raises.Exception):
+                    with py.test.raises(ValueError):
+                           int()
+
+            def test_raise_wrong_exception_passes_by():
+                with py.test.raises(ZeroDivisionError):
+                    with py.test.raises(ValueError):
+                           1/0
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*3 passed*',
+        ])
+
+
+
 def test_pytest_exit():
     try:
         py.test.exit("hello")
