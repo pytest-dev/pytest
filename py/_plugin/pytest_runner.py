@@ -353,18 +353,30 @@ def xfail(reason=""):
 xfail.Exception = XFailed
 
 def raises(ExpectedException, *args, **kwargs):
-    """ if args[0] is callable: raise AssertionError if calling it with 
+    """ assert that a code block/function call raises an exception. 
+        
+        If using Python 2.5 or above, you may use this function as a 
+        context manager::
+
+        >>> with raises(ZeroDivisionError):
+        ...    1/0
+
+        Or you can one of two forms: 
+
+        if args[0] is callable: raise AssertionError if calling it with 
         the remaining arguments does not raise the expected exception.  
         if args[0] is a string: raise AssertionError if executing the
         the string in the calling scope does not raise expected exception. 
-        for examples:
-        x = 5
-        raises(TypeError, lambda x: x + 'hello', x=x)
-        raises(TypeError, "x + 'hello'")
+        examples:
+        >>> x = 5
+        >>> raises(TypeError, lambda x: x + 'hello', x=x)
+        >>> raises(TypeError, "x + 'hello'")
     """
-    __tracebackhide__ = True 
-    assert args
-    if isinstance(args[0], str):
+    __tracebackhide__ = True
+
+    if not args:
+        return RaisesContext(ExpectedException)
+    elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
         frame = sys._getframe(1)
@@ -390,6 +402,26 @@ def raises(ExpectedException, *args, **kwargs):
         expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
     raise ExceptionFailure(msg="DID NOT RAISE", 
                            expr=args, expected=ExpectedException) 
+
+
+class RaisesContext(object):
+
+    def __init__(self, ExpectedException):
+        self.ExpectedException = ExpectedException
+        self.excinfo = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *tp):
+        __tracebackhide__ = True
+        if tp[0] is None:
+            raise ExceptionFailure(msg="DID NOT RAISE",
+                                   expr=(),
+                                   expected=self.ExpectedException)
+        self.excinfo = py.code.ExceptionInfo(tp)
+        return issubclass(self.excinfo.type, self.ExpectedException)
+
 
 raises.Exception = ExceptionFailure
 

@@ -130,14 +130,20 @@ first failed and then succeeded.
 asserting expected exceptions 
 ----------------------------------------
 
-In order to write assertions about exceptions, you use
-one of two forms::
+In order to write assertions about exceptions, you can use
+``py.test.raises`` as a context manager like this:: 
 
-    py.test.raises(Exception, func, *args, **kwargs) 
-    py.test.raises(Exception, "func(*args, **kwargs)")
+    with py.test.raises(ZeroDivisionError):
+        1 / 0
+
+If you want to write test code that works on Python2.4 as well, 
+you may also use two other ways to test for an expected exception::
+
+    py.test.raises(ExpectedException, func, *args, **kwargs) 
+    py.test.raises(ExpectedException, "func(*args, **kwargs)")
 
 both of which execute the specified function with args and kwargs and
-asserts that the given ``Exception`` is raised.  The reporter will
+asserts that the given ``ExpectedException`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 

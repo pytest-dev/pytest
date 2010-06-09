@@ -4,6 +4,14 @@ Changes between 1.3.1 and 1.3.x
 New features 
 ++++++++++++++++++
 
+- fix issue103: introduce additional "with py.test.raises(exc):" form, example::
+
+    with py.test.raises(ZeroDivisionError):
+        x = 0
+        1 / x
+
+  (thanks Ronny Pfannschmidt) 
+
 - Funcarg factories can now dynamically apply a marker to a 
   test invocation.  This is particularly useful if a factory
   provides parameters to a test which you expect-to-fail:
