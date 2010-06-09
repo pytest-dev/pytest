@@ -8,64 +8,20 @@ Helper functions for writing to terminals and files.
 import sys, os
 import py
 
+win32_and_ctypes = False
+if sys.platform == "win32":
+    try:
+        import ctypes
+        win32_and_ctypes = True
+    except ImportError:
+        pass
+
 def _getdimensions():
     import termios,fcntl,struct
     call = fcntl.ioctl(0,termios.TIOCGWINSZ,"\000"*8)
     height,width = struct.unpack( "hhhh", call ) [:2]
     return height, width 
 
-if sys.platform == 'win32':
-    # ctypes access to the Windows console
-
-    STD_OUTPUT_HANDLE = -11
-    STD_ERROR_HANDLE  = -12
-    FOREGROUND_BLUE      = 0x0001 # text color contains blue.
-    FOREGROUND_GREEN     = 0x0002 # text color contains green.
-    FOREGROUND_RED       = 0x0004 # text color contains red.
-    FOREGROUND_WHITE     = 0x0007
-    FOREGROUND_INTENSITY = 0x0008 # text color is intensified.
-    BACKGROUND_BLUE      = 0x0010 # background color contains blue.
-    BACKGROUND_GREEN     = 0x0020 # background color contains green.
-    BACKGROUND_RED       = 0x0040 # background color contains red.
-    BACKGROUND_WHITE     = 0x0070
-    BACKGROUND_INTENSITY = 0x0080 # background color is intensified.
-
-    def GetStdHandle(kind):
-        import ctypes
-        return ctypes.windll.kernel32.GetStdHandle(kind)
-
-    def SetConsoleTextAttribute(handle, attr):
-        import ctypes
-        ctypes.windll.kernel32.SetConsoleTextAttribute(
-            handle, attr)
-
-    def _getdimensions():
-        import ctypes
-        from ctypes import wintypes
-
-        SHORT = ctypes.c_short
-        class COORD(ctypes.Structure):
-            _fields_ = [('X', SHORT),
-                        ('Y', SHORT)]
-        class SMALL_RECT(ctypes.Structure):
-            _fields_ = [('Left', SHORT),
-                        ('Top', SHORT),
-                        ('Right', SHORT),
-                        ('Bottom', SHORT)]
-        class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
-            _fields_ = [('dwSize', COORD),
-                        ('dwCursorPosition', COORD),
-                        ('wAttributes', wintypes.WORD),
-                        ('srWindow', SMALL_RECT),
-                        ('dwMaximumWindowSize', COORD)]
-        STD_OUTPUT_HANDLE = -11
-        handle = GetStdHandle(STD_OUTPUT_HANDLE)
-        info = CONSOLE_SCREEN_BUFFER_INFO()
-        ctypes.windll.kernel32.GetConsoleScreenBufferInfo(
-            handle, ctypes.byref(info))
-        # Substract one from the width, otherwise the cursor wraps
-        # and the ending \n causes an empty line to display.
-        return info.dwSize.Y, info.dwSize.X - 1
 
 def get_terminal_width():
     try:
@@ -97,7 +53,7 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
     if newline:
         text += '\n'
 
-    if esc and sys.platform == "win32" and file.isatty():
+    if esc and win32_and_ctypes and file.isatty():
         if 1 in esc:
             bold = True
             esc = tuple([x for x in esc if x != 1])
@@ -254,9 +210,6 @@ class Win32ConsoleWriter(TerminalWriter):
     def line(self, s="", **kw):
         self.write(s+"\n", **kw)
 
-if sys.platform == 'win32':
-    TerminalWriter = Win32ConsoleWriter
-
 class WriteFile(object): 
     def __init__(self, writemethod, encoding=None): 
         self.encoding = encoding 
@@ -270,4 +223,58 @@ class WriteFile(object):
     def flush(self): 
         return 
 
+
+if win32_and_ctypes:
+    TerminalWriter = Win32ConsoleWriter
+
+    # ctypes access to the Windows console
+    STD_OUTPUT_HANDLE = -11
+    STD_ERROR_HANDLE  = -12
+    FOREGROUND_BLUE      = 0x0001 # text color contains blue.
+    FOREGROUND_GREEN     = 0x0002 # text color contains green.
+    FOREGROUND_RED       = 0x0004 # text color contains red.
+    FOREGROUND_WHITE     = 0x0007
+    FOREGROUND_INTENSITY = 0x0008 # text color is intensified.
+    BACKGROUND_BLUE      = 0x0010 # background color contains blue.
+    BACKGROUND_GREEN     = 0x0020 # background color contains green.
+    BACKGROUND_RED       = 0x0040 # background color contains red.
+    BACKGROUND_WHITE     = 0x0070
+    BACKGROUND_INTENSITY = 0x0080 # background color is intensified.
+
+    def GetStdHandle(kind):
+        import ctypes
+        return ctypes.windll.kernel32.GetStdHandle(kind)
+
+    def SetConsoleTextAttribute(handle, attr):
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleTextAttribute(
+            handle, attr)
+
+    def _getdimensions():
+        import ctypes
+        from ctypes import wintypes
+
+        SHORT = ctypes.c_short
+        class COORD(ctypes.Structure):
+            _fields_ = [('X', SHORT),
+                        ('Y', SHORT)]
+        class SMALL_RECT(ctypes.Structure):
+            _fields_ = [('Left', SHORT),
+                        ('Top', SHORT),
+                        ('Right', SHORT),
+                        ('Bottom', SHORT)]
+        class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+            _fields_ = [('dwSize', COORD),
+                        ('dwCursorPosition', COORD),
+                        ('wAttributes', wintypes.WORD),
+                        ('srWindow', SMALL_RECT),
+                        ('dwMaximumWindowSize', COORD)]
+        STD_OUTPUT_HANDLE = -11
+        handle = GetStdHandle(STD_OUTPUT_HANDLE)
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        ctypes.windll.kernel32.GetConsoleScreenBufferInfo(
+            handle, ctypes.byref(info))
+        # Substract one from the width, otherwise the cursor wraps
+        # and the ending \n causes an empty line to display.
+        return info.dwSize.Y, info.dwSize.X - 1
 
