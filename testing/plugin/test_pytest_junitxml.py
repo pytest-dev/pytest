@@ -119,6 +119,28 @@ class TestPython:
             classname="test_failure_escape.test_failure_escape", 
             name="test_func[&]")
 
+    def test_junit_prefixing(self, testdir):
+        testdir.makepyfile("""
+            def test_func(): 
+                assert 0
+            class TestHello:
+                def test_hello(self):
+                    pass
+        """)
+        result, dom = runandparse(testdir, "--junitprefix=xyz")
+        assert result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, failures=1, tests=2)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            classname="xyz.test_junit_prefixing.test_junit_prefixing",
+            name="test_func")
+        tnode = node.getElementsByTagName("testcase")[1]
+        assert_attr(tnode, 
+            classname="xyz.test_junit_prefixing.test_junit_prefixing."
+                      "TestHello", 
+            name="test_hello")
+
     def test_xfailure_function(self, testdir):
         testdir.makepyfile("""
             import py

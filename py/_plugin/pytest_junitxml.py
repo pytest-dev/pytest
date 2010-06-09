@@ -11,11 +11,14 @@ def pytest_addoption(parser):
     group.addoption('--junitxml', action="store", dest="xmlpath", 
            metavar="path", default=None,
            help="create junit-xml style report file at given path.")
+    group.addoption('--junitprefix', action="store", dest="junitprefix", 
+           metavar="str", default=None,
+           help="prepend prefix to classnames in junit-xml output")
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     if xmlpath:
-        config._xml = LogXML(xmlpath)
+        config._xml = LogXML(xmlpath, config.option.junitprefix)
         config.pluginmanager.register(config._xml)
 
 def pytest_unconfigure(config):
@@ -25,18 +28,25 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(xml)
 
 class LogXML(object):
-    def __init__(self, logfile):
+    def __init__(self, logfile, prefix):
         self.logfile = logfile
+        self.prefix = prefix
         self.test_logs = []
         self.passed = self.skipped = 0
         self.failed = self.errors = 0
         self._durations = {}
   
     def _opentestcase(self, report):
-        node = report.item 
-        d = {'time': self._durations.pop(report.item, "0")}
+        if hasattr(report, 'item'):
+            node = report.item
+        else:
+            node = report.collector
+        d = {'time': self._durations.pop(node, "0")}
         names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
-        d['classname'] = ".".join(names[:-1])
+        classnames = names[:-1]
+        if self.prefix:
+            classnames.insert(0, self.prefix)
+        d['classname'] = ".".join(classnames)
         d['name'] = py.xml.escape(names[-1])
         attrs = ['%s="%s"' % item for item in sorted(d.items())]
         self.test_logs.append("\n<testcase %s>" % " ".join(attrs))
@@ -66,17 +76,8 @@ class LogXML(object):
             self.failed += 1
         self._closetestcase()
 
-    def _opentestcase_collectfailure(self, report):
-        node = report.collector
-        d = {'time': '???'}
-        names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
-        d['classname'] = ".".join(names[:-1])
-        d['name'] = py.xml.escape(names[-1])
-        attrs = ['%s="%s"' % item for item in sorted(d.items())]
-        self.test_logs.append("\n<testcase %s>" % " ".join(attrs))
-
     def append_collect_failure(self, report):
-        self._opentestcase_collectfailure(report)
+        self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
         self.appendlog('<failure message="collection failure">%s</failure>', 
             report.longrepr)
@@ -84,7 +85,7 @@ class LogXML(object):
         self.errors += 1
 
     def append_collect_skipped(self, report):
-        self._opentestcase_collectfailure(report)
+        self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
         self.appendlog('<skipped message="collection skipped">%s</skipped>',
             report.longrepr)

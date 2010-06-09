@@ -17,6 +17,9 @@ New features
 
   (thanks Ronny Pfannschmidt) 
 
+- introduce '--junitprefix=STR' option to prepend a prefix 
+  to all reports in the junitxml file. 
+
 - Funcarg factories can now dynamically apply a marker to a 
   test invocation.  This is particularly useful if a factory
   provides parameters to a test which you expect-to-fail:
