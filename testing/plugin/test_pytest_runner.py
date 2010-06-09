@@ -347,12 +347,11 @@ class TestRaises:
             import py
 
             def test_simple():
-                with py.test.raises(ZeroDivisionError) as ctx:
+                with py.test.raises(ZeroDivisionError) as excinfo:
+                    assert isinstance(excinfo, py.code.ExceptionInfo)
                     1/0
-
-                print ctx.excinfo
-                assert ctx.excinfo.type is ZeroDivisionError
-
+                print (excinfo)
+                assert excinfo.type == ZeroDivisionError
 
             def test_noraise():
                 with py.test.raises(py.test.raises.Exception):

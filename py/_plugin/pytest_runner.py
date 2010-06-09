@@ -411,7 +411,8 @@ class RaisesContext(object):
         self.excinfo = None
 
     def __enter__(self):
-        return self
+        self.excinfo = object.__new__(py.code.ExceptionInfo)
+        return self.excinfo 
 
     def __exit__(self, *tp):
         __tracebackhide__ = True
@@ -419,7 +420,7 @@ class RaisesContext(object):
             raise ExceptionFailure(msg="DID NOT RAISE",
                                    expr=(),
                                    expected=self.ExpectedException)
-        self.excinfo = py.code.ExceptionInfo(tp)
+        self.excinfo.__init__(tp)
         return issubclass(self.excinfo.type, self.ExpectedException)
 
 

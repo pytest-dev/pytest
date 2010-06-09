@@ -136,6 +136,15 @@ In order to write assertions about exceptions, you can use
     with py.test.raises(ZeroDivisionError):
         1 / 0
 
+and if you need to have access to the actual exception info you may use::
+
+    with py.test.raises(RuntimeError) as excinfo: 
+        def f():
+            f()
+        f()
+
+    # do checks related to excinfo.type, excinfo.value, excinfo.traceback 
+
 If you want to write test code that works on Python2.4 as well, 
 you may also use two other ways to test for an expected exception::
 
