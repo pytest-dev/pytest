@@ -98,6 +98,27 @@ class TestPython:
         assert_attr(fnode, message="test failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_failure_escape(self, testdir):
+        testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(id="<", funcargs=dict(arg1=42))
+                metafunc.addcall(id="&", funcargs=dict(arg1=44))
+            def test_func(arg1): 
+                assert 0
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret 
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, failures=2, tests=2)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode, 
+            classname="test_failure_escape.test_failure_escape", 
+            name="test_func[<]")
+        tnode = node.getElementsByTagName("testcase")[1]
+        assert_attr(tnode, 
+            classname="test_failure_escape.test_failure_escape", 
+            name="test_func[&]")
+
     def test_xfailure_function(self, testdir):
         testdir.makepyfile("""
             import py

@@ -37,7 +37,7 @@ class LogXML(object):
         d = {'time': self._durations.pop(report.item, "0")}
         names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
         d['classname'] = ".".join(names[:-1])
-        d['name'] = names[-1]
+        d['name'] = py.xml.escape(names[-1])
         attrs = ['%s="%s"' % item for item in sorted(d.items())]
         self.test_logs.append("\n<testcase %s>" % " ".join(attrs))
 
@@ -71,7 +71,7 @@ class LogXML(object):
         d = {'time': '???'}
         names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
         d['classname'] = ".".join(names[:-1])
-        d['name'] = names[-1]
+        d['name'] = py.xml.escape(names[-1])
         attrs = ['%s="%s"' % item for item in sorted(d.items())]
         self.test_logs.append("\n<testcase %s>" % " ".join(attrs))
 

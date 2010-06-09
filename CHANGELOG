@@ -31,6 +31,7 @@ New features
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 
+- fix issue104 proper escaping for test names in junitxml plugin
 - fix issue57 -f|--looponfail to work with xpassing tests
 - fix pyimport() to work with directories
 - streamline py.path.local.mkdtemp implementation and usage
