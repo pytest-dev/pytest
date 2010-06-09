@@ -139,6 +139,13 @@ def test_assert_with_brokenrepr_arg():
     if e.msg.find("broken __repr__") == -1:
         py.test.fail("broken __repr__ not handle correctly")
 
+def test_multiple_statements_per_line():
+    try:
+        a = 1; assert a == 2
+    except AssertionError:
+        e = exvalue()
+        assert "assert 1 == 2" in e.msg
+
 
 class TestView:
 

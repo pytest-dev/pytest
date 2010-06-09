@@ -324,10 +324,11 @@ class DebugInterpreter(ast.NodeVisitor):
     def visit_Assign(self, assign):
         value_explanation, value_result = self.visit(assign.value)
         explanation = "... = %s" % (value_explanation,)
-        name = ast.Name("__exprinfo_expr", ast.Load(), assign.value.lineno,
-                        assign.value.col_offset)
-        new_assign = ast.Assign(assign.targets, name, assign.lineno,
-                                assign.col_offset)
+        name = ast.Name("__exprinfo_expr", ast.Load(),
+                        lineno=assign.value.lineno,
+                        col_offset=assign.value.col_offset)
+        new_assign = ast.Assign(assign.targets, name, lineno=assign.lineno,
+                                col_offset=assign.col_offset)
         mod = ast.Module([new_assign])
         co = self._compile(mod, "exec")
         try:

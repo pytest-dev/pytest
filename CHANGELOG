@@ -34,6 +34,7 @@ New features
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 
+- fix issue105 assignment on the same line as a failing assertion
 - fix issue104 proper escaping for test names in junitxml plugin
 - fix issue57 -f|--looponfail to work with xpassing tests
 - fix pyimport() to work with directories
