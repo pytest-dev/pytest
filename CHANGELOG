@@ -24,6 +24,7 @@ Bug fixes / Maintenance
 - don't print empty lines when showing junitxml-filename
 - fix py.code.compile(source) to generate unique filenames
 - add optional boolean ignore_errors parameter to py.path.local.remove
+- fix terminal writing on win32/python2.4 
 
 Changes between 1.3.0 and 1.3.1
 ==================================================

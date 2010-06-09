@@ -226,6 +226,8 @@ class WriteFile(object):
 
 if win32_and_ctypes:
     TerminalWriter = Win32ConsoleWriter
+    import ctypes
+    from ctypes import wintypes
 
     # ctypes access to the Windows console
     STD_OUTPUT_HANDLE = -11
@@ -242,17 +244,13 @@ if win32_and_ctypes:
     BACKGROUND_INTENSITY = 0x0080 # background color is intensified.
 
     def GetStdHandle(kind):
-        import ctypes
         return ctypes.windll.kernel32.GetStdHandle(kind)
 
     def SetConsoleTextAttribute(handle, attr):
-        import ctypes
         ctypes.windll.kernel32.SetConsoleTextAttribute(
             handle, attr)
 
     def _getdimensions():
-        import ctypes
-        from ctypes import wintypes
 
         SHORT = ctypes.c_short
         class COORD(ctypes.Structure):
