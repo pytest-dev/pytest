@@ -146,6 +146,13 @@ def test_multiple_statements_per_line():
         e = exvalue()
         assert "assert 1 == 2" in e.msg
 
+def test_power():
+    try:
+        assert 2**3 == 7
+    except AssertionError:
+        e = exvalue()
+        assert "assert 8 == 7" in e.msg
+
 
 class TestView:
 

@@ -92,6 +92,7 @@ operator_map = {
     ast.LtE : "<=",
     ast.Gt : ">",
     ast.GtE : ">=",
+    ast.Pow : "**",
     ast.Is : "is",
     ast.IsNot : "is not",
     ast.In : "in",
