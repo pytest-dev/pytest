@@ -37,10 +37,12 @@ Bug fixes / Maintenance
 - fix issue105 assignment on the same line as a failing assertion
 - fix issue104 proper escaping for test names in junitxml plugin
 - fix issue57 -f|--looponfail to work with xpassing tests
+- fix py.code.compile(source) to generate unique filenames 
+- fix assertion re-interp problems on PyPy, by defering code 
+  compilation to the (overridable) Frame.eval class. 
 - fix pyimport() to work with directories
 - streamline py.path.local.mkdtemp implementation and usage
 - don't print empty lines when showing junitxml-filename
-- fix py.code.compile(source) to generate unique filenames
 - add optional boolean ignore_errors parameter to py.path.local.remove
 - fix terminal writing on win32/python2.4 
 
