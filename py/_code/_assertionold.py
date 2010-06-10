@@ -185,10 +185,9 @@ class Compare(Interpretable):
             expr2.eval(frame)
             self.explanation = "%s %s %s" % (
                 expr.explanation, operation, expr2.explanation)
-            co = compile("__exprinfo_left %s __exprinfo_right" % operation,
-                         '?', 'eval')
+            source = "__exprinfo_left %s __exprinfo_right" % operation
             try:
-                self.result = frame.eval(co, __exprinfo_left=expr.result,
+                self.result = frame.eval(source, __exprinfo_left=expr.result,
                                              __exprinfo_right=expr2.result)
             except passthroughex:
                 raise
