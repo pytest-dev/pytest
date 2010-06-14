@@ -24,6 +24,7 @@ function arguments:
 test parametrization: 
 
 - `generating parametrized tests with funcargs`_ 
+- `test generators and cached setup`_ 
 - `parametrizing tests, generalized`_ (blog post) 
 - `putting test-hooks into local or global plugins`_ (blog post) 
 
@@ -47,6 +48,7 @@ plugin specific examples:
 .. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
 .. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
+.. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
 
 conference talks and tutorials
 ----------------------------------------
