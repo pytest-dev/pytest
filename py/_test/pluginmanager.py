@@ -6,8 +6,8 @@ import inspect
 from py._plugin import hookspec
 
 default_plugins = (
-    "default runner capture mark terminal skipping tmpdir monkeypatch "
-    "recwarn pdb pastebin unittest helpconfig nose assertion genscript "
+    "default runner pdb capture mark terminal skipping tmpdir monkeypatch "
+    "recwarn pastebin unittest helpconfig nose assertion genscript "
     "junitxml doctest").split()
 
 def check_old_use(mod, modname):

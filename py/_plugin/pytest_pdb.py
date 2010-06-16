@@ -15,19 +15,21 @@ def pytest_configure(config):
         config.pluginmanager.register(PdbInvoke(), 'pdb')
 
 class PdbInvoke:
-    def pytest_runtest_makereport(self, item, call):
-        if call.excinfo and not \
-           call.excinfo.errisinstance(py.test.skip.Exception): 
-            # play well with capturing, slightly hackish
-            capman = item.config.pluginmanager.getplugin('capturemanager')
-            capman.suspendcapture() 
-
-            tw = py.io.TerminalWriter()
-            repr = call.excinfo.getrepr()
-            repr.toterminal(tw) 
-            post_mortem(call.excinfo._excinfo[2])
-
-            capman.resumecapture_item(item)
+    def pytest_runtest_makereport(self, item, call, __multicall__):
+        if not call.excinfo or \
+            call.excinfo.errisinstance(py.test.skip.Exception):
+            return
+        rep = __multicall__.execute()
+        if "xfail" in rep.keywords:
+            return rep
+        # we assume that the above execute() suspended capturing
+        tw = py.io.TerminalWriter()
+        tw.line()
+        tw.sep(">", "traceback")
+        rep.toterminal(tw)
+        tw.sep(">", "entering PDB")
+        post_mortem(call.excinfo._excinfo[2])
+        return rep
 
 class Pdb(py.std.pdb.Pdb):
     def do_list(self, arg):

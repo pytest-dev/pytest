@@ -20,6 +20,16 @@ class TestPDB:
         tb = py.code.Traceback(pdblist[0][0])
         assert tb[-1].name == "test_func"
 
+    def test_pdb_on_xfail(self, testdir, pdblist):
+        rep = testdir.inline_runsource1('--pdb', """
+            import py
+            @py.test.mark.xfail
+            def test_func(): 
+                assert 0
+        """)
+        assert "xfail" in rep.keywords
+        assert not pdblist 
+
     def test_pdb_on_skip(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
             import py
