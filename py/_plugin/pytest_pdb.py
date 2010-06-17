@@ -15,6 +15,9 @@ def pytest_configure(config):
         config.pluginmanager.register(PdbInvoke(), 'pdb')
 
 class PdbInvoke:
+    def pytest_sessionfinish(self, session):
+        # don't display failures again at the end
+        session.config.option.tbstyle = "no" 
     def pytest_runtest_makereport(self, item, call, __multicall__):
         if not call.excinfo or \
             call.excinfo.errisinstance(py.test.skip.Exception):

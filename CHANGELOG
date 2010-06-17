@@ -34,7 +34,8 @@ New features
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 
-- fix --pdb to ignore xfailed tests and unify its TB-reporting 
+- refine --pdb: ignore xfailed tests, unify its TB-reporting and 
+  don't display failures again at the end.
 - fix assertion interpretation with the ** operator
 - fix issue105 assignment on the same line as a failing assertion
 - fix issue104 proper escaping for test names in junitxml plugin

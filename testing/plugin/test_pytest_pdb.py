@@ -50,7 +50,9 @@ class TestPDB:
         child.expect(".*i = 0")
         child.expect("(Pdb)")
         child.sendeof()
-        child.expect("1 failed")
+        rest = child.read()
+        assert "1 failed" in rest
+        assert "def test_1" not in rest 
         if child.isalive(): 
             child.wait()
 
