@@ -151,7 +151,7 @@ def test_power():
         assert 2**3 == 7
     except AssertionError:
         e = exvalue()
-        assert "assert 8 == 7" in e.msg
+        assert "assert (2 ** 3) == 7" in e.msg
 
 
 class TestView:
