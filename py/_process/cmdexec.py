@@ -8,18 +8,25 @@ import py
 from subprocess import Popen, PIPE
 
 def cmdexec(cmd):
-    """ return output of executing 'cmd' in a separate process.
+    """ return unicode output of executing 'cmd' in a separate process.
 
     raise cmdexec.ExecutionFailed exeception if the command failed.
     the exception will provide an 'err' attribute containing
     the error-output from the command.
+    if the subprocess module does not provide a proper encoding/unicode strings
+    sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
     """
     process = subprocess.Popen(cmd, shell=True, 
             universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = process.communicate()
-    out = py.builtin._totext(out, sys.stdout.encoding)
-    err = py.builtin._totext(err, sys.stderr.encoding)
+    if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not 
+        try:
+            default_encoding = sys.getdefaultencoding() # jython may not have it
+        except AttributeError:
+            default_encoding = sys.stdout.encoding or 'UTF-8'
+        out = unicode(out, process.stdout.encoding or default_encoding)
+        err = unicode(err, process.stderr.encoding or default_encoding)
     status = process.poll()
     if status:
         raise ExecutionFailed(status, status, cmd, out, err)
