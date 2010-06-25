@@ -189,12 +189,10 @@ else:
         exec2(obj, globals, locals) 
 
 if sys.version_info >= (3,0):
-    exec ("""
-def _reraise(cls, val, tb):
-    __tracebackhide__ = True
-    assert hasattr(val, '__traceback__')
-    raise val
-""")
+    def _reraise(cls, val, tb):
+        __tracebackhide__ = True
+        assert hasattr(val, '__traceback__')
+        raise val
 else:
     exec ("""
 def _reraise(cls, val, tb):
