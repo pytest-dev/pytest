@@ -448,16 +448,16 @@ class CollectonlyReporter:
         self.config = config 
         if out is None:
             out = py.std.sys.stdout
-        self.out = py.io.TerminalWriter(out)
+        self._tw = py.io.TerminalWriter(out)
         self.indent = ""
         self._failed = []
 
     def outindent(self, line):
-        self.out.line(self.indent + str(line))
+        self._tw.line(self.indent + str(line))
 
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
-            self.out.line("INTERNALERROR> " + line)
+            self._tw.line("INTERNALERROR> " + line)
 
     def pytest_collectstart(self, collector):
         self.outindent(collector)
@@ -474,9 +474,9 @@ class CollectonlyReporter:
 
     def pytest_sessionfinish(self, session, exitstatus):
         if self._failed:
-            self.out.sep("!", "collection failures")
+            self._tw.sep("!", "collection failures")
         for rep in self._failed:
-            rep.toterminal(self.out)
+            rep.toterminal(self._tw)
                 
 
 def repr_pythonversion(v=None):
