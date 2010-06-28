@@ -194,10 +194,13 @@ newline will be removed from the end of each line. """
 
     def bestrelpath(self, dest): 
         """ return a string which is a relative path from self 
-            to dest such that self.join(bestrelpath) == dest and 
-            if not such path can be determined return dest. 
+            (assumed to be a directory) to dest such that 
+            self.join(bestrelpath) == dest and if not such 
+            path can be determined return dest. 
         """ 
         try:
+            if self == dest:
+                return os.curdir
             base = self.common(dest)
             if not base:  # can be the case on windows
                 return str(dest)
@@ -207,7 +210,7 @@ newline will be removed from the end of each line. """
                 n = self2base.count(self.sep) + 1
             else:
                 n = 0
-            l = ['..'] * n
+            l = [os.pardir] * n
             if reldest:
                 l.append(reldest)     
             target = dest.sep.join(l)

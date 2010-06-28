@@ -117,6 +117,8 @@ class CommonFSTests(object):
     def test_bestrelpath(self, path1):
         curdir = path1
         sep = curdir.sep
+        s = curdir.bestrelpath(curdir)
+        assert s == "."
         s = curdir.bestrelpath(curdir.join("hello", "world"))
         assert s == "hello" + sep + "world"
 

@@ -53,6 +53,8 @@ Bug fixes / Maintenance
   on all python versions
 - install plain py.test/py.which scripts also for Jython, this helps to
   get canonical script paths in virtualenv situations
+- make path.bestrelpath(path) return ".", note that when calling 
+  X.bestrelpath the assumption is that X is a directory. 
 
 Changes between 1.3.0 and 1.3.1
 ==================================================
