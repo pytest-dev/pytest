@@ -71,9 +71,9 @@ def cmdline_entrypoints(versioninfo, platform, basename):
               'py.test-%s.%s' % versioninfo[:2] : 'py.cmdline:pytest',
               'py.which-%s.%s' % versioninfo[:2] : 'py.cmdline:pywhich'
             }
-        for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc', 
-                  'py.lookup', 'py.svnwcrevert', 'py.which', 'py.test']:
-            points[x] = "py.cmdline:%s" % x.replace('.','')
+    for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc', 
+              'py.lookup', 'py.svnwcrevert', 'py.which', 'py.test']:
+        points[x] = "py.cmdline:%s" % x.replace('.','')
     return points
 
 def make_entry_points():

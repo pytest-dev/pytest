@@ -166,7 +166,7 @@ def test_cmdline_entrypoints(monkeypatch):
         expected = "%s-jython" % script
         assert expected in points
     for script in unversioned_scripts:
-        assert script not in points
+        assert script in points
 
     points = cmdline_entrypoints((2,5,1), "xyz", 'pypy-c-XYZ')
     for script in versioned_scripts:
