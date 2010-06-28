@@ -13,7 +13,7 @@ New features
     with py.test.raises(RuntimeError) as excinfo:
         call_something()
 
-    # do extra checks on excinfo.value|type|traceback objects 
+    # you may do extra checks on excinfo.value|type|traceback here
 
   (thanks Ronny Pfannschmidt) 
 
@@ -21,8 +21,8 @@ New features
   to all reports in the junitxml file. 
 
 - Funcarg factories can now dynamically apply a marker to a 
-  test invocation.  This is particularly useful if a factory
-  provides parameters to a test which you expect-to-fail:
+  test invocation.  This is for example useful if a factory
+  provides parameters to a test which are expected-to-fail: 
 
     def pytest_funcarg__arg(request):
         request.applymarker(py.test.mark.xfail(reason="flaky config"))
@@ -40,6 +40,7 @@ Bug fixes / Maintenance
 - fix issue105 assignment on the same line as a failing assertion
 - fix issue104 proper escaping for test names in junitxml plugin
 - fix issue57 -f|--looponfail to work with xpassing tests
+- fix issue92 collectonly reporter and --pastebin
 - fix py.code.compile(source) to generate unique filenames 
 - fix assertion re-interp problems on PyPy, by defering code 
   compilation to the (overridable) Frame.eval class. 
