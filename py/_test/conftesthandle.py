@@ -36,6 +36,8 @@ class Conftest(object):
                 self._confcutdir = p 
                 break
         for arg in args + [current]:
+            if hasattr(arg, 'startswith') and arg.startswith("--"):
+                continue
             anchor = current.join(arg, abs=1)
             if anchor.check(): # we found some file object 
                 self._path2confmods[None] = self.getconftestmodules(anchor)

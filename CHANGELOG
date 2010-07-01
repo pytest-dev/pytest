@@ -55,6 +55,7 @@ Bug fixes / Maintenance
   get canonical script paths in virtualenv situations
 - make path.bestrelpath(path) return ".", note that when calling 
   X.bestrelpath the assumption is that X is a directory. 
+- make initial conftest discovery ignore "--" prefixed arguments 
 
 Changes between 1.3.0 and 1.3.1
 ==================================================

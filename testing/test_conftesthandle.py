@@ -98,6 +98,14 @@ def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/__init__.py")
     conftest = ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
 
+def test_doubledash_not_considered(testdir):
+    conf = testdir.mkdir("--option")
+    conf.join("conftest.py").ensure()
+    conftest = Conftest()
+    conftest.setinitial([conf.basename, conf.basename])
+    l = conftest.getconftestmodules(None)
+    assert len(l) == 0
+
 def test_conftestcutdir(testdir):
     conf = testdir.makeconftest("")
     p = testdir.mkdir("x")
