@@ -16,7 +16,8 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     resultlog = config.option.resultlog
-    if resultlog:
+    # prevent opening resultlog on slave nodes (xdist)
+    if resultlog and not hasattr(config, 'slaveinput'):
         logfile = open(resultlog, 'w', 1) # line buffered
         config._resultlog = ResultLog(config, logfile) 
         config.pluginmanager.register(config._resultlog)
@@ -50,7 +51,7 @@ def generic_path(item):
         gpath.append(name)
         fspath = newfspath
     return ''.join(gpath)
-        
+
 class ResultLog(object):
     def __init__(self, config, logfile):
         self.config = config

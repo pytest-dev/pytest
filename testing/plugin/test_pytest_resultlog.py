@@ -1,6 +1,7 @@
 import py
 import os
-from py._plugin.pytest_resultlog import generic_path, ResultLog
+from py._plugin.pytest_resultlog import generic_path, ResultLog, \
+        pytest_configure, pytest_unconfigure
 from py._test.collect import Node, Item, FSCollector
 
 def test_generic_path(testdir):
@@ -172,4 +173,19 @@ def test_generic(testdir, LineMatcher):
         "x *:test_xfail", 
         "x *:test_xfail_norun", 
     ])
-    
+
+def test_no_resultlog_on_slaves(testdir):
+    config = testdir.parseconfig("-p", "resultlog", "--resultlog=resultlog")
+
+    assert not hasattr(config, '_resultlog')
+    pytest_configure(config)
+    assert hasattr(config, '_resultlog')
+    pytest_unconfigure(config)
+    assert not hasattr(config, '_resultlog')
+
+    config.slaveinput = {}
+    pytest_configure(config)
+    assert not hasattr(config, '_resultlog')
+    pytest_unconfigure(config)
+    assert not hasattr(config, '_resultlog')
+
