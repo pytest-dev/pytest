@@ -17,9 +17,6 @@ New features
 
   (thanks Ronny Pfannschmidt) 
 
-- introduce '--junitprefix=STR' option to prepend a prefix 
-  to all reports in the junitxml file. 
-
 - Funcarg factories can now dynamically apply a marker to a 
   test invocation.  This is for example useful if a factory
   provides parameters to a test which are expected-to-fail: 
@@ -36,15 +33,15 @@ Bug fixes / Maintenance
 
 - refine --pdb: ignore xfailed tests, unify its TB-reporting and 
   don't display failures again at the end.
-- fix assertion interpretation with the ** operator
-- fix issue105 assignment on the same line as a failing assertion
-- fix issue104 proper escaping for test names in junitxml plugin
-- fix issue57 -f|--looponfail to work with xpassing tests
-- fix issue92 collectonly reporter and --pastebin
+- fix assertion interpretation with the ** operator (thanks Benjamin Peterson)
+- fix issue105 assignment on the same line as a failing assertion (thanks Benjamin Peterson)
+- fix issue104 proper escaping for test names in junitxml plugin (thanks anonymous)
+- fix issue57 -f|--looponfail to work with xpassing tests (thanks Ronny)
+- fix issue92 collectonly reporter and --pastebin (thanks Benjamin Peterson)
 - fix py.code.compile(source) to generate unique filenames 
 - fix assertion re-interp problems on PyPy, by defering code 
-  compilation to the (overridable) Frame.eval class. 
-- fix pyimport() to work with directories
+  compilation to the (overridable) Frame.eval class. (thanks Amaury Forgeot)
+- fix py.path.local.pyimport() to work with directories
 - streamline py.path.local.mkdtemp implementation and usage
 - don't print empty lines when showing junitxml-filename
 - add optional boolean ignore_errors parameter to py.path.local.remove

@@ -119,7 +119,7 @@ class TestPython:
             classname="test_failure_escape.test_failure_escape", 
             name="test_func[&]")
 
-    def test_junit_prefixing(self, testdir):
+    def YAGNI_test_junit_prefixing(self, testdir):
         testdir.makepyfile("""
             def test_func(): 
                 assert 0
