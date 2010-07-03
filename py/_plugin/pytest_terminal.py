@@ -295,7 +295,7 @@ class TerminalReporter:
         for line in flatten(lines):
             self.write_line(line)
         for i, testarg in enumerate(self.config.args):
-            self.write_line("test object %d: %s" %(i+1, testarg))
+            self.write_line("test path %d: %s" %(i+1, testarg))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
         __multicall__.execute() 
