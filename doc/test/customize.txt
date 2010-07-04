@@ -466,6 +466,15 @@ and test classes and methods. Test functions and methods
 are prefixed ``test`` by default.  Test classes must 
 start with a capitalized ``Test`` prefix. 
 
+Customizing error messages 
+-------------------------------------------------
+
+On test and collection nodes ``py.test`` will invoke 
+the ``node.repr_failure(excinfo)`` function which
+you may override and make it return an error 
+representation string of your choice.  It 
+will be reported as a (red) string. 
+
 .. _`package name`: 
 
 constructing the package name for test modules

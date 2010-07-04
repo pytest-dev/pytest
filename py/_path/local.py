@@ -90,6 +90,9 @@ class LocalPath(FSBase):
     """ object oriented interface to os.path and other local filesystem 
         related information. 
     """
+    class ImportMismatchError(ImportError):
+        """ raised on pyimport() if there is a mismatch of __file__'s"""
+        
     sep = os.sep
     class Checkers(common.Checkers):
         def _stat(self):
@@ -531,10 +534,7 @@ class LocalPath(FSBase):
             if modfile.endswith("__init__.py"):
                 modfile = modfile[:-12]
             if not self.samefile(modfile):
-                raise EnvironmentError("mismatch:\n"
-                "imported module %r\n"
-                "does not stem from %r\n" 
-                "maybe __init__.py files are missing?" % (mod, str(self)))
+                raise self.ImportMismatchError(modname, modfile, self)
             return mod
         else:
             try:

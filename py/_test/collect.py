@@ -174,7 +174,10 @@ class Node(object):
         return traceback 
 
     def _repr_failure_py(self, excinfo, style=None):
-        excinfo.traceback = self._prunetraceback(excinfo.traceback)
+        if self.config.option.fulltrace:
+            style="long"
+        else:
+            excinfo.traceback = self._prunetraceback(excinfo.traceback)
         # XXX should excinfo.getrepr record all data and toterminal()
         # process it? 
         if style is None:
@@ -200,6 +203,8 @@ class Collector(Node):
     """
     Directory = configproperty('Directory')
     Module = configproperty('Module')
+    class CollectError(Exception):
+        """ an error during collection, contains a custom message. """
 
     def collect(self):
         """ returns a list of children (items and collectors) 
@@ -213,10 +218,12 @@ class Collector(Node):
             if colitem.name == name:
                 return colitem
 
-    def repr_failure(self, excinfo, outerr=None):
+    def repr_failure(self, excinfo):
         """ represent a failure. """
-        assert outerr is None, "XXX deprecated"
-        return self._repr_failure_py(excinfo)
+        if excinfo.errisinstance(self.CollectError):
+            exc = excinfo.value
+            return str(exc.args[0])
+        return self._repr_failure_py(excinfo, style="short")
 
     def _memocollect(self):
         """ internal helper method to cache results of calling collect(). """

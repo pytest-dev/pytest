@@ -22,15 +22,20 @@ class TestModule:
         del py.std.sys.modules['test_whatever']
         b.ensure("test_whatever.py")
         result = testdir.runpytest()
-        s = result.stdout.str()
-        assert 'mismatch' in s
-        assert 'test_whatever' in s
+        result.stdout.fnmatch_lines([
+            "*import*mismatch*",
+            "*imported*test_whatever*",
+            "*%s*" % a.join("test_whatever.py"),
+            "*not the same*",
+            "*%s*" % b.join("test_whatever.py"),
+            "*HINT*",
+        ])
 
     def test_syntax_error_in_module(self, testdir):
         modcol = testdir.getmodulecol("this is a syntax error") 
-        py.test.raises(SyntaxError, modcol.collect)
-        py.test.raises(SyntaxError, modcol.collect)
-        py.test.raises(SyntaxError, modcol.run)
+        py.test.raises(modcol.CollectError, modcol.collect)
+        py.test.raises(modcol.CollectError, modcol.collect)
+        py.test.raises(modcol.CollectError, modcol.run)
 
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")

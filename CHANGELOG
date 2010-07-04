@@ -28,9 +28,17 @@ New features
     def test_function(arg):
         ...
 
+- customizable error reporting: allow custom error reporting for 
+  custom (test and particularly collection) nodes by always calling 
+  ``node.repr_failure(excinfo)`` which you may override to return a 
+  string error representation of your choice which is going to be 
+  reported as a (red) string. 
+
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 
+- improve error messages if importing a test module failed (ImportError,
+  import file mismatches, syntax errors) 
 - refine --pdb: ignore xfailed tests, unify its TB-reporting and 
   don't display failures again at the end.
 - fix assertion interpretation with the ** operator (thanks Benjamin Peterson)

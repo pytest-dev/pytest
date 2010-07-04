@@ -360,10 +360,13 @@ class TestImport:
         pseudopath = tmpdir.ensure(name+"123.py")
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
-        excinfo = py.test.raises(EnvironmentError, "p.pyimport()")
-        s = str(excinfo.value)
-        assert "mismatch" in s 
-        assert name+"123" in s 
+        excinfo = py.test.raises(pseudopath.ImportMismatchError, 
+            "p.pyimport()")
+        modname, modfile, orig = excinfo.value.args
+        assert modname == name
+        assert modfile == pseudopath 
+        assert orig == p
+        assert issubclass(pseudopath.ImportMismatchError, ImportError)
 
 def test_pypkgdir(tmpdir):
     pkg = tmpdir.ensure('pkg1', dir=1)

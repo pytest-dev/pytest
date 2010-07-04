@@ -126,6 +126,12 @@ class BaseReport(object):
             longrepr.toterminal(out)
         else:
             out.line(str(longrepr))
+
+class CollectErrorRepr(BaseReport):
+    def __init__(self, msg):
+        self.longrepr = msg 
+    def toterminal(self, out):
+        out.line(str(self.longrepr), red=True)
    
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
@@ -188,16 +194,16 @@ class CollectReport(BaseReport):
             self.passed = True
             self.result = result 
         else:
-            style = "short"
-            if collector.config.getvalue("fulltrace"):
-                style = "long"
-            self.longrepr = self.collector._repr_failure_py(excinfo, 
-                style=style)
             if excinfo.errisinstance(py.test.skip.Exception):
                 self.skipped = True
                 self.reason = str(excinfo.value)
+                self.longrepr = self.collector._repr_failure_py(excinfo, "line")
             else:
                 self.failed = True
+                errorinfo = self.collector.repr_failure(excinfo)
+                if not hasattr(errorinfo, "toterminal"):
+                    errorinfo = CollectErrorRepr(errorinfo)
+                self.longrepr = errorinfo 
 
     def getnode(self):
         return self.collector 
@@ -447,4 +453,5 @@ def importorskip(modname, minversion=None):
         py.test.skip("module %r has __version__ %r, required is: %r" %(
                      modname, verattr, minversion))
     return mod
+
 

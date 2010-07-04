@@ -152,8 +152,33 @@ class TestPrunetraceback:
         result = testdir.runpytest(p)
         assert "__import__" not in result.stdout.str(), "too long traceback"
         result.stdout.fnmatch_lines([
-            "*ERROR during collection*",
+            "*ERROR collecting*",
             "*mport*not_exists*"
+        ])
+
+    def test_custom_repr_failure(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        testdir.makeconftest("""
+            import py
+            def pytest_collect_file(path, parent):
+                return MyFile(path, parent)
+            class MyError(Exception):
+                pass
+            class MyFile(py.test.collect.File):
+                def collect(self):
+                    raise MyError()
+                def repr_failure(self, excinfo):
+                    if excinfo.errisinstance(MyError):
+                        return "hello world"
+                    return py.test.collect.File.repr_failure(self, excinfo)
+        """)
+
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR collecting*",
+            "*hello world*",
         ])
 
 class TestCustomConftests:

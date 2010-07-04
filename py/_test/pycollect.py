@@ -3,6 +3,7 @@ Python related collection nodes.
 """ 
 import py
 import inspect
+import sys
 from py._test.collect import configproperty, warnoldcollect
 from py._test import funcargs
 from py._code.code import TerminalRepr
@@ -140,7 +141,22 @@ class Module(py.test.collect.File, PyCollectorMixin):
 
     def _importtestmodule(self):
         # we assume we are only called once per module 
-        mod = self.fspath.pyimport()
+        try:
+            mod = self.fspath.pyimport(ensuresyspath=True)
+        except SyntaxError:
+            excinfo = py.code.ExceptionInfo()
+            raise self.CollectError(excinfo.getrepr(style="short"))
+        except self.fspath.ImportMismatchError:
+            e = sys.exc_info()[1]
+            raise self.CollectError(
+                "import file mismatch:\n"
+                "imported module %r has this __file__ attribute:\n" 
+                "  %s\n"
+                "which is not the same as the test file we want to collect:\n"
+                "  %s\n"
+                "HINT: use a unique basename for your test file modules"
+                 % e.args
+            )
         #print "imported test module", mod
         self.config.pluginmanager.consider_module(mod)
         return mod

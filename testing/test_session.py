@@ -74,7 +74,7 @@ class SessionTests:
         reprec = testdir.inline_runsource("this is really not python")
         l = reprec.getfailedcollections()
         assert len(l) == 1
-        out = l[0].longrepr.reprcrash.message
+        out = str(l[0].longrepr)
         assert out.find(str('not python')) != -1
 
     def test_exit_first_problem(self, testdir): 

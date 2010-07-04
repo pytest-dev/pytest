@@ -274,7 +274,6 @@ class TerminalReporter:
         if not report.passed:
             if report.failed:
                 self.stats.setdefault("error", []).append(report)
-                msg = report.longrepr.reprcrash.message 
                 self.write_fspath_result(report.collector.fspath, "E")
             elif report.skipped:
                 self.stats.setdefault("skipped", []).append(report)
@@ -403,7 +402,7 @@ class TerminalReporter:
                 msg = self._getfailureheadline(rep)
                 if not hasattr(rep, 'when'):
                     # collect
-                    msg = "ERROR during collection " + msg
+                    msg = "ERROR collecting " + msg
                 elif rep.when == "setup":
                     msg = "ERROR at setup of " + msg 
                 elif rep.when == "teardown":
