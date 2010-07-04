@@ -23,10 +23,7 @@ def test_invoke_compile(recwarn, monkeypatch):
     monkeypatch.setattr(py.builtin.builtins, 'compile', None)
     py.magic.invoke(compile=True)
     try:
-        co = compile("""if 1: 
-                    def f(): 
-                        return 1
-                    \n""", '', 'exec')
+        co = compile("def f(): return 1\n", '', 'exec')
         d = {}
         py.builtin.exec_(co, d)
         assert py.code.Source(d['f']) 

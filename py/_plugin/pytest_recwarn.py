@@ -33,7 +33,7 @@ warning:
 """
 
 import py
-import os
+import sys, os
 
 def pytest_funcarg__recwarn(request):
     """Return a WarningsRecorder instance that provides these methods:
@@ -41,9 +41,16 @@ def pytest_funcarg__recwarn(request):
     * ``pop(category=None)``: return last warning matching the category.
     * ``clear()``: clear list of warnings 
     """
-    warnings = WarningsRecorder()
-    request.addfinalizer(warnings.finalize)
-    return warnings
+    if sys.version_info >= (2,7):
+        import warnings 
+        oldfilters = warnings.filters[:]
+        warnings.simplefilter('default')
+        def reset_filters():
+            warnings.filters[:] = oldfilters
+        request.addfinalizer(reset_filters)
+    wrec = WarningsRecorder()
+    request.addfinalizer(wrec.finalize)
+    return wrec
 
 def pytest_namespace():
     return {'deprecated_call': deprecated_call}

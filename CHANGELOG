@@ -37,6 +37,9 @@ New features
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
 
+- make tests and the ``pytest_recwarn`` plugin in paricular fully compatible 
+  to Python2.7 (if you use the ``recwarn`` funcarg warnings will be enabled so that 
+  you can properly check for their existence in a cross-python manner). 
 - improve error messages if importing a test module failed (ImportError,
   import file mismatches, syntax errors) 
 - refine --pdb: ignore xfailed tests, unify its TB-reporting and 
