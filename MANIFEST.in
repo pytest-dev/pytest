@@ -9,6 +9,7 @@ graft contrib
 graft bin 
 graft testing
 #exclude *.orig 
+#exclude *.orig 
 #exclude *.rej 
 #exclude .hginore
 #exclude *.pyc
