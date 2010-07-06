@@ -292,7 +292,7 @@ def test_conftest_non_python_items(recwarn, testdir):
     assert item.name == "hello.xxx"
     assert item.__class__.__name__ == "CustomItem"
 
-def test_extra_python_files_and_functions(testdir):
+def test_extra_python_files_and_functions(testdir, recwarn):
     testdir.makepyfile(conftest="""
         import py
         class MyFunction(py.test.collect.Function):
