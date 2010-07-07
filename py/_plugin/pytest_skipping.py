@@ -76,6 +76,7 @@ apply the function will be skipped.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
+.. _xfail:
 
 mark a test function as **expected to fail**
 -------------------------------------------------------
