@@ -124,7 +124,7 @@ class BaseReport(object):
 
     def _getcrashline(self):
         try:
-            return self.longrepr.reprcrash
+            return str(self.longrepr.reprcrash)
         except AttributeError:
             try:
                 return str(self.longrepr)[:50]
