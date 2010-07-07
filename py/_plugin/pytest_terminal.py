@@ -6,8 +6,6 @@ This is a good source for looking at the various reporting hooks.
 import py
 import sys
 
-optionalhook = py.test.mark.optionalhook
-
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count", 
@@ -80,7 +78,6 @@ class TerminalReporter:
             file = py.std.sys.stdout
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None 
-        self.gateway2info = {}
         self.reportchars = getreportopt(config)
 
     def hasopt(self, char):
@@ -167,53 +164,6 @@ class TerminalReporter:
             #     which garbles our output if we use self.write_line 
             self.write_line(msg)
 
-    @optionalhook
-    def pytest_gwmanage_newgateway(self, gateway, platinfo):
-        #self.write_line("%s instantiated gateway from spec %r" %(gateway.id, gateway.spec._spec))
-        d = {}
-        d['version'] = repr_pythonversion(platinfo.version_info)
-        d['id'] = gateway.id
-        d['spec'] = gateway.spec._spec 
-        d['platform'] = platinfo.platform 
-        if self.config.option.verbose:
-            d['extra'] = "- " + platinfo.executable
-        else:
-            d['extra'] = ""
-        d['cwd'] = platinfo.cwd
-        infoline = ("[%(id)s] %(spec)s -- platform %(platform)s, "
-                        "Python %(version)s "
-                        "cwd: %(cwd)s"
-                        "%(extra)s" % d)
-        self.write_line(infoline)
-        self.gateway2info[gateway] = infoline
-
-    @optionalhook
-    def pytest_testnodeready(self, node):
-        self.write_line("[%s] txnode ready to receive tests" %(node.gateway.id,))
-
-    @optionalhook
-    def pytest_testnodedown(self, node, error):
-        if error:
-            self.write_line("[%s] node down, error: %s" %(node.gateway.id, error))
-
-    @optionalhook
-    def pytest_rescheduleitems(self, items):
-        if self.config.option.debug:
-            self.write_sep("!", "RESCHEDULING %s " %(items,))
-
-    @optionalhook
-    def pytest_looponfailinfo(self, failreports, rootdirs):
-        if failreports:
-            self.write_sep("#", "LOOPONFAILING", red=True)
-            for report in failreports:
-                loc = self._getcrashline(report)
-                if loc:
-                    self.write_line(loc, red=True)
-        self.write_sep("#", "waiting for changes")
-        for rootdir in rootdirs:
-            self.write_line("### Watching:   %s" %(rootdir,), bold=True)
-
-
     def pytest_trace(self, category, msg):
         if self.config.option.debug or \
            self.config.option.traceconfig and category.find("config") != -1:
@@ -223,24 +173,13 @@ class TerminalReporter:
         self.stats.setdefault('deselected', []).append(items)
 
     def pytest_itemstart(self, item, node=None):
-        if getattr(self.config.option, 'dist', 'no') != "no":
-            # for dist-testing situations itemstart means we 
-            # queued the item for sending, not interesting (unless debugging) 
-            if self.config.option.debug:
-                line = self._reportinfoline(item)
-                extra = ""
-                if node:
-                    extra = "-> [%s]" % node.gateway.id
-                self.write_ensure_prefix(line, extra)
+        if self.config.option.verbose:
+            line = self._reportinfoline(item)
+            self.write_ensure_prefix(line, "") 
         else:
-            if self.config.option.verbose:
-                line = self._reportinfoline(item)
-                self.write_ensure_prefix(line, "") 
-            else:
-                # ensure that the path is printed before the 
-                # 1st test of a module starts running
-
-                self.write_fspath_result(self._getfspath(item), "")
+            # ensure that the path is printed before the 
+            # 1st test of a module starts running
+            self.write_fspath_result(self._getfspath(item), "")
 
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
@@ -321,15 +260,6 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
 
-    def _getcrashline(self, report):
-        try:
-            return report.longrepr.reprcrash
-        except AttributeError:
-            try:
-                return str(report.longrepr)[:50]
-            except AttributeError:
-                return ""
-
     def _reportinfoline(self, item):
         collect_fspath = self._getfspath(item)
         fspath, lineno, msg = self._getreportinfo(item)
@@ -387,12 +317,11 @@ class TerminalReporter:
             self.write_sep("=", "FAILURES")
             for rep in self.stats['failed']:
                 if tbstyle == "line":
-                    line = self._getcrashline(rep)
+                    line = rep._getcrashline()
                     self.write_line(line)
                 else:    
                     msg = self._getfailureheadline(rep)
                     self.write_sep("_", msg)
-                    self.write_platinfo(rep)
                     rep.toterminal(self._tw)
 
     def summary_errors(self):
@@ -408,15 +337,7 @@ class TerminalReporter:
                 elif rep.when == "teardown":
                     msg = "ERROR at teardown of " + msg 
                 self.write_sep("_", msg)
-                self.write_platinfo(rep)
                 rep.toterminal(self._tw)
-
-    def write_platinfo(self, rep):
-        if hasattr(rep, 'node'):
-            self.write_line(self.gateway2info.get(
-                rep.node.gateway, 
-                "node %r (platinfo not found? strange)")
-                    [:self._tw.fullwidth-1])
 
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime

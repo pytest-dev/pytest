@@ -18,36 +18,28 @@ def basic_run_report(item):
     return runner.call_and_report(item, "call", log=False)
 
 class Option:
-    def __init__(self, verbose=False, dist=None, fulltrace=False):
+    def __init__(self, verbose=False, fulltrace=False):
         self.verbose = verbose
-        self.dist = dist
         self.fulltrace = fulltrace
-    def _getcmdargs(self):
+
+    @property
+    def args(self):
         l = []
         if self.verbose:
             l.append('-v')
-        if self.dist:
-            l.append('--dist=%s' % self.dist)
-            l.append('--tx=popen')
         if self.fulltrace:
             l.append('--fulltrace')
         return l
-    def _getcmdstring(self):
-        return " ".join(self._getcmdargs())
 
 def pytest_generate_tests(metafunc):
     if "option" in metafunc.funcargnames:
-        metafunc.addcall(id="default", param=Option(verbose=False))
-        metafunc.addcall(id="verbose", param=Option(verbose=True))
-        metafunc.addcall(id="fulltrace", param=Option(fulltrace=True))
-        if not getattr(metafunc.function, 'nodist', False):
-            metafunc.addcall(id="verbose-dist", 
-                             param=Option(dist='each', verbose=True))
+        metafunc.addcall(id="default", 
+                         funcargs={'option': Option(verbose=False)})
+        metafunc.addcall(id="verbose", 
+                         funcargs={'option': Option(verbose=True)})
+        metafunc.addcall(id="fulltrace", 
+                         funcargs={'option': Option(fulltrace=True)})
 
-def pytest_funcarg__option(request):
-    if request.param.dist:
-        request.config.pluginmanager.skipifmissing("xdist")
-    return request.param
 
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
@@ -60,22 +52,13 @@ class TestTerminal:
             def test_func():
                 assert 0
         """)
-        result = testdir.runpytest(*option._getcmdargs())
+        result = testdir.runpytest(*option.args)
         if option.verbose:
-            if not option.dist:
-                result.stdout.fnmatch_lines([
-                    "*test_pass_skip_fail.py:2: *test_ok*PASS*",
-                    "*test_pass_skip_fail.py:4: *test_skip*SKIP*",
-                    "*test_pass_skip_fail.py:6: *test_func*FAIL*",
-                ])
-            else:
-                expected = [
-                    "*PASS*test_pass_skip_fail.py:2: *test_ok*", 
-                    "*SKIP*test_pass_skip_fail.py:4: *test_skip*", 
-                    "*FAIL*test_pass_skip_fail.py:6: *test_func*", 
-                ]
-                for line in expected:
-                    result.stdout.fnmatch_lines([line])
+            result.stdout.fnmatch_lines([
+                "*test_pass_skip_fail.py:2: *test_ok*PASS*",
+                "*test_pass_skip_fail.py:4: *test_skip*SKIP*",
+                "*test_pass_skip_fail.py:6: *test_func*FAIL*",
+            ])
         else:
             result.stdout.fnmatch_lines([
             "*test_pass_skip_fail.py .sF"
@@ -84,16 +67,6 @@ class TestTerminal:
             "    def test_func():",
             ">       assert 0",
             "E       assert 0",
-        ])
-
-    def test_collect_fail(self, testdir, option):
-        p = testdir.makepyfile("import xyz\n")
-        result = testdir.runpytest(*option._getcmdargs())
-        result.stdout.fnmatch_lines([
-            "*test_collect_fail.py E*",
-            ">   import xyz",
-            "E   ImportError: No module named xyz",
-            "*1 error*",
         ])
 
     def test_internalerror(self, testdir, linecomp):
@@ -131,75 +104,6 @@ class TestTerminal:
         assert fspath.check()
         id = tr.gettestid(method)
         assert id.endswith("test_testid.py::TestClass::test_method")
-
-    def test_looponfailreport(self, testdir, linecomp):
-        modcol = testdir.getmodulecol("""
-            import py
-            def test_fail():
-                assert 0
-            def test_fail2():
-                raise ValueError()
-            @py.test.mark.xfail
-            def test_xfail():
-                assert 0
-            @py.test.mark.xfail
-            def test_xpass():
-                assert 1
-        """)
-        rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        reports = [basic_run_report(x) for x in modcol.collect()]
-        rep.pytest_looponfailinfo(reports, [modcol.config.topdir])
-        linecomp.assert_contains_lines([
-            "*test_looponfailreport.py:3: assert 0",
-            "*test_looponfailreport.py:5: ValueError*",
-            "*waiting*", 
-            "*%s*" % (modcol.config.topdir),
-        ])
-
-    def test_tb_option(self, testdir, option):
-        p = testdir.makepyfile("""
-            import py
-            def g():
-                raise IndexError
-            def test_func():
-                print (6*7)
-                g()  # --calling--
-        """)
-        for tbopt in ["long", "short", "no"]:
-            print('testing --tb=%s...' % tbopt)
-            result = testdir.runpytest('--tb=%s' % tbopt)
-            s = result.stdout.str()
-            if tbopt == "long":
-                assert 'print (6*7)' in s
-            else:
-                assert 'print (6*7)' not in s
-            if tbopt != "no":
-                assert '--calling--' in s
-                assert 'IndexError' in s
-            else:
-                assert 'FAILURES' not in s
-                assert '--calling--' not in s
-                assert 'IndexError' not in s
-
-    def test_tb_crashline(self, testdir, option):
-        p = testdir.makepyfile("""
-            import py
-            def g():
-                raise IndexError
-            def test_func1():
-                print (6*7)
-                g()  # --calling--
-            def test_func2():
-                assert 0, "hello"
-        """)
-        result = testdir.runpytest("--tb=line")
-        bn = p.basename
-        result.stdout.fnmatch_lines([
-            "*%s:3: IndexError*" % bn,
-            "*%s:8: AssertionError: hello*" % bn,
-        ])
-        s = result.stdout.str()
-        assert "def test_func2" not in s
 
     def test_show_path_before_running_test(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
@@ -263,22 +167,6 @@ class TestTerminal:
             "*test_p2.py <- *test_p1.py:2: TestMore.test_p1*",
         ])
 
-    def test_keyboard_interrupt_dist(self, testdir, option):
-        # xxx could be refined to check for return code 
-        p = testdir.makepyfile("""
-            def test_sleep():
-                import time
-                time.sleep(10)
-        """)
-        child = testdir.spawn_pytest(" ".join(option._getcmdargs()))
-        child.expect(".*test session starts.*")
-        child.kill(2) # keyboard interrupt
-        child.expect(".*KeyboardInterrupt.*")
-        #child.expect(".*seconds.*")
-        child.close()
-        #assert ret == 2 
-
-    @py.test.mark.nodist
     def test_keyboard_interrupt(self, testdir, option):
         p = testdir.makepyfile("""
             def test_foobar():
@@ -289,7 +177,7 @@ class TestTerminal:
                 raise KeyboardInterrupt   # simulating the user
         """)
 
-        result = testdir.runpytest(*option._getcmdargs())
+        result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
             "    def test_foobar():",
             ">       assert 0",
@@ -302,37 +190,6 @@ class TestTerminal:
             ])
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
-    def test_maxfailures(self, testdir, option):
-        p = testdir.makepyfile("""
-            def test_1():
-                assert 0
-            def test_2():
-                assert 0
-            def test_3():
-                assert 0
-        """)
-        result = testdir.runpytest("--maxfail=2", *option._getcmdargs())
-        result.stdout.fnmatch_lines([
-            "*def test_1():*",
-            "*def test_2():*",
-            "*!! Interrupted: stopping after 2 failures*!!*",
-            "*2 failed*",
-        ])
-
-    def test_pytest_report_header(self, testdir):
-        testdir.makeconftest("""
-            def pytest_report_header(config):
-                return "hello: info" 
-        """)
-        testdir.mkdir("a").join("conftest.py").write("""
-def pytest_report_header(config):
-    return ["line1", "line2"]""")
-        result = testdir.runpytest("a")
-        result.stdout.fnmatch_lines([
-            "*hello: info*",
-            "line1",
-            "line2",
-        ])
 
 
 class TestCollectonly:
@@ -691,12 +548,103 @@ def test_trace_reporting(testdir):
     ])
     assert result.ret == 0
 
-@py.test.mark.nodist
 def test_show_funcarg(testdir, option):
-    args = option._getcmdargs() + ["--funcargs"]
+    args = option.args + ["--funcargs"]
     result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines([
             "*tmpdir*",
             "*temporary directory*",
         ]
     )
+
+class TestGenericReporting: 
+    """ this test class can be subclassed with a different option
+        provider to run e.g. distributed tests.
+    """
+    def test_collect_fail(self, testdir, option):
+        p = testdir.makepyfile("import xyz\n")
+        result = testdir.runpytest(*option.args)
+        result.stdout.fnmatch_lines([
+            "*test_collect_fail.py E*",
+            ">   import xyz",
+            "E   ImportError: No module named xyz",
+            "*1 error*",
+        ])
+
+    def test_maxfailures(self, testdir, option):
+        p = testdir.makepyfile("""
+            def test_1():
+                assert 0
+            def test_2():
+                assert 0
+            def test_3():
+                assert 0
+        """)
+        result = testdir.runpytest("--maxfail=2", *option.args)
+        result.stdout.fnmatch_lines([
+            "*def test_1():*",
+            "*def test_2():*",
+            "*!! Interrupted: stopping after 2 failures*!!*",
+            "*2 failed*",
+        ])
+
+
+    def test_tb_option(self, testdir, option):
+        p = testdir.makepyfile("""
+            import py
+            def g():
+                raise IndexError
+            def test_func():
+                print (6*7)
+                g()  # --calling--
+        """)
+        for tbopt in ["long", "short", "no"]:
+            print('testing --tb=%s...' % tbopt)
+            result = testdir.runpytest('--tb=%s' % tbopt)
+            s = result.stdout.str()
+            if tbopt == "long":
+                assert 'print (6*7)' in s
+            else:
+                assert 'print (6*7)' not in s
+            if tbopt != "no":
+                assert '--calling--' in s
+                assert 'IndexError' in s
+            else:
+                assert 'FAILURES' not in s
+                assert '--calling--' not in s
+                assert 'IndexError' not in s
+
+    def test_tb_crashline(self, testdir, option):
+        p = testdir.makepyfile("""
+            import py
+            def g():
+                raise IndexError
+            def test_func1():
+                print (6*7)
+                g()  # --calling--
+            def test_func2():
+                assert 0, "hello"
+        """)
+        result = testdir.runpytest("--tb=line")
+        bn = p.basename
+        result.stdout.fnmatch_lines([
+            "*%s:3: IndexError*" % bn,
+            "*%s:8: AssertionError: hello*" % bn,
+        ])
+        s = result.stdout.str()
+        assert "def test_func2" not in s
+
+    def test_pytest_report_header(self, testdir, option):
+        testdir.makeconftest("""
+            def pytest_report_header(config):
+                return "hello: info" 
+        """)
+        testdir.mkdir("a").join("conftest.py").write("""
+def pytest_report_header(config):
+    return ["line1", "line2"]""")
+        result = testdir.runpytest("a")
+        result.stdout.fnmatch_lines([
+            "*hello: info*",
+            "line1",
+            "line2",
+        ])

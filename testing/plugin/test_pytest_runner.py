@@ -69,6 +69,21 @@ class BaseFunctionalTests:
         assert isinstance(rep.longrepr, ReprExceptionInfo)
         assert str(rep.shortrepr) == "F"
 
+    def test_failfunction_customized_report(self, testdir, LineMatcher):
+        reports = testdir.runitem("""
+            def test_func():
+                assert 0
+        """)
+        rep = reports[1]
+        rep.headerlines += ["hello world"]
+        tr = py.io.TerminalWriter(stringio=True)
+        rep.toterminal(tr)
+        val = tr.stringio.getvalue()
+        LineMatcher(val.split("\n")).fnmatch_lines([
+            "*hello world",
+            "*def test_func():*"
+        ])
+
     def test_skipfunction(self, testdir):
         reports = testdir.runitem("""
             import py
@@ -435,3 +450,4 @@ def test_pytest_cmdline_main(testdir):
     s = popen.stdout.read()
     ret = popen.wait()
     assert ret == 0
+

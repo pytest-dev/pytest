@@ -115,12 +115,25 @@ class CallInfo:
         return "<CallInfo when=%r %s>" % (self.when, status)
 
 class BaseReport(object):
+    def __init__(self):
+        self.headerlines = []
     def __repr__(self):
         l = ["%s=%s" %(key, value)
            for key, value in self.__dict__.items()]
         return "<%s %s>" %(self.__class__.__name__, " ".join(l),)
 
+    def _getcrashline(self):
+        try:
+            return self.longrepr.reprcrash
+        except AttributeError:
+            try:
+                return str(self.longrepr)[:50]
+            except AttributeError:
+                return ""
+
     def toterminal(self, out):
+        for line in self.headerlines:
+            out.line(line)
         longrepr = self.longrepr 
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
@@ -129,6 +142,7 @@ class BaseReport(object):
 
 class CollectErrorRepr(BaseReport):
     def __init__(self, msg):
+        super(CollectErrorRepr, self).__init__()
         self.longrepr = msg 
     def toterminal(self, out):
         out.line(str(self.longrepr), red=True)
@@ -137,6 +151,7 @@ class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
     def __init__(self, item, excinfo=None, when=None):
+        super(ItemTestReport, self).__init__()
         self.item = item 
         self.when = when
         if item and when != "setup":
@@ -189,6 +204,7 @@ class CollectReport(BaseReport):
     skipped = failed = passed = False 
 
     def __init__(self, collector, result, excinfo=None):
+        super(CollectReport, self).__init__()
         self.collector = collector 
         if not excinfo:
             self.passed = True
@@ -213,6 +229,7 @@ class TeardownErrorReport(BaseReport):
     failed = True
     when = "teardown"
     def __init__(self, excinfo):
+        super(TeardownErrorReport, self).__init__()
         self.longrepr = excinfo.getrepr(funcargs=True)
 
 class SetupState(object):

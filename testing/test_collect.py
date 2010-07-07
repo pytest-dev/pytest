@@ -181,6 +181,24 @@ class TestPrunetraceback:
             "*hello world*",
         ])
 
+    def test_collect_report_postprocessing(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        testdir.makeconftest("""
+            import py
+            def pytest_make_collect_report(__multicall__):
+                rep = __multicall__.execute()
+                rep.headerlines += ["header1"]
+                return rep
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR collecting*",
+            "*header1*",
+        ])
+
+
 class TestCustomConftests:
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest("""
