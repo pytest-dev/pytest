@@ -353,7 +353,7 @@ class TerminalReporter:
                 parts.append("%d %s" %(len(val), key))
         line = ", ".join(parts)
         # XXX coloring
-        self.write_sep("=", "%s in %.2f seconds" %(line, session_duration))
+        self.write_sep("=", "%s in %.2f seconds" %(line, session_duration), bold=True)
 
     def summary_deselected(self):
         if 'deselected' in self.stats:
