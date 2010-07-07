@@ -14,6 +14,8 @@ command line options
 
 ``--junitxml=path``
     create junit-xml style report file at given path.
+``--junitprefix=str``
+    prepend prefix to classnames in junit-xml output
 
 Start improving this plugin in 30 seconds
 =========================================
