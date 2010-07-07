@@ -11,15 +11,14 @@ def pytest_addoption(parser):
     group.addoption('--junitxml', action="store", dest="xmlpath", 
            metavar="path", default=None,
            help="create junit-xml style report file at given path.")
-    # probalby YAGNI, therefore commented out:
-    #group.addoption('--junitprefix', action="store", dest="junitprefix", 
-    #       metavar="str", default=None,
-    #       help="prepend prefix to classnames in junit-xml output")
+    group.addoption('--junitprefix', action="store", dest="junitprefix", 
+           metavar="str", default=None,
+           help="prepend prefix to classnames in junit-xml output")
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     if xmlpath:
-        config._xml = LogXML(xmlpath, None) # config.option.junitprefix)
+        config._xml = LogXML(xmlpath, config.option.junitprefix)
         config.pluginmanager.register(config._xml)
 
 def pytest_unconfigure(config):

@@ -28,11 +28,14 @@ New features
     def test_function(arg):
         ...
 
-- customizable error reporting: allow custom error reporting for 
-  custom (test and particularly collection) nodes by always calling 
-  ``node.repr_failure(excinfo)`` which you may override to return a 
-  string error representation of your choice which is going to be 
-  reported as a (red) string. 
+- improved error reporting when collection errors appear. 
+  In general, for custom (test and particularly collection) 
+  nodes ``node.repr_failure(excinfo)`` is now called so that you can 
+  override it to return a string error representation of your choice 
+  which is going to be reported as a (red) string. 
+
+- introduce '--junitprefix=STR' option to prepend a prefix 
+  to all reports in the junitxml file. 
 
 Bug fixes / Maintenance
 ++++++++++++++++++++++++++
