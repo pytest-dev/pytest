@@ -131,12 +131,16 @@ asserting expected exceptions
 ----------------------------------------
 
 In order to write assertions about exceptions, you can use
-``py.test.raises`` as a context manager like this:: 
+``py.test.raises`` as a context manager like this: 
+
+.. sourcecode:: python 
 
     with py.test.raises(ZeroDivisionError):
         1 / 0
 
-and if you need to have access to the actual exception info you may use::
+and if you need to have access to the actual exception info you may use:
+
+.. sourcecode:: python 
 
     with py.test.raises(RuntimeError) as excinfo: 
         def f():
@@ -146,7 +150,9 @@ and if you need to have access to the actual exception info you may use::
     # do checks related to excinfo.type, excinfo.value, excinfo.traceback 
 
 If you want to write test code that works on Python2.4 as well, 
-you may also use two other ways to test for an expected exception::
+you may also use two other ways to test for an expected exception:
+
+.. sourcecode:: python 
 
     py.test.raises(ExpectedException, func, *args, **kwargs) 
     py.test.raises(ExpectedException, "func(*args, **kwargs)")
@@ -217,7 +223,9 @@ keyword.
 By default, all filename parts and
 class/function names of a test function are put into the set
 of keywords for a given test.  You can specify additional 
-kewords like this::
+kewords like this:
+
+.. sourcecode:: python 
 
     @py.test.mark.webtest 
     def test_send_http():
