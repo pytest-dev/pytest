@@ -82,7 +82,7 @@ filename are inspected for finding tests:
 * classes with a leading ``Test`` name and ``test`` prefixed methods.   
 * ``unittest.TestCase`` subclasses
 
-parametrizing test functions and advanced functional testing
+parametrizing test functions and functional testing
 --------------------------------------------------------------
 
 py.test offers the unique `funcargs mechanism`_ for setting up
@@ -177,31 +177,31 @@ test functions.  You can modify traceback printing styles through the
 command line.  Using the `--pdb`` option you can automatically activate
 a PDB `Python debugger`_ when a test fails. 
 
-advanced skipping of tests 
+skip or expect-to-fail a test 
 ======================================
 
-py.test has `advanced support for skipping tests`_ or expecting
-failures on tests on certain platforms.  Apart from the 
-minimal py.test style also unittest- and nose-style tests 
-can make use of this feature.  
+py.test has a dedicated `skipping plugin`_ that allows to define
 
-.. _`advanced support for skipping tests`: plugin/skipping.html
+* define "skip" outcomes indicating a platform or a 
+  dependency mismatch.   
+
+* "xfail" outcomes indicating an "expected failure" either with 
+  with or without running a test. 
+
+* skip and xfail outcomes can be applied at module, class or method
+  level or even only for certain argument sets of a parametrized function. 
+
+.. _`skipping plugin`: plugin/skipping.html
 .. _`funcargs mechanism`: funcargs.html
 .. _`unittest.py`: http://docs.python.org/library/unittest.html
 .. _`doctest.py`: http://docs.python.org/library/doctest.html
 .. _`xUnit style setup`: xunit_setup.html
 .. _`pytest_nose`: plugin/nose.html
 
-advanced test selection and running modes 
+select tests by keyword / test name search 
 =========================================================
 
 .. _`selection by keyword`: 
-
-``py.test --looponfailing`` (implemented through the external
-`pytest-xdist`_ plugin) allows to run a test suite, 
-memorize all failures and then loop over the failing set
-of tests until they all pass.  It will re-start running
-the tests when it detects file changes in your project. 
 
 You can selectively run tests by specifiying a keyword 
 on the command line.  Examples::
@@ -235,6 +235,15 @@ and then use those keywords to select tests.  See the `pytest_keyword`_
 plugin for more information. 
 
 .. _`pytest_keyword`: plugin/mark.html
+
+Looping on the failing test set 
+=======================================
+
+``py.test --looponfailing`` (implemented through the external
+`pytest-xdist`_ plugin) allows to run a test suite, 
+memorize all failures and then loop over the failing set
+of tests until they all pass.  It will re-start running
+the tests when it detects file changes in your project. 
 
 
 .. _`reStructured Text`: http://docutils.sourceforge.net
