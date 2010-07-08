@@ -186,6 +186,7 @@ class TestLocalPath(common.CommonFSTests):
         assert l3.strpath == wc.strpath
         assert not hasattr(l3, 'commit')
 
+    @py.test.mark.xfail(run=False, reason="unreliable est for long filenames")
     def test_long_filenames(self, tmpdir):
         if sys.platform == "win32":
             py.test.skip("win32: work around needed for path length limit")
