@@ -618,7 +618,7 @@ class LocalPath(FSBase):
         try:
             x = os.environ['HOME']
         except KeyError:
-            x = os.environ['HOMEPATH']
+            x = os.environ["HOMEDRIVE"] + os.environ['HOMEPATH']
         return cls(x)
     _gethomedir = classmethod(_gethomedir)
 
