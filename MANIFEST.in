@@ -10,9 +10,9 @@ graft bin
 graft testing
 #exclude *.orig 
 #exclude *.orig 
-#exclude *.rej 
-#exclude .hginore
-#exclude *.pyc
+exclude *.rej 
+exclude .hginore
+exclude *.pyc
 #recursive-exclude testing *.pyc *.orig *.rej *$py.class
 #prune .pyc
 #prune .svn 
