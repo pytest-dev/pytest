@@ -13,7 +13,7 @@ def test_getdimensions(monkeypatch):
     monkeypatch.setattr(fcntl, 'ioctl', lambda *args: l.append(args))
     try:
         terminalwriter._getdimensions()
-    except struct.error:
+    except (TypeError, struct.error):
         pass
     assert len(l) == 1
     assert l[0][0] == 1
