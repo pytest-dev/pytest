@@ -18,7 +18,7 @@ if sys.platform == "win32":
 
 def _getdimensions():
     import termios,fcntl,struct
-    call = fcntl.ioctl(0,termios.TIOCGWINSZ,"\000"*8)
+    call = fcntl.ioctl(1,termios.TIOCGWINSZ,"\000"*8)
     height,width = struct.unpack( "hhhh", call ) [:2]
     return height, width 
 

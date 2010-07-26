@@ -6,6 +6,18 @@ def test_get_terminal_width():
     x = py.io.get_terminal_width
     assert x == terminalwriter.get_terminal_width
 
+def test_getdimensions(monkeypatch):
+    fcntl = py.test.importorskip("fcntl")
+    import struct
+    l = []
+    monkeypatch.setattr(fcntl, 'ioctl', lambda *args: l.append(args))
+    try:
+        terminalwriter._getdimensions()
+    except struct.error:
+        pass
+    assert len(l) == 1
+    assert l[0][0] == 1
+
 def test_terminal_width_COLUMNS(monkeypatch):
     """ Dummy test for get_terminal_width
     """
