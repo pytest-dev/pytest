@@ -75,7 +75,7 @@ class Checkers:
                             return False
         return True
 
-class NeverRaised(Exception): 
+class NeverRaised(Exception):
     pass
 
 class PathBase(object):
@@ -143,7 +143,7 @@ newline will be removed from the end of each line. """
     def move(self, target):
         """ move this path to target. """
         if target.relto(self):
-            raise py.error.EINVAL(target, 
+            raise py.error.EINVAL(target,
                 "cannot move path into a subdirectory of itself")
         try:
             self.rename(target)
@@ -174,9 +174,9 @@ newline will be removed from the end of each line. """
 
     def relto(self, relpath):
         """ return a string which is the relative part of the path
-        to the given 'relpath'. 
+        to the given 'relpath'.
         """
-        if not isinstance(relpath, (str, PathBase)): 
+        if not isinstance(relpath, (str, PathBase)):
             raise TypeError("%r: not a string or path object" %(relpath,))
         strrelpath = str(relpath)
         if strrelpath and strrelpath[-1] != self.sep:
@@ -187,17 +187,17 @@ newline will be removed from the end of each line. """
         if sys.platform == "win32" or getattr(os, '_name', None) == 'nt':
             if os.path.normcase(strself).startswith(
                os.path.normcase(strrelpath)):
-                return strself[len(strrelpath):]        
+                return strself[len(strrelpath):]
         elif strself.startswith(strrelpath):
             return strself[len(strrelpath):]
         return ""
 
-    def bestrelpath(self, dest): 
-        """ return a string which is a relative path from self 
-            (assumed to be a directory) to dest such that 
-            self.join(bestrelpath) == dest and if not such 
-            path can be determined return dest. 
-        """ 
+    def bestrelpath(self, dest):
+        """ return a string which is a relative path from self
+            (assumed to be a directory) to dest such that
+            self.join(bestrelpath) == dest and if not such
+            path can be determined return dest.
+        """
         try:
             if self == dest:
                 return os.curdir
@@ -212,9 +212,9 @@ newline will be removed from the end of each line. """
                 n = 0
             l = [os.pardir] * n
             if reldest:
-                l.append(reldest)     
+                l.append(reldest)
             target = dest.sep.join(l)
-            return target 
+            return target
         except AttributeError:
             return str(dest)
 
@@ -259,7 +259,7 @@ newline will be removed from the end of each line. """
 
     def __lt__(self, other):
         try:
-            return self.strpath < other.strpath 
+            return self.strpath < other.strpath
         except AttributeError:
             return str(self) < str(other)
 
@@ -278,7 +278,7 @@ newline will be removed from the end of each line. """
         """
         if isinstance(fil, str):
             fil = FNMatcher(fil)
-        if rec: 
+        if rec:
             if isinstance(rec, str):
                 rec = fnmatch(fil)
             elif not hasattr(rec, '__call__'):
@@ -287,7 +287,7 @@ newline will be removed from the end of each line. """
             entries = self.listdir()
         except ignore:
             return
-        dirs = [p for p in entries 
+        dirs = [p for p in entries
                     if p.check(dir=1) and (rec is None or rec(p))]
         for subdir in dirs:
             for p in subdir.visit(fil=fil, rec=rec, ignore=ignore):

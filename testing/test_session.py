@@ -4,11 +4,11 @@ class SessionTests:
     def test_initsession(self, testdir, tmpdir):
         config = testdir.reparseconfig()
         session = config.initsession()
-        assert session.config is config 
-    
+        assert session.config is config
+
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
-            def test_one(): 
+            def test_one():
                 pass
             def test_one_one():
                 assert 0
@@ -21,7 +21,7 @@ class SessionTests:
         passed, skipped, failed = reprec.listoutcomes()
         assert len(skipped) == 0
         assert len(passed) == 1
-        assert len(failed) == 3  
+        assert len(failed) == 3
         assert failed[0].item.name == "test_one_one"
         assert failed[1].item.name == "test_other"
         assert failed[2].item.name == "test_two"
@@ -32,22 +32,22 @@ class SessionTests:
         col = colstarted[0].collector
         assert isinstance(col, py.test.collect.Module)
 
-    def test_nested_import_error(self, testdir): 
+    def test_nested_import_error(self, testdir):
         tfile = testdir.makepyfile("""
             import import_fails
             def test_this():
                 assert import_fails.a == 1
         """, import_fails="""
-            import does_not_work 
+            import does_not_work
             a = 1
         """)
         reprec = testdir.inline_run(tfile)
         l = reprec.getfailedcollections()
-        assert len(l) == 1 
+        assert len(l) == 1
         out = l[0].longrepr.reprcrash.message
-        assert out.find('does_not_work') != -1 
+        assert out.find('does_not_work') != -1
 
-    def test_raises_output(self, testdir): 
+    def test_raises_output(self, testdir):
         reprec = testdir.inline_runsource("""
             import py
             def test_raises_doesnt():
@@ -56,28 +56,28 @@ class SessionTests:
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        if not out.find("DID NOT RAISE") != -1: 
+        if not out.find("DID NOT RAISE") != -1:
             print(out)
-            py.test.fail("incorrect raises() output") 
+            py.test.fail("incorrect raises() output")
 
-    def test_generator_yields_None(self, testdir): 
+    def test_generator_yields_None(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_1():
-                yield None 
+                yield None
         """)
         failures = reprec.getfailedcollections()
         out = failures[0].longrepr.reprcrash.message
-        i = out.find('TypeError') 
-        assert i != -1 
+        i = out.find('TypeError')
+        assert i != -1
 
-    def test_syntax_error_module(self, testdir): 
+    def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
         l = reprec.getfailedcollections()
         assert len(l) == 1
         out = str(l[0].longrepr)
         assert out.find(str('not python')) != -1
 
-    def test_exit_first_problem(self, testdir): 
+    def test_exit_first_problem(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_one(): assert 0
             def test_two(): assert 0
@@ -86,7 +86,7 @@ class SessionTests:
         assert failed == 1
         assert passed == skipped == 0
 
-    def test_maxfail(self, testdir): 
+    def test_maxfail(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_one(): assert 0
             def test_two(): assert 0
@@ -103,12 +103,12 @@ class SessionTests:
                 foo=0
                 def __repr__(self):
                     raise Exception("Ha Ha fooled you, I'm a broken repr().")
-            
+
             class TestBrokenClass:
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
                     py.test.raises(Exception, 'repr(t)')
-                    
+
                 def test_implicit_bad_repr1(self):
                     t = BrokenRepr1()
                     assert t.foo == 1
@@ -132,11 +132,11 @@ class SessionTests:
         reprec = testdir.inline_run(testdir.tmpdir)
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
-        assert reports[0].skipped 
+        assert reports[0].skipped
 
 class TestNewSession(SessionTests):
 
-    def test_order_of_execution(self, testdir): 
+    def test_order_of_execution(self, testdir):
         reprec = testdir.inline_runsource("""
             l = []
             def test_1():
@@ -159,7 +159,7 @@ class TestNewSession(SessionTests):
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == skipped == 0
         assert passed == 7
-        # also test listnames() here ... 
+        # also test listnames() here ...
 
     def test_collect_only_with_various_situations(self, testdir):
         p = testdir.makepyfile(
@@ -173,23 +173,23 @@ class TestNewSession(SessionTests):
 
                 class TestY(TestX):
                     pass
-            """, 
+            """,
             test_two="""
                 import py
                 py.test.skip('xxx')
-            """, 
+            """,
             test_three="xxxdsadsadsadsa",
             __init__=""
         )
         reprec = testdir.inline_run('--collectonly', p.dirpath())
-       
+
         itemstarted = reprec.getcalls("pytest_itemstart")
         assert len(itemstarted) == 3
-        assert not reprec.getreports("pytest_runtest_logreport") 
+        assert not reprec.getreports("pytest_runtest_logreport")
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
-        assert len(started) == len(finished) 
-        assert len(started) == 8 
+        assert len(started) == len(finished)
+        assert len(started) == 8
         colfail = [x for x in finished if x.failed]
         colskipped = [x for x in finished if x.skipped]
         assert len(colfail) == 1

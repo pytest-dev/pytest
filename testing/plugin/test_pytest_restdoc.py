@@ -20,27 +20,27 @@ class TestDoctest:
         testdir.makepyfile(confrest=
             "from py._plugin.pytest_restdoc import Project")
         # we scope our confrest file so that it doesn't
-        # conflict with another global confrest.py 
+        # conflict with another global confrest.py
         testdir.makepyfile(__init__="")
         return testdir
-    
+
     def test_doctest_extra_exec(self, testdir):
         xtxt = testdir.maketxtfile(x="""
             hello::
-                .. >>> raise ValueError 
+                .. >>> raise ValueError
                    >>> None
         """)
         result = testdir.runpytest(xtxt)
         result.stdout.fnmatch_lines(['*1 fail*'])
 
-    def test_doctest_basic(self, testdir): 
+    def test_doctest_basic(self, testdir):
         xtxt = testdir.maketxtfile(x="""
-            .. 
-               >>> from os.path import abspath 
+            ..
+               >>> from os.path import abspath
 
-            hello world 
+            hello world
 
-               >>> assert abspath 
+               >>> assert abspath
                >>> i=3
                >>> print (i)
                3
@@ -57,7 +57,7 @@ class TestDoctest:
             "*2 passed*"
         ])
 
-    def test_doctest_eol(self, testdir): 
+    def test_doctest_eol(self, testdir):
         ytxt = testdir.maketxtfile(y=".. >>> 1 + 1\r\n   2\r\n\r\n")
         result = testdir.runpytest(ytxt)
         result.stdout.fnmatch_lines(["*2 passed*"])
@@ -93,4 +93,4 @@ class TestDoctest:
         outcomes = result.parseoutcomes()
         assert outcomes['passed'] >= 1
         assert 'failed' not in outcomes
-        assert 'skipped' not in outcomes 
+        assert 'skipped' not in outcomes

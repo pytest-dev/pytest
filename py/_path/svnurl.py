@@ -1,7 +1,7 @@
 """
 module defining a subversion path object based on the external
 command 'svn'. This modules aims to work with svn 1.3 and higher
-but might also interact well with earlier versions. 
+but might also interact well with earlier versions.
 """
 
 import os, sys, time, re
@@ -11,7 +11,7 @@ from py._path import common
 from py._path import svnwc as svncommon
 from py._path.cacheutil import BuildcostAccessCache, AgingCache
 
-DEBUG=False 
+DEBUG=False
 
 class SvnCommandPath(svncommon.SvnPathBase):
     """ path implementation that offers access to (possibly remote) subversion
@@ -22,10 +22,10 @@ class SvnCommandPath(svncommon.SvnPathBase):
 
     def __new__(cls, path, rev=None, auth=None):
         self = object.__new__(cls)
-        if isinstance(path, cls): 
-            rev = path.rev 
+        if isinstance(path, cls):
+            rev = path.rev
             auth = path.auth
-            path = path.strpath 
+            path = path.strpath
         svncommon.checkbadchars(path)
         path = path.rstrip('/')
         self.strpath = path
@@ -97,7 +97,7 @@ class SvnCommandPath(svncommon.SvnPathBase):
 
     def open(self, mode='r'):
         """ return an opened file with the given mode. """
-        if mode not in ("r", "rU",): 
+        if mode not in ("r", "rU",):
             raise ValueError("mode %r not supported" % (mode,))
         assert self.check(file=1) # svn cat returns an empty file otherwise
         if self.rev is None:
@@ -111,17 +111,17 @@ class SvnCommandPath(svncommon.SvnPathBase):
         """ return the directory path of the current path joined
             with any given path arguments.
         """
-        l = self.strpath.split(self.sep) 
-        if len(l) < 4: 
-            raise py.error.EINVAL(self, "base is not valid") 
-        elif len(l) == 4: 
-            return self.join(*args, **kwargs) 
-        else: 
+        l = self.strpath.split(self.sep)
+        if len(l) < 4:
+            raise py.error.EINVAL(self, "base is not valid")
+        elif len(l) == 4:
+            return self.join(*args, **kwargs)
+        else:
             return self.new(basename='').join(*args, **kwargs)
 
     # modifying methods (cache must be invalidated)
     def mkdir(self, *args, **kwargs):
-        """ create & return the directory joined with args. 
+        """ create & return the directory joined with args.
         pass a 'msg' keyword argument to set the commit message.
         """
         commit_msg = kwargs.get('msg', "mkdir by py lib invocation")
@@ -177,29 +177,29 @@ checkin message msg."""
         if getattr(self, 'rev', None) is not None:
             raise py.error.EINVAL(self, "revisions are immutable")
         target = self.join(*args)
-        dir = kwargs.get('dir', 0) 
-        for x in target.parts(reverse=True): 
-            if x.check(): 
-                break 
-        else: 
-            raise py.error.ENOENT(target, "has not any valid base!") 
-        if x == target: 
-            if not x.check(dir=dir): 
-                raise dir and py.error.ENOTDIR(x) or py.error.EISDIR(x) 
-            return x 
-        tocreate = target.relto(x) 
+        dir = kwargs.get('dir', 0)
+        for x in target.parts(reverse=True):
+            if x.check():
+                break
+        else:
+            raise py.error.ENOENT(target, "has not any valid base!")
+        if x == target:
+            if not x.check(dir=dir):
+                raise dir and py.error.ENOTDIR(x) or py.error.EISDIR(x)
+            return x
+        tocreate = target.relto(x)
         basename = tocreate.split(self.sep, 1)[0]
         tempdir = py.path.local.mkdtemp()
-        try:    
-            tempdir.ensure(tocreate, dir=dir) 
+        try:
+            tempdir.ensure(tocreate, dir=dir)
             cmd = 'svn import -m "%s" "%s" "%s"' % (
-                    "ensure %s" % self._escape(tocreate), 
-                    self._escape(tempdir.join(basename)), 
+                    "ensure %s" % self._escape(tocreate),
+                    self._escape(tempdir.join(basename)),
                     x.join(basename)._encodedurl())
-            self._svncmdexecauth(cmd) 
+            self._svncmdexecauth(cmd)
             self._norev_delentry(x)
-        finally:    
-            tempdir.remove() 
+        finally:
+            tempdir.remove()
         return target
 
     # end of modifying methods
@@ -247,7 +247,7 @@ checkin message msg."""
             for lsline in lines:
                 if lsline:
                     info = InfoSvnCommand(lsline)
-                    if info._name != '.':  # svn 1.5 produces '.' dirs, 
+                    if info._name != '.':  # svn 1.5 produces '.' dirs,
                         nameinfo_seq.append((info._name, info))
             nameinfo_seq.sort()
             return nameinfo_seq

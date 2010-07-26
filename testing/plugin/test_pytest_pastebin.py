@@ -1,14 +1,14 @@
 
 class TestPasting:
     def pytest_funcarg__pastebinlist(self, request):
-        mp = request.getfuncargvalue("monkeypatch") 
+        mp = request.getfuncargvalue("monkeypatch")
         pastebinlist = []
         class MockProxy:
             def newPaste(self, language, code):
                 pastebinlist.append((language, code))
         plugin = request.config.pluginmanager.getplugin('pastebin')
-        mp.setattr(plugin, 'getproxy', MockProxy) 
-        return pastebinlist 
+        mp.setattr(plugin, 'getproxy', MockProxy)
+        return pastebinlist
 
     def test_failed(self, testdir, pastebinlist):
         testpath = testdir.makepyfile("""
@@ -44,4 +44,4 @@ class TestPasting:
         s = pastebinlist[0][1]
         for x in 'test_fail test_skip skipped'.split():
             assert s.find(x), (s, x)
-         
+

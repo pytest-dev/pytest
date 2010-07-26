@@ -74,7 +74,7 @@ class TestPyCleanup:
         subdir.mkdir("dist")
         result = testdir.runpybin("py.cleanup", opt, subdir)
         assert result.ret == 0
-        assert okbuild.check()      
+        assert okbuild.check()
         assert egg1.check()
         assert egg2.check()
         assert subdir.join("preserved1").check()

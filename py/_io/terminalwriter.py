@@ -1,6 +1,6 @@
 """
 
-Helper functions for writing to terminals and files. 
+Helper functions for writing to terminals and files.
 
 """
 
@@ -20,7 +20,7 @@ def _getdimensions():
     import termios,fcntl,struct
     call = fcntl.ioctl(1,termios.TIOCGWINSZ,"\000"*8)
     height,width = struct.unpack( "hhhh", call ) [:2]
-    return height, width 
+    return height, width
 
 
 def get_terminal_width():
@@ -32,7 +32,7 @@ def get_terminal_width():
         # FALLBACK
         width = int(os.environ.get('COLUMNS', 80))
     else:
-        # XXX the windows getdimensions may be bogus, let's sanify a bit 
+        # XXX the windows getdimensions may be bogus, let's sanify a bit
         if width < 40:
             width = 80
     return width
@@ -47,7 +47,7 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
     if esc and not isinstance(esc, tuple):
         esc = (esc,)
     if esc and sys.platform != "win32" and file.isatty():
-        text = (''.join(['\x1b[%sm' % cod for cod in esc])  +  
+        text = (''.join(['\x1b[%sm' % cod for cod in esc])  +
                 text +
                 '\x1b[0m')     # ANSI color code "reset"
     if newline:
@@ -93,9 +93,9 @@ def should_do_markup(file):
            and not (sys.platform.startswith('java') and os._name == 'nt')
 
 class TerminalWriter(object):
-    _esctable = dict(black=30, red=31, green=32, yellow=33, 
+    _esctable = dict(black=30, red=31, green=32, yellow=33,
                      blue=34, purple=35, cyan=36, white=37,
-                     Black=40, Red=41, Green=42, Yellow=43, 
+                     Black=40, Red=41, Green=42, Yellow=43,
                      Blue=44, Purple=45, Cyan=46, White=47,
                      bold=1, light=2, blink=5, invert=7)
 
@@ -106,19 +106,19 @@ class TerminalWriter(object):
             if stringio:
                 self.stringio = file = py.io.TextIO()
             else:
-                file = py.std.sys.stdout 
+                file = py.std.sys.stdout
                 if hasattr(file, 'encoding'):
                     encoding = file.encoding
         elif hasattr(file, '__call__'):
             file = WriteFile(file, encoding=encoding)
-        self.encoding = encoding 
+        self.encoding = encoding
         self._file = file
         self.fullwidth = get_terminal_width()
         self.hasmarkup = should_do_markup(file)
 
     def _escaped(self, text, esc):
         if esc and self.hasmarkup:
-            text = (''.join(['\x1b[%sm' % cod for cod in esc])  +  
+            text = (''.join(['\x1b[%sm' % cod for cod in esc])  +
                 text +'\x1b[0m')
         return text
 
@@ -210,18 +210,18 @@ class Win32ConsoleWriter(TerminalWriter):
     def line(self, s="", **kw):
         self.write(s+"\n", **kw)
 
-class WriteFile(object): 
-    def __init__(self, writemethod, encoding=None): 
-        self.encoding = encoding 
-        self._writemethod = writemethod 
+class WriteFile(object):
+    def __init__(self, writemethod, encoding=None):
+        self.encoding = encoding
+        self._writemethod = writemethod
 
     def write(self, data):
         if self.encoding:
             data = data.encode(self.encoding)
         self._writemethod(data)
 
-    def flush(self): 
-        return 
+    def flush(self):
+        return
 
 
 if win32_and_ctypes:

@@ -3,30 +3,30 @@ import os, sys
 WIDTH = 75
 
 plugins = [
-    ('advanced python testing', 
+    ('advanced python testing',
             'skipping mark pdb figleaf '
             'monkeypatch coverage cov capture capturelog recwarn tmpdir',),
     ('distributed testing, CI and deployment',
         'xdist pastebin junitxml resultlog genscript',),
     ('testing domains and conventions codecheckers',
             'oejskit django unittest nose doctest restdoc'),
-    ('internal, debugging, help functionality', 
+    ('internal, debugging, help functionality',
           'helpconfig terminal hooklog')
-    #('internal plugins / core functionality', 
+    #('internal plugins / core functionality',
     #    #'runner execnetcleanup # pytester',
     #    'runner execnetcleanup' # pytester',
     #)
 ]
 
 externals = {
-    'oejskit': "run javascript tests in real life browsers", 
+    'oejskit': "run javascript tests in real life browsers",
     'xdist': None,
     'figleaf': None,
-    'capturelog': None, 
-    'coverage': None, 
-    'cov': None, 
-    'codecheckers': None, 
-    'django': "for testing django applications", 
+    'capturelog': None,
+    'coverage': None,
+    'cov': None,
+    'codecheckers': None,
+    'django': "for testing django applications",
 }
 
 def warn(*args):
@@ -107,7 +107,7 @@ class RestWriter:
                 assert self._all_links[key] == link[1], (key, link[1])
             else:
                 self._all_links[key] = link[1]
-      
+
     def write_all_links(cls, linkpath):
         p = linkpath.new(basename="links.txt")
         p_writer = RestWriter(p)
@@ -142,7 +142,7 @@ class PluginOverview(RestWriter):
                     self.add_internal_link(name, htmlpath)
                 else:
                     doc = PluginDoc(docpath)
-                    doc.make(config=config, name=name) 
+                    doc.make(config=config, name=name)
                     self.add_internal_link(name, doc.target)
                     if name in externals:
                         self.para("%s_ (external) %s" %(name, doc.oneliner))
@@ -173,9 +173,9 @@ class PluginDoc(RestWriter):
             moduledoc = doc[i+1:].strip()
 
         self.name = oneliner # plugin.__name__.split(".")[-1]
-        self.oneliner = oneliner 
+        self.oneliner = oneliner
         self.moduledoc = moduledoc
-       
+
         #self.h1("%s plugin" % self.name) # : %s" %(self.name, self.oneliner))
         self.h1(oneliner)
         #self.Print(self.oneliner)
@@ -185,13 +185,13 @@ class PluginDoc(RestWriter):
         self.Print()
 
         self.Print(moduledoc)
-    
+
         self.emit_funcargs(plugin)
         self.emit_options(plugin)
         if name not in externals:
             self.emit_source(plugin, config.hg_changeset)
-        #self.sourcelink = (purename, 
-        #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" + 
+        #self.sourcelink = (purename,
+        #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" +
         #    purename + ".py")
         #
     def emit_source(self, plugin, hg_changeset):
@@ -199,35 +199,35 @@ class PluginDoc(RestWriter):
         if basename.endswith("pyc"):
             basename = basename[:-1]
         #self.para("`%s`_ source code" % basename)
-        #self.links.append((basename, 
+        #self.links.append((basename,
         #    "http://bitbucket.org/hpk42/py-trunk/src/tip/py/test/plugin/" +
         #    basename))
         self.h1("Start improving this plugin in 30 seconds")
         self.para(py.code.Source("""
-            1. Download `%s`_ plugin source code 
-            2. put it somewhere as ``%s`` into your import path 
+            1. Download `%s`_ plugin source code
+            2. put it somewhere as ``%s`` into your import path
             3. a subsequent ``py.test`` run will use your local version
 
-            Checkout customize_, other plugins_ or `get in contact`_. 
+            Checkout customize_, other plugins_ or `get in contact`_.
         """ % (basename, basename)))
         #    your work appreciated if you offer back your version.  In this case
-        #    it probably makes sense if you `checkout the py.test 
+        #    it probably makes sense if you `checkout the py.test
         #    development version`_ and apply your changes to the plugin
-        #    version in there. 
-        #self.links.append((basename, 
-        #    "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
+        #    version in there.
+        #self.links.append((basename,
+        #    "http://bitbucket.org/hpk42/py-trunk/raw/%s/"
         #    "py/test/plugin/%s" %(hg_changeset, basename)))
-        self.links.append((basename, 
-            "http://bitbucket.org/hpk42/py-trunk/raw/%s/" 
+        self.links.append((basename,
+            "http://bitbucket.org/hpk42/py-trunk/raw/%s/"
             "py/_plugin/%s" %(pyversion, basename)))
         self.links.append(('customize', '../customize.html'))
         self.links.append(('plugins', 'index.html'))
         self.links.append(('get in contact', '../../contact.html'))
-        self.links.append(('checkout the py.test development version', 
+        self.links.append(('checkout the py.test development version',
             '../../install.html#checkout'))
-       
+
         if 0: # this breaks the page layout and makes large doc files
-            #self.h2("plugin source code") 
+            #self.h2("plugin source code")
             self.Print()
             self.para("For your convenience here is also an inlined version "
                       "of ``%s``:" %basename)
@@ -285,15 +285,15 @@ if __name__ == "__main__":
     pydir = py.path.local(py.__file__).dirpath()
     pyversion = py.version
 
-    cmd = "hg tip --template '{node}'" 
+    cmd = "hg tip --template '{node}'"
     old = pydir.dirpath().chdir()
     _config.hg_changeset = py.process.cmdexec(cmd).strip()
 
     testdir = pydir.dirpath("doc", 'test')
-   
+
     ov = PluginOverview(testdir.join("plugin", "index.txt"))
     ov.make(config=_config)
-    
+
     ov = HookSpec(testdir.join("plugin", "hookspec.txt"))
     ov.make(config=_config)
 

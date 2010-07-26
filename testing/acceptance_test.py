@@ -38,7 +38,7 @@ class TestGeneralUsage:
         result = testdir.runpytest(p, '--basetemp=%s' %mytemp)
         assert result.ret == 0
         assert mytemp.join('hello').check()
-                
+
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile("""
             def test_this():
@@ -47,7 +47,7 @@ class TestGeneralUsage:
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            ">       assert x", 
+            ">       assert x",
             "E       assert 0",
         ])
         assert result.ret == 1
@@ -120,7 +120,7 @@ class TestGeneralUsage:
         result.stdout.fnmatch_lines([
             "*1 skip*"
         ])
-           
+
 
     @py.test.mark.xfail
     def test_issue88_initial_file_multinodes(self, testdir):
@@ -135,8 +135,8 @@ class TestGeneralUsage:
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p, "--collectonly")
         result.stdout.fnmatch_lines([
-            "*MyFile*test_issue88*", 
-            "*Module*test_issue88*", 
+            "*MyFile*test_issue88*",
+            "*Module*test_issue88*",
         ])
 
     @py.test.mark.xfail

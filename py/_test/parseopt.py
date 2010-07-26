@@ -1,5 +1,5 @@
 """
-thin wrapper around Python's optparse.py  
+thin wrapper around Python's optparse.py
 adding some extra checks and ways to systematically
 have Environment variables provide default values
 for options.  basic usage:
@@ -7,23 +7,23 @@ for options.  basic usage:
    >>> parser = Parser()
    >>> parser.addoption("--hello", action="store_true", dest="hello")
    >>> option, args = parser.parse(['--hello'])
-   >>> option.hello 
+   >>> option.hello
    True
    >>> args
    []
-    
+
 """
 import py
-import optparse 
+import optparse
 
 class Parser:
-    """ Parser for command line arguments. """ 
+    """ Parser for command line arguments. """
 
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
         self._groups = []
         self._processopt = processopt
-        self._usage = usage 
+        self._usage = usage
         self.hints = []
 
     def processoption(self, option):
@@ -44,9 +44,9 @@ class Parser:
             if grp.name == after:
                 break
         self._groups.insert(i+1, group)
-        return group 
+        return group
 
-    addgroup = getgroup 
+    addgroup = getgroup
     def addgroup(self, name, description=""):
         py.log._apiwarn("1.1", "use getgroup() which gets-or-creates")
         return self.getgroup(name, description)
@@ -60,7 +60,7 @@ class Parser:
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
-                desc = group.description or group.name 
+                desc = group.description or group.name
                 optgroup = optparse.OptionGroup(optparser, desc)
                 optgroup.add_options(group.options)
                 optparser.add_option_group(optgroup)
@@ -78,7 +78,7 @@ class OptionGroup:
         self.name = name
         self.description = description
         self.options = []
-        self.parser = parser 
+        self.parser = parser
 
     def addoption(self, *optnames, **attrs):
         """ add an option to this group. """
@@ -92,7 +92,7 @@ class OptionGroup:
     def _addoption_instance(self, option, shortupper=False):
         if not shortupper:
             for opt in option._short_opts:
-                if opt[0] == '-' and opt[1].islower(): 
+                if opt[0] == '-' and opt[1].islower():
                     raise ValueError("lowercase shortoptions reserved")
         if self.parser:
             self.parser.processoption(option)
@@ -101,10 +101,10 @@ class OptionGroup:
 
 class MyOptionParser(optparse.OptionParser):
     def __init__(self, parser):
-        self._parser = parser 
+        self._parser = parser
         optparse.OptionParser.__init__(self, usage=parser._usage)
     def format_epilog(self, formatter):
-        hints = self._parser.hints 
+        hints = self._parser.hints
         if hints:
             s = "\n".join(["hint: " + x for x in hints]) + "\n"
             s = "\n" + s + "\n"

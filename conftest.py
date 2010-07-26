@@ -12,7 +12,7 @@ pid = os.getpid()
 
 def pytest_addoption(parser):
     group = parser.getgroup("pylib", "py lib testing options")
-    group.addoption('--sshhost', 
+    group.addoption('--sshhost',
            action="store", dest="sshhost", default=None,
            help=("ssh xspec for ssh functional tests. "))
     group.addoption('--runslowtests',
@@ -43,7 +43,7 @@ def pytest_funcarg__sshhost(request):
     val = request.config.getvalue("sshhost")
     if val:
         return val
-    py.test.skip("need --sshhost option") 
+    py.test.skip("need --sshhost option")
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)
     if multi is not None:
@@ -52,11 +52,11 @@ def pytest_generate_tests(metafunc):
             for val in l:
                 metafunc.addcall(funcargs={name: val})
     elif 'anypython' in metafunc.funcargnames:
-        for name in ('python2.4', 'python2.5', 'python2.6', 
+        for name in ('python2.4', 'python2.5', 'python2.6',
                      'python2.7', 'python3.1', 'pypy-c', 'jython'):
             metafunc.addcall(id=name, param=name)
 
-# XXX copied from execnet's conftest.py - needs to be merged 
+# XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
     'python2.6': r'C:\Python26\python.exe',
@@ -73,7 +73,7 @@ def getexecutable(name, cache={}):
         if executable:
             if name == "jython":
                 import subprocess
-                popen = subprocess.Popen([str(executable), "--version"], 
+                popen = subprocess.Popen([str(executable), "--version"],
                     universal_newlines=True, stderr=subprocess.PIPE)
                 out, err = popen.communicate()
                 if not err or "2.5" not in err:

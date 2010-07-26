@@ -5,7 +5,7 @@ import py
 import pdb, sys, linecache
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general") 
+    group = parser.getgroup("general")
     group._addoption('--pdb',
                action="store_true", dest="usepdb", default=False,
                help="start the interactive Python debugger on errors.")
@@ -17,7 +17,7 @@ def pytest_configure(config):
 class PdbInvoke:
     def pytest_sessionfinish(self, session):
         # don't display failures again at the end
-        session.config.option.tbstyle = "no" 
+        session.config.option.tbstyle = "no"
     def pytest_runtest_makereport(self, item, call, __multicall__):
         if not call.excinfo or \
             call.excinfo.errisinstance(py.test.skip.Exception):

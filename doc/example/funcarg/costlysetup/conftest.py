@@ -1,7 +1,7 @@
 
 def pytest_funcarg__setup(request):
     return request.cached_setup(
-        setup=lambda: CostlySetup(), 
+        setup=lambda: CostlySetup(),
         teardown=lambda costlysetup: costlysetup.finalize(),
         scope="session",
     )
@@ -13,4 +13,4 @@ class CostlySetup:
         self.timecostly = 1
 
     def finalize(self):
-        del self.timecostly 
+        del self.timecostly

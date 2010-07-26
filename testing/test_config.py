@@ -27,7 +27,7 @@ class TestConfigCmdlineParsing:
         import os
         testdir.makeconftest("option_verbose=True")
         config = testdir.parseconfig()
-        assert config.option.verbose 
+        assert config.option.verbose
 
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
@@ -58,7 +58,7 @@ class TestConfigTmpdir:
         assert not config2.getbasetemp().relto(config3.getbasetemp())
         assert not config3.getbasetemp().relto(config2.getbasetemp())
 
-class TestConfigAPI: 
+class TestConfigAPI:
 
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")
@@ -76,12 +76,12 @@ class TestConfigAPI:
 
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
-        py.test.raises(py.test.skip.Exception, 
+        py.test.raises(py.test.skip.Exception,
             "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
         config.option.hello = None
-        py.test.raises(py.test.skip.Exception, 
+        py.test.raises(py.test.skip.Exception,
             "config.getvalueorskip('hello')")
 
     def test_config_overwrite(self, testdir):
@@ -108,9 +108,9 @@ class TestConfigAPI:
 
     def test_setsessionclass_and_initsession(self, testdir):
         config = testdir.Config()
-        class Session1: 
+        class Session1:
             def __init__(self, config):
-                self.config = config 
+                self.config = config
         config.setsessionclass(Session1)
         session = config.initsession()
         assert isinstance(session, Session1)
@@ -126,27 +126,27 @@ class TestConfigApi_getinitialnodes:
         col = colitems[0]
         assert isinstance(col, py.test.collect.Directory)
         for col in col.listchain():
-            assert col.config is config 
+            assert col.config is config
 
     def test_twodirs(self, testdir, tmpdir):
         config = testdir.reparseconfig([tmpdir, tmpdir])
         colitems = config.getinitialnodes()
         assert len(colitems) == 2
-        col1, col2 = colitems 
-        assert col1.name == col2.name 
-        assert col1.parent == col2.parent 
+        col1, col2 = colitems
+        assert col1.name == col2.name
+        assert col1.parent == col2.parent
 
     def test_curdir_and_subdir(self, testdir, tmpdir):
         a = tmpdir.ensure("a", dir=1)
         config = testdir.reparseconfig([tmpdir, a])
         colitems = config.getinitialnodes()
         assert len(colitems) == 2
-        col1, col2 = colitems 
+        col1, col2 = colitems
         assert col1.name == tmpdir.basename
         assert col2.name == 'a'
         for col in colitems:
             for subcol in col.listchain():
-                assert col.config is config 
+                assert col.config is config
 
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -154,10 +154,10 @@ class TestConfigApi_getinitialnodes:
         col, = config.getinitialnodes()
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
-        assert col.parent.name == tmpdir.basename 
+        assert col.parent.name == tmpdir.basename
         assert isinstance(col.parent.parent, RootCollector)
         for col in col.listchain():
-            assert col.config is config 
+            assert col.config is config
 
     def test_global_dir(self, testdir, tmpdir):
         x = tmpdir.ensure("a", dir=1)
@@ -167,7 +167,7 @@ class TestConfigApi_getinitialnodes:
         print(col.listchain())
         assert col.name == 'a'
         assert isinstance(col.parent, RootCollector)
-        assert col.config is config 
+        assert col.config is config
 
     def test_pkgfile(self, testdir, tmpdir):
         tmpdir = tmpdir.join("subdir")
@@ -177,10 +177,10 @@ class TestConfigApi_getinitialnodes:
         col, = config.getinitialnodes()
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
-        assert col.parent.name == x.dirpath().basename 
+        assert col.parent.name == x.dirpath().basename
         assert isinstance(col.parent.parent.parent, RootCollector)
         for col in col.listchain():
-            assert col.config is config 
+            assert col.config is config
 
 class TestConfig_gettopdir:
     def test_gettopdir(self, testdir):
@@ -188,7 +188,7 @@ class TestConfig_gettopdir:
         tmp = testdir.tmpdir
         assert gettopdir([tmp]) == tmp
         topdir = gettopdir([tmp.join("hello"), tmp.join("world")])
-        assert topdir == tmp 
+        assert topdir == tmp
         somefile = tmp.ensure("somefile.py")
         assert gettopdir([somefile]) == tmp
 
@@ -200,7 +200,7 @@ class TestConfig_gettopdir:
         c = tmp.ensure('a', 'b', 'c.py')
         Z = tmp.ensure('Z', dir=1)
         assert gettopdir([c]) == a
-        assert gettopdir([c, Z]) == tmp 
+        assert gettopdir([c, Z]) == tmp
         assert gettopdir(["%s::xyc" % c]) == a
         assert gettopdir(["%s::xyc::abc" % c]) == a
         assert gettopdir(["%s::xyc" % c, "%s::abc" % Z]) == tmp
@@ -209,24 +209,24 @@ def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
         reprec = testdir.inline_run(*opts)
         passed, skipped, failed = reprec.countoutcomes()
-        assert failed == 2 
+        assert failed == 2
         assert skipped == passed == 0
     path = testdir.makepyfile("""
         def test_f1(): assert 0
         def test_f2(): assert 0
     """)
 
-    for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'], 
-                 ['--tb=long'], ['--fulltrace'], ['--nomagic'], 
+    for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'],
+                 ['--tb=long'], ['--fulltrace'], ['--nomagic'],
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
 def test_ensuretemp(recwarn):
     #py.test.deprecated_call(py.test.ensuretemp, 'hello')
-    d1 = py.test.ensuretemp('hello') 
-    d2 = py.test.ensuretemp('hello') 
+    d1 = py.test.ensuretemp('hello')
+    d2 = py.test.ensuretemp('hello')
     assert d1 == d2
-    assert d1.check(dir=1) 
+    assert d1.check(dir=1)
 
 def test_preparse_ordering(testdir, monkeypatch):
     pkg_resources = py.test.importorskip("pkg_resources")
@@ -252,7 +252,7 @@ def test_preparse_ordering(testdir, monkeypatch):
 import pickle
 class TestConfigPickling:
     def pytest_funcarg__testdir(self, request):
-        oldconfig = py.test.config 
+        oldconfig = py.test.config
         print("setting py.test.config to None")
         py.test.config = None
         def resetglobals():
@@ -271,9 +271,9 @@ class TestConfigPickling:
         config2 = Config()
         config2.__setstate__(config1.__getstate__())
         assert config2.topdir == py.path.local()
-        config2_relpaths = [py.path.local(x).relto(config2.topdir) 
+        config2_relpaths = [py.path.local(x).relto(config2.topdir)
                                 for x in config2.args]
-        config1_relpaths = [py.path.local(x).relto(config1.topdir) 
+        config1_relpaths = [py.path.local(x).relto(config1.topdir)
                                 for x in config1.args]
 
         assert config2_relpaths == config1_relpaths
@@ -285,7 +285,7 @@ class TestConfigPickling:
         testdir.makeconftest("""
             def pytest_addoption(parser):
                 group = parser.getgroup("testing group")
-                group.addoption('-G', '--glong', action="store", default=42, 
+                group.addoption('-G', '--glong', action="store", default=42,
                     type="int", dest="gdest", help="g value.")
         """)
         config = testdir.parseconfig("-G", "11")
@@ -296,7 +296,7 @@ class TestConfigPickling:
         py.test.raises(AttributeError, "config.option.gdest")
 
         config2 = testdir.Config()
-        config2.__setstate__(repr) 
+        config2.__setstate__(repr)
         assert config2.option.gdest == 11
 
     def test_config_pickling_and_conftest_deprecated(self, testdir):
@@ -305,7 +305,7 @@ class TestConfigPickling:
         tmp.join("conftest.py").write(py.code.Source("""
             def pytest_addoption(parser):
                 group = parser.getgroup("testing group")
-                group.addoption('-G', '--glong', action="store", default=42, 
+                group.addoption('-G', '--glong', action="store", default=42,
                     type="int", dest="gdest", help="g value.")
         """))
         config = testdir.parseconfig(tmp, "-G", "11")
@@ -316,10 +316,10 @@ class TestConfigPickling:
         py.test.raises(AttributeError, "config.option.gdest")
 
         config2 = testdir.Config()
-        config2.__setstate__(repr) 
+        config2.__setstate__(repr)
         assert config2.option.gdest == 11
-       
-        option = config2.addoptions("testing group", 
+
+        option = config2.addoptions("testing group",
                 config2.Option('-G', '--glong', action="store", default=42,
                        type="int", dest="gdest", help="g value."))
         assert option.gdest == 11
@@ -340,10 +340,10 @@ class TestConfigPickling:
         io = py.io.BytesIO()
         pickler = pickle.Pickler(io)
         pickler.dump(col)
-        io.seek(0) 
+        io.seek(0)
         unpickler = pickle.Unpickler(io)
         col2 = unpickler.load()
-        assert col2.name == col.name 
+        assert col2.name == col.name
         assert col2.listnames() == col.listnames()
 
     def test_config_and_collector_pickling(self, testdir):
@@ -353,13 +353,13 @@ class TestConfigPickling:
         assert config.topdir == tmpdir
         col = config.getnode(dir1.dirpath())
         col1 = config.getnode(dir1)
-        assert col1.parent == col 
+        assert col1.parent == col
         io = py.io.BytesIO()
         pickler = pickle.Pickler(io)
         pickler.dump(col)
         pickler.dump(col1)
         pickler.dump(col)
-        io.seek(0) 
+        io.seek(0)
         unpickler = pickle.Unpickler(io)
         newtopdir = tmpdir.ensure("newtopdir", dir=1)
         newtopdir.mkdir("sourcedir").mkdir("somedir")
@@ -369,11 +369,11 @@ class TestConfigPickling:
             newcol2 = unpickler.load()
             newcol3 = unpickler.load()
             assert newcol2.config is newcol.config
-            assert newcol2.parent == newcol 
+            assert newcol2.parent == newcol
             assert newcol2.config.topdir.realpath() == newtopdir.realpath()
             newsourcedir = newtopdir.join("sourcedir")
             assert newcol.fspath.realpath() == newsourcedir.realpath()
             assert newcol2.fspath.basename == dir1.basename
             assert newcol2.fspath.relto(newcol2.config.topdir)
         finally:
-            old.chdir() 
+            old.chdir()

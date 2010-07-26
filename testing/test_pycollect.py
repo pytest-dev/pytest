@@ -6,7 +6,7 @@ class TestModule:
         fn = tmpdir.join('nada','no')
         col = py.test.collect.Module(fn, config=testdir.Config())
         col.config = testdir.parseconfig(tmpdir)
-        py.test.raises(py.error.ENOENT, col.collect) 
+        py.test.raises(py.error.ENOENT, col.collect)
 
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
@@ -32,7 +32,7 @@ class TestModule:
         ])
 
     def test_syntax_error_in_module(self, testdir):
-        modcol = testdir.getmodulecol("this is a syntax error") 
+        modcol = testdir.getmodulecol("this is a syntax error")
         py.test.raises(modcol.CollectError, modcol.collect)
         py.test.raises(modcol.CollectError, modcol.collect)
         py.test.raises(modcol.CollectError, modcol.run)
@@ -46,12 +46,12 @@ class TestClass:
         modcol = testdir.getmodulecol("""
             class TestClass1:
                 def __init__(self):
-                    pass 
+                    pass
             class TestClass2(object):
                 def __init__(self):
-                    pass 
+                    pass
         """)
-        l = modcol.collect() 
+        l = modcol.collect()
         assert len(l) == 0
 
 if py.std.sys.version_info > (3, 0):
@@ -60,12 +60,12 @@ else:
     _func_name_attr = "func_name"
 
 class TestGenerator:
-    def test_generative_functions(self, testdir): 
+    def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol("""
-            def func1(arg, arg2): 
-                assert arg == arg2 
+            def func1(arg, arg2):
+                assert arg == arg2
 
-            def test_gen(): 
+            def test_gen():
                 yield func1, 17, 3*5
                 yield func1, 42, 6*7
         """)
@@ -80,12 +80,12 @@ class TestGenerator:
         assert gencolitems[0].name == '[0]'
         assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
 
-    def test_generative_methods(self, testdir): 
+    def test_generative_methods(self, testdir):
         modcol = testdir.getmodulecol("""
-            def func1(arg, arg2): 
-                assert arg == arg2 
-            class TestGenMethods: 
-                def test_gen(self): 
+            def func1(arg, arg2):
+                assert arg == arg2
+            class TestGenMethods:
+                def test_gen(self):
                     yield func1, 17, 3*5
                     yield func1, 42, 6*7
         """)
@@ -100,10 +100,10 @@ class TestGenerator:
 
     def test_generative_functions_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol("""
-            def func1(arg, arg2): 
-                assert arg == arg2 
+            def func1(arg, arg2):
+                assert arg == arg2
 
-            def test_gen(): 
+            def test_gen():
                 yield "seventeen", func1, 17, 3*5
                 yield "fortytwo", func1, 42, 6*7
         """)
@@ -118,13 +118,13 @@ class TestGenerator:
         assert gencolitems[0].name == "['seventeen']"
         assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
         assert gencolitems[1].name == "['fortytwo']"
-        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'        
+        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'
 
     def test_generative_functions_unique_explicit_names(self, testdir):
-        # generative 
+        # generative
         modcol = testdir.getmodulecol("""
-            def func(): pass 
-            def test_gen(): 
+            def func(): pass
+            def test_gen():
                 yield "name", func
                 yield "name", func
         """)
@@ -134,12 +134,12 @@ class TestGenerator:
         assert isinstance(gencol, py.test.collect.Generator)
         py.test.raises(ValueError, "gencol.collect()")
 
-    def test_generative_methods_with_explicit_names(self, testdir): 
+    def test_generative_methods_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol("""
-            def func1(arg, arg2): 
-                assert arg == arg2 
-            class TestGenMethods: 
-                def test_gen(self): 
+            def func1(arg, arg2):
+                assert arg == arg2
+            class TestGenMethods:
+                def test_gen(self):
                     yield "m1", func1, 17, 3*5
                     yield "m2", func1, 42, 6*7
         """)
@@ -152,7 +152,7 @@ class TestGenerator:
         assert gencolitems[0].name == "['m1']"
         assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
         assert gencolitems[1].name == "['m2']"
-        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'        
+        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'
 
     def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
         o = testdir.makepyfile("""
@@ -163,20 +163,20 @@ class TestGenerator:
 
                 def list_append(item):
                     test_list.append(item)
-                    
+
                 def assert_order_of_execution():
                     py.builtin.print_('expected order', expected_list)
                     py.builtin.print_('but got       ', test_list)
                     assert test_list == expected_list
-                
+
                 for i in expected_list:
                     yield list_append, i
                 yield assert_order_of_execution
         """)
         reprec = testdir.inline_run(o)
-        passed, skipped, failed = reprec.countoutcomes() 
+        passed, skipped, failed = reprec.countoutcomes()
         assert passed == 7
-        assert not skipped and not failed 
+        assert not skipped and not failed
 
     def test_order_of_execution_generator_different_codeline(self, testdir):
         o = testdir.makepyfile("""
@@ -198,16 +198,16 @@ class TestGenerator:
                     py.builtin.print_('expected order', expected_list)
                     py.builtin.print_('but got       ', test_list)
                     assert test_list == expected_list
-                    
+
                 yield list_append_0
                 yield list_append_1
                 yield list_append_2
-                yield assert_order_of_execution   
+                yield assert_order_of_execution
         """)
-        reprec = testdir.inline_run(o) 
-        passed, skipped, failed = reprec.countoutcomes() 
+        reprec = testdir.inline_run(o)
+        passed, skipped, failed = reprec.countoutcomes()
         assert passed == 4
-        assert not skipped and not failed 
+        assert not skipped and not failed
 
 class TestFunction:
     def test_getmodulecollector(self, testdir):
@@ -215,16 +215,16 @@ class TestFunction:
         modcol = item.getparent(py.test.collect.Module)
         assert isinstance(modcol, py.test.collect.Module)
         assert hasattr(modcol.obj, 'test_func')
-        
+
     def test_function_equality(self, testdir, tmpdir):
         config = testdir.reparseconfig()
         f1 = py.test.collect.Function(name="name", config=config,
                                       args=(1,), callobj=isinstance)
-        f2 = py.test.collect.Function(name="name",config=config, 
+        f2 = py.test.collect.Function(name="name",config=config,
                                       args=(1,), callobj=py.builtin.callable)
         assert not f1 == f2
         assert f1 != f2
-        f3 = py.test.collect.Function(name="name", config=config, 
+        f3 = py.test.collect.Function(name="name", config=config,
                                       args=(1,2), callobj=py.builtin.callable)
         assert not f3 == f2
         assert f3 != f2
@@ -232,7 +232,7 @@ class TestFunction:
         assert not f3 == f1
         assert f3 != f1
 
-        f1_b = py.test.collect.Function(name="name", config=config, 
+        f1_b = py.test.collect.Function(name="name", config=config,
                                       args=(1,), callobj=isinstance)
         assert f1 == f1_b
         assert not f1 != f1_b
@@ -247,9 +247,9 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
-        f5 = py.test.collect.Function(name="name", config=config, 
+        f5 = py.test.collect.Function(name="name", config=config,
                                       callspec=callspec1, callobj=isinstance)
-        f5b = py.test.collect.Function(name="name", config=config, 
+        f5b = py.test.collect.Function(name="name", config=config,
                                       callspec=callspec2, callobj=isinstance)
         assert f5 != f5b
         assert not (f5 == f5b)
@@ -282,11 +282,11 @@ class TestSorting:
         assert fn1 != modcol
         if py.std.sys.version_info < (3, 0):
             assert cmp(fn1, fn2) == 0
-        assert hash(fn1) == hash(fn2) 
+        assert hash(fn1) == hash(fn2)
 
         fn3 = modcol.collect_by_name("test_fail")
         assert isinstance(fn3, py.test.collect.Function)
-        assert not (fn1 == fn3) 
+        assert not (fn1 == fn3)
         assert fn1 != fn3
 
         for fn in fn1,fn2,fn3:
@@ -349,22 +349,22 @@ class TestConftestCustomization:
         result.stdout.fnmatch_lines([
             "*MyFunction*some*",
         ])
-        
+
     def test_makeitem_non_underscore(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("def _hello(): pass")
         l = []
-        monkeypatch.setattr(py.test.collect.Module, 'makeitem', 
+        monkeypatch.setattr(py.test.collect.Module, 'makeitem',
             lambda self, name, obj: l.append(name))
         l = modcol.collect()
         assert '_hello' not in l
 
 
 class TestReportinfo:
-        
+
     def test_func_reportinfo(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         fspath, lineno, modpath = item.reportinfo()
-        assert fspath == item.fspath 
+        assert fspath == item.fspath
         assert lineno == 0
         assert modpath == "test_func"
 
@@ -376,15 +376,15 @@ class TestReportinfo:
         """)
         classcol = modcol.collect_by_name("TestClass")
         fspath, lineno, msg = classcol.reportinfo()
-        assert fspath == modcol.fspath 
+        assert fspath == modcol.fspath
         assert lineno == 1
         assert msg == "TestClass"
 
     def test_generator_reportinfo(self, testdir):
         modcol = testdir.getmodulecol("""
             # lineno 0
-            def test_gen(): 
-                def check(x): 
+            def test_gen():
+                def check(x):
                     assert x
                 yield check, 3
         """)
@@ -495,7 +495,7 @@ class TestTracebackCutting:
             x = 1
             x = 2
             x = 17
-            asd 
+            asd
         """)
         result = testdir.runpytest()
         assert result.ret != 0

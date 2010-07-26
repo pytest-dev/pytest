@@ -18,7 +18,7 @@ def pytest_funcarg__path1(request):
         common.setuptestfs(path1)
         return path1
     def teardown(path1):
-        # post check 
+        # post check
         assert path1.join("samplefile").check()
     return request.cached_setup(setup, teardown, scope="session")
 
@@ -62,10 +62,10 @@ class TestLocalPath(common.CommonFSTests):
 
     def test_remove_routes_ignore_errors(self, tmpdir, monkeypatch):
         l = []
-        monkeypatch.setattr(py.std.shutil, 'rmtree', 
+        monkeypatch.setattr(py.std.shutil, 'rmtree',
             lambda *args, **kwargs: l.append(kwargs))
         tmpdir.remove()
-        assert not l[0]['ignore_errors'] 
+        assert not l[0]['ignore_errors']
         for val in (True, False):
             l[:] = []
             tmpdir.remove(ignore_errors=val)
@@ -191,7 +191,7 @@ class TestLocalPath(common.CommonFSTests):
         if sys.platform == "win32":
             py.test.skip("win32: work around needed for path length limit")
         # see http://codespeak.net/pipermail/py-dev/2008q2/000922.html
-        
+
         # testing paths > 260 chars (which is Windows' limitation, but
         # depending on how the paths are used), but > 4096 (which is the
         # Linux' limitation) - the behaviour of paths with names > 4096 chars
@@ -210,7 +210,7 @@ class TestLocalPath(common.CommonFSTests):
         l = list(tmpdir.visit(lambda x: x.check(file=1)))
         assert len(l) == 3
         # check that breadth comes last
-        assert l[2] == p3 
+        assert l[2] == p3
 
 class TestExecutionOnWindows:
     pytestmark = win32only
@@ -233,16 +233,16 @@ class TestExecution:
         monkeypatch.setenv("PATH", noperm, prepend=":")
         noperm.chmod(0)
         assert py.path.local.sysfind('jaksdkasldqwe') is None
-            
+
     def test_sysfind_absolute(self):
         x = py.path.local.sysfind('test')
         assert x.check(file=1)
-        y = py.path.local.sysfind(str(x)) 
-        assert y.check(file=1) 
-        assert y == x 
+        y = py.path.local.sysfind(str(x))
+        assert y.check(file=1)
+        assert y == x
 
     def test_sysfind_multiple(self, tmpdir, monkeypatch):
-        monkeypatch.setenv('PATH', 
+        monkeypatch.setenv('PATH',
                           "%s:%s" % (tmpdir.ensure('a'),
                                        tmpdir.join('b')),
                           prepend=":")
@@ -255,9 +255,9 @@ class TestExecution:
         assert py.path.local.sysfind('a', checker=checker) is None
 
     def test_sysexec(self):
-        x = py.path.local.sysfind('ls') 
+        x = py.path.local.sysfind('ls')
         out = x.sysexec('-a')
-        for x in py.path.local().listdir(): 
+        for x in py.path.local().listdir():
             assert out.find(x.basename) != -1
 
     def test_sysexec_failing(self):
@@ -298,11 +298,11 @@ class TestExecution:
     #
 
 
-class TestImport: 
+class TestImport:
     def test_pyimport(self, path1):
         obj = path1.join('execfile.py').pyimport()
         assert obj.x == 42
-        assert obj.__name__ == 'execfile' 
+        assert obj.__name__ == 'execfile'
 
     def test_pyimport_dir(self, tmpdir):
         p = tmpdir.join("hello_123")
@@ -313,19 +313,19 @@ class TestImport:
     def test_pyimport_execfile_different_name(self, path1):
         obj = path1.join('execfile.py').pyimport(modname="0x.y.z")
         assert obj.x == 42
-        assert obj.__name__ == '0x.y.z' 
+        assert obj.__name__ == '0x.y.z'
 
     def test_pyimport_a(self, path1):
         otherdir = path1.join('otherdir')
         mod = otherdir.join('a.py').pyimport()
         assert mod.result == "got it"
-        assert mod.__name__ == 'otherdir.a' 
+        assert mod.__name__ == 'otherdir.a'
 
     def test_pyimport_b(self, path1):
         otherdir = path1.join('otherdir')
         mod = otherdir.join('b.py').pyimport()
         assert mod.stuff == "got it"
-        assert mod.__name__ == 'otherdir.b' 
+        assert mod.__name__ == 'otherdir.b'
 
     def test_pyimport_c(self, path1):
         otherdir = path1.join('otherdir')
@@ -338,11 +338,11 @@ class TestImport:
         assert mod.value2 == "got it"
 
     def test_pyimport_and_import(self, tmpdir):
-        tmpdir.ensure('xxxpackage', '__init__.py') 
+        tmpdir.ensure('xxxpackage', '__init__.py')
         mod1path = tmpdir.ensure('xxxpackage', 'module1.py')
-        mod1 = mod1path.pyimport() 
-        assert mod1.__name__ == 'xxxpackage.module1' 
-        from xxxpackage import module1 
+        mod1 = mod1path.pyimport()
+        assert mod1.__name__ == 'xxxpackage.module1'
+        from xxxpackage import module1
         assert module1 is mod1
 
     def test_pyimport_check_filepath_consistency(self, monkeypatch, tmpdir):
@@ -361,11 +361,11 @@ class TestImport:
         pseudopath = tmpdir.ensure(name+"123.py")
         mod.__file__ = str(pseudopath)
         monkeypatch.setitem(sys.modules, name, mod)
-        excinfo = py.test.raises(pseudopath.ImportMismatchError, 
+        excinfo = py.test.raises(pseudopath.ImportMismatchError,
             "p.pyimport()")
         modname, modfile, orig = excinfo.value.args
         assert modname == name
-        assert modfile == pseudopath 
+        assert modfile == pseudopath
         assert orig == p
         assert issubclass(pseudopath.ImportMismatchError, ImportError)
 
@@ -382,7 +382,7 @@ def test_pypkgdir_unimportable(tmpdir):
     subdir = pkg.ensure("subdir/__init__.py").dirpath()
     assert subdir.pypkgpath() == subdir
     assert subdir.ensure("xyz.py").pypkgpath() == subdir
-    assert not pkg.pypkgpath() 
+    assert not pkg.pypkgpath()
 
 def test_isimportable():
     from py._path.local import isimportable
@@ -402,7 +402,7 @@ def test_homedir():
 def test_samefile(tmpdir):
     assert tmpdir.samefile(tmpdir)
     p = tmpdir.ensure("hello")
-    assert p.samefile(p) 
+    assert p.samefile(p)
 
 def test_mkdtemp_rootdir(tmpdir):
     dtmp = local.mkdtemp(rootdir=tmpdir)
@@ -433,7 +433,7 @@ class TestWINLocalPath:
         t2 = path1.join("A_path")
         assert t1 == t1
         assert t1 == t2
-        
+
     def test_relto_with_mixed_case(self, path1):
         t1 = path1.join("a_path", "fiLe")
         t2 = path1.join("A_path")
@@ -455,7 +455,7 @@ class TestWINLocalPath:
             x = py.path.local.sysfind(cmd.relto(root))
             assert x.check(file=1)
         finally:
-            old.chdir()    
+            old.chdir()
 
 class TestPOSIXLocalPath:
     pytestmark = skiponwin32
@@ -466,14 +466,14 @@ class TestPOSIXLocalPath:
         filepath.write("Hello")
         nlink = filepath.stat().nlink
         linkpath.mklinkto(filepath)
-        assert filepath.stat().nlink == nlink + 1 
+        assert filepath.stat().nlink == nlink + 1
 
     def test_symlink_are_identical(self, tmpdir):
         filepath = tmpdir.join('file')
         filepath.write("Hello")
         linkpath = tmpdir.join('test')
         linkpath.mksymlinkto(filepath)
-        assert linkpath.readlink() == str(filepath) 
+        assert linkpath.readlink() == str(filepath)
 
     def test_symlink_isfile(self, tmpdir):
         linkpath = tmpdir.join('test')
@@ -531,17 +531,17 @@ class TestPOSIXLocalPath:
         from pwd import getpwuid
         from grp import getgrgid
         stat = path1.stat()
-        assert stat.path == path1 
+        assert stat.path == path1
 
         uid = stat.uid
         gid = stat.gid
         owner = getpwuid(uid)[0]
         group = getgrgid(gid)[0]
 
-        assert uid == stat.uid 
-        assert owner == stat.owner 
-        assert gid == stat.gid 
-        assert group == stat.group 
+        assert uid == stat.uid
+        assert owner == stat.owner
+        assert gid == stat.gid
+        assert group == stat.group
 
     def test_atime(self, tmpdir):
         import time
@@ -549,9 +549,9 @@ class TestPOSIXLocalPath:
         now = time.time()
         atime1 = path.atime()
         # we could wait here but timer resolution is very
-        # system dependent 
+        # system dependent
         path.read()
-        time.sleep(0.01) 
+        time.sleep(0.01)
         atime2 = path.atime()
         time.sleep(0.01)
         duration = time.time() - now
@@ -570,17 +570,17 @@ class TestPOSIXLocalPath:
         #     using the subversion command line api.
         p1 = path1.join('something')
         p2 = py.path.local(path1.sep+'blabla')
-        assert p1.common(p2) == '/' 
+        assert p1.common(p2) == '/'
 
-    def test_join_to_root(self, path1): 
+    def test_join_to_root(self, path1):
         root = path1.parts()[0]
         assert len(str(root)) == 1
         assert str(root.join('a')) == '/a'
 
-    def test_join_root_to_root_with_no_abs(self, path1): 
+    def test_join_root_to_root_with_no_abs(self, path1):
         nroot = path1.join('/')
-        assert str(path1) == str(nroot) 
-        assert path1 == nroot 
+        assert str(path1) == str(nroot)
+        assert path1 == nroot
 
     def test_chmod_simple_int(self, path1):
         mode = path1.stat().mode

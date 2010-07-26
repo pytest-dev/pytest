@@ -8,15 +8,15 @@ reprlib = py.builtin._tryimport('repr', 'reprlib')
 sysex = (KeyboardInterrupt, MemoryError, SystemExit)
 
 class SafeRepr(reprlib.Repr):
-    """ subclass of repr.Repr that limits the resulting size of repr() 
-        and includes information on exceptions raised during the call. 
-    """ 
+    """ subclass of repr.Repr that limits the resulting size of repr()
+        and includes information on exceptions raised during the call.
+    """
     def repr(self, x):
         return self._callhelper(reprlib.Repr.repr, self, x)
 
     def repr_instance(self, x, level):
         return self._callhelper(builtin_repr, x)
-        
+
     def _callhelper(self, call, x, *args):
         try:
             # Try the vanilla repr and make sure that the result is a string
@@ -42,11 +42,11 @@ class SafeRepr(reprlib.Repr):
             return s
 
 def saferepr(obj, maxsize=240):
-    """ return a size-limited safe repr-string for the given object.  
+    """ return a size-limited safe repr-string for the given object.
     Failing __repr__ functions of user instances will be represented
     with a short exception info and 'saferepr' generally takes
     care to never raise exceptions itself.  This function is a wrapper
-    around the Repr/reprlib functionality of the standard 2.6 lib. 
+    around the Repr/reprlib functionality of the standard 2.6 lib.
     """
     # review exception handling
     srepr = SafeRepr()

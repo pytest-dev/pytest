@@ -13,9 +13,9 @@ pytest_plugins = 'pytest_pytester',
 
 def pytest_funcarg__venv(request):
     p = request.config.mktemp(request.function.__name__, numbered=True)
-    venv = VirtualEnv(str(p)) 
-    return venv 
-   
+    venv = VirtualEnv(str(p))
+    return venv
+
 def pytest_funcarg__py_setup(request):
     testdir = request.getfuncargvalue('testdir')
     rootdir = py.path.local(py.__file__).dirpath().dirpath()
@@ -48,14 +48,14 @@ class SetupBuilder:
             destdir = py.path.local(destdir)
         target = destdir.join(sdist.basename)
         sdist.copy(target)
-        return target 
+        return target
 
 def subcall(args):
     if hasattr(subprocess, 'check_call'):
         subprocess.check_call(args)
     else:
         subprocess.call(args)
-# code taken from Ronny Pfannenschmidt's virtualenvmanager 
+# code taken from Ronny Pfannenschmidt's virtualenvmanager
 
 class VirtualEnv(object):
     def __init__(self, path):
@@ -119,7 +119,7 @@ class VirtualEnv(object):
 
 def test_make_sdist_and_run_it(py_setup, venv):
     sdist = py_setup.make_sdist(venv.path)
-    venv.easy_install(str(sdist)) 
+    venv.easy_install(str(sdist))
     gw = venv.makegateway()
     ch = gw.remote_exec("import py ; channel.send(py.__version__)")
     version = ch.receive()
@@ -127,7 +127,7 @@ def test_make_sdist_and_run_it(py_setup, venv):
 
 def test_plugin_setuptools_entry_point_integration(py_setup, venv, tmpdir):
     sdist = py_setup.make_sdist(venv.path)
-    venv.easy_install(str(sdist)) 
+    venv.easy_install(str(sdist))
     # create a sample plugin
     basedir = tmpdir.mkdir("testplugin")
     basedir.join("setup.py").write("""if 1:
@@ -151,7 +151,7 @@ def test_cmdline_entrypoints(monkeypatch):
     monkeypatch.syspath_prepend(py.path.local(__file__).dirpath().dirpath())
     from setup import cmdline_entrypoints
     versioned_scripts = ['py.test', 'py.which']
-    unversioned_scripts = versioned_scripts + [ 'py.cleanup', 
+    unversioned_scripts = versioned_scripts + [ 'py.cleanup',
         'py.convert_unittest', 'py.countloc', 'py.lookup', 'py.svnwcrevert']
     for ver in [(2,4,0), (2,5,0), (2,6,0), (2,7,0), (3,0,1), (3,1,1)]:
         for platform in ('posix', 'win32'):
@@ -187,7 +187,7 @@ def test_slave_popen_needs_no_pylib(testdir, venv, pytestconfig):
         def test_func():
             pass
      """)
-    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p), 
+    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p),
             '--dist=each', '--tx=popen//python=%s' % python)
     result.stdout.fnmatch_lines([
         "*1 passed*"
@@ -215,13 +215,13 @@ def test_slave_needs_no_execnet(testdir, sshhost, pytestconfig):
     ch = gw.remote_exec("import execnet")
     py.test.raises(ch.RemoteError, ch.waitclose)
     gw.exit()
-    
+
     p = testdir.makepyfile("""
         import py
         def test_func():
             pass
      """)
-    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p), 
+    result = testdir.runpytest(p, '--rsyncdir=%s' % str(p),
             '--dist=each', '--tx=%s' % newspec)
     result.stdout.fnmatch_lines([
         "*1 passed*"

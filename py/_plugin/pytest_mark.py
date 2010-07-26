@@ -1,19 +1,19 @@
 """
-generic mechanism for marking python functions. 
+generic mechanism for marking python functions.
 
 By using the ``py.test.mark`` helper you can instantiate
-decorators that will set named meta data on test functions. 
+decorators that will set named meta data on test functions.
 
-Marking a single function 
+Marking a single function
 ----------------------------------------------------
 
 You can "mark" a test function with meta data like this::
 
     @py.test.mark.webtest
     def test_send_http():
-        ... 
+        ...
 
-This will set a "Marker" instance as a function attribute named "webtest". 
+This will set a "Marker" instance as a function attribute named "webtest".
 You can also specify parametrized meta data like this::
 
     @py.test.mark.webtest(firefox=30)
@@ -34,7 +34,7 @@ and later access it with ``test_receive.webtest.args[0] == 'triangular``.
 
 .. _`scoped-marking`:
 
-Marking whole classes or modules 
+Marking whole classes or modules
 ----------------------------------------------------
 
 If you are programming with Python2.6 you may use ``py.test.mark`` decorators
@@ -48,9 +48,9 @@ with classes to apply markers to all its test methods::
             ...
 
 This is equivalent to directly applying the decorator to the
-two test functions. 
+two test functions.
 
-To remain compatible with Python2.5 you can also set a 
+To remain compatible with Python2.5 you can also set a
 ``pytestmark`` attribute on a TestClass like this::
 
     import py
@@ -70,8 +70,8 @@ You can also set a module level marker::
     import py
     pytestmark = py.test.mark.webtest
 
-in which case it will be applied to all functions and 
-methods defined in the module.  
+in which case it will be applied to all functions and
+methods defined in the module.
 
 Using "-k MARKNAME" to select tests
 ----------------------------------------------------
@@ -88,8 +88,8 @@ def pytest_namespace():
     return {'mark': MarkGenerator()}
 
 class MarkGenerator:
-    """ non-underscore attributes of this object can be used as decorators for 
-    marking test functions. Example: @py.test.mark.slowtest in front of a 
+    """ non-underscore attributes of this object can be used as decorators for
+    marking test functions. Example: @py.test.mark.slowtest in front of a
     function will set the 'slowtest' marker object on it. """
     def __getattr__(self, name):
         if name[0] == "_":
@@ -109,7 +109,7 @@ class MarkDecorator:
         return "<MarkDecorator %r %r>" %(name, d)
 
     def __call__(self, *args, **kwargs):
-        """ if passed a single callable argument: decorate it with mark info. 
+        """ if passed a single callable argument: decorate it with mark info.
             otherwise add *args/**kwargs in-place to mark information. """
         if args:
             func = args[0]
@@ -120,7 +120,7 @@ class MarkDecorator:
                         l = func.pytestmark
                         if not isinstance(l, list):
                            func.pytestmark = [l, self]
-                        else: 
+                        else:
                            l.append(self)
                     else:
                        func.pytestmark = [self]
@@ -137,7 +137,7 @@ class MarkDecorator:
                 self.args.extend(args)
         self.kwargs.update(kwargs)
         return self
-        
+
 class MarkInfo:
     def __init__(self, name, args, kwargs):
         self._name = name
@@ -153,7 +153,7 @@ class MarkInfo:
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)
-            
+
 
 def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     item = __multicall__.execute()
@@ -172,5 +172,5 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
                     if isinstance(mark, MarkDecorator):
                         mark(func)
                 item.keywords.update(py.builtin._getfuncdict(func) or {})
-                        
+
     return item

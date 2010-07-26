@@ -13,10 +13,10 @@ Foreword
 
 This document is an attempt to briefly state the actual specification of the
 :code:`py.log` module.  It was written by Francois Pinard and also contains
-some ideas for enhancing the py.log facilities. 
+some ideas for enhancing the py.log facilities.
 
 NOTE that :code:`py.log` is subject to refactorings, it may change with
-the next release. 
+the next release.
 
 This document is meant to trigger or facilitate discussions.  It shamelessly
 steals from the `Agile Testing`__ comments, and from other sources as well,
@@ -204,5 +204,5 @@ log entry.
 .. -------------
 .. XXX: fill in details
 .. + Should speak about pickle-ability of :code:`py.log`.
-.. 
+..
 .. + What is :code:`log.get` (in :file:`logger.py`)?

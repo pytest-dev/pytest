@@ -1,10 +1,10 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 """\
 py.cleanup [PATH] ...
 
 Delete typical python development related files recursively under the specified PATH (which defaults to the current working directory). Don't follow links and don't recurse into directories with a dot.  Optionally remove setup.py related files and empty
-directories. 
+directories.
 
 """
 import py
@@ -12,9 +12,9 @@ import sys, subprocess
 
 def main():
     parser = py.std.optparse.OptionParser(usage=__doc__)
-    parser.add_option("-e", metavar="ENDING", 
-        dest="endings", default=[".pyc", "$py.class"], action="append", 
-        help=("(multi) recursively remove files with the given ending." 
+    parser.add_option("-e", metavar="ENDING",
+        dest="endings", default=[".pyc", "$py.class"], action="append",
+        help=("(multi) recursively remove files with the given ending."
              " '.pyc' and '$py.class' are in the default list."))
     parser.add_option("-d", action="store_true", dest="removedir",
                       help="remove empty directories.")
@@ -22,8 +22,8 @@ def main():
                       help="remove 'build' and 'dist' directories next to setup.py files")
     parser.add_option("-a", action="store_true", dest="all",
                       help="synonym for '-S -d -e pip-log.txt'")
-    parser.add_option("-n", "--dryrun", dest="dryrun", default=False, 
-        action="store_true", 
+    parser.add_option("-n", "--dryrun", dest="dryrun", default=False,
+        action="store_true",
         help="don't actually delete but display would-be-removed filenames.")
     (options, args) = parser.parse_args()
 
@@ -44,9 +44,9 @@ class Cleanup:
         if self.options.setup:
             for arg in self.args:
                 self.setupclean(arg)
-        
+
         for path in self.args:
-            py.builtin.print_("cleaning path", path, 
+            py.builtin.print_("cleaning path", path,
                 "of extensions", self.options.endings)
             for x in path.visit(self.shouldremove, self.recursedir):
                 self.remove(x)
@@ -78,7 +78,7 @@ class Cleanup:
             subprocess.call([sys.executable, str(setup)] + list(args))
         finally:
             old.chdir()
-            
+
     def setupclean(self, path):
         for x in path.visit("setup.py", self.recursedir):
             basepath = x.dirpath()

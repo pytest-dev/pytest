@@ -4,16 +4,16 @@ from py._test.pluginmanager import PluginManager
 from py._test import parseopt
 from py._test.collect import RootCollector
 
-def ensuretemp(string, dir=1): 
+def ensuretemp(string, dir=1):
     """ (deprecated) return temporary directory path with
-        the given string as the trailing part.  It is usually 
+        the given string as the trailing part.  It is usually
         better to use the 'tmpdir' function argument which will
-        take care to provide empty unique directories for each 
-        test call even if the test is called multiple times. 
-    """ 
+        take care to provide empty unique directories for each
+        test call even if the test is called multiple times.
+    """
     #py.log._apiwarn(">1.1", "use tmpdir function argument")
     return py.test.config.ensuretemp(string, dir=dir)
-  
+
 class CmdOptions(object):
     """ holds cmdline options as attributes."""
     def __init__(self, **kwargs):
@@ -24,14 +24,14 @@ class CmdOptions(object):
 class Error(Exception):
     """ Test Configuration Error. """
 
-class Config(object): 
+class Config(object):
     """ access to config values, pluginmanager and plugin hooks.  """
-    Option = py.std.optparse.Option 
+    Option = py.std.optparse.Option
     Error = Error
     basetemp = None
     _sessionclass = None
 
-    def __init__(self, topdir=None, option=None): 
+    def __init__(self, topdir=None, option=None):
         self.option = option or CmdOptions()
         self.topdir = topdir
         self._parser = parseopt.Parser(
@@ -48,7 +48,7 @@ class Config(object):
 
     def _getmatchingplugins(self, fspath):
         allconftests = self._conftest._conftestpath2mod.values()
-        plugins = [x for x in self.pluginmanager.getplugins() 
+        plugins = [x for x in self.pluginmanager.getplugins()
                         if x not in allconftests]
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
@@ -69,7 +69,7 @@ class Config(object):
                     val = float(val)
                 elif not opt.type and opt.action in ("store_true", "store_false"):
                     val = eval(val)
-                opt.default = val 
+                opt.default = val
             else:
                 name = "option_" + opt.dest
                 try:
@@ -83,13 +83,13 @@ class Config(object):
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
-        self._conftest.setinitial(args) 
+        self._conftest.setinitial(args)
         self.pluginmanager.do_addoption(self._parser)
 
-    def parse(self, args): 
-        """ parse cmdline arguments into this config object. 
-            Note that this can only be called once per testing process. 
-        """ 
+    def parse(self, args):
+        """ parse cmdline arguments into this config object.
+            Note that this can only be called once per testing process.
+        """
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
@@ -106,25 +106,25 @@ class Config(object):
         self._argfspaths = [py.path.local(decodearg(x)[0]) for x in args]
 
     # config objects are usually pickled across system
-    # barriers but they contain filesystem paths. 
+    # barriers but they contain filesystem paths.
     # upon getstate/setstate we take care to do everything
-    # relative to "topdir". 
+    # relative to "topdir".
     def __getstate__(self):
         l = []
         for path in self.args:
             path = py.path.local(path)
-            l.append(path.relto(self.topdir)) 
+            l.append(path.relto(self.topdir))
         return l, self.option.__dict__
 
     def __setstate__(self, repr):
-        # we have to set py.test.config because loading 
-        # of conftest files may use it (deprecated) 
-        # mainly by py.test.config.addoptions() 
+        # we have to set py.test.config because loading
+        # of conftest files may use it (deprecated)
+        # mainly by py.test.config.addoptions()
         global config_per_process
-        py.test.config = config_per_process = self 
-        args, cmdlineopts = repr 
+        py.test.config = config_per_process = self
+        args, cmdlineopts = repr
         cmdlineopts = CmdOptions(**cmdlineopts)
-        # next line will registers default plugins 
+        # next line will registers default plugins
         self.__init__(topdir=py.path.local(), option=cmdlineopts)
         self._rootcol = RootCollector(config=self)
         args = [str(self.topdir.join(x)) for x in args]
@@ -132,11 +132,11 @@ class Config(object):
         self._setargs(args)
 
     def ensuretemp(self, string, dir=True):
-        return self.getbasetemp().ensure(string, dir=dir) 
+        return self.getbasetemp().ensure(string, dir=dir)
 
     def getbasetemp(self):
         if self.basetemp is None:
-            basetemp = self.option.basetemp 
+            basetemp = self.option.basetemp
             if basetemp:
                 basetemp = py.path.local(basetemp)
                 if not basetemp.check(dir=1):
@@ -144,7 +144,7 @@ class Config(object):
             else:
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
             self.basetemp = basetemp
-        return self.basetemp 
+        return self.basetemp
 
     def mktemp(self, basename, numbered=False):
         basetemp = self.getbasetemp()
@@ -188,7 +188,7 @@ class Config(object):
     def getconftest_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence
             of filenames that will be returned as a list of Path
-            objects (they can be relative to the location 
+            objects (they can be relative to the location
             where they were found).
         """
         try:
@@ -202,22 +202,22 @@ class Config(object):
                 relroot = relroot.replace("/", py.path.local.sep)
                 relroot = modpath.join(relroot, abs=True)
             l.append(relroot)
-        return l 
-             
-    def addoptions(self, groupname, *specs): 
-        """ add a named group of options to the current testing session. 
-            This function gets invoked during testing session initialization. 
-        """ 
+        return l
+
+    def addoptions(self, groupname, *specs):
+        """ add a named group of options to the current testing session.
+            This function gets invoked during testing session initialization.
+        """
         py.log._apiwarn("1.0", "define pytest_addoptions(parser) to add options", stacklevel=2)
         group = self._parser.getgroup(groupname)
         for opt in specs:
             group._addoption_instance(opt)
-        return self.option 
+        return self.option
 
     def addoption(self, *optnames, **attrs):
         return self._parser.addoption(*optnames, **attrs)
 
-    def getvalueorskip(self, name, path=None): 
+    def getvalueorskip(self, name, path=None):
         """ return getvalue() or call py.test.skip if no value exists. """
         try:
             val = self.getvalue(name, path)
@@ -227,12 +227,12 @@ class Config(object):
         except KeyError:
             py.test.skip("no %r value found" %(name,))
 
-    def getvalue(self, name, path=None): 
+    def getvalue(self, name, path=None):
         """ return 'name' value looked up from the 'options'
-            and then from the first conftest file found up 
-            the path (including the path itself). 
+            and then from the first conftest file found up
+            the path (including the path itself).
             if path is None, lookup the value in the initial
-            conftest modules found during command line parsing. 
+            conftest modules found during command line parsing.
         """
         try:
             return getattr(self.option, name)
@@ -247,7 +247,7 @@ class Config(object):
 
     def initsession(self):
         """ return an initialized session object. """
-        cls = self._sessionclass 
+        cls = self._sessionclass
         if cls is None:
             from py._test.session import Session
             cls = Session
@@ -259,10 +259,10 @@ class Config(object):
 # helpers
 #
 
-def gettopdir(args): 
+def gettopdir(args):
     """ return the top directory for the given paths.
-        if the common base dir resides in a python package 
-        parent directory of the root package is returned. 
+        if the common base dir resides in a python package
+        parent directory of the root package is returned.
     """
     fsargs = [py.path.local(decodearg(arg)[0]) for arg in args]
     p = fsargs and fsargs[0] or None
@@ -282,10 +282,10 @@ def decodearg(arg):
     return arg.split("::")
 
 def onpytestaccess():
-    # it's enough to have our containing module loaded as 
+    # it's enough to have our containing module loaded as
     # it initializes a per-process config instance
     # which loads default plugins which add to py.test.*
-    pass 
+    pass
 
-# a default per-process instance of py.test configuration 
+# a default per-process instance of py.test configuration
 config_per_process = Config()

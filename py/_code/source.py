@@ -3,7 +3,7 @@ import sys
 import inspect, tokenize
 import py
 from types import ModuleType
-cpy_compile = compile 
+cpy_compile = compile
 
 try:
     import _ast
@@ -21,9 +21,9 @@ class Source(object):
     def __init__(self, *parts, **kwargs):
         self.lines = lines = []
         de = kwargs.get('deindent', True)
-        rstrip = kwargs.get('rstrip', True) 
+        rstrip = kwargs.get('rstrip', True)
         for part in parts:
-            if not part: 
+            if not part:
                 partlines = []
             if isinstance(part, Source):
                 partlines = part.lines
@@ -32,8 +32,8 @@ class Source(object):
             elif isinstance(part, py.builtin._basestring):
                 partlines = part.split('\n')
                 if rstrip:
-                    while partlines: 
-                        if partlines[-1].strip(): 
+                    while partlines:
+                        if partlines[-1].strip():
                             break
                         partlines.pop()
             else:
@@ -42,13 +42,13 @@ class Source(object):
                 partlines = deindent(partlines)
             lines.extend(partlines)
 
-    def __eq__(self, other): 
+    def __eq__(self, other):
         try:
-            return self.lines == other.lines 
-        except AttributeError: 
-            if isinstance(other, str): 
-                return str(self) == other 
-            return False 
+            return self.lines == other.lines
+        except AttributeError:
+            if isinstance(other, str):
+                return str(self) == other
+            return False
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -58,8 +58,8 @@ class Source(object):
                 raise IndexError("cannot slice a Source with a step")
             return self.__getslice__(key.start, key.stop)
 
-    def __len__(self): 
-        return len(self.lines) 
+    def __len__(self):
+        return len(self.lines)
 
     def __getslice__(self, start, end):
         newsource = Source()
@@ -79,9 +79,9 @@ class Source(object):
         source.lines[:] = self.lines[start:end]
         return source
 
-    def putaround(self, before='', after='', indent=' ' * 4): 
-        """ return a copy of the source object with 
-            'before' and 'after' wrapped around it. 
+    def putaround(self, before='', after='', indent=' ' * 4):
+        """ return a copy of the source object with
+            'before' and 'after' wrapped around it.
         """
         before = Source(before)
         after = Source(after)
@@ -90,9 +90,9 @@ class Source(object):
         newsource.lines = before.lines + lines +  after.lines
         return newsource
 
-    def indent(self, indent=' ' * 4): 
-        """ return a copy of the source object with 
-            all lines indented by the given indent-string. 
+    def indent(self, indent=' ' * 4):
+        """ return a copy of the source object with
+            all lines indented by the given indent-string.
         """
         newsource = Source()
         newsource.lines = [(indent+line) for line in self.lines]
@@ -106,7 +106,7 @@ class Source(object):
         return self[start:end]
 
     def getstatementrange(self, lineno):
-        """ return (start, end) tuple which spans the minimal 
+        """ return (start, end) tuple which spans the minimal
             statement region which containing the given lineno.
         """
         # XXX there must be a better than these heuristic ways ...
@@ -159,7 +159,7 @@ class Source(object):
 
     def isparseable(self, deindent=True):
         """ return True if source is parseable, heuristically
-            deindenting it by default. 
+            deindenting it by default.
         """
         try:
             import parser
@@ -167,7 +167,7 @@ class Source(object):
             syntax_checker = lambda x: compile(x, 'asd', 'exec')
         else:
             syntax_checker = parser.suite
-    
+
         if deindent:
             source = str(self.deindent())
         else:
@@ -185,14 +185,14 @@ class Source(object):
     def __str__(self):
         return "\n".join(self.lines)
 
-    def compile(self, filename=None, mode='exec', 
-                flag=generators.compiler_flag, 
+    def compile(self, filename=None, mode='exec',
+                flag=generators.compiler_flag,
                 dont_inherit=0, _genframe=None):
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
             the source/line position of the caller frame.
         """
-        if not filename or py.path.local(filename).check(file=0): 
+        if not filename or py.path.local(filename).check(file=0):
             if _genframe is None:
                 _genframe = sys._getframe(1) # the caller
             fn,lineno = _genframe.f_code.co_filename, _genframe.f_lineno
@@ -240,8 +240,8 @@ def compile_(source, filename=None, mode='exec', flags=
             generators.compiler_flag, dont_inherit=0):
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
-        retrieval of the source code for the code object 
-        and any recursively created code objects. 
+        retrieval of the source code for the code object
+        and any recursively created code objects.
     """
     if _ast is not None and isinstance(source, _ast.AST):
         # XXX should Source support having AST?
@@ -256,7 +256,7 @@ def getfslineno(obj):
     try:
         code = py.code.Code(obj)
     except TypeError:
-        # fallback to 
+        # fallback to
         fn = (py.std.inspect.getsourcefile(obj) or
               py.std.inspect.getfile(obj))
         fspath = fn and py.path.local(fn) or None
@@ -269,7 +269,7 @@ def getfslineno(obj):
             lineno = None
     else:
         fspath = code.path
-        lineno = code.firstlineno 
+        lineno = code.firstlineno
     return fspath, lineno
 
 #
@@ -314,9 +314,9 @@ def deindent(lines, offset=None):
             yield line + '\n'
         while True:
             yield ''
-        
+
     r = readline_generator(lines)
-    try: 
+    try:
         readline = r.next
     except AttributeError:
         readline = r.__next__

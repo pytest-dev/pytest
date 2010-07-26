@@ -1,2 +1,2 @@
 
-pygreen: experimental IO and execnet operations through greenlets 
+pygreen: experimental IO and execnet operations through greenlets

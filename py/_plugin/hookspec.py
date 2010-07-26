@@ -1,9 +1,9 @@
 """
-hook specifications for py.test plugins 
+hook specifications for py.test plugins
 """
 
 # -------------------------------------------------------------------------
-# Command line and configuration 
+# Command line and configuration
 # -------------------------------------------------------------------------
 
 def pytest_namespace():
@@ -16,8 +16,8 @@ def pytest_addhooks(pluginmanager):
     "add hooks via pluginmanager.registerhooks(module)"
 
 def pytest_configure(config):
-    """ called after command line options have been parsed. 
-        and all plugins and initial conftest files been loaded. 
+    """ called after command line options have been parsed.
+        and all plugins and initial conftest files been loaded.
     """
 
 def pytest_unconfigure(config):
@@ -28,9 +28,9 @@ def pytest_unconfigure(config):
 # -------------------------------------------------------------------------
 
 def pytest_ignore_collect(path, config):
-    """ return true value to prevent considering this path for collection. 
+    """ return true value to prevent considering this path for collection.
     This hook is consulted for all files and directories prior to considering
-    collection hooks. 
+    collection hooks.
     """
 pytest_ignore_collect.firstresult = True
 
@@ -51,10 +51,10 @@ def pytest_deselected(items):
     """ called for test items deselected by keyword. """
 
 def pytest_make_collect_report(collector):
-    """ perform a collection and return a collection. """ 
+    """ perform a collection and return a collection. """
 pytest_make_collect_report.firstresult = True
 
-# XXX rename to item_collected()?  meaning in distribution context? 
+# XXX rename to item_collected()?  meaning in distribution context?
 def pytest_itemstart(item, node=None):
     """ test item gets collected. """
 
@@ -63,9 +63,9 @@ def pytest_itemstart(item, node=None):
 # -------------------------------------------------------------------------
 
 def pytest_pycollect_makemodule(path, parent):
-    """ return a Module collector or None for the given path. 
-    This hook will be called for each matching test module path. 
-    The pytest_collect_file hook needs to be used if you want to 
+    """ return a Module collector or None for the given path.
+    This hook will be called for each matching test module path.
+    The pytest_collect_file hook needs to be used if you want to
     create test modules for files that do not match as a test module.
     """
 pytest_pycollect_makemodule.firstresult = True
@@ -82,7 +82,7 @@ def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
 # -------------------------------------------------------------------------
-# generic runtest related hooks 
+# generic runtest related hooks
 # -------------------------------------------------------------------------
 
 def pytest_runtest_protocol(item):
@@ -90,20 +90,20 @@ def pytest_runtest_protocol(item):
 pytest_runtest_protocol.firstresult = True
 
 def pytest_runtest_setup(item):
-    """ called before pytest_runtest_call(). """ 
+    """ called before pytest_runtest_call(). """
 
 def pytest_runtest_call(item):
-    """ execute test item. """ 
+    """ execute test item. """
 
 def pytest_runtest_teardown(item):
-    """ called after pytest_runtest_call(). """ 
+    """ called after pytest_runtest_call(). """
 
 def pytest_runtest_makereport(item, call):
     """ make a test report for the given item and call outcome. """
 pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(report):
-    """ process item test report. """ 
+    """ process item test report. """
 
 # special handling for final teardown - somewhat internal for now
 def pytest__teardown_final(session):
@@ -111,10 +111,10 @@ def pytest__teardown_final(session):
 pytest__teardown_final.firstresult = True
 
 def pytest__teardown_final_logerror(report):
-    """ called if runtest_teardown_final failed. """ 
+    """ called if runtest_teardown_final failed. """
 
 # -------------------------------------------------------------------------
-# test session related hooks 
+# test session related hooks
 # -------------------------------------------------------------------------
 
 def pytest_sessionstart(session):
@@ -144,7 +144,7 @@ def pytest_report_iteminfo(item):
 pytest_report_iteminfo.firstresult = True
 
 # -------------------------------------------------------------------------
-# doctest hooks 
+# doctest hooks
 # -------------------------------------------------------------------------
 
 def pytest_doctest_prepare_content(content):
@@ -153,7 +153,7 @@ pytest_doctest_prepare_content.firstresult = True
 
 
 # -------------------------------------------------------------------------
-# error handling and internal debugging hooks 
+# error handling and internal debugging hooks
 # -------------------------------------------------------------------------
 
 def pytest_plugin_registered(plugin, manager):
@@ -169,4 +169,4 @@ def pytest_keyboard_interrupt(excinfo):
     """ called for keyboard interrupt. """
 
 def pytest_trace(category, msg):
-    """ called for debug info. """ 
+    """ called for debug info. """

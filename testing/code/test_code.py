@@ -12,9 +12,9 @@ def test_code_gives_back_name_for_not_existing_file():
     co_code = compile("pass\n", name, 'exec')
     assert co_code.co_filename == name
     code = py.code.Code(co_code)
-    assert str(code.path) == name 
+    assert str(code.path) == name
     assert code.fullsource is None
-   
+
 def test_code_with_class():
     class A:
         pass
@@ -56,8 +56,8 @@ def test_getstatement_empty_fullsource():
     finally:
         f.code.__class__.fullsource = prop
 
-def test_code_from_func(): 
-    co = py.code.Code(test_frame_getsourcelineno_myself) 
+def test_code_from_func():
+    co = py.code.Code(test_frame_getsourcelineno_myself)
     assert co.firstlineno
     assert co.path
 
@@ -65,7 +65,7 @@ def test_code_from_func():
 
 def test_builtin_patch_unpatch(monkeypatch):
     cpy_builtin = py.builtin.builtins
-    comp = cpy_builtin.compile 
+    comp = cpy_builtin.compile
     def mycompile(*args, **kwargs):
         return comp(*args, **kwargs)
     class Sub(AssertionError):
@@ -76,8 +76,8 @@ def test_builtin_patch_unpatch(monkeypatch):
     assert cpy_builtin.AssertionError != Sub
     assert cpy_builtin.compile != mycompile
     py.code.unpatch_builtins()
-    assert cpy_builtin.AssertionError is Sub 
-    assert cpy_builtin.compile == mycompile 
+    assert cpy_builtin.AssertionError is Sub
+    assert cpy_builtin.compile == mycompile
 
 
 def test_unicode_handling():
@@ -90,7 +90,7 @@ def test_unicode_handling():
         u = unicode(excinfo)
 
 def test_unicode_or_repr():
-    from py._code.code import unicode_or_repr 
+    from py._code.code import unicode_or_repr
     assert unicode_or_repr('hello') == "hello"
     if sys.version_info[0] < 3:
         s = unicode_or_repr('\xf6\xc4\x85')

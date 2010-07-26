@@ -1,8 +1,8 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 #
 # find and import a version of 'py' that exists in a parent dir
-# of the current working directory. fall back to import a 
+# of the current working directory. fall back to import a
 # globally available version
 #
 import sys
@@ -31,9 +31,9 @@ def searchpy(current):
 if not searchpy(abspath(os.curdir)):
     if not searchpy(opd(abspath(sys.argv[0]))):
         if not searchpy(opd(__file__)):
-            pass # let's hope it is just on sys.path 
+            pass # let's hope it is just on sys.path
 
 import py
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     print ("py lib is at %s" % py.__file__)

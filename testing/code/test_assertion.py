@@ -37,7 +37,7 @@ def test_assert_within_finally():
         finally:
             i = 42
     """)
-    s = excinfo.exconly() 
+    s = excinfo.exconly()
     assert s.find("takes no argument") != -1
 
     #def g():
@@ -81,9 +81,9 @@ def test_is():
         s = str(e)
         assert s.startswith("assert 1 is 2")
 
-def test_assert_non_string_message(): 
-    class A: 
-        def __str__(self): 
+def test_assert_non_string_message():
+    class A:
+        def __str__(self):
             return "hello"
     try:
         assert 0 == 1, A()
@@ -104,23 +104,23 @@ def test_assert_keyword_arg():
 class WeirdRepr:
     def __repr__(self):
         return '<WeirdRepr\nsecond line>'
-            
+
 def bug_test_assert_repr():
     v = WeirdRepr()
-    try: 
+    try:
         assert v == 1
     except AssertionError:
         e = exvalue()
         assert e.msg.find('WeirdRepr') != -1
         assert e.msg.find('second line') != -1
         assert 0
-        
+
 def test_assert_non_string():
-    try: 
+    try:
         assert 0, ['list']
     except AssertionError:
         e = exvalue()
-        assert e.msg.find("list") != -1 
+        assert e.msg.find("list") != -1
 
 def test_assert_implicit_multiline():
     try:
@@ -210,7 +210,7 @@ class TestView:
                 return '%s %s %s' % (self.args[0], self.opname, self.args[1])
 
         codelines = [PyOp(op).generate() for op in existing]
-        assert codelines == ["4 + 5", "getitem('', 'join')", 
+        assert codelines == ["4 + 5", "getitem('', 'join')",
             "setattr('x', 'y', 3)", "12 - 1"]
 
 def test_underscore_api():

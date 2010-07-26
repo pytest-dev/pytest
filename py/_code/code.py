@@ -9,15 +9,15 @@ class Code(object):
     """ wrapper around Python code objects """
     def __init__(self, rawcode):
         rawcode = py.code.getrawcode(rawcode)
-        self.raw = rawcode 
+        self.raw = rawcode
         try:
             self.filename = rawcode.co_filename
             self.firstlineno = rawcode.co_firstlineno - 1
             self.name = rawcode.co_name
-        except AttributeError: 
+        except AttributeError:
             raise TypeError("not a code object: %r" %(rawcode,))
-        
-    def __eq__(self, other): 
+
+    def __eq__(self, other):
         return self.raw == other.raw
 
     def __ne__(self, other):
@@ -27,11 +27,11 @@ class Code(object):
         """ return a path object pointing to source code"""
         p = py.path.local(self.raw.co_filename)
         if not p.check():
-            # XXX maybe try harder like the weird logic 
-            # in the standard lib [linecache.updatecache] does? 
+            # XXX maybe try harder like the weird logic
+            # in the standard lib [linecache.updatecache] does?
             p = self.raw.co_filename
         return p
-                
+
     path = property(path, None, None, "path of this code object")
 
     def fullsource(self):
@@ -42,7 +42,7 @@ class Code(object):
         return full
     fullsource = property(fullsource, None, None,
                           "full source containing this code object")
-    
+
     def source(self):
         """ return a py.code.Source object for the code object's source only
         """
@@ -81,7 +81,7 @@ class Frame(object):
 
             returns the result of the evaluation
         """
-        f_locals = self.f_locals.copy() 
+        f_locals = self.f_locals.copy()
         f_locals.update(vars)
         return eval(code, self.f_globals, f_locals)
 
@@ -90,7 +90,7 @@ class Frame(object):
 
             'vars' are optiona; additional local variables
         """
-        f_locals = self.f_locals.copy() 
+        f_locals = self.f_locals.copy()
         f_locals.update(vars)
         py.builtin.exec_(code, self.f_globals, f_locals )
 
@@ -115,8 +115,8 @@ class Frame(object):
 
 class TracebackEntry(object):
     """ a single entry in a traceback """
-    
-    exprinfo = None 
+
+    exprinfo = None
 
     def __init__(self, rawentry):
         self._rawentry = rawentry
@@ -153,13 +153,13 @@ class TracebackEntry(object):
             x = py.code._reinterpret(source, self.frame, should_fail=True)
             if not isinstance(x, str):
                 raise TypeError("interpret returned non-string %r" % (x,))
-            self.exprinfo = x 
+            self.exprinfo = x
         return self.exprinfo
 
     def getfirstlinesource(self):
         return self.frame.code.firstlineno
 
-    def getsource(self): 
+    def getsource(self):
         """ return failing source code. """
         source = self.frame.code.fullsource
         if source is None:
@@ -167,64 +167,64 @@ class TracebackEntry(object):
         start = self.getfirstlinesource()
         end = self.lineno
         try:
-            _, end = source.getstatementrange(end) 
-        except IndexError: 
-            end = self.lineno + 1 
-        # heuristic to stop displaying source on e.g. 
+            _, end = source.getstatementrange(end)
+        except IndexError:
+            end = self.lineno + 1
+        # heuristic to stop displaying source on e.g.
         #   if something:  # assume this causes a NameError
-        #      # _this_ lines and the one 
-               #        below we don't want from entry.getsource() 
-        for i in range(self.lineno, end): 
-            if source[i].rstrip().endswith(':'): 
+        #      # _this_ lines and the one
+               #        below we don't want from entry.getsource()
+        for i in range(self.lineno, end):
+            if source[i].rstrip().endswith(':'):
                 end = i + 1
-                break 
+                break
         return source[start:end]
     source = property(getsource)
 
     def ishidden(self):
-        """ return True if the current frame has a var __tracebackhide__ 
+        """ return True if the current frame has a var __tracebackhide__
             resolving to True
-            
+
             mostly for internal use
         """
-        try: 
-            return self.frame.eval("__tracebackhide__") 
-        except (SystemExit, KeyboardInterrupt): 
+        try:
+            return self.frame.eval("__tracebackhide__")
+        except (SystemExit, KeyboardInterrupt):
             raise
         except:
-            return False 
+            return False
 
-    def __str__(self): 
-        try: 
-            fn = str(self.path) 
-        except py.error.Error: 
+    def __str__(self):
+        try:
+            fn = str(self.path)
+        except py.error.Error:
             fn = '???'
-        name = self.frame.code.name 
-        try: 
+        name = self.frame.code.name
+        try:
             line = str(self.statement).lstrip()
         except KeyboardInterrupt:
             raise
         except:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" %(fn, self.lineno+1, name, line) 
+        return "  File %r:%d in %s\n  %s\n" %(fn, self.lineno+1, name, line)
 
     def name(self):
         return self.frame.code.raw.co_name
     name = property(name, None, None, "co_name of underlaying code")
 
 class Traceback(list):
-    """ Traceback objects encapsulate and offer higher level 
-        access to Traceback entries.  
+    """ Traceback objects encapsulate and offer higher level
+        access to Traceback entries.
     """
-    Entry = TracebackEntry 
+    Entry = TracebackEntry
     def __init__(self, tb):
         """ initialize from given python traceback object. """
         if hasattr(tb, 'tb_next'):
-            def f(cur): 
-                while cur is not None: 
+            def f(cur):
+                while cur is not None:
                     yield self.Entry(cur)
-                    cur = cur.tb_next 
-            list.__init__(self, f(tb)) 
+                    cur = cur.tb_next
+            list.__init__(self, f(tb))
         else:
             list.__init__(self, tb)
 
@@ -243,7 +243,7 @@ class Traceback(list):
             codepath = code.path
             if ((path is None or codepath == path) and
                 (excludepath is None or not hasattr(codepath, 'relto') or
-                 not codepath.relto(excludepath)) and 
+                 not codepath.relto(excludepath)) and
                 (lineno is None or x.lineno == lineno) and
                 (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
                 return Traceback(x._rawentry)
@@ -269,7 +269,7 @@ class Traceback(list):
 
     def getcrashentry(self):
         """ return last non-hidden traceback entry that lead
-        to the exception of a traceback. 
+        to the exception of a traceback.
         """
         tb = self.filter()
         if not tb:
@@ -282,17 +282,17 @@ class Traceback(list):
         """
         cache = {}
         for i, entry in enumerate(self):
-            key = entry.frame.code.path, entry.lineno 
+            key = entry.frame.code.path, entry.lineno
             #print "checking for recursion at", key
             l = cache.setdefault(key, [])
-            if l: 
+            if l:
                 f = entry.frame
                 loc = f.f_locals
-                for otherloc in l: 
-                    if f.is_true(f.eval(co_equal, 
+                for otherloc in l:
+                    if f.is_true(f.eval(co_equal,
                         __recursioncache_locals_1=loc,
                         __recursioncache_locals_2=otherloc)):
-                        return i 
+                        return i
             l.append(entry.frame.f_locals)
         return None
 
@@ -303,7 +303,7 @@ class ExceptionInfo(object):
     """ wraps sys.exc_info() objects and offers
         help for navigating the traceback.
     """
-    _striptext = '' 
+    _striptext = ''
     def __init__(self, tup=None, exprinfo=None):
         # NB. all attributes are private!  Subclasses or other
         #     ExceptionInfo-like classes may have different attributes.
@@ -318,14 +318,14 @@ class ExceptionInfo(object):
         self._excinfo = tup
         self.type, self.value, tb = self._excinfo
         self.typename = self.type.__name__
-        self.traceback = py.code.Traceback(tb) 
+        self.traceback = py.code.Traceback(tb)
 
     def __repr__(self):
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
 
-    def exconly(self, tryshort=False): 
+    def exconly(self, tryshort=False):
         """ return the exception as a string
-        
+
             when 'tryshort' resolves to True, and the exception is a
             py.code._AssertionError, only the actual exception part of
             the exception representation is returned (so 'AssertionError: ' is
@@ -334,14 +334,14 @@ class ExceptionInfo(object):
         lines = py.std.traceback.format_exception_only(self.type, self.value)
         text = ''.join(lines)
         text = text.rstrip()
-        if tryshort: 
-            if text.startswith(self._striptext): 
+        if tryshort:
+            if text.startswith(self._striptext):
                 text = text[len(self._striptext):]
         return text
 
-    def errisinstance(self, exc): 
+    def errisinstance(self, exc):
         """ return True if the exception is an instance of exc """
-        return isinstance(self.value, exc) 
+        return isinstance(self.value, exc)
 
     def _getreprcrash(self):
         exconly = self.exconly(tryshort=True)
@@ -350,14 +350,14 @@ class ExceptionInfo(object):
         reprcrash = ReprFileLocation(path, lineno+1, exconly)
         return reprcrash
 
-    def getrepr(self, showlocals=False, style="long", 
+    def getrepr(self, showlocals=False, style="long",
             abspath=False, tbfilter=True, funcargs=False):
         """ return str()able representation of this exception info.
-            showlocals: show locals per traceback entry 
-            style: long|short|no traceback style 
+            showlocals: show locals per traceback entry
+            style: long|short|no traceback style
             tbfilter: hide entries (where __tracebackhide__ is true)
         """
-        fmt = FormattedExcinfo(showlocals=showlocals, style=style, 
+        fmt = FormattedExcinfo(showlocals=showlocals, style=style,
             abspath=abspath, tbfilter=tbfilter, funcargs=funcargs)
         return fmt.repr_excinfo(self)
 
@@ -370,27 +370,27 @@ class ExceptionInfo(object):
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return unicode(loc)
-        
+
 
 class FormattedExcinfo(object):
-    """ presenting information about failing Functions and Generators. """ 
-    # for traceback entries 
-    flow_marker = ">"    
+    """ presenting information about failing Functions and Generators. """
+    # for traceback entries
+    flow_marker = ">"
     fail_marker = "E"
-    
+
     def __init__(self, showlocals=False, style="long", abspath=True, tbfilter=True, funcargs=False):
         self.showlocals = showlocals
         self.style = style
         self.tbfilter = tbfilter
         self.funcargs = funcargs
-        self.abspath = abspath 
+        self.abspath = abspath
 
     def _getindent(self, source):
-        # figure out indent for given source 
+        # figure out indent for given source
         try:
             s = str(source.getstatement(len(source)-1))
-        except KeyboardInterrupt: 
-            raise 
+        except KeyboardInterrupt:
+            raise
         except:
             try:
                 s = str(source[-1])
@@ -405,7 +405,7 @@ class FormattedExcinfo(object):
         if source is not None:
             source = source.deindent()
         return source
-    
+
     def _saferepr(self, obj):
         return py.io.saferepr(obj)
 
@@ -421,7 +421,7 @@ class FormattedExcinfo(object):
         lines = []
         if source is None:
             source = py.code.Source("???")
-            line_index = 0 
+            line_index = 0
         if line_index < 0:
             line_index += len(source)
         for i in range(len(source)):
@@ -440,24 +440,24 @@ class FormattedExcinfo(object):
 
     def get_exconly(self, excinfo, indent=4, markall=False):
         lines = []
-        indent = " " * indent 
-        # get the real exception information out 
+        indent = " " * indent
+        # get the real exception information out
         exlines = excinfo.exconly(tryshort=True).split('\n')
         failindent = self.fail_marker + indent[1:]
         for line in exlines:
             lines.append(failindent + line)
             if not markall:
-                failindent = indent 
+                failindent = indent
         return lines
 
     def repr_locals(self, locals):
-        if self.showlocals: 
+        if self.showlocals:
             lines = []
             keys = list(locals)
             keys.sort()
             for name in keys:
                 value = locals[name]
-                if name == '__builtins__': 
+                if name == '__builtins__':
                     lines.append("__builtins__ = <builtins>")
                 else:
                     # This formatting could all be handled by the
@@ -474,7 +474,7 @@ class FormattedExcinfo(object):
             return ReprLocals(lines)
 
     def repr_traceback_entry(self, entry, excinfo=None):
-        # excinfo is not None if this is the last tb entry 
+        # excinfo is not None if this is the last tb entry
         source = self._getentrysource(entry)
         if source is None:
             source = py.code.Source("???")
@@ -488,7 +488,7 @@ class FormattedExcinfo(object):
             short = self.style == "short"
             reprargs = None
             if not short:
-                reprargs = self.repr_args(entry) 
+                reprargs = self.repr_args(entry)
             s = self.get_source(source, line_index, excinfo, short=short)
             lines.extend(s)
             if short:
@@ -501,7 +501,7 @@ class FormattedExcinfo(object):
             if not short:
                 localsrepr =  self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, filelocrepr, short)
-        if excinfo: 
+        if excinfo:
             lines.extend(self.get_exconly(excinfo, indent=4))
         return ReprEntry(lines, None, None, None, False)
 
@@ -512,8 +512,8 @@ class FormattedExcinfo(object):
                 path = np
         return path
 
-    def repr_traceback(self, excinfo): 
-        traceback = excinfo.traceback 
+    def repr_traceback(self, excinfo):
+        traceback = excinfo.traceback
         if self.tbfilter:
             traceback = traceback.filter()
         recursionindex = None
@@ -522,7 +522,7 @@ class FormattedExcinfo(object):
         last = traceback[-1]
         entries = []
         extraline = None
-        for index, entry in enumerate(traceback): 
+        for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
             entries.append(reprentry)
@@ -564,7 +564,7 @@ def unicode_or_repr(obj):
 class ReprExceptionInfo(TerminalRepr):
     def __init__(self, reprtraceback, reprcrash):
         self.reprtraceback = reprtraceback
-        self.reprcrash = reprcrash 
+        self.reprcrash = reprcrash
         self.sections = []
 
     def addsection(self, name, content, sep="-"):
@@ -575,7 +575,7 @@ class ReprExceptionInfo(TerminalRepr):
         for name, content, sep in self.sections:
             tw.sep(sep, name)
             tw.line(content)
-    
+
 class ReprTraceback(TerminalRepr):
     entrysep = "_ "
 
@@ -585,7 +585,7 @@ class ReprTraceback(TerminalRepr):
         self.style = style
 
     def toterminal(self, tw):
-        sepok = False 
+        sepok = False
         for entry in self.reprentries:
             if self.style == "long":
                 if sepok:
@@ -602,7 +602,7 @@ class ReprEntry(TerminalRepr):
     def __init__(self, lines, reprfuncargs, reprlocals, filelocrepr, short):
         self.lines = lines
         self.reprfuncargs = reprfuncargs
-        self.reprlocals = reprlocals 
+        self.reprlocals = reprlocals
         self.reprfileloc = filelocrepr
         self.short = short
 
@@ -610,14 +610,14 @@ class ReprEntry(TerminalRepr):
         if self.short:
             self.reprfileloc.toterminal(tw)
             for line in self.lines:
-                red = line.startswith("E   ") 
+                red = line.startswith("E   ")
                 tw.line(line, bold=True, red=red)
             #tw.line("")
             return
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
         for line in self.lines:
-            red = line.startswith("E   ") 
+            red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
             #tw.sep(self.localssep, "Locals")
@@ -628,8 +628,8 @@ class ReprEntry(TerminalRepr):
             self.reprfileloc.toterminal(tw)
 
     def __str__(self):
-        return "%s\n%s\n%s" % ("\n".join(self.lines), 
-                               self.reprlocals, 
+        return "%s\n%s\n%s" % ("\n".join(self.lines),
+                               self.reprlocals,
                                self.reprfileloc)
 
 class ReprFileLocation(TerminalRepr):
@@ -641,15 +641,15 @@ class ReprFileLocation(TerminalRepr):
     def toterminal(self, tw):
         # filename and lineno output for each entry,
         # using an output format that most editors unterstand
-        msg = self.message 
+        msg = self.message
         i = msg.find("\n")
         if i != -1:
-            msg = msg[:i] 
+            msg = msg[:i]
         tw.line("%s:%s: %s" %(self.path, self.lineno, msg))
 
 class ReprLocals(TerminalRepr):
     def __init__(self, lines):
-        self.lines = lines 
+        self.lines = lines
 
     def toterminal(self, tw):
         for line in self.lines:
@@ -667,7 +667,7 @@ class ReprFuncArgs(TerminalRepr):
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)
-                    linesofar =  ns 
+                    linesofar =  ns
                 else:
                     if linesofar:
                         linesofar += ", " + ns
@@ -688,7 +688,7 @@ def patch_builtins(assertion=True, compile=True):
         l = oldbuiltins.setdefault('AssertionError', [])
         l.append(py.builtin.builtins.AssertionError)
         py.builtin.builtins.AssertionError = assertion.AssertionError
-    if compile: 
+    if compile:
         l = oldbuiltins.setdefault('compile', [])
         l.append(py.builtin.builtins.compile)
         py.builtin.builtins.compile = py.code.compile
@@ -697,14 +697,14 @@ def unpatch_builtins(assertion=True, compile=True):
     """ remove compile and AssertionError builtins from Python builtins. """
     if assertion:
         py.builtin.builtins.AssertionError = oldbuiltins['AssertionError'].pop()
-    if compile: 
+    if compile:
         py.builtin.builtins.compile = oldbuiltins['compile'].pop()
 
 def getrawcode(obj):
-    """ return code object for given function. """ 
+    """ return code object for given function. """
     obj = getattr(obj, 'im_func', obj)
     obj = getattr(obj, 'func_code', obj)
     obj = getattr(obj, 'f_code', obj)
     obj = getattr(obj, '__code__', obj)
     return obj
-    
+

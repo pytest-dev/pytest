@@ -1,14 +1,14 @@
 """
 Implements terminal reporting of the full testing process.
 
-This is a good source for looking at the various reporting hooks. 
+This is a good source for looking at the various reporting hooks.
 """
 import py
 import sys
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
-    group._addoption('-v', '--verbose', action="count", 
+    group._addoption('-v', '--verbose', action="count",
                dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
@@ -20,7 +20,7 @@ def pytest_addoption(parser):
     group._addoption('--report',
          action="store", dest="report", default=None, metavar="opts",
          help="(deprecated, use -r)")
-    group._addoption('--tb', metavar="style", 
+    group._addoption('--tb', metavar="style",
                action="store", dest="tbstyle", default='long',
                type="choice", choices=['long', 'short', 'no', 'line'],
                help="traceback print mode (long/short/line/no).")
@@ -40,7 +40,7 @@ def pytest_configure(config):
     else:
         reporter = TerminalReporter(config)
     if reporter:
-        # XXX see remote.py's XXX 
+        # XXX see remote.py's XXX
         for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
             if hasattr(config, attr):
                 #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
@@ -53,7 +53,7 @@ def getreportopt(config):
     reportopts = ""
     optvalue = config.getvalue("report")
     if optvalue:
-        py.builtin.print_("DEPRECATED: use -r instead of --report option.", 
+        py.builtin.print_("DEPRECATED: use -r instead of --report option.",
             file=py.std.sys.stderr)
         if optvalue:
             for setting in optvalue.split(","):
@@ -71,13 +71,13 @@ def getreportopt(config):
 
 class TerminalReporter:
     def __init__(self, config, file=None):
-        self.config = config 
-        self.stats = {}       
+        self.config = config
+        self.stats = {}
         self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
         self._tw = py.io.TerminalWriter(file)
-        self.currentfspath = None 
+        self.currentfspath = None
         self.reportchars = getreportopt(config)
 
     def hasopt(self, char):
@@ -96,14 +96,14 @@ class TerminalReporter:
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
             self._tw.line()
-            self.currentfspath = prefix 
+            self.currentfspath = prefix
             self._tw.write(prefix)
         if extra:
             self._tw.write(extra, **kwargs)
             self.currentfspath = -2
 
     def ensure_newline(self):
-        if self.currentfspath: 
+        if self.currentfspath:
             self._tw.line()
             self.currentfspath = None
 
@@ -122,20 +122,20 @@ class TerminalReporter:
             return res
         for cat in 'skipped failed passed ???'.split():
             if getattr(rep, cat, None):
-                break 
+                break
         return cat, self.getoutcomeletter(rep), self.getoutcomeword(rep)
 
     def getoutcomeletter(self, rep):
-        return rep.shortrepr 
+        return rep.shortrepr
 
     def getoutcomeword(self, rep):
-        if rep.passed: 
+        if rep.passed:
             return "PASS", dict(green=True)
-        elif rep.failed: 
+        elif rep.failed:
             return "FAIL", dict(red=True)
-        elif rep.skipped: 
+        elif rep.skipped:
             return "SKIP"
-        else: 
+        else:
             return "???", dict(red=True)
 
     def gettestid(self, item, relative=True):
@@ -157,11 +157,11 @@ class TerminalReporter:
             self.write_line("INTERNALERROR> " + line)
 
     def pytest_plugin_registered(self, plugin):
-        if self.config.option.traceconfig: 
+        if self.config.option.traceconfig:
             msg = "PLUGIN registered: %s" %(plugin,)
-            # XXX this event may happen during setup/teardown time 
-            #     which unfortunately captures our output here 
-            #     which garbles our output if we use self.write_line 
+            # XXX this event may happen during setup/teardown time
+            #     which unfortunately captures our output here
+            #     which garbles our output if we use self.write_line
             self.write_line(msg)
 
     def pytest_trace(self, category, msg):
@@ -175,15 +175,15 @@ class TerminalReporter:
     def pytest_itemstart(self, item, node=None):
         if self.config.option.verbose:
             line = self._reportinfoline(item)
-            self.write_ensure_prefix(line, "") 
+            self.write_ensure_prefix(line, "")
         else:
-            # ensure that the path is printed before the 
+            # ensure that the path is printed before the
             # 1st test of a module starts running
             self.write_fspath_result(self._getfspath(item), "")
 
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
- 
+
     def pytest_runtest_logreport(self, report):
         rep = report
         cat, letter, word = self.getcategoryletterword(rep)
@@ -236,7 +236,7 @@ class TerminalReporter:
             self.write_line("test path %d: %s" %(i+1, testarg))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
-        __multicall__.execute() 
+        __multicall__.execute()
         self._tw.line("")
         if exitstatus in (0, 1, 2):
             self.summary_errors()
@@ -280,7 +280,7 @@ class TerminalReporter:
         else:
             line = "[noreportinfo]"
         return line % locals() + " "
-        
+
     def _getfailureheadline(self, rep):
         if hasattr(rep, "collector"):
             return str(rep.collector.fspath)
@@ -288,7 +288,7 @@ class TerminalReporter:
             fspath, lineno, msg = self._getreportinfo(rep.item)
             return msg
         else:
-            return "test session" 
+            return "test session"
 
     def _getreportinfo(self, item):
         try:
@@ -308,7 +308,7 @@ class TerminalReporter:
             return fspath
 
     #
-    # summaries for sessionfinish 
+    # summaries for sessionfinish
     #
 
     def summary_failures(self):
@@ -319,7 +319,7 @@ class TerminalReporter:
                 if tbstyle == "line":
                     line = rep._getcrashline()
                     self.write_line(line)
-                else:    
+                else:
                     msg = self._getfailureheadline(rep)
                     self.write_sep("_", msg)
                     rep.toterminal(self._tw)
@@ -333,9 +333,9 @@ class TerminalReporter:
                     # collect
                     msg = "ERROR collecting " + msg
                 elif rep.when == "setup":
-                    msg = "ERROR at setup of " + msg 
+                    msg = "ERROR at setup of " + msg
                 elif rep.when == "teardown":
-                    msg = "ERROR at teardown of " + msg 
+                    msg = "ERROR at teardown of " + msg
                 self.write_sep("_", msg)
                 rep.toterminal(self._tw)
 
@@ -365,7 +365,7 @@ class CollectonlyReporter:
     INDENT = "  "
 
     def __init__(self, config, out=None):
-        self.config = config 
+        self.config = config
         if out is None:
             out = py.std.sys.stdout
         self._tw = py.io.TerminalWriter(out)
@@ -381,8 +381,8 @@ class CollectonlyReporter:
 
     def pytest_collectstart(self, collector):
         self.outindent(collector)
-        self.indent += self.INDENT 
-    
+        self.indent += self.INDENT
+
     def pytest_itemstart(self, item, node=None):
         self.outindent(item)
 
@@ -397,7 +397,7 @@ class CollectonlyReporter:
             self._tw.sep("!", "collection failures")
         for rep in self._failed:
             rep.toterminal(self._tw)
-                
+
 
 def repr_pythonversion(v=None):
     if v is None:
@@ -437,7 +437,7 @@ class ShowFuncargSession(Session):
                 if name.startswith(FuncargRequest._argprefix):
                     name = name[len(FuncargRequest._argprefix):]
                     if name not in available:
-                        available.append([name, factory]) 
+                        available.append([name, factory])
             if available:
                 pluginname = plugin.__name__
                 for name, factory in available:
@@ -452,7 +452,7 @@ class ShowFuncargSession(Session):
                         for line in doc.split("\n"):
                             tw.line("    " + line.strip())
                     else:
-                        tw.line("    %s: no docstring available" %(loc,), 
+                        tw.line("    %s: no docstring available" %(loc,),
                             red=True)
 
     def getlocation(self, function):

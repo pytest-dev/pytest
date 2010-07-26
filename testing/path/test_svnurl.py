@@ -55,7 +55,7 @@ class TestSvnURLCommandPath(CommonSvnTests):
         n2 = [x.basename for x in path1.listdir()]
         n1.sort()
         n2.sort()
-        assert n1 == n2 
+        assert n1 == n2
         assert not p.join('.svn').check()
         rev = path1.mkdir("newdir")
         tmpdir.remove()

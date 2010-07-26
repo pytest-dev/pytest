@@ -1,19 +1,19 @@
 =======================================
-py.test documentation index 
+py.test documentation index
 =======================================
 
 
-features_: overview and discussion of features. 
+features_: overview and discussion of features.
 
-quickstart_: getting started with writing a simple test. 
+quickstart_: getting started with writing a simple test.
 
-`talks, tutorials, examples`_: tutorial examples, slides 
+`talks, tutorials, examples`_: tutorial examples, slides
 
-funcargs_: powerful parametrized test function setup  
+funcargs_: powerful parametrized test function setup
 
-`plugins`_: list of available plugins with usage examples and feature details. 
+`plugins`_: list of available plugins with usage examples and feature details.
 
-customize_: configuration, customization, extensions 
+customize_: configuration, customization, extensions
 
 changelog_: history of changes covering last releases
 

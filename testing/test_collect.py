@@ -20,11 +20,11 @@ class TestCollector:
         assert fn1 != modcol
         if py.std.sys.version_info < (3, 0):
             assert cmp(fn1, fn2) == 0
-        assert hash(fn1) == hash(fn2) 
+        assert hash(fn1) == hash(fn2)
 
         fn3 = modcol.collect_by_name("test_fail")
         assert isinstance(fn3, py.test.collect.Function)
-        assert not (fn1 == fn3) 
+        assert not (fn1 == fn3)
         assert fn1 != fn3
 
         for fn in fn1,fn2,fn3:
@@ -42,7 +42,7 @@ class TestCollector:
         """)
         cls = modcol.collect_by_name("TestClass")
         fn = cls.collect_by_name("()").collect_by_name("test_foo")
-        
+
         parent = fn.getparent(py.test.collect.Module)
         assert parent is modcol
 
@@ -50,7 +50,7 @@ class TestCollector:
         assert parent is fn
 
         parent = fn.getparent(py.test.collect.Class)
-        assert parent is cls     
+        assert parent is cls
 
 
     def test_getcustomfile_roundtrip(self, testdir):
@@ -74,7 +74,7 @@ class TestCollector:
         assert isinstance(node, py.test.collect.File)
 
 class TestCollectFS:
-    def test_ignored_certain_directories(self, testdir): 
+    def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("_darcs", 'test_notfound.py')
         tmpdir.ensure("CVS", 'test_notfound.py')
@@ -91,7 +91,7 @@ class TestCollectFS:
         assert 'normal' in names
         assert 'test_found.py' in names
 
-    def test_found_certain_testfiles(self, testdir): 
+    def test_found_certain_testfiles(self, testdir):
         p1 = testdir.makepyfile(test_found = "pass", found_test="pass")
         col = testdir.parseconfig(p1).getnode(p1.dirpath())
         items = col.collect() # Directory collect returns files sorted by name
@@ -139,7 +139,7 @@ class TestCollectPluginHookRelay:
         reprec = testdir.inline_run()
         assert "hello" in wascalled
         assert "world" in wascalled
-        # make sure the directories do not get double-appended 
+        # make sure the directories do not get double-appended
         colreports = reprec.getreports("pytest_collectreport")
         names = [rep.collector.name for rep in colreports]
         assert names.count("hello") == 1
@@ -228,12 +228,12 @@ class TestCustomConftests:
         testdir.makepyfile(test_world="#")
         reprec = testdir.inline_run(testdir.tmpdir)
         names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
-        assert 'hello' not in names 
-        assert 'test_world.py' not in names 
+        assert 'hello' not in names
+        assert 'test_world.py' not in names
         reprec = testdir.inline_run(testdir.tmpdir, "--XX")
         names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
-        assert 'hello' in names 
-        assert 'test_world.py' in names 
+        assert 'hello' in names
+        assert 'test_world.py' in names
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         testdir.makeconftest("""
@@ -264,8 +264,8 @@ class TestRootCol:
         col = config.getnode(x)
         trail = config._rootcol.totrail(col)
         col2 = config._rootcol.fromtrail(trail)
-        assert col2 == col 
-       
+        assert col2 == col
+
     def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
         config = testdir.reparseconfig()
         col = config.getnode(config.topdir)
@@ -275,9 +275,9 @@ class TestRootCol:
         assert len(col2.listchain()) == 1
         py.test.raises(config.Error, "config.getnode(config.topdir.dirpath())")
         #col3 = config.getnode(config.topdir.dirpath())
-        #py.test.raises(ValueError, 
+        #py.test.raises(ValueError,
         #      "col3._totrail()")
-        
+
     def test_argid(self, testdir, tmpdir):
         cfg = testdir.parseconfig()
         p = testdir.makepyfile("def test_func(): pass")

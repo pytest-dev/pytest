@@ -1,8 +1,8 @@
-""" basic test session implementation. 
+""" basic test session implementation.
 
-* drives collection of tests 
-* triggers executions of tests   
-* produces events used by reporting 
+* drives collection of tests
+* triggers executions of tests
+* produces events used by reporting
 """
 
 import py
@@ -18,15 +18,15 @@ EXIT_NOHOSTS = 4
 Item = py.test.collect.Item
 Collector = py.test.collect.Collector
 
-class Session(object): 
+class Session(object):
     nodeid = ""
     class Interrupted(KeyboardInterrupt):
         """ signals an interrupted test run. """
         __module__ = 'builtins' # for py3
-        
+
     def __init__(self, config):
         self.config = config
-        self.pluginmanager = config.pluginmanager # shortcut 
+        self.pluginmanager = config.pluginmanager # shortcut
         self.pluginmanager.register(self)
         self._testsfailed = 0
         self._nomatch = False
@@ -36,34 +36,34 @@ class Session(object):
         """ yield Items from iterating over the given colitems. """
         if colitems:
             colitems = list(colitems)
-        while colitems: 
+        while colitems:
             next = colitems.pop(0)
             if isinstance(next, (tuple, list)):
-                colitems[:] = list(next) + colitems 
+                colitems[:] = list(next) + colitems
                 continue
             assert self.pluginmanager is next.config.pluginmanager
             if isinstance(next, Item):
                 remaining = self.filteritems([next])
                 if remaining:
                     self.config.hook.pytest_itemstart(item=next)
-                    yield next 
+                    yield next
             else:
                 assert isinstance(next, Collector)
                 self.config.hook.pytest_collectstart(collector=next)
                 rep = self.config.hook.pytest_make_collect_report(collector=next)
                 if rep.passed:
                     for x in self.genitems(rep.result, keywordexpr):
-                        yield x 
+                        yield x
                 self.config.hook.pytest_collectreport(report=rep)
             if self.shouldstop:
                 raise self.Interrupted(self.shouldstop)
 
     def filteritems(self, colitems):
         """ return items to process (some may be deselected)"""
-        keywordexpr = self.config.option.keyword 
+        keywordexpr = self.config.option.keyword
         if not keywordexpr or self._nomatch:
             return colitems
-        if keywordexpr[-1] == ":": 
+        if keywordexpr[-1] == ":":
             keywordexpr = keywordexpr[:-1]
         remaining = []
         deselected = []
@@ -73,13 +73,13 @@ class Session(object):
                     deselected.append(colitem)
                     continue
             remaining.append(colitem)
-        if deselected: 
+        if deselected:
             self.config.hook.pytest_deselected(items=deselected)
             if self.config.option.keyword.endswith(":"):
                 self._nomatch = True
-        return remaining 
+        return remaining
 
-    def collect(self, colitems): 
+    def collect(self, colitems):
         keyword = self.config.option.keyword
         for x in self.genitems(colitems, keyword):
             yield x
@@ -87,7 +87,7 @@ class Session(object):
     def sessionstarts(self):
         """ setup any neccessary resources ahead of the test run. """
         self.config.hook.pytest_sessionstart(session=self)
-        
+
     def pytest_runtest_logreport(self, report):
         if report.failed:
             self._testsfailed += 1
@@ -98,15 +98,15 @@ class Session(object):
     pytest_collectreport = pytest_runtest_logreport
 
     def sessionfinishes(self, exitstatus):
-        """ teardown any resources after a test run. """ 
+        """ teardown any resources after a test run. """
         self.config.hook.pytest_sessionfinish(
-            session=self, 
-            exitstatus=exitstatus, 
+            session=self,
+            exitstatus=exitstatus,
         )
 
     def main(self, colitems):
         """ main loop for running tests. """
-        self.shouldstop = False 
+        self.shouldstop = False
         self.sessionstarts()
         exitstatus = EXIT_OK
         try:
@@ -127,8 +127,8 @@ class Session(object):
         return exitstatus
 
     def _mainloop(self, colitems):
-        for item in self.collect(colitems): 
-            if not self.config.option.collectonly: 
+        for item in self.collect(colitems):
+            if not self.config.option.collectonly:
                 item.config.hook.pytest_runtest_protocol(item=item)
             if self.shouldstop:
                 raise self.Interrupted(self.shouldstop)

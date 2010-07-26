@@ -7,9 +7,9 @@ def otherfunc(a,b):
 def somefunc(x,y):
     otherfunc(x,y)
 
-def otherfunc_multi(a,b): 
-    assert (a == 
-            b) 
+def otherfunc_multi(a,b):
+    assert (a ==
+            b)
 
 def test_generative(param1, param2):
     assert param1 * 2 < param2

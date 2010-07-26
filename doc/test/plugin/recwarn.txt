@@ -6,10 +6,10 @@ helpers for asserting deprecation and other warnings.
 .. contents::
   :local:
 
-Example usage 
+Example usage
 ---------------------
 
-You can use the ``recwarn`` funcarg to track 
+You can use the ``recwarn`` funcarg to track
 warnings within a test function:
 
 .. sourcecode:: python
@@ -30,7 +30,7 @@ warning:
 .. sourcecode:: python
 
     import py
-            
+
     def test_global():
         py.test.deprecated_call(myfunction, 17)
 
@@ -43,16 +43,16 @@ the 'recwarn' test function argument
 Return a WarningsRecorder instance that provides these methods:
 
 * ``pop(category=None)``: return last warning matching the category.
-* ``clear()``: clear list of warnings 
+* ``clear()``: clear list of warnings
 
 Start improving this plugin in 30 seconds
 =========================================
 
 
-1. Download `pytest_recwarn.py`_ plugin source code 
-2. put it somewhere as ``pytest_recwarn.py`` into your import path 
+1. Download `pytest_recwarn.py`_ plugin source code
+2. put it somewhere as ``pytest_recwarn.py`` into your import path
 3. a subsequent ``py.test`` run will use your local version
 
-Checkout customize_, other plugins_ or `get in contact`_. 
+Checkout customize_, other plugins_ or `get in contact`_.
 
 .. include:: links.txt

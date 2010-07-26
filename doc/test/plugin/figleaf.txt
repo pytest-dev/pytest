@@ -14,7 +14,7 @@ after pip or easy_install mediated installation of ``pytest-figleaf`` you can ty
     py.test --figleaf [...]
 
 to enable figleaf coverage in your test run.  A default ".figleaf" data file
-and "html" directory will be created.  You can use ``--fig-data`` 
+and "html" directory will be created.  You can use ``--fig-data``
 and ``fig-html`` to modify the paths.
 
 command line options

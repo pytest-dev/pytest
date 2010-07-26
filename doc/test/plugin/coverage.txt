@@ -6,7 +6,7 @@ Write and report coverage data with the 'coverage' package.
 .. contents::
   :local:
 
-Original code by Ross Lawley. 
+Original code by Ross Lawley.
 
 Requires Ned Batchelder's excellent coverage:
 http://nedbatchelder.com/code/coverage/

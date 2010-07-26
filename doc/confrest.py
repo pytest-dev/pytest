@@ -2,7 +2,7 @@ import py
 
 from py._plugin.pytest_restdoc import convert_rest_html, strip_html_header
 
-html = py.xml.html 
+html = py.xml.html
 
 class css:
     #pagetitle = "pagetitle"
@@ -11,7 +11,7 @@ class css:
     navspace = "navspace"
     versioninfo = "versioninfo"
 
-class Page(object): 
+class Page(object):
     doctype = ('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"'
                ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n')
     googlefragment = """
@@ -27,18 +27,18 @@ pageTracker._trackPageview();
 """
 
     def __init__(self, project, title, targetpath, stylesheeturl=None,
-                 type="text/html", encoding="ISO-8859-1"): 
-        self.project = project 
-        self.title = project.prefix_title + title 
+                 type="text/html", encoding="ISO-8859-1"):
+        self.project = project
+        self.title = project.prefix_title + title
         self.targetpath = targetpath
-        self.stylesheeturl = stylesheeturl 
-        self.type = type 
-        self.encoding = encoding 
+        self.stylesheeturl = stylesheeturl
+        self.type = type
+        self.encoding = encoding
 
         self.body = html.body()
-        self.head = html.head() 
-        self._root = html.html(self.head, self.body) 
-        self.fill() 
+        self.head = html.head()
+        self._root = html.html(self.head, self.body)
+        self.fill()
 
     def a_href(self, name, url, **kwargs):
         return html.a(name, class_="menu", href=url, **kwargs)
@@ -54,7 +54,7 @@ pageTracker._trackPageview();
         return html.a(name, class_="menu",
                       href=relpath(self.targetpath.strpath,
                                    apipath.join(relhtmlpath).strpath))
-        
+
     def fill_menubar(self):
         items = [
             self.a_docref("INSTALL", "install.html"),
@@ -73,7 +73,7 @@ pageTracker._trackPageview();
                 self.a_href("hudson-tests", "http://hudson.testrun.org")
             ),
             html.div(
-                html.h3("supporting APIs:"), 
+                html.h3("supporting APIs:"),
                 self.a_docref("Index", "index.html"),
                 self.a_docref("py.path", "path.html"),
                 self.a_docref("py.code", "code.html"),
@@ -86,12 +86,12 @@ pageTracker._trackPageview();
         self.menubar = html.div(id=css.menubar, *[
             html.div(item) for item in items])
         version = py.version
-        announcelink = self.a_docref("%s ANN" % version, 
+        announcelink = self.a_docref("%s ANN" % version,
             "announce/release-%s.html" %(version,))
-        self.menubar.insert(0, 
+        self.menubar.insert(0,
             html.div(announcelink))
-            #self.a_href("%s-%s" % (self.title, py.version), 
-            #    "http://pypi.python.org/pypi/py/%s" % version, 
+            #self.a_href("%s-%s" % (self.title, py.version),
+            #    "http://pypi.python.org/pypi/py/%s" % version,
             #id="versioninfo",
 
     def fill(self):
@@ -108,31 +108,31 @@ pageTracker._trackPageview();
         self.body.append(html.div(
             self.project.logo,
             self.menubar,
-            id=css.navspace, 
+            id=css.navspace,
         ))
-            
+
         #self.body.append(html.div(self.title, id=css.pagetitle))
         self.contentspace = html.div(id=css.contentspace)
         self.body.append(self.contentspace)
 
-    def unicode(self, doctype=True): 
-        page = self._root.unicode() 
+    def unicode(self, doctype=True):
+        page = self._root.unicode()
         page = page.replace("</body>", self.googlefragment + "</body>")
-        if doctype: 
-            return self.doctype + page 
-        else: 
-            return page 
+        if doctype:
+            return self.doctype + page
+        else:
+            return page
 
-class PyPage(Page): 
+class PyPage(Page):
     def get_menubar(self):
         menubar = super(PyPage, self).get_menubar()
-        # base layout 
+        # base layout
         menubar.append(
             html.a("issue", href="https://codespeak.net/issue/py-dev/",
                    class_="menu"),
         )
         return menubar
-                            
+
 
 def getrealname(username):
     try:
@@ -143,30 +143,30 @@ def getrealname(username):
         user = uconf.system.User(username)
     except KeyboardInterrupt:
         raise
-    try: 
+    try:
         return user.realname or username
     except KeyError:
         return username
-    
+
 
 class Project:
     mydir = py.path.local(__file__).dirpath()
     title = "py lib"
     prefix_title = ""  # we have a logo already containing "py lib"
-    encoding = 'latin1' 
+    encoding = 'latin1'
     logo = html.div(
         html.a(
-            html.img(alt="py lib", id='pyimg', height=114/2, width=154/2, 
-                              src="http://codespeak.net/img/pylib.png"), 
+            html.img(alt="py lib", id='pyimg', height=114/2, width=154/2,
+                              src="http://codespeak.net/img/pylib.png"),
                             href="http://pylib.org"))
-    Page = PyPage 
+    Page = PyPage
 
     def __init__(self, sourcepath=None):
         if sourcepath is None:
             sourcepath = self.mydir
         self.setpath(sourcepath)
 
-    def setpath(self, sourcepath, docpath=None, 
+    def setpath(self, sourcepath, docpath=None,
                 apigenpath=None, stylesheet=None):
         self.sourcepath = sourcepath
         if docpath is None:
@@ -197,7 +197,7 @@ class Project:
         reloutputpath = txtpath.new(ext='.html').relto(self.sourcepath)
         return self.docpath.join(reloutputpath)
 
-    def process(self, txtpath): 
+    def process(self, txtpath):
         encoding = self.encoding
         content = self.get_content(txtpath, encoding)
         outputpath = self.get_htmloutputpath(txtpath)
@@ -214,16 +214,16 @@ class Project:
                                     stylesheet=stylesheet, encoding=encoding)
         content = strip_html_header(content, encoding=encoding)
 
-        title = txtpath.purebasename 
+        title = txtpath.purebasename
         if txtpath.dirpath().basename == "test":
             title = "py.test " + title
         # title = "[%s] %s" % (txtpath.purebasename, py.version)
-        page = self.Page(self, title, 
+        page = self.Page(self, title,
                          outputpath, stylesheeturl=stylesheet)
 
         try:
             modified = py.process.cmdexec(
-                "hg tip --template 'modified {date|shortdate}'" 
+                "hg tip --template 'modified {date|shortdate}'"
             )
         except py.process.cmdexec.Error:
             modified = " "
@@ -231,10 +231,10 @@ class Project:
         #page.body.append(html.div(modified, id="docinfoline"))
 
         page.contentspace.append(py.xml.raw(content))
-        outputpath.ensure().write(page.unicode().encode(encoding)) 
+        outputpath.ensure().write(page.unicode().encode(encoding))
 
 # XXX this function comes from apigen/linker.py, put it
-# somewhere in py lib 
+# somewhere in py lib
 import os
 def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
     """ create a relative path from p1 to p2
@@ -268,7 +268,7 @@ def relpath(p1, p2, sep=os.path.sep, back='..', normalize=True):
     # AA BB
     # AA CC     -> CC
     #
-    # AA BB 
+    # AA BB
     # AA      -> ../AA
 
     diffindex = 0

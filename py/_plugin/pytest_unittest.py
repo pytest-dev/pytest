@@ -1,15 +1,15 @@
 """
-automatically discover and run traditional "unittest.py" style tests. 
+automatically discover and run traditional "unittest.py" style tests.
 
 Usage
 ----------------
 
-This plugin collects and runs Python `unittest.py style`_ tests. 
-It will automatically collect ``unittest.TestCase`` subclasses 
+This plugin collects and runs Python `unittest.py style`_ tests.
+It will automatically collect ``unittest.TestCase`` subclasses
 and their ``test`` methods from the test modules of a project
-(usually following the ``test_*.py`` pattern). 
+(usually following the ``test_*.py`` pattern).
 
-This plugin is enabled by default. 
+This plugin is enabled by default.
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 """
@@ -54,7 +54,7 @@ class UnitTestCaseInstance(py.test.collect.Instance):
     def _getobj(self):
         x = self.parent.obj
         return self.parent.obj(methodName='run')
-        
+
 class UnitTestFunction(py.test.collect.Function):
     def __init__(self, name, parent, args=(), obj=_dummy, sort_value=None):
         super(UnitTestFunction, self).__init__(name, parent)

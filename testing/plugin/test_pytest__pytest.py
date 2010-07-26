@@ -11,7 +11,7 @@ def test_hookrecorder_basic():
     rec.start_recording(ApiClass)
     rec.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
-    assert call.arg == 123 
+    assert call.arg == 123
     assert call._name == "pytest_xyz"
     py.test.raises(ValueError, "rec.popcall('abc')")
 

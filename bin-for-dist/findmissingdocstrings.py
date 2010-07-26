@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 import py
 import inspect
@@ -73,4 +73,4 @@ if __name__ == '__main__':
     for name, obj in all_exported:
         if isinstance(obj, type):
             report_different_parameter_names(name, obj)
- 
+

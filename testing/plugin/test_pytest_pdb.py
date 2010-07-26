@@ -1,6 +1,6 @@
 import py
 
-class TestPDB: 
+class TestPDB:
     def pytest_funcarg__pdblist(self, request):
         monkeypatch = request.getfuncargvalue("monkeypatch")
         pdblist = []
@@ -8,11 +8,11 @@ class TestPDB:
             pdblist.append(args)
         plugin = request.config.pluginmanager.getplugin('pdb')
         monkeypatch.setattr(plugin, 'post_mortem', mypdb)
-        return pdblist 
-         
+        return pdblist
+
     def test_pdb_on_fail(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
-            def test_func(): 
+            def test_func():
                 assert 0
         """)
         assert rep.failed
@@ -24,11 +24,11 @@ class TestPDB:
         rep = testdir.inline_runsource1('--pdb', """
             import py
             @py.test.mark.xfail
-            def test_func(): 
+            def test_func():
                 assert 0
         """)
         assert "xfail" in rep.keywords
-        assert not pdblist 
+        assert not pdblist
 
     def test_pdb_on_skip(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
@@ -36,7 +36,7 @@ class TestPDB:
             def test_func():
                 py.test.skip("hello")
         """)
-        assert rep.skipped 
+        assert rep.skipped
         assert len(pdblist) == 0
 
     def test_pdb_interaction(self, testdir):
@@ -52,8 +52,8 @@ class TestPDB:
         child.sendeof()
         rest = child.read()
         assert "1 failed" in rest
-        assert "def test_1" not in rest 
-        if child.isalive(): 
+        assert "def test_1" not in rest
+        if child.isalive():
             child.wait()
 
     def test_pdb_interaction_exception(self, testdir):
@@ -72,5 +72,5 @@ class TestPDB:
         child.expect(".*function")
         child.sendeof()
         child.expect("1 failed")
-        if child.isalive(): 
+        if child.isalive():
             child.wait()

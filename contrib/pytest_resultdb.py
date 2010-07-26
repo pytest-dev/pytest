@@ -1,12 +1,12 @@
-"""XXX in progress: resultdb plugin for database logging of test results. 
+"""XXX in progress: resultdb plugin for database logging of test results.
 
 Saves test results to a datastore.
 
 XXX this needs to be merged with resultlog plugin
 
-Also mixes in some early ideas about an archive abstraction for test 
+Also mixes in some early ideas about an archive abstraction for test
 results.
-""" 
+"""
 import py
 
 py.test.skip("XXX needs to be merged with resultlog")
@@ -15,15 +15,15 @@ from pytest_resultlog import ResultLog
 
 def pytest_addoption(parser):
     group = parser.addgroup("resultdb", "resultdb plugin options")
-    group.addoption('--resultdb', action="store", dest="resultdb", 
+    group.addoption('--resultdb', action="store", dest="resultdb",
             metavar="path",
             help="path to the file to store test results.")
-    group.addoption('--resultdb_format', action="store", 
+    group.addoption('--resultdb_format', action="store",
             dest="resultdbformat", default='json',
             help="data format (json, sqlite)")
 
 def pytest_configure(config):
-    # XXX using config.XYZ is not good 
+    # XXX using config.XYZ is not good
     if config.getvalue('resultdb'):
         if config.option.resultdb:
             # local import so missing module won't crash py.test
@@ -36,14 +36,14 @@ def pytest_configure(config):
             except ImportError:
                 raise config.Error('Could not import simplejson module')
             if config.option.resultdbformat.lower() == 'json':
-                resultdb = ResultDB(JSONResultArchive, 
-                        config.option.resultdb) 
+                resultdb = ResultDB(JSONResultArchive,
+                        config.option.resultdb)
             elif config.option.resultdbformat.lower() == 'sqlite':
-                resultdb = ResultDB(SQLiteResultArchive, 
-                        config.option.resultdb) 
+                resultdb = ResultDB(SQLiteResultArchive,
+                        config.option.resultdb)
             else:
-                raise config.Error('Unknown --resultdb_format: %s' % 
-                        config.option.resultdbformat) 
+                raise config.Error('Unknown --resultdb_format: %s' %
+                        config.option.resultdbformat)
 
             config.pluginmanager.register(resultdb)
 
@@ -52,7 +52,7 @@ class JSONResultArchive(object):
         self.archive_path = archive_path
         import simplejson
         self.simplejson = simplejson
-        
+
     def init_db(self):
         if os.path.exists(self.archive_path):
             data_file = open(self.archive_path)
@@ -84,7 +84,7 @@ class SQLiteResultArchive(object):
         self.archive_path = archive_path
         import sqlite3
         self.sqlite3 = sqlite3
-        
+
     def init_db(self):
         if not os.path.exists(self.archive_path):
             conn = self.sqlite3.connect(self.archive_path)
@@ -153,7 +153,7 @@ class ResultDB(ResultLog):
         for item in vars(event).keys():
             if item not in event_excludes:
                 data[item] = getattr(event, item)
-        # use the locally calculated longrepr & shortrepr        
+        # use the locally calculated longrepr & shortrepr
         data['longrepr'] = longrepr
         data['shortrepr'] = shortrepr
 
@@ -185,10 +185,10 @@ insert into pytest_results (
     longrepr,
     fspath,
     itemname)
-values (?, ?, ?, ?, ?, ?, ?, ?, ?);          
+values (?, ?, ?, ?, ?, ?, ?, ?, ?);
 """
 SQL_SELECT_DATA = """
-select 
+select
     runid,
     name,
     passed,
@@ -204,7 +204,7 @@ from pytest_results;
 
 # ===============================================================================
 #
-# plugin tests 
+# plugin tests
 #
 # ===============================================================================
 
@@ -214,7 +214,7 @@ class BaseResultArchiveTests(object):
     cls = None
 
     def setup_class(cls):
-        # XXX refactor setup into a funcarg? 
+        # XXX refactor setup into a funcarg?
         cls.tempdb = "test_tempdb"
 
     def test_init_db(self, testdir):
@@ -243,7 +243,7 @@ class BaseResultArchiveTests(object):
         for key, value in data[0].items():
             assert value == result[0][key]
         assert 'runid' in result[0]
-        
+
         # make sure the data is persisted
         tempdb_path = unicode(testdir.tmpdir.join(self.tempdb))
         archive = self.cls(tempdb_path)
@@ -257,7 +257,7 @@ class TestJSONResultArchive(BaseResultArchiveTests):
     def setup_method(self, method):
         py.test.importorskip("simplejson")
 
-    
+
 class TestSQLiteResultArchive(BaseResultArchiveTests):
     cls = SQLiteResultArchive
 
@@ -270,8 +270,8 @@ class TestSQLiteResultArchive(BaseResultArchiveTests):
         archive = self.cls(tempdb_path)
         archive.init_db()
         assert os.path.exists(tempdb_path)
-        
-        # is table in the database? 
+
+        # is table in the database?
         import sqlite3
         conn = sqlite3.connect(tempdb_path)
         cursor = conn.cursor()
@@ -281,7 +281,7 @@ class TestSQLiteResultArchive(BaseResultArchiveTests):
         cursor.close()
         conn.close()
         assert len(tables) == 1
-    
+
 def verify_archive_item_shape(item):
     names = ("runid name passed skipped failed shortrepr "
                 "longrepr fspath itemname").split()
@@ -299,14 +299,14 @@ class TestWithFunctionIntegration:
         archive = SQLiteResultArchive(unicode(resultdb))
         archive.init_db()
         return archive
-        
+
     def test_collection_report(self, testdir):
         py.test.skip("Needs a rewrite for db version.")
         ok = testdir.makepyfile(test_collection_ok="")
         skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
 
-        lines = self.getresultdb(testdir, ok) 
+        lines = self.getresultdb(testdir, ok)
         assert not lines
 
         lines = self.getresultdb(testdir, skip)
@@ -326,7 +326,7 @@ class TestWithFunctionIntegration:
 
     def test_log_test_outcomes(self, testdir):
         mod = testdir.makepyfile(test_mod="""
-            import py 
+            import py
             def test_pass(): pass
             def test_skip(): py.test.skip("hello")
             def test_fail(): raise ValueError("val")
@@ -349,7 +349,7 @@ class TestWithFunctionIntegration:
             raise ValueError
         except ValueError:
             excinfo = py.code.ExceptionInfo()
-        reslog = ResultDB(StringIO.StringIO())        
+        reslog = ResultDB(StringIO.StringIO())
         reslog.pytest_internalerror(excinfo.getrepr)
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
@@ -357,7 +357,7 @@ class TestWithFunctionIntegration:
         assert entry_lines[0].startswith('! ')
         assert os.path.basename(__file__)[:-1] in entry_lines[0] #.py/.pyc
         assert entry_lines[-1][0] == ' '
-        assert 'ValueError' in entry  
+        assert 'ValueError' in entry
 
 def test_generic(testdir):
     testdir.makepyfile("""
@@ -371,4 +371,4 @@ def test_generic(testdir):
     """)
     testdir.runpytest("--resultdb=result.sqlite")
     #testdir.tmpdir.join("result.sqlite")
-    
+

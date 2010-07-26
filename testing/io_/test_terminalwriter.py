@@ -1,6 +1,6 @@
 import py
 import os, sys
-from py._io import terminalwriter 
+from py._io import terminalwriter
 
 def test_get_terminal_width():
     x = py.io.get_terminal_width
@@ -21,7 +21,7 @@ def test_getdimensions(monkeypatch):
 def test_terminal_width_COLUMNS(monkeypatch):
     """ Dummy test for get_terminal_width
     """
-    fcntl = py.test.importorskip("fcntl") 
+    fcntl = py.test.importorskip("fcntl")
     monkeypatch.setattr(fcntl, 'ioctl', lambda *args: int('x'))
     monkeypatch.setenv('COLUMNS', '42')
     assert terminalwriter.get_terminal_width() == 42
@@ -30,20 +30,20 @@ def test_terminal_width_COLUMNS(monkeypatch):
 def test_terminalwriter_defaultwidth_80(monkeypatch):
     monkeypatch.setattr(terminalwriter, '_getdimensions', lambda: 0/0)
     monkeypatch.delenv('COLUMNS', raising=False)
-    tw = py.io.TerminalWriter()  
+    tw = py.io.TerminalWriter()
     assert tw.fullwidth == 80
 
 def test_terminalwriter_getdimensions_bogus(monkeypatch):
     monkeypatch.setattr(terminalwriter, '_getdimensions', lambda: (10,10))
     monkeypatch.delenv('COLUMNS', raising=False)
-    tw = py.io.TerminalWriter()  
+    tw = py.io.TerminalWriter()
     assert tw.fullwidth == 80
 
 def test_terminalwriter_computes_width(monkeypatch):
     monkeypatch.setattr(terminalwriter, 'get_terminal_width', lambda: 42)
-    tw = py.io.TerminalWriter()  
+    tw = py.io.TerminalWriter()
     assert tw.fullwidth == 42
-    
+
 def test_terminalwriter_default_instantiation():
     tw = py.io.TerminalWriter(stringio=True)
     assert hasattr(tw, 'stringio')
@@ -99,28 +99,28 @@ class TestTerminalWriter:
         tw.getlines = getlines
         return tw
 
-    def test_line(self, tw):    
+    def test_line(self, tw):
         tw.line("hello")
         l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "hello\n"
 
-    def test_line_unicode(self, tw):    
+    def test_line_unicode(self, tw):
         for encoding in 'utf8', 'latin1':
-            tw._encoding = encoding 
+            tw._encoding = encoding
             msg = py.builtin._totext('b\u00f6y', 'utf8')
             tw.line(msg)
             l = tw.getlines()
             assert l[0] == msg + "\n"
 
     def test_sep_no_title(self, tw):
-        tw.sep("-", fullwidth=60) 
+        tw.sep("-", fullwidth=60)
         l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "-" * 60 + "\n"
 
     def test_sep_with_title(self, tw):
-        tw.sep("-", "hello", fullwidth=60) 
+        tw.sep("-", "hello", fullwidth=60)
         l = tw.getlines()
         assert len(l) == 1
         assert l[0] == "-" * 26 + " hello " + "-" * 27 + "\n"
@@ -166,7 +166,7 @@ def test_attr_hasmarkup():
 
 def test_ansi_print():
     # we have no easy way to construct a file that
-    # represents a terminal 
+    # represents a terminal
     f = py.io.TextIO()
     f.isatty = lambda: True
     py.io.ansi_print("hello", 0x32, file=f)

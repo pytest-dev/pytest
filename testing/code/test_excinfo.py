@@ -5,7 +5,7 @@ queue = py.builtin._tryimport('queue', 'Queue')
 
 failsonjython = py.test.mark.xfail("sys.platform.startswith('java')")
 
-class TWMock: 
+class TWMock:
     def __init__(self):
         self.lines = []
     def sep(self, sep, line=None):
@@ -58,18 +58,18 @@ def h():
     g()
     #
 
-class TestTraceback_f_g_h: 
-    def setup_method(self, method): 
+class TestTraceback_f_g_h:
+    def setup_method(self, method):
         try:
             h()
         except ValueError:
             self.excinfo = py.code.ExceptionInfo()
 
     def test_traceback_entries(self):
-        tb = self.excinfo.traceback 
-        entries = list(tb) 
-        assert len(tb) == 4 # maybe fragile test 
-        assert len(entries) == 4 # maybe fragile test 
+        tb = self.excinfo.traceback
+        entries = list(tb)
+        assert len(tb) == 4 # maybe fragile test
+        assert len(entries) == 4 # maybe fragile test
         names = ['f', 'g', 'h']
         for entry in entries:
             try:
@@ -79,10 +79,10 @@ class TestTraceback_f_g_h:
         assert not names
 
     def test_traceback_entry_getsource(self):
-        tb = self.excinfo.traceback 
+        tb = self.excinfo.traceback
         s = str(tb[-1].getsource() )
         assert s.startswith("def f():")
-        assert s.endswith("raise ValueError") 
+        assert s.endswith("raise ValueError")
 
     @failsonjython
     def test_traceback_entry_getsource_in_construct(self):
@@ -93,20 +93,20 @@ class TestTraceback_f_g_h:
                 except somenoname:
                     pass
             xyz()
-        """) 
-        try: 
+        """)
+        try:
             exec (source.compile())
-        except NameError: 
-            tb = py.code.ExceptionInfo().traceback 
+        except NameError:
+            tb = py.code.ExceptionInfo().traceback
             print (tb[-1].getsource())
             s = str(tb[-1].getsource())
             assert s.startswith("def xyz():\n    try:")
-            assert s.endswith("except somenoname:") 
+            assert s.endswith("except somenoname:")
 
     def test_traceback_cut(self):
         co = py.code.Code(f)
-        path, firstlineno = co.path, co.firstlineno 
-        traceback = self.excinfo.traceback 
+        path, firstlineno = co.path, co.firstlineno
+        traceback = self.excinfo.traceback
         newtraceback = traceback.cut(path=path, firstlineno=firstlineno)
         assert len(newtraceback) == 1
         newtraceback = traceback.cut(path=path, lineno=firstlineno+2)
@@ -133,8 +133,8 @@ class TestTraceback_f_g_h:
                 n += 1
             f(n)
         excinfo = py.test.raises(RuntimeError, f, 8)
-        traceback = excinfo.traceback 
-        recindex = traceback.recursionindex() 
+        traceback = excinfo.traceback
+        recindex = traceback.recursionindex()
         assert recindex == 3
 
     def test_traceback_no_recursion_index(self):
@@ -150,14 +150,14 @@ class TestTraceback_f_g_h:
             except:
                 reraise_me()
         excinfo = py.test.raises(RuntimeError, f, 8)
-        traceback = excinfo.traceback 
-        recindex = traceback.recursionindex() 
+        traceback = excinfo.traceback
+        recindex = traceback.recursionindex()
         assert recindex is None
 
     def test_traceback_getcrashentry(self):
         def i():
             __tracebackhide__ = True
-            raise ValueError 
+            raise ValueError
         def h():
             i()
         def g():
@@ -171,13 +171,13 @@ class TestTraceback_f_g_h:
         entry = tb.getcrashentry()
         co = py.code.Code(h)
         assert entry.frame.code.path == co.path
-        assert entry.lineno == co.firstlineno + 1 
+        assert entry.lineno == co.firstlineno + 1
         assert entry.frame.code.name == 'h'
 
     def test_traceback_getcrashentry_empty(self):
         def g():
             __tracebackhide__ = True
-            raise ValueError 
+            raise ValueError
         def f():
             __tracebackhide__ = True
             g()
@@ -190,22 +190,22 @@ class TestTraceback_f_g_h:
         assert entry.lineno == co.firstlineno + 2
         assert entry.frame.code.name == 'g'
 
-def hello(x): 
-    x + 5 
+def hello(x):
+    x + 5
 
-def test_tbentry_reinterpret(): 
-    try: 
-        hello("hello") 
-    except TypeError: 
-        excinfo = py.code.ExceptionInfo() 
+def test_tbentry_reinterpret():
+    try:
+        hello("hello")
+    except TypeError:
+        excinfo = py.code.ExceptionInfo()
     tbentry = excinfo.traceback[-1]
-    msg = tbentry.reinterpret() 
-    assert msg.startswith("TypeError: ('hello' + 5)") 
+    msg = tbentry.reinterpret()
+    assert msg.startswith("TypeError: ('hello' + 5)")
 
 def test_excinfo_exconly():
     excinfo = py.test.raises(ValueError, h)
     assert excinfo.exconly().startswith('ValueError')
-    excinfo = py.test.raises(ValueError, 
+    excinfo = py.test.raises(ValueError,
         "raise ValueError('hello\\nworld')")
     msg = excinfo.exconly(tryshort=True)
     assert msg.startswith('ValueError')
@@ -225,19 +225,19 @@ def test_excinfo_str():
 
 def test_excinfo_errisinstance():
     excinfo = py.test.raises(ValueError, h)
-    assert excinfo.errisinstance(ValueError) 
+    assert excinfo.errisinstance(ValueError)
 
 def test_excinfo_no_sourcecode():
     try:
         exec ("raise ValueError()")
-    except ValueError: 
+    except ValueError:
         excinfo = py.code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
     if py.std.sys.version_info < (2,5):
         assert s == "  File '<string>':1 in ?\n  ???\n"
     else:
         assert s == "  File '<string>':1 in <module>\n  ???\n"
-    
+
 def test_entrysource_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
@@ -260,7 +260,7 @@ def test_codepath_Queue_example():
     assert path.basename.lower() == "queue.py"
     assert path.check()
 
-class TestFormattedExcinfo: 
+class TestFormattedExcinfo:
     def pytest_funcarg__importasmod(self, request):
         def importasmod(source):
             source = py.code.Source(source)
@@ -309,8 +309,8 @@ class TestFormattedExcinfo:
         source = pr._getentrysource(excinfo.traceback[-1])
         lines = pr.get_source(source, 1, excinfo)
         assert lines == [
-            '    def f():', 
-            '>       assert 0', 
+            '    def f():',
+            '>       assert 0',
             'E       assert 0'
         ]
 
@@ -328,7 +328,7 @@ class TestFormattedExcinfo:
     def test_repr_many_line_source_not_existing(self):
         pr = FormattedExcinfo()
         co = compile("""
-a = 1        
+a = 1
 raise ValueError()
 """, "", "exec")
         try:
@@ -365,11 +365,11 @@ raise ValueError()
             typename = "Foo"
             def __init__(self):
                 pass
-            
+
             def exconly(self, tryshort):
                 return "EXC"
             def errisinstance(self, cls):
-                return False 
+                return False
 
         excinfo = FakeExcinfo()
         class FakeRawTB(object):
@@ -383,14 +383,14 @@ raise ValueError()
 
         fail = py.error.ENOENT
         repr = pr.repr_excinfo(excinfo)
-        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"        
-        
+        assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
+
 
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)
         loc = {'y': 5, 'z': 7, 'x': 3, '__builtins__': {}} # __builtins__}
-        reprlocals = p.repr_locals(loc) 
-        assert reprlocals.lines 
+        reprlocals = p.repr_locals(loc)
+        assert reprlocals.lines
         assert reprlocals.lines[0] == '__builtins__ = <builtins>'
         assert reprlocals.lines[1] == 'x          = 3'
         assert reprlocals.lines[2] == 'y          = 5'
@@ -405,13 +405,13 @@ raise ValueError()
         excinfo.traceback = excinfo.traceback.filter()
         p = FormattedExcinfo()
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1])
-        
+
         # test as intermittent entry
         lines = reprtb.lines
         assert lines[0] == '    def func1():'
         assert lines[1] == '>       raise ValueError("hello\\nworld")'
 
-        # test as last entry 
+        # test as last entry
         p = FormattedExcinfo(showlocals=True)
         repr_entry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = repr_entry.lines
@@ -422,7 +422,7 @@ raise ValueError()
         assert not lines[4:]
 
         loc = repr_entry.reprlocals is not None
-        loc = repr_entry.reprfileloc 
+        loc = repr_entry.reprfileloc
         assert loc.path == mod.__file__
         assert loc.lineno == 3
         #assert loc.message == "ValueError: hello"
@@ -467,7 +467,7 @@ raise ValueError()
         assert basename in str(reprtb.reprfileloc.path)
         assert reprtb.reprfileloc.lineno == 5
 
-        # test last entry 
+        # test last entry
         p = FormattedExcinfo(style="short")
         reprtb = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprtb.lines
@@ -491,7 +491,7 @@ raise ValueError()
         reprentry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprentry.lines
         assert lines[0] == 'E   ValueError: hello'
-        assert not lines[1:] 
+        assert not lines[1:]
 
     def test_repr_traceback_tbfilter(self, importasmod):
         mod = importasmod("""
@@ -540,7 +540,7 @@ raise ValueError()
                 f(0)
         """)
         excinfo = py.test.raises(ValueError, mod.entry)
-      
+
         for style in ("long", "short"):
             p = FormattedExcinfo(style=style)
             reprtb = p.repr_traceback(excinfo)
@@ -548,7 +548,7 @@ raise ValueError()
             assert reprtb.style == style
             assert not reprtb.extraline
             repr = p.repr_excinfo(excinfo)
-            assert repr.reprtraceback 
+            assert repr.reprtraceback
             assert len(repr.reprtraceback.reprentries) == len(reprtb.reprentries)
             assert repr.reprcrash.path.endswith("mod.py")
             assert repr.reprcrash.message == "ValueError: 0"
@@ -596,10 +596,10 @@ raise ValueError()
             assert str(reprtb)
 
     def test_tb_entry_AssertionError(self, importasmod):
-        # probably this test is a bit redundant 
+        # probably this test is a bit redundant
         # as py/magic/testing/test_assertion.py
         # already tests correctness of
-        # assertion-reinterpretation  logic 
+        # assertion-reinterpretation  logic
         mod = importasmod("""
             def somefunc():
                 x = 1
@@ -610,7 +610,7 @@ raise ValueError()
             excinfo = py.test.raises(AssertionError, mod.somefunc)
         finally:
             py.code.unpatch_builtins(assertion=True)
-            
+
         p = FormattedExcinfo()
         reprentry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
         lines = reprentry.lines
@@ -629,8 +629,8 @@ raise ValueError()
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
                 assert isinstance(repr, ReprExceptionInfo)
-                assert repr.reprtraceback.style == style 
-         
+                assert repr.reprtraceback.style == style
+
     def test_toterminal_long(self, importasmod):
         mod = importasmod("""
             def g(x):
@@ -645,7 +645,7 @@ raise ValueError()
         repr.toterminal(tw)
         assert tw.lines[0] == ""
         tw.lines.pop(0)
-        assert tw.lines[0] == "    def f():" 
+        assert tw.lines[0] == "    def f():"
         assert tw.lines[1] == ">       g(3)"
         assert tw.lines[2] == ""
         assert tw.lines[3].endswith("mod.py:5: ")
@@ -666,13 +666,13 @@ raise ValueError()
         tw = TWMock()
         path = py.path.local(mod.__file__)
         old = path.dirpath().chdir()
-        try: 
+        try:
             repr = excinfo.getrepr(abspath=False)
             repr.toterminal(tw)
             line = tw.lines[-1]
-            x = py.path.local().bestrelpath(path) 
+            x = py.path.local().bestrelpath(path)
             if len(x) < len(str(path)):
-                assert line == "mod.py:3: ValueError" 
+                assert line == "mod.py:3: ValueError"
 
             repr = excinfo.getrepr(abspath=True)
             repr.toterminal(tw)
@@ -682,10 +682,10 @@ raise ValueError()
             old.chdir()
 
     @py.test.mark.multi(reproptions=[
-        {'style': style, 'showlocals': showlocals, 
+        {'style': style, 'showlocals': showlocals,
          'funcargs': funcargs, 'tbfilter': tbfilter
         } for style in ("long", "short", "no")
-            for showlocals in (True, False) 
+            for showlocals in (True, False)
                 for tbfilter in (True, False)
                     for funcargs in (True, False)])
     def test_format_excinfo(self, importasmod, reproptions):

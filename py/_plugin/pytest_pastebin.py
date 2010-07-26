@@ -1,22 +1,22 @@
 """
-submit failure or test session information to a pastebin service. 
+submit failure or test session information to a pastebin service.
 
 Usage
 ----------
 
 **Creating a URL for each test failure**::
 
-    py.test --pastebin=failed 
+    py.test --pastebin=failed
 
 This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure. 
+for example ``-x`` if you only want to send one particular failure.
 
 **Creating a URL for a whole test session log**::
 
-    py.test --pastebin=all 
+    py.test --pastebin=all
 
-Currently only pasting to the http://paste.pocoo.org service is implemented.  
+Currently only pasting to the http://paste.pocoo.org service is implemented.
 
 """
 import py, sys
@@ -29,8 +29,8 @@ class url:
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group._addoption('--pastebin', metavar="mode",
-        action='store', dest="pastebin", default=None, 
-        type="choice", choices=['failed', 'all'], 
+        action='store', dest="pastebin", default=None,
+        type="choice", choices=['failed', 'all'],
         help="send failed|all info to Pocoo pastebin service.")
 
 def pytest_configure(__multicall__, config):
@@ -39,13 +39,13 @@ def pytest_configure(__multicall__, config):
     if config.option.pastebin == "all":
         config._pastebinfile = tempfile.TemporaryFile('w+')
         tr = config.pluginmanager.getplugin('terminalreporter')
-        oldwrite = tr._tw.write 
+        oldwrite = tr._tw.write
         def tee_write(s, **kwargs):
             oldwrite(s, **kwargs)
             config._pastebinfile.write(str(s))
-        tr._tw.write = tee_write 
+        tr._tw.write = tee_write
 
-def pytest_unconfigure(config): 
+def pytest_unconfigure(config):
     if hasattr(config, '_pastebinfile'):
         config._pastebinfile.seek(0)
         sessionlog = config._pastebinfile.read()
@@ -56,7 +56,7 @@ def pytest_unconfigure(config):
         sys.stderr.write("pastebin session-log: %s\n" % pastebinurl)
         tr = config.pluginmanager.getplugin('terminalreporter')
         del tr._tw.__dict__['write']
-        
+
 def getproxy():
     return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
 

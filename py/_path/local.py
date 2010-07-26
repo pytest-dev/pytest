@@ -11,17 +11,17 @@ class Stat(object):
     def __getattr__(self, name):
         return getattr(self._osstatresult, "st_" + name)
 
-    def __init__(self, path, osstatresult): 
-        self.path = path 
+    def __init__(self, path, osstatresult):
+        self.path = path
         self._osstatresult = osstatresult
 
     def owner(self):
         if iswin32:
             raise NotImplementedError("XXX win32")
-        import pwd 
+        import pwd
         entry = py.error.checked_call(pwd.getpwuid, self.uid)
         return entry[0]
-    owner = property(owner, None, None, "owner of path") 
+    owner = property(owner, None, None, "owner of path")
 
     def group(self):
         """ return group name of file. """
@@ -30,7 +30,7 @@ class Stat(object):
         import grp
         entry = py.error.checked_call(grp.getgrgid, self.gid)
         return entry[0]
-    group = property(group) 
+    group = property(group)
 
 class PosixPath(common.PathBase):
     def chown(self, user, group, rec=0):
@@ -42,7 +42,7 @@ class PosixPath(common.PathBase):
         uid = getuserid(user)
         gid = getgroupid(group)
         if rec:
-            for x in self.visit(rec=lambda x: x.check(link=0)): 
+            for x in self.visit(rec=lambda x: x.check(link=0)):
                 if x.check(link=0):
                     py.error.checked_call(os.chown, str(x), uid, gid)
         py.error.checked_call(os.chown, str(self), uid, gid)
@@ -87,12 +87,12 @@ def getgroupid(group):
 FSBase = not iswin32 and PosixPath or common.PathBase
 
 class LocalPath(FSBase):
-    """ object oriented interface to os.path and other local filesystem 
-        related information. 
+    """ object oriented interface to os.path and other local filesystem
+        related information.
     """
     class ImportMismatchError(ImportError):
         """ raised on pyimport() if there is a mismatch of __file__'s"""
-        
+
     sep = os.sep
     class Checkers(common.Checkers):
         def _stat(self):
@@ -149,7 +149,7 @@ class LocalPath(FSBase):
     def __eq__(self, other):
         s1 = str(self)
         s2 = str(other)
-        if iswin32: 
+        if iswin32:
             s1 = s1.lower()
             s2 = s2.lower()
         return s1 == s2
@@ -161,21 +161,21 @@ class LocalPath(FSBase):
         return str(self) < str(other)
 
     def remove(self, rec=1, ignore_errors=False):
-        """ remove a file or directory (or a directory tree if rec=1). 
-        if ignore_errors is True, errors while removing directories will 
+        """ remove a file or directory (or a directory tree if rec=1).
+        if ignore_errors is True, errors while removing directories will
         be ignored.
         """
         if self.check(dir=1, link=0):
             if rec:
-                # force remove of readonly files on windows 
-                if iswin32: 
+                # force remove of readonly files on windows
+                if iswin32:
                     self.chmod(448, rec=1) # octcal 0700
                 py.error.checked_call(py.std.shutil.rmtree, self.strpath,
                     ignore_errors=ignore_errors)
             else:
                 py.error.checked_call(os.rmdir, self.strpath)
         else:
-            if iswin32: 
+            if iswin32:
                 self.chmod(448) # octcal 0700
             py.error.checked_call(os.remove, self.strpath)
 
@@ -197,7 +197,7 @@ class LocalPath(FSBase):
                 buf = f.read(chunksize)
                 if not buf:
                     return hash.hexdigest()
-                hash.update(buf) 
+                hash.update(buf)
         finally:
             f.close()
 
@@ -235,7 +235,7 @@ class LocalPath(FSBase):
         obj.strpath = os.path.normpath(
             "%(drive)s%(dirname)s%(sep)s%(basename)s" % kw)
         return obj
-    
+
     def _getbyspec(self, spec):
         """ return a sequence of specified path parts.  'spec' is
             a comma separated string containing path part names.
@@ -321,7 +321,7 @@ class LocalPath(FSBase):
             if fil is None or fil(childurl):
                 res.append(childurl)
         self._sortlist(res, sort)
-        return res 
+        return res
 
     def size(self):
         """ return size of the underlying file object """
@@ -553,8 +553,8 @@ class LocalPath(FSBase):
 
     def sysexec(self, *argv, **popen_opts):
         """ return stdout text from executing a system child process,
-            where the 'self' path points to executable. 
-            The process is directly invoked and not through a system shell. 
+            where the 'self' path points to executable.
+            The process is directly invoked and not through a system shell.
         """
         from subprocess import Popen, PIPE
         argv = map(str, argv)
@@ -725,7 +725,7 @@ class LocalPath(FSBase):
                         raise
                     except: # this might be py.error.Error, WindowsError ...
                         pass
-        
+
         # make link...
         try:
             username = os.environ['USER']           #linux, et al
@@ -770,7 +770,7 @@ def autopath(globs=None):
 
         the path will always point to a .py file  or to None.
         the path will have the following payload:
-        pkgdir   is the last parent directory path containing __init__.py 
+        pkgdir   is the last parent directory path containing __init__.py
     """
     py.log._apiwarn("1.1", "py.magic.autopath deprecated, "
         "use py.path.local(__file__) and maybe pypkgpath/pyimport().")

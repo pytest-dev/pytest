@@ -1,14 +1,14 @@
-""" provide version info, conftest/environment config names. 
+""" provide version info, conftest/environment config names.
 """
 import py
 import inspect, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
-    group.addoption('--version', action="store_true", 
+    group.addoption('--version', action="store_true",
             help="display py lib version and import information.")
     group._addoption('-p', action="append", dest="plugins", default = [],
-               metavar="name", 
+               metavar="name",
                help="early-load given plugin (multi-allowed).")
     group.addoption('--traceconfig',
                action="store_true", dest="traceconfig", default=False,
@@ -19,14 +19,14 @@ def pytest_addoption(parser):
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="generate and show internal debugging information.")
-    group.addoption("--help-config", action="store_true", dest="helpconfig", 
+    group.addoption("--help-config", action="store_true", dest="helpconfig",
             help="show available conftest.py and ENV-variable names.")
 
 
 def pytest_configure(__multicall__, config):
     if config.option.version:
         p = py.path.local(py.__file__).dirpath()
-        sys.stderr.write("This is py.test version %s, imported from %s\n" % 
+        sys.stderr.write("This is py.test version %s, imported from %s\n" %
             (py.__version__, p))
         sys.exit(0)
     if not config.option.helpconfig:
@@ -35,7 +35,7 @@ def pytest_configure(__multicall__, config):
     options = []
     for group in config._parser._groups:
         options.extend(group.options)
-    widths = [0] * 10 
+    widths = [0] * 10
     tw = py.io.TerminalWriter()
     tw.sep("-")
     tw.line("%-13s | %-18s | %-25s | %s" %(
@@ -51,28 +51,28 @@ def pytest_configure(__multicall__, config):
         optstrings = filter(None, optstrings)
         optstring = "|".join(optstrings)
         line = "%-13s | %-18s | %-25s | %s" %(
-            optstring, 
-            "option_%s" % opt.dest, 
+            optstring,
+            "option_%s" % opt.dest,
             "PYTEST_OPTION_%s" % opt.dest.upper(),
-            opt.help and opt.help or "", 
+            opt.help and opt.help or "",
             )
         tw.line(line[:tw.fullwidth])
     for name, help in conftest_options:
         line = "%-13s | %-18s | %-25s | %s" %(
-            "", 
-            name, 
             "",
-            help, 
+            name,
+            "",
+            help,
             )
         tw.line(line[:tw.fullwidth])
-        
+
     tw.sep("-")
     sys.exit(0)
 
 conftest_options = (
     ('pytest_plugins', 'list of plugin names to load'),
-    ('collect_ignore', '(relative) paths ignored during collection'), 
-    ('rsyncdirs', 'to-be-rsynced directories for dist-testing'), 
+    ('collect_ignore', '(relative) paths ignored during collection'),
+    ('rsyncdirs', 'to-be-rsynced directories for dist-testing'),
 )
 
 def pytest_report_header(config):
@@ -89,7 +89,7 @@ def pytest_report_header(config):
 
 
 # =====================================================
-# validate plugin syntax and hooks 
+# validate plugin syntax and hooks
 # =====================================================
 
 def pytest_plugin_registered(manager, plugin):
@@ -97,7 +97,7 @@ def pytest_plugin_registered(manager, plugin):
     hooks = {}
     for hookspec in manager.hook._hookspecs:
         hooks.update(collectattr(hookspec))
-    
+
     stringio = py.io.TextIO()
     def Print(*args):
         if args:
@@ -110,7 +110,7 @@ def pytest_plugin_registered(manager, plugin):
         #print "checking", name
         if isgenerichook(name):
             continue
-        if name not in hooks: 
+        if name not in hooks:
             if not getattr(method, 'optionalhook', False):
                 Print("found unknown hook:", name)
                 fail = True
@@ -126,10 +126,10 @@ def pytest_plugin_registered(manager, plugin):
                 if arg not in hookargs:
                     Print("argument %r not available"  %(arg, ))
                     Print("actual definition: %s" %(formatdef(method)))
-                    Print("available hook arguments: %s" % 
+                    Print("available hook arguments: %s" %
                             ", ".join(hookargs))
                     fail = True
-                    break 
+                    break
             #if not fail:
             #    print "matching hook:", formatdef(method)
         if fail:
@@ -153,12 +153,12 @@ def collectattr(obj, prefixes=("pytest_",)):
     for apiname in dir(obj):
         for prefix in prefixes:
             if apiname.startswith(prefix):
-                methods[apiname] = getattr(obj, apiname) 
-    return methods 
+                methods[apiname] = getattr(obj, apiname)
+    return methods
 
 def formatdef(func):
     return "%s%s" %(
-        func.__name__, 
+        func.__name__,
         inspect.formatargspec(*inspect.getargspec(func))
     )
 

@@ -11,7 +11,7 @@ class TestSetupState:
         ss.addfinalizer(l.pop, colitem=item)
         assert l
         ss._pop_and_teardown()
-        assert not l 
+        assert not l
 
     def test_setup_scope_None(self, testdir):
         item = testdir.getitem("def test_func(): pass")
@@ -21,11 +21,11 @@ class TestSetupState:
         ss.addfinalizer(l.pop, colitem=None)
         assert l
         ss._pop_and_teardown()
-        assert l 
+        assert l
         ss._pop_and_teardown()
-        assert l 
+        assert l
         ss.teardown_all()
-        assert not l 
+        assert not l
 
     def test_teardown_exact_stack_empty(self, testdir):
         item = testdir.getitem("def test_func(): pass")
@@ -51,20 +51,20 @@ class BaseFunctionalTests:
                 pass
         """)
         rep = reports[1]
-        assert rep.passed 
+        assert rep.passed
         assert not rep.failed
         assert rep.shortrepr == "."
         assert not hasattr(rep, 'longrepr')
-                
+
     def test_failfunction(self, testdir):
         reports = testdir.runitem("""
             def test_func():
                 assert 0
         """)
         rep = reports[1]
-        assert not rep.passed 
-        assert not rep.skipped 
-        assert rep.failed 
+        assert not rep.passed
+        assert not rep.skipped
+        assert rep.failed
         assert rep.when == "call"
         assert isinstance(rep.longrepr, ReprExceptionInfo)
         assert str(rep.shortrepr) == "F"
@@ -91,15 +91,15 @@ class BaseFunctionalTests:
                 py.test.skip("hello")
         """)
         rep = reports[1]
-        assert not rep.failed 
-        assert not rep.passed 
-        assert rep.skipped 
+        assert not rep.failed
+        assert not rep.passed
+        assert rep.skipped
         #assert rep.skipped.when == "call"
         #assert rep.skipped.when == "call"
         #assert rep.skipped == "%sreason == "hello"
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.path
-        #assert not rep.skipped.failurerepr 
+        #assert not rep.skipped.failurerepr
 
     def test_skip_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -111,14 +111,14 @@ class BaseFunctionalTests:
         """)
         print(reports)
         rep = reports[0]
-        assert not rep.failed 
-        assert not rep.passed 
-        assert rep.skipped 
+        assert not rep.failed
+        assert not rep.passed
+        assert rep.skipped
         #assert rep.skipped.reason == "hello"
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.lineno == 3
         assert len(reports) == 2
-        assert reports[1].passed # teardown 
+        assert reports[1].passed # teardown
 
     def test_failure_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -129,9 +129,9 @@ class BaseFunctionalTests:
                 pass
         """)
         rep = reports[0]
-        assert not rep.skipped 
-        assert not rep.passed 
-        assert rep.failed 
+        assert not rep.skipped
+        assert not rep.passed
+        assert rep.failed
         assert rep.when == "setup"
         assert len(reports) == 2
 
@@ -146,19 +146,19 @@ class BaseFunctionalTests:
         print(reports)
         assert len(reports) == 3
         rep = reports[2]
-        assert not rep.skipped 
-        assert not rep.passed 
-        assert rep.failed 
-        assert rep.when == "teardown" 
+        assert not rep.skipped
+        assert not rep.passed
+        assert rep.failed
+        assert rep.when == "teardown"
         assert rep.longrepr.reprcrash.lineno == 3
-        assert rep.longrepr.reprtraceback.reprentries 
+        assert rep.longrepr.reprtraceback.reprentries
 
     def test_custom_failure_repr(self, testdir):
         testdir.makepyfile(conftest="""
             import py
             class Function(py.test.collect.Function):
                 def repr_failure(self, excinfo):
-                    return "hello" 
+                    return "hello"
         """)
         reports = testdir.runitem("""
             import py
@@ -166,12 +166,12 @@ class BaseFunctionalTests:
                 assert 0
         """)
         rep = reports[1]
-        assert not rep.skipped 
-        assert not rep.passed 
-        assert rep.failed 
+        assert not rep.skipped
+        assert not rep.passed
+        assert rep.failed
         #assert rep.outcome.when == "call"
         #assert rep.failed.where.lineno == 3
-        #assert rep.failed.where.path.basename == "test_func.py" 
+        #assert rep.failed.where.path.basename == "test_func.py"
         #assert rep.failed.failurerepr == "hello"
 
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
@@ -191,12 +191,12 @@ class BaseFunctionalTests:
         assert len(reports) == 2
         rep = reports[0]
         print(rep)
-        assert not rep.skipped 
-        assert not rep.passed 
-        assert rep.failed 
+        assert not rep.skipped
+        assert not rep.passed
+        assert rep.failed
         #assert rep.outcome.when == "setup"
         #assert rep.outcome.where.lineno == 3
-        #assert rep.outcome.where.path.basename == "test_func.py" 
+        #assert rep.outcome.where.path.basename == "test_func.py"
         #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_systemexit_does_not_bail_out(self, testdir):
@@ -220,7 +220,7 @@ class BaseFunctionalTests:
             """)
         except py.test.exit.Exception:
             pass
-        else: 
+        else:
             py.test.fail("did not raise")
 
 class TestExecutionNonForked(BaseFunctionalTests):
@@ -237,10 +237,10 @@ class TestExecutionNonForked(BaseFunctionalTests):
             """)
         except KeyboardInterrupt:
             pass
-        else: 
+        else:
             py.test.fail("did not raise")
 
-class TestExecutionForked(BaseFunctionalTests): 
+class TestExecutionForked(BaseFunctionalTests):
     pytestmark = py.test.mark.skipif("not hasattr(os, 'fork')")
 
     def getrunner(self):
@@ -269,11 +269,11 @@ class TestCollectionReports:
         rep = runner.pytest_make_collect_report(col)
         assert not rep.failed
         assert not rep.skipped
-        assert rep.passed 
-        res = rep.result 
+        assert rep.passed
+        res = rep.result
         assert len(res) == 2
-        assert res[0].name == "test_func1" 
-        assert res[1].name == "TestClass" 
+        assert res[0].name == "test_func1"
+        assert res[1].name == "TestClass"
 
     def test_skip_at_module_scope(self, testdir):
         col = testdir.getmodulecol("""
@@ -283,22 +283,22 @@ class TestCollectionReports:
                 pass
         """)
         rep = runner.pytest_make_collect_report(col)
-        assert not rep.failed 
-        assert not rep.passed 
-        assert rep.skipped 
+        assert not rep.failed
+        assert not rep.passed
+        assert rep.skipped
 
 def test_callinfo():
     ci = runner.CallInfo(lambda: 0, '123')
     assert ci.when == "123"
     assert ci.result == 0
-    assert "result" in repr(ci) 
+    assert "result" in repr(ci)
     ci = runner.CallInfo(lambda: 0/0, '123')
     assert ci.when == "123"
     assert not hasattr(ci, 'result')
-    assert ci.excinfo 
+    assert ci.excinfo
     assert "exc" in repr(ci)
 
-# design question: do we want general hooks in python files? 
+# design question: do we want general hooks in python files?
 # following passes if withpy defaults to True in pycoll.PyObjMix._getplugins()
 @py.test.mark.xfail
 def test_runtest_in_module_ordering(testdir):
@@ -322,7 +322,7 @@ def test_runtest_in_module_ordering(testdir):
             def test_hello2(self, mylist):
                 assert mylist == ['class', 'module'], mylist
         def pytest_runtest_teardown(item):
-            del item.function.mylist 
+            del item.function.mylist
     """)
     result = testdir.runpytest(p1)
     result.stdout.fnmatch_lines([
@@ -335,10 +335,10 @@ class TestRaises:
         excinfo = py.test.raises(ValueError, source)
         code = excinfo.traceback[-1].frame.code
         s = str(code.fullsource)
-        assert s == source 
+        assert s == source
 
     def test_raises_exec(self):
-        py.test.raises(ValueError, "a,x = []") 
+        py.test.raises(ValueError, "a,x = []")
 
     def test_raises_syntax_error(self):
         py.test.raises(SyntaxError, "qwe qwe qwe")
@@ -415,7 +415,7 @@ def test_importorskip():
         assert sys == py.std.sys
         #path = py.test.importorskip("os.path")
         #assert path == py.std.os.path
-        py.test.raises(py.test.skip.Exception, 
+        py.test.raises(py.test.skip.Exception,
             "py.test.importorskip('alskdj')")
         py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
         py.test.raises(SyntaxError, "py.test.importorskip('x=y')")

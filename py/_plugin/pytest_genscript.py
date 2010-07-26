@@ -1,14 +1,14 @@
 #! /usr/bin/env python
 """
-generate standalone test script to be distributed along with an application. 
+generate standalone test script to be distributed along with an application.
 """
 
 import os
 import sys
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
-    group.addoption("--genscript", action="store", default=None, 
-        dest="genscript", metavar="path", 
+    group.addoption("--genscript", action="store", default=None,
+        dest="genscript", metavar="path",
         help="create standalone py.test script at given target path.")
 
 def pytest_configure(config):
@@ -39,7 +39,7 @@ def main(pybasedir, outfile, infile):
         for f in filenames:
             if not f.endswith(".py"):
                 continue
-                
+
             fn = os.path.join(dirpath, f)
             files.append(fn)
 

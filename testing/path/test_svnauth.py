@@ -8,7 +8,7 @@ svnbin = py.path.local.sysfind('svn')
 
 def make_repo_auth(repo, userdata):
     """ write config to repo
-    
+
         user information in userdata is used for auth
         userdata has user names as keys, and a tuple (password, readwrite) as
         values, where 'readwrite' is either 'r' or 'rw'
@@ -301,7 +301,7 @@ class TestSvnWCAuthFunctional:
                                interactive=False)
         wc = py.path.svnwc(setup.temppath, auth)
         py.test.raises(Exception,
-           ("wc.checkout('svn://localhost:%(port)s/%(repopath)s')" % 
+           ("wc.checkout('svn://localhost:%(port)s/%(repopath)s')" %
              setup.__dict__))
 
     def test_log(self, setup):

@@ -7,18 +7,18 @@ generic mechanism for marking python functions.
   :local:
 
 By using the ``py.test.mark`` helper you can instantiate
-decorators that will set named meta data on test functions. 
+decorators that will set named meta data on test functions.
 
-Marking a single function 
+Marking a single function
 ----------------------------------------------------
 
 You can "mark" a test function with meta data like this::
 
     @py.test.mark.webtest
     def test_send_http():
-        ... 
+        ...
 
-This will set a "Marker" instance as a function attribute named "webtest". 
+This will set a "Marker" instance as a function attribute named "webtest".
 You can also specify parametrized meta data like this::
 
     @py.test.mark.webtest(firefox=30)
@@ -39,7 +39,7 @@ and later access it with ``test_receive.webtest.args[0] == 'triangular``.
 
 .. _`scoped-marking`:
 
-Marking whole classes or modules 
+Marking whole classes or modules
 ----------------------------------------------------
 
 If you are programming with Python2.6 you may use ``py.test.mark`` decorators
@@ -53,9 +53,9 @@ with classes to apply markers to all its test methods::
             ...
 
 This is equivalent to directly applying the decorator to the
-two test functions. 
+two test functions.
 
-To remain compatible with Python2.5 you can also set a 
+To remain compatible with Python2.5 you can also set a
 ``pytestmark`` attribute on a TestClass like this::
 
     import py
@@ -75,8 +75,8 @@ You can also set a module level marker::
     import py
     pytestmark = py.test.mark.webtest
 
-in which case it will be applied to all functions and 
-methods defined in the module.  
+in which case it will be applied to all functions and
+methods defined in the module.
 
 Using "-k MARKNAME" to select tests
 ----------------------------------------------------
@@ -90,10 +90,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-1. Download `pytest_mark.py`_ plugin source code 
-2. put it somewhere as ``pytest_mark.py`` into your import path 
+1. Download `pytest_mark.py`_ plugin source code
+2. put it somewhere as ``pytest_mark.py`` into your import path
 3. a subsequent ``py.test`` run will use your local version
 
-Checkout customize_, other plugins_ or `get in contact`_. 
+Checkout customize_, other plugins_ or `get in contact`_.
 
 .. include:: links.txt

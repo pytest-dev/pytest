@@ -1,10 +1,10 @@
-"""non-xml machine-readable logging of test results. 
-   Useful for buildbot integration code.  See the `PyPy-test`_ 
-   web page for post-processing. 
+"""non-xml machine-readable logging of test results.
+   Useful for buildbot integration code.  See the `PyPy-test`_
+   web page for post-processing.
 
 .. _`PyPy-test`: http://codespeak.net:8099/summary
- 
-""" 
+
+"""
 
 import py
 from py.builtin import print_
@@ -19,14 +19,14 @@ def pytest_configure(config):
     # prevent opening resultlog on slave nodes (xdist)
     if resultlog and not hasattr(config, 'slaveinput'):
         logfile = open(resultlog, 'w', 1) # line buffered
-        config._resultlog = ResultLog(config, logfile) 
+        config._resultlog = ResultLog(config, logfile)
         config.pluginmanager.register(config._resultlog)
 
 def pytest_unconfigure(config):
     resultlog = getattr(config, '_resultlog', None)
     if resultlog:
         resultlog.logfile.close()
-        del config._resultlog 
+        del config._resultlog
         config.pluginmanager.unregister(resultlog)
 
 def generic_path(item):
@@ -41,7 +41,7 @@ def generic_path(item):
                 gpath.append(':')
                 fspart = False
             else:
-                gpath.append('.')            
+                gpath.append('.')
         else:
             gpath.append('/')
             fspart = True
@@ -64,7 +64,7 @@ class ResultLog(object):
 
     def log_outcome(self, node, shortrepr, longrepr):
         testpath = generic_path(node)
-        self.write_log_entry(testpath, shortrepr, longrepr) 
+        self.write_log_entry(testpath, shortrepr, longrepr)
 
     def pytest_runtest_logreport(self, report):
         res = self.config.hook.pytest_report_teststatus(report=report)
@@ -79,21 +79,21 @@ class ResultLog(object):
         elif report.passed:
             longrepr = ""
         elif report.failed:
-            longrepr = str(report.longrepr) 
+            longrepr = str(report.longrepr)
         elif report.skipped:
             longrepr = str(report.longrepr.reprcrash.message)
-        self.log_outcome(report.item, code, longrepr) 
+        self.log_outcome(report.item, code, longrepr)
 
     def pytest_collectreport(self, report):
         if not report.passed:
-            if report.failed: 
+            if report.failed:
                 code = "F"
             else:
                 assert report.skipped
                 code = "S"
             longrepr = str(report.longrepr.reprcrash)
-            self.log_outcome(report.collector, code, longrepr)    
+            self.log_outcome(report.collector, code, longrepr)
 
     def pytest_internalerror(self, excrepr):
-        path = excrepr.reprcrash.path 
+        path = excrepr.reprcrash.path
         self.write_log_entry(path, '!', str(excrepr))

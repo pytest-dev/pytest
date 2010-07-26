@@ -42,7 +42,7 @@ class Test_UTestConvert:
         assert rewrite_utest("self.assert_(x)") == "assert x"
         assert rewrite_utest("self.failUnless(func(x)) # XXX") == (
                           "assert func(x) # XXX")
-        
+
         assert rewrite_utest(
             """
             self.assert_(1 + f(y)
@@ -72,7 +72,7 @@ class Test_UTestConvert:
                  'Meet the badger.\n')
             """
                           )
-        
+
         assert rewrite_utest(
             r"""
             self.failIf(0 + 0
@@ -95,7 +95,7 @@ class Test_UTestConvert:
 
         assert rewrite_utest("self.assertEquals(0, 0)") == (
                           "assert 0 == 0")
-        
+
         assert rewrite_utest(
             r"""
             self.assertEquals(0,
@@ -121,7 +121,7 @@ class Test_UTestConvert:
                               + snake) == 0
             """
                           )
-                            
+
         assert rewrite_utest(
             """
             self.assertNotEquals(badger + 0
@@ -181,7 +181,7 @@ class Test_UTestConvert:
             """
                           )
 
-                                   
+
         assert rewrite_utest(
             """
             self.assertEquals('''snake snake snake
@@ -193,7 +193,7 @@ class Test_UTestConvert:
                                  snake snake snake''' == mushroom
             """
                           )
-        
+
         assert rewrite_utest(
             """
             self.assertEquals(badger(),
@@ -205,7 +205,7 @@ class Test_UTestConvert:
                               snake()), 'BAD BADGER'
             """
                           )
-        
+
         assert rewrite_utest(
             """
             self.assertNotEquals(badger(),
@@ -383,7 +383,7 @@ class Test_UTestConvert:
             expression ... will this blow up?
             """
                           )
-        
+
         assert rewrite_utest(
             """
         self.failUnless('__builtin__' in modules, "An entry for __builtin__ "
@@ -395,7 +395,7 @@ class Test_UTestConvert:
                                                     "is not in sys.modules.")
             """
                            )
-        
+
         # two unittests on the same line separated by a semi-colon is
         # only half-converted.  Just so you know.
         assert rewrite_utest(
@@ -407,8 +407,8 @@ class Test_UTestConvert:
             assert 0 == 0; self.assertEquals(1, 1) #not 2 per line!
             """
                            )
-            
-                              
+
+
 if __name__ == '__main__':
     unittest.main()
 

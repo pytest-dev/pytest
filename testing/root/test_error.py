@@ -9,10 +9,10 @@ def test_error_classes():
         assert issubclass(x, py.error.Error)
         assert issubclass(x, EnvironmentError)
 
-def test_unknown_error(): 
+def test_unknown_error():
     num = 3999
     cls = py.error._geterrnoclass(num)
-    assert cls.__name__ == 'UnknownErrno%d' % (num,) 
+    assert cls.__name__ == 'UnknownErrno%d' % (num,)
     assert issubclass(cls, py.error.Error)
     assert issubclass(cls, EnvironmentError)
     cls2 = py.error._geterrnoclass(num)
@@ -23,7 +23,7 @@ def test_error_conversion_ENOTDIR(testdir):
     excinfo = py.test.raises(py.error.Error, py.error.checked_call, p.listdir)
     assert isinstance(excinfo.value, EnvironmentError)
     assert isinstance(excinfo.value, py.error.Error)
-    assert "ENOTDIR" in repr(excinfo.value) 
+    assert "ENOTDIR" in repr(excinfo.value)
 
 
 def test_checked_call_supports_kwargs(tmpdir):

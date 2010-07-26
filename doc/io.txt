@@ -4,7 +4,7 @@ py.io
 
 
 The 'py' lib provides helper classes for capturing IO during
-execution of a program. 
+execution of a program.
 
 IO Capturing examples
 ===============================================
@@ -21,7 +21,7 @@ Basic Example::
   >>> out.strip() == "hello"
   True
 
-For calling functions you may use a shortcut:: 
+For calling functions you may use a shortcut::
 
   >>> import py
   >>> def f(): print "hello"

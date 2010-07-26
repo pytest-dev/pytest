@@ -10,7 +10,7 @@ def main(args=None):
         args = sys.argv[1:]
     config = py.test.config
     try:
-        config.parse(args) 
+        config.parse(args)
         config.pluginmanager.do_configure(config)
         session = config.initsession()
         colitems = config.getinitialnodes()

@@ -1,5 +1,5 @@
 """
-   logging of test results in JUnit-XML format, for use with Hudson 
+   logging of test results in JUnit-XML format, for use with Hudson
    and build integration servers.  Based on initial code from Ross Lawley.
 """
 
@@ -8,10 +8,10 @@ import time
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
-    group.addoption('--junitxml', action="store", dest="xmlpath", 
+    group.addoption('--junitxml', action="store", dest="xmlpath",
            metavar="path", default=None,
            help="create junit-xml style report file at given path.")
-    group.addoption('--junitprefix', action="store", dest="junitprefix", 
+    group.addoption('--junitprefix', action="store", dest="junitprefix",
            metavar="str", default=None,
            help="prepend prefix to classnames in junit-xml output")
 
@@ -24,7 +24,7 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     xml = getattr(config, '_xml', None)
     if xml:
-        del config._xml 
+        del config._xml
         config.pluginmanager.unregister(xml)
 
 class LogXML(object):
@@ -35,7 +35,7 @@ class LogXML(object):
         self.passed = self.skipped = 0
         self.failed = self.errors = 0
         self._durations = {}
-  
+
     def _opentestcase(self, report):
         if hasattr(report, 'item'):
             node = report.item
@@ -57,7 +57,7 @@ class LogXML(object):
     def appendlog(self, fmt, *args):
         args = tuple([py.xml.escape(arg) for arg in args])
         self.test_logs.append(fmt % args)
-         
+
     def append_pass(self, report):
         self.passed += 1
         self._opentestcase(report)
@@ -71,7 +71,7 @@ class LogXML(object):
                 '<skipped message="xfail-marked test passes unexpectedly"/>')
             self.skipped += 1
         else:
-            self.appendlog('<failure message="test failure">%s</failure>', 
+            self.appendlog('<failure message="test failure">%s</failure>',
                 report.longrepr)
             self.failed += 1
         self._closetestcase()
@@ -79,7 +79,7 @@ class LogXML(object):
     def append_collect_failure(self, report):
         self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.appendlog('<failure message="collection failure">%s</failure>', 
+        self.appendlog('<failure message="collection failure">%s</failure>',
             report.longrepr)
         self._closetestcase()
         self.errors += 1
@@ -94,7 +94,7 @@ class LogXML(object):
 
     def append_error(self, report):
         self._opentestcase(report)
-        self.appendlog('<error message="test setup failure">%s</error>', 
+        self.appendlog('<error message="test setup failure">%s</error>',
             report.longrepr)
         self._closetestcase()
         self.errors += 1
@@ -103,7 +103,7 @@ class LogXML(object):
         self._opentestcase(report)
         if "xfail" in report.keywords:
             self.appendlog(
-                '<skipped message="expected test failure">%s</skipped>', 
+                '<skipped message="expected test failure">%s</skipped>',
                 report.keywords['xfail'])
         else:
             self.appendlog("<skipped/>")
@@ -120,14 +120,14 @@ class LogXML(object):
                 self.append_failure(report)
         elif report.skipped:
             self.append_skipped(report)
-        
+
     def pytest_runtest_call(self, item, __multicall__):
         start = time.time()
         try:
             return __multicall__.execute()
         finally:
             self._durations[item] = time.time() - start
-    
+
     def pytest_collectreport(self, report):
         if not report.passed:
             if report.failed:
@@ -151,7 +151,7 @@ class LogXML(object):
             logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
         else:
             logfile = open(self.logfile, 'w', encoding='utf-8')
-            
+
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
         numtests = self.passed + self.failed

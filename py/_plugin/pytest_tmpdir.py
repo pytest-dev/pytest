@@ -1,4 +1,4 @@
-"""provide temporary directories to test functions. 
+"""provide temporary directories to test functions.
 
 usage example::
 
@@ -15,8 +15,8 @@ def pytest_funcarg__tmpdir(request):
     unique to each test function invocation,
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_
-    path object. 
+    path object.
     """
-    name = request.function.__name__ 
+    name = request.function.__name__
     x = request.config.mktemp(name, numbered=True)
     return x.realpath()

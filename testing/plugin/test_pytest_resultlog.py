@@ -28,26 +28,26 @@ def test_generic_path(testdir):
 def test_write_log_entry():
     reslog = ResultLog(None, None)
     reslog.logfile = py.io.TextIO()
-    reslog.write_log_entry('name', '.', '')  
+    reslog.write_log_entry('name', '.', '')
     entry = reslog.logfile.getvalue()
-    assert entry[-1] == '\n'        
+    assert entry[-1] == '\n'
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 1
     assert entry_lines[0] == '. name'
 
     reslog.logfile = py.io.TextIO()
-    reslog.write_log_entry('name', 's', 'Skipped')  
+    reslog.write_log_entry('name', 's', 'Skipped')
     entry = reslog.logfile.getvalue()
-    assert entry[-1] == '\n'        
+    assert entry[-1] == '\n'
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 2
     assert entry_lines[0] == 's name'
     assert entry_lines[1] == ' Skipped'
 
     reslog.logfile = py.io.TextIO()
-    reslog.write_log_entry('name', 's', 'Skipped\n')  
+    reslog.write_log_entry('name', 's', 'Skipped\n')
     entry = reslog.logfile.getvalue()
-    assert entry[-1] == '\n'        
+    assert entry[-1] == '\n'
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 2
     assert entry_lines[0] == 's name'
@@ -57,29 +57,29 @@ def test_write_log_entry():
     longrepr = ' tb1\n tb 2\nE tb3\nSome Error'
     reslog.write_log_entry('name', 'F', longrepr)
     entry = reslog.logfile.getvalue()
-    assert entry[-1] == '\n'        
+    assert entry[-1] == '\n'
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 5
     assert entry_lines[0] == 'F name'
     assert entry_lines[1:] == [' '+line for line in longrepr.splitlines()]
 
-    
+
 class TestWithFunctionIntegration:
     # XXX (hpk) i think that the resultlog plugin should
-    # provide a Parser object so that one can remain 
-    # ignorant regarding formatting details.  
+    # provide a Parser object so that one can remain
+    # ignorant regarding formatting details.
     def getresultlog(self, testdir, arg):
         resultlog = testdir.tmpdir.join("resultlog")
         testdir.plugins.append("resultlog")
         args = ["--resultlog=%s" % resultlog] + [arg]
         testdir.runpytest(*args)
         return [x for x in resultlog.readlines(cr=0) if x]
-        
+
     def test_collection_report(self, testdir):
         ok = testdir.makepyfile(test_collection_ok="")
         skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
-        lines = self.getresultlog(testdir, ok) 
+        lines = self.getresultlog(testdir, ok)
         assert not lines
 
         lines = self.getresultlog(testdir, skip)
@@ -99,7 +99,7 @@ class TestWithFunctionIntegration:
 
     def test_log_test_outcomes(self, testdir):
         mod = testdir.makepyfile(test_mod="""
-            import py 
+            import py
             def test_pass(): pass
             def test_skip(): py.test.skip("hello")
             def test_fail(): raise ValueError("FAIL")
@@ -107,17 +107,17 @@ class TestWithFunctionIntegration:
             @py.test.mark.xfail
             def test_xfail(): raise ValueError("XFAIL")
             @py.test.mark.xfail
-            def test_xpass(): pass            
-            
+            def test_xpass(): pass
+
         """)
         lines = self.getresultlog(testdir, mod)
         assert len(lines) >= 3
         assert lines[0].startswith(". ")
         assert lines[0].endswith("test_pass")
         assert lines[1].startswith("s "), lines[1]
-        assert lines[1].endswith("test_skip") 
+        assert lines[1].endswith("test_skip")
         assert lines[2].find("hello") != -1
-       
+
         assert lines[3].startswith("F ")
         assert lines[3].endswith("test_fail")
         tb = "".join(lines[4:8])
@@ -137,7 +137,7 @@ class TestWithFunctionIntegration:
             raise ValueError
         except ValueError:
             excinfo = py.code.ExceptionInfo()
-        reslog = ResultLog(None, py.io.TextIO())        
+        reslog = ResultLog(None, py.io.TextIO())
         reslog.pytest_internalerror(excinfo.getrepr())
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
@@ -145,7 +145,7 @@ class TestWithFunctionIntegration:
         assert entry_lines[0].startswith('! ')
         assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
         assert entry_lines[-1][0] == ' '
-        assert 'ValueError' in entry  
+        assert 'ValueError' in entry
 
 def test_generic(testdir, LineMatcher):
     testdir.plugins.append("resultlog")
@@ -167,11 +167,11 @@ def test_generic(testdir, LineMatcher):
     testdir.runpytest("--resultlog=result.log")
     lines = testdir.tmpdir.join("result.log").readlines(cr=0)
     LineMatcher(lines).fnmatch_lines([
-        ". *:test_pass", 
-        "F *:test_fail", 
+        ". *:test_pass",
+        "F *:test_fail",
         "s *:test_skip",
-        "x *:test_xfail", 
-        "x *:test_xfail_norun", 
+        "x *:test_xfail",
+        "x *:test_xfail_norun",
     ])
 
 def test_no_resultlog_on_slaves(testdir):

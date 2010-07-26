@@ -3,18 +3,18 @@ from py._test.conftesthandle import Conftest
 
 def pytest_generate_tests(metafunc):
     if "basedir" in metafunc.funcargnames:
-        metafunc.addcall(param="global") 
+        metafunc.addcall(param="global")
         metafunc.addcall(param="inpackage")
 
-def pytest_funcarg__basedir(request): 
+def pytest_funcarg__basedir(request):
     def basedirmaker(request):
         basedir = d = request.getfuncargvalue("tmpdir")
         d.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
         d.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
-        if request.param == "inpackage": 
+        if request.param == "inpackage":
             d.ensure("adir/__init__.py")
             d.ensure("adir/b/__init__.py")
-        return d 
+        return d
     return request.cached_setup(lambda: basedirmaker(request), extrakey=request.param)
 
 def ConftestWithSetinitial(path):
@@ -31,9 +31,9 @@ class TestConftestValueAccessGlobal:
     def test_onimport(self, basedir):
         l = []
         conftest = Conftest(onimport=l.append)
-        conftest.setinitial([basedir.join("adir"), 
+        conftest.setinitial([basedir.join("adir"),
             '--confcutdir=%s' % basedir])
-        assert len(l) == 2 
+        assert len(l) == 2
         assert conftest.rget("a") == 1
         assert conftest.rget("b", basedir.join("adir", "b")) == 2
         assert len(l) == 2
@@ -52,8 +52,8 @@ class TestConftestValueAccessGlobal:
     def test_default_has_lower_prio(self, basedir):
         conftest = ConftestWithSetinitial(basedir.join("adir"))
         assert conftest.rget('Directory') == 3
-        #assert conftest.lget('Directory') == py.test.collect.Directory 
-        
+        #assert conftest.lget('Directory') == py.test.collect.Directory
+
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
         py.test.raises(KeyError, "conftest.rget('a')")
@@ -63,10 +63,10 @@ class TestConftestValueAccessGlobal:
         conftest = ConftestWithSetinitial(basedir)
         assert conftest.rget("a", basedir.join('adir')) == 1
         #assert conftest.lget("a", basedir.join('adir')) == 1
-        assert conftest.rget("a", basedir.join('adir', 'b')) == 1.5 
+        assert conftest.rget("a", basedir.join('adir', 'b')) == 1.5
         #assert conftest.lget("a", basedir.join('adir', 'b')) == 1
         #assert conftest.lget("b", basedir.join('adir', 'b')) == 2
-        #assert py.test.raises(KeyError, 
+        #assert py.test.raises(KeyError,
         #    'conftest.lget("b", basedir.join("a"))'
         #)
 
@@ -116,7 +116,7 @@ def test_conftestcutdir(testdir):
     l = conftest.getconftestmodules(conf.dirpath())
     assert len(l) == 0
     assert conf not in conftest._conftestpath2mod
-    # but we can still import a conftest directly 
+    # but we can still import a conftest directly
     conftest.importconftest(conf)
     l = conftest.getconftestmodules(conf.dirpath())
     assert l[0].__file__.startswith(str(conf))

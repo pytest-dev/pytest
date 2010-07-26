@@ -126,13 +126,13 @@ def test_totext():
     py.builtin._totext("hello", "UTF-8")
 
 def test_reraise():
-    from py.builtin import _reraise 
+    from py.builtin import _reraise
     try:
         raise Exception()
     except Exception:
         cls, val, tb = sys.exc_info()
     excinfo = py.test.raises(Exception, "_reraise(cls, val, tb)")
-   
+
 def test_exec():
     l = []
     py.builtin.exec_("l.append(1)")

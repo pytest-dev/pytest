@@ -20,7 +20,7 @@ try:
     from greenlet import greenlet
 except ImportError:
     print "Since pylib 1.0 greenlet are removed and separately packaged: " \
-            "http://pypi.python.org/pypi/greenlet" 
+            "http://pypi.python.org/pypi/greenlet"
     sys.exit(10)
 
 
@@ -44,7 +44,7 @@ def _run_twisted(logging=False):
     failure.Failure.cleanFailure = lambda *args: None
     if logging:
         _start_twisted_logging()
-        
+
     def fix_signal_handling():
         # see http://twistedmatrix.com/trac/ticket/733
         import signal
@@ -54,7 +54,7 @@ def _run_twisted(logging=False):
     def start():
         fix_signal_handling()
         doit(None)
-        
+
     # recursively called for each test-function/method due done()
     def doit(val): # val always None
         # switch context to wait that wrapper() passes back to test-method
@@ -68,7 +68,7 @@ def _run_twisted(logging=False):
 
         def err(res):
             reactor.callLater(0.0, doit, res)
-            
+
         # the test-function *may* return a deferred
         # here the test-function will actually been called
         # done() is finalizing a test-process by assuring recursive invoking
@@ -92,19 +92,19 @@ def pytest_unconfigure(config):
     gr_twisted.switch(None)
 
 def pytest_pyfunc_call(pyfuncitem):
-    # XXX1 kwargs?  
+    # XXX1 kwargs?
     # XXX2 we want to delegate actual call to next plugin
-    #      (which may want to produce test coverage, etc.) 
+    #      (which may want to produce test coverage, etc.)
     res = gr_twisted.switch(lambda: pyfuncitem.call())
     if res:
         res.raiseException()
-    return True # indicates that we performed the function call 
+    return True # indicates that we performed the function call
 
 gr_twisted  = greenlet(_run_twisted)
 gr_tests    = greenlet.getcurrent()
 
 # ===============================================================================
-# plugin tests 
+# plugin tests
 # ===============================================================================
 
 def test_generic(testdir):
@@ -125,7 +125,7 @@ def test_generic(testdir):
             def done():
                 log.msg("test_deferred.done() CALLBACK DONE")
                 d.callback(None)
-                
+
             reactor.callLater(2.5, done)
             log.msg("test_deferred() returning deferred: %r" % (d,))
             return d
@@ -136,7 +136,7 @@ def test_generic(testdir):
             def done():
                 log.msg("test_deferred2.done() CALLBACK DONE")
                 d.callback(None)
-                
+
             reactor.callLater(2.5, done)
             log.msg("test_deferred2() returning deferred: %r" % (d,))
             return d
@@ -157,7 +157,7 @@ def test_generic(testdir):
             def done():
                 log.msg("test_deferred3.done() CALLBACK DONE")
                 d.callback(None)
-                
+
             reactor.callLater(2.5, done)
             log.msg("test_deferred3() returning deferred: %r" % (d,))
             return d
@@ -172,7 +172,7 @@ def test_generic(testdir):
                 def done():
                     log.msg("TestTwistedSetupMethod.test_deferred() CALLBACK DONE")
                     d.callback(None)
-                    
+
                 reactor.callLater(2.5, done)
                 log.msg("TestTwistedSetupMethod.test_deferred() returning deferred: %r" % (d,))
                 return d

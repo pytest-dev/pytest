@@ -4,7 +4,7 @@ py.test and pylib: rapid testing and development utils
 this module uses apipkg.py for lazy-loading sub modules
 and classes.  The initpkg-dictionary  below specifies
 name->value mappings where value can be another namespace
-dictionary or an import path.  
+dictionary or an import path.
 
 (c) Holger Krekel and others, 2004-2010
 """
@@ -137,7 +137,7 @@ py.apipkg.initpkg(__name__, dict(
         'StdCapture'          : '._io.capture:StdCapture',
         'StdCaptureFD'        : '._io.capture:StdCaptureFD',
         'TerminalWriter'      : '._io.terminalwriter:TerminalWriter',
-        'ansi_print'          : '._io.terminalwriter:ansi_print', 
+        'ansi_print'          : '._io.terminalwriter:ansi_print',
         'get_terminal_width'  : '._io.terminalwriter:get_terminal_width',
         'saferepr'            : '._io.saferepr:saferepr',
     },

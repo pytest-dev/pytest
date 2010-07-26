@@ -16,19 +16,19 @@ class CommonFSTests(object):
 
     def test_join(self, path1):
         p = path1.join('sampledir')
-        strp = str(p) 
-        assert strp.endswith('sampledir') 
-        assert strp.startswith(str(path1)) 
+        strp = str(p)
+        assert strp.endswith('sampledir')
+        assert strp.startswith(str(path1))
 
     def test_join_normalized(self, path1):
         newpath = path1.join(path1.sep+'sampledir')
-        strp = str(newpath) 
-        assert strp.endswith('sampledir') 
-        assert strp.startswith(str(path1)) 
+        strp = str(newpath)
+        assert strp.endswith('sampledir')
+        assert strp.startswith(str(path1))
         newpath = path1.join((path1.sep*2) + 'sampledir')
-        strp = str(newpath) 
-        assert strp.endswith('sampledir') 
-        assert strp.startswith(str(path1)) 
+        strp = str(newpath)
+        assert strp.endswith('sampledir')
+        assert strp.startswith(str(path1))
 
     def test_join_noargs(self, path1):
         newpath = path1.join()
@@ -125,7 +125,7 @@ class CommonFSTests(object):
         s = curdir.bestrelpath(curdir.dirpath().join("sister"))
         assert s == ".." + sep + "sister"
         assert curdir.bestrelpath(curdir.dirpath()) == ".."
-        
+
         assert curdir.bestrelpath("hello") == "hello"
 
     def test_relto_not_relative(self, path1):
@@ -226,7 +226,7 @@ class CommonFSTests(object):
         newpath = path1.join('samplefile.py')
         dirname, purebasename, basename, ext = newpath._getbyspec(
             'dirname,purebasename,basename,ext')
-        assert str(path1).endswith(dirname) # be careful with win32 'drive' 
+        assert str(path1).endswith(dirname) # be careful with win32 'drive'
         assert purebasename == 'samplefile'
         assert basename == 'samplefile.py'
         assert ext == '.py'
@@ -280,12 +280,12 @@ class CommonFSTests(object):
         url = path1.join("samplefile")
         assert url.mtime() > 0
 
-    def test_relto_wrong_type(self, path1): 
+    def test_relto_wrong_type(self, path1):
         py.test.raises(TypeError, "path1.relto(42)")
 
     def test_visit_filesonly(self, path1):
         l = []
-        for i in path1.visit(lambda x: x.check(file=1)): 
+        for i in path1.visit(lambda x: x.check(file=1)):
             l.append(i.relto(path1))
         assert not "sampledir" in l
         assert path1.sep.join(["sampledir", "otherfile"]) in l
@@ -298,7 +298,7 @@ class CommonFSTests(object):
 
     def test_visit_nodotfiles(self, path1):
         l = []
-        for i in path1.visit(lambda x: x.check(dotfile=0)): 
+        for i in path1.visit(lambda x: x.check(dotfile=0)):
             l.append(i.relto(path1))
         assert "sampledir" in l
         assert path1.sep.join(["sampledir", "otherfile"]) in l
@@ -381,11 +381,11 @@ class CommonFSTests(object):
                 assert p.check()
 
     def test_move_dir(self, path1):
-        source = path1.join('sampledir') 
-        dest = path1.join('moveddir') 
+        source = path1.join('sampledir')
+        dest = path1.join('moveddir')
         source.move(dest)
         assert dest.check(dir=1)
-        assert dest.join('otherfile').check(file=1) 
+        assert dest.join('otherfile').check(file=1)
         assert not source.join('sampledir').check()
 
 def setuptestfs(path):
@@ -418,12 +418,12 @@ def setuptestfs(path):
     module_b = otherdir.ensure('b.py')
     module_b.write('stuff="got it"\n')
     module_c = otherdir.ensure('c.py')
-    module_c.write('''import py; 
+    module_c.write('''import py;
 import otherdir.a
 value = otherdir.a.result
 ''')
     module_d = otherdir.ensure('d.py')
-    module_d.write('''import py; 
+    module_d.write('''import py;
 from otherdir import a
 value2 = a.result
 ''')

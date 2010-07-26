@@ -12,7 +12,7 @@ def test_simple_unittest(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     assert reprec.matchreport("testpassing").passed
-    assert reprec.matchreport("test_failing").failed 
+    assert reprec.matchreport("test_failing").failed
 
 def test_isclasscheck_issue53(testdir):
     testpath = testdir.makepyfile("""
@@ -53,7 +53,7 @@ def test_new_instances(testdir):
 def test_teardown(testdir):
     testpath = testdir.makepyfile("""
         import unittest
-        pytest_plugins = "pytest_unittest" # XXX 
+        pytest_plugins = "pytest_unittest" # XXX
         class MyTestCase(unittest.TestCase):
             l = []
             def test_one(self):

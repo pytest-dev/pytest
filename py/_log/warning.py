@@ -4,11 +4,11 @@ class DeprecationWarning(DeprecationWarning):
     def __init__(self, msg, path, lineno):
         self.msg = msg
         self.path = path
-        self.lineno = lineno 
+        self.lineno = lineno
     def __repr__(self):
         return "%s:%d: %s" %(self.path, self.lineno+1, self.msg)
     def __str__(self):
-        return self.msg 
+        return self.msg
 
 def _apiwarn(startversion, msg, stacklevel=2, function=None):
     # below is mostly COPIED from python2.4/warnings.py's def warn()
@@ -21,7 +21,7 @@ def _apiwarn(startversion, msg, stacklevel=2, function=None):
             co = frame.f_code
             if co.co_filename.find(stacklevel) == -1:
                 if found:
-                    stacklevel = level 
+                    stacklevel = level
                     break
             else:
                 found = True
@@ -67,8 +67,8 @@ def warn(msg, stacklevel=1, function=None):
             filename = module
     path = py.path.local(filename)
     warning = DeprecationWarning(msg, path, lineno)
-    py.std.warnings.warn_explicit(warning, category=Warning, 
-        filename=str(warning.path), 
+    py.std.warnings.warn_explicit(warning, category=Warning,
+        filename=str(warning.path),
         lineno=warning.lineno,
         registry=py.std.warnings.__dict__.setdefault(
             "__warningsregistry__", {})

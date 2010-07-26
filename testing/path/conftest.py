@@ -13,12 +13,12 @@ def pytest_funcarg__repowc1(request):
     tmpdir = request.getfuncargvalue("tmpdir")
     repo, repourl, wc = request.cached_setup(
         setup=lambda: getrepowc(tmpdir, "path1repo", "path1wc"),
-        scope="module", 
+        scope="module",
     )
     for x in ('test_remove', 'test_move', 'test_status_deleted'):
         if request.function.__name__.startswith(x):
             #print >>sys.stderr, ("saving repo", repo, "for", request.function)
-            _savedrepowc = save_repowc(repo, wc) 
+            _savedrepowc = save_repowc(repo, wc)
             request.addfinalizer(lambda: restore_repowc(_savedrepowc))
     return repo, repourl, wc
 
@@ -26,7 +26,7 @@ def pytest_funcarg__repowc2(request):
     tmpdir = request.getfuncargvalue("tmpdir")
     name = request.function.__name__
     repo, url, wc = getrepowc(tmpdir, "%s-repo-2" % name, "%s-wc-2" % name)
-    return repo, url, wc 
+    return repo, url, wc
 
 def getsvnbin():
     if svnbin is None:
@@ -58,12 +58,12 @@ def getrepowc(tmpdir, reponame='basetestrepo', wcname='wc'):
 
 def save_repowc(repo, wc):
     assert not str(repo).startswith("file://"), repo
-    assert repo.check() 
+    assert repo.check()
     savedrepo = repo.dirpath(repo.basename+".1")
     savedwc = wc.dirpath(wc.basename+".1")
-    repo.copy(savedrepo) 
+    repo.copy(savedrepo)
     wc.localpath.copy(savedwc.localpath)
-    return savedrepo, savedwc 
+    return savedrepo, savedwc
 
 def restore_repowc(obj):
     savedrepo, savedwc = obj

@@ -29,7 +29,7 @@ def test_unicode():
     x = Source(unicode("4"))
     assert str(x) == "4"
     co = py.code.compile(unicode('u"\xc3\xa5"', 'utf8'), mode='eval')
-    val = eval(co) 
+    val = eval(co)
     assert isinstance(val, unicode)
 
 def test_source_from_function():
@@ -73,37 +73,37 @@ except ValueError:
 else:
     x = 23"""
 
-def test_source_putaround(): 
-    source = Source() 
+def test_source_putaround():
+    source = Source()
     source = source.putaround("""
         if 1:
             x=1
     """)
     assert str(source).strip() == "if 1:\n    x=1"
 
-def test_source_strips(): 
+def test_source_strips():
     source = Source("")
     assert source == Source()
     assert str(source) == ''
-    assert source.strip() == source 
+    assert source.strip() == source
 
-def test_source_strip_multiline(): 
+def test_source_strip_multiline():
     source = Source()
     source.lines = ["", " hello", "  "]
-    source2 = source.strip() 
+    source2 = source.strip()
     assert source2.lines == [" hello"]
 
 def test_syntaxerror_rerepresentation():
     ex = py.test.raises(SyntaxError, py.code.compile, 'xyz xyz')
     assert ex.value.lineno == 1
-    assert ex.value.offset in (4,7) # XXX pypy/jython versus cpython? 
+    assert ex.value.offset in (4,7) # XXX pypy/jython versus cpython?
     assert ex.value.text.strip(), 'x x'
 
 def test_isparseable():
     assert Source("hello").isparseable()
     assert Source("if 1:\n  pass").isparseable()
     assert Source(" \nif 1:\n  pass").isparseable()
-    assert not Source("if 1:\n").isparseable() 
+    assert not Source("if 1:\n").isparseable()
     assert not Source(" \nif 1:\npass").isparseable()
     assert not Source(chr(0)).isparseable()
 
@@ -125,12 +125,12 @@ class TestAccesses:
         assert x == "def f(x):"
 
     def test_len(self):
-        assert len(self.source) == 4 
+        assert len(self.source) == 4
 
     def test_iter(self):
-        l = [x for x in self.source] 
-        assert len(l) == 4 
-            
+        l = [x for x in self.source]
+        assert len(l) == 4
+
 class TestSourceParsingAndCompiling:
     source = Source("""\
         def f(x):
@@ -157,11 +157,11 @@ class TestSourceParsingAndCompiling:
         co1 = gensource("""
             def f():
                 raise KeyError()
-        """) 
+        """)
         co2 = gensource("""
             def f():
                 raise ValueError()
-        """) 
+        """)
         source1 = py.std.inspect.getsource(co1)
         assert 'KeyError' in source1
         source2 = py.std.inspect.getsource(co2)
@@ -179,21 +179,21 @@ class TestSourceParsingAndCompiling:
     def test_getstatementrange_within_constructs(self):
         source = Source("""\
             try:
-                try: 
+                try:
                     raise ValueError
-                except SomeThing: 
-                    pass 
+                except SomeThing:
+                    pass
             finally:
                 42
         """)
         assert len(source) == 7
-        assert source.getstatementrange(0) == (0, 7) 
-        assert source.getstatementrange(1) == (1, 5) 
+        assert source.getstatementrange(0) == (0, 7)
+        assert source.getstatementrange(1) == (1, 5)
         assert source.getstatementrange(2) == (2, 3)
         assert source.getstatementrange(3) == (1, 5)
-        assert source.getstatementrange(4) == (4, 5) 
+        assert source.getstatementrange(4) == (4, 5)
         assert source.getstatementrange(5) == (0, 7)
-        assert source.getstatementrange(6) == (6, 7) 
+        assert source.getstatementrange(6) == (6, 7)
 
     def test_getstatementrange_bug(self):
         source = Source("""\
@@ -236,7 +236,7 @@ class TestSourceParsingAndCompiling:
         py.builtin.exec_(co, globals())
         f(7)
         excinfo = py.test.raises(AssertionError, "f(6)")
-        frame = excinfo.traceback[-1].frame 
+        frame = excinfo.traceback[-1].frame
         stmt = frame.code.fullsource.getstatement(frame.lineno)
         #print "block", str(block)
         assert str(stmt).strip().startswith('assert')
@@ -253,8 +253,8 @@ class TestSourceParsingAndCompiling:
 
         mycode = py.code.Code(self.test_compilefuncs_and_path_sanity)
         mylineno = mycode.firstlineno
-        mypath = mycode.path 
-            
+        mypath = mycode.path
+
         for comp in py.code.compile, py.code.Source.compile:
             for name in '', None, 'my':
                 yield check, comp, name
@@ -319,7 +319,7 @@ def test_getfuncsource_with_multine_string():
     pass
 '''
     assert str(py.code.Source(f)).strip() == "def f():\n    c = '''while True:\n    pass\n'''"
-    
+
 
 def test_deindent():
     from py._code.source import deindent as deindent
@@ -343,8 +343,8 @@ def test_deindent():
 
 @py.test.mark.xfail("sys.version_info[:2] != (2,7)")
 def test_source_of_class_at_eof_without_newline(tmpdir):
-    # this test fails because the implicit inspect.getsource(A) below 
-    # does not return the "x = 1" last line. 
+    # this test fails because the implicit inspect.getsource(A) below
+    # does not return the "x = 1" last line.
     source = py.code.Source('''
         class A(object):
             def method(self):
@@ -385,7 +385,7 @@ def test_findsource():
     def x():
         pass
 """)
-        
+
     src, lineno = findsource(co)
     assert 'if 1:' in str(src)
 
@@ -394,7 +394,7 @@ def test_findsource():
     src, lineno = findsource(d['x'])
     assert 'if 1:' in str(src)
     assert src[lineno] == "    def x():"
-    
+
 
 def test_getfslineno():
     from py.code import getfslineno

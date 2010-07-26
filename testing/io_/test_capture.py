@@ -7,12 +7,12 @@ from py.builtin import print_
 
 if sys.version_info >= (3,0):
     def tobytes(obj):
-        if isinstance(obj, str): 
+        if isinstance(obj, str):
             obj = obj.encode('UTF-8')
         assert isinstance(obj, bytes)
         return obj
     def totext(obj):
-        if isinstance(obj, bytes): 
+        if isinstance(obj, bytes):
             obj = str(obj, 'UTF-8')
         assert isinstance(obj, str)
         return obj
@@ -30,11 +30,11 @@ else:
 
 def oswritebytes(fd, obj):
     os.write(fd, tobytes(obj))
-    
+
 class TestTextIO:
     def test_text(self):
         f = py.io.TextIO()
-        f.write("hello") 
+        f.write("hello")
         s = f.getvalue()
         assert s == "hello"
         f.close()
@@ -46,10 +46,10 @@ class TestTextIO:
             py.test.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
         else:
             f.write(unicode("\u00f6", 'UTF-8'))
-            f.write("hello") # bytes 
+            f.write("hello") # bytes
             s = f.getvalue()
             f.close()
-            assert isinstance(s, unicode) 
+            assert isinstance(s, unicode)
 
 def test_bytes_io():
     f = py.io.BytesIO()
@@ -61,10 +61,10 @@ def test_bytes_io():
 def test_dontreadfrominput():
     from py._io.capture import  DontReadFromInput
     f = DontReadFromInput()
-    assert not f.isatty() 
+    assert not f.isatty()
     py.test.raises(IOError, f.read)
     py.test.raises(IOError, f.readlines)
-    py.test.raises(IOError, iter, f) 
+    py.test.raises(IOError, iter, f)
     py.test.raises(ValueError, f.fileno)
     f.close() # just for completeness
 
@@ -77,14 +77,14 @@ def pytest_funcarg__tmpfile(request):
 @needsdup
 def test_dupfile(tmpfile):
     flist = []
-    for i in range(5): 
+    for i in range(5):
         nf = py.io.dupfile(tmpfile, encoding="utf-8")
         assert nf != tmpfile
         assert nf.fileno() != tmpfile.fileno()
-        assert nf not in flist 
+        assert nf not in flist
         print_(i, end="", file=nf)
-        flist.append(nf) 
-    for i in range(5): 
+        flist.append(nf)
+    for i in range(5):
         f = flist[i]
         f.close()
     tmpfile.seek(0)
@@ -92,8 +92,8 @@ def test_dupfile(tmpfile):
     assert "01234" in repr(s)
     tmpfile.close()
 
-class TestFDCapture: 
-    pytestmark = needsdup 
+class TestFDCapture:
+    pytestmark = needsdup
 
     def test_not_now(self, tmpfile):
         fd = tmpfile.fileno()
@@ -102,7 +102,7 @@ class TestFDCapture:
         os.write(fd, data)
         f = cap.done()
         s = f.read()
-        assert not s 
+        assert not s
         cap = py.io.FDCapture(fd, now=False)
         cap.start()
         os.write(fd, data)
@@ -143,14 +143,14 @@ class TestFDCapture:
         py.test.raises(ValueError, cap.start)
         f.close()
 
-    def test_stderr(self): 
+    def test_stderr(self):
         cap = py.io.FDCapture(2, patchsys=True)
         print_("hello", file=sys.stderr)
         f = cap.done()
         s = f.read()
         assert s == "hello\n"
 
-    def test_stdin(self, tmpfile): 
+    def test_stdin(self, tmpfile):
         tmpfile.write(tobytes("3"))
         tmpfile.seek(0)
         cap = py.io.FDCapture(0, tmpfile=tmpfile)
@@ -175,7 +175,7 @@ class TestFDCapture:
         assert stmp == data2
 
 
-class TestStdCapture: 
+class TestStdCapture:
     def getcapture(self, **kw):
         return py.io.StdCapture(**kw)
 
@@ -220,7 +220,7 @@ class TestStdCapture:
         assert not err
 
     def test_capturing_twice_error(self):
-        cap = self.getcapture() 
+        cap = self.getcapture()
         print ("hello")
         out, err = cap.reset()
         print ("world")
@@ -229,54 +229,54 @@ class TestStdCapture:
         assert not err
 
     def test_capturing_modify_sysouterr_in_between(self):
-        oldout = sys.stdout 
-        olderr = sys.stderr 
+        oldout = sys.stdout
+        olderr = sys.stderr
         cap = self.getcapture()
         sys.stdout.write("hello")
         sys.stderr.write("world")
-        sys.stdout = py.io.TextIO() 
-        sys.stderr = py.io.TextIO() 
+        sys.stdout = py.io.TextIO()
+        sys.stderr = py.io.TextIO()
         print ("not seen" )
         sys.stderr.write("not seen\n")
         out, err = cap.reset()
         assert out == "hello"
         assert err == "world"
-        assert sys.stdout == oldout 
-        assert sys.stderr == olderr 
+        assert sys.stdout == oldout
+        assert sys.stderr == olderr
 
     def test_capturing_error_recursive(self):
-        cap1 = self.getcapture() 
+        cap1 = self.getcapture()
         print ("cap1")
-        cap2 = self.getcapture() 
+        cap2 = self.getcapture()
         print ("cap2")
         out2, err2 = cap2.reset()
-        out1, err1 = cap1.reset() 
+        out1, err1 = cap1.reset()
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
-    
-    def test_just_out_capture(self): 
+
+    def test_just_out_capture(self):
         cap = self.getcapture(out=True, err=False)
         sys.stdout.write("hello")
         sys.stderr.write("world")
         out, err = cap.reset()
         assert out == "hello"
-        assert not err 
+        assert not err
 
-    def test_just_err_capture(self): 
-        cap = self.getcapture(out=False, err=True) 
+    def test_just_err_capture(self):
+        cap = self.getcapture(out=False, err=True)
         sys.stdout.write("hello")
         sys.stderr.write("world")
         out, err = cap.reset()
         assert err == "world"
-        assert not out 
+        assert not out
 
     def test_stdin_restored(self):
-        old = sys.stdin 
+        old = sys.stdin
         cap = self.getcapture(in_=True)
-        newstdin = sys.stdin 
+        newstdin = sys.stdin
         out, err = cap.reset()
         assert newstdin != sys.stdin
-        assert sys.stdin is old 
+        assert sys.stdin is old
 
     def test_stdin_nulled_by_default(self):
         print ("XXX this test may well hang instead of crashing")
@@ -293,7 +293,7 @@ class TestStdCapture:
             sys.stderr.write("error\n")
             out, err = cap.suspend()
             assert out == "hello\n"
-            assert not err 
+            assert not err
             print ("in between")
             sys.stderr.write("in between\n")
             cap.resume()
@@ -302,7 +302,7 @@ class TestStdCapture:
         finally:
             out, err = cap.reset()
         assert out == "after\n"
-        assert not err 
+        assert not err
 
 class TestStdCaptureNotNow(TestStdCapture):
     def getcapture(self, **kw):
@@ -311,13 +311,13 @@ class TestStdCaptureNotNow(TestStdCapture):
         cap.startall()
         return cap
 
-class TestStdCaptureFD(TestStdCapture): 
+class TestStdCaptureFD(TestStdCapture):
     pytestmark = needsdup
 
-    def getcapture(self, **kw): 
+    def getcapture(self, **kw):
         return py.io.StdCaptureFD(**kw)
 
-    def test_intermingling(self): 
+    def test_intermingling(self):
         cap = self.getcapture()
         oswritebytes(1, "1")
         sys.stdout.write(str(2))
@@ -328,24 +328,24 @@ class TestStdCaptureFD(TestStdCapture):
         sys.stderr.flush()
         oswritebytes(2, "c")
         out, err = cap.reset()
-        assert out == "123" 
-        assert err == "abc" 
+        assert out == "123"
+        assert err == "abc"
 
-    def test_callcapture(self): 
-        def func(x, y): 
+    def test_callcapture(self):
+        def func(x, y):
             print (x)
             py.std.sys.stderr.write(str(y))
             return 42
-      
-        res, out, err = py.io.StdCaptureFD.call(func, 3, y=4) 
-        assert res == 42 
-        assert out.startswith("3") 
-        assert err.startswith("4") 
+
+        res, out, err = py.io.StdCaptureFD.call(func, 3, y=4)
+        assert res == 42
+        assert out.startswith("3")
+        assert err.startswith("4")
 
 class TestStdCaptureFDNotNow(TestStdCaptureFD):
     pytestmark = needsdup
 
-    def getcapture(self, **kw): 
+    def getcapture(self, **kw):
         kw['now'] = False
         cap = py.io.StdCaptureFD(**kw)
         cap.startall()
@@ -381,7 +381,7 @@ class TestStdCaptureFDinvalidFD:
         assert result.ret == 0
         assert result.parseoutcomes()['passed'] == 3
 
-def test_capture_not_started_but_reset(): 
+def test_capture_not_started_but_reset():
     capsys = py.io.StdCapture(now=False)
     capsys.done()
     capsys.done()
@@ -389,7 +389,7 @@ def test_capture_not_started_but_reset():
     capsys.reset()
 
 @needsdup
-def test_capture_no_sys(): 
+def test_capture_no_sys():
     capsys = py.io.StdCapture()
     try:
         cap = py.io.StdCaptureFD(patchsys=False)
@@ -404,22 +404,22 @@ def test_capture_no_sys():
         capsys.reset()
 
 @needsdup
-def test_callcapture_nofd(): 
-    def func(x, y): 
+def test_callcapture_nofd():
+    def func(x, y):
         oswritebytes(1, "hello")
         oswritebytes(2, "hello")
         print (x)
         sys.stderr.write(str(y))
         return 42
-   
+
     capfd = py.io.StdCaptureFD(patchsys=False)
     try:
-        res, out, err = py.io.StdCapture.call(func, 3, y=4) 
+        res, out, err = py.io.StdCapture.call(func, 3, y=4)
     finally:
         capfd.reset()
-    assert res == 42 
-    assert out.startswith("3") 
-    assert err.startswith("4") 
+    assert res == 42
+    assert out.startswith("3")
+    assert err.startswith("4")
 
 @needsdup
 @py.test.mark.multi(use=[True, False])
@@ -438,7 +438,7 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
 def test_capturing_and_logging_fundamentals(testdir, method):
     if method == "StdCaptureFD" and not hasattr(os, 'dup'):
         py.test.skip("need os.dup")
-    # here we check a fundamental feature 
+    # here we check a fundamental feature
     p = testdir.makepyfile("""
         import sys, os
         import py, logging
@@ -461,4 +461,4 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         "suspend2, captured*hello2*WARNING:root:hello3*",
     ])
     assert "atexit" not in result.stderr.str()
-    
+

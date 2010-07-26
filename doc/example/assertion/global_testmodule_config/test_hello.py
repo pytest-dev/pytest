@@ -1,5 +1,5 @@
 
 hello = "world"
 
-def test_func(): 
+def test_func():
     pass

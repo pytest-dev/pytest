@@ -67,7 +67,7 @@ def test_function(recwarn):
     py.builtin.print_("out", out)
     py.builtin.print_("err", err)
     assert err.find("x.y.z") != -1
-    lno = py.code.getrawcode(test_function).co_firstlineno 
+    lno = py.code.getrawcode(test_function).co_firstlineno
     exp = "%s:%s" % (mypath, lno)
     assert err.find(exp) != -1
 

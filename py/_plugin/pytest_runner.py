@@ -1,23 +1,23 @@
-""" 
-collect and run test items and create reports. 
+"""
+collect and run test items and create reports.
 """
 
 import py, sys
 
 def pytest_namespace():
     return {
-        'raises'       : raises, 
+        'raises'       : raises,
         'skip'         : skip,
         'importorskip' : importorskip,
-        'fail'         : fail, 
-        'xfail'        : xfail, 
-        'exit'         : exit, 
+        'fail'         : fail,
+        'xfail'        : xfail,
+        'exit'         : exit,
     }
 
 #
-# pytest plugin hooks 
+# pytest plugin hooks
 
-# XXX move to pytest_sessionstart and fix py.test owns tests 
+# XXX move to pytest_sessionstart and fix py.test owns tests
 def pytest_configure(config):
     config._setupstate = SetupState()
 
@@ -69,12 +69,12 @@ def pytest__teardown_final(session):
         ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
         call.excinfo.traceback = ntraceback.filter()
         rep = TeardownErrorReport(call.excinfo)
-        return rep 
+        return rep
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
         if report.failed:
-            #      category, shortletter, verbose-word 
+            #      category, shortletter, verbose-word
             return "error", "E", "ERROR"
         elif report.skipped:
             return "skipped", "s", "SKIPPED"
@@ -88,18 +88,18 @@ def call_and_report(item, when, log=True):
     hook = item.ihook
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log and (when == "call" or not report.passed):
-        hook.pytest_runtest_logreport(report=report) 
+        hook.pytest_runtest_logreport(report=report)
     return report
 
 def call_runtest_hook(item, when):
-    hookname = "pytest_runtest_" + when 
+    hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     return CallInfo(lambda: ihook(item=item), when=when)
 
 class CallInfo:
-    excinfo = None 
+    excinfo = None
     def __init__(self, func, when):
-        self.when = when 
+        self.when = when
         try:
             self.result = func()
         except KeyboardInterrupt:
@@ -134,7 +134,7 @@ class BaseReport(object):
     def toterminal(self, out):
         for line in self.headerlines:
             out.line(line)
-        longrepr = self.longrepr 
+        longrepr = self.longrepr
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
@@ -143,36 +143,36 @@ class BaseReport(object):
 class CollectErrorRepr(BaseReport):
     def __init__(self, msg):
         super(CollectErrorRepr, self).__init__()
-        self.longrepr = msg 
+        self.longrepr = msg
     def toterminal(self, out):
         out.line(str(self.longrepr), red=True)
-   
+
 class ItemTestReport(BaseReport):
     failed = passed = skipped = False
 
     def __init__(self, item, excinfo=None, when=None):
         super(ItemTestReport, self).__init__()
-        self.item = item 
+        self.item = item
         self.when = when
         if item and when != "setup":
             self.keywords = item.keywords
         else:
-            # if we fail during setup it might mean 
+            # if we fail during setup it might mean
             # we are not able to access the underlying object
-            # this might e.g. happen if we are unpickled 
-            # and our parent collector did not collect us 
+            # this might e.g. happen if we are unpickled
+            # and our parent collector did not collect us
             # (because it e.g. skipped for platform reasons)
-            self.keywords = {}  
+            self.keywords = {}
         if not excinfo:
             self.passed = True
-            self.shortrepr = "." 
+            self.shortrepr = "."
         else:
             if not isinstance(excinfo, py.code.ExceptionInfo):
                 self.failed = True
                 shortrepr = "?"
-                longrepr = excinfo 
+                longrepr = excinfo
             elif excinfo.errisinstance(py.test.skip.Exception):
-                self.skipped = True 
+                self.skipped = True
                 shortrepr = "s"
                 longrepr = self.item._repr_failure_py(excinfo)
             else:
@@ -180,35 +180,35 @@ class ItemTestReport(BaseReport):
                 shortrepr = self.item.shortfailurerepr
                 if self.when == "call":
                     longrepr = self.item.repr_failure(excinfo)
-                else: # exception in setup or teardown 
+                else: # exception in setup or teardown
                     longrepr = self.item._repr_failure_py(excinfo)
                     shortrepr = shortrepr.lower()
-            self.shortrepr = shortrepr 
-            self.longrepr = longrepr 
+            self.shortrepr = shortrepr
+            self.longrepr = longrepr
 
     def __repr__(self):
-        status = (self.passed and "passed" or 
-                  self.skipped and "skipped" or 
-                  self.failed and "failed" or 
+        status = (self.passed and "passed" or
+                  self.skipped and "skipped" or
+                  self.failed and "failed" or
                   "CORRUPT")
         l = [repr(self.item.name), "when=%r" % self.when, "outcome %r" % status,]
         if hasattr(self, 'node'):
             l.append("txnode=%s" % self.node.gateway.id)
         info = " " .join(map(str, l))
-        return "<ItemTestReport %s>" % info 
+        return "<ItemTestReport %s>" % info
 
     def getnode(self):
-        return self.item 
+        return self.item
 
 class CollectReport(BaseReport):
-    skipped = failed = passed = False 
+    skipped = failed = passed = False
 
     def __init__(self, collector, result, excinfo=None):
         super(CollectReport, self).__init__()
-        self.collector = collector 
+        self.collector = collector
         if not excinfo:
             self.passed = True
-            self.result = result 
+            self.result = result
         else:
             if excinfo.errisinstance(py.test.skip.Exception):
                 self.skipped = True
@@ -219,13 +219,13 @@ class CollectReport(BaseReport):
                 errorinfo = self.collector.repr_failure(excinfo)
                 if not hasattr(errorinfo, "toterminal"):
                     errorinfo = CollectErrorRepr(errorinfo)
-                self.longrepr = errorinfo 
+                self.longrepr = errorinfo
 
     def getnode(self):
-        return self.collector 
+        return self.collector
 
 class TeardownErrorReport(BaseReport):
-    skipped = passed = False 
+    skipped = passed = False
     failed = True
     when = "teardown"
     def __init__(self, excinfo):
@@ -239,9 +239,9 @@ class SetupState(object):
         self._finalizers = {}
 
     def addfinalizer(self, finalizer, colitem):
-        """ attach a finalizer to the given colitem. 
-        if colitem is None, this will add a finalizer that 
-        is called at the end of teardown_all(). 
+        """ attach a finalizer to the given colitem.
+        if colitem is None, this will add a finalizer that
+        is called at the end of teardown_all().
         """
         assert hasattr(finalizer, '__call__')
         #assert colitem in self.stack
@@ -257,15 +257,15 @@ class SetupState(object):
             fin = finalizers.pop()
             fin()
 
-    def _teardown_with_finalization(self, colitem): 
-        self._callfinalizers(colitem) 
-        if colitem: 
+    def _teardown_with_finalization(self, colitem):
+        self._callfinalizers(colitem)
+        if colitem:
             colitem.teardown()
         for colitem in self._finalizers:
             assert colitem is None or colitem in self.stack
 
-    def teardown_all(self): 
-        while self.stack: 
+    def teardown_all(self):
+        while self.stack:
             self._pop_and_teardown()
         self._teardown_with_finalization(None)
         assert not self._finalizers
@@ -275,75 +275,75 @@ class SetupState(object):
             self._pop_and_teardown()
         else:
             self._callfinalizers(item)
-     
-    def prepare(self, colitem): 
+
+    def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method
             and teardown previously setup objects."""
-        needed_collectors = colitem.listchain() 
-        while self.stack: 
-            if self.stack == needed_collectors[:len(self.stack)]: 
-                break 
+        needed_collectors = colitem.listchain()
+        while self.stack:
+            if self.stack == needed_collectors[:len(self.stack)]:
+                break
             self._pop_and_teardown()
-        # check if the last collection node has raised an error 
+        # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, '_prepare_exc'):
-                py.builtin._reraise(*col._prepare_exc) 
-        for col in needed_collectors[len(self.stack):]: 
-            self.stack.append(col) 
+                py.builtin._reraise(*col._prepare_exc)
+        for col in needed_collectors[len(self.stack):]:
+            self.stack.append(col)
             try:
-                col.setup() 
+                col.setup()
             except Exception:
                 col._prepare_exc = sys.exc_info()
                 raise
 
 # =============================================================
-# Test OutcomeExceptions and helpers for creating them. 
+# Test OutcomeExceptions and helpers for creating them.
 
 
-class OutcomeException(Exception): 
-    """ OutcomeException and its subclass instances indicate and 
-        contain info about test and collection outcomes. 
-    """ 
-    def __init__(self, msg=None, excinfo=None): 
-        self.msg = msg 
+class OutcomeException(Exception):
+    """ OutcomeException and its subclass instances indicate and
+        contain info about test and collection outcomes.
+    """
+    def __init__(self, msg=None, excinfo=None):
+        self.msg = msg
         self.excinfo = excinfo
 
     def __repr__(self):
-        if self.msg: 
-            return repr(self.msg) 
+        if self.msg:
+            return repr(self.msg)
         return "<%s instance>" %(self.__class__.__name__,)
     __str__ = __repr__
 
-class Skipped(OutcomeException): 
-    # XXX hackish: on 3k we fake to live in the builtins 
+class Skipped(OutcomeException):
+    # XXX hackish: on 3k we fake to live in the builtins
     # in order to have Skipped exception printing shorter/nicer
     __module__ = 'builtins'
 
-class Failed(OutcomeException): 
+class Failed(OutcomeException):
     """ raised from an explicit call to py.test.fail() """
     __module__ = 'builtins'
 
-class XFailed(OutcomeException): 
+class XFailed(OutcomeException):
     """ raised from an explicit call to py.test.xfail() """
     __module__ = 'builtins'
 
-class ExceptionFailure(Failed): 
+class ExceptionFailure(Failed):
     """ raised by py.test.raises on an exception-assertion mismatch. """
-    def __init__(self, expr, expected, msg=None, excinfo=None): 
-        Failed.__init__(self, msg=msg, excinfo=excinfo) 
-        self.expr = expr 
+    def __init__(self, expr, expected, msg=None, excinfo=None):
+        Failed.__init__(self, msg=msg, excinfo=excinfo)
+        self.expr = expr
         self.expected = expected
 
 class Exit(KeyboardInterrupt):
     """ raised by py.test.exit for immediate program exits without tracebacks and reporter/summary. """
     def __init__(self, msg="unknown reason"):
-        self.msg = msg 
+        self.msg = msg
         KeyboardInterrupt.__init__(self, msg)
 
-# exposed helper methods 
+# exposed helper methods
 
-def exit(msg): 
-    """ exit testing process as if KeyboardInterrupt was triggered. """ 
+def exit(msg):
+    """ exit testing process as if KeyboardInterrupt was triggered. """
     __tracebackhide__ = True
     raise Exit(msg)
 
@@ -352,23 +352,23 @@ exit.Exception = Exit
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
     better use the py.test.mark.skipif marker to declare a test to be
-    skipped under certain conditions like mismatching platforms or 
-    dependencies.  See the pytest_skipping plugin for details. 
+    skipped under certain conditions like mismatching platforms or
+    dependencies.  See the pytest_skipping plugin for details.
     """
     __tracebackhide__ = True
-    raise Skipped(msg=msg) 
+    raise Skipped(msg=msg)
 
 skip.Exception = Skipped
 
 def fail(msg=""):
     """ explicitely fail an currently-executing test with the given Message. """
     __tracebackhide__ = True
-    raise Failed(msg=msg) 
+    raise Failed(msg=msg)
 
 fail.Exception = Failed
 
 def xfail(reason=""):
-    """ xfail an executing test or setup functions, taking an optional 
+    """ xfail an executing test or setup functions, taking an optional
     reason string.
     """
     __tracebackhide__ = True
@@ -376,20 +376,20 @@ def xfail(reason=""):
 xfail.Exception = XFailed
 
 def raises(ExpectedException, *args, **kwargs):
-    """ assert that a code block/function call raises an exception. 
-        
-        If using Python 2.5 or above, you may use this function as a 
+    """ assert that a code block/function call raises an exception.
+
+        If using Python 2.5 or above, you may use this function as a
         context manager::
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
-        Or you can one of two forms: 
+        Or you can one of two forms:
 
-        if args[0] is callable: raise AssertionError if calling it with 
-        the remaining arguments does not raise the expected exception.  
+        if args[0] is callable: raise AssertionError if calling it with
+        the remaining arguments does not raise the expected exception.
         if args[0] is a string: raise AssertionError if executing the
-        the string in the calling scope does not raise expected exception. 
+        the string in the calling scope does not raise expected exception.
         examples:
         >>> x = 5
         >>> raises(TypeError, lambda x: x + 'hello', x=x)
@@ -423,8 +423,8 @@ def raises(ExpectedException, *args, **kwargs):
         if k:
             k = ', ' + k
         expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
-    raise ExceptionFailure(msg="DID NOT RAISE", 
-                           expr=args, expected=ExpectedException) 
+    raise ExceptionFailure(msg="DID NOT RAISE",
+                           expr=args, expected=ExpectedException)
 
 
 class RaisesContext(object):
@@ -435,7 +435,7 @@ class RaisesContext(object):
 
     def __enter__(self):
         self.excinfo = object.__new__(py.code.ExceptionInfo)
-        return self.excinfo 
+        return self.excinfo
 
     def __exit__(self, *tp):
         __tracebackhide__ = True
@@ -450,9 +450,9 @@ class RaisesContext(object):
 raises.Exception = ExceptionFailure
 
 def importorskip(modname, minversion=None):
-    """ return imported module if it has a higher __version__ than the 
-    optionally specified 'minversion' - otherwise call py.test.skip() 
-    with a message detailing the mismatch. 
+    """ return imported module if it has a higher __version__ than the
+    optionally specified 'minversion' - otherwise call py.test.skip()
+    with a message detailing the mismatch.
     """
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:

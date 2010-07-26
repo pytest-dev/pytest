@@ -4,29 +4,29 @@ Learning by examples
 adding custom options
 ----------------------
 
-py.test supports adding of standard optparse_ Options. 
-A plugin may implement the ``addoption`` hook for registering 
-custom options:: 
+py.test supports adding of standard optparse_ Options.
+A plugin may implement the ``addoption`` hook for registering
+custom options::
 
     def pytest_addoption(parser):
-        parser.addoption("-M", "--myopt", action="store", 
+        parser.addoption("-M", "--myopt", action="store",
             help="specify string to set myopt")
 
     def pytest_configure(config):
         if config.option.myopt:
             # do action based on option value
             #
-            
+
 .. _optparse: http://docs.python.org/library/optparse.html
 
 Working Examples
 ================
 
-managing state at module, class and method level 
+managing state at module, class and method level
 ------------------------------------------------------------
 
-Here is a working example for what goes on when you setup modules, 
-classes and methods:: 
+Here is a working example for what goes on when you setup modules,
+classes and methods::
 
     # [[from py/documentation/example/pytest/test_setup_flow_example.py]]
 
@@ -58,17 +58,17 @@ For this example the control flow happens as follows::
 
     import test_setup_flow_example
     setup_module(test_setup_flow_example)
-       setup_class(TestStateFullThing) 
+       setup_class(TestStateFullThing)
            instance = TestStateFullThing()
-           setup_method(instance, instance.test_42) 
+           setup_method(instance, instance.test_42)
               instance.test_42()
-           setup_method(instance, instance.test_23) 
+           setup_method(instance, instance.test_23)
               instance.test_23()
-       teardown_class(TestStateFullThing) 
+       teardown_class(TestStateFullThing)
     teardown_module(test_setup_flow_example)
 
-Note that ``setup_class(TestStateFullThing)`` is called and not 
+Note that ``setup_class(TestStateFullThing)`` is called and not
 ``TestStateFullThing.setup_class()`` which would require you
 to insert ``setup_class = classmethod(setup_class)`` to make
 your setup function callable. Did we mention that lazyness
-is a virtue? 
+is a virtue?

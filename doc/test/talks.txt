@@ -1,5 +1,5 @@
 ==========================
-Talks and Tutorials 
+Talks and Tutorials
 ==========================
 
 .. _`funcargs`: funcargs.html
@@ -10,33 +10,33 @@ tutorial examples and blog postings
 .. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
-basic usage and funcargs: 
+basic usage and funcargs:
 
 - `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
 
-function arguments: 
+function arguments:
 
-- `application setup in test functions with funcargs`_ 
-- `making funcargs dependendent on command line options`_ 
+- `application setup in test functions with funcargs`_
+- `making funcargs dependendent on command line options`_
 - `monkey patching done right`_ (blog post, consult `monkeypatch
   plugin`_ for actual 1.0 API)
-  
-test parametrization: 
 
-- `generating parametrized tests with funcargs`_ 
-- `test generators and cached setup`_ 
-- `parametrizing tests, generalized`_ (blog post) 
-- `putting test-hooks into local or global plugins`_ (blog post) 
+test parametrization:
 
-distributed testing: 
+- `generating parametrized tests with funcargs`_
+- `test generators and cached setup`_
+- `parametrizing tests, generalized`_ (blog post)
+- `putting test-hooks into local or global plugins`_ (blog post)
 
-- `simultanously test your code on all platforms`_ (blog entry) 
- 
-plugin specific examples: 
+distributed testing:
+
+- `simultanously test your code on all platforms`_ (blog entry)
+
+plugin specific examples:
 
 - `skipping slow tests by default in py.test`_ (blog entry)
 
-- `many examples in the docs for plugins`_ 
+- `many examples in the docs for plugins`_
 
 .. _`skipping slow tests by default in py.test`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 .. _`making funcargs dependendent on command line options`: funcargs.html#tut-cmdlineoption
@@ -44,28 +44,28 @@ plugin specific examples:
 .. _`monkeypatch plugin`: plugin/monkeypatch.html
 .. _`application setup in test functions with funcargs`: funcargs.html#appsetup
 .. _`simultanously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
-.. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/ 
+.. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
-.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/ 
+.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 .. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
 .. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
 
 conference talks and tutorials
 ----------------------------------------
 
-- `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009): 
+- `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009):
 
-  - testing terminology 
+  - testing terminology
   - basic py.test usage, file system layout
-  - test function arguments (funcargs_) and test fixtures 
-  - existing plugins 
-  - distributed testing 
+  - test function arguments (funcargs_) and test fixtures
+  - existing plugins
+  - distributed testing
 
-- `ep2009-pytest.pdf`_ 60 minute py.test talk, highlighting unique features and a roadmap (July 2009) 
+- `ep2009-pytest.pdf`_ 60 minute py.test talk, highlighting unique features and a roadmap (July 2009)
 
-- `pycon2009-pytest-introduction.zip`_ slides and files, extended version of py.test basic introduction, discusses more options, also introduces old-style xUnit setup, looponfailing and other features. 
+- `pycon2009-pytest-introduction.zip`_ slides and files, extended version of py.test basic introduction, discusses more options, also introduces old-style xUnit setup, looponfailing and other features.
 
-- `pycon2009-pytest-advanced.pdf`_ contain a slightly older version of funcargs and distributed testing, compared to the EuroPython 2009 slides. 
+- `pycon2009-pytest-advanced.pdf`_ contain a slightly older version of funcargs and distributed testing, compared to the EuroPython 2009 slides.
 
 .. _`ep2009-rapidtesting.pdf`: http://codespeak.net/download/py/ep2009-rapidtesting.pdf
 .. _`ep2009-pytest.pdf`: http://codespeak.net/download/py/ep2009-pytest.pdf

@@ -1,5 +1,5 @@
 """
-perform ReST syntax, local and remote reference tests on .rst/.txt files. 
+perform ReST syntax, local and remote reference tests on .rst/.txt files.
 """
 import py
 import sys, os, re
@@ -7,8 +7,8 @@ import sys, os, re
 def pytest_addoption(parser):
     group = parser.getgroup("ReST", "ReST documentation check options")
     group.addoption('-R', '--urlcheck',
-           action="store_true", dest="urlcheck", default=False, 
-           help="urlopen() remote links found in ReST text files.") 
+           action="store_true", dest="urlcheck", default=False,
+           help="urlopen() remote links found in ReST text files.")
     group.addoption('--urltimeout', action="store", metavar="secs",
         type="int", dest="urlcheck_timeout", default=5,
         help="timeout in seconds for remote urlchecks")
@@ -59,7 +59,7 @@ def deindent(s, sep='\n'):
             lines[i] = line[leastspaces:]
     return sep.join(lines)
 
-class ReSTSyntaxTest(py.test.collect.Item): 
+class ReSTSyntaxTest(py.test.collect.Item):
     def __init__(self, name, parent, project):
         super(ReSTSyntaxTest, self).__init__(name=name, parent=parent)
         self.project = project
@@ -74,14 +74,14 @@ class ReSTSyntaxTest(py.test.collect.Item):
         py.test.importorskip("docutils")
         self.register_linkrole()
         from docutils.utils import SystemMessage
-        try: 
+        try:
             self._checkskip(path, self.project.get_htmloutputpath(path))
             self.project.process(path)
-        except KeyboardInterrupt: 
-            raise 
-        except SystemMessage: 
-            # we assume docutils printed info on stdout 
-            py.test.fail("docutils processing failed, see captured stderr") 
+        except KeyboardInterrupt:
+            raise
+        except SystemMessage:
+            # we assume docutils printed info on stdout
+            py.test.fail("docutils processing failed, see captured stderr")
 
     def register_linkrole(self):
         #directive.register_linkrole('api', self.resolve_linkrole)
@@ -89,7 +89,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
 #
 #        # XXX fake sphinx' "toctree" and refs
 #        directive.register_linkrole('ref', self.resolve_linkrole)
-        
+
         from docutils.parsers.rst import directives
         def toctree_directive(name, arguments, options, content, lineno,
                       content_offset, block_text, state, state_machine):
@@ -101,7 +101,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
         self.register_pygments()
 
     def register_pygments(self):
-        # taken from pygments-main/external/rst-directive.py 
+        # taken from pygments-main/external/rst-directive.py
         from docutils.parsers.rst import directives
         try:
             from pygments.formatters import HtmlFormatter
@@ -143,7 +143,7 @@ class ReSTSyntaxTest(py.test.collect.Item):
 
     def resolve_linkrole(self, name, text, check=True):
         apigen_relpath = self.project.apigen_relpath
-    
+
         if name == 'api':
             if text == 'py':
                 return ('py', apigen_relpath + 'api/index.html')
@@ -182,39 +182,39 @@ class ReSTSyntaxTest(py.test.collect.Item):
                 relpath += '.html'
             return (text, apigen_relpath + 'source/%s' % (relpath,))
         elif name == 'ref':
-            return ("", "") 
+            return ("", "")
 
     def _checkskip(self, lpath, htmlpath=None):
         if not self.config.getvalue("forcegen"):
             lpath = py.path.local(lpath)
             if htmlpath is not None:
                 htmlpath = py.path.local(htmlpath)
-            if lpath.ext == '.txt': 
+            if lpath.ext == '.txt':
                 htmlpath = htmlpath or lpath.new(ext='.html')
-                if htmlpath.check(file=1) and htmlpath.mtime() >= lpath.mtime(): 
+                if htmlpath.check(file=1) and htmlpath.mtime() >= lpath.mtime():
                     py.test.skip("html file is up to date, use --forcegen to regenerate")
-                    #return [] # no need to rebuild 
+                    #return [] # no need to rebuild
 
-class DoctestText(py.test.collect.Item): 
+class DoctestText(py.test.collect.Item):
     def reportinfo(self):
         return self.fspath, None, "doctest"
 
-    def runtest(self): 
+    def runtest(self):
         content = self._normalize_linesep()
         newcontent = self.config.hook.pytest_doctest_prepare_content(content=content)
         if newcontent is not None:
-            content = newcontent 
-        s = content 
+            content = newcontent
+        s = content
         l = []
         prefix = '.. >>> '
-        mod = py.std.types.ModuleType(self.fspath.purebasename) 
+        mod = py.std.types.ModuleType(self.fspath.purebasename)
         skipchunk = False
         for line in deindent(s).split('\n'):
             stripped = line.strip()
             if skipchunk and line.startswith(skipchunk):
                 py.builtin.print_("skipping", line)
                 continue
-            skipchunk = False 
+            skipchunk = False
             if stripped.startswith(prefix):
                 try:
                     py.builtin.exec_(py.code.Source(
@@ -228,9 +228,9 @@ class DoctestText(py.test.collect.Item):
             else:
                 l.append(line)
         docstring = "\n".join(l)
-        mod.__doc__ = docstring 
+        mod.__doc__ = docstring
         failed, tot = py.std.doctest.testmod(mod, verbose=1)
-        if failed: 
+        if failed:
             py.test.fail("doctest %s: %s failed out of %s" %(
                          self.fspath, failed, tot))
 
@@ -245,43 +245,43 @@ class DoctestText(py.test.collect.Item):
                 linesep = '\r\n'
         s = s.replace(linesep, '\n')
         return s
-        
-class LinkCheckerMaker(py.test.collect.Collector): 
+
+class LinkCheckerMaker(py.test.collect.Collector):
     def collect(self):
         return list(self.genlinkchecks())
 
     def genlinkchecks(self):
         path = self.fspath
-        # generating functions + args as single tests 
+        # generating functions + args as single tests
         timeout = self.config.getvalue("urlcheck_timeout")
-        for lineno, line in enumerate(path.readlines()): 
+        for lineno, line in enumerate(path.readlines()):
             line = line.strip()
-            if line.startswith('.. _'): 
+            if line.startswith('.. _'):
                 if line.startswith('.. _`'):
                     delim = '`:'
                 else:
                     delim = ':'
                 l = line.split(delim, 1)
-                if len(l) != 2: 
+                if len(l) != 2:
                     continue
-                tryfn = l[1].strip() 
+                tryfn = l[1].strip()
                 name = "%s:%d" %(tryfn, lineno)
-                if tryfn.startswith('http:') or tryfn.startswith('https'): 
+                if tryfn.startswith('http:') or tryfn.startswith('https'):
                     if self.config.getvalue("urlcheck"):
-                        yield CheckLink(name, parent=self, 
+                        yield CheckLink(name, parent=self,
                             args=(tryfn, path, lineno, timeout), checkfunc=urlcheck)
                 elif tryfn.startswith('webcal:'):
                     continue
-                else: 
-                    i = tryfn.find('#') 
-                    if i != -1: 
+                else:
+                    i = tryfn.find('#')
+                    if i != -1:
                         checkfn = tryfn[:i]
-                    else: 
-                        checkfn = tryfn 
-                    if checkfn.strip() and (1 or checkfn.endswith('.html')): 
-                        yield CheckLink(name, parent=self, 
+                    else:
+                        checkfn = tryfn
+                    if checkfn.strip() and (1 or checkfn.endswith('.html')):
+                        yield CheckLink(name, parent=self,
                             args=(tryfn, path, lineno), checkfunc=localrefcheck)
-        
+
 class CheckLink(py.test.collect.Item):
     def __init__(self, name, parent, args, checkfunc):
         super(CheckLink, self).__init__(name, parent)
@@ -294,16 +294,16 @@ class CheckLink(py.test.collect.Item):
     def reportinfo(self, basedir=None):
         return (self.fspath, self.args[2], "checklink: %s" % self.args[0])
 
-def urlcheck(tryfn, path, lineno, TIMEOUT_URLOPEN): 
+def urlcheck(tryfn, path, lineno, TIMEOUT_URLOPEN):
     old = py.std.socket.getdefaulttimeout()
     py.std.socket.setdefaulttimeout(TIMEOUT_URLOPEN)
     try:
-        try: 
+        try:
             py.builtin.print_("trying remote", tryfn)
             py.std.urllib2.urlopen(tryfn)
         finally:
             py.std.socket.setdefaulttimeout(old)
-    except (py.std.urllib2.URLError, py.std.urllib2.HTTPError): 
+    except (py.std.urllib2.URLError, py.std.urllib2.HTTPError):
         e = sys.exc_info()[1]
         if getattr(e, 'code', None) in (401, 403): # authorization required, forbidden
             py.test.skip("%s: %s" %(tryfn, str(e)))
@@ -311,38 +311,38 @@ def urlcheck(tryfn, path, lineno, TIMEOUT_URLOPEN):
             py.test.fail("remote reference error %r in %s:%d\n%s" %(
                          tryfn, path.basename, lineno+1, e))
 
-def localrefcheck(tryfn, path, lineno): 
-    # assume it should be a file 
+def localrefcheck(tryfn, path, lineno):
+    # assume it should be a file
     i = tryfn.find('#')
     if tryfn.startswith('javascript:'):
         return # don't check JS refs
-    if i != -1: 
+    if i != -1:
         anchor = tryfn[i+1:]
         tryfn = tryfn[:i]
-    else: 
+    else:
         anchor = ''
-    fn = path.dirpath(tryfn) 
-    ishtml = fn.ext == '.html' 
+    fn = path.dirpath(tryfn)
+    ishtml = fn.ext == '.html'
     fn = ishtml and fn.new(ext='.txt') or fn
     py.builtin.print_("filename is", fn)
-    if not fn.check(): # not ishtml or not fn.check(): 
-        if not py.path.local(tryfn).check(): # the html could be there 
+    if not fn.check(): # not ishtml or not fn.check():
+        if not py.path.local(tryfn).check(): # the html could be there
             py.test.fail("reference error %r in %s:%d" %(
                           tryfn, path.basename, lineno+1))
-    if anchor: 
+    if anchor:
         source = unicode(fn.read(), 'latin1')
         source = source.lower().replace('-', ' ') # aehem
 
-        anchor = anchor.replace('-', ' ') 
-        match2 = ".. _`%s`:" % anchor 
-        match3 = ".. _%s:" % anchor 
+        anchor = anchor.replace('-', ' ')
+        match2 = ".. _`%s`:" % anchor
+        match3 = ".. _%s:" % anchor
         candidates = (anchor, match2, match3)
         py.builtin.print_("candidates", repr(candidates))
-        for line in source.split('\n'): 
+        for line in source.split('\n'):
             line = line.strip()
-            if line in candidates: 
-                break 
-        else: 
+            if line in candidates:
+                break
+        else:
             py.test.fail("anchor reference error %s#%s in %s:%d" %(
                 tryfn, anchor, path.basename, lineno+1))
 
@@ -354,20 +354,20 @@ else:
         pass
 
 def convert_rest_html(source, source_path, stylesheet=None, encoding='latin1'):
-    """ return html latin1-encoded document for the given input. 
+    """ return html latin1-encoded document for the given input.
         source  a ReST-string
         sourcepath where to look for includes (basically)
         stylesheet path (to be used if any)
     """
     from docutils.core import publish_string
     kwargs = {
-        'stylesheet' : stylesheet, 
+        'stylesheet' : stylesheet,
         'stylesheet_path': None,
-        'traceback' : 1, 
+        'traceback' : 1,
         'embed_stylesheet': 0,
-        'output_encoding' : encoding, 
+        'output_encoding' : encoding,
         #'halt' : 0, # 'info',
-        'halt_level' : 2, 
+        'halt_level' : 2,
     }
     # docutils uses os.getcwd() :-(
     source_path = os.path.abspath(str(source_path))
@@ -397,9 +397,9 @@ def process(txtpath, encoding='latin1'):
     doc = convert_rest_html(content, txtpath, stylesheet=stylesheet, encoding=encoding)
     htmlpath.open('wb').write(doc)
     #log("wrote %r" % htmlpath)
-    #if txtpath.check(svnwc=1, versioned=1): 
+    #if txtpath.check(svnwc=1, versioned=1):
     #    info = txtpath.info()
-    #    svninfopath.dump(info) 
+    #    svninfopath.dump(info)
 
 if sys.version_info > (3, 0):
     def _uni(s): return s
@@ -411,16 +411,16 @@ rex1 = re.compile(r'.*<body>(.*)</body>.*', re.MULTILINE | re.DOTALL)
 rex2 = re.compile(r'.*<div class="document">(.*)</div>.*', re.MULTILINE | re.DOTALL)
 
 def strip_html_header(string, encoding='utf8'):
-    """ return the content of the body-tag """ 
+    """ return the content of the body-tag """
     uni = unicode(string, encoding)
-    for rex in rex1,rex2: 
-        match = rex.search(uni) 
-        if not match: 
-            break 
-        uni = match.group(1) 
-    return uni 
+    for rex in rex1,rex2:
+        match = rex.search(uni)
+        if not match:
+            break
+        uni = match.group(1)
+    return uni
 
-class Project: # used for confrest.py files 
+class Project: # used for confrest.py files
     def __init__(self, sourcepath):
         self.sourcepath = sourcepath
     def process(self, path):

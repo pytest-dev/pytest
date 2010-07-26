@@ -28,14 +28,14 @@ class DictImporter(object):
         except KeyError:
             s = self.sources[fullname+'.__init__']
             is_pkg = True
-        
+
         co = compile(s, fullname, 'exec')
         module = sys.modules.setdefault(fullname, ModuleType(fullname))
         module.__file__ = "%s/%s" % (__file__, fullname)
         module.__loader__ = self
         if is_pkg:
             module.__path__ = [fullname]
-            
+
         do_exec(co, module.__dict__)
         return sys.modules[fullname]
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     if sys.version_info >= (3,0):
         exec("def do_exec(co, loc): exec(co, loc)\n")
         import pickle
-        sources = sources.encode("ascii") # ensure bytes 
+        sources = sources.encode("ascii") # ensure bytes
         sources = pickle.loads(zlib.decompress(base64.decodebytes(sources)))
     else:
         import cPickle as pickle

@@ -6,7 +6,7 @@ def test_plugin_specify(testdir):
     config = py.test.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)
-    #py.test.raises(ImportError, 
+    #py.test.raises(ImportError,
     #    "config.pluginmanager.do_configure(config)"
     #)
 

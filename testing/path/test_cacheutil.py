@@ -1,5 +1,5 @@
 import py
-from py._path import cacheutil 
+from py._path import cacheutil
 
 class BasicCacheAPITest:
     cache = None
@@ -30,14 +30,14 @@ class TestBuildcostAccess(BasicCacheAPITest):
 
     def test_cache_works_somewhat_simple(self, monkeypatch):
         cache = cacheutil.BuildcostAccessCache()
-        # the default gettime 
-        # BuildcostAccessCache.build can 
+        # the default gettime
+        # BuildcostAccessCache.build can
         # result into time()-time() == 0 which makes the below
         # test fail randomly.  Let's rather use incrementing
-        # numbers instead. 
+        # numbers instead.
         l = [0]
         def counter():
-            l[0] = l[0] + 1 
+            l[0] = l[0] + 1
             return l[0]
         monkeypatch.setattr(cacheutil, 'gettime', counter)
         for x in range(cache.maxentries):
@@ -49,7 +49,7 @@ class TestBuildcostAccess(BasicCacheAPITest):
         for x in range(halfentries):
             assert cache.getorbuild(x, None) == x
             assert cache.getorbuild(x, None) == x
-        # evict one entry 
+        # evict one entry
         val = cache.getorbuild(-1, lambda: 42)
         assert val == 42
         # check that recently used ones are still there
@@ -65,20 +65,20 @@ class TestAging(BasicCacheAPITest):
 
     def test_cache_eviction(self):
         self.cache.getorbuild(17, lambda: 17)
-        endtime = py.std.time.time() + self.maxsecs * 10 
-        while py.std.time.time() < endtime: 
+        endtime = py.std.time.time() + self.maxsecs * 10
+        while py.std.time.time() < endtime:
             try:
                 self.cache._getentry(17)
             except KeyError:
-                break 
-            py.std.time.sleep(self.maxsecs*0.3) 
-        else: 
-            py.test.fail("waiting for cache eviction failed") 
+                break
+            py.std.time.sleep(self.maxsecs*0.3)
+        else:
+            py.test.fail("waiting for cache eviction failed")
 
-def test_prune_lowestweight(): 
-    maxsecs = 0.05 
+def test_prune_lowestweight():
+    maxsecs = 0.05
     cache = cacheutil.AgingCache(maxentries=10, maxseconds=maxsecs)
-    for x in range(cache.maxentries): 
-        cache.getorbuild(x, lambda: x) 
-    py.std.time.sleep(maxsecs*1.1) 
-    cache.getorbuild(cache.maxentries+1, lambda: 42) 
+    for x in range(cache.maxentries):
+        cache.getorbuild(x, lambda: x)
+    py.std.time.sleep(maxsecs*1.1)
+    cache.getorbuild(cache.maxentries+1, lambda: 42)

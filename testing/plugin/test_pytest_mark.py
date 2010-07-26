@@ -16,7 +16,7 @@ class TestMark:
         mark = Mark()
         def f(): pass
         mark.world(x=3, y=4)(f)
-        assert f.world 
+        assert f.world
         assert f.world.x == 3
         assert f.world.y == 4
 
@@ -74,7 +74,7 @@ class TestFunctional:
             class TestClass:
                 pytestmark = [py.test.mark.hello, py.test.mark.world]
                 def test_func(self):
-                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
         clscol = modcol.collect()[0]
@@ -88,7 +88,7 @@ class TestFunctional:
             pytestmark = [py.test.mark.hello, py.test.mark.world]
             class TestClass:
                 def test_func(self):
-                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
         clscol = modcol.collect()[0]
@@ -104,7 +104,7 @@ class TestFunctional:
             @py.test.mark.hello
             class TestClass:
                 def test_func(self):
-                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.hello
         """)
         clscol = modcol.collect()[0]
         item = clscol.collect()[0].collect()[0]
@@ -119,7 +119,7 @@ class TestFunctional:
             class TestClass:
                 pytestmark = py.test.mark.world
                 def test_func(self):
-                    assert TestClass.test_func.hello  
+                    assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
         clscol = modcol.collect()[0]
@@ -162,7 +162,7 @@ class TestFunctional:
             def pytest_funcarg__arg(request):
                 request.applymarker(py.test.mark.hello)
             def pytest_terminal_summary(terminalreporter):
-                l = terminalreporter.stats['passed'] 
+                l = terminalreporter.stats['passed']
                 terminalreporter._tw.line("keyword: %s" % l[0].keywords)
         """)
         testdir.makepyfile("""

@@ -12,7 +12,7 @@ def assert_attr(node, **kwargs):
     for name, expected in kwargs.items():
         anode = node.getAttributeNode(name)
         assert anode, "node %r has no attribute %r" %(node, name)
-        val = anode.value 
+        val = anode.value
         assert val == str(expected)
 
 class TestPython:
@@ -33,7 +33,7 @@ class TestPython:
                 assert 1
         """)
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=0, failures=1, skips=3, tests=2)
 
@@ -45,12 +45,12 @@ class TestPython:
                 pass
         """)
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
-            classname="test_setup_error.test_setup_error", 
+        assert_attr(tnode,
+            classname="test_setup_error.test_setup_error",
             name="test_function")
         fnode = tnode.getElementsByTagName("error")[0]
         assert_attr(fnode, message="test setup failure")
@@ -63,11 +63,11 @@ class TestPython:
                     assert 0
         """)
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, failures=1)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             classname="test_classname_instance.test_classname_instance.TestClass",
             name="test_method")
 
@@ -75,7 +75,7 @@ class TestPython:
         testdir.makeconftest("def pytest_runtest_protocol(): 0 / 0")
         testdir.makepyfile("def test_function(): pass")
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
@@ -87,12 +87,12 @@ class TestPython:
     def test_failure_function(self, testdir):
         testdir.makepyfile("def test_fail(): raise ValueError(42)")
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, failures=1, tests=1)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
-            classname="test_failure_function.test_failure_function", 
+        assert_attr(tnode,
+            classname="test_failure_function.test_failure_function",
             name="test_fail")
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
@@ -103,42 +103,42 @@ class TestPython:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(id="<", funcargs=dict(arg1=42))
                 metafunc.addcall(id="&", funcargs=dict(arg1=44))
-            def test_func(arg1): 
+            def test_func(arg1):
                 assert 0
         """)
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, failures=2, tests=2)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
-            classname="test_failure_escape.test_failure_escape", 
+        assert_attr(tnode,
+            classname="test_failure_escape.test_failure_escape",
             name="test_func[<]")
         tnode = node.getElementsByTagName("testcase")[1]
-        assert_attr(tnode, 
-            classname="test_failure_escape.test_failure_escape", 
+        assert_attr(tnode,
+            classname="test_failure_escape.test_failure_escape",
             name="test_func[&]")
 
     def test_junit_prefixing(self, testdir):
         testdir.makepyfile("""
-            def test_func(): 
+            def test_func():
                 assert 0
             class TestHello:
                 def test_hello(self):
                     pass
         """)
         result, dom = runandparse(testdir, "--junitprefix=xyz")
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, failures=1, tests=2)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             classname="xyz.test_junit_prefixing.test_junit_prefixing",
             name="test_func")
         tnode = node.getElementsByTagName("testcase")[1]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             classname="xyz.test_junit_prefixing.test_junit_prefixing."
-                      "TestHello", 
+                      "TestHello",
             name="test_hello")
 
     def test_xfailure_function(self, testdir):
@@ -148,11 +148,11 @@ class TestPython:
                 py.test.xfail("42")
         """)
         result, dom = runandparse(testdir)
-        assert not result.ret 
+        assert not result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             classname="test_xfailure_function.test_xfailure_function",
             name="test_xfail")
         fnode = tnode.getElementsByTagName("skipped")[0]
@@ -167,11 +167,11 @@ class TestPython:
                 pass
         """)
         result, dom = runandparse(testdir)
-        #assert result.ret 
+        #assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             classname="test_xfailure_xpass.test_xfailure_xpass",
             name="test_xpass")
         fnode = tnode.getElementsByTagName("skipped")[0]
@@ -181,11 +181,11 @@ class TestPython:
     def test_collect_error(self, testdir):
         testdir.makepyfile("syntax error")
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             #classname="test_collect_error",
             name="test_collect_error")
         fnode = tnode.getElementsByTagName("failure")[0]
@@ -195,11 +195,11 @@ class TestPython:
     def test_collect_skipped(self, testdir):
         testdir.makepyfile("import py ; py.test.skip('xyz')")
         result, dom = runandparse(testdir)
-        assert not result.ret 
+        assert not result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             #classname="test_collect_error",
             name="test_collect_skipped")
         fnode = tnode.getElementsByTagName("skipped")[0]
@@ -237,14 +237,14 @@ class TestNonPython:
         """)
         testdir.tmpdir.join("myfile.xyz").write("hello")
         result, dom = runandparse(testdir)
-        assert result.ret 
+        assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=0, failures=1, skips=0, tests=1)
         tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode, 
+        assert_attr(tnode,
             #classname="test_collect_error",
             name="myfile.xyz")
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
         assert "custom item runtest failed" in fnode.toxml()
-        
+

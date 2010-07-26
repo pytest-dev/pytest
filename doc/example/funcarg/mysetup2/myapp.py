@@ -1,5 +1,5 @@
 
 class MyApp:
     def question(self):
-        return 6 * 9 
+        return 6 * 9
 

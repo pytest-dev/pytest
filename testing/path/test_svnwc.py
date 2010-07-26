@@ -98,11 +98,11 @@ class TestWCSvnCommandPath(CommonSvnTests):
         s = path1.status(rec=1)
         # Comparing just the file names, because paths are unpredictable
         # on Windows. (long vs. 8.3 paths)
-        assert r.join('samplefile').basename in [item.basename 
+        assert r.join('samplefile').basename in [item.basename
                                                     for item in s.unchanged]
-        assert r.join('sampledir').basename in [item.basename 
+        assert r.join('sampledir').basename in [item.basename
                                                     for item in s.unchanged]
-        assert r.join('sampledir/otherfile').basename in [item.basename 
+        assert r.join('sampledir/otherfile').basename in [item.basename
                                                     for item in s.unchanged]
 
     def test_status_update(self, path1):
@@ -112,7 +112,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             s = r.status(updates=1, rec=1)
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
-            assert r.join('anotherfile').basename in [item.basename for 
+            assert r.join('anotherfile').basename in [item.basename for
                                                     item in s.update_available]
             #assert len(s.update_available) == 1
         finally:
@@ -246,7 +246,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
     def test_versioned(self, path1):
         assert path1.check(versioned=1)
         # TODO: Why does my copy of svn think .svn is versioned?
-        #assert path1.join('.svn').check(versioned=0) 
+        #assert path1.join('.svn').check(versioned=0)
         assert path1.join('samplefile').check(versioned=1)
         assert not path1.join('notexisting').check(versioned=1)
         notexisting = path1.join('hello').localpath
@@ -261,7 +261,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
         p = path1.localpath.ensure("not_a_versioned_file")
         l = [x.localpath
                 for x in path1.listdir(lambda x: x.check(versioned=True))]
-        assert p not in l 
+        assert p not in l
 
     def test_nonversioned_remove(self, path1):
         assert path1.check(versioned=1)
@@ -278,7 +278,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             assert path1.propget('gaga') == 'this'
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
-            assert path1.basename in [item.basename for item in 
+            assert path1.basename in [item.basename for item in
                                         path1.status().prop_modified]
             assert 'gaga' in path1.proplist()
             assert path1.proplist()['gaga'] == 'this'
@@ -293,7 +293,7 @@ class TestWCSvnCommandPath(CommonSvnTests):
             p = path1.proplist(rec=1)
             # Comparing just the file names, because paths are unpredictable
             # on Windows. (long vs. 8.3 paths)
-            assert (path1 / 'samplefile').basename in [item.basename 
+            assert (path1 / 'samplefile').basename in [item.basename
                                                                 for item in p]
         finally:
             s.propdel('gugu')
@@ -430,7 +430,7 @@ class TestInfoSvnWCCommand:
         Checksum: 357e44880e5d80157cc5fbc3ce9822e3
         """
         path = py.path.local(__file__).dirpath().chdir()
-        try:    
+        try:
             info = InfoSvnWCCommand(output)
         finally:
             path.chdir()

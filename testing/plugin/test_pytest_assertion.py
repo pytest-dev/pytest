@@ -5,9 +5,9 @@ def test_functional(testdir):
             assert x == 4
     """)
     result = testdir.runpytest()
-    assert "3 == 4" in result.stdout.str() 
+    assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest("--no-assert")
-    assert "3 == 4" not in result.stdout.str() 
+    assert "3 == 4" not in result.stdout.str()
 
 def test_traceback_failure(testdir):
     p1 = testdir.makepyfile("""
@@ -20,9 +20,9 @@ def test_traceback_failure(testdir):
     """)
     result = testdir.runpytest(p1)
     result.stdout.fnmatch_lines([
-        "*test_traceback_failure.py F", 
+        "*test_traceback_failure.py F",
         "====* FAILURES *====",
-        "____*____", 
+        "____*____",
         "",
         "    def test_onefails():",
         ">       f(3)",

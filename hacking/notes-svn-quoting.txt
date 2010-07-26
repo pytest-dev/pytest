@@ -24,7 +24,7 @@ URL related notes
   characters that aren't allowed in URL paths (such as :, @, %, etc.) should
   be replaced with a % sign following the ASCII value of the character (two
   digit HEX)
-  
+
   an exception (the only one I could find so far) is the drive letter in a file
   URL in windows, the following path was required to get a file 'bar' from a
   repo in 'c:\\foo'::

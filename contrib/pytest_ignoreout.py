@@ -5,4 +5,4 @@ def pytest_runtest_call(item, __multicall__):
     try:
         return __multicall__.execute()
     finally:
-        outerr = cap.reset() 
+        outerr = cap.reset()

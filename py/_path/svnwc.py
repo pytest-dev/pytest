@@ -75,13 +75,13 @@ class RepoCache:
 repositories = RepoCache()
 
 
-# svn support code 
+# svn support code
 
 ALLOWED_CHARS = "_ -/\\=$.~+%" #add characters as necessary when tested
 if sys.platform == "win32":
     ALLOWED_CHARS += ":"
 ALLOWED_CHARS_HOST = ALLOWED_CHARS + '@:'
-    
+
 def _getsvnversion(ver=[]):
     try:
         return ver[0]
@@ -108,7 +108,7 @@ def _check_for_bad_chars(text, allowed_chars=ALLOWED_CHARS):
     return False
 
 def checkbadchars(url):
-    # (hpk) not quite sure about the exact purpose, guido w.? 
+    # (hpk) not quite sure about the exact purpose, guido w.?
     proto, uri = url.split("://", 1)
     if proto != "file":
         host, uripath = uri.split('/', 1)
@@ -116,7 +116,7 @@ def checkbadchars(url):
         if (_check_for_bad_chars(host, ALLOWED_CHARS_HOST) \
             or _check_for_bad_chars(uripath, ALLOWED_CHARS)):
             raise ValueError("bad char in %r" % (url, ))
-            
+
 
 #_______________________________________________________________
 
@@ -351,7 +351,7 @@ def path_to_fspath(path, addat=True):
     elif addat:
         sp = '%s@HEAD' % (sp,)
     return sp
-    
+
 def url_from_path(path):
     fspath = path_to_fspath(path, False)
     quote = py.std.urllib.quote
@@ -460,7 +460,7 @@ class SvnWCCommandPath(common.PathBase):
         args = args and list(args) or []
         args.append(self._makeauthoptions())
         return self._svn(cmd, *args)
-        
+
     def _svn(self, cmd, *args):
         l = ['svn %s' % cmd]
         args = [self._escape(item) for item in args]
@@ -482,9 +482,9 @@ class SvnWCCommandPath(common.PathBase):
         except py.process.cmdexec.Error:
             e = sys.exc_info()[1]
             strerr = e.err.lower()
-            if strerr.find('file not found') != -1: 
-                raise py.error.ENOENT(self) 
-            if (strerr.find('file exists') != -1 or 
+            if strerr.find('file not found') != -1:
+                raise py.error.ENOENT(self)
+            if (strerr.find('file exists') != -1 or
                 strerr.find('file already exists') != -1 or
                 strerr.find("can't create directory") != -1):
                 raise py.error.EEXIST(self)
@@ -503,7 +503,7 @@ class SvnWCCommandPath(common.PathBase):
         if rev is None or rev == -1:
             if (py.std.sys.platform != 'win32' and
                     _getsvnversion() == '1.3'):
-                url += "@HEAD" 
+                url += "@HEAD"
         else:
             if _getsvnversion() == '1.3':
                 url += "@%d" % rev
@@ -544,7 +544,7 @@ class SvnWCCommandPath(common.PathBase):
         if p.check():
             if p.check(versioned=False):
                 p.add()
-            return p 
+            return p
         if kwargs.get('dir', 0):
             return p._ensuredirs()
         parent = p.dirpath()
@@ -594,7 +594,7 @@ class SvnWCCommandPath(common.PathBase):
         if not out:
             # warning or error, raise exception
             raise Exception(out[4:])
-    
+
     def unlock(self):
         """ unset a previously set lock """
         out = self._authsvn('unlock').strip()
@@ -627,8 +627,8 @@ class SvnWCCommandPath(common.PathBase):
             rec = '--non-recursive'
 
         # XXX does not work on all subversion versions
-        #if not externals: 
-        #    externals = '--ignore-externals' 
+        #if not externals:
+        #    externals = '--ignore-externals'
 
         if updates:
             updates = '-u'
@@ -688,19 +688,19 @@ class SvnWCCommandPath(common.PathBase):
             del cache.info[self]
         except KeyError:
             pass
-        if out: 
+        if out:
             m = self._rex_commit.match(out)
             return int(m.group(1))
 
     def propset(self, name, value, *args):
         """ set property name to value on this path. """
-        d = py.path.local.mkdtemp() 
-        try: 
-            p = d.join('value') 
-            p.write(value) 
+        d = py.path.local.mkdtemp()
+        try:
+            p = d.join('value')
+            p.write(value)
             self._svn('propset', name, '--file', str(p), *args)
-        finally: 
-            d.remove() 
+        finally:
+            d.remove()
 
     def propget(self, name):
         """ get property name on this path. """
@@ -776,16 +776,16 @@ recursively. """
             # XXX SVN 1.3 has output on stderr instead of stdout (while it does
             # return 0!), so a bit nasty, but we assume no output is output
             # to stderr...
-            if (output.strip() == '' or 
+            if (output.strip() == '' or
                     output.lower().find('not a versioned resource') != -1):
                 raise py.error.ENOENT(self, output)
             info = InfoSvnWCCommand(output)
 
             # Can't reliably compare on Windows without access to win32api
-            if py.std.sys.platform != 'win32': 
-                if info.path != self.localpath: 
-                    raise py.error.ENOENT(self, "not a versioned resource:" + 
-                            " %s != %s" % (info.path, self.localpath)) 
+            if py.std.sys.platform != 'win32':
+                if info.path != self.localpath:
+                    raise py.error.ENOENT(self, "not a versioned resource:" +
+                            " %s != %s" % (info.path, self.localpath))
             cache.info[self] = info
         return info
 
@@ -799,7 +799,7 @@ recursively. """
             fil = common.FNMatcher(fil)
         # XXX unify argument naming with LocalPath.listdir
         def notsvn(path):
-            return path.basename != '.svn' 
+            return path.basename != '.svn'
 
         paths = []
         for localpath in self.localpath.listdir(notsvn):
@@ -823,8 +823,8 @@ recursively. """
         def versioned(self):
             try:
                 s = self.svnwcpath.info()
-            except (py.error.ENOENT, py.error.EEXIST): 
-                return False 
+            except (py.error.ENOENT, py.error.EEXIST):
+                return False
             except py.process.cmdexec.Error:
                 e = sys.exc_info()[1]
                 if e.err.find('is not a working copy')!=-1:
@@ -833,7 +833,7 @@ recursively. """
                     return False
                 raise
             else:
-                return True 
+                return True
 
     def log(self, rev_start=None, rev_end=1, verbose=False):
         """ return a list of LogEntry instances for this path.
@@ -859,9 +859,9 @@ if verbose is True, then the LogEntry instances also know which files changed.
         cmd = locale_env + 'svn log --xml %s %s %s "%s"' % (
             rev_opt, verbose_opt, auth_opt, self.strpath)
 
-        popen = subprocess.Popen(cmd, 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE,  
+        popen = subprocess.Popen(cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     shell=True,
         )
         stdout, stderr = popen.communicate()

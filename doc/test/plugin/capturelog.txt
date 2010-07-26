@@ -9,10 +9,10 @@ capture output of logging module.
 Installation
 ------------
 
-You can install the `pytest-capturelog pypi`_ package 
+You can install the `pytest-capturelog pypi`_ package
 with pip::
 
-    pip install pytest-capturelog 
+    pip install pytest-capturelog
 
 or with easy install::
 

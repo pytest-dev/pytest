@@ -1,13 +1,13 @@
 import py
 
 class Conftest(object):
-    """ the single place for accessing values and interacting 
-        towards conftest modules from py.test objects. 
+    """ the single place for accessing values and interacting
+        towards conftest modules from py.test objects.
 
         (deprecated)
-        Note that triggering Conftest instances to import 
-        conftest.py files may result in added cmdline options. 
-    """ 
+        Note that triggering Conftest instances to import
+        conftest.py files may result in added cmdline options.
+    """
     def __init__(self, onimport=None, confcutdir=None):
         self._path2confmods = {}
         self._onimport = onimport
@@ -16,12 +16,12 @@ class Conftest(object):
 
     def setinitial(self, args):
         """ try to find a first anchor path for looking up global values
-            from conftests. This function is usually called _before_  
+            from conftests. This function is usually called _before_
             argument parsing.  conftest files may add command line options
             and we thus have no completely safe way of determining
             which parts of the arguments are actually related to options
-            and which are file system paths.  We just try here to get 
-            bootstrapped ... 
+            and which are file system paths.  We just try here to get
+            bootstrapped ...
         """
         current = py.path.local()
         opt = '--confcutdir'
@@ -33,15 +33,15 @@ class Conftest(object):
                         p = current.join(args[i+1], abs=True)
                 elif opt1.startswith(opt + "="):
                     p = current.join(opt1[len(opt)+1:], abs=1)
-                self._confcutdir = p 
+                self._confcutdir = p
                 break
         for arg in args + [current]:
             if hasattr(arg, 'startswith') and arg.startswith("--"):
                 continue
             anchor = current.join(arg, abs=1)
-            if anchor.check(): # we found some file object 
+            if anchor.check(): # we found some file object
                 self._path2confmods[None] = self.getconftestmodules(anchor)
-                # let's also consider test* dirs 
+                # let's also consider test* dirs
                 if anchor.check(dir=1):
                     for x in anchor.listdir(lambda x: x.check(dir=1, dotfile=0)):
                         self.getconftestmodules(x)
@@ -50,7 +50,7 @@ class Conftest(object):
             assert 0, "no root of filesystem?"
 
     def getconftestmodules(self, path):
-        """ return a list of imported conftest modules for the given path.  """ 
+        """ return a list of imported conftest modules for the given path.  """
         try:
             clist = self._path2confmods[path]
         except KeyError:
@@ -70,7 +70,7 @@ class Conftest(object):
                         clist.append(self.importconftest(conftestpath))
             self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
-        # affect us by always returning a copy of the actual list 
+        # affect us by always returning a copy of the actual list
         return clist[:]
 
     def rget(self, name, path=None):
@@ -92,9 +92,9 @@ class Conftest(object):
         try:
             return self._conftestpath2mod[conftestpath]
         except KeyError:
-            if not conftestpath.dirpath('__init__.py').check(file=1): 
-                # HACK: we don't want any "globally" imported conftest.py, 
-                #       prone to conflicts and subtle problems 
+            if not conftestpath.dirpath('__init__.py').check(file=1):
+                # HACK: we don't want any "globally" imported conftest.py,
+                #       prone to conflicts and subtle problems
                 modname = str(conftestpath).replace('.', conftestpath.sep)
                 mod = conftestpath.pyimport(modname=modname)
             else:

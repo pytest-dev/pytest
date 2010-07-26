@@ -67,10 +67,10 @@ except NameError:
 try:
     set, frozenset = set, frozenset
 except NameError:
-    from sets import set, frozenset 
+    from sets import set, frozenset
 
 # pass through
-enumerate = enumerate 
+enumerate = enumerate
 
 try:
     BaseException = BaseException
@@ -91,8 +91,8 @@ if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins
 
-    # some backward compatibility helpers 
-    _basestring = str 
+    # some backward compatibility helpers
+    _basestring = str
     def _totext(obj, encoding=None):
         if isinstance(obj, bytes):
             obj = obj.decode(encoding)
@@ -100,9 +100,9 @@ if sys.version_info >= (3, 0):
             obj = str(obj)
         return obj
 
-    def _isbytes(x): 
+    def _isbytes(x):
         return isinstance(x, bytes)
-    def _istext(x): 
+    def _istext(x):
         return isinstance(x, str)
 
     def _getimself(function):
@@ -135,13 +135,13 @@ if sys.version_info >= (3, 0):
 
 else:
     import __builtin__ as builtins
-    _totext = unicode 
+    _totext = unicode
     _basestring = basestring
     execfile = execfile
     callable = callable
-    def _isbytes(x): 
+    def _isbytes(x):
         return isinstance(x, str)
-    def _istext(x): 
+    def _istext(x):
         return isinstance(x, unicode)
 
     def _getimself(function):
@@ -157,7 +157,7 @@ else:
             return getattr(function, "func_code", None)
 
     def print_(*args, **kwargs):
-        """ minimal backport of py3k print statement. """ 
+        """ minimal backport of py3k print statement. """
         sep = ' '
         if 'sep' in kwargs:
             sep = kwargs.pop('sep')
@@ -177,16 +177,16 @@ else:
         file.write(end)
 
     def exec_(obj, globals=None, locals=None):
-        """ minimal backport of py3k exec statement. """ 
+        """ minimal backport of py3k exec statement. """
         __tracebackhide__ = True
-        if globals is None: 
+        if globals is None:
             frame = sys._getframe(1)
-            globals = frame.f_globals 
+            globals = frame.f_globals
             if locals is None:
                 locals = frame.f_locals
         elif locals is None:
             locals = globals
-        exec2(obj, globals, locals) 
+        exec2(obj, globals, locals)
 
 if sys.version_info >= (3,0):
     def _reraise(cls, val, tb):
@@ -200,11 +200,11 @@ def _reraise(cls, val, tb):
     raise cls, val, tb
 def exec2(obj, globals, locals):
     __tracebackhide__ = True
-    exec obj in globals, locals 
+    exec obj in globals, locals
 """)
 
 def _tryimport(*names):
-    """ return the first successfully imported module. """ 
+    """ return the first successfully imported module. """
     assert names
     for name in names:
         try:

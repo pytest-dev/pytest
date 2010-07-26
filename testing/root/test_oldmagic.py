@@ -26,7 +26,7 @@ def test_invoke_compile(recwarn, monkeypatch):
         co = compile("def f(): return 1\n", '', 'exec')
         d = {}
         py.builtin.exec_(co, d)
-        assert py.code.Source(d['f']) 
+        assert py.code.Source(d['f'])
     finally:
         py.magic.revoke(compile=True)
     recwarn.pop(DeprecationWarning)
@@ -72,7 +72,7 @@ def test_AssertionError(testdir):
             recwarn.pop(DeprecationWarning)
             assert err is py.code._AssertionError
     """)
-    result = testdir.runpytest() 
+    result = testdir.runpytest()
     assert "1 passed" in result.stdout.str()
 
 def test_autopath_deprecation(testdir):
@@ -83,13 +83,13 @@ def test_autopath_deprecation(testdir):
             recwarn.pop(DeprecationWarning)
             assert py.path.local(__file__).dirpath() == p.dirpath()
     """)
-    result = testdir.runpytest() 
+    result = testdir.runpytest()
     assert "1 passed" in result.stdout.str()
 
 class Testautopath:
     getauto = "from py.magic import autopath ; autopath = autopath()"
-    def setup_class(cls): 
-        cls.root = py.test.ensuretemp(cls.__name__) 
+    def setup_class(cls):
+        cls.root = py.test.ensuretemp(cls.__name__)
         cls.initdir = cls.root.ensure('pkgdir', dir=1)
         cls.initdir.ensure('__init__.py')
         cls.initdir2 = cls.initdir.ensure('initdir2', dir=1)

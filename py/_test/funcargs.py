@@ -3,15 +3,15 @@ import py
 def getfuncargnames(function):
     argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
     startindex = py.std.inspect.ismethod(function) and 1 or 0
-    defaults = getattr(function, 'func_defaults', 
+    defaults = getattr(function, 'func_defaults',
                        getattr(function, '__defaults__', None)) or ()
     numdefaults = len(defaults)
     if numdefaults:
         return argnames[startindex:-numdefaults]
     return argnames[startindex:]
-    
+
 def fillfuncargs(function):
-    """ fill missing funcargs. """ 
+    """ fill missing funcargs. """
     request = FuncargRequest(pyfuncitem=function)
     request._fillfuncargs()
 
@@ -29,10 +29,10 @@ def getplugins(node, withpy=False): # might by any node
 _notexists = object()
 class CallSpec:
     def __init__(self, funcargs, id, param):
-        self.funcargs = funcargs 
+        self.funcargs = funcargs
         self.id = id
         if param is not _notexists:
-            self.param = param 
+            self.param = param
     def __repr__(self):
         return "<CallSpec id=%r param=%r funcargs=%r>" %(
             self.id, getattr(self, 'param', '?'), self.funcargs)
@@ -40,7 +40,7 @@ class CallSpec:
 class Metafunc:
     def __init__(self, function, config=None, cls=None, module=None):
         self.config = config
-        self.module = module 
+        self.module = module
         self.function = function
         self.funcargnames = getfuncargnames(function)
         self.cls = cls
@@ -51,7 +51,7 @@ class Metafunc:
     def addcall(self, funcargs=None, id=_notexists, param=_notexists):
         assert funcargs is None or isinstance(funcargs, dict)
         if id is None:
-            raise ValueError("id=None not allowed") 
+            raise ValueError("id=None not allowed")
         if id is _notexists:
             id = len(self._calls)
         id = str(id)
@@ -65,7 +65,7 @@ class FuncargRequest:
     _argname = None
 
     class LookupError(LookupError):
-        """ error on performing funcarg request. """ 
+        """ error on performing funcarg request. """
 
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
@@ -77,7 +77,7 @@ class FuncargRequest:
         self.config = pyfuncitem.config
         self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
-            self.param = pyfuncitem._requestparam 
+            self.param = pyfuncitem._requestparam
         self._plugins = getplugins(pyfuncitem, withpy=True)
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
@@ -94,39 +94,39 @@ class FuncargRequest:
 
 
     def applymarker(self, marker):
-        """ apply a marker to a test function invocation. 
+        """ apply a marker to a test function invocation.
 
-        The 'marker' must be created with py.test.mark.* XYZ. 
+        The 'marker' must be created with py.test.mark.* XYZ.
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
             raise ValueError("%r is not a py.test.mark.* object")
-        self._pyfuncitem.keywords[marker.markname] = marker 
+        self._pyfuncitem.keywords[marker.markname] = marker
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
-        """ cache and return result of calling setup().  
+        """ cache and return result of calling setup().
 
-        The requested argument name, the scope and the ``extrakey`` 
-        determine the cache key.  The scope also determines when 
-        teardown(result) will be called.  valid scopes are: 
-        scope == 'function': when the single test function run finishes. 
+        The requested argument name, the scope and the ``extrakey``
+        determine the cache key.  The scope also determines when
+        teardown(result) will be called.  valid scopes are:
+        scope == 'function': when the single test function run finishes.
         scope == 'module': when tests in a different module are run
-        scope == 'session': when tests of the session have run. 
+        scope == 'session': when tests of the session have run.
         """
         if not hasattr(self.config, '_setupcache'):
-            self.config._setupcache = {} # XXX weakref? 
+            self.config._setupcache = {} # XXX weakref?
         cachekey = (self._currentarg, self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
         try:
             val = cache[cachekey]
         except KeyError:
             val = setup()
-            cache[cachekey] = val 
+            cache[cachekey] = val
             if teardown is not None:
                 def finalizer():
                     del cache[cachekey]
                     teardown(val)
                 self._addfinalizer(finalizer, scope=scope)
-        return val 
+        return val
 
     def getfuncargvalue(self, argname):
         try:
@@ -135,15 +135,15 @@ class FuncargRequest:
             pass
         if argname not in self._name2factory:
             self._name2factory[argname] = self.config.pluginmanager.listattr(
-                    plugins=self._plugins, 
+                    plugins=self._plugins,
                     attrname=self._argprefix + str(argname)
             )
-        #else: we are called recursively  
+        #else: we are called recursively
         if not self._name2factory[argname]:
             self._raiselookupfailed(argname)
         funcargfactory = self._name2factory[argname].pop()
         oldarg = self._currentarg
-        self._currentarg = argname 
+        self._currentarg = argname
         try:
             self._funcargs[argname] = res = funcargfactory(request=self)
         finally:
@@ -165,8 +165,8 @@ class FuncargRequest:
             finalizer=finalizer, colitem=colitem)
 
     def addfinalizer(self, finalizer):
-        """ call the given finalizer after test function finished execution. """ 
-        self._addfinalizer(finalizer, scope="function") 
+        """ call the given finalizer after test function finished execution. """
+        self._addfinalizer(finalizer, scope="function")
 
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)
@@ -178,7 +178,7 @@ class FuncargRequest:
                 if name.startswith(self._argprefix):
                     name = name[len(self._argprefix):]
                     if name not in available:
-                        available.append(name) 
+                        available.append(name)
         fspath, lineno, msg = self._pyfuncitem.reportinfo()
         msg = "LookupError: no factory found for function argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)

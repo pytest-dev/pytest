@@ -3,7 +3,7 @@ from py._test import funcargs
 
 def test_getfuncargnames():
     def f(): pass
-    assert not funcargs.getfuncargnames(f) 
+    assert not funcargs.getfuncargnames(f)
     def g(arg): pass
     assert funcargs.getfuncargnames(g) == ['arg']
     def h(arg1, arg2="hello"): pass
@@ -19,7 +19,7 @@ def test_getfuncargnames():
 
 def test_callspec_repr():
     cs = funcargs.CallSpec({}, 'hello', 1)
-    repr(cs) 
+    repr(cs)
     cs = funcargs.CallSpec({}, 'hello', funcargs._notexists)
     repr(cs)
 
@@ -30,7 +30,7 @@ class TestFillFuncArgs:
                 return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
-        exc = py.test.raises(funcargs.FuncargRequest.LookupError, 
+        exc = py.test.raises(funcargs.FuncargRequest.LookupError,
             "funcargs.fillfuncargs(item)")
         s = str(exc.value)
         assert s.find("xyzsomething") != -1
@@ -48,7 +48,7 @@ class TestFillFuncArgs:
         item = testdir.getitem("def test_func(some, other): pass")
         class Provider:
             def pytest_funcarg__some(self, request):
-                return request.function.__name__ 
+                return request.function.__name__
             def pytest_funcarg__other(self, request):
                 return 42
         item.config.pluginmanager.register(Provider())
@@ -64,9 +64,9 @@ class TestFillFuncArgs:
 
             class TestClass:
                 def test_method(self, something):
-                    pass 
+                    pass
             def test_func(something):
-                pass 
+                pass
         """)
         item1, item2 = testdir.genitems([modcol])
         funcargs.fillfuncargs(item1)
@@ -78,9 +78,9 @@ class TestFillFuncArgs:
         p = testdir.makepyfile("""
             class TestClass:
                 def pytest_funcarg__something(self, request):
-                    return request.instance 
+                    return request.instance
                 def test_method(self, something):
-                    assert something is self 
+                    assert something is self
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
@@ -105,17 +105,17 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
-        assert req.function == item.obj 
+        assert req.function == item.obj
         assert hasattr(req.module, 'test_func')
         assert req.cls is None
-        assert req.function.__name__ == "test_func" 
-        assert req.config == item.config 
+        assert req.function.__name__ == "test_func"
+        assert req.config == item.config
         assert repr(req).find(req.function.__name__) != -1
 
     def test_request_attributes_method(self, testdir):
         item, = testdir.getitems("""
             class TestB:
-                def test_func(self, something): 
+                def test_func(self, something):
                     pass
         """)
         req = funcargs.FuncargRequest(item)
@@ -144,29 +144,29 @@ class TestRequest:
         item = testdir.getitem("""
             def pytest_funcarg__something(request):
                 return request.getfuncargvalue("something") + 1
-            def test_func(something): 
+            def test_func(something):
                 assert something == 2
         """)
         req = funcargs.FuncargRequest(item)
-        val = req.getfuncargvalue("something") 
+        val = req.getfuncargvalue("something")
         assert val == 2
 
     def test_getfuncargvalue(self, testdir):
         item = testdir.getitem("""
             l = [2]
             def pytest_funcarg__something(request): return 1
-            def pytest_funcarg__other(request): 
+            def pytest_funcarg__other(request):
                 return l.pop()
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
         py.test.raises(req.LookupError, req.getfuncargvalue, "notexists")
-        val = req.getfuncargvalue("something") 
+        val = req.getfuncargvalue("something")
         assert val == 1
-        val = req.getfuncargvalue("something") 
+        val = req.getfuncargvalue("something")
         assert val == 1
         val2 = req.getfuncargvalue("other")
-        assert val2 == 2 
+        assert val2 == 2
         val2 = req.getfuncargvalue("other")  # see about caching
         assert val2 == 2
         req._fillfuncargs()
@@ -175,27 +175,27 @@ class TestRequest:
     def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
             teardownlist = []
-            def pytest_funcarg__something(request): 
+            def pytest_funcarg__something(request):
                 request.addfinalizer(lambda: teardownlist.append(1))
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
-        req.config._setupstate.prepare(item) # XXX 
+        req.config._setupstate.prepare(item) # XXX
         req._fillfuncargs()
-        # successively check finalization calls 
-        teardownlist = item.getparent(py.test.collect.Module).obj.teardownlist 
+        # successively check finalization calls
+        teardownlist = item.getparent(py.test.collect.Module).obj.teardownlist
         ss = item.config._setupstate
-        assert not teardownlist 
-        ss.teardown_exact(item) 
+        assert not teardownlist
+        ss.teardown_exact(item)
         print(ss.stack)
         assert teardownlist == [1]
 
     def test_request_addfinalizer_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
             l = []
-            def pytest_funcarg__something(request): 
+            def pytest_funcarg__something(request):
                 request.addfinalizer(lambda: l.append(None))
-            def test_func(something, missingarg): 
+            def test_func(something, missingarg):
                 pass
             def test_second():
                 assert len(l) == 1
@@ -209,32 +209,32 @@ class TestRequest:
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
         req = funcargs.FuncargRequest(item)
-        assert req.fspath == modcol.fspath 
+        assert req.fspath == modcol.fspath
 
 def test_applymarker(testdir):
     item1,item2 = testdir.getitems("""
         class TestClass:
-            def test_func1(self, something): 
+            def test_func1(self, something):
                 pass
-            def test_func2(self, something): 
+            def test_func2(self, something):
                 pass
     """)
     req1 = funcargs.FuncargRequest(item1)
-    assert 'xfail' not in item1.keywords 
+    assert 'xfail' not in item1.keywords
     req1.applymarker(py.test.mark.xfail)
-    assert 'xfail' in item1.keywords 
-    assert 'skipif' not in item1.keywords 
+    assert 'xfail' in item1.keywords
+    assert 'skipif' not in item1.keywords
     req1.applymarker(py.test.mark.skipif)
-    assert 'skipif' in item1.keywords 
+    assert 'skipif' in item1.keywords
     py.test.raises(ValueError, "req1.applymarker(42)")
 
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
         item1,item2 = testdir.getitems("""
             class TestClass:
-                def test_func1(self, something): 
+                def test_func1(self, something):
                     pass
-                def test_func2(self, something): 
+                def test_func2(self, something):
                     pass
         """)
         req1 = funcargs.FuncargRequest(item1)
@@ -289,7 +289,7 @@ class TestRequestCachedSetup:
             def pytest_funcarg__arg2(request):
                 return request.cached_setup(lambda: 17)
             def test_two_different_setups(arg1, arg2):
-                assert arg1 != arg2 
+                assert arg1 != arg2
         """)
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
@@ -316,10 +316,10 @@ class TestRequestCachedSetup:
             l = []
             def pytest_funcarg__something(request):
                 val = request.cached_setup(setup, teardown)
-                return val 
+                return val
             def setup(mycache=[1]):
                 l.append(mycache.pop())
-                return l 
+                return l
             def teardown(something):
                 l.remove(something[0])
                 l.append(2)
@@ -329,7 +329,7 @@ class TestRequestCachedSetup:
                 assert something == [1]
         """)
         testdir.makepyfile(test_1="""
-            import test_0 # should have run already 
+            import test_0 # should have run already
             def test_check_test0_has_teardown_correct():
                 assert test_0.l == [2]
         """)
@@ -349,7 +349,7 @@ class TestMetafunc:
         metafunc = funcargs.Metafunc(func)
         assert len(metafunc.funcargnames) == 1
         assert 'arg1' in metafunc.funcargnames
-        assert metafunc.function is func 
+        assert metafunc.function is func
         assert metafunc.cls is None
 
     def test_addcall_no_args(self):
@@ -377,19 +377,19 @@ class TestMetafunc:
     def test_addcall_param(self):
         def func(arg1): pass
         metafunc = funcargs.Metafunc(func)
-        class obj: pass 
-        metafunc.addcall(param=obj) 
-        metafunc.addcall(param=obj) 
-        metafunc.addcall(param=1) 
+        class obj: pass
+        metafunc.addcall(param=obj)
+        metafunc.addcall(param=obj)
+        metafunc.addcall(param=1)
         assert len(metafunc._calls) == 3
-        assert metafunc._calls[0].param == obj 
-        assert metafunc._calls[1].param == obj 
+        assert metafunc._calls[0].param == obj
+        assert metafunc._calls[1].param == obj
         assert metafunc._calls[2].param == 1
 
     def test_addcall_funcargs(self):
         def func(arg1): pass
         metafunc = funcargs.Metafunc(func)
-        class obj: pass 
+        class obj: pass
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})
         assert len(metafunc._calls) == 2
@@ -403,11 +403,11 @@ class TestGenfuncFunctional:
             # assumes that generate/provide runs in the same process
             import py
             def pytest_generate_tests(metafunc):
-                metafunc.addcall(param=metafunc) 
+                metafunc.addcall(param=metafunc)
 
             def pytest_funcarg__metafunc(request):
                 assert request._pyfuncitem._genid == "0"
-                return request.param 
+                return request.param
 
             def test_function(metafunc, pytestconfig):
                 assert metafunc.config == pytestconfig
@@ -435,7 +435,7 @@ class TestGenfuncFunctional:
     def test_addcall_with_two_funcargs_generators(self, testdir):
         testdir.makeconftest("""
             def pytest_generate_tests(metafunc):
-                assert "arg1" in metafunc.funcargnames 
+                assert "arg1" in metafunc.funcargnames
                 metafunc.addcall(funcargs=dict(arg1=1, arg2=2))
         """)
         p = testdir.makepyfile("""
@@ -444,12 +444,12 @@ class TestGenfuncFunctional:
 
             class TestClass:
                 def test_myfunc(self, arg1, arg2):
-                    assert arg1 == arg2 
+                    assert arg1 == arg2
         """)
         result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
-            "*test_myfunc*0*PASS*", 
-            "*test_myfunc*1*FAIL*", 
+            "*test_myfunc*0*PASS*",
+            "*test_myfunc*1*FAIL*",
             "*1 failed, 1 passed*"
         ])
 
@@ -457,7 +457,7 @@ class TestGenfuncFunctional:
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=10)
-                metafunc.addcall(param=20) 
+                metafunc.addcall(param=20)
 
             def pytest_funcarg__arg1(request):
                 return request.param
@@ -469,8 +469,8 @@ class TestGenfuncFunctional:
         """)
         result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
-            "*test_func1*0*PASS*", 
-            "*test_func1*1*FAIL*", 
+            "*test_func1*0*PASS*",
+            "*test_func1*1*FAIL*",
             "*test_func2*PASS*",
             "*1 failed, 3 passed*"
         ])
@@ -478,7 +478,7 @@ class TestGenfuncFunctional:
     def test_generate_plugin_and_module(self, testdir):
         testdir.makeconftest("""
             def pytest_generate_tests(metafunc):
-                assert "arg1" in metafunc.funcargnames 
+                assert "arg1" in metafunc.funcargnames
                 metafunc.addcall(id="world", param=(2,100))
         """)
         p = testdir.makepyfile("""
@@ -492,12 +492,12 @@ class TestGenfuncFunctional:
 
             class TestClass:
                 def test_myfunc(self, arg1, arg2):
-                    assert arg1 == arg2 
+                    assert arg1 == arg2
         """)
         result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
-            "*test_myfunc*hello*PASS*", 
-            "*test_myfunc*world*FAIL*", 
+            "*test_myfunc*hello*PASS*",
+            "*test_myfunc*world*FAIL*",
             "*1 failed, 1 passed*"
         ])
 
@@ -512,7 +512,7 @@ class TestGenfuncFunctional:
         """)
         result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
-            "*test_myfunc*hello*PASS*", 
+            "*test_myfunc*hello*PASS*",
             "*1 passed*"
         ])
 
@@ -529,8 +529,8 @@ class TestGenfuncFunctional:
         """)
         result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
-            "*test_func*0*PASS*", 
-            "*test_func*1*PASS*", 
+            "*test_func*0*PASS*",
+            "*test_func*1*PASS*",
             "*2 pass*",
         ])
 
@@ -576,7 +576,7 @@ def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
     clscol.obj = lambda arg1: None
     clscol.funcargs = {}
     funcargs.fillfuncargs(clscol)
-    assert clscol.funcargs['arg1'] == 42 
+    assert clscol.funcargs['arg1'] == 42
 
 
 def test_funcarg_lookup_error(testdir):
@@ -592,4 +592,4 @@ def test_funcarg_lookup_error(testdir):
         "*available funcargs*",
         "*1 error*",
     ])
-    assert "INTERNAL" not in result.stdout.str() 
+    assert "INTERNAL" not in result.stdout.str()

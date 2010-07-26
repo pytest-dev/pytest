@@ -1,22 +1,22 @@
 """
 
 module containing a parametrized tests testing cross-python
-serialization via the pickle module. 
+serialization via the pickle module.
 """
 import py
 
-pythonlist = ['python2.3', 'python2.4', 'python2.5', 'python2.6'] 
+pythonlist = ['python2.3', 'python2.4', 'python2.5', 'python2.6']
 # 'jython' 'python3.1']
-  
+
 def pytest_generate_tests(metafunc):
     if 'python1' in metafunc.funcargnames:
         assert 'python2' in metafunc.funcargnames
         for obj in metafunc.function.multiarg.kwargs['obj']:
             for py1 in pythonlist:
                 for py2 in pythonlist:
-                    metafunc.addcall(id="%s-%s-%s" % (py1, py2, obj), 
+                    metafunc.addcall(id="%s-%s-%s" % (py1, py2, obj),
                         param=(py1, py2, obj))
-        
+
 @py.test.mark.multiarg(obj=[42, {}, {1:3},])
 def test_basic_objects(python1, python2, obj):
     python1.dumps(obj)
@@ -49,7 +49,7 @@ class Python:
             f.close()
         """ % (str(self.picklefile), obj)))
         py.process.cmdexec("%s %s" %(self.pythonpath, dumpfile))
-        
+
     def load_and_is_true(self, expression):
         loadfile = self.picklefile.dirpath("load.py")
         loadfile.write(py.code.Source("""

@@ -16,11 +16,11 @@ def cmdexec(cmd):
     if the subprocess module does not provide a proper encoding/unicode strings
     sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
     """
-    process = subprocess.Popen(cmd, shell=True, 
+    process = subprocess.Popen(cmd, shell=True,
             universal_newlines=True,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = process.communicate()
-    if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not 
+    if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
         try:
             default_encoding = sys.getdefaultencoding() # jython may not have it
         except AttributeError:

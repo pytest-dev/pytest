@@ -60,18 +60,18 @@ def main():
 
 def cmdline_entrypoints(versioninfo, platform, basename):
     if platform.startswith('java'):
-        points = {'py.test-jython': 'py.cmdline:pytest', 
+        points = {'py.test-jython': 'py.cmdline:pytest',
                   'py.which-jython': 'py.cmdline:pywhich'}
     else:
         if basename.startswith("pypy"):
-            points = {'py.test-%s' % basename: 'py.cmdline:pytest', 
+            points = {'py.test-%s' % basename: 'py.cmdline:pytest',
                       'py.which-%s' % basename: 'py.cmdline:pywhich',}
         else: # cpython
             points = {
               'py.test-%s.%s' % versioninfo[:2] : 'py.cmdline:pytest',
               'py.which-%s.%s' % versioninfo[:2] : 'py.cmdline:pywhich'
             }
-    for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc', 
+    for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc',
               'py.lookup', 'py.svnwcrevert', 'py.which', 'py.test']:
         points[x] = "py.cmdline:%s" % x.replace('.','')
     return points

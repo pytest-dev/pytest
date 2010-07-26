@@ -2,7 +2,7 @@
 import py
 
 class TestCollectDeprecated:
-        
+
     def test_collect_with_deprecated_run_and_join(self, testdir, recwarn):
         testdir.makeconftest("""
             import py
@@ -28,7 +28,7 @@ class TestCollectDeprecated:
                         return self.Function(name, parent=self)
                     if name == 'Cls':
                         return MyClass(name, parent=self)
-            
+
             class MyDirectory(py.test.collect.Directory):
                 Module = MyModule
                 def run(self):
@@ -38,7 +38,7 @@ class TestCollectDeprecated:
                         return self.Module(self.fspath.join(name), parent=self)
 
             def pytest_collect_directory(path, parent):
-                if path.basename == "subconf": 
+                if path.basename == "subconf":
                     return MyDirectory(path, parent)
         """)
         subconf = testdir.mkpydir("subconf")
@@ -46,7 +46,7 @@ class TestCollectDeprecated:
         somefile.write(py.code.Source("""
             def check(): pass
             class Cls:
-                def check2(self): pass 
+                def check2(self): pass
         """))
         config = testdir.parseconfig(somefile)
         dirnode = config.getnode(somefile.dirpath())
@@ -63,12 +63,12 @@ class TestCollectDeprecated:
         assert len(colitems) == 2
         assert colitems[0].name == 'check'
         assert colitems[1].name == 'Cls'
-        clscol = colitems[1] 
+        clscol = colitems[1]
 
         colitems = clscol.collect()
         recwarn.pop(DeprecationWarning)
         assert len(colitems) == 1
-        icol = colitems[0] 
+        icol = colitems[0]
         colitems = icol.collect()
         recwarn.pop(DeprecationWarning)
         assert len(colitems) == 1
@@ -94,7 +94,7 @@ class TestCollectDeprecated:
             class SomeClass: pass
         """)
         colitems = col.collect()
-        recwarn.pop(DeprecationWarning) 
+        recwarn.pop(DeprecationWarning)
         assert len(colitems) == 1
         funcitem = colitems[0]
         assert funcitem.name == "check_one"
@@ -120,7 +120,7 @@ class TestCollectDeprecated:
             class MyFunction(py.test.collect.Function):
                 def execute(self, obj, *args):
                     pass
-            Function=MyFunction 
+            Function=MyFunction
         """)
         modcol = testdir.getmodulecol("def test_func2(): pass")
         funcitem = modcol.collect()[0]
@@ -142,7 +142,7 @@ class TestCollectDeprecated:
         modcol = testdir.getmodulecol("def test_some2(): pass")
         funcitem = modcol.collect()[0]
         w = recwarn.pop(DeprecationWarning)
-        assert "conftest.py" in str(w.message) 
+        assert "conftest.py" in str(w.message)
 
         recwarn.clear()
         funcitem._deprecated_testexecution()
@@ -177,7 +177,7 @@ class TestCollectDeprecated:
         assert col.collect() == []
 
 
-    
+
 class TestDisabled:
     def test_disabled_module(self, recwarn, testdir):
         modcol = testdir.getmodulecol("""
@@ -239,7 +239,7 @@ class TestDisabled:
         elif name in ("Module", "File"):
             config.getnode(p)
         else:
-            fnode = config.getnode(p) 
+            fnode = config.getnode(p)
             recwarn.clear()
             fnode.collect()
         w = recwarn.pop(DeprecationWarning)
@@ -251,9 +251,9 @@ def test_config_cmdline_options(recwarn, testdir):
         def _callback(option, opt_str, value, parser, *args, **kwargs):
             option.tdest = True
         Option = py.test.config.Option
-        option = py.test.config.addoptions("testing group", 
+        option = py.test.config.addoptions("testing group",
             Option('-G', '--glong', action="store", default=42,
-                   type="int", dest="gdest", help="g value."), 
+                   type="int", dest="gdest", help="g value."),
             # XXX note: special case, option without a destination
             Option('-T', '--tlong', action="callback", callback=_callback,
                     help='t value'),
@@ -262,12 +262,12 @@ def test_config_cmdline_options(recwarn, testdir):
     recwarn.clear()
     config = testdir.reparseconfig(['-G', '17'])
     recwarn.pop(DeprecationWarning)
-    assert config.option.gdest == 17 
+    assert config.option.gdest == 17
 
 def test_conftest_non_python_items(recwarn, testdir):
     testdir.makepyfile(conftest="""
         import py
-        class CustomItem(py.test.collect.Item): 
+        class CustomItem(py.test.collect.Item):
             def run(self):
                 pass
         class Directory(py.test.collect.Directory):
@@ -302,15 +302,15 @@ def test_extra_python_files_and_functions(testdir, recwarn):
                 if path.check(fnmatch="check_*.py"):
                     return self.Module(path, parent=self)
                 return super(Directory, self).consider_file(path)
-        class myfuncmixin: 
+        class myfuncmixin:
             Function = MyFunction
-            def funcnamefilter(self, name): 
-                return name.startswith('check_') 
+            def funcnamefilter(self, name):
+                return name.startswith('check_')
         class Module(myfuncmixin, py.test.collect.Module):
-            def classnamefilter(self, name): 
-                return name.startswith('CustomTestClass') 
+            def classnamefilter(self, name):
+                return name.startswith('CustomTestClass')
         class Instance(myfuncmixin, py.test.collect.Instance):
-            pass 
+            pass
     """)
     checkfile = testdir.makepyfile(check_file="""
         def check_func():
@@ -319,7 +319,7 @@ def test_extra_python_files_and_functions(testdir, recwarn):
             def check_method(self):
                 assert 23 == 23
     """)
-    # check that directory collects "check_" files 
+    # check that directory collects "check_" files
     config = testdir.parseconfig()
     col = config.getnode(checkfile.dirpath())
     colitems = col.collect()

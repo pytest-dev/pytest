@@ -3,9 +3,9 @@ import sys
 import py
 import tempfile
 
-try: 
+try:
     from io import StringIO
-except ImportError: 
+except ImportError:
     from StringIO import StringIO
 
 if sys.version_info < (3,0):
@@ -28,21 +28,21 @@ except ImportError:
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
-class FDCapture: 
+class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
-    
+
     def __init__(self, targetfd, tmpfile=None, now=True, patchsys=False):
-        """ save targetfd descriptor, and open a new 
-            temporary file there.  If no tmpfile is 
+        """ save targetfd descriptor, and open a new
+            temporary file there.  If no tmpfile is
             specified a tempfile.Tempfile() will be opened
-            in text mode. 
+            in text mode.
         """
         self.targetfd = targetfd
         if tmpfile is None and targetfd != 0:
             f = tempfile.TemporaryFile('wb+')
-            tmpfile = dupfile(f, encoding="UTF-8") 
+            tmpfile = dupfile(f, encoding="UTF-8")
             f.close()
-        self.tmpfile = tmpfile 
+        self.tmpfile = tmpfile
         self._savefd = os.dup(self.targetfd)
         if patchsys:
             self._oldsys = getattr(sys, patchsysdict[targetfd])
@@ -63,20 +63,20 @@ class FDCapture:
                 setattr(sys, patchsysdict[self.targetfd], DontReadFromInput())
         else:
             fd = self.tmpfile.fileno()
-            os.dup2(self.tmpfile.fileno(), self.targetfd) 
+            os.dup2(self.tmpfile.fileno(), self.targetfd)
             if hasattr(self, '_oldsys'):
                 setattr(sys, patchsysdict[self.targetfd], self.tmpfile)
 
-    def done(self): 
+    def done(self):
         """ unpatch and clean up, returns the self.tmpfile (file object)
         """
-        os.dup2(self._savefd, self.targetfd) 
-        os.close(self._savefd) 
+        os.dup2(self._savefd, self.targetfd)
+        os.close(self._savefd)
         if self.targetfd != 0:
             self.tmpfile.seek(0)
         if hasattr(self, '_oldsys'):
             setattr(sys, patchsysdict[self.targetfd], self._oldsys)
-        return self.tmpfile 
+        return self.tmpfile
 
     def writeorg(self, data):
         """ write a string to the original file descriptor
@@ -89,22 +89,22 @@ class FDCapture:
             tempfp.close()
 
 
-def dupfile(f, mode=None, buffering=0, raising=False, encoding=None): 
+def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
     """ return a new open file object that's a duplicate of f
 
-        mode is duplicated if not given, 'buffering' controls 
+        mode is duplicated if not given, 'buffering' controls
         buffer size (defaulting to no buffering) and 'raising'
         defines whether an exception is raised when an incompatible
         file object is passed in (if raising is False, the file
         object itself will be returned)
     """
-    try: 
-        fd = f.fileno() 
-    except AttributeError: 
-        if raising: 
-            raise 
+    try:
+        fd = f.fileno()
+    except AttributeError:
+        if raising:
+            raise
         return f
-    newfd = os.dup(fd) 
+    newfd = os.dup(fd)
     mode = mode and mode or f.mode
     if sys.version_info >= (3,0):
         if encoding is not None:
@@ -112,7 +112,7 @@ def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
             buffering = True
         return os.fdopen(newfd, mode, buffering, encoding, closefd=True)
     else:
-        f = os.fdopen(newfd, mode, buffering) 
+        f = os.fdopen(newfd, mode, buffering)
         if encoding is not None:
             return EncodedFile(f, encoding)
         return f
@@ -139,24 +139,24 @@ class EncodedFile(object):
         return getattr(self._stream, name)
 
 class Capture(object):
-    def call(cls, func, *args, **kwargs): 
+    def call(cls, func, *args, **kwargs):
         """ return a (res, out, err) tuple where
             out and err represent the output/error output
-            during function execution. 
+            during function execution.
             call the given function with args/kwargs
-            and capture output/error during its execution. 
-        """ 
+            and capture output/error during its execution.
+        """
         so = cls()
-        try: 
+        try:
             res = func(*args, **kwargs)
-        finally: 
+        finally:
             out, err = so.reset()
-        return res, out, err 
-    call = classmethod(call) 
+        return res, out, err
+    call = classmethod(call)
 
     def reset(self):
         """ reset sys.stdout/stderr and return captured output as strings. """
-        outfile, errfile = self.done() 
+        outfile, errfile = self.done()
         out, err = "", ""
         if outfile and not outfile.closed:
             out = outfile.read()
@@ -173,13 +173,13 @@ class Capture(object):
         return outerr
 
 
-class StdCaptureFD(Capture): 
-    """ This class allows to capture writes to FD1 and FD2 
+class StdCaptureFD(Capture):
+    """ This class allows to capture writes to FD1 and FD2
         and may connect a NULL file to FD0 (and prevent
-        reads from sys.stdin).  If any of the 0,1,2 file descriptors 
-        is invalid it will not be captured. 
+        reads from sys.stdin).  If any of the 0,1,2 file descriptors
+        is invalid it will not be captured.
     """
-    def __init__(self, out=True, err=True, mixed=False, 
+    def __init__(self, out=True, err=True, mixed=False,
         in_=True, patchsys=True, now=True):
         self._options = locals()
         self._save()
@@ -197,30 +197,30 @@ class StdCaptureFD(Capture):
                 self.in_ = FDCapture(0, tmpfile=None, now=False,
                     patchsys=patchsys)
             except OSError:
-                pass 
+                pass
         if out:
             tmpfile = None
             if hasattr(out, 'write'):
                 tmpfile = out
             try:
-                self.out = FDCapture(1, tmpfile=tmpfile, 
+                self.out = FDCapture(1, tmpfile=tmpfile,
                            now=False, patchsys=patchsys)
                 self._options['out'] = self.out.tmpfile
             except OSError:
-                pass 
+                pass
         if err:
             if out and mixed:
-                tmpfile = self.out.tmpfile 
+                tmpfile = self.out.tmpfile
             elif hasattr(err, 'write'):
                 tmpfile = err
             else:
                 tmpfile = None
             try:
-                self.err = FDCapture(2, tmpfile=tmpfile, 
-                           now=False, patchsys=patchsys) 
+                self.err = FDCapture(2, tmpfile=tmpfile,
+                           now=False, patchsys=patchsys)
                 self._options['err'] = self.err.tmpfile
             except OSError:
-                pass 
+                pass
 
     def startall(self):
         if hasattr(self, 'in_'):
@@ -238,13 +238,13 @@ class StdCaptureFD(Capture):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if hasattr(self, 'out') and not self.out.tmpfile.closed:
-            outfile = self.out.done() 
+            outfile = self.out.done()
         if hasattr(self, 'err') and not self.err.tmpfile.closed:
-            errfile = self.err.done() 
+            errfile = self.err.done()
         if hasattr(self, 'in_'):
             tmpfile = self.in_.done()
         self._save()
-        return outfile, errfile 
+        return outfile, errfile
 
     def readouterr(self):
         """ return snapshot value of stdout/stderr capturings. """
@@ -258,13 +258,13 @@ class StdCaptureFD(Capture):
                 f.truncate(0)
                 f.seek(0)
             l.append(res)
-        return l 
+        return l
 
 class StdCapture(Capture):
     """ This class allows to capture writes to sys.stdout|stderr "in-memory"
         and will raise errors on tries to read from sys.stdin. It only
-        modifies sys.stdout|stderr|stdin attributes and does not 
-        touch underlying File Descriptors (use StdCaptureFD for that). 
+        modifies sys.stdout|stderr|stdin attributes and does not
+        touch underlying File Descriptors (use StdCaptureFD for that).
     """
     def __init__(self, out=True, err=True, in_=True, mixed=False, now=True):
         self._oldout = sys.stdout
@@ -284,26 +284,26 @@ class StdCapture(Capture):
             self.startall()
 
     def startall(self):
-        if self.out: 
+        if self.out:
             sys.stdout = self.out
-        if self.err: 
+        if self.err:
             sys.stderr = self.err
         if self.in_:
             sys.stdin  = self.in_  = DontReadFromInput()
 
-    def done(self): 
+    def done(self):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if self.out and not self.out.closed:
-            sys.stdout = self._oldout 
+            sys.stdout = self._oldout
             outfile = self.out
             outfile.seek(0)
-        if self.err and not self.err.closed: 
-            sys.stderr = self._olderr 
-            errfile = self.err 
+        if self.err and not self.err.closed:
+            sys.stderr = self._olderr
+            errfile = self.err
             errfile.seek(0)
         if self.in_:
-            sys.stdin = self._oldin 
+            sys.stdin = self._oldin
         return outfile, errfile
 
     def resume(self):
@@ -321,7 +321,7 @@ class StdCapture(Capture):
             err = self.err.getvalue()
             self.err.truncate(0)
             self.err.seek(0)
-        return out, err 
+        return out, err
 
 class DontReadFromInput:
     """Temporary stub class.  Ideally when stdin is accessed, the
@@ -335,9 +335,9 @@ class DontReadFromInput:
     readline = read
     readlines = read
     __iter__ = read
-   
+
     def fileno(self):
-        raise ValueError("redirected Stdin is pseudofile, has no fileno()") 
+        raise ValueError("redirected Stdin is pseudofile, has no fileno()")
     def isatty(self):
         return False
     def close(self):

@@ -23,7 +23,7 @@ class TestSafeRepr:
         s = saferepr(('*'*50, A()), maxsize=25)
         assert len(s) == 25
         assert s[0] == '(' and s[-1] == ')'
-    
+
     def test_exceptions(self):
         class BrokenRepr:
             def __init__(self, ex):
@@ -32,7 +32,7 @@ class TestSafeRepr:
             def __repr__(self):
                 raise self.ex
         class BrokenReprException(Exception):
-            __str__ = None 
+            __str__ = None
             __repr__ = None
         assert 'Exception' in saferepr(BrokenRepr(Exception("broken")))
         s = saferepr(BrokenReprException("really broken"))
@@ -55,10 +55,10 @@ class TestSafeRepr:
             s = saferepr(Function())
         except Exception:
             py.test.fail("saferepr failed for newstyle class")
-  
+
 def test_builtin_patch_unpatch(monkeypatch):
     cpy_builtin = py.builtin.builtins
-    comp = cpy_builtin.compile 
+    comp = cpy_builtin.compile
     def mycompile(*args, **kwargs):
         return comp(*args, **kwargs)
     class Sub(AssertionError):
@@ -69,8 +69,8 @@ def test_builtin_patch_unpatch(monkeypatch):
     assert cpy_builtin.AssertionError != Sub
     assert cpy_builtin.compile != mycompile
     py.code.unpatch_builtins()
-    assert cpy_builtin.AssertionError is Sub 
-    assert cpy_builtin.compile == mycompile 
+    assert cpy_builtin.AssertionError is Sub
+    assert cpy_builtin.compile == mycompile
 
 
 def test_unicode_handling():
@@ -83,7 +83,7 @@ def test_unicode_handling():
         u = unicode(excinfo)
 
 def test_unicode_or_repr():
-    from py._code.code import unicode_or_repr 
+    from py._code.code import unicode_or_repr
     assert unicode_or_repr('hello') == "hello"
     if sys.version_info[0] < 3:
         s = unicode_or_repr('\xf6\xc4\x85')

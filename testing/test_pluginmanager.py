@@ -37,8 +37,8 @@ class TestBootstrapping:
         l1 = len(pluginmanager.getplugins())
         pluginmanager.consider_env()
         l2 = len(pluginmanager.getplugins())
-        assert l2 == l1 + 1 
-        assert pluginmanager.getplugin('pytest_xy123') 
+        assert l2 == l1 + 1
+        assert pluginmanager.getplugin('pytest_xy123')
         pluginmanager.consider_env()
         l3 = len(pluginmanager.getplugins())
         assert l2 == l3
@@ -54,7 +54,7 @@ class TestBootstrapping:
                         x = 42
                     return PseudoPlugin()
             return iter([EntryPoint()])
-        
+
         monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
         pluginmanager = PluginManager()
         pluginmanager.consider_setuptools_entrypoints()
@@ -64,7 +64,7 @@ class TestBootstrapping:
         assert plugin2 == plugin
 
     def test_consider_setuptools_not_installed(self, monkeypatch):
-        monkeypatch.setitem(py.std.sys.modules, 'pkg_resources', 
+        monkeypatch.setitem(py.std.sys.modules, 'pkg_resources',
             py.std.types.ModuleType("pkg_resources"))
         pluginmanager = PluginManager()
         pluginmanager.consider_setuptools_entrypoints()
@@ -116,7 +116,7 @@ class TestBootstrapping:
         mod = py.std.types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
-        pluginmanager = PluginManager() 
+        pluginmanager = PluginManager()
         reprec = testdir.getreportrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
@@ -124,7 +124,7 @@ class TestBootstrapping:
         call = reprec.getcall(pluginmanager.hook.pytest_plugin_registered.name)
         assert call.plugin.__name__ == "pytest_a"
 
-        # check that it is not registered twice 
+        # check that it is not registered twice
         pluginmanager.consider_module(mod)
         l = reprec.getcalls("pytest_plugin_registered")
         assert len(l) == 1
@@ -145,14 +145,14 @@ class TestBootstrapping:
 
     def test_registry(self):
         pp = PluginManager()
-        class A: pass 
+        class A: pass
         a1, a2 = A(), A()
         pp.register(a1)
         assert pp.isregistered(a1)
         pp.register(a2, "hello")
         assert pp.isregistered(a2)
         l = pp.getplugins()
-        assert a1 in l 
+        assert a1 in l
         assert a2 in l
         assert pp.getplugin('hello') == a2
         pp.unregister(a1)
@@ -166,10 +166,10 @@ class TestBootstrapping:
         pp.register(mod)
         assert pp.isregistered(mod)
         l = pp.getplugins()
-        assert mod in l 
+        assert mod in l
         py.test.raises(AssertionError, "pp.register(mod)")
         mod2 = py.std.types.ModuleType("pytest_hello")
-        #pp.register(mod2) # double registry 
+        #pp.register(mod2) # double registry
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == l
@@ -204,7 +204,7 @@ class TestBootstrapping:
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):
-        from py._test.config import Config 
+        from py._test.config import Config
         newhooks = testdir.makepyfile(newhooks="""
             def pytest_myhook(xyz):
                 "new hook"
@@ -217,7 +217,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = Config() 
+        config = Config()
         config._conftest.importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
@@ -244,7 +244,7 @@ class TestPytestPluginInteractions:
 
     def test_addhooks_nohooks(self, testdir):
         conf = testdir.makeconftest("""
-            import sys 
+            import sys
             def pytest_addhooks(pluginmanager):
                 pluginmanager.addhooks(sys)
         """)
@@ -255,12 +255,12 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_conftestplugin(self, testdir):
-        from py._test.config import Config 
+        from py._test.config import Config
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true")
         """)
-        config = Config() 
+        config = Config()
         config._conftest.importconftest(p)
         print(config.pluginmanager.getplugins())
         config.parse([])
@@ -272,26 +272,26 @@ class TestPytestPluginInteractions:
                 return {'hello': 'world'}
         """)
         p = testdir.makepyfile("""
-            from py.test import hello 
+            from py.test import hello
             import py
             def test_hello():
-                assert hello == "world" 
+                assert hello == "world"
                 assert 'hello' in py.test.__all__
         """)
-        result = testdir.runpytest(p) 
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        from py._test.config import Config 
-        config = Config() 
+        from py._test.config import Config
+        config = Config()
         config.parse([])
         config.pluginmanager.do_configure(config=config)
         assert not hasattr(config.option, 'test123')
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
-                parser.addoption('--test123', action="store_true", 
+                parser.addoption('--test123', action="store_true",
                     default=True)
         """)
         config._conftest.importconftest(p)
@@ -303,7 +303,7 @@ class TestPytestPluginInteractions:
         class A:
             def pytest_configure(self, config):
                 l.append(self)
-                
+
         config.pluginmanager.register(A())
         assert len(l) == 0
         config.pluginmanager.do_configure(config=config)
@@ -311,7 +311,7 @@ class TestPytestPluginInteractions:
         config.pluginmanager.register(A())  # this should lead to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
-       
+
         config.pluginmanager.do_unconfigure(config=config)
         config.pluginmanager.register(A())
         assert len(l) == 2
@@ -329,7 +329,7 @@ class TestPytestPluginInteractions:
 def test_namespace_has_default_and_env_plugins(testdir):
     p = testdir.makepyfile("""
         import py
-        py.test.mark 
+        py.test.mark
     """)
     result = testdir.runpython(p)
     assert result.ret == 0
@@ -342,7 +342,7 @@ def test_varnames():
             pass
     assert varnames(f) == ("x",)
     assert varnames(A().f) == ('y',)
-    
+
 class TestMultiCall:
     def test_uses_copy_of_methods(self):
         l = [lambda: 42]
@@ -363,19 +363,19 @@ class TestMultiCall:
             def m(self, __multicall__, x):
                 assert __multicall__.results == []
                 assert __multicall__.methods
-                return 23 
-               
-        p1 = P1() 
-        p2 = P2() 
+                return 23
+
+        p1 = P1()
+        p2 = P2()
         multicall = MultiCall([p1.m, p2.m], {'x': 23})
         assert "23" in repr(multicall)
         reslist = multicall.execute()
         assert len(reslist) == 2
-        # ensure reversed order 
+        # ensure reversed order
         assert reslist == [23, 17]
 
     def test_keyword_args(self):
-        def f(x): 
+        def f(x):
             return x + 1
         class A:
             def f(self, x, y):
@@ -477,7 +477,7 @@ class TestHookRelay:
     def test_firstresult_definition(self):
         registry = Registry()
         class Api:
-            def hello(self, arg): 
+            def hello(self, arg):
                 "api hook 1"
             hello.firstresult = True
 

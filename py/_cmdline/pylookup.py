@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 
 """\
 py.lookup [search_directory] SEARCH_STRING [options]
@@ -65,7 +65,7 @@ def main():
                 searchlines = s.lower().splitlines()
             else:
                 searchlines = lines
-            for i, (line, searchline) in enumerate(zip(lines, searchlines)): 
+            for i, (line, searchline) in enumerate(zip(lines, searchlines)):
                 indexes = find_indexes(searchline, string)
                 if not indexes:
                     continue

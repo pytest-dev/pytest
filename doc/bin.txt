@@ -1,11 +1,11 @@
 ======================
-pylib scripts 
+pylib scripts
 ======================
 
 The pylib installs several scripts to support testing and (python)
 development.  If working from a checkout you may also add ``bin`` to
 your ``PATH`` environment variable which makes the scripts available on
-your shell prompt. 
+your shell prompt.
 
 ``py.test`` and ``py.test-$VERSION``
 ============================================
@@ -14,16 +14,16 @@ The ``py.test`` executable is the main tool that the py lib offers;
 in fact most code in the py lib is geared towards supporting the
 testing process.  See the `py.test documentation`_ for extensive
 documentation.  The ``py.test-$VERSION`` is the same script with
-an interpreter specific suffix appended to make 
+an interpreter specific suffix appended to make
 several versions of py.test for using specific interpreters
 accessible:
 
-* CPython2.4: py.test-2.4 
+* CPython2.4: py.test-2.4
 * CPython2.5: py.test-2.5
-* ... 
+* ...
 * CPython3.1: py.test-3.1
 * Jython-2.5.1: py.test-jython
-* pypy-$SUFFIX: py.test-pypy-$SUFFIX 
+* pypy-$SUFFIX: py.test-pypy-$SUFFIX
 
 .. _`py.test documentation`: test/index.html
 
@@ -33,7 +33,7 @@ accessible:
 Usage: ``py.which modulename``
 
 Print the ``__file__`` of the module that is imported via ``import modulename``.
-The version-suffix is the same as with ``py.test`` above. 
+The version-suffix is the same as with ``py.test`` above.
 
 ``py.cleanup``
 ==============

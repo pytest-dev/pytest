@@ -7,20 +7,20 @@ def pytest_funcarg___pytest(request):
 
 class PytestArg:
     def __init__(self, request):
-        self.request = request 
+        self.request = request
 
     def gethookrecorder(self, hook):
         hookrecorder = HookRecorder(hook._registry)
         hookrecorder.start_recording(hook._hookspecs)
         self.request.addfinalizer(hookrecorder.finish_recording)
-        return hookrecorder 
+        return hookrecorder
 
 class ParsedCall:
     def __init__(self, name, locals):
-        assert '_name' not in locals 
+        assert '_name' not in locals
         self.__dict__.update(locals)
         self.__dict__.pop('self')
-        self._name = name 
+        self._name = name
 
     def __repr__(self):
         d = self.__dict__.copy()
@@ -32,21 +32,21 @@ class HookRecorder:
         self._registry = registry
         self.calls = []
         self._recorders = {}
-        
+
     def start_recording(self, hookspecs):
         if not isinstance(hookspecs, (list, tuple)):
             hookspecs = [hookspecs]
         for hookspec in hookspecs:
-            assert hookspec not in self._recorders 
-            class RecordCalls: 
-                _recorder = self 
+            assert hookspec not in self._recorders
+            class RecordCalls:
+                _recorder = self
             for name, method in vars(hookspec).items():
                 if name[0] != "_":
                     setattr(RecordCalls, name, self._makecallparser(method))
             recorder = RecordCalls()
             self._recorders[hookspec] = recorder
             self._registry.register(recorder)
-        self.hook = HookRelay(hookspecs, registry=self._registry, 
+        self.hook = HookRelay(hookspecs, registry=self._registry,
             prefix="pytest_")
 
     def finish_recording(self):
@@ -58,14 +58,14 @@ class HookRecorder:
         name = method.__name__
         args, varargs, varkw, default = py.std.inspect.getargspec(method)
         if not args or args[0] != "self":
-            args.insert(0, 'self') 
+            args.insert(0, 'self')
         fspec = py.std.inspect.formatargspec(args, varargs, varkw, default)
         # we use exec because we want to have early type
         # errors on wrong input arguments, using
         # *args/**kwargs delays this and gives errors
         # elsewhere
         exec (py.code.compile("""
-            def %(name)s%(fspec)s: 
+            def %(name)s%(fspec)s:
                         self._recorder.calls.append(
                             ParsedCall(%(name)r, locals()))
         """ % locals()))
@@ -91,7 +91,7 @@ class HookRecorder:
         for i, call in enumerate(self.calls):
             if call._name == name:
                 del self.calls[i]
-                return call 
+                return call
         raise ValueError("could not find call %r" %(name, ))
 
     def getcall(self, name):

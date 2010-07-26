@@ -1,35 +1,35 @@
 ==================================================
-py.test feature overview 
+py.test feature overview
 ==================================================
 
-.. contents:: 
+.. contents::
     :local:
     :depth: 1
 
-mature command line testing tool 
+mature command line testing tool
 ====================================================
 
 py.test is a command line tool to collect, run and report about automated tests.  It runs well on Linux, Windows and OSX and on Python 2.4 through to 3.1 versions.
-It is used in many projects, ranging from running 10 thousands of tests 
+It is used in many projects, ranging from running 10 thousands of tests
 to a few inlined tests on a command line script.  As of version 1.2 you can also
 generate a no-dependency py.test-equivalent standalone script that you
-can distribute along with your application.  
+can distribute along with your application.
 
-extensive easy plugin system 
+extensive easy plugin system
 ======================================================
 
 .. _`suprisingly easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 
 py.test delegates almost all aspects of its operation to plugins_.
 It is `suprisingly easy`_ to add command line options or
-do other kind of add-ons and customizations.  This can 
-be done per-project or by distributing a global plugin. 
-One can can thus modify or add aspects for purposes such as: 
+do other kind of add-ons and customizations.  This can
+be done per-project or by distributing a global plugin.
+One can can thus modify or add aspects for purposes such as:
 
 * reporting extensions
-* customizing collection and execution of tests 
+* customizing collection and execution of tests
 * running and managing non-python tests
-* managing domain-specific test state setup 
+* managing domain-specific test state setup
 * adding non-python tests into the run, e.g. driven by data files
 
 .. _`plugins`: plugin/index.html
@@ -42,18 +42,18 @@ distributing tests to your CPUs and SSH accounts
 Through the use of the separately released `pytest-xdist`_ plugin you
 can seemlessly distribute runs to multiple CPUs or remote computers
 through SSH and sockets.  This plugin also offers a ``--looponfailing``
-mode which will continously re-run only failing tests in a subprocess.  
+mode which will continously re-run only failing tests in a subprocess.
 
-supports several testing practises and methods 
+supports several testing practises and methods
 ==================================================================
 
-py.test supports many testing methods conventionally used in 
-the Python community. It runs traditional `unittest.py`_, 
+py.test supports many testing methods conventionally used in
+the Python community. It runs traditional `unittest.py`_,
 `doctest.py`_, supports `xUnit style setup`_ and nose_ specific
-setups and test suites.  It offers minimal no-boilerplate model 
-for configuring and deploying tests written as simple Python 
+setups and test suites.  It offers minimal no-boilerplate model
+for configuring and deploying tests written as simple Python
 functions or methods.  It also integrates `coverage testing
-with figleaf`_ or `Javasript unit- and functional testing`_. 
+with figleaf`_ or `Javasript unit- and functional testing`_.
 
 .. _`Javasript unit- and functional testing`: plugin/oejskit.html
 .. _`coverage testing with figleaf`: plugin/figleaf.html
@@ -63,98 +63,98 @@ integrates well with CI systems
 
 py.test can produce JUnitXML style output as well as formatted
 "resultlog" files that can be postprocessed by Continous Integration
-systems such as Hudson or Buildbot easily.  It also provides command 
-line options to control test configuration lookup behaviour or ignoring 
-certain tests or directories. 
+systems such as Hudson or Buildbot easily.  It also provides command
+line options to control test configuration lookup behaviour or ignoring
+certain tests or directories.
 
-no-boilerplate test functions with Python 
+no-boilerplate test functions with Python
 ===================================================
 
 .. _`autocollect`:
 
-automatic Python test discovery 
+automatic Python test discovery
 ------------------------------------
 
-By default, all python modules with a ``test_*.py`` 
+By default, all python modules with a ``test_*.py``
 filename are inspected for finding tests:
 
 * functions with a name beginning with ``test_``
-* classes with a leading ``Test`` name and ``test`` prefixed methods.   
+* classes with a leading ``Test`` name and ``test`` prefixed methods.
 * ``unittest.TestCase`` subclasses
 
 parametrizing test functions and functional testing
 --------------------------------------------------------------
 
 py.test offers the unique `funcargs mechanism`_ for setting up
-and passing project-specific objects to Python test functions.  
-Test Parametrization happens by triggering a call to the same test 
-function with different argument values.  For doing fixtures 
-using the funcarg mechanism makes your test and setup code 
+and passing project-specific objects to Python test functions.
+Test Parametrization happens by triggering a call to the same test
+function with different argument values.  For doing fixtures
+using the funcarg mechanism makes your test and setup code
 more efficient and more readable. This is especially true
 for functional tests which might depend on command line
-options and a setup that needs to be shared across 
-a whole test run. 
+options and a setup that needs to be shared across
+a whole test run.
 
 per-test capturing of output, including subprocesses
 ----------------------------------------------------
 
-By default, ``py.test`` captures all writes to stdout/stderr. 
-Output from ``print`` statements as well as from subprocesses 
-is captured_.  When a test fails, the associated captured outputs are shown. 
+By default, ``py.test`` captures all writes to stdout/stderr.
+Output from ``print`` statements as well as from subprocesses
+is captured_.  When a test fails, the associated captured outputs are shown.
 This allows you to put debugging print statements in your code without
 being overwhelmed by all the output that might be generated by tests
 that do not fail.
 
-.. _captured: plugin/capture.html 
+.. _captured: plugin/capture.html
 
 assert with the ``assert`` statement
 ----------------------------------------
 
 ``py.test`` allows to use the standard python
-``assert statement`` for verifying expectations 
-and values in Python tests.  For example, you can 
-write the following in your tests:: 
+``assert statement`` for verifying expectations
+and values in Python tests.  For example, you can
+write the following in your tests::
 
-     assert hasattr(x, 'attribute') 
+     assert hasattr(x, 'attribute')
 
 to state that your object has a certain ``attribute``. In case this
 assertion fails you will see the value of ``x``.  Intermediate
-values are computed by executing the assert expression a second time. 
+values are computed by executing the assert expression a second time.
 If you execute code with side effects, e.g. read from a file like this::
 
         assert f.read() != '...'
 
 then you may get a warning from pytest if that assertions
-first failed and then succeeded. 
+first failed and then succeeded.
 
-asserting expected exceptions 
+asserting expected exceptions
 ----------------------------------------
 
 In order to write assertions about exceptions, you can use
-``py.test.raises`` as a context manager like this: 
+``py.test.raises`` as a context manager like this:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
     with py.test.raises(ZeroDivisionError):
         1 / 0
 
 and if you need to have access to the actual exception info you may use:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
-    with py.test.raises(RuntimeError) as excinfo: 
+    with py.test.raises(RuntimeError) as excinfo:
         def f():
             f()
         f()
 
-    # do checks related to excinfo.type, excinfo.value, excinfo.traceback 
+    # do checks related to excinfo.type, excinfo.value, excinfo.traceback
 
-If you want to write test code that works on Python2.4 as well, 
+If you want to write test code that works on Python2.4 as well,
 you may also use two other ways to test for an expected exception:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
-    py.test.raises(ExpectedException, func, *args, **kwargs) 
+    py.test.raises(ExpectedException, func, *args, **kwargs)
     py.test.raises(ExpectedException, "func(*args, **kwargs)")
 
 both of which execute the specified function with args and kwargs and
@@ -175,21 +175,21 @@ from nightly runs, i.e. are detached from the actual test
 running session.  Here are `example tracebacks`_ for a number of failing
 test functions.  You can modify traceback printing styles through the
 command line.  Using the `--pdb`` option you can automatically activate
-a PDB `Python debugger`_ when a test fails. 
+a PDB `Python debugger`_ when a test fails.
 
-skip or expect-to-fail a test 
+skip or expect-to-fail a test
 ======================================
 
 py.test has a dedicated `skipping plugin`_ that allows to define
 
-* define "skip" outcomes indicating a platform or a 
-  dependency mismatch.   
+* define "skip" outcomes indicating a platform or a
+  dependency mismatch.
 
-* "xfail" outcomes indicating an "expected failure" either with 
-  with or without running a test. 
+* "xfail" outcomes indicating an "expected failure" either with
+  with or without running a test.
 
 * skip and xfail outcomes can be applied at module, class or method
-  level or even only for certain argument sets of a parametrized function. 
+  level or even only for certain argument sets of a parametrized function.
 
 .. _`skipping plugin`: plugin/skipping.html
 .. _`funcargs mechanism`: funcargs.html
@@ -198,52 +198,52 @@ py.test has a dedicated `skipping plugin`_ that allows to define
 .. _`xUnit style setup`: xunit_setup.html
 .. _`pytest_nose`: plugin/nose.html
 
-select tests by keyword / test name search 
+select tests by keyword / test name search
 =========================================================
 
-.. _`selection by keyword`: 
+.. _`selection by keyword`:
 
-You can selectively run tests by specifiying a keyword 
+You can selectively run tests by specifiying a keyword
 on the command line.  Examples::
 
-    py.test -k test_simple   
+    py.test -k test_simple
     py.test -k "-test_simple"
 
 will run all tests matching (or not matching) the
-"test_simple" keyword.  Note that you need to quote 
-the keyword if "-" is recognized as an indicator 
+"test_simple" keyword.  Note that you need to quote
+the keyword if "-" is recognized as an indicator
 for a commandline option.  Lastly, you may use::
 
     py.test. -k "test_simple:"
 
-which will run all tests after the expression has *matched once*, i.e. 
-all tests that are seen after a test that matches the "test_simple" 
-keyword. 
+which will run all tests after the expression has *matched once*, i.e.
+all tests that are seen after a test that matches the "test_simple"
+keyword.
 
 By default, all filename parts and
 class/function names of a test function are put into the set
-of keywords for a given test.  You can specify additional 
+of keywords for a given test.  You can specify additional
 kewords like this:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
-    @py.test.mark.webtest 
+    @py.test.mark.webtest
     def test_send_http():
-        ... 
+        ...
 
 and then use those keywords to select tests.  See the `pytest_keyword`_
-plugin for more information. 
+plugin for more information.
 
 .. _`pytest_keyword`: plugin/mark.html
 
-Looping on the failing test set 
+Looping on the failing test set
 =======================================
 
 ``py.test --looponfailing`` (implemented through the external
-`pytest-xdist`_ plugin) allows to run a test suite, 
+`pytest-xdist`_ plugin) allows to run a test suite,
 memorize all failures and then loop over the failing set
 of tests until they all pass.  It will re-start running
-the tests when it detects file changes in your project. 
+the tests when it detects file changes in your project.
 
 
 .. _`reStructured Text`: http://docutils.sourceforge.net

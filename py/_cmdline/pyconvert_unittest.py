@@ -64,7 +64,7 @@ def blocksplitter(fp):
                 blockstring = line # reset the block
         else:
             blockstring += line
-            
+
     blocklist.append(blockstring)
     return blocklist
 
@@ -84,7 +84,7 @@ def rewrite_utest(block):
     op  = d[old][1] # the operator you will use , or '' if there is none.
     possible_args = d[old][2]  # a list of the number of arguments the
                                # unittest function could possibly take.
-                
+
     if possible_args == ['Any']: # just rename assertRaises & friends
         return re.sub('self.'+old, new, block)
 
@@ -97,7 +97,7 @@ def rewrite_utest(block):
 
     except SyntaxError: # but we couldn't parse it!
         return block
-    
+
     argnum = len(argl)
     if argnum not in possible_args:
         # sanity check - this one isn't real either
@@ -132,12 +132,12 @@ def rewrite_utest(block):
 def decompose_unittest(old, block):
     '''decompose the block into its component parts'''
 
-    ''' returns indent, arglist, trailer 
+    ''' returns indent, arglist, trailer
         indent -- the indentation
         arglist -- the arguments to the unittest function
         trailer -- any extra junk after the closing paren, such as #commment
     '''
- 
+
     indent = re.match(r'(\s*)', block).group()
     pat = re.search('self.' + old + r'\(', block)
 
@@ -178,7 +178,7 @@ def get_expr(s, char):
             pos.append(i)
     if pos == []:
         raise SyntaxError # we didn't find the expected char.  Ick.
-     
+
     for p in pos:
         # make the python parser do the hard work of deciding which comma
         # splits the string into two expressions
@@ -248,6 +248,6 @@ def main():
 
             outfile.write(s)
 
-    
+
 if __name__ == '__main__':
     main()

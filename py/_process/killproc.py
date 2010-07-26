@@ -7,7 +7,7 @@ if sys.platform == "win32" or getattr(os, '_name', '') == 'nt':
     except ImportError:
         def dokill(pid):
             py.process.cmdexec("taskkill /F /PID %d" %(pid,))
-    else: 
+    else:
         def dokill(pid):
             PROCESS_TERMINATE = 1
             handle = ctypes.windll.kernel32.OpenProcess(
@@ -16,7 +16,7 @@ if sys.platform == "win32" or getattr(os, '_name', '') == 'nt':
             ctypes.windll.kernel32.CloseHandle(handle)
 else:
     def dokill(pid):
-        os.kill(pid, 15)     
+        os.kill(pid, 15)
 
 def kill(pid):
     """ kill process by id. """

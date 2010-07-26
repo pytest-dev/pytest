@@ -5,13 +5,13 @@ import py
 import sys
 
 # ===============================================================================
-# plugin tests 
+# plugin tests
 #
 # ===============================================================================
 
 from py._plugin.pytest_terminal import TerminalReporter, \
     CollectonlyReporter,  repr_pythonversion, getreportopt
-from py._plugin import pytest_runner as runner 
+from py._plugin import pytest_runner as runner
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)
@@ -33,11 +33,11 @@ class Option:
 
 def pytest_generate_tests(metafunc):
     if "option" in metafunc.funcargnames:
-        metafunc.addcall(id="default", 
+        metafunc.addcall(id="default",
                          funcargs={'option': Option(verbose=False)})
-        metafunc.addcall(id="verbose", 
+        metafunc.addcall(id="verbose",
                          funcargs={'option': Option(verbose=True)})
-        metafunc.addcall(id="fulltrace", 
+        metafunc.addcall(id="fulltrace",
                          funcargs={'option': Option(fulltrace=True)})
 
 
@@ -119,7 +119,7 @@ class TestTerminal:
             import py
             class Function(py.test.collect.Function):
                 def reportinfo(self):
-                    return "ABCDE", 42, "custom"    
+                    return "ABCDE", 42, "custom"
         """)
         item = testdir.getitem("def test_func(): pass")
         tr = TerminalReporter(item.config, file=linecomp.stringio)
@@ -135,7 +135,7 @@ class TestTerminal:
         class Plugin:
             def pytest_report_iteminfo(self, item):
                 return "FGHJ", 42, "custom"
-        item.config.pluginmanager.register(Plugin())             
+        item.config.pluginmanager.register(Plugin())
         tr = TerminalReporter(item.config, file=linecomp.stringio)
         item.config.pluginmanager.register(tr)
         tr.config.option.verbose = True
@@ -150,7 +150,7 @@ class TestTerminal:
                 def test_p1(self):
                     pass
             class TestClass(BaseTests):
-                pass 
+                pass
         """)
         p2 = testdir.makepyfile(test_p2="""
             from test_p1 import BaseTests
@@ -182,7 +182,7 @@ class TestTerminal:
             "    def test_foobar():",
             ">       assert 0",
             "E       assert 0",
-            "*_keyboard_interrupt.py:6: KeyboardInterrupt*", 
+            "*_keyboard_interrupt.py:6: KeyboardInterrupt*",
         ])
         if option.fulltrace:
             result.stdout.fnmatch_lines([
@@ -208,11 +208,11 @@ class TestCollectonly:
         item = modcol.join("test_func")
         rep.config.hook.pytest_itemstart(item=item)
         linecomp.assert_contains_lines([
-           "  <Function 'test_func'>", 
+           "  <Function 'test_func'>",
         ])
         rep.config.hook.pytest_collectreport(
             report=runner.CollectReport(modcol, [], excinfo=None))
-        assert rep.indent == indent 
+        assert rep.indent == indent
 
     def test_collectonly_skipped_module(self, testdir, linecomp):
         modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
@@ -244,9 +244,9 @@ class TestCollectonly:
     def test_collectonly_fatal(self, testdir):
         p1 = testdir.makeconftest("""
             def pytest_collectstart(collector):
-                assert 0, "urgs" 
+                assert 0, "urgs"
         """)
-        result = testdir.runpytest("--collectonly") 
+        result = testdir.runpytest("--collectonly")
         result.stdout.fnmatch_lines([
             "*INTERNAL*args*"
         ])
@@ -289,7 +289,7 @@ def test_repr_python_version(monkeypatch):
     monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
     assert repr_pythonversion() == "2.5.1-final-0"
     py.std.sys.version_info = x = (2,3)
-    assert repr_pythonversion() == str(x) 
+    assert repr_pythonversion() == str(x)
 
 class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):
@@ -309,7 +309,7 @@ class TestFixtureReporting:
             "*1 error*",
         ])
         assert result.ret != 0
-    
+
     def test_teardown_fixture_error(self, testdir):
         p = testdir.makepyfile("""
             def test_nada():
@@ -320,7 +320,7 @@ class TestFixtureReporting:
         """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            "*ERROR at teardown*", 
+            "*ERROR at teardown*",
             "*teardown_function(function):*",
             "*assert 0*",
             "*Captured stdout*",
@@ -339,13 +339,13 @@ class TestFixtureReporting:
         """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            "*ERROR at teardown of test_fail*", 
+            "*ERROR at teardown of test_fail*",
             "*teardown_function(function):*",
             "*assert False*",
             "*Captured stdout*",
             "*teardown func*",
 
-            "*test_fail*", 
+            "*test_fail*",
             "*def test_fail():",
             "*failingfunc*",
             "*1 failed*1 error*",
@@ -364,8 +364,8 @@ class TestTerminalFunctional:
         )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
-            "*test_deselected.py ..", 
-            "=* 1 test*deselected by 'test_two:'*=", 
+            "*test_deselected.py ..",
+            "=* 1 test*deselected by 'test_two:'*=",
         ])
         assert result.ret == 0
 
@@ -379,7 +379,7 @@ class TestTerminalFunctional:
             def test_skip():
                 py.test.skip("dontshow")
         """)
-        result = testdir.runpytest() 
+        result = testdir.runpytest()
         assert result.stdout.str().find("skip test summary") == -1
         assert result.ret == 1
 
@@ -397,7 +397,7 @@ class TestTerminalFunctional:
         finally:
             old.chdir()
         result.stdout.fnmatch_lines([
-            "test_passes.py ..", 
+            "test_passes.py ..",
             "* 2 pass*",
         ])
         assert result.ret == 0
@@ -414,19 +414,19 @@ class TestTerminalFunctional:
             "platform %s -- Python %s*" %(
                     py.std.sys.platform, verinfo), # , py.std.sys.executable),
             "*test_header_trailer_info.py .",
-            "=* 1 passed in *.[0-9][0-9] seconds *=", 
+            "=* 1 passed in *.[0-9][0-9] seconds *=",
         ])
 
-    def test_showlocals(self, testdir): 
+    def test_showlocals(self, testdir):
         p1 = testdir.makepyfile("""
             def test_showlocals():
                 x = 3
-                y = "x" * 5000 
+                y = "x" * 5000
                 assert 0
         """)
         result = testdir.runpytest(p1, '-l')
         result.stdout.fnmatch_lines([
-            #"_ _ * Locals *", 
+            #"_ _ * Locals *",
             "x* = 3",
             "y* = 'xxxxxx*"
         ])
@@ -448,7 +448,7 @@ class TestTerminalFunctional:
         """)
         result = testdir.runpytest(p1, '-v')
         result.stdout.fnmatch_lines([
-            "*test_verbose_reporting.py:2: test_fail*FAIL*", 
+            "*test_verbose_reporting.py:2: test_fail*FAIL*",
             "*test_verbose_reporting.py:4: test_pass*PASS*",
             "*test_verbose_reporting.py:7: TestClass.test_skip*SKIP*",
             "*test_verbose_reporting.py:10: test_gen*FAIL*",
@@ -457,7 +457,7 @@ class TestTerminalFunctional:
         pytestconfig.pluginmanager.skipifmissing("xdist")
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([
-            "*FAIL*test_verbose_reporting.py:2: test_fail*", 
+            "*FAIL*test_verbose_reporting.py:2: test_fail*",
         ])
         assert result.ret == 1
 
@@ -557,7 +557,7 @@ def test_show_funcarg(testdir, option):
         ]
     )
 
-class TestGenericReporting: 
+class TestGenericReporting:
     """ this test class can be subclassed with a different option
         provider to run e.g. distributed tests.
     """
@@ -637,7 +637,7 @@ class TestGenericReporting:
     def test_pytest_report_header(self, testdir, option):
         testdir.makeconftest("""
             def pytest_report_header(config):
-                return "hello: info" 
+                return "hello: info"
         """)
         testdir.mkdir("a").join("conftest.py").write("""
 def pytest_report_header(config):

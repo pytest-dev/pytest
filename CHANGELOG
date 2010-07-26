@@ -4,6 +4,8 @@ Changes between 1.3.2 and 1.3.3a1
 - fix weirdness: make terminal width detection work on stdout instead of stdin 
   (thanks Armin Ronacher for reporting) 
 
+- remove trailing whitespace in all py/text files
+
 Changes between 1.3.1 and 1.3.2
 ==================================================
 

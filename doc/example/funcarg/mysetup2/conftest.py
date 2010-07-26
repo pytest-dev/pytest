@@ -7,11 +7,11 @@ def pytest_funcarg__mysetup(request):
 def pytest_addoption(parser):
     parser.addoption("--ssh", action="store", default=None,
         help="specify ssh host to run tests with")
-    
+
 
 class MySetup:
     def __init__(self, request):
-        self.config = request.config 
+        self.config = request.config
 
     def myapp(self):
         return MyApp()
@@ -21,4 +21,4 @@ class MySetup:
         if host is None:
             py.test.skip("specify ssh host with --ssh")
         return execnet.SshGateway(host)
-        
+

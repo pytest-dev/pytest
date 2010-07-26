@@ -1,10 +1,10 @@
 
-""" 
+"""
     ForkedFunc provides a way to run a function in a forked process
     and get at its return value, stdout and stderr output as well
-    as signals and exitstatusus. 
+    as signals and exitstatusus.
 
-    XXX see if tempdir handling is sane 
+    XXX see if tempdir handling is sane
 """
 
 import py
@@ -29,8 +29,8 @@ class ForkedFunc(object):
 
         pid = os.fork()
         if pid: # in parent process
-            self.pid = pid 
-        else: # in child process 
+            self.pid = pid
+        else: # in child process
             self._child(nice_level)
 
     def _child(self, nice_level):
@@ -65,7 +65,7 @@ class ForkedFunc(object):
         os.close(1)
         os.close(2)
         os._exit(EXITSTATUS)
-    
+
     def waitfinish(self, waiter=os.waitpid):
         pid, systemstatus = waiter(self.pid, 0)
         if systemstatus:

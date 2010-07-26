@@ -85,7 +85,7 @@ def test_setenv():
 
 def test_delenv():
     name = 'xyz1234'
-    assert name not in os.environ 
+    assert name not in os.environ
     monkeypatch = MonkeyPatch()
     py.test.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
     monkeypatch.delenv(name, raising=False)
@@ -94,7 +94,7 @@ def test_delenv():
     try:
         monkeypatch = MonkeyPatch()
         monkeypatch.delenv(name)
-        assert name not in os.environ 
+        assert name not in os.environ
         monkeypatch.setenv(name, "3")
         assert os.environ[name] == "3"
         monkeypatch.undo()
@@ -115,7 +115,7 @@ def test_setenv_prepend():
 
 def test_monkeypatch_plugin(testdir):
     reprec = testdir.inline_runsource("""
-        pytest_plugins = 'pytest_monkeypatch', 
+        pytest_plugins = 'pytest_monkeypatch',
         def test_method(monkeypatch):
             assert monkeypatch.__class__.__name__ == "MonkeyPatch"
     """)
@@ -131,10 +131,10 @@ def test_syspath_prepend():
         assert sys.path[0] == "hello"
         assert sys.path[1] == "world"
         monkeypatch.undo()
-        assert sys.path == old 
+        assert sys.path == old
         monkeypatch.undo()
-        assert sys.path == old 
+        assert sys.path == old
     finally:
         sys.path[:] = old
 
-            
+

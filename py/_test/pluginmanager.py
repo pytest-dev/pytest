@@ -1,5 +1,5 @@
 """
-managing loading and interacting with pytest plugins. 
+managing loading and interacting with pytest plugins.
 """
 import py
 import inspect
@@ -11,7 +11,7 @@ default_plugins = (
     "junitxml doctest").split()
 
 def check_old_use(mod, modname):
-    clsname = modname[len('pytest_'):].capitalize() + "Plugin" 
+    clsname = modname[len('pytest_'):].capitalize() + "Plugin"
     assert not hasattr(mod, clsname), (mod, clsname)
 
 class PluginManager(object):
@@ -19,7 +19,7 @@ class PluginManager(object):
         self.registry = Registry()
         self._name2plugin = {}
         self._hints = []
-        self.hook = HookRelay([hookspec], registry=self.registry) 
+        self.hook = HookRelay([hookspec], registry=self.registry)
         self.register(self)
         for spec in default_plugins:
             self.import_plugin(spec)
@@ -29,8 +29,8 @@ class PluginManager(object):
             if hasattr(plugin, '__name__'):
                 name = plugin.__name__.split(".")[-1]
             else:
-                name = id(plugin) 
-        return name 
+                name = id(plugin)
+        return name
 
     def register(self, plugin, name=None):
         assert not self.isregistered(plugin), plugin
@@ -83,14 +83,14 @@ class PluginManager(object):
             impname = canonical_importname(name)
             return self._name2plugin[impname]
 
-    # API for bootstrapping 
+    # API for bootstrapping
     #
     def _envlist(self, varname):
         val = py.std.os.environ.get(varname, None)
         if val is not None:
             return val.split(',')
         return ()
-    
+
     def consider_env(self):
         for spec in self._envlist("PYTEST_PLUGINS"):
             self.import_plugin(spec)
@@ -99,7 +99,7 @@ class PluginManager(object):
         try:
             from pkg_resources import iter_entry_points
         except ImportError:
-            return # XXX issue a warning 
+            return # XXX issue a warning
         for ep in iter_entry_points('pytest11'):
             name = canonical_importname(ep.name)
             if name in self._name2plugin:
@@ -109,7 +109,7 @@ class PluginManager(object):
 
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
-            if opt1 == "-p": 
+            if opt1 == "-p":
                 self.import_plugin(opt2)
 
     def consider_conftest(self, conftestmodule):
@@ -126,7 +126,7 @@ class PluginManager(object):
             if not isinstance(attr, (list, tuple)):
                 attr = (attr,)
             for spec in attr:
-                self.import_plugin(spec) 
+                self.import_plugin(spec)
 
     def import_plugin(self, spec):
         assert isinstance(spec, str)
@@ -141,7 +141,7 @@ class PluginManager(object):
             e = py.std.sys.exc_info()[1]
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:
-            check_old_use(mod, modname) 
+            check_old_use(mod, modname)
             self.register(mod)
             self.consider_module(mod)
 
@@ -151,11 +151,11 @@ class PluginManager(object):
             for hint in self._hints:
                 tw.line("hint: %s" % hint)
 
-    # 
     #
-    # API for interacting with registered and instantiated plugin objects 
     #
-    # 
+    # API for interacting with registered and instantiated plugin objects
+    #
+    #
     def listattr(self, attrname, plugins=None):
         return self.registry.listattr(attrname, plugins=plugins)
 
@@ -177,14 +177,14 @@ class PluginManager(object):
             setattr(py.test, name, value)
             py.test.__all__.append(name)
         if hasattr(self, '_config'):
-            self.call_plugin(plugin, "pytest_addoption", 
+            self.call_plugin(plugin, "pytest_addoption",
                 {'parser': self._config._parser})
-            self.call_plugin(plugin, "pytest_configure", 
+            self.call_plugin(plugin, "pytest_configure",
                 {'config': self._config})
 
     def call_plugin(self, plugin, methname, kwargs):
         return MultiCall(
-                methods=self.listattr(methname, plugins=[plugin]), 
+                methods=self.listattr(methname, plugins=[plugin]),
                 kwargs=kwargs, firstresult=True).execute()
 
     def do_configure(self, config):
@@ -193,8 +193,8 @@ class PluginManager(object):
         config.hook.pytest_configure(config=self._config)
 
     def do_unconfigure(self, config):
-        config = self._config 
-        del self._config 
+        config = self._config
+        del self._config
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
@@ -202,25 +202,25 @@ def canonical_importname(name):
     name = name.lower()
     modprefix = "pytest_"
     if not name.startswith(modprefix):
-        name = modprefix + name 
-    return name 
+        name = modprefix + name
+    return name
 
 def importplugin(importspec):
     try:
-        return __import__(importspec) 
+        return __import__(importspec)
     except ImportError:
         e = py.std.sys.exc_info()[1]
         if str(e).find(importspec) == -1:
             raise
         try:
-            return __import__("py._plugin.%s" %(importspec), 
+            return __import__("py._plugin.%s" %(importspec),
                 None, None, '__doc__')
         except ImportError:
             e = py.std.sys.exc_info()[1]
             if str(e).find(importspec) == -1:
                 raise
             # show the original exception, not the failing internal one
-            return __import__(importspec)  
+            return __import__(importspec)
 
 
 class MultiCall:
@@ -243,11 +243,11 @@ class MultiCall:
             kwargs = self.getkwargs(method)
             res = method(**kwargs)
             if res is not None:
-                self.results.append(res) 
+                self.results.append(res)
                 if self.firstresult:
                     return res
         if not self.firstresult:
-            return self.results 
+            return self.results
 
     def getkwargs(self, method):
         kwargs = {}
@@ -256,7 +256,7 @@ class MultiCall:
                 kwargs[argname] = self.kwargs[argname]
             except KeyError:
                 pass # might be optional param
-        return kwargs 
+        return kwargs
 
 def varnames(func):
     ismethod = inspect.ismethod(func)
@@ -268,7 +268,7 @@ def varnames(func):
 
 class Registry:
     """
-        Manage Plugins: register/unregister call calls to plugins. 
+        Manage Plugins: register/unregister call calls to plugins.
     """
     def __init__(self, plugins=None):
         if plugins is None:
@@ -284,7 +284,7 @@ class Registry:
         self._plugins.remove(plugin)
 
     def isregistered(self, plugin):
-        return plugin in self._plugins 
+        return plugin in self._plugins
 
     def __iter__(self):
         return iter(self._plugins)
@@ -297,12 +297,12 @@ class Registry:
             try:
                 l.append(getattr(plugin, attrname))
             except AttributeError:
-                continue 
+                continue
         if reverse:
             l.reverse()
         return l
 
-class HookRelay: 
+class HookRelay:
     def __init__(self, hookspecs, registry, prefix="pytest_"):
         if not isinstance(hookspecs, list):
             hookspecs = [hookspecs]
@@ -327,16 +327,16 @@ class HookRelay:
         if not added:
             raise ValueError("did not find new %r hooks in %r" %(
                 prefix, hookspecs,))
-            
+
 
     def _performcall(self, name, multicall):
         return multicall.execute()
-        
+
 class HookCaller:
     def __init__(self, hookrelay, name, firstresult):
-        self.hookrelay = hookrelay 
-        self.name = name 
-        self.firstresult = firstresult 
+        self.hookrelay = hookrelay
+        self.name = name
+        self.firstresult = firstresult
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
@@ -350,4 +350,4 @@ class HookCaller:
         methods = self.hookrelay._registry.listattr(self.name, plugins=plugins)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         return self.hookrelay._performcall(self.name, mc)
-   
+

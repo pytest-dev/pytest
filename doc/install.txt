@@ -6,9 +6,9 @@ py.test/pylib installation info in a nutshell
 
 **Pythons**: 2.4, 2.5, 2.6, 2.7, 3.0, 3.1.x, Jython-2.5.1, PyPy-1.2
 
-**Operating systems**: Linux, Windows, OSX, Unix 
+**Operating systems**: Linux, Windows, OSX, Unix
 
-**Requirements**: setuptools_ or Distribute_ 
+**Requirements**: setuptools_ or Distribute_
 
 **Installers**: easy_install_ and pip_ or `standalone`_ (new for 1.2)
 
@@ -19,9 +19,9 @@ py.test/pylib installation info in a nutshell
 * debian: ``python-codespeak-lib``
 * gentoo: ``pylib``
 
-**Installed scripts**: see `bin`_ for which and how scripts are installed. 
+**Installed scripts**: see `bin`_ for which and how scripts are installed.
 
-**hg repository**: https://bitbucket.org/hpk42/py-trunk 
+**hg repository**: https://bitbucket.org/hpk42/py-trunk
 
 .. _`bin`: bin.html
 
@@ -29,12 +29,12 @@ py.test/pylib installation info in a nutshell
 Best practise: install tool and dependencies virtually
 ===========================================================
 
-It is recommended to work with virtual environments 
+It is recommended to work with virtual environments
 (e.g. virtualenv_ or buildout_ based) and use easy_install_
-(or pip_) for installing py.test/pylib and any dependencies 
-you need to run your tests.  Local virtual Python environments 
-(as opposed to system-wide "global" environments) make for a more 
-reproducible and reliable test environment. 
+(or pip_) for installing py.test/pylib and any dependencies
+you need to run your tests.  Local virtual Python environments
+(as opposed to system-wide "global" environments) make for a more
+reproducible and reliable test environment.
 
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
@@ -46,22 +46,22 @@ using easy_install (from setuptools or Distribute)
 ===================================================
 
 Both `Distribute`_ and setuptools_ provide the ``easy_install``
-installation tool.  While setuptools should work ok with 
-Python2 interpreters, `Distribute`_ also works with Python3 
+installation tool.  While setuptools should work ok with
+Python2 interpreters, `Distribute`_ also works with Python3
 and it avoids some issues on Windows.  In both cases you
 can open a command line window and then type::
 
-    easy_install -U py 
+    easy_install -U py
 
 to install the latest release of the py lib and py.test.  The ``-U`` switch
-will trigger an upgrade if you already have an older version installed. 
+will trigger an upgrade if you already have an older version installed.
 
 If you now type::
 
     py.test --version
 
 you should see the version number and the import location of the tool.
-Maybe you want to head on with the `quickstart`_ now? 
+Maybe you want to head on with the `quickstart`_ now?
 
 .. _quickstart: test/quickstart.html
 
@@ -70,19 +70,19 @@ Maybe you want to head on with the `quickstart`_ now?
 Generating a py.test standalone Script
 ============================================
 
-If you are a maintainer or application developer and want users 
+If you are a maintainer or application developer and want users
 to run tests you can use a facility to generate a standalone
 "py.test" script that you can tell users to run::
 
-    py.test --genscript=mytest 
+    py.test --genscript=mytest
 
 will generate a ``mytest`` script that is, in fact, a ``py.test`` under
 disguise.  You can tell people to download and then e.g. run it like this::
 
-    python mytest --pastebin=all 
+    python mytest --pastebin=all
 
-and ask them to send you the resulting URL.  The resulting script has 
-all core features and runs unchanged under Python2 and Python3 interpreters. 
+and ask them to send you the resulting URL.  The resulting script has
+all core features and runs unchanged under Python2 and Python3 interpreters.
 
 Troubleshooting / known issues
 ===============================
@@ -90,30 +90,30 @@ Troubleshooting / known issues
 .. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
 
 **Jython2.5.1 on XP**: `Jython does not create command line launchers`_
-so ``py.test`` will not work correctly.  You may install py.test on 
-CPython and type ``py.test --genscript=mytest`` and then use 
-``jython mytest`` to run py.test for your tests to run in Jython. 
+so ``py.test`` will not work correctly.  You may install py.test on
+CPython and type ``py.test --genscript=mytest`` and then use
+``jython mytest`` to run py.test for your tests to run in Jython.
 
 **On Linux**: If ``easy_install`` fails because it needs to run
-as the superuser you are trying to install things globally 
-and need to put ``sudo`` in front of the command. 
+as the superuser you are trying to install things globally
+and need to put ``sudo`` in front of the command.
 
 **On Windows**: If "easy_install" or "py.test" are not found
 please see here: `How do i run a Python program under Windows?`_
 
-.. _`How do i run a Python program under Windows?`: http://www.python.org/doc/faq/windows/#how-do-i-run-a-python-program-under-windows  
+.. _`How do i run a Python program under Windows?`: http://www.python.org/doc/faq/windows/#how-do-i-run-a-python-program-under-windows
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
-.. _`Distribute`: 
+.. _`Distribute`:
 .. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
 .. _`distribute installation`: http://pypi.python.org/pypi/distribute
 .. _checkout:
 .. _tarball:
 
-Working from version control or a tarball 
+Working from version control or a tarball
 =================================================
 
-To follow development or start experiments, checkout the 
+To follow development or start experiments, checkout the
 complete code and documentation source with mercurial_::
 
     hg clone https://bitbucket.org/hpk42/py-trunk/
@@ -126,45 +126,45 @@ download and unpack a TAR file::
     http://pypi.python.org/pypi/py/
 
 
-activating a checkout with setuptools 
+activating a checkout with setuptools
 --------------------------------------------
 
 With a working `Distribute`_ or setuptools_ installation you can type::
 
-    python setup.py develop 
+    python setup.py develop
 
-in order to work inline with the tools and the lib of your checkout. 
+in order to work inline with the tools and the lib of your checkout.
 
 .. _`no-setuptools`:
 
-.. _`directly use a checkout`: 
+.. _`directly use a checkout`:
 
-directly use a checkout or tarball / avoid setuptools 
+directly use a checkout or tarball / avoid setuptools
 -------------------------------------------------------------
 
 Get a checkout_ or tarball_ and add paths to your environment variables:
 
 * ``PYTHONPATH`` needs to contain the root directory (where ``py`` resides)
-* ``PATH`` needs to contain ``ROOT/bin`` or ``ROOT\bin\win32`` respectively. 
+* ``PATH`` needs to contain ``ROOT/bin`` or ``ROOT\bin\win32`` respectively.
 
-There also are helper scripts that set the variables accordingly.  On windows 
+There also are helper scripts that set the variables accordingly.  On windows
 execute::
 
     # inside autoexec.bat or shell startup
     c:\\path\to\checkout\bin\env.cmd
 
-on linux/OSX add this to your shell initialization:: 
+on linux/OSX add this to your shell initialization::
 
-    # inside e.g. .bashrc 
-    eval `python ~/path/to/checkout/bin/env.py` 
+    # inside e.g. .bashrc
+    eval `python ~/path/to/checkout/bin/env.py`
 
-both of which which will get you good settings.  If you install 
+both of which which will get you good settings.  If you install
 the pylib this way you can easily ``hg pull && hg up`` or download
 a new tarball_ to follow the development tree.
 
 
-Note that the scripts manually added like this will look for 
-py libs in the chain of parent directories of the current working dir.  
+Note that the scripts manually added like this will look for
+py libs in the chain of parent directories of the current working dir.
 For example, if you have a layout like this::
 
     mypkg/
@@ -179,7 +179,7 @@ the pylib comes from you can always do::
 
     py.test --version
 
-to see where py.test is imported from. 
+to see where py.test is imported from.
 
 .. _`command line scripts`: bin.html
 .. _contact: contact.html

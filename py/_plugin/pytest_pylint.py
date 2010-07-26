@@ -4,7 +4,7 @@ XXX: Currently in progress, NOT IN WORKING STATE.
 """
 import py
 
-pylint = py.test.importorskip("pylint.lint") 
+pylint = py.test.importorskip("pylint.lint")
 
 def pytest_addoption(parser):
     group = parser.getgroup('pylint options')

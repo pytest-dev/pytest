@@ -19,10 +19,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-1. Download `pytest_hooklog.py`_ plugin source code 
-2. put it somewhere as ``pytest_hooklog.py`` into your import path 
+1. Download `pytest_hooklog.py`_ plugin source code
+2. put it somewhere as ``pytest_hooklog.py`` into your import path
 3. a subsequent ``py.test`` run will use your local version
 
-Checkout customize_, other plugins_ or `get in contact`_. 
+Checkout customize_, other plugins_ or `get in contact`_.
 
 .. include:: links.txt

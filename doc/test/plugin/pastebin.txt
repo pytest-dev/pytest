@@ -11,15 +11,15 @@ Usage
 
 **Creating a URL for each test failure**::
 
-    py.test --pastebin=failed 
+    py.test --pastebin=failed
 
 This will submit test run information to a remote Paste service and
 provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure. 
+for example ``-x`` if you only want to send one particular failure.
 
 **Creating a URL for a whole test session log**::
 
-    py.test --pastebin=all 
+    py.test --pastebin=all
 
 Currently only pasting to the http://paste.pocoo.org service is implemented.
 
@@ -34,10 +34,10 @@ Start improving this plugin in 30 seconds
 =========================================
 
 
-1. Download `pytest_pastebin.py`_ plugin source code 
-2. put it somewhere as ``pytest_pastebin.py`` into your import path 
+1. Download `pytest_pastebin.py`_ plugin source code
+2. put it somewhere as ``pytest_pastebin.py`` into your import path
 3. a subsequent ``py.test`` run will use your local version
 
-Checkout customize_, other plugins_ or `get in contact`_. 
+Checkout customize_, other plugins_ or `get in contact`_.
 
 .. include:: links.txt

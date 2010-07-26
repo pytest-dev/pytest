@@ -1,8 +1,8 @@
-""" log invocations of extension hooks to a file. """ 
+""" log invocations of extension hooks to a file. """
 import py
 
 def pytest_addoption(parser):
-    parser.addoption("--hooklog", dest="hooklog", default=None, 
+    parser.addoption("--hooklog", dest="hooklog", default=None,
         help="write hook calls to the given file.")
 
 def pytest_configure(config):
@@ -10,7 +10,7 @@ def pytest_configure(config):
     if hooklog:
         config._hooklogfile = open(hooklog, 'w')
         config._hooklog_oldperformcall = config.hook._performcall
-        config.hook._performcall = (lambda name, multicall: 
+        config.hook._performcall = (lambda name, multicall:
             logged_call(name=name, multicall=multicall, config=config))
 
 def logged_call(name, multicall, config):
@@ -26,7 +26,7 @@ def logged_call(name, multicall, config):
 
 def pytest_unconfigure(config):
     try:
-        del config.hook.__dict__['_performcall'] 
+        del config.hook.__dict__['_performcall']
     except KeyError:
         pass
     else:

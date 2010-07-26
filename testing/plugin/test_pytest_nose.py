@@ -39,7 +39,7 @@ def test_nose_test_generator_fixtures(testdir):
             called[:] = []
             for i in range(0, 5):
                 yield check, i
-                
+
         def check(i):
             expect = ['outer_setup']
             for x in range(0, i):
@@ -48,7 +48,7 @@ def test_nose_test_generator_fixtures(testdir):
             expect.append('inner_setup')
             eq_(called, expect)
 
-            
+
         test_gen.setup = outer_setup
         test_gen.teardown = outer_teardown
         check.setup = inner_setup

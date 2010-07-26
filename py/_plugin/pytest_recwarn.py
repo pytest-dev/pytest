@@ -1,10 +1,10 @@
 """
-helpers for asserting deprecation and other warnings. 
+helpers for asserting deprecation and other warnings.
 
-Example usage 
+Example usage
 ---------------------
 
-You can use the ``recwarn`` funcarg to track 
+You can use the ``recwarn`` funcarg to track
 warnings within a test function:
 
 .. sourcecode:: python
@@ -25,11 +25,11 @@ warning:
 .. sourcecode:: python
 
     import py
-            
+
     def test_global():
         py.test.deprecated_call(myfunction, 17)
-        
-        
+
+
 """
 
 import py
@@ -39,10 +39,10 @@ def pytest_funcarg__recwarn(request):
     """Return a WarningsRecorder instance that provides these methods:
 
     * ``pop(category=None)``: return last warning matching the category.
-    * ``clear()``: clear list of warnings 
+    * ``clear()``: clear list of warnings
     """
     if sys.version_info >= (2,7):
-        import warnings 
+        import warnings
         oldfilters = warnings.filters[:]
         warnings.simplefilter('default')
         def reset_filters():
@@ -57,19 +57,19 @@ def pytest_namespace():
 
 def deprecated_call(func, *args, **kwargs):
     """ assert that calling func(*args, **kwargs)
-        triggers a DeprecationWarning. 
-    """ 
+        triggers a DeprecationWarning.
+    """
     warningmodule = py.std.warnings
     l = []
     oldwarn_explicit = getattr(warningmodule, 'warn_explicit')
-    def warn_explicit(*args, **kwargs): 
-        l.append(args) 
+    def warn_explicit(*args, **kwargs):
+        l.append(args)
         oldwarn_explicit(*args, **kwargs)
     oldwarn = getattr(warningmodule, 'warn')
-    def warn(*args, **kwargs): 
-        l.append(args) 
+    def warn(*args, **kwargs):
+        l.append(args)
         oldwarn(*args, **kwargs)
-        
+
     warningmodule.warn_explicit = warn_explicit
     warningmodule.warn = warn
     try:
@@ -100,10 +100,10 @@ class WarningsRecorder:
             self.list.append(RecordedWarning(
                 message, category, filename, lineno, line))
             try:
-                self.old_showwarning(message, category, 
+                self.old_showwarning(message, category,
                     filename, lineno, line=line)
             except TypeError:
-                # < python2.6 
+                # < python2.6
                 self.old_showwarning(message, category, filename, lineno)
         self.old_showwarning = warningmodule.showwarning
         warningmodule.showwarning = showwarning
@@ -121,7 +121,7 @@ class WarningsRecorder:
     #    warnings.onceregistry.clear()
     #    warnings.__warningregistry__.clear()
 
-    def clear(self): 
+    def clear(self):
         self.list[:] = []
 
     def finalize(self):

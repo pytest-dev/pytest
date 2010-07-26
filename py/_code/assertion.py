@@ -74,4 +74,4 @@ if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
     from py._code._assertionnew import interpret as reinterpret
 else:
     reinterpret = reinterpret_old
-    
+

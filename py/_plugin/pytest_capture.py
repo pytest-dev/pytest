@@ -1,27 +1,27 @@
 """
-configurable per-test stdout/stderr capturing mechanisms. 
+configurable per-test stdout/stderr capturing mechanisms.
 
-This plugin captures stdout/stderr output for each test separately. 
-In case of test failures this captured output is shown grouped 
-togtther with the test. 
+This plugin captures stdout/stderr output for each test separately.
+In case of test failures this captured output is shown grouped
+togtther with the test.
 
 The plugin also provides test function arguments that help to
-assert stdout/stderr output from within your tests, see the 
-`funcarg example`_. 
+assert stdout/stderr output from within your tests, see the
+`funcarg example`_.
 
 
-Capturing of input/output streams during tests 
+Capturing of input/output streams during tests
 ---------------------------------------------------
 
 By default ``sys.stdout`` and ``sys.stderr`` are substituted with
-temporary streams during the execution of tests and setup/teardown code.  
-During the whole testing process it will re-use the same temporary 
+temporary streams during the execution of tests and setup/teardown code.
+During the whole testing process it will re-use the same temporary
 streams allowing to play well with the logging module which easily
-takes ownership on these streams. 
+takes ownership on these streams.
 
-Also, 'sys.stdin' is substituted with a file-like "null" object that 
+Also, 'sys.stdin' is substituted with a file-like "null" object that
 does not return any values.  This is to immediately error out
-on tests that wait on reading something from stdin. 
+on tests that wait on reading something from stdin.
 
 You can influence output capturing mechanisms from the command line::
 
@@ -34,34 +34,34 @@ If you set capturing values in a conftest file like this::
     # conftest.py
     option_capture = 'fd'
 
-then all tests in that directory will execute with "fd" style capturing. 
+then all tests in that directory will execute with "fd" style capturing.
 
-sys-level capturing 
+sys-level capturing
 ------------------------------------------
 
-Capturing on 'sys' level means that ``sys.stdout`` and ``sys.stderr`` 
-will be replaced with in-memory files (``py.io.TextIO`` to be precise)  
+Capturing on 'sys' level means that ``sys.stdout`` and ``sys.stderr``
+will be replaced with in-memory files (``py.io.TextIO`` to be precise)
 that capture writes and decode non-unicode strings to a unicode object
-(using a default, usually, UTF-8, encoding). 
+(using a default, usually, UTF-8, encoding).
 
 FD-level capturing and subprocesses
 ------------------------------------------
 
 The ``fd`` based method means that writes going to system level files
-based on the standard file descriptors will be captured, for example 
-writes such as ``os.write(1, 'hello')`` will be captured properly. 
-Capturing on fd-level will include output generated from 
-any subprocesses created during a test. 
+based on the standard file descriptors will be captured, for example
+writes such as ``os.write(1, 'hello')`` will be captured properly.
+Capturing on fd-level will include output generated from
+any subprocesses created during a test.
 
 .. _`funcarg example`:
 
 Example Usage of the capturing Function arguments
 ---------------------------------------------------
 
-You can use the `capsys funcarg`_ and `capfd funcarg`_ to 
+You can use the `capsys funcarg`_ and `capfd funcarg`_ to
 capture writes to stdout and stderr streams.  Using the
-funcargs frees your test from having to care about setting/resetting 
-the old streams and also interacts well with py.test's own 
+funcargs frees your test from having to care about setting/resetting
+the old streams and also interacts well with py.test's own
 per-test capturing.  Here is an example test function:
 
 .. sourcecode:: python
@@ -74,14 +74,14 @@ per-test capturing.  Here is an example test function:
         assert err == "world\\n"
         print "next"
         out, err = capsys.readouterr()
-        assert out == "next\\n" 
+        assert out == "next\\n"
 
-The ``readouterr()`` call snapshots the output so far - 
-and capturing will be continued.  After the test 
-function finishes the original streams will 
-be restored.  If you want to capture on 
+The ``readouterr()`` call snapshots the output so far -
+and capturing will be continued.  After the test
+function finishes the original streams will
+be restored.  If you want to capture on
 the filedescriptor level you can use the ``capfd`` function
-argument which offers the same interface. 
+argument which offers the same interface.
 """
 
 import py
@@ -92,7 +92,7 @@ def pytest_addoption(parser):
     group._addoption('--capture', action="store", default=None,
         metavar="method", type="choice", choices=['fd', 'sys', 'no'],
         help="per-test capturing method: one of fd (default)|sys|no.")
-    group._addoption('-s', action="store_const", const="no", dest="capture", 
+    group._addoption('-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
 
 def addouterr(rep, outerr):
@@ -120,14 +120,14 @@ class CaptureManager:
 
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
-        newf = py.io.dupfile(f, encoding="UTF-8") 
+        newf = py.io.dupfile(f, encoding="UTF-8")
         return newf
 
     def _makestringio(self):
-        return py.io.TextIO() 
+        return py.io.TextIO()
 
     def _getcapture(self, method):
-        if method == "fd": 
+        if method == "fd":
             return py.io.StdCaptureFD(now=False,
                 out=self._maketempfile(), err=self._maketempfile()
             )
@@ -144,12 +144,12 @@ class CaptureManager:
         if config.option.capture:
             method = config.option.capture
         else:
-            try: 
+            try:
                 method = config._conftest.rget("option_capture", path=fspath)
             except KeyError:
                 method = "fd"
-        if method == "fd" and not hasattr(os, 'dup'): # e.g. jython 
-            method = "sys" 
+        if method == "fd" and not hasattr(os, 'dup'): # e.g. jython
+            method = "sys"
         return method
 
     def resumecapture_item(self, item):
@@ -160,10 +160,10 @@ class CaptureManager:
 
     def resumecapture(self, method):
         if hasattr(self, '_capturing'):
-            raise ValueError("cannot resume, already capturing with %r" % 
+            raise ValueError("cannot resume, already capturing with %r" %
                 (self._capturing,))
         cap = self._method2capture.get(method)
-        self._capturing = method 
+        self._capturing = method
         if cap is None:
             self._method2capture[method] = cap = self._getcapture(method)
             cap.startall()
@@ -179,9 +179,9 @@ class CaptureManager:
                 outerr = cap.suspend()
             del self._capturing
             if item:
-                outerr = (item.outerr[0] + outerr[0], 
+                outerr = (item.outerr[0] + outerr[0],
                           item.outerr[1] + outerr[1])
-            return outerr 
+            return outerr
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
@@ -245,23 +245,23 @@ class CaptureManager:
             addouterr(rep, outerr)
         if not rep.passed or rep.when == "teardown":
             outerr = ('', '')
-        item.outerr = outerr 
+        item.outerr = outerr
         return rep
 
 def pytest_funcarg__capsys(request):
-    """captures writes to sys.stdout/sys.stderr and makes 
-    them available successively via a ``capsys.readouterr()`` method 
-    which returns a ``(out, err)`` tuple of captured snapshot strings. 
-    """ 
+    """captures writes to sys.stdout/sys.stderr and makes
+    them available successively via a ``capsys.readouterr()`` method
+    which returns a ``(out, err)`` tuple of captured snapshot strings.
+    """
     return CaptureFuncarg(request, py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
-    """captures writes to file descriptors 1 and 2 and makes 
-    snapshotted ``(out, err)`` string tuples available 
+    """captures writes to file descriptors 1 and 2 and makes
+    snapshotted ``(out, err)`` string tuples available
     via the ``capsys.readouterr()`` method.  If the underlying
     platform does not have ``os.dup`` (e.g. Jython) tests using
-    this funcarg will automatically skip. 
-    """ 
+    this funcarg will automatically skip.
+    """
     if not hasattr(os, 'dup'):
         py.test.skip("capfd funcarg needs os.dup")
     return CaptureFuncarg(request, py.io.StdCaptureFD)
@@ -279,7 +279,7 @@ class CaptureFuncarg:
     def _finalize(self):
         if hasattr(self, 'capture'):
             self.capture.reset()
-            del self.capture 
+            del self.capture
 
     def readouterr(self):
         return self.capture.readouterr()

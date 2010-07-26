@@ -2,7 +2,7 @@ import py, os
 from py._plugin.pytest_helpconfig import collectattr
 
 def test_version(testdir):
-    assert py.version == py.__version__ 
+    assert py.version == py.__version__
     result = testdir.runpytest("--version")
     assert result.ret == 0
     #p = py.path.local(py.__file__).dirpath()
@@ -43,7 +43,7 @@ def test_hookvalidation_unknown(testdir):
 def test_hookvalidation_optional(testdir):
     testdir.makeconftest("""
         import py
-        @py.test.mark.optionalhook 
+        @py.test.mark.optionalhook
         def pytest_hello(xyz):
             pass
     """)

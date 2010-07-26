@@ -1,21 +1,21 @@
 """
 advanced skipping for python test functions, classes or modules.
 
-With this plugin you can mark test functions for conditional skipping 
+With this plugin you can mark test functions for conditional skipping
 or as "xfail", expected-to-fail.  Skipping a test will avoid running it
 while xfail-marked tests will run and result in an inverted outcome:
-a pass becomes a failure and a fail becomes a semi-passing one. 
+a pass becomes a failure and a fail becomes a semi-passing one.
 
-The need for skipping a test is usually connected to a condition.  
+The need for skipping a test is usually connected to a condition.
 If a test fails under all conditions then it's probably better
-to mark your test as 'xfail'. 
+to mark your test as 'xfail'.
 
 By passing ``-rxs`` to the terminal reporter you will see extra
-summary information on skips and xfail-run tests at the end of a test run. 
+summary information on skips and xfail-run tests at the end of a test run.
 
 .. _skipif:
 
-Skipping a single function 
+Skipping a single function
 -------------------------------------------
 
 Here is an example for marking a test function to be skipped
@@ -25,17 +25,17 @@ when run on a Python3 interpreter::
     def test_function():
         ...
 
-During test function setup the skipif condition is 
+During test function setup the skipif condition is
 evaluated by calling ``eval(expr, namespace)``.  The namespace
-contains the  ``sys`` and ``os`` modules and the test 
-``config`` object.  The latter allows you to skip based 
+contains the  ``sys`` and ``os`` modules and the test
+``config`` object.  The latter allows you to skip based
 on a test configuration value e.g. like this::
 
     @py.test.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
 
-Create a shortcut for your conditional skip decorator 
+Create a shortcut for your conditional skip decorator
 at module level like this::
 
     win32only = py.test.mark.skipif("sys.platform != 'win32'")
@@ -45,34 +45,34 @@ at module level like this::
         ...
 
 
-skip groups of test functions 
+skip groups of test functions
 --------------------------------------
 
 As with all metadata function marking you can do it at
-`whole class- or module level`_.  Here is an example 
+`whole class- or module level`_.  Here is an example
 for skipping all methods of a test class based on platform::
 
     class TestPosixCalls:
         pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
-    
+
         def test_function(self):
             # will not be setup or run under 'win32' platform
             #
 
 The ``pytestmark`` decorator will be applied to each test function.
-If your code targets python2.6 or above you can equivalently use 
+If your code targets python2.6 or above you can equivalently use
 the skipif decorator on classes::
 
     @py.test.mark.skipif("sys.platform == 'win32'")
     class TestPosixCalls:
-    
+
         def test_function(self):
             # will not be setup or run under 'win32' platform
             #
 
 It is fine in general to apply multiple "skipif" decorators
 on a single function - this means that if any of the conditions
-apply the function will be skipped. 
+apply the function will be skipped.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
@@ -82,7 +82,7 @@ mark a test function as **expected to fail**
 -------------------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
-expect the test to fail:: 
+expect the test to fail::
 
     @py.test.mark.xfail
     def test_function():
@@ -111,7 +111,7 @@ imperative xfail from within a test or setup function
 ------------------------------------------------------
 
 If you cannot declare xfail-conditions at import time
-you can also imperatively produce an XFail-outcome from 
+you can also imperatively produce an XFail-outcome from
 within test or setup code.  Example::
 
     def test_function():
@@ -122,7 +122,7 @@ within test or setup code.  Example::
 skipping on a missing import dependency
 --------------------------------------------------
 
-You can use the following import helper at module level 
+You can use the following import helper at module level
 or within a test or test setup function::
 
     docutils = py.test.importorskip("docutils")
@@ -139,7 +139,7 @@ imperative skip from within a test or setup function
 ------------------------------------------------------
 
 If for some reason you cannot declare skip-conditions
-you can also imperatively produce a Skip-outcome from 
+you can also imperatively produce a Skip-outcome from
 within test or setup code.  Example::
 
     def test_function():
@@ -152,7 +152,7 @@ import py
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
-    group.addoption('--runxfail', 
+    group.addoption('--runxfail',
            action="store_true", dest="runxfail", default=False,
            help="run tests even if they are marked xfail")
 
@@ -198,7 +198,7 @@ class MarkEvaluator:
             else:
                 return "condition: " + self.expr
         return expl
-        
+
 
 def pytest_runtest_setup(item):
     if not isinstance(item, py.test.collect.Function):
@@ -222,7 +222,7 @@ def check_xfail_no_run(item):
 def pytest_runtest_makereport(__multicall__, item, call):
     if not isinstance(item, py.test.collect.Function):
         return
-    if not (call.excinfo and 
+    if not (call.excinfo and
         call.excinfo.errisinstance(py.test.xfail.Exception)):
         evalxfail = getattr(item, '_evalxfail', None)
         if not evalxfail:
@@ -323,13 +323,13 @@ def cached_eval(config, expr, d):
 def folded_skips(skipped):
     d = {}
     for event in skipped:
-        entry = event.longrepr.reprcrash 
+        entry = event.longrepr.reprcrash
         key = entry.path, entry.lineno, entry.message
         d.setdefault(key, []).append(event)
     l = []
-    for key, events in d.items(): 
+    for key, events in d.items():
         l.append((len(events),) + key)
-    return l 
+    return l
 
 def show_skipped(terminalreporter, lines):
     tr = terminalreporter

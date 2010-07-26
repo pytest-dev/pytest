@@ -1,12 +1,12 @@
 """
 This module contains multithread-safe cache implementations.
 
-All Caches have 
+All Caches have
 
-    getorbuild(key, builder) 
-    delentry(key) 
+    getorbuild(key, builder)
+    delentry(key)
 
-methods and allow configuration when instantiating the cache class. 
+methods and allow configuration when instantiating the cache class.
 """
 from time import time as gettime
 
@@ -24,7 +24,7 @@ class BasicCache(object):
 
     def _putentry(self, key, entry):
         self._prunelowestweight()
-        self._dict[key] = entry 
+        self._dict[key] = entry
 
     def delentry(self, key, raising=False):
         try:
@@ -46,14 +46,14 @@ class BasicCache(object):
         numentries = len(self._dict)
         if numentries >= self.maxentries:
             # evict according to entry's weight
-            items = [(entry.weight, key) 
+            items = [(entry.weight, key)
                         for key, entry in self._dict.items()]
             items.sort()
             index = numentries - self.prunenum
             if index > 0:
                 for weight, key in items[:index]:
                     # in MT situations the element might be gone
-                    self.delentry(key, raising=False) 
+                    self.delentry(key, raising=False)
 
 class BuildcostAccessCache(BasicCache):
     """ A BuildTime/Access-counting cache implementation.
@@ -78,7 +78,7 @@ class BuildcostAccessCache(BasicCache):
 class WeightedCountingEntry(object):
     def __init__(self, value, oneweight):
         self._value = value
-        self.weight = self._oneweight = oneweight 
+        self.weight = self._oneweight = oneweight
 
     def value(self):
         self.weight += self._oneweight
@@ -95,8 +95,8 @@ class AgingCache(BasicCache):
     def _getentry(self, key):
         entry = self._dict[key]
         if entry.isexpired():
-            self.delentry(key) 
-            raise KeyError(key) 
+            self.delentry(key)
+            raise KeyError(key)
         return entry
 
     def _build(self, key, builder):
@@ -111,4 +111,4 @@ class AgingEntry(object):
 
     def isexpired(self):
         t = gettime()
-        return t >= self.weight 
+        return t >= self.weight

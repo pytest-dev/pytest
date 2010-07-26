@@ -1,5 +1,5 @@
 """
-funcargs and support code for testing py.test's own functionality. 
+funcargs and support code for testing py.test's own functionality.
 """
 
 import py
@@ -53,7 +53,7 @@ class TmpTestdir:
     def __init__(self, request):
         self.request = request
         self._pytest = request.getfuncargvalue("_pytest")
-        # XXX remove duplication with tmpdir plugin 
+        # XXX remove duplication with tmpdir plugin
         basetmp = request.config.ensuretemp("testdir")
         name = request.function.__name__
         for i in range(100):
@@ -105,7 +105,7 @@ class TmpTestdir:
     def chdir(self):
         old = self.tmpdir.chdir()
         if not hasattr(self, '_olddir'):
-            self._olddir = old 
+            self._olddir = old
 
     def _makefile(self, ext, args, kwargs):
         items = list(kwargs.items())
@@ -120,7 +120,7 @@ class TmpTestdir:
             p.write(source.encode("utf-8"), "wb")
             if ret is None:
                 ret = p
-        return ret 
+        return ret
 
 
     def makefile(self, ext, *args, **kwargs):
@@ -140,7 +140,7 @@ class TmpTestdir:
             path = self.tmpdir
         py.std.sys.path.insert(0, str(path))
         self._syspathremove.append(str(path))
-            
+
     def mkdir(self, name):
         return self.tmpdir.mkdir(name)
 
@@ -159,12 +159,12 @@ class TmpTestdir:
         rec = self.getreportrecorder(config)
         colitems = [config.getnode(arg) for arg in config.args]
         items = list(session.genitems(colitems))
-        return items, rec 
+        return items, rec
 
     def runitem(self, source):
-        # used from runner functional tests 
+        # used from runner functional tests
         item = self.getitem(source)
-        # the test class where we are called from wants to provide the runner 
+        # the test class where we are called from wants to provide the runner
         testclassinstance = py.builtin._getimself(self.request.function)
         runner = testclassinstance.getrunner()
         return runner(item)
@@ -181,7 +181,7 @@ class TmpTestdir:
         l = list(args) + [p]
         reprec = self.inline_run(*l)
         reports = reprec.getreports("pytest_runtest_logreport")
-        assert len(reports) == 1, reports 
+        assert len(reports) == 1, reports
         return reports[0]
 
     def inline_run(self, *args):
@@ -193,7 +193,7 @@ class TmpTestdir:
         colitems = config.getinitialnodes()
         session.main(colitems)
         config.pluginmanager.do_unconfigure(config)
-        return reprec 
+        return reprec
 
     def config_preparse(self):
         config = self.Config()
@@ -202,7 +202,7 @@ class TmpTestdir:
                 config.pluginmanager.import_plugin(plugin)
             else:
                 if isinstance(plugin, dict):
-                    plugin = PseudoPlugin(plugin) 
+                    plugin = PseudoPlugin(plugin)
                 if not config.pluginmanager.isregistered(plugin):
                     config.pluginmanager.register(plugin)
         return config
@@ -213,21 +213,21 @@ class TmpTestdir:
         config = self.config_preparse()
         args = list(args) + ["--basetemp=%s" % self.tmpdir.dirpath('basetemp')]
         config.parse(args)
-        return config 
+        return config
 
     def reparseconfig(self, args=None):
         """ this is used from tests that want to re-invoke parse(). """
         if not args:
             args = [self.tmpdir]
-        from py._test import config 
+        from py._test import config
         oldconfig = config.config_per_process # py.test.config
         try:
             c = config.config_per_process = py.test.config = pytestConfig()
             c.basetemp = oldconfig.mktemp("reparse", numbered=True)
-            c.parse(args) 
+            c.parse(args)
             return c
-        finally: 
-            config.config_per_process = py.test.config = oldconfig 
+        finally:
+            config.config_per_process = py.test.config = oldconfig
 
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
@@ -239,7 +239,7 @@ class TmpTestdir:
         moditems = modcol.collect()
         for item in modcol.collect():
             if item.name == funcname:
-                return item 
+                return item
         else:
             assert 0, "%r item not found in module:\n%s" %(funcname, source)
 
@@ -247,7 +247,7 @@ class TmpTestdir:
         modcol = self.getmodulecol(source)
         return list(modcol.config.initsession().genitems([modcol]))
         #assert item is not None, "%r item not found in module:\n%s" %(funcname, source)
-        #return item 
+        #return item
 
     def getfscol(self,  path, configargs=()):
         self.config = self.parseconfig(path, *configargs)
@@ -262,9 +262,9 @@ class TmpTestdir:
         self.config = self.parseconfig(path, *configargs)
         self.session = self.config.initsession()
         #self.config.pluginmanager.do_configure(config=self.config)
-        # XXX 
-        self.config.pluginmanager.import_plugin("runner") 
-        plugin = self.config.pluginmanager.getplugin("runner") 
+        # XXX
+        self.config.pluginmanager.import_plugin("runner")
+        plugin = self.config.pluginmanager.getplugin("runner")
         plugin.pytest_configure(config=self.config)
 
         return self.config.getnode(path)
@@ -290,7 +290,7 @@ class TmpTestdir:
         f1 = p1.open("wb")
         f2 = p2.open("wb")
         now = time.time()
-        popen = self.popen(cmdargs, stdout=f1, stderr=f2, 
+        popen = self.popen(cmdargs, stdout=f1, stderr=f2,
             close_fds=(sys.platform != "win32"))
         ret = popen.wait()
         f1.close()
@@ -322,7 +322,7 @@ class TmpTestdir:
             cmdlinename = scriptname.replace(".", "")
             assert hasattr(py.cmdline, cmdlinename), cmdlinename
             source = ("import sys;sys.path.insert(0,%r);"
-                      "import py;py.cmdline.%s()" % 
+                      "import py;py.cmdline.%s()" %
                 (str(py._pydir.dirpath()), cmdlinename))
             return (sys.executable, "-c", source,)
 
@@ -344,9 +344,9 @@ class TmpTestdir:
         return self.run(py.std.sys.executable, "-c", command)
 
     def runpytest(self, *args):
-        p = py.path.local.make_numbered_dir(prefix="runpytest-", 
+        p = py.path.local.make_numbered_dir(prefix="runpytest-",
             keep=None, rootdir=self.tmpdir)
-        args = ('--basetemp=%s' % p, ) + args 
+        args = ('--basetemp=%s' % p, ) + args
         for x in args:
             if '--confcutdir' in str(x):
                 break
@@ -377,7 +377,7 @@ def getdecoded(out):
 
 class PseudoPlugin:
     def __init__(self, vars):
-        self.__dict__.update(vars) 
+        self.__dict__.update(vars)
 
 class ReportRecorder(object):
     def __init__(self, hook):
@@ -395,7 +395,7 @@ class ReportRecorder(object):
         """ return list of ParsedCall instances matching the given eventname. """
         return self.hookrecorder.getcalls(names)
 
-    # functionality for test reports 
+    # functionality for test reports
 
     def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
         return [x.report for x in self.getcalls(names)]
@@ -426,14 +426,14 @@ class ReportRecorder(object):
         skipped = []
         failed = []
         for rep in self.getreports("pytest_runtest_logreport"):
-            if rep.passed: 
-                if rep.when == "call": 
-                    passed.append(rep) 
-            elif rep.skipped: 
-                skipped.append(rep) 
+            if rep.passed:
+                if rep.when == "call":
+                    passed.append(rep)
+            elif rep.skipped:
+                skipped.append(rep)
             elif rep.failed:
-                failed.append(rep) 
-        return passed, skipped, failed 
+                failed.append(rep)
+        return passed, skipped, failed
 
     def countoutcomes(self):
         return [len(x) for x in self.listoutcomes()]
@@ -456,7 +456,7 @@ class LineComp:
         self.stringio = py.io.TextIO()
 
     def assert_contains_lines(self, lines2):
-        """ assert that lines2 are contained (linearly) in lines1. 
+        """ assert that lines2 are contained (linearly) in lines1.
             return a list of extralines found.
         """
         __tracebackhide__ = True
@@ -465,7 +465,7 @@ class LineComp:
         self.stringio.seek(0)
         lines1 = val.split("\n")
         return LineMatcher(lines1).fnmatch_lines(lines2)
-            
+
 class LineMatcher:
     def __init__(self,  lines):
         self.lines = lines
@@ -490,7 +490,7 @@ class LineMatcher:
                 nextline = lines1.pop(0)
                 if line == nextline:
                     print_("exact match:", repr(line))
-                    break 
+                    break
                 elif fnmatch(nextline, line):
                     print_("fnmatch:", repr(line))
                     print_("   with:", repr(nextline))

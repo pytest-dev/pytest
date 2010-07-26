@@ -29,8 +29,8 @@ def test_exitstatus():
     result = py.process.ForkedFunc(func).waitfinish()
     assert result.exitstatus == 4
     assert result.signal == 0
-    assert not result.out 
-    assert not result.err 
+    assert not result.out
+    assert not result.err
 
 def test_execption_in_func():
     def fun():
@@ -79,7 +79,7 @@ def test_box_in_a_box():
         print (result.out)
         sys.stderr.write(result.err + "\n")
         return result.retval
-    
+
     result = py.process.ForkedFunc(boxfun).waitfinish()
     assert result.out == "someout\n"
     assert result.err == "someerr\n"
@@ -95,7 +95,7 @@ def test_kill_func_forked():
 
     def box_fun():
         time.sleep(10) # we don't want to last forever here
-    
+
     ff = py.process.ForkedFunc(box_fun)
     os.kill(ff.pid, 15)
     result = ff.waitfinish()
@@ -106,7 +106,7 @@ def test_kill_func_forked():
 
 
 # ======================================================================
-# examples 
+# examples
 # ======================================================================
 #
 
@@ -128,7 +128,7 @@ def boxhuge():
     os.write(1, s * 10000)
     os.write(2, s * 10000)
     os.write(1, s * 10000)
-    
+
     os.write(1, s * 10000)
     os.write(2, s * 10000)
     os.write(2, s * 10000)

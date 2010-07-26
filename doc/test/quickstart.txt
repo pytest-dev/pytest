@@ -9,13 +9,13 @@ Quickstart
 
 If you have the ``easy_install`` tool (otherwise see here_) just type::
 
-    easy_install -U py 
+    easy_install -U py
 
-Now create a file ``test_sample.py`` with the following content: 
+Now create a file ``test_sample.py`` with the following content:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
-    # content of test_sample.py 
+    # content of test_sample.py
     def func(x):
         return x + 1
     def test_answer():
@@ -27,7 +27,7 @@ You can now run the test file like this::
 
 and will see output like this:
 
-.. sourcecode:: python 
+.. sourcecode:: python
 
     =========================== test session starts ============================
     python: platform linux2 -- Python 2.6.2 -- pytest-1.1.0
@@ -46,14 +46,14 @@ and will see output like this:
     test_sample.py:6: AssertionError
     ========================= 1 failed in 0.08 seconds =========================
 
-This output contains Python interpreter information, a list of test objects, 
-a progress report and important details of the failure. 
+This output contains Python interpreter information, a list of test objects,
+a progress report and important details of the failure.
 
 **Where to go from here**
 
 `features`_: overview and description of test features
 
-`plugins`_: a list of available plugins which each contain usage examples 
+`plugins`_: a list of available plugins which each contain usage examples
 
 `tutorials`_: some blog entries and starting points with code examples
 

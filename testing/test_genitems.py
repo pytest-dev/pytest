@@ -1,6 +1,6 @@
 import py
 
-class Test_genitems: 
+class Test_genitems:
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile("""
             def test_1():
@@ -17,13 +17,13 @@ class Test_genitems:
                 if numj != numi:
                     assert hash(i) != hash(j)
                     assert i != j
-       
+
     def test_root_conftest_syntax_error(self, testdir):
         # do we want to unify behaviour with
-        # test_subdir_conftest_error? 
+        # test_subdir_conftest_error?
         p = testdir.makepyfile(conftest="raise SyntaxError\n")
         py.test.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
-       
+
     def test_example_items1(self, testdir):
         p = testdir.makepyfile('''
             def testone():
@@ -56,15 +56,15 @@ class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile("""
             def test_one(): assert 0
-            class TestClass(object): 
-                def test_method_one(self): 
-                    assert 42 == 43 
+            class TestClass(object):
+                def test_method_one(self):
+                    assert 42 == 43
         """)
         def check(keyword, name):
             reprec = testdir.inline_run("-s", "-k", keyword, file_test)
             passed, skipped, failed = reprec.listoutcomes()
             assert len(failed) == 1
-            assert failed[0].item.name == name 
+            assert failed[0].item.name == name
             assert len(reprec.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
@@ -75,19 +75,19 @@ class TestKeywordSelection:
     def test_select_extra_keywords(self, testdir):
         p = testdir.makepyfile(test_select="""
             def test_1():
-                pass 
-            class TestClass: 
-                def test_2(self): 
+                pass
+            class TestClass:
+                def test_2(self):
                     pass
         """)
         testdir.makepyfile(conftest="""
             import py
-            class Class(py.test.collect.Class): 
+            class Class(py.test.collect.Class):
                 def _keywords(self):
                     return ['xxx', self.name]
         """)
-        for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1', 
-                        'TestClass test_2', 'xxx TestClass test_2',): 
+        for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',
+                        'TestClass test_2', 'xxx TestClass test_2',):
             reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
             py.builtin.print_("keyword", repr(keyword))
             passed, skipped, failed = reprec.listoutcomes()
@@ -106,22 +106,22 @@ class TestKeywordSelection:
         reprec = testdir.inline_run("-k", "test_two:", threepass)
         passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 2
-        assert not failed 
+        assert not failed
         dlist = reprec.getcalls("pytest_deselected")
         assert len(dlist) == 1
         item = dlist[0].items[0]
-        assert item.name == "test_one" 
+        assert item.name == "test_one"
 
 
     def test_keyword_extra(self, testdir):
         p = testdir.makepyfile("""
-           def test_one(): 
-               assert 0  
+           def test_one():
+               assert 0
            test_one.mykeyword = True
         """)
         reprec = testdir.inline_run("-k", "-mykeyword", p)
         passed, skipped, failed = reprec.countoutcomes()
-        assert passed + skipped + failed == 0 
+        assert passed + skipped + failed == 0
         reprec = testdir.inline_run("-k", "mykeyword", p)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1

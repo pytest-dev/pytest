@@ -8,9 +8,9 @@ def test_reportrecorder(testdir):
     class rep:
         excinfo = None
         passed = False
-        failed = True 
+        failed = True
         skipped = False
-        when = "call" 
+        when = "call"
 
     recorder.hook.pytest_runtest_logreport(report=rep)
     failures = recorder.getfailures()
@@ -23,7 +23,7 @@ def test_reportrecorder(testdir):
         passed = False
         failed = False
         skipped = True
-        when = "call" 
+        when = "call"
     rep.passed = False
     rep.skipped = True
     recorder.hook.pytest_runtest_logreport(report=rep)
@@ -45,7 +45,7 @@ def test_reportrecorder(testdir):
     assert len(recorder.getfailedcollections()) == 1
 
     recorder.unregister()
-    recorder.clear() 
+    recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep)
     py.test.raises(ValueError, "recorder.getfailures()")
 
@@ -58,7 +58,7 @@ def test_parseconfig(testdir):
 
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
-        pytest_plugins = "pytest_pytester" 
+        pytest_plugins = "pytest_pytester"
         def test_hello(testdir):
             assert 1
     """)

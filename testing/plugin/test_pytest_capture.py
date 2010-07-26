@@ -10,7 +10,7 @@ class TestCaptureManager:
         capman = CaptureManager()
         monkeypatch.delattr(os, 'dup', raising=False)
         try:
-            assert capman._getmethod(config, None) == "sys" 
+            assert capman._getmethod(config, None) == "sys"
         finally:
             monkeypatch.undo()
 
@@ -20,9 +20,9 @@ class TestCaptureManager:
         capman = CaptureManager()
         hasfd = hasattr(os, 'dup')
         if hasfd:
-            assert capman._getmethod(config, None) == "fd" 
+            assert capman._getmethod(config, None) == "fd"
         else:
-            assert capman._getmethod(config, None) == "sys" 
+            assert capman._getmethod(config, None) == "sys"
 
         for name in ('no', 'fd', 'sys'):
             if not hasfd and name == 'fd':
@@ -52,10 +52,10 @@ class TestCaptureManager:
                 assert out == "hello\n"
             capman.resumecapture(method)
             out, err = capman.suspendcapture()
-            assert not out and not err 
+            assert not out and not err
         finally:
             capouter.reset()
-      
+
     @needsosdup
     def test_juggle_capturings(self, testdir):
         capouter = py.io.StdCaptureFD()
@@ -115,7 +115,7 @@ def test_collect_capturing(testdir):
     result = testdir.runpytest(p)
     result.stdout.fnmatch_lines([
         "*Captured stdout*",
-        "*collect 13 failure*", 
+        "*collect 13 failure*",
     ])
 
 class TestPerTestCapturing:
@@ -158,9 +158,9 @@ class TestPerTestCapturing:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*test_func():*",
-            "*Captured stdout during setup*", 
-            "module-setup*", 
-            "function-setup*", 
+            "*Captured stdout during setup*",
+            "module-setup*",
+            "function-setup*",
             "*Captured stdout*",
             "in teardown*",
         ])
@@ -176,8 +176,8 @@ class TestPerTestCapturing:
         """)
         result = testdir.runpytest(p)
         s = result.stdout.str()
-        assert "in func1" not in s 
-        assert "in func2" in s 
+        assert "in func1" not in s
+        assert "in func2" in s
 
 
     def test_teardown_capturing(self, testdir):
@@ -187,7 +187,7 @@ class TestPerTestCapturing:
             def teardown_function(function):
                 print ("teardown func1")
                 assert 0
-            def test_func1(): 
+            def test_func1():
                 print ("in func1")
                 pass
         """)
@@ -211,15 +211,15 @@ class TestPerTestCapturing:
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            "*def teardown_module(mod):*", 
-            "*Captured stdout*", 
-            "*teardown module*", 
-            "*1 error*", 
+            "*def teardown_module(mod):*",
+            "*Captured stdout*",
+            "*teardown module*",
+            "*1 error*",
         ])
 
-    def test_capturing_outerr(self, testdir): 
+    def test_capturing_outerr(self, testdir):
         p1 = testdir.makepyfile("""
-            import sys 
+            import sys
             def test_capturing():
                 print (42)
                 sys.stderr.write(str(23))
@@ -230,9 +230,9 @@ class TestPerTestCapturing:
         """)
         result = testdir.runpytest(p1)
         result.stdout.fnmatch_lines([
-            "*test_capturing_outerr.py .F", 
+            "*test_capturing_outerr.py .F",
             "====* FAILURES *====",
-            "____*____", 
+            "____*____",
             "*test_capturing_outerr.py:8: ValueError",
             "*--- Captured stdout ---*",
             "1",
@@ -252,7 +252,7 @@ class TestLoggingInteraction:
         """)
         result = testdir.runpytest(p)
         result.stderr.str().find("atexit") == -1
-           
+
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile("""
             import logging
@@ -273,8 +273,8 @@ class TestLoggingInteraction:
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
                 "*WARN*hello3",  # errors show first!
-                "*WARN*hello1", 
-                "*WARN*hello2", 
+                "*WARN*hello1",
+                "*WARN*hello2",
             ])
             # verify proper termination
             assert "closed" not in s
@@ -299,14 +299,14 @@ class TestLoggingInteraction:
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
                 "*WARN*hello3",  # errors come first
-                "*WARN*hello1", 
-                "*WARN*hello2", 
+                "*WARN*hello1",
+                "*WARN*hello2",
             ])
             # verify proper termination
             assert "closed" not in s
 
 class TestCaptureFuncarg:
-    def test_std_functional(self, testdir):        
+    def test_std_functional(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_hello(capsys):
                 print (42)
@@ -314,9 +314,9 @@ class TestCaptureFuncarg:
                 assert out.startswith("42")
         """)
         reprec.assertoutcome(passed=1)
-       
-    @needsosdup 
-    def test_stdfd_functional(self, testdir):        
+
+    @needsosdup
+    def test_stdfd_functional(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_hello(capfd):
                 import os
@@ -327,7 +327,7 @@ class TestCaptureFuncarg:
         """)
         reprec.assertoutcome(passed=1)
 
-    def test_partial_setup_failure(self, testdir):        
+    def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
             def test_hello(capsys, missingarg):
                 pass
@@ -339,7 +339,7 @@ class TestCaptureFuncarg:
         ])
 
     @needsosdup
-    def test_keyboardinterrupt_disables_capturing(self, testdir):        
+    def test_keyboardinterrupt_disables_capturing(self, testdir):
         p = testdir.makepyfile("""
             def test_hello(capfd):
                 import os
@@ -377,4 +377,4 @@ def test_fdfuncarg_skips_on_no_osdup(testdir):
     result.stdout.fnmatch_lines([
         "*1 skipped*"
     ])
-    
+

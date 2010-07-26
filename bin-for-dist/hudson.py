@@ -16,11 +16,11 @@ BIN=os.path.abspath(os.path.join(BUILDNAME, 'bin'))
 if not os.path.exists(BIN):
     BIN=os.path.abspath(os.path.join(BUILDNAME, 'Scripts'))
     assert os.path.exists(BIN)
-    
+
 PYTHON=os.path.join(BIN, 'python')
 bincall("python", "setup.py", "develop", "-q")
-bincall("pip", "install", "-r", "testing/pip-reqs1.txt", 
+bincall("pip", "install", "-r", "testing/pip-reqs1.txt",
                "-q", "--download-cache=download")
-bincall("py.test", "--ignore", BUILDNAME, 
-        "--xml=junit.xml", 
+bincall("py.test", "--ignore", BUILDNAME,
+        "--xml=junit.xml",
         "--report=skipped", "--runslowtest", *sys.argv[1:])

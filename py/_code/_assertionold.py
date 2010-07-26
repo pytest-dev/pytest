@@ -496,7 +496,7 @@ def getmsg(excinfo):
     #frame = py.code.Frame(frame)
     #return interpret(line, frame)
 
-    tb = excinfo.traceback[-1] 
+    tb = excinfo.traceback[-1]
     source = str(tb.statement).strip()
     x = interpret(source, tb.frame, should_fail=True)
     if not isinstance(x, str):

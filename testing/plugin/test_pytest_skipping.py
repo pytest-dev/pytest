@@ -2,7 +2,7 @@ import py
 
 from py._plugin.pytest_skipping import MarkEvaluator
 from py._plugin.pytest_skipping import pytest_runtest_setup
-from py._plugin.pytest_runner import runtestprotocol 
+from py._plugin.pytest_runner import runtestprotocol
 
 class TestEvaluator:
     def test_no_marker(self, testdir):
@@ -13,9 +13,9 @@ class TestEvaluator:
 
     def test_marked_no_args(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.xyz
-            def test_func(): 
+            def test_func():
                 pass
         """)
         ev = MarkEvaluator(item, 'xyz')
@@ -27,9 +27,9 @@ class TestEvaluator:
 
     def test_marked_one_arg(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.xyz("hasattr(os, 'sep')")
-            def test_func(): 
+            def test_func():
                 pass
         """)
         ev = MarkEvaluator(item, 'xyz')
@@ -40,9 +40,9 @@ class TestEvaluator:
 
     def test_marked_one_arg_with_reason(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.xyz("hasattr(os, 'sep')", attr=2, reason="hello world")
-            def test_func(): 
+            def test_func():
                 pass
         """)
         ev = MarkEvaluator(item, 'xyz')
@@ -59,10 +59,10 @@ class TestEvaluator:
         ]
         for i in range(0, 2):
             item = testdir.getitem("""
-                import py 
+                import py
                 %s
                 %s
-                def test_func(): 
+                def test_func():
                     pass
             """ % (lines[i], lines[(i+1) %2]))
             ev = MarkEvaluator(item, 'skipif')
@@ -73,10 +73,10 @@ class TestEvaluator:
 
     def test_marked_one_arg_twice2(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.skipif("hasattr(os, 'murks')")
             @py.test.mark.skipif("not hasattr(os, 'murks')")
-            def test_func(): 
+            def test_func():
                 pass
         """)
         ev = MarkEvaluator(item, 'skipif')
@@ -103,23 +103,23 @@ class TestEvaluator:
 class TestXFail:
     def test_xfail_simple(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.xfail
-            def test_func(): 
+            def test_func():
                 assert 0
         """)
         reports = runtestprotocol(item, log=False)
         assert len(reports) == 3
         callreport = reports[1]
-        assert callreport.skipped 
+        assert callreport.skipped
         expl = callreport.keywords['xfail']
         assert expl == ""
 
     def test_xfail_xpassed(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.xfail
-            def test_func(): 
+            def test_func():
                 assert 1
         """)
         reports = runtestprotocol(item, log=False)
@@ -131,9 +131,9 @@ class TestXFail:
 
     def test_xfail_run_anyway(self, testdir):
         testdir.makepyfile("""
-            import py 
+            import py
             @py.test.mark.xfail
-            def test_func(): 
+            def test_func():
                 assert 0
         """)
         result = testdir.runpytest("--runxfail")
@@ -153,7 +153,7 @@ class TestXFail:
         """)
         reports = runtestprotocol(item, log=False)
         callreport = reports[1]
-        assert callreport.failed 
+        assert callreport.failed
         assert 'xfail' not in callreport.keywords
 
     def test_xfail_not_report_default(self, testdir):
@@ -242,7 +242,7 @@ class TestXFail:
             import py
             def setup_function(function):
                 py.test.xfail("hello")
-            
+
             def test_this():
                 assert 0
         """)
@@ -306,9 +306,9 @@ class TestXFail:
 class TestSkipif:
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem("""
-            import py 
+            import py
             @py.test.mark.skipif("hasattr(os, 'sep')")
-            def test_func(): 
+            def test_func():
                 pass
         """)
         x = py.test.raises(py.test.skip.Exception, "pytest_runtest_setup(item)")
@@ -345,7 +345,7 @@ def test_skip_not_report_default(testdir):
 def test_skipif_class(testdir):
     p = testdir.makepyfile("""
         import py
-        
+
         class TestClass:
             pytestmark = py.test.mark.skipif("True")
             def test_that(self):
@@ -360,7 +360,7 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    from py._plugin import pytest_runner as runner 
+    from py._plugin import pytest_runner as runner
     from py._plugin.pytest_skipping import folded_skips
     class longrepr:
         class reprcrash:
@@ -371,8 +371,8 @@ def test_skip_reasons_folding():
     ev1 = runner.CollectReport(None, None)
     ev1.when = "execute"
     ev1.skipped = True
-    ev1.longrepr = longrepr 
-    
+    ev1.longrepr = longrepr
+
     ev2 = runner.ItemTestReport(None, excinfo=longrepr)
     ev2.skipped = True
 
@@ -406,11 +406,11 @@ def test_skipped_reasons_functional(testdir):
                 py.test.skip('test')
         """
     )
-    result = testdir.runpytest('--report=skipped') 
+    result = testdir.runpytest('--report=skipped')
     result.stdout.fnmatch_lines([
         "*test_one.py ss",
         "*test_two.py S",
-        "*SKIP*3*conftest.py:3: 'test'", 
+        "*SKIP*3*conftest.py:3: 'test'",
     ])
     assert result.ret == 0
 
