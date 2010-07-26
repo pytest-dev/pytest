@@ -12,14 +12,61 @@ the session collect logic to care for this "initial" case as well.
 Apart from simplification a side effect the dsession's session
 and the core session probably converge some more. 
 
-introduce py.test.mark.nocollect
+do early-teardown of test modules 
+-----------------------------------------
+tags: feature 1.3
+
+currently teardowns are called when the next tests is setup
+except for the function/method level where interally 
+"teardown_exact" tears down immediately.  Generalize
+this to perform the "neccessary" teardown compared to
+the "next" test item during teardown - this should
+get rid of some irritations because otherwise e.g. 
+prints of teardown-code appear in the setup of the next test. 
+
+consider and document __init__ file usage in test directories
+---------------------------------------------------------------
+tags: bug 1.4 core 
+
+Currently, a test module is imported with its fully qualified
+package path, determined by checking __init__ files upwards. 
+This has the side effect that a source package at the root 
+of the test dir could be imported as well.  This is somewhat
+convenient but complicates the picture for running tests against
+different versions of a package.  Also, implicit sys.path 
+manipulations are problematic per-se.  Maybe factorting out
+a pytest_addsyspath hook which can be disabled from the command line
+makes sense.  In any case documentation/recommendations for 
+certain scenarios makes sense. 
+
+relax requirement to have tests/testing contain an __init__
+----------------------------------------------------------------
+tags: feature 1.4
+bb: http://bitbucket.org/hpk42/py-trunk/issue/64
+
+A local test run of a "tests" directory may work 
+but a remote one fail because the tests directory
+does not contain an "__init__.py". Either give
+an error or make it work without the __init__.py
+i.e. port the nose-logic of unloading a test module. 
+
+customize test function collection 
 -------------------------------------------------------
 tags: feature 1.4
 
-for not considering a function for test collection at all. 
-maybe also introduce a py.test.mark.test to explicitely
-mark a function to become a tested one.  Lookup JUnit 
-ways of tagging tests. 
+- introduce py.test.mark.nocollect for not considering a function for
+  test collection at all.  maybe also introduce a py.test.mark.test to
+  explicitely mark a function to become a tested one.  Lookup JUnit ways
+  of tagging tests. 
+
+- allow an easy way to customize "test_", "Test" prefixes for file paths
+  and test function/class names. the current customizable Item requires
+  too much code/concepts to influence this collection matching. 
+  maybe introduce pytest_pycollect_filters = {
+    'file': 'test*.py', 
+    'function': 'test*', 
+    'class': 'Test*', 
+  }
 
 introduce py.test.mark.platform 
 -------------------------------------------------------
@@ -40,43 +87,60 @@ interpreter versions.
 
 introduce py.test.mark registration
 -----------------------------------------
-tags: feature 1.3
+tags: feature 1.4
 
 introduce a hook that allows to register a named mark decorator
 with documentation and add "py.test --marks" to get
 a list of available marks.  Deprecate "dynamic" mark
 definitions. 
 
-do early-teardown of test modules 
+allow to non-intrusively apply skipfs/xfail/marks 
+---------------------------------------------------
+tags: feature 1.4
+
+use case: mark a module or directory structures 
+to be skipped on certain platforms (i.e. no import 
+attempt will be made). 
+
+consider introducing a hook/mechanism that allows to apply marks 
+from conftests or plugins.  
+
+explicit referencing of conftest.py files 
 -----------------------------------------
-tags: feature 1.3
+tags: feature 1.4
 
-currently teardowns are called when the next tests is setup
-except for the function/method level where interally 
-"teardown_exact" tears down immediately.  Generalize
-this to perform the "neccessary" teardown compared to
-the "next" test item during teardown - this should
-get rid of some irritations because otherwise e.g. 
-prints of teardown-code appear in the setup of the next test. 
+allow to name conftest.py files (in sub directories) that should 
+be imported early, as to include command line options. 
 
-do recursive walk of conftest.py files? 
------------------------------------------
-tags: feature 1.3
+a central py.test ini/yml file 
+----------------------------------
+tags: feature 1.4
 
-it maybe makes sense to generally do a recursive search of conftest.py 
-files before command line parsing - this would help to offer the
-full list of options as applicable to a given test project. 
+introduce a declarative configuration file that allows:
+- default options 
+- to-be-collected test directories 
+- required plugins
+- test func/class/file matching patterns 
+- skip/xfail (non-intrusive) 
+- pytest.ini and tox.ini and setup.cfg configuration in the same file 
 
-consider introducing py.test.mark.skip_[not]win32/jython/pyXY
--------------------------------------------------------------
-tags: feature 1.3 
+new documentation 
+----------------------------------
+tags: feature 1.4
 
-conveniently introduce markers for platforms to 
-have a shorter form for skipping. 
+- logo py.test 
+- reference / customization 
+- writing a (local or global) plugin
+- examples for unittest or functional testing 
+- resource management for functional testing 
+- patterns: page object  
+- parametrized testing 
+- better / more integrated plugin docs 
+  i.e. not per-plugin but per-feature referencing a plugin
 
 generalize parametrized testing to generate combinations
 -------------------------------------------------------------
-tags: feature 1.3 
+tags: feature 1.4 
 
 think about extending metafunc.addcall or add a new method to allow to
 generate tests with combinations of all generated versions - what to do
@@ -124,7 +188,7 @@ to further reduce py.test globality.  Also consider
 having py.test.config and ensuretemp coming from
 a plugin rather than being there from the start.
 
-consider allowing funcargs to setup methods
+consider allowing funcargs for setup methods
 --------------------------------------------------------------
 tags: experimental-wish 1.4
 
@@ -135,6 +199,10 @@ For filling funcargs for setup methods, we could call funcarg
 factories with a request object that not have a cls/function 
 attributes.  However, how to handle parametrized test functions
 and funcargs? 
+
+setup_function -> request can be like it is now
+setup_class -> request has no request.function 
+setup_module -> request has no request.cls
 
 consider pytest_addsyspath hook
 -----------------------------------------
@@ -147,16 +215,6 @@ in order to more easily run against installed packages.
 Alternatively it could also be done via the config object 
 and pytest_configure. 
 
-relax requirement to have tests/testing contain an __init__
-----------------------------------------------------------------
-tags: feature 1.4
-bb: http://bitbucket.org/hpk42/py-trunk/issue/64
-
-A local test run of a "tests" directory may work 
-but a remote one fail because the tests directory
-does not contain an "__init__.py". Either give
-an error or make it work without the __init__.py
-
 
 show plugin information in test header 
 ----------------------------------------------------------------
@@ -165,15 +223,6 @@ tags: feature 1.4
 Now that external plugins are becoming more numerous 
 it would be useful to have external plugins along with
 their versions displayed as a header line. 
-
-generate/refine plugin doc generation 
-----------------------------------------------------------------
-tags: feature 1.4
-
-review and prepare docs for 1.4.0 release.  Probably
-have docs living with the plugin and require them to
-be available on doc generation time, at least when 
-the target is the website?  Or rather go for interactive help? 
 
 deprecate global py.test.config usage 
 ----------------------------------------------------------------
