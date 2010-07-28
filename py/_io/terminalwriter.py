@@ -78,9 +78,11 @@ def ansi_print(text, esc, file=None, newline=True, flush=False):
             handle = GetStdHandle(STD_ERROR_HANDLE)
         else:
             handle = GetStdHandle(STD_OUTPUT_HANDLE)
+        oldcolors = GetConsoleInfo(handle).wAttributes
+        attr |= (oldcolors & 0x0f0)
         SetConsoleTextAttribute(handle, attr)
         file.write(text)
-        SetConsoleTextAttribute(handle, FOREGROUND_WHITE)
+        SetConsoleTextAttribute(handle, oldcolors)
     else:
         file.write(text)
 
@@ -183,12 +185,12 @@ class TerminalWriter(object):
 class Win32ConsoleWriter(TerminalWriter):
     def write(self, s, **kw):
         if s:
-            s = self._getbytestring(s)
-            if self.hasmarkup:
-                handle = GetStdHandle(STD_OUTPUT_HANDLE)
-
+            oldcolors = None
             if self.hasmarkup and kw:
-                attr = 0
+                handle = GetStdHandle(STD_OUTPUT_HANDLE)
+                oldcolors = GetConsoleInfo(handle).wAttributes
+                default_bg = oldcolors & 0x00F0
+                attr = default_bg
                 if kw.pop('bold', False):
                     attr |= FOREGROUND_INTENSITY
 
@@ -199,13 +201,13 @@ class Win32ConsoleWriter(TerminalWriter):
                 elif kw.pop('green', False):
                     attr |= FOREGROUND_GREEN
                 else:
-                    attr |= FOREGROUND_WHITE
+                    attr |= FOREGROUND_BLACK # (oldcolors & 0x0007)
 
                 SetConsoleTextAttribute(handle, attr)
             self._file.write(s)
             self._file.flush()
-            if self.hasmarkup:
-                SetConsoleTextAttribute(handle, FOREGROUND_WHITE)
+            if oldcolors:
+                SetConsoleTextAttribute(handle, oldcolors)
 
     def line(self, s="", **kw):
         self.write(s+"\n", **kw)
@@ -232,46 +234,50 @@ if win32_and_ctypes:
     # ctypes access to the Windows console
     STD_OUTPUT_HANDLE = -11
     STD_ERROR_HANDLE  = -12
+    FOREGROUND_BLACK     = 0x0000 # black text
     FOREGROUND_BLUE      = 0x0001 # text color contains blue.
     FOREGROUND_GREEN     = 0x0002 # text color contains green.
     FOREGROUND_RED       = 0x0004 # text color contains red.
     FOREGROUND_WHITE     = 0x0007
     FOREGROUND_INTENSITY = 0x0008 # text color is intensified.
+    BACKGROUND_BLACK     = 0x0000 # background color black
     BACKGROUND_BLUE      = 0x0010 # background color contains blue.
     BACKGROUND_GREEN     = 0x0020 # background color contains green.
     BACKGROUND_RED       = 0x0040 # background color contains red.
     BACKGROUND_WHITE     = 0x0070
     BACKGROUND_INTENSITY = 0x0080 # background color is intensified.
 
+    SHORT = ctypes.c_short
+    class COORD(ctypes.Structure):
+        _fields_ = [('X', SHORT),
+                    ('Y', SHORT)]
+    class SMALL_RECT(ctypes.Structure):
+        _fields_ = [('Left', SHORT),
+                    ('Top', SHORT),
+                    ('Right', SHORT),
+                    ('Bottom', SHORT)]
+    class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+        _fields_ = [('dwSize', COORD),
+                    ('dwCursorPosition', COORD),
+                    ('wAttributes', wintypes.WORD),
+                    ('srWindow', SMALL_RECT),
+                    ('dwMaximumWindowSize', COORD)]
+
     def GetStdHandle(kind):
         return ctypes.windll.kernel32.GetStdHandle(kind)
 
-    def SetConsoleTextAttribute(handle, attr):
-        ctypes.windll.kernel32.SetConsoleTextAttribute(
-            handle, attr)
+    SetConsoleTextAttribute = \
+        ctypes.windll.kernel32.SetConsoleTextAttribute
+
+    def GetConsoleInfo(handle):
+        info = CONSOLE_SCREEN_BUFFER_INFO()
+        ctypes.windll.kernel32.GetConsoleScreenBufferInfo(\
+            handle, ctypes.byref(info))
+        return info
 
     def _getdimensions():
-
-        SHORT = ctypes.c_short
-        class COORD(ctypes.Structure):
-            _fields_ = [('X', SHORT),
-                        ('Y', SHORT)]
-        class SMALL_RECT(ctypes.Structure):
-            _fields_ = [('Left', SHORT),
-                        ('Top', SHORT),
-                        ('Right', SHORT),
-                        ('Bottom', SHORT)]
-        class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
-            _fields_ = [('dwSize', COORD),
-                        ('dwCursorPosition', COORD),
-                        ('wAttributes', wintypes.WORD),
-                        ('srWindow', SMALL_RECT),
-                        ('dwMaximumWindowSize', COORD)]
-        STD_OUTPUT_HANDLE = -11
         handle = GetStdHandle(STD_OUTPUT_HANDLE)
-        info = CONSOLE_SCREEN_BUFFER_INFO()
-        ctypes.windll.kernel32.GetConsoleScreenBufferInfo(
-            handle, ctypes.byref(info))
+        info = GetConsoleInfo(handle)
         # Substract one from the width, otherwise the cursor wraps
         # and the ending \n causes an empty line to display.
         return info.dwSize.Y, info.dwSize.X - 1
