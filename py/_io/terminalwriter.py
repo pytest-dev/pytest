@@ -204,6 +204,8 @@ class Win32ConsoleWriter(TerminalWriter):
                     attr |= FOREGROUND_BLACK # (oldcolors & 0x0007)
 
                 SetConsoleTextAttribute(handle, attr)
+            if not isinstance(self._file, WriteFile):
+                s = self._getbytestring(s)
             self._file.write(s)
             self._file.flush()
             if oldcolors:
