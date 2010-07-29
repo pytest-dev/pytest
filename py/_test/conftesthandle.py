@@ -13,6 +13,7 @@ class Conftest(object):
         self._onimport = onimport
         self._conftestpath2mod = {}
         self._confcutdir = confcutdir
+        self._md5cache = {}
 
     def setinitial(self, args):
         """ try to find a first anchor path for looking up global values
@@ -57,17 +58,23 @@ class Conftest(object):
             if path is None:
                 raise ValueError("missing default confest.")
             dp = path.dirpath()
-            if dp == path:
-                clist = []
-            else:
+            clist = []
+            if dp != path:
                 cutdir = self._confcutdir
-                clist = self.getconftestmodules(dp)
                 if cutdir and path != cutdir and not path.relto(cutdir):
                     pass
                 else:
                     conftestpath = path.join("conftest.py")
                     if conftestpath.check(file=1):
-                        clist.append(self.importconftest(conftestpath))
+                        key = conftestpath.computehash()
+                        # XXX logging about conftest loading
+                        if key not in self._md5cache:
+                            clist.append(self.importconftest(conftestpath))
+                            self._md5cache[key] = conftestpath
+                        else:
+                            # use some kind of logging 
+                            print ("WARN: not loading %s" % conftestpath)
+                clist[:0] = self.getconftestmodules(dp)
             self._path2confmods[path] = clist
         # be defensive: avoid changes from caller side to
         # affect us by always returning a copy of the actual list

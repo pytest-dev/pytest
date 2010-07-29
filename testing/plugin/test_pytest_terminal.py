@@ -644,7 +644,7 @@ def pytest_report_header(config):
     return ["line1", "line2"]""")
         result = testdir.runpytest("a")
         result.stdout.fnmatch_lines([
-            "*hello: info*",
             "line1",
             "line2",
+            "*hello: info*",
         ])
