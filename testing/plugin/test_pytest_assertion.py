@@ -9,6 +9,17 @@ def test_functional(testdir):
     result = testdir.runpytest("--no-assert")
     assert "3 == 4" not in result.stdout.str()
 
+def test_triple_quoted_string_issue113(testdir):
+    testdir.makepyfile("""
+        def test_hello():
+            assert "" == '''
+    '''""")
+    result = testdir.runpytest("--fulltrace")
+    result.stdout.fnmatch_lines([
+        "*1 failed*",
+    ])
+    assert 'SyntaxError' not in result.stdout.str()
+
 def test_traceback_failure(testdir):
     p1 = testdir.makepyfile("""
         def g():

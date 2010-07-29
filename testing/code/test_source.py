@@ -176,6 +176,13 @@ class TestSourceParsingAndCompiling:
             #x = s.deindent()
             assert str(s) == ass
 
+    def test_getstatementrange_triple_quoted(self):
+        #print str(self.source)
+        source = Source("""'''
+        '''""")
+        s = source.getstatement(1)
+        assert eval(str(s))
+
     def test_getstatementrange_within_constructs(self):
         source = Source("""\
             try:

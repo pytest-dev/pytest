@@ -125,16 +125,13 @@ class Source(object):
             try:
                 compile_command(trysource)
             except (SyntaxError, OverflowError, ValueError):
-                pass
-            else:
-                break   # got a valid or incomplete statement
+                continue
 
-        # 2. find the end of the statement
-        for end in range(lineno+1, len(self)+1):
-            trysource = self[start:end]
-            if trysource.isparseable():
-                break
-
+            # 2. find the end of the statement
+            for end in range(lineno+1, len(self)+1):
+                trysource = self[start:end]
+                if trysource.isparseable():
+                    return start, end
         return start, end
 
     def getblockend(self, lineno):
