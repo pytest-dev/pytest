@@ -72,7 +72,7 @@ class Conftest(object):
                             clist.append(self.importconftest(conftestpath))
                             self._md5cache[key] = conftestpath
                         else:
-                            # use some kind of logging 
+                            # use some kind of logging
                             print ("WARN: not loading %s" % conftestpath)
                 clist[:0] = self.getconftestmodules(dp)
             self._path2confmods[path] = clist
