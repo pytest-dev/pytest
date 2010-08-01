@@ -26,7 +26,7 @@ def main():
         name='py',
         description='py.test and pylib: rapid testing and development utils.',
         long_description = long_description,
-        version= '1.3.3',
+        version= '1.3.4a1',
         url='http://pylib.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
