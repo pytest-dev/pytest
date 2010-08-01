@@ -5,20 +5,27 @@ see http://pypi.python.org/pypi/apipkg
 
 (c) holger krekel, 2009 - MIT license
 """
+import os
 import sys
 from types import ModuleType
 
-__version__ = "1.0b6"
+__version__ = "1.0b7"
 
 def initpkg(pkgname, exportdefs):
     """ initialize given package from the export definitions. """
-    mod = ApiModule(pkgname, exportdefs, implprefix=pkgname)
     oldmod = sys.modules[pkgname]
-    mod.__file__ = getattr(oldmod, '__file__', None)
-    mod.__version__ = getattr(oldmod, '__version__', '0')
-    for name in ('__path__', '__loader__'):
-        if hasattr(oldmod, name):
-            setattr(mod, name, getattr(oldmod, name))
+    d = {}
+    f = getattr(oldmod, '__file__', None)
+    if f:
+        f = os.path.abspath(f)
+    d['__file__'] = f
+    d['__version__'] = getattr(oldmod, '__version__', '0')
+    if hasattr(oldmod, '__loader__'):
+        d['__loader__'] = oldmod.__loader__
+    if hasattr(oldmod, '__path__'):
+        d['__path__'] = [os.path.abspath(p) for p in oldmod.__path__]
+    oldmod.__dict__.update(d)
+    mod = ApiModule(pkgname, exportdefs, implprefix=pkgname, attr=d)
     sys.modules[pkgname]  = mod
 
 def importobj(modpath, attrname):
@@ -26,11 +33,15 @@ def importobj(modpath, attrname):
     return getattr(module, attrname)
 
 class ApiModule(ModuleType):
-    def __init__(self, name, importspec, implprefix=None):
+    def __init__(self, name, importspec, implprefix=None, attr=None):
         self.__name__ = name
         self.__all__ = [x for x in importspec if x != '__onfirstaccess__']
         self.__map__ = {}
         self.__implprefix__ = implprefix or name
+        if attr:
+            for name, val in attr.items():
+                #print "setting", self.__name__, name, val
+                setattr(self, name, val)
         for name, importspec in importspec.items():
             if isinstance(importspec, dict):
                 subname = '%s.%s'%(self.__name__, name)
@@ -58,6 +69,7 @@ class ApiModule(ModuleType):
 
     def __makeattr(self, name):
         """lazily compute value for name or raise AttributeError if unknown."""
+        #print "makeattr", self.__name__, name
         target = None
         if '__onfirstaccess__' in self.__map__:
             target = self.__map__.pop('__onfirstaccess__')

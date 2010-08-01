@@ -326,10 +326,11 @@ class TmpTestdir:
                 (str(py._pydir.dirpath()), cmdlinename))
             return (sys.executable, "-c", source,)
 
-    def runpython(self, script):
-        s = self._getsysprepend()
-        if s:
-            script.write(s + "\n" + script.read())
+    def runpython(self, script, prepend=True):
+        if prepend:
+            s = self._getsysprepend()
+            if s:
+                script.write(s + "\n" + script.read())
         return self.run(sys.executable, script)
 
     def _getsysprepend(self):

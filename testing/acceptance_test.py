@@ -147,3 +147,19 @@ class TestGeneralUsage:
         result = testdir.runpytest()
         assert result.ret == 0
         assert "should not be seen" not in result.stdout.str()
+
+    @py.test.mark.skipif("not hasattr(os, 'symlink')")
+    def test_chdir(self, testdir):
+        testdir.tmpdir.join("py").mksymlinkto(py._pydir)
+        p = testdir.tmpdir.join("main.py")
+        p.write(py.code.Source("""
+            import sys, os
+            sys.path.insert(0, '')
+            import py
+            print (py.__file__)
+            print (py.__path__)
+            os.chdir(os.path.dirname(os.getcwd()))
+            print (py.log.Producer)
+        """))
+        result = testdir.runpython(p, prepend=False)
+        assert not result.ret
