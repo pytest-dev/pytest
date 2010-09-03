@@ -8,8 +8,10 @@ def test_nose_setup(testdir):
 
         def test_hello():
             assert l == [1]
+
         def test_world():
             assert l == [1,2]
+
         test_hello.setup = lambda: l.append(1)
         test_hello.teardown = lambda: l.append(2)
     """)
@@ -34,9 +36,11 @@ def test_nose_setup_func(testdir):
         def test_hello():
             print l
             assert l == [1]
+
         def test_world():
             print l
             assert l == [1,2]
+
         test_hello.setup = my_setup
         test_hello.teardown = my_teardown
     """)
@@ -106,7 +110,6 @@ def test_nose_test_generator_fixtures(testdir):
                 #    expect.append('teardown')
                 #expect.append('setup')
                 eq_(self.called, expect)
-
     """)
     result = testdir.runpytest(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
@@ -118,6 +121,7 @@ def test_module_level_setup(testdir):
     testdir.makepyfile("""
         from nose.tools import with_setup
         items = {}
+
         def setup():
             items[1]=1
 
@@ -137,7 +141,6 @@ def test_module_level_setup(testdir):
         def test_local_setup():
             assert items[2] == 2
             assert 1 not in items
-
     """)
     result = testdir.runpytest('-p', 'nose')
     result.stdout.fnmatch_lines([
@@ -148,6 +151,7 @@ def test_module_level_setup(testdir):
 def test_nose_style_setup_teardown(testdir):
     testdir.makepyfile("""
         l = []
+
         def setup_module():
             l.append(1)
 
