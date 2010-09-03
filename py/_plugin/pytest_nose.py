@@ -90,7 +90,7 @@ def pytest_make_collect_report(collector):
 
 def call_optional(obj, name):
     method = getattr(obj, name, None)
-    if method and callable(method):
+    if method:
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()

@@ -74,6 +74,30 @@ def test_nose_setup_func_failure(testdir):
     ])
 
 
+def test_nose_setup_func_failure_2(testdir):
+    p = testdir.makepyfile("""
+        l = []
+
+        my_setup = 1
+        my_teardown = 2
+
+        def test_hello():
+            print l
+            assert l == [1]
+
+        def test_world():
+            print l
+            assert l == [1,2]
+
+        test_hello.setup = my_setup
+        test_hello.teardown = my_teardown
+    """)
+    result = testdir.runpytest(p, '-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*TypeError: 'int' object is not callable*"
+    ])
+
+
 def test_nose_setup_partial(testdir):
     p = testdir.makepyfile("""
         from functools import partial
