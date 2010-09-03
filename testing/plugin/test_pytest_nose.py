@@ -1,6 +1,7 @@
 import py
 py.test.importorskip("nose")
 
+
 def test_nose_setup(testdir):
     p = testdir.makepyfile("""
         l = []
@@ -16,6 +17,7 @@ def test_nose_setup(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
+
 
 def test_nose_setup_func(testdir):
     p = testdir.makepyfile("""
@@ -42,6 +44,7 @@ def test_nose_setup_func(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
+
 
 def test_nose_test_generator_fixtures(testdir):
     p = testdir.makepyfile("""
@@ -111,7 +114,6 @@ def test_nose_test_generator_fixtures(testdir):
     ])
 
 
-
 def test_module_level_setup(testdir):
     testdir.makepyfile("""
         from nose.tools import with_setup
@@ -142,6 +144,7 @@ def test_module_level_setup(testdir):
         "*2 passed*",
     ])
 
+
 def test_nose_style_setup_teardown(testdir):
     testdir.makepyfile("""
         l = []
@@ -161,4 +164,3 @@ def test_nose_style_setup_teardown(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
-
