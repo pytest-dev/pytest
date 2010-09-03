@@ -50,6 +50,64 @@ def test_nose_setup_func(testdir):
     ])
 
 
+def test_nose_setup_func_failure(testdir):
+    p = testdir.makepyfile("""
+        l = []
+
+        my_setup = lambda x: 1
+        my_teardown = lambda x: 2
+
+        def test_hello():
+            print l
+            assert l == [1]
+
+        def test_world():
+            print l
+            assert l == [1,2]
+
+        test_hello.setup = my_setup
+        test_hello.teardown = my_teardown
+    """)
+    result = testdir.runpytest(p, '-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*TypeError: <lambda>() takes exactly 1 argument (0 given)*"
+    ])
+
+
+def test_nose_setup_partial(testdir):
+    p = testdir.makepyfile("""
+        from functools import partial
+
+        l = []
+
+        def my_setup(x):
+            a = x
+            l.append(a)
+
+        def my_teardown(x):
+            b = x
+            l.append(b)
+
+        my_setup_partial = partial(my_setup, 1)
+        my_teardown_partial = partial(my_teardown, 2)
+
+        def test_hello():
+            print l
+            assert l == [1]
+
+        def test_world():
+            print l
+            assert l == [1,2]
+
+        test_hello.setup = my_setup_partial
+        test_hello.teardown = my_teardown_partial
+    """)
+    result = testdir.runpytest(p, '-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])
+
+
 def test_nose_test_generator_fixtures(testdir):
     p = testdir.makepyfile("""
         # taken from nose-0.11.1 unit_tests/test_generator_fixtures.py
