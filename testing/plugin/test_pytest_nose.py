@@ -17,6 +17,32 @@ def test_nose_setup(testdir):
         "*2 passed*"
     ])
 
+def test_nose_setup_func(testdir):
+    p = testdir.makepyfile("""
+        l = []
+
+        def my_setup():
+            a = 1
+            l.append(a)
+
+        def my_teardown():
+            b = 2
+            l.append(b)
+
+        def test_hello():
+            print l
+            assert l == [1]
+        def test_world():
+            print l
+            assert l == [1,2]
+        test_hello.setup = my_setup
+        test_hello.teardown = my_teardown
+    """)
+    result = testdir.runpytest(p, '-p', 'nose')
+    result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])
+
 def test_nose_test_generator_fixtures(testdir):
     p = testdir.makepyfile("""
         # taken from nose-0.11.1 unit_tests/test_generator_fixtures.py

@@ -93,6 +93,6 @@ def call_optional(obj, name):
     if method:
         ismethod = inspect.ismethod(method)
         rawcode = py.code.getrawcode(method)
-        if not rawcode.co_varnames[ismethod:]:
+        if not rawcode.co_varnames[ismethod:rawcode.co_argcount]:
             method()
             return True
