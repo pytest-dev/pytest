@@ -1,3 +1,8 @@
+Changes between 1.3.3 and XXX
+==================================================
+
+- fix issue116: --doctestmodules works in the presence of __init__.py files as well
+
 Changes between 1.3.2 and 1.3.3
 ==================================================
 

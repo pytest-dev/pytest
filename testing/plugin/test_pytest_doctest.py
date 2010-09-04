@@ -1,4 +1,5 @@
 from py._plugin.pytest_doctest import DoctestModule, DoctestTextfile
+import py
 
 pytest_plugins = ["pytest_doctest"]
 
@@ -73,16 +74,16 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1)
 
-    def test_doctestmodule_external(self, testdir):
-        p = testdir.makepyfile("""
-            #
+    def test_doctestmodule_external_and_issue116(self, testdir):
+        p = testdir.mkpydir("hello")
+        p.join("__init__.py").write(py.code.Source("""
             def somefunc():
                 '''
                     >>> i = 0
                     >>> i + 1
                     2
                 '''
-        """)
+        """))
         result = testdir.runpytest(p, "--doctest-modules")
         result.stdout.fnmatch_lines([
             '004 *>>> i = 0',

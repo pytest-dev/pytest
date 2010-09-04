@@ -306,8 +306,10 @@ class TestImport:
 
     def test_pyimport_dir(self, tmpdir):
         p = tmpdir.join("hello_123")
-        p.ensure("__init__.py")
+        p_init = p.ensure("__init__.py")
         m = p.pyimport()
+        assert m.__name__ == "hello_123"
+        m = p_init.pyimport()
         assert m.__name__ == "hello_123"
 
     def test_pyimport_execfile_different_name(self, path1):

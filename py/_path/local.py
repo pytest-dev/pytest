@@ -519,6 +519,8 @@ class LocalPath(FSBase):
                 pkg = __import__(pkgpath.basename, None, None, [])
                 names = self.new(ext='').relto(pkgpath.dirpath())
                 names = names.split(self.sep)
+                if names and names[-1] == "__init__":
+                    names.pop()
                 modname = ".".join(names)
             else:
                 # no package scope, still make it possible
@@ -532,7 +534,8 @@ class LocalPath(FSBase):
             elif modfile.endswith('$py.class'):
                 modfile = modfile[:-9] + '.py'
             if modfile.endswith("__init__.py"):
-                modfile = modfile[:-12]
+                if self.basename != "__init__.py":
+                    modfile = modfile[:-12]
             if not self.samefile(modfile):
                 raise self.ImportMismatchError(modname, modfile, self)
             return mod
