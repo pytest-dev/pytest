@@ -1,6 +1,3 @@
-import difflib
-import pprint
-
 import py
 import sys
 
@@ -44,7 +41,7 @@ def pytest_assert_compare(op, left, right):
     isdict = lambda x: isinstance(x, dict)
     if istext(left):
         explanation += [line.strip('\n') for line in
-                        difflib.ndiff(left.splitlines(), right.splitlines())]
+                        py.std.difflib.ndiff(left.splitlines(), right.splitlines())]
     elif issquence(left):
         explanation += _compare_eq_sequence(left, right)
     elif isdict(left):
@@ -73,5 +70,5 @@ def _compare_eq_sequence(left, right):
 def _pprint_diff(left, right):
     """Make explanation using pprint and difflib"""
     return [line.strip('\n') for line in
-            difflib.ndiff(pprint.pformat(left).splitlines(),
-                          pprint.pformat(right).splitlines())]
+            py.std.difflib.ndiff(py.std.pprint.pformat(left).splitlines(),
+                                 py.std.pprint.pformat(right).splitlines())]
