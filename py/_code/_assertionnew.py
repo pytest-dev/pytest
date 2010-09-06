@@ -162,10 +162,7 @@ class DebugInterpreter(ast.NodeVisitor):
     def visit_Compare(self, comp):
         left = comp.left
         left_explanation, left_result = self.visit(left)
-        got_result = False
         for op, next_op in zip(comp.ops, comp.comparators):
-            if got_result and not result:
-                break
             next_explanation, next_result = self.visit(next_op)
             op_symbol = operator_map[op.__class__]
             explanation = "%s %s %s" % (left_explanation, op_symbol,
@@ -177,9 +174,16 @@ class DebugInterpreter(ast.NodeVisitor):
                                          __exprinfo_right=next_result)
             except Exception:
                 raise Failure(explanation)
-            else:
-                got_result = True
+            if not result:
+                break
             left_explanation, left_result = next_explanation, next_result
+        hook_result = py.test.config.hook.pytest_assert_compare(
+            op=op_symbol, left=left_result, right=next_result)
+        if hook_result:
+            for new_expl in hook_result:
+                if new_expl:
+                    explanation = '\n~'.join(new_expl)
+                    break
         return explanation, result
 
     def visit_BoolOp(self, boolop):

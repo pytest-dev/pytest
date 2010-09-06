@@ -124,6 +124,19 @@ def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
 
 # -------------------------------------------------------------------------
+# hooks for customising the assert methods
+# -------------------------------------------------------------------------
+
+def pytest_assert_compare(op, left, right):
+    """Customise compare assertion
+
+    Return None or an empty list for no custom compare, otherwise
+    return a list of strings.  The strings will be joined by newlines
+    but any newlines *in* as string will be escaped.  Note that all
+    but the first line will be indented sligthly.
+    """
+
+# -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from pytest_terminal)
 # -------------------------------------------------------------------------
 

@@ -1,3 +1,6 @@
+import difflib
+import pprint
+
 import py
 import sys
 
@@ -26,3 +29,49 @@ def warn_about_missing_assertion():
     else:
         py.std.warnings.warn("Assertions are turned off!"
                              " (are you using python -O?)")
+
+
+def pytest_assert_compare(op, left, right):
+    """Make a specialised explanation for comapare equal"""
+    if op != '==' or type(left) != type(right):
+        return None
+    explanation = []
+    left_repr = py.io.saferepr(left, maxsize=30)
+    right_repr = py.io.saferepr(right, maxsize=30)
+    explanation += ['%s == %s' % (left_repr, right_repr)]
+    issquence = lambda x: isinstance(x, (list, tuple))
+    istext = lambda x: isinstance(x, basestring)
+    isdict = lambda x: isinstance(x, dict)
+    if istext(left):
+        explanation += [line.strip('\n') for line in
+                        difflib.ndiff(left.splitlines(), right.splitlines())]
+    elif issquence(left):
+        explanation += _compare_eq_sequence(left, right)
+    elif isdict(left):
+        explanation += _pprint_diff(left, right)
+    else:
+        return None         # No specialised knowledge
+    return explanation
+
+
+def _compare_eq_sequence(left, right):
+    explanation = []
+    for i in xrange(min(len(left), len(right))):
+        if left[i] != right[i]:
+            explanation += ['First differing item %s: %s != %s' %
+                            (i, left[i], right[i])]
+            break
+    if len(left) > len(right):
+        explanation += ['Left contains more items, '
+                        'first extra item: %s' % left[len(right)]]
+    elif len(left) < len(right):
+        explanation += ['Right contains more items, '
+                        'first extra item: %s' % right[len(right)]]
+    return explanation + _pprint_diff(left, right)
+
+
+def _pprint_diff(left, right):
+    """Make explanation using pprint and difflib"""
+    return [line.strip('\n') for line in
+            difflib.ndiff(pprint.pformat(left).splitlines(),
+                          pprint.pformat(right).splitlines())]
