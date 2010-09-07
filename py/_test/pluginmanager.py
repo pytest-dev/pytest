@@ -259,6 +259,8 @@ class MultiCall:
         return kwargs
 
 def varnames(func):
+    if not inspect.isfunction(func) and not inspect.ismethod(func):
+        func = getattr(func, '__call__', func)
     ismethod = inspect.ismethod(func)
     rawcode = py.code.getrawcode(func)
     try:
