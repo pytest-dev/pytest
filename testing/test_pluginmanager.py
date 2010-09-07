@@ -340,8 +340,12 @@ def test_varnames():
     class A:
         def f(self, y):
             pass
+    class B(object):
+        def __call__(self, z):
+            pass
     assert varnames(f) == ("x",)
     assert varnames(A().f) == ('y',)
+    assert varnames(B()) == ('z',)
 
 class TestMultiCall:
     def test_uses_copy_of_methods(self):
