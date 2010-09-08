@@ -700,3 +700,12 @@ raise ValueError()
         repr = excinfo.getrepr(**reproptions)
         repr.toterminal(tw)
         assert tw.stringio.getvalue()
+
+
+    def test_native_style(self):
+        excinfo = self.excinfo_from_exec("""
+            assert 0
+        """)
+        repr = excinfo.getrepr(style='native')
+        assert repr.startswith('Traceback (most recent call last):\n  File')
+        assert repr.endswith('\n    assert 0\nAssertionError: assert 0\n')

@@ -22,7 +22,7 @@ def pytest_addoption(parser):
          help="(deprecated, use -r)")
     group._addoption('--tb', metavar="style",
                action="store", dest="tbstyle", default='long',
-               type="choice", choices=['long', 'short', 'no', 'line'],
+               type="choice", choices=['long', 'short', 'no', 'line', 'native'],
                help="traceback print mode (long/short/line/no).")
     group._addoption('--fulltrace',
                action="store_true", dest="fulltrace", default=False,
