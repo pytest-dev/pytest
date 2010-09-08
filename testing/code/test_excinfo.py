@@ -708,4 +708,8 @@ raise ValueError()
         """)
         repr = excinfo.getrepr(style='native')
         assert repr.startswith('Traceback (most recent call last):\n  File')
-        assert repr.endswith('\n    assert 0\nAssertionError: assert 0\n')
+        assert repr.endswith('\nAssertionError: assert 0\n')
+        assert 'exec (source.compile())' in repr
+        # python 2.4 fails to get the source line for the assert
+        if py.std.sys.version_info >= (2, 5):
+            assert repr.count('assert 0') == 2
