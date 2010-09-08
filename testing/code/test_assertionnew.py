@@ -9,66 +9,36 @@ def getframe():
     return py.code.Frame(sys._getframe(1))
 
 
-def setup_module(mod):
-    py.code.patch_builtins(assertion=True, compile=False)
+def pytest_funcarg__hook(request):
+    class MockHook(object):
+        def __init__(self):
+            self.called = False
+            self.args = tuple()
+            self.kwargs = dict()
+
+        def __call__(self, op, left, right):
+            self.called = True
+            self.op = op
+            self.left = left
+            self.right = right
+    return MockHook()
 
 
-def teardown_module(mod):
-    py.code.unpatch_builtins(assertion=True, compile=False)
+def test_pytest_assert_compare_called(monkeypatch, hook):
+    monkeypatch.setattr(py._plugin.pytest_assertion,
+                        'pytest_assert_compare', hook)
+    interpret('assert 0 == 1', getframe())
+    assert hook.called
 
 
-def test_assert_simple():
-    # Simply test that this way of testing works
-    a = 0
-    b = 1
-    r = interpret('assert a == b', getframe())
-    assert r == 'assert 0 == 1'
-
-
-def test_assert_list():
-    r = interpret('assert [0, 1] == [0, 2]', getframe())
-    msg = ('assert [0, 1] == [0, 2]\n'
-           '  First differing item 1: 1 != 2\n'
-           '  - [0, 1]\n'
-           '  ?     ^\n'
-           '  + [0, 2]\n'
-           '  ?     ^')
-    print r
-    assert r == msg
-
-
-def test_assert_string():
-    r = interpret('assert "foo and bar" == "foo or bar"', getframe())
-    msg = ("assert 'foo and bar' == 'foo or bar'\n"
-           "  - foo and bar\n"
-           "  ?     ^^^\n"
-           "  + foo or bar\n"
-           "  ?     ^^")
-    print r
-    assert r == msg
-
-
-def test_assert_multiline_string():
-    a = 'foo\nand bar\nbaz'
-    b = 'foo\nor bar\nbaz'
-    r = interpret('assert a == b', getframe())
-    msg = ("assert 'foo\\nand bar\\nbaz' == 'foo\\nor bar\\nbaz'\n"
-           '    foo\n'
-           '  - and bar\n'
-           '  + or bar\n'
-           '    baz')
-    print r
-    assert r == msg
-
-
-def test_assert_dict():
-    a = {'a': 0, 'b': 1}
-    b = {'a': 0, 'c': 2}
-    r = interpret('assert a == b', getframe())
-    msg = ("assert {'a': 0, 'b': 1} == {'a': 0, 'c': 2}\n"
-           "  - {'a': 0, 'b': 1}\n"
-           "  ?           ^   ^\n"
-           "  + {'a': 0, 'c': 2}\n"
-           "  ?           ^   ^")
-    print r
-    assert r == msg
+def test_pytest_assert_compare_args(monkeypatch, hook):
+    print hook.called
+    monkeypatch.setattr(py._plugin.pytest_assertion,
+                        'pytest_assert_compare', hook)
+    interpret('assert [0, 1] == [0, 2]', getframe())
+    print hook.called
+    print hook.left
+    print hook.right
+    assert hook.op == '=='
+    assert hook.left == [0, 1]
+    assert hook.right == [0, 2]

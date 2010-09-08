@@ -1,3 +1,7 @@
+import py
+import py._plugin.pytest_assertion as plugin
+
+
 def test_functional(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -49,3 +53,31 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
+
+class Test_pytest_assert_compare:
+    def test_different_types(self):
+        assert plugin.pytest_assert_compare('==', [0, 1], 'foo') is None
+
+    def test_summary(self):
+        summary = plugin.pytest_assert_compare('==', [0, 1], [0, 2])[0]
+        assert len(summary) < 65
+
+    def test_text_diff(self):
+        diff = plugin.pytest_assert_compare('==', 'spam', 'eggs')[1:]
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_multiline_text_diff(self):
+        left = 'foo\nspam\nbar'
+        right = 'foo\neggs\nbar'
+        diff = plugin.pytest_assert_compare('==', left, right)
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_list(self):
+        expl = plugin.pytest_assert_compare('==', [0, 1], [0, 2])
+        assert len(expl) > 1
+
+    def test_dict(self):
+        expl = plugin.pytest_assert_compare('==', {'a': 0}, {'a': 1})
+        assert len(expl) > 1
