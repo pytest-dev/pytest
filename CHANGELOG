@@ -1,6 +1,7 @@
-Changes between 1.3.3 and XXX
+Changes between 1.3.3 and 1.3.4
 ==================================================
 
+- fix issue111: improve install documentation for windows
 - fix issue116: --doctestmodules works in the presence of __init__.py files as well
 - fix issue118: new --tb=native option for presenting cpython-standard exceptions
 
