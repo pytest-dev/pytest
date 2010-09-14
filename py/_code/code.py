@@ -189,7 +189,7 @@ class TracebackEntry(object):
         """
         try:
             return self.frame.eval("__tracebackhide__")
-        except (SystemExit, KeyboardInterrupt):
+        except py.builtin._sysex:
             raise
         except:
             return False

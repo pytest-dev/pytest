@@ -5,8 +5,6 @@ builtin_repr = repr
 
 reprlib = py.builtin._tryimport('repr', 'reprlib')
 
-sysex = (KeyboardInterrupt, MemoryError, SystemExit)
-
 class SafeRepr(reprlib.Repr):
     """ subclass of repr.Repr that limits the resulting size of repr()
         and includes information on exceptions raised during the call.
@@ -21,7 +19,7 @@ class SafeRepr(reprlib.Repr):
         try:
             # Try the vanilla repr and make sure that the result is a string
             s = call(x, *args)
-        except sysex:
+        except py.builtin._sysex:
             raise
         except:
             cls, e, tb = sys.exc_info()

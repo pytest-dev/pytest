@@ -111,6 +111,7 @@ py.apipkg.initpkg(__name__, dict(
         'frozenset'      : '._builtin:frozenset',
         'BaseException'  : '._builtin:BaseException',
         'GeneratorExit'  : '._builtin:GeneratorExit',
+        '_sysex'         : '._builtin:_sysex',
         'print_'         : '._builtin:print_',
         '_reraise'       : '._builtin:_reraise',
         '_tryimport'     : '._builtin:_tryimport',
