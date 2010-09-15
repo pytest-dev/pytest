@@ -8,7 +8,7 @@ dictionary or an import path.
 
 (c) Holger Krekel and others, 2004-2010
 """
-__version__ = version = "1.3.4"
+__version__ = version = "1.4.0a1"
 
 import py.apipkg
 
@@ -53,7 +53,7 @@ py.apipkg.initpkg(__name__, dict(
             '_fillfuncargs' : '._test.funcargs:fillfuncargs',
         },
         'cmdline': {
-            'main' : '._test.cmdline:main', # backward compat
+            'main' : '._test.session:main', # backward compat
         },
     },
 

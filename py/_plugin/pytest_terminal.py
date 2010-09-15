@@ -35,7 +35,6 @@ def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
     elif config.option.showfuncargs:
-        config.setsessionclass(ShowFuncargSession)
         reporter = None
     else:
         reporter = TerminalReporter(config)
@@ -170,7 +169,7 @@ class TerminalReporter:
             self.write_line("[%s] %s" %(category, msg))
 
     def pytest_deselected(self, items):
-        self.stats.setdefault('deselected', []).append(items)
+        self.stats.setdefault('deselected', []).extend(items)
 
     def pytest_itemstart(self, item, node=None):
         if self.config.option.verbose:
@@ -383,21 +382,27 @@ class CollectonlyReporter:
         self.outindent(collector)
         self.indent += self.INDENT
 
-    def pytest_itemstart(self, item, node=None):
+    def pytest_log_itemcollect(self, item):
         self.outindent(item)
 
     def pytest_collectreport(self, report):
         if not report.passed:
-            self.outindent("!!! %s !!!" % report.longrepr.reprcrash.message)
+            if hasattr(report.longrepr, 'reprcrash'):
+                msg = report.longrepr.reprcrash.message
+            else:
+                # XXX unify (we have CollectErrorRepr here)
+                msg = str(report.longrepr.longrepr)
+            self.outindent("!!! %s !!!" % msg)
+            #self.outindent("!!! error !!!")
             self._failed.append(report)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pytest_sessionfinish(self, session, exitstatus):
+    def pytest_log_finishcollection(self):
         if self._failed:
             self._tw.sep("!", "collection failures")
         for rep in self._failed:
             rep.toterminal(self._tw)
-
+        return self._failed and 1 or 0
 
 def repr_pythonversion(v=None):
     if v is None:
@@ -415,50 +420,3 @@ def flatten(l):
         else:
             yield x
 
-from py._test.session import Session
-class ShowFuncargSession(Session):
-    def main(self, colitems):
-        self.fspath = py.path.local()
-        self.sessionstarts()
-        try:
-            self.showargs(colitems[0])
-        finally:
-            self.sessionfinishes(exitstatus=1)
-
-    def showargs(self, colitem):
-        tw = py.io.TerminalWriter()
-        from py._test.funcargs import getplugins
-        from py._test.funcargs import FuncargRequest
-        plugins = getplugins(colitem, withpy=True)
-        verbose = self.config.getvalue("verbose")
-        for plugin in plugins:
-            available = []
-            for name, factory in vars(plugin).items():
-                if name.startswith(FuncargRequest._argprefix):
-                    name = name[len(FuncargRequest._argprefix):]
-                    if name not in available:
-                        available.append([name, factory])
-            if available:
-                pluginname = plugin.__name__
-                for name, factory in available:
-                    loc = self.getlocation(factory)
-                    if verbose:
-                        funcargspec = "%s -- %s" %(name, loc,)
-                    else:
-                        funcargspec = name
-                    tw.line(funcargspec, green=True)
-                    doc = factory.__doc__ or ""
-                    if doc:
-                        for line in doc.split("\n"):
-                            tw.line("    " + line.strip())
-                    else:
-                        tw.line("    %s: no docstring available" %(loc,),
-                            red=True)
-
-    def getlocation(self, function):
-        import inspect
-        fn = py.path.local(inspect.getfile(function))
-        lineno = py.builtin._getcode(function).co_firstlineno
-        if fn.relto(self.fspath):
-            fn = fn.relto(self.fspath)
-        return "%s:%d" %(fn, lineno+1)

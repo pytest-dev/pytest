@@ -74,10 +74,8 @@ class TmpTestdir:
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
-    def Config(self, topdir=None):
-        if topdir is None:
-            topdir = self.tmpdir.dirpath()
-        return pytestConfig(topdir=topdir)
+    def Config(self):
+        return pytestConfig()
 
     def finalize(self):
         for p in self._syspathremove:
@@ -149,16 +147,23 @@ class TmpTestdir:
         p.ensure("__init__.py")
         return p
 
+    def getnode(self, config, arg):
+        from py._test.session import Collection
+        collection = Collection(config)
+        return collection.getbyid(collection._normalizearg(arg))[0]
+
     def genitems(self, colitems):
-        return list(self.session.genitems(colitems))
+        collection = colitems[0].collection
+        result = []
+        collection.genitems(colitems, (), result)
+        return result
 
     def inline_genitems(self, *args):
         #config = self.parseconfig(*args)
-        config = self.parseconfig(*args)
-        session = config.initsession()
+        from py._test.session import Collection
+        config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
-        colitems = [config.getnode(arg) for arg in config.args]
-        items = list(session.genitems(colitems))
+        items = Collection(config).perform_collect()
         return items, rec
 
     def runitem(self, source):
@@ -187,11 +192,9 @@ class TmpTestdir:
     def inline_run(self, *args):
         args = ("-s", ) + args # otherwise FD leakage
         config = self.parseconfig(*args)
-        config.pluginmanager.do_configure(config)
-        session = config.initsession()
         reprec = self.getreportrecorder(config)
-        colitems = config.getinitialnodes()
-        session.main(colitems)
+        config.pluginmanager.do_configure(config)
+        config.hook.pytest_cmdline_main(config=config)
         config.pluginmanager.do_unconfigure(config)
         return reprec
 
@@ -245,29 +248,17 @@ class TmpTestdir:
 
     def getitems(self,  source):
         modcol = self.getmodulecol(source)
-        return list(modcol.config.initsession().genitems([modcol]))
-        #assert item is not None, "%r item not found in module:\n%s" %(funcname, source)
-        #return item
-
-    def getfscol(self,  path, configargs=()):
-        self.config = self.parseconfig(path, *configargs)
-        self.session = self.config.initsession()
-        return self.config.getnode(path)
+        return self.genitems([modcol])
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
         kw = {self.request.function.__name__: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__ = "#")
-        self.config = self.parseconfig(path, *configargs)
-        self.session = self.config.initsession()
-        #self.config.pluginmanager.do_configure(config=self.config)
-        # XXX
-        self.config.pluginmanager.import_plugin("runner")
-        plugin = self.config.pluginmanager.getplugin("runner")
-        plugin.pytest_configure(config=self.config)
-
-        return self.config.getnode(path)
+        self.config = config = self.parseconfigure(path, *configargs)
+        node = self.getnode(config, path)
+        #config.pluginmanager.do_unconfigure(config)
+        return node
 
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):

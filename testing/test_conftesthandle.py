@@ -82,10 +82,10 @@ class TestConftestValueAccessGlobal:
         #conftest.lget("b") == 1
 
     def test_value_access_with_confmod(self, basedir):
-        topdir = basedir.join("adir", "b")
-        topdir.ensure("xx", dir=True)
-        conftest = ConftestWithSetinitial(topdir)
-        mod, value = conftest.rget_with_confmod("a", topdir)
+        startdir = basedir.join("adir", "b")
+        startdir.ensure("xx", dir=True)
+        conftest = ConftestWithSetinitial(startdir)
+        mod, value = conftest.rget_with_confmod("a", startdir)
         assert  value == 1.5
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")

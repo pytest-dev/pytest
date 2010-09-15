@@ -26,6 +26,7 @@ def test_gen(testdir, anypython, standalone):
         "*imported from*mypytest"
     ])
 
+@py.test.mark.xfail(reason="fix-dist")
 def test_rundist(testdir, pytestconfig, standalone):
     pytestconfig.pluginmanager.skipifmissing("xdist")
     testdir.makepyfile("""

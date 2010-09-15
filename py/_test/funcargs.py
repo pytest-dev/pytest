@@ -184,3 +184,45 @@ class FuncargRequest:
         msg += "\n available funcargs: %s" %(", ".join(available),)
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         raise self.LookupError(msg)
+
+def showfuncargs(config):
+    from py._test.session import Collection
+    collection = Collection(config)
+    colitem = collection.getinitialnodes()[0]
+    curdir = py.path.local()
+    tw = py.io.TerminalWriter()
+    #from py._test.funcargs import getplugins
+    #from py._test.funcargs import FuncargRequest
+    plugins = getplugins(colitem, withpy=True)
+    verbose = config.getvalue("verbose")
+    for plugin in plugins:
+        available = []
+        for name, factory in vars(plugin).items():
+            if name.startswith(FuncargRequest._argprefix):
+                name = name[len(FuncargRequest._argprefix):]
+                if name not in available:
+                    available.append([name, factory])
+        if available:
+            pluginname = plugin.__name__
+            for name, factory in available:
+                loc = getlocation(factory, curdir)
+                if verbose:
+                    funcargspec = "%s -- %s" %(name, loc,)
+                else:
+                    funcargspec = name
+                tw.line(funcargspec, green=True)
+                doc = factory.__doc__ or ""
+                if doc:
+                    for line in doc.split("\n"):
+                        tw.line("    " + line.strip())
+                else:
+                    tw.line("    %s: no docstring available" %(loc,),
+                        red=True)
+
+def getlocation(function, curdir):
+    import inspect
+    fn = py.path.local(inspect.getfile(function))
+    lineno = py.builtin._getcode(function).co_firstlineno
+    if fn.relto(curdir):
+        fn = fn.relto(curdir)
+    return "%s:%d" %(fn, lineno+1)

@@ -20,12 +20,25 @@ def pytest_configure(config):
         and all plugins and initial conftest files been loaded.
     """
 
+def pytest_cmdline_main(config):
+    """ called for performing the main (cmdline) action. """
+pytest_cmdline_main.firstresult = True
+
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
 # -------------------------------------------------------------------------
 # collection hooks
 # -------------------------------------------------------------------------
+
+def pytest_log_startcollection(collection):
+    """ called before collection.perform_collection() is called. """
+
+def pytest_collection_modifyitems(collection):
+    """ called to allow filtering and selecting of test items (inplace). """
+
+def pytest_log_finishcollection(collection):
+    """ called after collection has finished. """
 
 def pytest_ignore_collect(path, config):
     """ return true value to prevent considering this path for collection.
@@ -41,8 +54,12 @@ pytest_collect_directory.firstresult = True
 def pytest_collect_file(path, parent):
     """ return Collection node or None for the given path. """
 
+# logging hooks for collection
 def pytest_collectstart(collector):
     """ collector starts collecting. """
+
+def pytest_log_itemcollect(item):
+    """ we just collected a test item. """
 
 def pytest_collectreport(report):
     """ collector finished collecting. """
@@ -53,10 +70,6 @@ def pytest_deselected(items):
 def pytest_make_collect_report(collector):
     """ perform a collection and return a collection. """
 pytest_make_collect_report.firstresult = True
-
-# XXX rename to item_collected()?  meaning in distribution context?
-def pytest_itemstart(item, node=None):
-    """ test item gets collected. """
 
 # -------------------------------------------------------------------------
 # Python test function related hooks
@@ -84,6 +97,9 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
+
+def pytest_itemstart(item, node=None):
+    """ test item starts running. """
 
 def pytest_runtest_protocol(item):
     """ implement fixture, run and report about the given test item. """

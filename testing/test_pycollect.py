@@ -247,10 +247,11 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
+        collection = object()
         f5 = py.test.collect.Function(name="name", config=config,
-                                      callspec=callspec1, callobj=isinstance)
+            callspec=callspec1, callobj=isinstance, collection=collection)
         f5b = py.test.collect.Function(name="name", config=config,
-                                      callspec=callspec2, callobj=isinstance)
+            callspec=callspec2, callobj=isinstance, collection=collection)
         assert f5 != f5b
         assert not (f5 == f5b)
 
@@ -459,8 +460,8 @@ def test_generate_tests_only_done_in_subdir(testdir):
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
-    trail = modcol.config._rootcol.totrail(modcol)
-    newcol = modcol.config._rootcol.fromtrail(trail)
+    trail = modcol.collection.getid(modcol)
+    newcol = modcol.collection.getbyid(trail)[0]
     assert modcol.name == newcol.name
 
 

@@ -348,8 +348,9 @@ class Function(FunctionMixin, py.test.collect.Item):
     """
     _genid = None
     def __init__(self, name, parent=None, args=None, config=None,
-                 callspec=None, callobj=_dummy):
-        super(Function, self).__init__(name, parent, config=config)
+                 callspec=None, callobj=_dummy, collection=None):
+        super(Function, self).__init__(name, parent,
+            config=config, collection=collection)
         self._args = args
         if self._isyieldedfunction():
             assert not callspec, "yielded functions (deprecated) cannot have funcargs"

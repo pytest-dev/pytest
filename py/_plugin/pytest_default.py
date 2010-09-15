@@ -3,6 +3,22 @@
 import sys
 import py
 
+def pytest_cmdline_main(config):
+    from py._test.session import Session, Collection
+    exitstatus = 0
+    if config.option.showfuncargs:
+        from py._test.funcargs import showfuncargs
+        session = showfuncargs(config)
+    else:
+        collection = Collection(config)
+        # instantiate session already because it
+        # records failures and implements maxfail handling
+        session = Session(config, collection)
+        exitstatus = collection.do_collection()
+        if not exitstatus:
+            exitstatus = session.main()
+    return exitstatus
+
 def pytest_pyfunc_call(__multicall__, pyfuncitem):
     if not __multicall__.execute():
         testfunction = pyfuncitem.obj
@@ -16,7 +32,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     pb = path.purebasename
     if pb.startswith("test_") or pb.endswith("_test") or \
-       path in parent.config._argfspaths:
+       path in parent.collection._argfspaths:
         if ext == ".py":
             return parent.ihook.pytest_pycollect_makemodule(
                 path=path, parent=parent)
@@ -49,7 +65,7 @@ def pytest_collect_directory(path, parent):
     # define Directory(dir) already
     if not parent.recfilter(path): # by default special ".cvs", ...
         # check if cmdline specified this dir or a subdir directly
-        for arg in parent.config._argfspaths:
+        for arg in parent.collection._argfspaths:
             if path == arg or arg.relto(path):
                 break
         else:
@@ -68,12 +84,6 @@ def pytest_addoption(parser):
     group._addoption('--maxfail', metavar="num",
                action="store", type="int", dest="maxfail", default=0,
                help="exit after first num failures or errors.")
-    group._addoption('-k',
-        action="store", dest="keyword", default='',
-        help="only run test items matching the given "
-             "space separated keywords.  precede a keyword with '-' to negate. "
-             "Terminate the expression with ':' to treat a match as a signal "
-             "to run all subsequent tests. ")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly',
@@ -91,16 +101,9 @@ def pytest_addoption(parser):
                help="base temporary directory for this test run.")
 
 def pytest_configure(config):
-    setsession(config)
     # compat
     if config.getvalue("exitfirst"):
         config.option.maxfail = 1
-
-def setsession(config):
-    val = config.getvalue
-    if val("collectonly"):
-        from py._test.session import Session
-        config.setsessionclass(Session)
 
 # pycollect related hooks and code, should move to pytest_pycollect.py
 
