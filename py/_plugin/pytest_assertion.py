@@ -30,25 +30,39 @@ def warn_about_missing_assertion():
 
 def pytest_assert_compare(op, left, right):
     """Make a specialised explanation for comapare equal"""
-    if op != '==' or type(left) != type(right):
+    if type(left) != type(right):
         return None
-    explanation = []
+
     left_repr = py.io.saferepr(left, maxsize=30)
     right_repr = py.io.saferepr(right, maxsize=30)
-    explanation += ['%s == %s' % (left_repr, right_repr)]
+    summary = '%s %s %s' % (left_repr, op, right_repr)
+
     issquence = lambda x: isinstance(x, (list, tuple))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
-    if istext(left):
-        explanation += [line.strip('\n') for line in
-                        py.std.difflib.ndiff(left.splitlines(), right.splitlines())]
-    elif issquence(left):
-        explanation += _compare_eq_sequence(left, right)
-    elif isdict(left):
-        explanation += _pprint_diff(left, right)
-    else:
-        return None         # No specialised knowledge
-    return explanation
+    isset = lambda: isinstance(left, set)
+
+    explanation = None
+    if op == '==':
+        if istext(left):
+            explanation = [line.strip('\n') for line in
+                           py.std.difflib.ndiff(left.splitlines(),
+                                                right.splitlines())]
+        elif issquence(left):
+            explanation = _compare_eq_sequence(left, right)
+        elif isset():
+            explanation = _compare_eq_set(left, right)
+        elif isdict(left):
+            explanation = _pprint_diff(left, right)
+
+    if not explanation:
+        return None
+
+    # Don't include pageloads of data, should be configurable
+    if len(''.join(explanation)) > 80*8:
+        explanation = ['Detailed information too verbose, truncated']
+
+    return [summary] + explanation
 
 
 def _compare_eq_sequence(left, right):
@@ -72,3 +86,18 @@ def _pprint_diff(left, right):
     return [line.strip('\n') for line in
             py.std.difflib.ndiff(py.std.pprint.pformat(left).splitlines(),
                                  py.std.pprint.pformat(right).splitlines())]
+
+
+def _compare_eq_set(left, right):
+    explanation = []
+    diff_left = left - right
+    diff_right = right - left
+    if diff_left:
+        explanation.append('Extra items in the left set:')
+        for item in diff_left:
+            explanation.append(py.io.saferepr(item))
+    if diff_right:
+        explanation.append('Extra items in the right set:')
+        for item in diff_right:
+            explanation.append(py.io.saferepr(item))
+    return explanation

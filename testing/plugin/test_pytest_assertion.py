@@ -81,3 +81,7 @@ class Test_pytest_assert_compare:
     def test_dict(self):
         expl = plugin.pytest_assert_compare('==', {'a': 0}, {'a': 1})
         assert len(expl) > 1
+
+    def test_set(self):
+        expl = plugin.pytest_assert_compare('==', set([0, 1]), set([0, 2]))
+        assert len(expl) > 1
