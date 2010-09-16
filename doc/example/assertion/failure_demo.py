@@ -118,5 +118,25 @@ def test_dynamic_compile_shows_nicely():
     module.foo()
 
 
+class TestSpecialisedExplanations(object):
+    def test_eq_text(self):
+        assert 'spam' == 'eggs'
+
+    def test_eq_similar_text(self):
+        assert 'foo 1 bar' == 'foo 2 bar'
+
+    def test_eq_multiline_text(self):
+        assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
+
+    def test_eq_list(self):
+        assert [0, 1, 2] == [0, 1, 3]
+
+    def test_eq_dict(self):
+        assert {'a': 0, 'b': 1} == {'a': 0, 'b': 2}
+
+    def test_eq_set(self):
+        assert set([0, 10, 11, 12]) == set([0, 20, 21])
+
+
 def globf(x):
     return x+1
