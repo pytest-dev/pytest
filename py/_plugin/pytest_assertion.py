@@ -8,10 +8,15 @@ def pytest_addoption(parser):
         help="disable python assert expression reinterpretation."),
 
 def pytest_configure(config):
+    # The _pytesthook attribute on the AssertionError is used by
+    # py._code._assertionnew to detect this plugin was loaded and in
+    # turn call the hooks defined here as part of the
+    # DebugInterpreter.
     if not config.getvalue("noassert") and not config.getvalue("nomagic"):
         warn_about_missing_assertion()
         config._oldassertion = py.builtin.builtins.AssertionError
         py.builtin.builtins.AssertionError = py.code._AssertionError
+        py.builtin.builtins.AssertionError._pytesthook = config.hook
 
 def pytest_unconfigure(config):
     if hasattr(config, '_oldassertion'):
