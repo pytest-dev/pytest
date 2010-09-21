@@ -33,32 +33,32 @@ def warn_about_missing_assertion():
                              " (are you using python -O?)")
 
 
-def pytest_assert_compare(op, left, right):
-    """Make a specialised explanation for comapare equal"""
-    if type(left) != type(right):
-        return None
-
+def pytest_assert_binrepr(op, left, right):
+    """Make specialised explanations for some operators/operands"""
     left_repr = py.io.saferepr(left, maxsize=30)
     right_repr = py.io.saferepr(right, maxsize=30)
     summary = '%s %s %s' % (left_repr, op, right_repr)
 
-    issquence = lambda x: isinstance(x, (list, tuple))
+    issequence = lambda x: isinstance(x, (list, tuple))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
-    isset = lambda: isinstance(left, set)
+    isset = lambda x: isinstance(x, set)
 
     explanation = None
     if op == '==':
-        if istext(left):
+        if istext(left) and istext(right):
             explanation = [line.strip('\n') for line in
                            py.std.difflib.ndiff(left.splitlines(),
                                                 right.splitlines())]
-        elif issquence(left):
+        elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right)
-        elif isset():
+        elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right)
-        elif isdict(left):
+        elif isdict(left) and isdict(right):
             explanation = _pprint_diff(left, right)
+    elif op == 'in':
+        # XXX
+        pass
 
     if not explanation:
         return None

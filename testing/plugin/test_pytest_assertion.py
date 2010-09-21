@@ -77,17 +77,17 @@ def test_traceback_failure(testdir):
     ])
 
 
-def test_pytest_assert_compare_called(monkeypatch, hook):
+def test_pytest_assert_binrepr_called(monkeypatch, hook):
     monkeypatch.setattr(py._plugin.pytest_assertion,
-                        'pytest_assert_compare', hook)
+                        'pytest_assert_binrepr', hook)
     interpret('assert 0 == 1', getframe())
     assert hook.called
 
 
-def test_pytest_assert_compare_args(monkeypatch, hook):
+def test_pytest_assert_binrepr_args(monkeypatch, hook):
     print hook.called
     monkeypatch.setattr(py._plugin.pytest_assertion,
-                        'pytest_assert_compare', hook)
+                        'pytest_assert_binrepr', hook)
     interpret('assert [0, 1] == [0, 2]', getframe())
     print hook.called
     print hook.left
@@ -99,32 +99,32 @@ def test_pytest_assert_compare_args(monkeypatch, hook):
 
 class TestAssertCompare:
     def test_different_types(self):
-        assert plugin.pytest_assert_compare('==', [0, 1], 'foo') is None
+        assert plugin.pytest_assert_binrepr('==', [0, 1], 'foo') is None
 
     def test_summary(self):
-        summary = plugin.pytest_assert_compare('==', [0, 1], [0, 2])[0]
+        summary = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])[0]
         assert len(summary) < 65
 
     def test_text_diff(self):
-        diff = plugin.pytest_assert_compare('==', 'spam', 'eggs')[1:]
+        diff = plugin.pytest_assert_binrepr('==', 'spam', 'eggs')[1:]
         assert '- spam' in diff
         assert '+ eggs' in diff
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
         right = 'foo\neggs\nbar'
-        diff = plugin.pytest_assert_compare('==', left, right)
+        diff = plugin.pytest_assert_binrepr('==', left, right)
         assert '- spam' in diff
         assert '+ eggs' in diff
 
     def test_list(self):
-        expl = plugin.pytest_assert_compare('==', [0, 1], [0, 2])
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])
         assert len(expl) > 1
 
     def test_dict(self):
-        expl = plugin.pytest_assert_compare('==', {'a': 0}, {'a': 1})
+        expl = plugin.pytest_assert_binrepr('==', {'a': 0}, {'a': 1})
         assert len(expl) > 1
 
     def test_set(self):
-        expl = plugin.pytest_assert_compare('==', set([0, 1]), set([0, 2]))
+        expl = plugin.pytest_assert_binrepr('==', set([0, 1]), set([0, 2]))
         assert len(expl) > 1

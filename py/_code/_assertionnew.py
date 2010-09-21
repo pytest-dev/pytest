@@ -184,7 +184,7 @@ class DebugInterpreter(ast.NodeVisitor):
                 break
             left_explanation, left_result = next_explanation, next_result
         if self._pytesthook:
-            hook_result = self._pytesthook.pytest_assert_compare(
+            hook_result = self._pytesthook.pytest_assert_binrepr(
                 op=op_symbol, left=left_result, right=next_result)
             if hook_result:
                 for new_expl in hook_result:
