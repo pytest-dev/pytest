@@ -55,7 +55,7 @@ class AssertionError(BuiltinAssertionError):
         if args:
             try:
                 self.msg = str(args[0])
-            except (KeyboardInterrupt, SystemExit):
+            except py.builtin._sysex:
                 raise
             except:
                 self.msg = "<[broken __repr__] %s at %0xd>" %(

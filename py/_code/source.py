@@ -276,7 +276,7 @@ def getfslineno(obj):
 def findsource(obj):
     try:
         sourcelines, lineno = py.std.inspect.findsource(obj)
-    except (KeyboardInterrupt, SystemExit):
+    except py.builtin._sysex:
         raise
     except:
         return None, None

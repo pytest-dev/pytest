@@ -156,11 +156,11 @@ command line options
     box each test run in a separate process (unix)
 ``--dist=distmode``
     set mode for distributing tests to exec environments.
-
+    
     each: send each test to each available environment.
-
+    
     load: send each test to available environment.
-
+    
     (default) no: run tests inprocess, don't distribute.
 ``--tx=xspec``
     add a test execution environment. some examples: --tx popen//python=python2.5 --tx socket=192.168.1.102:8888 --tx ssh=user@codespeak.net//chdir=testcache

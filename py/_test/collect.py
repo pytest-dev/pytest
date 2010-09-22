@@ -102,7 +102,7 @@ class Node(object):
             return getattr(self, attrname)
         try:
             res = function()
-        except (KeyboardInterrupt, SystemExit):
+        except py.builtin._sysex:
             raise
         except:
             failure = py.std.sys.exc_info()

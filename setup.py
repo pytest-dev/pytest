@@ -12,8 +12,12 @@ py.test and pylib: rapid testing and development utils
 - `py.code`_: dynamic code compile and traceback printing support
 
 Platforms: Linux, Win32, OSX
+
 Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy
-For questions please check out http://pylib.org/contact.html
+
+Bugs and issues: http://bitbucket.org/hpk42/py-trunk/issues/
+
+Mailing lists and more contact points: http://pylib.org/contact.html
 
 .. _`py.test`: http://pytest.org
 .. _`py.path`: http://pylib.org/path.html
@@ -26,14 +30,14 @@ def main():
         name='py',
         description='py.test and pylib: rapid testing and development utils.',
         long_description = long_description,
-        version= '1.3.4a1',
+        version= '1.3.4',
         url='http://pylib.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
-        classifiers=['Development Status :: 5 - Production/Stable',
+        classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',
