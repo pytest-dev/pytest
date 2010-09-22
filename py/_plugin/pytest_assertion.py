@@ -89,7 +89,7 @@ def _compare_eq_sequence(left, right):
                         'first extra item: %s' % left[len(right)]]
     elif len(left) < len(right):
         explanation += ['Right contains more items, '
-                        'first extra item: %s' % right[len(right)]]
+                        'first extra item: %s' % right[len(left)]]
     return explanation + _pprint_diff(left, right)
 
 

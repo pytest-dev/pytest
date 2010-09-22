@@ -117,6 +117,12 @@ class TestAssertCompare:
         expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])
         assert len(expl) > 1
 
+    def test_list_different_lenghts(self):
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 1, 2])
+        assert len(expl) > 1
+        expl = plugin.pytest_assert_binrepr('==', [0, 1, 2], [0, 1])
+        assert len(expl) > 1
+
     def test_dict(self):
         expl = plugin.pytest_assert_binrepr('==', {'a': 0}, {'a': 1})
         assert len(expl) > 1
