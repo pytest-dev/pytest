@@ -33,6 +33,13 @@ def warn_about_missing_assertion():
                              " (are you using python -O?)")
 
 
+# Provide basestring in python3
+try:
+    basestring = basestring
+except NameError:
+    basestring = str
+
+
 def pytest_assert_binrepr(op, left, right):
     """Make specialised explanations for some operators/operands"""
     left_repr = py.io.saferepr(left, maxsize=30)
@@ -72,7 +79,7 @@ def pytest_assert_binrepr(op, left, right):
 
 def _compare_eq_sequence(left, right):
     explanation = []
-    for i in xrange(min(len(left), len(right))):
+    for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
             explanation += ['First differing item %s: %s != %s' %
                             (i, left[i], right[i])]
