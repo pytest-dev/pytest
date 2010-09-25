@@ -6,7 +6,7 @@ import inspect
 from py._plugin import hookspec
 
 default_plugins = (
-    "default runner pdb capture mark terminal skipping tmpdir monkeypatch "
+   "default python runner pdb capture mark terminal skipping tmpdir monkeypatch "
     "recwarn pastebin unittest helpconfig nose assertion genscript "
     "junitxml doctest keyword").split()
 

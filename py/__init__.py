@@ -45,12 +45,6 @@ py.apipkg.initpkg(__name__, dict(
             'Directory' : '._test.collect:Directory',
             'File'      : '._test.collect:File',
             'Item'      : '._test.collect:Item',
-            'Module'    : '._test.pycollect:Module',
-            'Class'     : '._test.pycollect:Class',
-            'Instance'  : '._test.pycollect:Instance',
-            'Generator' : '._test.pycollect:Generator',
-            'Function'  : '._test.pycollect:Function',
-            '_fillfuncargs' : '._test.funcargs:fillfuncargs',
         },
         'cmdline': {
             'main' : '._test.session:main', # backward compat

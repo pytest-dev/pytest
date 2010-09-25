@@ -5,44 +5,14 @@ import py
 
 def pytest_cmdline_main(config):
     from py._test.session import Session, Collection
-    exitstatus = 0
-    if config.option.showfuncargs:
-        from py._test.funcargs import showfuncargs
-        session = showfuncargs(config)
-    else:
-        collection = Collection(config)
-        # instantiate session already because it
-        # records failures and implements maxfail handling
-        session = Session(config, collection)
-        exitstatus = collection.do_collection()
-        if not exitstatus:
-            exitstatus = session.main()
+    collection = Collection(config)
+    # instantiate session already because it
+    # records failures and implements maxfail handling
+    session = Session(config, collection)
+    exitstatus = collection.do_collection()
+    if not exitstatus:
+        exitstatus = session.main()
     return exitstatus
-
-def pytest_pyfunc_call(__multicall__, pyfuncitem):
-    if not __multicall__.execute():
-        testfunction = pyfuncitem.obj
-        if pyfuncitem._isyieldedfunction():
-            testfunction(*pyfuncitem._args)
-        else:
-            funcargs = pyfuncitem.funcargs
-            testfunction(**funcargs)
-
-def pytest_collect_file(path, parent):
-    ext = path.ext
-    pb = path.purebasename
-    if pb.startswith("test_") or pb.endswith("_test") or \
-       path in parent.collection._argfspaths:
-        if ext == ".py":
-            return parent.ihook.pytest_pycollect_makemodule(
-                path=path, parent=parent)
-
-def pytest_pycollect_makemodule(path, parent):
-    return parent.Module(path, parent)
-
-def pytest_funcarg__pytestconfig(request):
-    """ the pytest config object with access to command line opts."""
-    return request.config
 
 def pytest_ignore_collect(path, config):
     ignore_paths = config.getconftest_pathlist("collect_ignore", path=path)
@@ -56,7 +26,6 @@ def pytest_ignore_collect(path, config):
         for p in ignore_paths:
             if path == p or path.relto(p):
                 return True
-
 
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment
@@ -105,30 +74,3 @@ def pytest_configure(config):
     if config.getvalue("exitfirst"):
         config.option.maxfail = 1
 
-# pycollect related hooks and code, should move to pytest_pycollect.py
-
-def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
-    res = __multicall__.execute()
-    if res is not None:
-        return res
-    if collector._istestclasscandidate(name, obj):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
-        return collector.Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
-        if is_generator(obj):
-            # XXX deprecation warning
-            return collector.Generator(name, parent=collector)
-        else:
-            return collector._genfunctions(name, obj)
-
-def is_generator(func):
-    try:
-        return py.code.getrawcode(func).co_flags & 32 # generator function
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False

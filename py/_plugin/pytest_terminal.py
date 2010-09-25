@@ -27,9 +27,6 @@ def pytest_addoption(parser):
     group._addoption('--fulltrace',
                action="store_true", dest="fulltrace", default=False,
                help="don't cut any tracebacks (default is to cut).")
-    group._addoption('--funcargs',
-               action="store_true", dest="showfuncargs", default=False,
-               help="show available function arguments, sorted by plugin")
 
 def pytest_configure(config):
     if config.option.collectonly:

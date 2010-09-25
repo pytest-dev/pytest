@@ -3,6 +3,7 @@ Changes between 1.3.4 and 1.4.0a1
 ==================================================
 
 - major refactoring of internal collection handling
+- majorly reduce py.test core code, shift function/python testing to own plugin
 - fix issue88 (finding custom test nodes from command line arg)
 
 Changes between 1.3.3 and 1.3.4
