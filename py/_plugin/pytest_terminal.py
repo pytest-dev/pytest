@@ -84,12 +84,12 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, fspath, res):
-        fspath = self.curdir.bestrelpath(fspath)
         if fspath != self.currentfspath:
+            self.currentfspath = fspath
+            fspath = self.curdir.bestrelpath(fspath)
             self._tw.line()
             relpath = self.curdir.bestrelpath(fspath)
             self._tw.write(relpath + " ")
-            self.currentfspath = fspath
         self._tw.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
@@ -135,17 +135,17 @@ class TerminalReporter:
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).extend(items)
 
-    #def pytest_itemstart(self, item, node=None):
-    #    if self.config.option.verbose:
-    #        line = self._locationline(rep)
-    #        self.write_ensure_prefix(line, "")
-    #    else:
-    #        # ensure that the path is printed before the
-    #        # 1st test of a module starts running
-    #        self.write_fspath_result(self._getfspath(item), "")
-
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
+
+    def pytest_runtest_logstart(self, nodeid, location):
+        # ensure that the path is printed before the
+        # 1st test of a module starts running
+        if self.config.option.verbose:
+            line = self._locationline(*location)
+            self.write_ensure_prefix(line, "")
+        else:
+            self.write_fspath_result(py.path.local(location[0]), "")
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -162,9 +162,10 @@ class TerminalReporter:
         if not self.config.option.verbose:
             self.write_fspath_result(rep.fspath, letter)
         else:
-            line = self._locationline(rep)
+            line = self._locationline(*rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
+                #self._tw.write(word, **markup)
             else:
                 self.ensure_newline()
                 if hasattr(rep, 'node'):
@@ -226,21 +227,20 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
 
-    def _locationline(self, rep):
+    def _locationline(self, fspath, lineno, domain):
         #collect_fspath = self._getfspath(item)
-        fspath, lineno, msg = rep.location
         #if fspath and fspath != collect_fspath:
         #    fspath = "%s <- %s" % (
         #        self.curdir.bestrelpath(collect_fspath),
         #        self.curdir.bestrelpath(fspath))
         if fspath:
-            fspath = self.curdir.bestrelpath(fspath)
+            fspath = self.curdir.bestrelpath(py.path.local(fspath))
         if lineno is not None:
             lineno += 1
-        if fspath and lineno and msg:
-            line = "%(fspath)s:%(lineno)s: %(msg)s"
-        elif fspath and msg:
-            line = "%(fspath)s: %(msg)s"
+        if fspath and lineno and domain:
+            line = "%(fspath)s:%(lineno)s: %(domain)s"
+        elif fspath and domain:
+            line = "%(fspath)s: %(domain)s"
         elif fspath and lineno:
             line = "%(fspath)s:%(lineno)s %(extrapath)s"
         else:

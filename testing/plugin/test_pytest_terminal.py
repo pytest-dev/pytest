@@ -89,47 +89,27 @@ class TestTerminal:
         assert lines[1].endswith("xy.py .")
         assert lines[2] == "hello world"
 
-    @py.test.mark.xfail(reason="re-implement ItemStart events")
-    def test_show_path_before_running_test(self, testdir, linecomp):
+    def test_show_runtest_logstart(self, testdir, linecomp):
         item = testdir.getitem("def test_func(): pass")
         tr = TerminalReporter(item.config, file=linecomp.stringio)
         item.config.pluginmanager.register(tr)
-        tr.config.hook.pytest_itemstart(item=item)
+        nodeid = item.collection.getid(item)
+        location = item.ihook.pytest_report_iteminfo(item=item)
+        tr.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
         linecomp.assert_contains_lines([
-            "*test_show_path_before_running_test.py*"
+            "*test_show_runtest_logstart.py*"
         ])
 
-    @py.test.mark.xfail(reason="re-implement ItemStart events")
-    def test_itemreport_reportinfo(self, testdir, linecomp):
-        testdir.makeconftest("""
-            import py
-            class Function(py.test.collect.Function):
-                def reportinfo(self):
-                    return "ABCDE", 42, "custom"
+    def test_runtest_location_shown_before_test_starts(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import time
+                time.sleep(20)
         """)
-        item = testdir.getitem("def test_func(): pass")
-        tr = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(tr)
-        tr.config.option.verbose = True
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*ABCDE:43: custom*"
-        ])
-
-    @py.test.mark.xfail(reason="re-implement ItemStart events")
-    def test_itemreport_pytest_report_iteminfo(self, testdir, linecomp):
-        item = testdir.getitem("def test_func(): pass")
-        class Plugin:
-            def pytest_report_iteminfo(self, item):
-                return "FGHJ", 42, "custom"
-        item.config.pluginmanager.register(Plugin())
-        tr = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(tr)
-        tr.config.option.verbose = True
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*FGHJ:43: custom*"
-        ])
+        child = testdir.spawn_pytest("")
+        child.expect(".*test_runtest_location.*py")
+        child.sendeof()
+        child.kill(15)
 
     @py.test.mark.xfail(reason="re-implement subclassing precision reporting")
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):

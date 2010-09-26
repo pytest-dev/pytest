@@ -1109,3 +1109,28 @@ def test_funcarg_lookup_error(testdir):
         "*1 error*",
     ])
     assert "INTERNAL" not in result.stdout.str()
+
+class TestReportInfo:
+    def test_itemreport_reportinfo(self, testdir, linecomp):
+        testdir.makeconftest("""
+            import py
+            class Function(py.test.collect.Function):
+                def reportinfo(self):
+                    return "ABCDE", 42, "custom"
+        """)
+        item = testdir.getitem("def test_func(): pass")
+        runner = item.config.pluginmanager.getplugin("runner")
+        nodeinfo = runner.getitemnodeinfo(item)
+        assert nodeinfo.location == ("ABCDE", 42, "custom")
+
+    def test_itemreport_pytest_report_iteminfo(self, testdir, linecomp):
+        item = testdir.getitem("def test_func(): pass")
+        tup = "FGHJ", 42, "custom"
+        class Plugin:
+            def pytest_report_iteminfo(self, item):
+                return tup
+        item.config.pluginmanager.register(Plugin())
+        runner = runner = item.config.pluginmanager.getplugin("runner")
+        nodeinfo = runner.getitemnodeinfo(item)
+        location = nodeinfo.location
+        assert location == tup

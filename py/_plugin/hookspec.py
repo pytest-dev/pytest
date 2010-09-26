@@ -102,13 +102,15 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
-
 def pytest_itemstart(item, node=None):
-    """ test item starts running. """
+    """ (deprecated, use pytest_runtest_logstart). """
 
 def pytest_runtest_protocol(item):
     """ implement fixture, run and report about the given test item. """
 pytest_runtest_protocol.firstresult = True
+
+def pytest_runtest_logstart(nodeid, location):
+    """ signal the start of a test run. """
 
 def pytest_runtest_setup(item):
     """ called before pytest_runtest_call(). """
@@ -160,7 +162,7 @@ def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting. """
 
 def pytest_report_iteminfo(item):
-    """ return (fspath, lineno, domainpath) for the item.
+    """ return (fspath, lineno, domainpath) location info for the item.
         the information is used for result display and to sort tests.
         fspath,lineno: file and linenumber of source of item definition.
         domainpath: custom id - e.g. for python: dotted import address

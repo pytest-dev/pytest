@@ -29,7 +29,31 @@ def pytest_sessionfinish(session, exitstatus):
         if rep:
             hook.pytest__teardown_final_logerror(report=rep)
 
+class NodeInfo:
+    def __init__(self, nodeid, nodenames, fspath, location):
+        self.nodeid = nodeid
+        self.nodenames = nodenames
+        self.fspath = fspath
+        self.location = location
+
+def getitemnodeinfo(item):
+    try:
+        return item._nodeinfo
+    except AttributeError:
+        location = item.ihook.pytest_report_iteminfo(item=item)
+        location = (str(location[0]), location[1], str(location[2]))
+        nodenames = tuple(item.listnames())
+        nodeid = item.collection.getid(item)
+        fspath = item.fspath
+        item._nodeinfo = n = NodeInfo(nodeid, nodenames, fspath, location)
+        return n
+        
 def pytest_runtest_protocol(item):
+    nodeinfo = getitemnodeinfo(item)
+    item.ihook.pytest_runtest_logstart(
+        nodeid=nodeinfo.nodeid,
+        location=nodeinfo.location
+    )
     runtestprotocol(item)
     return True
 
@@ -117,11 +141,7 @@ class BaseReport(object):
 
 
 def pytest_runtest_makereport(item, call):
-    location = item.ihook.pytest_report_iteminfo(item=item)
-    location = (str(location[0]), location[1], str(location[2]))
-    nodenames = tuple(item.listnames())
-    nodeid = item.collection.getid(item)
-    fspath = item.fspath
+    nodeinfo = getitemnodeinfo(item)
     when = call.when
     keywords = dict([(x,1) for x in item.keywords])
     excinfo = call.excinfo
@@ -141,7 +161,8 @@ def pytest_runtest_makereport(item, call):
                 longrepr = item.repr_failure(excinfo)
             else: # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo)
-    return TestReport(nodeid, nodenames, fspath, location,
+    return TestReport(nodeinfo.nodeid, nodeinfo.nodenames,
+        nodeinfo.fspath, nodeinfo.location,
         keywords, outcome, longrepr, when)
 
 class TestReport(BaseReport):
