@@ -6,7 +6,7 @@
 """
 
 import py
-import sys
+import os, sys
 
 #
 # main entry point
@@ -16,18 +16,15 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     config = py.test.config
+    config.parse(args)
     try:
-        config.parse(args)
-        config.pluginmanager.do_configure(config)
         exitstatus = config.hook.pytest_cmdline_main(config=config)
-        config.pluginmanager.do_unconfigure(config)
     except config.Error:
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         exitstatus = EXIT_INTERNALERROR
     py.test.config = py.test.config.__class__()
     return exitstatus
-
 
 # exitcodes for the command line
 EXIT_OK = 0
@@ -36,27 +33,25 @@ EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 EXIT_NOHOSTS = 4
 
-# imports used for genitems()
-Item = py.test.collect.Item
-Collector = py.test.collect.Collector
-
 class Session(object):
     nodeid = ""
     class Interrupted(KeyboardInterrupt):
         """ signals an interrupted test run. """
         __module__ = 'builtins' # for py3
 
-    def __init__(self, config, collection):
+    def __init__(self, config):
         self.config = config
-        self.pluginmanager = config.pluginmanager # shortcut
-        self.pluginmanager.register(self)
+        self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
-        self.collection = collection
+        self.collection = Collection(config)
 
-    def sessionstarts(self):
-        """ setup any neccessary resources ahead of the test run. """
-        self.config.hook.pytest_sessionstart(session=self)
+    def sessionfinishes(self, exitstatus):
+        # XXX move to main loop / refactor mainloop
+        self.config.hook.pytest_sessionfinish(
+            session=self,
+            exitstatus=exitstatus,
+        )
 
     def pytest_runtest_logreport(self, report):
         if report.failed:
@@ -68,24 +63,22 @@ class Session(object):
                 self.collection.shouldstop = self.shouldstop
     pytest_collectreport = pytest_runtest_logreport
 
-    def sessionfinishes(self, exitstatus):
-        """ teardown any resources after a test run. """
-        self.config.hook.pytest_sessionfinish(
-            session=self,
-            exitstatus=exitstatus,
-        )
-
     def main(self):
         """ main loop for running tests. """
         self.shouldstop = False
-
-        self.sessionstarts()
         exitstatus = EXIT_OK
+        config = self.config
         try:
-            self._mainloop()
+            config.pluginmanager.do_configure(config)
+            config.hook.pytest_sessionstart(session=self)
+            config.hook.pytest_perform_collection(session=self)
+            config.hook.pytest_runtest_mainloop(session=self)
             if self._testsfailed:
                 exitstatus = EXIT_TESTSFAILED
             self.sessionfinishes(exitstatus=exitstatus)
+            config.pluginmanager.do_unconfigure(config)
+        except self.config.Error:
+            raise
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
             self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
@@ -94,18 +87,11 @@ class Session(object):
             excinfo = py.code.ExceptionInfo()
             self.config.pluginmanager.notify_exception(excinfo)
             exitstatus = EXIT_INTERNALERROR
+            if excinfo.errisinstance(SystemExit):
+                sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
         if exitstatus in (EXIT_INTERNALERROR, EXIT_INTERRUPTED):
             self.sessionfinishes(exitstatus=exitstatus)
         return exitstatus
-
-    def _mainloop(self):
-        if self.config.option.collectonly:
-            return
-        for item in self.collection.items:
-            item.config.hook.pytest_runtest_protocol(item=item)
-            if self.shouldstop:
-                raise self.Interrupted(self.shouldstop)
-
 
 class Collection:
     def __init__(self, config):
@@ -121,13 +107,15 @@ class Collection:
     def _normalizearg(self, arg):
         return "::".join(self._parsearg(arg))
 
-    def _parsearg(self, arg):
+    def _parsearg(self, arg, base=None):
         """ return normalized name list for a command line specified id
         which might be of the form x/y/z::name1::name2
         and should result into the form x::y::z::name1::name2
         """
+        if base is None:
+            base = py.path.local()
         parts = str(arg).split("::")
-        path = py.path.local(parts[0])
+        path = base.join(parts[0], abs=True)
         if not path.check():
             raise self.config.Error("file not found: %s" %(path,))
         topdir = self.topdir
@@ -137,17 +125,21 @@ class Collection:
         topparts = path.relto(topdir).split(path.sep)
         return topparts + parts[1:]
 
-    def getid(self, node, relative=True):
+    def getid(self, node):
         """ return id for node, relative to topdir. """
         path = node.fspath
         chain = [x for x in node.listchain() if x.fspath == path]
         chain = chain[1:]
         names = [x.name for x in chain if x.name != "()"]
-        if relative:
-            relpath = path.relto(self.topdir)
-            if relpath:
-                path = relpath
-        names = relpath.split(node.fspath.sep) + names
+        relpath = path.relto(self.topdir)
+        if not relpath:
+            assert path == self.topdir
+            path = ''
+        else:
+            path = relpath
+            if os.sep != "/":
+                path = str(path).replace(os.sep, "/")
+        names.insert(0, path)
         return "::".join(names)
 
     def getbyid(self, id):
@@ -158,6 +150,9 @@ class Collection:
         names = id.split("::")
         while names:
             name = names.pop(0)
+            newnames = name.split("/")
+            name = newnames[0]
+            names[:0] = newnames[1:]
             l = []
             for current in matching:
                 for x in current._memocollect():
@@ -171,22 +166,6 @@ class Collection:
                 raise ValueError("no node named %r below %r" %(name, current))
             matching = l
         return matching
-
-    def do_collection(self):
-        assert not hasattr(self, 'items')
-        hook = self.config.hook
-        hook.pytest_log_startcollection(collection=self)
-        try:
-            self.items = self.perform_collect()
-        except self.config.Error:
-            raise
-        except Exception:
-            self.config.pluginmanager.notify_exception()
-            return EXIT_INTERNALERROR
-        else:
-            hook.pytest_collection_modifyitems(collection=self)
-            res = hook.pytest_log_finishcollection(collection=self)
-            return res and max(res) or 0 # returncode
 
     def getinitialnodes(self):
         idlist = [self._normalizearg(arg) for arg in self.config.args]
@@ -206,36 +185,36 @@ class Collection:
         names = list(names)
         name = names and names.pop(0) or None
         for node in matching:
-            if isinstance(node, Item):
+            if isinstance(node, py.test.collect.Item):
                 if name is None:
                     self.config.hook.pytest_log_itemcollect(item=node)
                     result.append(node)
-            else:
-                assert isinstance(node, Collector)
-                node.ihook.pytest_collectstart(collector=node)
-                rep = node.ihook.pytest_make_collect_report(collector=node)
-                #print "matching", rep.result, "against name", name
-                if rep.passed:
-                    if name:
-                        matched = False
-                        for subcol in rep.result:
-                            if subcol.name != name and subcol.name == "()":
-                                names.insert(0, name)
-                                name = "()"
-                            # see doctests/custom naming XXX
-                            if subcol.name == name or subcol.fspath.basename == name:
-                                self.genitems([subcol], names, result)
-                                matched = True
-                        if not matched:
-                            raise self.config.Error(
-                                "can't collect: %s" % (name,))
+                continue
+            assert isinstance(node, py.test.collect.Collector)
+            node.ihook.pytest_collectstart(collector=node)
+            rep = node.ihook.pytest_make_collect_report(collector=node)
+            #print "matching", rep.result, "against name", name
+            if rep.passed:
+                if name:
+                    matched = False
+                    for subcol in rep.result:
+                        if subcol.name != name and subcol.name == "()":
+                            names.insert(0, name)
+                            name = "()"
+                        # see doctests/custom naming XXX
+                        if subcol.name == name or subcol.fspath.basename == name:
+                            self.genitems([subcol], names, result)
+                            matched = True
+                    if not matched:
+                        raise self.config.Error(
+                            "can't collect: %s" % (name,))
 
-                    else:
-                        self.genitems(rep.result, [], result)
-                node.ihook.pytest_collectreport(report=rep)
-                x = getattr(self, 'shouldstop', None)
-                if x:
-                    raise self.Interrupted(x)
+                else:
+                    self.genitems(rep.result, [], result)
+            node.ihook.pytest_collectreport(report=rep)
+            x = getattr(self, 'shouldstop', None)
+            if x:
+                raise Session.Interrupted(x)
 
 def gettopdir(args):
     """ return the top directory for the given paths.

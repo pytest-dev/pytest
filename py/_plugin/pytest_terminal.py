@@ -29,21 +29,13 @@ def pytest_addoption(parser):
                help="don't cut any tracebacks (default is to cut).")
 
 def pytest_configure(config):
+    if config.option.showfuncargs:
+        return
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
-    elif config.option.showfuncargs:
-        reporter = None
     else:
         reporter = TerminalReporter(config)
-    if reporter:
-        # XXX see remote.py's XXX
-        for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
-            if hasattr(config, attr):
-                #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
-                name = attr.split("_")[-1]
-                assert hasattr(self.reporter._tw, name), name
-                setattr(reporter._tw, name, getattr(config, attr))
-        config.pluginmanager.register(reporter, 'terminalreporter')
+    config.pluginmanager.register(reporter, 'terminalreporter')
 
 def getreportopt(config):
     reportopts = ""
@@ -192,7 +184,10 @@ class TerminalReporter:
             markup = {}
         self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
-            self.write_fspath_result(self._getfspath(rep.item), letter)
+            fspath = getattr(rep, 'fspath', None)
+            if not fspath:
+                fspath = self._getfspath(rep.item)
+            self.write_fspath_result(fspath, letter)
         else:
             line = self._reportinfoline(rep.item)
             if not hasattr(rep, 'node'):
@@ -217,17 +212,19 @@ class TerminalReporter:
     def pytest_sessionstart(self, session):
         self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
-
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
         msg += " -- pytest-%s" % (py.__version__)
-        if self.config.option.verbose or self.config.option.debug or getattr(self.config.option, 'pastebin', None):
+        if self.config.option.verbose or self.config.option.debug or \
+           getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
         lines = self.config.hook.pytest_report_header(config=self.config)
         lines.reverse()
         for line in flatten(lines):
             self.write_line(line)
+
+    def pytest_log_finishcollection(self):
         for i, testarg in enumerate(self.config.args):
             self.write_line("test path %d: %s" %(i+1, testarg))
 

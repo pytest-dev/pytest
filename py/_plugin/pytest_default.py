@@ -4,15 +4,26 @@ import sys
 import py
 
 def pytest_cmdline_main(config):
-    from py._test.session import Session, Collection
-    collection = Collection(config)
-    # instantiate session already because it
-    # records failures and implements maxfail handling
-    session = Session(config, collection)
-    exitstatus = collection.do_collection()
-    if not exitstatus:
-        exitstatus = session.main()
-    return exitstatus
+    from py._test.session import Session
+    return Session(config).main()
+
+def pytest_perform_collection(session):
+    collection = session.collection
+    assert not hasattr(collection, 'items')
+    hook = session.config.hook
+    collection.items = items = collection.perform_collect()
+    hook.pytest_collection_modifyitems(config=session.config, items=items)
+    hook.pytest_log_finishcollection(collection=collection)
+    return True
+
+def pytest_runtest_mainloop(session):
+    if session.config.option.collectonly:
+        return True
+    for item in session.collection.items:
+        item.config.hook.pytest_runtest_protocol(item=item)
+        if session.shouldstop:
+            raise session.Interrupted(session.shouldstop)
+    return True
 
 def pytest_ignore_collect(path, config):
     ignore_paths = config.getconftest_pathlist("collect_ignore", path=path)
@@ -21,11 +32,6 @@ def pytest_ignore_collect(path, config):
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
-    # XXX more refined would be:
-    if ignore_paths:
-        for p in ignore_paths:
-            if path == p or path.relto(p):
-                return True
 
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment

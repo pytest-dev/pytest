@@ -24,6 +24,10 @@ def pytest_cmdline_main(config):
     """ called for performing the main (cmdline) action. """
 pytest_cmdline_main.firstresult = True
 
+def pytest_runtest_mainloop(session):
+    """ called for performing the main runtest loop (after collection. """
+pytest_runtest_mainloop.firstresult = True
+
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
@@ -31,10 +35,11 @@ def pytest_unconfigure(config):
 # collection hooks
 # -------------------------------------------------------------------------
 
-def pytest_log_startcollection(collection):
-    """ called before collection.perform_collection() is called. """
+def pytest_perform_collection(session):
+    """ perform the collection protocol for the given session. """
+pytest_perform_collection.firstresult = True
 
-def pytest_collection_modifyitems(collection):
+def pytest_collection_modifyitems(config, items):
     """ called to allow filtering and selecting of test items (inplace). """
 
 def pytest_log_finishcollection(collection):
@@ -138,6 +143,7 @@ def pytest_sessionstart(session):
 
 def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
+
 
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from pytest_terminal)

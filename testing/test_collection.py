@@ -145,7 +145,7 @@ class TestCollection:
         bbb = testdir.mkpydir("bbb")
         p.copy(aaa.join("test_aaa.py"))
         p.move(bbb.join("test_bbb.py"))
-        
+
         id = "."
         config = testdir.parseconfig(id)
         rcol = Collection(config)

@@ -193,9 +193,9 @@ class TmpTestdir:
         args = ("-s", ) + args # otherwise FD leakage
         config = self.parseconfig(*args)
         reprec = self.getreportrecorder(config)
-        config.pluginmanager.do_configure(config)
+        #config.pluginmanager.do_configure(config)
         config.hook.pytest_cmdline_main(config=config)
-        config.pluginmanager.do_unconfigure(config)
+        #config.pluginmanager.do_unconfigure(config)
         return reprec
 
     def config_preparse(self):

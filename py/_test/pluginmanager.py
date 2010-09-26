@@ -32,7 +32,7 @@ class PluginManager(object):
                 name = id(plugin)
         return name
 
-    def register(self, plugin, name=None):
+    def register(self, plugin, name=None, prepend=False):
         assert not self.isregistered(plugin), plugin
         assert not self.registry.isregistered(plugin), plugin
         name = self._getpluginname(plugin, name)
@@ -41,7 +41,7 @@ class PluginManager(object):
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
-        self.registry.register(plugin)
+        self.registry.register(plugin, prepend=prepend)
         return True
 
     def unregister(self, plugin):
@@ -277,10 +277,13 @@ class Registry:
             plugins = []
         self._plugins = plugins
 
-    def register(self, plugin):
+    def register(self, plugin, prepend=False):
         assert not isinstance(plugin, str)
         assert not plugin in self._plugins
-        self._plugins.append(plugin)
+        if not prepend:
+            self._plugins.append(plugin)
+        else:
+            self._plugins.insert(0, plugin)
 
     def unregister(self, plugin):
         self._plugins.remove(plugin)

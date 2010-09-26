@@ -11,7 +11,7 @@ def pytest_addoption(parser):
         dest="genscript", metavar="path",
         help="create standalone py.test script at given target path.")
 
-def pytest_configure(config):
+def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
         import py
@@ -20,7 +20,7 @@ def pytest_configure(config):
         pybasedir = py.path.local(py.__file__).dirpath().dirpath()
         genscript = py.path.local(genscript)
         main(pybasedir, outfile=genscript, infile=infile)
-        raise SystemExit(0)
+        return 0
 
 def main(pybasedir, outfile, infile):
     import base64

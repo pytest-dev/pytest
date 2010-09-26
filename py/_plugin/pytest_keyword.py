@@ -8,8 +8,7 @@ def pytest_addoption(parser):
              "Terminate the expression with ':' to treat a match as a signal "
              "to run all subsequent tests. ")
 
-def pytest_collection_modifyitems(collection):
-    config = collection.config
+def pytest_collection_modifyitems(items, config):
     keywordexpr = config.option.keyword
     if not keywordexpr:
         return
@@ -20,7 +19,7 @@ def pytest_collection_modifyitems(collection):
 
     remaining = []
     deselected = []
-    for colitem in collection.items:
+    for colitem in items:
         if keywordexpr and skipbykeyword(colitem, keywordexpr):
             deselected.append(colitem)
         else:
@@ -30,7 +29,7 @@ def pytest_collection_modifyitems(collection):
 
     if deselected:
         config.hook.pytest_deselected(items=deselected)
-    collection.items[:] = remaining
+        items[:] = remaining
 
 def skipbykeyword(colitem, keywordexpr):
     """ return True if they given keyword expression means to

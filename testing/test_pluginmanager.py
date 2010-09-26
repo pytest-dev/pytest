@@ -160,6 +160,19 @@ class TestBootstrapping:
         pp.unregister(a2)
         assert not pp.isregistered(a2)
 
+    def test_registry_ordering(self):
+        pp = PluginManager()
+        class A: pass
+        a1, a2 = A(), A()
+        pp.register(a1)
+        pp.register(a2, "hello")
+        l = pp.getplugins()
+        assert l.index(a1) < l.index(a2)
+        a3 = A()
+        pp.register(a3, prepend=True)
+        l = pp.getplugins()
+        assert l.index(a3) == 0
+
     def test_register_imported_modules(self):
         pp = PluginManager()
         mod = py.std.types.ModuleType("x.y.pytest_hello")
