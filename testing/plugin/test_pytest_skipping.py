@@ -183,8 +183,10 @@ class TestXFail:
         """)
         result = testdir.runpytest(p, '--report=xfailed', )
         result.stdout.fnmatch_lines([
-            "*test_one*test_this*NOTRUN*noway",
-            "*test_one*test_this_true*NOTRUN*condition:*True*",
+            "*test_one*test_this*",
+            "*NOTRUN*noway",
+            "*test_one*test_this_true*",
+            "*NOTRUN*condition:*True*",
             "*1 passed*",
         ])
 
@@ -199,7 +201,8 @@ class TestXFail:
         """)
         result = testdir.runpytest(p, '--report=xfailed', )
         result.stdout.fnmatch_lines([
-            "*test_one*test_this*NOTRUN*hello",
+            "*test_one*test_this*",
+            "*NOTRUN*hello",
             "*1 xfailed*",
         ])
 
@@ -229,7 +232,8 @@ class TestXFail:
         ])
         result = testdir.runpytest(p, "-rx")
         result.stdout.fnmatch_lines([
-            "*XFAIL*test_this*reason:*hello*",
+            "*XFAIL*test_this*",
+            "*reason:*hello*",
         ])
         result = testdir.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines([
@@ -252,7 +256,8 @@ class TestXFail:
         ])
         result = testdir.runpytest(p, "-rx")
         result.stdout.fnmatch_lines([
-            "*XFAIL*test_this*reason:*hello*",
+            "*XFAIL*test_this*",
+            "*reason:*hello*",
         ])
         result = testdir.runpytest(p, "--runxfail")
         result.stdout.fnmatch_lines([
@@ -286,7 +291,8 @@ class TestXFail:
         """)
         result = testdir.runpytest(p, '-rxX')
         result.stdout.fnmatch_lines([
-            "*XFAIL*test_this*NOTRUN*",
+            "*XFAIL*test_this*",
+            "*NOTRUN*",
         ])
 
     def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
@@ -360,7 +366,6 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    from py._plugin import pytest_runner as runner
     from py._plugin.pytest_skipping import folded_skips
     class longrepr:
         class reprcrash:
@@ -368,12 +373,15 @@ def test_skip_reasons_folding():
             lineno = 3
             message = "justso"
 
-    ev1 = runner.CollectReport(None, None)
+    class X:
+        pass
+    ev1 = X()
     ev1.when = "execute"
     ev1.skipped = True
     ev1.longrepr = longrepr
 
-    ev2 = runner.ItemTestReport(None, excinfo=longrepr)
+    ev2 = X()
+    ev2.longrepr = longrepr
     ev2.skipped = True
 
     l = folded_skips([ev1, ev2])

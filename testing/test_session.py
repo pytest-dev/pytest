@@ -17,9 +17,9 @@ class SessionTests:
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3
-        assert failed[0].item.name == "test_one_one"
-        assert failed[1].item.name == "test_other"
-        assert failed[2].item.name == "test_two"
+        assert failed[0].nodenames[-1] == "test_one_one"
+        assert failed[1].nodenames[-1] == "test_other"
+        assert failed[2].nodenames[-1] == "test_two"
         itemstarted = reprec.getcalls("pytest_log_itemcollect")
         assert len(itemstarted) == 4
         colstarted = reprec.getcalls("pytest_collectstart")

@@ -140,7 +140,7 @@ class TestCollectPluginHookRelay:
         assert "world" in wascalled
         # make sure the directories do not get double-appended
         colreports = reprec.getreports("pytest_collectreport")
-        names = [rep.collector.name for rep in colreports]
+        names = [rep.nodenames[-1] for rep in colreports]
         assert names.count("hello") == 1
 
 class TestPrunetraceback:
@@ -180,6 +180,7 @@ class TestPrunetraceback:
             "*hello world*",
         ])
 
+    @py.test.mark.xfail(reason="other mechanism for adding to reporting needed")
     def test_collect_report_postprocessing(self, testdir):
         p = testdir.makepyfile("""
             import not_exists
@@ -226,11 +227,13 @@ class TestCustomConftests:
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="#")
         reprec = testdir.inline_run(testdir.tmpdir)
-        names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
+        names = [rep.nodenames[-1]
+                    for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' not in names
         assert 'test_world.py' not in names
         reprec = testdir.inline_run(testdir.tmpdir, "--XX")
-        names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
+        names = [rep.nodenames[-1]
+                    for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' in names
         assert 'test_world.py' in names
 

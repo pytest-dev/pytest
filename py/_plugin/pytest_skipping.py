@@ -231,19 +231,16 @@ def pytest_runtest_makereport(__multicall__, item, call):
         if not item.config.getvalue("runxfail"):
             rep = __multicall__.execute()
             rep.keywords['xfail'] = "reason: " + call.excinfo.value.msg
-            rep.skipped = True
-            rep.failed = False
+            rep.outcome = "skipped"
             return rep
     if call.when == "call":
         rep = __multicall__.execute()
         evalxfail = getattr(item, '_evalxfail')
         if not item.config.getvalue("runxfail") and evalxfail.istrue():
             if call.excinfo:
-                rep.skipped = True
-                rep.failed = rep.passed = False
+                rep.outcome = "skipped"
             else:
-                rep.skipped = rep.passed = False
-                rep.failed = True
+                rep.outcome = "failed"
             rep.keywords['xfail'] = evalxfail.getexplanation()
         else:
             if 'xfail' in rep.keywords:
@@ -275,9 +272,9 @@ def pytest_terminal_summary(terminalreporter):
             show_xfailed(terminalreporter, lines)
         elif char == "X":
             show_xpassed(terminalreporter, lines)
-        elif char == "f":
+        elif char in "fF":
             show_failed(terminalreporter, lines)
-        elif char == "s":
+        elif char in "sS":
             show_skipped(terminalreporter, lines)
     if lines:
         tr._tw.sep("=", "short test summary info")
@@ -289,22 +286,24 @@ def show_failed(terminalreporter, lines):
     failed = terminalreporter.stats.get("failed")
     if failed:
         for rep in failed:
-            pos = terminalreporter.gettestid(rep.item)
+            pos = rep.nodeid
             lines.append("FAIL %s" %(pos, ))
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
     if xfailed:
         for rep in xfailed:
-            pos = terminalreporter.gettestid(rep.item)
+            pos = rep.nodeid
             reason = rep.keywords['xfail']
-            lines.append("XFAIL %s %s" %(pos, reason))
+            lines.append("XFAIL %s" % (pos,))
+            if reason:
+                lines.append("  " + str(reason))
 
 def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
         for rep in xpassed:
-            pos = terminalreporter.gettestid(rep.item)
+            pos = rep.nodeid
             reason = rep.keywords['xfail']
             lines.append("XPASS %s %s" %(pos, reason))
 

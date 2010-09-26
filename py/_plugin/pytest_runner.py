@@ -3,6 +3,7 @@ collect and run test items and create reports.
 """
 
 import py, sys
+from py._code.code import TerminalRepr
 
 def pytest_namespace():
     return {
@@ -28,16 +29,6 @@ def pytest_sessionfinish(session, exitstatus):
         if rep:
             hook.pytest__teardown_final_logerror(report=rep)
 
-def pytest_make_collect_report(collector):
-    result = excinfo = None
-    try:
-        result = collector._memocollect()
-    except KeyboardInterrupt:
-        raise
-    except:
-        excinfo = py.code.ExceptionInfo()
-    return CollectReport(collector, result, excinfo)
-
 def pytest_runtest_protocol(item):
     runtestprotocol(item)
     return True
@@ -57,9 +48,6 @@ def pytest_runtest_call(item):
     if not item._deprecated_testexecution():
         item.runtest()
 
-def pytest_runtest_makereport(item, call):
-    return ItemTestReport(item, call.excinfo, call.when)
-
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)
 
@@ -68,8 +56,7 @@ def pytest__teardown_final(session):
     if call.excinfo:
         ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
         call.excinfo.traceback = ntraceback.filter()
-        rep = TeardownErrorReport(call.excinfo)
-        return rep
+        return TeardownErrorReport(call.excinfo)
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
@@ -80,6 +67,8 @@ def pytest_report_teststatus(report):
             return "skipped", "s", "SKIPPED"
         else:
             return "", "", ""
+
+
 #
 # Implementation
 
@@ -115,122 +104,119 @@ class CallInfo:
         return "<CallInfo when=%r %s>" % (self.when, status)
 
 class BaseReport(object):
-    def __init__(self):
-        self.headerlines = []
-    def __repr__(self):
-        l = ["%s=%s" %(key, value)
-           for key, value in self.__dict__.items()]
-        return "<%s %s>" %(self.__class__.__name__, " ".join(l),)
-
-    def _getcrashline(self):
-        try:
-            return str(self.longrepr.reprcrash)
-        except AttributeError:
-            try:
-                return str(self.longrepr)[:50]
-            except AttributeError:
-                return ""
-
     def toterminal(self, out):
-        for line in self.headerlines:
-            out.line(line)
         longrepr = self.longrepr
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
             out.line(str(longrepr))
 
-class CollectErrorRepr(BaseReport):
+    passed = property(lambda x: x.outcome == "passed")
+    failed = property(lambda x: x.outcome == "failed")
+    skipped = property(lambda x: x.outcome == "skipped")
+
+
+def pytest_runtest_makereport(item, call):
+    location = item.ihook.pytest_report_iteminfo(item=item)
+    location = (str(location[0]), location[1], str(location[2]))
+    nodenames = tuple(item.listnames())
+    nodeid = item.collection.getid(item)
+    fspath = item.fspath
+    when = call.when
+    keywords = dict([(x,1) for x in item.keywords])
+    excinfo = call.excinfo
+    if not call.excinfo:
+        outcome = "passed"
+        longrepr = None
+    else:
+        if not isinstance(excinfo, py.code.ExceptionInfo):
+            outcome = "failed"
+            longrepr = excinfo
+        elif excinfo.errisinstance(py.test.skip.Exception):
+            outcome = "skipped"
+            longrepr = item._repr_failure_py(excinfo)
+        else:
+            outcome = "failed"
+            if call.when == "call":
+                longrepr = item.repr_failure(excinfo)
+            else: # exception in setup or teardown
+                longrepr = item._repr_failure_py(excinfo)
+    return TestReport(nodeid, nodenames, fspath, location,
+        keywords, outcome, longrepr, when)
+
+class TestReport(BaseReport):
+    def __init__(self, nodeid, nodenames, fspath, location,
+            keywords, outcome, longrepr, when):
+        self.nodeid = nodeid
+        self.nodenames = nodenames
+        self.fspath = fspath  # where the test was collected
+        self.location = location
+        self.keywords = keywords
+        self.outcome = outcome
+        self.longrepr = longrepr
+        self.when = when
+
+    def __repr__(self):
+        return "<TestReport %r when=%r outcome=%r>" % (
+            self.nodeid, self.when, self.outcome)
+
+class TeardownErrorReport(BaseReport):
+    outcome = "failed"
+    when = "teardown"
+    def __init__(self, excinfo):
+        self.longrepr = excinfo.getrepr(funcargs=True)
+
+def pytest_make_collect_report(collector):
+    result = excinfo = None
+    try:
+        result = collector._memocollect()
+    except KeyboardInterrupt:
+        raise
+    except:
+        excinfo = py.code.ExceptionInfo()
+    nodenames = tuple(collector.listnames())
+    nodeid = collector.collection.getid(collector)
+    fspath = str(collector.fspath)
+    reason = longrepr = None
+    if not excinfo:
+        outcome = "passed"
+    else:
+        if excinfo.errisinstance(py.test.skip.Exception):
+            outcome = "skipped"
+            reason = str(excinfo.value)
+            longrepr = collector._repr_failure_py(excinfo, "line")
+        else:
+            outcome = "failed"
+            errorinfo = collector.repr_failure(excinfo)
+            if not hasattr(errorinfo, "toterminal"):
+                errorinfo = CollectErrorRepr(errorinfo)
+            longrepr = errorinfo
+    return CollectReport(nodenames, nodeid, fspath,
+        outcome, longrepr, result, reason)
+
+class CollectReport(BaseReport):
+    def __init__(self, nodenames, nodeid, fspath, outcome,
+        longrepr, result, reason):
+        self.nodenames = nodenames
+        self.nodeid = nodeid
+        self.fspath = fspath
+        self.outcome = outcome
+        self.longrepr = longrepr
+        self.result = result
+        self.reason = reason
+
+    @property
+    def location(self):
+        return (self.fspath, None, self.fspath)
+
+    def __repr__(self):
+        return "<CollectReport %r outcome=%r>" % (self.nodeid, self.outcome)
+
+class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):
-        super(CollectErrorRepr, self).__init__()
         self.longrepr = msg
     def toterminal(self, out):
         out.line(str(self.longrepr), red=True)
-
-class ItemTestReport(BaseReport):
-    failed = passed = skipped = False
-
-    def __init__(self, item, excinfo=None, when=None):
-        super(ItemTestReport, self).__init__()
-        self.item = item
-        self.when = when
-        if item and when != "setup":
-            self.keywords = item.keywords
-        else:
-            # if we fail during setup it might mean
-            # we are not able to access the underlying object
-            # this might e.g. happen if we are unpickled
-            # and our parent collector did not collect us
-            # (because it e.g. skipped for platform reasons)
-            self.keywords = {}
-        if not excinfo:
-            self.passed = True
-            self.shortrepr = "."
-        else:
-            if not isinstance(excinfo, py.code.ExceptionInfo):
-                self.failed = True
-                shortrepr = "?"
-                longrepr = excinfo
-            elif excinfo.errisinstance(py.test.skip.Exception):
-                self.skipped = True
-                shortrepr = "s"
-                longrepr = self.item._repr_failure_py(excinfo)
-            else:
-                self.failed = True
-                shortrepr = self.item.shortfailurerepr
-                if self.when == "call":
-                    longrepr = self.item.repr_failure(excinfo)
-                else: # exception in setup or teardown
-                    longrepr = self.item._repr_failure_py(excinfo)
-                    shortrepr = shortrepr.lower()
-            self.shortrepr = shortrepr
-            self.longrepr = longrepr
-
-    def __repr__(self):
-        status = (self.passed and "passed" or
-                  self.skipped and "skipped" or
-                  self.failed and "failed" or
-                  "CORRUPT")
-        l = [repr(self.item.name), "when=%r" % self.when, "outcome %r" % status,]
-        if hasattr(self, 'node'):
-            l.append("txnode=%s" % self.node.gateway.id)
-        info = " " .join(map(str, l))
-        return "<ItemTestReport %s>" % info
-
-    def getnode(self):
-        return self.item
-
-class CollectReport(BaseReport):
-    skipped = failed = passed = False
-
-    def __init__(self, collector, result, excinfo=None):
-        super(CollectReport, self).__init__()
-        self.collector = collector
-        if not excinfo:
-            self.passed = True
-            self.result = result
-        else:
-            if excinfo.errisinstance(py.test.skip.Exception):
-                self.skipped = True
-                self.reason = str(excinfo.value)
-                self.longrepr = self.collector._repr_failure_py(excinfo, "line")
-            else:
-                self.failed = True
-                errorinfo = self.collector.repr_failure(excinfo)
-                if not hasattr(errorinfo, "toterminal"):
-                    errorinfo = CollectErrorRepr(errorinfo)
-                self.longrepr = errorinfo
-
-    def getnode(self):
-        return self.collector
-
-class TeardownErrorReport(BaseReport):
-    skipped = passed = False
-    failed = True
-    when = "teardown"
-    def __init__(self, excinfo):
-        super(TeardownErrorReport, self).__init__()
-        self.longrepr = excinfo.getrepr(funcargs=True)
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """

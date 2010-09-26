@@ -37,12 +37,9 @@ class LogXML(object):
         self._durations = {}
 
     def _opentestcase(self, report):
-        if hasattr(report, 'item'):
-            node = report.item
-        else:
-            node = report.collector
-        d = {'time': self._durations.pop(node, "0")}
-        names = [x.replace(".py", "") for x in node.listnames() if x != "()"]
+        names = report.nodenames
+        d = {'time': self._durations.pop(names, "0")}
+        names = [x.replace(".py", "") for x in names if x != "()"]
         classnames = names[:-1]
         if self.prefix:
             classnames.insert(0, self.prefix)
@@ -122,11 +119,12 @@ class LogXML(object):
             self.append_skipped(report)
 
     def pytest_runtest_call(self, item, __multicall__):
+        names = tuple(item.listnames())
         start = time.time()
         try:
             return __multicall__.execute()
         finally:
-            self._durations[item] = time.time() - start
+            self._durations[names] = time.time() - start
 
     def pytest_collectreport(self, report):
         if not report.passed:

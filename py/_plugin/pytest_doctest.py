@@ -86,6 +86,9 @@ class DoctestItem(py.test.collect.Item):
         else:
             return super(DoctestItem, self).repr_failure(excinfo)
 
+    def reportinfo(self):
+        return self.fspath, None, "[doctest]"
+
 class DoctestTextfile(DoctestItem):
     def runtest(self):
         if not self._deprecated_testexecution():

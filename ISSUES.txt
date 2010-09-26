@@ -1,3 +1,10 @@
+checks / deprecations for next release
+---------------------------------------------------------------
+tags: bug 1.4 core xdist
+
+* reportinfo -> location in hooks and items
+* check oejskit plugin compatibility
+
 refine session initialization / fix custom collect crash
 ---------------------------------------------------------------
 tags: bug 1.4 core xdist

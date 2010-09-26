@@ -60,8 +60,8 @@ class TestCollection:
             ("pytest_collectstart", "collector.fspath == p"),
             ("pytest_make_collect_report", "collector.fspath == p"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.collector.fspath == p"),
-            ("pytest_collectreport", "report.collector.fspath == topdir")
+            ("pytest_collectreport", "report.fspath == p"),
+            ("pytest_collectreport", "report.fspath == topdir")
         ])
 
     def test_collect_protocol_method(self, testdir):
@@ -115,9 +115,9 @@ class TestCollection:
             ("pytest_collectstart",
                 "collector.__class__.__name__ == 'Module'"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.collector.fspath == p"),
+            ("pytest_collectreport", "report.fspath == p"),
             ("pytest_collectreport",
-                "report.collector.fspath == report.collector.collection.topdir")
+                "report.fspath == %r" % str(rcol.topdir)),
         ])
 
     def test_collect_subdir_event_ordering(self, testdir):
@@ -135,8 +135,8 @@ class TestCollection:
             ("pytest_collectstart", "collector.fspath == aaa"),
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.collector.fspath == test_aaa"),
-            ("pytest_collectreport", "report.collector.fspath == aaa"),
+            ("pytest_collectreport", "report.fspath == test_aaa"),
+            ("pytest_collectreport", "report.fspath == aaa"),
         ])
 
     def test_collect_two_commandline_args(self, testdir):
@@ -156,10 +156,10 @@ class TestCollection:
         hookrec.hookrecorder.contains([
             ("pytest_collectstart", "collector.fspath == aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.collector.fspath == aaa"),
+            ("pytest_collectreport", "report.fspath == aaa"),
             ("pytest_collectstart", "collector.fspath == bbb"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.collector.fspath == bbb"),
+            ("pytest_collectreport", "report.fspath == bbb"),
         ])
 
     def test_serialization_byid(self, testdir):

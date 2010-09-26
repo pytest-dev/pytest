@@ -396,8 +396,7 @@ class ReportRecorder(object):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
-            colitem = rep.getnode()
-            if not inamepart or inamepart in colitem.listnames():
+            if not inamepart or inamepart in rep.nodenames:
                 l.append(rep)
         if not l:
             raise ValueError("could not find test report matching %r: no test reports at all!" %

@@ -182,6 +182,9 @@ class Collection:
         return nodes
 
     def genitems(self, matching, names, result):
+        if not matching:
+            assert not names
+            return result
         names = list(names)
         name = names and names.pop(0) or None
         for node in matching:

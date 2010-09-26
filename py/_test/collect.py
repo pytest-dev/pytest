@@ -126,7 +126,6 @@ class Node(object):
                                style=style)
 
     repr_failure = _repr_failure_py
-    shortfailurerepr = "F"
 
 class Collector(Node):
     """

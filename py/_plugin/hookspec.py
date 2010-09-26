@@ -160,8 +160,10 @@ def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting. """
 
 def pytest_report_iteminfo(item):
-    """ return (fspath, lineno, name) for the item.
-        the information is used for result display and to sort tests
+    """ return (fspath, lineno, domainpath) for the item.
+        the information is used for result display and to sort tests.
+        fspath,lineno: file and linenumber of source of item definition.
+        domainpath: custom id - e.g. for python: dotted import address
     """
 pytest_report_iteminfo.firstresult = True
 
