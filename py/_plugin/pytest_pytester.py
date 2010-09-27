@@ -7,13 +7,14 @@ import sys, os
 import re
 import inspect
 import time
+from fnmatch import fnmatch
 from py._test.config import Config as pytestConfig
 from py.builtin import print_
 
 def pytest_addoption(parser):
     group = parser.getgroup("pylib")
-    group.addoption('--tools-on-path',
-           action="store_true", dest="toolsonpath", default=False,
+    group.addoption('--no-tools-on-path',
+           action="store_true", dest="notoolsonpath", default=False,
            help=("discover tools on PATH instead of going through py.cmdline.")
     )
 
@@ -305,7 +306,7 @@ class TmpTestdir:
         return self.run(*fullargs)
 
     def _getpybinargs(self, scriptname):
-        if self.request.config.getvalue("toolsonpath"):
+        if not self.request.config.getvalue("notoolsonpath"):
             script = py.path.local.sysfind(scriptname)
             assert script, "script %r not found" % scriptname
             return (script,)
@@ -325,7 +326,7 @@ class TmpTestdir:
         return self.run(sys.executable, script)
 
     def _getsysprepend(self):
-        if not self.request.config.getvalue("toolsonpath"):
+        if self.request.config.getvalue("notoolsonpath"):
             s = "import sys;sys.path.insert(0,%r);" % str(py._pydir.dirpath())
         else:
             s = ""
@@ -351,8 +352,8 @@ class TmpTestdir:
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         pexpect = py.test.importorskip("pexpect", "2.4")
-        if not self.request.config.getvalue("toolsonpath"):
-            py.test.skip("need --tools-on-path to run py.test script")
+        if self.request.config.getvalue("notoolsonpath"):
+            py.test.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
         invoke = self._getpybinargs("py.test")[0]
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
@@ -464,13 +465,25 @@ class LineMatcher:
     def str(self):
         return "\n".join(self.lines)
 
-    def fnmatch_lines(self, lines2):
+    def _getlines(self, lines2):
         if isinstance(lines2, str):
             lines2 = py.code.Source(lines2)
         if isinstance(lines2, py.code.Source):
             lines2 = lines2.strip().lines
+        return lines2
 
-        from fnmatch import fnmatch
+    def fnmatch_lines_random(self, lines2):
+        lines2 = self._getlines(lines2)
+        for line in lines2:
+            for x in self.lines:
+                if line == x or fnmatch(x, line):
+                    print_("matched: ", repr(line))
+                    break
+            else:
+                raise ValueError("line %r not found in output" % line)
+
+    def fnmatch_lines(self, lines2):
+        lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
         extralines = []
