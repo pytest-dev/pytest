@@ -138,7 +138,7 @@ class Collection:
 
     def getbyid(self, id):
         """ return one or more nodes matching the id. """
-        names = filter(None, id.split("::"))
+        names = [x for x in id.split("::") if x]
         if names and '/' in names[0]:
             names[:1] = names[0].split("/")
         return self._match([self._topcollector], names)

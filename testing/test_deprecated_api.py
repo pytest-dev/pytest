@@ -170,10 +170,10 @@ class TestCollectDeprecated:
                     if path.basename == "testme.xxx":
                         return Module(path, parent=self)
                     return super(Directory, self).consider_file(path)
+        """)
             #def pytest_collect_file(path, parent):
             #    if path.basename == "testme.xxx":
             #        return Module(path, parent=parent)
-        """)
         testme = testdir.makefile('xxx', testme="hello")
         config = testdir.parseconfig(testme)
         col = testdir.getnode(config, testme)
