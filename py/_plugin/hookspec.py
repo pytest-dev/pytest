@@ -109,7 +109,7 @@ def pytest_runtest_protocol(item):
     """ implement fixture, run and report about the given test item. """
 pytest_runtest_protocol.firstresult = True
 
-def pytest_runtest_logstart(nodeid, location):
+def pytest_runtest_logstart(nodeid, location, fspath):
     """ signal the start of a test run. """
 
 def pytest_runtest_setup(item):
@@ -133,7 +133,7 @@ def pytest__teardown_final(session):
     """ called before test session finishes. """
 pytest__teardown_final.firstresult = True
 
-def pytest__teardown_final_logerror(report):
+def pytest__teardown_final_logerror(report, session):
     """ called if runtest_teardown_final failed. """
 
 # -------------------------------------------------------------------------

@@ -27,7 +27,8 @@ def pytest_sessionfinish(session, exitstatus):
         hook = session.config.hook
         rep = hook.pytest__teardown_final(session=session)
         if rep:
-            hook.pytest__teardown_final_logerror(report=rep)
+            hook.pytest__teardown_final_logerror(session=session, report=rep)
+            session.exitstatus = 1
 
 class NodeInfo:
     def __init__(self, nodeid, nodenames, fspath, location):
@@ -52,7 +53,8 @@ def pytest_runtest_protocol(item):
     nodeinfo = getitemnodeinfo(item)
     item.ihook.pytest_runtest_logstart(
         nodeid=nodeinfo.nodeid,
-        location=nodeinfo.location
+        location=nodeinfo.location,
+        fspath=str(item.fspath),
     )
     runtestprotocol(item)
     return True
@@ -80,7 +82,8 @@ def pytest__teardown_final(session):
     if call.excinfo:
         ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
         call.excinfo.traceback = ntraceback.filter()
-        return TeardownErrorReport(call.excinfo)
+        longrepr = call.excinfo.getrepr(funcargs=True)
+        return TeardownErrorReport(longrepr)
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
@@ -184,8 +187,8 @@ class TestReport(BaseReport):
 class TeardownErrorReport(BaseReport):
     outcome = "failed"
     when = "teardown"
-    def __init__(self, excinfo):
-        self.longrepr = excinfo.getrepr(funcargs=True)
+    def __init__(self, longrepr):
+        self.longrepr = longrepr
 
 def pytest_make_collect_report(collector):
     result = excinfo = None

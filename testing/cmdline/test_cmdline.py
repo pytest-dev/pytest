@@ -7,7 +7,7 @@ def test_cmdmain(name, pytestconfig):
     main = getattr(py.cmdline, name)
     assert py.builtin.callable(main)
     assert name[:2] == "py"
-    if pytestconfig.getvalue("toolsonpath"):
+    if not pytestconfig.getvalue("notoolsonpath"):
         scriptname = "py." + name[2:]
         assert py.path.local.sysfind(scriptname), scriptname
 

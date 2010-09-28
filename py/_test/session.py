@@ -44,14 +44,7 @@ class Session(object):
         self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
-        self.collection = Collection(config)
-
-    def sessionfinishes(self, exitstatus):
-        # XXX move to main loop / refactor mainloop
-        self.config.hook.pytest_sessionfinish(
-            session=self,
-            exitstatus=exitstatus,
-        )
+        self.collection = Collection(config) # XXX move elswehre
 
     def pytest_runtest_logreport(self, report):
         if report.failed:
@@ -66,32 +59,33 @@ class Session(object):
     def main(self):
         """ main loop for running tests. """
         self.shouldstop = False
-        exitstatus = EXIT_OK
+        self.exitstatus = EXIT_OK
         config = self.config
         try:
             config.pluginmanager.do_configure(config)
             config.hook.pytest_sessionstart(session=self)
             config.hook.pytest_perform_collection(session=self)
             config.hook.pytest_runtest_mainloop(session=self)
-            if self._testsfailed:
-                exitstatus = EXIT_TESTSFAILED
-            self.sessionfinishes(exitstatus=exitstatus)
-            config.pluginmanager.do_unconfigure(config)
         except self.config.Error:
             raise
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
             self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
-            exitstatus = EXIT_INTERRUPTED
+            self.exitstatus = EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
             self.config.pluginmanager.notify_exception(excinfo)
-            exitstatus = EXIT_INTERNALERROR
+            self.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
-        if exitstatus in (EXIT_INTERNALERROR, EXIT_INTERRUPTED):
-            self.sessionfinishes(exitstatus=exitstatus)
-        return exitstatus
+
+        if not self.exitstatus and self._testsfailed:
+            self.exitstatus = EXIT_TESTSFAILED
+        self.config.hook.pytest_sessionfinish(
+            session=self, exitstatus=self.exitstatus,
+        )
+        config.pluginmanager.do_unconfigure(config)
+        return self.exitstatus
 
 class Collection:
     def __init__(self, config):

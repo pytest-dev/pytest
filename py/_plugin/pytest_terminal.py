@@ -138,14 +138,14 @@ class TerminalReporter:
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
 
-    def pytest_runtest_logstart(self, nodeid, location):
+    def pytest_runtest_logstart(self, nodeid, location, fspath):
         # ensure that the path is printed before the
         # 1st test of a module starts running
         if self.config.option.verbose:
-            line = self._locationline(*location)
+            line = self._locationline(fspath, *location)
             self.write_ensure_prefix(line, "")
         else:
-            self.write_fspath_result(py.path.local(location[0]), "")
+            self.write_fspath_result(py.path.local(fspath), "")
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -158,11 +158,16 @@ class TerminalReporter:
         if isinstance(word, tuple):
             word, markup = word
         else:
-            markup = {}
+            if rep.passed:
+                markup = {'green':True}
+            elif rep.failed:
+                markup = {'red':True}
+            elif rep.skipped:
+                markup = {'yellow':True}
         if not self.config.option.verbose:
             self.write_fspath_result(rep.fspath, letter)
         else:
-            line = self._locationline(*rep.location)
+            line = self._locationline(str(rep.fspath), *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
                 #self._tw.write(word, **markup)
@@ -227,13 +232,12 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
 
-    def _locationline(self, fspath, lineno, domain):
-        #collect_fspath = self._getfspath(item)
-        #if fspath and fspath != collect_fspath:
-        #    fspath = "%s <- %s" % (
-        #        self.curdir.bestrelpath(collect_fspath),
-        #        self.curdir.bestrelpath(fspath))
-        if fspath:
+    def _locationline(self, collect_fspath, fspath, lineno, domain):
+        if fspath and fspath != collect_fspath:
+            fspath = "%s <- %s" % (
+                self.curdir.bestrelpath(py.path.local(collect_fspath)),
+                self.curdir.bestrelpath(py.path.local(fspath)))
+        elif fspath:
             fspath = self.curdir.bestrelpath(py.path.local(fspath))
         if lineno is not None:
             lineno += 1
