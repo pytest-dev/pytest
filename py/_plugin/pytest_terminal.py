@@ -155,18 +155,21 @@ class TerminalReporter:
         if not letter and not word:
             # probably passed setup/teardown
             return
-        if isinstance(word, tuple):
-            word, markup = word
-        else:
-            if rep.passed:
-                markup = {'green':True}
-            elif rep.failed:
-                markup = {'red':True}
-            elif rep.skipped:
-                markup = {'yellow':True}
         if not self.config.option.verbose:
-            self.write_fspath_result(rep.fspath, letter)
+            if not hasattr(rep, 'node'):
+                self.write_fspath_result(rep.fspath, letter)
+            else:
+                self._tw.write(letter)
         else:
+            if isinstance(word, tuple):
+                word, markup = word
+            else:
+                if rep.passed:
+                    markup = {'green':True}
+                elif rep.failed:
+                    markup = {'red':True}
+                elif rep.skipped:
+                    markup = {'yellow':True}
             line = self._locationline(str(rep.fspath), *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
