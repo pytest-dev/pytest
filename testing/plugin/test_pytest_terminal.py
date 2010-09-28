@@ -112,7 +112,6 @@ class TestTerminal:
         child.sendeof()
         child.kill(15)
 
-    @py.test.mark.xfail(reason="re-implement subclassing precision reporting")
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         p1 = testdir.makepyfile(test_p1="""
             class BaseTests:
