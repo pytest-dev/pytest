@@ -191,3 +191,23 @@ class TestGeneralUsage:
         for dirname, other_dirname in [('a', 'b'), ('b', 'a')]:
             result = testdir.runpytest(dirname)
             assert result.ret == 0, "test_sibling_conftest: py.test run for '%s', but '%s/conftest.py' loaded." % (dirname, other_dirname)
+
+    def test_multiple_items_per_collector_byid(self, testdir):
+        c = testdir.makeconftest("""
+            import py
+            class MyItem(py.test.collect.Item):
+                def runtest(self):
+                    pass
+            class MyCollector(py.test.collect.File):
+                def collect(self):
+                    return [MyItem(name="xyz", parent=self)]
+            def pytest_collect_file(path, parent):
+                if path.basename.startswith("conftest"):
+                    return MyCollector(path, parent)
+        """)
+        result = testdir.runpytest(c.basename+"::"+"xyz")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 pass*",
+        ])
+

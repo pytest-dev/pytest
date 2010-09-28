@@ -4,6 +4,8 @@ tags: bug 1.4 core xdist
 
 * reportinfo -> location in hooks and items
 * check oejskit plugin compatibility
+* terminal reporting - dot-printing
+* some simple profiling 
 
 refine session initialization / fix custom collect crash
 ---------------------------------------------------------------

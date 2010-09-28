@@ -138,15 +138,14 @@ class Collection:
 
     def getbyid(self, id):
         """ return one or more nodes matching the id. """
-        matching = [self._topcollector]
-        if not id:
-            return matching
-        names = id.split("::")
+        names = filter(None, id.split("::"))
+        if names and '/' in names[0]:
+            names[:1] = names[0].split("/")
+        return self._match([self._topcollector], names)
+
+    def _match(self, matching, names):
         while names:
             name = names.pop(0)
-            newnames = name.split("/")
-            name = newnames[0]
-            names[:0] = newnames[1:]
             l = []
             for current in matching:
                 for x in current._memocollect():
@@ -169,22 +168,28 @@ class Collection:
         return nodes
 
     def perform_collect(self):
-        idlist = [self._parsearg(arg) for arg in self.config.args]
         nodes = []
-        for names in idlist:
-            self.genitems([self._topcollector], names, nodes)
+        for arg in self.config.args:
+            names = self._parsearg(arg)
+            try:
+                self.genitems([self._topcollector], names, nodes)
+            except NoMatch:
+                raise self.config.Error("can't collect: %s" % (arg,))
         return nodes
 
     def genitems(self, matching, names, result):
         if not matching:
             assert not names
-            return result
-        names = list(names)
-        name = names and names.pop(0) or None
+            return
+        if names:
+            name = names[0]
+            names = names[1:]
+        else:
+            name = None
         for node in matching:
             if isinstance(node, py.test.collect.Item):
                 if name is None:
-                    self.config.hook.pytest_log_itemcollect(item=node)
+                    node.ihook.pytest_log_itemcollect(item=node)
                     result.append(node)
                 continue
             assert isinstance(node, py.test.collect.Collector)
@@ -192,26 +197,30 @@ class Collection:
             rep = node.ihook.pytest_make_collect_report(collector=node)
             #print "matching", rep.result, "against name", name
             if rep.passed:
-                if name:
-                    matched = False
-                    for subcol in rep.result:
-                        if subcol.name != name and subcol.name == "()":
-                            names.insert(0, name)
-                            name = "()"
-                        # see doctests/custom naming XXX
-                        if subcol.name == name or subcol.fspath.basename == name:
-                            self.genitems([subcol], names, result)
-                            matched = True
-                    if not matched:
-                        raise self.config.Error(
-                            "can't collect: %s" % (name,))
-
-                else:
+                if not name:
                     self.genitems(rep.result, [], result)
+                else:
+                    matched = False
+                    for x in rep.result:
+                        try:
+                            if x.name == name or x.fspath.basename == name:
+                                self.genitems([x], names, result)
+                                matched = True
+                            elif x.name == "()": # XXX special Instance() case
+                                self.genitems([x], [name] + names, result)
+                                matched = True
+                        except NoMatch:
+                            pass
+                    if not matched:
+                        node.ihook.pytest_collectreport(report=rep)
+                        raise NoMatch(name)
             node.ihook.pytest_collectreport(report=rep)
             x = getattr(self, 'shouldstop', None)
             if x:
                 raise Session.Interrupted(x)
+
+class NoMatch(Exception):
+    """ raised if genitems cannot locate a matching names. """
 
 def gettopdir(args):
     """ return the top directory for the given paths.
