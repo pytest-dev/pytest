@@ -54,18 +54,16 @@ def pytest_assert_binrepr(op, left, right):
     explanation = None
     if op == '==':
         if istext(left) and istext(right):
-            explanation = [line.strip('\n') for line in
-                           py.std.difflib.ndiff(left.splitlines(),
-                                                right.splitlines())]
+            explanation = _diff_text(left, right)
         elif issequence(left) and issequence(right):
             explanation = _compare_eq_sequence(left, right)
         elif isset(left) and isset(right):
             explanation = _compare_eq_set(left, right)
         elif isdict(left) and isdict(right):
-            explanation = _pprint_diff(left, right)
+            explanation = _diff_text(py.std.pprint.pformat(left),
+                                     py.std.pprint.pformat(right))
     elif op == 'in':
-        # XXX
-        pass
+        pass                    # XXX
 
     if not explanation:
         return None
@@ -75,6 +73,38 @@ def pytest_assert_binrepr(op, left, right):
         explanation = ['Detailed information too verbose, truncated']
 
     return [summary] + explanation
+
+
+def _diff_text(left, right):
+    """Return the explanation for the diff between text
+
+    This will skip leading and trailing characters which are
+    identical to keep the diff minimal.
+    """
+    explanation = []
+    for i in range(min(len(left), len(right))):
+        if left[i] != right[i]:
+            break
+    if i > 42:
+        i -= 10                 # Provide some context
+        explanation = ['Skipping %s identical '
+                       'leading characters in diff' % i]
+        left = left[i:]
+        right = right[i:]
+    if len(left) == len(right):
+        for i in range(len(left)):
+            if left[-i] != right[-i]:
+                break
+        if i > 42:
+            i -= 10     # Provide some context
+            explanation += ['Skipping %s identical '
+                            'trailing characters in diff' % i]
+            left = left[:-i]
+            right = right[:-i]
+    explanation += [line.strip('\n')
+                    for line in py.std.difflib.ndiff(left.splitlines(),
+                                                     right.splitlines())]
+    return explanation
 
 
 def _compare_eq_sequence(left, right):
@@ -90,14 +120,8 @@ def _compare_eq_sequence(left, right):
     elif len(left) < len(right):
         explanation += ['Right contains more items, '
                         'first extra item: %s' % right[len(left)]]
-    return explanation + _pprint_diff(left, right)
-
-
-def _pprint_diff(left, right):
-    """Make explanation using pprint and difflib"""
-    return [line.strip('\n') for line in
-            py.std.difflib.ndiff(py.std.pprint.pformat(left).splitlines(),
-                                 py.std.pprint.pformat(right).splitlines())]
+    return explanation + _diff_text(py.std.pprint.pformat(left),
+                                    py.std.pprint.pformat(right))
 
 
 def _compare_eq_set(left, right):
