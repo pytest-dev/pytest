@@ -1,6 +1,7 @@
 import py
-py.test.importorskip("nose")
 
+def setup_module(mod):
+    mod.nose = py.test.importorskip("nose")
 
 def test_nose_setup(testdir):
     p = testdir.makepyfile("""
@@ -99,6 +100,7 @@ def test_nose_setup_func_failure_2(testdir):
 
 
 def test_nose_setup_partial(testdir):
+    py.test.importorskip("functools")
     p = testdir.makepyfile("""
         from functools import partial
 
