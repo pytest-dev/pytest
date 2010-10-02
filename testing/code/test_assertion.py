@@ -217,3 +217,13 @@ def test_underscore_api():
     py.code._AssertionError
     py.code._reinterpret_old # used by pypy
     py.code._reinterpret
+
+@py.test.mark.skipif("sys.version_info < (2,6)")
+def test_assert_customizable_binrepr(monkeypatch):
+    monkeypatch.setattr(py.code, '_binrepr', lambda *args: 'hello')
+    try:
+        assert 3 == 4
+    except AssertionError:
+        e = exvalue()
+        s = str(e)
+        assert "hello" in s

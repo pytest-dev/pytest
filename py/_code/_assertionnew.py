@@ -108,16 +108,10 @@ unary_map = {
 
 
 class DebugInterpreter(ast.NodeVisitor):
-    """Interpret AST nodes to gleam useful debugging information.
-
-    The _pytesthook attribute is used to detect if the py.test
-    pytest_assertion plugin is loaded and if so call it's hooks.
-    """
+    """Interpret AST nodes to gleam useful debugging information. """
 
     def __init__(self, frame):
         self.frame = frame
-        self._pytesthook = getattr(py.builtin.builtins.AssertionError,
-                                   "_pytesthook")
 
     def generic_visit(self, node):
         # Fallback when we don't have a special implementation.
@@ -183,14 +177,12 @@ class DebugInterpreter(ast.NodeVisitor):
             if not result:
                 break
             left_explanation, left_result = next_explanation, next_result
-        if self._pytesthook:
-            hook_result = self._pytesthook.pytest_assert_binrepr(
-                op=op_symbol, left=left_result, right=next_result)
-            if hook_result:
-                for new_expl in hook_result:
-                    if new_expl:
-                        explanation = '\n~'.join(new_expl)
-                        break
+
+        binrepr = py.code._binrepr
+        if binrepr:
+            res = binrepr(op_symbol, left_result, next_result)
+            if res:
+                explanation = res
         return explanation, result
 
     def visit_BoolOp(self, boolop):

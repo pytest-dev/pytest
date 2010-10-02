@@ -151,7 +151,7 @@ def pytest_sessionfinish(session, exitstatus):
 # hooks for customising the assert methods
 # -------------------------------------------------------------------------
 
-def pytest_assert_binrepr(op, left, right):
+def pytest_assert_binrepr(config, op, left, right):
     """Customise explanation for binary operators
 
     Return None or an empty list for no custom explanation, otherwise

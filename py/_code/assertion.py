@@ -3,6 +3,7 @@ import py
 
 BuiltinAssertionError = py.builtin.builtins.AssertionError
 
+_binrepr = None # if set, will be called by assert reinterp for comparison ops
 
 def _format_explanation(explanation):
     """This formats an explanation
@@ -49,7 +50,6 @@ def _format_explanation(explanation):
 
 
 class AssertionError(BuiltinAssertionError):
-
     def __init__(self, *args):
         BuiltinAssertionError.__init__(self, *args)
         if args:

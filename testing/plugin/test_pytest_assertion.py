@@ -3,29 +3,104 @@ import sys
 import py
 import py._plugin.pytest_assertion as plugin
 
+needsnewassert = py.test.mark.skipif("sys.version_info < (2,6)")
 
-def getframe():
-    """Return the frame of the caller as a py.code.Frame object"""
-    return py.code.Frame(sys._getframe(1))
+def interpret(expr):
+    return py.code._reinterpret(expr, py.code.Frame(sys._getframe(1)))
 
-def interpret(expr, frame):
-    anew = py.test.importorskip('py._code._assertionnew')
-    return anew.interpret(expr, frame)
+class TestBinReprIntegration:
+    pytestmark = needsnewassert
 
-def pytest_funcarg__hook(request):
-    class MockHook(object):
-        def __init__(self):
-            self.called = False
-            self.args = tuple()
-            self.kwargs = dict()
+    def pytest_funcarg__hook(self, request):
+        class MockHook(object):
+            def __init__(self):
+                self.called = False
+                self.args = tuple()
+                self.kwargs = dict()
 
-        def __call__(self, op, left, right):
-            self.called = True
-            self.op = op
-            self.left = left
-            self.right = right
-    return MockHook()
+            def __call__(self, op, left, right):
+                self.called = True
+                self.op = op
+                self.left = left
+                self.right = right
+        mockhook = MockHook()
+        monkeypatch = request.getfuncargvalue("monkeypatch")
+        monkeypatch.setattr(py.code, '_binrepr', mockhook)
+        return mockhook
 
+    def test_pytest_assert_binrepr_called(self, hook):
+        interpret('assert 0 == 1')
+        assert hook.called
+
+
+    def test_pytest_assert_binrepr_args(self, hook):
+        interpret('assert [0, 1] == [0, 2]')
+        assert hook.op == '=='
+        assert hook.left == [0, 1]
+        assert hook.right == [0, 2]
+
+    def test_configure_unconfigure(self, testdir, hook):
+        assert hook == py.code._binrepr
+        config = testdir.parseconfig()
+        plugin.pytest_configure(config)
+        assert hook != py.code._binrepr
+        plugin.pytest_unconfigure(config)
+        assert hook == py.code._binrepr
+
+class TestAssert_binrepr:
+    def test_different_types(self):
+        assert plugin.pytest_assert_binrepr('==', [0, 1], 'foo') is None
+
+    def test_summary(self):
+        summary = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])[0]
+        assert len(summary) < 65
+
+    def test_text_diff(self):
+        diff = plugin.pytest_assert_binrepr('==', 'spam', 'eggs')[1:]
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_multiline_text_diff(self):
+        left = 'foo\nspam\nbar'
+        right = 'foo\neggs\nbar'
+        diff = plugin.pytest_assert_binrepr('==', left, right)
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_list(self):
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])
+        assert len(expl) > 1
+
+    def test_list_different_lenghts(self):
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 1, 2])
+        assert len(expl) > 1
+        expl = plugin.pytest_assert_binrepr('==', [0, 1, 2], [0, 1])
+        assert len(expl) > 1
+
+    def test_dict(self):
+        expl = plugin.pytest_assert_binrepr('==', {'a': 0}, {'a': 1})
+        assert len(expl) > 1
+
+    def test_set(self):
+        expl = plugin.pytest_assert_binrepr('==', set([0, 1]), set([0, 2]))
+        assert len(expl) > 1
+
+@needsnewassert
+def test_pytest_assert_binrepr_integration(testdir):
+    testdir.makepyfile("""
+        def test_hello():
+            x = set(range(100))
+            y = x.copy()
+            y.remove(50)
+            assert x == y
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*def test_hello():*",
+        "*assert x == y*",
+        "*E*Extra items*left*",
+        "*E*50*",
+    ])
 
 def test_functional(testdir):
     testdir.makepyfile("""
@@ -78,57 +153,3 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
-
-def test_pytest_assert_binrepr_called(monkeypatch, hook):
-    monkeypatch.setattr(py._plugin.pytest_assertion,
-                        'pytest_assert_binrepr', hook)
-    interpret('assert 0 == 1', getframe())
-    assert hook.called
-
-
-def test_pytest_assert_binrepr_args(monkeypatch, hook):
-    monkeypatch.setattr(py._plugin.pytest_assertion,
-                        'pytest_assert_binrepr', hook)
-    interpret('assert [0, 1] == [0, 2]', getframe())
-    assert hook.op == '=='
-    assert hook.left == [0, 1]
-    assert hook.right == [0, 2]
-
-
-class TestAssertCompare:
-    def test_different_types(self):
-        assert plugin.pytest_assert_binrepr('==', [0, 1], 'foo') is None
-
-    def test_summary(self):
-        summary = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])[0]
-        assert len(summary) < 65
-
-    def test_text_diff(self):
-        diff = plugin.pytest_assert_binrepr('==', 'spam', 'eggs')[1:]
-        assert '- spam' in diff
-        assert '+ eggs' in diff
-
-    def test_multiline_text_diff(self):
-        left = 'foo\nspam\nbar'
-        right = 'foo\neggs\nbar'
-        diff = plugin.pytest_assert_binrepr('==', left, right)
-        assert '- spam' in diff
-        assert '+ eggs' in diff
-
-    def test_list(self):
-        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])
-        assert len(expl) > 1
-
-    def test_list_different_lenghts(self):
-        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 1, 2])
-        assert len(expl) > 1
-        expl = plugin.pytest_assert_binrepr('==', [0, 1, 2], [0, 1])
-        assert len(expl) > 1
-
-    def test_dict(self):
-        expl = plugin.pytest_assert_binrepr('==', {'a': 0}, {'a': 1})
-        assert len(expl) > 1
-
-    def test_set(self):
-        expl = plugin.pytest_assert_binrepr('==', set([0, 1]), set([0, 2]))
-        assert len(expl) > 1
