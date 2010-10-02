@@ -1,3 +1,32 @@
+import sys
+
+import py
+import py._plugin.pytest_assertion as plugin
+
+
+def getframe():
+    """Return the frame of the caller as a py.code.Frame object"""
+    return py.code.Frame(sys._getframe(1))
+
+def interpret(expr, frame):
+    anew = py.test.importorskip('py._code._assertionnew')
+    return anew.interpret(expr, frame)
+
+def pytest_funcarg__hook(request):
+    class MockHook(object):
+        def __init__(self):
+            self.called = False
+            self.args = tuple()
+            self.kwargs = dict()
+
+        def __call__(self, op, left, right):
+            self.called = True
+            self.op = op
+            self.left = left
+            self.right = right
+    return MockHook()
+
+
 def test_functional(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -49,3 +78,57 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
+
+def test_pytest_assert_binrepr_called(monkeypatch, hook):
+    monkeypatch.setattr(py._plugin.pytest_assertion,
+                        'pytest_assert_binrepr', hook)
+    interpret('assert 0 == 1', getframe())
+    assert hook.called
+
+
+def test_pytest_assert_binrepr_args(monkeypatch, hook):
+    monkeypatch.setattr(py._plugin.pytest_assertion,
+                        'pytest_assert_binrepr', hook)
+    interpret('assert [0, 1] == [0, 2]', getframe())
+    assert hook.op == '=='
+    assert hook.left == [0, 1]
+    assert hook.right == [0, 2]
+
+
+class TestAssertCompare:
+    def test_different_types(self):
+        assert plugin.pytest_assert_binrepr('==', [0, 1], 'foo') is None
+
+    def test_summary(self):
+        summary = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])[0]
+        assert len(summary) < 65
+
+    def test_text_diff(self):
+        diff = plugin.pytest_assert_binrepr('==', 'spam', 'eggs')[1:]
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_multiline_text_diff(self):
+        left = 'foo\nspam\nbar'
+        right = 'foo\neggs\nbar'
+        diff = plugin.pytest_assert_binrepr('==', left, right)
+        assert '- spam' in diff
+        assert '+ eggs' in diff
+
+    def test_list(self):
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 2])
+        assert len(expl) > 1
+
+    def test_list_different_lenghts(self):
+        expl = plugin.pytest_assert_binrepr('==', [0, 1], [0, 1, 2])
+        assert len(expl) > 1
+        expl = plugin.pytest_assert_binrepr('==', [0, 1, 2], [0, 1])
+        assert len(expl) > 1
+
+    def test_dict(self):
+        expl = plugin.pytest_assert_binrepr('==', {'a': 0}, {'a': 1})
+        assert len(expl) > 1
+
+    def test_set(self):
+        expl = plugin.pytest_assert_binrepr('==', set([0, 1]), set([0, 2]))
+        assert len(expl) > 1
