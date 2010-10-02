@@ -3,7 +3,7 @@ import py
 
 BuiltinAssertionError = py.builtin.builtins.AssertionError
 
-_binrepr = None # if set, will be called by assert reinterp for comparison ops
+_reprcompare = None # if set, will be called by assert reinterp for comparison ops
 
 def _format_explanation(explanation):
     """This formats an explanation

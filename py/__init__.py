@@ -93,7 +93,7 @@ py.apipkg.initpkg(__name__, dict(
         '_AssertionError'   : '._code.assertion:AssertionError',
         '_reinterpret_old'  : '._code.assertion:reinterpret_old',
         '_reinterpret'      : '._code.assertion:reinterpret',
-        '_binrepr'          : '._code.assertion:_binrepr',
+        '_reprcompare'      : '._code.assertion:_reprcompare',
     },
 
     # backports and additions of builtins

@@ -151,14 +151,13 @@ def pytest_sessionfinish(session, exitstatus):
 # hooks for customising the assert methods
 # -------------------------------------------------------------------------
 
-def pytest_assert_binrepr(config, op, left, right):
-    """Customise explanation for binary operators
+def pytest_assertrepr_compare(config, op, left, right):
+    """return explanation for comparisons in failing assert expressions.
 
-    Return None or an empty list for no custom explanation, otherwise
-    return a list of strings.  The strings will be joined by newlines
-    but any newlines *in* a string will be escaped.  Note that all but
-    the first line will be indented sligthly, the intention is for the
-    first line to be a summary.
+    Return None for no custom explanation, otherwise return a list
+    of strings.  The strings will be joined by newlines but any newlines
+    *in* a string will be escaped.  Note that all but the first line will
+    be indented sligthly, the intention is for the first line to be a summary.
     """
 
 # -------------------------------------------------------------------------

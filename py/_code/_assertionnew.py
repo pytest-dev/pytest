@@ -178,9 +178,9 @@ class DebugInterpreter(ast.NodeVisitor):
                 break
             left_explanation, left_result = next_explanation, next_result
 
-        binrepr = py.code._binrepr
-        if binrepr:
-            res = binrepr(op_symbol, left_result, next_result)
+        rcomp = py.code._reprcompare
+        if rcomp:
+            res = rcomp(op_symbol, left_result, next_result)
             if res:
                 explanation = res
         return explanation, result
