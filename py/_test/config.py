@@ -2,7 +2,6 @@ import py, os
 from py._test.conftesthandle import Conftest
 from py._test.pluginmanager import PluginManager
 from py._test import parseopt
-from py._test.collect import RootCollector
 
 def ensuretemp(string, dir=1):
     """ (deprecated) return temporary directory path with
@@ -31,9 +30,8 @@ class Config(object):
     basetemp = None
     _sessionclass = None
 
-    def __init__(self, topdir=None, option=None):
-        self.option = option or CmdOptions()
-        self.topdir = topdir
+    def __init__(self):
+        self.option = CmdOptions()
         self._parser = parseopt.Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
@@ -97,39 +95,7 @@ class Config(object):
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())
-        self.topdir = gettopdir(args)
-        self._rootcol = RootCollector(config=self)
-        self._setargs(args)
-
-    def _setargs(self, args):
-        self.args = list(args)
-        self._argfspaths = [py.path.local(decodearg(x)[0]) for x in args]
-
-    # config objects are usually pickled across system
-    # barriers but they contain filesystem paths.
-    # upon getstate/setstate we take care to do everything
-    # relative to "topdir".
-    def __getstate__(self):
-        l = []
-        for path in self.args:
-            path = py.path.local(path)
-            l.append(path.relto(self.topdir))
-        return l, self.option.__dict__
-
-    def __setstate__(self, repr):
-        # we have to set py.test.config because loading
-        # of conftest files may use it (deprecated)
-        # mainly by py.test.config.addoptions()
-        global config_per_process
-        py.test.config = config_per_process = self
-        args, cmdlineopts = repr
-        cmdlineopts = CmdOptions(**cmdlineopts)
-        # next line will registers default plugins
-        self.__init__(topdir=py.path.local(), option=cmdlineopts)
-        self._rootcol = RootCollector(config=self)
-        args = [str(self.topdir.join(x)) for x in args]
-        self._preparse(args)
-        self._setargs(args)
+        self.args = args
 
     def ensuretemp(self, string, dir=True):
         return self.getbasetemp().ensure(string, dir=dir)
@@ -153,27 +119,6 @@ class Config(object):
         else:
             return py.path.local.make_numbered_dir(prefix=basename,
                 keep=0, rootdir=basetemp, lock_timeout=None)
-
-    def getinitialnodes(self):
-        return [self.getnode(arg) for arg in self.args]
-
-    def getnode(self, arg):
-        parts = decodearg(arg)
-        path = py.path.local(parts.pop(0))
-        if not path.check():
-            raise self.Error("file not found: %s" %(path,))
-        topdir = self.topdir
-        if path != topdir and not path.relto(topdir):
-            raise self.Error("path %r is not relative to %r" %
-                (str(path), str(topdir)))
-        # assumtion: pytest's fs-collector tree follows the filesystem tree
-        names = list(filter(None, path.relto(topdir).split(path.sep)))
-        names += parts
-        try:
-            return self._rootcol.getbynames(names)
-        except ValueError:
-            e = py.std.sys.exc_info()[1]
-            raise self.Error("can't collect: %s\n%s" % (arg, e.args[0]))
 
     def _getcollectclass(self, name, path):
         try:
@@ -239,47 +184,9 @@ class Config(object):
         except AttributeError:
             return self._conftest.rget(name, path)
 
-    def setsessionclass(self, cls):
-        if self._sessionclass is not None:
-            raise ValueError("sessionclass already set to: %r" %(
-                self._sessionclass))
-        self._sessionclass = cls
-
-    def initsession(self):
-        """ return an initialized session object. """
-        cls = self._sessionclass
-        if cls is None:
-            from py._test.session import Session
-            cls = Session
-        session = cls(self)
-        self.trace("instantiated session %r" % session)
-        return session
-
 #
 # helpers
 #
-
-def gettopdir(args):
-    """ return the top directory for the given paths.
-        if the common base dir resides in a python package
-        parent directory of the root package is returned.
-    """
-    fsargs = [py.path.local(decodearg(arg)[0]) for arg in args]
-    p = fsargs and fsargs[0] or None
-    for x in fsargs[1:]:
-        p = p.common(x)
-    assert p, "cannot determine common basedir of %s" %(fsargs,)
-    pkgdir = p.pypkgpath()
-    if pkgdir is None:
-        if p.check(file=1):
-            p = p.dirpath()
-        return p
-    else:
-        return pkgdir.dirpath()
-
-def decodearg(arg):
-    arg = str(arg)
-    return arg.split("::")
 
 def onpytestaccess():
     # it's enough to have our containing module loaded as

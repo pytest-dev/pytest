@@ -53,8 +53,8 @@ class BaseFunctionalTests:
         rep = reports[1]
         assert rep.passed
         assert not rep.failed
-        assert rep.shortrepr == "."
-        assert not hasattr(rep, 'longrepr')
+        assert rep.outcome == "passed"
+        assert not rep.longrepr
 
     def test_failfunction(self, testdir):
         reports = testdir.runitem("""
@@ -66,23 +66,8 @@ class BaseFunctionalTests:
         assert not rep.skipped
         assert rep.failed
         assert rep.when == "call"
-        assert isinstance(rep.longrepr, ReprExceptionInfo)
-        assert str(rep.shortrepr) == "F"
-
-    def test_failfunction_customized_report(self, testdir, LineMatcher):
-        reports = testdir.runitem("""
-            def test_func():
-                assert 0
-        """)
-        rep = reports[1]
-        rep.headerlines += ["hello world"]
-        tr = py.io.TerminalWriter(stringio=True)
-        rep.toterminal(tr)
-        val = tr.stringio.getvalue()
-        LineMatcher(val.split("\n")).fnmatch_lines([
-            "*hello world",
-            "*def test_func():*"
-        ])
+        assert rep.outcome == "failed"
+        #assert isinstance(rep.longrepr, ReprExceptionInfo)
 
     def test_skipfunction(self, testdir):
         reports = testdir.runitem("""
@@ -94,6 +79,7 @@ class BaseFunctionalTests:
         assert not rep.failed
         assert not rep.passed
         assert rep.skipped
+        assert rep.outcome == "skipped"
         #assert rep.skipped.when == "call"
         #assert rep.skipped.when == "call"
         #assert rep.skipped == "%sreason == "hello"
@@ -150,8 +136,8 @@ class BaseFunctionalTests:
         assert not rep.passed
         assert rep.failed
         assert rep.when == "teardown"
-        assert rep.longrepr.reprcrash.lineno == 3
-        assert rep.longrepr.reprtraceback.reprentries
+        #assert rep.longrepr.reprcrash.lineno == 3
+        #assert rep.longrepr.reprtraceback.reprentries
 
     def test_custom_failure_repr(self, testdir):
         testdir.makepyfile(conftest="""
@@ -270,6 +256,10 @@ class TestCollectionReports:
         assert not rep.failed
         assert not rep.skipped
         assert rep.passed
+        locinfo = rep.location
+        assert locinfo[0] == col.fspath
+        assert not locinfo[1]
+        assert locinfo[2] == col.fspath
         res = rep.result
         assert len(res) == 2
         assert res[0].name == "test_func1"
@@ -299,7 +289,7 @@ def test_callinfo():
     assert "exc" in repr(ci)
 
 # design question: do we want general hooks in python files?
-# following passes if withpy defaults to True in pycoll.PyObjMix._getplugins()
+# then something like the following functional tests makes sense
 @py.test.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""

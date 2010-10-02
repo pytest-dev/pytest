@@ -25,46 +25,14 @@ class Node(object):
     """ base class for all Nodes in the collection tree.
         Collector subclasses have children, Items are terminal nodes.
     """
-    def __init__(self, name, parent=None, config=None):
+    def __init__(self, name, parent=None, config=None, collection=None):
         self.name = name
         self.parent = parent
         self.config = config or parent.config
+        self.collection = collection or getattr(parent, 'collection', None)
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = HookProxy(self)
         self.keywords = self.readkeywords()
-
-    def _reraiseunpicklingproblem(self):
-        if hasattr(self, '_unpickle_exc'):
-            py.builtin._reraise(*self._unpickle_exc)
-
-    #
-    # note to myself: Pickling is uh.
-    #
-    def __getstate__(self):
-        return (self.name, self.parent)
-    def __setstate__(self, nameparent):
-        name, parent = nameparent
-        try:
-            colitems = parent._memocollect()
-            for colitem in colitems:
-                if colitem.name == name:
-                    # we are a copy that will not be returned
-                    # by our parent
-                    self.__dict__ = colitem.__dict__
-                    break
-            else:
-                raise ValueError("item %r not found in parent collection %r" %(
-                    name, [x.name for x in colitems]))
-        except KeyboardInterrupt:
-            raise
-        except Exception:
-            # our parent can't collect us but we want unpickling to
-            # otherwise continue - self._reraiseunpicklingproblem() will
-            # reraise the problem
-            self._unpickle_exc = py.std.sys.exc_info()
-            self.name = name
-            self.parent = parent
-            self.config = parent.config
 
     def __repr__(self):
         if getattr(self.config.option, 'debug', False):
@@ -79,7 +47,8 @@ class Node(object):
     def __eq__(self, other):
         if not isinstance(other, Node):
             return False
-        return self.name == other.name and self.parent == other.parent
+        return self.__class__ == other.__class__ and \
+               self.name == other.name and self.parent == other.parent 
 
     def __ne__(self, other):
         return not self == other
@@ -102,7 +71,7 @@ class Node(object):
             return getattr(self, attrname)
         try:
             res = function()
-        except (KeyboardInterrupt, SystemExit):
+        except py.builtin._sysex:
             raise
         except:
             failure = py.std.sys.exc_info()
@@ -117,7 +86,7 @@ class Node(object):
         l = [self]
         while 1:
             x = l[0]
-            if x.parent is not None and x.parent.parent is not None:
+            if x.parent is not None: # and x.parent.parent is not None:
                 l.insert(0, x.parent)
             else:
                 return l
@@ -136,39 +105,6 @@ class Node(object):
 
     def _keywords(self):
         return [self.name]
-
-    def _skipbykeyword(self, keywordexpr):
-        """ return True if they given keyword expression means to
-            skip this collector/item.
-        """
-        if not keywordexpr:
-            return
-        chain = self.listchain()
-        for key in filter(None, keywordexpr.split()):
-            eor = key[:1] == '-'
-            if eor:
-                key = key[1:]
-            if not (eor ^ self._matchonekeyword(key, chain)):
-                return True
-
-    def _matchonekeyword(self, key, chain):
-        elems = key.split(".")
-        # XXX O(n^2), anyone cares?
-        chain = [item.keywords for item in chain if item.keywords]
-        for start, _ in enumerate(chain):
-            if start + len(elems) > len(chain):
-                return False
-            for num, elem in enumerate(elems):
-                for keyword in chain[num + start]:
-                    ok = False
-                    if elem in keyword:
-                        ok = True
-                        break
-                if not ok:
-                    break
-            if num == len(elems) - 1 and ok:
-                return True
-        return False
 
     def _prunetraceback(self, traceback):
         return traceback
@@ -190,7 +126,6 @@ class Node(object):
                                style=style)
 
     repr_failure = _repr_failure_py
-    shortfailurerepr = "F"
 
 class Collector(Node):
     """
@@ -270,18 +205,11 @@ class Collector(Node):
         return traceback
 
 class FSCollector(Collector):
-    def __init__(self, fspath, parent=None, config=None):
+    def __init__(self, fspath, parent=None, config=None, collection=None):
         fspath = py.path.local(fspath)
-        super(FSCollector, self).__init__(fspath.basename, parent, config=config)
+        super(FSCollector, self).__init__(fspath.basename,
+            parent, config, collection)
         self.fspath = fspath
-
-    def __getstate__(self):
-        # RootCollector.getbynames() inserts a directory which we need
-        # to throw out here for proper re-instantiation
-        if isinstance(self.parent.parent, RootCollector):
-            assert self.parent.fspath == self.parent.parent.fspath, self.parent
-            return (self.name, self.parent.parent) # shortcut
-        return super(Collector, self).__getstate__()
 
 class File(FSCollector):
     """ base class for collecting tests from a file. """
@@ -368,59 +296,3 @@ def warnoldtestrun(function=None):
         "item.run() and item.execute()",
         stacklevel=2, function=function)
 
-
-
-class RootCollector(Directory):
-    def __init__(self, config):
-        Directory.__init__(self, config.topdir, parent=None, config=config)
-        self.name = None
-
-    def __repr__(self):
-        return "<RootCollector fspath=%r>" %(self.fspath,)
-
-    def getbynames(self, names):
-        current = self.consider(self.config.topdir)
-        while names:
-            name = names.pop(0)
-            if name == ".": # special "identity" name
-                continue
-            l = []
-            for x in current._memocollect():
-                if x.name == name:
-                    l.append(x)
-                elif x.fspath == current.fspath.join(name):
-                    l.append(x)
-                elif x.name == "()":
-                    names.insert(0, name)
-                    l.append(x)
-                    break
-            if not l:
-                raise ValueError("no node named %r below %r" %(name, current))
-            current = l[0]
-        return current
-
-    def totrail(self, node):
-        chain = node.listchain()
-        names = [self._getrelpath(chain[0].fspath)]
-        names += [x.name for x in chain[1:]]
-        return names
-
-    def fromtrail(self, trail):
-        return self.config._rootcol.getbynames(trail)
-
-    def _getrelpath(self, fspath):
-        topdir = self.config.topdir
-        relpath = fspath.relto(topdir)
-        if not relpath:
-            if fspath == topdir:
-                relpath = "."
-            else:
-                raise ValueError("%r not relative to topdir %s"
-                        %(self.fspath, topdir))
-        return relpath
-
-    def __getstate__(self):
-        return self.config
-
-    def __setstate__(self, config):
-        self.__init__(config)

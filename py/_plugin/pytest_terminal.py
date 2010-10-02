@@ -22,32 +22,20 @@ def pytest_addoption(parser):
          help="(deprecated, use -r)")
     group._addoption('--tb', metavar="style",
                action="store", dest="tbstyle", default='long',
-               type="choice", choices=['long', 'short', 'no', 'line'],
+               type="choice", choices=['long', 'short', 'no', 'line', 'native'],
                help="traceback print mode (long/short/line/no).")
     group._addoption('--fulltrace',
                action="store_true", dest="fulltrace", default=False,
                help="don't cut any tracebacks (default is to cut).")
-    group._addoption('--funcargs',
-               action="store_true", dest="showfuncargs", default=False,
-               help="show available function arguments, sorted by plugin")
 
 def pytest_configure(config):
+    if config.option.showfuncargs:
+        return
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
-    elif config.option.showfuncargs:
-        config.setsessionclass(ShowFuncargSession)
-        reporter = None
     else:
         reporter = TerminalReporter(config)
-    if reporter:
-        # XXX see remote.py's XXX
-        for attr in 'pytest_terminal_hasmarkup', 'pytest_terminal_fullwidth':
-            if hasattr(config, attr):
-                #print "SETTING TERMINAL OPTIONS", attr, getattr(config, attr)
-                name = attr.split("_")[-1]
-                assert hasattr(self.reporter._tw, name), name
-                setattr(reporter._tw, name, getattr(config, attr))
-        config.pluginmanager.register(reporter, 'terminalreporter')
+    config.pluginmanager.register(reporter, 'terminalreporter')
 
 def getreportopt(config):
     reportopts = ""
@@ -69,6 +57,17 @@ def getreportopt(config):
                 reportopts += char
     return reportopts
 
+def pytest_report_teststatus(report):
+    if report.passed:
+        letter = "."
+    elif report.skipped:
+        letter = "s"
+    elif report.failed:
+        letter = "F"
+        if report.when != "call":
+            letter = "f"
+    return report.outcome, letter, report.outcome.upper()
+
 class TerminalReporter:
     def __init__(self, config, file=None):
         self.config = config
@@ -85,12 +84,12 @@ class TerminalReporter:
         return char in self.reportchars
 
     def write_fspath_result(self, fspath, res):
-        fspath = self.curdir.bestrelpath(fspath)
         if fspath != self.currentfspath:
+            self.currentfspath = fspath
+            fspath = self.curdir.bestrelpath(fspath)
             self._tw.line()
             relpath = self.curdir.bestrelpath(fspath)
             self._tw.write(relpath + " ")
-            self.currentfspath = fspath
         self._tw.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
@@ -116,42 +115,6 @@ class TerminalReporter:
         self.ensure_newline()
         self._tw.sep(sep, title, **markup)
 
-    def getcategoryletterword(self, rep):
-        res = self.config.hook.pytest_report_teststatus(report=rep)
-        if res:
-            return res
-        for cat in 'skipped failed passed ???'.split():
-            if getattr(rep, cat, None):
-                break
-        return cat, self.getoutcomeletter(rep), self.getoutcomeword(rep)
-
-    def getoutcomeletter(self, rep):
-        return rep.shortrepr
-
-    def getoutcomeword(self, rep):
-        if rep.passed:
-            return "PASS", dict(green=True)
-        elif rep.failed:
-            return "FAIL", dict(red=True)
-        elif rep.skipped:
-            return "SKIP"
-        else:
-            return "???", dict(red=True)
-
-    def gettestid(self, item, relative=True):
-        fspath = item.fspath
-        chain = [x for x in item.listchain() if x.fspath == fspath]
-        chain = chain[1:]
-        names = [x.name for x in chain if x.name != "()"]
-        path = item.fspath
-        if relative:
-            relpath = path.relto(self.curdir)
-            if relpath:
-                path = relpath
-        names.insert(0, str(path))
-        return "::".join(names)
-
-
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
@@ -170,37 +133,47 @@ class TerminalReporter:
             self.write_line("[%s] %s" %(category, msg))
 
     def pytest_deselected(self, items):
-        self.stats.setdefault('deselected', []).append(items)
-
-    def pytest_itemstart(self, item, node=None):
-        if self.config.option.verbose:
-            line = self._reportinfoline(item)
-            self.write_ensure_prefix(line, "")
-        else:
-            # ensure that the path is printed before the
-            # 1st test of a module starts running
-            self.write_fspath_result(self._getfspath(item), "")
+        self.stats.setdefault('deselected', []).extend(items)
 
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
 
+    def pytest_runtest_logstart(self, nodeid, location, fspath):
+        # ensure that the path is printed before the
+        # 1st test of a module starts running
+        if self.config.option.verbose:
+            line = self._locationline(fspath, *location)
+            self.write_ensure_prefix(line, "")
+        else:
+            self.write_fspath_result(py.path.local(fspath), "")
+
     def pytest_runtest_logreport(self, report):
         rep = report
-        cat, letter, word = self.getcategoryletterword(rep)
+        res = self.config.hook.pytest_report_teststatus(report=rep)
+        cat, letter, word = res
+        self.stats.setdefault(cat, []).append(rep)
         if not letter and not word:
             # probably passed setup/teardown
             return
-        if isinstance(word, tuple):
-            word, markup = word
-        else:
-            markup = {}
-        self.stats.setdefault(cat, []).append(rep)
         if not self.config.option.verbose:
-            self.write_fspath_result(self._getfspath(rep.item), letter)
+            if not hasattr(rep, 'node'):
+                self.write_fspath_result(rep.fspath, letter)
+            else:
+                self._tw.write(letter)
         else:
-            line = self._reportinfoline(rep.item)
+            if isinstance(word, tuple):
+                word, markup = word
+            else:
+                if rep.passed:
+                    markup = {'green':True}
+                elif rep.failed:
+                    markup = {'red':True}
+                elif rep.skipped:
+                    markup = {'yellow':True}
+            line = self._locationline(str(rep.fspath), *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
+                #self._tw.write(word, **markup)
             else:
                 self.ensure_newline()
                 if hasattr(rep, 'node'):
@@ -213,25 +186,27 @@ class TerminalReporter:
         if not report.passed:
             if report.failed:
                 self.stats.setdefault("error", []).append(report)
-                self.write_fspath_result(report.collector.fspath, "E")
+                self.write_fspath_result(report.fspath, "E")
             elif report.skipped:
                 self.stats.setdefault("skipped", []).append(report)
-                self.write_fspath_result(report.collector.fspath, "S")
+                self.write_fspath_result(report.fspath, "S")
 
     def pytest_sessionstart(self, session):
         self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
-
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
         msg += " -- pytest-%s" % (py.__version__)
-        if self.config.option.verbose or self.config.option.debug or getattr(self.config.option, 'pastebin', None):
+        if self.config.option.verbose or self.config.option.debug or \
+           getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
         lines = self.config.hook.pytest_report_header(config=self.config)
         lines.reverse()
         for line in flatten(lines):
             self.write_line(line)
+
+    def pytest_log_finishcollection(self):
         for i, testarg in enumerate(self.config.args):
             self.write_line("test path %d: %s" %(i+1, testarg))
 
@@ -260,52 +235,40 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
 
-    def _reportinfoline(self, item):
-        collect_fspath = self._getfspath(item)
-        fspath, lineno, msg = self._getreportinfo(item)
+    def _locationline(self, collect_fspath, fspath, lineno, domain):
         if fspath and fspath != collect_fspath:
             fspath = "%s <- %s" % (
-                self.curdir.bestrelpath(collect_fspath),
-                self.curdir.bestrelpath(fspath))
+                self.curdir.bestrelpath(py.path.local(collect_fspath)),
+                self.curdir.bestrelpath(py.path.local(fspath)))
         elif fspath:
-            fspath = self.curdir.bestrelpath(fspath)
+            fspath = self.curdir.bestrelpath(py.path.local(fspath))
         if lineno is not None:
             lineno += 1
-        if fspath and lineno and msg:
-            line = "%(fspath)s:%(lineno)s: %(msg)s"
-        elif fspath and msg:
-            line = "%(fspath)s: %(msg)s"
+        if fspath and lineno and domain:
+            line = "%(fspath)s:%(lineno)s: %(domain)s"
+        elif fspath and domain:
+            line = "%(fspath)s: %(domain)s"
         elif fspath and lineno:
             line = "%(fspath)s:%(lineno)s %(extrapath)s"
         else:
-            line = "[noreportinfo]"
+            line = "[nolocation]"
         return line % locals() + " "
 
     def _getfailureheadline(self, rep):
-        if hasattr(rep, "collector"):
-            return str(rep.collector.fspath)
-        elif hasattr(rep, 'item'):
-            fspath, lineno, msg = self._getreportinfo(rep.item)
-            return msg
+        if hasattr(rep, 'location'):
+            fspath, lineno, domain = rep.location
+            return domain
         else:
-            return "test session"
+            return "test session" # XXX?
 
-    def _getreportinfo(self, item):
+    def _getcrashline(self, rep):
         try:
-            return item.__reportinfo
+            return str(rep.longrepr.reprcrash)
         except AttributeError:
-            pass
-        reportinfo = item.config.hook.pytest_report_iteminfo(item=item)
-        # cache on item
-        item.__reportinfo = reportinfo
-        return reportinfo
-
-    def _getfspath(self, item):
-        try:
-            return item.fspath
-        except AttributeError:
-            fspath, lineno, msg = self._getreportinfo(item)
-            return fspath
+            try:
+                return str(rep.longrepr)[:50]
+            except AttributeError:
+                return ""
 
     #
     # summaries for sessionfinish
@@ -317,7 +280,7 @@ class TerminalReporter:
             self.write_sep("=", "FAILURES")
             for rep in self.stats['failed']:
                 if tbstyle == "line":
-                    line = rep._getcrashline()
+                    line = self._getcrashline(rep)
                     self.write_line(line)
                 else:
                     msg = self._getfailureheadline(rep)
@@ -383,21 +346,27 @@ class CollectonlyReporter:
         self.outindent(collector)
         self.indent += self.INDENT
 
-    def pytest_itemstart(self, item, node=None):
+    def pytest_log_itemcollect(self, item):
         self.outindent(item)
 
     def pytest_collectreport(self, report):
         if not report.passed:
-            self.outindent("!!! %s !!!" % report.longrepr.reprcrash.message)
+            if hasattr(report.longrepr, 'reprcrash'):
+                msg = report.longrepr.reprcrash.message
+            else:
+                # XXX unify (we have CollectErrorRepr here)
+                msg = str(report.longrepr.longrepr)
+            self.outindent("!!! %s !!!" % msg)
+            #self.outindent("!!! error !!!")
             self._failed.append(report)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pytest_sessionfinish(self, session, exitstatus):
+    def pytest_log_finishcollection(self):
         if self._failed:
             self._tw.sep("!", "collection failures")
         for rep in self._failed:
             rep.toterminal(self._tw)
-
+        return self._failed and 1 or 0
 
 def repr_pythonversion(v=None):
     if v is None:
@@ -415,50 +384,3 @@ def flatten(l):
         else:
             yield x
 
-from py._test.session import Session
-class ShowFuncargSession(Session):
-    def main(self, colitems):
-        self.fspath = py.path.local()
-        self.sessionstarts()
-        try:
-            self.showargs(colitems[0])
-        finally:
-            self.sessionfinishes(exitstatus=1)
-
-    def showargs(self, colitem):
-        tw = py.io.TerminalWriter()
-        from py._test.funcargs import getplugins
-        from py._test.funcargs import FuncargRequest
-        plugins = getplugins(colitem, withpy=True)
-        verbose = self.config.getvalue("verbose")
-        for plugin in plugins:
-            available = []
-            for name, factory in vars(plugin).items():
-                if name.startswith(FuncargRequest._argprefix):
-                    name = name[len(FuncargRequest._argprefix):]
-                    if name not in available:
-                        available.append([name, factory])
-            if available:
-                pluginname = plugin.__name__
-                for name, factory in available:
-                    loc = self.getlocation(factory)
-                    if verbose:
-                        funcargspec = "%s -- %s" %(name, loc,)
-                    else:
-                        funcargspec = name
-                    tw.line(funcargspec, green=True)
-                    doc = factory.__doc__ or ""
-                    if doc:
-                        for line in doc.split("\n"):
-                            tw.line("    " + line.strip())
-                    else:
-                        tw.line("    %s: no docstring available" %(loc,),
-                            red=True)
-
-    def getlocation(self, function):
-        import inspect
-        fn = py.path.local(inspect.getfile(function))
-        lineno = py.builtin._getcode(function).co_firstlineno
-        if fn.relto(self.fspath):
-            fn = fn.relto(self.fspath)
-        return "%s:%d" %(fn, lineno+1)

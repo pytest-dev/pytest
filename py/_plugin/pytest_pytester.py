@@ -7,13 +7,14 @@ import sys, os
 import re
 import inspect
 import time
+from fnmatch import fnmatch
 from py._test.config import Config as pytestConfig
 from py.builtin import print_
 
 def pytest_addoption(parser):
     group = parser.getgroup("pylib")
-    group.addoption('--tools-on-path',
-           action="store_true", dest="toolsonpath", default=False,
+    group.addoption('--no-tools-on-path',
+           action="store_true", dest="notoolsonpath", default=False,
            help=("discover tools on PATH instead of going through py.cmdline.")
     )
 
@@ -74,10 +75,8 @@ class TmpTestdir:
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
-    def Config(self, topdir=None):
-        if topdir is None:
-            topdir = self.tmpdir.dirpath()
-        return pytestConfig(topdir=topdir)
+    def Config(self):
+        return pytestConfig()
 
     def finalize(self):
         for p in self._syspathremove:
@@ -149,16 +148,23 @@ class TmpTestdir:
         p.ensure("__init__.py")
         return p
 
+    def getnode(self, config, arg):
+        from py._test.session import Collection
+        collection = Collection(config)
+        return collection.getbyid(collection._normalizearg(arg))[0]
+
     def genitems(self, colitems):
-        return list(self.session.genitems(colitems))
+        collection = colitems[0].collection
+        result = []
+        collection.genitems(colitems, (), result)
+        return result
 
     def inline_genitems(self, *args):
         #config = self.parseconfig(*args)
-        config = self.parseconfig(*args)
-        session = config.initsession()
+        from py._test.session import Collection
+        config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
-        colitems = [config.getnode(arg) for arg in config.args]
-        items = list(session.genitems(colitems))
+        items = Collection(config).perform_collect()
         return items, rec
 
     def runitem(self, source):
@@ -187,12 +193,10 @@ class TmpTestdir:
     def inline_run(self, *args):
         args = ("-s", ) + args # otherwise FD leakage
         config = self.parseconfig(*args)
-        config.pluginmanager.do_configure(config)
-        session = config.initsession()
         reprec = self.getreportrecorder(config)
-        colitems = config.getinitialnodes()
-        session.main(colitems)
-        config.pluginmanager.do_unconfigure(config)
+        #config.pluginmanager.do_configure(config)
+        config.hook.pytest_cmdline_main(config=config)
+        #config.pluginmanager.do_unconfigure(config)
         return reprec
 
     def config_preparse(self):
@@ -245,29 +249,17 @@ class TmpTestdir:
 
     def getitems(self,  source):
         modcol = self.getmodulecol(source)
-        return list(modcol.config.initsession().genitems([modcol]))
-        #assert item is not None, "%r item not found in module:\n%s" %(funcname, source)
-        #return item
-
-    def getfscol(self,  path, configargs=()):
-        self.config = self.parseconfig(path, *configargs)
-        self.session = self.config.initsession()
-        return self.config.getnode(path)
+        return self.genitems([modcol])
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
         kw = {self.request.function.__name__: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
             self.makepyfile(__init__ = "#")
-        self.config = self.parseconfig(path, *configargs)
-        self.session = self.config.initsession()
-        #self.config.pluginmanager.do_configure(config=self.config)
-        # XXX
-        self.config.pluginmanager.import_plugin("runner")
-        plugin = self.config.pluginmanager.getplugin("runner")
-        plugin.pytest_configure(config=self.config)
-
-        return self.config.getnode(path)
+        self.config = config = self.parseconfigure(path, *configargs)
+        node = self.getnode(config, path)
+        #config.pluginmanager.do_unconfigure(config)
+        return node
 
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
@@ -314,7 +306,7 @@ class TmpTestdir:
         return self.run(*fullargs)
 
     def _getpybinargs(self, scriptname):
-        if self.request.config.getvalue("toolsonpath"):
+        if not self.request.config.getvalue("notoolsonpath"):
             script = py.path.local.sysfind(scriptname)
             assert script, "script %r not found" % scriptname
             return (script,)
@@ -334,7 +326,7 @@ class TmpTestdir:
         return self.run(sys.executable, script)
 
     def _getsysprepend(self):
-        if not self.request.config.getvalue("toolsonpath"):
+        if self.request.config.getvalue("notoolsonpath"):
             s = "import sys;sys.path.insert(0,%r);" % str(py._pydir.dirpath())
         else:
             s = ""
@@ -360,8 +352,8 @@ class TmpTestdir:
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         pexpect = py.test.importorskip("pexpect", "2.4")
-        if not self.request.config.getvalue("toolsonpath"):
-            py.test.skip("need --tools-on-path to run py.test script")
+        if self.request.config.getvalue("notoolsonpath"):
+            py.test.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
         invoke = self._getpybinargs("py.test")[0]
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
@@ -405,8 +397,7 @@ class ReportRecorder(object):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
-            colitem = rep.getnode()
-            if not inamepart or inamepart in colitem.listnames():
+            if not inamepart or inamepart in rep.nodenames:
                 l.append(rep)
         if not l:
             raise ValueError("could not find test report matching %r: no test reports at all!" %
@@ -474,13 +465,25 @@ class LineMatcher:
     def str(self):
         return "\n".join(self.lines)
 
-    def fnmatch_lines(self, lines2):
+    def _getlines(self, lines2):
         if isinstance(lines2, str):
             lines2 = py.code.Source(lines2)
         if isinstance(lines2, py.code.Source):
             lines2 = lines2.strip().lines
+        return lines2
 
-        from fnmatch import fnmatch
+    def fnmatch_lines_random(self, lines2):
+        lines2 = self._getlines(lines2)
+        for line in lines2:
+            for x in self.lines:
+                if line == x or fnmatch(x, line):
+                    print_("matched: ", repr(line))
+                    break
+            else:
+                raise ValueError("line %r not found in output" % line)
+
+    def fnmatch_lines(self, lines2):
+        lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
         extralines = []

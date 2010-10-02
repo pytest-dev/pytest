@@ -3,30 +3,27 @@
 import sys
 import py
 
-def pytest_pyfunc_call(__multicall__, pyfuncitem):
-    if not __multicall__.execute():
-        testfunction = pyfuncitem.obj
-        if pyfuncitem._isyieldedfunction():
-            testfunction(*pyfuncitem._args)
-        else:
-            funcargs = pyfuncitem.funcargs
-            testfunction(**funcargs)
+def pytest_cmdline_main(config):
+    from py._test.session import Session
+    return Session(config).main()
 
-def pytest_collect_file(path, parent):
-    ext = path.ext
-    pb = path.purebasename
-    if pb.startswith("test_") or pb.endswith("_test") or \
-       path in parent.config._argfspaths:
-        if ext == ".py":
-            return parent.ihook.pytest_pycollect_makemodule(
-                path=path, parent=parent)
+def pytest_perform_collection(session):
+    collection = session.collection
+    assert not hasattr(collection, 'items')
+    hook = session.config.hook
+    collection.items = items = collection.perform_collect()
+    hook.pytest_collection_modifyitems(config=session.config, items=items)
+    hook.pytest_log_finishcollection(collection=collection)
+    return True
 
-def pytest_pycollect_makemodule(path, parent):
-    return parent.Module(path, parent)
-
-def pytest_funcarg__pytestconfig(request):
-    """ the pytest config object with access to command line opts."""
-    return request.config
+def pytest_runtest_mainloop(session):
+    if session.config.option.collectonly:
+        return True
+    for item in session.collection.items:
+        item.config.hook.pytest_runtest_protocol(item=item)
+        if session.shouldstop:
+            raise session.Interrupted(session.shouldstop)
+    return True
 
 def pytest_ignore_collect(path, config):
     ignore_paths = config.getconftest_pathlist("collect_ignore", path=path)
@@ -35,12 +32,6 @@ def pytest_ignore_collect(path, config):
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
-    # XXX more refined would be:
-    if ignore_paths:
-        for p in ignore_paths:
-            if path == p or path.relto(p):
-                return True
-
 
 def pytest_collect_directory(path, parent):
     # XXX reconsider the following comment
@@ -49,7 +40,7 @@ def pytest_collect_directory(path, parent):
     # define Directory(dir) already
     if not parent.recfilter(path): # by default special ".cvs", ...
         # check if cmdline specified this dir or a subdir directly
-        for arg in parent.config._argfspaths:
+        for arg in parent.collection._argfspaths:
             if path == arg or arg.relto(path):
                 break
         else:
@@ -68,12 +59,6 @@ def pytest_addoption(parser):
     group._addoption('--maxfail', metavar="num",
                action="store", type="int", dest="maxfail", default=0,
                help="exit after first num failures or errors.")
-    group._addoption('-k',
-        action="store", dest="keyword", default='',
-        help="only run test items matching the given "
-             "space separated keywords.  precede a keyword with '-' to negate. "
-             "Terminate the expression with ':' to treat a match as a signal "
-             "to run all subsequent tests. ")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly',
@@ -91,41 +76,7 @@ def pytest_addoption(parser):
                help="base temporary directory for this test run.")
 
 def pytest_configure(config):
-    setsession(config)
     # compat
     if config.getvalue("exitfirst"):
         config.option.maxfail = 1
 
-def setsession(config):
-    val = config.getvalue
-    if val("collectonly"):
-        from py._test.session import Session
-        config.setsessionclass(Session)
-
-# pycollect related hooks and code, should move to pytest_pycollect.py
-
-def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
-    res = __multicall__.execute()
-    if res is not None:
-        return res
-    if collector._istestclasscandidate(name, obj):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
-        return collector.Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
-        if is_generator(obj):
-            # XXX deprecation warning
-            return collector.Generator(name, parent=collector)
-        else:
-            return collector._genfunctions(name, obj)
-
-def is_generator(func):
-    try:
-        return py.code.getrawcode(func).co_flags & 32 # generator function
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False

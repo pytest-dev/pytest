@@ -26,7 +26,7 @@ def _getdimensions():
 def get_terminal_width():
     try:
         height, width = _getdimensions()
-    except (SystemExit, KeyboardInterrupt):
+    except py.builtin._sysex:
         raise
     except:
         # FALLBACK

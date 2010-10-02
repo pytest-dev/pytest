@@ -8,7 +8,7 @@ dictionary or an import path.
 
 (c) Holger Krekel and others, 2004-2010
 """
-__version__ = version = "1.3.4a1"
+__version__ = version = "1.4.0a1"
 
 import py.apipkg
 
@@ -45,15 +45,9 @@ py.apipkg.initpkg(__name__, dict(
             'Directory' : '._test.collect:Directory',
             'File'      : '._test.collect:File',
             'Item'      : '._test.collect:Item',
-            'Module'    : '._test.pycollect:Module',
-            'Class'     : '._test.pycollect:Class',
-            'Instance'  : '._test.pycollect:Instance',
-            'Generator' : '._test.pycollect:Generator',
-            'Function'  : '._test.pycollect:Function',
-            '_fillfuncargs' : '._test.funcargs:fillfuncargs',
         },
         'cmdline': {
-            'main' : '._test.cmdline:main', # backward compat
+            'main' : '._test.session:main', # backward compat
         },
     },
 
@@ -99,6 +93,7 @@ py.apipkg.initpkg(__name__, dict(
         '_AssertionError'   : '._code.assertion:AssertionError',
         '_reinterpret_old'  : '._code.assertion:reinterpret_old',
         '_reinterpret'      : '._code.assertion:reinterpret',
+        '_reprcompare'      : '._code.assertion:_reprcompare',
     },
 
     # backports and additions of builtins
@@ -111,6 +106,7 @@ py.apipkg.initpkg(__name__, dict(
         'frozenset'      : '._builtin:frozenset',
         'BaseException'  : '._builtin:BaseException',
         'GeneratorExit'  : '._builtin:GeneratorExit',
+        '_sysex'         : '._builtin:_sysex',
         'print_'         : '._builtin:print_',
         '_reraise'       : '._builtin:_reraise',
         '_tryimport'     : '._builtin:_tryimport',

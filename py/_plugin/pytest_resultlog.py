@@ -57,21 +57,20 @@ class ResultLog(object):
         self.config = config
         self.logfile = logfile # preferably line buffered
 
-    def write_log_entry(self, testpath, shortrepr, longrepr):
-        print_("%s %s" % (shortrepr, testpath), file=self.logfile)
+    def write_log_entry(self, testpath, lettercode, longrepr):
+        print_("%s %s" % (lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
             print_(" %s" % line, file=self.logfile)
 
-    def log_outcome(self, node, shortrepr, longrepr):
-        testpath = generic_path(node)
-        self.write_log_entry(testpath, shortrepr, longrepr)
+    def log_outcome(self, report, lettercode, longrepr):
+        testpath = getattr(report, 'nodeid', None)
+        if testpath is None:
+            testpath = report.fspath
+        self.write_log_entry(testpath, lettercode, longrepr)
 
     def pytest_runtest_logreport(self, report):
         res = self.config.hook.pytest_report_teststatus(report=report)
-        if res is not None:
-            code = res[1]
-        else:
-            code = report.shortrepr
+        code = res[1]
         if code == 'x':
             longrepr = str(report.longrepr)
         elif code == 'X':
@@ -82,7 +81,7 @@ class ResultLog(object):
             longrepr = str(report.longrepr)
         elif report.skipped:
             longrepr = str(report.longrepr.reprcrash.message)
-        self.log_outcome(report.item, code, longrepr)
+        self.log_outcome(report, code, longrepr)
 
     def pytest_collectreport(self, report):
         if not report.passed:
@@ -92,7 +91,7 @@ class ResultLog(object):
                 assert report.skipped
                 code = "S"
             longrepr = str(report.longrepr.reprcrash)
-            self.log_outcome(report.collector, code, longrepr)
+            self.log_outcome(report, code, longrepr)
 
     def pytest_internalerror(self, excrepr):
         path = excrepr.reprcrash.path

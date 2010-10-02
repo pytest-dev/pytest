@@ -20,12 +20,30 @@ def pytest_configure(config):
         and all plugins and initial conftest files been loaded.
     """
 
+def pytest_cmdline_main(config):
+    """ called for performing the main (cmdline) action. """
+pytest_cmdline_main.firstresult = True
+
+def pytest_runtest_mainloop(session):
+    """ called for performing the main runtest loop (after collection. """
+pytest_runtest_mainloop.firstresult = True
+
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
 # -------------------------------------------------------------------------
 # collection hooks
 # -------------------------------------------------------------------------
+
+def pytest_perform_collection(session):
+    """ perform the collection protocol for the given session. """
+pytest_perform_collection.firstresult = True
+
+def pytest_collection_modifyitems(config, items):
+    """ called to allow filtering and selecting of test items (inplace). """
+
+def pytest_log_finishcollection(collection):
+    """ called after collection has finished. """
 
 def pytest_ignore_collect(path, config):
     """ return true value to prevent considering this path for collection.
@@ -41,8 +59,12 @@ pytest_collect_directory.firstresult = True
 def pytest_collect_file(path, parent):
     """ return Collection node or None for the given path. """
 
+# logging hooks for collection
 def pytest_collectstart(collector):
     """ collector starts collecting. """
+
+def pytest_log_itemcollect(item):
+    """ we just collected a test item. """
 
 def pytest_collectreport(report):
     """ collector finished collecting. """
@@ -53,10 +75,6 @@ def pytest_deselected(items):
 def pytest_make_collect_report(collector):
     """ perform a collection and return a collection. """
 pytest_make_collect_report.firstresult = True
-
-# XXX rename to item_collected()?  meaning in distribution context?
-def pytest_itemstart(item, node=None):
-    """ test item gets collected. """
 
 # -------------------------------------------------------------------------
 # Python test function related hooks
@@ -84,10 +102,15 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
+def pytest_itemstart(item, node=None):
+    """ (deprecated, use pytest_runtest_logstart). """
 
 def pytest_runtest_protocol(item):
     """ implement fixture, run and report about the given test item. """
 pytest_runtest_protocol.firstresult = True
+
+def pytest_runtest_logstart(nodeid, location, fspath):
+    """ signal the start of a test run. """
 
 def pytest_runtest_setup(item):
     """ called before pytest_runtest_call(). """
@@ -110,7 +133,7 @@ def pytest__teardown_final(session):
     """ called before test session finishes. """
 pytest__teardown_final.firstresult = True
 
-def pytest__teardown_final_logerror(report):
+def pytest__teardown_final_logerror(report, session):
     """ called if runtest_teardown_final failed. """
 
 # -------------------------------------------------------------------------
@@ -122,6 +145,20 @@ def pytest_sessionstart(session):
 
 def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
+
+
+# -------------------------------------------------------------------------
+# hooks for customising the assert methods
+# -------------------------------------------------------------------------
+
+def pytest_assertrepr_compare(config, op, left, right):
+    """return explanation for comparisons in failing assert expressions.
+
+    Return None for no custom explanation, otherwise return a list
+    of strings.  The strings will be joined by newlines but any newlines
+    *in* a string will be escaped.  Note that all but the first line will
+    be indented sligthly, the intention is for the first line to be a summary.
+    """
 
 # -------------------------------------------------------------------------
 # hooks for influencing reporting (invoked from pytest_terminal)
@@ -138,8 +175,10 @@ def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting. """
 
 def pytest_report_iteminfo(item):
-    """ return (fspath, lineno, name) for the item.
-        the information is used for result display and to sort tests
+    """ return (fspath, lineno, domainpath) location info for the item.
+        the information is used for result display and to sort tests.
+        fspath,lineno: file and linenumber of source of item definition.
+        domainpath: custom id - e.g. for python: dotted import address
     """
 pytest_report_iteminfo.firstresult = True
 

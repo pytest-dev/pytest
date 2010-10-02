@@ -89,60 +89,28 @@ class TestTerminal:
         assert lines[1].endswith("xy.py .")
         assert lines[2] == "hello world"
 
-    def test_testid(self, testdir, linecomp):
-        func,method = testdir.getitems("""
-            def test_func():
-                pass
-            class TestClass:
-                def test_method(self):
-                    pass
+    def test_show_runtest_logstart(self, testdir, linecomp):
+        item = testdir.getitem("def test_func(): pass")
+        tr = TerminalReporter(item.config, file=linecomp.stringio)
+        item.config.pluginmanager.register(tr)
+        nodeid = item.collection.getid(item)
+        location = item.ihook.pytest_report_iteminfo(item=item)
+        tr.config.hook.pytest_runtest_logstart(nodeid=nodeid,
+            location=location, fspath=str(item.fspath))
+        linecomp.assert_contains_lines([
+            "*test_show_runtest_logstart.py*"
+        ])
+
+    def test_runtest_location_shown_before_test_starts(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import time
+                time.sleep(20)
         """)
-        tr = TerminalReporter(func.config, file=linecomp.stringio)
-        id = tr.gettestid(func)
-        assert id.endswith("test_testid.py::test_func")
-        fspath = py.path.local(id.split("::")[0])
-        assert fspath.check()
-        id = tr.gettestid(method)
-        assert id.endswith("test_testid.py::TestClass::test_method")
-
-    def test_show_path_before_running_test(self, testdir, linecomp):
-        item = testdir.getitem("def test_func(): pass")
-        tr = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(tr)
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*test_show_path_before_running_test.py*"
-        ])
-
-    def test_itemreport_reportinfo(self, testdir, linecomp):
-        testdir.makeconftest("""
-            import py
-            class Function(py.test.collect.Function):
-                def reportinfo(self):
-                    return "ABCDE", 42, "custom"
-        """)
-        item = testdir.getitem("def test_func(): pass")
-        tr = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(tr)
-        tr.config.option.verbose = True
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*ABCDE:43: custom*"
-        ])
-
-    def test_itemreport_pytest_report_iteminfo(self, testdir, linecomp):
-        item = testdir.getitem("def test_func(): pass")
-        class Plugin:
-            def pytest_report_iteminfo(self, item):
-                return "FGHJ", 42, "custom"
-        item.config.pluginmanager.register(Plugin())
-        tr = TerminalReporter(item.config, file=linecomp.stringio)
-        item.config.pluginmanager.register(tr)
-        tr.config.option.verbose = True
-        tr.config.hook.pytest_itemstart(item=item)
-        linecomp.assert_contains_lines([
-            "*FGHJ:43: custom*"
-        ])
+        child = testdir.spawn_pytest("")
+        child.expect(".*test_runtest_location.*py")
+        child.sendeof()
+        child.kill(15)
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         p1 = testdir.makepyfile(test_p1="""
@@ -206,12 +174,12 @@ class TestCollectonly:
            "<Module 'test_collectonly_basic.py'>"
         ])
         item = modcol.join("test_func")
-        rep.config.hook.pytest_itemstart(item=item)
+        rep.config.hook.pytest_log_itemcollect(item=item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>",
         ])
-        rep.config.hook.pytest_collectreport(
-            report=runner.CollectReport(modcol, [], excinfo=None))
+        report = rep.config.hook.pytest_make_collect_report(collector=modcol)
+        rep.config.hook.pytest_collectreport(report=report)
         assert rep.indent == indent
 
     def test_collectonly_skipped_module(self, testdir, linecomp):
@@ -264,13 +232,13 @@ class TestCollectonly:
         stderr = result.stderr.str().strip()
         #assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
-        extra = result.stdout.fnmatch_lines(py.code.Source("""
-            <Module '*.py'>
-              <Function 'test_func1'*>
-              <Class 'TestClass'>
-                <Instance '()'>
-                  <Function 'test_method'*>
-        """).strip())
+        extra = result.stdout.fnmatch_lines([
+            "*<Module '*.py'>",
+            "* <Function 'test_func1'*>",
+            "* <Class 'TestClass'>",
+            "*  <Instance '()'>",
+            "*   <Function 'test_method'*>",
+        ])
 
     def test_collectonly_error(self, testdir):
         p = testdir.makepyfile("import Errlkjqweqwe")
@@ -278,9 +246,9 @@ class TestCollectonly:
         stderr = result.stderr.str().strip()
         assert result.ret == 1
         extra = result.stdout.fnmatch_lines(py.code.Source("""
-            <Module '*.py'>
+            *<Module '*.py'>
               *ImportError*
-            !!!*failures*!!!
+            *!!!*failures*!!!
             *test_collectonly_error.py:1*
         """).strip())
 
@@ -454,6 +422,7 @@ class TestTerminalFunctional:
             "*test_verbose_reporting.py:10: test_gen*FAIL*",
         ])
         assert result.ret == 1
+        py.test.xfail("fix dist-testing")
         pytestconfig.pluginmanager.skipifmissing("xdist")
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([

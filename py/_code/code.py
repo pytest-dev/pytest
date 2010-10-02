@@ -189,7 +189,7 @@ class TracebackEntry(object):
         """
         try:
             return self.frame.eval("__tracebackhide__")
-        except (SystemExit, KeyboardInterrupt):
+        except py.builtin._sysex:
             raise
         except:
             return False
@@ -354,9 +354,17 @@ class ExceptionInfo(object):
             abspath=False, tbfilter=True, funcargs=False):
         """ return str()able representation of this exception info.
             showlocals: show locals per traceback entry
-            style: long|short|no traceback style
+            style: long|short|no|native traceback style
             tbfilter: hide entries (where __tracebackhide__ is true)
         """
+        if style == 'native':
+            import traceback
+            return ''.join(traceback.format_exception(
+                self.type,
+                self.value,
+                self.traceback[0]._rawentry,
+                ))
+
         fmt = FormattedExcinfo(showlocals=showlocals, style=style,
             abspath=abspath, tbfilter=tbfilter, funcargs=funcargs)
         return fmt.repr_excinfo(self)

@@ -87,6 +87,8 @@ except NameError:
         pass
     GeneratorExit.__module__ = 'exceptions'
 
+_sysex = (KeyboardInterrupt, SystemExit, MemoryError, GeneratorExit)
+
 if sys.version_info >= (3, 0):
     exec ("print_ = print ; exec_=exec")
     import builtins

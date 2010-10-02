@@ -1,11 +1,6 @@
 import py
 
 class SessionTests:
-    def test_initsession(self, testdir, tmpdir):
-        config = testdir.reparseconfig()
-        session = config.initsession()
-        assert session.config is config
-
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
             def test_one():
@@ -22,14 +17,14 @@ class SessionTests:
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3
-        assert failed[0].item.name == "test_one_one"
-        assert failed[1].item.name == "test_other"
-        assert failed[2].item.name == "test_two"
-        itemstarted = reprec.getcalls("pytest_itemstart")
+        assert failed[0].nodenames[-1] == "test_one_one"
+        assert failed[1].nodenames[-1] == "test_other"
+        assert failed[2].nodenames[-1] == "test_two"
+        itemstarted = reprec.getcalls("pytest_log_itemcollect")
         assert len(itemstarted) == 4
         colstarted = reprec.getcalls("pytest_collectstart")
-        assert len(colstarted) == 1
-        col = colstarted[0].collector
+        assert len(colstarted) == 1 + 1 # XXX ExtraTopCollector
+        col = colstarted[1].collector
         assert isinstance(col, py.test.collect.Module)
 
     def test_nested_import_error(self, testdir):
@@ -183,13 +178,13 @@ class TestNewSession(SessionTests):
         )
         reprec = testdir.inline_run('--collectonly', p.dirpath())
 
-        itemstarted = reprec.getcalls("pytest_itemstart")
+        itemstarted = reprec.getcalls("pytest_log_itemcollect")
         assert len(itemstarted) == 3
         assert not reprec.getreports("pytest_runtest_logreport")
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 8
+        assert len(started) == 8 + 1 # XXX extra TopCollector
         colfail = [x for x in finished if x.failed]
         colskipped = [x for x in finished if x.skipped]
         assert len(colfail) == 1

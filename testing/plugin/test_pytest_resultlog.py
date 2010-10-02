@@ -3,10 +3,12 @@ import os
 from py._plugin.pytest_resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
 from py._test.collect import Node, Item, FSCollector
+from py._test.session import Collection
 
 def test_generic_path(testdir):
     config = testdir.parseconfig()
-    p1 = Node('a', parent=config._rootcol)
+    collection = Collection(config)
+    p1 = Node('a', config=config, collection=collection)
     #assert p1.fspath is None
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)
@@ -15,7 +17,7 @@ def test_generic_path(testdir):
     res = generic_path(item)
     assert res == 'a.B().c'
 
-    p0 = FSCollector('proj/test', parent=config._rootcol)
+    p0 = FSCollector('proj/test', config=config, collection=collection)
     p1 = FSCollector('proj/test/a', parent=p0)
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent = p2)

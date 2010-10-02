@@ -6,27 +6,39 @@ produce code coverage reports using the 'coverage' package, including support fo
 .. contents::
   :local:
 
-This plugin produces coverage reports using the coverage package.  It
-supports centralised testing and distributed testing in both load and
-each modes.
+This plugin produces coverage reports.  It supports centralised testing and distributed testing in
+both load and each modes.  It also supports coverage of subprocesses.
 
-All features offered by the coverage package should be available,
-either through this plugin or through coverage's own config file.
+All features offered by the coverage package should be available, either through pytest-cov or
+through coverage's config file.
 
 
 Installation
 ------------
 
-The `pytest-cov pypi`_ package may be installed / uninstalled with pip::
+The `pytest-cov`_ package may be installed with pip or easy_install::
 
     pip install pytest-cov
-    pip uninstall pytest-cov
-
-Alternatively easy_install can be used::
-
     easy_install pytest-cov
 
-.. _`pytest-cov pypi`: http://pypi.python.org/pypi/pytest-cov/
+.. _`pytest-cov`: http://pypi.python.org/pypi/pytest-cov/
+
+
+Uninstallation
+--------------
+
+Uninstalling packages is supported by pip::
+
+    pip uninstall pytest-cov
+
+However easy_install does not provide an uninstall facility.
+
+.. IMPORTANT::
+
+    Ensure that you manually delete the init_cov_core.pth file in your site-packages directory.
+
+    This file starts coverage collection of subprocesses if appropriate during site initialisation
+    at python startup.
 
 
 Usage
@@ -35,6 +47,9 @@ Usage
 Centralised Testing
 ~~~~~~~~~~~~~~~~~~~
 
+Centralised testing will report on the combined coverage of the main process and all of it's
+subprocesses.
+
 Running centralised testing::
 
     py.test --cov myproj tests/
@@ -42,150 +57,149 @@ Running centralised testing::
 Shows a terminal report::
 
     -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
-    Name                 Stmts   Exec  Cover   Missing
-    --------------------------------------------------
-    myproj/__init__          2      2   100%
-    myproj/myproj          257    244    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-    myproj/feature4286      94     87    92%   183-188, 197
-    --------------------------------------------------
-    TOTAL                  353    333    94%
+    Name                 Stmts   Miss  Cover
+    ----------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%
+    myproj/feature4286      94      7    92%
+    ----------------------------------------
+    TOTAL                  353     20    94%
 
 
-Distributed Testing
-~~~~~~~~~~~~~~~~~~~
+Distributed Testing: Load
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Distributed testing with dist mode set to load::
+Distributed testing with dist mode set to load will report on the combined coverage of all slaves.
+The slaves may be spread out over any number of hosts and each slave may be located anywhere on the
+file system.  Each slave will have it's subprocesses measured.
+
+Running distributed testing with dist mode set to load::
 
     py.test --cov myproj -n 2 tests/
 
-The results from the slaves will be combined like so::
+Shows a terminal report::
 
     -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
-    Name                 Stmts   Exec  Cover   Missing
-    --------------------------------------------------
-    myproj/__init__          2      2   100%
-    myproj/myproj          257    244    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-    myproj/feature4286      94     87    92%   183-188, 197
-    --------------------------------------------------
-    TOTAL                  353    333    94%
+    Name                 Stmts   Miss  Cover
+    ----------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%
+    myproj/feature4286      94      7    92%
+    ----------------------------------------
+    TOTAL                  353     20    94%
 
 
-Distributed testing in each mode::
+Again but spread over different hosts and different directories::
 
-    py.test --cov myproj --dist=each
-            --tx=popen//python=/usr/local/python265/bin/python
-            --tx=popen//python=/usr/local/python27b1/bin/python
+    py.test --cov myproj --dist load
+            --tx ssh=memedough@host1//chdir=testenv1
+            --tx ssh=memedough@host2//chdir=/tmp/testenv2//python=/tmp/env1/bin/python
+            --rsyncdir myproj --rsyncdir tests --rsync examples
             tests/
 
-Will produce a report for each slave::
+Shows a terminal report::
 
-    -------------------- coverage: platform linux2, python 2.6.5-final-0 ---------------------
-    Name                 Stmts   Exec  Cover   Missing
-    --------------------------------------------------
-    myproj/__init__          2      2   100%
-    myproj/myproj          257    244    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-    myproj/feature4286      94     87    92%   183-188, 197
-    --------------------------------------------------
-    TOTAL                  353    333    94%
-    --------------------- coverage: platform linux2, python 2.7.0-beta-1 ---------------------
-    Name                 Stmts   Exec  Cover   Missing
-    --------------------------------------------------
-    myproj/__init__          2      2   100%
-    myproj/myproj          257    244    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-    myproj/feature4286      94     87    92%   183-188, 197
-    --------------------------------------------------
-    TOTAL                  353    333    94%
+    -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
+    Name                 Stmts   Miss  Cover
+    ----------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%
+    myproj/feature4286      94      7    92%
+    ----------------------------------------
+    TOTAL                  353     20    94%
 
 
-Distributed testing in each mode can also produce a single combined
-report.  This is useful to get coverage information spanning things
-such as all python versions::
+Distributed Testing: Each
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    py.test --cov myproj --cov-combine-each --dist=each
-            --tx=popen//python=/usr/local/python265/bin/python
-            --tx=popen//python=/usr/local/python27b1/bin/python
+Distributed testing with dist mode set to each will report on the combined coverage of all slaves.
+Since each slave is running all tests this allows generating a combined coverage report for multiple
+environments.
+
+Running distributed testing with dist mode set to each::
+
+    py.test --cov myproj --dist each
+            --tx popen//chdir=/tmp/testenv3//python=/usr/local/python27/bin/python
+            --tx ssh=memedough@host2//chdir=/tmp/testenv4//python=/tmp/env2/bin/python
+            --rsyncdir myproj --rsyncdir tests --rsync examples
             tests/
 
-Which looks like::
+Shows a terminal report::
 
     ---------------------------------------- coverage ----------------------------------------
                               platform linux2, python 2.6.5-final-0
-                               platform linux2, python 2.7.0-beta-1
-    Name                 Stmts   Exec  Cover   Missing
-    --------------------------------------------------
-    myproj/__init__          2      2   100%
-    myproj/myproj          257    244    94%   24-26, 99, 149, 233-236, 297-298, 369-370
-    myproj/feature4286      94     87    92%   183-188, 197
-    --------------------------------------------------
-    TOTAL                  353    333    94%
+                              platform linux2, python 2.7.0-final-0
+    Name                 Stmts   Miss  Cover
+    ----------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%
+    myproj/feature4286      94      7    92%
+    ----------------------------------------
+    TOTAL                  353     20    94%
 
 
 Reporting
 ---------
 
-By default a terminal report is output.  This report can be disabled
-if desired, such as when results are going to a continuous integration
-system and the terminal output won't be seen.
+It is possible to generate any combination of the reports for a single test run.
 
-In addition and without rerunning tests it is possible to generate
-annotated source code, a html report and an xml report.
+The available reports are terminal (with or without missing line numbers shown), HTML, XML and
+annotated source code.
 
-The directories for annotated source code and html reports can be
-specified as can the file name for the xml report.
+The terminal report without line numbers (default)::
 
-Since testing often takes a non trivial amount of time at the end of
-testing any / all of the reports may be generated.
+    py.test --cov-report term --cov myproj tests/
+
+    -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
+    Name                 Stmts   Miss  Cover
+    ----------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%
+    myproj/feature4286      94      7    92%
+    ----------------------------------------
+    TOTAL                  353     20    94%
+
+
+The terminal report with line numbers::
+
+    py.test --cov-report term-missing --cov myproj tests/
+
+    -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
+    Name                 Stmts   Miss  Cover   Missing
+    --------------------------------------------------
+    myproj/__init__          2      0   100%
+    myproj/myproj          257     13    94%   24-26, 99, 149, 233-236, 297-298, 369-370
+    myproj/feature4286      94      7    92%   183-188, 197
+    --------------------------------------------------
+    TOTAL                  353     20    94%
+
+
+The remaining three reports output to files without showing anything on the terminal (useful for
+when the output is going to a continuous integration server)::
+
+    py.test --cov-report html --cov-report xml --cov-report annotate --cov myproj tests/
 
 
 Coverage Data File
 ------------------
 
-During testing there may be many data files with coverage data.  These
-will have unique suffixes and will be combined at the end of testing.
+The data file is erased at the beginning of testing to ensure clean data for each test run.
 
-Upon completion, for --dist=load (and also for --dist=each when the
---cov-combine-each option is used) there will only be one data file.
-
-For --dist=each there may be many data files where each one will have
-the platform / python version info appended to the name.
-
-These data files are left at the end of testing so that it is possible
-to use normal coverage tools to examine them.
-
-At the beginning of testing any data files that are about to be used
-will first be erased so ensure the data is clean for each test run.
-
-It is possible to set the name of the data file.  If needed the
-platform / python version will be appended automatically to this name.
-
-
-Coverage Config File
---------------------
-
-Coverage by default will read its own config file.  An alternative
-file name may be specified or reading config can be disabled entirely.
-
-Care has been taken to ensure that the coverage env vars and config
-file options work the same under this plugin as they do under coverage
-itself.
-
-Since options may be specified in different ways the order of
-precedence between pytest-cov and coverage from highest to lowest is:
-
-1. pytest command line
-2. pytest env var
-3. pytest conftest
-4. coverage env var
-5. coverage config file
-6. coverage default
+The data file is left at the end of testing so that it is possible to use normal coverage tools to
+examine it.
 
 
 Limitations
 -----------
 
-For distributed testing the slaves must have the pytest-cov package
-installed.  This is needed since the plugin must be registered through
-setuptools / distribute for pytest to start the plugin on the slave.
+For distributed testing the slaves must have the pytest-cov package installed.  This is needed since
+the plugin must be registered through setuptools / distribute for pytest to start the plugin on the
+slave.
+
+For subprocess measurement environment variables must make it from the main process to the
+subprocess.  The python used by the subprocess must have pytest-cov installed.  The subprocess must
+do normal site initialisation so that the environment variables can be detected and coverage
+started.
 
 
 Acknowledgements
@@ -193,14 +207,11 @@ Acknowledgements
 
 Holger Krekel for pytest with its distributed testing support.
 
-Ned Batchelder for coverage and its ability to combine the coverage
-results of parallel runs.
+Ned Batchelder for coverage and its ability to combine the coverage results of parallel runs.
 
-Whilst this plugin has been built fresh from the ground up to support
-distributed testing it has been influenced by the work done on
-pytest-coverage (Ross Lawley, James Mills, Holger Krekel) and
-nose-cover (Jason Pellerin) which are other coverage plugins for
-pytest and nose respectively.
+Whilst this plugin has been built fresh from the ground up to support distributed testing it has
+been influenced by the work done on pytest-coverage (Ross Lawley, James Mills, Holger Krekel) and
+nose-cover (Jason Pellerin) which are other coverage plugins for pytest and nose respectively.
 
 No doubt others have contributed to these tools as well.
 
@@ -208,43 +219,11 @@ command line options
 --------------------
 
 
-``--cov-on``
-    enable coverage, only needed if not specifying any --cov options
-``--cov=package``
-    collect coverage for the specified package (multi-allowed)
-``--cov-no-terminal``
-    disable printing a report on the terminal
-``--cov-annotate``
-    generate an annotated source code report
-``--cov-html``
-    generate a html report
-``--cov-xml``
-    generate an xml report
-``--cov-annotate-dir=dir``
-    directory for the annotate report, default: %default
-``--cov-html-dir=dir``
-    directory for the html report, default: coverage_html
-``--cov-xml-file=path``
-    file for the xml report, default: coverage.xml
-``--cov-data-file=path``
-    file containing coverage data, default: .coverage
-``--cov-combine-each``
-    for dist=each mode produce a single combined report
-``--cov-branch``
-    enable branch coverage
-``--cov-pylib``
-    enable python library coverage
-``--cov-timid``
-    enable slower and simpler tracing
-``--cov-no-missing-lines``
-    disable showing missing lines, only relevant to the terminal report
-``--cov-no-missing-files``
-    disable showing message about missing source files
-``--cov-omit=prefix1,prefix2,...``
-    ignore files with these prefixes
-``--cov-no-config``
-    disable coverage reading its config file
-``--cov-config-file=path``
-    config file for coverage, default: %default
+``--cov=path``
+    measure coverage for filesystem path (multi-allowed)
+``--cov-report=type``
+    type of report to generate: term, term-missing, annotate, html, xml (multi-allowed)
+``--cov-config=path``
+    config file for coverage, default: .coveragerc
 
 .. include:: links.txt

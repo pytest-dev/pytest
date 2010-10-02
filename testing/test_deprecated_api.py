@@ -49,7 +49,7 @@ class TestCollectDeprecated:
                 def check2(self): pass
         """))
         config = testdir.parseconfig(somefile)
-        dirnode = config.getnode(somefile.dirpath())
+        dirnode = testdir.getnode(config, somefile.dirpath())
         colitems = dirnode.collect()
         w = recwarn.pop(DeprecationWarning)
         assert w.filename.find("conftest.py") != -1
@@ -171,9 +171,12 @@ class TestCollectDeprecated:
                         return Module(path, parent=self)
                     return super(Directory, self).consider_file(path)
         """)
+            #def pytest_collect_file(path, parent):
+            #    if path.basename == "testme.xxx":
+            #        return Module(path, parent=parent)
         testme = testdir.makefile('xxx', testme="hello")
         config = testdir.parseconfig(testme)
-        col = config.getnode(testme)
+        col = testdir.getnode(config, testme)
         assert col.collect() == []
 
 
@@ -219,7 +222,7 @@ class TestDisabled:
         """)
         reprec.assertoutcome(skipped=2)
 
-    @py.test.mark.multi(name="Directory Module Class Function".split())
+    @py.test.mark.multi(name="Module Class Function".split())
     def test_function_deprecated_run_execute(self, name, testdir, recwarn):
         testdir.makeconftest("""
             import py
@@ -235,11 +238,11 @@ class TestDisabled:
         """)
         config = testdir.parseconfig()
         if name == "Directory":
-            config.getnode(testdir.tmpdir)
+            testdir.getnode(config, testdir.tmpdir)
         elif name in ("Module", "File"):
-            config.getnode(p)
+            testdir.getnode(config, p)
         else:
-            fnode = config.getnode(p)
+            fnode = testdir.getnode(config, p)
             recwarn.clear()
             fnode.collect()
         w = recwarn.pop(DeprecationWarning)
@@ -278,9 +281,10 @@ def test_conftest_non_python_items(recwarn, testdir):
     checkfile = testdir.makefile(ext="xxx", hello="world")
     testdir.makepyfile(x="")
     testdir.maketxtfile(x="")
-    config = testdir.parseconfig()
     recwarn.clear()
-    dircol = config.getnode(checkfile.dirpath())
+    config = testdir.parseconfig()
+    dircol = testdir.getnode(config, checkfile.dirpath())
+
     w = recwarn.pop(DeprecationWarning)
     assert str(w.message).find("conftest.py") != -1
     colitems = dircol.collect()
@@ -288,7 +292,7 @@ def test_conftest_non_python_items(recwarn, testdir):
     assert colitems[0].name == "hello.xxx"
     assert colitems[0].__class__.__name__ == "CustomItem"
 
-    item = config.getnode(checkfile)
+    item = testdir.getnode(config, checkfile)
     assert item.name == "hello.xxx"
     assert item.__class__.__name__ == "CustomItem"
 
@@ -321,14 +325,14 @@ def test_extra_python_files_and_functions(testdir, recwarn):
     """)
     # check that directory collects "check_" files
     config = testdir.parseconfig()
-    col = config.getnode(checkfile.dirpath())
+    col = testdir.getnode(config, checkfile.dirpath())
     colitems = col.collect()
     assert len(colitems) == 1
     assert isinstance(colitems[0], py.test.collect.Module)
 
     # check that module collects "check_" functions and methods
     config = testdir.parseconfig(checkfile)
-    col = config.getnode(checkfile)
+    col = testdir.getnode(config, checkfile)
     assert isinstance(col, py.test.collect.Module)
     colitems = col.collect()
     assert len(colitems) == 2

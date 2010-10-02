@@ -53,7 +53,7 @@ you  start monkeypatching after the undo call.
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 """
 
-import py, os, sys
+import os, sys
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these

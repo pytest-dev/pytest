@@ -23,15 +23,18 @@ def pytest_addoption(parser):
             help="show available conftest.py and ENV-variable names.")
 
 
-def pytest_configure(__multicall__, config):
+def pytest_cmdline_main(config):
     if config.option.version:
         p = py.path.local(py.__file__).dirpath()
         sys.stderr.write("This is py.test version %s, imported from %s\n" %
             (py.__version__, p))
-        sys.exit(0)
-    if not config.option.helpconfig:
-        return
-    __multicall__.execute()
+        return 0
+    elif config.option.helpconfig:
+        config.pluginmanager.do_configure(config)
+        showpluginhelp(config)
+        return 0
+
+def showpluginhelp(config):
     options = []
     for group in config._parser._groups:
         options.extend(group.options)
@@ -65,9 +68,7 @@ def pytest_configure(__multicall__, config):
             help,
             )
         tw.line(line[:tw.fullwidth])
-
     tw.sep("-")
-    sys.exit(0)
 
 conftest_options = (
     ('pytest_plugins', 'list of plugin names to load'),

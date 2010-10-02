@@ -59,19 +59,18 @@ class TestCollector:
             import py
             class CustomFile(py.test.collect.File):
                 pass
-            class MyDirectory(py.test.collect.Directory):
-                def collect(self):
-                    return [CustomFile(self.fspath.join("hello.xxx"), parent=self)]
-            def pytest_collect_directory(path, parent):
-                return MyDirectory(path, parent=parent)
+            def pytest_collect_file(path, parent):
+                if path.ext == ".xxx":
+                    return CustomFile(path, parent=parent)
         """)
         config = testdir.parseconfig(hello)
-        node = config.getnode(hello)
+        node = testdir.getnode(config, hello)
         assert isinstance(node, py.test.collect.File)
         assert node.name == "hello.xxx"
-        names = config._rootcol.totrail(node)
-        node = config._rootcol.getbynames(names)
-        assert isinstance(node, py.test.collect.File)
+        id = node.collection.getid(node)
+        nodes = node.collection.getbyid(id)
+        assert len(nodes) == 1
+        assert isinstance(nodes[0], py.test.collect.File)
 
 class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
@@ -84,7 +83,7 @@ class TestCollectFS:
         tmpdir.ensure("normal", 'test_found.py')
         tmpdir.ensure('test_found.py')
 
-        col = testdir.parseconfig(tmpdir).getnode(tmpdir)
+        col = testdir.getnode(testdir.parseconfig(tmpdir), tmpdir)
         items = col.collect()
         names = [x.name for x in items]
         assert len(items) == 2
@@ -93,7 +92,7 @@ class TestCollectFS:
 
     def test_found_certain_testfiles(self, testdir):
         p1 = testdir.makepyfile(test_found = "pass", found_test="pass")
-        col = testdir.parseconfig(p1).getnode(p1.dirpath())
+        col = testdir.getnode(testdir.parseconfig(p1), p1.dirpath())
         items = col.collect() # Directory collect returns files sorted by name
         assert len(items) == 2
         assert items[1].name == 'test_found.py'
@@ -106,7 +105,7 @@ class TestCollectFS:
         testdir.makepyfile(test_two="hello")
         p1.dirpath().mkdir("dir2")
         config = testdir.parseconfig()
-        col = config.getnode(p1.dirpath())
+        col = testdir.getnode(config, p1.dirpath())
         names = [x.name for x in col.collect()]
         assert names == ["dir1", "dir2", "test_one.py", "test_two.py", "x"]
 
@@ -120,7 +119,7 @@ class TestCollectPluginHookRelay:
         config = testdir.Config()
         config.pluginmanager.register(Plugin())
         config.parse([tmpdir])
-        col = config.getnode(tmpdir)
+        col = testdir.getnode(config, tmpdir)
         testdir.makefile(".abc", "xyz")
         res = col.collect()
         assert len(wascalled) == 1
@@ -141,7 +140,7 @@ class TestCollectPluginHookRelay:
         assert "world" in wascalled
         # make sure the directories do not get double-appended
         colreports = reprec.getreports("pytest_collectreport")
-        names = [rep.collector.name for rep in colreports]
+        names = [rep.nodenames[-1] for rep in colreports]
         assert names.count("hello") == 1
 
 class TestPrunetraceback:
@@ -181,6 +180,7 @@ class TestPrunetraceback:
             "*hello world*",
         ])
 
+    @py.test.mark.xfail(reason="other mechanism for adding to reporting needed")
     def test_collect_report_postprocessing(self, testdir):
         p = testdir.makepyfile("""
             import not_exists
@@ -227,16 +227,18 @@ class TestCustomConftests:
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="#")
         reprec = testdir.inline_run(testdir.tmpdir)
-        names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
+        names = [rep.nodenames[-1]
+                    for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' not in names
         assert 'test_world.py' not in names
         reprec = testdir.inline_run(testdir.tmpdir, "--XX")
-        names = [rep.collector.name for rep in reprec.getreports("pytest_collectreport")]
+        names = [rep.nodenames[-1]
+                    for rep in reprec.getreports("pytest_collectreport")]
         assert 'hello' in names
         assert 'test_world.py' in names
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
-        testdir.makeconftest("""
+        conf = testdir.makeconftest("""
             import py
             class MyDirectory(py.test.collect.Directory):
                 pass
@@ -247,79 +249,11 @@ class TestCustomConftests:
             def pytest_collect_file(path, parent):
                 return MyModule(path, parent)
         """)
-        testdir.makepyfile("def test_x(): pass")
+        sub = testdir.mkdir("sub")
+        p = testdir.makepyfile("def test_x(): pass")
         result = testdir.runpytest("--collectonly")
         result.stdout.fnmatch_lines([
             "*MyDirectory*",
             "*MyModule*",
             "*test_x*"
         ])
-
-class TestRootCol:
-    def test_totrail_and_back(self, testdir, tmpdir):
-        a = tmpdir.ensure("a", dir=1)
-        tmpdir.ensure("a", "__init__.py")
-        x = tmpdir.ensure("a", "trail.py")
-        config = testdir.reparseconfig([x])
-        col = config.getnode(x)
-        trail = config._rootcol.totrail(col)
-        col2 = config._rootcol.fromtrail(trail)
-        assert col2 == col
-
-    @py.test.mark.xfail(reason="http://bitbucket.org/hpk42/py-trunk/issue/109")
-    def test_sibling_conftest_issue109(self, testdir):
-        """
-        This test is to make sure that the conftest.py of sibling directories is not loaded
-        if py.test is run for/in one of the siblings directory and those sibling directories
-        are not packaged together with an __init__.py. See bitbucket issue #109.
-        """
-        for dirname in ['a', 'b']:
-            testdir.tmpdir.ensure(dirname, dir=True)
-            testdir.tmpdir.ensure(dirname, '__init__.py')
-
-            # To create the conftest.py I would like to use testdir.make*-methods
-            # but as far as I have seen they can only create files in testdir.tempdir
-            # Maybe there is a way to explicitly specifiy the directory on which those
-            # methods work or a completely better way to do that?
-            backupTmpDir = testdir.tmpdir
-            testdir.tmpdir = testdir.tmpdir.join(dirname)
-            testdir.makeconftest("""
-                _DIR_NAME = '%s'
-                def pytest_configure(config):
-                    if config.args and config.args[0] != _DIR_NAME:
-                        raise Exception("py.test run for '" + config.args[0] + "', but '" + _DIR_NAME + "/conftest.py' loaded.")
-            """ % dirname)
-            testdir.tmpdir = backupTmpDir
-
-        for dirname, other_dirname in [('a', 'b'), ('b', 'a')]:
-            result = testdir.runpytest(dirname)
-            assert result.ret == 0, "test_sibling_conftest: py.test run for '%s', but '%s/conftest.py' loaded." % (dirname, other_dirname)
-
-    def test_totrail_topdir_and_beyond(self, testdir, tmpdir):
-        config = testdir.reparseconfig()
-        col = config.getnode(config.topdir)
-        trail = config._rootcol.totrail(col)
-        col2 = config._rootcol.fromtrail(trail)
-        assert col2.fspath == config.topdir
-        assert len(col2.listchain()) == 1
-        py.test.raises(config.Error, "config.getnode(config.topdir.dirpath())")
-        #col3 = config.getnode(config.topdir.dirpath())
-        #py.test.raises(ValueError,
-        #      "col3._totrail()")
-
-    def test_argid(self, testdir, tmpdir):
-        cfg = testdir.parseconfig()
-        p = testdir.makepyfile("def test_func(): pass")
-        item = cfg.getnode("%s::test_func" % p)
-        assert item.name == "test_func"
-
-    def test_argid_with_method(self, testdir, tmpdir):
-        cfg = testdir.parseconfig()
-        p = testdir.makepyfile("""
-            class TestClass:
-                def test_method(self): pass
-        """)
-        item = cfg.getnode("%s::TestClass::()::test_method" % p)
-        assert item.name == "test_method"
-        item = cfg.getnode("%s::TestClass::test_method" % p)
-        assert item.name == "test_method"

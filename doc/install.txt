@@ -26,7 +26,47 @@ py.test/pylib installation info in a nutshell
 .. _`bin`: bin.html
 
 
-Best practise: install tool and dependencies virtually
+.. _`easy_install`:
+
+Installation using easy_install
+===================================================
+
+Both `Distribute`_ and setuptools_ provide the ``easy_install``
+installation tool with which you can type into a command line window::
+
+    easy_install -U py
+
+to install the latest release of the py lib and py.test.  The ``-U`` switch
+will trigger an upgrade if you already have an older version installed.
+Note that setuptools works ok with Python2 interpreters while `Distribute`_
+additionally works with Python3 and also avoid some issues on Windows.
+
+Known issues:
+
+- **Windows**: If "easy_install" or "py.test" are not found
+  please see here for preparing your environment for running
+  command line tools: `Python for Windows`_.  You may alternatively
+  use an `ActivePython install`_ which makes command line tools
+  automatically available under Windows.
+
+.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
+
+.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
+
+- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
+  so ``py.test`` will not work correctly.  You may install py.test on
+  CPython and type ``py.test --genscript=mytest`` and then use
+  ``jython mytest`` to run py.test for your tests to run in Jython.
+
+- **On Linux**: If ``easy_install`` fails because it needs to run
+  as the superuser you are trying to install things globally
+  and need to put ``sudo`` in front of the command.
+
+
+.. _quickstart: test/quickstart.html
+
+
+Recommendation: install tool and dependencies virtually
 ===========================================================
 
 It is recommended to work with virtual environments
@@ -36,34 +76,9 @@ you need to run your tests.  Local virtual Python environments
 (as opposed to system-wide "global" environments) make for a more
 reproducible and reliable test environment.
 
-
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/
 .. _pip: http://pypi.python.org/pypi/pip
-.. _`easy_install`:
-
-using easy_install (from setuptools or Distribute)
-===================================================
-
-Both `Distribute`_ and setuptools_ provide the ``easy_install``
-installation tool.  While setuptools should work ok with
-Python2 interpreters, `Distribute`_ also works with Python3
-and it avoids some issues on Windows.  In both cases you
-can open a command line window and then type::
-
-    easy_install -U py
-
-to install the latest release of the py lib and py.test.  The ``-U`` switch
-will trigger an upgrade if you already have an older version installed.
-
-If you now type::
-
-    py.test --version
-
-you should see the version number and the import location of the tool.
-Maybe you want to head on with the `quickstart`_ now?
-
-.. _quickstart: test/quickstart.html
 
 .. _standalone:
 
@@ -84,24 +99,7 @@ disguise.  You can tell people to download and then e.g. run it like this::
 and ask them to send you the resulting URL.  The resulting script has
 all core features and runs unchanged under Python2 and Python3 interpreters.
 
-Troubleshooting / known issues
-===============================
-
-.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
-
-**Jython2.5.1 on XP**: `Jython does not create command line launchers`_
-so ``py.test`` will not work correctly.  You may install py.test on
-CPython and type ``py.test --genscript=mytest`` and then use
-``jython mytest`` to run py.test for your tests to run in Jython.
-
-**On Linux**: If ``easy_install`` fails because it needs to run
-as the superuser you are trying to install things globally
-and need to put ``sudo`` in front of the command.
-
-**On Windows**: If "easy_install" or "py.test" are not found
-please see here: `How do i run a Python program under Windows?`_
-
-.. _`How do i run a Python program under Windows?`: http://www.python.org/doc/faq/windows/#how-do-i-run-a-python-program-under-windows
+.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
 
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`Distribute`:

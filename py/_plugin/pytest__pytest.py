@@ -87,6 +87,28 @@ class HookRecorder:
                 l.append(call)
         return l
 
+    def contains(self, entries):
+        from py.builtin import print_
+        i = 0
+        entries = list(entries)
+        backlocals = py.std.sys._getframe(1).f_locals 
+        while entries:
+            name, check = entries.pop(0)
+            for ind, call in enumerate(self.calls[i:]):
+                if call._name == name:
+                    print_("NAMEMATCH", name, call)
+                    if eval(check, backlocals, call.__dict__):
+                        print_("CHECKERMATCH", repr(check), "->", call)
+                    else:
+                        print_("NOCHECKERMATCH", repr(check), "-", call)
+                        continue
+                    i += ind + 1
+                    break
+                print_("NONAMEMATCH", name, "with", call)
+            else:
+                raise AssertionError("could not find %r in %r" %(
+                    name, self.calls[i:]))
+
     def popcall(self, name):
         for i, call in enumerate(self.calls):
             if call._name == name:
