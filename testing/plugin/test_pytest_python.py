@@ -831,12 +831,12 @@ class TestRequestCachedSetup:
         testdir.makepyfile(test_0="""
             l = []
             def pytest_funcarg__something(request):
-                val = request.cached_setup(setup, teardown)
+                val = request.cached_setup(fsetup, fteardown)
                 return val
-            def setup(mycache=[1]):
+            def fsetup(mycache=[1]):
                 l.append(mycache.pop())
                 return l
-            def teardown(something):
+            def fteardown(something):
                 l.remove(something[0])
                 l.append(2)
             def test_list_once(something):

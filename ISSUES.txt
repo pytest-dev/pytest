@@ -6,6 +6,9 @@ tags: bug 1.4 core xdist
 * check oejskit plugin compatibility
 * terminal reporting - dot-printing
 * some simple profiling 
+* move pytest_nose out of pylib because it implicitely extends
+  the protocol now - setup/teardown is called at module level.
+  consider making calling of setup/teardown configurable
 
 refine session initialization / fix custom collect crash
 ---------------------------------------------------------------
