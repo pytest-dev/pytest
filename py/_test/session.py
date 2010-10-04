@@ -160,13 +160,6 @@ class Collection:
             matching = l
         return matching
 
-    def getinitialnodes(self):
-        idlist = [self._normalizearg(arg) for arg in self.config.args]
-        nodes = []
-        for id in idlist:
-            nodes.extend(self.getbyid(id))
-        return nodes
-
     def perform_collect(self):
         nodes = []
         for arg in self.config.args:

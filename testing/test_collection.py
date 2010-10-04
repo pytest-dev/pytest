@@ -198,40 +198,37 @@ class Test_gettopdir:
         assert gettopdir(["%s::xyc::abc" % c]) == a
         assert gettopdir(["%s::xyc" % c, "%s::abc" % Z]) == tmp
 
+def getargnode(collection, arg):
+    return collection.getbyid(collection._normalizearg(str(arg)))[0]
+
 class Test_getinitialnodes:
     def test_onedir(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
-        colitems = Collection(config).getinitialnodes()
-        assert len(colitems) == 1
-        col = colitems[0]
+        c = Collection(config)
+        col = getargnode(c, testdir.tmpdir)
         assert isinstance(col, py.test.collect.Directory)
         for col in col.listchain():
             assert col.config is config
-
-    def test_twodirs(self, testdir, tmpdir):
-        config = testdir.reparseconfig([tmpdir, tmpdir])
-        colitems = Collection(config).getinitialnodes()
-        assert len(colitems) == 2
-        col1, col2 = colitems
-        assert col1.name == col2.name
-        assert col1.parent == col2.parent
+        t2 = getargnode(c, testdir.tmpdir)
+        assert col == t2
 
     def test_curdir_and_subdir(self, testdir, tmpdir):
         a = tmpdir.ensure("a", dir=1)
         config = testdir.reparseconfig([tmpdir, a])
-        colitems = Collection(config).getinitialnodes()
-        assert len(colitems) == 2
-        col1, col2 = colitems
+        c = Collection(config)
+        
+        col1 = getargnode(c, tmpdir)
+        col2 = getargnode(c, a)
         assert col1.name == tmpdir.basename
         assert col2.name == 'a'
-        for col in colitems:
+        for col in (col1, col2):
             for subcol in col.listchain():
                 assert col.config is config
 
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         config = testdir.reparseconfig([x])
-        col, = Collection(config).getinitialnodes()
+        col = getargnode(Collection(config), x)
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == tmpdir.basename
@@ -242,7 +239,7 @@ class Test_getinitialnodes:
     def test_global_dir(self, testdir, tmpdir):
         x = tmpdir.ensure("a", dir=1)
         config = testdir.reparseconfig([x])
-        col, = Collection(config).getinitialnodes()
+        col = getargnode(Collection(config), x)
         assert isinstance(col, py.test.collect.Directory)
         print(col.listchain())
         assert col.name == 'a'
@@ -254,7 +251,7 @@ class Test_getinitialnodes:
         x = tmpdir.ensure("x.py")
         tmpdir.ensure("__init__.py")
         config = testdir.reparseconfig([x])
-        col, = Collection(config).getinitialnodes()
+        col = getargnode(Collection(config), x)
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
         assert col.parent.name == x.dirpath().basename

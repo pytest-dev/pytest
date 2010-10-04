@@ -664,7 +664,8 @@ class FuncargRequest:
 def showfuncargs(config):
     from py._test.session import Collection
     collection = Collection(config)
-    colitem = collection.getinitialnodes()[0]
+    firstid = collection._normalizearg(config.args[0])
+    colitem = collection.getbyid(firstid)[0]
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
     plugins = getplugins(colitem, withpy=True)

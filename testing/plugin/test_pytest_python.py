@@ -1127,3 +1127,10 @@ class TestReportInfo:
                     pass
        """
 
+def test_show_funcarg(testdir):
+    result = testdir.runpytest("--funcargs")
+    result.stdout.fnmatch_lines([
+            "*tmpdir*",
+            "*temporary directory*",
+        ]
+    )

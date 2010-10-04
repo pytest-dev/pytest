@@ -517,14 +517,6 @@ def test_trace_reporting(testdir):
     ])
     assert result.ret == 0
 
-def test_show_funcarg(testdir, option):
-    args = option.args + ["--funcargs"]
-    result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines([
-            "*tmpdir*",
-            "*temporary directory*",
-        ]
-    )
 
 class TestGenericReporting:
     """ this test class can be subclassed with a different option
