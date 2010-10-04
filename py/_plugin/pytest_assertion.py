@@ -61,18 +61,22 @@ def pytest_assertrepr_compare(op, left, right):
     isset = lambda x: isinstance(x, set)
 
     explanation = None
-    if op == '==':
-        if istext(left) and istext(right):
-            explanation = _diff_text(left, right)
-        elif issequence(left) and issequence(right):
-            explanation = _compare_eq_sequence(left, right)
-        elif isset(left) and isset(right):
-            explanation = _compare_eq_set(left, right)
-        elif isdict(left) and isdict(right):
-            explanation = _diff_text(py.std.pprint.pformat(left),
-                                     py.std.pprint.pformat(right))
-    elif op == 'in':
-        pass                    # XXX
+    try:
+        if op == '==':
+            if istext(left) and istext(right):
+                explanation = _diff_text(left, right)
+            elif issequence(left) and issequence(right):
+                explanation = _compare_eq_sequence(left, right)
+            elif isset(left) and isset(right):
+                explanation = _compare_eq_set(left, right)
+            elif isdict(left) and isdict(right):
+                explanation = _diff_text(py.std.pprint.pformat(left),
+                                         py.std.pprint.pformat(right))
+    except py.builtin._sysex:
+        raise
+    except:
+        explanation = ['(pytest_assertion plugin: representation of '
+            'details failed. Probably an object has a faulty __repr__.)']
 
     if not explanation:
         return None
@@ -120,17 +124,17 @@ def _compare_eq_sequence(left, right):
     explanation = []
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
-            explanation += ['First differing item %s: %s != %s' %
+            explanation += ['At index %s diff: %r != %r' %
                             (i, left[i], right[i])]
             break
     if len(left) > len(right):
         explanation += ['Left contains more items, '
-                        'first extra item: %s' % left[len(right)]]
+            'first extra item: %s' % py.io.saferepr(left[len(right)],)]
     elif len(left) < len(right):
         explanation += ['Right contains more items, '
-                        'first extra item: %s' % right[len(left)]]
-    return explanation + _diff_text(py.std.pprint.pformat(left),
-                                    py.std.pprint.pformat(right))
+            'first extra item: %s' % py.io.saferepr(right[len(left)],)]
+    return explanation # + _diff_text(py.std.pprint.pformat(left),
+                       #             py.std.pprint.pformat(right))
 
 
 def _compare_eq_set(left, right):

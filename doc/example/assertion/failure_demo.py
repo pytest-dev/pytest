@@ -152,6 +152,9 @@ class TestSpecialisedExplanations(object):
     def test_eq_set(self):
         assert set([0, 10, 11, 12]) == set([0, 20, 21])
 
+    def test_eq_longer_list(self):
+        assert [1,2] == [1,2,3]
+
     def test_in_list(self):
         assert 1 in [0, 2, 3, 4, 5]
 

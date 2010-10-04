@@ -47,43 +47,61 @@ class TestBinReprIntegration:
         plugin.pytest_unconfigure(config)
         assert hook == py.code._reprcompare
 
+def callequal(left, right):
+    return plugin.pytest_assertrepr_compare('==', left, right)
+
 class TestAssert_reprcompare:
     def test_different_types(self):
-        assert plugin.pytest_assertrepr_compare('==', [0, 1], 'foo') is None
+        assert callequal([0, 1], 'foo') is None
 
     def test_summary(self):
-        summary = plugin.pytest_assertrepr_compare('==', [0, 1], [0, 2])[0]
+        summary = callequal([0, 1], [0, 2])[0]
         assert len(summary) < 65
 
     def test_text_diff(self):
-        diff = plugin.pytest_assertrepr_compare('==', 'spam', 'eggs')[1:]
+        diff = callequal('spam', 'eggs')[1:]
         assert '- spam' in diff
         assert '+ eggs' in diff
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
         right = 'foo\neggs\nbar'
-        diff = plugin.pytest_assertrepr_compare('==', left, right)
+        diff = callequal(left, right)
         assert '- spam' in diff
         assert '+ eggs' in diff
 
     def test_list(self):
-        expl = plugin.pytest_assertrepr_compare('==', [0, 1], [0, 2])
+        expl = callequal([0, 1], [0, 2])
         assert len(expl) > 1
 
     def test_list_different_lenghts(self):
-        expl = plugin.pytest_assertrepr_compare('==', [0, 1], [0, 1, 2])
+        expl = callequal([0, 1], [0, 1, 2])
         assert len(expl) > 1
-        expl = plugin.pytest_assertrepr_compare('==', [0, 1, 2], [0, 1])
+        expl = callequal([0, 1, 2], [0, 1])
         assert len(expl) > 1
 
     def test_dict(self):
-        expl = plugin.pytest_assertrepr_compare('==', {'a': 0}, {'a': 1})
+        expl = callequal({'a': 0}, {'a': 1})
         assert len(expl) > 1
 
     def test_set(self):
-        expl = plugin.pytest_assertrepr_compare('==', set([0, 1]), set([0, 2]))
+        expl = callequal(set([0, 1]), set([0, 2]))
         assert len(expl) > 1
+
+    def test_list_tuples(self):
+        expl = callequal([], [(1,2)])
+        assert len(expl) > 1
+        expl = callequal([(1,2)], [])
+        assert len(expl) > 1
+
+    def test_list_bad_repr(self):
+        class A:
+            def __repr__(self):
+                raise ValueError(42)
+        expl = callequal([], [A()])
+        assert 'ValueError' in "".join(expl)
+        expl = callequal({}, {'1': A()})
+        assert 'faulty' in "".join(expl)
 
 @needsnewassert
 def test_pytest_assertrepr_compare_integration(testdir):
@@ -101,6 +119,25 @@ def test_pytest_assertrepr_compare_integration(testdir):
         "*E*Extra items*left*",
         "*E*50*",
     ])
+
+@needsnewassert
+def test_sequence_comparison_uses_repr(testdir):
+    testdir.makepyfile("""
+        def test_hello():
+            x = set("hello x")
+            y = set("hello y")
+            assert x == y
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*def test_hello():*",
+        "*assert x == y*",
+        "*E*Extra items*left*",
+        "*E*'x'*",
+        "*E*Extra items*right*",
+        "*E*'y'*",
+    ])
+
 
 def test_functional(testdir):
     testdir.makepyfile("""
