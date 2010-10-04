@@ -55,11 +55,6 @@ class TestClass:
         l = modcol.collect()
         assert len(l) == 0
 
-if py.std.sys.version_info > (3, 0):
-    _func_name_attr = "__name__"
-else:
-    _func_name_attr = "func_name"
-
 class TestGenerator:
     def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -79,7 +74,7 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == '[0]'
-        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
+        assert gencolitems[0].obj.__name__ == 'func1'
 
     def test_generative_methods(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -97,7 +92,7 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == '[0]'
-        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
+        assert gencolitems[0].obj.__name__ == 'func1'
 
     def test_generative_functions_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -117,9 +112,9 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == "['seventeen']"
-        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
+        assert gencolitems[0].obj.__name__ == 'func1'
         assert gencolitems[1].name == "['fortytwo']"
-        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'
+        assert gencolitems[1].obj.__name__ == 'func1'
 
     def test_generative_functions_unique_explicit_names(self, testdir):
         # generative
@@ -151,9 +146,9 @@ class TestGenerator:
         assert isinstance(gencolitems[0], py.test.collect.Function)
         assert isinstance(gencolitems[1], py.test.collect.Function)
         assert gencolitems[0].name == "['m1']"
-        assert getattr(gencolitems[0].obj, _func_name_attr) == 'func1'
+        assert gencolitems[0].obj.__name__ == 'func1'
         assert gencolitems[1].name == "['m2']"
-        assert getattr(gencolitems[1].obj, _func_name_attr) == 'func1'
+        assert gencolitems[1].obj.__name__ == 'func1'
 
     def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
         o = testdir.makepyfile("""
@@ -359,59 +354,6 @@ class TestConftestCustomization:
             lambda self, name, obj: l.append(name))
         l = modcol.collect()
         assert '_hello' not in l
-
-
-class TestReportinfo:
-
-    def test_func_reportinfo(self, testdir):
-        item = testdir.getitem("def test_func(): pass")
-        fspath, lineno, modpath = item.reportinfo()
-        assert fspath == item.fspath
-        assert lineno == 0
-        assert modpath == "test_func"
-
-    def test_class_reportinfo(self, testdir):
-        modcol = testdir.getmodulecol("""
-            # lineno 0
-            class TestClass:
-                def test_hello(self): pass
-        """)
-        classcol = modcol.collect_by_name("TestClass")
-        fspath, lineno, msg = classcol.reportinfo()
-        assert fspath == modcol.fspath
-        assert lineno == 1
-        assert msg == "TestClass"
-
-    def test_generator_reportinfo(self, testdir):
-        modcol = testdir.getmodulecol("""
-            # lineno 0
-            def test_gen():
-                def check(x):
-                    assert x
-                yield check, 3
-        """)
-        gencol = modcol.collect_by_name("test_gen")
-        fspath, lineno, modpath = gencol.reportinfo()
-        assert fspath == modcol.fspath
-        assert lineno == 1
-        assert modpath == "test_gen"
-
-        genitem = gencol.collect()[0]
-        fspath, lineno, modpath = genitem.reportinfo()
-        assert fspath == modcol.fspath
-        assert lineno == 2
-        assert modpath == "test_gen[0]"
-        """
-            def test_func():
-                pass
-            def test_genfunc():
-                def check(x):
-                    pass
-                yield check, 3
-            class TestClass:
-                def test_method(self):
-                    pass
-       """
 
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
@@ -1134,3 +1076,54 @@ class TestReportInfo:
         nodeinfo = runner.getitemnodeinfo(item)
         location = nodeinfo.location
         assert location == tup
+
+    def test_func_reportinfo(self, testdir):
+        item = testdir.getitem("def test_func(): pass")
+        fspath, lineno, modpath = item.reportinfo()
+        assert fspath == item.fspath
+        assert lineno == 0
+        assert modpath == "test_func"
+
+    def test_class_reportinfo(self, testdir):
+        modcol = testdir.getmodulecol("""
+            # lineno 0
+            class TestClass:
+                def test_hello(self): pass
+        """)
+        classcol = modcol.collect_by_name("TestClass")
+        fspath, lineno, msg = classcol.reportinfo()
+        assert fspath == modcol.fspath
+        assert lineno == 1
+        assert msg == "TestClass"
+
+    def test_generator_reportinfo(self, testdir):
+        modcol = testdir.getmodulecol("""
+            # lineno 0
+            def test_gen():
+                def check(x):
+                    assert x
+                yield check, 3
+        """)
+        gencol = modcol.collect_by_name("test_gen")
+        fspath, lineno, modpath = gencol.reportinfo()
+        assert fspath == modcol.fspath
+        assert lineno == 1
+        assert modpath == "test_gen"
+
+        genitem = gencol.collect()[0]
+        fspath, lineno, modpath = genitem.reportinfo()
+        assert fspath == modcol.fspath
+        assert lineno == 2
+        assert modpath == "test_gen[0]"
+        """
+            def test_func():
+                pass
+            def test_genfunc():
+                def check(x):
+                    pass
+                yield check, 3
+            class TestClass:
+                def test_method(self):
+                    pass
+       """
+
