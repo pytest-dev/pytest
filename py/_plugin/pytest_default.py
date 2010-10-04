@@ -26,7 +26,8 @@ def pytest_runtest_mainloop(session):
     return True
 
 def pytest_ignore_collect(path, config):
-    ignore_paths = config.getconftest_pathlist("collect_ignore", path=path)
+    p = path.dirpath()
+    ignore_paths = config.getconftest_pathlist("collect_ignore", path=p)
     ignore_paths = ignore_paths or []
     excludeopt = config.getvalue("ignore")
     if excludeopt:
@@ -34,10 +35,6 @@ def pytest_ignore_collect(path, config):
     return path in ignore_paths
 
 def pytest_collect_directory(path, parent):
-    # XXX reconsider the following comment
-    # not use parent.Directory here as we generally
-    # want dir/conftest.py to be able to
-    # define Directory(dir) already
     if not parent.recfilter(path): # by default special ".cvs", ...
         # check if cmdline specified this dir or a subdir directly
         for arg in parent.collection._argfspaths:
@@ -45,8 +42,7 @@ def pytest_collect_directory(path, parent):
                 break
         else:
             return
-    Directory = parent.config._getcollectclass('Directory', path)
-    return Directory(path, parent=parent)
+    return parent.Directory(path, parent=parent)
 
 def pytest_report_iteminfo(item):
     return item.reportinfo()

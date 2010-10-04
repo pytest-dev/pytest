@@ -33,7 +33,7 @@ class TestConftestValueAccessGlobal:
         conftest = Conftest(onimport=l.append)
         conftest.setinitial([basedir.join("adir"),
             '--confcutdir=%s' % basedir])
-        assert len(l) == 2
+        assert len(l) == 1
         assert conftest.rget("a") == 1
         assert conftest.rget("b", basedir.join("adir", "b")) == 2
         assert len(l) == 2
@@ -170,7 +170,7 @@ def test_setinitial_conftest_subdirs(testdir, name):
     subconftest = sub.ensure("conftest.py")
     conftest = Conftest()
     conftest.setinitial([sub.dirpath(), '--confcutdir=%s' % testdir.tmpdir])
-    if name != ".dotdir":
+    if name not in ('whatever', '.dotdir'):
         assert  subconftest in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 1
     else:

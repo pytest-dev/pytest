@@ -163,34 +163,31 @@ class TestGeneralUsage:
         result = testdir.runpython(p, prepend=False)
         assert not result.ret
 
-    @py.test.mark.xfail(reason="http://bitbucket.org/hpk42/py-trunk/issue/109")
-    def test_sibling_conftest_issue109(self, testdir):
-        """
-        This test is to make sure that the conftest.py of sibling directories is not loaded
-        if py.test is run for/in one of the siblings directory and those sibling directories
-        are not packaged together with an __init__.py. See bitbucket issue #109.
-        """
-        for dirname in ['a', 'b']:
-            testdir.tmpdir.ensure(dirname, dir=True)
-            testdir.tmpdir.ensure(dirname, '__init__.py')
+    def test_issue109_sibling_conftests_not_loaded(self, testdir):
+        sub1 = testdir.tmpdir.mkdir("sub1")
+        sub2 = testdir.tmpdir.mkdir("sub2")
+        sub1.join("conftest.py").write("assert 0")
+        result = testdir.runpytest(sub2)
+        assert result.ret == 0
+        sub2.ensure("__init__.py")
+        p = sub2.ensure("test_hello.py")
+        result = testdir.runpytest(p)
+        assert result.ret == 0
+        result = testdir.runpytest(sub1)
+        assert result.ret != 0
 
-            # To create the conftest.py I would like to use testdir.make*-methods
-            # but as far as I have seen they can only create files in testdir.tempdir
-            # Maybe there is a way to explicitly specifiy the directory on which those
-            # methods work or a completely better way to do that?
-            backupTmpDir = testdir.tmpdir
-            testdir.tmpdir = testdir.tmpdir.join(dirname)
-            testdir.makeconftest("""
-                _DIR_NAME = '%s'
-                def pytest_configure(config):
-                    if config.args and config.args[0] != _DIR_NAME:
-                        raise Exception("py.test run for '" + config.args[0] + "', but '" + _DIR_NAME + "/conftest.py' loaded.")
-            """ % dirname)
-            testdir.tmpdir = backupTmpDir
-
-        for dirname, other_dirname in [('a', 'b'), ('b', 'a')]:
-            result = testdir.runpytest(dirname)
-            assert result.ret == 0, "test_sibling_conftest: py.test run for '%s', but '%s/conftest.py' loaded." % (dirname, other_dirname)
+    def test_directory_skipped(self, testdir):
+        testdir.makeconftest("""
+            import py
+            def pytest_ignore_collect():
+                py.test.skip("intentional")
+        """)
+        testdir.makepyfile("def test_hello(): pass")
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 skipped*"
+        ])
 
     def test_multiple_items_per_collector_byid(self, testdir):
         c = testdir.makeconftest("""
