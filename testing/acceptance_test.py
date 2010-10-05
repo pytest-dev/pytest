@@ -208,3 +208,11 @@ class TestGeneralUsage:
             "*1 pass*",
         ])
 
+
+    def test_python_minus_m_invocation(self, testdir):
+        p1 = testdir.makepyfile("def test_hello(): pass")
+        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
+        assert res.ret == 0
+        p2 = testdir.makepyfile("def test_world(): 0/0")
+        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p2))
+        assert res.ret == 1
