@@ -609,3 +609,21 @@ def pytest_report_header(config):
             "line2",
             "*hello: info*",
         ])
+
+needsosdup = py.test.mark.xfail("not hasattr(os, 'dup')")
+def test_fdopen_kept_alive_issue124(testdir):
+    testdir.makepyfile("""
+        import os, sys
+        k = []
+        def test_open_file_and_keep_alive(capfd):
+            stdout = os.fdopen(1, 'w', 1)
+            k.append(stdout)
+
+        def test_close_kept_alive_file():
+            stdout = k.pop()
+            stdout.close()
+    """)
+    result = testdir.runpytest("-s")
+    result.stdout.fnmatch_lines([
+        "*2 passed*"
+    ])

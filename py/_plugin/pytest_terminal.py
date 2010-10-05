@@ -5,6 +5,7 @@ This is a good source for looking at the various reporting hooks.
 """
 import py
 import sys
+import os
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
@@ -29,8 +30,6 @@ def pytest_addoption(parser):
                help="don't cut any tracebacks (default is to cut).")
 
 def pytest_configure(config):
-    if config.option.showfuncargs:
-        return
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
     else:
@@ -75,6 +74,15 @@ class TerminalReporter:
         self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
+            # we try hard to make printing resilient against 
+            # later changes on FD level.
+            if hasattr(os, 'dup') and hasattr(file, 'fileno'):
+                try:
+                    newfd = os.dup(file.fileno())
+                except ValueError:
+                    pass
+                else:
+                    file = os.fdopen(newfd, file.mode, 1)
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)

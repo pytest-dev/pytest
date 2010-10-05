@@ -377,4 +377,3 @@ def test_fdfuncarg_skips_on_no_osdup(testdir):
     result.stdout.fnmatch_lines([
         "*1 skipped*"
     ])
-
