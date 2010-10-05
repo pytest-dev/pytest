@@ -103,7 +103,6 @@ class TerminalWriter(object):
 
     # XXX deprecate stringio argument
     def __init__(self, file=None, stringio=False, encoding=None):
-
         if file is None:
             if stringio:
                 self.stringio = file = py.io.TextIO()

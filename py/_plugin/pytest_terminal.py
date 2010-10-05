@@ -118,6 +118,7 @@ class TerminalReporter:
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
+        return 1
 
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig:

@@ -214,6 +214,21 @@ class TestBootstrapping:
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
             impname = canonical_importname(name)
 
+    def test_notify_exception(self, capfd):
+        pp = PluginManager()
+        excinfo = py.test.raises(ValueError, "raise ValueError(1)")
+        pp.notify_exception(excinfo)
+        out, err = capfd.readouterr()
+        assert "ValueError" in err
+        class A:
+            def pytest_internalerror(self, excrepr):
+                return True
+        pp.register(A())
+        pp.notify_exception(excinfo)
+        out, err = capfd.readouterr()
+        assert not err
+
+
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):

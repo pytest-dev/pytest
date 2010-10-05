@@ -2,6 +2,7 @@
 managing loading and interacting with pytest plugins.
 """
 import py
+import sys
 import inspect
 from py._plugin import hookspec
 
@@ -163,7 +164,11 @@ class PluginManager(object):
         if excinfo is None:
             excinfo = py.code.ExceptionInfo()
         excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
-        return self.hook.pytest_internalerror(excrepr=excrepr)
+        res = self.hook.pytest_internalerror(excrepr=excrepr)
+        if not py.builtin.any(res):
+            for line in str(excrepr).split("\n"):
+                sys.stderr.write("INTERNALERROR> %s\n" %line)
+                sys.stderr.flush()
 
     def do_addoption(self, parser):
         mname = "pytest_addoption"
