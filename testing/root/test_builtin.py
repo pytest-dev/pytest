@@ -8,6 +8,10 @@ def test_enumerate():
     for i,x in enumerate(l):
         assert i == x
 
+def test_any():
+    assert not py.builtin.any([0,False, None])
+    assert py.builtin.any([0,False, None,1])
+
 def test_BaseException():
     assert issubclass(IndexError, py.builtin.BaseException)
     assert issubclass(Exception, py.builtin.BaseException)

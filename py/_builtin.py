@@ -36,6 +36,15 @@ except NameError:
             return self.remaining
 
 try:
+    any = any
+except NameError:
+    def any(iterable):
+        for x in iterable:
+            if x:
+                return True
+        return False
+
+try:
     sorted = sorted
 except NameError:
     builtin_cmp = cmp # need to use cmp as keyword arg

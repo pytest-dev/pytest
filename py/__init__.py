@@ -102,6 +102,7 @@ py.apipkg.initpkg(__name__, dict(
         'enumerate'      : '._builtin:enumerate',
         'reversed'       : '._builtin:reversed',
         'sorted'         : '._builtin:sorted',
+        'any'            : '._builtin:any',
         'set'            : '._builtin:set',
         'frozenset'      : '._builtin:frozenset',
         'BaseException'  : '._builtin:BaseException',
