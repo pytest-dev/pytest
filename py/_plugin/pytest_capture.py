@@ -253,7 +253,7 @@ def pytest_funcarg__capsys(request):
     them available successively via a ``capsys.readouterr()`` method
     which returns a ``(out, err)`` tuple of captured snapshot strings.
     """
-    return CaptureFuncarg(request, py.io.StdCapture)
+    return CaptureFuncarg(py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
     """captures writes to file descriptors 1 and 2 and makes
@@ -264,14 +264,11 @@ def pytest_funcarg__capfd(request):
     """
     if not hasattr(os, 'dup'):
         py.test.skip("capfd funcarg needs os.dup")
-    return CaptureFuncarg(request, py.io.StdCaptureFD)
-
+    return CaptureFuncarg(py.io.StdCaptureFD)
 
 class CaptureFuncarg:
-    def __init__(self, request, captureclass):
-        self._cclass = captureclass
-        self.capture = self._cclass(now=False)
-        #request.addfinalizer(self._finalize)
+    def __init__(self, captureclass):
+        self.capture = captureclass(now=False)
 
     def _start(self):
         self.capture.startall()
