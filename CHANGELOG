@@ -11,7 +11,8 @@ Changes between 1.3.4 and 1.4.0.dev0
 - fix issue109 - sibling conftest.py files will not be loaded.
   (and Directory collectors cannot be customized anymore from a Directory's
   conftest.py - this needs to happen at least one level up).
-- introduce (customizable) assertion failure representations (Floris Bruynooghe)
+- introduce (customizable) assertion failure representations and enhance
+  output on assertion failures for comparisons and other cases (Floris Bruynooghe)
 - nose-plugin: pass through type-signature failures in setup/teardown
   functions instead of not calling them (Ed Singleton)
 - major refactoring of internal collection handling
