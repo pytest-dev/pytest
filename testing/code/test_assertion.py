@@ -81,6 +81,8 @@ def test_is():
         s = str(e)
         assert s.startswith("assert 1 is 2")
 
+
+@py.test.mark.skipif("sys.version_info < (2,6)")
 def test_attrib():
     class Foo(object):
         b = 1
@@ -92,6 +94,7 @@ def test_attrib():
         s = str(e)
         assert s.startswith("assert 1 == 2")
 
+@py.test.mark.skipif("sys.version_info < (2,6)")
 def test_attrib_inst():
     class Foo(object):
         b = 1
