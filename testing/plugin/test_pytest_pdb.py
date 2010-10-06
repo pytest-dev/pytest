@@ -39,6 +39,15 @@ class TestPDB:
         assert rep.skipped
         assert len(pdblist) == 0
 
+    def test_pdb_on_BdbQuit(self, testdir, pdblist):
+        rep = testdir.inline_runsource1('--pdb', """
+            import py, bdb
+            def test_func():
+                raise bdb.BdbQuit
+        """)
+        assert rep.failed
+        assert len(pdblist) == 0
+
     def test_pdb_interaction(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():

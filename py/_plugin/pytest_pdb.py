@@ -2,7 +2,7 @@
 interactive debugging with the Python Debugger.
 """
 import py
-import pdb, sys, linecache
+import bdb, pdb, sys, linecache
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -20,7 +20,8 @@ class PdbInvoke:
         session.config.option.tbstyle = "no"
     def pytest_runtest_makereport(self, item, call, __multicall__):
         if not call.excinfo or \
-            call.excinfo.errisinstance(py.test.skip.Exception):
+            call.excinfo.errisinstance(py.test.skip.Exception) or \
+            call.excinfo.errisinstance(bdb.BdbQuit):
             return
         rep = __multicall__.execute()
         if "xfail" in rep.keywords:
