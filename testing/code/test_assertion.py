@@ -81,6 +81,27 @@ def test_is():
         s = str(e)
         assert s.startswith("assert 1 is 2")
 
+def test_attrib():
+    class Foo(object):
+        b = 1
+    i = Foo()
+    try:
+        assert i.b == 2
+    except AssertionError:
+        e = exvalue()
+        s = str(e)
+        assert s.startswith("assert 1 == 2")
+
+def test_attrib_inst():
+    class Foo(object):
+        b = 1
+    try:
+        assert Foo().b == 2
+    except AssertionError:
+        e = exvalue()
+        s = str(e)
+        assert s.startswith("assert 1 == 2")
+
 def test_assert_non_string_message():
     class A:
         def __str__(self):

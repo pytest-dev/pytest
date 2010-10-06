@@ -10,6 +10,6 @@ def test_failure_demo_fails_properly(testdir):
     failure_demo.copy(testdir.tmpdir.join(failure_demo.basename))
     result = testdir.runpytest(target)
     result.stdout.fnmatch_lines([
-        "*31 failed*"
+        "*35 failed*"
     ])
     assert result.ret != 0

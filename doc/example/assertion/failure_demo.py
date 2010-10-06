@@ -159,5 +159,35 @@ class TestSpecialisedExplanations(object):
         assert 1 in [0, 2, 3, 4, 5]
 
 
+def test_attribute():
+    class Foo(object):
+        b = 1
+    i = Foo()
+    assert i.b == 2
+
+
+def test_attribute_instance():
+    class Foo(object):
+        b = 1
+    assert Foo().b == 2
+
+
+def test_attribute_failure():
+    class Foo(object):
+        def _get_b(self):
+            raise Exception('Failed to get attrib')
+        b = property(_get_b)
+    i = Foo()
+    assert i.b == 2
+
+
+def test_attribute_multiple():
+    class Foo(object):
+        b = 1
+    class Bar(object):
+        b = 2
+    assert Foo().b == Bar().b
+
+
 def globf(x):
     return x+1

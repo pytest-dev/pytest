@@ -298,6 +298,9 @@ class DebugInterpreter(ast.NodeVisitor):
             result = self.frame.eval(co, __exprinfo_expr=source_result)
         except Exception:
             raise Failure(explanation)
+        explanation = "%s\n{%s = %s.%s\n}" % (self.frame.repr(result),
+                                              self.frame.repr(result),
+                                              source_explanation, attr.attr)
         # Check if the attr is from an instance.
         source = "%r in getattr(__exprinfo_expr, '__dict__', {})"
         source = source % (attr.attr,)
