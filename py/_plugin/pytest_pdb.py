@@ -10,10 +10,38 @@ def pytest_addoption(parser):
                action="store_true", dest="usepdb", default=False,
                help="start the interactive Python debugger on errors.")
 
+def pytest_namespace():
+    return {'set_trace': pytestPDB().set_trace}
+
 def pytest_configure(config):
     if config.getvalue("usepdb"):
-        config.pluginmanager.register(PdbInvoke(), 'pdb')
+        config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
+class pytestPDB:
+    """ Pseudo PDB that defers to the real pdb. """
+    item = None
+
+    def set_trace(self):
+        """ invoke PDB set_trace debugging, dropping any IO capturing. """
+        frame = sys._getframe().f_back
+        item = getattr(self, 'item', None)
+        if item is not None:
+            capman = item.config.pluginmanager.getplugin("capturemanager")
+            out, err = capman.suspendcapture()
+            if hasattr(item, 'outerr'):
+                item.outerr = (item.outerr[0] + out, item.outerr[1] + err)
+            tw = py.io.TerminalWriter()
+            tw.line()
+            tw.sep(">", "PDB set_trace (IO-capturing turned off)")
+        py.std.pdb.Pdb().set_trace(frame)
+
+def pdbitem(item):
+    pytestPDB.item = item
+pytest_runtest_setup = pytest_runtest_call = pytest_runtest_teardown = pdbitem
+
+def pytest_runtest_makereport():
+    pytestPDB.item = None
+    
 class PdbInvoke:
     def pytest_sessionfinish(self, session):
         # don't display failures again at the end

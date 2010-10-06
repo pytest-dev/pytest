@@ -351,13 +351,17 @@ class TmpTestdir:
         return self.runpybin("py.test", *args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
-        pexpect = py.test.importorskip("pexpect", "2.4")
         if self.request.config.getvalue("notoolsonpath"):
             py.test.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
         invoke = self._getpybinargs("py.test")[0]
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
-        child = pexpect.spawn(cmd, logfile=basetemp.join("spawn.out").open("w"))
+        return self.spawn(cmd, expect_timeout=expect_timeout)
+
+    def spawn(self, cmd, expect_timeout=10.0):
+        pexpect = py.test.importorskip("pexpect", "2.4")
+        logfile = self.tmpdir.join("spawn.out")
+        child = pexpect.spawn(cmd, logfile=logfile.open("w"))
         child.timeout = expect_timeout
         return child
 

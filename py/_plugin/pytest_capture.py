@@ -182,6 +182,8 @@ class CaptureManager:
                 outerr = (item.outerr[0] + outerr[0],
                           item.outerr[1] + outerr[1])
             return outerr
+        if hasattr(item, 'outerr'):
+            return item.outerr
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):

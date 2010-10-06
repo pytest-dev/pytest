@@ -1,4 +1,5 @@
 import py
+import sys
 
 class TestPDB:
     def pytest_funcarg__pdblist(self, request):
@@ -83,3 +84,62 @@ class TestPDB:
         child.expect("1 failed")
         if child.isalive():
             child.wait()
+
+    def test_pdb_interaction_capturing_simple(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def test_1():
+                i = 0
+                print ("hello17")
+                py.test.set_trace()
+                x = 3
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("x = 3")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read()
+        assert "1 failed" in rest
+        assert "def test_1" in rest
+        assert "hello17" in rest # out is captured
+        if child.isalive():
+            child.wait()
+
+    def test_pdb_interaction_capturing_twice(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            def test_1():
+                i = 0
+                print ("hello17")
+                py.test.set_trace()
+                x = 3
+                print ("hello18")
+                py.test.set_trace()
+                x = 4
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("x = 3")
+        child.expect("(Pdb)")
+        child.sendline('c')
+        child.expect("x = 4")
+        child.sendeof()
+        rest = child.read()
+        assert "1 failed" in rest
+        assert "def test_1" in rest
+        assert "hello17" in rest # out is captured
+        assert "hello18" in rest # out is captured
+        if child.isalive():
+            child.wait()
+
+    def test_pdb_used_outside_test(self, testdir):
+        p1 = testdir.makepyfile("""
+            import py
+            py.test.set_trace()
+            x = 5
+        """)
+        child = testdir.spawn("%s %s" %(sys.executable, p1))
+        child.expect("x = 5")
+        child.sendeof()
+        child.wait()
