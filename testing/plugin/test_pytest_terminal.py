@@ -610,7 +610,7 @@ def pytest_report_header(config):
             "*hello: info*",
         ])
 
-needsosdup = py.test.mark.xfail("not hasattr(os, 'dup')")
+@py.test.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
     testdir.makepyfile("""
         import os, sys

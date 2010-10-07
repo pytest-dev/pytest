@@ -157,7 +157,8 @@ class TracebackEntry(object):
         return self.exprinfo
 
     def getfirstlinesource(self):
-        return self.frame.code.firstlineno
+        # on Jython this firstlineno can be -1 apparently
+        return max(self.frame.code.firstlineno, 0)
 
     def getsource(self):
         """ return failing source code. """
