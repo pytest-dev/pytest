@@ -1,5 +1,5 @@
-from py._plugin.pytest_tmpdir import pytest_funcarg__tmpdir
-from py._plugin.pytest_python import FuncargRequest
+from pytest.plugin.pytest_tmpdir import pytest_funcarg__tmpdir
+from pytest.plugin.pytest_python import FuncargRequest
 
 def test_funcarg(testdir):
     item = testdir.getitem("def test_func(tmpdir): pass")

@@ -9,9 +9,9 @@ import sys
 #
 # ===============================================================================
 
-from py._plugin.pytest_terminal import TerminalReporter, \
+from pytest.plugin.pytest_terminal import TerminalReporter, \
     CollectonlyReporter,  repr_pythonversion, getreportopt
-from py._plugin import pytest_runner as runner
+from pytest.plugin import pytest_runner as runner
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)

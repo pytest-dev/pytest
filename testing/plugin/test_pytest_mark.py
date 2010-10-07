@@ -1,5 +1,5 @@
 import py
-from py._plugin.pytest_mark import MarkGenerator as Mark
+from pytest.plugin.pytest_mark import MarkGenerator as Mark
 
 class TestMark:
     def test_pytest_mark_notcallable(self):

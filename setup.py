@@ -5,11 +5,7 @@ if sys.version_info >= (3,0):
 from setuptools import setup
 
 long_description = """
-py.test and pylib: rapid testing and development utils
-
-- `py.test`_: cross-project testing tool with many advanced features
-- `py.path`_: path abstractions over local and subversion files
-- `py.code`_: dynamic code compile and traceback printing support
+cross-project testing tool with many advanced features
 
 Platforms: Linux, Win32, OSX
 
@@ -27,8 +23,8 @@ Mailing lists and more contact points: http://pylib.org/contact.html
 """
 def main():
     setup(
-        name='py',
-        description='py.test and pylib: rapid testing and development utils.',
+        name='pytest',
+        description='py.test: simple testing with Python',
         long_description = long_description,
         version= '1.4.0a1',
         url='http://pylib.org',
@@ -48,36 +44,20 @@ def main():
                      'Topic :: Utilities',
                      'Programming Language :: Python',
                      'Programming Language :: Python :: 3'],
-        packages=['py',
-                  'py._plugin',
-                  'py._cmdline',
-                  'py._code',
-                  'py._compat',
-                  'py._io',
-                  'py._log',
-                  'py._path',
-                  'py._process',
-                  'py._test',
-        ],
+        packages=['pytest', 'pytest.plugin', ],
         zip_safe=False,
     )
 
 def cmdline_entrypoints(versioninfo, platform, basename):
+    target = 'pytest:__main__'
     if platform.startswith('java'):
-        points = {'py.test-jython': 'py.cmdline:pytest',
-                  'py.which-jython': 'py.cmdline:pywhich'}
+        points = {'py.test-jython': target}
     else:
         if basename.startswith("pypy"):
-            points = {'py.test-%s' % basename: 'py.cmdline:pytest',
-                      'py.which-%s' % basename: 'py.cmdline:pywhich',}
+            points = {'py.test-%s' % basename: target}
         else: # cpython
-            points = {
-              'py.test-%s.%s' % versioninfo[:2] : 'py.cmdline:pytest',
-              'py.which-%s.%s' % versioninfo[:2] : 'py.cmdline:pywhich'
-            }
-    for x in ['py.cleanup', 'py.convert_unittest', 'py.countloc',
-              'py.lookup', 'py.svnwcrevert', 'py.which', 'py.test']:
-        points[x] = "py.cmdline:%s" % x.replace('.','')
+            points = {'py.test-%s.%s' % versioninfo[:2] : target,}
+        points['py.test'] = target
     return points
 
 def make_entry_points():

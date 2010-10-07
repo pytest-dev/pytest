@@ -1,5 +1,5 @@
 import py, sys
-from py._plugin import pytest_runner as runner
+from pytest.plugin import pytest_runner as runner
 from py._code.code import ReprExceptionInfo
 
 class TestSetupState:

@@ -259,7 +259,7 @@ class PluginDoc(RestWriter):
                 warn("missing docstring", func)
 
     def emit_options(self, plugin):
-        from py._test.parseopt import Parser
+        from pytest.parseopt import Parser
         options = []
         parser = Parser(processopt=options.append)
         if hasattr(plugin, 'pytest_addoption'):

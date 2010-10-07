@@ -1,8 +1,8 @@
 import py
 
-from py._plugin.pytest_skipping import MarkEvaluator
-from py._plugin.pytest_skipping import pytest_runtest_setup
-from py._plugin.pytest_runner import runtestprotocol
+from pytest.plugin.pytest_skipping import MarkEvaluator
+from pytest.plugin.pytest_skipping import pytest_runtest_setup
+from pytest.plugin.pytest_runner import runtestprotocol
 
 class TestEvaluator:
     def test_no_marker(self, testdir):
@@ -366,7 +366,7 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    from py._plugin.pytest_skipping import folded_skips
+    from pytest.plugin.pytest_skipping import folded_skips
     class longrepr:
         class reprcrash:
             path = 'xyz'

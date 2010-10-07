@@ -17,7 +17,7 @@ syntax:glob
 
 build/
 dist/
-py.egg-info
+*.egg-info
 issue/
 env/
 3rdparty/
