@@ -103,6 +103,17 @@ class TestAssert_reprcompare:
         expl = callequal({}, {'1': A()})
         assert 'faulty' in "".join(expl)
 
+    def test_one_repr_empty(self):
+        """
+        the faulty empty string repr did trigger
+        a unbound local error in _diff_text
+        """
+        class A(str):
+            def __repr__(self):
+                return ''
+        expl = callequal(A(), '')
+        assert not expl
+
 @needsnewassert
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""

@@ -75,8 +75,12 @@ def pytest_assertrepr_compare(op, left, right):
     except py.builtin._sysex:
         raise
     except:
+        excinfo = py.code.ExceptionInfo()
         explanation = ['(pytest_assertion plugin: representation of '
-            'details failed. Probably an object has a faulty __repr__.)']
+            'details failed. Probably an object has a faulty __repr__.)',
+            str(excinfo)
+            ]
+
 
     if not explanation:
         return None
@@ -95,6 +99,7 @@ def _diff_text(left, right):
     identical to keep the diff minimal.
     """
     explanation = []
+    i = 0 # just in case left or right has zero length
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
             break
