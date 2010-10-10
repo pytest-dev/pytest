@@ -8,7 +8,19 @@ usage example::
 .. _`py.path.local`: ../../path.html
 
 """
-import py
+import pytest
+
+def pytest_configure(config):
+    def ensuretemp(string, dir=1):
+        """ (deprecated) return temporary directory path with
+            the given string as the trailing part.  It is usually
+            better to use the 'tmpdir' function argument which will
+            take care to provide empty unique directories for each
+            test call even if the test is called multiple times.
+        """
+        #py.log._apiwarn(">1.1", "use tmpdir function argument")
+        return config.ensuretemp(string, dir=dir)
+    pytest.ensuretemp = ensuretemp
 
 def pytest_funcarg__tmpdir(request):
     """return a temporary directory path object

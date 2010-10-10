@@ -121,13 +121,6 @@ def test_options_on_small_file_do_not_blow_up(testdir):
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
-def test_ensuretemp(recwarn):
-    #py.test.deprecated_call(py.test.ensuretemp, 'hello')
-    d1 = py.test.ensuretemp('hello')
-    d2 = py.test.ensuretemp('hello')
-    assert d1 == d2
-    assert d1.check(dir=1)
-
 def test_preparse_ordering(testdir, monkeypatch):
     pkg_resources = py.test.importorskip("pkg_resources")
     def my_iter(name):

@@ -8,7 +8,7 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from pytest.config import Config as pytestConfig
+from pytest._config import Config as pytestConfig
 from pytest.plugin.pytest_session import Collection
 from py.builtin import print_
 
@@ -222,15 +222,15 @@ class TmpTestdir:
         """ this is used from tests that want to re-invoke parse(). """
         if not args:
             args = [self.tmpdir]
-        from pytest import config
-        oldconfig = config.config_per_process # py.test.config
+        from pytest import _config
+        oldconfig = _config.config_per_process # py.test.config
         try:
-            c = config.config_per_process = py.test.config = pytestConfig()
+            c = _config.config_per_process = py.test.config = pytestConfig()
             c.basetemp = oldconfig.mktemp("reparse", numbered=True)
             c.parse(args)
             return c
         finally:
-            config.config_per_process = py.test.config = oldconfig
+            _config.config_per_process = py.test.config = oldconfig
 
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)

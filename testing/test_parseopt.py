@@ -1,5 +1,5 @@
 import py
-from pytest import config as parseopt
+from pytest import _config as parseopt
 
 class TestParser:
     def test_init(self, capsys):

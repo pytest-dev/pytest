@@ -232,7 +232,7 @@ class TestBootstrapping:
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):
-        from pytest.config import Config
+        from pytest._config import Config
         newhooks = testdir.makepyfile(newhooks="""
             def pytest_myhook(xyz):
                 "new hook"
@@ -283,7 +283,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_conftestplugin(self, testdir):
-        from pytest.config import Config
+        from pytest._config import Config
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true")
@@ -312,7 +312,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        from pytest.config import Config
+        from pytest._config import Config
         config = Config()
         config.parse([])
         config.pluginmanager.do_configure(config=config)

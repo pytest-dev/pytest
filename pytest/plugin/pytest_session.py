@@ -38,6 +38,7 @@ def pytest_configure(config):
     if config.getvalue("exitfirst"):
         config.option.maxfail = 1
 
+
 def pytest_cmdline_main(config):
     return Session(config).main()
 

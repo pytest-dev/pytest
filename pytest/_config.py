@@ -215,16 +215,6 @@ class Conftest(object):
         return mod
 
 
-def ensuretemp(string, dir=1):
-    """ (deprecated) return temporary directory path with
-        the given string as the trailing part.  It is usually
-        better to use the 'tmpdir' function argument which will
-        take care to provide empty unique directories for each
-        test call even if the test is called multiple times.
-    """
-    #py.log._apiwarn(">1.1", "use tmpdir function argument")
-    return py.test.config.ensuretemp(string, dir=dir)
-
 class CmdOptions(object):
     """ holds cmdline options as attributes."""
     def __init__(self, **kwargs):

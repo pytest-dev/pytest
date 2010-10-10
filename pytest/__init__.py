@@ -3,8 +3,10 @@ extensible functional and unit testing with Python.
 (c) Holger Krekel and others, 2004-2010
 """
 __version__ = "2.0.0dev0"
-import pytest.config
+import pytest._config
 from pytest import collect
+
+__all__ = ['collect', 'cmdline']
 
 class cmdline: # compatibility py.test.cmdline.main == pytest.cmdline.main
     @staticmethod
@@ -12,7 +14,7 @@ class cmdline: # compatibility py.test.cmdline.main == pytest.cmdline.main
         import sys
         if args is None:
             args = sys.argv[1:]
-        config = pytest.config.Config()
+        config = pytest._config.config_per_process = pytest._config.Config()
         config.parse(args)
         try:
             exitstatus = config.hook.pytest_cmdline_main(config=config)
