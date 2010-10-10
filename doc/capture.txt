@@ -42,7 +42,7 @@ then all tests in that directory will execute with "fd" style capturing.
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The `funcarg mechanism`_ allows test function a very easy
+The :ref:`funcarg mechanism` allows test function a very easy
 way to access the captured output by simply using the names
 ``capsys`` or ``capfd`` in the test function signature.  Here
 is an example test function that performs some output related

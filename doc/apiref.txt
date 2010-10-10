@@ -13,4 +13,5 @@ py.test reference documentation
    mark.txt
    doctest.txt
    recwarn.txt
+   reporting.txt
    

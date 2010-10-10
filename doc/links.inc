@@ -11,3 +11,4 @@
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
 .. _`distribute`: http://pypi.python.org/pypi/distribute
+.. _hudon: http://hudson-ci.org/

@@ -1,10 +1,4 @@
-"""non-xml machine-readable logging of test results.
-   Useful for buildbot integration code.  See the `PyPy-test`_
-   web page for post-processing.
-
-.. _`PyPy-test`: http://codespeak.net:8099/summary
-
-"""
+""" create machine readable plain text file with results.  """
 
 import py
 from py.builtin import print_

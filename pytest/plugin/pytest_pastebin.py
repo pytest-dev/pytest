@@ -1,24 +1,4 @@
-"""
-submit failure or test session information to a pastebin service.
-
-Usage
-----------
-
-**Creating a URL for each test failure**::
-
-    py.test --pastebin=failed
-
-This will submit test run information to a remote Paste service and
-provide a URL for each failure.  You may select tests as usual or add
-for example ``-x`` if you only want to send one particular failure.
-
-**Creating a URL for a whole test session log**::
-
-    py.test --pastebin=all
-
-Currently only pasting to the http://paste.pocoo.org service is implemented.
-
-"""
+""" submit failure or test session information to a pastebin service. """
 import py, sys
 
 class url:
