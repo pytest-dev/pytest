@@ -1,4 +1,0 @@
-docutils
-pygments
-pexpect
-hg+http://bitbucket.org/hpk42/execnet#egg=execnet

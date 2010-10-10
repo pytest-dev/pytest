@@ -1,5 +1,0 @@
-docutils
-pygments
-pexpect
-figleaf
-execnet
