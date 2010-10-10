@@ -527,6 +527,24 @@ class Metafunc:
         self._ids = py.builtin.set()
 
     def addcall(self, funcargs=None, id=_notexists, param=_notexists):
+        """ add a new call to the underlying test function during the
+        collection phase of a test run.
+        
+        :arg funcargs: argument keyword dictionary used when invoking
+            the test function.
+        
+        :arg id: used for reporting and identification purposes.  If you 
+            don't supply an `id` the length of the currently
+            list of calls to the test function will be used.
+
+        :arg param: will be exposed to a later funcarg factory invocation
+            through the ``request.param`` attribute.  Setting it (instead of
+            directly providing a ``funcargs`` ditionary) is called
+            *indirect parametrization*.  Indirect parametrization is 
+            preferable if test values are expensive to setup or can 
+            only be created after certain fixtures or test-run related 
+            initialization code has been run.
+        """
         assert funcargs is None or isinstance(funcargs, dict)
         if id is None:
             raise ValueError("id=None not allowed")
@@ -573,22 +591,29 @@ class FuncargRequest:
 
     def applymarker(self, marker):
         """ apply a marker to a test function invocation.
+        Usually markers can be used as decorators for test functions or
+        classes.  However, with parametrized testing a single
+        test function may be called multiple times and ``applymarker``
+        allows to mark only a single invocation.
 
-        The 'marker' must be created with pytest.mark.* XYZ.
+        :param marker: The ``pytest.mark.*`` object to be applied to the test invocation. 
+        
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
             raise ValueError("%r is not a py.test.mark.* object")
         self._pyfuncitem.keywords[marker.markname] = marker
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
-        """ cache and return result of calling setup().
+        """ return a testing resource managed by ``setup`` &
+        ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
+        ``teardown`` function will be called so that subsequent calls to
+        ``setup`` would recreate the resource.
 
-        The requested argument name, the scope and the ``extrakey``
-        determine the cache key.  The scope also determines when
-        teardown(result) will be called.  valid scopes are:
-        scope == 'function': when the single test function run finishes.
-        scope == 'module': when tests in a different module are run
-        scope == 'session': when tests of the session have run.
+        :arg teardown: function receiving a previously setup resource.
+        :arg setup: a no-argument function creating a resource.
+        :arg scope: a string value out of ``function``, ``module`` or
+            ``session`` indicating the caching lifecycle of the resource.
+        :arg extrakey: added to internal caching key of (funcargname, scope).
         """
         if not hasattr(self.config, '_setupcache'):
             self.config._setupcache = {} # XXX weakref?
@@ -607,6 +632,13 @@ class FuncargRequest:
         return val
 
     def getfuncargvalue(self, argname):
+        """ Retrieve a function argument by name for this test
+        function invocation.  This allows one function argument factory
+        to call another function argument factory.  If there are two
+        funcarg factories for the same test function argument the first
+        factory may use ``getfuncargvalue`` to call the second one and
+        do something additional with the resource.
+        """
         try:
             return self._funcargs[argname]
         except KeyError:
@@ -637,14 +669,15 @@ class FuncargRequest:
             return None
         raise ValueError("unknown finalization scope %r" %(scope,))
 
+    def addfinalizer(self, finalizer):
+        """add finalizer function to be called after test function
+        finished execution. """
+        self._addfinalizer(finalizer, scope="function")
+
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
         self.config._setupstate.addfinalizer(
             finalizer=finalizer, colitem=colitem)
-
-    def addfinalizer(self, finalizer):
-        """ call the given finalizer after test function finished execution. """
-        self._addfinalizer(finalizer, scope="function")
 
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)

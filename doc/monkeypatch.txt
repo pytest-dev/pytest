@@ -1,0 +1,52 @@
+
+monkeypatching/mocking modules and environments
+================================================================
+
+.. currentmodule:: pytest.plugin.pytest_monkeypatch
+
+Sometimes tests need to invoke functionality which depends
+on global settings or which invokes code which cannot be easily
+tested such as network access.  The ``monkeypatch`` function argument
+helps you to safely set/delete an attribute, dictionary item or
+environment variable or to modify ``sys.path`` for importing.
+See the `monkeypatch blog post`_ one some introduction material
+and motivation.
+
+.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+
+
+Simple example: patching ``os.path.expanduser``
+---------------------------------------------------
+
+If you e.g. want to pretend that ``os.expanduser`` returns a certain
+directory, you can use the :py:meth:`monkeypatch.setattr` method to
+patch this function before calling into a function which uses it::
+
+    import os.path
+    def getssh(): # pseudo application code
+        return os.path.join(os.expanduser("~admin"), '.ssh')
+
+    def test_mytest(monkeypatch):
+        monkeypatch.setattr(os.path, 'expanduser', lambda x: '/tmp/xyz')
+        x = getssh()
+        assert x == '/tmp/xyz/.ssh'
+
+After the test function finishes the ``os.path.expanduser`` modification
+will be undone.
+
+Running the above example::
+    
+    $ py.test
+    PASS
+
+
+Method reference of the monkeypatch function argument
+-----------------------------------------------------
+
+.. autoclass:: monkeypatch
+    :members: setattr, delattr, setitem, delitem, setenv, delenv, syspath_prepend, undo
+
+``monkeypatch.setattr/delattr/delitem/delenv()`` all
+by default raise an Exception if the target does not exist.
+Pass ``raising=False`` if you want to skip this check.
+

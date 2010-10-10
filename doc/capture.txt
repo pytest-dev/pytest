@@ -1,0 +1,73 @@
+
+Capturing of stdout/stderr output
+=========================================================
+
+By default ``stdout`` and ``stderr`` output is captured separately for
+setup and test execution code.  If a test or a setup method fails its
+according output will usually be shown along with the failure traceback.
+In addition, ``stdin`` is set to a "null" object which will fail all
+attempts to read from it.  This is important if some code paths in
+test otherwise might lead to waiting for input - which is usually
+not desired when running automated tests.
+
+Setting capturing methods or disabling capturing
+-------------------------------------------------
+
+There are two ways in which ``py.test`` can perform capturing:
+
+* ``fd`` level capturing (default): All writes going to the operating 
+  system file descriptors 1 and 2 will be captured, for example writes such 
+  as ``os.write(1, 'hello')``.  Capturing on ``fd``-level also includes 
+  **output from subprocesses**.
+
+* ``sys`` level capturing: The ``sys.stdout`` and ``sys.stderr`` will 
+  will be replaced with in-memory files and the ``print`` builtin or
+  output from code like ``sys.stderr.write(...)`` will be captured with 
+  this method.
+
+
+You can influence output capturing mechanisms from the command line::
+
+    py.test -s            # disable all capturing
+    py.test --capture=sys # replace sys.stdout/stderr with in-mem files
+    py.test --capture=fd  # also point filedescriptors 1 and 2 to temp file
+
+If you set capturing values in a conftest file like this::
+
+    # conftest.py
+    option_capture = 'fd'
+
+then all tests in that directory will execute with "fd" style capturing.
+
+Accessing captured output from a test function
+---------------------------------------------------
+
+The `funcarg mechanism`_ allows test function a very easy
+way to access the captured output by simply using the names
+``capsys`` or ``capfd`` in the test function signature.  Here
+is an example test function that performs some output related
+checks::
+
+    def test_myoutput(capsys): # or use "capfd" for fd-level
+        print ("hello")
+        sys.stderr.write("world\n")
+        out, err = capsys.readouterr()
+        assert out == "hello\n"
+        assert err == "world\n"
+        print "next"
+        out, err = capsys.readouterr()
+        assert out == "next\n"
+
+The ``readouterr()`` call snapshots the output so far -
+and capturing will be continued.  After the test
+function finishes the original streams will
+be restored.  Using ``capsys`` this way frees your
+test from having to care about setting/resetting
+output streams and also interacts well with py.test's
+own per-test capturing.
+
+If you want to capture on ``fd`` level you can use
+the ``capfd`` function argument which offers the exact
+same interface.
+
+.. include:: links.inc

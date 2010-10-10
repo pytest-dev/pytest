@@ -1,0 +1,14 @@
+
+Using the command line
+===============================================
+
+Example command line usages::
+
+    py.test --version   # shows where pytest was imported from
+    py.test --funcargs  # show available builtin function arguments
+    py.test --help-config # show configuration values
+    
+    py.test -h | --help # show help
+    
+
+which tells you both version and import location of the tool.

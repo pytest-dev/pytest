@@ -1,2 +1,5 @@
 
+Changelog history
+=================================
+
 .. include:: ../CHANGELOG

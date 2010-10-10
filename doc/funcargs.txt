@@ -1,0 +1,189 @@
+==============================================================
+funcargs: creating and managing test function arguments
+==============================================================
+
+.. currentmodule:: pytest.plugin.pytest_python
+
+.. _`funcarg mechanism`:
+
+Test function arguments and factories
+=================================================
+
+A *funcarg* is the short name for "test function argument".  Like
+any other Python function a test function can receive one or multiple
+arguments.  When ``py.test`` prepares running a test function
+it looks at the neccessary function arguments, locates and calls
+factories which then provide the values to be passed to the function.
+
+Basic funcarg example
+-----------------------
+
+Let's look at a simple self-contained example that you can put
+into a test module::
+
+    # ./test_simplefactory.py
+    def pytest_funcarg__myfuncarg(request):
+        return 42
+
+    def test_function(myfuncarg):
+        assert myfuncarg == 17
+
+If you run this with ``py.test test_simplefactory.py`` you see something like this::
+
+    =========================== test session starts ============================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simplefactory.py
+
+    test_simplefactory.py F
+
+    ================================ FAILURES ==================================
+    ______________________________ test_function _______________________________
+
+    myfuncarg = 42
+
+        def test_function(myfuncarg):
+    >       assert myfuncarg == 17
+    E       assert 42 == 17
+
+    test_simplefactory.py:6: AssertionError
+    ======================== 1 failed in 0.11 seconds ==========================
+
+
+This means that the test function was called with a ``myfuncarg`` value
+of ``42`` and the assert fails accordingly.  Here is how py.test
+calls the test function:
+
+1. py.test discovers the ``test_function`` because of the ``test_`` prefix.
+   The test function needs a function argument named ``myfuncarg``.
+   A matching factory function is discovered by looking for the
+   name ``pytest_funcarg__myfuncarg``.
+
+2. ``pytest_funcarg__myfuncarg(request)`` is called and
+   returns the value for ``myfuncarg``.
+
+3. ``test_function(42)`` call is executed.
+
+Note that if you misspell a function argument or want
+to use one that isn't available, you'll see an error
+with a list of available function arguments. You can
+also issue::
+
+    py.test --funcargs test_simplefactory.py
+
+to see available function arguments (which you can also
+think of as "resources").
+
+
+.. _`contact possibilities`: ../contact.html
+.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
+
+.. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`xUnit style`: xunit_setup.html
+
+
+.. _`funcarg factory`:
+.. _factory:
+
+The funcarg **request** object
+=============================================
+
+Each funcarg factory receives a **request** object which is tied to a
+specific test function call.  A request object is passed to a funcarg
+factory and provides access to test configuration and context:
+
+``request.function``: python function object requesting the argument
+
+``request.cls``: class object where the test function is defined in or None.
+
+``request.module``: module object where the test function is defined in.
+
+``request.config``: access to command line opts and general config
+
+``request.param``: if exists was passed by a previous :py:meth:`~Metafunc.addcall`
+
+
+.. _`useful caching and finalization helpers`:
+
+.. automethod:: FuncargRequest.addfinalizer
+
+.. automethod:: FuncargRequest.cached_setup
+
+.. automethod:: FuncargRequest.applymarker
+
+.. automethod:: FuncargRequest.getfuncargvalue
+
+
+.. _`test generators`:
+.. _`parametrizing-tests`:
+
+Parametrizing multiple calls to a test function
+===========================================================
+
+You can parametrize multiple runs of the same test
+function by adding new test function calls with different
+function argument values. Let's look at a simple self-contained
+example:
+
+Basic generated test example
+----------------------------
+
+Let's consider this test module::
+
+    # ./test_example.py
+    def pytest_generate_tests(metafunc):
+        if "numiter" in metafunc.funcargnames:
+            for i in range(10):
+                metafunc.addcall(funcargs=dict(numiter=i))
+
+    def test_func(numiter):
+        assert numiter < 9
+
+If you run this with ``py.test test_example.py`` you'll get::
+
+    ============================= test session starts ==========================
+    python: platform linux2 -- Python 2.6.2
+    test object 1: /home/hpk/hg/py/trunk/test_example.py
+
+    test_example.py .........F
+
+    ================================ FAILURES ==================================
+    __________________________ test_func.test_func[9] __________________________
+
+    numiter = 9
+
+        def test_func(numiter):
+    >       assert numiter < 9
+    E       assert 9 < 9
+
+    /home/hpk/hg/py/trunk/test_example.py:10: AssertionError
+
+
+Here is what happens in detail:
+
+1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
+   function.  It adds ten new function calls with explicit function arguments.
+
+2. **execute tests**: ``test_func(numiter)`` is called ten times with
+   ten different arguments.
+
+.. _`metafunc object`:
+
+The **metafunc** object
+-------------------------------------------
+
+metafunc objects are passed to the ``pytest_generate_tests`` hook.
+They help to inspect a testfunction and to generate tests
+according to test configuration or values specified
+in the class or module where a test function is defined:
+
+``metafunc.funcargnames``: set of required function arguments for given function
+
+``metafunc.function``: underlying python test function
+
+``metafunc.cls``: class object where the test function is defined in or None.
+
+``metafunc.module``: the module object where the test function is defined in.
+
+``metafunc.config``: access to command line opts and general config
+
+.. automethod:: Metafunc.addcall(funcargs=None, id=_notexists, param=_notexists)

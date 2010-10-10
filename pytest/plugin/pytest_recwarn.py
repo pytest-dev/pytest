@@ -1,36 +1,4 @@
-"""
-helpers for asserting deprecation and other warnings.
-
-Example usage
----------------------
-
-You can use the ``recwarn`` funcarg to track
-warnings within a test function:
-
-.. sourcecode:: python
-
-    def test_hello(recwarn):
-        from warnings import warn
-        warn("hello", DeprecationWarning)
-        w = recwarn.pop(DeprecationWarning)
-        assert issubclass(w.category, DeprecationWarning)
-        assert 'hello' in str(w.message)
-        assert w.filename
-        assert w.lineno
-
-You can also call a global helper for checking
-taht a certain function call yields a Deprecation
-warning:
-
-.. sourcecode:: python
-
-    import py
-
-    def test_global():
-        py.test.deprecated_call(myfunction, 17)
-
-
-"""
+""" record warnings to allow assertions about them.  """
 
 import py
 import sys, os

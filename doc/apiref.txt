@@ -1,0 +1,16 @@
+
+py.test reference documentation
+================================================
+
+.. toctree::
+   :maxdepth: 2
+  
+   funcargs.txt
+   xunit_setup.txt
+   capture.txt
+   monkeypatch.txt
+   skipping.txt
+   mark.txt
+   doctest.txt
+   recwarn.txt
+   

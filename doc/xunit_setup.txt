@@ -1,0 +1,82 @@
+====================================
+extended xUnit style setup fixtures
+====================================
+
+.. _`funcargs`: funcargs.html
+.. _`test parametrization`: funcargs.html#parametrizing-tests
+.. _`unittest plugin`: plugin/unittest.html
+.. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
+
+Python, Java and many other languages support xUnit_ style testing.
+This typically involves the call of a ``setup`` ("fixture") method
+before running a test function and ``teardown`` after it has finished.
+``py.test`` supports a more fine-grained model of setup/teardown
+handling by optionally calling per-module and per-class hooks.
+
+
+module level setup/teardown
+=============================================
+
+If you have multiple test functions and test classes in a single
+module you can optionally implement the following fixture methods
+which will usually be called once for all the functions::
+
+    def setup_module(module):
+        """ setup up any state specific to the execution
+            of the given module.
+        """
+
+    def teardown_module(module):
+        """ teardown any state that was previously setup
+            with a setup_module method.
+        """
+
+class level setup/teardown
+=============================================
+
+Similarly, the following methods are called at class level before
+and after all test methods of the class are called::
+
+    def setup_class(cls):
+        """ setup up any state specific to the execution
+            of the given class (which usually contains tests).
+        """
+
+    def teardown_class(cls):
+        """ teardown any state that was previously setup
+            with a call to setup_class.
+        """
+
+method and function level setup/teardown
+=============================================
+
+Similarly, the following methods are called around each method invocation::
+
+    def setup_method(self, method):
+        """ setup up any state tied to the execution of the given
+            method in a class.  setup_method is invoked for every
+            test method of a class.
+        """
+
+    def teardown_method(self, method):
+        """ teardown any state that was previously setup
+            with a setup_method call.
+        """
+
+If you rather define test functions directly at module level
+you can also use the following functions to implement fixtures::
+
+    def setup_function(function):
+        """ setup up any state tied to the execution of the given
+            function. Invoked for every test function in the module.
+        """
+
+    def teardown_method(function):
+        """ teardown any state that was previously setup
+            with a setup_function call.
+    
+Note that it possible that setup/teardown pairs are invoked multiple
+times per testing process.
+
+.. _`unittest.py module`: http://docs.python.org/library/unittest.html
+

@@ -1,0 +1,8 @@
+
+Examples for writing tests
+===========================================
+
+.. toctree::
+   :maxdepth: 2
+
+   example/funcarg_simple.txt

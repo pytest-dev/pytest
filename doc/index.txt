@@ -1,41 +1,35 @@
-py lib: testing and filesystem abstraction
-====================================================
+.. pytest documentation master file, created by
+   sphinx-quickstart on Fri Oct  8 17:54:28 2010.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-The ``py`` lib has several namespaces which help with automated testing,
-and with accessing filesystems.  Here is some documentation on the
-core namespaces:
+py.test: no-boilerplate rapid testing with Python
+======================================================
 
-`py.test`_ write and deploy unit- and functional tests to multiple machines.
+Welcome to ``py.test`` documentation.
 
-`py.code`_: generate code and use advanced introspection/traceback support.
+Contents:
 
-`py.path`_: use path objects to transparently access local and svn filesystems.
+.. toctree::
+   :maxdepth: 2
 
-Other (minor) support functionality
-===================================
+   overview
+   apiref
+   customize
+   examples
+   talks
+   develop
 
-`py lib scripts`_ to make python development easier.
+.. toctree::
+   :hidden:
 
-`py.xml`_ for generating in-memory xml/html object trees
+   changelog.txt
+   
 
-`py.io`_: Helper Classes for Capturing of Input/Output
+Indices and tables
+==================
 
-`py.log`_: an alpha document about the ad-hoc logging facilities
-
-`miscellaneous features`_ describes some small but nice py lib features.
-
-
-.. _`PyPI project page`: http://pypi.python.org/pypi/py/
-
-For the latest Release, see `PyPI project page`_
-
-.. _`py-dev at codespeak net`: http://codespeak.net/mailman/listinfo/py-dev
-.. _`py.log`: log.html
-.. _`py.io`: io.html
-.. _`py.path`: path.html
-.. _`py.code`: code.html
-.. _`py.test`: test/index.html
-.. _`py lib scripts`: bin.html
-.. _`py.xml`: xml.html
-.. _`miscellaneous features`: misc.html
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 

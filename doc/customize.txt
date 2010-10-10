@@ -2,10 +2,6 @@
 Customizing and Extending py.test
 ================================================
 
-.. contents::
-    :local:
-    :depth: 2
-
 basic test configuration
 ===================================
 

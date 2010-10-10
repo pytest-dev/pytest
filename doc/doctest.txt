@@ -1,0 +1,23 @@
+
+collect and run doctests from modules and test files.
+=========================================================
+
+By default all files matching the ``test*.txt`` pattern will
+be run through the python standard ``doctest`` module.  You
+can change the pattern by issuing::
+
+    py.test --doctest-glob='*.rst'
+
+on the command line.  You can also trigger running of doctests
+from docstrings in all python modules (including regular
+python test modules)::
+
+    py.test --doctest-modules
+
+You can make these changes permanent in your project by
+putting them into a conftest.py file like this::
+
+    # content of conftest.py
+    option_doctestmodules = True
+    option_doctestglob = "*.rst"
+

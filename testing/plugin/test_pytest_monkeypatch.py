@@ -1,6 +1,6 @@
 import os, sys
 import py
-from pytest.plugin.pytest_monkeypatch import MonkeyPatch
+from pytest.plugin.pytest_monkeypatch import monkeypatch as MonkeyPatch
 
 def test_setattr():
     class A:
@@ -115,9 +115,8 @@ def test_setenv_prepend():
 
 def test_monkeypatch_plugin(testdir):
     reprec = testdir.inline_runsource("""
-        pytest_plugins = 'pytest_monkeypatch',
         def test_method(monkeypatch):
-            assert monkeypatch.__class__.__name__ == "MonkeyPatch"
+            assert monkeypatch.__class__.__name__ == "monkeypatch"
     """)
     res = reprec.countoutcomes()
     assert tuple(res) == (1, 0, 0), res

@@ -1,0 +1,69 @@
+py.test Features
+==================
+
+mature command line testing tool
+--------------------------------------
+
+- used in many projects, ranging from 10 to 10K tests
+- simple well sorted command line options
+- runs on Unix, Windows from Python 2.4 up to Python 3.1 and 3.2
+- is itself tested extensively on a CI server
+- keyword/testname based selection of tests
+
+extensive plugin and customization system
+------------------------------------------------------
+
+.. _`suprisingly easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
+
+- all collection, reporting, running aspects are delegated to hook functions
+- hook functions are defined per-directory, per-project or through PyPI released plugins
+- it is `suprisingly easy`_ to add command line options or
+  do other kind of add-ons and customizations.
+
+integrates well with CI systems
+----------------------------------------
+
+- produces compatible JunitXML output for Hudson or other CI servers
+- produces "resultlog" text files for easy parsing
+- integrates well with tox_
+
+.. _`tox`: http://codespeak.net/tox
+
+no-boilerplate testing with Python
+----------------------------------
+
+- automatic customizable Python test discovery
+- powerful parametrization of test functions
+- use the ``assert`` statement for your assertions
+- rely on powerful traceback and assertion reporting
+- use ``print`` or ``pdb`` debugging on failures
+
+supports several testing practises and methods
+-----------------------------------------------------------
+
+- supports extended `xUnit style setup`_
+- can integrate nose_, `unittest.py` and `doctest.py`_ style tests
+- supports generating testing coverage
+- `Javasript unit- and functional testing`_
+
+.. _`Javasript unit- and functional testing`: plugin/oejskit.html
+.. _`coverage testing with figleaf`: plugin/figleaf.html
+.. _`unittest.py`: http://docs.python.org/library/unittest.html
+
+distributing tests to local/remote subprocesses
+--------------------------------------------------------
+
+.. _`pytest-xdist`: plugin/xdist.html
+
+- distribute tests to multiple CPUs
+- distribute tests to remote ssh or socket connected machines
+- run tests in subprocess, re-run failing ones on file-change
+
+skip or expect-to-fail a test
+-------------------------------------------
+
+- skip tests if there are platform or dependency mismatches
+- xfail a test (on certain platforms)indicating an implementation problem
+- you can use skip and xfail imperatively or as a decorating marker
+
+.. include:: links.inc

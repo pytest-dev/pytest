@@ -2,21 +2,18 @@
 advanced skipping for python test functions, classes or modules.
 ================================================================
 
+You can mark test functions for a conditional *skip* or as *xfail*,
+expected-to-fail.  Skipping a test avoids running a test.
+Whereas an xfail-marked test usually is run but if it fails it is
+not reported in detail and counted separately. The latter allows
+to keep track of real implementation problems whereas test skips
+are normally tied to a condition, such as a platform or dependency
+requirement without which considering or running the test does
+not make sense.  If a test fails under all conditions then it's
+probably best to mark your test as 'xfail'.
 
-.. contents::
-  :local:
-
-With this plugin you can mark test functions for conditional skipping
-or as "xfail", expected-to-fail.  Skipping a test will avoid running it
-while xfail-marked tests will run and result in an inverted outcome:
-a pass becomes a failure and a fail becomes a semi-passing one.
-
-The need for skipping a test is usually connected to a condition.
-If a test fails under all conditions then it's probably better
-to mark your test as 'xfail'.
-
-By passing ``-rxs`` to the terminal reporter you will see extra
-summary information on skips and xfail-run tests at the end of a test run.
+By running ``py.test -rxs`` you will see extra reporting 
+information on skips and xfail-run tests at the end of a test run.
 
 .. _skipif:
 
@@ -53,7 +50,7 @@ at module level like this::
 skip groups of test functions
 --------------------------------------
 
-As with all metadata function marking you can do it at
+As with all function :ref:`marking` you can do it at
 `whole class- or module level`_.  Here is an example
 for skipping all methods of a test class based on platform::
 
@@ -112,6 +109,12 @@ To specify an explicit reason to be shown with xfailure detail::
 
     @py.test.mark.xfail(..., reason="my reason")
 
+By specifying on the commandline::
+
+    py.test --runxfail
+
+you can force the running and reporting of a runnable ``xfail`` marked test.
+
 imperative xfail from within a test or setup function
 ------------------------------------------------------
 
@@ -151,21 +154,3 @@ within test or setup code.  Example::
         if not valid_config():
             py.test.skip("unsuppored configuration")
 
-command line options
---------------------
-
-
-``--runxfail``
-    run tests even if they are marked xfail
-
-Start improving this plugin in 30 seconds
-=========================================
-
-
-1. Download `pytest_skipping.py`_ plugin source code
-2. put it somewhere as ``pytest_skipping.py`` into your import path
-3. a subsequent ``py.test`` run will use your local version
-
-Checkout customize_, other plugins_ or `get in contact`_.
-
-.. include:: links.txt

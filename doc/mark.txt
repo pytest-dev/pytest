@@ -1,10 +1,8 @@
 
+.. _mark:
+
 generic mechanism for marking python functions.
 ===============================================
-
-
-.. contents::
-  :local:
 
 By using the ``py.test.mark`` helper you can instantiate
 decorators that will set named meta data on test functions.
@@ -86,14 +84,3 @@ tests::
 
     py.test -k webtest  # will only run tests marked as webtest
 
-Start improving this plugin in 30 seconds
-=========================================
-
-
-1. Download `pytest_mark.py`_ plugin source code
-2. put it somewhere as ``pytest_mark.py`` into your import path
-3. a subsequent ``py.test`` run will use your local version
-
-Checkout customize_, other plugins_ or `get in contact`_.
-
-.. include:: links.txt
