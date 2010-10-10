@@ -33,6 +33,7 @@ def main():
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
+        install_requires=['pylib>=1.3.9'],
         classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

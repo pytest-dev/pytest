@@ -8,6 +8,10 @@ import pytest
 from pytest.collect import configproperty, warnoldcollect
 from py._code.code import TerminalRepr
 
+import pytest
+cutdir = py.path.local(pytest.__file__).dirpath()
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group._addoption('--funcargs',
@@ -327,7 +331,7 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.cut(excludepath=py._pydir)
+                    ntraceback = ntraceback.cut(excludepath=cutdir)
             traceback = ntraceback.filter()
         return traceback
 

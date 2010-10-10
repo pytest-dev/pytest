@@ -180,16 +180,14 @@ class PluginManager(object):
             if isinstance(value, dict):
                 self._setns(getattr(obj, name), value)
             else:
-                #print "setting", name, value
+                #print "setting", name, value, "on", obj
                 setattr(obj, name, value)
-                if hasattr(obj, '__all__'):
-                    py.test.__all__.append(name)
+                obj.__all__.append(name)
 
     def pytest_plugin_registered(self, plugin):
         dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
-        import pytest
         if dic:
-            self._setns(pytest, dic)
+            self._setns(py.test, dic)
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption",
                 {'parser': self._config._parser})

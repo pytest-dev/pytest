@@ -3,6 +3,8 @@ test collection nodes, forming a tree, Items are leafs.
 """
 import py
 
+__all__ = ['Collector', 'Item', 'File', 'Directory']
+
 def configproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)

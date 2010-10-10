@@ -205,7 +205,7 @@ class TerminalReporter:
         self._sessionstarttime = py.std.time.time()
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
-        msg += " -- pytest-%s" % (py.__version__)
+        msg += " -- pytest-%s" % (py.test.__version__)
         if self.config.option.verbose or self.config.option.debug or \
            getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)

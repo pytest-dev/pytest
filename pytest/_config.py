@@ -396,7 +396,5 @@ def onpytestaccess():
     # which loads default plugins which add to py.test.*
     pass
 
-# a default per-process instance of py.test configuration
-config_per_process = Config()
 
 

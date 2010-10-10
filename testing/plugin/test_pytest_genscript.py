@@ -1,6 +1,9 @@
 import py, os, sys
 import subprocess
 
+pytestmark = py.test.mark.xfail(run=False,
+    reason="XXX needs refactoring after pylib/pytest split")
+
 def pytest_funcarg__standalone(request):
     return request.cached_setup(scope="module", setup=lambda: Standalone(request))
 
@@ -17,6 +20,7 @@ class Standalone:
         testdir.chdir()
         return testdir._run(anypython, self.script, *args)
 
+@pytestmark # XXX bug in application of global markers to generated functions?
 def test_gen(testdir, anypython, standalone):
     result = standalone.run(anypython, testdir, '-h')
     assert result.ret == 0

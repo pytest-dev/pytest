@@ -210,8 +210,8 @@ def test_plugin_specify(testdir):
     #)
 
 def test_plugin_already_exists(testdir):
-    config = testdir.parseconfig("-p", "default")
-    assert config.option.plugins == ['default']
+    config = testdir.parseconfig("-p", "session")
+    assert config.option.plugins == ['session']
     config.pluginmanager.do_configure(config)
 
 def test_exclude(testdir):

@@ -223,14 +223,14 @@ class TmpTestdir:
         if not args:
             args = [self.tmpdir]
         from pytest import _config
-        oldconfig = _config.config_per_process # py.test.config
+        oldconfig = py.test.config
         try:
-            c = _config.config_per_process = py.test.config = pytestConfig()
+            c = py.test.config = pytestConfig()
             c.basetemp = oldconfig.mktemp("reparse", numbered=True)
             c.parse(args)
             return c
         finally:
-            _config.config_per_process = py.test.config = oldconfig
+            py.test.config = oldconfig
 
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
