@@ -176,3 +176,13 @@ def test_setinitial_conftest_subdirs(testdir, name):
     else:
         assert  subconftest not in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 0
+
+def test_conftest_confcutdir(testdir):
+    testdir.makeconftest("assert 0")
+    x = testdir.mkdir("x")
+    x.join("conftest.py").write(py.code.Source("""
+        def pytest_addoption(parser):
+            parser.addoption("--xyz", action="store_true")
+    """))
+    result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
+    result.stdout.fnmatch_lines(["*--xyz*"])

@@ -3,11 +3,9 @@ managing loading and interacting with pytest plugins.
 """
 import py
 import sys
-import inspect
-from pytest.plugin import hookspec
 
 default_plugins = (
- "default terminal python runner pdb capture mark skipping tmpdir monkeypatch "
+ "session terminal python runner pdb capture mark skipping tmpdir monkeypatch "
  "recwarn pastebin unittest helpconfig nose assertion genscript "
  "junitxml doctest keyword").split()
 
@@ -17,6 +15,7 @@ def check_old_use(mod, modname):
 
 class PluginManager(object):
     def __init__(self):
+        from pytest.plugin import hookspec
         self.registry = Registry()
         self._name2plugin = {}
         self._hints = []
@@ -275,6 +274,7 @@ class MultiCall:
         return kwargs
 
 def varnames(func):
+    import inspect
     if not inspect.isfunction(func) and not inspect.ismethod(func):
         func = getattr(func, '__call__', func)
     ismethod = inspect.ismethod(func)

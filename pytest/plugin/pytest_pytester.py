@@ -9,6 +9,7 @@ import inspect
 import time
 from fnmatch import fnmatch
 from pytest.config import Config as pytestConfig
+from pytest.plugin.pytest_session import Collection
 from py.builtin import print_
 
 def pytest_addoption(parser):
@@ -149,7 +150,6 @@ class TmpTestdir:
         return p
 
     def getnode(self, config, arg):
-        from pytest.session import Collection
         collection = Collection(config)
         return collection.getbyid(collection._normalizearg(arg))[0]
 
@@ -161,7 +161,6 @@ class TmpTestdir:
 
     def inline_genitems(self, *args):
         #config = self.parseconfig(*args)
-        from pytest.session import Collection
         config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
         items = Collection(config).perform_collect()

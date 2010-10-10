@@ -26,7 +26,7 @@ def main():
         name='pytest',
         description='py.test: simple testing with Python',
         long_description = long_description,
-        version= '1.4.0a1',
+        version= '2.0.0.dev0',
         url='http://pylib.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
