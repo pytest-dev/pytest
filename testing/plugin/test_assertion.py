@@ -1,7 +1,7 @@
 import sys
 
 import py
-import pytest.plugin.pytest_assertion as plugin
+import pytest.plugin.assertion as plugin
 
 needsnewassert = py.test.mark.skipif("sys.version_info < (2,6)")
 

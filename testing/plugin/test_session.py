@@ -1,5 +1,5 @@
 import py
-from pytest.plugin.pytest_session import pytest_report_iteminfo
+from pytest.plugin.session import pytest_report_iteminfo
 
 class SessionTests:
     def test_basic_testitem_events(self, testdir):

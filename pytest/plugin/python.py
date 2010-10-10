@@ -697,7 +697,7 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from pytest.plugin.pytest_session import Collection
+    from pytest.plugin.session import Collection
     collection = Collection(config)
     firstid = collection._normalizearg(config.args[0])
     colitem = collection.getbyid(firstid)[0]

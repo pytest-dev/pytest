@@ -1,6 +1,6 @@
 import os, sys
 import py
-from pytest.plugin.pytest_monkeypatch import monkeypatch as MonkeyPatch
+from pytest.plugin.monkeypatch import monkeypatch as MonkeyPatch
 
 def test_setattr():
     class A:

@@ -1,6 +1,6 @@
 import py
 
-from pytest.plugin.pytest_session import Collection, gettopdir
+from pytest.plugin.session import Collection, gettopdir
 
 class TestCollection:
     def test_parsearg(self, testdir):

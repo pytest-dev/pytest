@@ -1,11 +1,11 @@
 import py
 import os
-from pytest.plugin.pytest_resultlog import generic_path, ResultLog, \
+from pytest.plugin.resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
 from pytest.collect import Node, Item, FSCollector
 
 def test_generic_path(testdir):
-    from pytest.plugin.pytest_session import Collection
+    from pytest.plugin.session import Collection
     config = testdir.parseconfig()
     collection = Collection(config)
     p1 = Node('a', config=config, collection=collection)

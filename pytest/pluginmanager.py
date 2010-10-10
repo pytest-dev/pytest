@@ -142,7 +142,7 @@ class PluginManager(object):
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:
             check_old_use(mod, modname)
-            self.register(mod)
+            self.register(mod, modname)
             self.consider_module(mod)
 
     def pytest_terminal_summary(self, terminalreporter):
@@ -225,12 +225,14 @@ def importplugin(importspec):
         e = py.std.sys.exc_info()[1]
         if str(e).find(importspec) == -1:
             raise
+        name = importspec
         try:
-            return __import__("pytest.plugin.%s" %(importspec),
-                None, None, '__doc__')
+            if name.startswith("pytest_"):
+                name = importspec[7:]
+            return __import__("pytest.plugin.%s" %(name), None, None, '__doc__')
         except ImportError:
             e = py.std.sys.exc_info()[1]
-            if str(e).find(importspec) == -1:
+            if str(e).find(name) == -1:
                 raise
             # show the original exception, not the failing internal one
             return __import__(importspec)

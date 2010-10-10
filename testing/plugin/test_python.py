@@ -1,5 +1,5 @@
 import py, sys
-from pytest.plugin import pytest_python as funcargs
+from pytest.plugin import python as funcargs
 
 class TestModule:
     def test_module_file_not_found(self, testdir):

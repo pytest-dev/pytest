@@ -2,7 +2,7 @@
 funcargs: creating and managing test function arguments
 ==============================================================
 
-.. currentmodule:: pytest.plugin.pytest_python
+.. currentmodule:: pytest.plugin.python
 
 .. _`funcarg mechanism`:
 

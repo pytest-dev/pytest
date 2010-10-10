@@ -1,5 +1,5 @@
 import py, os, sys
-from pytest.plugin.pytest_capture import CaptureManager
+from pytest.plugin.capture import CaptureManager
 
 needsosdup = py.test.mark.xfail("not hasattr(os, 'dup')")
 

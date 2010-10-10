@@ -9,7 +9,7 @@ import inspect
 import time
 from fnmatch import fnmatch
 from pytest._config import Config as pytestConfig
-from pytest.plugin.pytest_session import Collection
+from pytest.plugin.session import Collection
 from py.builtin import print_
 
 def pytest_addoption(parser):

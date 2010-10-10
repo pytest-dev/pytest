@@ -1,6 +1,6 @@
 import py
 import os, sys
-from pytest.plugin.pytest__pytest import HookRecorder
+from pytest.plugin._pytest import HookRecorder
 from pytest.pluginmanager import Registry
 
 def test_hookrecorder_basic():

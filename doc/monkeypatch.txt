@@ -2,7 +2,7 @@
 monkeypatching/mocking modules and environments
 ================================================================
 
-.. currentmodule:: pytest.plugin.pytest_monkeypatch
+.. currentmodule:: pytest.plugin.monkeypatch
 
 Sometimes tests need to invoke functionality which depends
 on global settings or which invokes code which cannot be easily
