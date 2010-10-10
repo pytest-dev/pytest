@@ -21,14 +21,16 @@ Basic funcarg example
 Let's look at a simple self-contained example that you can put
 into a test module::
 
-    # ./test_simplefactory.py
+    # content of ./test_simplefactory.py
     def pytest_funcarg__myfuncarg(request):
         return 42
 
     def test_function(myfuncarg):
         assert myfuncarg == 17
 
-If you run this with ``py.test test_simplefactory.py`` you see something like this::
+Running the test looks like this::
+
+    $ py.test test_simplefactory.py
 
     =========================== test session starts ============================
     python: platform linux2 -- Python 2.6.2
@@ -129,7 +131,7 @@ Basic generated test example
 
 Let's consider this test module::
 
-    # ./test_example.py
+    # content of ./test_example.py
     def pytest_generate_tests(metafunc):
         if "numiter" in metafunc.funcargnames:
             for i in range(10):
@@ -138,8 +140,9 @@ Let's consider this test module::
     def test_func(numiter):
         assert numiter < 9
 
-If you run this with ``py.test test_example.py`` you'll get::
+Running this::
 
+    $ py.test test_example.py
     ============================= test session starts ==========================
     python: platform linux2 -- Python 2.6.2
     test object 1: /home/hpk/hg/py/trunk/test_example.py
