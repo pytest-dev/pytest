@@ -1,7 +1,5 @@
-Sending output to files or to remote services
+Sending test report output to XML files or to remote services
 =================================================================
-
-
 
 creating JUnitXML format files
 ----------------------------------------------------

@@ -15,7 +15,7 @@ def check_old_use(mod, modname):
 
 class PluginManager(object):
     def __init__(self):
-        from pytest.plugin import hookspec
+        from pytest import hookspec
         self.registry = Registry()
         self._name2plugin = {}
         self._hints = []

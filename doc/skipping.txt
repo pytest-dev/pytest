@@ -80,7 +80,7 @@ apply the function will be skipped.
 
 .. _xfail:
 
-mark a test function as **expected to fail**
+mark a test function as expected to fail
 -------------------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you

@@ -3,33 +3,40 @@ hook specifications for py.test plugins
 """
 
 # -------------------------------------------------------------------------
-# Command line and configuration
+# Initialization
 # -------------------------------------------------------------------------
 
 def pytest_namespace():
-    "return dict of name->object which will get stored at py.test. namespace"
+    """return dict of name->object to be made globally available in
+    the py.test/pytest namespace.  This hook is called before command
+    line options are fully parsed.  If you want to provide helper functions
+    that can interact with a test function invocation, please refer to 
+    :ref:`funcarg mechanism`.
+    """
 
 def pytest_addoption(parser):
-    "add optparse-style options via parser.addoption."
+    """allows to add optparse-style command line options via a call to 
+    ``parser.addoption(...)``."""
 
 def pytest_addhooks(pluginmanager):
-    "add hooks via pluginmanager.registerhooks(module)"
+    "allows to add new hooks via pluginmanager.registerhooks(module)"
+
+def pytest_cmdline_main(config):
+    """ called for performing the main command line action. The default
+    implementation will invoke the configure hooks and runtest_mainloop. """
+pytest_cmdline_main.firstresult = True
 
 def pytest_configure(config):
     """ called after command line options have been parsed.
         and all plugins and initial conftest files been loaded.
     """
 
-def pytest_cmdline_main(config):
-    """ called for performing the main (cmdline) action. """
-pytest_cmdline_main.firstresult = True
+def pytest_unconfigure(config):
+    """ called before test process is exited.  """
 
 def pytest_runtest_mainloop(session):
     """ called for performing the main runtest loop (after collection. """
 pytest_runtest_mainloop.firstresult = True
-
-def pytest_unconfigure(config):
-    """ called before test process is exited.  """
 
 # -------------------------------------------------------------------------
 # collection hooks

@@ -228,83 +228,39 @@ the ``--traceconfig`` option.
 .. _`well specified hooks`:
 .. _`implement hooks`:
 
-Important py.test hooks
+py.test hook reference
 ====================================
 
-py.test calls hooks functions to implement its `test collection`_,
-running and reporting process.  When py.test loads a plugin it validates
-that all hook functions conform to the `hook definition specification`_.
+hook specification and validation
+-----------------------------------------
 
-The hook function name and its
-argument names need to match exactly but it is allowed for an implementation
-to accept *less* parameters.  You'll get useful errors on mistyped hook or
-argument names.  Read on for some introductory information on particular
-hooks.  It's sensible to look at existing plugins so see example usages
-and start off with your own plugin.
+py.test calls hook functions to implement initialization, running,
+test execution and reporting.  When py.test loads a plugin it validates
+that all hook functions conform to their respective hook specification.
+Each hook function name and its argument names need to match a hook
+specification exactly but it is allowed for a hook function to accept 
+*less* parameters than specified.  If you mistype argument names or the
+hook name itself you get useful errors.
 
-.. _`hook definition specification`: plugin/hookspec.html
-
-.. _`configuration hooks`:
-
-command line parsing and configuration hooks
+initialisation, command line and configuration hooks
 --------------------------------------------------------------------
 
-When the `test tool starts up`_ it will invoke all hooks that add
-command line options in the python standard optparse style.
+.. currentmodule:: pytest.hookspec
 
-.. sourcecode:: python
-
-    def pytest_addoption(parser):
-        """ add command line options. """"
-        parser.addoption("--myopt", dest="myopt", action="store_true")
-
-After all these hooks have been called, the command line is parser
-and a ``config`` object is created and another hook is invoked,
-for example:
-
-.. sourcecode:: python
-
-    def pytest_configure(config):
-        config.getvalue("myopt")
-
-When the test run finishes this corresponding finalizer hook is called:
-
-.. sourcecode:: python
-
-    def pytest_unconfigure(config):
-        ...
-
-
-adding global py.test helpers and functionality
---------------------------------------------------------------------
-
-If you want to make global helper functions or objects available
-to your test code you can implement:
-
-.. sourcecode:: python
-
-    def pytest_namespace():
-        """ return dictionary with items to be made available on py.test. namespace """
-
-All such returned items will be made available directly on
-the ``py.test`` namespace.
-
-If you want to provide helpers that are specific to a test function run or need
-to be setup per test function run, please refer to the `funcargs mechanism`_.
-
-.. _`funcargs mechanism`: funcargs.html
-
+.. autofunction:: pytest_namespace
+.. autofunction:: pytest_addoption
+.. autofunction:: pytest_cmdline_main
+.. autofunction:: pytest_configure
+.. autofunction:: pytest_unconfigure
 
 generic "runtest" hooks
 ------------------------------
 
 Each test item is usually executed by calling the following three hooks:
 
-.. sourcecode:: python
-
-    pytest_runtest_setup(item)
-    pytest_runtest_call(item)
-    pytest_runtest_teardown(item)
+.. autofunction:: pytest_runtest_setup
+.. autofunction:: pytest_runtest_call
+.. autofunction:: pytest_runtest_teardown
 
 For each of the three invocations a `call object`_ encapsulates
 information about the outcome of the call and is subsequently used
