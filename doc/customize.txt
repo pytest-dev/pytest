@@ -319,24 +319,14 @@ Collection nodes which have children are called "Collectors" and otherwise
 they are called "Items" or "test items".  Here is an example of such a
 tree::
 
-    testing $ py.test --collectonly test_parseonly.py
-    <Directory 'testing'>
-      <Module 'test_parseopt.py'>
-        <Class 'TestParser'>
+    example $ py.test --collectonly test_collectonly.py
+    <Directory 'example'>
+      <Module 'test_collectonly.py'>
+        <Function 'test_function'>
+        <Class 'TestClass'>
           <Instance '()'>
-            <Function 'test_init'>
-            <Function 'test_group_add_and_get'>
-            <Function 'test_addgroup_deprecation'>
-            <Function 'test_getgroup_simple'>
-            <Function 'test_group_ordering'>
-            <Function 'test_group_addoption'>
-            <Function 'test_group_shortopt_lowercase'>
-            <Function 'test_parser_addoption'>
-            <Function 'test_parse'>
-            <Function 'test_parse_will_set_default'>
-            <Function 'test_parse_setoption'>
-            <Function 'test_parse_defaultgetter'>
-        <Function 'test_addoption_parser_epilog'>
+            <Function 'test_method'>
+            <Function 'test_anothermethod'>
 
 By default all directories not starting with a dot are traversed,
 looking for ``test_*.py`` and ``*_test.py`` files.  Those Python

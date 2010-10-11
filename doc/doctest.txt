@@ -45,7 +45,7 @@ then you can just invoke ``py.test`` without command line options::
     $ py.test
     ============================= test session starts ==============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
-    test path 1: /tmp/doc-exec-109
+    test path 1: /tmp/doc-exec-224
     
     conftest.py .
     example.rst .
