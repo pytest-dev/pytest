@@ -27,18 +27,22 @@ patch this function before calling into a function which uses it::
         return os.path.join(os.expanduser("~admin"), '.ssh')
 
     def test_mytest(monkeypatch):
-        monkeypatch.setattr(os.path, 'expanduser', lambda x: '/tmp/xyz')
+        def mockreturn(path):
+            return '/abc'
+        monkeypatch.setattr(os.path, 'expanduser', mockreturn)
         x = getssh()
-        assert x == '/tmp/xyz/.ssh'
+        assert x == '/abc'
 
 After the test function finishes the ``os.path.expanduser`` modification
 will be undone.
 
-Running the above example::
-    
-    $ py.test
-    PASS
-
+.. background check:
+   $ py.test
+   ============================= test session starts ==============================
+   platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+   test path 1: /tmp/doc-exec-117
+   
+   ===============================  in 0.00 seconds ===============================
 
 Method reference of the monkeypatch function argument
 -----------------------------------------------------

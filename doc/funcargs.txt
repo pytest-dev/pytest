@@ -31,25 +31,23 @@ into a test module::
 Running the test looks like this::
 
     $ py.test test_simplefactory.py
-
-    =========================== test session starts ============================
-    python: platform linux2 -- Python 2.6.2
-    test object 1: /home/hpk/hg/py/trunk/example/funcarg/test_simplefactory.py
-
+    ============================= test session starts ==============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_simplefactory.py
+    
     test_simplefactory.py F
-
-    ================================ FAILURES ==================================
-    ______________________________ test_function _______________________________
-
+    
+    =================================== FAILURES ===================================
+    ________________________________ test_function _________________________________
+    
     myfuncarg = 42
-
+    
         def test_function(myfuncarg):
     >       assert myfuncarg == 17
     E       assert 42 == 17
-
-    test_simplefactory.py:6: AssertionError
-    ======================== 1 failed in 0.11 seconds ==========================
-
+    
+    test_simplefactory.py:5: AssertionError
+    =========================== 1 failed in 0.02 seconds ===========================
 
 This means that the test function was called with a ``myfuncarg`` value
 of ``42`` and the assert fails accordingly.  Here is how py.test
@@ -143,23 +141,23 @@ Let's consider this test module::
 Running this::
 
     $ py.test test_example.py
-    ============================= test session starts ==========================
-    python: platform linux2 -- Python 2.6.2
-    test object 1: /home/hpk/hg/py/trunk/test_example.py
-
+    ============================= test session starts ==============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_example.py
+    
     test_example.py .........F
-
-    ================================ FAILURES ==================================
-    __________________________ test_func.test_func[9] __________________________
-
+    
+    =================================== FAILURES ===================================
+    _________________________________ test_func[9] _________________________________
+    
     numiter = 9
-
+    
         def test_func(numiter):
     >       assert numiter < 9
     E       assert 9 < 9
-
-    /home/hpk/hg/py/trunk/test_example.py:10: AssertionError
-
+    
+    test_example.py:7: AssertionError
+    ====================== 1 failed, 9 passed in 0.04 seconds ======================
 
 Here is what happens in detail:
 

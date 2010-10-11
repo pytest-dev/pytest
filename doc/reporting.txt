@@ -5,9 +5,9 @@ creating JUnitXML format files
 ----------------------------------------------------
 
 To create result files which can be read by Hudson_ or other Continous
-integration servers, use this::
+integration servers, use this invocation::
 
-    $ py.test --junitxml=path
+    py.test --junitxml=path
 
 to create an XML file at ``path``.
 
@@ -16,7 +16,7 @@ creating resultlog format files
 
 To create plain-text machine-readable result files you can issue::
 
-    $ py.test --resultlog=path
+    py.test --resultlog=path
 
 and look at the content at the ``path`` location.  Such files are used e.g.
 by the `PyPy-test`_ web page to show test results over several revisions.
