@@ -113,8 +113,11 @@ def call_runtest_hook(item, when):
     return CallInfo(lambda: ihook(item=item), when=when)
 
 class CallInfo:
+    """ Call Information about a hook call. """
+    #: None or ExceptionInfo object.
     excinfo = None
     def __init__(self, func, when):
+        #: one of "setup", "call", "teardown" specifying the runtest phase.
         self.when = when
         try:
             self.result = func()
@@ -169,15 +172,36 @@ def pytest_runtest_makereport(item, call):
         keywords, outcome, longrepr, when)
 
 class TestReport(BaseReport):
+    """ Basic test report object (also used for setup and teardown calls if
+    they fail).
+    """
     def __init__(self, nodeid, nodenames, fspath, location,
             keywords, outcome, longrepr, when):
+        #: normalized collection node id
         self.nodeid = nodeid
+
+        #: list of names indicating position in collection tree.
         self.nodenames = nodenames
+
+        #: the collected path of the file containing the test.
         self.fspath = fspath  # where the test was collected
+
+        #: a (filesystempath, lineno, domaininfo) tuple indicating the
+        #: actual location of a test item - it might be different from the
+        #: collected one e.g. if a method is inherited from a different module.
         self.location = location
+
+        #: a name -> value dictionary containing all keywords and
+        #: markers associated with a test invocation.
         self.keywords = keywords
+        
+        #: test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
+
+        #: None or a failure representation.
         self.longrepr = longrepr
+        
+        #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 
     def __repr__(self):

@@ -53,18 +53,20 @@ def pytest_log_finishcollection(collection):
     """ called after collection has finished. """
 
 def pytest_ignore_collect(path, config):
-    """ return true value to prevent considering this path for collection.
-    This hook is consulted for all files and directories prior to considering
-    collection hooks.
+    """ return True to prevent considering this path for collection.
+    This hook is consulted for all files and directories prior to calling
+    more specific hooks.
     """
 pytest_ignore_collect.firstresult = True
 
 def pytest_collect_directory(path, parent):
-    """ return Collection node or None for the given path. """
+    """ return collection Node or None for the given path. Any new node
+    needs to have the specified ``parent`` as a parent."""
 pytest_collect_directory.firstresult = True
 
 def pytest_collect_file(path, parent):
-    """ return Collection node or None for the given path. """
+    """ return collection Node or None for the given path. Any new node
+    needs to have the specified ``parent`` as a parent."""
 
 # logging hooks for collection
 def pytest_collectstart(collector):
@@ -113,23 +115,30 @@ def pytest_itemstart(item, node=None):
     """ (deprecated, use pytest_runtest_logstart). """
 
 def pytest_runtest_protocol(item):
-    """ implement fixture, run and report about the given test item. """
+    """ implements the standard runtest_setup/call/teardown protocol including
+    capturing exceptions and calling reporting hooks on the results accordingly.
+
+    :return boolean: True if no further hook implementations should be invoked.
+    """
 pytest_runtest_protocol.firstresult = True
 
 def pytest_runtest_logstart(nodeid, location, fspath):
     """ signal the start of a test run. """
 
 def pytest_runtest_setup(item):
-    """ called before pytest_runtest_call(). """
+    """ called before ``pytest_runtest_call(item)``. """
 
 def pytest_runtest_call(item):
-    """ execute test item. """
+    """ called to execute the test ``item``. """
 
 def pytest_runtest_teardown(item):
-    """ called after pytest_runtest_call(). """
+    """ called after ``pytest_runtest_call``. """
 
 def pytest_runtest_makereport(item, call):
-    """ make a test report for the given item and call outcome. """
+    """ return a :py:class:`pytest.plugin.runner.TestReport` object
+    for the given :py:class:`pytest.collect.Item` and
+    :py:class:`pytest.plugin.runner.CallInfo`.
+    """
 pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(report):

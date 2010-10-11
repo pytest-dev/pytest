@@ -256,158 +256,87 @@ initialisation, command line and configuration hooks
 generic "runtest" hooks
 ------------------------------
 
-Each test item is usually executed by calling the following three hooks:
+Almost runtest related hooks receive a :py:class:`pytest.collect.Item` object.
 
+.. autofunction:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_setup
 .. autofunction:: pytest_runtest_call
 .. autofunction:: pytest_runtest_teardown
+.. autofunction:: pytest_runtest_makereport
 
-For each of the three invocations a `call object`_ encapsulates
-information about the outcome of the call and is subsequently used
-to make a report object:
+For deeper understanding you may look at the default implementation of
+these hooks in :py:mod:`pytest.plugin.runner` and maybe also
+in :py:mod:`pytest.plugin.pdb` which intercepts creation
+of reports in order to drop to interactive debugging.
 
-.. sourcecode:: python
+The :py:mod:`pytest.plugin.terminal` reported specifically uses
+the reporting hook to print information about a test run.
 
-    report = hook.pytest_runtest_makereport(item, call)
-
-For example, the `pytest_pdb plugin`_ uses this hook to activate
-interactive debugging on failures when ``--pdb`` is specified on the
-command line.
-
-Usually three reports will be generated for a single test item for each
-of the three runtest hooks respectively.  If ``pytest_runtest_setup``
-fails then ``pytest_runtest_teardown`` will be called but not
-``pytest_runtest_call``.
-
-Each of the up to three reports is eventually fed to the logreport hook:
-
-.. sourcecode:: python
-
-    pytest_runtest_logreport(report)
-
-A ``report`` object contains status and reporting information:
-
-.. sourcecode:: python
-
-    report.longrepr = string/lines/object to print
-    report.when = "setup", "call" or "teardown"
-    report.shortrepr = letter for progress-report
-    report.passed = True or False
-    report.failed = True or False
-    report.skipped = True or False
-
-The `terminal plugin`_ uses this hook to print information
-about a test run.
-
-The whole protocol described here is implemented via this hook:
-
-.. sourcecode:: python
-
-    pytest_runtest_protocol(item) -> True
-
-.. _`call object`:
-
-The call object contains information about a performed call:
-
-.. sourcecode:: python
-
-    call.excinfo = ExceptionInfo object or None
-    call.when = "setup", "call" or "teardown"
-    call.outerr = None or tuple of strings representing captured stdout/stderr
-
-.. _`pytest_pdb plugin`: plugin/pdb.html
-.. _`terminal plugin`: plugin/terminal.html
-
-
-generic collection hooks
+collection hooks
 ------------------------------
 
-py.test calls the following two fundamental hooks for collecting files and directories:
+py.test calls the following hooks for collecting files and directories:
 
-.. sourcecode:: python
-
-    def pytest_collect_directory(path, parent):
-        """ return Collection node or None for the given path. """
-
-    def pytest_collect_file(path, parent):
-        """ return Collection node or None for the given path. """
-
-Both return a `collection node`_ for a given path.  All returned
-nodes from all hook implementations will participate in the
-collection and running protocol.  The ``parent`` object is
-the parent node and may be used to access command line
-options via the ``parent.config`` object.
-
-
-Python test function and module hooks
-----------------------------------------------------
+.. autofunction:: pytest_ignore_collect
+.. autofunction:: pytest_collect_directory
+.. autofunction:: pytest_collect_file
 
 For influencing the collection of objects in Python modules
 you can use the following hook:
 
-.. sourcecode:: python
-
-    def pytest_pycollect_makeitem(collector, name, obj):
-        """ return custom item/collector for a python object in a module, or None.  """
-
-This hook will be called for each Python object in a collected
-Python module.  The return value is a custom `collection node`_ or None.
-
-.. XXX or ``False`` if you want to indicate that the given item should not be collected.
+.. autofunction:: pytest_pycollect_makeitem
 
 
-Gateway initialization (distributed testing)
-----------------------------------------------------
+reporting hooks
+------------------------------
 
-(alpha) For distributed testing it can be useful to prepare the
-remote environment.  For this you can implement the newgateway hook:
+Collection related reporting hooks:
 
-.. sourcecode:: python
+.. autofunction: pytest_collectstart
+.. autofunction: pytest_log_itemcollect
+.. autofunction: pytest_collectreport
+.. autofunction: pytest_deselected
 
-    def pytest_gwmanage_newgateway(gateway, platinfo):
-        """ called after a gateway is instantiated. """
+And here is the central hook for reporting about
+test execution:
 
-The ``gateway`` object here has a ``spec`` attribute which is an ``execnet.XSpec``
-object, which has attributes that map key/values as specified from a ``--txspec``
-option. The platinfo object is a dictionary with information about the remote process:
+.. autofunction: pytest_runtest_logreport
 
-* ``version``: remote python's ``sys.version_info``
-* ``platform``: remote ``sys.platform``
-* ``cwd``: remote ``os.getcwd``
-
-
-.. _`collection process`:
-.. _`collection node`:
-.. _`test collection`:
-
-
-Test Collection process
+The test collection tree
 ======================================================
 
-the collection tree
----------------------------------
 
-The collecting process is iterative so that distribution
-and execution of tests can start as soon as the first test
-item is collected.  Collection nodes with children are
-called "Collectors" and terminal nodes are called "Items".
-Here is an example of such a tree, generated with the
-command ``py.test --collectonly py/xmlobj``::
+Default filesystem test discovery
+-----------------------------------------------
 
-    <Directory 'xmlobj'>
-        <Directory 'testing'>
-            <Module 'test_html.py' (py.__.xmlobj.testing.test_html)>
-                <Function 'test_html_name_stickyness'>
-                <Function 'test_stylenames'>
-                <Function 'test_class_None'>
-                <Function 'test_alternating_style'>
-            <Module 'test_xml.py' (py.__.xmlobj.testing.test_xml)>
-                <Function 'test_tag_with_text'>
-                <Function 'test_class_identity'>
-                <Function 'test_tag_with_text_and_attributes'>
-                <Function 'test_tag_with_subclassed_attr_simple'>
-                <Function 'test_tag_nested'>
-                <Function 'test_tag_xmlname'>
+Test collection starts from specified paths or from the current
+directory.  All tests are collected ahead of running the first test.
+(This used to be different in earlier versions of ``py.test`` where
+collection and running was interweaved which made test randomization
+and distributed testing harder).
+
+Collection nodes which have children are called "Collectors" and otherwise
+they are called "Items" or "test items".  Here is an example of such a
+tree::
+
+    testing $ py.test --collectonly test_parseonly.py
+    <Directory 'testing'>
+      <Module 'test_parseopt.py'>
+        <Class 'TestParser'>
+          <Instance '()'>
+            <Function 'test_init'>
+            <Function 'test_group_add_and_get'>
+            <Function 'test_addgroup_deprecation'>
+            <Function 'test_getgroup_simple'>
+            <Function 'test_group_ordering'>
+            <Function 'test_group_addoption'>
+            <Function 'test_group_shortopt_lowercase'>
+            <Function 'test_parser_addoption'>
+            <Function 'test_parse'>
+            <Function 'test_parse_will_set_default'>
+            <Function 'test_parse_setoption'>
+            <Function 'test_parse_defaultgetter'>
+        <Function 'test_addoption_parser_epilog'>
 
 By default all directories not starting with a dot are traversed,
 looking for ``test_*.py`` and ``*_test.py`` files.  Those Python
@@ -441,3 +370,18 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 * perform ``sys.path.insert(0, basedir)``.
 
 * import the root package as ``root``
+
+Complete reference of objects involved in hooks
+===========================================================
+
+.. autoclass:: pytest.plugin.runner.CallInfo
+    :members:
+
+.. autoclass:: pytest.plugin.runner.TestReport
+    :members:
+
+.. autoclass:: pytest.collect.Node
+    :members:
+
+.. autoclass:: pytest.collect.Item
+    :inherited-members:

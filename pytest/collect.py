@@ -25,13 +25,20 @@ class HookProxy:
 
 class Node(object):
     """ base class for all Nodes in the collection tree.
-        Collector subclasses have children, Items are terminal nodes.
-    """
+    Collector subclasses have children, Items are terminal nodes."""
+
     def __init__(self, name, parent=None, config=None, collection=None):
+        #: a unique name with the scope of the parent
         self.name = name
+
+        #: the parent collector node.
         self.parent = parent
+        
         self.config = config or parent.config
+        #: the collection this node is part of.
         self.collection = collection or getattr(parent, 'collection', None)
+        
+        #: the file where this item is contained/collected from.
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = HookProxy(self)
         self.keywords = self.readkeywords()
@@ -130,13 +137,8 @@ class Node(object):
     repr_failure = _repr_failure_py
 
 class Collector(Node):
-    """
-        Collector instances create children through collect()
-        and thus iteratively build a tree.  attributes::
-
-        parent: attribute pointing to the parent collector
-                (or None if this is the root collector)
-        name:   basename of this collector object
+    """ Collector instances create children through collect()
+        and thus iteratively build a tree.
     """
     Directory = configproperty('Directory')
     Module = configproperty('Module')
@@ -165,6 +167,15 @@ class Collector(Node):
     def _memocollect(self):
         """ internal helper method to cache results of calling collect(). """
         return self._memoizedcall('_collected', self.collect)
+
+    def _prunetraceback(self, traceback):
+        if hasattr(self, 'fspath'):
+            path = self.fspath
+            ntraceback = traceback.cut(path=self.fspath)
+            if ntraceback == traceback:
+                ntraceback = ntraceback.cut(excludepath=py._pydir)
+            traceback = ntraceback.filter()
+        return traceback
 
     # **********************************************************************
     # DEPRECATED METHODS
@@ -196,15 +207,6 @@ class Collector(Node):
              If the return value is None there is no such child.
         """
         return self.collect_by_name(name)
-
-    def _prunetraceback(self, traceback):
-        if hasattr(self, 'fspath'):
-            path = self.fspath
-            ntraceback = traceback.cut(path=self.fspath)
-            if ntraceback == traceback:
-                ntraceback = ntraceback.cut(excludepath=py._pydir)
-            traceback = ntraceback.filter()
-        return traceback
 
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, collection=None):
@@ -264,7 +266,10 @@ class Directory(FSCollector):
         return self.ihook.pytest_collect_directory(path=path, parent=self)
 
 class Item(Node):
-    """ a basic test item. """
+    """ a basic test invocation item. Note that for a single function
+    there might be multiple test invocation items. Attributes:
+    
+    """
     def _deprecated_testexecution(self):
         if self.__class__.run != Item.run:
             warnoldtestrun(function=self.run)
