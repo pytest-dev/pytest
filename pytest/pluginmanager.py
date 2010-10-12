@@ -178,7 +178,14 @@ class PluginManager(object):
     def _setns(self, obj, dic):
         for name, value in dic.items():
             if isinstance(value, dict):
-                self._setns(getattr(obj, name), value)
+                mod = getattr(obj, name, None)
+                if mod is None:
+                    mod = py.std.types.ModuleType(name)
+                    sys.modules['pytest.%s' % name] = mod
+                    sys.modules['py.test.%s' % name] = mod
+                    mod.__all__ = []
+                    setattr(obj, name, mod)
+                self._setns(mod, value)
             else:
                 #print "setting", name, value, "on", obj
                 setattr(obj, name, value)

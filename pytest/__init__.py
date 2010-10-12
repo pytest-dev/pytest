@@ -8,7 +8,6 @@ __all__ = ['collect', 'cmdline', 'config']
 
 import pytest._config
 config = pytest._config.Config()
-from pytest import collect
 from pytest import main as cmdline
 
 def __main__():

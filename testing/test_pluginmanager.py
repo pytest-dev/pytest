@@ -294,6 +294,15 @@ class TestPytestPluginInteractions:
         config.parse([])
         assert not config.option.test123
 
+    def test_namespace_early_from_import(self, testdir):
+        p = testdir.makepyfile("""
+            from py.test.collect import Item
+            from pytest.collect import Item as Item2
+            assert Item is Item2
+        """)
+        result = testdir.runpython(p)
+        assert result.ret == 0
+
     def test_do_ext_namespace(self, testdir):
         testdir.makeconftest("""
             def pytest_namespace():

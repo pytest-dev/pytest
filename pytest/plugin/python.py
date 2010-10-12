@@ -5,7 +5,7 @@ import py
 import inspect
 import sys
 import pytest
-from pytest.collect import configproperty, warnoldcollect
+from pytest.plugin.session import configproperty, warnoldcollect
 from py._code.code import TerminalRepr
 
 import pytest
