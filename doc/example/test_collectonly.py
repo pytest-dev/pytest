@@ -5,7 +5,7 @@ def test_function():
     pass
 
 class TestClass:
-    def test_method():
+    def test_method(self):
         pass
-    def test_anothermethod():
+    def test_anothermethod(self):
         pass

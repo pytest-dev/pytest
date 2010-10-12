@@ -31,14 +31,14 @@ into a test module::
 Running the test looks like this::
 
     $ py.test test_simplefactory.py
-    ============================= test session starts ==============================
+    =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
     test path 1: test_simplefactory.py
     
     test_simplefactory.py F
     
-    =================================== FAILURES ===================================
-    ________________________________ test_function _________________________________
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
     myfuncarg = 42
     
@@ -47,7 +47,7 @@ Running the test looks like this::
     E       assert 42 == 17
     
     test_simplefactory.py:5: AssertionError
-    =========================== 1 failed in 0.02 seconds ===========================
+    ========================= 1 failed in 0.02 seconds =========================
 
 This means that the test function was called with a ``myfuncarg`` value
 of ``42`` and the assert fails accordingly.  Here is how py.test
@@ -129,7 +129,7 @@ Basic generated test example
 
 Let's consider this test module::
 
-    # content of ./test_example.py
+    # content of test_example.py
     def pytest_generate_tests(metafunc):
         if "numiter" in metafunc.funcargnames:
             for i in range(10):
@@ -141,14 +141,14 @@ Let's consider this test module::
 Running this::
 
     $ py.test test_example.py
-    ============================= test session starts ==============================
+    =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
     test path 1: test_example.py
     
     test_example.py .........F
     
-    =================================== FAILURES ===================================
-    _________________________________ test_func[9] _________________________________
+    ================================= FAILURES =================================
+    _______________________________ test_func[9] _______________________________
     
     numiter = 9
     
@@ -157,7 +157,7 @@ Running this::
     E       assert 9 < 9
     
     test_example.py:7: AssertionError
-    ====================== 1 failed, 9 passed in 0.04 seconds ======================
+    ==================== 1 failed, 9 passed in 0.04 seconds ====================
 
 Here is what happens in detail:
 

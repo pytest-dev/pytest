@@ -5,7 +5,7 @@ Customizing and Extending py.test
 basic test configuration
 ===================================
 
-available command line options
+Command line options
 ---------------------------------
 
 You can see command line options by running::
@@ -25,10 +25,6 @@ A unique feature of py.test are its ``conftest.py`` files which
 allow to:
 
 * `set option defaults`_
-
-* `implement hooks`_
-
-* `specify funcargs`_
 
 or set particular variables to influence the testing process:
 
@@ -68,25 +64,6 @@ To find out about the particular switches and type::
 This will print information about all options in your
 environment, including your local plugins.
 
-.. _`basetemp`:
-
-Temporary directories
--------------------------------------------
-
-You can create directories by calling one of two methods
-on the config object:
-
-- ``config.mktemp(basename)``: create and return a new tempdir
-
-- ``config.ensuretemp(basename)``: create or return a new tempdir
-
-temporary directories are created as sub directories of a per-session
-testdir and will keep around the directories of the last three test
-runs.  You can set the base temporary directory through the command line
-`--basetemp`` option.  When distributing tests on the same machine,
-``py.test`` takes care to configure a basetemp directory for the sub
-processes such that all temporary data lands below below a single
-per-test run basetemp directory.
 
 .. _`function arguments`: funcargs.html
 .. _`extensions`:
@@ -226,7 +203,6 @@ If you want to look at the names of existing plugins, use
 the ``--traceconfig`` option.
 
 .. _`well specified hooks`:
-.. _`implement hooks`:
 
 py.test hook reference
 ====================================
@@ -361,8 +337,17 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 
 * import the root package as ``root``
 
-Complete reference of objects involved in hooks
+Reference of important objects involved in hooks
 ===========================================================
+
+.. autoclass:: pytest._config.Config
+    :members:
+
+.. autoclass:: pytest.collect.Item
+    :inherited-members:
+
+.. autoclass:: pytest.collect.Node
+    :members:
 
 .. autoclass:: pytest.plugin.runner.CallInfo
     :members:
@@ -370,8 +355,3 @@ Complete reference of objects involved in hooks
 .. autoclass:: pytest.plugin.runner.TestReport
     :members:
 
-.. autoclass:: pytest.collect.Node
-    :members:
-
-.. autoclass:: pytest.collect.Item
-    :inherited-members:

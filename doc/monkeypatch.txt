@@ -38,11 +38,11 @@ will be undone.
 
 .. background check:
    $ py.test
-   ============================= test session starts ==============================
+   =========================== test session starts ============================
    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
-   test path 1: /tmp/doc-exec-232
+   test path 1: /tmp/doc-exec-296
    
-   ===============================  in 0.00 seconds ===============================
+   =============================  in 0.00 seconds =============================
 
 Method reference of the monkeypatch function argument
 -----------------------------------------------------

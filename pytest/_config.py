@@ -226,18 +226,19 @@ class Error(Exception):
     """ Test Configuration Error. """
 
 class Config(object):
-    """ access to config values, pluginmanager and plugin hooks.  """
+    """ access to configuration values, pluginmanager and plugin hooks.  """
     Option = py.std.optparse.Option
     Error = Error
     basetemp = None
-    _sessionclass = None
 
     def __init__(self):
+        #: command line option values
         self.option = CmdOptions()
         self._parser = Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
             processopt=self._processopt,
         )
+        #: a pluginmanager instance
         self.pluginmanager = PluginManager()
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
@@ -287,9 +288,8 @@ class Config(object):
         self.pluginmanager.do_addoption(self._parser)
 
     def parse(self, args):
-        """ parse cmdline arguments into this config object.
-            Note that this can only be called once per testing process.
-        """
+        # cmdline arguments into this config object.
+        # Note that this can only be called once per testing process.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
@@ -352,10 +352,10 @@ class Config(object):
         return l
 
     def addoptions(self, groupname, *specs):
-        """ add a named group of options to the current testing session.
-            This function gets invoked during testing session initialization.
-        """
-        py.log._apiwarn("1.0", "define pytest_addoptions(parser) to add options", stacklevel=2)
+        # add a named group of options to the current testing session.
+        # This function gets invoked during testing session initialization.
+        py.log._apiwarn("1.0",
+            "define pytest_addoptions(parser) to add options", stacklevel=2)
         group = self._parser.getgroup(groupname)
         for opt in specs:
             group._addoption_instance(opt)
@@ -365,7 +365,7 @@ class Config(object):
         return self._parser.addoption(*optnames, **attrs)
 
     def getvalueorskip(self, name, path=None):
-        """ return getvalue() or call py.test.skip if no value exists. """
+        """ return getvalue(name) or call py.test.skip if no value exists. """
         try:
             val = self.getvalue(name, path)
             if val is None:

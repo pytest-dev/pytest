@@ -1,4 +1,6 @@
 
+.. _`captures`:
+
 Capturing of stdout/stderr output
 =========================================================
 
@@ -25,6 +27,7 @@ There are two ways in which ``py.test`` can perform capturing:
   output from code like ``sys.stderr.write(...)`` will be captured with 
   this method.
 
+.. _`disable capturing`:
 
 You can influence output capturing mechanisms from the command line::
 

@@ -9,9 +9,12 @@ py.test reference documentation
    xunit_setup.txt
    capture.txt
    monkeypatch.txt
+   tmpdir.txt
    skipping.txt
    mark.txt
-   doctest.txt
    recwarn.txt
    reporting.txt
+   debugging.txt
+   doctest.txt
+   unittest.txt
    

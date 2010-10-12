@@ -1,0 +1,61 @@
+automatically discover and run traditional "unittest.py" style tests.
+=====================================================================
+
+py.test has limited support for running Python `unittest.py style`_ tests.
+It will automatically collect ``unittest.TestCase`` subclasses
+and their ``test`` methods in test files.  It will invoke
+``setUp/tearDown`` methods but also perform py.test's standard ways
+of treating tests like IO capturing::
+
+    # content of test_unittest.py
+
+    import unittest
+    class MyTest(unittest.TestCase):
+        def setUp(self):
+            print ("hello") # output is captured
+        def test_method(self):
+            x = 1
+            self.assertEquals(x, 3)
+       
+Running it yields::
+
+    $ py.test test_unittest.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_unittest.py
+    
+    test_unittest.py F
+    
+    ================================= FAILURES =================================
+    ____________________________ MyTest.test_method ____________________________
+    
+    self = <test_unittest.MyTest testMethod=run>
+    
+        def test_method(self):
+            x = 1
+    >       self.assertEquals(x, 3)
+    
+    test_unittest.py:8: 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    
+    self = <test_unittest.MyTest testMethod=run>, first = 1, second = 3
+    msg = None
+    
+        def failUnlessEqual(self, first, second, msg=None):
+            """Fail if the two objects are unequal as determined by the '=='
+                   operator.
+                """
+            if not first == second:
+                raise self.failureException, \
+    >                 (msg or '%r != %r' % (first, second))
+    E                 AssertionError: 1 != 3
+    
+    /usr/lib/python2.6/unittest.py:350: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    hello
+    ========================= 1 failed in 0.02 seconds =========================
+
+This plugin is enabled by default.
+
+.. _`unittest.py style`: http://docs.python.org/library/unittest.html
+

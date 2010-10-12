@@ -34,7 +34,9 @@ class Node(object):
         #: the parent collector node.
         self.parent = parent
         
+        #: the test config object
         self.config = config or parent.config
+
         #: the collection this node is part of.
         self.collection = collection or getattr(parent, 'collection', None)
         
