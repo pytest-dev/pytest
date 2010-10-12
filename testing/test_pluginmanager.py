@@ -1,6 +1,6 @@
 import py, os
-from pytest.pluginmanager import PluginManager, canonical_importname
-from pytest.pluginmanager import Registry, MultiCall, HookRelay, varnames
+from pytest._core import PluginManager, canonical_importname
+from pytest._core import Registry, MultiCall, HookRelay, varnames
 
 
 class TestBootstrapping:
@@ -232,7 +232,6 @@ class TestBootstrapping:
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):
-        from pytest._config import Config
         newhooks = testdir.makepyfile(newhooks="""
             def pytest_myhook(xyz):
                 "new hook"
@@ -245,7 +244,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = Config()
+        config = testdir.Config()
         config._conftest.importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
@@ -283,12 +282,11 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_conftestplugin(self, testdir):
-        from pytest._config import Config
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
                 parser.addoption('--test123', action="store_true")
         """)
-        config = Config()
+        config = testdir.Config()
         config._conftest.importconftest(p)
         print(config.pluginmanager.getplugins())
         config.parse([])
@@ -321,8 +319,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        from pytest._config import Config
-        config = Config()
+        config = testdir.Config()
         config.parse([])
         config.pluginmanager.do_configure(config=config)
         assert not hasattr(config.option, 'test123')

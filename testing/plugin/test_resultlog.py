@@ -2,7 +2,7 @@ import py
 import os
 from pytest.plugin.resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
-from pytest.collect import Node, Item, FSCollector
+from pytest.plugin.session import Node, Item, FSCollector
 
 def test_generic_path(testdir):
     from pytest.plugin.session import Collection

@@ -232,7 +232,7 @@ initialisation, command line and configuration hooks
 generic "runtest" hooks
 ------------------------------
 
-Almost runtest related hooks receive a :py:class:`pytest.collect.Item` object.
+All all runtest related hooks receive a :py:class:`pytest.collect.Item` object.
 
 .. autofunction:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_setup
@@ -340,13 +340,13 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 Reference of important objects involved in hooks
 ===========================================================
 
-.. autoclass:: pytest._config.Config
+.. autoclass:: pytest._core.Config
     :members:
 
-.. autoclass:: pytest.collect.Item
+.. autoclass:: pytest.plugin.session.Item
     :inherited-members:
 
-.. autoclass:: pytest.collect.Node
+.. autoclass:: pytest.plugin.session.Node
     :members:
 
 .. autoclass:: pytest.plugin.runner.CallInfo

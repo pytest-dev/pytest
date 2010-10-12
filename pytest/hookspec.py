@@ -1,6 +1,4 @@
-"""
-hook specifications for py.test plugins
-"""
+""" hook specifications for pytest plugins, invoked from _core.py and builtin plugins.  """
 
 # -------------------------------------------------------------------------
 # Initialization

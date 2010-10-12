@@ -1,6 +1,6 @@
 import py
 
-from pytest.pluginmanager import HookRelay
+from pytest._core import HookRelay
 
 def pytest_funcarg___pytest(request):
     return PytestArg(request)
