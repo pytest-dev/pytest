@@ -8,16 +8,21 @@ def pytest_namespace():
     """return dict of name->object to be made globally available in
     the py.test/pytest namespace.  This hook is called before command
     line options are fully parsed.  If you want to provide helper functions
-    that can interact with a test function invocation, please refer to 
+    that can interact with a test function invocation, please refer to
     :ref:`funcarg mechanism`.
     """
 
+def pytest_cmdline_parse(pluginmanager, args):
+    """return initialized config object, parsing the specified args. """
+pytest_cmdline_parse.firstresult = True
+
 def pytest_addoption(parser):
-    """allows to add optparse-style command line options via a call to 
+    """allows to add optparse-style command line options via a call to
     ``parser.addoption(...)``."""
 
 def pytest_addhooks(pluginmanager):
-    "allows to add new hooks via pluginmanager.registerhooks(module)"
+    """called at plugin load time to allow adding new hooks via a call to
+    pluginmanager.registerhooks(module)."""
 
 def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default

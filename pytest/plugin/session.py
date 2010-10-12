@@ -37,7 +37,7 @@ def pytest_namespace():
         File=File, Directory=Directory))
         
 def pytest_configure(config):
-    # compat
+    py.test.config = config # compatibiltiy
     if config.getvalue("exitfirst"):
         config.option.maxfail = 1
 

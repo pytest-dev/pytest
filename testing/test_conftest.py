@@ -1,5 +1,5 @@
 import py
-from pytest._core import Conftest
+from pytest.plugin.config import Conftest
 
 def pytest_generate_tests(metafunc):
     if "basedir" in metafunc.funcargnames:

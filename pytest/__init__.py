@@ -10,8 +10,6 @@ __version__ = "2.0.0dev0"
 __all__ = ['config', 'cmdline']
 
 from pytest import _core as cmdline
-from pytest._core import Config
-config = Config()
 
 def __main__():
     raise SystemExit(cmdline.main())

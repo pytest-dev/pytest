@@ -114,12 +114,10 @@ py.test loads plugin modules at tool startup in the following way:
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in a ``conftest.py`` file
 
-Specifying plugins in a test module or plugin
------------------------------------------------
+Requiring/Loading plugins in a test module or plugin
+-------------------------------------------------------------
 
-You can specify plugins in a test module or a plugin like this:
-
-.. sourcecode:: python
+You can specify plugins in a test module or a plugin like this::
 
     pytest_plugins = "name1", "name2",
 
@@ -138,11 +136,7 @@ The purpose of ``conftest.py`` files is to allow `project-specific
 test configuration`_.  They thus make for a good place to implement
 project-specific test related features through hooks.  For example you may
 set the `collect_ignore`_ variable depending on a command line option
-by defining the following hook in a ``conftest.py`` file:
-
-.. _`exclude-file-example`:
-
-.. sourcecode:: python
+by defining the following hook in a ``conftest.py`` file::
 
     # ./conftest.py in your root or package dir
     collect_ignore = ['hello', 'test_world.py']
@@ -223,6 +217,7 @@ initialisation, command line and configuration hooks
 
 .. currentmodule:: pytest.hookspec
 
+.. autofunction:: pytest_cmdline_parse
 .. autofunction:: pytest_namespace
 .. autofunction:: pytest_addoption
 .. autofunction:: pytest_cmdline_main
@@ -340,7 +335,7 @@ name.  Given a filesystem ``fspath`` it is constructed as follows:
 Reference of important objects involved in hooks
 ===========================================================
 
-.. autoclass:: pytest._core.Config
+.. autoclass:: pytest.plugin.config.Config
     :members:
 
 .. autoclass:: pytest.plugin.session.Item

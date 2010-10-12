@@ -8,7 +8,6 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from pytest._core import Config as pytestConfig
 from pytest.plugin.session import Collection
 from py.builtin import print_
 from pytest._core import HookRelay
@@ -109,7 +108,7 @@ class HookRecorder:
         from py.builtin import print_
         i = 0
         entries = list(entries)
-        backlocals = py.std.sys._getframe(1).f_locals 
+        backlocals = py.std.sys._getframe(1).f_locals
         while entries:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
@@ -173,6 +172,7 @@ class RunResult:
 class TmpTestdir:
     def __init__(self, request):
         self.request = request
+        self.Config = request.config.__class__
         self._pytest = request.getfuncargvalue("_pytest")
         # XXX remove duplication with tmpdir plugin
         basetmp = request.config.ensuretemp("testdir")
@@ -194,9 +194,6 @@ class TmpTestdir:
 
     def __repr__(self):
         return "<TmpTestdir %r>" % (self.tmpdir,)
-
-    def Config(self):
-        return pytestConfig()
 
     def finalize(self):
         for p in self._syspathremove:
@@ -341,9 +338,9 @@ class TmpTestdir:
         """ this is used from tests that want to re-invoke parse(). """
         if not args:
             args = [self.tmpdir]
-        oldconfig = py.test.config
+        oldconfig = getattr(py.test, 'config', None)
         try:
-            c = py.test.config = pytestConfig()
+            c = py.test.config = self.Config()
             c.basetemp = oldconfig.mktemp("reparse", numbered=True)
             c.parse(args)
             return c
