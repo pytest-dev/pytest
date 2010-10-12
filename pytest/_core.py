@@ -4,7 +4,7 @@ import sys, os
 default_plugins = (
  "session terminal python runner pdb capture mark skipping tmpdir monkeypatch "
  "recwarn pastebin unittest helpconfig nose assertion genscript "
- "junitxml doctest keyword").split()
+ "junitxml doctest").split()
 
 def main(args=None):
     import sys
