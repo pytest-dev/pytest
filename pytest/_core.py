@@ -1,4 +1,8 @@
 import py
+
+assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
+    "%s is too old, remove or upgrade 'py'" % (py.__version__))
+
 import sys, os
 
 default_plugins = (
