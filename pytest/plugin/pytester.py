@@ -27,7 +27,7 @@ class PytestArg:
         self.request = request
 
     def gethookrecorder(self, hook):
-        hookrecorder = HookRecorder(hook._registry)
+        hookrecorder = HookRecorder(hook._pm)
         hookrecorder.start_recording(hook._hookspecs)
         self.request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder
@@ -45,8 +45,8 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 class HookRecorder:
-    def __init__(self, registry):
-        self._registry = registry
+    def __init__(self, pluginmanager):
+        self._pluginmanager = pluginmanager
         self.calls = []
         self._recorders = {}
 
@@ -62,13 +62,13 @@ class HookRecorder:
                     setattr(RecordCalls, name, self._makecallparser(method))
             recorder = RecordCalls()
             self._recorders[hookspec] = recorder
-            self._registry.register(recorder)
-        self.hook = HookRelay(hookspecs, registry=self._registry,
+            self._pluginmanager.register(recorder)
+        self.hook = HookRelay(hookspecs, pm=self._pluginmanager,
             prefix="pytest_")
 
     def finish_recording(self):
         for recorder in self._recorders.values():
-            self._registry.unregister(recorder)
+            self._pluginmanager.unregister(recorder)
         self._recorders.clear()
 
     def _makecallparser(self, method):
@@ -493,8 +493,8 @@ class PseudoPlugin:
 class ReportRecorder(object):
     def __init__(self, hook):
         self.hook = hook
-        self.registry = hook._registry
-        self.registry.register(self)
+        self.pluginmanager = hook._pm
+        self.pluginmanager.register(self)
 
     def getcall(self, name):
         return self.hookrecorder.getcall(name)
@@ -558,7 +558,7 @@ class ReportRecorder(object):
         self.hookrecorder.calls[:] = []
 
     def unregister(self):
-        self.registry.unregister(self)
+        self.pluginmanager.unregister(self)
         self.hookrecorder.finish_recording()
 
 class LineComp:

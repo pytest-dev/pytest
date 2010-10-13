@@ -1,7 +1,7 @@
 import py
 import os, sys
 from pytest.plugin.pytester import LineMatcher, LineComp, HookRecorder
-from pytest._core import Registry
+from pytest._core import PluginManager
 
 def test_reportrecorder(testdir):
     item = testdir.getitem("def test_func(): pass")
@@ -72,7 +72,7 @@ def test_testdir_runs_with_plugin(testdir):
     ])
 
 def test_hookrecorder_basic():
-    rec = HookRecorder(Registry())
+    rec = HookRecorder(PluginManager())
     class ApiClass:
         def pytest_xyz(self, arg):
             "x"
@@ -84,7 +84,7 @@ def test_hookrecorder_basic():
     py.test.raises(ValueError, "rec.popcall('abc')")
 
 def test_hookrecorder_basic_no_args_hook():
-    rec = HookRecorder(Registry())
+    rec = HookRecorder(PluginManager())
     apimod = type(os)('api')
     def pytest_xyz():
         "x"
@@ -97,17 +97,17 @@ def test_hookrecorder_basic_no_args_hook():
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
         import py
-        from pytest._core import HookRelay, Registry
+        from pytest._core import HookRelay, PluginManager
         pytest_plugins="pytester"
         def test_func(_pytest):
             class ApiClass:
                 def pytest_xyz(self, arg):  "x"
-            hook = HookRelay([ApiClass], Registry())
+            hook = HookRelay([ApiClass], PluginManager(load=False))
             rec = _pytest.gethookrecorder(hook)
             class Plugin:
                 def pytest_xyz(self, arg):
                     return arg + 1
-            rec._registry.register(Plugin())
+            rec._pluginmanager.register(Plugin())
             res = rec.hook.pytest_xyz(arg=41)
             assert res == [42]
     """)

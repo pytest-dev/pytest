@@ -246,7 +246,7 @@ class Config(object):
             processopt=self._processopt,
         )
         #: a pluginmanager instance
-        self.pluginmanager = pluginmanager or PluginManager()
+        self.pluginmanager = pluginmanager or PluginManager(load=True)
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
 

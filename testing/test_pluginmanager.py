@@ -1,6 +1,6 @@
 import py, os
 from pytest._core import PluginManager, canonical_importname
-from pytest._core import Registry, MultiCall, HookRelay, varnames
+from pytest._core import MultiCall, HookRelay, varnames
 
 
 class TestBootstrapping:
@@ -143,7 +143,7 @@ class TestBootstrapping:
         pp = PluginManager()
         py.test.raises(ImportError, "pp.consider_conftest(mod)")
 
-    def test_registry(self):
+    def test_pm(self):
         pp = PluginManager()
         class A: pass
         a1, a2 = A(), A()
@@ -160,7 +160,7 @@ class TestBootstrapping:
         pp.unregister(a2)
         assert not pp.isregistered(a2)
 
-    def test_registry_ordering(self):
+    def test_pm_ordering(self):
         pp = PluginManager()
         class A: pass
         a1, a2 = A(), A()
@@ -182,7 +182,7 @@ class TestBootstrapping:
         assert mod in l
         py.test.raises(AssertionError, "pp.register(mod)")
         mod2 = py.std.types.ModuleType("pytest_hello")
-        #pp.register(mod2) # double registry
+        #pp.register(mod2) # double pm
         py.test.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == l
@@ -197,14 +197,14 @@ class TestBootstrapping:
         assert pp.isregistered(mod)
 
     def test_register_mismatch_method(self):
-        pp = PluginManager()
+        pp = PluginManager(load=True)
         class hello:
             def pytest_gurgel(self):
                 pass
         py.test.raises(Exception, "pp.register(hello())")
 
     def test_register_mismatch_arg(self):
-        pp = PluginManager()
+        pp = PluginManager(load=True)
         class hello:
             def pytest_configure(self, asd):
                 pass
@@ -228,6 +228,36 @@ class TestBootstrapping:
         out, err = capfd.readouterr()
         assert not err
 
+    def test_register(self):
+        pm = PluginManager(load=False)
+        class MyPlugin:
+            pass
+        my = MyPlugin()
+        pm.register(my)
+        assert pm.getplugins()
+        my2 = MyPlugin()
+        pm.register(my2)
+        assert pm.getplugins()[1:] == [my, my2]
+
+        assert pm.isregistered(my)
+        assert pm.isregistered(my2)
+        pm.unregister(my)
+        assert not pm.isregistered(my)
+        assert pm.getplugins()[1:] == [my2]
+
+    def test_listattr(self):
+        plugins = PluginManager()
+        class api1:
+            x = 41
+        class api2:
+            x = 42
+        class api3:
+            x = 43
+        plugins.register(api1())
+        plugins.register(api2())
+        plugins.register(api3())
+        l = list(plugins.listattr('x'))
+        assert l == [41, 42, 43]
 
 class TestPytestPluginInteractions:
 
@@ -370,7 +400,7 @@ def test_namespace_has_default_and_env_plugins(testdir):
 
 def test_varnames():
     def f(x):
-        pass
+        i = 3
     class A:
         def f(self, y):
             pass
@@ -425,6 +455,14 @@ class TestMultiCall:
         assert reslist == [24+23, 24]
         assert "2 results" in repr(multicall)
 
+    def test_keyword_args_with_defaultargs(self):
+        def f(x, z=1):
+            return x + z
+        reslist = MultiCall([f], dict(x=23, y=24)).execute()
+        assert reslist == [24]
+        reslist = MultiCall([f], dict(x=23, z=2)).execute()
+        assert reslist == [25]
+
     def test_keywords_call_error(self):
         multicall = MultiCall([lambda x: x], {})
         py.test.raises(TypeError, "multicall.execute()")
@@ -451,79 +489,44 @@ class TestMultiCall:
         res = MultiCall([m1, m2], {}).execute()
         assert res == [1]
 
-class TestRegistry:
-
-    def test_register(self):
-        registry = Registry()
-        class MyPlugin:
-            pass
-        my = MyPlugin()
-        registry.register(my)
-        assert list(registry) == [my]
-        my2 = MyPlugin()
-        registry.register(my2)
-        assert list(registry) == [my, my2]
-
-        assert registry.isregistered(my)
-        assert registry.isregistered(my2)
-        registry.unregister(my)
-        assert not registry.isregistered(my)
-        assert list(registry) == [my2]
-
-    def test_listattr(self):
-        plugins = Registry()
-        class api1:
-            x = 41
-        class api2:
-            x = 42
-        class api3:
-            x = 43
-        plugins.register(api1())
-        plugins.register(api2())
-        plugins.register(api3())
-        l = list(plugins.listattr('x'))
-        assert l == [41, 42, 43]
-        l = list(plugins.listattr('x', reverse=True))
-        assert l == [43, 42, 41]
-
 class TestHookRelay:
     def test_happypath(self):
-        registry = Registry()
+        pm = PluginManager()
         class Api:
             def hello(self, arg):
                 "api hook 1"
 
-        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
+        mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
         assert hasattr(mcm, 'hello')
         assert repr(mcm.hello).find("hello") != -1
         class Plugin:
             def hello(self, arg):
                 return arg + 1
-        registry.register(Plugin())
+        pm.register(Plugin())
         l = mcm.hello(arg=3)
         assert l == [4]
         assert not hasattr(mcm, 'world')
 
     def test_only_kwargs(self):
-        registry = Registry()
+        pm = PluginManager()
         class Api:
             def hello(self, arg):
                 "api hook 1"
-        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
+        mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
         py.test.raises(TypeError, "mcm.hello(3)")
 
     def test_firstresult_definition(self):
-        registry = Registry()
+        pm = PluginManager()
         class Api:
             def hello(self, arg):
                 "api hook 1"
             hello.firstresult = True
 
-        mcm = HookRelay(hookspecs=Api, registry=registry, prefix="he")
+        mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
         class Plugin:
             def hello(self, arg):
                 return arg + 1
-        registry.register(Plugin())
+        pm.register(Plugin())
         res = mcm.hello(arg=3)
         assert res == 4
 
