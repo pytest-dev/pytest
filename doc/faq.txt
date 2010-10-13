@@ -1,5 +1,28 @@
-Frequently asked Questions
+Frequent Issues and Questions
 ==================================
+
+.. _`installation issues`:
+
+Installation issues
+------------------------------
+
+easy_install or py.test not found on Windows machine
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+- **Windows**: If "easy_install" or "py.test" are not found
+  please see here for preparing your environment for running
+  command line tools: `Python for Windows`_.  You may alternatively
+  use an `ActivePython install`_ which makes command line tools
+  automatically available under Windows.
+
+.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
+
+.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
+
+- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
+  so ``py.test`` will not work correctly.  You may install py.test on
+  CPython and type ``py.test --genscript=mytest`` and then use
+  ``jython mytest`` to run py.test for your tests to run in Jython.
 
 On naming, nosetests, licensing and magic XXX
 ------------------------------------------------

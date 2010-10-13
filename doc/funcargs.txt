@@ -1,5 +1,5 @@
 ==============================================================
-funcargs: creating and managing test function arguments
+creating and managing test function arguments
 ==============================================================
 
 .. currentmodule:: pytest.plugin.python

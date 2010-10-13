@@ -1,8 +1,10 @@
 
 .. _mark:
 
-mark (attribute) python functions
+mark test functions with attributes
 =================================================================
+
+.. currentmodule:: pytest.plugin.mark
 
 By using the ``py.test.mark`` helper you can instantiate
 decorators that will set named meta data on test functions.
@@ -17,7 +19,7 @@ You can "mark" a test function with meta data like this::
     def test_send_http():
         ...
 
-This will set the function attribute ``webtest`` to a :py:meth:`MarkInfo` 
+This will set the function attribute ``webtest`` to a :py:class:`MarkInfo` 
 instance.  You can also specify parametrized meta data like this::
 
     # content of test_mark.py
@@ -79,15 +81,15 @@ You can also set a module level marker::
 in which case it will be applied to all functions and
 methods defined in the module.
 
-Using "-k MARKNAME" to select tests
+Using ``-k TEXT`` to select tests
 ----------------------------------------------------
 
 You can use the ``-k`` command line option to select tests::
 
-    $ py.test -k webtest  # will only run tests marked as webtest
+    $ py.test -k webtest  # running with the above defined examples yields
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
-    test path 1: /tmp/doc-exec-335
+    test path 1: /tmp/doc-exec-11
     
     test_mark.py ..
     test_mark_classlevel.py ..
@@ -96,16 +98,35 @@ You can use the ``-k`` command line option to select tests::
 
 And you can also run all tests except the ones that match the keyword::
 
-    $ py.test -k-webtest  # "-" negates but be careful to have no space before
+    $ py.test -k-webtest
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
-    test path 1: /tmp/doc-exec-335
+    test path 1: /tmp/doc-exec-11
     
     ===================== 4 tests deselected by '-webtest' =====================
     ======================= 4 deselected in 0.01 seconds =======================
 
+Or to only select the class::
+
+    $ py.test -kTestClass
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: /tmp/doc-exec-11
+    
+    test_mark_classlevel.py ..
+    
+    ==================== 2 tests deselected by 'TestClass' =====================
+    ================== 2 passed, 2 deselected in 0.01 seconds ==================
+
 API reference for mark related objects
 ------------------------------------------------
 
-.. autoclass:: pytest.plugin.mark.MarkInfo
+.. autoclass:: MarkGenerator
+    :members:
+
+.. autoclass:: MarkDecorator
+    :members:
+
+.. autoclass:: MarkInfo
+    :members:
 

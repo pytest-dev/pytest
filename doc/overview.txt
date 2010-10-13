@@ -7,4 +7,8 @@ Overview and Introduction
 
    features.txt
    install.txt
+   basic_usage.txt
+   cmdline.txt
+   goodpractises.txt
+   faq.txt
 

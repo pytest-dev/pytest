@@ -1,16 +1,9 @@
-.. pytest documentation master file, created by
-   sphinx-quickstart on Fri Oct  8 17:54:28 2010.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+py.test: no-boilerplate testing with Python
+==============================================
+   
+Welcome to ``py.test`` documentation:
 
-py.test: no-boilerplate rapid testing with Python
-======================================================
-
-Welcome to ``py.test`` documentation.
-
-Contents:
-
-.. toctree::
+.. toctree:: 
    :maxdepth: 2
 
    overview
@@ -24,7 +17,6 @@ Contents:
    :hidden:
 
    changelog.txt
-   
 
 Indices and tables
 ==================

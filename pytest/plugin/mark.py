@@ -70,16 +70,37 @@ def matchonekeyword(key, chain):
     return False
 
 class MarkGenerator:
-    """ non-underscore attributes of this object can be used as decorators for
-    marking test functions. Example: @py.test.mark.slowtest in front of a
-    function will set the 'slowtest' marker object on it. """
+    """ Factory for :class:`MarkDecorator` objects - exposed as 
+    a ``py.test.mark`` singleton instance.  Example::
+
+         import py
+         @py.test.mark.slowtest
+         def test_function():
+            pass
+  
+    will set a 'slowtest' :class:`MarkInfo` object
+    on the ``test_function`` object. """
+
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
         return MarkDecorator(name)
 
 class MarkDecorator:
-    """ decorator for setting function attributes. """
+    """ A decorator for test functions and test classes.  When applied
+    it will create :class:`MarkInfo` objects which may be 
+    :ref:`retrieved by hooks as item keywords`  MarkDecorator instances 
+    are usually created by writing::
+
+        mark1 = py.test.mark.NAME              # simple MarkDecorator
+        mark2 = py.test.mark.NAME(name1=value) # parametrized MarkDecorator
+
+    and can then be applied as decorators to test functions::
+
+        @mark2
+        def test_function():
+            pass
+    """
     def __init__(self, name):
         self.markname = name
         self.kwargs = {}
@@ -121,9 +142,13 @@ class MarkDecorator:
         return self
 
 class MarkInfo:
+    """ Marking object created by :class:`MarkDecorator` instances. """
     def __init__(self, name, args, kwargs):
-        self._name = name
+        #: name of attribute
+        self.name = name
+        #: positional argument list, empty if none specified
         self.args = args
+        #: keyword argument dictionary, empty if nothing specified
         self.kwargs = kwargs
 
     def __repr__(self):

@@ -1,14 +1,14 @@
 py.test Features
 ==================
 
-mature command line testing tool
---------------------------------------
+no-boilerplate testing with Python
+----------------------------------
 
-- used in many projects, ranging from 10 to 10K tests
-- simple well sorted command line options
-- runs on Unix, Windows from Python 2.4 up to Python 3.1 and 3.2
-- is itself tested extensively on a CI server
-- keyword/testname based selection of tests
+- automatic customizable Python test discovery
+- powerful parametrization of test functions
+- use the ``assert`` statement for your assertions
+- rely on powerful traceback and assertion reporting
+- use ``print`` or ``pdb`` debugging on failures
 
 extensive plugin and customization system
 ------------------------------------------------------
@@ -20,6 +20,16 @@ extensive plugin and customization system
 - it is `suprisingly easy`_ to add command line options or
   do other kind of add-ons and customizations.
 
+mature command line testing tool
+--------------------------------------
+
+- used in many projects, ranging from 10 to 10K tests
+- autodiscovery of tests
+- simple well sorted command line options
+- runs on Unix, Windows from Python 2.4 up to Python 3.1 and 3.2
+- is itself tested extensively on a CI server
+- keyword/testname based selection of tests
+
 integrates well with CI systems
 ----------------------------------------
 
@@ -29,14 +39,6 @@ integrates well with CI systems
 
 .. _`tox`: http://codespeak.net/tox
 
-no-boilerplate testing with Python
-----------------------------------
-
-- automatic customizable Python test discovery
-- powerful parametrization of test functions
-- use the ``assert`` statement for your assertions
-- rely on powerful traceback and assertion reporting
-- use ``print`` or ``pdb`` debugging on failures
 
 supports several testing practises and methods
 -----------------------------------------------------------

@@ -560,14 +560,12 @@ class FuncargRequest:
 
 
     def applymarker(self, marker):
-        """ apply a marker to a test function invocation.
-        Usually markers can be used as decorators for test functions or
-        classes.  However, with parametrized testing a single
-        test function may be called multiple times and ``applymarker``
-        allows to mark only a single invocation.
+        """ apply a marker to a single test function invocation.
+        This method is useful if you don't want to have a keyword/marker
+        on all function invocations. 
 
-        :param marker: The ``pytest.mark.*`` object to be applied to the test invocation. 
-        
+        :arg marker: a :py:class:`pytest.plugin.mark.MarkDecorator` object
+            created by a call to ``py.test.mark.NAME(...)``.
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
             raise ValueError("%r is not a py.test.mark.* object")

@@ -6,7 +6,6 @@ Feedback and contribute to py.test
    :maxdepth: 2
 
    contact.txt
-   faq.txt
 
 .. _checkout:
 

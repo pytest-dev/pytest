@@ -13,76 +13,21 @@ installing py.test
 Installation using easy_install
 ----------------------------------------
 
-You need setuptools_ or Distribute_ to be able to simply type::
+If you have setuptools_ or Distribute_ type::
 
     easy_install -U pytest
-    
+
 to install the latest release of ``py.test``.  The ``-U`` switch
 triggers an upgrade if you already have an older version installed.
-Note that setuptools works ok with Python2 interpreters while `Distribute`_
-additionally works with Python3 and also avoid some issues on Windows.
+Note that setuptools works ok with Python2 interpreters while **Distribute
+works with Python3 and Python2** and also avoids some issues on Windows.
 
-Known issues:
+You should now be able to type::
 
-- **Windows**: If "easy_install" or "py.test" are not found
-  please see here for preparing your environment for running
-  command line tools: `Python for Windows`_.  You may alternatively
-  use an `ActivePython install`_ which makes command line tools
-  automatically available under Windows.
+    $ py.test --version
 
-.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
-
-.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
-
-- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``py.test`` will not work correctly.  You may install py.test on
-  CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run py.test for your tests to run in Jython.
-
-- **On Linux**: If ``easy_install`` fails because it needs to run
-  as the superuser you are trying to install things globally
-  and need to put ``sudo`` in front of the command.
-
-
-.. _quickstart: test/quickstart.html
-
-
-Recommendation: install tool and dependencies virtually
------------------------------------------------------------
-
-I recommend to work with virtual environments
-(e.g. virtualenv_ or buildout_ based) and use easy_install_
-(or pip_) for installing py.test/pylib and any dependencies
-you need to run your tests.  Local virtual Python environments
-(as opposed to system-wide "global" environments) make for a more
-reproducible and reliable test environment.
-
-.. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
-.. _`buildout`: http://www.buildout.org/
-.. _pip: http://pypi.python.org/pypi/pip
-
-.. _standalone:
-
-Generating a py.test standalone Script
--------------------------------------------
-
-If you are a maintainer or application developer and want users
-to run tests you can use a facility to generate a standalone
-"py.test" script that you can tell users to run::
-
-    py.test --genscript=mytest
-
-will generate a ``mytest`` script that is, in fact, a ``py.test`` under
-disguise.  You can tell people to download and then e.g. run it like this::
-
-    python mytest --pastebin=all
-
-and ask them to send you the resulting URL.  The resulting script has
-all core features and runs unchanged under Python2 and Python3 interpreters.
-
-.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
-
-.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
-.. _`distribute installation`: http://pypi.python.org/pypi/distribute
+Refer to :ref:`installation issues` if you have issues.
 
 .. include:: links.inc
+
+

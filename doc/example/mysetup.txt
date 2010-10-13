@@ -1,0 +1,138 @@
+
+.. highlightlang:: python
+
+mysetup pattern: application specific test fixtures
+==========================================================
+
+Here is a basic useful step-by-step example for managing and interacting
+with application specific test setup.  The goal is to have one place
+where we have the glue and test support code for bootstrapping and
+configuring application objects and allow test modules and test
+functions to stay ignorant of involved details.
+
+step1: implementing the test/app-specific ``mysetup`` pattern
+-------------------------------------------------------------
+
+Let's write a simple test function using a ``mysetup`` funcarg::
+
+    # content of test_sample.py
+    def test_answer(mysetup):
+        app = mysetup.myapp()
+        answer = app.question()
+        assert answer == 42
+
+To run this test py.test needs to find and call a factory to
+obtain the required ``mysetup`` function argument.  To make
+an according factory findable we write down a specifically named factory
+method in a :ref:`local plugin`::
+
+    # content of conftest.py
+    from myapp import MyApp
+
+    def pytest_funcarg__mysetup(request): # "mysetup" factory function
+        return MySetup()
+
+    class MySetup: # instances of this are seen by test functions
+        def myapp(self):
+            return MyApp()
+
+To run the example we stub out a a simple ``MyApp`` application object::
+
+    # content of myapp.py
+    class MyApp:
+        def question(self):
+            return 6 * 9
+
+You can now run the test::
+
+    $ py.test test_sample.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_sample.py
+    
+    test_sample.py F
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
+    mysetup = <conftest.MySetup instance at 0x1a09f38>
+    
+        def test_answer(mysetup):
+            app = mysetup.myapp()
+            answer = app.question()
+    >       assert answer == 42
+    E       assert 54 == 42
+    
+    test_sample.py:4: AssertionError
+    ========================= 1 failed in 0.02 seconds =========================
+
+This means that our ``mysetup`` object was successfully instantiated
+and ``mysetup.app()`` returned an initialized ``MyApp`` instance.
+We can ask it about the question and if you are confused as to what
+the concrete question or answers actually mean, please see here_.
+
+.. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
+.. _`tut-cmdlineoption`:
+
+step 2: checking a command line option and skipping tests
+-----------------------------------------------------------
+
+To add a command line option we update the ``conftest.py`` of
+the previous example to add a command line option
+and to offer a new mysetup method::
+
+    # content of ./conftest.py
+    import py
+    from myapp import MyApp
+
+    def pytest_funcarg__mysetup(request): # "mysetup" factory function
+        return MySetup(request)
+
+    def pytest_addoption(parser):
+        parser.addoption("--ssh", action="store", default=None,
+            help="specify ssh host to run tests with")
+
+
+    class MySetup:
+        def __init__(self, request):
+            self.config = request.config
+
+        def myapp(self):
+            return MyApp()
+
+        def getsshconnection(self):
+            host = self.config.option.ssh
+            if host is None:
+                py.test.skip("specify ssh host with --ssh")
+            return execnet.SshGateway(host)
+
+
+Now any test function can use the ``mysetup.getsshconnection()`` method
+like this::
+
+    # content of test_ssh.py
+    class TestClass:
+        def test_function(self, mysetup):
+            conn = mysetup.getsshconnection()
+            # work with conn
+
+Running it yields::
+
+    $ py.test test_ssh.py -rs
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_ssh.py
+    
+    test_ssh.py s
+    ========================= short test summary info ==========================
+    SKIP [1] /tmp/doc-exec-9/conftest.py:22: 'specify ssh host with --ssh'
+    
+    ======================== 1 skipped in 0.02 seconds =========================
+
+If you specify a command line option like ``py.test --ssh=python.org`` the test will execute as expected.
+
+Note that neither the ``TestClass`` nor the ``test_function`` need to
+know anything about how to setup the test state.  It is handled separately
+in your "test setup glue" code in the ``conftest.py`` file.  It is easy
+to extend the ``mysetup`` object for further needs in the test code - and for use by any other test functions in the files and directories below the ``conftest.py`` file.
+

@@ -64,7 +64,7 @@ release = '2.0.0dev0'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', 'example', 'test', 'announce'] # XXX
+exclude_patterns = ['_build', 'test', 'announce'] # XXX
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None

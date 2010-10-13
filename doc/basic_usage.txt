@@ -1,0 +1,58 @@
+.. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
+
+
+Basic usage
+==================
+
+We assume you have done an :ref:`install` like this::
+
+    easy_install -U pytest # or
+    pip install -U pytest
+
+Ensure that this installed the ``py.test`` script::
+
+    py.test --version
+
+
+Writing a first test
+------------------------------
+
+Let's create a small file with the following content::
+
+    # content of test_sample.py
+    def func(x):
+        return x + 1
+    def test_answer():
+        assert func(3) == 5
+
+That's it.  Now you can already execute the test function::
+
+    $ py.test test_sample.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_sample.py
+    
+    test_sample.py F
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
+        def test_answer():
+    >       assert func(3) == 5
+    E       assert 4 == 5
+    E        +  where 4 = func(3)
+    
+    test_sample.py:4: AssertionError
+    ========================= 1 failed in 0.02 seconds =========================
+
+We got a failure because our little ``func(3)`` call did not return ``5``.
+A few notes on this little test invocation:
+
+* ``test_answer`` was identified as a test function because of the
+  ``test_`` prefix,
+
+*  we conveniently used the standard `assert statement`_ and the failure
+   report shows us the intermediate values.
+
+.. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+

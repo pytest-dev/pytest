@@ -13,8 +13,6 @@ py.test reference documentation
    skipping.txt
    mark.txt
    recwarn.txt
-   reporting.txt
-   debugging.txt
    doctest.txt
    unittest.txt
    
