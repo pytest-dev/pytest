@@ -1,7 +1,6 @@
 
-helpers for asserting deprecation and other warnings.
+asserting deprecation and other warnings.
 =====================================================
-
 
 recwarn function argument
 ------------------------------------

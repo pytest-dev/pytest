@@ -1,6 +1,6 @@
 
-advanced skipping for python test functions, classes or modules.
-================================================================
+skip and xfail mechanisms
+=====================================================================
 
 You can mark test functions for a conditional *skip* or as *xfail*,
 expected-to-fail.  Skipping a test avoids running a test.

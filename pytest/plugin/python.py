@@ -54,7 +54,6 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return parent.Module(path, parent)
 
-
 def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     res = __multicall__.execute()
     if res is not None:
@@ -204,7 +203,7 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
             function = self.Function(name=subname, parent=self,
-                callspec=callspec, callobj=funcobj)
+                callspec=callspec, callobj=funcobj, keywords={callspec.id:True})
             l.append(function)
         return l
 
@@ -414,7 +413,7 @@ class Function(FunctionMixin, pytest.collect.Item):
     """
     _genid = None
     def __init__(self, name, parent=None, args=None, config=None,
-                 callspec=None, callobj=_dummy, collection=None):
+                 callspec=None, callobj=_dummy, keywords=None, collection=None):
         super(Function, self).__init__(name, parent,
             config=config, collection=collection)
         self._args = args
@@ -432,6 +431,8 @@ class Function(FunctionMixin, pytest.collect.Item):
             self._obj = callobj
         self.function = getattr(self.obj, 'im_func', self.obj)
         self.keywords.update(py.builtin._getfuncdict(self.obj) or {})
+        if keywords:
+            self.keywords.update(keywords)
 
     def _getobj(self):
         name = self.name

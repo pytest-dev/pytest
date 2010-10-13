@@ -1,87 +1,4 @@
-"""
-generic mechanism for marking python functions.
-
-By using the ``py.test.mark`` helper you can instantiate
-decorators that will set named meta data on test functions.
-
-Marking a single function
-----------------------------------------------------
-
-You can "mark" a test function with meta data like this::
-
-    @py.test.mark.webtest
-    def test_send_http():
-        ...
-
-This will set a "Marker" instance as a function attribute named "webtest".
-You can also specify parametrized meta data like this::
-
-    @py.test.mark.webtest(firefox=30)
-    def test_receive():
-        ...
-
-The named marker can be accessed like this later::
-
-    test_receive.webtest.kwargs['firefox'] == 30
-
-In addition to set key-value pairs you can also use positional arguments::
-
-    @py.test.mark.webtest("triangular")
-    def test_receive():
-        ...
-
-and later access it with ``test_receive.webtest.args[0] == 'triangular``.
-
-.. _`scoped-marking`:
-
-Marking whole classes or modules
-----------------------------------------------------
-
-If you are programming with Python2.6 you may use ``py.test.mark`` decorators
-with classes to apply markers to all its test methods::
-
-    @py.test.mark.webtest
-    class TestClass:
-        def test_startup(self):
-            ...
-        def test_startup_and_more(self):
-            ...
-
-This is equivalent to directly applying the decorator to the
-two test functions.
-
-To remain compatible with Python2.5 you can also set a
-``pytestmark`` attribute on a TestClass like this::
-
-    import py
-
-    class TestClass:
-        pytestmark = py.test.mark.webtest
-
-or if you need to use multiple markers you can use a list::
-
-    import py
-
-    class TestClass:
-        pytestmark = [py.test.mark.webtest, pytest.mark.slowtest]
-
-You can also set a module level marker::
-
-    import py
-    pytestmark = py.test.mark.webtest
-
-in which case it will be applied to all functions and
-methods defined in the module.
-
-Using "-k MARKNAME" to select tests
-----------------------------------------------------
-
-You can use the ``-k`` command line option to select
-tests::
-
-    py.test -k webtest  # will only run tests marked as webtest
-
-"""
+""" generic mechanism for marking and selecting python functions. """
 import py
 
 def pytest_namespace():
@@ -219,7 +136,6 @@ class MarkInfo:
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)
 
-
 def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     item = __multicall__.execute()
     if isinstance(item, py.test.collect.Function):
@@ -237,5 +153,4 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
                     if isinstance(mark, MarkDecorator):
                         mark(func)
                 item.keywords.update(py.builtin._getfuncdict(func) or {})
-
     return item

@@ -1,4 +1,4 @@
-Sending test report output to XML files or to remote services
+XML, pastebin services and other reporting
 =================================================================
 
 creating JUnitXML format files

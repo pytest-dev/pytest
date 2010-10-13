@@ -1,5 +1,5 @@
 
-working with temporary directories and files
+temporary directories and files
 ================================================
 
 the 'tmpdir' test function argument

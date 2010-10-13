@@ -74,7 +74,6 @@ to see available function arguments (which you can also
 think of as "resources").
 
 
-.. _`contact possibilities`: ../contact.html
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 
 .. _`blog post about the monkeypatch funcarg`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
@@ -157,15 +156,37 @@ Running this::
     E       assert 9 < 9
     
     test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.04 seconds ====================
+    ==================== 1 failed, 9 passed in 0.03 seconds ====================
 
-Here is what happens in detail:
+Note that the ``pytest_generate_tests(metafunc)`` hook is called during
+the test collection phase.  You can have a look at it with this::
 
-1. ``pytest_generate_tests(metafunc)`` hook is called once for each test
-   function.  It adds ten new function calls with explicit function arguments.
+    $ py.test --collectonly test_example.py
+    <Directory 'doc-exec-341'>
+      <Module 'test_example.py'>
+        <Function 'test_func[0]'>
+        <Function 'test_func[1]'>
+        <Function 'test_func[2]'>
+        <Function 'test_func[3]'>
+        <Function 'test_func[4]'>
+        <Function 'test_func[5]'>
+        <Function 'test_func[6]'>
+        <Function 'test_func[7]'>
+        <Function 'test_func[8]'>
+        <Function 'test_func[9]'>
 
-2. **execute tests**: ``test_func(numiter)`` is called ten times with
-   ten different arguments.
+If you want to select only the run with the value ``7`` you could do::
+
+    $ py.test -v -k 7 test_example.py  # or -k test_func[7]
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0 -- /home/hpk/venv/0/bin/python
+    test path 1: test_example.py
+    
+    test_example.py:6: test_func[7] PASSED
+    
+    ======================== 9 tests deselected by '7' =========================
+    ================== 1 passed, 9 deselected in 0.01 seconds ==================
+
 
 .. _`metafunc object`:
 

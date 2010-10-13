@@ -220,3 +220,19 @@ class TestGeneralUsage:
         p1 = testdir.makepyfile("def test_fail(): 0/0")
         res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
         assert res.ret == 1
+
+    def test_skip_on_generated_funcarg_id(self, testdir):
+        testdir.makeconftest("""
+            import py
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall({'x': 3}, id='hello-123')
+            def pytest_runtest_setup(item):
+                print (item.keywords)
+                if 'hello-123' in item.keywords:
+                    py.test.skip("hello")
+                assert 0
+        """)
+        p = testdir.makepyfile("""def test_func(x): pass""")
+        res = testdir.runpytest(p)
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 skipped*"])

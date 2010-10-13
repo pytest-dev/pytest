@@ -1,8 +1,8 @@
 
 .. _mark:
 
-generic mechanism for marking python functions.
-===============================================
+mark (attribute) python functions
+=================================================================
 
 By using the ``py.test.mark`` helper you can instantiate
 decorators that will set named meta data on test functions.
@@ -12,28 +12,29 @@ Marking a single function
 
 You can "mark" a test function with meta data like this::
 
+    import py
     @py.test.mark.webtest
     def test_send_http():
         ...
 
-This will set a "Marker" instance as a function attribute named "webtest".
-You can also specify parametrized meta data like this::
+This will set the function attribute ``webtest`` to a :py:meth:`MarkInfo` 
+instance.  You can also specify parametrized meta data like this::
 
+    # content of test_mark.py
+
+    import py
     @py.test.mark.webtest(firefox=30)
     def test_receive():
-        ...
+        pass
 
-The named marker can be accessed like this later::
+    @py.test.mark.webtest("functional", firefox=30)
+    def test_run_and_look():
+        pass
+
+and access it from other places like this::
 
     test_receive.webtest.kwargs['firefox'] == 30
-
-In addition to set key-value pairs you can also use positional arguments::
-
-    @py.test.mark.webtest("triangular")
-    def test_receive():
-        ...
-
-and later access it with ``test_receive.webtest.args[0] == 'triangular``.
+    test_run_and_look.webtest.args[0] == "functional"
 
 .. _`scoped-marking`:
 
@@ -43,12 +44,14 @@ Marking whole classes or modules
 If you are programming with Python2.6 you may use ``py.test.mark`` decorators
 with classes to apply markers to all its test methods::
 
+    # content of test_mark_classlevel.py
+    import py
     @py.test.mark.webtest
     class TestClass:
         def test_startup(self):
-            ...
+            pass
         def test_startup_and_more(self):
-            ...
+            pass
 
 This is equivalent to directly applying the decorator to the
 two test functions.
@@ -79,8 +82,30 @@ methods defined in the module.
 Using "-k MARKNAME" to select tests
 ----------------------------------------------------
 
-You can use the ``-k`` command line option to select
-tests::
+You can use the ``-k`` command line option to select tests::
 
-    py.test -k webtest  # will only run tests marked as webtest
+    $ py.test -k webtest  # will only run tests marked as webtest
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: /tmp/doc-exec-335
+    
+    test_mark.py ..
+    test_mark_classlevel.py ..
+    
+    ========================= 4 passed in 0.01 seconds =========================
+
+And you can also run all tests except the ones that match the keyword::
+
+    $ py.test -k-webtest  # "-" negates but be careful to have no space before
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: /tmp/doc-exec-335
+    
+    ===================== 4 tests deselected by '-webtest' =====================
+    ======================= 4 deselected in 0.01 seconds =======================
+
+API reference for mark related objects
+------------------------------------------------
+
+.. autoclass:: pytest.plugin.mark.MarkInfo
 

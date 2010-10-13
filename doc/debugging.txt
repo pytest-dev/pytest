@@ -1,5 +1,5 @@
 
-Tracebacks and debugging Python failures
+debugging Python failures
 =================================================================
 
 Stopping after the first (or N) failures

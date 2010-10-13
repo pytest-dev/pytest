@@ -1,4 +1,4 @@
-automatically discover and run traditional "unittest.py" style tests.
+unittest.py style testing integration
 =====================================================================
 
 py.test has limited support for running Python `unittest.py style`_ tests.
