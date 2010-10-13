@@ -10,16 +10,9 @@ class TestParser:
 
     def test_group_add_and_get(self):
         parser = parseopt.Parser()
-        group = parser.addgroup("hello", description="desc")
+        group = parser.getgroup("hello", description="desc")
         assert group.name == "hello"
         assert group.description == "desc"
-
-    def test_addgroup_deprecation(self, recwarn):
-        parser = parseopt.Parser()
-        group = parser.addgroup("hello", description="desc")
-        assert recwarn.pop()
-        group2 = parser.getgroup("hello")
-        assert group == group2
 
     def test_getgroup_simple(self):
         parser = parseopt.Parser()
@@ -46,7 +39,7 @@ class TestParser:
 
     def test_group_shortopt_lowercase(self):
         parser = parseopt.Parser()
-        group = parser.addgroup("hello")
+        group = parser.getgroup("hello")
         py.test.raises(ValueError, """
             group.addoption("-x", action="store_true")
         """)

@@ -131,7 +131,7 @@ class TestCollectPluginHookRelay:
         class Plugin:
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
-                return parent.Directory(path, parent)
+                return py.test.collect.Directory(path, parent)
         testdir.plugins.append(Plugin())
         testdir.mkdir("hello")
         testdir.mkdir("world")

@@ -5,7 +5,6 @@ import py
 import inspect
 import sys
 import pytest
-from pytest.plugin.session import configproperty, warnoldcollect
 from py._code.code import TerminalRepr
 
 import pytest
@@ -52,24 +51,17 @@ def pytest_collect_file(path, parent):
                 path=path, parent=parent)
 
 def pytest_pycollect_makemodule(path, parent):
-    return parent.Module(path, parent)
+    return Module(path, parent)
 
 def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     res = __multicall__.execute()
     if res is not None:
         return res
     if collector._istestclasscandidate(name, obj):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
-        return collector.Class(name, parent=collector)
+        return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
-        res = collector._deprecated_join(name)
-        if res is not None:
-            return res
         if is_generator(obj):
-            # XXX deprecation warning
-            return collector.Generator(name, parent=collector)
+            return Generator(name, parent=collector)
         else:
             return collector._genfunctions(name, obj)
 
@@ -136,10 +128,6 @@ class PyobjMixin(object):
         return fspath, lineno, modpath
 
 class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
-    Class = configproperty('Class')
-    Instance = configproperty('Instance')
-    Function = configproperty('Function')
-    Generator = configproperty('Generator')
 
     def funcnamefilter(self, name):
         return name.startswith('test')
@@ -147,9 +135,6 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
         return name.startswith('Test')
 
     def collect(self):
-        l = self._deprecated_collect()
-        if l is not None:
-            return l
         # NB. we avoid random getattrs and peek in the __dict__ instead
         dicts = [getattr(self.obj, '__dict__', {})]
         for basecls in inspect.getmro(self.obj.__class__):
@@ -170,11 +155,6 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
                     l.extend(res)
         l.sort(key=lambda item: item.reportinfo()[:2])
         return l
-
-    def _deprecated_join(self, name):
-        if self.__class__.join != pytest.collect.Collector.join:
-            warnoldcollect()
-            return self.join(name)
 
     def makeitem(self, name, obj):
         return self.ihook.pytest_pycollect_makeitem(
@@ -198,11 +178,11 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
         plugins = getplugins(self, withpy=True)
         gentesthook.pcall(plugins, metafunc=metafunc)
         if not metafunc._calls:
-            return self.Function(name, parent=self)
+            return Function(name, parent=self)
         l = []
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
-            function = self.Function(name=subname, parent=self,
+            function = Function(name=subname, parent=self,
                 callspec=callspec, callobj=funcobj, keywords={callspec.id:True})
             l.append(function)
         return l
@@ -234,10 +214,6 @@ class Module(pytest.collect.File, PyCollectorMixin):
         return mod
 
     def setup(self):
-        if getattr(self.obj, 'disabled', 0):
-            py.log._apiwarn(">1.1.1", "%r uses 'disabled' which is deprecated, "
-                "use pytestmark=..., see pytest_skipping plugin" % (self.obj,))
-            pytest.skip("%r is disabled" %(self.obj,))
         if hasattr(self.obj, 'setup_module'):
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a pytest style one
@@ -260,16 +236,9 @@ class Module(pytest.collect.File, PyCollectorMixin):
 class Class(PyCollectorMixin, pytest.collect.Collector):
 
     def collect(self):
-        l = self._deprecated_collect()
-        if l is not None:
-            return l
-        return [self.Instance(name="()", parent=self)]
+        return [Instance(name="()", parent=self)]
 
     def setup(self):
-        if getattr(self.obj, 'disabled', 0):
-            py.log._apiwarn(">1.1.1", "%r uses 'disabled' which is deprecated, "
-                "use pytestmark=..., see pytest_skipping plugin" % (self.obj,))
-            pytest.skip("%r is disabled" %(self.obj,))
         setup_class = getattr(self.obj, 'setup_class', None)
         if setup_class is not None:
             setup_class = getattr(setup_class, 'im_func', setup_class)
@@ -387,7 +356,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.collect.Collector):
             if name in seen:
                 raise ValueError("%r generated tests with non-unique name %r" %(self, name))
             seen[name] = True
-            l.append(self.Function(name, self, args=args, callobj=call))
+            l.append(Function(name, self, args=args, callobj=call))
         return l
 
     def getcallargs(self, obj):

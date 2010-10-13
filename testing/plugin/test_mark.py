@@ -17,20 +17,20 @@ class TestMark:
         def f(): pass
         mark.world(x=3, y=4)(f)
         assert f.world
-        assert f.world.x == 3
-        assert f.world.y == 4
+        assert f.world.kwargs['x'] == 3
+        assert f.world.kwargs['y'] == 4
 
     def test_apply_multiple_and_merge(self):
         mark = Mark()
         def f(): pass
         marker = mark.world
         mark.world(x=3)(f)
-        assert f.world.x == 3
+        assert f.world.kwargs['x'] == 3
         mark.world(y=4)(f)
-        assert f.world.x == 3
-        assert f.world.y == 4
+        assert f.world.kwargs['x'] == 3
+        assert f.world.kwargs['y'] == 4
         mark.world(y=1)(f)
-        assert f.world.y == 1
+        assert f.world.kwargs['y'] == 1
         assert len(f.world.args) == 0
 
     def test_pytest_mark_positional(self):
@@ -39,13 +39,6 @@ class TestMark:
         mark.world("hello")(f)
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
-
-    def test_oldstyle_marker_access(self, recwarn):
-        mark = Mark()
-        def f(): pass
-        mark.world(x=1)(f)
-        assert f.world.x == 1
-        assert recwarn.pop()
 
 class TestFunctional:
     def test_mark_per_function(self, testdir):
@@ -257,9 +250,11 @@ class TestKeywordSelection:
         """)
         testdir.makepyfile(conftest="""
             import py
-            class Class(py.test.collect.Class):
-                def _keywords(self):
-                    return ['xxx', self.name]
+            def pytest_pycollect_makeitem(__multicall__, name):
+                if name == "TestClass":
+                    item = __multicall__.execute()
+                    item.keywords['xxx'] = True
+                    return item
         """)
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',
                         'TestClass test_2', 'xxx TestClass test_2',):

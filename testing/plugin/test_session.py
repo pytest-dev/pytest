@@ -116,16 +116,18 @@ class SessionTests:
         out = failed[0].longrepr.reprcrash.message
         assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
 
-    def test_skip_by_conftest_directory(self, testdir):
+    def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(conftest="""
             import py
-            class Directory(py.test.collect.Directory):
-                def collect(self):
-                    py.test.skip("intentional")
+            def pytest_collect_file():
+                py.test.skip("intentional")
         """, test_file="""
             def test_one(): pass
         """)
-        reprec = testdir.inline_run(testdir.tmpdir)
+        try:
+            reprec = testdir.inline_run(testdir.tmpdir)
+        except py.test.skip.Exception:
+            py.test.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
         assert reports[0].skipped

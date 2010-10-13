@@ -173,7 +173,7 @@ class TestCollectonly:
         linecomp.assert_contains_lines([
            "<Module 'test_collectonly_basic.py'>"
         ])
-        item = modcol.join("test_func")
+        item = modcol.collect()[0]
         rep.config.hook.pytest_log_itemcollect(item=item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>",

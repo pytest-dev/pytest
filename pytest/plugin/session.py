@@ -79,7 +79,7 @@ def pytest_collect_directory(path, parent):
                 break
         else:
             return
-    return parent.Directory(path, parent=parent)
+    return Directory(path, parent=parent)
 
 def pytest_report_iteminfo(item):
     return item.reportinfo()
@@ -296,12 +296,6 @@ def decodearg(arg):
     arg = str(arg)
     return arg.split("::")
 
-def configproperty(name):
-    def fget(self):
-        #print "retrieving %r property from %s" %(name, self.fspath)
-        return self.config._getcollectclass(name, self.fspath)
-    return property(fget)
-
 class HookProxy:
     def __init__(self, node):
         self.node = node
@@ -433,8 +427,6 @@ class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
     """
-    Directory = configproperty('Directory')
-    Module = configproperty('Module')
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
 
@@ -470,37 +462,6 @@ class Collector(Node):
             traceback = ntraceback.filter()
         return traceback
 
-    # **********************************************************************
-    # DEPRECATED METHODS
-    # **********************************************************************
-
-    def _deprecated_collect(self):
-        # avoid recursion:
-        # collect -> _deprecated_collect -> custom run() ->
-        # super().run() -> collect
-        attrname = '_depcollectentered'
-        if hasattr(self, attrname):
-            return
-        setattr(self, attrname, True)
-        method = getattr(self.__class__, 'run', None)
-        if method is not None and method != Collector.run:
-            warnoldcollect(function=method)
-            names = self.run()
-            return [x for x in [self.join(name) for name in names] if x]
-
-    def run(self):
-        """ DEPRECATED: returns a list of names available from this collector.
-            You can return an empty list.  Callers of this method
-            must take care to catch exceptions properly.
-        """
-        return [colitem.name for colitem in self._memocollect()]
-
-    def join(self, name):
-        """  DEPRECATED: return a child collector or item for the given name.
-             If the return value is None there is no such child.
-        """
-        return self.collect_by_name(name)
-
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, collection=None):
         fspath = py.path.local(fspath)
@@ -517,9 +478,6 @@ class Directory(FSCollector):
             return path.basename not in ('CVS', '_darcs', '{arch}')
 
     def collect(self):
-        l = self._deprecated_collect()
-        if l is not None:
-            return l
         l = []
         for path in self.fspath.listdir(sort=True):
             res = self.consider(path)
@@ -553,9 +511,7 @@ class Directory(FSCollector):
     def consider_file(self, path):
         return self.ihook.pytest_collect_file(path=path, parent=self)
 
-    def consider_dir(self, path, usefilters=None):
-        if usefilters is not None:
-            py.log._apiwarn("0.99", "usefilters argument not needed")
+    def consider_dir(self, path):
         return self.ihook.pytest_collect_directory(path=path, parent=self)
 
 class Item(Node):
@@ -563,36 +519,5 @@ class Item(Node):
     there might be multiple test invocation items. Attributes:
     
     """
-    def _deprecated_testexecution(self):
-        if self.__class__.run != Item.run:
-            warnoldtestrun(function=self.run)
-        elif self.__class__.execute != Item.execute:
-            warnoldtestrun(function=self.execute)
-        else:
-            return False
-        self.run()
-        return True
-
-    def run(self):
-        """ deprecated, here because subclasses might call it. """
-        return self.execute(self.obj)
-
-    def execute(self, obj):
-        """ deprecated, here because subclasses might call it. """
-        return obj()
-
     def reportinfo(self):
         return self.fspath, None, ""
-
-def warnoldcollect(function=None):
-    py.log._apiwarn("1.0",
-        "implement collector.collect() instead of "
-        "collector.run() and collector.join()",
-        stacklevel=2, function=function)
-
-def warnoldtestrun(function=None):
-    py.log._apiwarn("1.0",
-        "implement item.runtest() instead of "
-        "item.run() and item.execute()",
-        stacklevel=2, function=function)
-

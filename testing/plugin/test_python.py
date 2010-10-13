@@ -13,7 +13,6 @@ class TestModule:
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
         py.test.raises(ImportError, modcol.collect)
         py.test.raises(ImportError, modcol.collect)
-        py.test.raises(ImportError, modcol.run)
 
     def test_import_duplicate(self, testdir):
         a = testdir.mkdir("a")
@@ -36,7 +35,6 @@ class TestModule:
         modcol = testdir.getmodulecol("this is a syntax error")
         py.test.raises(modcol.CollectError, modcol.collect)
         py.test.raises(modcol.CollectError, modcol.collect)
-        py.test.raises(modcol.CollectError, modcol.run)
 
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
@@ -1056,9 +1054,12 @@ class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest("""
             import py
-            class Function(py.test.collect.Function):
+            class MyFunction(py.test.collect.Function):
                 def reportinfo(self):
                     return "ABCDE", 42, "custom"
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == "test_func":
+                    return MyFunction(name, parent=collector)
         """)
         item = testdir.getitem("def test_func(): pass")
         runner = item.config.pluginmanager.getplugin("runner")

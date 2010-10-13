@@ -71,8 +71,7 @@ def pytest_runtest_setup(item):
     item.config._setupstate.prepare(item)
 
 def pytest_runtest_call(item):
-    if not item._deprecated_testexecution():
-        item.runtest()
+    item.runtest()
 
 def pytest_runtest_teardown(item):
     item.config._setupstate.teardown_exact(item)

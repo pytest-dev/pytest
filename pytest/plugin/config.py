@@ -38,11 +38,6 @@ class Parser:
         self._groups.insert(i+1, group)
         return group
 
-    addgroup = getgroup
-    def addgroup(self, name, description=""):
-        py.log._apiwarn("1.1", "use getgroup() which gets-or-creates")
-        return self.getgroup(name, description)
-
     def addoption(self, *opts, **attrs):
         """ add an optparse-style option. """
         self._anonymous.addoption(*opts, **attrs)
@@ -329,16 +324,6 @@ class Config(object):
             return py.path.local.make_numbered_dir(prefix=basename,
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
-    def _getcollectclass(self, name, path):
-        try:
-            cls = self._conftest.rget(name, path)
-        except KeyError:
-            return getattr(py.test.collect, name)
-        else:
-            py.log._apiwarn(">1.1", "%r was found in a conftest.py file, "
-                "use pytest_collect hooks instead." % (cls,))
-            return cls
-
     def getconftest_pathlist(self, name, path=None):
         """ return a matching value, which needs to be sequence
             of filenames that will be returned as a list of Path
@@ -357,19 +342,6 @@ class Config(object):
                 relroot = modpath.join(relroot, abs=True)
             l.append(relroot)
         return l
-
-    def addoptions(self, groupname, *specs):
-        # add a named group of options to the current testing session.
-        # This function gets invoked during testing session initialization.
-        py.log._apiwarn("1.0",
-            "define pytest_addoptions(parser) to add options", stacklevel=2)
-        group = self._parser.getgroup(groupname)
-        for opt in specs:
-            group._addoption_instance(opt)
-        return self.option
-
-    def addoption(self, *optnames, **attrs):
-        return self._parser.addoption(*optnames, **attrs)
 
     def getvalueorskip(self, name, path=None):
         """ return getvalue(name) or call py.test.skip if no value exists. """

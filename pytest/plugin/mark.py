@@ -126,12 +126,6 @@ class MarkInfo:
         self.args = args
         self.kwargs = kwargs
 
-    def __getattr__(self, name):
-        if name[0] != '_' and name in self.kwargs:
-            py.log._apiwarn("1.1", "use .kwargs attribute to access key-values")
-            return self.kwargs[name]
-        raise AttributeError(name)
-
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)

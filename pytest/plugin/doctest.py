@@ -68,10 +68,9 @@ class DoctestItem(py.test.collect.Item):
 
 class DoctestTextfile(DoctestItem):
     def runtest(self):
-        if not self._deprecated_testexecution():
-            failed, tot = py.std.doctest.testfile(
-                str(self.fspath), module_relative=False,
-                raise_on_error=True, verbose=0)
+        failed, tot = py.std.doctest.testfile(
+            str(self.fspath), module_relative=False,
+            raise_on_error=True, verbose=0)
 
 class DoctestModule(DoctestItem):
     def runtest(self):
