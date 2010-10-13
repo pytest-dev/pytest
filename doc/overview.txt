@@ -6,8 +6,7 @@ Overview and Introduction
    :maxdepth: 2
 
    features.txt
-   install.txt
-   basic_usage.txt
+   getting-started.txt
    cmdline.txt
    goodpractises.txt
    faq.txt

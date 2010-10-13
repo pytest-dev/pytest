@@ -1,4 +1,6 @@
 
+.. _`good practises`:
+
 Good Practises
 =================================================
 
@@ -17,6 +19,17 @@ reproducible and reliable test environment.
 .. _pip: http://pypi.python.org/pypi/pip
 
 .. _standalone:
+
+
+Choosing a test layout
+----------------------------
+
+py.test supports common test layouts.
+
+XXX
+
+
+
 
 Generating a py.test standalone Script
 -------------------------------------------

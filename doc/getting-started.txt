@@ -1,17 +1,28 @@
-.. _`setuptools installation`: http://pypi.python.org/pypi/setuptools
+Installation and Getting Started
+===================================
 
+.. _`easy_install`:
 
-Basic usage
-==================
+Installation using easy_install
+----------------------------------------
 
-We assume you have done an :ref:`install` like this::
+**PyPI distribution name**: pytest_.  **repository**: https://bitbucket.org/hpk42/pytest
 
-    easy_install -U pytest # or
-    pip install -U pytest
+**Compatibility**: Python 2.4-3.2, Jython, PyPy on Unix/Posix and Windows
 
-Ensure that this installed the ``py.test`` script::
+You need to have setuptools_ or Distribute_ to install or upgrade ``py.test``::
 
-    py.test --version
+    easy_install -U pytest
+
+Note that setuptools works for Python2 interpreters and
+**Distribute works for both Python3 and Python2** and fixes some issues
+on Windows.  You may also use pip_ for installation on Python2 interpreters.
+
+To check your installation works type::
+
+    $ py.test --version
+
+If you get an error, checkout :ref:`installation issues`.
 
 
 Writing a first test
@@ -55,4 +66,15 @@ A few notes on this little test invocation:
    report shows us the intermediate values.
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+
+
+where to go from here
+-------------------------------------
+
+Here are a few suggestions where to go next:
+
+* :ref:`cmdline` for command line invocation examples
+* :ref:`good practises` for virtualenv, test layout, genscript support
+* :ref:`apiref` for documentation and examples on writing Python tests
+* :ref:`examples` for more complex examples
 

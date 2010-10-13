@@ -1,0 +1,135 @@
+
+Writing easy assertions in tests
+============================================
+
+assert with the ``assert`` statement
+---------------------------------------------------------
+
+``py.test`` allows to use the standard python ``assert`` for verifying
+expectations and values in Python tests.  For example, you can write the
+following in your tests::
+
+    # content of test_assert1.py
+    def f():
+        return 3
+
+    def test_function():
+        assert f() == 4
+
+to state that your object has a certain ``attribute``. In case this
+assertion fails you will see the value of ``x``::
+
+    $ py.test test_assert1.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_assert1.py
+    
+    test_assert1.py F
+    
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
+    
+        def test_function():
+    >       assert f() == 4
+    E       assert 3 == 4
+    E        +  where 3 = f()
+    
+    test_assert1.py:5: AssertionError
+    ========================= 1 failed in 0.02 seconds =========================
+
+Reporting details about the failing assertion is achieved by re-evaluating
+the assert expression and recording intermediate values.
+
+Note: If evaluating the assert expression has side effects you may get a
+warning that the intermediate values could not be determined safely.  A 
+common example for this issue is reading from a file and comparing in one
+line::
+
+        assert f.read() != '...'
+
+This might fail but when re-interpretation comes along it might pass.
+You can rewrite this (and any other expression with side effects) easily, though:
+
+        content = f.read()
+        assert content != '...'
+
+assertions about expected exceptions
+------------------------------------------
+
+In order to write assertions about raised exceptions, you can use
+``py.test.raises`` as a context manager like this::
+
+    with py.test.raises(ZeroDivisionError):
+        1 / 0
+
+and if you need to have access to the actual exception info you may use::
+
+    with py.test.raises(RuntimeError) as excinfo:
+        def f():
+            f()
+        f()
+
+    # do checks related to excinfo.type, excinfo.value, excinfo.traceback
+
+If you want to write test code that works on Python2.4 as well,
+you may also use two other ways to test for an expected exception::
+
+    py.test.raises(ExpectedException, func, *args, **kwargs)
+    py.test.raises(ExpectedException, "func(*args, **kwargs)")
+
+both of which execute the specified function with args and kwargs and
+asserts that the given ``ExpectedException`` is raised.  The reporter will
+provide you with helpful output in case of failures such as *no
+exception* or *wrong exception*.
+
+Making use of context-sensitive comparisons
+-------------------------------------------------
+
+.. versionadded:: 2.0
+
+py.test has rich support for providing context-sensitive informations
+when it encounters comparisons.  For example::
+
+    # content of test_assert2.py
+
+    def test_set_comparison():
+        set1 = set("1308")
+        set2 = set("8035")
+        assert set1 == set2
+
+if you run this module::
+
+    $ py.test test_assert2.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    test path 1: test_assert2.py
+    
+    test_assert2.py F
+    
+    ================================= FAILURES =================================
+    ___________________________ test_set_comparison ____________________________
+    
+        def test_set_comparison():
+            set1 = set("1308")
+            set2 = set("8035")
+    >       assert set1 == set2
+    E       assert set(['0', '1', '3', '8']) == set(['0', '3', '5', '8'])
+    E         Extra items in the left set:
+    E         '1'
+    E         Extra items in the right set:
+    E         '5'
+    
+    test_assert2.py:5: AssertionError
+    ========================= 1 failed in 0.02 seconds =========================
+
+Special comparisons are done for a number of cases:
+
+* comparing long strings: a context diff is shown
+* comparing long sequences: first failing indices
+* comparing dicts: different entries
+
+.. 
+    Defining your own comparison
+    ----------------------------------------------
+
+

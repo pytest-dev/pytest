@@ -1,4 +1,6 @@
 
+.. _cmdline:
+
 Using the interactive command line
 ===============================================
 
