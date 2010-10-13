@@ -1,6 +1,6 @@
 
 import py
-import os
+import sys, os
 from pytest._core import PluginManager
 
 def pytest_cmdline_parse(pluginmanager, args):
@@ -194,14 +194,10 @@ class Conftest(object):
         try:
             return self._conftestpath2mod[conftestpath]
         except KeyError:
-            if not conftestpath.dirpath('__init__.py').check(file=1):
-                # HACK: we don't want any "globally" imported conftest.py,
-                #       prone to conflicts and subtle problems
-                modname = str(conftestpath).replace('.', conftestpath.sep)
-                mod = conftestpath.pyimport(modname=modname)
-            else:
-                mod = conftestpath.pyimport()
-            self._conftestpath2mod[conftestpath] = mod
+            pkgpath = conftestpath.pypkgpath()
+            if pkgpath is None:
+                _ensure_removed_sysmodule(conftestpath.purebasename)
+            self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
             dirpath = conftestpath.dirpath()
             if dirpath in self._path2confmods:
                 for path, mods in self._path2confmods.items():
@@ -216,6 +212,11 @@ class Conftest(object):
             self._onimport(mod)
         return mod
 
+def _ensure_removed_sysmodule(modname):
+    try:
+        del sys.modules[modname]
+    except KeyError:
+        pass
 
 class CmdOptions(object):
     """ holds cmdline options as attributes."""

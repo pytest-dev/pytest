@@ -106,6 +106,27 @@ def test_doubledash_not_considered(testdir):
     l = conftest.getconftestmodules(None)
     assert len(l) == 0
 
+def test_conftest_global_import(testdir):
+    testdir.makeconftest("x=3")
+    p = testdir.makepyfile("""
+        import py
+        from pytest.plugin.config import Conftest
+        conf = Conftest()
+        mod = conf.importconftest(py.path.local("conftest.py"))
+        assert mod.x == 3
+        import conftest
+        assert conftest is mod, (conftest, mod)
+        subconf = py.path.local().ensure("sub", "conftest.py")
+        subconf.write("y=4")
+        mod2 = conf.importconftest(subconf)
+        assert mod != mod2
+        assert mod2.y == 4
+        import conftest
+        assert conftest is mod2, (conftest, mod)
+    """)
+    res = testdir.runpython(p)
+    assert res.ret == 0
+
 def test_conftestcutdir(testdir):
     conf = testdir.makeconftest("")
     p = testdir.mkdir("x")
