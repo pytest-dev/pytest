@@ -2,16 +2,15 @@ include CHANGELOG
 include README.txt
 include setup.py
 include distribute_setup.py
-include LICENSE 
-include conftest.py 
+include LICENSE
+#include conftest.py
 graft doc
-graft contrib
-graft bin 
 graft testing
+include testing
 #exclude *.orig 
 #exclude *.orig 
 exclude *.rej 
-exclude .hginore
+exclude .hgignore
 exclude *.pyc
 #recursive-exclude testing *.pyc *.orig *.rej *$py.class
 #prune .pyc

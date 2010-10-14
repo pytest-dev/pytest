@@ -5,29 +5,25 @@ if sys.version_info >= (3,0):
 from setuptools import setup
 
 long_description = """
-cross-project testing tool with many advanced features
+cross-project testing tool for Python.
 
 Platforms: Linux, Win32, OSX
 
 Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy
 
-Bugs and issues: http://bitbucket.org/hpk42/py-trunk/issues/
+Bugs and issues: http://bitbucket.org/hpk42/pytest/issues/
 
-Mailing lists and more contact points: http://pylib.org/contact.html
-
-.. _`py.test`: http://pytest.org
-.. _`py.path`: http://pylib.org/path.html
-.. _`py.code`: http://pylib.org/code.html
+Web page: http://pytest.org
 
 (c) Holger Krekel and others, 2004-2010
 """
 def main():
     setup(
         name='pytest',
-        description='py.test: simple testing with Python',
+        description='py.test: simple powerful testing with Python',
         long_description = long_description,
         version= '2.0.0.dev0',
-        url='http://pylib.org',
+        url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
