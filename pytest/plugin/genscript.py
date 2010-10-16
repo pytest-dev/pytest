@@ -1,10 +1,53 @@
-#! /usr/bin/env python
-"""
-generate standalone test script to be distributed along with an application.
-"""
+import py
+import pickle
+import zlib
+import base64
 
-import os
-import sys
+def find_toplevel(name):
+    for syspath in py.std.sys.path:
+        base = py.path.local(syspath)
+        lib = base/name
+        if lib.check(dir=1):
+            return lib
+    raise LookupError(name)
+
+def pkgname(toplevel, rootpath, path):
+    parts = path.parts()[len(rootpath.parts()):]
+    return '.'.join([toplevel] + [x.purebasename for x in parts])
+
+def pkg_to_mapping(name):
+    toplevel = find_toplevel(name)
+    name2src = {}
+    for pyfile in toplevel.visit('*.py'):
+        pkg = pkgname(name, toplevel, pyfile)
+        name2src[pkg] = pyfile.read()
+    return name2src
+
+
+def compress_mapping(mapping):
+    data = pickle.dumps(mapping, 2)
+    data = zlib.compress(data, 9)
+    data = base64.encodestring(data)
+    data = data.decode('ascii')
+    return data
+
+
+def compress_packages(names):
+    mapping = {}
+    for name in names:
+        mapping.update(pkg_to_mapping(name))
+    return compress_mapping(mapping)
+
+
+def generate_script(entry, packages):
+    data = compress_packages(packages)
+    tmpl = py.path.local(__file__).dirpath().join('standalonetemplate.py')
+    exe = tmpl.read()
+    exe = exe.replace('@SOURCES@', data)
+    exe = exe.replace('@ENTRY@', entry)
+    return exe
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption("--genscript", action="store", default=None,
@@ -14,56 +57,11 @@ def pytest_addoption(parser):
 def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
-        import py
-        mydir = py.path.local(__file__).dirpath()
-        infile = mydir.join("standalonetemplate.py")
-        pybasedir = py.path.local(py.__file__).dirpath().dirpath()
+        script = generate_script(
+            'import py; py.test.cmdline.main()',
+            ['py', 'pytest'],
+        )
+
         genscript = py.path.local(genscript)
-        main(pybasedir, outfile=genscript, infile=infile)
+        genscript.write(script)
         return 0
-
-def main(pybasedir, outfile, infile):
-    import base64
-    import zlib
-    try:
-        import pickle
-    except Importerror:
-        import cPickle as pickle
-
-    outfile = str(outfile)
-    infile = str(infile)
-    assert os.path.isabs(outfile)
-    os.chdir(str(pybasedir))
-    files = []
-    for dirpath, dirnames, filenames in os.walk("py"):
-        for f in filenames:
-            if not f.endswith(".py"):
-                continue
-
-            fn = os.path.join(dirpath, f)
-            files.append(fn)
-
-    name2src = {}
-    for f in files:
-        k = f.replace(os.sep, ".")[:-3]
-        name2src[k] = open(f, "r").read()
-
-    data = pickle.dumps(name2src, 2)
-    data = zlib.compress(data, 9)
-    data = base64.encodestring(data)
-    data = data.decode("ascii")
-
-    exe = open(infile, "r").read()
-    exe = exe.replace("@SOURCES@", data)
-
-    open(outfile, "w").write(exe)
-    os.chmod(outfile, 493)  # 0755
-    sys.stdout.write("generated standalone py.test at %r, have fun!\n" % outfile)
-
-if __name__=="__main__":
-    dn = os.path.dirname
-    here = os.path.abspath(dn(__file__)) # py/plugin/
-    pybasedir = dn(dn(here))
-    outfile = os.path.join(os.getcwd(), "py.test-standalone")
-    infile = os.path.join(here, 'standalonetemplate.py')
-    main(pybasedir, outfile, infile)

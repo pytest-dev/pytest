@@ -59,5 +59,5 @@ if __name__ == "__main__":
     importer = DictImporter(sources)
     sys.meta_path.append(importer)
 
-    import py
-    py.cmdline.pytest()
+    entry = "@ENTRY@"
+    do_exec(entry, locals())
