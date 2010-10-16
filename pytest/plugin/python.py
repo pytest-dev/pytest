@@ -527,28 +527,60 @@ class Metafunc:
         self._calls.append(CallSpec(funcargs, id, param))
 
 class FuncargRequest:
+    """ A request for function arguments from a test function. """
     _argprefix = "pytest_funcarg__"
     _argname = None
 
     class LookupError(LookupError):
         """ error on performing funcarg request. """
-
+   
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
-        self.function = pyfuncitem.obj
-        self.keywords = pyfuncitem.keywords
-        self.module = pyfuncitem.getparent(pytest.collect.Module).obj
-        clscol = pyfuncitem.getparent(pytest.collect.Class)
-        self.cls = clscol and clscol.obj or None
-        self.instance = py.builtin._getimself(self.function)
-        self.config = pyfuncitem.config
-        self.fspath = pyfuncitem.fspath
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam
         self._plugins = getplugins(pyfuncitem, withpy=True)
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
         self._currentarg = None
+
+    @property
+    def function(self):
+        """ function object of the test invocation. """
+        return self._pyfuncitem.obj
+
+    @property
+    def keywords(self):
+        """ keywords of the test function item.
+
+        .. versionadded:: 2.0
+        """
+        return self._pyfuncitem.keywords
+
+    @property
+    def module(self):
+        """ module where the test function was collected. """
+        return self._pyfuncitem.getparent(pytest.collect.Module).obj
+       
+    @property
+    def cls(self):
+        """ class (can be None) where the test function was collected. """
+        clscol = self._pyfuncitem.getparent(pytest.collect.Class)
+        if clscol:
+            return clscol.obj
+    @property
+    def instance(self):
+        """ instance (can be None) on which test function was collected. """
+        return py.builtin._getimself(self.function)
+
+    @property
+    def config(self):
+        """ the pytest config object associated with this request. """
+        return self._pyfuncitem.config
+    
+    @property
+    def fspath(self):
+        """ the file system path of the test module which collected this test. """
+        return self._pyfuncitem.fspath
 
     def _fillfuncargs(self):
         argnames = getfuncargnames(self.function)

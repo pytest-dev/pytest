@@ -90,16 +90,8 @@ Each funcarg factory receives a **request** object which is tied to a
 specific test function call.  A request object is passed to a funcarg
 factory and provides access to test configuration and context:
 
-``request.function``: python function object requesting the argument
-
-``request.cls``: class object where the test function is defined in or None.
-
-``request.module``: module object where the test function is defined in.
-
-``request.config``: access to command line opts and general config
-
-``request.param``: if exists was passed by a previous :py:meth:`~Metafunc.addcall`
-
+.. autoclass:: pytest.plugin.python.FuncargRequest()
+    :members: function,cls,module,keywords,config
 
 .. _`useful caching and finalization helpers`:
 
