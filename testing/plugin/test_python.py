@@ -562,6 +562,7 @@ class TestRequest:
         """)
         req = funcargs.FuncargRequest(item)
         assert req.function == item.obj
+        assert req.keywords is item.keywords
         assert hasattr(req.module, 'test_func')
         assert req.cls is None
         assert req.function.__name__ == "test_func"

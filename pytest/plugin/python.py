@@ -536,6 +536,7 @@ class FuncargRequest:
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
         self.function = pyfuncitem.obj
+        self.keywords = pyfuncitem.keywords
         self.module = pyfuncitem.getparent(pytest.collect.Module).obj
         clscol = pyfuncitem.getparent(pytest.collect.Class)
         self.cls = clscol and clscol.obj or None
