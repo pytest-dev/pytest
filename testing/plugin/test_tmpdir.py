@@ -4,11 +4,16 @@ from pytest.plugin.tmpdir import pytest_funcarg__tmpdir
 from pytest.plugin.python import FuncargRequest
 
 def test_funcarg(testdir):
-    item = testdir.getitem("def test_func(tmpdir): pass")
+    item = testdir.getitem("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall(id='a')
+                metafunc.addcall(id='b')
+            def test_func(tmpdir): pass
+            """, 'test_func[a]')
     p = pytest_funcarg__tmpdir(FuncargRequest(item))
     assert p.check()
     bn = p.basename.strip("0123456789")
-    assert bn.endswith("test_func")
+    assert bn.endswith("test_func[a]")
 
 def test_ensuretemp(recwarn):
     #py.test.deprecated_call(py.test.ensuretemp, 'hello')

@@ -29,6 +29,6 @@ def pytest_funcarg__tmpdir(request):
     directory.  The returned object is a `py.path.local`_
     path object.
     """
-    name = request.function.__name__
+    name = request._pyfuncitem.name
     x = request.config.mktemp(name, numbered=True)
     return x.realpath()
