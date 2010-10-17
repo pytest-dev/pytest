@@ -5,9 +5,9 @@ Misc examples
 Detect if running from within a py.test run
 --------------------------------------------------------------
 
-Usually it is a good idea to make application code
+Usually it is a bad idea to make application code
 behave differently if called from a test.  But if you
-absolutely must find out if your application code is 
+absolutely must find out if your application code is
 running from a test you can do something like this::
 
     # content of conftest.py in your testing directory
