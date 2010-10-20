@@ -425,12 +425,7 @@ class TmpTestdir:
             assert script, "script %r not found" % scriptname
             return (script,)
         else:
-            cmdlinename = scriptname.replace(".", "")
-            assert hasattr(py.cmdline, cmdlinename), cmdlinename
-            source = ("import sys;sys.path.insert(0,%r);"
-                      "import py;py.cmdline.%s()" %
-                (str(py._pydir.dirpath()), cmdlinename))
-            return (sys.executable, "-c", source,)
+            py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
     def runpython(self, script, prepend=True):
         if prepend:
