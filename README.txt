@@ -1,8 +1,4 @@
-The py lib is a Python development support library featuring
-the following tools and modules:
+py.test is a simple and popular testing tool for Python.
 
-* py.test: tool for distributed automated testing
-* py.code: dynamic code generation and introspection
-* py.path:  uniform local and svn path objects
+See http://pytest.org for more documentation.
 
-For questions and more information please visit http://pylib.org
