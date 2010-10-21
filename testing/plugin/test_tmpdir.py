@@ -13,7 +13,12 @@ def test_funcarg(testdir):
     p = pytest_funcarg__tmpdir(FuncargRequest(item))
     assert p.check()
     bn = p.basename.strip("0123456789")
-    assert bn.endswith("test_func[a]")
+    assert bn.endswith("test_func_a_")
+    item.name = "qwe/\\abc"
+    p = pytest_funcarg__tmpdir(FuncargRequest(item))
+    assert p.check()
+    bn = p.basename.strip("0123456789")
+    assert bn == "qwe__abc"
 
 def test_ensuretemp(recwarn):
     #py.test.deprecated_call(py.test.ensuretemp, 'hello')

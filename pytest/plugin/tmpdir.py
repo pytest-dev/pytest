@@ -8,7 +8,7 @@ usage example::
 .. _`py.path.local`: ../../path.html
 
 """
-import pytest
+import pytest, py
 
 def pytest_configure(config):
     def ensuretemp(string, dir=1):
@@ -30,5 +30,6 @@ def pytest_funcarg__tmpdir(request):
     path object.
     """
     name = request._pyfuncitem.name
+    name = py.std.re.sub("[\W]", "_", name)
     x = request.config.mktemp(name, numbered=True)
     return x.realpath()
