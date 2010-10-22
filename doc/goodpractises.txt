@@ -48,8 +48,6 @@ disguise.  You can tell people to download and then e.g. run it like this::
 and ask them to send you the resulting URL.  The resulting script has
 all core features and runs unchanged under Python2 and Python3 interpreters.
 
-.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
-
 .. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
 .. _`distribute installation`: http://pypi.python.org/pypi/distribute
 

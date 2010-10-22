@@ -78,3 +78,4 @@ Here are a few suggestions where to go next:
 * :ref:`apiref` for documentation and examples on writing Python tests
 * :ref:`examples` for more complex examples
 
+.. include:: links.inc

@@ -10,6 +10,8 @@
 .. _pytest: http://pypi.python.org/pypi/pytest
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
+
+.. _`easy_install`:
 .. _`distribute`: http://pypi.python.org/pypi/distribute
 .. _`pip`: http://pypi.python.org/pypi/pip
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv

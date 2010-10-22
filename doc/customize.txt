@@ -79,10 +79,10 @@ in your home directory to provide global configuration values.
 
 .. Note::
     if you have ``conftest.py`` files which do not reside in a
-    python package directory (one containing an ``__init__.py``) then
-    "import conftest" will be ambigous and should be avoided. **If you
-    want to import anything from a ``conftest.py`` file it is better
-    to put it inside a package to disambiguate.
+    python package directory (i.e. one containing an ``__init__.py``) then
+    "import conftest" will be ambigous and should be avoided. If you
+    ever want to import anything from a ``conftest.py`` file
+    put it inside a package.  You avoid trouble this way.
 
 .. _`named plugins`: plugin/index.html
 
@@ -128,7 +128,7 @@ Writing per-project plugins (conftest.py)
 The purpose of :file:`conftest.py` files is to allow project-specific
 test customization.  They thus make for a good place to implement
 project-specific test related features through hooks.  For example you may
-set the `collect_ignore`_ variable depending on a command line option
+set the ``collect_ignore`` variable depending on a command line option
 by defining the following hook in a ``conftest.py`` file::
 
     # ./conftest.py in your root or package dir
