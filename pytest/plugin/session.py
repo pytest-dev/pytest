@@ -106,7 +106,7 @@ class Session(object):
         self.collection = Collection(config) # XXX move elswehre
 
     def pytest_runtest_logreport(self, report):
-        if report.failed:
+        if report.failed and 'xfail' not in report.keywords:
             self._testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self._testsfailed >= maxfail:

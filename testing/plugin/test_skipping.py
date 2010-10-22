@@ -218,7 +218,7 @@ class TestXFail:
             "*XPASS*test_that*",
             "*1 xpassed*"
         ])
-        assert result.ret == 1
+        assert result.ret == 0
 
     def test_xfail_imperative(self, testdir):
         p = testdir.makepyfile("""
