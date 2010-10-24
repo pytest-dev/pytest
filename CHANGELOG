@@ -22,6 +22,7 @@ Changes between 1.3.4 and 2.0.0dev0
   with test names (thanks Ronny)
 - "xpass" (unexpected pass) tests don't cause exitcode!=0
 - fix issue131 / issue60 - importing doctests in __init__ files used as namespace packages
+- fix issue93 stdout/stderr is captured while importing conftest.py
 
 Changes between 1.3.3 and 1.3.4
 ----------------------------------------------

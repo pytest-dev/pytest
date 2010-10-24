@@ -140,11 +140,14 @@ class TestGeneralUsage:
 
     def test_issue93_initialnode_importing_capturing(self, testdir):
         testdir.makeconftest("""
+            import sys
             print ("should not be seen")
+            sys.stderr.write("stder42\\n")
         """)
         result = testdir.runpytest()
         assert result.ret == 0
         assert "should not be seen" not in result.stdout.str()
+        assert "stderr42" not in result.stderr.str()
 
     def test_conftest_printing_shows_if_error(self, testdir):
         testdir.makeconftest("""
