@@ -1,34 +1,30 @@
-Installation and Getting Started
+Getting Started
 ===================================
 
 .. _`easy_install`:
 
-Installation using easy_install
-----------------------------------------
-
-**PyPI distribution name**: pytest_.  **repository**: https://bitbucket.org/hpk42/pytest
-
 **Compatibility**: Python 2.4-3.2, Jython, PyPy on Unix/Posix and Windows
 
-You need to have setuptools_ or Distribute_ to install or upgrade ``py.test``::
+Installation
+----------------------------------------
 
-    easy_install -U pytest
+Installation options::
 
-Note that setuptools works for Python2 interpreters and
-**Distribute works for both Python3 and Python2** and fixes some issues
-on Windows.  You may also use pip_ for installation on Python2 interpreters.
+    easy_install -U pytest  # or
+    pip install -U pytest
 
-To check your installation works type::
+To check your installation has installed the correct version::
 
     $ py.test --version
 
 If you get an error, checkout :ref:`installation issues`.
 
 
-Writing a first test
-------------------------------
+Writing a simple test function with an assertion
+----------------------------------------------------------
 
-Let's create a small file with the following content::
+Let's create a small file with a test function testing a function
+computes a certain value::
 
     # content of test_sample.py
     def func(x):
@@ -36,17 +32,17 @@ Let's create a small file with the following content::
     def test_answer():
         assert func(3) == 5
 
-That's it.  Now you can already execute the test function::
+Now you can execute the test function::
 
     $ py.test test_sample.py
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    ========================= test session starts ==========================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev4
     test path 1: test_sample.py
     
     test_sample.py F
     
-    ================================= FAILURES =================================
-    _______________________________ test_answer ________________________________
+    =============================== FAILURES ===============================
+    _____________________________ test_answer ______________________________
     
         def test_answer():
     >       assert func(3) == 5
@@ -54,7 +50,7 @@ That's it.  Now you can already execute the test function::
     E        +  where 4 = func(3)
     
     test_sample.py:4: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ======================= 1 failed in 0.02 seconds =======================
 
 We got a failure because our little ``func(3)`` call did not return ``5``.
 A few notes on this little test invocation:
@@ -67,6 +63,33 @@ A few notes on this little test invocation:
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
 
+Asserting that a certain exception is raised
+--------------------------------------------------------------
+
+If you want to assert a test raises a certain exception you can
+use the ``raises`` helper::
+
+    # content of test_sysexit.py
+    import py
+    def f():
+        raise SystemExit(1)
+
+    def test_mytest():
+        with py.test.raises(SystemExit):
+            f()
+
+Running it with::
+
+    $ py.test test_sysexit.py
+    ========================= test session starts ==========================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev4
+    test path 1: test_sysexit.py
+    
+    test_sysexit.py .
+    
+    ======================= 1 passed in 0.01 seconds =======================
+
+.. For further ways to assert exceptions see the :pyfunc:`raises`
 
 where to go from here
 -------------------------------------

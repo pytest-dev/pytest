@@ -6,7 +6,23 @@ Frequent Issues and Questions
 Installation issues
 ------------------------------
 
-easy_install or py.test not found on Windows machine
+easy_install or pip not found?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Consult distribute_ to install the ``easy_install`` tool on your machine. 
+You may also use the original but somewhat older `setuptools`_ project
+although we generally recommend to use ``distribute`` because it contains
+more bug fixes and also works for Python3.
+
+For Python2 you can also consult pip_ for the popular ``pip`` tool.
+
+for the according ``pip`` installation tool.  installation instructions.
+You can also `setuptools`_ and 
+If you want to install on Python3 you need to use Distribute_ which
+provides the ``easy_install`` utility.
+
+
+py.test not found on Windows despite installation?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
