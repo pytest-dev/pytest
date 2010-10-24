@@ -3,6 +3,7 @@ import py
 import sys, os
 from pytest._core import PluginManager
 
+
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
@@ -283,11 +284,25 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
+    def _setinitialconftest(self, args):
+        # capture output during conftest init (#issue93)
+        name = hasattr(os, 'dup') and 'StdCaptureFD' or 'StdCapture'
+        cap = getattr(py.io, name)()
+        try:
+            try:
+                self._conftest.setinitial(args)
+            finally:
+                out, err = cap.reset()
+        except:
+            sys.stdout.write(out)
+            sys.stderr.write(err)
+            raise
+
     def _preparse(self, args):
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
-        self._conftest.setinitial(args)
+        self._setinitialconftest(args)
         self.pluginmanager.do_addoption(self._parser)
 
     def parse(self, args):

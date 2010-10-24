@@ -138,14 +138,22 @@ class TestGeneralUsage:
             "*Module*test_issue88*",
         ])
 
-    @py.test.mark.xfail
     def test_issue93_initialnode_importing_capturing(self, testdir):
         testdir.makeconftest("""
-            print "should not be seen"
+            print ("should not be seen")
         """)
         result = testdir.runpytest()
         assert result.ret == 0
         assert "should not be seen" not in result.stdout.str()
+
+    def test_conftest_printing_shows_if_error(self, testdir):
+        testdir.makeconftest("""
+            print ("should be seen")
+            assert 0
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        assert "should be seen" in result.stdout.str()
 
     @py.test.mark.skipif("not hasattr(os, 'symlink')")
     def test_chdir(self, testdir):
