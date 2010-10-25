@@ -8,6 +8,9 @@ rsyncdirs = ['conftest.py', '../pytest', '../doc', '.']
 
 import os, py
 
+def pytest_report_header():
+    return "pid: %s" % os.getpid()
+
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)
     if multi is not None:

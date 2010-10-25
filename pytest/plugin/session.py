@@ -105,6 +105,10 @@ class Session(object):
         self.shouldstop = False
         self.collection = Collection(config) # XXX move elswehre
 
+    def pytest_collectstart(self):
+        if self.shouldstop:
+            raise self.Interrupted(self.shouldstop)
+
     def pytest_runtest_logreport(self, report):
         if report.failed and 'xfail' not in getattr(report, 'keywords', []):
             self._testsfailed += 1
@@ -112,7 +116,6 @@ class Session(object):
             if maxfail and self._testsfailed >= maxfail:
                 self.shouldstop = "stopping after %d failures" % (
                     self._testsfailed)
-                self.collection.shouldstop = self.shouldstop
     pytest_collectreport = pytest_runtest_logreport
 
     def main(self):
@@ -200,49 +203,32 @@ class Collection:
         names = [x for x in id.split("::") if x]
         if names and '/' in names[0]:
             names[:1] = names[0].split("/")
-        return self._match([self._topcollector], names)
-
-    def _match(self, matching, names):
-        while names:
-            name = names.pop(0)
-            l = []
-            for current in matching:
-                for x in current._memocollect():
-                    if x.name == name:
-                        l.append(x)
-                    elif x.name == "()":
-                        names.insert(0, name)
-                        l.append(x)
-                        break
-            if not l:
-                raise ValueError("no node named %r below %r" %(name, current))
-            matching = l
-        return matching
+        return list(self.matchnodes([self._topcollector], names))
 
     def perform_collect(self):
-        nodes = []
+        items = []
         for arg in self.config.args:
             names = self._parsearg(arg)
             try:
-                self.genitems([self._topcollector], names, nodes)
+                for node in self.matchnodes([self._topcollector], names):
+                    items.extend(self.genitems(node))
             except NoMatch:
                 raise self.config.Error("can't collect: %s" % (arg,))
-        return nodes
+        return items
 
-    def genitems(self, matching, names, result):
+    def matchnodes(self, matching, names):
         if not matching:
-            assert not names
             return
-        if names:
-            name = names[0]
-            names = names[1:]
-        else:
-            name = None
+        if not names:
+            for x in matching:
+                yield x
+            return
+        name = names[0]
+        names = names[1:]
         for node in matching:
             if isinstance(node, pytest.collect.Item):
-                if name is None:
-                    node.ihook.pytest_log_itemcollect(item=node)
-                    result.append(node)
+                if not name:
+                    yield node
                 continue
             assert isinstance(node, pytest.collect.Collector)
             node.ihook.pytest_collectstart(collector=node)
@@ -250,16 +236,19 @@ class Collection:
             #print "matching", rep.result, "against name", name
             if rep.passed:
                 if not name:
-                    self.genitems(rep.result, [], result)
+                    for x in rep.result:
+                        yield x
                 else:
                     matched = False
                     for x in rep.result:
                         try:
                             if x.name == name or x.fspath.basename == name:
-                                self.genitems([x], names, result)
+                                for x in self.matchnodes([x], names):
+                                    yield x
                                 matched = True
                             elif x.name == "()": # XXX special Instance() case
-                                self.genitems([x], [name] + names, result)
+                                for x in self.matchnodes([x], [name] + names):
+                                    yield x
                                 matched = True
                         except NoMatch:
                             pass
@@ -267,12 +256,23 @@ class Collection:
                         node.ihook.pytest_collectreport(report=rep)
                         raise NoMatch(name)
             node.ihook.pytest_collectreport(report=rep)
-            x = getattr(self, 'shouldstop', None)
-            if x:
-                raise Session.Interrupted(x)
+
+    def genitems(self, node):
+        if isinstance(node, pytest.collect.Item):
+            node.ihook.pytest_log_itemcollect(item=node)
+            yield node
+        else:
+            assert isinstance(node, pytest.collect.Collector)
+            node.ihook.pytest_collectstart(collector=node)
+            rep = node.ihook.pytest_make_collect_report(collector=node)
+            if rep.passed:
+                for subnode in rep.result or []:
+                    for x in self.genitems(subnode):
+                        yield x
+            node.ihook.pytest_collectreport(report=rep)
 
 class NoMatch(Exception):
-    """ raised if genitems cannot locate a matching names. """
+    """ raised if matching cannot locate a matching names. """
 
 def gettopdir(args):
     """ return the top directory for the given paths.

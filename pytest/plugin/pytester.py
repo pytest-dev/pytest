@@ -272,7 +272,8 @@ class TmpTestdir:
     def genitems(self, colitems):
         collection = colitems[0].collection
         result = []
-        collection.genitems(colitems, (), result)
+        for colitem in colitems:
+            result.extend(collection.genitems(colitem))
         return result
 
     def inline_genitems(self, *args):
