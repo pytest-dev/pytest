@@ -70,3 +70,14 @@ def test_teardown(testdir):
     assert passed == 2
     assert passed + skipped + failed == 2
 
+def test_module_level_pytestmark(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        import py
+        pytestmark = py.test.mark.xfail
+        class MyTestCase(unittest.TestCase):
+            def test_func1(self):
+                assert 0
+    """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)

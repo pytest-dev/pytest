@@ -266,7 +266,7 @@ class Collection:
             node.ihook.pytest_collectstart(collector=node)
             rep = node.ihook.pytest_make_collect_report(collector=node)
             if rep.passed:
-                for subnode in rep.result or []:
+                for subnode in rep.result:
                     for x in self.genitems(subnode):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
@@ -328,7 +328,7 @@ class Node(object):
         #: the file where this item is contained/collected from.
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = HookProxy(self)
-        self.keywords = self.readkeywords()
+        self.keywords = {self.name: True}
 
     def __repr__(self):
         if getattr(self.config.option, 'debug', False):
@@ -344,7 +344,7 @@ class Node(object):
         if not isinstance(other, Node):
             return False
         return self.__class__ == other.__class__ and \
-               self.name == other.name and self.parent == other.parent 
+               self.name == other.name and self.parent == other.parent
 
     def __ne__(self, other):
         return not self == other
@@ -395,12 +395,6 @@ class Node(object):
         while current and not isinstance(current, cls):
             current = current.parent
         return current
-
-    def readkeywords(self):
-        return dict([(x, True) for x in self._keywords()])
-
-    def _keywords(self):
-        return [self.name]
 
     def _prunetraceback(self, traceback):
         return traceback

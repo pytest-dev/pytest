@@ -8,13 +8,15 @@ class TestMark:
 
     def test_pytest_mark_bare(self):
         mark = Mark()
-        def f(): pass
+        def f():
+            pass
         mark.hello(f)
         assert f.hello
 
     def test_pytest_mark_keywords(self):
         mark = Mark()
-        def f(): pass
+        def f():
+            pass
         mark.world(x=3, y=4)(f)
         assert f.world
         assert f.world.kwargs['x'] == 3
@@ -22,7 +24,8 @@ class TestMark:
 
     def test_apply_multiple_and_merge(self):
         mark = Mark()
-        def f(): pass
+        def f():
+            pass
         marker = mark.world
         mark.world(x=3)(f)
         assert f.world.kwargs['x'] == 3
@@ -35,7 +38,8 @@ class TestMark:
 
     def test_pytest_mark_positional(self):
         mark = Mark()
-        def f(): pass
+        def f():
+            pass
         mark.world("hello")(f)
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
@@ -62,7 +66,7 @@ class TestFunctional:
         assert 'hello' in keywords
 
     def test_marklist_per_class(self, testdir):
-        modcol = testdir.getmodulecol("""
+        item = testdir.getitem("""
             import py
             class TestClass:
                 pytestmark = [py.test.mark.hello, py.test.mark.world]
@@ -70,13 +74,11 @@ class TestFunctional:
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
-        clscol = modcol.collect()[0]
-        item = clscol.collect()[0].collect()[0]
         keywords = item.keywords
         assert 'hello' in keywords
 
     def test_marklist_per_module(self, testdir):
-        modcol = testdir.getmodulecol("""
+        item = testdir.getitem("""
             import py
             pytestmark = [py.test.mark.hello, py.test.mark.world]
             class TestClass:
@@ -84,29 +86,25 @@ class TestFunctional:
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
-        clscol = modcol.collect()[0]
-        item = clscol.collect()[0].collect()[0]
         keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
 
     @py.test.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator(self, testdir):
-        modcol = testdir.getmodulecol("""
+        item = testdir.getitem("""
             import py
             @py.test.mark.hello
             class TestClass:
                 def test_func(self):
                     assert TestClass.test_func.hello
         """)
-        clscol = modcol.collect()[0]
-        item = clscol.collect()[0].collect()[0]
         keywords = item.keywords
         assert 'hello' in keywords
 
     @py.test.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
-        modcol = testdir.getmodulecol("""
+        item = testdir.getitem("""
             import py
             @py.test.mark.hello
             class TestClass:
@@ -115,8 +113,6 @@ class TestFunctional:
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
         """)
-        clscol = modcol.collect()[0]
-        item = clscol.collect()[0].collect()[0]
         keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
@@ -140,14 +136,15 @@ class TestFunctional:
         assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
 
     def test_mark_other(self, testdir):
-        item = testdir.getitem("""
-            import py
-            class pytestmark:
-                pass
-            def test_func():
-                pass
-        """)
-        keywords = item.keywords
+        py.test.raises(TypeError, '''
+            testdir.getitem("""
+                import py
+                class pytestmark:
+                    pass
+                def test_func():
+                    pass
+            """)
+        ''')
 
     def test_mark_dynamically_in_funcarg(self, testdir):
         testdir.makeconftest("""
@@ -223,7 +220,8 @@ class Test_genitems:
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile("""
-            def test_one(): assert 0
+            def test_one():
+                assert 0
             class TestClass(object):
                 def test_method_one(self):
                     assert 42 == 43

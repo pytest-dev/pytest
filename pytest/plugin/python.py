@@ -136,6 +136,7 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
 
     def collect(self):
         # NB. we avoid random getattrs and peek in the __dict__ instead
+        # (XXX originally introduced from a PyPy need, still true?)
         dicts = [getattr(self.obj, '__dict__', {})]
         for basecls in inspect.getmro(self.obj.__class__):
             dicts.append(basecls.__dict__)
@@ -253,9 +254,6 @@ class Class(PyCollectorMixin, pytest.collect.Collector):
 class Instance(PyCollectorMixin, pytest.collect.Collector):
     def _getobj(self):
         return self.parent.obj()
-
-    def _keywords(self):
-        return []
 
     def newinstance(self):
         self.obj = self._getobj()
@@ -449,6 +447,7 @@ def hasinit(obj):
 
 
 def getfuncargnames(function):
+    # XXX merge with _core.py's varnames
     argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
     startindex = py.std.inspect.ismethod(function) and 1 or 0
     defaults = getattr(function, 'func_defaults',

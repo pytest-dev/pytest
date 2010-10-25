@@ -7,11 +7,12 @@ def pytest_namespace():
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption('-k',
-        action="store", dest="keyword", default='',
-        help="only run test items matching the given "
-             "space separated keywords.  precede a keyword with '-' to negate. "
-             "Terminate the expression with ':' to treat a match as a signal "
-             "to run all subsequent tests. ")
+        action="store", dest="keyword", default='', metavar="KEYWORDEXPR",
+        help="only run tests which match given keyword expression.  "
+             "An expression consists of space-separated terms. "
+             "Each term must match. Precede a term with '-' to negate. "
+             "Terminate expression with ':' to make the first match match "
+             "all subsequent tests (usually file-order). ")
 
 def pytest_collection_modifyitems(items, config):
     keywordexpr = config.option.keyword
@@ -42,32 +43,31 @@ def skipbykeyword(colitem, keywordexpr):
     """
     if not keywordexpr:
         return
-    chain = colitem.listchain()
+    
+    itemkeywords = getkeywords(colitem)
     for key in filter(None, keywordexpr.split()):
         eor = key[:1] == '-'
         if eor:
             key = key[1:]
-        if not (eor ^ matchonekeyword(key, chain)):
+        if not (eor ^ matchonekeyword(key, itemkeywords)):
             return True
 
-def matchonekeyword(key, chain):
-    elems = key.split(".")
-    # XXX O(n^2), anyone cares?
-    chain = [item.keywords for item in chain if item.keywords]
-    for start, _ in enumerate(chain):
-        if start + len(elems) > len(chain):
-            return False
-        for num, elem in enumerate(elems):
-            for keyword in chain[num + start]:
-                ok = False
-                if elem in keyword:
-                    ok = True
-                    break
-            if not ok:
+def getkeywords(node):
+    keywords = {}
+    while node is not None:
+        keywords.update(node.keywords)
+        node = node.parent
+    return keywords
+
+
+def matchonekeyword(key, itemkeywords):
+    for elem in key.split("."):
+        for kw in itemkeywords:
+            if elem in kw:
                 break
-        if num == len(elems) - 1 and ok:
-            return True
-    return False
+        else:
+            return False
+    return True
 
 class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as 
@@ -155,21 +155,22 @@ class MarkInfo:
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)
 
-def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
-    item = __multicall__.execute()
-    if isinstance(item, py.test.collect.Function):
-        cls = collector.getparent(py.test.collect.Class)
-        mod = collector.getparent(py.test.collect.Module)
-        func = item.obj
-        func = getattr(func, '__func__', func) # py3
-        func = getattr(func, 'im_func', func)  # py2
-        for parent in [x for x in (mod, cls) if x]:
-            marker = getattr(parent.obj, 'pytestmark', None)
+def pytest_log_itemcollect(item):
+    if not isinstance(item, py.test.collect.Function):
+        return
+    try:
+        func = item.obj.__func__
+    except AttributeError:
+        func = getattr(item.obj, 'im_func', item.obj)
+    pyclasses = (py.test.collect.Class, py.test.collect.Module)
+    for node in item.listchain():
+        if isinstance(node, pyclasses):
+            marker = getattr(node.obj, 'pytestmark', None)
             if marker is not None:
-                if not isinstance(marker, list):
-                    marker = [marker]
-                for mark in marker:
-                    if isinstance(mark, MarkDecorator):
+                if isinstance(marker, list):
+                    for mark in marker:
                         mark(func)
-                item.keywords.update(py.builtin._getfuncdict(func) or {})
-    return item
+                else:
+                    marker(func)
+        node = node.parent
+    item.keywords.update(py.builtin._getfuncdict(func))

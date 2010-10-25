@@ -249,7 +249,7 @@ class CollectReport(BaseReport):
         self.fspath = fspath
         self.outcome = outcome
         self.longrepr = longrepr
-        self.result = result
+        self.result = result or []
         self.reason = reason
 
     @property

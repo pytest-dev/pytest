@@ -7,8 +7,8 @@ assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
- "config session terminal python runner pdb capture mark skipping tmpdir "
- "monkeypatch recwarn pastebin unittest helpconfig nose assertion genscript "
+ "config session terminal python runner pdb capture unittest mark skipping "
+ "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
  "junitxml doctest").split()
 
 IMPORTPREFIX = "pytest_"
@@ -282,7 +282,7 @@ class MultiCall:
                     kwargs[argname] = self
         return kwargs
 
-def varnames(func, cache={}):
+def varnames(func):
     if not inspect.isfunction(func) and not inspect.ismethod(func):
         func = getattr(func, '__call__', func)
     ismethod = inspect.ismethod(func)
