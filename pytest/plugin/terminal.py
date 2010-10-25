@@ -33,8 +33,25 @@ def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
     else:
-        reporter = TerminalReporter(config)
+        # we try hard to make printing resilient against 
+        # later changes on FD level.
+        stdout = py.std.sys.stdout
+        if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
+            try:
+                newfd = os.dup(stdout.fileno())
+                #print "got newfd", newfd
+            except ValueError:
+                pass
+            else:
+                stdout = os.fdopen(newfd, stdout.mode, 1)
+                config._toclose = stdout
+        reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
+
+def pytest_unconfigure(config):
+    if hasattr(config, '_toclose'):
+        #print "closing", config._toclose, config._toclose.fileno()
+        config._toclose.close()
 
 def getreportopt(config):
     reportopts = ""
@@ -74,15 +91,6 @@ class TerminalReporter:
         self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
-            # we try hard to make printing resilient against 
-            # later changes on FD level.
-            if hasattr(os, 'dup') and hasattr(file, 'fileno'):
-                try:
-                    newfd = os.dup(file.fileno())
-                except ValueError:
-                    pass
-                else:
-                    file = os.fdopen(newfd, file.mode, 1)
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)

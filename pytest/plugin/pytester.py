@@ -351,6 +351,8 @@ class TmpTestdir:
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
+        self.request.addfinalizer(lambda:
+            config.pluginmanager.do_unconfigure(config))
         return config
 
     def getitem(self,  source, funcname="test_func"):

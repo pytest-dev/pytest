@@ -24,10 +24,18 @@ def addouterr(rep, outerr):
 def pytest_configure(config):
     config.pluginmanager.register(CaptureManager(), 'capturemanager')
 
+def pytest_unconfigure(config):
+    capman = config.pluginmanager.getplugin('capturemanager')
+    while capman._method2capture:
+        name, cap = capman._method2capture.popitem()
+        cap.reset()
+
 class NoCapture:
     def startall(self):
         pass
     def resume(self):
+        pass
+    def reset(self):
         pass
     def suspend(self):
         return "", ""
@@ -39,6 +47,7 @@ class CaptureManager:
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
         newf = py.io.dupfile(f, encoding="UTF-8")
+        f.close()
         return newf
 
     def _makestringio(self):
