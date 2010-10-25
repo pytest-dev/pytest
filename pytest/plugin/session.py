@@ -308,6 +308,14 @@ class HookProxy:
             return hookmethod.pcall(plugins, **kwargs)
         return call_matching_hooks
 
+def compatproperty(name):
+    def fget(self):
+        #print "retrieving %r property from %s" %(name, self.fspath)
+        py.log._apiwarn("2.0", "use py.test.collect.%s for "
+            "Collection classes" % name)
+        return getattr(pytest.collect, name)
+    return property(fget)
+    
 class Node(object):
     """ base class for all Nodes in the collection tree.
     Collector subclasses have children, Items are terminal nodes."""
@@ -329,6 +337,12 @@ class Node(object):
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = HookProxy(self)
         self.keywords = {self.name: True}
+
+    Module = compatproperty("Module")
+    Class = compatproperty("Class")
+    Function = compatproperty("Function")
+    File = compatproperty("File")
+    Item = compatproperty("Item")
 
     def __repr__(self):
         if getattr(self.config.option, 'debug', False):

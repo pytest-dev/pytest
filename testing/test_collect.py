@@ -6,6 +6,23 @@ class TestCollector:
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 
+    def test_compat_attributes(self, testdir, recwarn):
+        modcol = testdir.getmodulecol("""
+            def test_pass(): pass
+            def test_fail(): assert 0
+        """)
+        recwarn.clear()
+        assert modcol.Module == py.test.collect.Module
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Class == py.test.collect.Class
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Item == py.test.collect.Item
+        recwarn.pop(DeprecationWarning)
+        assert modcol.File == py.test.collect.File
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Function == py.test.collect.Function
+        recwarn.pop(DeprecationWarning)
+
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_pass(): pass
