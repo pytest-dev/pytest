@@ -10,3 +10,4 @@ Usages and Examples
    example/marking.txt
    example/mysetup.txt
    example/misc.txt
+   example/nonpython.txt
