@@ -45,7 +45,8 @@ supports several testing practises and methods
 
 - supports extended `xUnit style setup`_
 - can integrate nose_, `unittest.py` and `doctest.py`_ style tests
-- supports generating testing coverage
+- supports generating testing coverage reports
+- supports :ref:`non-python tests`
 - `Javasript unit- and functional testing`_
 
 .. _`Javasript unit- and functional testing`: plugin/oejskit.html

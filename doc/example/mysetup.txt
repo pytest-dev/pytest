@@ -1,6 +1,8 @@
 
 .. highlightlang:: python
 
+.. _mysetup:
+
 mysetup pattern: application specific test fixtures
 ==========================================================
 

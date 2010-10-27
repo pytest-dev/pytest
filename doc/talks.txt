@@ -16,6 +16,7 @@ basic usage and funcargs:
 
 function arguments:
 
+- :ref:`mysetup`
 - `application setup in test functions with funcargs`_
 - `making funcargs dependendent on command line options`_
 - `monkey patching done right`_ (blog post, consult `monkeypatch
