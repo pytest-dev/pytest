@@ -15,6 +15,26 @@ You can see command line options by running::
 This will display all available command line options
 in your specific environment.
 
+reading test configuration from ini-files
+--------------------------------------------------------
+
+py.test tries to find a configuration INI format file, trying
+to find a section ``[pytest]`` in a ``tox.ini`` (or XXX ``pytest.ini`` file).
+Possible entries in a ``[pytest]`` section are:
+
+.. confval:: minversion = VERSTRING
+
+   specifies the minimal pytest version that is needed for this test suite.
+
+        minversion = 2.1  # will fail if we run with pytest-2.0
+
+.. confval:: appendargs = OPTS
+
+   append the specified ``OPTS`` to the command line arguments as if they
+   had been specified by the user. Example::
+
+        appendargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
+
 
 setting persistent option defaults
 ------------------------------------
@@ -22,6 +42,7 @@ setting persistent option defaults
 py.test will lookup option values in this order:
 
 * command line
+* ``[pytest]`` section in upwards ``setup.cfg`` or ``tox.ini`` files.
 * conftest.py files
 * environment variables
 
@@ -85,6 +106,7 @@ in your home directory to provide global configuration values.
     put it inside a package.  You avoid trouble this way.
 
 .. _`named plugins`: plugin/index.html
+
 
 Plugin discovery at tool startup
 --------------------------------------------

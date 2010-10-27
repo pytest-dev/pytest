@@ -10,6 +10,7 @@ __version__ = '2.0.0.dev10'
 __all__ = ['config', 'cmdline']
 
 from pytest import _core as cmdline
+UsageError = cmdline.UsageError
 
 def __main__():
     raise SystemExit(cmdline.main())

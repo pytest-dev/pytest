@@ -2,6 +2,7 @@
 import py
 import sys, os
 from pytest._core import PluginManager
+import pytest
 
 
 def pytest_cmdline_parse(pluginmanager, args):
@@ -226,13 +227,9 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
-class Error(Exception):
-    """ Test Configuration Error. """
-
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
     Option = py.std.optparse.Option
-    Error = Error
     basetemp = None
 
     def __init__(self, pluginmanager=None):
@@ -280,7 +277,10 @@ class Config(object):
                 try:
                     opt.default = self._conftest.rget(name)
                 except (ValueError, KeyError):
-                    pass
+                    try:
+                        opt.default = self.inicfg[opt.dest]
+                    except KeyError:
+                        pass
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
@@ -299,11 +299,24 @@ class Config(object):
             raise
 
     def _preparse(self, args):
+        self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
+        self._checkversion()
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
         self._setinitialconftest(args)
         self.pluginmanager.do_addoption(self._parser)
+
+    def _checkversion(self):
+        minver = self.inicfg.get('minversion', None)
+        if minver:
+            ver = minver.split(".")
+            myver = pytest.__version__.split(".")
+            if myver < ver:
+                raise pytest.UsageError(
+                    "%s:%d: requires pytest-%s, actual pytest-%s'" %(
+                    self.inicfg.config.path, self.inicfg.lineof('minversion'),
+                    minver, pytest.__version__))
 
     def parse(self, args):
         # cmdline arguments into this config object.
@@ -312,6 +325,10 @@ class Config(object):
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
         self._parser.hints.extend(self.pluginmanager._hints)
+        if self.inicfg:
+            newargs = self.inicfg.get("appendargs", None)
+            if newargs:
+                args += py.std.shlex.split(newargs)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())
@@ -380,4 +397,27 @@ class Config(object):
             return getattr(self.option, name)
         except AttributeError:
             return self._conftest.rget(name, path)
+
+def getcfg(args, inibasenames):
+    if not args:
+        args = [py.path.local()]
+    for inibasename in inibasenames:
+        for p in args:
+            x = findupwards(p, inibasename)
+            if x is not None:
+                iniconfig = py.iniconfig.IniConfig(x)
+                if 'pytest' in iniconfig.sections:
+                    return iniconfig['pytest']
+    return {}
+   
+def findupwards(current, basename):
+    current = py.path.local(current)
+    while 1:
+        p = current.join(basename)
+        if p.check():
+            return p
+        p = current.dirpath()
+        if p == current:
+            return
+        current = p
 

@@ -4,7 +4,8 @@ class TestGeneralUsage:
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
-                raise config.Error("hello")
+                import pytest
+                raise pytest.UsageError("hello")
         """)
         result = testdir.runpytest(testdir.tmpdir)
         assert result.ret != 0

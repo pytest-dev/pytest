@@ -1,9 +1,55 @@
 import py
 
+from pytest.plugin.config import getcfg, Config
+
+class TestParseIni:
+    def test_getcfg_and_config(self, tmpdir):
+        sub = tmpdir.mkdir("sub")
+        sub.chdir()
+        tmpdir.join("setup.cfg").write(py.code.Source("""
+            [pytest]
+            name = value
+        """))
+        cfg = getcfg([sub], ["setup.cfg"])
+        assert cfg['name'] == "value"
+        config = Config()
+        config._preparse([sub])
+        assert config.inicfg['name'] == 'value'
+
+    def test_getvalue(self, tmpdir):
+        tmpdir.join("setup.cfg").write(py.code.Source("""
+            [pytest]
+            verbose = True
+        """))
+        config = Config()
+        config._preparse([tmpdir])
+        assert config.option.verbose
+
+    def test_append_parse_args(self, tmpdir):
+        tmpdir.join("setup.cfg").write(py.code.Source("""
+            [pytest]
+            appendargs = --verbose
+        """))
+        config = Config()
+        config.parse([tmpdir])
+        assert config.option.verbose
+
+    def test_tox_ini_wrong_version(self, testdir):
+        p = testdir.makefile('.ini', tox="""
+            [pytest]
+            minversion=9.0
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines([
+            "*tox.ini:2*requires*9.0*actual*"
+        ])
+
 class TestConfigCmdlineParsing:
     def test_parser_addoption_default_env(self, testdir, monkeypatch):
         import os
         config = testdir.Config()
+        config._preparse([testdir.tmpdir])
         group = config._parser.getgroup("hello")
 
         monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION1', 'True')

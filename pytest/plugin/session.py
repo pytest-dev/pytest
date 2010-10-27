@@ -128,7 +128,7 @@ class Session(object):
             config.hook.pytest_sessionstart(session=self)
             config.hook.pytest_perform_collection(session=self)
             config.hook.pytest_runtest_mainloop(session=self)
-        except self.config.Error:
+        except pytest.UsageError:
             raise
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
@@ -173,10 +173,10 @@ class Collection:
         parts = str(arg).split("::")
         path = base.join(parts[0], abs=True)
         if not path.check():
-            raise self.config.Error("file not found: %s" %(path,))
+            raise pytest.UsageError("file not found: %s" %(path,))
         topdir = self.topdir
         if path != topdir and not path.relto(topdir):
-            raise self.config.Error("path %r is not relative to %r" %
+            raise pytest.UsageError("path %r is not relative to %r" %
                 (str(path), str(topdir)))
         topparts = path.relto(topdir).split(path.sep)
         return topparts + parts[1:]
@@ -213,7 +213,7 @@ class Collection:
                 for node in self.matchnodes([self._topcollector], names):
                     items.extend(self.genitems(node))
             except NoMatch:
-                raise self.config.Error("can't collect: %s" % (arg,))
+                raise pytest.UsageError("can't collect: %s" % (arg,))
         return items
 
     def matchnodes(self, matching, names):
