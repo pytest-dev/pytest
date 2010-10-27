@@ -45,7 +45,7 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
-        optparser = MyOptionParser(self)
+        self.optparser = optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -53,7 +53,7 @@ class Parser:
                 optgroup = py.std.optparse.OptionGroup(optparser, desc)
                 optgroup.add_options(group.options)
                 optparser.add_option_group(optgroup)
-        return optparser.parse_args([str(x) for x in args])
+        return self.optparser.parse_args([str(x) for x in args])
 
     def parse_setoption(self, args, option):
         parsedoption, args = self.parse(args)
@@ -91,7 +91,8 @@ class OptionGroup:
 class MyOptionParser(py.std.optparse.OptionParser):
     def __init__(self, parser):
         self._parser = parser
-        py.std.optparse.OptionParser.__init__(self, usage=parser._usage)
+        py.std.optparse.OptionParser.__init__(self, usage=parser._usage,
+            add_help_option=False)
     def format_epilog(self, formatter):
         hints = self._parser.hints
         if hints:
@@ -248,6 +249,12 @@ class Config(object):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
         self.pluginmanager.consider_conftest(conftestmodule)
 
+    def _processopt(self, opt):
+        if hasattr(opt, 'default') and opt.dest:
+            if not hasattr(self.option, opt.dest):
+                setattr(self.option, opt.dest, opt.default)
+
+
     def _getmatchingplugins(self, fspath):
         allconftests = self._conftest._conftestpath2mod.values()
         plugins = [x for x in self.pluginmanager.getplugins()
@@ -258,31 +265,6 @@ class Config(object):
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
             self.hook.pytest_trace(category="config", msg=msg)
-
-    def _processopt(self, opt):
-        if hasattr(opt, 'default') and opt.dest:
-            val = os.environ.get("PYTEST_OPTION_" + opt.dest.upper(), None)
-            if val is not None:
-                if opt.type == "int":
-                    val = int(val)
-                elif opt.type == "long":
-                    val = long(val)
-                elif opt.type == "float":
-                    val = float(val)
-                elif not opt.type and opt.action in ("store_true", "store_false"):
-                    val = eval(val)
-                opt.default = val
-            else:
-                name = "option_" + opt.dest
-                try:
-                    opt.default = self._conftest.rget(name)
-                except (ValueError, KeyError):
-                    try:
-                        opt.default = self.inicfg[opt.dest]
-                    except KeyError:
-                        pass
-            if not hasattr(self.option, opt.dest):
-                setattr(self.option, opt.dest, opt.default)
 
     def _setinitialconftest(self, args):
         # capture output during conftest init (#issue93)
@@ -300,6 +282,10 @@ class Config(object):
 
     def _preparse(self, args):
         self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
+        if self.inicfg:
+            newargs = self.inicfg.get("addargs", None)
+            if newargs:
+                args[:] = args + py.std.shlex.split(newargs)
         self._checkversion()
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
@@ -325,10 +311,6 @@ class Config(object):
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
         self._parser.hints.extend(self.pluginmanager._hints)
-        if self.inicfg:
-            newargs = self.inicfg.get("appendargs", None)
-            if newargs:
-                args += py.std.shlex.split(newargs)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())

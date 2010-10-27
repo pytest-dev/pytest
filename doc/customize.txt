@@ -8,12 +8,12 @@ basic test configuration
 Command line options
 ---------------------------------
 
-You can see command line options by running::
+You can get help on options and configuration by running::
 
-    py.test -h
+    py.test -h   # or --help
 
-This will display all available command line options
-in your specific environment.
+This will display command line options, ini-settings and conftest.py
+settings in your specific environment.
 
 reading test configuration from ini-files
 --------------------------------------------------------
@@ -28,12 +28,12 @@ Possible entries in a ``[pytest]`` section are:
 
         minversion = 2.1  # will fail if we run with pytest-2.0
 
-.. confval:: appendargs = OPTS
+.. confval:: addargs = OPTS
 
-   append the specified ``OPTS`` to the command line arguments as if they
+   add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example::
 
-        appendargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
+        addargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
 
 setting persistent option defaults

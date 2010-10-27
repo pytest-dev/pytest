@@ -2,11 +2,11 @@ import py
 from pytest.plugin import config as parseopt
 
 class TestParser:
-    def test_init(self, capsys):
+    def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         py.test.raises(SystemExit, 'parser.parse(["-h"])')
         out, err = capsys.readouterr()
-        assert out.find("xyz") != -1
+        assert err.find("no such option") != -1
 
     def test_group_add_and_get(self):
         parser = parseopt.Parser()

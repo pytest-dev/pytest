@@ -242,6 +242,9 @@ class TmpTestdir:
     def makefile(self, ext, *args, **kwargs):
         return self._makefile(ext, args, kwargs)
 
+    def makeini(self, source):
+        return self.makefile('cfg', setup=source)
+
     def makeconftest(self, source):
         return self.makepyfile(conftest=source)
 

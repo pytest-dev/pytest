@@ -16,19 +16,10 @@ class TestParseIni:
         config._preparse([sub])
         assert config.inicfg['name'] == 'value'
 
-    def test_getvalue(self, tmpdir):
-        tmpdir.join("setup.cfg").write(py.code.Source("""
-            [pytest]
-            verbose = True
-        """))
-        config = Config()
-        config._preparse([tmpdir])
-        assert config.option.verbose
-
     def test_append_parse_args(self, tmpdir):
         tmpdir.join("setup.cfg").write(py.code.Source("""
             [pytest]
-            appendargs = --verbose
+            addargs = --verbose
         """))
         config = Config()
         config.parse([tmpdir])
@@ -46,32 +37,6 @@ class TestParseIni:
         ])
 
 class TestConfigCmdlineParsing:
-    def test_parser_addoption_default_env(self, testdir, monkeypatch):
-        import os
-        config = testdir.Config()
-        config._preparse([testdir.tmpdir])
-        group = config._parser.getgroup("hello")
-
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION1', 'True')
-        group.addoption("--option1", action="store_true")
-        assert group.options[0].default == True
-
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION2', 'abc')
-        group.addoption("--option2", action="store", default="x")
-        assert group.options[1].default == "abc"
-
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION3', '32')
-        group.addoption("--option3", action="store", type="int")
-        assert group.options[2].default == 32
-
-        group.addoption("--option4", action="store", type="int")
-        assert group.options[3].default == ("NO", "DEFAULT")
-
-    def test_parser_addoption_default_conftest(self, testdir, monkeypatch):
-        import os
-        testdir.makeconftest("option_verbose=True")
-        config = testdir.parseconfig()
-        assert config.option.verbose
 
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])

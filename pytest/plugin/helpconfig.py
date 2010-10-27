@@ -1,12 +1,15 @@
 """ provide version info, conftest/environment config names.
 """
 import py
+import pytest
 import inspect, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
     group.addoption('--version', action="store_true",
             help="display py lib version and import information.")
+    group._addoption("-h", "--help", action="store_true", dest="help",
+            help="show help message and configuration info")
     group._addoption('-p', action="append", dest="plugins", default = [],
                metavar="name",
                help="early-load given plugin (multi-allowed).")
@@ -19,56 +22,47 @@ def pytest_addoption(parser):
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="generate and show internal debugging information.")
-    group.addoption("--help-config", action="store_true", dest="helpconfig",
-            help="show available conftest.py and ENV-variable names.")
 
 
 def pytest_cmdline_main(config):
     if config.option.version:
-        p = py.path.local(py.__file__).dirpath()
+        p = py.path.local(pytest.__file__).dirpath()
         sys.stderr.write("This is py.test version %s, imported from %s\n" %
             (py.__version__, p))
         return 0
-    elif config.option.helpconfig:
+    elif config.option.help:
         config.pluginmanager.do_configure(config)
-        showpluginhelp(config)
+        showhelp(config)
         return 0
 
-def showpluginhelp(config):
-    options = []
-    for group in config._parser._groups:
-        options.extend(group.options)
-    widths = [0] * 10
+def showhelp(config):
     tw = py.io.TerminalWriter()
-    tw.sep("-")
-    tw.line("%-13s | %-18s | %-25s | %s" %(
-            "cmdline name", "conftest.py name", "ENV-variable name", "help"))
-    tw.sep("-")
+    tw.write(config._parser.optparser.format_help())
+    tw.line()
+    tw.line()
+    tw.sep( "=", "ini-settings")
+    tw.line("the following values can be defined in [pytest] sections of")
+    tw.line("setup.cfg or tox.ini files:")
+    tw.line()
 
-    options = [opt for opt in options if opt._long_opts]
-    options.sort(key=lambda x: x._long_opts)
-    for opt in options:
-        if not opt._long_opts or not opt.dest:
-            continue
-        optstrings = list(opt._long_opts) # + list(opt._short_opts)
-        optstrings = filter(None, optstrings)
-        optstring = "|".join(optstrings)
-        line = "%-13s | %-18s | %-25s | %s" %(
-            optstring,
-            "option_%s" % opt.dest,
-            "PYTEST_OPTION_%s" % opt.dest.upper(),
-            opt.help and opt.help or "",
-            )
+    for name, help in ini_settings:
+        line = "   %-15s  %s" %(name, help)
         tw.line(line[:tw.fullwidth])
+
+    tw.line() ; tw.line()
+    #tw.sep( "=", "conftest.py settings")
+    tw.line("the following values can be defined in conftest.py files")
+    tw.line()
     for name, help in conftest_options:
-        line = "%-13s | %-18s | %-25s | %s" %(
-            "",
-            name,
-            "",
-            help,
-            )
+        line = "   %-15s  %s" %(name, help)
         tw.line(line[:tw.fullwidth])
-    tw.sep("-")
+    tw.line()
+    tw.sep( "=")
+
+ini_settings = (
+    ('addargs', 'extra command line arguments'),
+    ('minversion', 'minimally required pytest version'),
+)
 
 conftest_options = (
     ('pytest_plugins', 'list of plugin names to load'),
@@ -79,7 +73,9 @@ conftest_options = (
 def pytest_report_header(config):
     lines = []
     if config.option.debug or config.option.traceconfig:
-        lines.append("using py lib: %s" % (py.path.local(py.__file__).dirpath()))
+        lines.append("using: pytest-%s pylib-%s" % 
+            (pytest.__version__,py.__version__))
+            
     if config.option.traceconfig:
         lines.append("active plugins:")
         plugins = []
@@ -149,12 +145,11 @@ def getargs(func):
     startindex = inspect.ismethod(func) and 1 or 0
     return args[startindex:]
 
-def collectattr(obj, prefixes=("pytest_",)):
+def collectattr(obj):
     methods = {}
     for apiname in dir(obj):
-        for prefix in prefixes:
-            if apiname.startswith(prefix):
-                methods[apiname] = getattr(obj, apiname)
+        if apiname.startswith("pytest_"):
+            methods[apiname] = getattr(obj, apiname)
     return methods
 
 def formatdef(func):
