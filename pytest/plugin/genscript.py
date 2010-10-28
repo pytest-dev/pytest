@@ -58,7 +58,7 @@ def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
         script = generate_script(
-            'import py; py.test.cmdline.main()',
+            'import py; raise SystemExit(py.test.cmdline.main())',
             ['py', 'pytest'],
         )
 

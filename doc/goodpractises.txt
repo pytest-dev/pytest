@@ -1,4 +1,5 @@
 
+.. highlightlang:: python
 .. _`good practises`:
 
 Good Practises
@@ -28,8 +29,7 @@ py.test supports common test layouts.
 
 XXX
 
-
-
+.. _`genscript method`:
 
 Generating a py.test standalone Script
 -------------------------------------------
@@ -38,17 +38,59 @@ If you are a maintainer or application developer and want users
 to run tests you can use a facility to generate a standalone
 "py.test" script that you can tell users to run::
 
-    py.test --genscript=mytest
+    py.test --genscript=runtests.py
 
 will generate a ``mytest`` script that is, in fact, a ``py.test`` under
 disguise.  You can tell people to download and then e.g. run it like this::
 
-    python mytest --pastebin=all
+    python runtests.py --pastebin=all
 
 and ask them to send you the resulting URL.  The resulting script has
 all core features and runs unchanged under Python2 and Python3 interpreters.
 
 .. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
 .. _`distribute installation`: http://pypi.python.org/pypi/distribute
+
+
+Integrating with distutils / ``python setup.py test``
+--------------------------------------------------------
+
+You can easily integrate test runs into your distutils or
+setuptools based project.  Use the `genscript method`_
+to generate a standalone py.test script::
+
+    py.test --genscript=runtests.py
+
+and make this script part of your distribution and then add
+this to your ``setup.py`` file::
+
+    from distutils.core import setup, Command
+    # you can also import from setuptools
+
+    class PyTest(Command):
+        user_options = []
+        def initialize_options(self):
+            pass
+        def finalize_options(self):
+            pass
+        def run(self):
+            import sys,subprocess
+            errno = subprocess.call([sys.executable, 'runtest.py'])
+            raise SystemExit(errno)
+    setup(
+        #...,
+        cmdclass = {'test': PyTest},
+        #...,
+    )
+
+If you now type::
+
+    python setup.py test
+
+this will execute your tests using ``runtest.py``. As this is a
+standalone version of ``py.test`` no prior installation whatsoever is
+required for calling the test command. You can also pass additional
+arguments to the subprocess-calls like your test directory or other
+options.
 
 .. include:: links.inc
