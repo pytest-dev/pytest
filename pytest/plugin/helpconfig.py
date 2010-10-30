@@ -7,7 +7,7 @@ import inspect, sys
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
     group.addoption('--version', action="store_true",
-            help="display py lib version and import information.")
+            help="display pytest lib version and import information.")
     group._addoption("-h", "--help", action="store_true", dest="help",
             help="show help message and configuration info")
     group._addoption('-p', action="append", dest="plugins", default = [],
@@ -40,12 +40,12 @@ def showhelp(config):
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
-    tw.sep( "=", "ini-settings")
+    tw.sep( "=", "config file settings")
     tw.line("the following values can be defined in [pytest] sections of")
     tw.line("setup.cfg or tox.ini files:")
     tw.line()
 
-    for name, help in ini_settings:
+    for name, help in sorted(config._parser._inidict.items()):
         line = "   %-15s  %s" %(name, help)
         tw.line(line[:tw.fullwidth])
 
@@ -59,10 +59,6 @@ def showhelp(config):
     tw.line()
     tw.sep( "=")
 
-ini_settings = (
-    ('addargs', 'extra command line arguments'),
-    ('minversion', 'minimally required pytest version'),
-)
 
 conftest_options = (
     ('pytest_plugins', 'list of plugin names to load'),

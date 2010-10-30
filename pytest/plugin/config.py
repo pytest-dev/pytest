@@ -10,6 +10,10 @@ def pytest_cmdline_parse(pluginmanager, args):
     config.parse(args)
     return config
 
+def pytest_addoption(parser):
+    parser.addini('addargs', 'extra command line arguments')
+    parser.addini('minversion', 'minimally required pytest version')
+
 class Parser:
     """ Parser for command line arguments. """
 
@@ -18,6 +22,7 @@ class Parser:
         self._groups = []
         self._processopt = processopt
         self._usage = usage
+        self._inidict = {}
         self.hints = []
 
     def processoption(self, option):
@@ -29,6 +34,12 @@ class Parser:
         self._notes.append(note)
 
     def getgroup(self, name, description="", after=None):
+        """ get (or create) a named option Group.
+       
+        :name: unique name of the option group.
+        :description: long description for --help output.
+        :after: name of other group, used for ordering --help output.
+        """
         for group in self._groups:
             if group.name == name:
                 return group
@@ -61,6 +72,14 @@ class Parser:
             setattr(option, name, value)
         return args
 
+    def addini(self, name, description):
+        """ add an ini-file option with the given name and description. """
+        self._inidict[name] = description
+    
+    def setfromini(self, inisection, option):
+        for name, value in inisection.items():
+            assert name in self._inidict
+            return setattr(option, name, value)
 
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
@@ -254,7 +273,6 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
-
     def _getmatchingplugins(self, fspath):
         allconftests = self._conftest._conftestpath2mod.values()
         plugins = [x for x in self.pluginmanager.getplugins()
@@ -305,13 +323,14 @@ class Config(object):
                     minver, pytest.__version__))
 
     def parse(self, args):
-        # cmdline arguments into this config object.
+        # parse given cmdline arguments into this config object.
         # Note that this can only be called once per testing process.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._preparse(args)
         self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
+        self._parser.setfromini(self.inicfg, self.option)
         if not args:
             args.append(py.std.os.getcwd())
         self.args = args

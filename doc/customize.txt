@@ -354,6 +354,9 @@ Reference of important objects involved in hooks
 .. autoclass:: pytest.plugin.config.Config
     :members:
 
+.. autoclass:: pytest.plugin.config.Parser
+    :members:
+
 .. autoclass:: pytest.plugin.session.Item
     :inherited-members:
 
@@ -365,6 +368,7 @@ Reference of important objects involved in hooks
 
 .. autoclass:: pytest.plugin.runner.TestReport
     :members:
+
 
 
 conftest.py configuration files

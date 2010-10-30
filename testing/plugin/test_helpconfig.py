@@ -15,7 +15,7 @@ def test_help(testdir):
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*-v*verbose*",
-        "*ini-settings*",
+        "*settings*",
         "*conftest.py*",
     ])
 
