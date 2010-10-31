@@ -15,8 +15,8 @@ def test_help(testdir):
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*-v*verbose*",
-        "*settings*",
-        "*conftest.py*",
+        "*setup.cfg*",
+        "*minversion*",
     ])
 
 def test_collectattr():

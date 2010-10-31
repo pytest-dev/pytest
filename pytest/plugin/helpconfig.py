@@ -40,9 +40,8 @@ def showhelp(config):
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
-    tw.sep( "=", "config file settings")
-    tw.line("the following values can be defined in [pytest] sections of")
-    tw.line("setup.cfg or tox.ini files:")
+    #tw.sep( "=", "config file settings")
+    tw.line("setup.cfg or tox.ini options to be put into [pytest] section:")
     tw.line()
 
     for name, help in sorted(config._parser._inidict.items()):
@@ -50,21 +49,21 @@ def showhelp(config):
         tw.line(line[:tw.fullwidth])
 
     tw.line() ; tw.line()
-    #tw.sep( "=", "conftest.py settings")
-    tw.line("the following values can be defined in conftest.py files")
+    #tw.sep("=")
+    return
+
+    tw.line("conftest.py options:")
     tw.line()
-    for name, help in conftest_options:
+    conftestitems = sorted(config._parser._conftestdict.items())
+    for name, help in conftest_options + conftestitems:
         line = "   %-15s  %s" %(name, help)
         tw.line(line[:tw.fullwidth])
     tw.line()
-    tw.sep( "=")
+    #tw.sep( "=")
 
-
-conftest_options = (
+conftest_options = [
     ('pytest_plugins', 'list of plugin names to load'),
-    ('collect_ignore', '(relative) paths ignored during collection'),
-    ('rsyncdirs', 'to-be-rsynced directories for dist-testing'),
-)
+]
 
 def pytest_report_header(config):
     lines = []

@@ -9,6 +9,7 @@ import pytest
 import os, sys
 
 def pytest_addoption(parser):
+
     group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst', action="store_true", default=False,
                dest="exitfirst",
@@ -31,6 +32,7 @@ def pytest_addoption(parser):
         "test process debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
+
 
 def pytest_namespace():
     return dict(collect=dict(Item=Item, Collector=Collector,
@@ -64,7 +66,7 @@ def pytest_runtest_mainloop(session):
 
 def pytest_ignore_collect(path, config):
     p = path.dirpath()
-    ignore_paths = config.getconftest_pathlist("collect_ignore", path=p)
+    ignore_paths = config._getconftest_pathlist("collect_ignore", path=p)
     ignore_paths = ignore_paths or []
     excludeopt = config.getvalue("ignore")
     if excludeopt:
@@ -445,7 +447,6 @@ class Collector(Node):
         raise NotImplementedError("abstract")
 
     def collect_by_name(self, name):
-        """ return a child matching the given name, else None. """
         for colitem in self._memocollect():
             if colitem.name == name:
                 return colitem

@@ -2,9 +2,6 @@ import py
 import sys
 
 pytest_plugins = "pytester",
-collect_ignore = ['../build', '../doc/_build']
-
-rsyncdirs = ['conftest.py', '../pytest', '../doc', '.']
 
 import os, py
 pid = os.getpid()

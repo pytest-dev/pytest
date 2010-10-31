@@ -5,22 +5,39 @@ Customizing and Extending py.test
 basic test configuration
 ===================================
 
-Command line options
----------------------------------
+Command line options and configuration file settings
+-----------------------------------------------------------------
 
-You can get help on options and configuration by running::
+You can get help on options and configuration options by running::
 
-    py.test -h   # or --help
+    py.test -h   # prints options _and_ config file settings
 
-This will display command line options, ini-settings and conftest.py
-settings in your specific environment.
+This will display command line and configuration file settings
+which were registered by installed plugins.
 
-reading test configuration from ini-files
+how test configuration is read from setup/tox ini-files
 --------------------------------------------------------
 
-py.test tries to find a configuration INI format file, trying
-to find a section ``[pytest]`` in a ``tox.ini`` (or XXX ``pytest.ini`` file).
-Possible entries in a ``[pytest]`` section are:
+py.test looks for the first ``[pytest]`` section in either the first ``setup.cfg`` or the first ``tox.ini`` file found upwards from the arguments.  Example::
+
+    py.test path/to/testdir
+
+will look in the following dirs for a config file::
+
+    path/to/testdir/setup.cfg
+    path/to/setup.cfg
+    path/setup.cfg
+    setup.cfg
+    ... # up until root of filesystem
+    path/to/testdir/tox.ini
+    path/to/tox.ini
+    path/tox.ini
+    ... # up until root of filesystem
+
+If no path was provided at all the current working directory is used for the lookup.
+
+builtin configuration file options
+----------------------------------------------
 
 .. confval:: minversion = VERSTRING
 
@@ -31,28 +48,14 @@ Possible entries in a ``[pytest]`` section are:
 .. confval:: addargs = OPTS
 
    add the specified ``OPTS`` to the set of command line arguments as if they
-   had been specified by the user. Example::
+   had been specified by the user. Example: if you have this ini file content::
 
-        addargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
+       [pytest]
+       addargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
+   issuing ``py.test test_hello.py`` actually means::
 
-setting persistent option defaults
-------------------------------------
-
-py.test will lookup option values in this order:
-
-* command line
-* ``[pytest]`` section in upwards ``setup.cfg`` or ``tox.ini`` files.
-* conftest.py files
-* environment variables
-
-To get an overview on existing names and settings type::
-
-    py.test --help-config
-
-This will print information about all available options
-in your environment, including your local plugins and
-command line options.
+       py.test --maxfail=2 -rf test_hello.py
 
 .. _`function arguments`: funcargs.html
 .. _`extensions`:
@@ -70,10 +73,8 @@ extensions and customizations close to test code.
 local conftest.py plugins
 --------------------------------------------------------------
 
-local `conftest.py` plugins are usually automatically loaded and
-registered but its contained hooks are only called when collecting or
-running tests in files or directories next to or below the ``conftest.py``
-file.  Assume the following layout and content of files::
+local ``conftest.py`` plugins contain directory-specific hook implemenations.  Its contained runtest- and collection- related hooks are called when collecting or running tests in files or directories next to or below the ``conftest.py``
+file.  Example: Assume the following layout and content of files::
 
     a/conftest.py:
         def pytest_runtest_setup(item):
@@ -93,17 +94,18 @@ Here is how you might run it::
      py.test a/test_sub.py  # will show "setting up"
 
 ``py.test`` loads all ``conftest.py`` files upwards from the command
-line file arguments.  It usually looks up configuration values or hooks
-right-to-left, i.e. the closer conftest files are checked before
-the further away ones.  This means you can have a ``conftest.py``
-in your home directory to provide global configuration values.
+line file arguments.  It usually performs look up right-to-left, i.e. 
+the hooks in "closer" conftest files will be called earlier than further
+away ones.  This means you can even have a ``conftest.py`` file in your home
+directory to customize test functionality globally for all of your projects.
 
 .. Note::
-    if you have ``conftest.py`` files which do not reside in a
+    If you have ``conftest.py`` files which do not reside in a
     python package directory (i.e. one containing an ``__init__.py``) then
-    "import conftest" will be ambigous and should be avoided. If you
-    ever want to import anything from a ``conftest.py`` file
-    put it inside a package.  You avoid trouble this way.
+    "import conftest" can be ambigous because there might be other
+    ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
+    It is good practise for projects to put ``conftest.py`` within a package
+    scope or to never import anything from the conftest.py file.
 
 .. _`named plugins`: plugin/index.html
 
@@ -115,9 +117,6 @@ py.test loads plugin modules at tool startup in the following way:
 
 * by loading all plugins registered through `setuptools entry points`_.
 
-* by reading the ``PYTEST_PLUGINS`` environment variable
-  and importing the comma-separated list of named plugins.
-
 * by pre-scanning the command line for the ``-p name`` option
   and loading the specified plugin before actual command line parsing.
 
@@ -127,39 +126,17 @@ py.test loads plugin modules at tool startup in the following way:
   not loaded at tool startup.
 
 * by recursively loading all plugins specified by the
-  ``pytest_plugins`` variable in a ``conftest.py`` file
+  ``pytest_plugins`` variable in ``conftest.py`` files
 
 Requiring/Loading plugins in a test module or plugin
 -------------------------------------------------------------
 
-You can specify plugins in a test module or a plugin like this::
+You can require plugins in a test module or a plugin like this::
 
     pytest_plugins = "name1", "name2",
 
 When the test module or plugin is loaded the specified plugins
-will be loaded.  If you specify plugins without the ``pytest_``
-prefix it will be automatically added.  All plugin names
-must be lowercase.
-
-.. _`conftest.py plugin`:
-.. _`conftestplugin`:
-
-Writing per-project plugins (conftest.py)
-------------------------------------------------------
-
-The purpose of :file:`conftest.py` files is to allow project-specific
-test customization.  They thus make for a good place to implement
-project-specific test related features through hooks.  For example you may
-set the ``collect_ignore`` variable depending on a command line option
-by defining the following hook in a ``conftest.py`` file::
-
-    # ./conftest.py in your root or package dir
-    collect_ignore = ['hello', 'test_world.py']
-    def pytest_addoption(parser):
-        parser.addoption("--runall", action="store_true", default=False)
-    def pytest_configure(config):
-        if config.getvalue("runall"):
-            collect_ignore[:] = []
+will be loaded.
 
 .. _`setuptools entry points`:
 .. _registered:
@@ -357,10 +334,13 @@ Reference of important objects involved in hooks
 .. autoclass:: pytest.plugin.config.Parser
     :members:
 
+.. autoclass:: pytest.plugin.session.File
+    :inherited-members:
+
 .. autoclass:: pytest.plugin.session.Item
     :inherited-members:
 
-.. autoclass:: pytest.plugin.session.Node
+.. autoclass:: pytest.plugin.python.Function
     :members:
 
 .. autoclass:: pytest.plugin.runner.CallInfo
@@ -370,30 +350,3 @@ Reference of important objects involved in hooks
     :members:
 
 
-
-conftest.py configuration files
-=================================================
-
-conftest.py reference docs
-
-A unique feature of py.test are its ``conftest.py`` files which allow
-project and directory specific customizations to testing.
-
-* `set option defaults`_
-
-or set particular variables to influence the testing process:
-
-* ``pytest_plugins``: list of named plugins to load
-
-* ``collect_ignore``: list of paths to ignore during test collection, relative to the containing ``conftest.py`` file
-
-* ``rsyncdirs``: list of to-be-rsynced directories for distributed
-  testing, relative to the containing ``conftest.py`` file.
-
-You may put a conftest.py files in your project root directory or into
-your package directory if you want to add project-specific test options.
-
-
-.. _`specify funcargs`: funcargs.html#application-setup-tutorial-example
-
-.. _`set option defaults`:

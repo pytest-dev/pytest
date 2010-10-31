@@ -11,7 +11,7 @@ def pytest_cmdline_parse(pluginmanager, args):
     return config
 
 def pytest_addoption(parser):
-    parser.addini('addargs', 'extra command line arguments')
+    parser.addini('addargs', 'default command line arguments')
     parser.addini('minversion', 'minimally required pytest version')
 
 class Parser:
@@ -72,14 +72,9 @@ class Parser:
             setattr(option, name, value)
         return args
 
-    def addini(self, name, description):
+    def addini(self, name, description, type=None):
         """ add an ini-file option with the given name and description. """
-        self._inidict[name] = description
-    
-    def setfromini(self, inisection, option):
-        for name, value in inisection.items():
-            assert name in self._inidict
-            return setattr(option, name, value)
+        self._inidict[name] = (description, type)
 
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
@@ -330,7 +325,6 @@ class Config(object):
         self._preparse(args)
         self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
-        self._parser.setfromini(self.inicfg, self.option)
         if not args:
             args.append(py.std.os.getcwd())
         self.args = args
@@ -358,12 +352,26 @@ class Config(object):
             return py.path.local.make_numbered_dir(prefix=basename,
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
-    def getconftest_pathlist(self, name, path=None):
-        """ return a matching value, which needs to be sequence
-            of filenames that will be returned as a list of Path
-            objects (they can be relative to the location
-            where they were found).
-        """
+    def getini(self, name):
+        """ return configuration value from an ini file. """
+        try:
+            description, type = self._parser._inidict[name]
+        except KeyError:
+            raise ValueError("unknown configuration value: %r" %(name,))
+        try:
+            value = self.inicfg[name]
+        except KeyError:
+            return # None indicates nothing found
+        if type == "pathlist":
+            dp = py.path.local(self.inicfg.config.path).dirpath()
+            l = []
+            for relpath in py.std.shlex.split(value):
+                l.append(dp.join(relpath, abs=True))
+            return l
+        else:
+            return value
+
+    def _getconftest_pathlist(self, name, path=None):
         try:
             mod, relroots = self._conftest.rget_with_confmod(name, path)
         except KeyError:
@@ -377,6 +385,21 @@ class Config(object):
             l.append(relroot)
         return l
 
+    def _getconftest(self, name, path=None, check=False):
+        if check:
+            self._checkconftest(name)
+        return self._conftest.rget(name, path)
+
+    def getvalue(self, name, path=None):
+        """ return 'name' value looked up from command line 'options'.
+            (deprecated) if we can't find the option also lookup
+            the name in a matching conftest file.
+        """
+        try:
+            return getattr(self.option, name)
+        except AttributeError:
+            return self._getconftest(name, path, check=False)
+
     def getvalueorskip(self, name, path=None):
         """ return getvalue(name) or call py.test.skip if no value exists. """
         try:
@@ -387,17 +410,6 @@ class Config(object):
         except KeyError:
             py.test.skip("no %r value found" %(name,))
 
-    def getvalue(self, name, path=None):
-        """ return 'name' value looked up from the 'options'
-            and then from the first conftest file found up
-            the path (including the path itself).
-            if path is None, lookup the value in the initial
-            conftest modules found during command line parsing.
-        """
-        try:
-            return getattr(self.option, name)
-        except AttributeError:
-            return self._conftest.rget(name, path)
 
 def getcfg(args, inibasenames):
     if not args:

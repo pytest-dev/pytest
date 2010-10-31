@@ -248,6 +248,13 @@ class TmpTestdir:
     def makeconftest(self, source):
         return self.makepyfile(conftest=source)
 
+    def makeini(self, source):
+        return self.makefile('.ini', tox=source)
+
+    def getinicfg(self, source):
+        p = self.makeini(source)
+        return py.iniconfig.IniConfig(p)['pytest']
+
     def makepyfile(self, *args, **kwargs):
         return self._makefile('.py', args, kwargs)
 

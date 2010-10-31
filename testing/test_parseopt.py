@@ -101,17 +101,6 @@ class TestParser:
         assert option.hello == "world"
         assert option.this == 42
 
-    def test_parser_addini(self, tmpdir):
-        parser = parseopt.Parser()
-        parser.addini("myname", "my new ini value")
-        cfg = py.iniconfig.IniConfig("tox.ini", dedent("""
-            [pytest]
-            myname=hello
-        """))['pytest']
-        class option:
-            pass
-        parser.setfromini(cfg, option)
-        assert option.myname == "hello"
 
 @py.test.mark.skipif("sys.version_info < (2,5)")
 def test_addoption_parser_epilog(testdir):
