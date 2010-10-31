@@ -28,9 +28,9 @@ class TestCollector:
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        fn1 = modcol.collect_by_name("test_pass")
+        fn1 = testdir.collect_by_name(modcol, "test_pass")
         assert isinstance(fn1, py.test.collect.Function)
-        fn2 = modcol.collect_by_name("test_pass")
+        fn2 = testdir.collect_by_name(modcol, "test_pass")
         assert isinstance(fn2, py.test.collect.Function)
 
         assert fn1 == fn2
@@ -39,7 +39,7 @@ class TestCollector:
             assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2)
 
-        fn3 = modcol.collect_by_name("test_fail")
+        fn3 = testdir.collect_by_name(modcol, "test_fail")
         assert isinstance(fn3, py.test.collect.Function)
         assert not (fn1 == fn3)
         assert fn1 != fn3
@@ -57,8 +57,9 @@ class TestCollector:
                  def test_foo():
                      pass
         """)
-        cls = modcol.collect_by_name("TestClass")
-        fn = cls.collect_by_name("()").collect_by_name("test_foo")
+        cls = testdir.collect_by_name(modcol, "TestClass")
+        fn = testdir.collect_by_name(
+            testdir.collect_by_name(cls, "()"), "test_foo")
 
         parent = fn.getparent(py.test.collect.Module)
         assert parent is modcol

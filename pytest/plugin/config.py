@@ -244,7 +244,6 @@ class CmdOptions(object):
 
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
-    Option = py.std.optparse.Option
     basetemp = None
 
     def __init__(self, pluginmanager=None):
@@ -353,7 +352,9 @@ class Config(object):
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
     def getini(self, name):
-        """ return configuration value from an ini file. """
+        """ return configuration value from an ini file. If the
+        specified name hasn't been registered through a prior ``parse.addini``
+        call (usually from a plugin), a ValueError is raised. """
         try:
             description, type = self._parser._inidict[name]
         except KeyError:
@@ -391,9 +392,10 @@ class Config(object):
         return self._conftest.rget(name, path)
 
     def getvalue(self, name, path=None):
-        """ return 'name' value looked up from command line 'options'.
-            (deprecated) if we can't find the option also lookup
-            the name in a matching conftest file.
+        """ return ``name`` value looked set from command line options.
+
+        (deprecated) if we can't find the option also lookup
+        the name in a matching conftest file.
         """
         try:
             return getattr(self.option, name)

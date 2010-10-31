@@ -446,13 +446,8 @@ class Collector(Node):
         """
         raise NotImplementedError("abstract")
 
-    def collect_by_name(self, name):
-        for colitem in self._memocollect():
-            if colitem.name == name:
-                return colitem
-
     def repr_failure(self, excinfo):
-        """ represent a failure. """
+        """ represent a collection failure. """
         if excinfo.errisinstance(self.CollectError):
             exc = excinfo.value
             return str(exc.args[0])
@@ -525,8 +520,7 @@ class Directory(FSCollector):
 
 class Item(Node):
     """ a basic test invocation item. Note that for a single function
-    there might be multiple test invocation items. Attributes:
-    
+    there might be multiple test invocation items.
     """
     def reportinfo(self):
         return self.fspath, None, ""

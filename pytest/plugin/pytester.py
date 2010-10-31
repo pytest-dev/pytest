@@ -385,6 +385,11 @@ class TmpTestdir:
         #config.pluginmanager.do_unconfigure(config)
         return node
 
+    def collect_by_name(self, modcol, name):
+        for colitem in modcol._memocollect():
+            if colitem.name == name:
+                return colitem
+
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):
             py.test.skip("no subprocess module")

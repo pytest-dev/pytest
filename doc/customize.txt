@@ -334,14 +334,24 @@ Reference of important objects involved in hooks
 .. autoclass:: pytest.plugin.config.Parser
     :members:
 
-.. autoclass:: pytest.plugin.session.File
-    :inherited-members:
-
-.. autoclass:: pytest.plugin.session.Item
-    :inherited-members:
-
-.. autoclass:: pytest.plugin.python.Function
+.. autoclass:: pytest.plugin.session.Node(name, parent)
     :members:
+
+.. 
+    .. autoclass:: pytest.plugin.session.File(fspath, parent)
+        :members:
+
+    .. autoclass:: pytest.plugin.session.Item(name, parent)
+        :members:
+
+    .. autoclass:: pytest.plugin.python.Module(name, parent)
+        :members:
+
+    .. autoclass:: pytest.plugin.python.Class(name, parent)
+        :members:
+
+    .. autoclass:: pytest.plugin.python.Function(name, parent)
+        :members:
 
 .. autoclass:: pytest.plugin.runner.CallInfo
     :members:
