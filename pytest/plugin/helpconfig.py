@@ -28,7 +28,7 @@ def pytest_cmdline_main(config):
     if config.option.version:
         p = py.path.local(pytest.__file__).dirpath()
         sys.stderr.write("This is py.test version %s, imported from %s\n" %
-            (py.__version__, p))
+            (pytest.__version__, p))
         return 0
     elif config.option.help:
         config.pluginmanager.do_configure(config)

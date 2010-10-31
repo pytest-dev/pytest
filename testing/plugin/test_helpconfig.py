@@ -1,13 +1,12 @@
-import py, os
+import py, pytest,os
 from pytest.plugin.helpconfig import collectattr
 
 def test_version(testdir):
-    assert py.version == py.__version__
     result = testdir.runpytest("--version")
     assert result.ret == 0
     #p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([
-        '*py.test*%s*imported from*' % (py.version, )
+        '*py.test*%s*imported from*' % (pytest.__version__, )
     ])
 
 def test_help(testdir):
