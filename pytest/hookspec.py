@@ -37,17 +37,17 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
-def pytest_runtest_mainloop(session):
+def pytest_runtestloop(session):
     """ called for performing the main runtest loop (after collection. """
-pytest_runtest_mainloop.firstresult = True
+pytest_runtestloop.firstresult = True
 
 # -------------------------------------------------------------------------
 # collection hooks
 # -------------------------------------------------------------------------
 
-def pytest_collection_perform(session):
+def pytest_collection(session):
     """ perform the collection protocol for the given session. """
-pytest_collection_perform.firstresult = True
+pytest_collection.firstresult = True
 
 def pytest_collection_modifyitems(config, items):
     """ called after collection has been performed, may filter or re-order

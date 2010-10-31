@@ -8,6 +8,13 @@ import py
 import pytest
 import os, sys
 
+# exitcodes for the command line
+EXIT_OK = 0
+EXIT_TESTSFAILED = 1
+EXIT_INTERRUPTED = 2
+EXIT_INTERNALERROR = 3
+EXIT_NOHOSTS = 4
+
 def pytest_addoption(parser):
 
     group = parser.getgroup("general", "running and selection options")
@@ -44,9 +51,35 @@ def pytest_configure(config):
         config.option.maxfail = 1
 
 def pytest_cmdline_main(config):
-    return Session(config).main()
+    """ default command line protocol for initialization, collection,
+    running tests and reporting. """
+    session = Session(config)
+    session.exitstatus = EXIT_OK
+    try:
+        config.pluginmanager.do_configure(config)
+        config.hook.pytest_sessionstart(session=session)
+        config.hook.pytest_collection(session=session)
+        config.hook.pytest_runtestloop(session=session)
+    except pytest.UsageError:
+        raise
+    except KeyboardInterrupt:
+        excinfo = py.code.ExceptionInfo()
+        config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
+        session.exitstatus = EXIT_INTERRUPTED
+    except:
+        excinfo = py.code.ExceptionInfo()
+        config.pluginmanager.notify_exception(excinfo)
+        session.exitstatus = EXIT_INTERNALERROR
+        if excinfo.errisinstance(SystemExit):
+            sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
+    if not session.exitstatus and session._testsfailed:
+        session.exitstatus = EXIT_TESTSFAILED
+    config.hook.pytest_sessionfinish(session=session,
+        exitstatus=session.exitstatus)
+    config.pluginmanager.do_unconfigure(config)
+    return session.exitstatus
 
-def pytest_collection_perform(session):
+def pytest_collection(session):
     collection = session.collection
     assert not hasattr(collection, 'items')
     hook = session.config.hook
@@ -55,7 +88,7 @@ def pytest_collection_perform(session):
     hook.pytest_collection_finish(collection=collection)
     return True
 
-def pytest_runtest_mainloop(session):
+def pytest_runtestloop(session):
     if session.config.option.collectonly:
         return True
     for item in session.collection.items:
@@ -86,16 +119,7 @@ def pytest_collect_directory(path, parent):
 def pytest_report_iteminfo(item):
     return item.reportinfo()
 
-
-# exitcodes for the command line
-EXIT_OK = 0
-EXIT_TESTSFAILED = 1
-EXIT_INTERRUPTED = 2
-EXIT_INTERNALERROR = 3
-EXIT_NOHOSTS = 4
-
 class Session(object):
-    nodeid = ""
     class Interrupted(KeyboardInterrupt):
         """ signals an interrupted test run. """
         __module__ = 'builtins' # for py3
@@ -119,37 +143,6 @@ class Session(object):
                 self.shouldstop = "stopping after %d failures" % (
                     self._testsfailed)
     pytest_collectreport = pytest_runtest_logreport
-
-    def main(self):
-        """ main loop for running tests. """
-        self.shouldstop = False
-        self.exitstatus = EXIT_OK
-        config = self.config
-        try:
-            config.pluginmanager.do_configure(config)
-            config.hook.pytest_sessionstart(session=self)
-            config.hook.pytest_collection_perform(session=self)
-            config.hook.pytest_runtest_mainloop(session=self)
-        except pytest.UsageError:
-            raise
-        except KeyboardInterrupt:
-            excinfo = py.code.ExceptionInfo()
-            self.config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
-            self.exitstatus = EXIT_INTERRUPTED
-        except:
-            excinfo = py.code.ExceptionInfo()
-            self.config.pluginmanager.notify_exception(excinfo)
-            self.exitstatus = EXIT_INTERNALERROR
-            if excinfo.errisinstance(SystemExit):
-                sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
-
-        if not self.exitstatus and self._testsfailed:
-            self.exitstatus = EXIT_TESTSFAILED
-        self.config.hook.pytest_sessionfinish(
-            session=self, exitstatus=self.exitstatus,
-        )
-        config.pluginmanager.do_unconfigure(config)
-        return self.exitstatus
 
 class Collection:
     def __init__(self, config):
