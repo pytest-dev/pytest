@@ -11,6 +11,8 @@ def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count",
                dest="verbose", default=0, help="increase verbosity."),
+    group._addoption('-q', '--quiet', action="count",
+               dest="quiet", default=0, help="decreate verbosity."),
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
@@ -30,6 +32,7 @@ def pytest_addoption(parser):
                help="don't cut any tracebacks (default is to cut).")
 
 def pytest_configure(config):
+    config.option.verbose -= config.option.quiet
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
     else:
@@ -87,6 +90,11 @@ def pytest_report_teststatus(report):
 class TerminalReporter:
     def __init__(self, config, file=None):
         self.config = config
+        self.verbosity = self.config.option.verbose
+        self.showheader = self.verbosity >= 0
+        self.showfspath = self.verbosity >= 0
+        self.showlongtestinfo = self.verbosity > 0
+
         self.stats = {}
         self.curdir = py.path.local()
         if file is None:
@@ -158,10 +166,10 @@ class TerminalReporter:
     def pytest_runtest_logstart(self, nodeid, location, fspath):
         # ensure that the path is printed before the
         # 1st test of a module starts running
-        if self.config.option.verbose:
+        if self.showlongtestinfo:
             line = self._locationline(fspath, *location)
             self.write_ensure_prefix(line, "")
-        else:
+        elif self.showfspath:
             self.write_fspath_result(py.path.local(fspath), "")
 
     def pytest_runtest_logreport(self, report):
@@ -172,8 +180,8 @@ class TerminalReporter:
         if not letter and not word:
             # probably passed setup/teardown
             return
-        if not self.config.option.verbose:
-            if not hasattr(rep, 'node'):
+        if self.verbosity <= 0:
+            if not hasattr(rep, 'node') and self.showfspath:
                 self.write_fspath_result(rep.fspath, letter)
             else:
                 self._tw.write(letter)
@@ -209,12 +217,14 @@ class TerminalReporter:
                 self.write_fspath_result(report.fspath, "S")
 
     def pytest_sessionstart(self, session):
-        self.write_sep("=", "test session starts", bold=True)
         self._sessionstarttime = py.std.time.time()
+        if not self.showheader:
+            return
+        self.write_sep("=", "test session starts", bold=True)
         verinfo = ".".join(map(str, sys.version_info[:3]))
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
         msg += " -- pytest-%s" % (py.test.__version__)
-        if self.config.option.verbose or self.config.option.debug or \
+        if self.verbosity > 0 or self.config.option.debug or \
            getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
@@ -224,6 +234,8 @@ class TerminalReporter:
             self.write_line(line)
 
     def pytest_log_finishcollection(self):
+        if not self.showheader:
+            return
         for i, testarg in enumerate(self.config.args):
             self.write_line("test path %d: %s" %(i+1, testarg))
 
@@ -333,7 +345,11 @@ class TerminalReporter:
                 parts.append("%d %s" %(len(val), key))
         line = ", ".join(parts)
         # XXX coloring
-        self.write_sep("=", "%s in %.2f seconds" %(line, session_duration), bold=True)
+        msg = "%s in %.2f seconds" %(line, session_duration)
+        if self.verbosity >= 0:
+            self.write_sep("=", msg, bold=True)
+        else:
+            self.write_line(msg, bold=True)
 
     def summary_deselected(self):
         if 'deselected' in self.stats:

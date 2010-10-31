@@ -37,6 +37,8 @@ def pytest_generate_tests(metafunc):
                          funcargs={'option': Option(verbose=False)})
         metafunc.addcall(id="verbose",
                          funcargs={'option': Option(verbose=True)})
+        metafunc.addcall(id="quiet",
+                         funcargs={'option': Option(verbose=-1)})
         metafunc.addcall(id="fulltrace",
                          funcargs={'option': Option(fulltrace=True)})
 
@@ -429,6 +431,14 @@ class TestTerminalFunctional:
             "*FAIL*test_verbose_reporting.py:2: test_fail*",
         ])
         assert result.ret == 1
+
+    def test_quiet_reporting(self, testdir):
+        p1 = testdir.makepyfile("def test_pass(): pass")
+        result = testdir.runpytest(p1, '-q')
+        s = result.stdout.str()
+        assert 'test session starts' not in s
+        assert p1.basename not in s
+        assert "===" not in s
 
 def test_fail_extra_reporting(testdir):
     p = testdir.makepyfile("def test_this(): assert 0")

@@ -23,7 +23,7 @@ You can create a simple example file:
 and if you installed `PyYAML`_ or a compatible YAML-parser you can
 now execute the test specification::
 
-    nonpython $ py.test
+    nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev10
     test path 1: /home/hpk/p/pytest/doc/example/nonpython
