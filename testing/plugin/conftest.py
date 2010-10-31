@@ -1,6 +1,5 @@
 import py
 
-pytest_plugins = "pytester"
 import pytest.plugin
 plugindir = py.path.local(pytest.plugin.__file__).dirpath()
 from pytest._core import default_plugins

@@ -466,8 +466,8 @@ def test_getreportopt():
     testdict.update(dict(reportchars="sfx"))
     assert getreportopt(config) == "sfx"
 
-def test_terminalreporter_reportopt_conftestsetting(testdir):
-    testdir.makeconftest("option_report = 'skipped'")
+def test_terminalreporter_reportopt_addargs(testdir):
+    testdir.makeini("[pytest]\naddargs=-rs")
     p = testdir.makepyfile("""
         def pytest_funcarg__tr(request):
             tr = request.config.pluginmanager.getplugin("terminalreporter")

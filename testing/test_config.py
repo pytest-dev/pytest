@@ -1,32 +1,42 @@
 import py
 
-class TestConfigCmdlineParsing:
-    def test_parser_addoption_default_env(self, testdir, monkeypatch):
-        import os
-        config = testdir.Config()
-        group = config._parser.getgroup("hello")
+from pytest.plugin.config import getcfg, Config
 
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION1', 'True')
-        group.addoption("--option1", action="store_true")
-        assert group.options[0].default == True
+class TestParseIni:
+    def test_getcfg_and_config(self, tmpdir):
+        sub = tmpdir.mkdir("sub")
+        sub.chdir()
+        tmpdir.join("setup.cfg").write(py.code.Source("""
+            [pytest]
+            name = value
+        """))
+        cfg = getcfg([sub], ["setup.cfg"])
+        assert cfg['name'] == "value"
+        config = Config()
+        config._preparse([sub])
+        assert config.inicfg['name'] == 'value'
 
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION2', 'abc')
-        group.addoption("--option2", action="store", default="x")
-        assert group.options[1].default == "abc"
-
-        monkeypatch.setitem(os.environ, 'PYTEST_OPTION_OPTION3', '32')
-        group.addoption("--option3", action="store", type="int")
-        assert group.options[2].default == 32
-
-        group.addoption("--option4", action="store", type="int")
-        assert group.options[3].default == ("NO", "DEFAULT")
-
-    def test_parser_addoption_default_conftest(self, testdir, monkeypatch):
-        import os
-        testdir.makeconftest("option_verbose=True")
-        config = testdir.parseconfig()
+    def test_append_parse_args(self, tmpdir):
+        tmpdir.join("setup.cfg").write(py.code.Source("""
+            [pytest]
+            addargs = --verbose
+        """))
+        config = Config()
+        config.parse([tmpdir])
         assert config.option.verbose
 
+    def test_tox_ini_wrong_version(self, testdir):
+        p = testdir.makefile('.ini', tox="""
+            [pytest]
+            minversion=9.0
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stderr.fnmatch_lines([
+            "*tox.ini:2*requires*9.0*actual*"
+        ])
+
+class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
         py.test.raises(AssertionError, "config.parse([])")
@@ -97,13 +107,43 @@ class TestConfigAPI:
         p = tmpdir.join("conftest.py")
         p.write("pathlist = ['.', %r]" % str(somepath))
         config = testdir.reparseconfig([p])
-        assert config.getconftest_pathlist('notexist') is None
-        pl = config.getconftest_pathlist('pathlist')
+        assert config._getconftest_pathlist('notexist') is None
+        pl = config._getconftest_pathlist('pathlist')
         print(pl)
         assert len(pl) == 2
         assert pl[0] == tmpdir
         assert pl[1] == somepath
 
+    def test_addini(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("myname", "my new ini value")
+        """)
+        testdir.makeini("""
+            [pytest]
+            myname=hello
+        """)
+        config = testdir.parseconfig()
+        val = config.getini("myname")
+        assert val == "hello"
+        py.test.raises(ValueError, config.getini, 'other')
+
+    def test_addini_pathlist(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("paths", "my new ini value", type="pathlist")
+                parser.addini("abc", "abc value")
+        """)
+        p = testdir.makeini("""
+            [pytest]
+            paths=hello world/sub.py
+        """)
+        config = testdir.parseconfig()
+        l = config.getini("paths")
+        assert len(l) == 2
+        assert l[0] == p.dirpath('hello')
+        assert l[1] == p.dirpath('world/sub.py')
+        py.test.raises(ValueError, config.getini, 'other')
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
@@ -140,3 +180,4 @@ def test_preparse_ordering(testdir, monkeypatch):
     config = testdir.parseconfig()
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin.x == 42
+

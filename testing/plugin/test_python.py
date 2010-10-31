@@ -268,9 +268,9 @@ class TestSorting:
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        fn1 = modcol.collect_by_name("test_pass")
+        fn1 = testdir.collect_by_name(modcol, "test_pass")
         assert isinstance(fn1, py.test.collect.Function)
-        fn2 = modcol.collect_by_name("test_pass")
+        fn2 = testdir.collect_by_name(modcol, "test_pass")
         assert isinstance(fn2, py.test.collect.Function)
 
         assert fn1 == fn2
@@ -279,7 +279,7 @@ class TestSorting:
             assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2)
 
-        fn3 = modcol.collect_by_name("test_fail")
+        fn3 = testdir.collect_by_name(modcol, "test_fail")
         assert isinstance(fn3, py.test.collect.Function)
         assert not (fn1 == fn3)
         assert fn1 != fn3
@@ -1092,7 +1092,7 @@ class TestReportInfo:
             class TestClass:
                 def test_hello(self): pass
         """)
-        classcol = modcol.collect_by_name("TestClass")
+        classcol = testdir.collect_by_name(modcol, "TestClass")
         fspath, lineno, msg = classcol.reportinfo()
         assert fspath == modcol.fspath
         assert lineno == 1
@@ -1106,7 +1106,7 @@ class TestReportInfo:
                     assert x
                 yield check, 3
         """)
-        gencol = modcol.collect_by_name("test_gen")
+        gencol = testdir.collect_by_name(modcol, "test_gen")
         fspath, lineno, modpath = gencol.reportinfo()
         assert fspath == modcol.fspath
         assert lineno == 1

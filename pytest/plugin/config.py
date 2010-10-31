@@ -2,12 +2,17 @@
 import py
 import sys, os
 from pytest._core import PluginManager
+import pytest
 
 
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
     return config
+
+def pytest_addoption(parser):
+    parser.addini('addargs', 'default command line arguments')
+    parser.addini('minversion', 'minimally required pytest version')
 
 class Parser:
     """ Parser for command line arguments. """
@@ -17,6 +22,7 @@ class Parser:
         self._groups = []
         self._processopt = processopt
         self._usage = usage
+        self._inidict = {}
         self.hints = []
 
     def processoption(self, option):
@@ -28,6 +34,12 @@ class Parser:
         self._notes.append(note)
 
     def getgroup(self, name, description="", after=None):
+        """ get (or create) a named option Group.
+       
+        :name: unique name of the option group.
+        :description: long description for --help output.
+        :after: name of other group, used for ordering --help output.
+        """
         for group in self._groups:
             if group.name == name:
                 return group
@@ -44,7 +56,7 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
-        optparser = MyOptionParser(self)
+        self.optparser = optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -52,7 +64,7 @@ class Parser:
                 optgroup = py.std.optparse.OptionGroup(optparser, desc)
                 optgroup.add_options(group.options)
                 optparser.add_option_group(optgroup)
-        return optparser.parse_args([str(x) for x in args])
+        return self.optparser.parse_args([str(x) for x in args])
 
     def parse_setoption(self, args, option):
         parsedoption, args = self.parse(args)
@@ -60,6 +72,9 @@ class Parser:
             setattr(option, name, value)
         return args
 
+    def addini(self, name, description, type=None):
+        """ add an ini-file option with the given name and description. """
+        self._inidict[name] = (description, type)
 
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
@@ -90,7 +105,8 @@ class OptionGroup:
 class MyOptionParser(py.std.optparse.OptionParser):
     def __init__(self, parser):
         self._parser = parser
-        py.std.optparse.OptionParser.__init__(self, usage=parser._usage)
+        py.std.optparse.OptionParser.__init__(self, usage=parser._usage,
+            add_help_option=False)
     def format_epilog(self, formatter):
         hints = self._parser.hints
         if hints:
@@ -226,13 +242,8 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
-class Error(Exception):
-    """ Test Configuration Error. """
-
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
-    Option = py.std.optparse.Option
-    Error = Error
     basetemp = None
 
     def __init__(self, pluginmanager=None):
@@ -251,6 +262,11 @@ class Config(object):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
         self.pluginmanager.consider_conftest(conftestmodule)
 
+    def _processopt(self, opt):
+        if hasattr(opt, 'default') and opt.dest:
+            if not hasattr(self.option, opt.dest):
+                setattr(self.option, opt.dest, opt.default)
+
     def _getmatchingplugins(self, fspath):
         allconftests = self._conftest._conftestpath2mod.values()
         plugins = [x for x in self.pluginmanager.getplugins()
@@ -261,28 +277,6 @@ class Config(object):
     def trace(self, msg):
         if getattr(self.option, 'traceconfig', None):
             self.hook.pytest_trace(category="config", msg=msg)
-
-    def _processopt(self, opt):
-        if hasattr(opt, 'default') and opt.dest:
-            val = os.environ.get("PYTEST_OPTION_" + opt.dest.upper(), None)
-            if val is not None:
-                if opt.type == "int":
-                    val = int(val)
-                elif opt.type == "long":
-                    val = long(val)
-                elif opt.type == "float":
-                    val = float(val)
-                elif not opt.type and opt.action in ("store_true", "store_false"):
-                    val = eval(val)
-                opt.default = val
-            else:
-                name = "option_" + opt.dest
-                try:
-                    opt.default = self._conftest.rget(name)
-                except (ValueError, KeyError):
-                    pass
-            if not hasattr(self.option, opt.dest):
-                setattr(self.option, opt.dest, opt.default)
 
     def _setinitialconftest(self, args):
         # capture output during conftest init (#issue93)
@@ -299,14 +293,31 @@ class Config(object):
             raise
 
     def _preparse(self, args):
+        self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
+        if self.inicfg:
+            newargs = self.inicfg.get("addargs", None)
+            if newargs:
+                args[:] = args + py.std.shlex.split(newargs)
+        self._checkversion()
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
         self._setinitialconftest(args)
         self.pluginmanager.do_addoption(self._parser)
 
+    def _checkversion(self):
+        minver = self.inicfg.get('minversion', None)
+        if minver:
+            ver = minver.split(".")
+            myver = pytest.__version__.split(".")
+            if myver < ver:
+                raise pytest.UsageError(
+                    "%s:%d: requires pytest-%s, actual pytest-%s'" %(
+                    self.inicfg.config.path, self.inicfg.lineof('minversion'),
+                    minver, pytest.__version__))
+
     def parse(self, args):
-        # cmdline arguments into this config object.
+        # parse given cmdline arguments into this config object.
         # Note that this can only be called once per testing process.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
@@ -340,12 +351,28 @@ class Config(object):
             return py.path.local.make_numbered_dir(prefix=basename,
                 keep=0, rootdir=basetemp, lock_timeout=None)
 
-    def getconftest_pathlist(self, name, path=None):
-        """ return a matching value, which needs to be sequence
-            of filenames that will be returned as a list of Path
-            objects (they can be relative to the location
-            where they were found).
-        """
+    def getini(self, name):
+        """ return configuration value from an ini file. If the
+        specified name hasn't been registered through a prior ``parse.addini``
+        call (usually from a plugin), a ValueError is raised. """
+        try:
+            description, type = self._parser._inidict[name]
+        except KeyError:
+            raise ValueError("unknown configuration value: %r" %(name,))
+        try:
+            value = self.inicfg[name]
+        except KeyError:
+            return # None indicates nothing found
+        if type == "pathlist":
+            dp = py.path.local(self.inicfg.config.path).dirpath()
+            l = []
+            for relpath in py.std.shlex.split(value):
+                l.append(dp.join(relpath, abs=True))
+            return l
+        else:
+            return value
+
+    def _getconftest_pathlist(self, name, path=None):
         try:
             mod, relroots = self._conftest.rget_with_confmod(name, path)
         except KeyError:
@@ -359,6 +386,22 @@ class Config(object):
             l.append(relroot)
         return l
 
+    def _getconftest(self, name, path=None, check=False):
+        if check:
+            self._checkconftest(name)
+        return self._conftest.rget(name, path)
+
+    def getvalue(self, name, path=None):
+        """ return ``name`` value looked set from command line options.
+
+        (deprecated) if we can't find the option also lookup
+        the name in a matching conftest file.
+        """
+        try:
+            return getattr(self.option, name)
+        except AttributeError:
+            return self._getconftest(name, path, check=False)
+
     def getvalueorskip(self, name, path=None):
         """ return getvalue(name) or call py.test.skip if no value exists. """
         try:
@@ -369,15 +412,27 @@ class Config(object):
         except KeyError:
             py.test.skip("no %r value found" %(name,))
 
-    def getvalue(self, name, path=None):
-        """ return 'name' value looked up from the 'options'
-            and then from the first conftest file found up
-            the path (including the path itself).
-            if path is None, lookup the value in the initial
-            conftest modules found during command line parsing.
-        """
-        try:
-            return getattr(self.option, name)
-        except AttributeError:
-            return self._conftest.rget(name, path)
+
+def getcfg(args, inibasenames):
+    if not args:
+        args = [py.path.local()]
+    for inibasename in inibasenames:
+        for p in args:
+            x = findupwards(p, inibasename)
+            if x is not None:
+                iniconfig = py.iniconfig.IniConfig(x)
+                if 'pytest' in iniconfig.sections:
+                    return iniconfig['pytest']
+    return {}
+   
+def findupwards(current, basename):
+    current = py.path.local(current)
+    while 1:
+        p = current.join(basename)
+        if p.check():
+            return p
+        p = current.dirpath()
+        if p == current:
+            return
+        current = p
 

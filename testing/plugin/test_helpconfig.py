@@ -10,11 +10,13 @@ def test_version(testdir):
         '*py.test*%s*imported from*' % (py.version, )
     ])
 
-def test_helpconfig(testdir):
-    result = testdir.runpytest("--help-config")
+def test_help(testdir):
+    result = testdir.runpytest("--help")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
-        "*cmdline*conftest*ENV*",
+        "*-v*verbose*",
+        "*setup.cfg*",
+        "*minversion*",
     ])
 
 def test_collectattr():

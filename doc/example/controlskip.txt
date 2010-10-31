@@ -1,7 +1,4 @@
 
-Customizing test function through marks and hooks
-====================================================
-
 .. _`retrieved by hooks as item keywords`:
 
 control skipping of tests according to command line option

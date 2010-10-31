@@ -2,9 +2,6 @@ import py
 import sys
 
 pytest_plugins = "pytester",
-collect_ignore = ['../build', '../doc/_build']
-
-rsyncdirs = ['conftest.py', '../pytest', '../doc', '.']
 
 import os, py
 pid = os.getpid()
@@ -40,6 +37,12 @@ def pytest_unconfigure(config, __multicall__):
     len2 = getopenfiles(out2)
     assert len2 < config._numfiles + 7, out2
 
+
+def pytest_runtest_setup(item):
+    item._oldir = py.path.local()
+
+def pytest_runtest_teardown(item):
+    item._oldir.chdir()
 
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)

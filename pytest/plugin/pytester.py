@@ -242,8 +242,18 @@ class TmpTestdir:
     def makefile(self, ext, *args, **kwargs):
         return self._makefile(ext, args, kwargs)
 
+    def makeini(self, source):
+        return self.makefile('cfg', setup=source)
+
     def makeconftest(self, source):
         return self.makepyfile(conftest=source)
+
+    def makeini(self, source):
+        return self.makefile('.ini', tox=source)
+
+    def getinicfg(self, source):
+        p = self.makeini(source)
+        return py.iniconfig.IniConfig(p)['pytest']
 
     def makepyfile(self, *args, **kwargs):
         return self._makefile('.py', args, kwargs)
@@ -374,6 +384,11 @@ class TmpTestdir:
         node = self.getnode(config, path)
         #config.pluginmanager.do_unconfigure(config)
         return node
+
+    def collect_by_name(self, modcol, name):
+        for colitem in modcol._memocollect():
+            if colitem.name == name:
+                return colitem
 
     def popen(self, cmdargs, stdout, stderr, **kw):
         if not hasattr(py.std, 'subprocess'):

@@ -345,13 +345,16 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     hook = pluginmanager.hook
-    config = hook.pytest_cmdline_parse(pluginmanager=pluginmanager, args=args)
     try:
+        config = hook.pytest_cmdline_parse(
+                pluginmanager=pluginmanager, args=args)
         exitstatus = hook.pytest_cmdline_main(config=config)
-    except config.Error:
+    except UsageError:
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         exitstatus = 3
     pluginmanager = PluginManager(load=True)
     return exitstatus
 
+class UsageError(Exception):
+    """ error in py.test usage or invocation"""
