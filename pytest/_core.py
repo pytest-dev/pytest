@@ -115,10 +115,6 @@ class PluginManager(object):
                 self.import_plugin(opt2)
 
     def consider_conftest(self, conftestmodule):
-        cls = getattr(conftestmodule, 'ConftestPlugin', None)
-        if cls is not None:
-            raise ValueError("%r: 'ConftestPlugins' only existed till 1.0.0b1, "
-                "were removed in 1.0.0b2" % (cls,))
         if self.register(conftestmodule, name=conftestmodule.__file__):
             self.consider_module(conftestmodule)
 

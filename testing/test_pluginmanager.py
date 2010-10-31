@@ -129,11 +129,6 @@ class TestBootstrapping:
         l = reprec.getcalls("pytest_plugin_registered")
         assert len(l) == 1
 
-    def test_consider_conftest_deprecated(self, testdir):
-        pp = PluginManager()
-        mod = testdir.makepyfile("class ConftestPlugin: pass").pyimport()
-        call = py.test.raises(ValueError, pp.consider_conftest, mod)
-
     def test_config_sets_conftesthandle_onimport(self, testdir):
         config = testdir.parseconfig([])
         assert config._conftest._onimport == config._onimportconftest
