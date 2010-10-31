@@ -44,7 +44,7 @@ def showhelp(config):
     tw.line("setup.cfg or tox.ini options to be put into [pytest] section:")
     tw.line()
 
-    for name, help in sorted(config._parser._inidict.items()):
+    for name, (help, type) in sorted(config._parser._inidict.items()):
         line = "   %-15s  %s" %(name, help)
         tw.line(line[:tw.fullwidth])
 
