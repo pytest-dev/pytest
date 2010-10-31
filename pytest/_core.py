@@ -218,15 +218,16 @@ class PluginManager(object):
                 kwargs=kwargs, firstresult=True).execute()
 
 def canonical_importname(name):
+    if '.' in name:
+        return name
     name = name.lower()
     if not name.startswith(IMPORTPREFIX):
         name = IMPORTPREFIX + name
     return name
 
 def importplugin(importspec):
-    #print "importing", importspec
     try:
-        return __import__(importspec)
+        return __import__(importspec, None, None, '__doc__')
     except ImportError:
         e = py.std.sys.exc_info()[1]
         if str(e).find(importspec) == -1:
@@ -241,7 +242,7 @@ def importplugin(importspec):
             if str(e).find(name) == -1:
                 raise
             # show the original exception, not the failing internal one
-            return __import__(importspec)
+            return __import__(importspec, None, None, '__doc__')
 
 
 class MultiCall:

@@ -101,6 +101,18 @@ class TestBootstrapping:
         plugin2 = pluginmanager.getplugin("hello")
         assert plugin2 is plugin1
 
+    def test_import_plugin_dotted_name(self, testdir):
+        pluginmanager = PluginManager()
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("x.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_x.y")')
+
+        reset = testdir.syspathinsert()
+        testdir.mkpydir("pkg").join("plug.py").write("x=3")
+        pluginname = "pkg.plug"
+        pluginmanager.import_plugin(pluginname)
+        mod = pluginmanager.getplugin("pkg.plug")
+        assert mod.x == 3
+
     def test_consider_module(self, testdir):
         pluginmanager = PluginManager()
         testdir.syspathinsert()

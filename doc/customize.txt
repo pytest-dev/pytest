@@ -128,15 +128,19 @@ py.test loads plugin modules at tool startup in the following way:
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in ``conftest.py`` files
 
-Requiring/Loading plugins in a test module or plugin
+Requiring/Loading plugins in a test module or conftest file
 -------------------------------------------------------------
 
-You can require plugins in a test module or a plugin like this::
+You can require plugins in a test module or a conftest file like this::
 
     pytest_plugins = "name1", "name2",
 
-When the test module or plugin is loaded the specified plugins
-will be loaded.
+When the test module or conftest plugin is loaded the specified plugins
+will be loaded as well.  You can also use dotted path like this::
+
+    pytest_plugins = "myapp.testsupport.myplugin"
+
+which will import the specified module as a py.test plugin.
 
 .. _`setuptools entry points`:
 .. _registered:
