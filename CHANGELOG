@@ -6,6 +6,8 @@ Changes between 1.3.4 and 2.0.0dev0
   by default setup.cfg and tox.ini files are searched.  The old
   ways (certain environment variables, dynamic conftest.py reading 
   is removed).
+- add a new "-q" option which decreases verbosity and prints a more
+  nose/unittest-style "dot" output.
 - fix issue126 - introduce py.test.set_trace() to trace execution via
   PDB during the running of tests even if capturing is ongoing.
 - fix issue123 - new "python -m py.test" invocation for py.test
@@ -29,6 +31,7 @@ Changes between 1.3.4 and 2.0.0dev0
 - fix issue93 stdout/stderr is captured while importing conftest.py
 - fix bug: unittest collected functions now also can have "pytestmark"
   applied at class/module level
+
 
 Changes between 1.3.3 and 1.3.4
 ----------------------------------------------
