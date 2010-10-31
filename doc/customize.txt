@@ -261,7 +261,7 @@ reporting hooks
 Collection related reporting hooks:
 
 .. autofunction: pytest_collectstart
-.. autofunction: pytest_log_itemcollect
+.. autofunction: pytest_itemcollected
 .. autofunction: pytest_collectreport
 .. autofunction: pytest_deselected
 

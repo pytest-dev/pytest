@@ -16,9 +16,7 @@ more bug fixes and also works for Python3.
 
 For Python2 you can also consult pip_ for the popular ``pip`` tool.
 
-for the according ``pip`` installation tool.  installation instructions.
-You can also `setuptools`_ and 
-If you want to install on Python3 you need to use Distribute_ which
+However, If you want to install on Python3 you need to use Distribute_ which
 provides the ``easy_install`` utility.
 
 
@@ -68,7 +66,6 @@ as a clone of ``py.test`` when py.test was in the ``0.8`` release
 cycle so some of the newer features_ introduced with py.test-1.0
 and py.test-1.1 have no counterpart in nose_.
 
-.. _nose: http://somethingaboutorange.com/mrl/projects/nose/0.11.1/
 .. _features: test/features.html
 .. _apipkg: http://pypi.python.org/pypi/apipkg
 
@@ -111,8 +108,6 @@ in a managed class/module/function scope.
 .. _monkeypatch: test/plugin/monkeypatch.html
 .. _tmpdir: test/plugin/tmpdir.html
 .. _capture: test/plugin/capture.html
-.. _`xUnit style setup`: test/xunit_setup.html
-.. _`pytest_nose`: test/plugin/nose.html
 
 .. _`why pytest_pyfuncarg__ methods?`:
 
@@ -152,7 +147,6 @@ and implement the `parametrization scheme of your choice`_.
 .. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
 .. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 
-
 py.test interaction with other packages
 ---------------------------------------------------
 
@@ -185,4 +179,4 @@ script with this content and invoke that with the python version::
 
 .. _`install distribute`: http://pypi.python.org/pypi/distribute#installation-instructions
 
-
+.. include:: links.inc

@@ -4,12 +4,15 @@
 # Initialization
 # -------------------------------------------------------------------------
 
+def pytest_addhooks(pluginmanager):
+    """called at plugin load time to allow adding new hooks via a call to
+    pluginmanager.registerhooks(module)."""
+
+
 def pytest_namespace():
     """return dict of name->object to be made globally available in
     the py.test/pytest namespace.  This hook is called before command
-    line options are fully parsed.  If you want to provide helper functions
-    that can interact with a test function invocation, please refer to
-    :ref:`funcarg mechanism`.
+    line options are parsed.
     """
 
 def pytest_cmdline_parse(pluginmanager, args):
@@ -17,12 +20,9 @@ def pytest_cmdline_parse(pluginmanager, args):
 pytest_cmdline_parse.firstresult = True
 
 def pytest_addoption(parser):
-    """allows to add optparse-style command line options via a call to
-    ``parser.addoption(...)``."""
-
-def pytest_addhooks(pluginmanager):
-    """called at plugin load time to allow adding new hooks via a call to
-    pluginmanager.registerhooks(module)."""
+    """add optparse-style options and ini-style config values via calls 
+    to ``parser.addoption`` and ``parser.addini(...)``.
+    """
 
 def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
@@ -45,15 +45,16 @@ pytest_runtest_mainloop.firstresult = True
 # collection hooks
 # -------------------------------------------------------------------------
 
-def pytest_perform_collection(session):
+def pytest_collection_perform(session):
     """ perform the collection protocol for the given session. """
-pytest_perform_collection.firstresult = True
+pytest_collection_perform.firstresult = True
 
 def pytest_collection_modifyitems(config, items):
-    """ called to allow filtering and selecting of test items (inplace). """
+    """ called after collection has been performed, may filter or re-order
+    the items in-place."""
 
-def pytest_log_finishcollection(collection):
-    """ called after collection has finished. """
+def pytest_collection_finish(collection):
+    """ called after collection has been performed and modified. """
 
 def pytest_ignore_collect(path, config):
     """ return True to prevent considering this path for collection.
@@ -75,7 +76,7 @@ def pytest_collect_file(path, parent):
 def pytest_collectstart(collector):
     """ collector starts collecting. """
 
-def pytest_log_itemcollect(item):
+def pytest_itemcollected(item):
     """ we just collected a test item. """
 
 def pytest_collectreport(report):
@@ -85,7 +86,7 @@ def pytest_deselected(items):
     """ called for test items deselected by keyword. """
 
 def pytest_make_collect_report(collector):
-    """ perform a collection and return a collection. """
+    """ perform ``collector.collect()`` and return a CollectReport. """
 pytest_make_collect_report.firstresult = True
 
 # -------------------------------------------------------------------------

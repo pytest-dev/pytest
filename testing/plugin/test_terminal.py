@@ -176,7 +176,7 @@ class TestCollectonly:
            "<Module 'test_collectonly_basic.py'>"
         ])
         item = modcol.collect()[0]
-        rep.config.hook.pytest_log_itemcollect(item=item)
+        rep.config.hook.pytest_itemcollected(item=item)
         linecomp.assert_contains_lines([
            "  <Function 'test_func'>",
         ])
@@ -456,24 +456,23 @@ def test_fail_reporting_on_pass(testdir):
     assert 'short test summary' not in result.stdout.str()
 
 def test_getreportopt():
-    testdict = {}
-    class Config:
-        def getvalue(self, name):
-            return testdict.get(name, None)
-    config = Config()
-    testdict.update(dict(report="xfailed"))
+    class config:
+        class option:
+            reportchars = ""
+    config.option.report = "xfailed"
     assert getreportopt(config) == "x"
 
-    testdict.update(dict(report="xfailed,skipped"))
+    config.option.report = "xfailed,skipped"
     assert getreportopt(config) == "xs"
 
-    testdict.update(dict(report="skipped,xfailed"))
+    config.option.report = "skipped,xfailed"
     assert getreportopt(config) == "sx"
 
-    testdict.update(dict(report="skipped", reportchars="sf"))
+    config.option.report = "skipped"
+    config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
 
-    testdict.update(dict(reportchars="sfx"))
+    config.option.reportchars = "sfx"
     assert getreportopt(config) == "sfx"
 
 def test_terminalreporter_reportopt_addargs(testdir):

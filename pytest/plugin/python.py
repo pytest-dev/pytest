@@ -315,9 +315,7 @@ class FunctionMixin(PyobjMixin):
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
         return self._repr_failure_py(excinfo,
-            style=self.config.getvalue("tbstyle"))
-
-    shortfailurerepr = "F"
+            style=self.config.option.tbstyle)
 
 class FuncargLookupErrorRepr(TerminalRepr):
     def __init__(self, filename, firstlineno, deflines, errorstring):

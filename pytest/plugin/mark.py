@@ -155,7 +155,7 @@ class MarkInfo:
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self._name, self.args, self.kwargs)
 
-def pytest_log_itemcollect(item):
+def pytest_itemcollected(item):
     if not isinstance(item, py.test.collect.Function):
         return
     try:

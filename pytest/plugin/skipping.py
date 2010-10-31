@@ -213,7 +213,7 @@ def pytest_pyfunc_call(pyfuncitem):
     check_xfail_no_run(pyfuncitem)
 
 def check_xfail_no_run(item):
-    if not item.config.getvalue("runxfail"):
+    if not item.config.option.runxfail:
         evalxfail = item._evalxfail
         if evalxfail.istrue():
             if not evalxfail.get('run', True):

@@ -21,7 +21,7 @@ class SessionTests:
         assert failed[0].nodenames[-1] == "test_one_one"
         assert failed[1].nodenames[-1] == "test_other"
         assert failed[2].nodenames[-1] == "test_two"
-        itemstarted = reprec.getcalls("pytest_log_itemcollect")
+        itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 4
         colstarted = reprec.getcalls("pytest_collectstart")
         assert len(colstarted) == 1 + 1 # XXX ExtraTopCollector
@@ -181,7 +181,7 @@ class TestNewSession(SessionTests):
         )
         reprec = testdir.inline_run('--collectonly', p.dirpath())
 
-        itemstarted = reprec.getcalls("pytest_log_itemcollect")
+        itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 3
         assert not reprec.getreports("pytest_runtest_logreport")
         started = reprec.getcalls("pytest_collectstart")

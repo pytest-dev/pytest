@@ -58,7 +58,7 @@ def pytest_unconfigure(config):
 
 def getreportopt(config):
     reportopts = ""
-    optvalue = config.getvalue("report")
+    optvalue = config.option.report
     if optvalue:
         py.builtin.print_("DEPRECATED: use -r instead of --report option.",
             file=py.std.sys.stderr)
@@ -69,7 +69,7 @@ def getreportopt(config):
                     reportopts += "s"
                 elif setting == "xfailed":
                     reportopts += "x"
-    reportchars = config.getvalue("reportchars")
+    reportchars = config.option.reportchars
     if reportchars:
         for char in reportchars:
             if char not in reportopts:
@@ -233,7 +233,7 @@ class TerminalReporter:
         for line in flatten(lines):
             self.write_line(line)
 
-    def pytest_log_finishcollection(self):
+    def pytest_collection_finish(self):
         if not self.showheader:
             return
         for i, testarg in enumerate(self.config.args):
@@ -259,7 +259,7 @@ class TerminalReporter:
         msg = excrepr.reprcrash.message
         self.write_sep("!", msg)
         if "KeyboardInterrupt" in msg:
-            if self.config.getvalue("fulltrace"):
+            if self.config.option.fulltrace:
                 excrepr.toterminal(self._tw)
             else:
                 excrepr.reprcrash.toterminal(self._tw)
@@ -304,7 +304,7 @@ class TerminalReporter:
     #
 
     def summary_failures(self):
-        tbstyle = self.config.getvalue("tbstyle")
+        tbstyle = self.config.option.tbstyle
         if 'failed' in self.stats and tbstyle != "no":
             self.write_sep("=", "FAILURES")
             for rep in self.stats['failed']:
@@ -379,7 +379,7 @@ class CollectonlyReporter:
         self.outindent(collector)
         self.indent += self.INDENT
 
-    def pytest_log_itemcollect(self, item):
+    def pytest_itemcollected(self, item):
         self.outindent(item)
 
     def pytest_collectreport(self, report):
@@ -394,7 +394,7 @@ class CollectonlyReporter:
             self._failed.append(report)
         self.indent = self.indent[:-len(self.INDENT)]
 
-    def pytest_log_finishcollection(self):
+    def pytest_collection_finish(self):
         if self._failed:
             self._tw.sep("!", "collection failures")
         for rep in self._failed:

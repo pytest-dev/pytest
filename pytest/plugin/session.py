@@ -46,13 +46,13 @@ def pytest_configure(config):
 def pytest_cmdline_main(config):
     return Session(config).main()
 
-def pytest_perform_collection(session):
+def pytest_collection_perform(session):
     collection = session.collection
     assert not hasattr(collection, 'items')
     hook = session.config.hook
     collection.items = items = collection.perform_collect()
     hook.pytest_collection_modifyitems(config=session.config, items=items)
-    hook.pytest_log_finishcollection(collection=collection)
+    hook.pytest_collection_finish(collection=collection)
     return True
 
 def pytest_runtest_mainloop(session):
@@ -128,7 +128,7 @@ class Session(object):
         try:
             config.pluginmanager.do_configure(config)
             config.hook.pytest_sessionstart(session=self)
-            config.hook.pytest_perform_collection(session=self)
+            config.hook.pytest_collection_perform(session=self)
             config.hook.pytest_runtest_mainloop(session=self)
         except pytest.UsageError:
             raise
@@ -261,7 +261,7 @@ class Collection:
 
     def genitems(self, node):
         if isinstance(node, pytest.collect.Item):
-            node.ihook.pytest_log_itemcollect(item=node)
+            node.ihook.pytest_itemcollected(item=node)
             yield node
         else:
             assert isinstance(node, pytest.collect.Collector)
