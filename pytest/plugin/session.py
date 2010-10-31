@@ -295,8 +295,6 @@ class HookProxy:
     def __init__(self, node):
         self.node = node
     def __getattr__(self, name):
-        if name[0] == "_":
-            raise AttributeError(name)
         hookmethod = getattr(self.node.config.hook, name)
         def call_matching_hooks(**kwargs):
             plugins = self.node.config._getmatchingplugins(self.node.fspath)

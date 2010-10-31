@@ -85,8 +85,8 @@ class TestBootstrapping:
 
     def test_import_plugin_importname(self, testdir):
         pluginmanager = PluginManager()
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("x.y")')
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_x.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwx.y")')
 
         reset = testdir.syspathinsert()
         pluginname = "pytest_hello"
@@ -103,8 +103,8 @@ class TestBootstrapping:
 
     def test_import_plugin_dotted_name(self, testdir):
         pluginmanager = PluginManager()
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("x.y")')
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_x.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
+        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwex.y")')
 
         reset = testdir.syspathinsert()
         testdir.mkpydir("pkg").join("plug.py").write("x=3")
