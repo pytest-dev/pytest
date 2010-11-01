@@ -13,6 +13,11 @@ class TestGeneralUsage:
             '*ERROR: hello'
         ])
 
+    def test_file_not_found(self, testdir):
+        result = testdir.runpytest("asd")
+        assert result.ret != 0
+        result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
+
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
             def pytest_addoption(parser):

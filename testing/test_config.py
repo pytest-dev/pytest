@@ -66,6 +66,9 @@ class TestConfigTmpdir:
         assert not config2.getbasetemp().relto(config3.getbasetemp())
         assert not config3.getbasetemp().relto(config2.getbasetemp())
 
+    def test_reparse_filename_too_long(self, testdir):
+        config = testdir.reparseconfig(["--basetemp=%s" % ("123"*300)])
+
 class TestConfigAPI:
 
     def test_config_getvalue_honours_conftest(self, testdir):

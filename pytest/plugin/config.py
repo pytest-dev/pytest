@@ -297,7 +297,7 @@ class Config(object):
         if self.inicfg:
             newargs = self.inicfg.get("addargs", None)
             if newargs:
-                args[:] = args + py.std.shlex.split(newargs)
+                args[:] = py.std.shlex.split(newargs) + args
         self._checkversion()
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
@@ -414,6 +414,7 @@ class Config(object):
 
 
 def getcfg(args, inibasenames):
+    args = [x for x in args if str(x)[0] != "-"]
     if not args:
         args = [py.path.local()]
     for inibasename in inibasenames:

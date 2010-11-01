@@ -2,16 +2,6 @@ import py, sys
 from pytest.plugin import python as funcargs
 
 class TestModule:
-    def test_module_file_not_found(self, testdir):
-        tmpdir = testdir.tmpdir
-        fn = tmpdir.join('nada','no')
-        config=testdir.Config()
-        config.args = ["hello"]
-        col = py.test.collect.Module(fn, config=config,
-            collection=testdir.Collection(config))
-        col.config = testdir.parseconfig(tmpdir)
-        py.test.raises(py.error.ENOENT, col.collect)
-
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
         py.test.raises(ImportError, modcol.collect)
