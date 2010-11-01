@@ -1,23 +1,25 @@
-Contact and Communication points
+
+.. _`contact channels`:
+
+Contact channels
 ===================================
 
-- `py-dev developers list`_ announcements and discussions.
+- `new issue tracker`_ to report bugs or suggest features.
+  See also the `old issue tracker`_ but don't submit bugs there.
+
+- `Testing In Python`_: a mailing list for Python testing tools and discussion.
+
+- `py-dev developers list`_ pytest specific announcements and discussions.
 
 - #pylib on irc.freenode.net IRC channel for random questions.
 
-
 - `tetamap`_: Holger Krekel's blog, often about testing and py.test related news.
-
-- `Testing In Python`_: a mailing list for testing tools and discussion.
-
-- `commit mailing list`_ or `@pylibcommit`_ to follow development commits,
-
-- `bitbucket issue tracker`_ use this bitbucket issue tracker to report
-  bugs or request features.
+- `commit mailing list`_
 
 - `merlinux.eu`_ offers on-site teaching and consulting services.
 
-.. _`bitbucket issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
+.. _`new issue tracker`: http://bitbucket.org/hpk42/pytest/issues/
+.. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
 
 .. _`merlinux.eu`: http://merlinux.eu
 
@@ -28,20 +30,8 @@ Contact and Communication points
 .. _`@pylibcommit`: http://twitter.com/pylibcommit
 
 
-..
-    get an account on codespeak
-    ---------------------------
-
-    codespeak_ is where the subversion repository is hosted.  If you know
-    someone who is active on codespeak already or you are otherwise known in
-    the community (see also: FOAF_) you will get access.  But even if
-    you are new to the python developer community please come to the IRC
-    or the mailing list and ask questions, get involved.
-
 .. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
-.. _us: http://codespeak.net/mailman/listinfo/py-dev
-.. _codespeak: http://codespeak.net/
 .. _`py-dev`:
 .. _`development mailing list`:
 .. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev

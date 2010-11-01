@@ -4,9 +4,11 @@ py.test Features
 no-boilerplate testing with Python
 ----------------------------------
 
-- automatic customizable Python test discovery
+- automatic, fully customizable Python test discovery
+- :pep:`8` consistent testing style
+- allows simple test functions
+- ``assert`` statement for your assertions
 - powerful parametrization of test functions
-- use the ``assert`` statement for your assertions
 - rely on powerful traceback and assertion reporting
 - use ``print`` or ``pdb`` debugging on failures
 

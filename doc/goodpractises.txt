@@ -2,51 +2,91 @@
 .. highlightlang:: python
 .. _`good practises`:
 
-Good Practises
+Good Integration Practises
 =================================================
 
-Recommendation: install tool and dependencies virtually
+work with virtual environments
 -----------------------------------------------------------
 
-We recommend to work with virtual environments
-(e.g. virtualenv_ or buildout_ based) and use easy_install_
-(or pip_) for installing py.test/pylib and any dependencies
-you need to run your tests.  Local virtual Python environments
-(as opposed to system-wide "global" environments) make for a more
-reproducible and reliable test environment.
+We recommend to work with virtualenv_ environments and use easy_install_
+(or pip_) for installing your application dependencies as well as
+the ``pytest`` package itself.  This way you get a much more reproducible
+environment.  A good tool to help you automate test runs against multiple
+dependency configurations or Python interpreters is `tox`_,
+independently created by the main py.test author.  The latter
+is also useful for integration with the continous integration
+server Hudson_.
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/
 .. _pip: http://pypi.python.org/pypi/pip
 
+
+Choosing a test layout / import rules
+------------------------------------------
+
+py.test supports common test layouts:
+
+* inlining test directories into your application package, useful if you want to
+  keep (unit) tests and actually tested code close together::
+
+    mypkg/
+        __init__.py
+        appmodule.py
+        ...
+        test/
+            test_app.py
+            ...
+
+* putting tests into an extra directory outside your actual application
+  code, useful if you have many functional tests or want to keep
+  tests separate from actual application code::
+
+    mypkg/
+        __init__.py
+        appmodule.py
+    tests/
+        test_app.py
+        ...
+
+You can always run your tests by pointing to it::
+
+    py.test tests/test_app.py       # for external test dirs
+    py.test mypkg/test/test_app.py  # for inlined test dirs
+    py.test mypkg                   # run tests in all below test directories
+    py.test                         # run all tests below current dir
+    ...
+
+.. note:: 
+
+    Test modules are imported under their fully qualified name as follows:
+
+    * ``basedir`` = first upward directory not containing an ``__init__.py``
+
+    * perform ``sys.path.insert(0, basedir)``.
+
+    * ``import path.to.test_module``
+
 .. _standalone:
-
-
-Choosing a test layout
-----------------------------
-
-py.test supports common test layouts.
-
-XXX
-
 .. _`genscript method`:
 
 Generating a py.test standalone Script
 -------------------------------------------
 
-If you are a maintainer or application developer and want users
-to run tests you can use a facility to generate a standalone
-"py.test" script that you can tell users to run::
+If you are a maintainer or application developer and want others
+to easily run tests you can generate a completely standalone "py.test" 
+script::
 
     py.test --genscript=runtests.py
 
-will generate a ``mytest`` script that is, in fact, a ``py.test`` under
-disguise.  You can tell people to download and then e.g. run it like this::
+generates a ``runtests.py`` script which is a fully functional basic
+``py.test`` script, running unchanged under Python2 and Python3.
+You can tell people to download and then e.g.  run it like this to
+produce a Paste URL::
 
     python runtests.py --pastebin=all
 
-and ask them to send you the resulting URL.  The resulting script has
-all core features and runs unchanged under Python2 and Python3 interpreters.
+and ask them to send you the resulting URL.
 
 .. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
 .. _`distribute installation`: http://pypi.python.org/pypi/distribute

@@ -1,11 +1,11 @@
-unittest.py style testing integration
+unittest.TestCase support
 =====================================================================
 
 py.test has limited support for running Python `unittest.py style`_ tests.
 It will automatically collect ``unittest.TestCase`` subclasses
 and their ``test`` methods in test files.  It will invoke
 ``setUp/tearDown`` methods but also perform py.test's standard ways
-of treating tests like IO capturing::
+of treating tests like e.g. IO capturing::
 
     # content of test_unittest.py
 
@@ -21,7 +21,7 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0dev0
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
     test path 1: test_unittest.py
     
     test_unittest.py F
@@ -54,8 +54,6 @@ Running it yields::
     ----------------------------- Captured stdout ------------------------------
     hello
     ========================= 1 failed in 0.02 seconds =========================
-
-This plugin is enabled by default.
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 

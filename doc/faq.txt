@@ -1,87 +1,56 @@
-Frequent Issues and Questions
+Some Issues and Questions
 ==================================
 
-.. _`installation issues`:
+.. note::
 
-Installation issues
-------------------------------
-
-easy_install or pip not found?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-Consult distribute_ to install the ``easy_install`` tool on your machine. 
-You may also use the original but somewhat older `setuptools`_ project
-although we generally recommend to use ``distribute`` because it contains
-more bug fixes and also works for Python3.
-
-For Python2 you can also consult pip_ for the popular ``pip`` tool.
-
-However, If you want to install on Python3 you need to use Distribute_ which
-provides the ``easy_install`` utility.
-
-
-py.test not found on Windows despite installation?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
-
-
-- **Windows**: If "easy_install" or "py.test" are not found
-  please see here for preparing your environment for running
-  command line tools: `Python for Windows`_.  You may alternatively
-  use an `ActivePython install`_ which makes command line tools
-  automatically available under Windows.
-
-.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
-
-.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
-
-- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``py.test`` will not work correctly.  You may install py.test on
-  CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run py.test for your tests to run in Jython.
+    If you don't find an answer here, checkout the :ref:`contact channels`
+    to get help.
 
 On naming, nosetests, licensing and magic XXX
 ------------------------------------------------
 
-Why the ``py.test`` naming, why not ``pytest``?
+Why a ``py.test`` instead of a ``pytest`` command?
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-XXX
-
-because of TAB-completion under Bash/Shells.  If you hit
-``py.<TAB>`` you'll get a list of available development
-tools that all share the ``py.`` prefix.  Another motivation
-was to unify the package ("py.test") and tool filename.
-
+Some historic, some practical reasons: ``py.test`` used to be part of 
+the ``py`` package which provided several developer utitilities,
+all starting with ``py.<TAB>``, providing nice TAB-completion. If
+you install ``pip install pycmd`` you get these tools from a separate
+package.  These days the command line tool could be ``pytest`` 
+but then many people have gotten used to the old name and there
+also is another tool with this same which would lead to some clashes.
 
 What's py.test's relation to ``nosetests``?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 py.test and nose_ share basic philosophy when it comes
-to running Python tests.  In fact,
-with py.test-1.1.0 it is ever easier to run many test suites
-that currently work with ``nosetests``.  nose_ was created
+to running Python tests.  In fact, you can run many tests
+written for unittest or nose with py.test.  nose_ was originally created
 as a clone of ``py.test`` when py.test was in the ``0.8`` release
-cycle so some of the newer features_ introduced with py.test-1.0
-and py.test-1.1 have no counterpart in nose_.
+cycle.
 
 .. _features: test/features.html
-.. _apipkg: http://pypi.python.org/pypi/apipkg
 
 
 What's this "magic" with py.test?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Around 2007 it was claimed that py.test was magic implementation
-wise XXX.  It has been refactored.
+Around 2007 (version ``0.8``) some several people claimed that py.test
+was using too much "magic".  It has been refactored a lot.  It is today
+probably one of the smallest, most universally runnable and most 
+customizable testing frameworks for Python.   It remains true 
+that ``py.test`` uses metaprogramming techniques, i.e. it views 
+test code similar to how compilers view programs, using a 
+somewhat abstract internal model.   
 
-* when an ``assert`` statement fails, py.test re-interprets the expression
-  to show intermediate values if a test fails.  If your expression
-  has side effects the intermediate values may not be the same, obfuscating
-  the initial error (this is also explained at the command line if it happens).
-  ``py.test --no-assert`` turns off assert re-intepretation.
-  Sidenote: it is good practise to avoid asserts with side effects.
+It's also true that the no-boilerplate testing is implemented by making
+use of the Python assert statement through "re-interpretation":
+When an ``assert`` statement fails, py.test re-interprets the expression
+to show intermediate values if a test fails.  If your expression
+has side effects the intermediate values may not be the same, obfuscating
+the initial error (this is also explained at the command line if it happens).
+``py.test --no-assert`` turns off assert re-intepretation.
+Sidenote: it is good practise to avoid asserts with side effects.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
@@ -92,10 +61,9 @@ function arguments, parametrized tests and setup
 
 .. _funcargs: test/funcargs.html
 
-Is using funcarg- versus xUnit-based setup a style question?
+Is using funcarg- versus xUnit setup a style question?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-XXX
 For simple applications and for people experienced with nose_ or 
 unittest-style test setup using `xUnit style setup`_
 feels natural.  For larger test suites, parametrized testing

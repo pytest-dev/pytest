@@ -1,0 +1,45 @@
+
+Test collection and discovery
+======================================================
+
+.. _`discovered`:
+
+Default filesystem test discovery
+-----------------------------------------------
+
+Test collection starts from paths specified at the command line or from 
+the current directory.  Tests are collected ahead of running the first test.
+(This used to be different in earlier versions of ``py.test`` where
+collection and running was interweaved which made test randomization
+and distributed testing harder).
+
+Collection nodes which have children are called "Collectors" and otherwise
+they are called "Items" or "test items".  Here is an example of such a
+tree::
+
+    example $ py.test --collectonly test_collectonly.py
+    <Directory 'example'>
+      <Module 'test_collectonly.py'>
+        <Function 'test_function'>
+        <Class 'TestClass'>
+          <Instance '()'>
+            <Function 'test_method'>
+            <Function 'test_anothermethod'>
+
+By default all directories not starting with a dot are traversed,
+looking for ``test_*.py`` and ``*_test.py`` files.  Those Python
+files are imported under their `package name`_.
+
+The Module collector looks for test functions
+and test classes and methods. Test functions and methods
+are prefixed ``test`` by default.  Test classes must
+start with a capitalized ``Test`` prefix.
+
+Customizing error messages
+-------------------------------------------------
+
+On test and collection nodes ``py.test`` will invoke
+the ``node.repr_failure(excinfo)`` function which
+you may override and make it return an error
+representation string of your choice.  It
+will be reported as a (red) string.

@@ -1,5 +1,8 @@
 py.test: no-boilerplate testing with Python
 ==============================================
+
+.. todolist::
+
    
 Welcome to ``py.test`` documentation:
 
@@ -8,7 +11,7 @@ Welcome to ``py.test`` documentation:
 
    overview
    apiref
-   customize
+   plugins
    examples
    talks
    develop

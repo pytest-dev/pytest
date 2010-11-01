@@ -247,7 +247,8 @@ class Config(object):
     basetemp = None
 
     def __init__(self, pluginmanager=None):
-        #: command line option values
+        #: command line option values, usually added via parser.addoption(...)
+        #: or parser.getgroup(...).addoption(...) calls
         self.option = CmdOptions()
         self._parser = Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
@@ -404,7 +405,7 @@ class Config(object):
             return self._getconftest(name, path, check=False)
 
     def getvalueorskip(self, name, path=None):
-        """ return getvalue(name) or call py.test.skip if no value exists. """
+        """ (deprecated) return getvalue(name) or call py.test.skip if no value exists. """
         try:
             val = self.getvalue(name, path)
             if val is None:

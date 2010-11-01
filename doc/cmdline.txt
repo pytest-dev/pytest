@@ -11,9 +11,7 @@ Getting help on version, option names, environment vars
 
     py.test --version   # shows where pytest was imported from
     py.test --funcargs  # show available builtin function arguments
-    py.test --help-config # show configuration values
-    
-    py.test -h | --help # show help
+    py.test -h | --help # show help on command line and config file options
 
 
 Stopping after the first (or N) failures

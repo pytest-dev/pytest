@@ -54,13 +54,13 @@ Similarly, the following methods are called around each method invocation::
 
     def setup_method(self, method):
         """ setup up any state tied to the execution of the given
-            method in a class.  setup_method is invoked for every
-            test method of a class.
+        method in a class.  setup_method is invoked for every
+        test method of a class.
         """
 
     def teardown_method(self, method):
         """ teardown any state that was previously setup
-            with a setup_method call.
+        with a setup_method call.
         """
 
 If you rather define test functions directly at module level
@@ -68,12 +68,13 @@ you can also use the following functions to implement fixtures::
 
     def setup_function(function):
         """ setup up any state tied to the execution of the given
-            function. Invoked for every test function in the module.
+        function. Invoked for every test function in the module.
         """
 
     def teardown_method(function):
         """ teardown any state that was previously setup
-            with a setup_function call.
+        with a setup_function call.
+        """
     
 Note that it possible that setup/teardown pairs are invoked multiple
 times per testing process.

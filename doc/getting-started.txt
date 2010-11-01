@@ -1,4 +1,4 @@
-Getting Started
+Installation and Getting Started
 ===================================
 
 .. _`easy_install`:
@@ -20,7 +20,7 @@ To check your installation has installed the correct version::
 If you get an error, checkout :ref:`installation issues`.
 
 
-Writing a simple test function with an assertion
+Our first test run
 ----------------------------------------------------------
 
 Let's create a small file with a test function testing a function
@@ -32,17 +32,17 @@ computes a certain value::
     def test_answer():
         assert func(3) == 5
 
-Now you can execute the test function::
+You can execute the test function::
 
     $ py.test test_sample.py
-    ========================= test session starts ==========================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev4
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
     test path 1: test_sample.py
     
     test_sample.py F
     
-    =============================== FAILURES ===============================
-    _____________________________ test_answer ______________________________
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
         def test_answer():
     >       assert func(3) == 5
@@ -50,23 +50,27 @@ Now you can execute the test function::
     E        +  where 4 = func(3)
     
     test_sample.py:4: AssertionError
-    ======================= 1 failed in 0.02 seconds =======================
+    ========================= 1 failed in 0.02 seconds =========================
 
-We got a failure because our little ``func(3)`` call did not return ``5``.
-A few notes on this little test invocation:
+We told py.test to run the ``test_sample.py`` file and it :ref:`discovered` the 
+``test_answer`` function because of the ``test_`` prefix.  We got a
+failure because our little ``func(3)`` call did not return ``5``.  
 
-* ``test_answer`` was identified as a test function because of the
-  ``test_`` prefix,
+.. note::
 
-*  we conveniently used the standard `assert statement`_ and the failure
-   report shows us the intermediate values.
+    You can simply use the `assert statement`_ for coding expectations because
+    intermediate values will be presented to you.  Or to put it bluntly,
+    there is no need to learn all `the JUnit legacy methods`_ for expressing
+    assertions.
+
+.. _`the JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
 
-Asserting that a certain exception is raised
+Asserting a certain exception is raised
 --------------------------------------------------------------
 
-If you want to assert a test raises a certain exception you can
+If you want to assert some code raises an exception you can
 use the ``raises`` helper::
 
     # content of test_sysexit.py
@@ -78,18 +82,49 @@ use the ``raises`` helper::
         with py.test.raises(SystemExit):
             f()
 
-Running it with::
+Running it with, this time in "quiet" reporting mode::
 
-    $ py.test test_sysexit.py
-    ========================= test session starts ==========================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev4
-    test path 1: test_sysexit.py
-    
-    test_sysexit.py .
-    
-    ======================= 1 passed in 0.01 seconds =======================
+    $ py.test -q test_sysexit.py
+    .
+    1 passed in 0.01 seconds
 
-.. For further ways to assert exceptions see the :pyfunc:`raises`
+.. todo:: For further ways to assert exceptions see the :pyfunc:`raises`
+
+Grouping multiple tests in a class
+--------------------------------------------------------------
+
+If you start to have more than a few tests it often makes sense
+to group tests logically, in classes and modules.  Let's put two
+tests in a class like this::
+
+    # content of test_class.py
+    class TestClass:
+        def test_one(self):
+            x = "this"
+            assert 'h' in x
+
+        def test_two(self):
+            x = "hello"
+            assert hasattr(x, 'check')
+
+The two tests will be discovered because of the default `automatic test 
+discovery`_.  There is no need to subclass anything.  If we now run
+the module we'll see one passed and one failed test::
+
+    $ py.test -q test_class.py
+    .F
+    ================================= FAILURES =================================
+    ____________________________ TestClass.test_two ____________________________
+    
+    self = <test_class.TestClass instance at 0x1732368>
+    
+        def test_two(self):
+            x = "hello"
+    >       assert hasattr(x, 'check')
+    E       assert hasattr('hello', 'check')
+    
+    test_class.py:8: AssertionError
+    1 failed, 1 passed in 0.02 seconds
 
 where to go from here
 -------------------------------------
@@ -99,6 +134,47 @@ Here are a few suggestions where to go next:
 * :ref:`cmdline` for command line invocation examples
 * :ref:`good practises` for virtualenv, test layout, genscript support
 * :ref:`apiref` for documentation and examples on writing Python tests
-* :ref:`examples` for more complex examples
+
+.. _`installation issues`:
+
+Installation issues
+------------------------------
+
+easy_install or pip not found?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Consult distribute_ to install the ``easy_install`` tool on your machine. 
+You may also use the original but somewhat older `setuptools`_ project
+although we generally recommend to use ``distribute`` because it contains
+more bug fixes and also works for Python3.
+
+For Python2 you can also consult pip_ for the popular ``pip`` tool.
+
+However, If you want to install on Python3 you need to use Distribute_ which
+provides the ``easy_install`` utility.
+
+
+py.test not found on Windows despite installation?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
+
+
+- **Windows**: If "easy_install" or "py.test" are not found
+  please see here for preparing your environment for running
+  command line tools: `Python for Windows`_.  You may alternatively
+  use an `ActivePython install`_ which makes command line tools
+  automatically available under Windows.
+
+.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
+
+.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
+
+- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
+  so ``py.test`` will not work correctly.  You may install py.test on
+  CPython and type ``py.test --genscript=mytest`` and then use
+  ``jython mytest`` to run py.test for your tests to run in Jython.
+
+ :ref:`examples` for more complex examples
 
 .. include:: links.inc
