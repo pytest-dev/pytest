@@ -164,7 +164,7 @@ class TestBootstrapping:
         assert pp.getplugin('hello') == a2
         pp.unregister(a1)
         assert not pp.isregistered(a1)
-        pp.unregister(a2)
+        pp.unregister(name="hello")
         assert not pp.isregistered(a2)
 
     def test_pm_ordering(self):

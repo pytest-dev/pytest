@@ -47,9 +47,11 @@ class PluginManager(object):
             self._plugins.insert(0, plugin)
         return True
 
-    def unregister(self, plugin):
-        self.hook.pytest_plugin_unregistered(plugin=plugin)
+    def unregister(self, plugin=None, name=None):
+        if plugin is None:
+            plugin = self.getplugin(name=name)
         self._plugins.remove(plugin)
+        self.hook.pytest_plugin_unregistered(plugin=plugin)
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
