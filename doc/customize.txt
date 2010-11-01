@@ -45,13 +45,13 @@ builtin configuration file options
 
         minversion = 2.1  # will fail if we run with pytest-2.0
 
-.. confval:: addargs = OPTS
+.. confval:: addopts = OPTS
 
    add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example: if you have this ini file content::
 
        [pytest]
-       addargs = --maxfail=2 -rf  # exit after 2 failures, report fail info
+       addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
    issuing ``py.test test_hello.py`` actually means::
 

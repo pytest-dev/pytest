@@ -475,8 +475,8 @@ def test_getreportopt():
     config.option.reportchars = "sfx"
     assert getreportopt(config) == "sfx"
 
-def test_terminalreporter_reportopt_addargs(testdir):
-    testdir.makeini("[pytest]\naddargs=-rs")
+def test_terminalreporter_reportopt_addopts(testdir):
+    testdir.makeini("[pytest]\naddopts=-rs")
     p = testdir.makepyfile("""
         def pytest_funcarg__tr(request):
             tr = request.config.pluginmanager.getplugin("terminalreporter")

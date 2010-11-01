@@ -11,7 +11,7 @@ def pytest_cmdline_parse(pluginmanager, args):
     return config
 
 def pytest_addoption(parser):
-    parser.addini('addargs', 'default command line arguments')
+    parser.addini('addopts', 'default command line arguments')
     parser.addini('minversion', 'minimally required pytest version')
 
 class Parser:
@@ -292,10 +292,11 @@ class Config(object):
             sys.stderr.write(err)
             raise
 
-    def _preparse(self, args):
+    def _preparse(self, args, addopts=True):
+        self.inicfg = {}
         self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
-        if self.inicfg:
-            newargs = self.inicfg.get("addargs", None)
+        if self.inicfg and addopts:
+            newargs = self.inicfg.get("addopts", None)
             if newargs:
                 args[:] = py.std.shlex.split(newargs) + args
         self._checkversion()

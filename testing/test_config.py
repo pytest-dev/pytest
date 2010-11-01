@@ -19,11 +19,15 @@ class TestParseIni:
     def test_append_parse_args(self, tmpdir):
         tmpdir.join("setup.cfg").write(py.code.Source("""
             [pytest]
-            addargs = --verbose
+            addopts = --verbose
         """))
         config = Config()
         config.parse([tmpdir])
         assert config.option.verbose
+        config = Config()
+        args = [tmpdir,]
+        config._preparse(args, addopts=False)
+        assert len(args) == 1
 
     def test_tox_ini_wrong_version(self, testdir):
         p = testdir.makefile('.ini', tox="""
