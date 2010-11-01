@@ -383,7 +383,8 @@ class Function(FunctionMixin, pytest.collect.Item):
             config=config, collection=collection)
         self._args = args
         if self._isyieldedfunction():
-            assert not callspec, "yielded functions (deprecated) cannot have funcargs"
+            assert not callspec, (
+                "yielded functions (deprecated) cannot have funcargs")
         else:
             if callspec is not None:
                 self.funcargs = callspec.funcargs or {}

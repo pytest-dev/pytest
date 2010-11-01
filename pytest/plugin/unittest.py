@@ -19,51 +19,31 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 class UnitTestCase(py.test.collect.Class):
     def collect(self):
-        return [UnitTestCaseInstance("()", self)]
-
-    def setup(self):
-        pass
-
-    def teardown(self):
-        pass
-
-_dummy = object()
-class UnitTestCaseInstance(py.test.collect.Instance):
-    def collect(self):
         loader = py.std.unittest.TestLoader()
-        names = loader.getTestCaseNames(self.obj.__class__)
-        l = []
-        for name in names:
-            callobj = getattr(self.obj, name)
-            if py.builtin.callable(callobj):
-                l.append(UnitTestFunction(name, parent=self))
-        return l
-
-    def _getobj(self):
-        x = self.parent.obj
-        return self.parent.obj(methodName='run')
-
-class UnitTestFunction(py.test.collect.Function):
-    def __init__(self, name, parent, args=(), obj=_dummy, sort_value=None):
-        super(UnitTestFunction, self).__init__(name, parent)
-        self._args = args
-        if obj is not _dummy:
-            self._obj = obj
-        self._sort_value = sort_value
-        if hasattr(self.parent, 'newinstance'):
-            self.parent.newinstance()
-            self.obj = self._getobj()
-
-    def runtest(self):
-        target = self.obj
-        args = self._args
-        target(*args)
+        for name in loader.getTestCaseNames(self.obj):
+            yield TestCaseFunction(name, parent=self)
 
     def setup(self):
-        instance = py.builtin._getimself(self.obj)
-        instance.setUp()
+        meth = getattr(self.obj, 'setUpClass', None)
+        if meth is not None:
+            meth()
 
     def teardown(self):
-        instance = py.builtin._getimself(self.obj)
-        instance.tearDown()
+        meth = getattr(self.obj, 'tearDownClass', None)
+        if meth is not None:
+            meth()
 
+class TestCaseFunction(py.test.collect.Function):
+    def startTest(self, testcase):
+        pass
+    def addError(self, testcase, rawexcinfo):
+        py.builtin._reraise(*rawexcinfo)
+    def addFailure(self, testcase, rawexcinfo):
+        py.builtin._reraise(*rawexcinfo)
+    def addSuccess(self, testcase):
+        pass
+    def stopTest(self, testcase):
+        pass
+    def runtest(self):
+        testcase = self.parent.obj(self.name)
+        testcase(result=self)

@@ -2,6 +2,8 @@ Changes between 1.3.4 and 2.0.0dev0
 ----------------------------------------------
 
 - pytest-2.0 is now its own package and depends on pylib-2.0
+- try harder to run unittest test suites in a more compatible manner
+  by deferring setup/teardown semantics to the unittest package. 
 - introduce a new way to set config options via ini-style files,
   by default setup.cfg and tox.ini files are searched.  The old
   ways (certain environment variables, dynamic conftest.py reading 

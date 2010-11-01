@@ -81,3 +81,25 @@ def test_module_level_pytestmark(testdir):
     """)
     reprec = testdir.inline_run(testpath, "-s")
     reprec.assertoutcome(skipped=1)
+
+def test_class_setup(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        import py
+        class MyTestCase(unittest.TestCase):
+            x = 0
+            @classmethod
+            def setUpClass(cls):
+                cls.x += 1
+            def test_func1(self):
+                assert self.x == 1
+            def test_func2(self):
+                assert self.x == 1
+            @classmethod
+            def tearDownClass(cls):
+                cls.x -= 1
+        def test_teareddown():
+            assert MyTestCase.x == 0
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=3)
