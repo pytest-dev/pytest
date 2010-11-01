@@ -275,6 +275,7 @@ class TmpTestdir:
         p.ensure("__init__.py")
         return p
 
+    Collection = Collection
     def getnode(self, config, arg):
         collection = Collection(config)
         return collection.getbyid(collection._normalizearg(arg))[0]

@@ -5,7 +5,10 @@ class TestModule:
     def test_module_file_not_found(self, testdir):
         tmpdir = testdir.tmpdir
         fn = tmpdir.join('nada','no')
-        col = py.test.collect.Module(fn, config=testdir.Config())
+        config=testdir.Config()
+        config.args = ["hello"]
+        col = py.test.collect.Module(fn, config=config,
+            collection=testdir.Collection(config))
         col.config = testdir.parseconfig(tmpdir)
         py.test.raises(py.error.ENOENT, col.collect)
 
@@ -212,14 +215,15 @@ class TestFunction:
 
     def test_function_equality(self, testdir, tmpdir):
         config = testdir.reparseconfig()
+        collection = testdir.Collection(config)
         f1 = py.test.collect.Function(name="name", config=config,
-                                      args=(1,), callobj=isinstance)
+                args=(1,), callobj=isinstance, collection=collection)
         f2 = py.test.collect.Function(name="name",config=config,
-                                      args=(1,), callobj=py.builtin.callable)
+                args=(1,), callobj=py.builtin.callable, collection=collection)
         assert not f1 == f2
         assert f1 != f2
         f3 = py.test.collect.Function(name="name", config=config,
-                                      args=(1,2), callobj=py.builtin.callable)
+                args=(1,2), callobj=py.builtin.callable, collection=collection)
         assert not f3 == f2
         assert f3 != f2
 
@@ -227,7 +231,7 @@ class TestFunction:
         assert f3 != f1
 
         f1_b = py.test.collect.Function(name="name", config=config,
-                                      args=(1,), callobj=isinstance)
+              args=(1,), callobj=isinstance, collection=collection)
         assert f1 == f1_b
         assert not f1 != f1_b
 

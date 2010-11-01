@@ -324,7 +324,7 @@ class Node(object):
         self.config = config or parent.config
 
         #: the collection this node is part of.
-        self.collection = collection or getattr(parent, 'collection', None)
+        self.collection = collection or parent.collection
         
         #: the file where this item is contained/collected from.
         self.fspath = getattr(parent, 'fspath', None)
