@@ -424,7 +424,6 @@ class TestTerminalFunctional:
             "*test_verbose_reporting.py:10: test_gen*FAIL*",
         ])
         assert result.ret == 1
-        py.test.xfail("fix dist-testing")
         pytestconfig.pluginmanager.skipifmissing("xdist")
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([
