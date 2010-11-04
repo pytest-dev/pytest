@@ -44,8 +44,11 @@ def showhelp(config):
     tw.line("setup.cfg or tox.ini options to be put into [pytest] section:")
     tw.line()
 
-    for name, (help, type) in sorted(config._parser._inidict.items()):
-        line = "   %-15s  %s" %(name, help)
+    for name, (help, type, default) in sorted(config._parser._inidict.items()):
+        if type is None:
+            type = "string"
+        spec = "%s (%s)" % (name, type)
+        line = "  %-24s %s" %(spec, help)
         tw.line(line[:tw.fullwidth])
 
     tw.line() ; tw.line()
@@ -68,7 +71,7 @@ conftest_options = [
 def pytest_report_header(config):
     lines = []
     if config.option.debug or config.option.traceconfig:
-        lines.append("using: pytest-%s pylib-%s" % 
+        lines.append("using: pytest-%s pylib-%s" %
             (pytest.__version__,py.__version__))
             
     if config.option.traceconfig:

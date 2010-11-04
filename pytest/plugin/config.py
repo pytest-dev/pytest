@@ -10,10 +10,6 @@ def pytest_cmdline_parse(pluginmanager, args):
     config.parse(args)
     return config
 
-def pytest_addoption(parser):
-    parser.addini('addopts', 'default command line arguments')
-    parser.addini('minversion', 'minimally required pytest version')
-
 class Parser:
     """ Parser for command line arguments. """
 
@@ -72,9 +68,10 @@ class Parser:
             setattr(option, name, value)
         return args
 
-    def addini(self, name, description, type=None):
+    def addini(self, name, help, type=None, default=None):
         """ add an ini-file option with the given name and description. """
-        self._inidict[name] = (description, type)
+        assert type in (None, "pathlist", "args")
+        self._inidict[name] = (help, type, default)
 
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
@@ -293,13 +290,15 @@ class Config(object):
             sys.stderr.write(err)
             raise
 
-    def _preparse(self, args, addopts=True):
-        self.inicfg = {}
+    def _initini(self, args):
         self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
-        if self.inicfg and addopts:
-            newargs = self.inicfg.get("addopts", None)
-            if newargs:
-                args[:] = py.std.shlex.split(newargs) + args
+        self._parser.addini('addopts', 'extra command line options', 'args')
+        self._parser.addini('minversion', 'minimally required pytest version')
+
+    def _preparse(self, args, addopts=True):
+        self._initini(args)
+        if addopts:
+            args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
@@ -358,20 +357,25 @@ class Config(object):
         specified name hasn't been registered through a prior ``parse.addini``
         call (usually from a plugin), a ValueError is raised. """
         try:
-            description, type = self._parser._inidict[name]
+            description, type, default = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: %r" %(name,))
         try:
             value = self.inicfg[name]
         except KeyError:
-            return # None indicates nothing found
+            if default is not None:
+                return default
+            return {'pathlist': [], 'args': [], None: ''}.get(type)
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
             l = []
             for relpath in py.std.shlex.split(value):
                 l.append(dp.join(relpath, abs=True))
             return l
+        elif type == "args":
+            return py.std.shlex.split(value)
         else:
+            assert type is None
             return value
 
     def _getconftest_pathlist(self, name, path=None):

@@ -152,6 +152,23 @@ class TestConfigAPI:
         assert l[1] == p.dirpath('world/sub.py')
         py.test.raises(ValueError, config.getini, 'other')
 
+    def test_addini_args(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("args", "new args", type="args")
+                parser.addini("a2", "", "args", default="1 2 3".split())
+        """)
+        p = testdir.makeini("""
+            [pytest]
+            args=123 "123 hello" "this"
+        """)
+        config = testdir.parseconfig()
+        l = config.getini("args")
+        assert len(l) == 3
+        assert l == ["123", "123 hello", "this"]
+        l = config.getini("a2")
+        assert l == list("123")
+
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
         reprec = testdir.inline_run(*opts)

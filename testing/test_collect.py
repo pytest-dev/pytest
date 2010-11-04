@@ -99,14 +99,25 @@ class TestCollectFS:
         tmpdir.ensure(".whatever", 'test_notfound.py')
         tmpdir.ensure(".bzr", 'test_notfound.py')
         tmpdir.ensure("normal", 'test_found.py')
-        tmpdir.ensure('test_found.py')
 
-        col = testdir.getnode(testdir.parseconfig(tmpdir), tmpdir)
-        items = col.collect()
-        names = [x.name for x in items]
-        assert len(items) == 2
-        assert 'normal' in names
-        assert 'test_found.py' in names
+        result = testdir.runpytest("--collectonly")
+        s = result.stdout.str()
+        assert "test_notfound" not in s
+        assert "test_found" in s
+
+    def test_custom_norecursedirs(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            norecursedirs = mydir xyz*
+        """)
+        tmpdir = testdir.tmpdir
+        tmpdir.ensure("mydir", "test_hello.py").write("def test_1(): pass")
+        tmpdir.ensure("xyz123", "test_2.py").write("def test_2(): 0/0")
+        tmpdir.ensure("xy", "test_ok.py").write("def test_3(): pass")
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
+        rec = testdir.inline_run("xyz123/test_2.py")
+        rec.assertoutcome(failed=1)
 
     def test_found_certain_testfiles(self, testdir):
         p1 = testdir.makepyfile(test_found = "pass", found_test="pass")

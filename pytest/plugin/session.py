@@ -16,7 +16,8 @@ EXIT_INTERNALERROR = 3
 EXIT_NOHOSTS = 4
 
 def pytest_addoption(parser):
-
+    parser.addini("norecursedirs", "directory patterns to avoid for recursion",
+        type="args", default=('.*', 'CVS', '_darcs', '{arch}'))
     group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst', action="store_true", default=False,
                dest="exitfirst",
@@ -107,13 +108,15 @@ def pytest_ignore_collect(path, config):
     return path in ignore_paths
 
 def pytest_collect_directory(path, parent):
-    if not parent.recfilter(path): # by default special ".cvs", ...
-        # check if cmdline specified this dir or a subdir directly
-        for arg in parent.collection._argfspaths:
-            if path == arg or arg.relto(path):
-                break
-        else:
-            return
+    # check if cmdline specified this dir or a subdir directly
+    for arg in parent.collection._argfspaths:
+        if path == arg or arg.relto(path):
+            break
+    else:
+        patterns = parent.config.getini("norecursedirs")
+        for pat in patterns or []:
+            if path.check(fnmatch=pat):
+                return
     return Directory(path, parent=parent)
 
 class Session(object):
@@ -465,10 +468,6 @@ class File(FSCollector):
     """ base class for collecting tests from a file. """
 
 class Directory(FSCollector):
-    def recfilter(self, path):
-        if path.check(dir=1, dotfile=0):
-            return path.basename not in ('CVS', '_darcs', '{arch}')
-
     def collect(self):
         l = []
         for path in self.fspath.listdir(sort=True):
