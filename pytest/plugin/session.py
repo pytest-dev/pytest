@@ -116,9 +116,6 @@ def pytest_collect_directory(path, parent):
             return
     return Directory(path, parent=parent)
 
-def pytest_report_iteminfo(item):
-    return item.reportinfo()
-
 class Session(object):
     class Interrupted(KeyboardInterrupt):
         """ signals an interrupted test run. """

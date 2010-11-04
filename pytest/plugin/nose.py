@@ -49,19 +49,6 @@ def pytest_runtest_makereport(__multicall__, item, call):
             call2 = call.__class__(lambda: py.test.skip(str(call.excinfo.value)), call.when)
             call.excinfo = call2.excinfo
 
-def pytest_report_iteminfo(item):
-    # nose 0.11.1 uses decorators for "raises" and other helpers.
-    # for reporting progress by filename we fish for the filename
-    if isinstance(item, py.test.collect.Function):
-        obj = item.obj
-        if hasattr(obj, 'compat_co_firstlineno'):
-            fn = sys.modules[obj.__module__].__file__
-            if fn.endswith(".pyc"):
-                fn = fn[:-1]
-            #assert 0
-            #fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
-            lineno = obj.compat_co_firstlineno
-            return py.path.local(fn), lineno, obj.__module__
 
 def pytest_runtest_setup(item):
     if isinstance(item, (py.test.collect.Function)):

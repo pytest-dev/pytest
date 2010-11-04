@@ -1,5 +1,4 @@
 import py
-from pytest.plugin.session import pytest_report_iteminfo
 
 class SessionTests:
     def test_basic_testitem_events(self, testdir):
@@ -225,12 +224,3 @@ def test_exclude(testdir):
     result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
-
-def test_pytest_report_iteminfo():
-    class FakeItem(object):
-
-        def reportinfo(self):
-            return "-reportinfo-"
-
-    res = pytest_report_iteminfo(FakeItem())
-    assert res == "-reportinfo-"

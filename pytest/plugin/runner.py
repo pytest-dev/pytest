@@ -41,7 +41,7 @@ def getitemnodeinfo(item):
     try:
         return item._nodeinfo
     except AttributeError:
-        location = item.ihook.pytest_report_iteminfo(item=item)
+        location = item.reportinfo()
         location = (str(location[0]), location[1], str(location[2]))
         nodenames = tuple(item.listnames())
         nodeid = item.collection.getid(item)

@@ -20,7 +20,7 @@ def pytest_cmdline_parse(pluginmanager, args):
 pytest_cmdline_parse.firstresult = True
 
 def pytest_addoption(parser):
-    """add optparse-style options and ini-style config values via calls 
+    """add optparse-style options and ini-style config values via calls
     to ``parser.addoption`` and ``parser.addini(...)``.
     """
 
@@ -193,14 +193,6 @@ pytest_report_teststatus.firstresult = True
 
 def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting. """
-
-def pytest_report_iteminfo(item):
-    """ return (fspath, lineno, domainpath) location info for the item.
-        the information is used for result display and to sort tests.
-        fspath,lineno: file and linenumber of source of item definition.
-        domainpath: custom id - e.g. for python: dotted import address
-    """
-pytest_report_iteminfo.firstresult = True
 
 # -------------------------------------------------------------------------
 # doctest hooks

@@ -123,8 +123,19 @@ class PyobjMixin(object):
         return self._fslineno
 
     def reportinfo(self):
-        fspath, lineno = self._getfslineno()
-        modpath = self.getmodpath()
+        obj = self.obj
+        if hasattr(obj, 'compat_co_firstlineno'):
+            # nose compatibility
+            fspath = sys.modules[obj.__module__].__file__
+            if fspath.endswith(".pyc"):
+                fspath = fspath[:-1]
+            #assert 0
+            #fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
+            lineno = obj.compat_co_firstlineno
+            modpath = obj.__module__
+        else:
+            fspath, lineno = self._getfslineno()
+            modpath = self.getmodpath()
         return fspath, lineno, modpath
 
 class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
@@ -501,16 +512,16 @@ class Metafunc:
         :arg funcargs: argument keyword dictionary used when invoking
             the test function.
         
-        :arg id: used for reporting and identification purposes.  If you 
+        :arg id: used for reporting and identification purposes.  If you
             don't supply an `id` the length of the currently
             list of calls to the test function will be used.
 
         :arg param: will be exposed to a later funcarg factory invocation
             through the ``request.param`` attribute.  Setting it (instead of
             directly providing a ``funcargs`` ditionary) is called
-            *indirect parametrization*.  Indirect parametrization is 
-            preferable if test values are expensive to setup or can 
-            only be created after certain fixtures or test-run related 
+            *indirect parametrization*.  Indirect parametrization is
+            preferable if test values are expensive to setup or can
+            only be created after certain fixtures or test-run related
             initialization code has been run.
         """
         assert funcargs is None or isinstance(funcargs, dict)
@@ -593,7 +604,7 @@ class FuncargRequest:
     def applymarker(self, marker):
         """ apply a marker to a single test function invocation.
         This method is useful if you don't want to have a keyword/marker
-        on all function invocations. 
+        on all function invocations.
 
         :arg marker: a :py:class:`pytest.plugin.mark.MarkDecorator` object
             created by a call to ``py.test.mark.NAME(...)``.
