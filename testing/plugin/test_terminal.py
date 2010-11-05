@@ -511,20 +511,28 @@ def test_tbstyle_short(testdir):
     assert 'x = 0' in s
     assert 'assert x' in s
 
-def test_trace_reporting(testdir):
+def test_traceconfig(testdir, monkeypatch):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines([
         "*active plugins*"
     ])
     assert result.ret == 0
 
-def test_trace_reporting(testdir):
-    result = testdir.runpytest("--traceconfig")
-    result.stdout.fnmatch_lines([
-        "*active plugins*"
+def test_debug(testdir, monkeypatch):
+    result = testdir.runpytest("--debug")
+    result.stderr.fnmatch_lines([
+        "*registered*session*",
     ])
     assert result.ret == 0
 
+def test_PYTEST_DEBUG(testdir, monkeypatch):
+    monkeypatch.setenv("PYTEST_DEBUG", "1")
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stderr.fnmatch_lines([
+        "*registered*PluginManager*"
+    ])
+    
 
 class TestGenericReporting:
     """ this test class can be subclassed with a different option

@@ -8,6 +8,8 @@ import pytest
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
+    if config.option.debug:
+        config.trace.root.setwriter(sys.stderr.write)
     return config
 
 class Parser:
@@ -253,6 +255,7 @@ class Config(object):
         )
         #: a pluginmanager instance
         self.pluginmanager = pluginmanager or PluginManager(load=True)
+        self.trace = self.pluginmanager.trace.get("config")
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
 
@@ -271,10 +274,6 @@ class Config(object):
                         if x not in allconftests]
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
-
-    def trace(self, msg):
-        if getattr(self.option, 'traceconfig', None):
-            self.hook.pytest_trace(category="config", msg=msg)
 
     def _setinitialconftest(self, args):
         # capture output during conftest init (#issue93)

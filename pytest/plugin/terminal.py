@@ -36,7 +36,7 @@ def pytest_configure(config):
     if config.option.collectonly:
         reporter = CollectonlyReporter(config)
     else:
-        # we try hard to make printing resilient against 
+        # we try hard to make printing resilient against
         # later changes on FD level.
         stdout = py.std.sys.stdout
         if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
@@ -50,6 +50,11 @@ def pytest_configure(config):
                 config._toclose = stdout
         reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
+    if config.option.debug or config.option.traceconfig:
+        def mywriter(tags, args):
+            msg = " ".join(map(str, args))
+            reporter.write_line("[traceconfig] " + msg)
+        config.trace.root.setprocessor("pytest:config", mywriter)
 
 def pytest_unconfigure(config):
     if hasattr(config, '_toclose'):
@@ -151,11 +156,6 @@ class TerminalReporter:
             #     which unfortunately captures our output here
             #     which garbles our output if we use self.write_line
             self.write_line(msg)
-
-    def pytest_trace(self, category, msg):
-        if self.config.option.debug or \
-           self.config.option.traceconfig and category.find("config") != -1:
-            self.write_line("[%s] %s" %(category, msg))
 
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).extend(items)

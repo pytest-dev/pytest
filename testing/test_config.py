@@ -75,6 +75,14 @@ class TestConfigTmpdir:
 
 class TestConfigAPI:
 
+    def test_config_trace(self, testdir):
+        config = testdir.Config()
+        l = []
+        config.trace.root.setwriter(l.append)
+        config.trace("hello")
+        assert len(l) == 1
+        assert l[0] == "[pytest:config] hello\n"
+
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")
         testdir.mkdir("sub").join("conftest.py").write("x=2 ; y = 3")

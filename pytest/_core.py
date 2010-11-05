@@ -13,11 +13,53 @@ default_plugins = (
 
 IMPORTPREFIX = "pytest_"
 
+class TagTracer:
+    def __init__(self):
+        self._tag2proc = {}
+        self.writer = None
+
+    def get(self, name):
+        return TagTracerSub(self, (name,))
+
+    def processmessage(self, tags, args):
+        if self.writer is not None:
+            prefix = ":".join(tags)
+            content = " ".join(map(str, args))
+            self.writer("[%s] %s\n" %(prefix, content))
+        try:
+            self._tag2proc[tags](tags, args)
+        except KeyError:
+            pass
+
+    def setwriter(self, writer):
+        self.writer = writer
+
+    def setprocessor(self, tags, processor):
+        if isinstance(tags, str):
+            tags = tuple(tags.split(":"))
+        else:
+            assert isinstance(tags, tuple)
+        self._tag2proc[tags] = processor
+
+class TagTracerSub:
+    def __init__(self, root, tags):
+        self.root = root
+        self.tags = tags
+    def __call__(self, *args):
+        self.root.processmessage(self.tags, args)
+    def setmyprocessor(self, processor):
+        self.root.setprocessor(self.tags, processor)
+    def get(self, name):
+        return self.__class__(self.root, self.tags + (name,))
+
 class PluginManager(object):
     def __init__(self, load=False):
         self._name2plugin = {}
         self._plugins = []
         self._hints = []
+        self.trace = TagTracer().get("pytest")
+        if os.environ.get('PYTEST_DEBUG'):
+            self.trace.root.setwriter(sys.stderr.write)
         self.hook = HookRelay([hookspec], pm=self)
         self.register(self)
         if load:
@@ -41,6 +83,7 @@ class PluginManager(object):
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
+        self.trace("registered", plugin)
         if not prepend:
             self._plugins.append(plugin)
         else:

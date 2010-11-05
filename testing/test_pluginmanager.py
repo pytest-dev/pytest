@@ -266,6 +266,19 @@ class TestBootstrapping:
         l = list(plugins.listattr('x'))
         assert l == [41, 42, 43]
 
+    def test_register_trace(self):
+        pm = PluginManager()
+        class api1:
+            x = 41
+        l = []
+        pm.trace.setmyprocessor(lambda kw, args: l.append((kw, args)))
+        p = api1()
+        pm.register(p)
+        assert len(l) == 1
+        kw, args = l[0]
+        assert args[0] == "registered"
+        assert args[1] == p
+
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):
@@ -470,7 +483,7 @@ class TestMultiCall:
         reslist = MultiCall([f], dict(x=23, z=2)).execute()
         assert reslist == [25]
 
-    def test_keywords_call_error(self):
+    def test_tags_call_error(self):
         multicall = MultiCall([lambda x: x], {})
         py.test.raises(TypeError, "multicall.execute()")
 
@@ -537,3 +550,55 @@ class TestHookRelay:
         res = mcm.hello(arg=3)
         assert res == 4
 
+class TestTracer:
+    def test_simple(self):
+        from pytest._core import TagTracer
+        rootlogger = TagTracer()
+        log = rootlogger.get("pytest")
+        log("hello")
+        l = []
+        rootlogger.setwriter(l.append)
+        log("world")
+        assert len(l) == 1
+        assert l[0] == "[pytest] world\n"
+        sublog = log.get("collection")
+        sublog("hello")
+        assert l[1] == "[pytest:collection] hello\n"
+
+    def test_setprocessor(self):
+        from pytest._core import TagTracer
+        rootlogger = TagTracer()
+        log = rootlogger.get("1")
+        log2 = log.get("2")
+        assert log2.tags  == tuple("12")
+        l = []
+        rootlogger.setprocessor(tuple("12"), lambda *args: l.append(args))
+        log("not seen")
+        log2("seen")
+        assert len(l) == 1
+        tags, args = l[0]
+        assert "1" in tags
+        assert "2" in tags
+        assert args == ("seen",)
+        l2 = []
+        rootlogger.setprocessor("1:2", lambda *args: l2.append(args))
+        log2("seen")
+        tags, args = l2[0]
+        assert args == ("seen",)
+        
+
+    def test_setmyprocessor(self):
+        from pytest._core import TagTracer
+        rootlogger = TagTracer()
+        log = rootlogger.get("1")
+        log2 = log.get("2")
+        l = []
+        log2.setmyprocessor(lambda *args: l.append(args))
+        log("not seen")
+        assert not l
+        log2(42)
+        assert len(l) == 1
+        tags, args = l[0]
+        assert "1" in tags
+        assert "2" in tags
+        assert args == (42,)
