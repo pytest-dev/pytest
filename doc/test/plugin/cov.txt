@@ -35,7 +35,7 @@ However easy_install does not provide an uninstall facility.
 
 .. IMPORTANT::
 
-    Ensure that you manually delete the init_cov_core.pth file in your site-packages directory.
+    Ensure that you manually delete the init_covmain.pth file in your site-packages directory.
 
     This file starts coverage collection of subprocesses if appropriate during site initialisation
     at python startup.

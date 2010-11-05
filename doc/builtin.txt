@@ -1,7 +1,19 @@
 
-pytest builtin helpers
+py.test builtin helpers
 ================================================
 
+builtin py.test.* helpers
+-----------------------------------------------------
+
+You can always use an interactive Python prompt and type::
+
+    import pytest
+    help(pytest)
+
+to get an overview on available globally available helpers.
+
+.. automodule:: pytest
+    :members:
 
 builtin function arguments
 -----------------------------------------------------
@@ -53,18 +65,4 @@ You can ask for available builtin or project-custom
 
         * ``pop(category=None)``: return last warning matching the category.
         * ``clear()``: clear list of warnings
-
-
-builtin py.test.* helpers
------------------------------------------------------
-
-You can always use an interactive Python prompt and type::
-
-    import pytest
-    help(pytest)
-
-to get an overview on available globally available helpers.
-
-.. automodule:: pytest
-    :members:
 

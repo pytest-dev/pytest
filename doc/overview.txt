@@ -7,7 +7,7 @@ Overview and Introduction
 
    features.txt
    getting-started.txt
-   cmdline.txt
+   usage.txt
    goodpractises.txt
    faq.txt
 

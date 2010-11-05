@@ -1,4 +1,4 @@
-import sys, py
+import sys, py, pytest
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
@@ -81,36 +81,6 @@ class TestGeneralUsage:
             "*ERROR: can't collect:*%s" %(p2.basename,)
         ])
 
-
-    def test_earlyinit(self, testdir):
-        p = testdir.makepyfile("""
-            import py
-            assert hasattr(py.test, 'mark')
-        """)
-        result = testdir.runpython(p)
-        assert result.ret == 0
-
-    def test_pydoc(self, testdir):
-        result = testdir.runpython_c("import py;help(py.test)")
-        assert result.ret == 0
-        s = result.stdout.str()
-        assert 'MarkGenerator' in s
-
-    def test_double_pytestcmdline(self, testdir):
-        p = testdir.makepyfile(run="""
-            import py
-            py.test.cmdline.main()
-            py.test.cmdline.main()
-        """)
-        testdir.makepyfile("""
-            def test_hello():
-                pass
-        """)
-        result = testdir.runpython(p)
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-            "*1 passed*",
-        ])
 
 
     @py.test.mark.xfail
@@ -225,19 +195,6 @@ class TestGeneralUsage:
             "*1 pass*",
         ])
 
-
-    @py.test.mark.skipif("sys.version_info < (2,5)")
-    def test_python_minus_m_invocation_ok(self, testdir):
-        p1 = testdir.makepyfile("def test_hello(): pass")
-        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
-        assert res.ret == 0
-
-    @py.test.mark.skipif("sys.version_info < (2,5)")
-    def test_python_minus_m_invocation_fail(self, testdir):
-        p1 = testdir.makepyfile("def test_fail(): 0/0")
-        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
-        assert res.ret == 1
-
     def test_skip_on_generated_funcarg_id(self, testdir):
         testdir.makeconftest("""
             import py
@@ -253,3 +210,83 @@ class TestGeneralUsage:
         res = testdir.runpytest(p)
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
+
+class TestInvocationVariants:
+    def test_earlyinit(self, testdir):
+        p = testdir.makepyfile("""
+            import py
+            assert hasattr(py.test, 'mark')
+        """)
+        result = testdir.runpython(p)
+        assert result.ret == 0
+
+    def test_pydoc(self, testdir):
+        result = testdir.runpython_c("import py;help(py.test)")
+        assert result.ret == 0
+        s = result.stdout.str()
+        assert 'MarkGenerator' in s
+
+    def test_double_pytestcmdline(self, testdir):
+        p = testdir.makepyfile(run="""
+            import py
+            py.test.cmdline.main()
+            py.test.cmdline.main()
+        """)
+        testdir.makepyfile("""
+            def test_hello():
+                pass
+        """)
+        result = testdir.runpython(p)
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+            "*1 passed*",
+        ])
+
+    @py.test.mark.skipif("sys.version_info < (2,5)")
+    def test_python_minus_m_invocation_ok(self, testdir):
+        p1 = testdir.makepyfile("def test_hello(): pass")
+        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
+        assert res.ret == 0
+
+    @py.test.mark.skipif("sys.version_info < (2,5)")
+    def test_python_minus_m_invocation_fail(self, testdir):
+        p1 = testdir.makepyfile("def test_fail(): 0/0")
+        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
+        assert res.ret == 1
+
+    def test_python_pytest_main(self, testdir):
+        p1 = testdir.makepyfile("def test_pass(): pass")
+        res = testdir.run(py.std.sys.executable, "-m", "pytest.main", str(p1))
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    @py.test.mark.skipif("sys.version_info < (2,7)")
+    def test_python_pytest_package(self, testdir):
+        p1 = testdir.makepyfile("def test_pass(): pass")
+        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_equivalence_pytest_pytest(self):
+        assert pytest.main == py.test.cmdline.main
+
+    def test_invoke_with_string(self, capsys):
+        retcode = pytest.main("-h")
+        assert not retcode
+        out, err = capsys.readouterr()
+        assert "--help" in out
+
+    def test_invoke_with_path(self, testdir, capsys):
+        retcode = testdir.pytestmain(testdir.tmpdir)
+        assert not retcode
+        out, err = capsys.readouterr()
+        
+    def test_invoke_plugin_api(self, capsys):
+        class MyPlugin:
+            def pytest_addoption(self, parser):
+                parser.addoption("--myopt")
+            
+        pytest.main(["-h"], plugins=[MyPlugin()])
+        out, err = capsys.readouterr()
+        assert "--myopt" in out
+

@@ -76,16 +76,21 @@ You can always run your tests by pointing to it::
     ...
 
 .. _`package name`:
- 
-.. note:: 
+
+.. note::
 
     Test modules are imported under their fully qualified name as follows:
 
-    * ``basedir`` = first upward directory not containing an ``__init__.py``
+    * find ``basedir`` -- this is the first "upward" directory not
+      containing an ``__init__.py``
 
-    * perform ``sys.path.insert(0, basedir)``.
+    * perform ``sys.path.insert(0, basedir)`` to make the fully
+      qualified test module path importable.
 
-    * ``import path.to.test_module``
+    * ``import path.to.test_module`` where the path is determined
+      by converting path separators into "." files.  This means
+      you must follow the convention of having directory and file
+      names map to the import names.
 
 .. _standalone:
 .. _`genscript method`:
@@ -94,7 +99,7 @@ Generating a py.test standalone Script
 -------------------------------------------
 
 If you are a maintainer or application developer and want others
-to easily run tests you can generate a completely standalone "py.test" 
+to easily run tests you can generate a completely standalone "py.test"
 script::
 
     py.test --genscript=runtests.py

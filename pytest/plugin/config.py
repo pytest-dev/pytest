@@ -1,7 +1,7 @@
 
 import py
 import sys, os
-from pytest._core import PluginManager
+from pytest.main import PluginManager
 import pytest
 
 

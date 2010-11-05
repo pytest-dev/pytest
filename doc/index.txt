@@ -3,10 +3,14 @@ py.test: no-boilerplate testing with Python
 
 .. todolist::
 
-   
+.. note::
+    version 2.0 introduces ``pytest`` as the main Python import name
+    but for historic reasons ``py.test`` remains fully valid and
+    represents the same package.
+
 Welcome to ``py.test`` documentation:
 
-.. toctree:: 
+.. toctree::
    :maxdepth: 2
 
    overview
@@ -27,4 +31,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

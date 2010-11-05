@@ -46,7 +46,7 @@ def main():
     )
 
 def cmdline_entrypoints(versioninfo, platform, basename):
-    target = 'pytest:__main__'
+    target = 'pytest:main'
     if platform.startswith('java'):
         points = {'py.test-jython': target}
     else:

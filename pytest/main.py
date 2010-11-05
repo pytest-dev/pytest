@@ -1,7 +1,12 @@
+"""
+pytest PluginManager, basic initialization and tracing.
+All else is in pytest/plugin.
+(c) Holger Krekel 2004-2010
+"""
 import sys, os
 import inspect
 import py
-from pytest import hookspec
+from pytest import hookspec # the extension point definitions
 
 assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
@@ -375,23 +380,33 @@ class HookCaller:
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         return mc.execute()
 
-pluginmanager = PluginManager(load=True) # will trigger default plugin importing
+_preinit = [PluginManager(load=True)] # triggers default plugin importing
 
-def main(args=None):
-    global pluginmanager
+def main(args=None, plugins=None):
     if args is None:
         args = sys.argv[1:]
-    hook = pluginmanager.hook
+    elif not isinstance(args, (tuple, list)):
+        args = py.std.shlex.split(str(args))
+    if _preinit:
+       _pluginmanager = _preinit.pop(0)
+    else: # subsequent calls to main will create a fresh instance
+        _pluginmanager = PluginManager(load=True)
+    hook = _pluginmanager.hook
     try:
+        if plugins:
+            for plugin in plugins:
+                _pluginmanager.register(plugin)
         config = hook.pytest_cmdline_parse(
-                pluginmanager=pluginmanager, args=args)
+                pluginmanager=_pluginmanager, args=args)
         exitstatus = hook.pytest_cmdline_main(config=config)
     except UsageError:
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
         exitstatus = 3
-    pluginmanager = PluginManager(load=True)
     return exitstatus
 
 class UsageError(Exception):
     """ error in py.test usage or invocation"""
+
+if __name__ == '__main__':
+    raise SystemExit(main())

@@ -5,8 +5,8 @@ no-boilerplate testing with Python
 ----------------------------------
 
 - automatic, fully customizable Python test discovery
-- :pep:`8` consistent testing style
-- allows simple test functions
+- allows fully :pep:`8` compliant coding style
+- write simple test functions and freely group tests
 - ``assert`` statement for your assertions
 - powerful parametrization of test functions
 - rely on powerful traceback and assertion reporting
@@ -25,8 +25,8 @@ extensive plugin and customization system
 mature command line testing tool
 --------------------------------------
 
+- powerful :ref:`usage` possibilities
 - used in many projects, ranging from 10 to 10K tests
-- autodiscovery of tests
 - simple well sorted command line options
 - runs on Unix, Windows from Python 2.4 up to Python 3.1 and 3.2
 - is itself tested extensively on a CI server

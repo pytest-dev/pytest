@@ -2,7 +2,7 @@
 funcargs and support code for testing py.test's own functionality.
 """
 
-import py
+import py, pytest
 import sys, os
 import re
 import inspect
@@ -10,7 +10,7 @@ import time
 from fnmatch import fnmatch
 from pytest.plugin.session import Collection
 from py.builtin import print_
-from pytest._core import HookRelay
+from pytest.main import HookRelay
 
 def pytest_addoption(parser):
     group = parser.getgroup("pylib")
@@ -401,6 +401,10 @@ class TmpTestdir:
         #print "env", env
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
+    def pytestmain(self, *args, **kwargs):
+        ret = pytest.main(*args, **kwargs)
+        if ret == 2:
+            raise KeyboardInterrupt()
     def run(self, *cmdargs):
         return self._run(*cmdargs)
 

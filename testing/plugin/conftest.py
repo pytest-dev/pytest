@@ -2,7 +2,7 @@ import py
 
 import pytest.plugin
 plugindir = py.path.local(pytest.plugin.__file__).dirpath()
-from pytest._core import default_plugins
+from pytest.main import default_plugins
 
 def pytest_collect_file(path, parent):
     if path.basename.startswith("pytest_") and path.ext == ".py":

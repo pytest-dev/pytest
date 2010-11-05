@@ -1,7 +1,7 @@
 import py
 import os, sys
 from pytest.plugin.pytester import LineMatcher, LineComp, HookRecorder
-from pytest._core import PluginManager
+from pytest.main import PluginManager
 
 def test_reportrecorder(testdir):
     item = testdir.getitem("def test_func(): pass")
@@ -97,7 +97,7 @@ def test_hookrecorder_basic_no_args_hook():
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
         import py
-        from pytest._core import HookRelay, PluginManager
+        from pytest.main import HookRelay, PluginManager
         pytest_plugins="pytester"
         def test_func(_pytest):
             class ApiClass:

@@ -58,8 +58,8 @@ builtin configuration file options
 .. confval:: norecursedirs
 
    Set the directory basename patterns to avoid when recursing
-   for test discovery.  The individual (fnmatch-style) patterns are 
-   applied to the basename of a directory to decide if to recurse into it.  
+   for test discovery.  The individual (fnmatch-style) patterns are
+   applied to the basename of a directory to decide if to recurse into it.
    Pattern matching characters::
 
         *       matches everything
@@ -68,7 +68,7 @@ builtin configuration file options
         [!seq]  matches any char not in seq
 
    Default patterns are ``.* _* CVS {args}``. Setting a ``norecurse``
-   replaces the default.  Here is a customizing example for avoiding 
+   replaces the default.  Here is a customizing example for avoiding
    a different set of directories::
 
     # content of setup.cfg

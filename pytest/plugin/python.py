@@ -461,7 +461,7 @@ def hasinit(obj):
 
 
 def getfuncargnames(function):
-    # XXX merge with _core.py's varnames
+    # XXX merge with main.py's varnames
     argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
     startindex = py.std.inspect.ismethod(function) and 1 or 0
     defaults = getattr(function, 'func_defaults',

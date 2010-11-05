@@ -1,8 +1,11 @@
 
-.. _cmdline:
+.. _usage:
 
-Using the interactive command line
-===============================================
+Usage and Invocations
+==========================================
+
+
+.. _cmdline:
 
 Getting help on version, option names, environment vars
 -----------------------------------------------------------
@@ -22,6 +25,57 @@ To stop the testing process after the first (N) failures::
     py.test -x            # stop after first failure
     py.test -maxfail=2    # stop after two failures
 
+calling pytest from Python code
+----------------------------------------------------
+
+.. versionadded: 2.0
+
+You can invoke ``py.test`` from Python code directly::
+
+    pytest.main()
+
+this acts as if you would call "py.test" from the command line.
+It will not raise ``SystemExit`` but return the exitcode instead.
+You can pass in options and arguments::
+
+    pytest.main(['x', 'mytestdir'])
+
+or pass in a string::
+
+    pytest.main("-x mytestdir")
+
+You can specify additional plugins to ``pytest.main``::
+
+    # content of myinvoke.py
+    import pytest
+    class MyPlugin:
+        def pytest_addoption(self, parser):
+            raise pytest.UsageError("hi from our plugin")
+
+    pytest.main(plugins=[MyPlugin()])
+
+Running it will exit quickly::
+
+    $ python myinvoke.py
+    ERROR: hi from our plugin
+
+calling pytest through ``python -m pytest``
+-----------------------------------------------------
+
+.. versionadded: 2.0
+
+You can invoke testing through the Python interpreter from the command line::
+
+    python -m pytest.main [...]
+
+Python2.7 and Python3 introduced specifying packages to "-m" so there
+you can also type::
+
+    python -m pytest [...]
+
+All of these invocations are equivalent to the ``py.test [...]`` command line invocation.
+
+
 Modifying Python traceback printing
 ----------------------------------------------
 
@@ -40,7 +94,7 @@ Dropping to PDB (Python Debugger) on failures
 
 .. _PDB: http://docs.python.org/library/pdb.html
 
-Python comes with a builtin Python debugger called PDB_.  ``py.test`` 
+Python comes with a builtin Python debugger called PDB_.  ``py.test``
 allows to drop into the PDB prompt via a command line option::
 
     py.test --pdb
