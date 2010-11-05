@@ -3,10 +3,17 @@ checks / deprecations for next release
 tags: bug 2.4 core xdist
 
 * check oejskit plugin compatibility
-* some simple profiling 
 * move pytest_nose out of pylib because it implicitely extends
   the protocol now - setup/teardown is called at module level.
   consider making calling of setup/teardown configurable
+
+profiling / hook call optimization
+-------------------------------------
+tags: enhancement 2.1
+
+bench/bench.py reveals that for very quick running
+unit tests the hook architecture is a bit slow.
+Profile and improve hook calls.
 
 do early-teardown of test modules
 -----------------------------------------
@@ -108,13 +115,12 @@ tags: feature 2.1
 allow to name conftest.py files (in sub directories) that should
 be imported early, as to include command line options.
 
-a central py.test ini/yml file
+improve central py.test ini file
 ----------------------------------
 tags: feature 2.1
 
-introduce a declarative configuration file that allows:
-- default options
-- to-be-collected test directories
+introduce more declarative configuration options:
+- (to-be-collected test directories)
 - required plugins
 - test func/class/file matching patterns
 - skip/xfail (non-intrusive)
@@ -125,14 +131,11 @@ new documentation
 tags: feature 2.1
 
 - logo py.test
-- reference / customization
-- writing a (local or global) plugin
 - examples for unittest or functional testing
 - resource management for functional testing
 - patterns: page object
 - parametrized testing
 - better / more integrated plugin docs
-  i.e. not per-plugin but per-feature referencing a plugin
 
 generalize parametrized testing to generate combinations
 -------------------------------------------------------------
