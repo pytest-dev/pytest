@@ -5,7 +5,7 @@
 Good Integration Practises
 =================================================
 
-work with virtual environments
+Work with virtual environments
 -----------------------------------------------------------
 
 We recommend to work with virtualenv_ environments and use easy_install_
@@ -21,6 +21,24 @@ server Hudson_.
 .. _`buildout`: http://www.buildout.org/
 .. _pip: http://pypi.python.org/pypi/pip
 
+.. _`test discovery`:
+
+Conventions for Python test discovery
+-------------------------------------------------
+
+``py.test`` implements the following standard test discovery:
+
+* collection starts from initial command line arguments
+  which may be directories, filenames or test ids.
+* recurse into directories, unless they match :confval:`norecursedirs`
+* ``test_*.py`` or ``*_test.py`` files, imported by their `package name`_.
+* ``Test`` prefixed test classes (without an ``__init__`` method)
+* ``test_`` prefixed test functions or methods are test items
+
+For changing and customization example, see :doc:`example/pythoncollection`.
+
+py.test additionally discovers tests using the standard
+:ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
 Choosing a test layout / import rules
 ------------------------------------------
@@ -57,6 +75,8 @@ You can always run your tests by pointing to it::
     py.test                         # run all tests below current dir
     ...
 
+.. _`package name`:
+ 
 .. note:: 
 
     Test modules are imported under their fully qualified name as follows:

@@ -3,7 +3,7 @@ Writing, managing and understanding plugins
 
 .. _`local plugin`:
 
-py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic locations types::
+py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic locations types:
 
 * builtin plugins: loaded from py.test's own `pytest/plugin`_ directory.
 * `external plugins`_: modules discovered through `setuptools entry points`_
@@ -55,7 +55,7 @@ earlier than further away ones.
 .. _`installing plugins`:
 .. _`external plugins`:
 
-Installing External Plugins
+Installing External Plugins / Searching
 ------------------------------------------------------
 
 Installing a plugin happens through any usual Python installation
@@ -72,9 +72,7 @@ de-install it.  You can find a list of valid plugins through a
 .. _`available installable plugins`:
 .. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
 
-.. _`setuptools entry points`:
-
-Writing an installable plugin
+Writing a plugin by looking at examples
 ------------------------------------------------------
 
 .. _`Distribute`: http://pypi.python.org/pypi/distribute
@@ -83,8 +81,17 @@ Writing an installable plugin
 If you want to write a plugin, there are many real-life examples
 you can copy from:
 
+* a custom collection example plugin: :ref:`yaml plugin`
 * around 20 `builtin plugins`_ which comprise py.test's own functionality
 * around 10 `external plugins`_ providing additional features
+
+All of these plugins are using the documented `well specified hooks`_
+to implement their wide-ranging functionality.
+
+.. _`setuptools entry points`:
+
+Making your plugin installable by others
+-----------------------------------------------
 
 If you want to make your plugin externally available, you
 may define a so called entry point for your distribution so
@@ -148,9 +155,6 @@ will be loaded as well.  You can also use dotted path like this::
     pytest_plugins = "myapp.testsupport.myplugin"
 
 which will import the specified module as a py.test plugin.
-
-.. _`setuptools entry points`:
-.. _registered:
 
 
 Accessing another plugin by name

@@ -4,6 +4,8 @@ creating and managing test function arguments
 
 .. currentmodule:: pytest.plugin.python
 
+
+.. _`funcargs`:
 .. _`funcarg mechanism`:
 
 Test function arguments and factories
@@ -34,18 +36,18 @@ Running the test looks like this::
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
     test path 1: test_simplefactory.py
-    
+
     test_simplefactory.py F
-    
+
     ================================= FAILURES =================================
     ______________________________ test_function _______________________________
-    
+
     myfuncarg = 42
-    
+
         def test_function(myfuncarg):
     >       assert myfuncarg == 17
     E       assert 42 == 17
-    
+
     test_simplefactory.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
@@ -118,7 +120,8 @@ example:
 Basic generated test example
 ----------------------------
 
-Let's consider this test module::
+Let's consider a test module which uses the ``pytest_generate_tests``
+hook to generate several calls to the same test function::
 
     # content of test_example.py
     def pytest_generate_tests(metafunc):
@@ -135,23 +138,24 @@ Running this::
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
     test path 1: test_example.py
-    
+
     test_example.py .........F
-    
+
     ================================= FAILURES =================================
     _______________________________ test_func[9] _______________________________
-    
+
     numiter = 9
-    
+
         def test_func(numiter):
     >       assert numiter < 9
     E       assert 9 < 9
-    
+
     test_example.py:7: AssertionError
     ==================== 1 failed, 9 passed in 0.03 seconds ====================
 
 Note that the ``pytest_generate_tests(metafunc)`` hook is called during
-the test collection phase.  You can have a look at it with this::
+the test collection phase which is separate from the actual test running.
+Let's just look at what is collected::
 
     $ py.test --collectonly test_example.py
     <Directory 'doc-exec-167'>
@@ -173,7 +177,7 @@ If you want to select only the run with the value ``7`` you could do::
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17 -- /home/hpk/venv/0/bin/python
     test path 1: test_example.py
-    
+
     test_example.py:6: test_func[0] PASSED
     test_example.py:6: test_func[1] PASSED
     test_example.py:6: test_func[2] PASSED
@@ -184,16 +188,16 @@ If you want to select only the run with the value ``7`` you could do::
     test_example.py:6: test_func[7] PASSED
     test_example.py:6: test_func[8] PASSED
     test_example.py:6: test_func[9] FAILED
-    
+
     ================================= FAILURES =================================
     _______________________________ test_func[9] _______________________________
-    
+
     numiter = 9
-    
+
         def test_func(numiter):
     >       assert numiter < 9
     E       assert 9 < 9
-    
+
     test_example.py:7: AssertionError
     ==================== 1 failed, 9 passed in 0.04 seconds ====================
 

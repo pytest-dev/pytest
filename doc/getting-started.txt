@@ -1,8 +1,6 @@
 Installation and Getting Started
 ===================================
 
-.. _`easy_install`:
-
 **Compatibility**: Python 2.4-3.2, Jython, PyPy on Unix/Posix and Windows
 
 Installation
@@ -17,27 +15,26 @@ To check your installation has installed the correct version::
 
     $ py.test --version
 
-If you get an error, checkout :ref:`installation issues`.
-
+If you get an error checkout :ref:`installation issues`.
 
 Our first test run
 ----------------------------------------------------------
 
-Let's create a small file with a test function testing a function
-computes a certain value::
+Let's create a first test file with a simple test function::
 
     # content of test_sample.py
     def func(x):
         return x + 1
+
     def test_answer():
         assert func(3) == 5
 
-You can execute the test function::
+That's it. You can execute the test function now::
 
-    $ py.test test_sample.py
+    $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
-    test path 1: test_sample.py
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev18
+    test path 1: /tmp/doc-exec-211
     
     test_sample.py F
     
@@ -49,19 +46,26 @@ You can execute the test function::
     E       assert 4 == 5
     E        +  where 4 = func(3)
     
-    test_sample.py:4: AssertionError
+    test_sample.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
-We told py.test to run the ``test_sample.py`` file and it :ref:`discovered` the 
-``test_answer`` function because of the ``test_`` prefix.  We got a
-failure because our little ``func(3)`` call did not return ``5``.  
+py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.  The report is formatted using the :ref:`standard traceback reporting`.
 
 .. note::
 
-    You can simply use the `assert statement`_ for coding expectations because
-    intermediate values will be presented to you.  Or to put it bluntly,
-    there is no need to learn all `the JUnit legacy methods`_ for expressing
-    assertions.
+    You can simply use the ``assert`` statement for coding expectations because
+    intermediate values will be presented to you. This is much easier than
+    learning all the `the JUnit legacy methods`_ which are even inconsistent
+    with Python's own coding guidelines (but consistent with
+    Java-style naming).
+
+    There is only one seldomly hit caveat to using asserts: if your
+    assertion expression fails and has side effects then re-evaluating
+    it for presenting intermediate values can go wrong.  It's easy to fix:
+    compute the value ahead of the assert and then do the
+    assertion or use the assert "message" syntax::
+
+       assert expr, "message" # show "message" if expr is not True
 
 .. _`the JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 
@@ -88,7 +92,7 @@ Running it with, this time in "quiet" reporting mode::
     .
     1 passed in 0.01 seconds
 
-.. todo:: For further ways to assert exceptions see the :pyfunc:`raises`
+.. todo:: For further ways to assert exceptions see the `raises`
 
 Grouping multiple tests in a class
 --------------------------------------------------------------
@@ -107,16 +111,16 @@ tests in a class like this::
             x = "hello"
             assert hasattr(x, 'check')
 
-The two tests will be discovered because of the default `automatic test 
-discovery`_.  There is no need to subclass anything.  If we now run
-the module we'll see one passed and one failed test::
+The two tests are found because of the standard :ref:`test discovery`.
+There is no need to subclass anything.  We can simply
+run the module by passing its filename::
 
     $ py.test -q test_class.py
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x1732368>
+    self = <test_class.TestClass instance at 0x19c6638>
     
         def test_two(self):
             x = "hello"
@@ -126,27 +130,74 @@ the module we'll see one passed and one failed test::
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.02 seconds
 
-where to go from here
+The first test passed, the second failed. Again we can easily see
+the intermediate values used in the assertion, helping us to
+understand the reason for the failure.
+
+Going functional: requesting a unique temporary directory
+--------------------------------------------------------------
+
+For functional tests one often needs to create some files
+and pass them to application objects.  py.test provides
+the versatile :ref:`funcarg mechanism` which allows to request
+arbitrary resources, for example a unique temporary directory::
+
+    # content of test_tmpdir.py
+    def test_needsfiles(tmpdir):
+        print tmpdir
+        assert 0
+
+We list the name ``tmpdir`` in the test function signature and
+py.test will lookup and call a factory to create the resource 
+before performing the test function call.  Let's just run it::
+
+    $ py.test -q test_tmpdir.py
+    F
+    ================================= FAILURES =================================
+    _____________________________ test_needsfiles ______________________________
+    
+    tmpdir = local('/tmp/pytest-1306/test_needsfiles0')
+    
+        def test_needsfiles(tmpdir):
+            print tmpdir
+    >       assert 0
+    E       assert 0
+    
+    test_tmpdir.py:3: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    /tmp/pytest-1306/test_needsfiles0
+    1 failed in 0.04 seconds
+
+Before the test runs, a unique-per-test-invocation temporary directory
+was created.  More info at :ref:`tmpdir handling`.
+
+You can find out what kind of builtin :ref:`funcargs` exist by typing::
+
+    py.test --funcargs   # shows builtin and custom function arguments
+
+where to go next
 -------------------------------------
 
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
 * :ref:`good practises` for virtualenv, test layout, genscript support
-* :ref:`apiref` for documentation and examples on writing Python tests
+* :ref:`apiref` for documentation and examples on using py.test
+* :ref:`plugins` managing and writing plugins
 
 .. _`installation issues`:
 
-Installation issues
+Known Installation issues
 ------------------------------
 
 easy_install or pip not found?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Consult distribute_ to install the ``easy_install`` tool on your machine. 
-You may also use the original but somewhat older `setuptools`_ project
-although we generally recommend to use ``distribute`` because it contains
-more bug fixes and also works for Python3.
+Consult `distribute docs <distribute>`_ to install the ``easy_install``
+tool on your machine.  You may also use the original but somewhat older
+`setuptools`_ project although we generally recommend to use
+``distribute`` because it contains more bug fixes and also works for
+Python3.
 
 For Python2 you can also consult pip_ for the popular ``pip`` tool.
 

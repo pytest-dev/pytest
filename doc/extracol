@@ -1,0 +1,32 @@
+changing Python test discovery patterns
+--------------------------------------------------
+
+You can influence python test file, function and class prefixes through
+the :confval:`python_patterns` configuration valueto determine which
+files are checked and which test functions are found.  Example for using
+a scheme that builds on ``check`` rather than on ``test`` prefixes::
+
+
+    # content of setup.cfg
+    [pytest]
+    python_patterns =
+        files: check_*.py
+        functions: check_
+        classes: Check
+
+See 
+    :confval:`python_funcprefixes` and :confval:`python_classprefixes`
+
+
+    changing test file discovery
+    -----------------------------------------------------
+
+    You can specify patterns where python tests are found::
+     
+        python_testfilepatterns =
+            testing/**/{purebasename}.py
+            testing/*.py
+
+    .. note::
+
+       conftest.py files are never considered for test discovery

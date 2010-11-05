@@ -1,0 +1,137 @@
+
+.. highlightlang:: python
+
+simple patterns using hooks
+==========================================================
+
+pass different values to a test function, depending on command line options
+----------------------------------------------------------------------------
+
+Suppose we want to write a test that depends on a command line option.
+Here is a basic pattern how to achieve this::
+
+    # content of test_sample.py
+    def test_answer(cmdopt):
+        if cmdopt == "type1":
+            print ("first")
+        elif cmdopt == "type2":
+            print ("second")
+        assert 0 # to see what was printed
+
+
+For this to work we need to add a command line option and
+provide the ``cmdopt`` through a function argument factory::
+
+    # content of conftest.py
+    def pytest_addoption(parser):
+        parser.addoption("--cmdopt", action="store", default="type1",
+            help="my option: type1 or type2")
+
+    def pytest_funcarg__cmdopt(request):
+        return request.config.option.cmdopt
+
+Let's run this without supplying our new command line option::
+
+    $ py.test -q
+    F
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+
+    cmdopt = 'type1'
+
+        def test_answer(cmdopt):
+            if cmdopt == "type1":
+                print ("first")
+            elif cmdopt == "type2":
+                print ("second")
+    >       assert 0 # to see what was printed
+    E       assert 0
+
+    test_sample.py:6: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    first
+    1 failed in 0.02 seconds
+
+And now with supplying a command line option::
+
+    $ py.test -q --cmdopt=type2
+    F
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+
+    cmdopt = 'type2'
+
+        def test_answer(cmdopt):
+            if cmdopt == "type1":
+                print ("first")
+            elif cmdopt == "type2":
+                print ("second")
+    >       assert 0 # to see what was printed
+    E       assert 0
+
+    test_sample.py:6: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    second
+    1 failed in 0.02 seconds
+
+Ok, this completes the basic pattern.  However, one often rather
+wants to process command line options outside of the test and
+rather pass in different or more complex objects.  See the
+next example or refer to :ref:`mysetup` for more information
+on real-life examples.
+
+generating parameters combinations, depending on command line
+----------------------------------------------------------------------------
+
+Let's say we want to execute a test with different parameters
+and the parameter range shall be determined by a command
+line argument.  Let's first write a simple computation test::
+
+    # content of test_compute.py
+
+    def test_compute(param1):
+        assert param1 < 4
+
+Now we add a test configuration like this::
+
+    # content of conftest.py
+
+    def pytest_addoption(parser):
+        parser.addoption("--all", action="store_true",
+            help="run all combinations")
+
+    def pytest_generate_tests(metafunc):
+        if 'param1' in metafunc.funcargnames:
+            if metafunc.config.option.all:
+                end = 5
+            else:
+                end = 2
+            for i in range(end):
+                metafunc.addcall(funcargs={'param1': i})
+
+This means that we only run 2 tests if we do not pass ``--all``::
+
+    $ py.test -q test_compute.py
+    ..
+    2 passed in 0.01 seconds
+
+We run only two computations, so we see two dots.
+let's run the full monty::
+
+    $ py.test -q --all test_compute.py
+    ....F
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
+
+    param1 = 4
+
+        def test_compute(param1):
+    >       assert param1 < 4
+    E       assert 4 < 4
+
+    test_compute.py:3: AssertionError
+    1 failed, 4 passed in 0.03 seconds
+
+
+As expected when running the full range of ``param1`` values
+we'll get an error on the last one.

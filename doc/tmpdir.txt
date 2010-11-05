@@ -1,4 +1,6 @@
 
+.. _`tmpdir handling`:
+
 temporary directories and files
 ================================================
 
@@ -18,7 +20,7 @@ and more.  Here is an example test usage::
         p = tmpdir.mkdir("sub").join("hello.txt")
         p.write("content")
         assert p.read() == "content"
-        assert len(os.listdir(str(tmpdir))) == 1
+        assert tmpdir.listdir() == 1
         assert 0
 
 Running this would result in a passed test except for the last 
@@ -41,8 +43,6 @@ Running this would result in a passed test except for the last
             p.write("content")
             assert p.read() == "content"
             assert len(os.listdir(str(tmpdir))) == 1
-    >       assert 0
-    E       assert 0
     
     test_tmpdir.py:7: AssertionError
     ========================= 1 failed in 0.04 seconds =========================

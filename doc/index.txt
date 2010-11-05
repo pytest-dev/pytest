@@ -12,7 +12,7 @@ Welcome to ``py.test`` documentation:
    overview
    apiref
    plugins
-   examples
+   example/index
    talks
    develop
 

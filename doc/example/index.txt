@@ -7,7 +7,9 @@ Usages and Examples
 .. toctree::
    :maxdepth: 2
 
-   example/controlskip.txt
-   example/mysetup.txt
-   example/detectpytest.txt
-   example/nonpython.txt
+   pythoncollection.txt
+   controlskip.txt
+   mysetup.txt
+   detectpytest.txt
+   nonpython.txt
+   simple.txt

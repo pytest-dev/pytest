@@ -4,6 +4,8 @@
 Working with non-python tests
 ====================================================
 
+.. _`yaml plugin`:
+
 a basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
@@ -39,7 +41,17 @@ now execute the test specification::
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
-interesting interpretation of the yaml-values.  Note that ``reportinfo()``
+interesting interpretation of the yaml-values.  You can easily write
+your own domain specific testing language this way.
+
+.. note::
+
+    ``repr_failure(excinfo)`` is called for representing test failures.
+    If you create custom collection nodes you can return an error 
+    representation string of your choice.  It
+    will be reported as a (red) string.
+
+    ``reportinfo()``
 is used for representing the test location and is also consulted for
 reporting in ``verbose`` mode::
 

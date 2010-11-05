@@ -35,13 +35,13 @@ If no path was provided at all the current working directory is used for the loo
 builtin configuration file options
 ----------------------------------------------
 
-.. confval:: minversion = VERSTRING
+.. confval:: minversion
 
-   specifies the minimal pytest version that is needed for this test suite.
+   specifies a minimal pytest version needed for running tests.
 
         minversion = 2.1  # will fail if we run with pytest-2.0
 
-.. confval:: addopts = OPTS
+.. confval:: addopts
 
    add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example: if you have this ini file content::
@@ -53,5 +53,28 @@ builtin configuration file options
 
        py.test --maxfail=2 -rf test_hello.py
 
-.. _`function arguments`: funcargs.html
+   Default is to add no options.
+
+.. confval:: norecursedirs
+
+   Set the directory basename patterns to avoid when recursing
+   for test discovery.  The individual (fnmatch-style) patterns are 
+   applied to the basename of a directory to decide if to recurse into it.  
+   Pattern matching characters::
+
+        *       matches everything
+        ?       matches any single character
+        [seq]   matches any character in seq
+        [!seq]  matches any char not in seq
+
+   Default patterns are ``.* _* CVS {args}``. Setting a ``norecurse``
+   replaces the default.  Here is a customizing example for avoiding 
+   a different set of directories::
+
+    # content of setup.cfg
+    [pytest]
+    norecursedirs = .svn _build tmp*
+
+   This would tell py.test to not recurse into typical subversion or
+   sphinx-build directories or into any ``tmp`` prefixed directory.
 
