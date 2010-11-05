@@ -70,7 +70,7 @@ class Parser:
 
     def addini(self, name, help, type=None, default=None):
         """ add an ini-file option with the given name and description. """
-        assert type in (None, "pathlist", "args")
+        assert type in (None, "pathlist", "args", "linelist")
         self._inidict[name] = (help, type, default)
 
 class OptionGroup:
@@ -365,7 +365,9 @@ class Config(object):
         except KeyError:
             if default is not None:
                 return default
-            return {'pathlist': [], 'args': [], None: ''}.get(type)
+            if type is None:
+                return ''
+            return []
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
             l = []
@@ -374,6 +376,8 @@ class Config(object):
             return l
         elif type == "args":
             return py.std.shlex.split(value)
+        elif type == "linelist":
+            return filter(None, map(lambda x: x.strip(), value.split("\n")))
         else:
             assert type is None
             return value
