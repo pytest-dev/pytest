@@ -7,11 +7,9 @@ from py._code.code import TerminalRepr
 
 def pytest_namespace():
     return {
-        'raises'       : raises,
+        'fail'         : fail,
         'skip'         : skip,
         'importorskip' : importorskip,
-        'fail'         : fail,
-        'xfail'        : xfail,
         'exit'         : exit,
     }
 
@@ -337,13 +335,12 @@ class OutcomeException(Exception):
     """ OutcomeException and its subclass instances indicate and
         contain info about test and collection outcomes.
     """
-    def __init__(self, msg=None, excinfo=None):
+    def __init__(self, msg=None):
         self.msg = msg
-        self.excinfo = excinfo
 
     def __repr__(self):
         if self.msg:
-            return repr(self.msg)
+            return str(self.msg)
         return "<%s instance>" %(self.__class__.__name__,)
     __str__ = __repr__
 
@@ -356,19 +353,8 @@ class Failed(OutcomeException):
     """ raised from an explicit call to py.test.fail() """
     __module__ = 'builtins'
 
-class XFailed(OutcomeException):
-    """ raised from an explicit call to py.test.xfail() """
-    __module__ = 'builtins'
-
-class ExceptionFailure(Failed):
-    """ raised by py.test.raises on an exception-assertion mismatch. """
-    def __init__(self, expr, expected, msg=None, excinfo=None):
-        Failed.__init__(self, msg=msg, excinfo=excinfo)
-        self.expr = expr
-        self.expected = expected
-
 class Exit(KeyboardInterrupt):
-    """ raised by py.test.exit for immediate program exits without tracebacks and reporter/summary. """
+    """ raised for immediate program exits (no tracebacks/summaries)"""
     def __init__(self, msg="unknown reason"):
         self.msg = msg
         KeyboardInterrupt.__init__(self, msg)
@@ -384,103 +370,20 @@ exit.Exception = Exit
 
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
-    better use the py.test.mark.skipif marker to declare a test to be
+    better to use the py.test.mark.skipif marker to declare a test to be
     skipped under certain conditions like mismatching platforms or
     dependencies.  See the pytest_skipping plugin for details.
     """
     __tracebackhide__ = True
     raise Skipped(msg=msg)
-
 skip.Exception = Skipped
 
 def fail(msg=""):
     """ explicitely fail an currently-executing test with the given Message. """
     __tracebackhide__ = True
     raise Failed(msg=msg)
-
 fail.Exception = Failed
 
-def xfail(reason=""):
-    """ xfail an executing test or setup functions, taking an optional
-    reason string.
-    """
-    __tracebackhide__ = True
-    raise XFailed(reason)
-xfail.Exception = XFailed
-
-def raises(ExpectedException, *args, **kwargs):
-    """ assert that a code block/function call raises an exception.
-
-        If using Python 2.5 or above, you may use this function as a
-        context manager::
-
-        >>> with raises(ZeroDivisionError):
-        ...    1/0
-
-        Or you can one of two forms:
-
-        if args[0] is callable: raise AssertionError if calling it with
-        the remaining arguments does not raise the expected exception.
-        if args[0] is a string: raise AssertionError if executing the
-        the string in the calling scope does not raise expected exception.
-        examples:
-        >>> x = 5
-        >>> raises(TypeError, lambda x: x + 'hello', x=x)
-        >>> raises(TypeError, "x + 'hello'")
-    """
-    __tracebackhide__ = True
-
-    if not args:
-        return RaisesContext(ExpectedException)
-    elif isinstance(args[0], str):
-        code, = args
-        assert isinstance(code, str)
-        frame = sys._getframe(1)
-        loc = frame.f_locals.copy()
-        loc.update(kwargs)
-        #print "raises frame scope: %r" % frame.f_locals
-        try:
-            code = py.code.Source(code).compile()
-            py.builtin.exec_(code, frame.f_globals, loc)
-            # XXX didn'T mean f_globals == f_locals something special?
-            #     this is destroyed here ...
-        except ExpectedException:
-            return py.code.ExceptionInfo()
-    else:
-        func = args[0]
-        try:
-            func(*args[1:], **kwargs)
-        except ExpectedException:
-            return py.code.ExceptionInfo()
-        k = ", ".join(["%s=%r" % x for x in kwargs.items()])
-        if k:
-            k = ', ' + k
-        expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
-    raise ExceptionFailure(msg="DID NOT RAISE",
-                           expr=args, expected=ExpectedException)
-
-
-class RaisesContext(object):
-
-    def __init__(self, ExpectedException):
-        self.ExpectedException = ExpectedException
-        self.excinfo = None
-
-    def __enter__(self):
-        self.excinfo = object.__new__(py.code.ExceptionInfo)
-        return self.excinfo
-
-    def __exit__(self, *tp):
-        __tracebackhide__ = True
-        if tp[0] is None:
-            raise ExceptionFailure(msg="DID NOT RAISE",
-                                   expr=(),
-                                   expected=self.ExpectedException)
-        self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.ExpectedException)
-
-
-raises.Exception = ExceptionFailure
 
 def importorskip(modname, minversion=None):
     """ return imported module if it has a higher __version__ than the
@@ -503,5 +406,3 @@ def importorskip(modname, minversion=None):
         py.test.skip("module %r has __version__ %r, required is: %r" %(
                      modname, verattr, minversion))
     return mod
-
-

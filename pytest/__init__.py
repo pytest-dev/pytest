@@ -1,5 +1,5 @@
 """
-py.test / pytest API for unit and functional testing with Python.
+unit and functional testing with Python.
 
 see http://pytest.org for documentation and details
 

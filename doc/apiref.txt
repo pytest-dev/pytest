@@ -6,9 +6,10 @@ py.test reference documentation
 
 .. toctree::
    :maxdepth: 2
- 
+
+   builtin.txt
    customize.txt
-   assert.txt 
+   assert.txt
    funcargs.txt
    xunit_setup.txt
    capture.txt
@@ -16,7 +17,7 @@ py.test reference documentation
    tmpdir.txt
    skipping.txt
    mark.txt
-   recwarn.txt 
+   recwarn.txt
    unittest.txt
    doctest.txt
-   
+

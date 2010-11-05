@@ -195,7 +195,7 @@ class TestCollectonly:
         assert len(cols) == 0
         linecomp.assert_contains_lines("""
             <Module 'test_collectonly_skipped_module.py'>
-              !!! Skipped: 'nomod' !!!
+              !!! Skipped: nomod !!!
         """)
 
     def test_collectonly_failed_module(self, testdir, linecomp):

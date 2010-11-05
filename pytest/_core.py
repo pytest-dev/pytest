@@ -7,7 +7,7 @@ assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
- "config session terminal python runner pdb capture unittest mark skipping "
+ "config session terminal runner python pdb capture unittest mark skipping "
  "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
  "junitxml doctest").split()
 

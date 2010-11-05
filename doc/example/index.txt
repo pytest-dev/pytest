@@ -7,6 +7,7 @@ Usages and Examples
 .. toctree::
    :maxdepth: 2
 
+   builtin.txt
    pythoncollection.txt
    controlskip.txt
    mysetup.txt

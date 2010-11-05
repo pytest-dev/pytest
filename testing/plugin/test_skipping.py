@@ -417,7 +417,7 @@ def test_skipped_reasons_functional(testdir):
     result.stdout.fnmatch_lines([
         "*test_two.py S",
         "*test_one.py ss",
-        "*SKIP*3*conftest.py:3: 'test'",
+        "*SKIP*3*conftest.py:3: test",
     ])
     assert result.ret == 0
 

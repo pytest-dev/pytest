@@ -7,6 +7,7 @@
 import py
 import pytest
 import os, sys
+tracebackcutdir = py.path.local(pytest.__file__).dirpath()
 
 # exitcodes for the command line
 EXIT_OK = 0
@@ -403,14 +404,14 @@ class Node(object):
             current = current.parent
         return current
 
-    def _prunetraceback(self, traceback):
-        return traceback
+    def _prunetraceback(self, excinfo):
+        pass
 
     def _repr_failure_py(self, excinfo, style=None):
         if self.config.option.fulltrace:
             style="long"
         else:
-            excinfo.traceback = self._prunetraceback(excinfo.traceback)
+            self._prunetraceback(excinfo)
         # XXX should excinfo.getrepr record all data and toterminal()
         # process it?
         if style is None:
@@ -448,14 +449,14 @@ class Collector(Node):
         """ internal helper method to cache results of calling collect(). """
         return self._memoizedcall('_collected', self.collect)
 
-    def _prunetraceback(self, traceback):
+    def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):
             path = self.fspath
+            traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:
-                ntraceback = ntraceback.cut(excludepath=py._pydir)
-            traceback = ntraceback.filter()
-        return traceback
+                ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
+            excinfo.traceback = ntraceback.filter()
 
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, collection=None):

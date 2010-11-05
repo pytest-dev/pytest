@@ -319,61 +319,6 @@ def test_runtest_in_module_ordering(testdir):
         "*2 passed*"
     ])
 
-class TestRaises:
-    def test_raises(self):
-        source = "int('qwe')"
-        excinfo = py.test.raises(ValueError, source)
-        code = excinfo.traceback[-1].frame.code
-        s = str(code.fullsource)
-        assert s == source
-
-    def test_raises_exec(self):
-        py.test.raises(ValueError, "a,x = []")
-
-    def test_raises_syntax_error(self):
-        py.test.raises(SyntaxError, "qwe qwe qwe")
-
-    def test_raises_function(self):
-        py.test.raises(ValueError, int, 'hello')
-
-    def test_raises_callable_no_exception(self):
-        class A:
-            def __call__(self):
-                pass
-        try:
-            py.test.raises(ValueError, A())
-        except py.test.raises.Exception:
-            pass
-
-    @py.test.mark.skipif('sys.version < "2.5"')
-    def test_raises_as_contextmanager(self, testdir):
-        testdir.makepyfile("""
-            from __future__ import with_statement
-            import py
-
-            def test_simple():
-                with py.test.raises(ZeroDivisionError) as excinfo:
-                    assert isinstance(excinfo, py.code.ExceptionInfo)
-                    1/0
-                print (excinfo)
-                assert excinfo.type == ZeroDivisionError
-
-            def test_noraise():
-                with py.test.raises(py.test.raises.Exception):
-                    with py.test.raises(ValueError):
-                           int()
-
-            def test_raise_wrong_exception_passes_by():
-                with py.test.raises(ZeroDivisionError):
-                    with py.test.raises(ValueError):
-                           1/0
-        """)
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            '*3 passed*',
-        ])
-
-
 
 def test_pytest_exit():
     try:

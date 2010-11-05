@@ -7,7 +7,6 @@ import sys
 import pytest
 from py._code.code import TerminalRepr
 
-import pytest
 cutdir = py.path.local(pytest.__file__).dirpath()
 
 
@@ -22,11 +21,16 @@ def pytest_cmdline_main(config):
         showfuncargs(config)
         return 0
 
-def pytest_namespace():
-    return {'collect': {
+def pytest_namespace(__multicall__):
+    __multicall__.execute()
+    raises.Exception = pytest.fail.Exception
+    return {
+        'raises' : raises,
+        'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
         'Function': Function, 'Generator': Generator,
-        '_fillfuncargs': fillfuncargs}}
+        '_fillfuncargs': fillfuncargs}
+    }
 
 def pytest_funcarg__pytestconfig(request):
     """ the pytest config object with access to command line opts."""
@@ -300,17 +304,17 @@ class FunctionMixin(PyobjMixin):
         if teardown_func_or_meth is not None:
             teardown_func_or_meth(self.obj)
 
-    def _prunetraceback(self, traceback):
+    def _prunetraceback(self, excinfo):
         if hasattr(self, '_obj') and not self.config.option.fulltrace:
             code = py.code.Code(self.obj)
             path, firstlineno = code.path, code.firstlineno
+            traceback = excinfo.traceback
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
                     ntraceback = ntraceback.cut(excludepath=cutdir)
-            traceback = ntraceback.filter()
-        return traceback
+            excinfo.traceback = ntraceback.filter()
 
     def _repr_failure_py(self, excinfo, style="long"):
         if excinfo.errisinstance(FuncargRequest.LookupError):
@@ -746,3 +750,71 @@ def getlocation(function, curdir):
     if fn.relto(curdir):
         fn = fn.relto(curdir)
     return "%s:%d" %(fn, lineno+1)
+
+# builtin pytest.raises helper
+
+def raises(ExpectedException, *args, **kwargs):
+    """ assert that a code block/function call raises an exception.
+
+        If using Python 2.5 or above, you may use this function as a
+        context manager::
+
+        >>> with raises(ZeroDivisionError):
+        ...    1/0
+
+        Or you can one of two forms:
+
+        if args[0] is callable: raise AssertionError if calling it with
+        the remaining arguments does not raise the expected exception.
+        if args[0] is a string: raise AssertionError if executing the
+        the string in the calling scope does not raise expected exception.
+        examples:
+        >>> x = 5
+        >>> raises(TypeError, lambda x: x + 'hello', x=x)
+        >>> raises(TypeError, "x + 'hello'")
+    """
+    __tracebackhide__ = True
+
+    if not args:
+        return RaisesContext(ExpectedException)
+    elif isinstance(args[0], str):
+        code, = args
+        assert isinstance(code, str)
+        frame = sys._getframe(1)
+        loc = frame.f_locals.copy()
+        loc.update(kwargs)
+        #print "raises frame scope: %r" % frame.f_locals
+        try:
+            code = py.code.Source(code).compile()
+            py.builtin.exec_(code, frame.f_globals, loc)
+            # XXX didn'T mean f_globals == f_locals something special?
+            #     this is destroyed here ...
+        except ExpectedException:
+            return py.code.ExceptionInfo()
+    else:
+        func = args[0]
+        try:
+            func(*args[1:], **kwargs)
+        except ExpectedException:
+            return py.code.ExceptionInfo()
+        k = ", ".join(["%s=%r" % x for x in kwargs.items()])
+        if k:
+            k = ', ' + k
+        expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
+    pytest.fail("DID NOT RAISE")
+
+class RaisesContext(object):
+    def __init__(self, ExpectedException):
+        self.ExpectedException = ExpectedException
+        self.excinfo = None
+
+    def __enter__(self):
+        self.excinfo = object.__new__(py.code.ExceptionInfo)
+        return self.excinfo
+
+    def __exit__(self, *tp):
+        __tracebackhide__ = True
+        if tp[0] is None:
+            pytest.fail("DID NOT RAISE")
+        self.excinfo.__init__(tp)
+        return issubclass(self.excinfo.type, self.ExpectedException)

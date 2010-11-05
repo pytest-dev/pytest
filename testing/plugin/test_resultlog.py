@@ -89,7 +89,7 @@ class TestWithFunctionIntegration:
         assert lines[0].startswith("S ")
         assert lines[0].endswith("test_collection_skip.py")
         assert lines[1].startswith(" ")
-        assert lines[1].endswith("test_collection_skip.py:1: Skipped: 'hello'")
+        assert lines[1].endswith("test_collection_skip.py:1: Skipped: hello")
 
         lines = self.getresultlog(testdir, fail)
         assert lines
