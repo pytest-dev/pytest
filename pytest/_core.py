@@ -180,11 +180,6 @@ class PluginManager(object):
             for hint in self._hints:
                 tw.line("hint: %s" % hint)
 
-    def do_addoption(self, parser):
-        mname = "pytest_addoption"
-        methods = reversed(self.listattr(mname))
-        MultiCall(methods, {'parser': parser}).execute()
-
     def do_configure(self, config):
         assert not hasattr(self, '_config')
         self._config = config

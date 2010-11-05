@@ -53,12 +53,12 @@ class Parser:
 
     def parse(self, args):
         self.optparser = optparser = MyOptionParser(self)
-        groups = self._groups + [self._anonymous]
+        groups = list(reversed(self._groups)) + [self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name
                 optgroup = py.std.optparse.OptionGroup(optparser, desc)
-                optgroup.add_options(group.options)
+                optgroup.add_options(reversed(group.options))
                 optparser.add_option_group(optgroup)
         return self.optparser.parse_args([str(x) for x in args])
 
@@ -304,7 +304,7 @@ class Config(object):
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
         self._setinitialconftest(args)
-        self.pluginmanager.do_addoption(self._parser)
+        self.hook.pytest_addoption(parser=self._parser)
 
     def _checkversion(self):
         minver = self.inicfg.get('minversion', None)
