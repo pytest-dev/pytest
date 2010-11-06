@@ -9,8 +9,8 @@ cutdir = py.path.local(pytest.__file__).dirpath()
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("terminal reporting")
-    group._addoption('--funcargs',
+    group = parser.getgroup("general")
+    group.addoption('--funcargs',
                action="store_true", dest="showfuncargs", default=False,
                help="show available function arguments, sorted by plugin")
 

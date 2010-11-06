@@ -31,6 +31,8 @@ def pytest_addoption(parser):
     group.addoption('--collectonly',
         action="store_true", dest="collectonly",
         help="only collect tests, don't execute them."),
+    group.addoption('--pyargs', action="store_true",
+        help="try to interpret all arguments as python packages.")
     group.addoption("--ignore", action="append", metavar="path",
         help="ignore path during collection (multi-allowed).")
     group.addoption('--confcutdir', dest="confcutdir", default=None,
@@ -429,12 +431,29 @@ class Collection(FSCollector):
         ihook.pytest_collect_directory(path=path, parent=self)
         return True
 
+    def _tryconvertpyarg(self, x):
+        try:
+            mod = __import__(x, None, None, ['__doc__'])
+        except ImportError:
+            return x
+        p = py.path.local(mod.__file__)
+        if p.purebasename == "__init__":
+            p = p.dirpath()
+        return p
+
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
+        arg = str(arg)
+        if self.config.option.pyargs:
+            arg = self._tryconvertpyarg(arg)
         parts = str(arg).split("::")
         path = self.fspath.join(parts[0], abs=True)
         if not path.check():
-            raise pytest.UsageError("file not found: %s" %(path,))
+            if self.config.option.pyargs:
+                msg = "file or package not found: "
+            else:
+                msg = "file not found: "
+            raise pytest.UsageError(msg + arg)
         parts[0] = path
         return parts
    

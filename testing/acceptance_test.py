@@ -309,3 +309,24 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
         assert "--myopt" in out
 
+    def test_cmdline_python_package(self, testdir):
+        path = testdir.mkpydir("tpkg")
+        path.join("test_hello.py").write("def test_hello(): pass")
+        path.join("test_world.py").write("def test_world(): pass")
+        result = testdir.runpytest("--pyargs", "tpkg")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*2 passed*"
+        ])
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
+    def test_cmdline_python_package_not_exists(self, testdir):
+        result = testdir.runpytest("--pyargs", "tpkgwhatv")
+        assert result.ret
+        result.stderr.fnmatch_lines([
+            "ERROR*file*or*package*not*found*",
+        ])

@@ -25,39 +25,18 @@ To stop the testing process after the first (N) failures::
     py.test -x            # stop after first failure
     py.test -maxfail=2    # stop after two failures
 
-calling pytest from Python code
-----------------------------------------------------
+specifying tests / selecting tests
+---------------------------------------------------
 
-.. versionadded: 2.0
+Several test run options::
 
-You can invoke ``py.test`` from Python code directly::
+    py.test test_mod.py   # run tests in module
+    py.test somepath      # run all tests below path
+    py.test -k string     # only run tests whose names contain a string
 
-    pytest.main()
+Import 'pkg' and use its filesystem location to find and run tests::
 
-this acts as if you would call "py.test" from the command line.
-It will not raise ``SystemExit`` but return the exitcode instead.
-You can pass in options and arguments::
-
-    pytest.main(['x', 'mytestdir'])
-
-or pass in a string::
-
-    pytest.main("-x mytestdir")
-
-You can specify additional plugins to ``pytest.main``::
-
-    # content of myinvoke.py
-    import pytest
-    class MyPlugin:
-        def pytest_addoption(self, parser):
-            raise pytest.UsageError("hi from our plugin")
-
-    pytest.main(plugins=[MyPlugin()])
-
-Running it will exit quickly::
-
-    $ python myinvoke.py
-    ERROR: hi from our plugin
+    py.test --testpkg=pypkg # run all tests found below directory of pypkg
 
 calling pytest through ``python -m pytest``
 -----------------------------------------------------
@@ -161,5 +140,40 @@ for example ``-x`` if you only want to send one particular failure.
     py.test --pastebin=all
 
 Currently only pasting to the http://paste.pocoo.org service is implemented.
+
+calling pytest from Python code
+----------------------------------------------------
+
+.. versionadded: 2.0
+
+You can invoke ``py.test`` from Python code directly::
+
+    pytest.main()
+
+this acts as if you would call "py.test" from the command line.
+It will not raise ``SystemExit`` but return the exitcode instead.
+You can pass in options and arguments::
+
+    pytest.main(['x', 'mytestdir'])
+
+or pass in a string::
+
+    pytest.main("-x mytestdir")
+
+You can specify additional plugins to ``pytest.main``::
+
+    # content of myinvoke.py
+    import pytest
+    class MyPlugin:
+        def pytest_addoption(self, parser):
+            raise pytest.UsageError("hi from our plugin")
+
+    pytest.main(plugins=[MyPlugin()])
+
+Running it will exit quickly::
+
+    $ python myinvoke.py
+    ERROR: hi from our plugin
+
 
 .. include:: links.inc

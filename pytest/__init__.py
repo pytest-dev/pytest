@@ -5,7 +5,7 @@ see http://pytest.org for documentation and details
 
 (c) Holger Krekel and others, 2004-2010
 """
-__version__ = '2.0.0.dev19'
+__version__ = '2.0.0.dev20'
 
 __all__ = ['config', 'cmdline']
 
