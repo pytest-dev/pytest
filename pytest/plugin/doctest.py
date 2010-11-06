@@ -17,7 +17,7 @@ def pytest_addoption(parser):
 def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
-        if config.getvalue("doctestmodules"):
+        if config.option.doctestmodules:
             return DoctestModule(path, parent)
     elif path.check(fnmatch=config.getvalue("doctestglob")):
         return DoctestTextfile(path, parent)

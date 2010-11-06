@@ -133,7 +133,11 @@ class CaptureManager:
 
     def pytest_make_collect_report(self, __multicall__, collector):
         method = self._getmethod(collector.config, collector.fspath)
-        self.resumecapture(method)
+        try:
+            self.resumecapture(method)
+        except ValueError:
+            return # recursive collect, XXX refactor capturing
+                   # to allow for more lightweight recursive capturing
         try:
             rep = __multicall__.execute()
         finally:

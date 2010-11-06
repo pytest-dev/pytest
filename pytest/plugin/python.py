@@ -48,11 +48,10 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
 def pytest_collect_file(path, parent):
     ext = path.ext
     pb = path.purebasename
-    if pb.startswith("test_") or pb.endswith("_test") or \
-       path in parent.collection._argfspaths:
-        if ext == ".py":
-            return parent.ihook.pytest_pycollect_makemodule(
-                path=path, parent=parent)
+    if ext == ".py" and (pb.startswith("test_") or pb.endswith("_test") or
+       parent.collection.isinitpath(path)):
+        return parent.ihook.pytest_pycollect_makemodule(
+            path=path, parent=parent)
 
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
@@ -713,11 +712,13 @@ class FuncargRequest:
 def showfuncargs(config):
     from pytest.plugin.session import Collection
     collection = Collection(config)
-    firstid = collection._normalizearg(config.args[0])
-    colitem = collection.getbyid(firstid)[0]
+    collection.perform_collect()
+    if collection.items:
+        plugins = getplugins(collection.items[0])
+    else:
+        plugins = getplugins(collection)
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
-    plugins = getplugins(colitem, withpy=True)
     verbose = config.getvalue("verbose")
     for plugin in plugins:
         available = []

@@ -67,7 +67,10 @@ class PluginManager(object):
         self._hints = []
         self.trace = TagTracer().get("pluginmanage")
         if os.environ.get('PYTEST_DEBUG'):
-            self.trace.root.setwriter(sys.stderr.write)
+            err = sys.stderr
+            if hasattr(os, 'dup'):
+                err = py.io.dupfile(err)
+            self.trace.root.setwriter(err.write)
         self.hook = HookRelay([hookspec], pm=self)
         self.register(self)
         if load:
@@ -370,6 +373,7 @@ class HookCaller:
         self.hookrelay = hookrelay
         self.name = name
         self.firstresult = firstresult
+        self.trace = self.hookrelay.trace
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
@@ -380,10 +384,15 @@ class HookCaller:
         return mc.execute()
 
     def pcall(self, plugins, **kwargs):
-        self.hookrelay.trace(self.name, kwargs)
+        self.trace(self.name, kwargs)
+        self.trace.root.indent += 1
         methods = self.hookrelay._pm.listattr(self.name, plugins=plugins)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
-        return mc.execute()
+        res = mc.execute()
+        if res:
+            self.trace(res)
+        self.trace.root.indent -= 1
+        return res
 
 _preinit = [PluginManager(load=True)] # triggers default plugin importing
 

@@ -126,7 +126,7 @@ def pytest_runtest_protocol(item):
     """
 pytest_runtest_protocol.firstresult = True
 
-def pytest_runtest_logstart(nodeid, location, fspath):
+def pytest_runtest_logstart(nodeid, location):
     """ signal the start of a test run. """
 
 def pytest_runtest_setup(item):

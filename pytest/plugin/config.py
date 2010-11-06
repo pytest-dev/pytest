@@ -255,7 +255,7 @@ class Config(object):
         )
         #: a pluginmanager instance
         self.pluginmanager = pluginmanager or PluginManager(load=True)
-        self.trace = self.pluginmanager.trace.get("config")
+        self.trace = self.pluginmanager.trace.root.get("config")
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
 

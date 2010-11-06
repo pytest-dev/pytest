@@ -9,11 +9,13 @@ def runandparse(testdir, *args):
     return result, xmldoc
 
 def assert_attr(node, **kwargs):
+    __tracebackhide__ = True
     for name, expected in kwargs.items():
         anode = node.getAttributeNode(name)
         assert anode, "node %r has no attribute %r" %(node, name)
         val = anode.value
-        assert val == str(expected)
+        if val != str(expected):
+            py.test.fail("%r != %r" %(str(val), str(expected)))
 
 class TestPython:
     def test_summing_simple(self, testdir):
@@ -50,7 +52,7 @@ class TestPython:
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_setup_error.test_setup_error",
+            classname="test_setup_error",
             name="test_function")
         fnode = tnode.getElementsByTagName("error")[0]
         assert_attr(fnode, message="test setup failure")
@@ -68,8 +70,20 @@ class TestPython:
         assert_attr(node, failures=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_classname_instance.test_classname_instance.TestClass",
+            classname="test_classname_instance.TestClass",
             name="test_method")
+
+    def test_classname_nested_dir(self, testdir):
+        p = testdir.tmpdir.ensure("sub", "test_hello.py")
+        p.write("def test_func(): 0/0")
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, failures=1)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode,
+            classname="sub.test_hello",
+            name="test_func")
 
     def test_internal_error(self, testdir):
         testdir.makeconftest("def pytest_runtest_protocol(): 0 / 0")
@@ -92,7 +106,7 @@ class TestPython:
         assert_attr(node, failures=1, tests=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_failure_function.test_failure_function",
+            classname="test_failure_function",
             name="test_fail")
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
@@ -112,11 +126,11 @@ class TestPython:
         assert_attr(node, failures=2, tests=2)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_failure_escape.test_failure_escape",
+            classname="test_failure_escape",
             name="test_func[<]")
         tnode = node.getElementsByTagName("testcase")[1]
         assert_attr(tnode,
-            classname="test_failure_escape.test_failure_escape",
+            classname="test_failure_escape",
             name="test_func[&]")
 
     def test_junit_prefixing(self, testdir):
@@ -133,11 +147,11 @@ class TestPython:
         assert_attr(node, failures=1, tests=2)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="xyz.test_junit_prefixing.test_junit_prefixing",
+            classname="xyz.test_junit_prefixing",
             name="test_func")
         tnode = node.getElementsByTagName("testcase")[1]
         assert_attr(tnode,
-            classname="xyz.test_junit_prefixing.test_junit_prefixing."
+            classname="xyz.test_junit_prefixing."
                       "TestHello",
             name="test_hello")
 
@@ -153,7 +167,7 @@ class TestPython:
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_xfailure_function.test_xfailure_function",
+            classname="test_xfailure_function",
             name="test_xfail")
         fnode = tnode.getElementsByTagName("skipped")[0]
         assert_attr(fnode, message="expected test failure")
@@ -172,7 +186,7 @@ class TestPython:
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
-            classname="test_xfailure_xpass.test_xfailure_xpass",
+            classname="test_xfailure_xpass",
             name="test_xpass")
         fnode = tnode.getElementsByTagName("skipped")[0]
         assert_attr(fnode, message="xfail-marked test passes unexpectedly")

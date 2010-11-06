@@ -3,6 +3,7 @@
 """
 
 import py
+import os
 import time
 
 def pytest_addoption(parser):
@@ -36,7 +37,9 @@ class LogXML(object):
         self._durations = {}
 
     def _opentestcase(self, report):
-        names = report.nodenames
+        names = report.nodeid.split("::")
+        names[0] = names[0].replace(os.sep, '.')
+        names = tuple(names)
         d = {'time': self._durations.pop(names, "0")}
         names = [x.replace(".py", "") for x in names if x != "()"]
         classnames = names[:-1]

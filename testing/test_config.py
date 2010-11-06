@@ -81,7 +81,7 @@ class TestConfigAPI:
         config.trace.root.setwriter(l.append)
         config.trace("hello")
         assert len(l) == 1
-        assert l[0] == "[pytest:config] hello\n"
+        assert l[0] == "[pytest] hello\n"
 
     def test_config_getvalue_honours_conftest(self, testdir):
         testdir.makepyfile(conftest="x=1")

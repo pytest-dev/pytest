@@ -17,13 +17,14 @@ class SessionTests:
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3
-        assert failed[0].nodenames[-1] == "test_one_one"
-        assert failed[1].nodenames[-1] == "test_other"
-        assert failed[2].nodenames[-1] == "test_two"
+        end = lambda x: x.nodeid.split("::")[-1]
+        assert end(failed[0]) == "test_one_one"
+        assert end(failed[1]) == "test_other"
+        assert end(failed[2]) == "test_two"
         itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 4
         colstarted = reprec.getcalls("pytest_collectstart")
-        assert len(colstarted) == 1 + 1 # XXX ExtraTopCollector
+        assert len(colstarted) == 1 + 1
         col = colstarted[1].collector
         assert isinstance(col, py.test.collect.Module)
 
@@ -186,7 +187,7 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 8 + 1 # XXX extra TopCollector
+        assert len(started) == 8 # XXX extra TopCollector
         colfail = [x for x in finished if x.failed]
         colskipped = [x for x in finished if x.skipped]
         assert len(colfail) == 1

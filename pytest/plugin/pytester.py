@@ -105,6 +105,7 @@ class HookRecorder:
         return l
 
     def contains(self, entries):
+        __tracebackhide__ = True
         from py.builtin import print_
         i = 0
         entries = list(entries)
@@ -123,8 +124,7 @@ class HookRecorder:
                     break
                 print_("NONAMEMATCH", name, "with", call)
             else:
-                raise AssertionError("could not find %r in %r" %(
-                    name, self.calls[i:]))
+                py.test.fail("could not find %r check %r" % (name, check))
 
     def popcall(self, name):
         for i, call in enumerate(self.calls):
@@ -278,7 +278,16 @@ class TmpTestdir:
     Collection = Collection
     def getnode(self, config, arg):
         collection = Collection(config)
-        return collection.getbyid(collection._normalizearg(arg))[0]
+        assert '::' not in str(arg)
+        p = py.path.local(arg)
+        x = collection.fspath.bestrelpath(p)
+        return collection.perform_collect([x], genitems=False)[0]
+
+    def getpathnode(self, path):
+        config = self.parseconfig(path)
+        collection = Collection(config)
+        x = collection.fspath.bestrelpath(path)
+        return collection.perform_collect([x], genitems=False)[0]
 
     def genitems(self, colitems):
         collection = colitems[0].collection
@@ -291,8 +300,9 @@ class TmpTestdir:
         #config = self.parseconfig(*args)
         config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
-        items = Collection(config).perform_collect()
-        return items, rec
+        collection = Collection(config)
+        collection.perform_collect()
+        return collection.items, rec
 
     def runitem(self, source):
         # used from runner functional tests
@@ -469,11 +479,12 @@ class TmpTestdir:
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args
-        for x in args:
-            if '--confcutdir' in str(x):
-                break
-        else:
-            args = ('--confcutdir=.',) + args
+        #for x in args:
+        #    if '--confcutdir' in str(x):
+        #        break
+        #else:
+        #    pass
+        #    args = ('--confcutdir=.',) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ('-p', plugins[0]) + args
@@ -530,7 +541,7 @@ class ReportRecorder(object):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
-            if not inamepart or inamepart in rep.nodenames:
+            if not inamepart or inamepart in rep.nodeid.split("::"):
                 l.append(rep)
         if not l:
             raise ValueError("could not find test report matching %r: no test reports at all!" %
@@ -616,6 +627,8 @@ class LineMatcher:
                 raise ValueError("line %r not found in output" % line)
 
     def fnmatch_lines(self, lines2):
+        def show(arg1, arg2):
+            py.builtin.print_(arg1, arg2, file=py.std.sys.stderr)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
@@ -626,17 +639,17 @@ class LineMatcher:
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
-                    print_("exact match:", repr(line))
+                    show("exact match:", repr(line))
                     break
                 elif fnmatch(nextline, line):
-                    print_("fnmatch:", repr(line))
-                    print_("   with:", repr(nextline))
+                    show("fnmatch:", repr(line))
+                    show("   with:", repr(nextline))
                     break
                 else:
                     if not nomatchprinted:
-                        print_("nomatch:", repr(line))
+                        show("nomatch:", repr(line))
                         nomatchprinted = True
-                    print_("    and:", repr(nextline))
+                    show("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                assert line == nextline
+                py.test.fail("remains unmatched: %r, see stderr" % (line,))

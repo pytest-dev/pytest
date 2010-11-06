@@ -29,30 +29,12 @@ def pytest_sessionfinish(session, exitstatus):
             session.exitstatus = 1
 
 class NodeInfo:
-    def __init__(self, nodeid, nodenames, fspath, location):
-        self.nodeid = nodeid
-        self.nodenames = nodenames
-        self.fspath = fspath
+    def __init__(self, location):
         self.location = location
 
-def getitemnodeinfo(item):
-    try:
-        return item._nodeinfo
-    except AttributeError:
-        location = item.reportinfo()
-        location = (str(location[0]), location[1], str(location[2]))
-        nodenames = tuple(item.listnames())
-        nodeid = item.collection.getid(item)
-        fspath = item.fspath
-        item._nodeinfo = n = NodeInfo(nodeid, nodenames, fspath, location)
-        return n
-        
 def pytest_runtest_protocol(item):
-    nodeinfo = getitemnodeinfo(item)
     item.ihook.pytest_runtest_logstart(
-        nodeid=nodeinfo.nodeid,
-        location=nodeinfo.location,
-        fspath=str(item.fspath),
+        nodeid=item.nodeid, location=item.location,
     )
     runtestprotocol(item)
     return True
@@ -142,16 +124,18 @@ class BaseReport(object):
     failed = property(lambda x: x.outcome == "failed")
     skipped = property(lambda x: x.outcome == "skipped")
 
+    @property
+    def fspath(self):
+        return self.nodeid.split("::")[0]
 
 def pytest_runtest_makereport(item, call):
-    nodeinfo = getitemnodeinfo(item)
     when = call.when
     keywords = dict([(x,1) for x in item.keywords])
-    excinfo = call.excinfo
     if not call.excinfo:
         outcome = "passed"
         longrepr = None
     else:
+        excinfo = call.excinfo
         if not isinstance(excinfo, py.code.ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
@@ -164,24 +148,17 @@ def pytest_runtest_makereport(item, call):
                 longrepr = item.repr_failure(excinfo)
             else: # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo)
-    return TestReport(nodeinfo.nodeid, nodeinfo.nodenames,
-        nodeinfo.fspath, nodeinfo.location,
+    return TestReport(item.nodeid, item.location,
         keywords, outcome, longrepr, when)
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
     they fail).
     """
-    def __init__(self, nodeid, nodenames, fspath, location,
+    def __init__(self, nodeid, location,
             keywords, outcome, longrepr, when):
         #: normalized collection node id
         self.nodeid = nodeid
-
-        #: list of names indicating position in collection tree.
-        self.nodenames = nodenames
-
-        #: the collected path of the file containing the test.
-        self.fspath = fspath  # where the test was collected
 
         #: a (filesystempath, lineno, domaininfo) tuple indicating the
         #: actual location of a test item - it might be different from the
@@ -212,39 +189,27 @@ class TeardownErrorReport(BaseReport):
         self.longrepr = longrepr
 
 def pytest_make_collect_report(collector):
-    result = excinfo = None
-    try:
-        result = collector._memocollect()
-    except KeyboardInterrupt:
-        raise
-    except:
-        excinfo = py.code.ExceptionInfo()
-    nodenames = tuple(collector.listnames())
-    nodeid = collector.collection.getid(collector)
-    fspath = str(collector.fspath)
+    call = CallInfo(collector._memocollect, "memocollect")
     reason = longrepr = None
-    if not excinfo:
+    if not call.excinfo:
         outcome = "passed"
     else:
-        if excinfo.errisinstance(py.test.skip.Exception):
+        if call.excinfo.errisinstance(py.test.skip.Exception):
             outcome = "skipped"
-            reason = str(excinfo.value)
-            longrepr = collector._repr_failure_py(excinfo, "line")
+            reason = str(call.excinfo.value)
+            longrepr = collector._repr_failure_py(call.excinfo, "line")
         else:
             outcome = "failed"
-            errorinfo = collector.repr_failure(excinfo)
+            errorinfo = collector.repr_failure(call.excinfo)
             if not hasattr(errorinfo, "toterminal"):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
-    return CollectReport(nodenames, nodeid, fspath,
-        outcome, longrepr, result, reason)
+    return CollectReport(collector.nodeid, outcome, longrepr,
+        getattr(call, 'result', None), reason)
 
 class CollectReport(BaseReport):
-    def __init__(self, nodenames, nodeid, fspath, outcome,
-        longrepr, result, reason):
-        self.nodenames = nodenames
+    def __init__(self, nodeid, outcome, longrepr, result, reason):
         self.nodeid = nodeid
-        self.fspath = fspath
         self.outcome = outcome
         self.longrepr = longrepr
         self.result = result or []
@@ -255,7 +220,8 @@ class CollectReport(BaseReport):
         return (self.fspath, None, self.fspath)
 
     def __repr__(self):
-        return "<CollectReport %r outcome=%r>" % (self.nodeid, self.outcome)
+        return "<CollectReport %r lenresult=%s outcome=%r>" % (
+                self.nodeid, len(self.result), self.outcome)
 
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):

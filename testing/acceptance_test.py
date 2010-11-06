@@ -76,14 +76,13 @@ class TestGeneralUsage:
         p1 = testdir.makepyfile("")
         p2 = testdir.makefile(".pyc", "123")
         result = testdir.runpytest(p1, p2)
-        assert result.ret != 0
+        assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR: can't collect:*%s" %(p2.basename,)
+            "*ERROR: not found:*%s" %(p2.basename,)
         ])
 
 
 
-    @py.test.mark.xfail
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
         testdir.makeconftest("""
@@ -96,7 +95,6 @@ class TestGeneralUsage:
         result.stdout.fnmatch_lines([
             "*1 skip*"
         ])
-
 
     def test_issue88_initial_file_multinodes(self, testdir):
         testdir.makeconftest("""
@@ -145,7 +143,7 @@ class TestGeneralUsage:
             print (py.__file__)
             print (py.__path__)
             os.chdir(os.path.dirname(os.getcwd()))
-            print (py.log.Producer)
+            print (py.log)
         """))
         result = testdir.runpython(p, prepend=False)
         assert not result.ret
@@ -210,6 +208,27 @@ class TestGeneralUsage:
         res = testdir.runpytest(p)
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
+        
+    def test_direct_addressing_selects(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall({'i': 1}, id="1")
+                metafunc.addcall({'i': 2}, id="2")
+            def test_func(i):
+                pass
+        """)
+        res = testdir.runpytest(p.basename + "::" + "test_func[1]")
+        assert res.ret == 0
+        res.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_direct_addressing_notfound(self, testdir):
+        p = testdir.makepyfile("""
+            def test_func():
+                pass
+        """)
+        res = testdir.runpytest(p.basename + "::" + "test_notfound")
+        assert res.ret
+        res.stderr.fnmatch_lines(["*ERROR*not found*"])
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):

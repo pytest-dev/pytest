@@ -115,10 +115,10 @@ class TerminalReporter:
     def write_fspath_result(self, fspath, res):
         if fspath != self.currentfspath:
             self.currentfspath = fspath
-            fspath = self.curdir.bestrelpath(fspath)
+            #fspath = self.curdir.bestrelpath(fspath)
             self._tw.line()
-            relpath = self.curdir.bestrelpath(fspath)
-            self._tw.write(relpath + " ")
+            #relpath = self.curdir.bestrelpath(fspath)
+            self._tw.write(fspath + " ")
         self._tw.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
@@ -163,14 +163,15 @@ class TerminalReporter:
     def pytest__teardown_final_logerror(self, report):
         self.stats.setdefault("error", []).append(report)
 
-    def pytest_runtest_logstart(self, nodeid, location, fspath):
+    def pytest_runtest_logstart(self, nodeid, location):
         # ensure that the path is printed before the
         # 1st test of a module starts running
+        fspath = nodeid.split("::")[0]
         if self.showlongtestinfo:
             line = self._locationline(fspath, *location)
             self.write_ensure_prefix(line, "")
         elif self.showfspath:
-            self.write_fspath_result(py.path.local(fspath), "")
+            self.write_fspath_result(fspath, "")
 
     def pytest_runtest_logreport(self, report):
         rep = report

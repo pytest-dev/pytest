@@ -235,7 +235,7 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
-        collection = object()
+        collection = testdir.Collection(config)
         f5 = py.test.collect.Function(name="name", config=config,
             callspec=callspec1, callobj=isinstance, collection=collection)
         f5b = py.test.collect.Function(name="name", config=config,
@@ -395,8 +395,8 @@ def test_generate_tests_only_done_in_subdir(testdir):
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
-    trail = modcol.collection.getid(modcol)
-    newcol = modcol.collection.getbyid(trail)[0]
+    trail = modcol.nodeid
+    newcol = modcol.collection.perform_collect([trail], genitems=0)[0]
     assert modcol.name == newcol.name
 
 
@@ -1058,8 +1058,7 @@ class TestReportInfo:
         """)
         item = testdir.getitem("def test_func(): pass")
         runner = item.config.pluginmanager.getplugin("runner")
-        nodeinfo = runner.getitemnodeinfo(item)
-        assert nodeinfo.location == ("ABCDE", 42, "custom")
+        assert item.location == ("ABCDE", 42, "custom")
 
     def test_func_reportinfo(self, testdir):
         item = testdir.getitem("def test_func(): pass")

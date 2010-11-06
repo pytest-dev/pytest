@@ -1,6 +1,283 @@
 import py
 
-from pytest.plugin.session import Collection, gettopdir
+from pytest.plugin.session import Collection
+
+class TestCollector:
+    def test_collect_versus_item(self):
+        from pytest.collect import Collector, Item
+        assert not issubclass(Collector, Item)
+        assert not issubclass(Item, Collector)
+
+    def test_compat_attributes(self, testdir, recwarn):
+        modcol = testdir.getmodulecol("""
+            def test_pass(): pass
+            def test_fail(): assert 0
+        """)
+        recwarn.clear()
+        assert modcol.Module == py.test.collect.Module
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Class == py.test.collect.Class
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Item == py.test.collect.Item
+        recwarn.pop(DeprecationWarning)
+        assert modcol.File == py.test.collect.File
+        recwarn.pop(DeprecationWarning)
+        assert modcol.Function == py.test.collect.Function
+        recwarn.pop(DeprecationWarning)
+
+    def test_check_equality(self, testdir):
+        modcol = testdir.getmodulecol("""
+            def test_pass(): pass
+            def test_fail(): assert 0
+        """)
+        fn1 = testdir.collect_by_name(modcol, "test_pass")
+        assert isinstance(fn1, py.test.collect.Function)
+        fn2 = testdir.collect_by_name(modcol, "test_pass")
+        assert isinstance(fn2, py.test.collect.Function)
+
+        assert fn1 == fn2
+        assert fn1 != modcol
+        if py.std.sys.version_info < (3, 0):
+            assert cmp(fn1, fn2) == 0
+        assert hash(fn1) == hash(fn2)
+
+        fn3 = testdir.collect_by_name(modcol, "test_fail")
+        assert isinstance(fn3, py.test.collect.Function)
+        assert not (fn1 == fn3)
+        assert fn1 != fn3
+
+        for fn in fn1,fn2,fn3:
+            assert fn != 3
+            assert fn != modcol
+            assert fn != [1,2,3]
+            assert [1,2,3] != fn
+            assert modcol != fn
+
+    def test_getparent(self, testdir):
+        modcol = testdir.getmodulecol("""
+            class TestClass:
+                 def test_foo():
+                     pass
+        """)
+        cls = testdir.collect_by_name(modcol, "TestClass")
+        fn = testdir.collect_by_name(
+            testdir.collect_by_name(cls, "()"), "test_foo")
+
+        parent = fn.getparent(py.test.collect.Module)
+        assert parent is modcol
+
+        parent = fn.getparent(py.test.collect.Function)
+        assert parent is fn
+
+        parent = fn.getparent(py.test.collect.Class)
+        assert parent is cls
+
+
+    def test_getcustomfile_roundtrip(self, testdir):
+        hello = testdir.makefile(".xxx", hello="world")
+        testdir.makepyfile(conftest="""
+            import py
+            class CustomFile(py.test.collect.File):
+                pass
+            def pytest_collect_file(path, parent):
+                if path.ext == ".xxx":
+                    return CustomFile(path, parent=parent)
+        """)
+        node = testdir.getpathnode(hello)
+        assert isinstance(node, py.test.collect.File)
+        assert node.name == "hello.xxx"
+        nodes = node.collection.perform_collect([node.nodeid], genitems=False)
+        assert len(nodes) == 1
+        assert isinstance(nodes[0], py.test.collect.File)
+
+class TestCollectFS:
+    def test_ignored_certain_directories(self, testdir):
+        tmpdir = testdir.tmpdir
+        tmpdir.ensure("_darcs", 'test_notfound.py')
+        tmpdir.ensure("CVS", 'test_notfound.py')
+        tmpdir.ensure("{arch}", 'test_notfound.py')
+        tmpdir.ensure(".whatever", 'test_notfound.py')
+        tmpdir.ensure(".bzr", 'test_notfound.py')
+        tmpdir.ensure("normal", 'test_found.py')
+
+        result = testdir.runpytest("--collectonly")
+        s = result.stdout.str()
+        assert "test_notfound" not in s
+        assert "test_found" in s
+
+    def test_custom_norecursedirs(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            norecursedirs = mydir xyz*
+        """)
+        tmpdir = testdir.tmpdir
+        tmpdir.ensure("mydir", "test_hello.py").write("def test_1(): pass")
+        tmpdir.ensure("xyz123", "test_2.py").write("def test_2(): 0/0")
+        tmpdir.ensure("xy", "test_ok.py").write("def test_3(): pass")
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
+        rec = testdir.inline_run("xyz123/test_2.py")
+        rec.assertoutcome(failed=1)
+
+class TestCollectPluginHookRelay:
+    def test_pytest_collect_file(self, testdir):
+        wascalled = []
+        class Plugin:
+            def pytest_collect_file(self, path, parent):
+                wascalled.append(path)
+        testdir.makefile(".abc", "xyz")
+        testdir.pytestmain([testdir.tmpdir], plugins=[Plugin()])
+        assert len(wascalled) == 1
+        assert wascalled[0].ext == '.abc'
+
+    def test_pytest_collect_directory(self, testdir):
+        wascalled = []
+        class Plugin:
+            def pytest_collect_directory(self, path, parent):
+                wascalled.append(path.basename)
+        testdir.mkdir("hello")
+        testdir.mkdir("world")
+        testdir.pytestmain(testdir.tmpdir, plugins=[Plugin()])
+        assert "hello" in wascalled
+        assert "world" in wascalled
+
+class TestPrunetraceback:
+    def test_collection_error(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        result = testdir.runpytest(p)
+        assert "__import__" not in result.stdout.str(), "too long traceback"
+        result.stdout.fnmatch_lines([
+            "*ERROR collecting*",
+            "*mport*not_exists*"
+        ])
+
+    def test_custom_repr_failure(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        testdir.makeconftest("""
+            import py
+            def pytest_collect_file(path, parent):
+                return MyFile(path, parent)
+            class MyError(Exception):
+                pass
+            class MyFile(py.test.collect.File):
+                def collect(self):
+                    raise MyError()
+                def repr_failure(self, excinfo):
+                    if excinfo.errisinstance(MyError):
+                        return "hello world"
+                    return py.test.collect.File.repr_failure(self, excinfo)
+        """)
+
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR collecting*",
+            "*hello world*",
+        ])
+
+    @py.test.mark.xfail(reason="other mechanism for adding to reporting needed")
+    def test_collect_report_postprocessing(self, testdir):
+        p = testdir.makepyfile("""
+            import not_exists
+        """)
+        testdir.makeconftest("""
+            import py
+            def pytest_make_collect_report(__multicall__):
+                rep = __multicall__.execute()
+                rep.headerlines += ["header1"]
+                return rep
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR collecting*",
+            "*header1*",
+        ])
+
+
+class TestCustomConftests:
+    def test_ignore_collect_path(self, testdir):
+        testdir.makeconftest("""
+            def pytest_ignore_collect(path, config):
+                return path.basename.startswith("x") or \
+                       path.basename == "test_one.py"
+        """)
+        testdir.mkdir("xy123").ensure("test_hello.py").write(
+            "syntax error"
+        )
+        testdir.makepyfile("def test_hello(): pass")
+        testdir.makepyfile(test_one="syntax error")
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_collectignore_exclude_on_option(self, testdir):
+        testdir.makeconftest("""
+            collect_ignore = ['hello', 'test_world.py']
+            def pytest_addoption(parser):
+                parser.addoption("--XX", action="store_true", default=False)
+            def pytest_configure(config):
+                if config.getvalue("XX"):
+                    collect_ignore[:] = []
+        """)
+        testdir.mkdir("hello")
+        testdir.makepyfile(test_world="def test_hello(): pass")
+        result = testdir.runpytest()
+        assert result.ret == 0
+        assert "passed" not in result.stdout.str()
+        result = testdir.runpytest("--XX")
+        assert result.ret == 0
+        assert "passed" in result.stdout.str()
+
+    def test_pytest_fs_collect_hooks_are_seen(self, testdir):
+        conf = testdir.makeconftest("""
+            import py
+            class MyModule(py.test.collect.Module):
+                pass
+            def pytest_collect_file(path, parent):
+                if path.ext == ".py":
+                    return MyModule(path, parent)
+        """)
+        sub = testdir.mkdir("sub")
+        p = testdir.makepyfile("def test_x(): pass")
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*MyModule*",
+            "*test_x*"
+        ])
+
+    def test_pytest_collect_file_from_sister_dir(self, testdir):
+        sub1 = testdir.mkpydir("sub1")
+        sub2 = testdir.mkpydir("sub2")
+        conf1 = testdir.makeconftest("""
+            import py
+            class MyModule1(py.test.collect.Module):
+                pass
+            def pytest_collect_file(path, parent):
+                if path.ext == ".py":
+                    return MyModule1(path, parent)
+        """)
+        conf1.move(sub1.join(conf1.basename))
+        conf2 = testdir.makeconftest("""
+            import py
+            class MyModule2(py.test.collect.Module):
+                pass
+            def pytest_collect_file(path, parent):
+                if path.ext == ".py":
+                    return MyModule2(path, parent)
+        """)
+        conf2.move(sub2.join(conf2.basename))
+        p = testdir.makepyfile("def test_x(): pass")
+        p.copy(sub1.join(p.basename))
+        p.copy(sub2.join(p.basename))
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*MyModule1*",
+            "*MyModule2*",
+            "*test_x*"
+        ])
 
 class TestCollection:
     def test_parsearg(self, testdir):
@@ -13,16 +290,15 @@ class TestCollection:
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
         rcol = Collection(config=config)
-        assert rcol.topdir == testdir.tmpdir
+        assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
-        assert parts[0] ==  "sub"
-        assert parts[1] ==  p.basename
-        assert len(parts) == 2
+
+        assert parts[0] ==  target
+        assert len(parts) == 1
         parts = rcol._parsearg(p.basename + "::test_func")
-        assert parts[0] ==  "sub"
-        assert parts[1] ==  p.basename
-        assert parts[2] ==  "test_func"
-        assert len(parts) == 3
+        assert parts[0] ==  target
+        assert parts[1] ==  "test_func"
+        assert len(parts) == 2
 
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -30,14 +306,14 @@ class TestCollection:
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
         rcol = Collection(config)
-        assert topdir == rcol.topdir
-        hookrec = testdir.getreportrecorder(config)
-        items = rcol.perform_collect()
-        assert len(items) == 1
-        root = items[0].listchain()[0]
-        root_id = rcol.getid(root)
-        root2 = rcol.getbyid(root_id)[0]
-        assert root2.fspath == root.fspath
+        assert topdir == rcol.fspath
+        rootid = rcol.nodeid
+        #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
+        #assert root2 == rcol, rootid
+        colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
+        assert len(colitems) == 1
+        assert colitems[0].fspath == p
+
 
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -45,13 +321,14 @@ class TestCollection:
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
         rcol = Collection(config)
-        assert topdir == rcol.topdir
+        assert topdir == rcol.fspath
         hookrec = testdir.getreportrecorder(config)
-        items = rcol.perform_collect()
+        rcol.perform_collect()
+        items = rcol.items
         assert len(items) == 1
         item = items[0]
         assert item.name == "test_func"
-        newid = rcol.getid(item)
+        newid = item.nodeid
         assert newid == id
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         hookrec.hookrecorder.contains([
@@ -60,8 +337,8 @@ class TestCollection:
             ("pytest_collectstart", "collector.fspath == p"),
             ("pytest_make_collect_report", "collector.fspath == p"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.fspath == p"),
-            ("pytest_collectreport", "report.fspath == topdir")
+            ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
+            ("pytest_collectreport", "report.nodeid == '.'")
         ])
 
     def test_collect_protocol_method(self, testdir):
@@ -70,19 +347,19 @@ class TestCollection:
                 def test_method(self):
                     pass
         """)
-        normid = p.basename + "::TestClass::test_method"
+        normid = p.basename + "::TestClass::()::test_method"
         for id in [p.basename,
                    p.basename + "::TestClass",
                    p.basename + "::TestClass::()",
-                   p.basename + "::TestClass::()::test_method",
                    normid,
                    ]:
             config = testdir.parseconfig(id)
             rcol = Collection(config=config)
-            nodes = rcol.perform_collect()
-            assert len(nodes) == 1
-            assert nodes[0].name == "test_method"
-            newid = rcol.getid(nodes[0])
+            rcol.perform_collect()
+            items = rcol.items
+            assert len(items) == 1
+            assert items[0].name == "test_method"
+            newid = items[0].nodeid
             assert newid == normid
 
     def test_collect_custom_nodes_multi_id(self, testdir):
@@ -104,20 +381,21 @@ class TestCollection:
         config = testdir.parseconfig(id)
         rcol = Collection(config)
         hookrec = testdir.getreportrecorder(config)
-        items = rcol.perform_collect()
+        rcol.perform_collect()
+        items = rcol.items
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         assert len(items) == 2
         hookrec.hookrecorder.contains([
             ("pytest_collectstart",
-                "collector.fspath == collector.collection.topdir"),
+                "collector.fspath == collector.collection.fspath"),
             ("pytest_collectstart",
                 "collector.__class__.__name__ == 'SpecialFile'"),
             ("pytest_collectstart",
                 "collector.__class__.__name__ == 'Module'"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.fspath == p"),
-            ("pytest_collectreport",
-                "report.fspath == %r" % str(rcol.topdir)),
+            ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
+            #("pytest_collectreport",
+            #    "report.fspath == %r" % str(rcol.fspath)),
         ])
 
     def test_collect_subdir_event_ordering(self, testdir):
@@ -128,134 +406,87 @@ class TestCollection:
         config = testdir.parseconfig()
         rcol = Collection(config)
         hookrec = testdir.getreportrecorder(config)
-        items = rcol.perform_collect()
+        rcol.perform_collect()
+        items = rcol.items
         assert len(items) == 1
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         hookrec.hookrecorder.contains([
-            ("pytest_collectstart", "collector.fspath == aaa"),
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.fspath == test_aaa"),
-            ("pytest_collectreport", "report.fspath == aaa"),
+            ("pytest_collectreport",
+                    "report.nodeid.startswith('aaa/test_aaa.py')"),
         ])
 
     def test_collect_two_commandline_args(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         aaa = testdir.mkpydir("aaa")
         bbb = testdir.mkpydir("bbb")
-        p.copy(aaa.join("test_aaa.py"))
-        p.move(bbb.join("test_bbb.py"))
+        test_aaa = aaa.join("test_aaa.py")
+        p.copy(test_aaa)
+        test_bbb = bbb.join("test_bbb.py")
+        p.move(test_bbb)
 
         id = "."
         config = testdir.parseconfig(id)
         rcol = Collection(config)
         hookrec = testdir.getreportrecorder(config)
-        items = rcol.perform_collect()
+        rcol.perform_collect()
+        items = rcol.items
         assert len(items) == 2
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         hookrec.hookrecorder.contains([
-            ("pytest_collectstart", "collector.fspath == aaa"),
+            ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.fspath == aaa"),
-            ("pytest_collectstart", "collector.fspath == bbb"),
+            ("pytest_collectreport", "report.nodeid == 'aaa/test_aaa.py'"),
+            ("pytest_collectstart", "collector.fspath == test_bbb"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.fspath == bbb"),
+            ("pytest_collectreport", "report.nodeid == 'bbb/test_bbb.py'"),
         ])
 
     def test_serialization_byid(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         config = testdir.parseconfig()
         rcol = Collection(config)
-        items = rcol.perform_collect()
+        rcol.perform_collect()
+        items = rcol.items
         assert len(items) == 1
         item, = items
-        id = rcol.getid(item)
         newcol = Collection(config)
-        item2, = newcol.getbyid(id)
+        item2, = newcol.perform_collect([item.nodeid], genitems=False)
         assert item2.name == item.name
         assert item2.fspath == item.fspath
-        item2b, = newcol.getbyid(id)
-        assert item2b is item2
-
-class Test_gettopdir:
-    def test_gettopdir(self, testdir):
-        tmp = testdir.tmpdir
-        assert gettopdir([tmp]) == tmp
-        topdir = gettopdir([tmp.join("hello"), tmp.join("world")])
-        assert topdir == tmp
-        somefile = tmp.ensure("somefile.py")
-        assert gettopdir([somefile]) == tmp
-
-    def test_gettopdir_pypkg(self, testdir):
-        tmp = testdir.tmpdir
-        a = tmp.ensure('a', dir=1)
-        b = tmp.ensure('a', 'b', '__init__.py')
-        c = tmp.ensure('a', 'b', 'c.py')
-        Z = tmp.ensure('Z', dir=1)
-        assert gettopdir([c]) == a
-        assert gettopdir([c, Z]) == tmp
-        assert gettopdir(["%s::xyc" % c]) == a
-        assert gettopdir(["%s::xyc::abc" % c]) == a
-        assert gettopdir(["%s::xyc" % c, "%s::abc" % Z]) == tmp
+        item2b, = newcol.perform_collect([item.nodeid], genitems=False)
+        assert item2b == item2
 
 def getargnode(collection, arg):
-    return collection.getbyid(collection._normalizearg(str(arg)))[0]
+    argpath = arg.relto(collection.fspath)
+    return collection.perform_collect([argpath], genitems=False)[0]
 
 class Test_getinitialnodes:
-    def test_onedir(self, testdir):
-        config = testdir.reparseconfig([testdir.tmpdir])
-        c = Collection(config)
-        col = getargnode(c, testdir.tmpdir)
-        assert isinstance(col, py.test.collect.Directory)
-        for col in col.listchain():
-            assert col.config is config
-        t2 = getargnode(c, testdir.tmpdir)
-        assert col == t2
-
-    def test_curdir_and_subdir(self, testdir, tmpdir):
-        a = tmpdir.ensure("a", dir=1)
-        config = testdir.reparseconfig([tmpdir, a])
-        c = Collection(config)
-        
-        col1 = getargnode(c, tmpdir)
-        col2 = getargnode(c, a)
-        assert col1.name == tmpdir.basename
-        assert col2.name == 'a'
-        for col in (col1, col2):
-            for subcol in col.listchain():
-                assert col.config is config
-
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         config = testdir.reparseconfig([x])
-        col = getargnode(Collection(config), x)
+        col = testdir.getnode(config, x)
         assert isinstance(col, py.test.collect.Module)
         assert col.name == 'x.py'
-        assert col.parent.name == tmpdir.basename
+        assert col.parent.name == testdir.tmpdir.basename
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
 
-    def test_global_dir(self, testdir, tmpdir):
-        x = tmpdir.ensure("a", dir=1)
+    def test_pkgfile(self, testdir):
+        testdir.chdir()
+        tmpdir = testdir.tmpdir
+        subdir = tmpdir.join("subdir")
+        x = subdir.ensure("x.py")
+        subdir.ensure("__init__.py")
         config = testdir.reparseconfig([x])
-        col = getargnode(Collection(config), x)
-        assert isinstance(col, py.test.collect.Directory)
-        print(col.listchain())
-        assert col.name == 'a'
-        assert col.parent is None
-        assert col.config is config
-
-    def test_pkgfile(self, testdir, tmpdir):
-        tmpdir = tmpdir.join("subdir")
-        x = tmpdir.ensure("x.py")
-        tmpdir.ensure("__init__.py")
-        config = testdir.reparseconfig([x])
-        col = getargnode(Collection(config), x)
+        col = testdir.getnode(config, x)
         assert isinstance(col, py.test.collect.Module)
-        assert col.name == 'x.py'
-        assert col.parent.name == x.dirpath().basename
-        assert col.parent.parent.parent is None
+        print col.obj
+        print col.listchain()
+        assert col.name == 'subdir/x.py'
+        assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
 
