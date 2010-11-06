@@ -403,7 +403,11 @@ def main(args=None, plugins=None):
     if args is None:
         args = sys.argv[1:]
     elif not isinstance(args, (tuple, list)):
-        args = py.std.shlex.split(str(args))
+        if isinstance(args, py.path.local):
+            args = str(args)
+        if not isinstance(args, str):
+            raise ValueError("not a string or argument list: %r" % (args,))
+        args = py.std.shlex.split(args)
     if _preinit:
        _pluginmanager = _preinit.pop(0)
     else: # subsequent calls to main will create a fresh instance

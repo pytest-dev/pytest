@@ -294,6 +294,7 @@ class TestInvocationVariants:
         assert not retcode
         out, err = capsys.readouterr()
         assert "--help" in out
+        pytest.raises(ValueError, lambda: pytest.main(retcode))
 
     def test_invoke_with_path(self, testdir, capsys):
         retcode = testdir.pytestmain(testdir.tmpdir)
@@ -330,3 +331,18 @@ class TestInvocationVariants:
         result.stderr.fnmatch_lines([
             "ERROR*file*or*package*not*found*",
         ])
+
+
+    def test_noclass_discovery_if_not_testcase(self, testdir):
+        testpath = testdir.makepyfile("""
+            import unittest
+            import py
+            class TestHello(object):
+                def test_hello(self):
+                    assert self.attr
+
+            class RealTest(TestHello, unittest.TestCase):
+                attr = 42
+        """)
+        reprec = testdir.inline_run(testpath)
+        reprec.assertoutcome(passed=1)

@@ -1,12 +1,13 @@
-""" support discovery and running of traditional "unittest.py" style tests. """
+""" discovery and running of std-library "unittest" style tests. """
 import py
 import sys
 
 def pytest_pycollect_makeitem(collector, name, obj):
-    if 'unittest' not in sys.modules:
-        return # nobody derived unittest.TestCase
+    unittest = sys.modules.get('unittest')
+    if unittest is None:
+        return # nobody can have derived unittest.TestCase
     try:
-        isunit = issubclass(obj, py.std.unittest.TestCase)
+        isunit = issubclass(obj, unittest.TestCase)
     except KeyboardInterrupt:
         raise
     except Exception:
