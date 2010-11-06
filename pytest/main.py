@@ -389,10 +389,12 @@ class HookCaller:
         self.trace(self.name, kwargs)
         self.trace.root.indent += 1
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
-        res = mc.execute()
-        if res:
-            self.trace(res)
-        self.trace.root.indent -= 1
+        try:
+            res = mc.execute()
+            if res:
+                self.trace(res)
+        finally:
+            self.trace.root.indent -= 1
         return res
 
 _preinit = [PluginManager(load=True)] # triggers default plugin importing

@@ -266,18 +266,26 @@ class TestBootstrapping:
         l = list(plugins.listattr('x'))
         assert l == [41, 42, 43]
 
-    def test_register_trace(self):
+    def test_hook_tracing(self):
         pm = PluginManager()
+        saveindent = []
         class api1:
             x = 41
+            def pytest_plugin_registered(self, plugin):
+                saveindent.append(pm.trace.root.indent)
+                raise ValueError(42)
         l = []
-        pm.trace.setmyprocessor(lambda kw, args: l.append((kw, args)))
+        pm.trace.root.setwriter(l.append)
+        indent = pm.trace.root.indent
         p = api1()
         pm.register(p)
+
+        assert pm.trace.root.indent == indent
         assert len(l) == 1
-        kw, args = l[0]
-        assert args[0] == "registered"
-        assert args[1] == p
+        assert 'pytest_plugin_registered' in l[0]
+        py.test.raises(ValueError, lambda: pm.register(api1()))
+        assert pm.trace.root.indent == indent
+        assert saveindent[0] > indent
 
 class TestPytestPluginInteractions:
 
