@@ -44,7 +44,7 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
-    test path 1: /tmp/doc-exec-197
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    test path 1: /tmp/doc-exec-400
     
     =============================  in 0.00 seconds =============================

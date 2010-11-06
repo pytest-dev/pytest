@@ -1,6 +1,4 @@
-"""
-funcargs and support code for testing py.test's own functionality.
-"""
+""" (disabled by default) support for testing py.test and py.test plugins. """
 
 import py, pytest
 import sys, os

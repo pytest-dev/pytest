@@ -1,5 +1,6 @@
-""" logging of test results in JUnit-XML format, for use with Hudson
-   and build integration servers.  Based on initial code from Ross Lawley.
+""" report test results in JUnit-XML format, for use with Hudson and build integration servers.
+
+Based on initial code from Ross Lawley.
 """
 
 import py

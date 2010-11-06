@@ -1,4 +1,4 @@
-""" collect and execute doctests from modules and test files."""
+""" discover and run doctests in modules and test files."""
 
 import py
 from py._code.code import TerminalRepr, ReprFileLocation

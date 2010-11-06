@@ -36,9 +36,9 @@ Let's run this without supplying our new command line option::
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-
+    
     cmdopt = 'type1'
-
+    
         def test_answer(cmdopt):
             if cmdopt == "type1":
                 print ("first")
@@ -46,7 +46,7 @@ Let's run this without supplying our new command line option::
                 print ("second")
     >       assert 0 # to see what was printed
     E       assert 0
-
+    
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     first
@@ -58,9 +58,9 @@ And now with supplying a command line option::
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-
+    
     cmdopt = 'type2'
-
+    
         def test_answer(cmdopt):
             if cmdopt == "type1":
                 print ("first")
@@ -68,7 +68,7 @@ And now with supplying a command line option::
                 print ("second")
     >       assert 0 # to see what was printed
     E       assert 0
-
+    
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     second
@@ -122,16 +122,15 @@ let's run the full monty::
     ....F
     ================================= FAILURES =================================
     _____________________________ test_compute[4] ______________________________
-
+    
     param1 = 4
-
+    
         def test_compute(param1):
     >       assert param1 < 4
     E       assert 4 < 4
-
+    
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.03 seconds
-
+    1 failed, 4 passed in 0.02 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.

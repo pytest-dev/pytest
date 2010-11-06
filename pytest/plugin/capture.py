@@ -1,6 +1,4 @@
-""" plugin for configurable per-test stdout/stderr capturing mechanisms and
-``capsys`` and ``capfd`` function arguments.
-"""
+""" per-test stdout/stderr capturing mechanisms, ``capsys`` and ``capfd`` function arguments.  """
 
 import py
 import os

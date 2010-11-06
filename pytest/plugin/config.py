@@ -1,9 +1,9 @@
+""" command line configuration, ini-file and conftest.py processing. """
 
 import py
 import sys, os
 from pytest.main import PluginManager
 import pytest
-
 
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)

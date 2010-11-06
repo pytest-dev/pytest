@@ -4,6 +4,9 @@
 Usages and Examples
 ===========================================
 
+This is a (growing) list of examples. :ref:`Contact <contact>` us if you
+need more examples or have questions.
+
 .. toctree::
    :maxdepth: 2
 
@@ -14,3 +17,4 @@ Usages and Examples
    detectpytest.txt
    nonpython.txt
    simple.txt
+   xunit_setup.txt

@@ -66,7 +66,7 @@ class monkeypatch:
 
     def setenv(self, name, value, prepend=None):
         """ set environment variable ``name`` to ``value``.  if ``prepend``
-        is a character, read the current environment variable value 
+        is a character, read the current environment variable value
         and prepend the ``value`` adjoined with the ``prepend`` character."""
         value = str(value)
         if prepend and name in os.environ:

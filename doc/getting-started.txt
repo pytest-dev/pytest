@@ -14,6 +14,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
+    This is py.test version 2.0.0.dev19, imported from /home/hpk/p/pytest/pytest
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -33,8 +34,8 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev18
-    test path 1: /tmp/doc-exec-211
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    test path 1: /tmp/doc-exec-404
     
     test_sample.py F
     
@@ -120,7 +121,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x19c6638>
+    self = <test_class.TestClass instance at 0x2c2c560>
     
         def test_two(self):
             x = "hello"
@@ -156,7 +157,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-1306/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-240/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -165,7 +166,7 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-1306/test_needsfiles0
+    /tmp/pytest-240/test_needsfiles0
     1 failed in 0.04 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory

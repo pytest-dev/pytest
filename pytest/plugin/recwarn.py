@@ -1,4 +1,4 @@
-""" record warnings to allow assertions about them.  """
+""" recording warnings during test function execution. """
 
 import py
 import sys, os

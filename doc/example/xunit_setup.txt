@@ -19,8 +19,8 @@ custom options::
 
 .. _optparse: http://docs.python.org/library/optparse.html
 
-Working Examples
-================
+order of setup/teardown module/class/item methods
+====================================================
 
 managing state at module, class and method level
 ------------------------------------------------------------

@@ -20,5 +20,6 @@ py.test reference documentation
    mark.txt
    recwarn.txt
    unittest.txt
+   nose.txt
    doctest.txt
 

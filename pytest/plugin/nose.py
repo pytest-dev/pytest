@@ -1,42 +1,5 @@
-"""nose-compatibility plugin: allow to run nose test suites natively.
+"""run test suites written for nose. """
 
-This is an experimental plugin for allowing to run tests written
-in 'nosetests style with py.test.
-
-Usage
--------------
-
-type::
-
-    py.test  # instead of 'nosetests'
-
-and you should be able to run nose style tests and at the same
-time can make full use of py.test's capabilities.
-
-Supported nose Idioms
-----------------------
-
-* setup and teardown at module/class/method level
-* SkipTest exceptions and markers
-* setup/teardown decorators
-* yield-based tests and their setup
-* general usage of nose utilities
-
-Unsupported idioms / issues
-----------------------------------
-
-- nose-style doctests are not collected and executed correctly,
-  also fixtures don't work.
-
-- no nose-configuration is recognized
-
-If you find other issues or have suggestions please run::
-
-    py.test --pastebin=all
-
-and send the resulting URL to a py.test contact channel,
-at best to the mailing list.
-"""
 import py
 import inspect
 import sys

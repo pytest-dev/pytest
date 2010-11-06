@@ -1,6 +1,4 @@
-"""
-Python related collection nodes.
-"""
+""" Python test discovery, setup and run of test functions. """
 import py
 import inspect
 import sys

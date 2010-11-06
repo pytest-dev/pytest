@@ -1,3 +1,4 @@
+""" generate a single-file self-contained version of py.test """
 import py
 import pickle
 import zlib

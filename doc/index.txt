@@ -19,6 +19,7 @@ Welcome to ``py.test`` documentation:
    example/index
    talks
    develop
+   announce/index
 
 .. toctree::
    :hidden:

@@ -1,5 +1,4 @@
-""" provide version info, conftest/environment config names.
-"""
+""" version info, help messages, tracing configuration.  """
 import py
 import pytest
 import inspect, sys

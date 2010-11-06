@@ -20,15 +20,15 @@ and more.  Here is an example test usage::
         p = tmpdir.mkdir("sub").join("hello.txt")
         p.write("content")
         assert p.read() == "content"
-        assert tmpdir.listdir() == 1
+        assert len(tmpdir.listdir()) == 1
         assert 0
 
-Running this would result in a passed test except for the last 
+Running this would result in a passed test except for the last
 ``assert 0`` line which we use to look at values::
-    
+
     $ py.test test_tmpdir.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
     test path 1: test_tmpdir.py
     
     test_tmpdir.py F
@@ -36,13 +36,15 @@ Running this would result in a passed test except for the last
     ================================= FAILURES =================================
     _____________________________ test_create_file _____________________________
     
-    tmpdir = local('/tmp/pytest-1248/test_create_file0')
+    tmpdir = local('/tmp/pytest-243/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")
             p.write("content")
             assert p.read() == "content"
-            assert len(os.listdir(str(tmpdir))) == 1
+            assert len(tmpdir.listdir()) == 1
+    >       assert 0
+    E       assert 0
     
     test_tmpdir.py:7: AssertionError
     ========================= 1 failed in 0.04 seconds =========================
@@ -52,7 +54,7 @@ Running this would result in a passed test except for the last
 the default base temporary directory
 -----------------------------------------------
 
-.. 
+..
     You can create directories by calling one of two methods
     on the config object:
     - ``config.mktemp(basename)``: create and return a new tempdir
@@ -61,14 +63,14 @@ the default base temporary directory
 Temporary directories are by default created as sub directories of
 the system temporary directory.  The name will be ``pytest-NUM`` where
 ``NUM`` will be incremenated with each test run.  Moreover, entries older
-than 3 temporary directories will be removed.  
+than 3 temporary directories will be removed.
 
 You can override the default temporary directory logic and set it like this::
 
     py.test --basetemp=mydir
 
-When distributing tests on the local machine, ``py.test`` takes care to 
-configure a basetemp directory for the sub processes such that all 
+When distributing tests on the local machine, ``py.test`` takes care to
+configure a basetemp directory for the sub processes such that all
 temporary data lands below below a single per-test run basetemp directory.
 
 .. _`py.path.local`: http://pylib.org/path.html

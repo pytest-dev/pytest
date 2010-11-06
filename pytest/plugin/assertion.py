@@ -1,3 +1,6 @@
+"""
+support for presented detailed information in failing assertions.
+"""
 import py
 import sys
 

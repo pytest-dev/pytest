@@ -1,0 +1,50 @@
+py.test 2.0.0: standalone, features++, implementation++, docs++
+===========================================================================
+
+XXX PENDING
+
+Welcome to pytest-2.0.0!  With this release py.test becomes its own standalone
+PyPI distribution, named ``pytest``, installing the ``py.test`` command line
+tool.  Apart from a great internal cleanup this release comes with tons
+of improvements and new features and a completely revamped extensive
+documentation, including many continously tested examples. See
+
+    http://pytest.org
+
+New Features
+-----------------------
+
+- new invocations through Python interpreter and from Python::
+
+    python -m pytest      # on all pythons >= 2.7
+    python -m pytest.main # on all pythons >= 2.5
+    import pytest ; pytest.main(args, plugins)
+
+  see http://pytest.org/2.0.0/invoke.html for details.
+
+- new configuration through ini-files (setup.cfg or tox.ini recognized),
+  for example::
+
+    [pytest]
+    norecursedirs = .hg _build
+    python_collect_funcprefix = test_
+    python_collect_classprefix = Test
+
+  see http://pytest.org/2.0.0/customize.html
+
+-
+
+Thanks to issue reporters, people asking questions, complaining and
+generally to Ronny Pfannschmidt for his awesome help on many issues.
+
+cheers,
+holger krekel
+
+Changes between 1.3.3 and 1.3.4
+==================================================
+
+- fix issue111: improve install documentation for windows
+- fix issue119: fix custom collectability of __init__.py as a module
+- fix issue116: --doctestmodules work with __init__.py files as well
+- fix issue115: unify internal exception passthrough/catching/GeneratorExit
+- fix issue118: new --tb=native for presenting cpython-standard exceptions

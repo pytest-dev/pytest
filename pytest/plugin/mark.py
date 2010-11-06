@@ -70,7 +70,7 @@ def matchonekeyword(key, itemkeywords):
     return True
 
 class MarkGenerator:
-    """ Factory for :class:`MarkDecorator` objects - exposed as 
+    """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``py.test.mark`` singleton instance.  Example::
 
          import py
@@ -88,8 +88,8 @@ class MarkGenerator:
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
-    it will create :class:`MarkInfo` objects which may be 
-    :ref:`retrieved by hooks as item keywords`  MarkDecorator instances 
+    it will create :class:`MarkInfo` objects which may be
+    :ref:`retrieved by hooks as item keywords`  MarkDecorator instances
     are usually created by writing::
 
         mark1 = py.test.mark.NAME              # simple MarkDecorator

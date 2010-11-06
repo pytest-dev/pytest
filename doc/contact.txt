@@ -1,11 +1,13 @@
 
 .. _`contact channels`:
+.. _`contact`:
 
 Contact channels
 ===================================
 
-- `new issue tracker`_ to report bugs or suggest features.
-  See also the `old issue tracker`_ but don't submit bugs there.
+- `new issue tracker`_ to report bugs or suggest features (for version
+  2.0 and above).  You may also peek at the `old issue tracker`_ but please
+  don't submit bugs there anymore.
 
 - `Testing In Python`_: a mailing list for Python testing tools and discussion.
 

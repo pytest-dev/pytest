@@ -5,7 +5,7 @@ Writing, managing and understanding plugins
 
 py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic locations types:
 
-* builtin plugins: loaded from py.test's own `pytest/plugin`_ directory.
+* `builtin plugins`_: loaded from py.test's own ``pytest/plugin`` directory.
 * `external plugins`_: modules discovered through `setuptools entry points`_
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
@@ -48,8 +48,8 @@ earlier than further away ones.
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambigous because there might be other
     ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
-    It is thus good practise for projects to either put ``conftest.py`` 
-    under a package scope or to never import anything from a 
+    It is thus good practise for projects to either put ``conftest.py``
+    under a package scope or to never import anything from a
     conftest.py file.
 
 .. _`installing plugins`:
@@ -90,6 +90,7 @@ to implement their wide-ranging functionality.
 
 .. _`setuptools entry points`:
 
+
 Making your plugin installable by others
 -----------------------------------------------
 
@@ -97,8 +98,8 @@ If you want to make your plugin externally available, you
 may define a so called entry point for your distribution so
 that ``py.test`` finds your plugin module.  Entry points are
 a feature that is provided by `setuptools`_ or `Distribute`_.
-The concrete entry point is ``pytest11``.  To make your plugin 
-available you can insert the following lines in your 
+The concrete entry point is ``pytest11``.  To make your plugin
+available you can insert the following lines in your
 setuptools/distribute-based setup-invocation:
 
 .. sourcecode:: python
@@ -171,6 +172,37 @@ the plugin manager like this:
 If you want to look at the names of existing plugins, use
 the ``--traceconfig`` option.
 
+
+.. _`builtin plugins`:
+
+py.test default plugin reference
+====================================
+
+.. autosummary::
+
+    pytest.plugin.assertion
+    pytest.plugin.capture
+    pytest.plugin.config
+    pytest.plugin.doctest
+    pytest.plugin.genscript
+    pytest.plugin.helpconfig
+    pytest.plugin.junitxml
+    pytest.plugin.mark
+    pytest.plugin.monkeypatch
+    pytest.plugin.nose
+    pytest.plugin.pastebin
+    pytest.plugin.pdb
+    pytest.plugin.pytester
+    pytest.plugin.python
+    pytest.plugin.recwarn
+    pytest.plugin.resultlog
+    pytest.plugin.runner
+    pytest.plugin.session
+    pytest.plugin.skipping
+    pytest.plugin.terminal
+    pytest.plugin.tmpdir
+    pytest.plugin.unittest
+
 .. _`well specified hooks`:
 
 py.test hook reference
@@ -183,7 +215,7 @@ py.test calls hook functions to implement initialization, running,
 test execution and reporting.  When py.test loads a plugin it validates
 that all hook functions conform to their respective hook specification.
 Each hook function name and its argument names need to match a hook
-specification exactly but it is allowed for a hook function to accept 
+specification exactly but it is allowed for a hook function to accept
 *less* parameters than specified.  If you mistype argument names or the
 hook name itself you get useful errors.
 
@@ -261,7 +293,7 @@ Reference of important objects involved in hooks
 .. autoclass:: pytest.plugin.session.Node(name, parent)
     :members:
 
-.. 
+..
     .. autoclass:: pytest.plugin.session.File(fspath, parent)
         :members:
 

@@ -1,4 +1,4 @@
-""" create machine readable plain text file with results.  """
+""" (disabled by default) create result information in a plain text file. """
 
 import py
 from py.builtin import print_

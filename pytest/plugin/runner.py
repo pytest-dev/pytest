@@ -1,6 +1,4 @@
-"""
-collect and run test items and create reports.
-"""
+""" basic collect and runtest protocol implementations """
 
 import py, sys
 from py._code.code import TerminalRepr
@@ -92,11 +90,12 @@ def call_runtest_hook(item, when):
     return CallInfo(lambda: ihook(item=item), when=when)
 
 class CallInfo:
-    """ Call Information about a hook call. """
+    """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None
     def __init__(self, func, when):
-        #: one of "setup", "call", "teardown" specifying the runtest phase.
+        #: context of invocation: one of "setup", "call",
+        #: "teardown", "memocollect"
         self.when = when
         try:
             self.result = func()

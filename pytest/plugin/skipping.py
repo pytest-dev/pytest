@@ -1,6 +1,4 @@
-"""
-plugin providing skip and xfail functionality.
-"""
+""" support for skip/xfail functions and markers. """
 
 import py, pytest
 

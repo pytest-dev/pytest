@@ -24,7 +24,7 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev17
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
     test path 1: test_unittest.py
     
     test_unittest.py F
@@ -32,7 +32,7 @@ Running it yields::
     ================================= FAILURES =================================
     ____________________________ MyTest.test_method ____________________________
     
-    self = <test_unittest.MyTest testMethod=run>
+    self = <test_unittest.MyTest testMethod=test_method>
     
         def test_method(self):
             x = 1
@@ -41,7 +41,7 @@ Running it yields::
     test_unittest.py:8: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
-    self = <test_unittest.MyTest testMethod=run>, first = 1, second = 3
+    self = <test_unittest.MyTest testMethod=test_method>, first = 1, second = 3
     msg = None
     
         def failUnlessEqual(self, first, second, msg=None):

@@ -1,13 +1,4 @@
-"""provide temporary directories to test functions.
-
-usage example::
-
-    def test_plugin(tmpdir):
-        tmpdir.join("hello").write("hello")
-
-.. _`py.path.local`: ../../path.html
-
-"""
+""" support for providing temporary directories to test functions.  """
 import pytest, py
 
 def pytest_configure(config):

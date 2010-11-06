@@ -1,8 +1,4 @@
-""" basic test session implementation.
-
-* drives collection of tests
-* triggers executions of tests
-"""
+""" core implementation of testing process: init, collection, runtest loop. """
 
 import py
 import pytest
@@ -174,10 +170,10 @@ class Node(object):
         #: the test config object
         self.config = config or parent.config
 
-        #: the collection this node is part of.
+        #: the collection this node is part of
         self.collection = collection or parent.collection
         
-        #: the file where this item is contained/collected from.
+        #: filesystem path where this node was collected from
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = self.collection.gethookproxy(self.fspath)
         self.keywords = {self.name: True}

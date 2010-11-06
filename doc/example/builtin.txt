@@ -3,8 +3,9 @@ writing well integrated assertion helpers
 ========================================================
 
 If you have a test helper function called from a test you can
-use the ``pytest.fail``_ builtin to cleanly fail a test with a message.
-The test support function will never itself show up in the traceback.
+use the ``pytest.fail`` marker to fail a test with a certain message.
+The test support function will not show up in the traceback if you
+set the ``__tracebackhide__`` option somewhere in the helper function.
 Example::
 
     # content of test_checkconfig.py
@@ -33,4 +34,3 @@ Let's run our little function::
 
     test_checkconfig.py:8: Failed
     1 failed in 0.02 seconds
-

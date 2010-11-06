@@ -1,6 +1,5 @@
-"""
-interactive debugging with the Python Debugger.
-"""
+""" interactive debugging with PDB, the Python Debugger. """
+
 import py
 import sys
 

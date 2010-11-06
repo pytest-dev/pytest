@@ -1,6 +1,4 @@
-"""
-automatically discover and run traditional "unittest.py" style tests.
-"""
+""" support discovery and running of traditional "unittest.py" style tests. """
 import py
 import sys
 
