@@ -161,15 +161,6 @@ def test_functional(testdir):
     result = testdir.runpytest("--no-assert")
     assert "3 == 4" not in result.stdout.str()
 
-def test_AssertionErrorIdentity(testdir):
-    testdir.makepyfile("""
-        def test_hello():
-            import exceptions
-            assert AssertionError is exceptions.AssertionError
-    """)
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*1 passed*"])
-
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
         def test_hello():

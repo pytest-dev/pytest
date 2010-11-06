@@ -366,9 +366,10 @@ class Collection(FSCollector):
         self.trace.root.indent += 1
         self._notfound = []
         self._initialpaths = set()
-        self._initialargs = args
+        self._initialparts = []
         for arg in args:
             parts = self._parsearg(arg)
+            self._initialparts.append(parts)
             self._initialpaths.add(parts[0])
         self.ihook.pytest_collectstart(collector=self)
         rep = self.ihook.pytest_make_collect_report(collector=self)
@@ -376,7 +377,7 @@ class Collection(FSCollector):
         self.trace.root.indent -= 1
         if self._notfound:
             for arg, exc in self._notfound:
-                line = "no name %r in any of %r" % (exc.args[1], exc.args[0])
+                line = "(no name %r in any of %r)" % (arg, exc.args[0])
                 raise pytest.UsageError("not found: %s\n%s" %(arg, line))
         if not genitems:
             return rep.result
@@ -388,8 +389,9 @@ class Collection(FSCollector):
             return items
 
     def collect(self):
-        for arg in self._initialargs:
-            self.trace("processing arg", arg)
+        for parts in self._initialparts:
+            arg = "::".join(map(str, parts))
+            self.trace("processing argument", arg)
             self.trace.root.indent += 1
             try:
                 for x in self._collect(arg):
@@ -417,8 +419,9 @@ class Collection(FSCollector):
 
     def _collectfile(self, path):
         ihook = self.gethookproxy(path)
-        if ihook.pytest_ignore_collect(path=path, config=self.config):
-           return ()
+        if not self.isinitpath(path):
+            if ihook.pytest_ignore_collect(path=path, config=self.config):
+               return ()
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, path):
@@ -439,6 +442,8 @@ class Collection(FSCollector):
         p = py.path.local(mod.__file__)
         if p.purebasename == "__init__":
             p = p.dirpath()
+        else:
+            p = p.new(basename=p.purebasename+".py")
         return p
 
     def _parsearg(self, arg):

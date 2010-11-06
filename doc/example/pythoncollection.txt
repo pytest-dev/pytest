@@ -12,6 +12,18 @@ You can set the :confval:`norecursedirs` option in an ini-file, for example your
 
 This would tell py.test to not recurse into typical subversion or sphinx-build directories or into any ``tmp`` prefixed directory.
 
+always try to interpret arguments as Python packages
+-----------------------------------------------------
+
+You can use the ``--pyargs`` option to make py.test try
+interpreting arguments as python package names, deriving
+their file system path and then running the test. Through
+an ini-file and the :confval:`addopts` option you can make
+this change more permanently::
+
+    # content of setup.cfg or tox.ini
+    [pytest]
+    addopts = --pyargs
 
 finding out what is collected
 -----------------------------------------------

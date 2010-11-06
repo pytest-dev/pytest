@@ -213,6 +213,19 @@ class TestCustomConftests:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_ignore_collect_not_called_on_argument(self, testdir):
+        testdir.makeconftest("""
+            def pytest_ignore_collect(path, config):
+                return True
+        """)
+        p = testdir.makepyfile("def test_hello(): pass")
+        result = testdir.runpytest(p)
+        assert result.ret == 0
+        assert "1 passed" in result.stdout.str()
+        result = testdir.runpytest()
+        assert result.ret == 0
+        assert "1 passed" not in result.stdout.str()
+
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest("""
             collect_ignore = ['hello', 'test_world.py']

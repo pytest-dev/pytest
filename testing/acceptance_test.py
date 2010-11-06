@@ -310,7 +310,8 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
         assert "--myopt" in out
 
-    def test_cmdline_python_package(self, testdir):
+    def test_cmdline_python_package(self, testdir, monkeypatch):
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE')
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write("def test_hello(): pass")
         path.join("test_world.py").write("def test_world(): pass")
