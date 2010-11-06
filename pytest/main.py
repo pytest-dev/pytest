@@ -94,7 +94,6 @@ class PluginManager(object):
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
-        self.trace("registered", plugin)
         if not prepend:
             self._plugins.append(plugin)
         else:
@@ -380,13 +379,15 @@ class HookCaller:
 
     def __call__(self, **kwargs):
         methods = self.hookrelay._pm.listattr(self.name)
-        mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
-        return mc.execute()
+        return self._docall(methods, kwargs)
 
     def pcall(self, plugins, **kwargs):
+        methods = self.hookrelay._pm.listattr(self.name, plugins=plugins)
+        return self._docall(methods, kwargs)
+
+    def _docall(self, methods, kwargs):
         self.trace(self.name, kwargs)
         self.trace.root.indent += 1
-        methods = self.hookrelay._pm.listattr(self.name, plugins=plugins)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         res = mc.execute()
         if res:
