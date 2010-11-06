@@ -392,7 +392,7 @@ class HookCaller:
         try:
             res = mc.execute()
             if res:
-                self.trace(res)
+                self.trace("finish", self.name, "-->", res)
         finally:
             self.trace.root.indent -= 1
         return res
