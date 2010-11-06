@@ -311,7 +311,7 @@ class TestInvocationVariants:
         assert "--myopt" in out
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
-        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE')
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write("def test_hello(): pass")
         path.join("test_world.py").write("def test_world(): pass")
