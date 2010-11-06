@@ -376,7 +376,7 @@ class Config(object):
         elif type == "args":
             return py.std.shlex.split(value)
         elif type == "linelist":
-            return filter(None, map(lambda x: x.strip(), value.split("\n")))
+            return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
         else:
             assert type is None
             return value
