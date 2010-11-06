@@ -19,18 +19,21 @@ default_plugins = (
 IMPORTPREFIX = "pytest_"
 
 class TagTracer:
-    def __init__(self):
+    def __init__(self, prefix="[pytest] "):
         self._tag2proc = {}
         self.writer = None
+        self.indent = 0
+        self.prefix = prefix
 
     def get(self, name):
         return TagTracerSub(self, (name,))
 
     def processmessage(self, tags, args):
         if self.writer is not None:
-            prefix = ":".join(tags)
-            content = " ".join(map(str, args))
-            self.writer("[%s] %s\n" %(prefix, content))
+            if args:
+                indent = "  " * self.indent
+                content = " ".join(map(str, args))
+                self.writer("%s%s%s\n" %(self.prefix, indent, content))
         try:
             self._tag2proc[tags](tags, args)
         except KeyError:
@@ -62,7 +65,7 @@ class PluginManager(object):
         self._name2plugin = {}
         self._plugins = []
         self._hints = []
-        self.trace = TagTracer().get("pytest")
+        self.trace = TagTracer().get("pluginmanage")
         if os.environ.get('PYTEST_DEBUG'):
             self.trace.root.setwriter(sys.stderr.write)
         self.hook = HookRelay([hookspec], pm=self)
@@ -340,6 +343,7 @@ class HookRelay:
             hookspecs = [hookspecs]
         self._hookspecs = []
         self._pm = pm
+        self.trace = pm.trace.root.get("hook")
         for hookspec in hookspecs:
             self._addhooks(hookspec, prefix)
 
@@ -376,6 +380,7 @@ class HookCaller:
         return mc.execute()
 
     def pcall(self, plugins, **kwargs):
+        self.hookrelay.trace(self.name, kwargs)
         methods = self.hookrelay._pm.listattr(self.name, plugins=plugins)
         mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
         return mc.execute()

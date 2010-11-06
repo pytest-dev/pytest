@@ -553,17 +553,39 @@ class TestHookRelay:
 class TestTracer:
     def test_simple(self):
         from pytest.main import TagTracer
-        rootlogger = TagTracer()
+        rootlogger = TagTracer("[my] ")
         log = rootlogger.get("pytest")
         log("hello")
         l = []
         rootlogger.setwriter(l.append)
         log("world")
         assert len(l) == 1
-        assert l[0] == "[pytest] world\n"
+        assert l[0] == "[my] world\n"
         sublog = log.get("collection")
         sublog("hello")
-        assert l[1] == "[pytest:collection] hello\n"
+        assert l[1] == "[my] hello\n"
+
+    def test_indent(self):
+        from pytest.main import TagTracer
+        rootlogger = TagTracer()
+        log = rootlogger.get("1")
+        l = []
+        log.root.setwriter(lambda arg: l.append(arg))
+        log("hello")
+        log.root.indent += 1
+        log("line1")
+        log("line2")
+        log.root.indent += 1
+        log("line3")
+        log("line4")
+        log.root.indent -= 1
+        log("line5")
+        log.root.indent -= 1
+        log("last")
+        assert len(l) == 7
+        names = [x.rstrip()[len(rootlogger.prefix):] for x in l]
+        assert names == ['hello', '  line1', '  line2',
+                     '    line3', '    line4', '  line5', 'last']
 
     def test_setprocessor(self):
         from pytest.main import TagTracer
