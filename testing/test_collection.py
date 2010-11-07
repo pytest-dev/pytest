@@ -496,8 +496,6 @@ class Test_getinitialnodes:
         config = testdir.reparseconfig([x])
         col = testdir.getnode(config, x)
         assert isinstance(col, py.test.collect.Module)
-        print col.obj
-        print col.listchain()
         assert col.name == 'subdir/x.py'
         assert col.parent.parent is None
         for col in col.listchain():

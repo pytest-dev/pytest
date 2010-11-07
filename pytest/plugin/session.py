@@ -437,7 +437,7 @@ class Collection(FSCollector):
     def _tryconvertpyarg(self, x):
         try:
             mod = __import__(x, None, None, ['__doc__'])
-        except ImportError:
+        except (ValueError, ImportError):
             return x
         p = py.path.local(mod.__file__)
         if p.purebasename == "__init__":

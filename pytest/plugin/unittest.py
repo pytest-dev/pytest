@@ -33,6 +33,10 @@ class UnitTestCase(py.test.collect.Class):
             meth()
 
 class TestCaseFunction(py.test.collect.Function):
+    def setup(self):
+        pass
+    def teardown(self):
+        pass
     def startTest(self, testcase):
         pass
     def addError(self, testcase, rawexcinfo):

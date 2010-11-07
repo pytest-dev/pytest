@@ -325,6 +325,11 @@ class TestInvocationVariants:
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
+        result = testdir.runpytest("--pyargs", ".")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*2 passed*"
+        ])
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
@@ -342,7 +347,7 @@ class TestInvocationVariants:
                 def test_hello(self):
                     assert self.attr
 
-            class RealTest(TestHello, unittest.TestCase):
+            class RealTest(unittest.TestCase, TestHello):
                 attr = 42
         """)
         reprec = testdir.inline_run(testpath)

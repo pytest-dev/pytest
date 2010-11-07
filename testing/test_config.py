@@ -40,6 +40,17 @@ class TestParseIni:
             "*tox.ini:2*requires*9.0*actual*"
         ])
 
+    @py.test.mark.xfail(reason="probably not needed")
+    def test_confcutdir(self, testdir):
+        sub = testdir.mkdir("sub")
+        sub.chdir()
+        testdir.makeini("""
+            [pytest]
+            addopts = --qwe
+        """)
+        result = testdir.runpytest("--confcutdir=.")
+        assert result.ret == 0
+    
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])

@@ -68,8 +68,11 @@ class PluginManager(object):
         self.trace = TagTracer().get("pluginmanage")
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
-            if hasattr(os, 'dup'):
-                err = py.io.dupfile(err)
+            encoding = getattr(err, 'encoding', 'utf8')
+            try:
+                err = py.io.dupfile(err, encoding=encoding)
+            except Exception:
+                pass
             self.trace.root.setwriter(err.write)
         self.hook = HookRelay([hookspec], pm=self)
         self.register(self)
