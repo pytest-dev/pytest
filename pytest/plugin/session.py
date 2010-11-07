@@ -323,7 +323,7 @@ class FSCollector(Collector):
             return "."
         relpath = self.collection.fspath.bestrelpath(self.fspath)
         if os.sep != "/":
-            relpath = str(path).replace(os.sep, "/")
+            relpath = relpath.replace(os.sep, "/")
         return relpath
 
 class File(FSCollector):
