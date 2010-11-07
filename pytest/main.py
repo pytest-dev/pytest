@@ -410,9 +410,9 @@ _preinit = [PluginManager(load=True)] # triggers default plugin importing
 def main(args=None, plugins=None):
     if args is None:
         args = sys.argv[1:]
+    elif isinstance(args, py.path.local):
+        args = [str(args)]
     elif not isinstance(args, (tuple, list)):
-        if isinstance(args, py.path.local):
-            args = str(args)
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = py.std.shlex.split(args)
