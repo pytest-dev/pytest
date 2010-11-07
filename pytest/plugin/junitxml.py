@@ -39,7 +39,7 @@ class LogXML(object):
 
     def _opentestcase(self, report):
         names = report.nodeid.split("::")
-        names[0] = names[0].replace(os.sep, '.')
+        names[0] = names[0].replace("/", '.')
         names = tuple(names)
         d = {'time': self._durations.pop(names, "0")}
         names = [x.replace(".py", "") for x in names if x != "()"]

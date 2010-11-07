@@ -354,6 +354,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.collect.Collector):
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
         self.config._setupstate.prepare(self)
+
         l = []
         seen = {}
         for i, x in enumerate(self.obj()):

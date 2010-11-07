@@ -108,34 +108,6 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
 
-class Session(object):
-    class Interrupted(KeyboardInterrupt):
-        """ signals an interrupted test run. """
-        __module__ = 'builtins' # for py3
-
-    def __init__(self, config):
-        self.config = config
-        self.config.pluginmanager.register(self, name="session", prepend=True)
-        self._testsfailed = 0
-        self.shouldstop = False
-        self.session = Session(config) # XXX move elswehre
-
-    def pytest_collectstart(self):
-        if self.shouldstop:
-            raise self.Interrupted(self.shouldstop)
-
-    def pytest_runtest_logreport(self, report):
-        if report.failed and 'xfail' not in getattr(report, 'keywords', []):
-            self._testsfailed += 1
-            maxfail = self.config.getvalue("maxfail")
-            if maxfail and self._testsfailed >= maxfail:
-                self.shouldstop = "stopping after %d failures" % (
-                    self._testsfailed)
-    pytest_collectreport = pytest_runtest_logreport
-
-class NoMatch(Exception):
-    """ raised if matching cannot locate a matching names. """
-
 class HookProxy:
     def __init__(self, fspath, config):
         self.fspath = fspath
@@ -311,7 +283,12 @@ class Collector(Node):
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None):
         fspath = py.path.local(fspath) # xxx only for test_resultlog.py?
-        name = parent and fspath.relto(parent.fspath) or fspath.basename
+        name = fspath.basename
+        if parent is not None:
+            rel = fspath.relto(parent.fspath)
+            if rel:
+                name = rel
+            name = name.replace(os.sep, "/")
         super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
@@ -342,6 +319,9 @@ class Item(Node):
             location = (str(location[0]), location[1], str(location[2]))
             self._location = location
             return location
+
+class NoMatch(Exception):
+    """ raised if matching cannot locate a matching names. """
 
 class Session(FSCollector):
     class Interrupted(KeyboardInterrupt):
@@ -469,7 +449,8 @@ class Session(FSCollector):
         if self.config.option.pyargs:
             arg = self._tryconvertpyarg(arg)
         parts = str(arg).split("::")
-        path = self.fspath.join(parts[0], abs=True)
+        relpath = parts[0].replace("/", os.sep)
+        path = self.fspath.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
                 msg = "file or package not found: "
