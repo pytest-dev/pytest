@@ -28,7 +28,6 @@ def test_gen(testdir, anypython, standalone):
     result = standalone.run(anypython, testdir, p)
     assert result.ret != 0
 
-@py.test.mark.xfail(reason="fix-dist", run=False)
 def test_rundist(testdir, pytestconfig, standalone):
     pytestconfig.pluginmanager.skipifmissing("xdist")
     testdir.makepyfile("""

@@ -40,6 +40,30 @@ class TestParseIni:
             "*tox.ini:2*requires*9.0*actual*"
         ])
 
+    @py.test.mark.multi(name="setup.cfg tox.ini pytest.ini".split())
+    def test_ini_names(self, testdir, name):
+        testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
+            [pytest]
+            minversion = 1.0
+        """))
+        config = Config()
+        config.parse([testdir.tmpdir])
+        assert config.getini("minversion") == "1.0"
+
+    def test_toxini_before_lower_pytestini(self, testdir):
+        sub = testdir.tmpdir.mkdir("sub")
+        sub.join("tox.ini").write(py.std.textwrap.dedent("""
+            [pytest]
+            minversion = 2.0
+        """))
+        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+            [pytest]
+            minversion = 1.5
+        """))
+        config = Config()
+        config.parse([sub])
+        assert config.getini("minversion") == "2.0"
+
     @py.test.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
         sub = testdir.mkdir("sub")

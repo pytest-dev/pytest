@@ -4,7 +4,7 @@ basic test configuration
 Command line options and configuration file settings
 -----------------------------------------------------------------
 
-You can get help on options and configuration options by running::
+You can get help on options and ini-config values by running::
 
     py.test -h   # prints options _and_ config file settings
 
@@ -14,23 +14,31 @@ which were registered by installed plugins.
 how test configuration is read from setup/tox ini-files
 --------------------------------------------------------
 
-py.test looks for the first ``[pytest]`` section in either the first ``setup.cfg`` or the first ``tox.ini`` file found upwards from the arguments.  Example::
+py.test searched for the first matching ini-style configuration file
+in the directories of command line argument and the directories above.
+It looks for filenames in this order::
+
+    pytest.ini
+    tox.ini
+    setup.cfg
+
+Searching stops when the first ``[pytest]`` section is found.
+There is no merging of configuration values from multiple files.  Example::
 
     py.test path/to/testdir
 
 will look in the following dirs for a config file::
 
-    path/to/testdir/setup.cfg
-    path/to/setup.cfg
-    path/setup.cfg
-    setup.cfg
-    ... # up until root of filesystem
+    path/to/testdir/pytest.ini
     path/to/testdir/tox.ini
+    path/to/testdir/setup.cfg
+    path/to/pytest.ini
     path/to/tox.ini
-    path/tox.ini
+    path/to/setup.cfg
     ... # up until root of filesystem
 
-If no path was provided at all the current working directory is used for the lookup.
+If argument is provided to a py.test run, the current working directory
+is used to start the search.
 
 builtin configuration file options
 ----------------------------------------------

@@ -43,7 +43,8 @@ def showhelp(config):
     tw.line("setup.cfg or tox.ini options to be put into [pytest] section:")
     tw.line()
 
-    for name, (help, type, default) in sorted(config._parser._inidict.items()):
+    for name in config._parser._ininames:
+        help, type, default = config._parser._inidict[name]
         if type is None:
             type = "string"
         spec = "%s (%s)" % (name, type)

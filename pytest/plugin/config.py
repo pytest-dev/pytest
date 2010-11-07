@@ -21,6 +21,7 @@ class Parser:
         self._processopt = processopt
         self._usage = usage
         self._inidict = {}
+        self._ininames = []
         self.hints = []
 
     def processoption(self, option):
@@ -55,12 +56,12 @@ class Parser:
 
     def parse(self, args):
         self.optparser = optparser = MyOptionParser(self)
-        groups = list(reversed(self._groups)) + [self._anonymous]
+        groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
                 desc = group.description or group.name
                 optgroup = py.std.optparse.OptionGroup(optparser, desc)
-                optgroup.add_options(reversed(group.options))
+                optgroup.add_options(group.options)
                 optparser.add_option_group(optgroup)
         return self.optparser.parse_args([str(x) for x in args])
 
@@ -74,6 +75,7 @@ class Parser:
         """ add an ini-file option with the given name and description. """
         assert type in (None, "pathlist", "args", "linelist")
         self._inidict[name] = (help, type, default)
+        self._ininames.append(name)
 
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
@@ -290,7 +292,7 @@ class Config(object):
             raise
 
     def _initini(self, args):
-        self.inicfg = getcfg(args, ["setup.cfg", "tox.ini",])
+        self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
 
@@ -303,7 +305,7 @@ class Config(object):
         self.pluginmanager.consider_env()
         self.pluginmanager.consider_preparse(args)
         self._setinitialconftest(args)
-        self.hook.pytest_addoption(parser=self._parser)
+        self.pluginmanager.do_addoption(self._parser)
 
     def _checkversion(self):
         minver = self.inicfg.get('minversion', None)
@@ -426,13 +428,16 @@ def getcfg(args, inibasenames):
     args = [x for x in args if str(x)[0] != "-"]
     if not args:
         args = [py.path.local()]
-    for inibasename in inibasenames:
-        for p in args:
-            x = findupwards(p, inibasename)
-            if x is not None:
-                iniconfig = py.iniconfig.IniConfig(x)
-                if 'pytest' in iniconfig.sections:
-                    return iniconfig['pytest']
+    for arg in args:
+        arg = py.path.local(arg)
+        if arg.check():
+            for base in arg.parts(reverse=True):
+                for inibasename in inibasenames:
+                    p = base.join(inibasename)
+                    if p.check():
+                        iniconfig = py.iniconfig.IniConfig(p)
+                        if 'pytest' in iniconfig.sections:
+                            return iniconfig['pytest']
     return {}
    
 def findupwards(current, basename):
