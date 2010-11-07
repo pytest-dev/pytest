@@ -273,6 +273,7 @@ class TestInvocationVariants:
         res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
         assert res.ret == 1
 
+    @py.test.mark.skipif("sys.version_info < (2,5)")
     def test_python_pytest_main(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
         res = testdir.run(py.std.sys.executable, "-m", "pytest.main", str(p1))
