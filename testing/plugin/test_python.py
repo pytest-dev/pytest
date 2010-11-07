@@ -205,15 +205,15 @@ class TestFunction:
 
     def test_function_equality(self, testdir, tmpdir):
         config = testdir.reparseconfig()
-        collection = testdir.Collection(config)
+        session = testdir.Session(config)
         f1 = py.test.collect.Function(name="name", config=config,
-                args=(1,), callobj=isinstance, collection=collection)
+                args=(1,), callobj=isinstance, session=session)
         f2 = py.test.collect.Function(name="name",config=config,
-                args=(1,), callobj=py.builtin.callable, collection=collection)
+                args=(1,), callobj=py.builtin.callable, session=session)
         assert not f1 == f2
         assert f1 != f2
         f3 = py.test.collect.Function(name="name", config=config,
-                args=(1,2), callobj=py.builtin.callable, collection=collection)
+                args=(1,2), callobj=py.builtin.callable, session=session)
         assert not f3 == f2
         assert f3 != f2
 
@@ -221,7 +221,7 @@ class TestFunction:
         assert f3 != f1
 
         f1_b = py.test.collect.Function(name="name", config=config,
-              args=(1,), callobj=isinstance, collection=collection)
+              args=(1,), callobj=isinstance, session=session)
         assert f1 == f1_b
         assert not f1 != f1_b
 
@@ -235,11 +235,11 @@ class TestFunction:
             param = 1
             funcargs = {}
             id = "world"
-        collection = testdir.Collection(config)
+        session = testdir.Session(config)
         f5 = py.test.collect.Function(name="name", config=config,
-            callspec=callspec1, callobj=isinstance, collection=collection)
+            callspec=callspec1, callobj=isinstance, session=session)
         f5b = py.test.collect.Function(name="name", config=config,
-            callspec=callspec2, callobj=isinstance, collection=collection)
+            callspec=callspec2, callobj=isinstance, session=session)
         assert f5 != f5b
         assert not (f5 == f5b)
 
@@ -396,7 +396,7 @@ def test_generate_tests_only_done_in_subdir(testdir):
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
     trail = modcol.nodeid
-    newcol = modcol.collection.perform_collect([trail], genitems=0)[0]
+    newcol = modcol.session.perform_collect([trail], genitems=0)[0]
     assert modcol.name == newcol.name
 
 

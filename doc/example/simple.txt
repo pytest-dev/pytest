@@ -130,7 +130,7 @@ let's run the full monty::
     E       assert 4 < 4
     
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.02 seconds
+    1 failed, 4 passed in 0.03 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.

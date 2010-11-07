@@ -31,7 +31,6 @@ finding out what is collected
 You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collectonly collectonly.py
-    <Collection 'example'>
     <Module 'collectonly.py'>
       <Function 'test_function'>
       <Class 'TestClass'>

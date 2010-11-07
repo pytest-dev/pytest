@@ -27,17 +27,19 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
     test path 1: test_simple.yml
-
+    
     test_simple.yml .F
-
+    
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.42 seconds ====================
+    ========================= short test summary info ==========================
+    FAIL test_simple.yml::hello
+    ==================== 1 failed, 1 passed in 0.43 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -56,24 +58,25 @@ reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22 -- /home/hpk/venv/0/bin/python
     test path 1: /home/hpk/p/pytest/doc/example/nonpython
-
+    
     test_simple.yml <- test_simple.yml:1: usecase: ok PASSED
     test_simple.yml <- test_simple.yml:1: usecase: hello FAILED
-
+    
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
+    ========================= short test summary info ==========================
+    FAIL test_simple.yml::hello
     ==================== 1 failed, 1 passed in 0.07 seconds ====================
 
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ py.test --collectonly
-    <Collection 'nonpython'>
     <YamlFile 'test_simple.yml'>
       <YamlItem 'ok'>
       <YamlItem 'hello'>

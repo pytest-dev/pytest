@@ -244,7 +244,7 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.failed
         assert rep.when == "???"
 
-class TestCollectionReports:
+class TestSessionReports:
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol("""
             def test_func1():

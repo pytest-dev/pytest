@@ -1,6 +1,6 @@
 import py
 
-from pytest.plugin.session import Collection
+from pytest.plugin.session import Session
 
 class TestCollector:
     def test_collect_versus_item(self):
@@ -86,7 +86,7 @@ class TestCollector:
         node = testdir.getpathnode(hello)
         assert isinstance(node, py.test.collect.File)
         assert node.name == "hello.xxx"
-        nodes = node.collection.perform_collect([node.nodeid], genitems=False)
+        nodes = node.session.perform_collect([node.nodeid], genitems=False)
         assert len(nodes) == 1
         assert isinstance(nodes[0], py.test.collect.File)
 
@@ -292,7 +292,7 @@ class TestCustomConftests:
             "*test_x*"
         ])
 
-class TestCollection:
+class TestSession:
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -302,7 +302,7 @@ class TestCollection:
         testdir.chdir()
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
-        rcol = Collection(config=config)
+        rcol = Session(config=config)
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
@@ -318,7 +318,7 @@ class TestCollection:
         id = "::".join([p.basename, "test_func"])
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
-        rcol = Collection(config)
+        rcol = Session(config)
         assert topdir == rcol.fspath
         rootid = rcol.nodeid
         #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
@@ -333,7 +333,7 @@ class TestCollection:
         id = "::".join([p.basename, "test_func"])
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
-        rcol = Collection(config)
+        rcol = Session(config)
         assert topdir == rcol.fspath
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
@@ -367,7 +367,7 @@ class TestCollection:
                    normid,
                    ]:
             config = testdir.parseconfig(id)
-            rcol = Collection(config=config)
+            rcol = Session(config=config)
             rcol.perform_collect()
             items = rcol.items
             assert len(items) == 1
@@ -392,7 +392,7 @@ class TestCollection:
         id = p.basename
 
         config = testdir.parseconfig(id)
-        rcol = Collection(config)
+        rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
         items = rcol.items
@@ -400,7 +400,7 @@ class TestCollection:
         assert len(items) == 2
         hookrec.hookrecorder.contains([
             ("pytest_collectstart",
-                "collector.fspath == collector.collection.fspath"),
+                "collector.fspath == collector.session.fspath"),
             ("pytest_collectstart",
                 "collector.__class__.__name__ == 'SpecialFile'"),
             ("pytest_collectstart",
@@ -417,7 +417,7 @@ class TestCollection:
         test_aaa = aaa.join("test_aaa.py")
         p.move(test_aaa)
         config = testdir.parseconfig()
-        rcol = Collection(config)
+        rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
         items = rcol.items
@@ -441,7 +441,7 @@ class TestCollection:
 
         id = "."
         config = testdir.parseconfig(id)
-        rcol = Collection(config)
+        rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
         items = rcol.items
@@ -459,12 +459,13 @@ class TestCollection:
     def test_serialization_byid(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         config = testdir.parseconfig()
-        rcol = Collection(config)
+        rcol = Session(config)
         rcol.perform_collect()
         items = rcol.items
         assert len(items) == 1
         item, = items
-        newcol = Collection(config)
+        rcol.config.pluginmanager.unregister(name="session")
+        newcol = Session(config)
         item2, = newcol.perform_collect([item.nodeid], genitems=False)
         assert item2.name == item.name
         assert item2.fspath == item.fspath

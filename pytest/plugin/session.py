@@ -1,4 +1,4 @@
-""" core implementation of testing process: init, collection, runtest loop. """
+""" core implementation of testing process: init, session, runtest loop. """
 
 import py
 import pytest
@@ -54,7 +54,7 @@ def pytest_configure(config):
         config.option.maxfail = 1
 
 def pytest_cmdline_main(config):
-    """ default command line protocol for initialization, collection,
+    """ default command line protocol for initialization, session,
     running tests and reporting. """
     session = Session(config)
     session.exitstatus = EXIT_OK
@@ -83,20 +83,17 @@ def pytest_cmdline_main(config):
     return session.exitstatus
 
 def pytest_collection(session):
-    collection = session.collection
-    assert not hasattr(collection, 'items')
-
-    collection.perform_collect()
+    session.perform_collect()
     hook = session.config.hook
-    items = collection.items
-    hook.pytest_collection_modifyitems(config=session.config, items=items)
-    hook.pytest_collection_finish(collection=collection)
+    hook.pytest_collection_modifyitems(session=session,
+        config=session.config, items=session.items)
+    hook.pytest_collection_finish(session=session)
     return True
 
 def pytest_runtestloop(session):
     if session.config.option.collectonly:
         return True
-    for item in session.collection.items:
+    for item in session.session.items:
         item.config.hook.pytest_runtest_protocol(item=item)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
@@ -121,7 +118,7 @@ class Session(object):
         self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
-        self.collection = Collection(config) # XXX move elswehre
+        self.session = Session(config) # XXX move elswehre
 
     def pytest_collectstart(self):
         if self.shouldstop:
@@ -154,7 +151,7 @@ def compatproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
         py.log._apiwarn("2.0", "use py.test.collect.%s for "
-            "Collection classes" % name)
+            "Session classes" % name)
         return getattr(pytest.collect, name)
     return property(fget)
     
@@ -162,7 +159,7 @@ class Node(object):
     """ base class for all Nodes in the collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
-    def __init__(self, name, parent=None, config=None, collection=None):
+    def __init__(self, name, parent=None, config=None, session=None):
         #: a unique name with the scope of the parent
         self.name = name
 
@@ -173,11 +170,11 @@ class Node(object):
         self.config = config or parent.config
 
         #: the collection this node is part of
-        self.collection = collection or parent.collection
+        self.session = session or parent.session
         
         #: filesystem path where this node was collected from
         self.fspath = getattr(parent, 'fspath', None)
-        self.ihook = self.collection.gethookproxy(self.fspath)
+        self.ihook = self.session.gethookproxy(self.fspath)
         self.keywords = {self.name: True}
 
     Module = compatproperty("Module")
@@ -312,16 +309,16 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 class FSCollector(Collector):
-    def __init__(self, fspath, parent=None, config=None, collection=None):
+    def __init__(self, fspath, parent=None, config=None, session=None):
         fspath = py.path.local(fspath) # xxx only for test_resultlog.py?
         name = parent and fspath.relto(parent.fspath) or fspath.basename
-        super(FSCollector, self).__init__(name, parent, config, collection)
+        super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
     def _makeid(self):
-        if self == self.collection:
+        if self == self.session:
             return "."
-        relpath = self.collection.fspath.bestrelpath(self.fspath)
+        relpath = self.session.fspath.bestrelpath(self.fspath)
         if os.sep != "/":
             relpath = relpath.replace(os.sep, "/")
         return relpath
@@ -346,12 +343,32 @@ class Item(Node):
             self._location = location
             return location
 
-class Collection(FSCollector):
+class Session(FSCollector):
+    class Interrupted(KeyboardInterrupt):
+        """ signals an interrupted test run. """
+        __module__ = 'builtins' # for py3
+
     def __init__(self, config):
-        super(Collection, self).__init__(py.path.local(), parent=None,
-            config=config, collection=self)
+        super(Session, self).__init__(py.path.local(), parent=None,
+            config=config, session=self)
+        self.config.pluginmanager.register(self, name="session", prepend=True)
+        self._testsfailed = 0
+        self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
+
+    def pytest_collectstart(self):
+        if self.shouldstop:
+            raise self.Interrupted(self.shouldstop)
+
+    def pytest_runtest_logreport(self, report):
+        if report.failed and 'xfail' not in getattr(report, 'keywords', []):
+            self._testsfailed += 1
+            maxfail = self.config.getvalue("maxfail")
+            if maxfail and self._testsfailed >= maxfail:
+                self.shouldstop = "stopping after %d failures" % (
+                    self._testsfailed)
+    pytest_collectreport = pytest_runtest_logreport
 
     def isinitpath(self, path):
         return path in self._initialpaths
@@ -509,3 +526,4 @@ class Collection(FSCollector):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
 
+Session = Session

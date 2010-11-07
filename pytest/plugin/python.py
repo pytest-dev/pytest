@@ -47,7 +47,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     pb = path.purebasename
     if ext == ".py" and (pb.startswith("test_") or pb.endswith("_test") or
-       parent.collection.isinitpath(path)):
+       parent.session.isinitpath(path)):
         return parent.ihook.pytest_pycollect_makemodule(
             path=path, parent=parent)
 
@@ -393,9 +393,9 @@ class Function(FunctionMixin, pytest.collect.Item):
     """
     _genid = None
     def __init__(self, name, parent=None, args=None, config=None,
-                 callspec=None, callobj=_dummy, keywords=None, collection=None):
+                 callspec=None, callobj=_dummy, keywords=None, session=None):
         super(Function, self).__init__(name, parent,
-            config=config, collection=collection)
+            config=config, session=session)
         self._args = args
         if self._isyieldedfunction():
             assert not callspec, (
@@ -711,13 +711,13 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from pytest.plugin.session import Collection
-    collection = Collection(config)
-    collection.perform_collect()
-    if collection.items:
-        plugins = getplugins(collection.items[0])
+    from pytest.plugin.session import Session
+    session = Session(config)
+    session.perform_collect()
+    if session.items:
+        plugins = getplugins(session.items[0])
     else:
-        plugins = getplugins(collection)
+        plugins = getplugins(session)
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")

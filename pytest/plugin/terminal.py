@@ -376,8 +376,9 @@ class CollectonlyReporter:
             self._tw.line("INTERNALERROR> " + line)
 
     def pytest_collectstart(self, collector):
-        self.outindent(collector)
-        self.indent += self.INDENT
+        if collector.session != collector:
+            self.outindent(collector)
+            self.indent += self.INDENT
 
     def pytest_itemcollected(self, item):
         self.outindent(item)

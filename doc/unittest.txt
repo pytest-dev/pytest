@@ -24,7 +24,7 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
     test path 1: test_unittest.py
     
     test_unittest.py F
@@ -56,7 +56,7 @@ Running it yields::
     /usr/lib/python2.6/unittest.py:350: AssertionError
     ----------------------------- Captured stdout ------------------------------
     hello
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.12 seconds =========================
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 

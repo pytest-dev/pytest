@@ -34,7 +34,7 @@ Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
     test path 1: test_simplefactory.py
     
     test_simplefactory.py F
@@ -136,7 +136,7 @@ Running this::
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
     test path 1: test_example.py
     
     test_example.py .........F
@@ -158,7 +158,6 @@ the test collection phase which is separate from the actual test running.
 Let's just look at what is collected::
 
     $ py.test --collectonly test_example.py
-    <Collection 'doc-exec-403'>
     <Module 'test_example.py'>
       <Function 'test_func[0]'>
       <Function 'test_func[1]'>
@@ -175,7 +174,7 @@ If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22 -- /home/hpk/venv/0/bin/python
     test path 1: test_example.py
     
     test_example.py <- test_example.py:6: test_func[7] PASSED

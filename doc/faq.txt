@@ -12,11 +12,11 @@ On naming, nosetests, licensing and magic XXX
 Why a ``py.test`` instead of a ``pytest`` command?
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Some historic, some practical reasons: ``py.test`` used to be part of 
+Some historic, some practical reasons: ``py.test`` used to be part of
 the ``py`` package which provided several developer utitilities,
 all starting with ``py.<TAB>``, providing nice TAB-completion. If
 you install ``pip install pycmd`` you get these tools from a separate
-package.  These days the command line tool could be ``pytest`` 
+package.  These days the command line tool could be ``pytest``
 but then many people have gotten used to the old name and there
 also is another tool with this same which would lead to some clashes.
 
@@ -37,11 +37,11 @@ What's this "magic" with py.test?
 
 Around 2007 (version ``0.8``) some several people claimed that py.test
 was using too much "magic".  It has been refactored a lot.  It is today
-probably one of the smallest, most universally runnable and most 
-customizable testing frameworks for Python.   It remains true 
-that ``py.test`` uses metaprogramming techniques, i.e. it views 
-test code similar to how compilers view programs, using a 
-somewhat abstract internal model.   
+probably one of the smallest, most universally runnable and most
+customizable testing frameworks for Python.   It remains true
+that ``py.test`` uses metaprogramming techniques, i.e. it views
+test code similar to how compilers view programs, using a
+somewhat abstract internal model.
 
 It's also true that the no-boilerplate testing is implemented by making
 use of the Python assert statement through "re-interpretation":
@@ -64,7 +64,7 @@ function arguments, parametrized tests and setup
 Is using funcarg- versus xUnit setup a style question?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-For simple applications and for people experienced with nose_ or 
+For simple applications and for people experienced with nose_ or
 unittest-style test setup using `xUnit style setup`_
 feels natural.  For larger test suites, parametrized testing
 or setup of complex test resources using funcargs_ is recommended.

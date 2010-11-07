@@ -16,7 +16,7 @@ conftest.py: local per-directory plugins
 --------------------------------------------------------------
 
 local ``conftest.py`` plugins contain directory-specific hook
-implementations.  Collection and test running activities will
+implementations.  Session and test running activities will
 invoke all hooks defined in "higher up" ``conftest.py`` files.
 Example: Assume the following layout and content of files::
 
@@ -268,7 +268,7 @@ you can use the following hook:
 reporting hooks
 ------------------------------
 
-Collection related reporting hooks:
+Session related reporting hooks:
 
 .. autofunction: pytest_collectstart
 .. autofunction: pytest_itemcollected

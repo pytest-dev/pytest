@@ -6,7 +6,7 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from pytest.plugin.session import Collection
+from pytest.plugin.session import Session
 from py.builtin import print_
 from pytest.main import HookRelay
 
@@ -273,34 +273,34 @@ class TmpTestdir:
         p.ensure("__init__.py")
         return p
 
-    Collection = Collection
+    Session = Session
     def getnode(self, config, arg):
-        collection = Collection(config)
+        session = Session(config)
         assert '::' not in str(arg)
         p = py.path.local(arg)
-        x = collection.fspath.bestrelpath(p)
-        return collection.perform_collect([x], genitems=False)[0]
+        x = session.fspath.bestrelpath(p)
+        return session.perform_collect([x], genitems=False)[0]
 
     def getpathnode(self, path):
         config = self.parseconfig(path)
-        collection = Collection(config)
-        x = collection.fspath.bestrelpath(path)
-        return collection.perform_collect([x], genitems=False)[0]
+        session = Session(config)
+        x = session.fspath.bestrelpath(path)
+        return session.perform_collect([x], genitems=False)[0]
 
     def genitems(self, colitems):
-        collection = colitems[0].collection
+        session = colitems[0].session
         result = []
         for colitem in colitems:
-            result.extend(collection.genitems(colitem))
+            result.extend(session.genitems(colitem))
         return result
 
     def inline_genitems(self, *args):
         #config = self.parseconfig(*args)
         config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
-        collection = Collection(config)
-        collection.perform_collect()
-        return collection.items, rec
+        session = Session(config)
+        session.perform_collect()
+        return session.items, rec
 
     def runitem(self, source):
         # used from runner functional tests

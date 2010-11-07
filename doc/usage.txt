@@ -175,5 +175,4 @@ Running it will exit quickly::
     $ python myinvoke.py
     ERROR: hi from our plugin
 
-
 .. include:: links.inc

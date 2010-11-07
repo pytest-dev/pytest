@@ -27,10 +27,10 @@ Let's run our little function::
     F
     ================================= FAILURES =================================
     ______________________________ test_something ______________________________
-
+    
         def test_something():
     >       checkconfig(42)
     E       Failed: not configured: 42
-
+    
     test_checkconfig.py:8: Failed
     1 failed in 0.02 seconds

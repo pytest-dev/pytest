@@ -28,7 +28,7 @@ Running this would result in a passed test except for the last
 
     $ py.test test_tmpdir.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev19
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
     test path 1: test_tmpdir.py
     
     test_tmpdir.py F
@@ -36,7 +36,7 @@ Running this would result in a passed test except for the last
     ================================= FAILURES =================================
     _____________________________ test_create_file _____________________________
     
-    tmpdir = local('/tmp/pytest-243/test_create_file0')
+    tmpdir = local('/tmp/pytest-447/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")
@@ -47,7 +47,7 @@ Running this would result in a passed test except for the last
     E       assert 0
     
     test_tmpdir.py:7: AssertionError
-    ========================= 1 failed in 0.04 seconds =========================
+    ========================= 1 failed in 0.15 seconds =========================
 
 .. _`base temporary directory`:
 

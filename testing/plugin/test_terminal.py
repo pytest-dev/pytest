@@ -516,7 +516,7 @@ def test_traceconfig(testdir, monkeypatch):
 def test_debug(testdir, monkeypatch):
     result = testdir.runpytest("--debug")
     result.stderr.fnmatch_lines([
-        "*registered*session*",
+        "*pytest_sessionstart*session*",
     ])
     assert result.ret == 0
 

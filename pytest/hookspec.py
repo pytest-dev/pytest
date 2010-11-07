@@ -38,7 +38,8 @@ def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
 def pytest_runtestloop(session):
-    """ called for performing the main runtest loop (after collection. """
+    """ called for performing the main runtest loop
+    (after collection finished). """
 pytest_runtestloop.firstresult = True
 
 # -------------------------------------------------------------------------
@@ -49,11 +50,11 @@ def pytest_collection(session):
     """ perform the collection protocol for the given session. """
 pytest_collection.firstresult = True
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(session, config, items):
     """ called after collection has been performed, may filter or re-order
     the items in-place."""
 
-def pytest_collection_finish(collection):
+def pytest_collection_finish(session):
     """ called after collection has been performed and modified. """
 
 def pytest_ignore_collect(path, config):
@@ -64,8 +65,7 @@ def pytest_ignore_collect(path, config):
 pytest_ignore_collect.firstresult = True
 
 def pytest_collect_directory(path, parent):
-    """ return collection Node or None for the given path. Any new node
-    needs to have the specified ``parent`` as a parent."""
+    """ called before traversing a directory for collection files. """
 pytest_collect_directory.firstresult = True
 
 def pytest_collect_file(path, parent):
