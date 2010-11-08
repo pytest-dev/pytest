@@ -222,6 +222,7 @@ class TestPython:
     def test_unicode(self, testdir):
         value = 'hx\xc4\x85\xc4\x87\n'
         testdir.makepyfile("""
+            # coding: utf-8
             def test_hello():
                 print (%r)
                 assert 0
