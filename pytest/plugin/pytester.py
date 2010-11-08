@@ -451,7 +451,7 @@ class TmpTestdir:
         if not self.request.config.getvalue("notoolsonpath"):
             script = py.path.local.sysfind(scriptname)
             assert script, "script %r not found" % scriptname
-            return (script,)
+            return (py.std.sys.executable, script,)
         else:
             py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
