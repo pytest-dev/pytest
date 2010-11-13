@@ -74,17 +74,18 @@ class ResultLog(object):
         elif report.failed:
             longrepr = str(report.longrepr)
         elif report.skipped:
-            longrepr = str(report.longrepr.reprcrash.message)
+            longrepr = str(report.longrepr[2])
         self.log_outcome(report, code, longrepr)
 
     def pytest_collectreport(self, report):
         if not report.passed:
             if report.failed:
                 code = "F"
+                longrepr = str(report.longrepr.reprcrash)
             else:
                 assert report.skipped
                 code = "S"
-            longrepr = str(report.longrepr.reprcrash)
+                longrepr = "%s:%d: %s" % report.longrepr
             self.log_outcome(report, code, longrepr)
 
     def pytest_internalerror(self, excrepr):

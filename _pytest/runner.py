@@ -111,9 +111,21 @@ class CallInfo:
             status = "result: %r" % (self.result,)
         return "<CallInfo when=%r %s>" % (self.when, status)
 
+def getslaveinfoline(node):
+    try:
+        return node._slaveinfocache
+    except AttributeError:
+        d = node.slaveinfo
+        ver = "%s.%s.%s" % d['version_info'][:3]
+        node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
+            d['id'], d['sysplatform'], ver, d['executable'])
+        return s
+
 class BaseReport(object):
     def toterminal(self, out):
         longrepr = self.longrepr
+        if hasattr(self, 'node'):
+            out.line(getslaveinfoline(self.node))
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
@@ -140,7 +152,8 @@ def pytest_runtest_makereport(item, call):
             longrepr = excinfo
         elif excinfo.errisinstance(py.test.skip.Exception):
             outcome = "skipped"
-            longrepr = item._repr_failure_py(excinfo)
+            r = item._repr_failure_py(excinfo, "line").reprcrash
+            longrepr = (str(r.path), r.lineno, r.message)
         else:
             outcome = "failed"
             if call.when == "call":
@@ -189,14 +202,14 @@ class TeardownErrorReport(BaseReport):
 
 def pytest_make_collect_report(collector):
     call = CallInfo(collector._memocollect, "memocollect")
-    reason = longrepr = None
+    longrepr = None
     if not call.excinfo:
         outcome = "passed"
     else:
         if call.excinfo.errisinstance(py.test.skip.Exception):
             outcome = "skipped"
-            reason = str(call.excinfo.value)
-            longrepr = collector._repr_failure_py(call.excinfo, "line")
+            r = collector._repr_failure_py(call.excinfo, "line").reprcrash
+            longrepr = (str(r.path), r.lineno, r.message)
         else:
             outcome = "failed"
             errorinfo = collector.repr_failure(call.excinfo)
@@ -204,15 +217,14 @@ def pytest_make_collect_report(collector):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     return CollectReport(collector.nodeid, outcome, longrepr,
-        getattr(call, 'result', None), reason)
+        getattr(call, 'result', None))
 
 class CollectReport(BaseReport):
-    def __init__(self, nodeid, outcome, longrepr, result, reason):
+    def __init__(self, nodeid, outcome, longrepr, result):
         self.nodeid = nodeid
         self.outcome = outcome
         self.longrepr = longrepr
         self.result = result or []
-        self.reason = reason
 
     @property
     def location(self):
@@ -355,6 +367,7 @@ def importorskip(modname, minversion=None):
     optionally specified 'minversion' - otherwise call py.test.skip()
     with a message detailing the mismatch.
     """
+    __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:
         mod = __import__(modname, None, None, ['__doc__'])

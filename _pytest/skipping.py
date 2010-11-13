@@ -186,8 +186,8 @@ def cached_eval(config, expr, d):
 def folded_skips(skipped):
     d = {}
     for event in skipped:
-        entry = event.longrepr.reprcrash
-        key = entry.path, entry.lineno, entry.message
+        key = event.longrepr
+        assert len(key) == 3, (event, key)
         d.setdefault(key, []).append(event)
     l = []
     for key, events in d.items():

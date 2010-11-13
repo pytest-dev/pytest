@@ -366,11 +366,10 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    class longrepr:
-        class reprcrash:
-            path = 'xyz'
-            lineno = 3
-            message = "justso"
+    path = 'xyz'
+    lineno = 3
+    message = "justso"
+    longrepr = (path, lineno, message)
 
     class X:
         pass
@@ -387,9 +386,9 @@ def test_skip_reasons_folding():
     assert len(l) == 1
     num, fspath, lineno, reason = l[0]
     assert num == 2
-    assert fspath == longrepr.reprcrash.path
-    assert lineno == longrepr.reprcrash.lineno
-    assert reason == longrepr.reprcrash.message
+    assert fspath == path
+    assert lineno == lineno
+    assert reason == message
 
 def test_skipped_reasons_functional(testdir):
     testdir.makepyfile(

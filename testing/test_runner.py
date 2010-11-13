@@ -344,13 +344,18 @@ def test_exception_printing_skip():
 
 def test_importorskip():
     importorskip = py.test.importorskip
+    def f():
+        importorskip("asdlkj")
     try:
         sys = importorskip("sys")
         assert sys == py.std.sys
         #path = py.test.importorskip("os.path")
         #assert path == py.std.os.path
-        py.test.raises(py.test.skip.Exception,
-            "py.test.importorskip('alskdj')")
+        excinfo = py.test.raises(py.test.skip.Exception, f)
+        path = py.path.local(excinfo.getrepr().reprcrash.path)
+        # check that importorskip reports the actual call
+        # in this test the test_runner.py file
+        assert path.purebasename == "test_runner"
         py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
         py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
         path = importorskip("py", minversion=".".join(py.__version__))

@@ -389,7 +389,7 @@ class CollectonlyReporter:
                 msg = report.longrepr.reprcrash.message
             else:
                 # XXX unify (we have CollectErrorRepr here)
-                msg = str(report.longrepr.longrepr)
+                msg = str(report.longrepr[2])
             self.outindent("!!! %s !!!" % msg)
             #self.outindent("!!! error !!!")
             self._failed.append(report)
