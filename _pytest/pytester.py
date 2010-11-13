@@ -400,10 +400,8 @@ class TmpTestdir:
                 return colitem
 
     def popen(self, cmdargs, stdout, stderr, **kw):
-        if not hasattr(py.std, 'subprocess'):
-            py.test.skip("no subprocess module")
         env = os.environ.copy()
-        env['PYTHONPATH'] = ":".join(filter(None, [
+        env['PYTHONPATH'] = os.pathsep.join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
         #print "env", env
@@ -449,12 +447,13 @@ class TmpTestdir:
 
     def _getpybinargs(self, scriptname):
         if not self.request.config.getvalue("notoolsonpath"):
-            script = py.path.local.sysfind(scriptname)
+            import pytest
+            script = pytest.__file__.strip("co")
             assert script, "script %r not found" % scriptname
             # XXX we rely on script refering to the correct environment
             # we cannot use "(py.std.sys.executable,script)"
             # becaue on windows the script is e.g. a py.test.exe
-            return (script,)
+            return (py.std.sys.executable, script,)
         else:
             py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
 

@@ -157,14 +157,17 @@ class PluginManager(object):
 
     def consider_setuptools_entrypoints(self):
         try:
-            from pkg_resources import iter_entry_points
+            from pkg_resources import iter_entry_points, DistributionNotFound
         except ImportError:
             return # XXX issue a warning
         for ep in iter_entry_points('pytest11'):
             name = canonical_importname(ep.name)
             if name in self._name2plugin:
                 continue
-            plugin = ep.load()
+            try:
+                plugin = ep.load()
+            except DistributionNotFound:
+                continue
             self.register(plugin, name=name)
 
     def consider_preparse(self, args):
