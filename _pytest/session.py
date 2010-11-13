@@ -317,7 +317,8 @@ class Item(Node):
             return self._location
         except AttributeError:
             location = self.reportinfo()
-            location = (str(location[0]), location[1], str(location[2]))
+            fspath = self.session.fspath.bestrelpath(location[0])
+            location = (fspath, location[1], str(location[2]))
             self._location = location
             return location
 

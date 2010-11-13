@@ -266,11 +266,7 @@ class TerminalReporter:
 
     def _locationline(self, collect_fspath, fspath, lineno, domain):
         if fspath and fspath != collect_fspath:
-            fspath = "%s <- %s" % (
-                self.curdir.bestrelpath(py.path.local(collect_fspath)),
-                self.curdir.bestrelpath(py.path.local(fspath)))
-        elif fspath:
-            fspath = self.curdir.bestrelpath(py.path.local(fspath))
+            fspath = "%s <- %s" % (collect_fspath, fspath)
         if lineno is not None:
             lineno += 1
         if fspath and lineno and domain:
