@@ -5,8 +5,8 @@ import sys
 import pytest
 from py._code.code import TerminalRepr
 
-cutdir = py.path.local(pytest.__file__).dirpath()
-
+import _pytest
+cutdir = py.path.local(_pytest.__file__).dirpath()
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -611,7 +611,7 @@ class FuncargRequest:
         This method is useful if you don't want to have a keyword/marker
         on all function invocations.
 
-        :arg marker: a :py:class:`pytest.plugin.mark.MarkDecorator` object
+        :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
             created by a call to ``py.test.mark.NAME(...)``.
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
@@ -712,7 +712,7 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from pytest.plugin.session import Session
+    from _pytest.session import Session
     session = Session(config)
     session.perform_collect()
     if session.items:

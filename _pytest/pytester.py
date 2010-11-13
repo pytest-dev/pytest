@@ -6,9 +6,9 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from pytest.plugin.session import Session
+from _pytest.session import Session
 from py.builtin import print_
-from pytest.main import HookRelay
+from _pytest.core import HookRelay
 
 def pytest_addoption(parser):
     group = parser.getgroup("pylib")
@@ -492,7 +492,7 @@ class TmpTestdir:
         if self.request.config.getvalue("notoolsonpath"):
             py.test.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
-        invoke = self._getpybinargs("py.test")[0]
+        invoke = " ".join(map(str, self._getpybinargs("py.test")))
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 

@@ -1,5 +1,5 @@
 import py
-from pytest.plugin import config as parseopt
+from _pytest import config as parseopt
 from textwrap import dedent
 
 class TestParser:

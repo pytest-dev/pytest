@@ -25,7 +25,7 @@ def pytest_addoption(parser):
 
 def pytest_cmdline_main(config):
     if config.option.version:
-        p = py.path.local(pytest.__file__).dirpath()
+        p = py.path.local(pytest.__file__)
         sys.stderr.write("This is py.test version %s, imported from %s\n" %
             (pytest.__version__, p))
         return 0

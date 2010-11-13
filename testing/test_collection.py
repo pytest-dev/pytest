@@ -1,6 +1,6 @@
 import pytest, py
 
-from pytest.plugin.session import Session
+from _pytest.session import Session
 
 class TestCollector:
     def test_collect_versus_item(self):

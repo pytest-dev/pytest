@@ -1,8 +1,8 @@
 import py
 
-from pytest.plugin.skipping import MarkEvaluator, folded_skips
-from pytest.plugin.skipping import pytest_runtest_setup
-from pytest.plugin.runner import runtestprotocol
+from _pytest.skipping import MarkEvaluator, folded_skips
+from _pytest.skipping import pytest_runtest_setup
+from _pytest.runner import runtestprotocol
 
 class TestEvaluator:
     def test_no_marker(self, testdir):

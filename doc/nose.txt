@@ -4,7 +4,7 @@ Running test written for nose
 .. include:: links.inc
 
 py.test has basic support for running tests written for nose_.
-This is implemented in :pymod:`pytest.plugin.nose`.
+This is implemented in :pymod:`_pytest.nose`.
 
 Usage
 -------------

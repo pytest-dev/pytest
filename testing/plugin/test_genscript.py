@@ -22,7 +22,7 @@ def test_gen(testdir, anypython, standalone):
     result = standalone.run(anypython, testdir, '--version')
     assert result.ret == 0
     result.stderr.fnmatch_lines([
-        "*imported from*mypytest"
+        "*imported from*mypytest*"
     ])
     p = testdir.makepyfile("def test_func(): assert 0")
     result = standalone.run(anypython, testdir, p)

@@ -1,5 +1,5 @@
 import py
-from pytest.plugin.config import Conftest
+from _pytest.config import Conftest
 
 def pytest_generate_tests(metafunc):
     if "basedir" in metafunc.funcargnames:
@@ -110,7 +110,7 @@ def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
     p = testdir.makepyfile("""
         import py
-        from pytest.plugin.config import Conftest
+        from _pytest.config import Conftest
         conf = Conftest()
         mod = conf.importconftest(py.path.local("conftest.py"))
         assert mod.x == 3

@@ -3,7 +3,7 @@ support for presented detailed information in failing assertions.
 """
 import py
 import sys
-from pytest.plugin.monkeypatch import monkeypatch
+from _pytest.monkeypatch import monkeypatch
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")

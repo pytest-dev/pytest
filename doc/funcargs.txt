@@ -2,7 +2,7 @@
 creating and managing test function arguments
 ==============================================================
 
-.. currentmodule:: pytest.plugin.python
+.. currentmodule:: _pytest.python
 
 
 .. _`funcargs`:
@@ -92,7 +92,7 @@ Each funcarg factory receives a **request** object which is tied to a
 specific test function call.  A request object is passed to a funcarg
 factory and provides access to test configuration and context:
 
-.. autoclass:: pytest.plugin.python.FuncargRequest()
+.. autoclass:: _pytest.python.FuncargRequest()
     :members: function,cls,module,keywords,config
 
 .. _`useful caching and finalization helpers`:

@@ -244,16 +244,30 @@ class TestInvocationVariants:
             s = result.stdout.str()
             assert 'MarkGenerator' in s
 
-    @pytest.mark.multi(source=['py.test', 'pytest'])
-    def test_import_star(self, testdir, source):
+    def test_import_star_py_dot_test(self, testdir):
         p = testdir.makepyfile("""
-            from %s import *
-            collect
-            cmdline
+            from py.test import *
+            #collect
+            #cmdline
+            #Item
+            #assert collect.Item is Item
+            #assert collect.Collector is Collector
             main
             skip
             xfail
-        """ % source)
+        """)
+        result = testdir.runpython(p)
+        assert result.ret == 0
+
+    def test_import_star_pytest(self, testdir):
+        p = testdir.makepyfile("""
+            from pytest import *
+            #Item
+            #File
+            main
+            skip
+            xfail
+        """)
         result = testdir.runpython(p)
         assert result.ret == 0
 
@@ -286,13 +300,6 @@ class TestInvocationVariants:
         assert res.ret == 1
 
     @py.test.mark.skipif("sys.version_info < (2,5)")
-    def test_python_pytest_main(self, testdir):
-        p1 = testdir.makepyfile("def test_pass(): pass")
-        res = testdir.run(py.std.sys.executable, "-m", "pytest.main", str(p1))
-        assert res.ret == 0
-        res.stdout.fnmatch_lines(["*1 passed*"])
-
-    @py.test.mark.skipif("sys.version_info < (2,7)")
     def test_python_pytest_package(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
         res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))

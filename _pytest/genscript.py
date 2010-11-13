@@ -10,6 +10,9 @@ def find_toplevel(name):
         lib = base/name
         if lib.check(dir=1):
             return lib
+        mod = base.join("%s.py" % name)
+        if mod.check(file=1):
+            return mod
     raise LookupError(name)
 
 def pkgname(toplevel, rootpath, path):
@@ -19,11 +22,13 @@ def pkgname(toplevel, rootpath, path):
 def pkg_to_mapping(name):
     toplevel = find_toplevel(name)
     name2src = {}
-    for pyfile in toplevel.visit('*.py'):
-        pkg = pkgname(name, toplevel, pyfile)
-        name2src[pkg] = pyfile.read()
+    if toplevel.check(file=1): # module
+        name2src[toplevel.purebasename] = toplevel.read()
+    else: # package
+        for pyfile in toplevel.visit('*.py'):
+            pkg = pkgname(name, toplevel, pyfile)
+            name2src[pkg] = pyfile.read()
     return name2src
-
 
 def compress_mapping(mapping):
     data = pickle.dumps(mapping, 2)
@@ -60,7 +65,7 @@ def pytest_cmdline_main(config):
     if genscript:
         script = generate_script(
             'import py; raise SystemExit(py.test.cmdline.main())',
-            ['py', 'pytest'],
+            ['py', '_pytest', 'pytest'],
         )
 
         genscript = py.path.local(genscript)

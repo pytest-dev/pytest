@@ -4,7 +4,7 @@
 mark test functions with attributes
 =================================================================
 
-.. currentmodule:: pytest.plugin.mark
+.. currentmodule:: _pytest.mark
 
 By using the ``py.test.mark`` helper you can instantiate
 decorators that will set named meta data on test functions.

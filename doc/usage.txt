@@ -7,6 +7,19 @@ Usage and Invocations
 
 .. _cmdline:
 
+calling pytest through ``python -m pytest``
+-----------------------------------------------------
+
+.. versionadded: 2.0
+
+If you use Python-2.5 or above you can invoke testing through the
+Python interpreter from the command line::
+
+    python -m pytest [...]
+
+This is equivalent to invoking the command line script ``py.test [...]``
+directly.
+
 Getting help on version, option names, environment vars
 -----------------------------------------------------------
 
@@ -37,23 +50,6 @@ Several test run options::
 Import 'pkg' and use its filesystem location to find and run tests::
 
     py.test --pyargs pkg # run all tests found below directory of pypkg
-
-calling pytest through ``python -m pytest``
------------------------------------------------------
-
-.. versionadded: 2.0
-
-You can invoke testing through the Python interpreter from the command line::
-
-    python -m pytest.main [...]
-
-Python2.7 and Python3 introduced specifying packages to "-m" so there
-you can also type::
-
-    python -m pytest [...]
-
-All of these invocations are equivalent to the ``py.test [...]`` command line invocation.
-
 
 Modifying Python traceback printing
 ----------------------------------------------

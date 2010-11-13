@@ -1,6 +1,6 @@
 import py
 
-from pytest.plugin.config import getcfg, Config
+from _pytest.config import getcfg, Config
 
 class TestParseIni:
     def test_getcfg_and_config(self, tmpdir):

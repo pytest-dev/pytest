@@ -1,6 +1,6 @@
 # content of conftest.py
 
-import py
+import pytest
 
 def pytest_collect_file(path, parent):
     if path.ext == ".yml" and path.basename.startswith("test"):

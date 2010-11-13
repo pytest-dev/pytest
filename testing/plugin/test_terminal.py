@@ -4,9 +4,9 @@ terminal reporting of the full testing process.
 import pytest,py
 import sys
 
-from pytest.plugin.terminal import TerminalReporter, \
+from _pytest.terminal import TerminalReporter, \
     CollectonlyReporter,  repr_pythonversion, getreportopt
-from pytest.plugin import runner
+from _pytest import runner
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)

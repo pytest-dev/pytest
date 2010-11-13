@@ -26,14 +26,16 @@ New Features
 
 - new invocations through Python interpreter and from Python::
 
-    python -m pytest      # on all pythons >= 2.7
-    python -m pytest.main # on all pythons >= 2.5
+    python -m pytest      # on all pythons >= 2.5
+
+  or from a python program::
+
     import pytest ; pytest.main(args, plugins)
 
   see http://pytest.org/2.0.0/usage.html for details.
 
 - new and better reporting information in assert expressions
-  which compare lists, sequences or strings.
+  if comparing lists, sequences or strings.
 
   see http://pytest.org/2.0.0/assert.html for details.
 
@@ -42,7 +44,7 @@ New Features
 
     [pytest]
     norecursedirs = .hg data*  # don't ever recurse in such dirs
-    addopts = -x --pyargs      # add these options by default
+    addopts = -x --pyargs      # add these command line options by default
 
   see http://pytest.org/2.0.0/customize.html
 
@@ -51,8 +53,9 @@ New Features
 
     py.test --pyargs unittest
 
-- add a new "-q" option which decreases verbosity and prints a more
+- new "-q" option which decreases verbosity and prints a more
   nose/unittest-style "dot" output.
+
 
 Fixes
 -----------------------

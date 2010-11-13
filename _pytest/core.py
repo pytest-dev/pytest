@@ -6,8 +6,7 @@ All else is in pytest/plugin.
 import sys, os
 import inspect
 import py
-import pytest
-from pytest import hookspec # the extension point definitions
+from _pytest import hookspec # the extension point definitions
 
 assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
@@ -206,6 +205,7 @@ class PluginManager(object):
             self.consider_module(mod)
 
     def pytest_plugin_registered(self, plugin):
+        import pytest
         dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
         if dic:
             self._setns(pytest, dic)
@@ -216,6 +216,7 @@ class PluginManager(object):
                 {'config': self._config})
 
     def _setns(self, obj, dic):
+        import pytest
         for name, value in dic.items():
             if isinstance(value, dict):
                 mod = getattr(obj, name, None)
@@ -225,14 +226,13 @@ class PluginManager(object):
                     sys.modules[modname] = mod
                     mod.__all__ = []
                     setattr(obj, name, mod)
-                #print "setns", mod, value
+                obj.__all__.append(name)
                 self._setns(mod, value)
             else:
-                #print "setting", name, value, "on", obj
                 setattr(obj, name, value)
                 obj.__all__.append(name)
-                #print "appending", name, "to", obj
-                #pytest.__all__.append(name) # don't show in help(py.test)
+                #if obj != pytest:
+                #    pytest.__all__.append(name)
                 setattr(pytest, name, value)
 
     def pytest_terminal_summary(self, terminalreporter):
@@ -300,7 +300,7 @@ def importplugin(importspec):
         try:
             if name.startswith("pytest_"):
                 name = importspec[7:]
-            return __import__("pytest.plugin.%s" %(name), None, None, '__doc__')
+            return __import__("_pytest.%s" %(name), None, None, '__doc__')
         except ImportError:
             e = py.std.sys.exc_info()[1]
             if str(e).find(name) == -1:
@@ -411,7 +411,10 @@ class HookCaller:
             self.trace.root.indent -= 1
         return res
 
-_preinit = [PluginManager(load=True)] # triggers default plugin importing
+_preinit = []
+
+def _preloadplugins():
+    _preinit.append(PluginManager(load=True))
 
 def main(args=None, plugins=None):
     """ returned exit code integer, after an in-process testing run
@@ -446,5 +449,3 @@ def main(args=None, plugins=None):
 class UsageError(Exception):
     """ error in py.test usage or invocation"""
 
-if __name__ == '__main__':
-    raise SystemExit(main())

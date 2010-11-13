@@ -1,9 +1,9 @@
 """ core implementation of testing process: init, session, runtest loop. """
 
 import py
-import pytest
+import pytest, _pytest
 import os, sys
-tracebackcutdir = py.path.local(pytest.__file__).dirpath()
+tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
 # exitcodes for the command line
 EXIT_OK = 0
@@ -125,7 +125,8 @@ def compatproperty(name):
         py.log._apiwarn("2.0", "use pytest.%s for "
             "test collection and item classes" % name)
         return getattr(pytest, name)
-    return property(fget)
+    return property(fget, None, None,
+        "deprecated attribute %r, use pytest.%s" % (name,name))
     
 class Node(object):
     """ base class for all Nodes in the collection tree.

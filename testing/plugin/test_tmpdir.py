@@ -1,7 +1,7 @@
 import py
 
-from pytest.plugin.tmpdir import pytest_funcarg__tmpdir
-from pytest.plugin.python import FuncargRequest
+from _pytest.tmpdir import pytest_funcarg__tmpdir
+from _pytest.python import FuncargRequest
 
 def test_funcarg(testdir):
     item = testdir.getitem("""

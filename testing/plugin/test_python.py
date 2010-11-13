@@ -1,5 +1,5 @@
 import pytest, py, sys
-from pytest.plugin import python as funcargs
+from _pytest import python as funcargs
 
 class TestModule:
     def test_failing_import(self, testdir):

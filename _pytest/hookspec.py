@@ -139,9 +139,9 @@ def pytest_runtest_teardown(item):
     """ called after ``pytest_runtest_call``. """
 
 def pytest_runtest_makereport(item, call):
-    """ return a :py:class:`pytest.plugin.runner.TestReport` object
+    """ return a :py:class:`_pytest.runner.TestReport` object
     for the given :py:class:`pytest.Item` and
-    :py:class:`pytest.plugin.runner.CallInfo`.
+    :py:class:`_pytest.runner.CallInfo`.
     """
 pytest_runtest_makereport.firstresult = True
 
@@ -181,7 +181,7 @@ def pytest_assertrepr_compare(config, op, left, right):
     """
 
 # -------------------------------------------------------------------------
-# hooks for influencing reporting (invoked from pytest_terminal)
+# hooks for influencing reporting (invoked from _pytest_terminal)
 # -------------------------------------------------------------------------
 
 def pytest_report_header(config):

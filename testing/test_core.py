@@ -1,6 +1,6 @@
 import py, os
-from pytest.main import PluginManager, canonical_importname
-from pytest.main import MultiCall, HookRelay, varnames
+from _pytest.core import PluginManager, canonical_importname
+from _pytest.core import MultiCall, HookRelay, varnames
 
 
 class TestBootstrapping:
@@ -560,7 +560,7 @@ class TestHookRelay:
 
 class TestTracer:
     def test_simple(self):
-        from pytest.main import TagTracer
+        from _pytest.core import TagTracer
         rootlogger = TagTracer("[my] ")
         log = rootlogger.get("pytest")
         log("hello")
@@ -574,7 +574,7 @@ class TestTracer:
         assert l[1] == "[my] hello\n"
 
     def test_indent(self):
-        from pytest.main import TagTracer
+        from _pytest.core import TagTracer
         rootlogger = TagTracer()
         log = rootlogger.get("1")
         l = []
@@ -596,7 +596,7 @@ class TestTracer:
                      '    line3', '    line4', '  line5', 'last']
 
     def test_setprocessor(self):
-        from pytest.main import TagTracer
+        from _pytest.core import TagTracer
         rootlogger = TagTracer()
         log = rootlogger.get("1")
         log2 = log.get("2")
@@ -618,7 +618,7 @@ class TestTracer:
         
 
     def test_setmyprocessor(self):
-        from pytest.main import TagTracer
+        from _pytest.core import TagTracer
         rootlogger = TagTracer()
         log = rootlogger.get("1")
         log2 = log.get("2")

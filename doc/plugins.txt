@@ -180,28 +180,28 @@ py.test default plugin reference
 
 .. autosummary::
 
-    pytest.plugin.assertion
-    pytest.plugin.capture
-    pytest.plugin.config
-    pytest.plugin.doctest
-    pytest.plugin.genscript
-    pytest.plugin.helpconfig
-    pytest.plugin.junitxml
-    pytest.plugin.mark
-    pytest.plugin.monkeypatch
-    pytest.plugin.nose
-    pytest.plugin.pastebin
-    pytest.plugin.pdb
-    pytest.plugin.pytester
-    pytest.plugin.python
-    pytest.plugin.recwarn
-    pytest.plugin.resultlog
-    pytest.plugin.runner
-    pytest.plugin.session
-    pytest.plugin.skipping
-    pytest.plugin.terminal
-    pytest.plugin.tmpdir
-    pytest.plugin.unittest
+    _pytest.assertion
+    _pytest.capture
+    _pytest.config
+    _pytest.doctest
+    _pytest.genscript
+    _pytest.helpconfig
+    _pytest.junitxml
+    _pytest.mark
+    _pytest.monkeypatch
+    _pytest.nose
+    _pytest.pastebin
+    _pytest.pdb
+    _pytest.pytester
+    _pytest.python
+    _pytest.recwarn
+    _pytest.resultlog
+    _pytest.runner
+    _pytest.session
+    _pytest.skipping
+    _pytest.terminal
+    _pytest.tmpdir
+    _pytest.unittest
 
 .. _`well specified hooks`:
 
@@ -222,7 +222,7 @@ hook name itself you get useful errors.
 initialisation, command line and configuration hooks
 --------------------------------------------------------------------
 
-.. currentmodule:: pytest.hookspec
+.. currentmodule:: _pytest.hookspec
 
 .. autofunction:: pytest_cmdline_parse
 .. autofunction:: pytest_namespace
@@ -243,11 +243,11 @@ All all runtest related hooks receive a :py:class:`pytest.Item` object.
 .. autofunction:: pytest_runtest_makereport
 
 For deeper understanding you may look at the default implementation of
-these hooks in :py:mod:`pytest.plugin.runner` and maybe also
-in :py:mod:`pytest.plugin.pdb` which intercepts creation
+these hooks in :py:mod:`_pytest.runner` and maybe also
+in :py:mod:`_pytest.pdb` which intercepts creation
 of reports in order to drop to interactive debugging.
 
-The :py:mod:`pytest.plugin.terminal` reported specifically uses
+The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
 
 collection hooks
@@ -284,35 +284,35 @@ test execution:
 Reference of important objects involved in hooks
 ===========================================================
 
-.. autoclass:: pytest.plugin.config.Config
+.. autoclass:: _pytest.config.Config
     :members:
 
-.. autoclass:: pytest.plugin.config.Parser
+.. autoclass:: _pytest.config.Parser
     :members:
 
-.. autoclass:: pytest.plugin.session.Node(name, parent)
+.. autoclass:: _pytest.session.Node(name, parent)
     :members:
 
 ..
-    .. autoclass:: pytest.plugin.session.File(fspath, parent)
+    .. autoclass:: _pytest.session.File(fspath, parent)
         :members:
 
-    .. autoclass:: pytest.plugin.session.Item(name, parent)
+    .. autoclass:: _pytest.session.Item(name, parent)
         :members:
 
-    .. autoclass:: pytest.plugin.python.Module(name, parent)
+    .. autoclass:: _pytest.python.Module(name, parent)
         :members:
 
-    .. autoclass:: pytest.plugin.python.Class(name, parent)
+    .. autoclass:: _pytest.python.Class(name, parent)
         :members:
 
-    .. autoclass:: pytest.plugin.python.Function(name, parent)
+    .. autoclass:: _pytest.python.Function(name, parent)
         :members:
 
-.. autoclass:: pytest.plugin.runner.CallInfo
+.. autoclass:: _pytest.runner.CallInfo
     :members:
 
-.. autoclass:: pytest.plugin.runner.TestReport
+.. autoclass:: _pytest.runner.TestReport
     :members:
 
 

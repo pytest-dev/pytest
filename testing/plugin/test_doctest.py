@@ -1,4 +1,4 @@
-from pytest.plugin.doctest import DoctestModule, DoctestTextfile
+from _pytest.doctest import DoctestModule, DoctestTextfile
 import py
 
 pytest_plugins = ["pytest_doctest"]
