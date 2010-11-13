@@ -15,7 +15,7 @@ class DictImporter(object):
     def find_module(self, fullname, path=None):
         if fullname in self.sources:
             return self
-        if fullname+'.__init__' in self.sources:
+        if fullname + '.__init__' in self.sources:
             return self
         return None
 
@@ -26,7 +26,7 @@ class DictImporter(object):
             s = self.sources[fullname]
             is_pkg = False
         except KeyError:
-            s = self.sources[fullname+'.__init__']
+            s = self.sources[fullname + '.__init__']
             is_pkg = True
 
         co = compile(s, fullname, 'exec')
@@ -42,11 +42,11 @@ class DictImporter(object):
     def get_source(self, name):
         res = self.sources.get(name)
         if res is None:
-            res = self.sources.get(name+'.__init__')
+            res = self.sources.get(name + '.__init__')
         return res
 
 if __name__ == "__main__":
-    if sys.version_info >= (3,0):
+    if sys.version_info >= (3, 0):
         exec("def do_exec(co, loc): exec(co, loc)\n")
         import pickle
         sources = sources.encode("ascii") # ensure bytes

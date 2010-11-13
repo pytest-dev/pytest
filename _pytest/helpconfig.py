@@ -129,7 +129,7 @@ def pytest_plugin_registered(manager, plugin):
             #    print "matching hook:", formatdef(method)
         if fail:
             name = getattr(plugin, '__name__', plugin)
-            raise PluginValidationError("%s:\n%s" %(name, stringio.getvalue()))
+            raise PluginValidationError("%s:\n%s" % (name, stringio.getvalue()))
 
 class PluginValidationError(Exception):
     """ plugin failed validation. """
@@ -151,7 +151,7 @@ def collectattr(obj):
     return methods
 
 def formatdef(func):
-    return "%s%s" %(
+    return "%s%s" % (
         func.__name__,
         inspect.formatargspec(*inspect.getargspec(func))
     )
