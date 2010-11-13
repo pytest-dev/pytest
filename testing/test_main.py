@@ -352,8 +352,8 @@ class TestPytestPluginInteractions:
 
     def test_namespace_early_from_import(self, testdir):
         p = testdir.makepyfile("""
-            from py.test.collect import Item
-            from pytest.collect import Item as Item2
+            from pytest import Item
+            from pytest import Item as Item2
             assert Item is Item2
         """)
         result = testdir.runpython(p)

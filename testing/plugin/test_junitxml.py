@@ -237,11 +237,11 @@ class TestPython:
 class TestNonPython:
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_collect_file(path, parent):
                 if path.ext == ".xyz":
                     return MyItem(path, parent)
-            class MyItem(py.test.collect.Item):
+            class MyItem(pytest.Item):
                 def __init__(self, path, parent):
                     super(MyItem, self).__init__(path.basename, parent)
                     self.fspath = path

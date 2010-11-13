@@ -6,14 +6,14 @@ def pytest_collect_file(path, parent):
     if path.ext == ".yml" and path.basename.startswith("test"):
         return YamlFile(path, parent)
             
-class YamlFile(py.test.collect.File):
+class YamlFile(pytest.File):
     def collect(self):
         import yaml # we need a yaml parser, e.g. PyYAML
         raw = yaml.load(self.fspath.open())
         for name, spec in raw.items():
             yield YamlItem(name, self, spec)
 
-class YamlItem(py.test.collect.Item):
+class YamlItem(pytest.Item):
     def __init__(self, name, parent, spec):
         super(YamlItem, self).__init__(name, parent)
         self.spec = spec

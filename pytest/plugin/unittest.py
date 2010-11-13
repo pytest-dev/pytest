@@ -1,5 +1,5 @@
 """ discovery and running of std-library "unittest" style tests. """
-import py
+import pytest, py
 import sys
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -16,7 +16,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         if isunit:
             return UnitTestCase(name, parent=collector)
 
-class UnitTestCase(py.test.collect.Class):
+class UnitTestCase(pytest.Class):
     def collect(self):
         loader = py.std.unittest.TestLoader()
         for name in loader.getTestCaseNames(self.obj):
@@ -32,7 +32,7 @@ class UnitTestCase(py.test.collect.Class):
         if meth is not None:
             meth()
 
-class TestCaseFunction(py.test.collect.Function):
+class TestCaseFunction(pytest.Function):
     def setup(self):
         pass
     def teardown(self):

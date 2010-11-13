@@ -1,5 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
-import py
+import pytest, py
 
 def pytest_namespace():
     return {'mark': MarkGenerator()}
@@ -156,13 +156,13 @@ class MarkInfo:
                 self._name, self.args, self.kwargs)
 
 def pytest_itemcollected(item):
-    if not isinstance(item, py.test.collect.Function):
+    if not isinstance(item, pytest.Function):
         return
     try:
         func = item.obj.__func__
     except AttributeError:
         func = getattr(item.obj, 'im_func', item.obj)
-    pyclasses = (py.test.collect.Class, py.test.collect.Module)
+    pyclasses = (pytest.Class, pytest.Module)
     for node in item.listchain():
         if isinstance(node, pyclasses):
             marker = getattr(node.obj, 'pytestmark', None)

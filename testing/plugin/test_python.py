@@ -59,11 +59,11 @@ class TestGenerator:
         colitems = modcol.collect()
         assert len(colitems) == 1
         gencol = colitems[0]
-        assert isinstance(gencol, py.test.collect.Generator)
+        assert isinstance(gencol, pytest.Generator)
         gencolitems = gencol.collect()
         assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], py.test.collect.Function)
-        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert isinstance(gencolitems[0], pytest.Function)
+        assert isinstance(gencolitems[1], pytest.Function)
         assert gencolitems[0].name == '[0]'
         assert gencolitems[0].obj.__name__ == 'func1'
 
@@ -77,11 +77,11 @@ class TestGenerator:
                     yield func1, 42, 6*7
         """)
         gencol = modcol.collect()[0].collect()[0].collect()[0]
-        assert isinstance(gencol, py.test.collect.Generator)
+        assert isinstance(gencol, pytest.Generator)
         gencolitems = gencol.collect()
         assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], py.test.collect.Function)
-        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert isinstance(gencolitems[0], pytest.Function)
+        assert isinstance(gencolitems[1], pytest.Function)
         assert gencolitems[0].name == '[0]'
         assert gencolitems[0].obj.__name__ == 'func1'
 
@@ -97,11 +97,11 @@ class TestGenerator:
         colitems = modcol.collect()
         assert len(colitems) == 1
         gencol = colitems[0]
-        assert isinstance(gencol, py.test.collect.Generator)
+        assert isinstance(gencol, pytest.Generator)
         gencolitems = gencol.collect()
         assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], py.test.collect.Function)
-        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert isinstance(gencolitems[0], pytest.Function)
+        assert isinstance(gencolitems[1], pytest.Function)
         assert gencolitems[0].name == "['seventeen']"
         assert gencolitems[0].obj.__name__ == 'func1'
         assert gencolitems[1].name == "['fortytwo']"
@@ -118,7 +118,7 @@ class TestGenerator:
         colitems = modcol.collect()
         assert len(colitems) == 1
         gencol = colitems[0]
-        assert isinstance(gencol, py.test.collect.Generator)
+        assert isinstance(gencol, pytest.Generator)
         py.test.raises(ValueError, "gencol.collect()")
 
     def test_generative_methods_with_explicit_names(self, testdir):
@@ -131,11 +131,11 @@ class TestGenerator:
                     yield "m2", func1, 42, 6*7
         """)
         gencol = modcol.collect()[0].collect()[0].collect()[0]
-        assert isinstance(gencol, py.test.collect.Generator)
+        assert isinstance(gencol, pytest.Generator)
         gencolitems = gencol.collect()
         assert len(gencolitems) == 2
-        assert isinstance(gencolitems[0], py.test.collect.Function)
-        assert isinstance(gencolitems[1], py.test.collect.Function)
+        assert isinstance(gencolitems[0], pytest.Function)
+        assert isinstance(gencolitems[1], pytest.Function)
         assert gencolitems[0].name == "['m1']"
         assert gencolitems[0].obj.__name__ == 'func1'
         assert gencolitems[1].name == "['m2']"
@@ -199,20 +199,20 @@ class TestGenerator:
 class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")
-        modcol = item.getparent(py.test.collect.Module)
-        assert isinstance(modcol, py.test.collect.Module)
+        modcol = item.getparent(pytest.Module)
+        assert isinstance(modcol, pytest.Module)
         assert hasattr(modcol.obj, 'test_func')
 
     def test_function_equality(self, testdir, tmpdir):
         config = testdir.reparseconfig()
         session = testdir.Session(config)
-        f1 = py.test.collect.Function(name="name", config=config,
+        f1 = pytest.Function(name="name", config=config,
                 args=(1,), callobj=isinstance, session=session)
-        f2 = py.test.collect.Function(name="name",config=config,
+        f2 = pytest.Function(name="name",config=config,
                 args=(1,), callobj=py.builtin.callable, session=session)
         assert not f1 == f2
         assert f1 != f2
-        f3 = py.test.collect.Function(name="name", config=config,
+        f3 = pytest.Function(name="name", config=config,
                 args=(1,2), callobj=py.builtin.callable, session=session)
         assert not f3 == f2
         assert f3 != f2
@@ -220,7 +220,7 @@ class TestFunction:
         assert not f3 == f1
         assert f3 != f1
 
-        f1_b = py.test.collect.Function(name="name", config=config,
+        f1_b = pytest.Function(name="name", config=config,
               args=(1,), callobj=isinstance, session=session)
         assert f1 == f1_b
         assert not f1 != f1_b
@@ -236,9 +236,9 @@ class TestFunction:
             funcargs = {}
             id = "world"
         session = testdir.Session(config)
-        f5 = py.test.collect.Function(name="name", config=config,
+        f5 = pytest.Function(name="name", config=config,
             callspec=callspec1, callobj=isinstance, session=session)
-        f5b = py.test.collect.Function(name="name", config=config,
+        f5b = pytest.Function(name="name", config=config,
             callspec=callspec2, callobj=isinstance, session=session)
         assert f5 != f5b
         assert not (f5 == f5b)
@@ -263,9 +263,9 @@ class TestSorting:
             def test_fail(): assert 0
         """)
         fn1 = testdir.collect_by_name(modcol, "test_pass")
-        assert isinstance(fn1, py.test.collect.Function)
+        assert isinstance(fn1, pytest.Function)
         fn2 = testdir.collect_by_name(modcol, "test_pass")
-        assert isinstance(fn2, py.test.collect.Function)
+        assert isinstance(fn2, pytest.Function)
 
         assert fn1 == fn2
         assert fn1 != modcol
@@ -274,7 +274,7 @@ class TestSorting:
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")
-        assert isinstance(fn3, py.test.collect.Function)
+        assert isinstance(fn3, pytest.Function)
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
@@ -309,8 +309,8 @@ class TestSorting:
 class TestConftestCustomization:
     def test_pytest_pycollect_module(self, testdir):
         testdir.makeconftest("""
-            import py
-            class MyModule(py.test.collect.Module):
+            import pytest
+            class MyModule(pytest.Module):
                 pass
             def pytest_pycollect_makemodule(path, parent):
                 if path.basename == "test_xyz.py":
@@ -326,8 +326,8 @@ class TestConftestCustomization:
 
     def test_pytest_pycollect_makeitem(self, testdir):
         testdir.makeconftest("""
-            import py
-            class MyFunction(py.test.collect.Function):
+            import pytest
+            class MyFunction(pytest.Function):
                 pass
             def pytest_pycollect_makeitem(collector, name, obj):
                 if name == "some":
@@ -342,7 +342,7 @@ class TestConftestCustomization:
     def test_makeitem_non_underscore(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("def _hello(): pass")
         l = []
-        monkeypatch.setattr(py.test.collect.Module, 'makeitem',
+        monkeypatch.setattr(pytest.Module, 'makeitem',
             lambda self, name, obj: l.append(name))
         l = modcol.collect()
         assert '_hello' not in l
@@ -545,7 +545,7 @@ class TestFillFuncArgs:
         item.config.pluginmanager.register(Provider())
         if hasattr(item, '_args'):
             del item._args
-        py.test.collect._fillfuncargs(item)
+        pytest._fillfuncargs(item)
         assert len(item.funcargs) == 1
 
 class TestRequest:
@@ -634,7 +634,7 @@ class TestRequest:
         req.config._setupstate.prepare(item) # XXX
         req._fillfuncargs()
         # successively check finalization calls
-        teardownlist = item.getparent(py.test.collect.Module).obj.teardownlist
+        teardownlist = item.getparent(pytest.Module).obj.teardownlist
         ss = item.config._setupstate
         assert not teardownlist
         ss.teardown_exact(item)
@@ -1009,11 +1009,11 @@ def test_conftest_funcargs_only_available_in_subdir(testdir):
 
 def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
     testdir.makeconftest("""
-        import py
+        import pytest
         def pytest_pycollect_makeitem(collector, name, obj):
             if name == "MyClass":
                 return MyCollector(name, parent=collector)
-        class MyCollector(py.test.collect.Collector):
+        class MyCollector(pytest.Collector):
             def reportinfo(self):
                 return self.fspath, 3, "xyz"
     """)
@@ -1048,8 +1048,8 @@ def test_funcarg_lookup_error(testdir):
 class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest("""
-            import py
-            class MyFunction(py.test.collect.Function):
+            import pytest
+            class MyFunction(pytest.Function):
                 def reportinfo(self):
                     return "ABCDE", 42, "custom"
             def pytest_pycollect_makeitem(collector, name, obj):

@@ -52,7 +52,7 @@ class TestConftestValueAccessGlobal:
     def test_default_has_lower_prio(self, basedir):
         conftest = ConftestWithSetinitial(basedir.join("adir"))
         assert conftest.rget('Directory') == 3
-        #assert conftest.lget('Directory') == py.test.collect.Directory
+        #assert conftest.lget('Directory') == pytest.Directory
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)

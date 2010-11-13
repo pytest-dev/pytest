@@ -141,8 +141,8 @@ class BaseFunctionalTests:
 
     def test_custom_failure_repr(self, testdir):
         testdir.makepyfile(conftest="""
-            import py
-            class Function(py.test.collect.Function):
+            import pytest
+            class Function(pytest.Function):
                 def repr_failure(self, excinfo):
                     return "hello"
         """)
@@ -162,13 +162,12 @@ class BaseFunctionalTests:
 
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
         testdir.makepyfile(conftest="""
-            import py
-            class Function(py.test.collect.Function):
+            import pytest
+            class Function(pytest.Function):
                 def repr_failure(self, excinfo):
                     assert 0
         """)
         reports = testdir.runitem("""
-            import py
             def setup_function(func):
                 raise ValueError(42)
             def test_func():
@@ -200,9 +199,9 @@ class BaseFunctionalTests:
     def test_exit_propagates(self, testdir):
         try:
             testdir.runitem("""
-                import py
+                import pytest
                 def test_func():
-                    raise py.test.exit.Exception()
+                    raise pytest.exit.Exception()
             """)
         except py.test.exit.Exception:
             pass
@@ -267,8 +266,8 @@ class TestSessionReports:
 
     def test_skip_at_module_scope(self, testdir):
         col = testdir.getmodulecol("""
-            import py
-            py.test.skip("hello")
+            import pytest
+            pytest.skip("hello")
             def test_func():
                 pass
         """)

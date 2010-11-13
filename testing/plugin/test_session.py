@@ -1,4 +1,4 @@
-import py
+import pytest, py
 
 class SessionTests:
     def test_basic_testitem_events(self, testdir):
@@ -26,7 +26,7 @@ class SessionTests:
         colstarted = reprec.getcalls("pytest_collectstart")
         assert len(colstarted) == 1 + 1
         col = colstarted[1].collector
-        assert isinstance(col, py.test.collect.Module)
+        assert isinstance(col, pytest.Module)
 
     def test_nested_import_error(self, testdir):
         tfile = testdir.makepyfile("""
@@ -94,7 +94,7 @@ class SessionTests:
 
     def test_broken_repr(self, testdir):
         p = testdir.makepyfile("""
-            import py
+            import pytest
             class BrokenRepr1:
                 foo=0
                 def __repr__(self):
@@ -103,7 +103,7 @@ class SessionTests:
             class TestBrokenClass:
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
-                    py.test.raises(Exception, 'repr(t)')
+                    pytest.raises(Exception, 'repr(t)')
 
                 def test_implicit_bad_repr1(self):
                     t = BrokenRepr1()

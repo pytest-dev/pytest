@@ -1,10 +1,10 @@
-import py
+import pytest, py
 
 from pytest.plugin.session import Session
 
 class TestCollector:
     def test_collect_versus_item(self):
-        from pytest.collect import Collector, Item
+        from pytest import Collector, Item
         assert not issubclass(Collector, Item)
         assert not issubclass(Item, Collector)
 
@@ -14,15 +14,15 @@ class TestCollector:
             def test_fail(): assert 0
         """)
         recwarn.clear()
-        assert modcol.Module == py.test.collect.Module
+        assert modcol.Module == pytest.Module
         recwarn.pop(DeprecationWarning)
-        assert modcol.Class == py.test.collect.Class
+        assert modcol.Class == pytest.Class
         recwarn.pop(DeprecationWarning)
-        assert modcol.Item == py.test.collect.Item
+        assert modcol.Item == pytest.Item
         recwarn.pop(DeprecationWarning)
-        assert modcol.File == py.test.collect.File
+        assert modcol.File == pytest.File
         recwarn.pop(DeprecationWarning)
-        assert modcol.Function == py.test.collect.Function
+        assert modcol.Function == pytest.Function
         recwarn.pop(DeprecationWarning)
 
     def test_check_equality(self, testdir):
@@ -31,9 +31,9 @@ class TestCollector:
             def test_fail(): assert 0
         """)
         fn1 = testdir.collect_by_name(modcol, "test_pass")
-        assert isinstance(fn1, py.test.collect.Function)
+        assert isinstance(fn1, pytest.Function)
         fn2 = testdir.collect_by_name(modcol, "test_pass")
-        assert isinstance(fn2, py.test.collect.Function)
+        assert isinstance(fn2, pytest.Function)
 
         assert fn1 == fn2
         assert fn1 != modcol
@@ -42,7 +42,7 @@ class TestCollector:
         assert hash(fn1) == hash(fn2)
 
         fn3 = testdir.collect_by_name(modcol, "test_fail")
-        assert isinstance(fn3, py.test.collect.Function)
+        assert isinstance(fn3, pytest.Function)
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
@@ -63,32 +63,32 @@ class TestCollector:
         fn = testdir.collect_by_name(
             testdir.collect_by_name(cls, "()"), "test_foo")
 
-        parent = fn.getparent(py.test.collect.Module)
+        parent = fn.getparent(pytest.Module)
         assert parent is modcol
 
-        parent = fn.getparent(py.test.collect.Function)
+        parent = fn.getparent(pytest.Function)
         assert parent is fn
 
-        parent = fn.getparent(py.test.collect.Class)
+        parent = fn.getparent(pytest.Class)
         assert parent is cls
 
 
     def test_getcustomfile_roundtrip(self, testdir):
         hello = testdir.makefile(".xxx", hello="world")
         testdir.makepyfile(conftest="""
-            import py
-            class CustomFile(py.test.collect.File):
+            import pytest
+            class CustomFile(pytest.File):
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".xxx":
                     return CustomFile(path, parent=parent)
         """)
         node = testdir.getpathnode(hello)
-        assert isinstance(node, py.test.collect.File)
+        assert isinstance(node, pytest.File)
         assert node.name == "hello.xxx"
         nodes = node.session.perform_collect([node.nodeid], genitems=False)
         assert len(nodes) == 1
-        assert isinstance(nodes[0], py.test.collect.File)
+        assert isinstance(nodes[0], pytest.File)
 
 class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
@@ -158,18 +158,18 @@ class TestPrunetraceback:
             import not_exists
         """)
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_collect_file(path, parent):
                 return MyFile(path, parent)
             class MyError(Exception):
                 pass
-            class MyFile(py.test.collect.File):
+            class MyFile(pytest.File):
                 def collect(self):
                     raise MyError()
                 def repr_failure(self, excinfo):
                     if excinfo.errisinstance(MyError):
                         return "hello world"
-                    return py.test.collect.File.repr_failure(self, excinfo)
+                    return pytest.File.repr_failure(self, excinfo)
         """)
 
         result = testdir.runpytest(p)
@@ -184,7 +184,7 @@ class TestPrunetraceback:
             import not_exists
         """)
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_make_collect_report(__multicall__):
                 rep = __multicall__.execute()
                 rep.headerlines += ["header1"]
@@ -246,8 +246,8 @@ class TestCustomConftests:
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
         conf = testdir.makeconftest("""
-            import py
-            class MyModule(py.test.collect.Module):
+            import pytest
+            class MyModule(pytest.Module):
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
@@ -265,8 +265,8 @@ class TestCustomConftests:
         sub1 = testdir.mkpydir("sub1")
         sub2 = testdir.mkpydir("sub2")
         conf1 = testdir.makeconftest("""
-            import py
-            class MyModule1(py.test.collect.Module):
+            import pytest
+            class MyModule1(pytest.Module):
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
@@ -274,8 +274,8 @@ class TestCustomConftests:
         """)
         conf1.move(sub1.join(conf1.basename))
         conf2 = testdir.makeconftest("""
-            import py
-            class MyModule2(py.test.collect.Module):
+            import pytest
+            class MyModule2(pytest.Module):
                 pass
             def pytest_collect_file(path, parent):
                 if path.ext == ".py":
@@ -378,11 +378,11 @@ class TestSession:
     def test_collect_custom_nodes_multi_id(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         testdir.makeconftest("""
-            import py
-            class SpecialItem(py.test.collect.Item):
+            import pytest
+            class SpecialItem(pytest.Item):
                 def runtest(self):
                     return # ok
-            class SpecialFile(py.test.collect.File):
+            class SpecialFile(pytest.File):
                 def collect(self):
                     return [SpecialItem(name="check", parent=self)]
             def pytest_collect_file(path, parent):
@@ -481,7 +481,7 @@ class Test_getinitialnodes:
         x = tmpdir.ensure("x.py")
         config = testdir.reparseconfig([x])
         col = testdir.getnode(config, x)
-        assert isinstance(col, py.test.collect.Module)
+        assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'
         assert col.parent.name == testdir.tmpdir.basename
         assert col.parent.parent is None
@@ -496,7 +496,7 @@ class Test_getinitialnodes:
         subdir.ensure("__init__.py")
         config = testdir.reparseconfig([x])
         col = testdir.getnode(config, x)
-        assert isinstance(col, py.test.collect.Module)
+        assert isinstance(col, pytest.Module)
         assert col.name == 'subdir/x.py'
         assert col.parent.parent is None
         for col in col.listchain():

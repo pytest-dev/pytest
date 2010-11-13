@@ -1,6 +1,6 @@
 """run test suites written for nose. """
 
-import py
+import pytest, py
 import inspect
 import sys
 
@@ -14,12 +14,12 @@ def pytest_runtest_makereport(__multicall__, item, call):
 
 
 def pytest_runtest_setup(item):
-    if isinstance(item, (py.test.collect.Function)):
-        if isinstance(item.parent, py.test.collect.Generator):
+    if isinstance(item, (pytest.Function)):
+        if isinstance(item.parent, pytest.Generator):
             gen = item.parent
             if not hasattr(gen, '_nosegensetup'):
                 call_optional(gen.obj, 'setup')
-                if isinstance(gen.parent, py.test.collect.Instance):
+                if isinstance(gen.parent, pytest.Instance):
                     call_optional(gen.parent.obj, 'setup')
                 gen._nosegensetup = True
         if not call_optional(item.obj, 'setup'):
@@ -27,7 +27,7 @@ def pytest_runtest_setup(item):
             call_optional(item.parent.obj, 'setup')
 
 def pytest_runtest_teardown(item):
-    if isinstance(item, py.test.collect.Function):
+    if isinstance(item, pytest.Function):
         if not call_optional(item.obj, 'teardown'):
             call_optional(item.parent.obj, 'teardown')
         #if hasattr(item.parent, '_nosegensetup'):
@@ -35,7 +35,7 @@ def pytest_runtest_teardown(item):
         #    del item.parent._nosegensetup
 
 def pytest_make_collect_report(collector):
-    if isinstance(collector, py.test.collect.Generator):
+    if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 
 def call_optional(obj, name):

@@ -6,6 +6,7 @@ All else is in pytest/plugin.
 import sys, os
 import inspect
 import py
+import pytest
 from pytest import hookspec # the extension point definitions
 
 assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
@@ -207,7 +208,7 @@ class PluginManager(object):
     def pytest_plugin_registered(self, plugin):
         dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
         if dic:
-            self._setns(py.test, dic)
+            self._setns(pytest, dic)
         if hasattr(self, '_config'):
             self.call_plugin(plugin, "pytest_addoption",
                 {'parser': self._config._parser})
@@ -219,16 +220,20 @@ class PluginManager(object):
             if isinstance(value, dict):
                 mod = getattr(obj, name, None)
                 if mod is None:
-                    mod = py.std.types.ModuleType(name)
-                    sys.modules['pytest.%s' % name] = mod
-                    sys.modules['py.test.%s' % name] = mod
+                    modname = "pytest.%s" % name
+                    mod = py.std.types.ModuleType(modname)
+                    sys.modules[modname] = mod
                     mod.__all__ = []
                     setattr(obj, name, mod)
+                #print "setns", mod, value
                 self._setns(mod, value)
             else:
                 #print "setting", name, value, "on", obj
                 setattr(obj, name, value)
                 obj.__all__.append(name)
+                #print "appending", name, "to", obj
+                #pytest.__all__.append(name) # don't show in help(py.test)
+                setattr(pytest, name, value)
 
     def pytest_terminal_summary(self, terminalreporter):
         tw = terminalreporter._tw
@@ -284,6 +289,7 @@ def canonical_importname(name):
     return name
 
 def importplugin(importspec):
+    #print "importing", importspec
     try:
         return __import__(importspec, None, None, '__doc__')
     except ImportError:
@@ -408,6 +414,9 @@ class HookCaller:
 _preinit = [PluginManager(load=True)] # triggers default plugin importing
 
 def main(args=None, plugins=None):
+    """ returned exit code integer, after an in-process testing run
+    with the given command line arguments, preloading an optional list
+    of passed in plugin objects. """
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):

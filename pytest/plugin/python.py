@@ -142,7 +142,7 @@ class PyobjMixin(object):
             modpath = self.getmodpath()
         return fspath, lineno, modpath
 
-class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
+class PyCollectorMixin(PyobjMixin, pytest.Collector):
 
     def funcnamefilter(self, name):
         return name.startswith('test')
@@ -203,7 +203,7 @@ class PyCollectorMixin(PyobjMixin, pytest.collect.Collector):
             l.append(function)
         return l
 
-class Module(pytest.collect.File, PyCollectorMixin):
+class Module(pytest.File, PyCollectorMixin):
     def _getobj(self):
         return self._memoizedcall('_obj', self._importtestmodule)
 
@@ -249,7 +249,7 @@ class Module(pytest.collect.File, PyCollectorMixin):
             else:
                 self.obj.teardown_module()
 
-class Class(PyCollectorMixin, pytest.collect.Collector):
+class Class(PyCollectorMixin, pytest.Collector):
 
     def collect(self):
         return [Instance(name="()", parent=self)]
@@ -266,7 +266,7 @@ class Class(PyCollectorMixin, pytest.collect.Collector):
             teardown_class = getattr(teardown_class, 'im_func', teardown_class)
             teardown_class(self.obj)
 
-class Instance(PyCollectorMixin, pytest.collect.Collector):
+class Instance(PyCollectorMixin, pytest.Collector):
     def _getobj(self):
         return self.parent.obj()
 
@@ -348,7 +348,7 @@ class FuncargLookupErrorRepr(TerminalRepr):
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
-class Generator(FunctionMixin, PyCollectorMixin, pytest.collect.Collector):
+class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
     def collect(self):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
@@ -388,7 +388,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.collect.Collector):
 #  Test Items
 #
 _dummy = object()
-class Function(FunctionMixin, pytest.collect.Item):
+class Function(FunctionMixin, pytest.Item):
     """ a Function Item is responsible for setting up
         and executing a Python callable test object.
     """
@@ -480,10 +480,10 @@ def fillfuncargs(function):
 def getplugins(node, withpy=False): # might by any node
     plugins = node.config._getmatchingplugins(node.fspath)
     if withpy:
-        mod = node.getparent(pytest.collect.Module)
+        mod = node.getparent(pytest.Module)
         if mod is not None:
             plugins.append(mod.obj)
-        inst = node.getparent(pytest.collect.Instance)
+        inst = node.getparent(pytest.Instance)
         if inst is not None:
             plugins.append(inst.obj)
     return plugins
@@ -573,12 +573,12 @@ class FuncargRequest:
     @property
     def module(self):
         """ module where the test function was collected. """
-        return self._pyfuncitem.getparent(pytest.collect.Module).obj
+        return self._pyfuncitem.getparent(pytest.Module).obj
        
     @property
     def cls(self):
         """ class (can be None) where the test function was collected. """
-        clscol = self._pyfuncitem.getparent(pytest.collect.Class)
+        clscol = self._pyfuncitem.getparent(pytest.Class)
         if clscol:
             return clscol.obj
     @property
@@ -679,7 +679,7 @@ class FuncargRequest:
         if scope == "function":
             return self._pyfuncitem
         elif scope == "module":
-            return self._pyfuncitem.getparent(py.test.collect.Module)
+            return self._pyfuncitem.getparent(pytest.Module)
         elif scope == "session":
             return None
         raise ValueError("unknown finalization scope %r" %(scope,))

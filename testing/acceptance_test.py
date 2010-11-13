@@ -24,7 +24,6 @@ class TestGeneralUsage:
                 parser.addoption("--xyz", dest="xyz", action="store")
         """)
         testdir.makepyfile(test_one="""
-            import py
             def test_option(pytestconfig):
                 assert pytestconfig.option.xyz == "123"
         """)
@@ -37,7 +36,6 @@ class TestGeneralUsage:
     def test_basetemp(self, testdir):
         mytemp = testdir.tmpdir.mkdir("mytemp")
         p = testdir.makepyfile("""
-            import py
             def test_1(pytestconfig):
                 pytestconfig.getbasetemp().ensure("hello")
         """)
@@ -86,9 +84,9 @@ class TestGeneralUsage:
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_collect_directory():
-                py.test.skip("early")
+                pytest.skip("early")
         """)
         result = testdir.runpytest()
         assert result.ret == 0
@@ -98,8 +96,8 @@ class TestGeneralUsage:
 
     def test_issue88_initial_file_multinodes(self, testdir):
         testdir.makeconftest("""
-            import py
-            class MyFile(py.test.collect.File):
+            import pytest
+            class MyFile(pytest.File):
                 def collect(self):
                     return
             def pytest_collect_file(path, parent):
@@ -163,9 +161,9 @@ class TestGeneralUsage:
 
     def test_directory_skipped(self, testdir):
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_ignore_collect():
-                py.test.skip("intentional")
+                pytest.skip("intentional")
         """)
         testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest()
@@ -176,11 +174,11 @@ class TestGeneralUsage:
 
     def test_multiple_items_per_collector_byid(self, testdir):
         c = testdir.makeconftest("""
-            import py
-            class MyItem(py.test.collect.Item):
+            import pytest
+            class MyItem(pytest.Item):
                 def runtest(self):
                     pass
-            class MyCollector(py.test.collect.File):
+            class MyCollector(pytest.File):
                 def collect(self):
                     return [MyItem(name="xyz", parent=self)]
             def pytest_collect_file(path, parent):
@@ -195,13 +193,13 @@ class TestGeneralUsage:
 
     def test_skip_on_generated_funcarg_id(self, testdir):
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_generate_tests(metafunc):
                 metafunc.addcall({'x': 3}, id='hello-123')
             def pytest_runtest_setup(item):
                 print (item.keywords)
                 if 'hello-123' in item.keywords:
-                    py.test.skip("hello")
+                    pytest.skip("hello")
                 assert 0
         """)
         p = testdir.makepyfile("""def test_func(x): pass""")
@@ -233,23 +231,37 @@ class TestGeneralUsage:
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""
-            import py
-            assert hasattr(py.test, 'mark')
+            import pytest
+            assert hasattr(pytest, 'mark')
         """)
         result = testdir.runpython(p)
         assert result.ret == 0
 
     def test_pydoc(self, testdir):
-        result = testdir.runpython_c("import py;help(py.test)")
+        for name in ('py.test', 'pytest'):
+            result = testdir.runpython_c("import %s;help(%s)" % (name,name))
+            assert result.ret == 0
+            s = result.stdout.str()
+            assert 'MarkGenerator' in s
+
+    @pytest.mark.multi(source=['py.test', 'pytest'])
+    def test_import_star(self, testdir, source):
+        p = testdir.makepyfile("""
+            from %s import *
+            collect
+            cmdline
+            main
+            skip
+            xfail
+        """ % source)
+        result = testdir.runpython(p)
         assert result.ret == 0
-        s = result.stdout.str()
-        assert 'MarkGenerator' in s
 
     def test_double_pytestcmdline(self, testdir):
         p = testdir.makepyfile(run="""
-            import py
-            py.test.cmdline.main()
-            py.test.cmdline.main()
+            import py, pytest
+            pytest.main()
+            pytest.main()
         """)
         testdir.makepyfile("""
             def test_hello():
@@ -343,7 +355,6 @@ class TestInvocationVariants:
     def test_noclass_discovery_if_not_testcase(self, testdir):
         testpath = testdir.makepyfile("""
             import unittest
-            import py
             class TestHello(object):
                 def test_hello(self):
                     assert self.attr

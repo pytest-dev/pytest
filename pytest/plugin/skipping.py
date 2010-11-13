@@ -65,7 +65,7 @@ class MarkEvaluator:
 
 
 def pytest_runtest_setup(item):
-    if not isinstance(item, py.test.collect.Function):
+    if not isinstance(item, pytest.Function):
         return
     evalskip = MarkEvaluator(item, 'skipif')
     if evalskip.istrue():
@@ -84,7 +84,7 @@ def check_xfail_no_run(item):
                 py.test.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 def pytest_runtest_makereport(__multicall__, item, call):
-    if not isinstance(item, py.test.collect.Function):
+    if not isinstance(item, pytest.Function):
         return
     if not (call.excinfo and
         call.excinfo.errisinstance(py.test.xfail.Exception)):

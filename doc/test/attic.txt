@@ -60,7 +60,7 @@ modules to determine collectors and items at ``Directory``, ``Module``,
 Customizing execution of Items and Functions
 ----------------------------------------------------
 
-- ``py.test.collect.Function`` test items control execution
+- ``pytest.Function`` test items control execution
   of a test function through its ``function.runtest()`` method.
   This method is responsible for performing setup and teardown
   ("Test Fixtures") for a test Function.

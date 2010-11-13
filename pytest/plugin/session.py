@@ -122,9 +122,9 @@ class HookProxy:
 def compatproperty(name):
     def fget(self):
         #print "retrieving %r property from %s" %(name, self.fspath)
-        py.log._apiwarn("2.0", "use py.test.collect.%s for "
-            "Session classes" % name)
-        return getattr(pytest.collect, name)
+        py.log._apiwarn("2.0", "use pytest.%s for "
+            "test collection and item classes" % name)
+        return getattr(pytest, name)
     return property(fget)
     
 class Node(object):
@@ -479,10 +479,10 @@ class Session(FSCollector):
         nextnames = names[1:]
         resultnodes = []
         for node in matching:
-            if isinstance(node, pytest.collect.Item):
+            if isinstance(node, pytest.Item):
                 resultnodes.append(node)
                 continue
-            assert isinstance(node, pytest.collect.Collector)
+            assert isinstance(node, pytest.Collector)
             node.ihook.pytest_collectstart(collector=node)
             rep = node.ihook.pytest_make_collect_report(collector=node)
             if rep.passed:
@@ -494,11 +494,11 @@ class Session(FSCollector):
 
     def genitems(self, node):
         self.trace("genitems", node)
-        if isinstance(node, pytest.collect.Item):
+        if isinstance(node, pytest.Item):
             node.ihook.pytest_itemcollected(item=node)
             yield node
         else:
-            assert isinstance(node, pytest.collect.Collector)
+            assert isinstance(node, pytest.Collector)
             node.ihook.pytest_collectstart(collector=node)
             rep = node.ihook.pytest_make_collect_report(collector=node)
             if rep.passed:

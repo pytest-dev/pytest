@@ -1,6 +1,6 @@
 """ discover and run doctests in modules and test files."""
 
-import py
+import pytest, py
 from py._code.code import TerminalRepr, ReprFileLocation
 
 def pytest_addoption(parser):
@@ -31,7 +31,7 @@ class ReprFailDoctest(TerminalRepr):
             tw.line(line)
         self.reprlocation.toterminal(tw)
 
-class DoctestItem(py.test.collect.Item):
+class DoctestItem(pytest.Item):
     def __init__(self, path, parent):
         name = self.__class__.__name__ + ":" + path.basename
         super(DoctestItem, self).__init__(name=name, parent=parent)
