@@ -482,7 +482,8 @@ class Session(FSCollector):
         resultnodes = []
         for node in matching:
             if isinstance(node, pytest.Item):
-                resultnodes.append(node)
+                if not names:
+                    resultnodes.append(node)
                 continue
             assert isinstance(node, pytest.Collector)
             node.ihook.pytest_collectstart(collector=node)
@@ -508,5 +509,3 @@ class Session(FSCollector):
                     for x in self.genitems(subnode):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
-
-Session = Session

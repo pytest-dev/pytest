@@ -372,3 +372,22 @@ class TestInvocationVariants:
         """)
         reprec = testdir.inline_run(testpath)
         reprec.assertoutcome(passed=1)
+
+    def test_doctest_id(self, testdir):
+        testdir.makefile('.txt', """
+            >>> x=3
+            >>> x
+            4
+        """)
+        result = testdir.runpytest("-rf")
+        lines = result.stdout.str().splitlines()
+        for line in lines:
+            if line.startswith("FAIL "):
+                testid = line[5:].strip()
+                break
+        result = testdir.runpytest(testid, '-rf')
+        result.stdout.fnmatch_lines([
+            line,
+            "*1 failed*",
+        ])
+

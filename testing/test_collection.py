@@ -472,10 +472,6 @@ class TestSession:
         item2b, = newcol.perform_collect([item.nodeid], genitems=False)
         assert item2b == item2
 
-def getargnode(collection, arg):
-    argpath = arg.relto(collection.fspath)
-    return collection.perform_collect([argpath], genitems=False)[0]
-
 class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -552,3 +548,43 @@ class Test_genitems:
         s = items[0].getmodpath(stopatmodule=False)
         assert s.endswith("test_example_items1.testone")
         print(s)
+
+def test_matchnodes_two_collections_same_file(testdir):
+    testdir.makeconftest("""
+        import pytest
+        def pytest_configure(config):
+            config.pluginmanager.register(Plugin2())
+
+        class Plugin2:
+            def pytest_collect_file(self, path, parent):
+                if path.ext == ".abc":
+                    return MyFile2(path, parent)
+
+        def pytest_collect_file(path, parent):
+            if path.ext == ".abc":
+                return MyFile1(path, parent)
+
+        class MyFile1(pytest.Item, pytest.File):
+            def runtest(self):
+                pass
+        class MyFile2(pytest.File):
+            def collect(self):
+                return [Item2("hello", parent=self)]
+
+        class Item2(pytest.Item):
+            def runtest(self):
+                pass
+    """)
+    p = testdir.makefile(".abc", "")
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*2 passed*",
+    ])
+    res = testdir.runpytest("%s::hello" % p.basename)
+    res.stdout.fnmatch_lines([
+        "*1 passed*",
+    ])
+    
+
+

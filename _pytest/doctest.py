@@ -33,11 +33,6 @@ class ReprFailDoctest(TerminalRepr):
         self.reprlocation.toterminal(tw)
 
 class DoctestItem(pytest.Item):
-    def __init__(self, path, parent):
-        name = self.__class__.__name__ + ":" + path.basename
-        super(DoctestItem, self).__init__(name=name, parent=parent)
-        self.fspath = path
-
     def repr_failure(self, excinfo):
         if excinfo.errisinstance(py.std.doctest.DocTestFailure):
             doctestfailure = excinfo.value
@@ -67,13 +62,13 @@ class DoctestItem(pytest.Item):
     def reportinfo(self):
         return self.fspath, None, "[doctest]"
 
-class DoctestTextfile(DoctestItem):
+class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
         failed, tot = py.std.doctest.testfile(
             str(self.fspath), module_relative=False,
             raise_on_error=True, verbose=0)
 
-class DoctestModule(DoctestItem):
+class DoctestModule(DoctestItem, pytest.File):
     def runtest(self):
         module = self.fspath.pyimport()
         failed, tot = py.std.doctest.testmod(
