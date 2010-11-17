@@ -5,7 +5,7 @@ see http://pytest.org for documentation and details
 
 (c) Holger Krekel and others, 2004-2010
 """
-__version__ = '2.0.0.dev29'
+__version__ = '2.0.0.dev30'
 __all__ = ['main']
 
 from _pytest.core import main, UsageError, _preloadplugins
