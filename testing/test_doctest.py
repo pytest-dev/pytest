@@ -1,12 +1,10 @@
 from _pytest.doctest import DoctestModule, DoctestTextfile
 import py
 
-pytest_plugins = ["pytest_doctest"]
-
 class TestDoctests:
 
     def test_collect_testtextfile(self, testdir):
-        testdir.maketxtfile(whatever="")
+        w = testdir.maketxtfile(whatever="")
         checkfile = testdir.maketxtfile(test_something="""
             alskdjalsdk
             >>> i = 5
@@ -18,6 +16,8 @@ class TestDoctests:
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestTextfile)
+        items, reprec = testdir.inline_genitems(w)
+        assert len(items) == 1
 
     def test_collect_module(self, testdir):
         path = testdir.makepyfile(whatever="#")

@@ -5,7 +5,7 @@ py.test: no-boilerplate testing with Python
 
 .. note::
     version 2.0 introduces ``pytest`` as the main Python import name
-    but for compatibility reasons you may continue to use ``py.test``
+    but for compatibility reasons you can continue to use ``py.test``
     in your test code.
 
 Welcome to ``py.test`` documentation:

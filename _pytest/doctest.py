@@ -19,7 +19,8 @@ def pytest_collect_file(path, parent):
     if path.ext == ".py":
         if config.option.doctestmodules:
             return DoctestModule(path, parent)
-    elif path.check(fnmatch=config.getvalue("doctestglob")):
+    elif (path.ext in ('.txt', '.rst') and parent.session.isinitpath(path)) or \
+        path.check(fnmatch=config.getvalue("doctestglob")):
         return DoctestTextfile(path, parent)
 
 class ReprFailDoctest(TerminalRepr):
