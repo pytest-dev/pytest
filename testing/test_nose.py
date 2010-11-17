@@ -1,4 +1,4 @@
-import py
+import py, pytest
 
 def setup_module(mod):
     mod.nose = py.test.importorskip("nose")

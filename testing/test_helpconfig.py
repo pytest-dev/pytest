@@ -43,8 +43,8 @@ def test_hookvalidation_unknown(testdir):
 
 def test_hookvalidation_optional(testdir):
     testdir.makeconftest("""
-        import py
-        @py.test.mark.optionalhook
+        import pytest
+        @pytest.mark.optionalhook
         def pytest_hello(xyz):
             pass
     """)

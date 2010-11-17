@@ -20,17 +20,17 @@ def assert_attr(node, **kwargs):
 class TestPython:
     def test_summing_simple(self, testdir):
         testdir.makepyfile("""
-            import py
+            import pytest
             def test_pass():
                 pass
             def test_fail():
                 assert 0
             def test_skip():
-                py.test.skip("")
-            @py.test.mark.xfail
+                pytest.skip("")
+            @pytest.mark.xfail
             def test_xfail():
                 assert 0
-            @py.test.mark.xfail
+            @pytest.mark.xfail
             def test_xpass():
                 assert 1
         """)
@@ -157,9 +157,9 @@ class TestPython:
 
     def test_xfailure_function(self, testdir):
         testdir.makepyfile("""
-            import py
+            import pytest
             def test_xfail():
-                py.test.xfail("42")
+                pytest.xfail("42")
         """)
         result, dom = runandparse(testdir)
         assert not result.ret
@@ -175,8 +175,8 @@ class TestPython:
 
     def test_xfailure_xpass(self, testdir):
         testdir.makepyfile("""
-            import py
-            @py.test.mark.xfail
+            import pytest
+            @pytest.mark.xfail
             def test_xpass():
                 pass
         """)
@@ -207,7 +207,7 @@ class TestPython:
         assert "SyntaxError" in fnode.toxml()
 
     def test_collect_skipped(self, testdir):
-        testdir.makepyfile("import py ; py.test.skip('xyz')")
+        testdir.makepyfile("import pytest; pytest.skip('xyz')")
         result, dom = runandparse(testdir)
         assert not result.ret
         node = dom.getElementsByTagName("testsuite")[0]

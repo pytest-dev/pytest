@@ -4,8 +4,8 @@ from _pytest import python as funcargs
 class TestModule:
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
-        py.test.raises(ImportError, modcol.collect)
-        py.test.raises(ImportError, modcol.collect)
+        pytest.raises(ImportError, modcol.collect)
+        pytest.raises(ImportError, modcol.collect)
 
     def test_import_duplicate(self, testdir):
         a = testdir.mkdir("a")
@@ -26,12 +26,12 @@ class TestModule:
 
     def test_syntax_error_in_module(self, testdir):
         modcol = testdir.getmodulecol("this is a syntax error")
-        py.test.raises(modcol.CollectError, modcol.collect)
-        py.test.raises(modcol.CollectError, modcol.collect)
+        pytest.raises(modcol.CollectError, modcol.collect)
+        pytest.raises(modcol.CollectError, modcol.collect)
 
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
-        py.test.raises(ImportError, "modcol.obj")
+        pytest.raises(ImportError, "modcol.obj")
 
 class TestClass:
     def test_class_with_init_not_collected(self, testdir):
@@ -119,7 +119,7 @@ class TestGenerator:
         assert len(colitems) == 1
         gencol = colitems[0]
         assert isinstance(gencol, pytest.Generator)
-        py.test.raises(ValueError, "gencol.collect()")
+        pytest.raises(ValueError, "gencol.collect()")
 
     def test_generative_methods_with_explicit_names(self, testdir):
         modcol = testdir.getmodulecol("""
@@ -144,7 +144,7 @@ class TestGenerator:
     def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
         o = testdir.makepyfile("""
             def test_generative_order_of_execution():
-                import py
+                import py, pytest
                 test_list = []
                 expected_list = list(range(6))
 
@@ -168,7 +168,7 @@ class TestGenerator:
     def test_order_of_execution_generator_different_codeline(self, testdir):
         o = testdir.makepyfile("""
             def test_generative_tests_different_codeline():
-                import py
+                import py, pytest
                 test_list = []
                 expected_list = list(range(3))
 
@@ -351,7 +351,7 @@ def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
     sub1.join("conftest.py").write(py.code.Source("""
-        import py
+        import pytest
         def pytest_runtest_setup(item):
             assert item.fspath.purebasename == "test_in_sub1"
         def pytest_runtest_call(item):
@@ -360,7 +360,7 @@ def test_setup_only_available_in_subdir(testdir):
             assert item.fspath.purebasename == "test_in_sub1"
     """))
     sub2.join("conftest.py").write(py.code.Source("""
-        import py
+        import pytest
         def pytest_runtest_setup(item):
             assert item.fspath.purebasename == "test_in_sub2"
         def pytest_runtest_call(item):
@@ -402,7 +402,7 @@ def test_modulecol_roundtrip(testdir):
 
 class TestTracebackCutting:
     def test_skip_simple(self):
-        excinfo = py.test.raises(py.test.skip.Exception, 'py.test.skip("xxx")')
+        excinfo = pytest.raises(pytest.skip.Exception, 'pytest.skip("xxx")')
         assert excinfo.traceback[-1].frame.code.name == "skip"
         assert excinfo.traceback[-1].ishidden()
 
@@ -480,7 +480,7 @@ class TestFillFuncArgs:
                 return 42
         """)
         item = testdir.getitem("def test_func(some): pass")
-        exc = py.test.raises(funcargs.FuncargRequest.LookupError,
+        exc = pytest.raises(funcargs.FuncargRequest.LookupError,
             "funcargs.fillfuncargs(item)")
         s = str(exc.value)
         assert s.find("xyzsomething") != -1
@@ -611,7 +611,7 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
-        py.test.raises(req.LookupError, req.getfuncargvalue, "notexists")
+        pytest.raises(req.LookupError, req.getfuncargvalue, "notexists")
         val = req.getfuncargvalue("something")
         assert val == 1
         val = req.getfuncargvalue("something")
@@ -672,12 +672,12 @@ def test_applymarker(testdir):
     """)
     req1 = funcargs.FuncargRequest(item1)
     assert 'xfail' not in item1.keywords
-    req1.applymarker(py.test.mark.xfail)
+    req1.applymarker(pytest.mark.xfail)
     assert 'xfail' in item1.keywords
     assert 'skipif' not in item1.keywords
-    req1.applymarker(py.test.mark.skipif)
+    req1.applymarker(pytest.mark.skipif)
     assert 'skipif' in item1.keywords
-    py.test.raises(ValueError, "req1.applymarker(42)")
+    pytest.raises(ValueError, "req1.applymarker(42)")
 
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
@@ -815,11 +815,11 @@ class TestMetafunc:
     def test_addcall_id(self):
         def func(arg1): pass
         metafunc = funcargs.Metafunc(func)
-        py.test.raises(ValueError, "metafunc.addcall(id=None)")
+        pytest.raises(ValueError, "metafunc.addcall(id=None)")
 
         metafunc.addcall(id=1)
-        py.test.raises(ValueError, "metafunc.addcall(id=1)")
-        py.test.raises(ValueError, "metafunc.addcall(id='1')")
+        pytest.raises(ValueError, "metafunc.addcall(id=1)")
+        pytest.raises(ValueError, "metafunc.addcall(id='1')")
         metafunc.addcall(id=2)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].id == "1"
@@ -852,7 +852,7 @@ class TestGenfuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
             # assumes that generate/provide runs in the same process
-            import py
+            import py, pytest
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
@@ -990,14 +990,14 @@ def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
     sub1.join("conftest.py").write(py.code.Source("""
-        import py
+        import pytest
         def pytest_funcarg__arg1(request):
-            py.test.raises(Exception, "request.getfuncargvalue('arg2')")
+            pytest.raises(Exception, "request.getfuncargvalue('arg2')")
     """))
     sub2.join("conftest.py").write(py.code.Source("""
-        import py
+        import pytest
         def pytest_funcarg__arg2(request):
-            py.test.raises(Exception, "request.getfuncargvalue('arg1')")
+            pytest.raises(Exception, "request.getfuncargvalue('arg1')")
     """))
 
     sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
@@ -1121,50 +1121,50 @@ def test_show_funcarg(testdir):
 class TestRaises:
     def test_raises(self):
         source = "int('qwe')"
-        excinfo = py.test.raises(ValueError, source)
+        excinfo = pytest.raises(ValueError, source)
         code = excinfo.traceback[-1].frame.code
         s = str(code.fullsource)
         assert s == source
 
     def test_raises_exec(self):
-        py.test.raises(ValueError, "a,x = []")
+        pytest.raises(ValueError, "a,x = []")
 
     def test_raises_syntax_error(self):
-        py.test.raises(SyntaxError, "qwe qwe qwe")
+        pytest.raises(SyntaxError, "qwe qwe qwe")
 
     def test_raises_function(self):
-        py.test.raises(ValueError, int, 'hello')
+        pytest.raises(ValueError, int, 'hello')
 
     def test_raises_callable_no_exception(self):
         class A:
             def __call__(self):
                 pass
         try:
-            py.test.raises(ValueError, A())
-        except py.test.raises.Exception:
+            pytest.raises(ValueError, A())
+        except pytest.raises.Exception:
             pass
 
-    @py.test.mark.skipif('sys.version < "2.5"')
+    @pytest.mark.skipif('sys.version < "2.5"')
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile("""
             from __future__ import with_statement
-            import py
+            import py, pytest
 
             def test_simple():
-                with py.test.raises(ZeroDivisionError) as excinfo:
+                with pytest.raises(ZeroDivisionError) as excinfo:
                     assert isinstance(excinfo, py.code.ExceptionInfo)
                     1/0
                 print (excinfo)
                 assert excinfo.type == ZeroDivisionError
 
             def test_noraise():
-                with py.test.raises(py.test.raises.Exception):
-                    with py.test.raises(ValueError):
+                with pytest.raises(pytest.raises.Exception):
+                    with pytest.raises(ValueError):
                            int()
 
             def test_raise_wrong_exception_passes_by():
-                with py.test.raises(ZeroDivisionError):
-                    with py.test.raises(ValueError):
+                with pytest.raises(ZeroDivisionError):
+                    with pytest.raises(ValueError):
                            1/0
         """)
         result = testdir.runpytest()

@@ -1,7 +1,7 @@
-import py, os, sys
+import pytest, py, os, sys
 from _pytest.capture import CaptureManager
 
-needsosdup = py.test.mark.xfail("not hasattr(os, 'dup')")
+needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
 
 class TestCaptureManager:
     def test_getmethod_default_no_fd(self, testdir, monkeypatch):
@@ -33,7 +33,7 @@ class TestCaptureManager:
             assert capman._getmethod(config, sub.join("test_hello.py")) == name
 
     @needsosdup
-    @py.test.mark.multi(method=['no', 'fd', 'sys'])
+    @pytest.mark.multi(method=['no', 'fd', 'sys'])
     def test_capturing_basic_api(self, method):
         capouter = py.io.StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
@@ -63,8 +63,8 @@ class TestCaptureManager:
             config = testdir.parseconfig(testdir.tmpdir)
             capman = CaptureManager()
             capman.resumecapture("fd")
-            py.test.raises(ValueError, 'capman.resumecapture("fd")')
-            py.test.raises(ValueError, 'capman.resumecapture("sys")')
+            pytest.raises(ValueError, 'capman.resumecapture("fd")')
+            pytest.raises(ValueError, 'capman.resumecapture("sys")')
             os.write(1, "hello\n".encode('ascii'))
             out, err = capman.suspendcapture()
             assert out == "hello\n"
@@ -77,7 +77,7 @@ class TestCaptureManager:
         finally:
             capouter.reset()
 
-@py.test.mark.multi(method=['fd', 'sys'])
+@pytest.mark.multi(method=['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
     if sys.version_info >= (3,0):
         obj = "'b\u00f6y'"
@@ -96,7 +96,7 @@ def test_capturing_unicode(testdir, method):
         "*1 passed*"
     ])
 
-@py.test.mark.multi(method=['fd', 'sys'])
+@pytest.mark.multi(method=['fd', 'sys'])
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile("""
         def test_unicode():
@@ -141,7 +141,7 @@ class TestPerTestCapturing:
             "in func2*",
         ])
 
-    @py.test.mark.xfail
+    @pytest.mark.xfail
     def test_capture_scope_cache(self, testdir):
         p = testdir.makepyfile("""
             import sys
@@ -245,7 +245,7 @@ class TestLoggingInteraction:
         p = testdir.makepyfile("""
             def test_logging():
                 import logging
-                import py
+                import pytest
                 stream = py.io.TextIO()
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources

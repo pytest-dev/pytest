@@ -1,4 +1,4 @@
-import py
+import py, pytest
 from _pytest.recwarn import WarningsRecorder
 
 def test_WarningRecorder(recwarn):
@@ -16,7 +16,7 @@ def test_WarningRecorder(recwarn):
     rec.clear()
     assert len(rec.list) == 0
     assert l is rec.list
-    py.test.raises(AssertionError, "rec.pop()")
+    pytest.raises(AssertionError, "rec.pop()")
     rec.finalize()
     assert showwarning == py.std.warnings.showwarning
 
@@ -52,7 +52,7 @@ def dep_explicit(i):
                                       filename="hello", lineno=3)
 
 def test_deprecated_call_raises():
-    excinfo = py.test.raises(AssertionError,
+    excinfo = pytest.raises(AssertionError,
                    "py.test.deprecated_call(dep, 3)")
     assert str(excinfo).find("did not produce") != -1
 
@@ -72,7 +72,7 @@ def test_deprecated_call_preserves():
     assert f == py.std.warnings.filters
 
 def test_deprecated_explicit_call_raises():
-    py.test.raises(AssertionError,
+    pytest.raises(AssertionError,
                    "py.test.deprecated_call(dep_explicit, 3)")
 
 def test_deprecated_explicit_call():

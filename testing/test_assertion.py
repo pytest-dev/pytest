@@ -1,9 +1,9 @@
 import sys
 
-import py
+import py, pytest
 import _pytest.assertion as plugin
 
-needsnewassert = py.test.mark.skipif("sys.version_info < (2,6)")
+needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 def interpret(expr):
     return py.code._reinterpret(expr, py.code.Frame(sys._getframe(1)))

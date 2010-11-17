@@ -1,4 +1,4 @@
-import py
+import py, pytest
 import sys
 
 class TestPDB:
@@ -23,8 +23,8 @@ class TestPDB:
 
     def test_pdb_on_xfail(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
-            import py
-            @py.test.mark.xfail
+            import pytest
+            @pytest.mark.xfail
             def test_func():
                 assert 0
         """)
@@ -33,16 +33,16 @@ class TestPDB:
 
     def test_pdb_on_skip(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
-            import py
+            import pytest
             def test_func():
-                py.test.skip("hello")
+                pytest.skip("hello")
         """)
         assert rep.skipped
         assert len(pdblist) == 0
 
     def test_pdb_on_BdbQuit(self, testdir, pdblist):
         rep = testdir.inline_runsource1('--pdb', """
-            import py, bdb
+            import bdb
             def test_func():
                 raise bdb.BdbQuit
         """)
@@ -68,15 +68,15 @@ class TestPDB:
 
     def test_pdb_interaction_exception(self, testdir):
         p1 = testdir.makepyfile("""
-            import py
+            import pytest
             def globalfunc():
                 pass
             def test_1():
-                py.test.raises(ValueError, globalfunc)
+                pytest.raises(ValueError, globalfunc)
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
         child.expect(".*def test_1")
-        child.expect(".*py.test.raises.*globalfunc")
+        child.expect(".*pytest.raises.*globalfunc")
         child.expect("(Pdb)")
         child.sendline("globalfunc")
         child.expect(".*function")
@@ -87,11 +87,11 @@ class TestPDB:
 
     def test_pdb_interaction_capturing_simple(self, testdir):
         p1 = testdir.makepyfile("""
-            import py
+            import pytest
             def test_1():
                 i = 0
                 print ("hello17")
-                py.test.set_trace()
+                pytest.set_trace()
                 x = 3
         """)
         child = testdir.spawn_pytest(str(p1))
@@ -108,14 +108,14 @@ class TestPDB:
 
     def test_pdb_interaction_capturing_twice(self, testdir):
         p1 = testdir.makepyfile("""
-            import py
+            import pytest
             def test_1():
                 i = 0
                 print ("hello17")
-                py.test.set_trace()
+                pytest.set_trace()
                 x = 3
                 print ("hello18")
-                py.test.set_trace()
+                pytest.set_trace()
                 x = 4
         """)
         child = testdir.spawn_pytest(str(p1))
@@ -135,8 +135,8 @@ class TestPDB:
 
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile("""
-            import py
-            py.test.set_trace()
+            import pytest
+            pytest.set_trace()
             x = 5
         """)
         child = testdir.spawn("%s %s" %(sys.executable, p1))

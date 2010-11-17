@@ -130,7 +130,7 @@ class TestGeneralUsage:
         assert result.ret != 0
         assert "should be seen" in result.stdout.str()
 
-    @py.test.mark.skipif("not hasattr(os, 'symlink')")
+    @pytest.mark.skipif("not hasattr(os, 'symlink')")
     def test_chdir(self, testdir):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")
@@ -273,7 +273,7 @@ class TestInvocationVariants:
 
     def test_double_pytestcmdline(self, testdir):
         p = testdir.makepyfile(run="""
-            import py, pytest
+            import pytest
             pytest.main()
             pytest.main()
         """)
@@ -287,19 +287,19 @@ class TestInvocationVariants:
             "*1 passed*",
         ])
 
-    @py.test.mark.skipif("sys.version_info < (2,5)")
+    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_python_minus_m_invocation_ok(self, testdir):
         p1 = testdir.makepyfile("def test_hello(): pass")
         res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
         assert res.ret == 0
 
-    @py.test.mark.skipif("sys.version_info < (2,5)")
+    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_python_minus_m_invocation_fail(self, testdir):
         p1 = testdir.makepyfile("def test_fail(): 0/0")
         res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
         assert res.ret == 1
 
-    @py.test.mark.skipif("sys.version_info < (2,5)")
+    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_python_pytest_package(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
         res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
@@ -359,7 +359,7 @@ class TestInvocationVariants:
         ])
 
 
-    @py.test.mark.xfail(reason="decide: feature or bug")
+    @pytest.mark.xfail(reason="decide: feature or bug")
     def test_noclass_discovery_if_not_testcase(self, testdir):
         testpath = testdir.makepyfile("""
             import unittest

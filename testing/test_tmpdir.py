@@ -1,4 +1,4 @@
-import py
+import py, pytest
 
 from _pytest.tmpdir import pytest_funcarg__tmpdir
 from _pytest.python import FuncargRequest

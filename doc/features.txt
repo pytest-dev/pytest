@@ -15,11 +15,11 @@ no-boilerplate testing with Python
 extensive plugin and customization system
 ------------------------------------------------------
 
-.. _`suprisingly easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
+.. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 
 - all collection, reporting, running aspects are delegated to hook functions
-- hook functions are defined per-directory, per-project or through PyPI released plugins
-- it is `suprisingly easy`_ to add command line options or
+- hook functions are implemented per-directory, per-project or through PyPI released plugins
+- it is `easy`_ to add command line options or
   do other kind of add-ons and customizations.
 
 mature command line testing tool
@@ -42,23 +42,19 @@ integrates well with CI systems
 .. _`tox`: http://codespeak.net/tox
 
 
-supports several testing practises and methods
+supports common testing practises and methods
 -----------------------------------------------------------
 
 - supports extended `xUnit style setup`_
-- can integrate nose_, `unittest.py` and `doctest.py`_ style tests
+- can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style tests
 - supports generating testing coverage reports
 - supports :ref:`non-python tests`
 - `Javasript unit- and functional testing`_
 
-.. _`Javasript unit- and functional testing`: plugin/oejskit.html
-.. _`coverage testing with figleaf`: plugin/figleaf.html
-.. _`unittest.py`: http://docs.python.org/library/unittest.html
+.. _`Javasript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
 
 distributing tests to local/remote subprocesses
 --------------------------------------------------------
-
-.. _`pytest-xdist`: plugin/xdist.html
 
 - distribute tests to multiple CPUs
 - distribute tests to remote ssh or socket connected machines

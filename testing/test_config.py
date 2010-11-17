@@ -1,4 +1,4 @@
-import py
+import py, pytest
 
 from _pytest.config import getcfg, Config
 
@@ -40,7 +40,7 @@ class TestParseIni:
             "*tox.ini:2*requires*9.0*actual*"
         ])
 
-    @py.test.mark.multi(name="setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.multi(name="setup.cfg tox.ini pytest.ini".split())
     def test_ini_names(self, testdir, name):
         testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
             [pytest]
@@ -64,7 +64,7 @@ class TestParseIni:
         config.parse([sub])
         assert config.getini("minversion") == "2.0"
 
-    @py.test.mark.xfail(reason="probably not needed")
+    @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
         sub = testdir.mkdir("sub")
         sub.chdir()
@@ -78,7 +78,7 @@ class TestParseIni:
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.reparseconfig([testdir.tmpdir])
-        py.test.raises(AssertionError, "config.parse([])")
+        pytest.raises(AssertionError, "config.parse([])")
 
 
 class TestConfigTmpdir:
@@ -125,21 +125,21 @@ class TestConfigAPI:
         o = testdir.tmpdir
         assert config.getvalue("x") == 1
         assert config.getvalue("x", o.join('sub')) == 2
-        py.test.raises(KeyError, "config.getvalue('y')")
+        pytest.raises(KeyError, "config.getvalue('y')")
         config = testdir.reparseconfig([str(o.join('sub'))])
         assert config.getvalue("x") == 2
         assert config.getvalue("y") == 3
         assert config.getvalue("x", o) == 1
-        py.test.raises(KeyError, 'config.getvalue("y", o)')
+        pytest.raises(KeyError, 'config.getvalue("y", o)')
 
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
-        py.test.raises(py.test.skip.Exception,
+        pytest.raises(pytest.skip.Exception,
             "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
         config.option.hello = None
-        py.test.raises(py.test.skip.Exception,
+        pytest.raises(pytest.skip.Exception,
             "config.getvalueorskip('hello')")
 
     def test_config_overwrite(self, testdir):
@@ -176,7 +176,7 @@ class TestConfigAPI:
         config = testdir.parseconfig()
         val = config.getini("myname")
         assert val == "hello"
-        py.test.raises(ValueError, config.getini, 'other')
+        pytest.raises(ValueError, config.getini, 'other')
 
     def test_addini_pathlist(self, testdir):
         testdir.makeconftest("""
@@ -193,7 +193,7 @@ class TestConfigAPI:
         assert len(l) == 2
         assert l[0] == p.dirpath('hello')
         assert l[1] == p.dirpath('world/sub.py')
-        py.test.raises(ValueError, config.getini, 'other')
+        pytest.raises(ValueError, config.getini, 'other')
 
     def test_addini_args(self, testdir):
         testdir.makeconftest("""

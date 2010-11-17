@@ -45,9 +45,9 @@ class SessionTests:
 
     def test_raises_output(self, testdir):
         reprec = testdir.inline_runsource("""
-            import py
+            import pytest
             def test_raises_doesnt():
-                py.test.raises(ValueError, int, "3")
+                pytest.raises(ValueError, int, "3")
         """)
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
@@ -118,15 +118,15 @@ class SessionTests:
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(conftest="""
-            import py
+            import pytest
             def pytest_collect_file():
-                py.test.skip("intentional")
+                pytest.skip("intentional")
         """, test_file="""
             def test_one(): pass
         """)
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
-        except py.test.skip.Exception:
+        except pytest.skip.Exception:
             py.test.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
@@ -173,8 +173,8 @@ class TestNewSession(SessionTests):
                     pass
             """,
             test_two="""
-                import py
-                py.test.skip('xxx')
+                import pytest
+                pytest.skip('xxx')
             """,
             test_three="xxxdsadsadsadsa",
             __init__=""
@@ -204,10 +204,10 @@ class TestNewSession(SessionTests):
 
 def test_plugin_specify(testdir):
     testdir.chdir()
-    config = py.test.raises(ImportError, """
+    config = pytest.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)
-    #py.test.raises(ImportError,
+    #pytest.raises(ImportError,
     #    "config.pluginmanager.do_configure(config)"
     #)
 

@@ -14,7 +14,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.0.0.dev22, imported from /home/hpk/p/pytest/pytest
+    This is py.test version 2.0.0.dev30, imported from /home/hpk/p/pytest/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -34,8 +34,8 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
-    test path 1: /tmp/doc-exec-523
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
+    test path 1: /tmp/doc-exec-70
     
     test_sample.py F
     
@@ -79,19 +79,19 @@ If you want to assert some code raises an exception you can
 use the ``raises`` helper::
 
     # content of test_sysexit.py
-    import py
+    import pytest
     def f():
         raise SystemExit(1)
 
     def test_mytest():
-        with py.test.raises(SystemExit):
+        with pytest.raises(SystemExit):
             f()
 
 Running it with, this time in "quiet" reporting mode::
 
     $ py.test -q test_sysexit.py
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.00 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -121,7 +121,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x254f6c8>
+    self = <test_class.TestClass instance at 0x288fc20>
     
         def test_two(self):
             x = "hello"
@@ -129,7 +129,7 @@ run the module by passing its filename::
     E       assert hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
-    1 failed, 1 passed in 0.03 seconds
+    1 failed, 1 passed in 0.02 seconds
 
 The first test passed, the second failed. Again we can easily see
 the intermediate values used in the assertion, helping us to
@@ -149,7 +149,7 @@ arbitrary resources, for example a unique temporary directory::
         assert 0
 
 We list the name ``tmpdir`` in the test function signature and
-py.test will lookup and call a factory to create the resource 
+py.test will lookup and call a factory to create the resource
 before performing the test function call.  Let's just run it::
 
     $ py.test -q test_tmpdir.py
@@ -157,7 +157,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-446/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-122/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -166,8 +166,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-446/test_needsfiles0
-    1 failed in 0.07 seconds
+    /tmp/pytest-122/test_needsfiles0
+    1 failed in 0.05 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

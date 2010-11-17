@@ -1,5 +1,5 @@
 from _pytest.doctest import DoctestModule, DoctestTextfile
-import py
+import py, pytest
 
 class TestDoctests:
 
@@ -58,7 +58,7 @@ class TestDoctests:
         assert call.report.longrepr
         # XXX
         #testitem, = items
-        #excinfo = py.test.raises(Failed, "testitem.runtest()")
+        #excinfo = pytest.raises(Failed, "testitem.runtest()")
         #repr = testitem.repr_failure(excinfo, ("", ""))
         #assert repr.reprlocation
 

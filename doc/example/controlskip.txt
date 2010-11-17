@@ -8,22 +8,22 @@ Here is a ``conftest.py`` file adding a ``--runslow`` command
 line option to control skipping of ``slow`` marked tests::
 
     # content of conftest.py
-    
-    import py
+
+    import pytest
     def pytest_addoption(parser):
         parser.addoption("--runslow", action="store_true",
             help="run slow tests")
 
     def pytest_runtest_setup(item):
         if 'slow' in item.keywords and not item.config.getvalue("runslow"):
-            py.test.skip("need --runslow option to run")
+            pytest.skip("need --runslow option to run")
 
 We can now write a test module like this::
 
     # content of test_module.py
-    
-    import py
-    slow = py.test.mark.slow
+
+    import pytest
+    slow = pytest.mark.slow
 
     def test_func_fast():
         pass
@@ -34,14 +34,14 @@ We can now write a test module like this::
 
 and when running it will see a skipped "slow" test::
 
-    $ py.test test_module.py -rs    # "-rs" means report on the little 's'
+    $ py.test test_module.py -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_module.py
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-557/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-104/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
@@ -49,7 +49,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test test_module.py --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_module.py
     
     test_module.py ..

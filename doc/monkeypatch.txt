@@ -39,8 +39,8 @@ will be undone.
 .. background check:
    $ py.test
    =========================== test session starts ============================
-   platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
-   test path 1: /tmp/doc-exec-528
+   platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
+   test path 1: /tmp/doc-exec-75
    
    =============================  in 0.00 seconds =============================
 

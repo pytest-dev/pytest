@@ -41,11 +41,11 @@ def pytest_generate_tests(metafunc):
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
         p = testdir.makepyfile("""
-            import py
+            import pytest
             def test_ok():
                 pass
             def test_skip():
-                py.test.skip("xx")
+                pytest.skip("xx")
             def test_func():
                 assert 0
         """)
@@ -69,7 +69,7 @@ class TestTerminal:
     def test_internalerror(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        excinfo = py.test.raises(ValueError, "raise ValueError('hello')")
+        excinfo = pytest.raises(ValueError, "raise ValueError('hello')")
         rep.pytest_internalerror(excinfo.getrepr())
         linecomp.assert_contains_lines([
             "INTERNALERROR> *ValueError*hello*"
@@ -136,7 +136,7 @@ class TestTerminal:
             def test_foobar():
                 assert 0
             def test_spamegg():
-                import py; py.test.skip('skip me please!')
+                import py; pytest.skip('skip me please!')
             def test_interrupt_me():
                 raise KeyboardInterrupt   # simulating the user
         """)
@@ -180,8 +180,8 @@ class TestCollectonly:
 
     def test_collectonly_skipped_module(self, testdir, linecomp):
         modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
-            import py
-            py.test.skip("nomod")
+            import pytest
+            pytest.skip("nomod")
         """)
         rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
         modcol.config.pluginmanager.register(rep)
@@ -335,13 +335,13 @@ class TestTerminalFunctional:
 
     def test_no_skip_summary_if_failure(self, testdir):
         testdir.makepyfile("""
-            import py
+            import pytest
             def test_ok():
                 pass
             def test_fail():
                 assert 0
             def test_skip():
-                py.test.skip("dontshow")
+                pytest.skip("dontshow")
         """)
         result = testdir.runpytest()
         assert result.stdout.str().find("skip test summary") == -1
@@ -397,14 +397,14 @@ class TestTerminalFunctional:
 
     def test_verbose_reporting(self, testdir, pytestconfig):
         p1 = testdir.makepyfile("""
-            import py
+            import pytest
             def test_fail():
                 raise ValueError()
             def test_pass():
                 pass
             class TestClass:
                 def test_skip(self):
-                    py.test.skip("hello")
+                    pytest.skip("hello")
             def test_gen():
                 def check(x):
                     assert x == 1
@@ -562,7 +562,7 @@ class TestGenericReporting:
 
     def test_tb_option(self, testdir, option):
         p = testdir.makepyfile("""
-            import py
+            import pytest
             def g():
                 raise IndexError
             def test_func():
@@ -587,7 +587,7 @@ class TestGenericReporting:
 
     def test_tb_crashline(self, testdir, option):
         p = testdir.makepyfile("""
-            import py
+            import pytest
             def g():
                 raise IndexError
             def test_func1():
@@ -620,7 +620,7 @@ def pytest_report_header(config):
             "*hello: info*",
         ])
 
-@py.test.mark.xfail("not hasattr(os, 'dup')")
+@pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
     testdir.makepyfile("""
         import os, sys

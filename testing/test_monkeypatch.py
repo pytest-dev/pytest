@@ -1,12 +1,12 @@
 import os, sys
-import py
+import pytest
 from _pytest.monkeypatch import monkeypatch as MonkeyPatch
 
 def test_setattr():
     class A:
         x = 1
     monkeypatch = MonkeyPatch()
-    py.test.raises(AttributeError, "monkeypatch.setattr(A, 'notexists', 2)")
+    pytest.raises(AttributeError, "monkeypatch.setattr(A, 'notexists', 2)")
     monkeypatch.setattr(A, 'y', 2, raising=False)
     assert A.y == 2
     monkeypatch.undo()
@@ -35,7 +35,7 @@ def test_delattr():
 
     monkeypatch = MonkeyPatch()
     monkeypatch.delattr(A, 'x')
-    py.test.raises(AttributeError, "monkeypatch.delattr(A, 'y')")
+    pytest.raises(AttributeError, "monkeypatch.delattr(A, 'y')")
     monkeypatch.delattr(A, 'y', raising=False)
     monkeypatch.setattr(A, 'x', 5, raising=False)
     assert A.x == 5
@@ -65,7 +65,7 @@ def test_delitem():
     monkeypatch.delitem(d, 'x')
     assert 'x' not in d
     monkeypatch.delitem(d, 'y', raising=False)
-    py.test.raises(KeyError, "monkeypatch.delitem(d, 'y')")
+    pytest.raises(KeyError, "monkeypatch.delitem(d, 'y')")
     assert not d
     monkeypatch.setitem(d, 'y', 1700)
     assert d['y'] == 1700
@@ -87,7 +87,7 @@ def test_delenv():
     name = 'xyz1234'
     assert name not in os.environ
     monkeypatch = MonkeyPatch()
-    py.test.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
+    pytest.raises(KeyError, "monkeypatch.delenv(%r, raising=True)" % name)
     monkeypatch.delenv(name, raising=False)
     monkeypatch.undo()
     os.environ[name] = "1"

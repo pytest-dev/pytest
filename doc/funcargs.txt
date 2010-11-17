@@ -34,7 +34,7 @@ Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_simplefactory.py
     
     test_simplefactory.py F
@@ -136,7 +136,7 @@ Running this::
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_example.py
     
     test_example.py .........F
@@ -151,7 +151,7 @@ Running this::
     E       assert 9 < 9
     
     test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.04 seconds ====================
+    ==================== 1 failed, 9 passed in 0.03 seconds ====================
 
 Note that the ``pytest_generate_tests(metafunc)`` hook is called during
 the test collection phase which is separate from the actual test running.
@@ -174,10 +174,10 @@ If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30 -- /home/hpk/venv/0/bin/python
     test path 1: test_example.py
     
-    test_example.py <- test_example.py:6: test_func[7] PASSED
+    test_example.py:6: test_func[7] PASSED
     
     ======================== 9 tests deselected by '7' =========================
     ================== 1 passed, 9 deselected in 0.01 seconds ==================

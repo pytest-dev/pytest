@@ -1,10 +1,10 @@
-import py
+import py, pytest
 from _pytest.mark import MarkGenerator as Mark
 
 class TestMark:
     def test_pytest_mark_notcallable(self):
         mark = Mark()
-        py.test.raises((AttributeError, TypeError), "mark()")
+        pytest.raises((AttributeError, TypeError), "mark()")
 
     def test_pytest_mark_bare(self):
         mark = Mark()
@@ -47,8 +47,8 @@ class TestMark:
 class TestFunctional:
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile("""
-            import py
-            @py.test.mark.hello
+            import pytest
+            @pytest.mark.hello
             def test_hello():
                 assert hasattr(test_hello, 'hello')
         """)
@@ -57,8 +57,8 @@ class TestFunctional:
 
     def test_mark_per_module(self, testdir):
         item = testdir.getitem("""
-            import py
-            pytestmark = py.test.mark.hello
+            import pytest
+            pytestmark = pytest.mark.hello
             def test_func():
                 pass
         """)
@@ -67,9 +67,9 @@ class TestFunctional:
 
     def test_marklist_per_class(self, testdir):
         item = testdir.getitem("""
-            import py
+            import pytest
             class TestClass:
-                pytestmark = [py.test.mark.hello, py.test.mark.world]
+                pytestmark = [pytest.mark.hello, pytest.mark.world]
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
@@ -79,8 +79,8 @@ class TestFunctional:
 
     def test_marklist_per_module(self, testdir):
         item = testdir.getitem("""
-            import py
-            pytestmark = [py.test.mark.hello, py.test.mark.world]
+            import pytest
+            pytestmark = [pytest.mark.hello, pytest.mark.world]
             class TestClass:
                 def test_func(self):
                     assert TestClass.test_func.hello
@@ -90,11 +90,11 @@ class TestFunctional:
         assert 'hello' in keywords
         assert 'world' in keywords
 
-    @py.test.mark.skipif("sys.version_info < (2,6)")
+    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator(self, testdir):
         item = testdir.getitem("""
-            import py
-            @py.test.mark.hello
+            import pytest
+            @pytest.mark.hello
             class TestClass:
                 def test_func(self):
                     assert TestClass.test_func.hello
@@ -102,13 +102,13 @@ class TestFunctional:
         keywords = item.keywords
         assert 'hello' in keywords
 
-    @py.test.mark.skipif("sys.version_info < (2,6)")
+    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
         item = testdir.getitem("""
-            import py
-            @py.test.mark.hello
+            import pytest
+            @pytest.mark.hello
             class TestClass:
-                pytestmark = py.test.mark.world
+                pytestmark = pytest.mark.world
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
@@ -119,12 +119,12 @@ class TestFunctional:
 
     def test_merging_markers(self, testdir):
         p = testdir.makepyfile("""
-            import py
-            pytestmark = py.test.mark.hello("pos1", x=1, y=2)
+            import pytest
+            pytestmark = pytest.mark.hello("pos1", x=1, y=2)
             class TestClass:
                 # classlevel overrides module level
-                pytestmark = py.test.mark.hello(x=3)
-                @py.test.mark.hello("pos0", z=4)
+                pytestmark = pytest.mark.hello(x=3)
+                @pytest.mark.hello("pos0", z=4)
                 def test_func(self):
                     pass
         """)
@@ -136,9 +136,9 @@ class TestFunctional:
         assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
 
     def test_mark_other(self, testdir):
-        py.test.raises(TypeError, '''
+        pytest.raises(TypeError, '''
             testdir.getitem("""
-                import py
+                import pytest
                 class pytestmark:
                     pass
                 def test_func():
@@ -148,9 +148,9 @@ class TestFunctional:
 
     def test_mark_dynamically_in_funcarg(self, testdir):
         testdir.makeconftest("""
-            import py
+            import pytest
             def pytest_funcarg__arg(request):
-                request.applymarker(py.test.mark.hello)
+                request.applymarker(pytest.mark.hello)
             def pytest_terminal_summary(terminalreporter):
                 l = terminalreporter.stats['passed']
                 terminalreporter._tw.line("keyword: %s" % l[0].keywords)
@@ -187,7 +187,7 @@ class Test_genitems:
         # do we want to unify behaviour with
         # test_subdir_conftest_error?
         p = testdir.makepyfile(conftest="raise SyntaxError\n")
-        py.test.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
+        pytest.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
 
     def test_example_items1(self, testdir):
         p = testdir.makepyfile('''
@@ -247,7 +247,6 @@ class TestKeywordSelection:
                     pass
         """)
         testdir.makepyfile(conftest="""
-            import py
             def pytest_pycollect_makeitem(__multicall__, name):
                 if name == "TestClass":
                     item = __multicall__.execute()

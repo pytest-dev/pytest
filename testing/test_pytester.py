@@ -1,4 +1,4 @@
-import py
+import pytest
 import os, sys
 from _pytest.pytester import LineMatcher, LineComp, HookRecorder
 from _pytest.core import PluginManager
@@ -8,7 +8,7 @@ def test_reportrecorder(testdir):
     recorder = testdir.getreportrecorder(item.config)
     assert not recorder.getfailures()
 
-    py.test.xfail("internal reportrecorder tests need refactoring")
+    pytest.xfail("internal reportrecorder tests need refactoring")
     class rep:
         excinfo = None
         passed = False
@@ -51,10 +51,11 @@ def test_reportrecorder(testdir):
     recorder.unregister()
     recorder.clear()
     recorder.hook.pytest_runtest_logreport(report=rep)
-    py.test.raises(ValueError, "recorder.getfailures()")
+    pytest.raises(ValueError, "recorder.getfailures()")
 
 
 def test_parseconfig(testdir):
+    import py
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
     assert config2 != config1
@@ -81,7 +82,7 @@ def test_hookrecorder_basic():
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    py.test.raises(ValueError, "rec.popcall('abc')")
+    pytest.raises(ValueError, "rec.popcall('abc')")
 
 def test_hookrecorder_basic_no_args_hook():
     rec = HookRecorder(PluginManager())
@@ -96,7 +97,7 @@ def test_hookrecorder_basic_no_args_hook():
 
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
-        import py
+        import pytest
         from _pytest.core import HookRelay, PluginManager
         pytest_plugins="pytester"
         def test_func(_pytest):

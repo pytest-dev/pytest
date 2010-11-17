@@ -1,4 +1,4 @@
-import py
+import py, pytest
 import os
 from _pytest.resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
@@ -79,7 +79,8 @@ class TestWithFunctionIntegration:
 
     def test_collection_report(self, testdir):
         ok = testdir.makepyfile(test_collection_ok="")
-        skip = testdir.makepyfile(test_collection_skip="import py ; py.test.skip('hello')")
+        skip = testdir.makepyfile(test_collection_skip=
+            "import pytest ; pytest.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
         lines = self.getresultlog(testdir, ok)
         assert not lines
@@ -101,14 +102,14 @@ class TestWithFunctionIntegration:
 
     def test_log_test_outcomes(self, testdir):
         mod = testdir.makepyfile(test_mod="""
-            import py
+            import pytest
             def test_pass(): pass
-            def test_skip(): py.test.skip("hello")
+            def test_skip(): pytest.skip("hello")
             def test_fail(): raise ValueError("FAIL")
 
-            @py.test.mark.xfail
+            @pytest.mark.xfail
             def test_xfail(): raise ValueError("XFAIL")
-            @py.test.mark.xfail
+            @pytest.mark.xfail
             def test_xpass(): pass
 
         """)
@@ -152,17 +153,17 @@ class TestWithFunctionIntegration:
 def test_generic(testdir, LineMatcher):
     testdir.plugins.append("resultlog")
     testdir.makepyfile("""
-        import py
+        import pytest
         def test_pass():
             pass
         def test_fail():
             assert 0
         def test_skip():
-            py.test.skip("")
-        @py.test.mark.xfail
+            pytest.skip("")
+        @pytest.mark.xfail
         def test_xfail():
             assert 0
-        @py.test.mark.xfail(run=False)
+        @pytest.mark.xfail(run=False)
         def test_xfail_norun():
             assert 0
     """)

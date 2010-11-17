@@ -1,4 +1,4 @@
-import py, sys
+import pytest, py, sys
 from _pytest import runner
 from py._code.code import ReprExceptionInfo
 
@@ -41,8 +41,8 @@ class TestSetupState:
             def test_func(): pass
         """)
         ss = runner.SetupState()
-        py.test.raises(ValueError, "ss.prepare(item)")
-        py.test.raises(ValueError, "ss.prepare(item)")
+        pytest.raises(ValueError, "ss.prepare(item)")
+        pytest.raises(ValueError, "ss.prepare(item)")
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):
@@ -71,9 +71,9 @@ class BaseFunctionalTests:
 
     def test_skipfunction(self, testdir):
         reports = testdir.runitem("""
-            import py
+            import pytest
             def test_func():
-                py.test.skip("hello")
+                pytest.skip("hello")
         """)
         rep = reports[1]
         assert not rep.failed
@@ -89,9 +89,9 @@ class BaseFunctionalTests:
 
     def test_skip_in_setup_function(self, testdir):
         reports = testdir.runitem("""
-            import py
+            import pytest
             def setup_function(func):
-                py.test.skip("hello")
+                pytest.skip("hello")
             def test_func():
                 pass
         """)
@@ -108,7 +108,7 @@ class BaseFunctionalTests:
 
     def test_failure_in_setup_function(self, testdir):
         reports = testdir.runitem("""
-            import py
+            import pytest
             def setup_function(func):
                 raise ValueError(42)
             def test_func():
@@ -123,7 +123,7 @@ class BaseFunctionalTests:
 
     def test_failure_in_teardown_function(self, testdir):
         reports = testdir.runitem("""
-            import py
+            import pytest
             def teardown_function(func):
                 raise ValueError(42)
             def test_func():
@@ -147,7 +147,7 @@ class BaseFunctionalTests:
                     return "hello"
         """)
         reports = testdir.runitem("""
-            import py
+            import pytest
             def test_func():
                 assert 0
         """)
@@ -226,7 +226,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
             py.test.fail("did not raise")
 
 class TestExecutionForked(BaseFunctionalTests):
-    pytestmark = py.test.mark.skipif("not hasattr(os, 'fork')")
+    pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
 
     def getrunner(self):
         # XXX re-arrange this test to live in pytest-xdist
@@ -289,7 +289,7 @@ def test_callinfo():
 
 # design question: do we want general hooks in python files?
 # then something like the following functional tests makes sense
-@py.test.mark.xfail
+@pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
         def pytest_runtest_setup(item): # runs after class-level!
@@ -336,8 +336,8 @@ def test_pytest_fail():
 
 def test_exception_printing_skip():
     try:
-        py.test.skip("hello")
-    except py.test.skip.Exception:
+        pytest.skip("hello")
+    except pytest.skip.Exception:
         excinfo = py.code.ExceptionInfo()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
@@ -351,20 +351,20 @@ def test_importorskip():
         assert sys == py.std.sys
         #path = py.test.importorskip("os.path")
         #assert path == py.std.os.path
-        excinfo = py.test.raises(py.test.skip.Exception, f)
+        excinfo = pytest.raises(pytest.skip.Exception, f)
         path = py.path.local(excinfo.getrepr().reprcrash.path)
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.purebasename == "test_runner"
-        py.test.raises(SyntaxError, "py.test.importorskip('x y z')")
-        py.test.raises(SyntaxError, "py.test.importorskip('x=y')")
+        pytest.raises(SyntaxError, "py.test.importorskip('x y z')")
+        pytest.raises(SyntaxError, "py.test.importorskip('x=y')")
         path = importorskip("py", minversion=".".join(py.__version__))
         mod = py.std.types.ModuleType("hello123")
         mod.__version__ = "1.3"
-        py.test.raises(py.test.skip.Exception, """
+        pytest.raises(pytest.skip.Exception, """
             py.test.importorskip("hello123", minversion="5.0")
         """)
-    except py.test.skip.Exception:
+    except pytest.skip.Exception:
         print(py.code.ExceptionInfo())
         py.test.fail("spurious skip")
 

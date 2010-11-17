@@ -178,7 +178,7 @@ class TestPrunetraceback:
             "*hello world*",
         ])
 
-    @py.test.mark.xfail(reason="other mechanism for adding to reporting needed")
+    @pytest.mark.xfail(reason="other mechanism for adding to reporting needed")
     def test_collect_report_postprocessing(self, testdir):
         p = testdir.makepyfile("""
             import not_exists
@@ -520,7 +520,7 @@ class Test_genitems:
         # do we want to unify behaviour with
         # test_subdir_conftest_error?
         p = testdir.makepyfile(conftest="raise SyntaxError\n")
-        py.test.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
+        pytest.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
 
     def test_example_items1(self, testdir):
         p = testdir.makepyfile('''

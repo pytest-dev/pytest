@@ -10,7 +10,7 @@ Usage and Invocations
 calling pytest through ``python -m pytest``
 -----------------------------------------------------
 
-.. versionadded: 2.0
+.. versionadded:: 2.0
 
 If you use Python-2.5 or above you can invoke testing through the
 Python interpreter from the command line::
@@ -88,9 +88,10 @@ Setting a breakpoint / aka ``set_trace()``
 If you want to set a breakpoint and enter the ``pdb.set_trace()`` you
 can use a helper::
 
+    import pytest
     def test_function():
         ...
-        py.test.set_trace()    # invoke PDB debugger and tracing
+        pytest.set_trace()    # invoke PDB debugger and tracing
 
 .. versionadded: 2.0.0
 
@@ -140,7 +141,7 @@ Currently only pasting to the http://paste.pocoo.org service is implemented.
 calling pytest from Python code
 ----------------------------------------------------
 
-.. versionadded: 2.0
+.. versionadded:: 2.0
 
 You can invoke ``py.test`` from Python code directly::
 

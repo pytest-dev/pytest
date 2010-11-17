@@ -152,9 +152,9 @@ def test_failing_setup_calls_teardown(testdir):
 
 def test_setup_that_skips_calledagain_and_teardown(testdir):
     p = testdir.makepyfile("""
-        import py
+        import pytest
         def setup_module(mod):
-            py.test.skip("x")
+            pytest.skip("x")
         def test_function1():
             pass
         def test_function2():
@@ -170,7 +170,7 @@ def test_setup_that_skips_calledagain_and_teardown(testdir):
 
 def test_setup_fails_again_on_all_tests(testdir):
     p = testdir.makepyfile("""
-        import py
+        import pytest
         def setup_module(mod):
             raise ValueError(42)
         def test_function1():
@@ -188,7 +188,7 @@ def test_setup_fails_again_on_all_tests(testdir):
 
 def test_setup_funcarg_setup_not_called_if_outer_scope_fails(testdir):
     p = testdir.makepyfile("""
-        import py
+        import pytest
         def setup_module(mod):
             raise ValueError(42)
         def pytest_funcarg__hello(request):

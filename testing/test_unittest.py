@@ -1,4 +1,4 @@
-import py
+import pytest
 
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
@@ -73,8 +73,8 @@ def test_teardown(testdir):
 def test_module_level_pytestmark(testdir):
     testpath = testdir.makepyfile("""
         import unittest
-        import py
-        pytestmark = py.test.mark.xfail
+        import pytest
+        pytestmark = pytest.mark.xfail
         class MyTestCase(unittest.TestCase):
             def test_func1(self):
                 assert 0
@@ -85,7 +85,7 @@ def test_module_level_pytestmark(testdir):
 def test_class_setup(testdir):
     testpath = testdir.makepyfile("""
         import unittest
-        import py
+        import pytest
         class MyTestCase(unittest.TestCase):
             x = 0
             @classmethod

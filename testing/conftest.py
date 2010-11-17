@@ -1,4 +1,4 @@
-import py
+import pytest
 import sys
 
 pytest_plugins = "pytester",
@@ -91,5 +91,5 @@ def pytest_funcarg__anypython(request):
                 executable = py.path.local(executable)
                 if executable.check():
                     return executable
-        py.test.skip("no %s found" % (name,))
+        pytest.skip("no %s found" % (name,))
     return executable

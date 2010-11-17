@@ -1,11 +1,11 @@
-import py
+import py, pytest
 from _pytest import config as parseopt
 from textwrap import dedent
 
 class TestParser:
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
-        py.test.raises(SystemExit, 'parser.parse(["-h"])')
+        pytest.raises(SystemExit, 'parser.parse(["-h"])')
         out, err = capsys.readouterr()
         assert err.find("no such option") != -1
 
@@ -41,7 +41,7 @@ class TestParser:
     def test_group_shortopt_lowercase(self):
         parser = parseopt.Parser()
         group = parser.getgroup("hello")
-        py.test.raises(ValueError, """
+        pytest.raises(ValueError, """
             group.addoption("-x", action="store_true")
         """)
         assert len(group.options) == 0
@@ -102,7 +102,7 @@ class TestParser:
         assert option.this == 42
 
 
-@py.test.mark.skipif("sys.version_info < (2,5)")
+@pytest.mark.skipif("sys.version_info < (2,5)")
 def test_addoption_parser_epilog(testdir):
     testdir.makeconftest("""
         def pytest_addoption(parser):

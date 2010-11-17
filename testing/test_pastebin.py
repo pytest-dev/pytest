@@ -12,13 +12,13 @@ class TestPasting:
 
     def test_failed(self, testdir, pastebinlist):
         testpath = testdir.makepyfile("""
-            import py
+            import pytest
             def test_pass():
                 pass
             def test_fail():
                 assert 0
             def test_skip():
-                py.test.skip("")
+                pytest.skip("")
         """)
         reprec = testdir.inline_run(testpath, "--paste=failed")
         assert len(pastebinlist) == 1
@@ -29,13 +29,13 @@ class TestPasting:
 
     def test_all(self, testdir, pastebinlist):
         testpath = testdir.makepyfile("""
-            import py
+            import pytest
             def test_pass():
                 pass
             def test_fail():
                 assert 0
             def test_skip():
-                py.test.skip("")
+                pytest.skip("")
         """)
         reprec = testdir.inline_run(testpath, "--pastebin=all")
         assert reprec.countoutcomes() == [1,1,1]

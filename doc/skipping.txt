@@ -12,7 +12,7 @@ requirement without which considering or running the test does
 not make sense.  If a test fails under all conditions then it's
 probably best to mark your test as 'xfail'.
 
-By running ``py.test -rxs`` you will see extra reporting 
+By running ``py.test -rxs`` you will see extra reporting
 information on skips and xfail-run tests at the end of a test run.
 
 .. _skipif:
@@ -23,7 +23,7 @@ Skipping a single function
 Here is an example for marking a test function to be skipped
 when run on a Python3 interpreter::
 
-    @py.test.mark.skipif("sys.version_info >= (3,0)")
+    @pytest.mark.skipif("sys.version_info >= (3,0)")
     def test_function():
         ...
 
@@ -33,14 +33,14 @@ contains the  ``sys`` and ``os`` modules and the test
 ``config`` object.  The latter allows you to skip based
 on a test configuration value e.g. like this::
 
-    @py.test.mark.skipif("not config.getvalue('db')")
+    @pytest.mark.skipif("not config.getvalue('db')")
     def test_function(...):
         ...
 
 Create a shortcut for your conditional skip decorator
 at module level like this::
 
-    win32only = py.test.mark.skipif("sys.platform != 'win32'")
+    win32only = pytest.mark.skipif("sys.platform != 'win32'")
 
     @win32only
     def test_function():
@@ -55,7 +55,7 @@ As with all function :ref:`marking` you can do it at
 for skipping all methods of a test class based on platform::
 
     class TestPosixCalls:
-        pytestmark = py.test.mark.skipif("sys.platform == 'win32'")
+        pytestmark = pytest.mark.skipif("sys.platform == 'win32'")
 
         def test_function(self):
             # will not be setup or run under 'win32' platform
@@ -65,7 +65,7 @@ The ``pytestmark`` decorator will be applied to each test function.
 If your code targets python2.6 or above you can equivalently use
 the skipif decorator on classes::
 
-    @py.test.mark.skipif("sys.platform == 'win32'")
+    @pytest.mark.skipif("sys.platform == 'win32'")
     class TestPosixCalls:
 
         def test_function(self):
@@ -86,7 +86,7 @@ mark a test function as expected to fail
 You can use the ``xfail`` marker to indicate that you
 expect the test to fail::
 
-    @py.test.mark.xfail
+    @pytest.mark.xfail
     def test_function():
         ...
 
@@ -97,21 +97,21 @@ when it fails. Instead terminal reporting will list it in the
 Same as with skipif_ you can also selectively expect a failure
 depending on platform::
 
-    @py.test.mark.xfail("sys.version_info >= (3,0)")
+    @pytest.mark.xfail("sys.version_info >= (3,0)")
     def test_function():
         ...
 
 To not run a test and still regard it as "xfailed"::
 
-    @py.test.mark.xfail(..., run=False)
+    @pytest.mark.xfail(..., run=False)
 
 To specify an explicit reason to be shown with xfailure detail::
 
-    @py.test.mark.xfail(..., reason="my reason")
+    @pytest.mark.xfail(..., reason="my reason")
 
 By specifying on the commandline::
 
-    py.test --runxfail
+    pytest --runxfail
 
 you can force the running and reporting of a runnable ``xfail`` marked test.
 
@@ -124,7 +124,7 @@ within test or setup code.  Example::
 
     def test_function():
         if not valid_config():
-            py.test.xfail("unsuppored configuration")
+            pytest.xfail("unsuppored configuration")
 
 
 skipping on a missing import dependency
@@ -133,13 +133,13 @@ skipping on a missing import dependency
 You can use the following import helper at module level
 or within a test or test setup function::
 
-    docutils = py.test.importorskip("docutils")
+    docutils = pytest.importorskip("docutils")
 
 If ``docutils`` cannot be imported here, this will lead to a
 skip outcome of the test.  You can also skip dependeing if
 if a library does not come with a high enough version::
 
-    docutils = py.test.importorskip("docutils", minversion="0.3")
+    docutils = pytest.importorskip("docutils", minversion="0.3")
 
 The version will be read from the specified module's ``__version__`` attribute.
 
@@ -152,5 +152,5 @@ within test or setup code.  Example::
 
     def test_function():
         if not valid_config():
-            py.test.skip("unsuppored configuration")
+            pytest.skip("unsuppored configuration")
 

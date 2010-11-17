@@ -1,4 +1,4 @@
-import py, os
+import pytest, py, os
 from _pytest.core import PluginManager, canonical_importname
 from _pytest.core import MultiCall, HookRelay, varnames
 
@@ -7,18 +7,18 @@ class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
         pluginmanager = PluginManager()
         monkeypatch.setenv('PYTEST_PLUGINS', 'nonexisting', prepend=",")
-        py.test.raises(ImportError, "pluginmanager.consider_env()")
+        pytest.raises(ImportError, "pluginmanager.consider_env()")
 
     def test_preparse_args(self):
         pluginmanager = PluginManager()
-        py.test.raises(ImportError, """
+        pytest.raises(ImportError, """
             pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
         """)
 
     def test_plugin_skip(self, testdir, monkeypatch):
         p = testdir.makepyfile(pytest_skipping1="""
-            import py
-            py.test.skip("hello")
+            import pytest
+            pytest.skip("hello")
         """)
         p.copy(p.dirpath("pytest_skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
@@ -73,7 +73,7 @@ class TestBootstrapping:
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
         x500 = testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""
-            import py
+            import pytest
             def test_hello(pytestconfig):
                 plugin = pytestconfig.pluginmanager.getplugin('x500')
                 assert plugin is not None
@@ -85,8 +85,8 @@ class TestBootstrapping:
 
     def test_import_plugin_importname(self, testdir):
         pluginmanager = PluginManager()
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwx.y")')
+        pytest.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
+        pytest.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwx.y")')
 
         reset = testdir.syspathinsert()
         pluginname = "pytest_hello"
@@ -103,8 +103,8 @@ class TestBootstrapping:
 
     def test_import_plugin_dotted_name(self, testdir):
         pluginmanager = PluginManager()
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
-        py.test.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwex.y")')
+        pytest.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
+        pytest.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwex.y")')
 
         reset = testdir.syspathinsert()
         testdir.mkpydir("pkg").join("plug.py").write("x=3")
@@ -148,7 +148,7 @@ class TestBootstrapping:
     def test_consider_conftest_deps(self, testdir):
         mod = testdir.makepyfile("pytest_plugins='xyz'").pyimport()
         pp = PluginManager()
-        py.test.raises(ImportError, "pp.consider_conftest(mod)")
+        pytest.raises(ImportError, "pp.consider_conftest(mod)")
 
     def test_pm(self):
         pp = PluginManager()
@@ -187,10 +187,10 @@ class TestBootstrapping:
         assert pp.isregistered(mod)
         l = pp.getplugins()
         assert mod in l
-        py.test.raises(AssertionError, "pp.register(mod)")
+        pytest.raises(AssertionError, "pp.register(mod)")
         mod2 = py.std.types.ModuleType("pytest_hello")
         #pp.register(mod2) # double pm
-        py.test.raises(AssertionError, "pp.register(mod)")
+        pytest.raises(AssertionError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == l
 
@@ -208,14 +208,14 @@ class TestBootstrapping:
         class hello:
             def pytest_gurgel(self):
                 pass
-        py.test.raises(Exception, "pp.register(hello())")
+        pytest.raises(Exception, "pp.register(hello())")
 
     def test_register_mismatch_arg(self):
         pp = PluginManager(load=True)
         class hello:
             def pytest_configure(self, asd):
                 pass
-        excinfo = py.test.raises(Exception, "pp.register(hello())")
+        excinfo = pytest.raises(Exception, "pp.register(hello())")
 
     def test_canonical_importname(self):
         for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
@@ -223,7 +223,7 @@ class TestBootstrapping:
 
     def test_notify_exception(self, capfd):
         pp = PluginManager()
-        excinfo = py.test.raises(ValueError, "raise ValueError(1)")
+        excinfo = pytest.raises(ValueError, "raise ValueError(1)")
         pp.notify_exception(excinfo)
         out, err = capfd.readouterr()
         assert "ValueError" in err
@@ -283,7 +283,7 @@ class TestBootstrapping:
         assert pm.trace.root.indent == indent
         assert len(l) == 1
         assert 'pytest_plugin_registered' in l[0]
-        py.test.raises(ValueError, lambda: pm.register(api1()))
+        pytest.raises(ValueError, lambda: pm.register(api1()))
         assert pm.trace.root.indent == indent
         assert saveindent[0] > indent
 
@@ -420,8 +420,8 @@ class TestPytestPluginInteractions:
 
 def test_namespace_has_default_and_env_plugins(testdir):
     p = testdir.makepyfile("""
-        import py
-        py.test.mark
+        import pytest
+        pytest.mark
     """)
     result = testdir.runpython(p)
     assert result.ret == 0
@@ -493,7 +493,7 @@ class TestMultiCall:
 
     def test_tags_call_error(self):
         multicall = MultiCall([lambda x: x], {})
-        py.test.raises(TypeError, "multicall.execute()")
+        pytest.raises(TypeError, "multicall.execute()")
 
     def test_call_subexecute(self):
         def m(__multicall__):
@@ -541,7 +541,7 @@ class TestHookRelay:
             def hello(self, arg):
                 "api hook 1"
         mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
-        py.test.raises(TypeError, "mcm.hello(3)")
+        pytest.raises(TypeError, "mcm.hello(3)")
 
     def test_firstresult_definition(self):
         pm = PluginManager()

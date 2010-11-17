@@ -49,7 +49,7 @@ You can now run the test::
 
     $ py.test test_sample.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_sample.py
     
     test_sample.py F
@@ -57,7 +57,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x1ca5cf8>
+    mysetup = <conftest.MySetup instance at 0x16f5998>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -84,7 +84,7 @@ the previous example to add a command line option
 and to offer a new mysetup method::
 
     # content of ./conftest.py
-    import py
+    import pytest
     from myapp import MyApp
 
     def pytest_funcarg__mysetup(request): # "mysetup" factory function
@@ -105,7 +105,7 @@ and to offer a new mysetup method::
         def getsshconnection(self):
             host = self.config.option.ssh
             if host is None:
-                py.test.skip("specify ssh host with --ssh")
+                pytest.skip("specify ssh host with --ssh")
             return execnet.SshGateway(host)
 
 
@@ -122,14 +122,14 @@ Running it yields::
 
     $ py.test test_ssh.py -rs
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev22
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: test_ssh.py
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-560/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /tmp/doc-exec-107/conftest.py:22: specify ssh host with --ssh
     
-    ======================== 1 skipped in 0.03 seconds =========================
+    ======================== 1 skipped in 0.02 seconds =========================
 
 If you specify a command line option like ``py.test --ssh=python.org`` the test will execute as expected.
 

@@ -1,4 +1,4 @@
-import py
+import py, pytest
 from _pytest.config import Conftest
 
 def pytest_generate_tests(metafunc):
@@ -56,8 +56,8 @@ class TestConftestValueAccessGlobal:
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
-        py.test.raises(KeyError, "conftest.rget('a')")
-        #py.test.raises(KeyError, "conftest.lget('a')")
+        pytest.raises(KeyError, "conftest.rget('a')")
+        #pytest.raises(KeyError, "conftest.lget('a')")
 
     def test_value_access_by_path(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
@@ -66,7 +66,7 @@ class TestConftestValueAccessGlobal:
         assert conftest.rget("a", basedir.join('adir', 'b')) == 1.5
         #assert conftest.lget("a", basedir.join('adir', 'b')) == 1
         #assert conftest.lget("b", basedir.join('adir', 'b')) == 2
-        #assert py.test.raises(KeyError,
+        #assert pytest.raises(KeyError,
         #    'conftest.lget("b", basedir.join("a"))'
         #)
 
@@ -109,7 +109,7 @@ def test_doubledash_not_considered(testdir):
 def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
     p = testdir.makepyfile("""
-        import py
+        import py, pytest
         from _pytest.config import Conftest
         conf = Conftest()
         mod = conf.importconftest(py.path.local("conftest.py"))
@@ -185,7 +185,7 @@ def test_conftest_samecontent_detection(testdir):
     assert len(l) == 1
     assert l[0].__file__ == p.join("conftest.py")
 
-@py.test.mark.multi(name='test tests whatever .dotdir'.split())
+@pytest.mark.multi(name='test tests whatever .dotdir'.split())
 def test_setinitial_conftest_subdirs(testdir, name):
     sub = testdir.mkdir(name)
     subconftest = sub.ensure("conftest.py")
