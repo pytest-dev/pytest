@@ -59,8 +59,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     if res is not None:
         return res
     if collector._istestclasscandidate(name, obj):
-        if hasattr(collector.obj, 'unittest'):
-            return # we assume it's a mixin class for a TestCase derived one
+        #if hasattr(collector.obj, 'unittest'):
+        #    return # we assume it's a mixin class for a TestCase derived one
         return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
         if is_generator(obj):

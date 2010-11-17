@@ -359,6 +359,7 @@ class TestInvocationVariants:
         ])
 
 
+    @py.test.mark.xfail(reason="decide: feature or bug")
     def test_noclass_discovery_if_not_testcase(self, testdir):
         testpath = testdir.makepyfile("""
             import unittest
