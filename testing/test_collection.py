@@ -204,12 +204,12 @@ class TestCustomConftests:
                 return path.basename.startswith("x") or \
                        path.basename == "test_one.py"
         """)
-        testdir.mkdir("xy123").ensure("test_hello.py").write(
-            "syntax error"
-        )
+        sub = testdir.mkdir("xy123")
+        sub.ensure("test_hello.py").write("syntax error")
+        sub.join("conftest.py").write("syntax error")
         testdir.makepyfile("def test_hello(): pass")
         testdir.makepyfile(test_one="syntax error")
-        result = testdir.runpytest()
+        result = testdir.runpytest("--fulltrace")
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 

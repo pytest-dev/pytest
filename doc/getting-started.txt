@@ -36,17 +36,17 @@ That's it. You can execute the test function now::
     =========================== test session starts ============================
     platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
     test path 1: /tmp/doc-exec-70
-    
+
     test_sample.py F
-    
+
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-    
+
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-    
+
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
@@ -120,14 +120,14 @@ run the module by passing its filename::
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
-    
+
     self = <test_class.TestClass instance at 0x288fc20>
-    
+
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       assert hasattr('hello', 'check')
-    
+
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.02 seconds
 
@@ -156,14 +156,14 @@ before performing the test function call.  Let's just run it::
     F
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
-    
+
     tmpdir = local('/tmp/pytest-122/test_needsfiles0')
-    
+
         def test_needsfiles(tmpdir):
             print tmpdir
     >       assert 0
     E       assert 0
-    
+
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
     /tmp/pytest-122/test_needsfiles0
@@ -194,29 +194,20 @@ Known Installation issues
 easy_install or pip not found?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Consult `distribute docs <distribute>`_ to install the ``easy_install``
-tool on your machine.  You may also use the original but somewhat older
-`setuptools`_ project although we generally recommend to use
-``distribute`` because it contains more bug fixes and also works for
-Python3.
-
-For Python2 you can also consult pip_ for the popular ``pip`` tool.
-
-However, If you want to install on Python3 you need to use Distribute_ which
-provides the ``easy_install`` utility.
-
+Consult `distribute docs`_ to install the ``easy_install``
+tool on your machine.  You may also use the older
+`setuptools`_ project but it lacks bug fixes and does not
+work on Python3.  If you use Python2 you may also install pip_.
 
 py.test not found on Windows despite installation?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
 
-
 - **Windows**: If "easy_install" or "py.test" are not found
-  please see here for preparing your environment for running
-  command line tools: `Python for Windows`_.  You may alternatively
-  use an `ActivePython install`_ which makes command line tools
-  automatically available under Windows.
+  you need to add the Python script path to your ``PATH``, see here:
+  `Python for Windows`_.  You may alternatively use an `ActivePython install`_
+  which does this for you automatically.
 
 .. _`ActivePython install`: http://www.activestate.com/activepython/downloads
 

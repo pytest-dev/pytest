@@ -1,8 +1,10 @@
 
+.. _`pytest helpers`:
+
 pytest builtin helpers
 ================================================
 
-builtin pytest.* helpers
+builtin pytest.* functions and helping objects
 -----------------------------------------------------
 
 You can always use an interactive Python prompt and type::

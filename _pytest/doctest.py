@@ -64,12 +64,16 @@ class DoctestItem(pytest.Item):
 
 class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
-        failed, tot = py.std.doctest.testfile(
+        doctest = py.std.doctest
+        failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
+            optionflags=doctest.ELLIPSIS,
             raise_on_error=True, verbose=0)
 
 class DoctestModule(DoctestItem, pytest.File):
     def runtest(self):
+        doctest = py.std.doctest
         module = self.fspath.pyimport()
-        failed, tot = py.std.doctest.testmod(
-            module, raise_on_error=True, verbose=0)
+        failed, tot = doctest.testmod(
+            module, raise_on_error=True, verbose=0,
+            optionflags=doctest.ELLIPSIS)

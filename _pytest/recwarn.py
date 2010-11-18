@@ -24,8 +24,8 @@ def pytest_namespace():
     return {'deprecated_call': deprecated_call}
 
 def deprecated_call(func, *args, **kwargs):
-    """ assert that calling func(*args, **kwargs)
-        triggers a DeprecationWarning.
+    """ assert that calling ``func(*args, **kwargs)``
+    triggers a DeprecationWarning.
     """
     warningmodule = py.std.warnings
     l = []

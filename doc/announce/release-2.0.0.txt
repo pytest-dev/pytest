@@ -87,6 +87,7 @@ and "pytest.raises" used as the recommended default way.
 - py.test.config is now only available if you are in a test run.
 
 - the following (mostly already deprecated) functionality was removed:
+
   - removed support for Module/Class/... collection node definitions
     in conftest.py files.  They will cause nothing special.
   - removed support for calling the pre-1.0 collection API of "run()" and "join"

@@ -39,7 +39,7 @@ class TestGeneralUsage:
             def test_1(pytestconfig):
                 pytestconfig.getbasetemp().ensure("hello")
         """)
-        result = testdir.runpytest(p, '--basetemp=%s' %mytemp)
+        result = testdir.runpytest(p, '--basetemp=%s' % mytemp)
         assert result.ret == 0
         assert mytemp.join('hello').check()
 
@@ -239,7 +239,7 @@ class TestInvocationVariants:
 
     def test_pydoc(self, testdir):
         for name in ('py.test', 'pytest'):
-            result = testdir.runpython_c("import %s;help(%s)" % (name,name))
+            result = testdir.runpython_c("import %s;help(%s)" % (name, name))
             assert result.ret == 0
             s = result.stdout.str()
             assert 'MarkGenerator' in s
@@ -325,7 +325,7 @@ class TestInvocationVariants:
         class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
-            
+
         pytest.main(["-h"], plugins=[MyPlugin()])
         out, err = capsys.readouterr()
         assert "--myopt" in out
@@ -357,7 +357,6 @@ class TestInvocationVariants:
         result.stderr.fnmatch_lines([
             "ERROR*file*or*package*not*found*",
         ])
-
 
     @pytest.mark.xfail(reason="decide: feature or bug")
     def test_noclass_discovery_if_not_testcase(self, testdir):

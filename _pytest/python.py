@@ -762,19 +762,28 @@ def raises(ExpectedException, *args, **kwargs):
         If using Python 2.5 or above, you may use this function as a
         context manager::
 
-        >>> with raises(ZeroDivisionError):
-        ...    1/0
+            >>> with raises(ZeroDivisionError):
+            ...    1/0
 
-        Or you can one of two forms:
+        Or you can specify a callable by passing a to-be-called lambda::
 
-        if args[0] is callable: raise AssertionError if calling it with
-        the remaining arguments does not raise the expected exception.
-        if args[0] is a string: raise AssertionError if executing the
-        the string in the calling scope does not raise expected exception.
-        examples:
-        >>> x = 5
-        >>> raises(TypeError, lambda x: x + 'hello', x=x)
-        >>> raises(TypeError, "x + 'hello'")
+            >>> raises(ZeroDivisionError, lambda: 1/0)
+            <ExceptionInfo ...>
+
+        or you can specify an arbitrary callable with arguments::
+
+            >>> def f(x): return 1/x
+            ...
+            >>> raises(ZeroDivisionError, f, 0)
+            <ExceptionInfo ...>
+            >>> raises(ZeroDivisionError, f, x=0)
+            <ExceptionInfo ...>
+
+        A third possibility is to use a string which which will
+        be executed::
+        
+            >>> raises(ZeroDivisionError, "f(0)")
+            <ExceptionInfo ...>
     """
     __tracebackhide__ = True
 

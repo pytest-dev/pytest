@@ -15,6 +15,7 @@ py.test reference documentation
    xunit_setup.txt
    capture.txt
    monkeypatch.txt
+   xdist.txt
    tmpdir.txt
    skipping.txt
    mark.txt

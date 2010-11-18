@@ -1,4 +1,4 @@
-"""run test suites written for nose. """
+""" run test suites written for nose. """
 
 import pytest, py
 import inspect

@@ -52,7 +52,6 @@ earlier than further away ones.
     under a package scope or to never import anything from a
     conftest.py file.
 
-.. _`installing plugins`:
 .. _`external plugins`:
 
 Installing External Plugins / Searching
@@ -85,11 +84,10 @@ you can copy from:
 * around 20 `builtin plugins`_ which comprise py.test's own functionality
 * around 10 `external plugins`_ providing additional features
 
-All of these plugins are using the documented `well specified hooks`_
-to implement their wide-ranging functionality.
+All of these plugins implement the documented `well specified hooks`_
+to extend and add functionality.
 
 .. _`setuptools entry points`:
-
 
 Making your plugin installable by others
 -----------------------------------------------

@@ -408,7 +408,8 @@ class Session(FSCollector):
         path = names.pop(0)
         if path.check(dir=1):
             assert not names, "invalid arg %r" %(arg,)
-            for path in path.visit(rec=self._recurse, bf=True, sort=True):
+            for path in path.visit(fil=lambda x: x.check(file=1),
+                rec=self._recurse, bf=True, sort=True):
                 for x in self._collectfile(path):
                     yield x
         else:
@@ -424,12 +425,13 @@ class Session(FSCollector):
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, path):
-        ihook = self.gethookproxy(path)
+        ihook = self.gethookproxy(path.dirpath())
         if ihook.pytest_ignore_collect(path=path, config=self.config):
            return
         for pat in self._norecursepatterns:
             if path.check(fnmatch=pat):
                 return False
+        ihook = self.gethookproxy(path)
         ihook.pytest_collect_directory(path=path, parent=self)
         return True
 

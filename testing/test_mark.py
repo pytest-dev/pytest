@@ -2,6 +2,10 @@ import py, pytest
 from _pytest.mark import MarkGenerator as Mark
 
 class TestMark:
+    def test_pytest_exists_in_namespace_all(self):
+        assert 'mark' in py.test.__all__
+        assert 'mark' in pytest.__all__
+
     def test_pytest_mark_notcallable(self):
         mark = Mark()
         pytest.raises((AttributeError, TypeError), "mark()")
