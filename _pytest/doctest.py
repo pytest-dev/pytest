@@ -73,7 +73,10 @@ class DoctestTextfile(DoctestItem, pytest.File):
 class DoctestModule(DoctestItem, pytest.File):
     def runtest(self):
         doctest = py.std.doctest
-        module = self.fspath.pyimport()
+        if self.fspath.basename == "conftest.py":
+            module = self.config._conftest.importconftest(self.fspath)
+        else:
+            module = self.fspath.pyimport()
         failed, tot = doctest.testmod(
             module, raise_on_error=True, verbose=0,
             optionflags=doctest.ELLIPSIS)
