@@ -39,8 +39,8 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-install: html
-	rsync -avz _build/html/ code:public_html/pytest
+install: clean html
+	rsync -avz _build/html/ code:www-pytest/2.0.0
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

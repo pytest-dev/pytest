@@ -1,24 +1,23 @@
-py.test 2.0.0: standalone, features++, implementation++, docs++
+py.test 2.0.0: improved asserts, unittest, reporting, config, docs
 ===========================================================================
 
-XXX PENDING
+Welcome to pytest-2.0.0, a major new release of "py.test", the rapid
+easy Python testing tool.  There are many new features and a lot of
+long-deprecated code is removed, resulting in a much smaller and cleaner
+implementation.  If you had a test suite using non-deprecated
+functionality 2.0.0 is very likely to continue to work for you without
+requiring changes.
 
-Welcome to pytest-2.0.0, rapid and easy testing for and with Python.
-py.test now comes as its own PyPI distribution named ``pytest`` which
-installs the ``py.test`` tool.  It removes most long-deprecated code,
-providing for a much smaller and easier to understand code base.  There
-are also many new features and much improved documentation. See
+Check out the revised the improved documentation and examples:
 
-    http://pytest.org
-
-for details or below for some more information.
+    http://pytest.org/2.0.0/index.html
 
 Thanks to all issue reporters and people asking questions or
 complaining.  Particular thanks to Floris Bruynooghe and Ronny Pfannschmidt
-for their great coding contributions.
+for their great coding contributions and may others for feedback and help.
 
 best,
-holger
+holger krekel
 
 
 New Features
@@ -30,7 +29,7 @@ New Features
 
   or from a python program::
 
-    import pytest ; pytest.main(args, plugins)
+    import pytest ; pytest.main(arglist, pluginlist)
 
   see http://pytest.org/2.0.0/usage.html for details.
 
@@ -48,14 +47,17 @@ New Features
 
   see http://pytest.org/2.0.0/customize.html
 
-- improved standard unittest support.  For example you can now run
-  the tests of an installed 'unittest' package with py.test::
+- improved standard unittest support.  In general py.test should now
+  better run custom TestCases like twisted trial or Django based
+  TestCases.  Also you can now run the tests of an installed
+  'unittest' package with py.test::
 
     py.test --pyargs unittest
 
 - new "-q" option which decreases verbosity and prints a more
   nose/unittest-style "dot" output.
 
+- many more improvements in details
 
 Fixes
 -----------------------
@@ -72,14 +74,24 @@ Fixes
 - fix bug: unittest collected functions now also can have "pytestmark"
   applied at class/module level
 
-Important Note on importing "pytest" versus "py.test"
--------------------------------------------------------
+Notes
+--------------------
 
-The usual way in pre-2.0 times to use py.test in python code was
-to import "py" and then e.g. use "py.test.raises" for the helper.
-This remains valid and is not planned to be deprecated.  However,
-in most examples and internal code you'll find "import pytest"
-and "pytest.raises" used as the recommended default way.
+* The usual way in pre-2.0 times to use py.test in python code was
+  to import "py" and then e.g. use "py.test.raises" for the helper.
+  This remains valid and is not planned to be deprecated.  However,
+  in most examples and internal code you'll find "import pytest"
+  and "pytest.raises" used as the recommended default way.
+
+* pytest now first performs collection of the complete test suite
+  before running any test. This changes for example the semantics of when
+  pytest_collectstart/pytest_collectreport are called.  Some plugins may
+  need upgrading.
+
+* The pytest package consists of a 400 LOC core.py and about 20 builtin plugins,
+  summing up to roughly 5000 LOCs, including docstrings. To be fair, it also
+  uses generic code from the "pylib", and the new "py" package to help
+  with filesystem and introspection/code manipulation.
 
 (Incompatible) Removals
 -----------------------------
@@ -99,7 +111,7 @@ and "pytest.raises" used as the recommended default way.
 
 - py.test.collect.Directory does not exist anymore and it
   is not possible to provide an own "Directory" object.
-  If you have used this and don#t know what to do, get
+  If you have used this and don't know what to do, get
   in contact.  We'll figure someting out.
 
   Note that pytest_collect_directory() is still called but
