@@ -48,6 +48,21 @@ class TestMark:
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
+    def test_pytest_mark_reuse(self):
+        mark = Mark()
+        def f():
+            pass
+        w = mark.some
+        w("hello", reason="123")(f)
+        assert f.some.args[0] == "hello"
+        assert f.some.kwargs['reason'] == "123"
+        def g():
+            pass
+        w("world", reason2="456")(g)
+        assert g.some.args[0] == "world"
+        assert 'reason' not in g.some.kwargs
+        assert g.some.kwargs['reason2'] == "456"
+
 class TestFunctional:
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile("""
@@ -136,7 +151,7 @@ class TestFunctional:
         item, = items
         keywords = item.keywords
         marker = keywords['hello']
-        assert marker.args == ["pos0", "pos1"]
+        assert marker.args == ("pos0", "pos1")
         assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
 
     def test_mark_other(self, testdir):

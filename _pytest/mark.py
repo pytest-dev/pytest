@@ -101,10 +101,10 @@ class MarkDecorator:
         def test_function():
             pass
     """
-    def __init__(self, name):
+    def __init__(self, name, args=None, kwargs=None):
         self.markname = name
-        self.kwargs = {}
-        self.args = []
+        self.args = args or ()
+        self.kwargs = kwargs or {}
 
     def __repr__(self):
         d = self.__dict__.copy()
@@ -134,12 +134,12 @@ class MarkDecorator:
                         setattr(func, self.markname, holder)
                     else:
                         holder.kwargs.update(self.kwargs)
-                        holder.args.extend(self.args)
+                        holder.args += self.args
                 return func
-            else:
-                self.args.extend(args)
-        self.kwargs.update(kwargs)
-        return self
+        kw = self.kwargs.copy()
+        kw.update(kwargs)
+        args = self.args + args
+        return self.__class__(self.markname, args=args, kwargs=kw)
 
 class MarkInfo:
     """ Marking object created by :class:`MarkDecorator` instances. """
