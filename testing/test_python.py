@@ -682,9 +682,9 @@ def test_applymarker(testdir):
 class TestRequestCachedSetup:
     def test_request_cachedsetup(self, testdir):
         item1,item2 = testdir.getitems("""
+            def test_func1(self, something):
+                pass
             class TestClass:
-                def test_func1(self, something):
-                    pass
                 def test_func2(self, something):
                     pass
         """)
@@ -692,6 +692,7 @@ class TestRequestCachedSetup:
         l = ["hello"]
         def setup():
             return l.pop()
+        # cached_setup's scope defaults to 'module'
         ret1 = req1.cached_setup(setup)
         assert ret1 == "hello"
         ret1b = req1.cached_setup(setup)
@@ -699,6 +700,39 @@ class TestRequestCachedSetup:
         req2 = funcargs.FuncargRequest(item2)
         ret2 = req2.cached_setup(setup)
         assert ret2 == ret1
+
+    def test_request_cachedsetup_class(self, testdir):
+        item1, item2, item3, item4 = testdir.getitems("""
+            def test_func1(self, something):
+                pass
+            def test_func2(self, something):
+                pass
+            class TestClass:
+                def test_func1a(self, something):
+                    pass
+                def test_func2b(self, something):
+                    pass
+        """)
+        req1 = funcargs.FuncargRequest(item2)
+        l = ["hello2", "hello"]
+        def setup():
+            return l.pop()
+
+        # module level functions setup with scope=class
+        # automatically turn "class" to "module" scope
+        ret1 = req1.cached_setup(setup, scope="class")
+        assert ret1 == "hello"
+        req2 = funcargs.FuncargRequest(item2)
+        ret2 = req2.cached_setup(setup, scope="class")
+        assert ret2 == "hello"
+        
+        req3 = funcargs.FuncargRequest(item3)
+        ret3a = req3.cached_setup(setup, scope="class")
+        ret3b = req3.cached_setup(setup, scope="class")
+        assert ret3a == ret3b == "hello2"
+        req4 = funcargs.FuncargRequest(item4)
+        ret4 = req4.cached_setup(setup, scope="class")
+        assert ret4 == ret3a
 
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")

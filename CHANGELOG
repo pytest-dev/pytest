@@ -37,6 +37,7 @@ Changes between 1.3.4 and 2.0.0dev0
 - fix issue93 stdout/stderr is captured while importing conftest.py
 - fix bug: unittest collected functions now also can have "pytestmark"
   applied at class/module level
+- add ability to use "class" level for cached_setup helper
 
 
 Changes between 1.3.3 and 1.3.4

@@ -626,8 +626,8 @@ class FuncargRequest:
 
         :arg teardown: function receiving a previously setup resource.
         :arg setup: a no-argument function creating a resource.
-        :arg scope: a string value out of ``function``, ``module`` or
-            ``session`` indicating the caching lifecycle of the resource.
+        :arg scope: a string value out of ``function``, ``class``, ``module``
+            or ``session`` indicating the caching lifecycle of the resource.
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
         if not hasattr(self.config, '_setupcache'):
@@ -678,10 +678,15 @@ class FuncargRequest:
     def _getscopeitem(self, scope):
         if scope == "function":
             return self._pyfuncitem
-        elif scope == "module":
-            return self._pyfuncitem.getparent(pytest.Module)
         elif scope == "session":
             return None
+        elif scope == "class":
+            x = self._pyfuncitem.getparent(pytest.Class)
+            if x is not None:
+                return x
+            scope = "module"
+        if scope == "module":
+            return self._pyfuncitem.getparent(pytest.Module)
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def addfinalizer(self, finalizer):
