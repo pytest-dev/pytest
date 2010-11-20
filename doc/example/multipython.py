@@ -1,12 +1,10 @@
 """
-
 module containing a parametrized tests testing cross-python
 serialization via the pickle module.
 """
 import py
 
-pythonlist = ['python2.3', 'python2.4', 'python2.5', 'python2.6']
-# 'jython' 'python3.1']
+pythonlist = ['python2.4', 'python2.5', 'python2.6', 'python2.7', 'python2.8']
 
 def pytest_generate_tests(metafunc):
     if 'python1' in metafunc.funcargnames:

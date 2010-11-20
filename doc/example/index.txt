@@ -10,11 +10,8 @@ need more examples or have questions.
 .. toctree::
    :maxdepth: 2
 
-   builtin.txt
-   pythoncollection.txt
-   controlskip.txt
-   mysetup.txt
-   detectpytest.txt
-   nonpython.txt
    simple.txt
-   xunit_setup.txt
+   pythoncollection.txt
+   mysetup.txt
+   parametrize.txt
+   nonpython.txt

@@ -65,7 +65,7 @@ tool, for example::
 
 If a plugin is installed,  py.test automatically finds and integrates it,
 there is no need to activate it.  If you don't need a plugin anymore simply
-de-install it.  You can find a list of valid plugins through a
+de-install it.  You can find a list of available plugins through a
 `pytest- pypi.python.org search`_.
 
 .. _`available installable plugins`:

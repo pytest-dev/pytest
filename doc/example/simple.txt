@@ -1,8 +1,25 @@
 
 .. highlightlang:: python
 
-simple patterns using hooks
+simple hook using patterns
 ==========================================================
+
+adding custom options
+----------------------
+
+py.test supports adding of standard optparse_ Options.
+A plugin may implement the ``addoption`` hook for registering
+custom options::
+
+    def pytest_addoption(parser):
+        parser.addoption("-M", "--myopt", action="store",
+            help="specify string to set myopt")
+
+    def pytest_configure(config):
+        if config.option.myopt:
+            # do action based on option value
+
+.. _optparse: http://docs.python.org/library/optparse.html
 
 pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
@@ -134,3 +151,128 @@ let's run the full monty::
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
+
+
+.. _`retrieved by hooks as item keywords`:
+
+control skipping of tests according to command line option
+--------------------------------------------------------------
+
+Here is a ``conftest.py`` file adding a ``--runslow`` command
+line option to control skipping of ``slow`` marked tests::
+
+    # content of conftest.py
+
+    import pytest
+    def pytest_addoption(parser):
+        parser.addoption("--runslow", action="store_true",
+            help="run slow tests")
+
+    def pytest_runtest_setup(item):
+        if 'slow' in item.keywords and not item.config.getvalue("runslow"):
+            pytest.skip("need --runslow option to run")
+
+We can now write a test module like this::
+
+    # content of test_module.py
+
+    import pytest
+    slow = pytest.mark.slow
+
+    def test_func_fast():
+        pass
+
+    @slow
+    def test_func_slow():
+        pass
+
+and when running it will see a skipped "slow" test::
+
+    $ py.test test_module.py -rs    # "-rs" means report details on the little 's'
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
+    test path 1: test_module.py
+    
+    test_module.py .s
+    ========================= short test summary info ==========================
+    SKIP [1] /tmp/doc-exec-104/conftest.py:9: need --runslow option to run
+    
+    =================== 1 passed, 1 skipped in 0.02 seconds ====================
+
+Or run it including the ``slow`` marked test::
+
+    $ py.test test_module.py --runslow
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
+    test path 1: test_module.py
+    
+    test_module.py ..
+    
+    ========================= 2 passed in 0.01 seconds =========================
+
+
+writing well integrated assertion helpers
+--------------------------------------------------
+
+If you have a test helper function called from a test you can
+use the ``pytest.fail`` marker to fail a test with a certain message.
+The test support function will not show up in the traceback if you
+set the ``__tracebackhide__`` option somewhere in the helper function.
+Example::
+
+    # content of test_checkconfig.py
+    import pytest
+    def checkconfig(x):
+        __tracebackhide__ = True
+        if not hasattr(x, "config"):
+            pytest.fail("not configured: %s" %(x,))
+
+    def test_something():
+        checkconfig(42)
+
+The ``__tracebackhide__`` setting influences py.test showing
+of tracebacks: the ``checkconfig`` function will not be shown
+unless the ``--fulltrace`` command line option is specified.
+Let's run our little function::
+
+    $ py.test -q
+    F
+    ================================= FAILURES =================================
+    ______________________________ test_something ______________________________
+    
+        def test_something():
+    >       checkconfig(42)
+    E       Failed: not configured: 42
+    
+    test_checkconfig.py:8: Failed
+    1 failed in 0.02 seconds
+
+
+Detect if running from within a py.test run
+--------------------------------------------------------------
+
+Usually it is a bad idea to make application code
+behave differently if called from a test.  But if you
+absolutely must find out if your application code is
+running from a test you can do something like this::
+
+    # content of conftest.py in your testing directory
+
+    def pytest_configure(config):
+        import sys
+        sys._called_from_test = True
+
+    def pytest_unconfigure(config):
+        del sys._called_from_test
+
+and then check for the ``sys._called_from_test`` flag::
+
+    if hasattr(sys, '_called_from_test'):
+        # called from within a test run
+    else:
+        # called "normally"
+    
+accordingly in your application.  It's also a good idea
+to rather use your own application module rather than ``sys``
+for handling flag.
+

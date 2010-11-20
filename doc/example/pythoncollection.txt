@@ -21,7 +21,7 @@ their file system path and then running the test. Through
 an ini-file and the :confval:`addopts` option you can make
 this change more permanently::
 
-    # content of setup.cfg or tox.ini
+    # content of pytest.ini
     [pytest]
     addopts = --pyargs
 
@@ -30,8 +30,8 @@ finding out what is collected
 
 You can always peek at the collection tree without running tests like this::
 
-    . $ py.test --collectonly collectonly.py
-    <Module 'collectonly.py'>
+    . $ py.test --collectonly pythoncollection.py
+    <Module 'pythoncollection.py'>
       <Function 'test_function'>
       <Class 'TestClass'>
         <Instance '()'>

@@ -9,6 +9,7 @@ def pytest_funcarg__setup(request):
 class CostlySetup:
     def __init__(self):
         import time
+        print ("performing costly setup")
         time.sleep(5)
         self.timecostly = 1
 

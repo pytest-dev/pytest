@@ -1,0 +1,142 @@
+
+parametrizing tests
+=================================================
+
+py.test allows to easily implement your own custom
+parametrization scheme for tests.  Here we provide
+some examples for inspiration and re-use.
+
+Parametrizing test methods through per-class configuration
+--------------------------------------------------------------
+
+.. _`unittest parameterizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
+
+Here is an example ``pytest_generate_function`` function implementing a
+parametrization scheme similar to Michael Foords `unittest
+parameterizer`_ in a lot less code::
+
+    # content of ./test_parametrize.py
+    import pytest
+
+    def pytest_generate_tests(metafunc):
+        # called once per each test function
+        for funcargs in metafunc.cls.params[metafunc.function.__name__]:
+            # schedule a new test function run with applied **funcargs
+            metafunc.addcall(funcargs=funcargs)
+
+    class TestClass:
+        # a map specifying multiple argument sets for a test method
+        params = {
+            'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],
+            'test_zerodivision': [dict(a=1, b=0), dict(a=3, b=2)],
+        }
+
+        def test_equals(self, a, b):
+            assert a == b
+
+        def test_zerodivision(self, a, b):
+            pytest.raises(ZeroDivisionError, "a/b")
+
+Running it means we are two tests for each test functions, using
+the respective settings::
+
+    $ py.test -q
+    F..F
+    ================================= FAILURES =================================
+    _________________________ TestClass.test_equals[0] _________________________
+    
+    self = <test_parametrize.TestClass instance at 0x128a638>, a = 1, b = 2
+    
+        def test_equals(self, a, b):
+    >       assert a == b
+    E       assert 1 == 2
+    
+    test_parametrize.py:17: AssertionError
+    ______________________ TestClass.test_zerodivision[1] ______________________
+    
+    self = <test_parametrize.TestClass instance at 0x1296440>, a = 3, b = 2
+    
+        def test_zerodivision(self, a, b):
+    >       pytest.raises(ZeroDivisionError, "a/b")
+    E       Failed: DID NOT RAISE
+    
+    test_parametrize.py:20: Failed
+    2 failed, 2 passed in 0.03 seconds
+
+Parametrizing test methods through a decorator
+--------------------------------------------------------------
+
+Modifying the previous example we can also allow decorators
+for parametrizing test methods::
+
+    # content of test_parametrize2.py
+
+    import pytest
+
+    # test support code
+    def params(funcarglist):
+        def wrapper(function):
+            function.funcarglist = funcarglist
+            return function
+        return wrapper
+
+    def pytest_generate_tests(metafunc):
+        for funcargs in getattr(metafunc.function, 'funcarglist', ()):
+            metafunc.addcall(funcargs=funcargs)
+
+    # actual test code
+    class TestClass:
+        @params([dict(a=1, b=2), dict(a=3, b=3), ])
+        def test_equals(self, a, b):
+            assert a == b
+
+        @params([dict(a=1, b=0), dict(a=3, b=2)])
+        def test_zerodivision(self, a, b):
+            pytest.raises(ZeroDivisionError, "a/b")
+
+Running it gives similar results as before::
+
+    $ py.test -q test_parametrize2.py
+    F..F
+    ================================= FAILURES =================================
+    _________________________ TestClass.test_equals[0] _________________________
+    
+    self = <test_parametrize2.TestClass instance at 0x1dbcc68>, a = 1, b = 2
+    
+        @params([dict(a=1, b=2), dict(a=3, b=3), ])
+        def test_equals(self, a, b):
+    >       assert a == b
+    E       assert 1 == 2
+    
+    test_parametrize2.py:19: AssertionError
+    ______________________ TestClass.test_zerodivision[1] ______________________
+    
+    self = <test_parametrize2.TestClass instance at 0x1dd0488>, a = 3, b = 2
+    
+        @params([dict(a=1, b=0), dict(a=3, b=2)])
+        def test_zerodivision(self, a, b):
+    >       pytest.raises(ZeroDivisionError, "a/b")
+    E       Failed: DID NOT RAISE
+    
+    test_parametrize2.py:23: Failed
+    2 failed, 2 passed in 0.03 seconds
+
+checking serialization between Python interpreters
+--------------------------------------------------------------
+
+Here is a stripped down real-life example of using parametrized
+testing for testing serialization betwee different interpreters.
+We define a ``test_basic_objects`` function which is to be run
+with different sets of arguments for its three arguments::
+
+* ``python1``: first python interpreter
+* ``python2``: second python interpreter
+* ``obj``: object to be dumped from first interpreter and loaded into second interpreter
+
+.. literalinclude:: multipython.py
+
+Running it (with Python-2.4 through to Python2.7 installed)::
+
+   . $ py.test -q multipython.py
+   ....s....s....s....ssssss....s....s....s....ssssss....s....s....s....ssssss
+   48 passed, 27 skipped in 2.55 seconds
