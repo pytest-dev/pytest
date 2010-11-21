@@ -418,6 +418,35 @@ class TestPytestPluginInteractions:
         assert not pluginmanager.listattr("hello")
         assert pluginmanager.listattr("x") == [42]
 
+    def test_listattr_tryfirst(self):
+        class P1:
+            @pytest.mark.tryfirst
+            def m(self):
+                return 17
+
+        class P2:
+            def m(self):
+                return 23
+        class P3:
+            def m(self):
+                return 19
+
+        pluginmanager = PluginManager()
+        p1 = P1()
+        p2 = P2()
+        p3 = P3()
+        pluginmanager.register(p1)
+        pluginmanager.register(p2)
+        pluginmanager.register(p3)
+        methods = pluginmanager.listattr('m')
+        assert methods == [p2.m, p3.m, p1.m]
+        del P1.m.__dict__['tryfirst']
+
+        pytest.mark.trylast(getattr(P2.m, 'im_func', P2.m))
+        methods = pluginmanager.listattr('m')
+        assert methods == [p2.m, p1.m, p3.m]
+
+
 def test_namespace_has_default_and_env_plugins(testdir):
     p = testdir.makepyfile("""
         import pytest

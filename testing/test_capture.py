@@ -377,3 +377,13 @@ def test_fdfuncarg_skips_on_no_osdup(testdir):
     result.stdout.fnmatch_lines([
         "*1 skipped*"
     ])
+
+def test_capture_conftest_runtest_setup(testdir):
+    testdir.makeconftest("""
+        def pytest_runtest_setup():
+            print ("hello19")
+    """)
+    testdir.makepyfile("def test_func(): pass")
+    result = testdir.runpytest()
+    assert result.ret == 0
+    assert 'hello19' not in result.stdout.str()

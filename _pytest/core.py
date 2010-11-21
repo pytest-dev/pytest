@@ -12,7 +12,7 @@ assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
- "config session terminal runner python pdb capture unittest mark skipping "
+ "config mark session terminal runner python pdb unittest capture skipping "
  "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
  "junitxml doctest").split()
 
@@ -272,11 +272,19 @@ class PluginManager(object):
         if plugins is None:
             plugins = self._plugins
         l = []
+        last = []
         for plugin in plugins:
             try:
-                l.append(getattr(plugin, attrname))
+                meth = getattr(plugin, attrname)
+                if hasattr(meth, 'tryfirst'):
+                    last.append(meth)
+                elif hasattr(meth, 'trylast'):
+                    l.insert(0, meth)
+                else:
+                    l.append(meth)
             except AttributeError:
                 continue
+        l.extend(last)
         return l
 
     def call_plugin(self, plugin, methname, kwargs):

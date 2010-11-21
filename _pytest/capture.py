@@ -1,6 +1,6 @@
 """ per-test stdout/stderr capturing mechanisms, ``capsys`` and ``capfd`` function arguments.  """
 
-import py
+import pytest, py
 import os
 
 def pytest_addoption(parser):
@@ -143,13 +143,16 @@ class CaptureManager:
         addouterr(rep, outerr)
         return rep
 
+    @pytest.mark.tryfirst
     def pytest_runtest_setup(self, item):
         self.resumecapture_item(item)
 
+    @pytest.mark.tryfirst
     def pytest_runtest_call(self, item):
         self.resumecapture_item(item)
         self.activate_funcargs(item)
 
+    @pytest.mark.tryfirst
     def pytest_runtest_teardown(self, item):
         self.resumecapture_item(item)
 
@@ -168,6 +171,7 @@ class CaptureManager:
         if hasattr(self, '_capturing'):
             self.suspendcapture()
 
+    @pytest.mark.tryfirst
     def pytest_runtest_makereport(self, __multicall__, item, call):
         self.deactivate_funcargs()
         rep = __multicall__.execute()

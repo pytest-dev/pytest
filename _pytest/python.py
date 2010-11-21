@@ -19,8 +19,8 @@ def pytest_cmdline_main(config):
         showfuncargs(config)
         return 0
 
-def pytest_namespace(__multicall__):
-    __multicall__.execute()
+@pytest.mark.trylast
+def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
         'raises' : raises,

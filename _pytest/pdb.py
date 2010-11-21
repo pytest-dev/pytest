@@ -1,6 +1,6 @@
 """ interactive debugging with PDB, the Python Debugger. """
 
-import py
+import pytest, py
 import sys
 
 def pytest_addoption(parser):
@@ -45,9 +45,11 @@ class PdbInvoke:
     def pytest_sessionfinish(self, session):
         # don't display failures again at the end
         session.config.option.tbstyle = "no"
+
+    @pytest.mark.tryfirst
     def pytest_runtest_makereport(self, item, call, __multicall__):
         if not call.excinfo or \
-            call.excinfo.errisinstance(py.test.skip.Exception) or \
+            call.excinfo.errisinstance(pytest.skip.Exception) or \
             call.excinfo.errisinstance(py.std.bdb.BdbQuit):
             return
         rep = __multicall__.execute()
