@@ -33,16 +33,6 @@ class TestGeneralUsage:
             '*1 passed*',
         ])
 
-    def test_basetemp(self, testdir):
-        mytemp = testdir.tmpdir.mkdir("mytemp")
-        p = testdir.makepyfile("""
-            def test_1(pytestconfig):
-                pytestconfig.getbasetemp().ensure("hello")
-        """)
-        result = testdir.runpytest(p, '--basetemp=%s' % mytemp)
-        assert result.ret == 0
-        assert mytemp.join('hello').check()
-
     def test_assertion_magic(self, testdir):
         p = testdir.makepyfile("""
             def test_this():

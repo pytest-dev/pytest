@@ -5,8 +5,8 @@ py.test: no-boilerplate testing with Python
 
 .. note::
     version 2.0 introduces ``pytest`` as the main Python import name
-    but for compatibility reasons you can continue to use ``import py``
-    and ``py.test.XYZ`` to access :ref:`pytest helpers` in your test code.
+    in examples but you can continue to use ``import py`` and
+    ``py.test.XYZ`` to access :ref:`pytest helpers` in your test code.
 
 Welcome to ``py.test`` documentation:
 

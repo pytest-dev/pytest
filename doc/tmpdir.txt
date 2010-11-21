@@ -54,18 +54,12 @@ Running this would result in a passed test except for the last
 the default base temporary directory
 -----------------------------------------------
 
-..
-    You can create directories by calling one of two methods
-    on the config object:
-    - ``config.mktemp(basename)``: create and return a new tempdir
-    - ``config.ensuretemp(basename)``: create or return a new tempdir
-
 Temporary directories are by default created as sub directories of
-the system temporary directory.  The name will be ``pytest-NUM`` where
+the system temporary directory.  The base name will be ``pytest-NUM`` where
 ``NUM`` will be incremenated with each test run.  Moreover, entries older
 than 3 temporary directories will be removed.
 
-You can override the default temporary directory logic and set it like this::
+You can override the default temporary directory setting like this::
 
     py.test --basetemp=mydir
 

@@ -1,4 +1,4 @@
-""" command line configuration, ini-file and conftest.py processing. """
+""" command line options, ini-file and conftest.py processing. """
 
 import py
 import sys, os
@@ -245,8 +245,6 @@ class CmdOptions(object):
 
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
-    basetemp = None
-
     def __init__(self, pluginmanager=None):
         #: command line option values, usually added via parser.addoption(...)
         #: or parser.getgroup(...).addoption(...) calls
@@ -329,29 +327,6 @@ class Config(object):
         if not args:
             args.append(py.std.os.getcwd())
         self.args = args
-
-    def ensuretemp(self, string, dir=True):
-        return self.getbasetemp().ensure(string, dir=dir)
-
-    def getbasetemp(self):
-        if self.basetemp is None:
-            basetemp = self.option.basetemp
-            if basetemp:
-                basetemp = py.path.local(basetemp)
-                if not basetemp.check(dir=1):
-                    basetemp.mkdir()
-            else:
-                basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
-            self.basetemp = basetemp
-        return self.basetemp
-
-    def mktemp(self, basename, numbered=False):
-        basetemp = self.getbasetemp()
-        if not numbered:
-            return basetemp.mkdir(basename)
-        else:
-            return py.path.local.make_numbered_dir(prefix=basename,
-                keep=0, rootdir=basetemp, lock_timeout=None)
 
     def getini(self, name):
         """ return configuration value from an ini file. If the

@@ -81,33 +81,6 @@ class TestConfigCmdlineParsing:
         pytest.raises(AssertionError, "config.parse([])")
 
 
-class TestConfigTmpdir:
-    def test_getbasetemp(self, testdir):
-        config = testdir.Config()
-        config.basetemp = "hello"
-        config.getbasetemp() == "hello"
-
-    def test_mktemp(self, testdir):
-        config = testdir.Config()
-        config.basetemp = testdir.mkdir("hello")
-        tmp = config.mktemp("world")
-        assert tmp.relto(config.basetemp) == "world"
-        tmp = config.mktemp("this", numbered=True)
-        assert tmp.relto(config.basetemp).startswith("this")
-        tmp2 = config.mktemp("this", numbered=True)
-        assert tmp2.relto(config.basetemp).startswith("this")
-        assert tmp2 != tmp
-
-    def test_reparse(self, testdir):
-        config2 = testdir.reparseconfig([])
-        config3 = testdir.reparseconfig([])
-        assert config2.getbasetemp() != config3.getbasetemp()
-        assert not config2.getbasetemp().relto(config3.getbasetemp())
-        assert not config3.getbasetemp().relto(config2.getbasetemp())
-
-    def test_reparse_filename_too_long(self, testdir):
-        config = testdir.reparseconfig(["--basetemp=%s" % ("123"*300)])
-
 class TestConfigAPI:
 
     def test_config_trace(self, testdir):

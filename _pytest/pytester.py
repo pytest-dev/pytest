@@ -173,7 +173,7 @@ class TmpTestdir:
         self.Config = request.config.__class__
         self._pytest = request.getfuncargvalue("_pytest")
         # XXX remove duplication with tmpdir plugin
-        basetmp = request.config.ensuretemp("testdir")
+        basetmp = request.config._tmpdirhandler.ensuretemp("testdir")
         name = request.function.__name__
         for i in range(100):
             try:
@@ -350,7 +350,12 @@ class TmpTestdir:
         if not args:
             args = (self.tmpdir,)
         config = self.config_preparse()
-        args = list(args) + ["--basetemp=%s" % self.tmpdir.dirpath('basetemp')]
+        args = list(args)
+        for x in args:
+            if str(x).startswith('--basetemp'):
+                break
+        else:
+            args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
         config.parse(args)
         return config
 
@@ -361,7 +366,8 @@ class TmpTestdir:
         oldconfig = getattr(py.test, 'config', None)
         try:
             c = py.test.config = self.Config()
-            c.basetemp = oldconfig.mktemp("reparse", numbered=True)
+            c.basetemp = py.path.local.make_numbered_dir(prefix="reparse",
+                keep=0, rootdir=self.tmpdir, lock_timeout=None)
             c.parse(args)
             return c
         finally:
