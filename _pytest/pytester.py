@@ -454,7 +454,7 @@ class TmpTestdir:
     def _getpybinargs(self, scriptname):
         if not self.request.config.getvalue("notoolsonpath"):
             import pytest
-            script = pytest.__file__.strip("co")
+            script = pytest.__file__.rstrip("co")
             assert script, "script %r not found" % scriptname
             # XXX we rely on script refering to the correct environment
             # we cannot use "(py.std.sys.executable,script)"
