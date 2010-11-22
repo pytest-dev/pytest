@@ -405,14 +405,13 @@ def getcfg(args, inibasenames):
         args = [py.path.local()]
     for arg in args:
         arg = py.path.local(arg)
-        if arg.check():
-            for base in arg.parts(reverse=True):
-                for inibasename in inibasenames:
-                    p = base.join(inibasename)
-                    if p.check():
-                        iniconfig = py.iniconfig.IniConfig(p)
-                        if 'pytest' in iniconfig.sections:
-                            return iniconfig['pytest']
+        for base in arg.parts(reverse=True):
+            for inibasename in inibasenames:
+                p = base.join(inibasename)
+                if p.check():
+                    iniconfig = py.iniconfig.IniConfig(p)
+                    if 'pytest' in iniconfig.sections:
+                        return iniconfig['pytest']
     return {}
    
 def findupwards(current, basename):

@@ -536,7 +536,6 @@ class TestGenericReporting:
         p = testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
-            "*test_collect_fail.py E*",
             ">   import xyz",
             "E   ImportError: No module named xyz",
             "*1 error*",

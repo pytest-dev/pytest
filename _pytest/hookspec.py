@@ -218,6 +218,3 @@ def pytest_internalerror(excrepr):
 
 def pytest_keyboard_interrupt(excinfo):
     """ called for keyboard interrupt. """
-
-def pytest_trace(category, msg):
-    """ called for debug info. """

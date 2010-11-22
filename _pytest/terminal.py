@@ -2,7 +2,7 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-import py
+import pytest, py
 import sys
 import os
 
@@ -98,6 +98,7 @@ class TerminalReporter:
         self.showheader = self.verbosity >= 0
         self.showfspath = self.verbosity >= 0
         self.showlongtestinfo = self.verbosity > 0
+        self._numcollected = 0
 
         self.stats = {}
         self.curdir = py.path.local()
@@ -106,6 +107,7 @@ class TerminalReporter:
         self._tw = py.io.TerminalWriter(file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)
+        self.hasmarkup = self._tw.hasmarkup
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char,char)
@@ -138,6 +140,10 @@ class TerminalReporter:
         line = str(line)
         self.ensure_newline()
         self._tw.line(line, **markup)
+
+    def rewrite(self, line, **markup):
+        line = str(line)
+        self._tw.write("\r" + line, **markup)
 
     def write_sep(self, sep, title=None, **markup):
         self.ensure_newline()
@@ -207,14 +213,42 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
+    def pytest_collection(self):
+        if not self.hasmarkup:
+            self.write_line("collecting ...", bold=True)
+
     def pytest_collectreport(self, report):
-        if not report.passed:
-            if report.failed:
-                self.stats.setdefault("error", []).append(report)
-                self.write_fspath_result(report.fspath, "E")
-            elif report.skipped:
-                self.stats.setdefault("skipped", []).append(report)
-                self.write_fspath_result(report.fspath, "S")
+        if report.failed:
+            self.stats.setdefault("error", []).append(report)
+        elif report.skipped:
+            self.stats.setdefault("skipped", []).append(report)
+        items = [x for x in report.result if isinstance(x, pytest.Item)]
+        self._numcollected += len(items)
+        if self.hasmarkup:
+            #self.write_fspath_result(report.fspath, 'E')
+            self.report_collect()
+
+    def report_collect(self, final=False):
+        errors = len(self.stats.get('error', []))
+        skipped = len(self.stats.get('skipped', []))
+        if final:
+            line = "collected "
+        else:
+            line = "collecting "
+        line += str(self._numcollected) + " items"
+        if errors:
+            line += " / %d errors" % errors
+        if skipped:
+            line += " / %d skipped" % skipped
+        if self.hasmarkup:
+            if final:
+                line += " \n"
+            self.rewrite(line, bold=True)
+        else:
+            self.write_line(line)
+
+    def pytest_collection_modifyitems(self):
+        self.report_collect(True)
 
     def pytest_sessionstart(self, session):
         self._sessionstarttime = py.std.time.time()
@@ -236,8 +270,8 @@ class TerminalReporter:
     def pytest_collection_finish(self):
         if not self.showheader:
             return
-        for i, testarg in enumerate(self.config.args):
-            self.write_line("test path %d: %s" %(i+1, testarg))
+        #for i, testarg in enumerate(self.config.args):
+        #    self.write_line("test path %d: %s" %(i+1, testarg))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
         __multicall__.execute()

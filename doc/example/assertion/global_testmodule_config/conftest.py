@@ -7,4 +7,4 @@ def pytest_runtest_setup(item):
             return
         mod = item.getparent(pytest.Module).obj
         if hasattr(mod, 'hello'):
-            py.builtin.print_("mod.hello", mod.hello)
+            print ("mod.hello %r" % (mod.hello,))
