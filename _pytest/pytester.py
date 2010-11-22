@@ -125,11 +125,14 @@ class HookRecorder:
                 py.test.fail("could not find %r check %r" % (name, check))
 
     def popcall(self, name):
+        __tracebackhide__ = True
         for i, call in enumerate(self.calls):
             if call._name == name:
                 del self.calls[i]
                 return call
-        raise ValueError("could not find call %r" %(name, ))
+        lines = ["could not find call %r, in:" % (name,)]
+        lines.extend(["  %s" % str(x) for x in self.calls])
+        py.test.fail("\n".join(lines))
 
     def getcall(self, name):
         l = self.getcalls(name)

@@ -82,7 +82,7 @@ def test_hookrecorder_basic():
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
-    pytest.raises(ValueError, "rec.popcall('abc')")
+    pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
 
 def test_hookrecorder_basic_no_args_hook():
     rec = HookRecorder(PluginManager())
