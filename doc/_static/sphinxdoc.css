@@ -17,7 +17,7 @@
 body {
     font-family: 'Lucida Grande', 'Lucida Sans Unicode', 'Geneva',
                  'Verdana', sans-serif;
-    font-size: 14px;
+    font-size: 1.1em;
     letter-spacing: -0.01em;
     line-height: 150%;
     text-align: center;
@@ -38,7 +38,7 @@ div.document {
 }
 
 div.bodywrapper {
-    margin: 0 360px 0 0;
+    margin: 0 240px 0 0;
     border-right: 1px solid #ccc;
 }
 
@@ -88,7 +88,7 @@ div.sphinxsidebarwrapper {
 div.sphinxsidebar {
     margin: 0;
     padding: 0.5em 15px 15px 0;
-    width: 310px;
+    width: 210px;
     float: right;
     font-size: 1em;
     text-align: left;
@@ -99,7 +99,7 @@ div.sphinxsidebar h3, div.sphinxsidebar h4 {
     font-size: 1em;
     padding: 0.1em 0 0.1em 0.5em;
     color: white;
-    border: 2px solid #86989B;
+    border: 1px solid #86989B;
     background-color: #AFC1C4;
 }
 

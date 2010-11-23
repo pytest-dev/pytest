@@ -16,9 +16,10 @@ Some historic, some practical reasons: ``py.test`` used to be part of
 the ``py`` package which provided several developer utitilities,
 all starting with ``py.<TAB>``, providing nice TAB-completion. If
 you install ``pip install pycmd`` you get these tools from a separate
-package.  These days the command line tool could be ``pytest``
-but then many people have gotten used to the old name and there
-also is another tool with this same which would lead to some clashes.
+package.  These days the command line tool could be called ``pytest``
+but then again many people have gotten used to the old name and there
+is another tool named "pytest" so we just decided to stick with
+``py.test``.
 
 What's py.test's relation to ``nosetests``?
 +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -35,11 +36,12 @@ cycle.
 What's this "magic" with py.test?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Around 2007 (version ``0.8``) some several people claimed that py.test
-was using too much "magic".  It has been refactored a lot.  It is today
+Around 2007 (version ``0.8``) some people claimed that py.test
+was using too much "magic".  It has been refactored a lot.  Thrown
+out old code.  Deprecated unused approaches and code.  And it is today
 probably one of the smallest, most universally runnable and most
-customizable testing frameworks for Python.   It remains true
-that ``py.test`` uses metaprogramming techniques, i.e. it views
+customizable testing frameworks for Python.   It's true that
+``py.test`` uses metaprogramming techniques, i.e. it views
 test code similar to how compilers view programs, using a
 somewhat abstract internal model.
 

@@ -2,13 +2,18 @@ py.test 2.0.0: improved asserts, unittest, reporting, config, docs
 ===========================================================================
 
 Welcome to pytest-2.0.0, a major new release of "py.test", the rapid
-easy Python testing tool.  There are many new features and a lot of
-long-deprecated code is removed, resulting in a much smaller and cleaner
-implementation.  If you had a test suite using non-deprecated
-functionality 2.0.0 is very likely to continue to work for you without
-requiring changes.
+easy Python testing tool.  There are many new features and enhancements,
+see below.  Also a lot of long-deprecated code has been removed,
+resulting in a much smaller and cleaner implementation.   Note that
+pytest used to part of the "py" distribution up until version py-1.3.4
+but this has changed now:  pytest-2.0.0 only contains py.test related
+code and is expected to be backward-compatible to existing test code. If
+you want to install it, type one of::
 
-Check out the revised the improved documentation and examples:
+    pip install -U pytest
+    easy_install -U pytest
+
+and check out the much improved documentation and examples:
 
     http://pytest.org/2.0.0/index.html
 
@@ -136,6 +141,7 @@ More Detailed Changes between 1.3.4 and 2.0.0
   is removed).
 - add a new "-q" option which decreases verbosity and prints a more
   nose/unittest-style "dot" output.
+- fix issue135 - marks now work with unittest test cases as well
 - fix issue126 - introduce py.test.set_trace() to trace execution via
   PDB during the running of tests even if capturing is ongoing.
 - fix issue123 - new "python -m py.test" invocation for py.test
@@ -160,3 +166,6 @@ More Detailed Changes between 1.3.4 and 2.0.0
 - fix issue93 stdout/stderr is captured while importing conftest.py
 - fix bug: unittest collected functions now also can have "pytestmark"
   applied at class/module level
+- add ability to use "class" level for cached_setup helper
+- fix strangeness: mark.* objects are now immutable, create new instances
+

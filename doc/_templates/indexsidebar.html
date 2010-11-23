@@ -1,0 +1,21 @@
+<h3>Download</h3>
+{% if version.endswith('(hg)') %}
+<p>This documentation is for version <b>{{ version }}</b>, which is
+  not released yet.</p>
+<p>You can use it from the
+  <a href="http://bitbucket.org/hpk42/pytest">Bitbucket Repo</a> or look for
+  released versions in the <a href="http://pypi.python.org/pypi/pytest">Python
+    Package Index</a>.</p>
+{% else %}
+<p>Current: <b>{{ version }}</b>
+[<a href="{{ pathto('changelog') }}">Changes</a>]</p>
+<p>
+<a href="http://pypi.python.org/pypi/pytest">pytest on PyPI</a>
+</p>
+<pre>pip install pytest</pre>
+{% endif %}
+
+<h3>Questions? Suggestions?</h3>
+
+<p>Checkout <a href="{{ pathto('contact') }}">support channels</a>
+</p>
