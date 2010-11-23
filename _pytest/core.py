@@ -8,7 +8,7 @@ import inspect
 import py
 from _pytest import hookspec # the extension point definitions
 
-assert py.__version__.split(".")[:2] >= ['2', '0'], ("installation problem: "
+assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
