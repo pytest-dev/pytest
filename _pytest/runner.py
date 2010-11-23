@@ -358,7 +358,9 @@ def skip(msg=""):
 skip.Exception = Skipped
 
 def fail(msg="", pytrace=True):
-    """ explicitely fail an currently-executing test with the given Message. """
+    """ explicitely fail an currently-executing test with the given Message.
+    if @pytrace is not True the msg represents the full failure information.
+    """
     __tracebackhide__ = True
     raise Failed(msg=msg, pytrace=pytrace)
 fail.Exception = Failed

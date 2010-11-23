@@ -42,10 +42,6 @@ def pytest_runtest_makereport():
     pytestPDB.item = None
     
 class PdbInvoke:
-    def pytest_sessionfinish(self, session):
-        # don't display failures again at the end
-        session.config.option.tbstyle = "no"
-
     @pytest.mark.tryfirst
     def pytest_runtest_makereport(self, item, call, __multicall__):
         if not call.excinfo or \
@@ -62,6 +58,7 @@ class PdbInvoke:
         rep.toterminal(tw)
         tw.sep(">", "entering PDB")
         post_mortem(call.excinfo._excinfo[2])
+        rep._pdbshown = True
         return rep
 
 def post_mortem(t):

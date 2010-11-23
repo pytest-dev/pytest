@@ -332,13 +332,21 @@ class TerminalReporter:
     #
     # summaries for sessionfinish
     #
+    def getreports(self, name):
+        l = []
+        for x in self.stats.get(name, []):
+            if not hasattr(x, '_pdbshown'):
+                l.append(x)
+        return l
 
     def summary_failures(self):
-        tbstyle = self.config.option.tbstyle
-        if 'failed' in self.stats and tbstyle != "no":
+        if self.config.option.tbstyle != "no":
+            reports = self.getreports('failed')
+            if not reports:
+                return
             self.write_sep("=", "FAILURES")
-            for rep in self.stats['failed']:
-                if tbstyle == "line":
+            for rep in reports:
+                if self.config.option.tbstyle == "line":
                     line = self._getcrashline(rep)
                     self.write_line(line)
                 else:
@@ -347,7 +355,10 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
 
     def summary_errors(self):
-        if 'error' in self.stats and self.config.option.tbstyle != "no":
+        if self.config.option.tbstyle != "no":
+            reports = self.getreports('error')
+            if not reports:
+                return
             self.write_sep("=", "ERRORS")
             for rep in self.stats['error']:
                 msg = self._getfailureheadline(rep)

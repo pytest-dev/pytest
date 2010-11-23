@@ -143,3 +143,11 @@ class TestPDB:
         child.expect("x = 5")
         child.sendeof()
         child.wait()
+
+    def test_pdb_collection_failure_is_shown(self, testdir):
+        p1 = testdir.makepyfile("""xxx """)
+        result = testdir.runpytest("--pdb", p1)
+        result.stdout.fnmatch_lines([
+            "*NameError*xxx*",
+            "*1 error*",
+        ])
