@@ -103,3 +103,65 @@ def test_class_setup(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=3)
+
+
+@pytest.mark.multi(type=['Error', 'Failure'])
+def test_testcase_adderrorandfailure_defers(testdir, type):
+    testdir.makepyfile("""
+        from unittest import TestCase
+        import pytest
+        class MyTestCase(TestCase):
+            def run(self, result):
+                excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
+                try:
+                    result.add%s(self, excinfo._excinfo)
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    pytest.fail("add%s should not raise")
+            def test_hello(self):
+                pass
+    """ % (type, type))
+    result = testdir.runpytest()
+    assert 'should not raise' not in result.stdout.str()
+
+@pytest.mark.multi(type=['Error', 'Failure'])
+def test_testcase_custom_exception_info(testdir, type):
+    testdir.makepyfile("""
+        from unittest import TestCase
+        import py, pytest
+        class MyTestCase(TestCase):
+            def run(self, result):
+                excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
+                # we fake an incompatible exception info
+                from _pytest.monkeypatch import monkeypatch
+                mp = monkeypatch()
+                def t(*args):
+                    mp.undo()
+                    raise TypeError()
+                mp.setattr(py.code, 'ExceptionInfo', t)
+                try:
+                    excinfo = excinfo._excinfo
+                    result.add%(type)s(self, excinfo)
+                finally:
+                    mp.undo()
+            def test_hello(self):
+                pass
+    """ % locals())
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "NOTE: Incompatible Exception Representation*",
+        "*ZeroDivisionError*",
+        "*1 failed*",
+    ])
+
+def test_testcase_totally_incompatible_exception_info(testdir):
+    item, = testdir.getitems("""
+        from unittest import TestCase
+        class MyTestCase(TestCase):
+            def test_hello(self):
+                pass
+    """)
+    item.addError(None, 42)
+    excinfo = item._excinfo
+    assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())

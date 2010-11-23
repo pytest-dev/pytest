@@ -334,6 +334,17 @@ def test_pytest_fail():
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Failed")
 
+def test_pytest_fail_notrace(testdir):
+    testdir.makepyfile("""
+        import pytest
+        def test_hello():
+            pytest.fail("hello", pytrace=False)
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "hello"
+    ])
+
 def test_exception_printing_skip():
     try:
         pytest.skip("hello")

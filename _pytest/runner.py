@@ -142,6 +142,7 @@ class BaseReport(object):
 def pytest_runtest_makereport(item, call):
     when = call.when
     keywords = dict([(x,1) for x in item.keywords])
+    excinfo = call.excinfo
     if not call.excinfo:
         outcome = "passed"
         longrepr = None
@@ -312,8 +313,9 @@ class OutcomeException(Exception):
     """ OutcomeException and its subclass instances indicate and
         contain info about test and collection outcomes.
     """
-    def __init__(self, msg=None):
+    def __init__(self, msg=None, pytrace=True):
         self.msg = msg
+        self.pytrace = pytrace
 
     def __repr__(self):
         if self.msg:
@@ -355,10 +357,10 @@ def skip(msg=""):
     raise Skipped(msg=msg)
 skip.Exception = Skipped
 
-def fail(msg=""):
+def fail(msg="", pytrace=True):
     """ explicitely fail an currently-executing test with the given Message. """
     __tracebackhide__ = True
-    raise Failed(msg=msg)
+    raise Failed(msg=msg, pytrace=pytrace)
 fail.Exception = Failed
 
 

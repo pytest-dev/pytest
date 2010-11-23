@@ -329,6 +329,9 @@ class FunctionMixin(PyobjMixin):
 
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
+        if excinfo.errisinstance(pytest.fail.Exception):
+            if not excinfo.value.pytrace:
+                return str(excinfo.value)
         return self._repr_failure_py(excinfo,
             style=self.config.option.tbstyle)
 
