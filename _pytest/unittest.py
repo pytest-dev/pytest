@@ -26,11 +26,13 @@ class UnitTestCase(pytest.Class):
         meth = getattr(self.obj, 'setUpClass', None)
         if meth is not None:
             meth()
+        super(UnitTestCase, self).setup()
 
     def teardown(self):
         meth = getattr(self.obj, 'tearDownClass', None)
         if meth is not None:
             meth()
+        super(UnitTestCase, self).teardown()
 
 class TestCaseFunction(pytest.Function):
     _excinfo = None
