@@ -339,11 +339,15 @@ def test_pytest_fail_notrace(testdir):
         import pytest
         def test_hello():
             pytest.fail("hello", pytrace=False)
+        def teardown_function(function):
+            pytest.fail("world", pytrace=False)
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        "hello"
+        "world",
+        "hello",
     ])
+    assert 'def teardown_function' not in result.stdout.str()
 
 def test_exception_printing_skip():
     try:
