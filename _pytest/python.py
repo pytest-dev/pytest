@@ -13,6 +13,13 @@ def pytest_addoption(parser):
     group.addoption('--funcargs',
                action="store_true", dest="showfuncargs", default=False,
                help="show available function arguments, sorted by plugin")
+    parser.addini("python_files", type="args",
+        default=('test_*.py', '*_test.py'),
+        help="glob-style file patterns for Python test module discovery")
+    parser.addini("python_classes", type="args", default=("Test",),
+        help="prefixes for Python test class discovery")
+    parser.addini("python_functions", type="args", default=("test",),
+        help="prefixes for Python test function and method discovery")
 
 def pytest_cmdline_main(config):
     if config.option.showfuncargs:
@@ -46,8 +53,13 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
 def pytest_collect_file(path, parent):
     ext = path.ext
     pb = path.purebasename
-    if ext == ".py" and (pb.startswith("test_") or pb.endswith("_test") or
-       parent.session.isinitpath(path)):
+    if ext == ".py":
+        if not parent.session.isinitpath(path):
+            for pat in parent.config.getini('python_files'):
+                if path.fnmatch(pat):
+                    break
+            else:
+               return
         return parent.ihook.pytest_pycollect_makemodule(
             path=path, parent=parent)
 
@@ -145,9 +157,14 @@ class PyobjMixin(object):
 class PyCollectorMixin(PyobjMixin, pytest.Collector):
 
     def funcnamefilter(self, name):
-        return name.startswith('test')
+        for prefix in self.config.getini("python_functions"):
+            if name.startswith(prefix):
+                return True
+        
     def classnamefilter(self, name):
-        return name.startswith('Test')
+        for prefix in self.config.getini("python_classes"):
+            if name.startswith(prefix):
+                return True
 
     def collect(self):
         # NB. we avoid random getattrs and peek in the __dict__ instead

@@ -258,6 +258,7 @@ class Config(object):
         self.trace = self.pluginmanager.trace.root.get("config")
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
+        self._inicache = {}
 
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
@@ -332,6 +333,13 @@ class Config(object):
         """ return configuration value from an ini file. If the
         specified name hasn't been registered through a prior ``parse.addini``
         call (usually from a plugin), a ValueError is raised. """
+        try:
+            return self._inicache[name]
+        except KeyError:
+            self._inicache[name] = val = self._getini(name)
+            return val
+
+    def _getini(self, name):
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:

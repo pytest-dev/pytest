@@ -12,18 +12,62 @@ You can set the :confval:`norecursedirs` option in an ini-file, for example your
 
 This would tell py.test to not recurse into typical subversion or sphinx-build directories or into any ``tmp`` prefixed directory.
 
-always try to interpret arguments as Python packages
+.. _`change naming conventions`:
+
+change naming conventions
+-----------------------------------------------------
+
+You can configure different naming conventions by setting
+the :confval:`pytest_pycollect` configuration option.  Example::
+
+    # content of setup.cfg
+    # can also be defined in in tox.ini or pytest.ini file
+    [pytest]
+    python_files=check_*.py
+    python_classes=Check
+    python_functions=check
+
+This would make py.test look for ``check_`` prefixes in
+Python filenames, ``Check`` prefixes in classes and ``check`` prefixes
+in functions and classes.  For example, if we have::
+
+    # content of check_myapp.py
+    class CheckMyApp:
+        def check_simple(self):
+            pass
+        def check_complex(self):
+            pass
+
+then the test collection looks like this::
+
+    $ py.test --collectonly
+    <Module 'check_myapp.py'>
+      <Class 'CheckMyApp'>
+        <Instance '()'>
+          <Function 'check_simple'>
+          <Function 'check_complex'>
+
+interpret cmdline arguments as Python packages
 -----------------------------------------------------
 
 You can use the ``--pyargs`` option to make py.test try
 interpreting arguments as python package names, deriving
-their file system path and then running the test. Through
-an ini-file and the :confval:`addopts` option you can make
-this change more permanently::
+their file system path and then running the test. For
+example if you have unittest2 installed you can type::
+
+    py.test --pyargs unittest2.test.test_skipping -q
+
+which will run the respective test module.   Like with
+other options, through an ini-file and the :confval:`addopts` option you
+can make this change more permanently::
 
     # content of pytest.ini
     [pytest]
     addopts = --pyargs
+
+Now a simple invocation of ``py.test NAME`` will check
+if NAME exists as an importable package/module and otherwise
+treat it as a filesystem path.
 
 finding out what is collected
 -----------------------------------------------

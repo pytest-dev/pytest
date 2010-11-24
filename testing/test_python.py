@@ -1208,3 +1208,32 @@ class TestRaises:
 
 
 
+def test_customized_python_discovery(testdir):
+    testdir.makeini("""
+        [pytest]
+        python_files=check_*.py
+        python_classes=Check
+        python_functions=check
+    """)
+    p = testdir.makepyfile("""
+        def check_simple():
+            pass
+        class CheckMyApp:
+            def check_meth(self):
+                pass
+    """)
+    p2 = p.new(basename=p.basename.replace("test", "check"))
+    p.move(p2)
+    result = testdir.runpytest("--collectonly", "-s")
+    result.stdout.fnmatch_lines([
+        "*check_customized*",
+        "*check_simple*",
+        "*CheckMyApp*",
+        "*check_meth*",
+    ])
+    
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*2 passed*",
+    ])

@@ -86,3 +86,18 @@ builtin configuration file options
    This would tell py.test to not recurse into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
+.. confval:: python_discovery
+
+   Determines names and patterns for finding Python tests, specified
+   through indendent ``name = value`` settings with these possible names::
+
+        [pytest]
+        python_discovery =
+            file = <glob-pattern> <glob-pattern>
+            func = <function-or-method-name-prefix>
+            class = <class-name-prefix>
+
+   See :ref:`change naming conventions` for examples. the ``class``
+   to be empty in which case all non-underscore empty classes
+   will be considered.
+
