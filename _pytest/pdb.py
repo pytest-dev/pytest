@@ -44,11 +44,11 @@ def pytest_runtest_makereport():
 class PdbInvoke:
     @pytest.mark.tryfirst
     def pytest_runtest_makereport(self, item, call, __multicall__):
+        rep = __multicall__.execute()
         if not call.excinfo or \
             call.excinfo.errisinstance(pytest.skip.Exception) or \
             call.excinfo.errisinstance(py.std.bdb.BdbQuit):
-            return
-        rep = __multicall__.execute()
+            return rep
         if "xfail" in rep.keywords:
             return rep
         # we assume that the above execute() suspended capturing

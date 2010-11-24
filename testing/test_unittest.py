@@ -185,3 +185,107 @@ def test_testcase_totally_incompatible_exception_info(testdir):
     item.addError(None, 42)
     excinfo = item._excinfo
     assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())
+
+
+
+class TestTrialUnittest:
+    def setup_class(cls):
+        pytest.importorskip("twisted.trial.unittest")
+
+    def test_trial_exceptions_with_skips(self, testdir):
+        testdir.makepyfile("""
+            from twisted.trial import unittest
+            import pytest
+            class TC(unittest.TestCase):
+                def test_hello(self):
+                    pytest.skip("skip_in_method")
+                @pytest.mark.skipif("sys.version_info != 1")
+                def test_hello2(self):
+                    pass
+                @pytest.mark.xfail(reason="iwanto")
+                def test_hello3(self):
+                    assert 0
+                def test_hello4(self):
+                    pytest.xfail("i2wanto")
+
+            class TC2(unittest.TestCase):
+                def setup_class(cls):
+                    pytest.skip("skip_in_setup_class")
+                def test_method(self):
+                    pass
+        """)
+        result = testdir.runpytest("-rxs")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines_random([
+            "*skip_in_setup_class*",
+            "*iwanto*",
+            "*i2wanto*",
+            "*sys.version_info*",
+            "*skip_in_method*",
+            "*3 skipped*2 xfail*",
+        ])
+
+    def test_trial_pdb(self, testdir):
+        p = testdir.makepyfile("""
+            from twisted.trial import unittest
+            import pytest
+            class TC(unittest.TestCase):
+                def test_hello(self):
+                    assert 0, "hellopdb"
+        """)
+        child = testdir.spawn_pytest(p)
+        child.expect("hellopdb")
+        child.sendeof()
+
+def test_djangolike_testcase(testdir):
+    # contributed from Morten Breekevold
+    testdir.makepyfile("""
+        from unittest import TestCase, main
+
+        class DjangoLikeTestCase(TestCase):
+
+            def setUp(self):
+                print ("setUp()")
+
+            def test_presetup_has_been_run(self):
+                print ("test_thing()")
+                self.assertTrue(hasattr(self, 'was_presetup'))
+
+            def tearDown(self):
+                print ("tearDown()")
+
+            def __call__(self, result=None):
+                try:
+                    self._pre_setup()
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except Exception:
+                    import sys
+                    result.addError(self, sys.exc_info())
+                    return
+                super(DjangoLikeTestCase, self).__call__(result)
+                try:
+                    self._post_teardown()
+                except (KeyboardInterrupt, SystemExit):
+                    raise
+                except Exception:
+                    import sys
+                    result.addError(self, sys.exc_info())
+                    return
+
+            def _pre_setup(self):
+                print ("_pre_setup()")
+                self.was_presetup = True
+
+            def _post_teardown(self):
+                print ("_post_teardown()")
+    """)
+    result = testdir.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*_pre_setup()*",
+        "*setUp()*",
+        "*test_thing()*",
+        "*tearDown()*",
+        "*_post_teardown()*",
+    ])

@@ -44,8 +44,8 @@ class TestCaseFunction(pytest.Function):
         pass
 
     def _addexcinfo(self, rawexcinfo):
-        #__tracebackhide__ = True
-        assert rawexcinfo
+        # unwrap potential exception info (see twisted trial support below)
+        rawexcinfo = getattr(rawexcinfo, '_rawexcinfo', rawexcinfo)
         try:
             self._excinfo = py.code.ExceptionInfo(rawexcinfo)
         except TypeError:
@@ -60,10 +60,10 @@ class TestCaseFunction(pytest.Function):
                 except:
                     pytest.fail("ERROR: Unknown Incompatible Exception "
                         "representation:\n%r" %(rawexcinfo,), pytrace=False)
-            except pytest.fail.Exception:
-                self._excinfo = py.code.ExceptionInfo()
             except KeyboardInterrupt:
                 raise
+            except pytest.fail.Exception:
+                self._excinfo = py.code.ExceptionInfo()
 
     def addError(self, testcase, rawexcinfo):
         self._addexcinfo(rawexcinfo)
@@ -84,3 +84,30 @@ def pytest_runtest_makereport(item, call):
             call.excinfo = item._excinfo
             item._excinfo = None
             del call.result
+
+# twisted trial support
+def pytest_runtest_protocol(item, __multicall__):
+    if isinstance(item, TestCaseFunction):
+        if 'twisted.trial.unittest' in sys.modules:
+            ut = sys.modules['twisted.python.failure']
+            Failure__init__ = ut.Failure.__init__.im_func
+            check_testcase_implements_trial_reporter()
+            def excstore(self, exc_value=None, exc_type=None, exc_tb=None):
+                if exc_value is None:
+                    self._rawexcinfo = sys.exc_info()
+                else:
+                    self._rawexcinfo = (exc_value, exc_type, exc_tb)
+                Failure__init__(self, exc_value, exc_type, exc_tb)
+            ut.Failure.__init__ = excstore
+            try:
+                return __multicall__.execute()
+            finally:
+                ut.Failure.__init__ = Failure__init__
+
+def check_testcase_implements_trial_reporter(done=[]):
+    if done:
+        return
+    from zope.interface import classImplements
+    from twisted.trial.itrial import IReporter
+    classImplements(TestCaseFunction, IReporter)
+    done.append(1)
