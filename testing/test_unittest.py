@@ -228,7 +228,7 @@ class TestTrialUnittest:
     def test_trial_error(self, testdir):
         testdir.makepyfile("""
             from twisted.trial.unittest import TestCase
-            from twisted.internet.defer import inlineCallbacks
+            from twisted.internet.defer import Deferred
             from twisted.internet import reactor
 
             class TC(TestCase):
@@ -238,13 +238,16 @@ class TestTrialUnittest:
                 def test_two(self):
                     def f(_):
                         crash
-                    
-                    return reactor.callLater(0.3, f)
+
+                    d = Deferred()
+                    d.addCallback(f)
+                    reactor.callLater(0.3, d.callback, None)
+                    return d
 
                 def test_three(self):
                     def f():
                         pass # will never get called
-                    return reactor.callLater(0.3, f)
+                    reactor.callLater(0.3, f)
                 # will crash at teardown
 
                 def test_four(self):
@@ -252,7 +255,10 @@ class TestTrialUnittest:
                         reactor.callLater(0.3, f)
                         crash
 
-                    return reactor.callLater(0.3, f)
+                    d = Deferred()
+                    d.addCallback(f)
+                    reactor.callLater(0.3, d.callback, None)
+                    return d
                 # will crash both at test time and at teardown
         """)
         result = testdir.runpytest()
