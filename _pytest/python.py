@@ -208,7 +208,10 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
         metafunc = Metafunc(funcobj, config=self.config,
             cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
-        plugins = getplugins(self, withpy=True)
+        extra = [module]
+        if cls is not None:
+            extra.append(cls())
+        plugins = self.getplugins() + extra
         gentesthook.pcall(plugins, metafunc=metafunc)
         if not metafunc._calls:
             return Function(name, parent=self)
@@ -497,17 +500,6 @@ def fillfuncargs(function):
     request = FuncargRequest(pyfuncitem=function)
     request._fillfuncargs()
 
-def getplugins(node, withpy=False): # might by any node
-    plugins = node.config._getmatchingplugins(node.fspath)
-    if withpy:
-        mod = node.getparent(pytest.Module)
-        if mod is not None:
-            plugins.append(mod.obj)
-        inst = node.getparent(pytest.Instance)
-        if inst is not None:
-            plugins.append(inst.obj)
-    return plugins
-
 _notexists = object()
 class CallSpec:
     def __init__(self, funcargs, id, param):
@@ -572,7 +564,8 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam
-        self._plugins = getplugins(pyfuncitem, withpy=True)
+        extra = filter(None, [self.module, self.instance])
+        self._plugins = pyfuncitem.getplugins() + extra
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
         self._currentarg = None
@@ -741,9 +734,9 @@ def showfuncargs(config):
     session = Session(config)
     session.perform_collect()
     if session.items:
-        plugins = getplugins(session.items[0])
+        plugins = session.items[0].getplugins()
     else:
-        plugins = getplugins(session)
+        plugins = session.getplugins()
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")

@@ -221,6 +221,9 @@ class Node(object):
     def listnames(self):
         return [x.name for x in self.listchain()]
 
+    def getplugins(self):
+        return self.config._getmatchingplugins(self.fspath)
+
     def getparent(self, cls):
         current = self
         while current and not isinstance(current, cls):
