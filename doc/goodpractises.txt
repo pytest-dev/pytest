@@ -22,6 +22,7 @@ server Hudson_.
 .. _pip: http://pypi.python.org/pypi/pip
 
 .. _`test discovery`:
+.. _`Python test discovery`:
 
 Conventions for Python test discovery
 -------------------------------------------------

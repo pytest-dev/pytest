@@ -1,16 +1,39 @@
 py.test Features
 ==================
 
-no-boilerplate testing with Python
-----------------------------------
+mature no-boilerplate testing with Python
+------------------------------------------------
 
-- automatic, fully customizable Python test discovery
-- write simple test functions and freely group tests
-- ``assert`` statement for your assertions
+- automatic, customizable :ref:`Python test discovery`
+- simple test functions and freely groupable tests
+- simple ``assert`` statements for assertions
 - powerful parametrization of test functions
-- rely on helpful traceback and failing assertion reporting
+- very helpful traceback and failing assertion reporting
 - use ``print`` or ``pdb`` debugging on failures
 - enables fully :pep:`8` compliant coding style
+- powerful :ref:`usage` possibilities, well sorted command line options
+- used in many projects, ranging from 10 to 10K tests
+- tested on Unix and Windows from Python 2.4 up to Python 3.1 and 3.2
+- keyword/testname based selection of tests
+
+supports common testing practises and methods
+-----------------------------------------------------------
+
+- can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style
+  tests, including running testcases made for Django and trial
+- supports extended `xUnit style setup`_
+- supports domain-specific :ref:`non-python tests`
+- supports generating testing coverage reports
+- `Javasript unit- and functional testing`_
+
+.. _`Javasript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
+
+distributing tests to local/remote subprocesses
+--------------------------------------------------------
+
+- can distribute tests to multiple CPUs
+- can distribute tests to remote ssh or socket connected machines
+- can run tests in subprocess, re-run failing ones on file-change
 
 extensive plugin and customization system
 ------------------------------------------------------
@@ -22,14 +45,6 @@ extensive plugin and customization system
 - it is `easy`_ to add command line options or
   do other kind of add-ons and customizations.
 
-mature command line testing tool
---------------------------------------
-
-- powerful :ref:`usage` possibilities, well sorted command line options
-- used in many projects, ranging from 10 to 10K tests
-- tested on Unix and Windows from Python 2.4 up to Python 3.1 and 3.2
-- keyword/testname based selection of tests
-
 integrates well with CI systems
 ----------------------------------------
 
@@ -38,24 +53,6 @@ integrates well with CI systems
 - integrates well with tox_
 
 .. _`tox`: http://codespeak.net/tox
-
-supports common testing practises and methods
------------------------------------------------------------
-
-- supports extended `xUnit style setup`_
-- can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style tests
-- supports generating testing coverage reports
-- supports :ref:`non-python tests`
-- `Javasript unit- and functional testing`_
-
-.. _`Javasript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
-
-distributing tests to local/remote subprocesses
---------------------------------------------------------
-
-- distribute tests to multiple CPUs
-- distribute tests to remote ssh or socket connected machines
-- run tests in subprocess, re-run failing ones on file-change
 
 skip or expect-to-fail a test
 -------------------------------------------

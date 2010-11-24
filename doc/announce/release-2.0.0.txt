@@ -1,25 +1,25 @@
-py.test 2.0.0: improved asserts, unittest, reporting, config, docs
+py.test 2.0.0: asserts++, unittest++, reporting++, config++, docs++
 ===========================================================================
 
 Welcome to pytest-2.0.0, a major new release of "py.test", the rapid
 easy Python testing tool.  There are many new features and enhancements,
-see below.  Also a lot of long-deprecated code has been removed,
-resulting in a much smaller and cleaner implementation.   Note that
-pytest used to part of the "py" distribution up until version py-1.3.4
-but this has changed now:  pytest-2.0.0 only contains py.test related
-code and is expected to be backward-compatible to existing test code. If
-you want to install it, type one of::
+see below for summary and detailed lists.  A lot of long-deprecated code
+has been removed, resulting in a much smaller and cleaner
+implementation.  See the new docs with examples here:
+
+    http://pytest.org/2.0.0/index.html
+
+A note on packaging: pytest used to part of the "py" distribution up
+until version py-1.3.4 but this has changed now:  pytest-2.0.0 only
+contains py.test related code and is expected to be backward-compatible
+to existing test code. If you want to install pytest, just type one of::
 
     pip install -U pytest
     easy_install -U pytest
 
-and check out the much improved documentation and examples:
-
-    http://pytest.org/2.0.0/index.html
-
-Thanks to all issue reporters and people asking questions or
+Many thanks to all issue reporters and people asking questions or
 complaining.  Particular thanks to Floris Bruynooghe and Ronny Pfannschmidt
-for their great coding contributions and may others for feedback and help.
+for their great coding contributions and many others for feedback and help.
 
 best,
 holger krekel
@@ -53,16 +53,16 @@ New Features
   see http://pytest.org/2.0.0/customize.html
 
 - improved standard unittest support.  In general py.test should now
-  better run custom TestCases like twisted trial or Django based
-  TestCases.  Also you can now run the tests of an installed
-  'unittest' package with py.test::
+  better be able to run custom unittest.TestCases like twisted trial
+  or Django based TestCases.  Also you can now run the tests of an
+  installed 'unittest' package with py.test::
 
     py.test --pyargs unittest
 
 - new "-q" option which decreases verbosity and prints a more
   nose/unittest-style "dot" output.
 
-- many more improvements in details
+- many many more detailed improvements details
 
 Fixes
 -----------------------
@@ -79,7 +79,7 @@ Fixes
 - fix bug: unittest collected functions now also can have "pytestmark"
   applied at class/module level
 
-Notes
+Important Notes
 --------------------
 
 * The usual way in pre-2.0 times to use py.test in python code was
