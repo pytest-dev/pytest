@@ -17,6 +17,15 @@ def pytest_addoption(parser):
            help=("discover tools on PATH instead of going through py.cmdline.")
     )
 
+def pytest_configure(config):
+    # This might be called multiple times. Only take the first.
+    global _pytest_fullpath
+    import pytest
+    try:
+        _pytest_fullpath
+    except NameError:
+        _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
+
 def pytest_funcarg___pytest(request):
     return PytestArg(request)
 
@@ -456,13 +465,10 @@ class TmpTestdir:
 
     def _getpybinargs(self, scriptname):
         if not self.request.config.getvalue("notoolsonpath"):
-            import pytest
-            script = pytest.__file__.rstrip("co")
-            assert script, "script %r not found" % scriptname
             # XXX we rely on script refering to the correct environment
             # we cannot use "(py.std.sys.executable,script)"
             # becaue on windows the script is e.g. a py.test.exe
-            return (py.std.sys.executable, script,)
+            return (py.std.sys.executable, _pytest_fullpath,)
         else:
             py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
