@@ -36,10 +36,17 @@ class UnitTestCase(pytest.Class):
 
 class TestCaseFunction(pytest.Function):
     _excinfo = None
+
     def setup(self):
-        pass
+        self._testcase = self.parent.obj(self.name)
+        self._obj = getattr(self._testcase, self.name)
+        if hasattr(self._testcase, 'setup_method'):
+            self._testcase.setup_method(self._obj)
+
     def teardown(self):
-        pass
+        if hasattr(self._testcase, 'teardown_method'):
+            self._testcase.teardown_method(self._obj)
+
     def startTest(self, testcase):
         pass
 
@@ -75,13 +82,12 @@ class TestCaseFunction(pytest.Function):
     def stopTest(self, testcase):
         pass
     def runtest(self):
-        testcase = self.parent.obj(self.name)
-        testcase(result=self)
+        self._testcase(result=self)
 
 @pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):
-        if hasattr(item, '_excinfo') and item._excinfo:
+        if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
             del call.result
 

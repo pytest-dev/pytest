@@ -26,17 +26,24 @@ def test_isclasscheck_issue53(testdir):
     assert result.ret == 0
 
 def test_setup(testdir):
-    testpath = testdir.makepyfile(test_two="""
+    testpath = testdir.makepyfile("""
         import unittest
         class MyTestCase(unittest.TestCase):
             def setUp(self):
                 self.foo = 1
-            def test_setUp(self):
+            def setup_method(self, method):
+                self.foo2 = 1
+            def test_both(self):
                 self.assertEquals(1, self.foo)
+                assert self.foo2 == 1
+            def teardown_method(self, method):
+                assert 0, "42"
+                
     """)
-    reprec = testdir.inline_run(testpath)
-    rep = reprec.matchreport("test_setUp")
-    assert rep.passed
+    reprec = testdir.inline_run("-s", testpath)
+    assert reprec.matchreport("test_both", when="call").passed
+    rep = reprec.matchreport("test_both", when="teardown")
+    assert rep.failed and '42' in str(rep.longrepr)
 
 def test_new_instances(testdir):
     testpath = testdir.makepyfile("""
@@ -53,7 +60,6 @@ def test_new_instances(testdir):
 def test_teardown(testdir):
     testpath = testdir.makepyfile("""
         import unittest
-        pytest_plugins = "pytest_unittest" # XXX
         class MyTestCase(unittest.TestCase):
             l = []
             def test_one(self):
@@ -70,17 +76,44 @@ def test_teardown(testdir):
     assert passed == 2
     assert passed + skipped + failed == 2
 
-def test_module_level_pytestmark(testdir):
-    testpath = testdir.makepyfile("""
+def test_method_and_teardown_failing_reporting(testdir):
+    testdir.makepyfile("""
+        import unittest, pytest
+        class TC(unittest.TestCase):
+            def tearDown(self):
+                assert 0, "down1"
+            def test_method(self):
+                assert False, "down2"
+    """)
+    result = testdir.runpytest("-s")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines([
+        "*tearDown*",
+        "*assert 0*",
+        "*test_method*",
+        "*assert False*",
+        "*1 failed*1 error*",
+    ])
+
+def test_setup_failure_is_shown(testdir):
+    testdir.makepyfile("""
         import unittest
         import pytest
-        pytestmark = pytest.mark.xfail
-        class MyTestCase(unittest.TestCase):
-            def test_func1(self):
-                assert 0
+        class TC(unittest.TestCase):
+            def setUp(self):
+                assert 0, "down1"
+            def test_method(self):
+                print ("never42")
+                xyz
     """)
-    reprec = testdir.inline_run(testpath, "-s")
-    reprec.assertoutcome(skipped=1)
+    result = testdir.runpytest("-s")
+    assert result.ret == 1
+    result.stdout.fnmatch_lines([
+        "*setUp*",
+        "*assert 0*down1*",
+        "*1 failed*",
+    ])
+    assert 'never42' not in result.stdout.str()
 
 def test_setup_setUpClass(testdir):
     testpath = testdir.makepyfile("""
@@ -186,6 +219,19 @@ def test_testcase_totally_incompatible_exception_info(testdir):
     excinfo = item._excinfo.pop(0)
     assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())
 
+def test_module_level_pytestmark(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        import pytest
+        pytestmark = pytest.mark.xfail
+        class MyTestCase(unittest.TestCase):
+            def test_func1(self):
+                assert 0
+    """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
 class TestTrialUnittest:
     def setup_class(cls):
         pytest.importorskip("twisted.trial.unittest")
@@ -274,46 +320,6 @@ class TestTrialUnittest:
         child = testdir.spawn_pytest(p)
         child.expect("hellopdb")
         child.sendeof()
-
-    def test_trial_setup_failure_is_shown(self, testdir):
-        testdir.makepyfile("""
-            from twisted.trial import unittest
-            import pytest
-            class TC(unittest.TestCase):
-                def setUp(self):
-                    assert 0, "down1"
-                def test_method(self):
-                    print ("never42")
-                    xyz
-        """)
-        result = testdir.runpytest("-s")
-        assert result.ret == 1
-        result.stdout.fnmatch_lines([
-            "*setUp*",
-            "*assert 0*down1*",
-            "*1 failed*",
-        ])
-        assert 'never42' not in result.stdout.str()
-
-    def test_trial_teardown_and_test_failure(self, testdir):
-        testdir.makepyfile("""
-            from twisted.trial import unittest
-            import pytest
-            class TC(unittest.TestCase):
-                def tearDown(self):
-                    assert 0, "down1"
-                def test_method(self):
-                    assert False, "down2"
-        """)
-        result = testdir.runpytest("-s")
-        assert result.ret == 1
-        result.stdout.fnmatch_lines([
-            "*tearDown*",
-            "*assert 0*",
-            "*test_method*",
-            "*assert False*",
-            "*1 failed*1 error*",
-        ])
 
 def test_djangolike_testcase(testdir):
     # contributed from Morten Breekevold

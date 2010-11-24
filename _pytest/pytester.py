@@ -552,10 +552,12 @@ class ReportRecorder(object):
     def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
         return [x.report for x in self.getcalls(names)]
 
-    def matchreport(self, inamepart="", names="pytest_runtest_logreport pytest_collectreport"):
+    def matchreport(self, inamepart="", names="pytest_runtest_logreport pytest_collectreport", when=None):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
+            if when and getattr(rep, 'when', None) != when:
+                continue
             if not inamepart or inamepart in rep.nodeid.split("::"):
                 l.append(rep)
         if not l:
