@@ -1,6 +1,6 @@
 """ discovery and running of std-library "unittest" style tests. """
 import pytest, py
-import sys
+import sys, pdb
 
 def pytest_pycollect_makeitem(collector, name, obj):
     unittest = sys.modules.get('unittest')
@@ -96,7 +96,9 @@ def pytest_runtest_protocol(item, __multicall__):
                 if exc_value is None:
                     self._rawexcinfo = sys.exc_info()
                 else:
-                    self._rawexcinfo = (exc_value, exc_type, exc_tb)
+                    if exc_type is None:
+                        exc_type = type(exc_value)
+                    self._rawexcinfo = (exc_type, exc_value, exc_tb)
                 Failure__init__(self, exc_value, exc_type, exc_tb)
             ut.Failure.__init__ = excstore
             try:
