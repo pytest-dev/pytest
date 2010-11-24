@@ -183,10 +183,8 @@ def test_testcase_totally_incompatible_exception_info(testdir):
                 pass
     """)
     item.addError(None, 42)
-    excinfo = item._excinfo
+    excinfo = item._excinfo.pop(0)
     assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())
-
-
 
 class TestTrialUnittest:
     def setup_class(cls):
@@ -225,6 +223,7 @@ class TestTrialUnittest:
             "*3 skipped*2 xfail*",
         ])
 
+    @pytest.mark.xfail(reason="fijal needs add checks")
     def test_trial_error(self, testdir):
         testdir.makepyfile("""
             from twisted.trial.unittest import TestCase
@@ -262,6 +261,7 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """)
         result = testdir.runpytest()
+        assert 0
 
     def test_trial_pdb(self, testdir):
         p = testdir.makepyfile("""
@@ -274,6 +274,46 @@ class TestTrialUnittest:
         child = testdir.spawn_pytest(p)
         child.expect("hellopdb")
         child.sendeof()
+
+    def test_trial_setup_failure_is_shown(self, testdir):
+        testdir.makepyfile("""
+            from twisted.trial import unittest
+            import pytest
+            class TC(unittest.TestCase):
+                def setUp(self):
+                    assert 0, "down1"
+                def test_method(self):
+                    print ("never42")
+                    xyz
+        """)
+        result = testdir.runpytest("-s")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*setUp*",
+            "*assert 0*down1*",
+            "*1 failed*",
+        ])
+        assert 'never42' not in result.stdout.str()
+
+    def test_trial_teardown_and_test_failure(self, testdir):
+        testdir.makepyfile("""
+            from twisted.trial import unittest
+            import pytest
+            class TC(unittest.TestCase):
+                def tearDown(self):
+                    assert 0, "down1"
+                def test_method(self):
+                    assert False, "down2"
+        """)
+        result = testdir.runpytest("-s")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*tearDown*",
+            "*assert 0*",
+            "*test_method*",
+            "*assert False*",
+            "*1 failed*1 error*",
+        ])
 
 def test_djangolike_testcase(testdir):
     # contributed from Morten Breekevold

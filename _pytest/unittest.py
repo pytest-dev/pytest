@@ -47,7 +47,7 @@ class TestCaseFunction(pytest.Function):
         # unwrap potential exception info (see twisted trial support below)
         rawexcinfo = getattr(rawexcinfo, '_rawexcinfo', rawexcinfo)
         try:
-            self._excinfo = py.code.ExceptionInfo(rawexcinfo)
+            excinfo = py.code.ExceptionInfo(rawexcinfo)
         except TypeError:
             try:
                 try:
@@ -63,7 +63,8 @@ class TestCaseFunction(pytest.Function):
             except KeyboardInterrupt:
                 raise
             except pytest.fail.Exception:
-                self._excinfo = py.code.ExceptionInfo()
+                excinfo = py.code.ExceptionInfo()
+        self.__dict__.setdefault('_excinfo', []).append(excinfo)
 
     def addError(self, testcase, rawexcinfo):
         self._addexcinfo(rawexcinfo)
@@ -80,9 +81,8 @@ class TestCaseFunction(pytest.Function):
 @pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):
-        if item._excinfo:
-            call.excinfo = item._excinfo
-            item._excinfo = None
+        if hasattr(item, '_excinfo') and item._excinfo:
+            call.excinfo = item._excinfo.pop(0)
             del call.result
 
 # twisted trial support
