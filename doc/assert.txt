@@ -130,6 +130,8 @@ Special comparisons are done for a number of cases:
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
 
+See the :ref:`reporting demo <reportingdemo>` for examples.
+
 ..
     Defining your own comparison
     ----------------------------------------------

@@ -1,6 +1,6 @@
 .. _projects:
 
-Project Examples
+Project examples
 ==========================
 
 Here are some examples of projects using py.test:
@@ -11,6 +11,7 @@ Here are some examples of projects using py.test:
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
 * `six <http://pypi.python.org/pypi/six/>`_ Python 2 and 3 compatibility utilities
+* `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
 * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
@@ -20,6 +21,7 @@ Here are some examples of projects using py.test:
 * `pydataportability <http://pydataportability.net/>`_ libraries for managing the open web
 * `XIST <http://www.livinglogic.de/Python/xist/>`_ extensible HTML/XML generator
 * `tiddlyweb <http://pypi.python.org/pypi/tiddlyweb>`_ optionally headless, extensible RESTful datastore
+* `fancycompleter <http://bitbucket.org/antocuni/fancycompleter/src>`_ for colorful tab-completion
 * `Paludis <http://paludis-tools.lunaryorn.de/>`_ tools for Gentoo Paludis package manager
 * `Gerald <http://halfcooked.com/code/gerald/>`_ schema comparison tool
 * `abjad <http://code.google.com/p/abjad/>`_ Python API for Formalized Score control
@@ -28,8 +30,8 @@ Here are some examples of projects using py.test:
 * `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
 * many more ... (please send notes via the :ref:`contact`)
 
-Some examples of organisations using py.test
-----------------------------------------------
+Some organisations using py.test
+-----------------------------------
 
 * `Square Kilometre Array <http://ska.ac.za/>`_
 * `Tandberg <http://www.tandberg.com/>`_
