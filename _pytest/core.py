@@ -1,6 +1,5 @@
 """
 pytest PluginManager, basic initialization and tracing.
-All else is in pytest/plugin.
 (c) Holger Krekel 2004-2010
 """
 import sys, os
