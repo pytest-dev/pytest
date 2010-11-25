@@ -7,7 +7,9 @@ Demo of Python failure reports with py.test
 Here is a nice run of several tens of failures
 and how py.test presents things (unfortunately
 not showing the nice colors here in the HTML that you
-get on the terminal - we are working on that)::
+get on the terminal - we are working on that):
+
+.. code-block:: python
 
     assertion $ py.test failure_demo.py
     =========================== test session starts ============================

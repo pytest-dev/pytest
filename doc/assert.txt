@@ -84,6 +84,8 @@ asserts that the given ``ExpectedException`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 
+.. _newreport:
+
 Making use of context-sensitive comparisons
 -------------------------------------------------
 
@@ -130,7 +132,7 @@ Special comparisons are done for a number of cases:
 * comparing long sequences: first failing indices
 * comparing dicts: different entries
 
-See the :ref:`reporting demo <reportingdemo>` for examples.
+See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
 ..
     Defining your own comparison

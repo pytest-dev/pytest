@@ -77,6 +77,7 @@ class TestCaptureManager:
         finally:
             capouter.reset()
 
+@pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 @pytest.mark.multi(method=['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
     if sys.version_info >= (3,0):

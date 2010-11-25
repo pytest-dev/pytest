@@ -41,7 +41,7 @@ New Features
 - new and better reporting information in assert expressions
   if comparing lists, sequences or strings.
 
-  see http://pytest.org/2.0.0/assert.html for details.
+  see http://pytest.org/2.0.0/assert.html#newreport
 
 - new configuration through ini-files (setup.cfg or tox.ini recognized),
   for example::
