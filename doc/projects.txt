@@ -11,11 +11,14 @@ Here are some examples of projects using py.test:
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
 * `six <http://pypi.python.org/pypi/six/>`_ Python 2 and 3 compatibility utilities
-* `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
+* `pediapress <http://code.pediapress.com/wiki/wiki>`_ MediaWiki articles
+* `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
+* `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
+* `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
 * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
-* `Circuits <http://pypi.python.org/pypi/circuits/1.2.1>`_ lightweight Event Driven Framework
+* `Circuits <http://pypi.python.org/pypi/circuits>`_ lightweight Event Driven Framework
 * `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_ easy interaction with PyGTK
 * `QuantumCore <http://quantumcore.org/>`_ statusmessage and repoze openid plugin
 * `pydataportability <http://pydataportability.net/>`_ libraries for managing the open web
@@ -39,4 +42,4 @@ Some organisations using py.test
 * `Open End <http://openend.se>`_
 * `Laboraratory of Bioinformatics <http://genesilico.pl/>`_
 * `merlinux <http://merlinux.eu>`_
-* many more ... (please send a note via the :ref:`contact`)
+* many more ... (please be so kind to send a note via :ref:`contact`)

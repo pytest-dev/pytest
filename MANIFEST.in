@@ -3,17 +3,5 @@ include README.txt
 include setup.py
 include distribute_setup.py
 include LICENSE
-#include conftest.py
 graft doc
 graft testing
-exclude doc/_build
-include testing
-#exclude *.orig 
-#exclude *.orig 
-exclude *.rej 
-exclude .hgignore
-exclude *.pyc
-#recursive-exclude testing *.pyc *.orig *.rej *$py.class
-#prune .pyc
-#prune .svn 
-#prune .hg 
