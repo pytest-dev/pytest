@@ -37,6 +37,12 @@ class UnitTestCase(pytest.Class):
 class TestCaseFunction(pytest.Function):
     _excinfo = None
 
+    def __init__(self, name, parent):
+        super(TestCaseFunction, self).__init__(name, parent)
+        if hasattr(self._obj, 'todo'):
+            getattr(self._obj, 'im_func', self._obj).xfail = \
+                pytest.mark.xfail(reason=str(self._obj.todo))
+
     def setup(self):
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
@@ -77,6 +83,18 @@ class TestCaseFunction(pytest.Function):
         self._addexcinfo(rawexcinfo)
     def addFailure(self, testcase, rawexcinfo):
         self._addexcinfo(rawexcinfo)
+    def addSkip(self, testcase, reason):
+        try:
+            pytest.skip(reason)
+        except pytest.skip.Exception:
+            self._addexcinfo(sys.exc_info())
+    def addExpectedFailure(self, testcase, rawexcinfo, reason):
+        try:
+            pytest.xfail(str(reason))
+        except pytest.xfail.Exception:
+            self._addexcinfo(sys.exc_info())
+    def addUnexpectedSuccess(self, testcase, reason):
+        pass
     def addSuccess(self, testcase):
         pass
     def stopTest(self, testcase):

@@ -251,6 +251,17 @@ class TestTrialUnittest:
                     assert 0
                 def test_hello4(self):
                     pytest.xfail("i2wanto")
+                def test_trial_skip(self):
+                    pass
+                test_trial_skip.skip = "trialselfskip"
+
+                def test_trial_todo(self):
+                    assert 0
+                test_trial_todo.todo = "mytodo"
+
+                def test_trial_todo_success(self):
+                    pass
+                test_trial_todo_success.todo = "mytodo"
 
             class TC2(unittest.TestCase):
                 def setup_class(cls):
@@ -261,15 +272,16 @@ class TestTrialUnittest:
         result = testdir.runpytest("-rxs")
         assert result.ret == 0
         result.stdout.fnmatch_lines_random([
+            "*XFAIL*test_trial_todo*",
+            "*trialselfskip*",
             "*skip_in_setup_class*",
             "*iwanto*",
             "*i2wanto*",
             "*sys.version_info*",
             "*skip_in_method*",
-            "*3 skipped*2 xfail*",
+            "*4 skipped*3 xfail*1 xpass*",
         ])
 
-    @pytest.mark.xfail(reason="fijal needs add checks")
     def test_trial_error(self, testdir):
         testdir.makepyfile("""
             from twisted.trial.unittest import TestCase
@@ -307,7 +319,18 @@ class TestTrialUnittest:
                 # will crash both at test time and at teardown
         """)
         result = testdir.runpytest()
-        assert 0
+        result.stdout.fnmatch_lines([
+            "*ERRORS*",
+            "*DelayedCalls*",
+            "*test_four*",
+            "*NameError*crash*",
+            "*test_one*",
+            "*NameError*crash*",
+            "*test_three*",
+            "*DelayedCalls*",
+            "*test_two*",
+            "*crash*",
+        ])
 
     def test_trial_pdb(self, testdir):
         p = testdir.makepyfile("""
