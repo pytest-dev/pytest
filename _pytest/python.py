@@ -564,7 +564,7 @@ class FuncargRequest:
         self._pyfuncitem = pyfuncitem
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam
-        extra = filter(None, [self.module, self.instance])
+        extra = [obj for obj in (self.module, self.instance) if obj]
         self._plugins = pyfuncitem.getplugins() + extra
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
