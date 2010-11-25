@@ -8,14 +8,25 @@ creating and managing test function arguments
 .. _`funcargs`:
 .. _`funcarg mechanism`:
 
-Test function arguments and factories
+Dependency injection through function arguments
 =================================================
 
-A *funcarg* is the short name for "test function argument".  Like
-any other Python function a test function can receive one or multiple
-arguments.  When ``py.test`` prepares running a test function
-it looks at the neccessary function arguments, locates and calls
-factories which then provide the values to be passed to the function.
+py.test allows to inject values into test functions through the *funcarg
+mechanism*: For each argument name in a test function signature a factory is
+looked up and called to create the value.  The factory can live in the
+same test class, test module, in a per-directory ``confest.py`` file or
+in an external plugin.  It has full access to the requesting test
+function, can register finalizers and invoke lifecycle-caching
+helpers.  As can be expected from a systematic dependency
+injection mechanism, this allows full de-coupling of resource and
+fixture setup from test code, enabling more maintainable and
+easy-to-modify test suites.
+
+A test function may be invoked multiple times in which case we
+speak of :ref:`parametrized testing <parametrizing-tests>`. This can be
+very useful if you want to test e.g. against different database backends
+or with multiple numerical arguments sets and want to reuse the same set
+of test functions.
 
 Basic funcarg example
 -----------------------
@@ -53,17 +64,19 @@ Running the test looks like this::
 
 This means that the test function was called with a ``myfuncarg`` value
 of ``42`` and the assert fails accordingly.  Here is how py.test
-calls the test function:
+comes to call the test function this way:
 
-1. py.test discovers the ``test_function`` because of the ``test_`` prefix.
-   The test function needs a function argument named ``myfuncarg``.
-   A matching factory function is discovered by looking for the
-   name ``pytest_funcarg__myfuncarg``.
+1. py.test :ref:`finds <test discovery>` the ``test_function`` because
+   of the ``test_`` prefix.  The test function needs a function argument
+   named ``myfuncarg``.  A matching factory function is discovered by
+   looking for the name ``pytest_funcarg__myfuncarg``.
 
 2. ``pytest_funcarg__myfuncarg(request)`` is called and
    returns the value for ``myfuncarg``.
 
-3. ``test_function(42)`` call is executed.
+3. the test function can now be called: ``test_function(42)``
+   and results in the above exception because of the assertion
+   mismatch.
 
 Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error
@@ -108,6 +121,7 @@ factory and provides access to test configuration and context:
 
 .. _`test generators`:
 .. _`parametrizing-tests`:
+.. _`parametrized test functions`:
 
 Parametrizing multiple calls to a test function
 ===========================================================

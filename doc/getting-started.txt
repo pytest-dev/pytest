@@ -3,6 +3,8 @@ Installation and Getting Started
 
 **Compatibility**: Python 2.4-3.2, Jython, PyPy on Unix/Posix and Windows
 
+.. _`getstarted`:
+
 Installation
 ----------------------------------------
 
@@ -17,6 +19,8 @@ To check your installation has installed the correct version::
     This is py.test version 2.0.0.dev30, imported from /home/hpk/p/pytest/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
+
+.. _`simpletest`:
 
 Our first test run
 ----------------------------------------------------------
@@ -55,16 +59,16 @@ py.test found the ``test_answer`` function by following :ref:`standard test disc
 .. note::
 
     You can simply use the ``assert`` statement for coding expectations because
-    intermediate values will be presented to you. This is much easier than
-    learning all the `the JUnit legacy methods`_ which are even inconsistent
-    with Python's own coding guidelines (but consistent with
-    Java-style naming).
+    intermediate values will be presented to you. This is arguably easier than
+    learning all the `the JUnit legacy methods`_.
 
-    There is only one seldomly hit caveat to using asserts: if your
-    assertion expression fails and has side effects then re-evaluating
-    it for presenting intermediate values can go wrong.  It's easy to fix:
-    compute the value ahead of the assert and then do the
-    assertion or use the assert "message" syntax::
+    However, there remains one caveat to using simple asserts: your
+    assertion expression should better be side-effect free.  Because
+    after an assertion failed py.test will re-evaluate the expression
+    in order to present intermediate values. You will get a nice warning
+    and you can easily fix it: compute the value ahead of the assert and
+    then do the assertion.  Or maybe just use the assert "explicit message"
+    syntax::
 
        assert expr, "message" # show "message" if expr is not True
 

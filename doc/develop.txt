@@ -15,15 +15,12 @@ Working from version control or a tarball
 To follow development or start experiments, checkout the
 complete code and documentation source with mercurial_::
 
-    hg clone https://bitbucket.org/hpk42/py-trunk/
-
-Development takes place on the 'trunk' branch.
+    hg clone https://bitbucket.org/hpk42/pytest/
 
 You can also go to the python package index and
 download and unpack a TAR file::
 
-    http://pypi.python.org/pypi/py/
-
+    http://pypi.python.org/pypi/pytest/
 
 activating a checkout with setuptools
 --------------------------------------------

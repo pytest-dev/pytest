@@ -775,33 +775,34 @@ def getlocation(function, curdir):
 # builtin pytest.raises helper
 
 def raises(ExpectedException, *args, **kwargs):
-    """ assert that a code block/function call raises an exception.
-
-        If using Python 2.5 or above, you may use this function as a
-        context manager::
-
-            >>> with raises(ZeroDivisionError):
-            ...    1/0
-
-        Or you can specify a callable by passing a to-be-called lambda::
-
-            >>> raises(ZeroDivisionError, lambda: 1/0)
-            <ExceptionInfo ...>
-
-        or you can specify an arbitrary callable with arguments::
-
-            >>> def f(x): return 1/x
-            ...
-            >>> raises(ZeroDivisionError, f, 0)
-            <ExceptionInfo ...>
-            >>> raises(ZeroDivisionError, f, x=0)
-            <ExceptionInfo ...>
-
-        A third possibility is to use a string which which will
-        be executed::
+    """ assert that a code block/function call raises @ExpectedException
+    and raise a failure exception otherwise.
         
-            >>> raises(ZeroDivisionError, "f(0)")
-            <ExceptionInfo ...>
+    If using Python 2.5 or above, you may use this function as a
+    context manager::
+
+        >>> with raises(ZeroDivisionError):
+        ...    1/0
+
+    Or you can specify a callable by passing a to-be-called lambda::
+
+        >>> raises(ZeroDivisionError, lambda: 1/0)
+        <ExceptionInfo ...>
+
+    or you can specify an arbitrary callable with arguments::
+
+        >>> def f(x): return 1/x
+        ...
+        >>> raises(ZeroDivisionError, f, 0)
+        <ExceptionInfo ...>
+        >>> raises(ZeroDivisionError, f, x=0)
+        <ExceptionInfo ...>
+
+    A third possibility is to use a string which which will
+    be executed::
+    
+        >>> raises(ZeroDivisionError, "f(0)")
+        <ExceptionInfo ...>
     """
     __tracebackhide__ = True
 

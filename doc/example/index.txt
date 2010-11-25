@@ -4,12 +4,13 @@
 Usages and Examples
 ===========================================
 
-This is a (growing) list of examples. :ref:`Contact <contact>` us if you
-need more examples or have questions.
+Here is a (growing) list of examples. :ref:`Contact <contact>` us if you
+need more examples or have questions. Also take a look at the :ref:`comprehensive documentation <toc>` which contains many example snippets as well.
 
 .. toctree::
    :maxdepth: 2
 
+   reportingdemo.txt
    simple.txt
    pythoncollection.txt
    mysetup.txt

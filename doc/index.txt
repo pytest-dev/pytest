@@ -1,35 +1,59 @@
-py.test: no-boilerplate testing with Python
-==============================================
 
-.. todolist::
 
-.. note::
-    version 2.0 introduces ``pytest`` as the main Python import name
-    in examples but you can continue to use ``import py`` and
-    ``py.test.XYZ`` to access :ref:`pytest helpers` in your test code.
+Welcome to ``py.test``!
+=============================================
 
-Welcome to ``py.test`` documentation:
 
-.. toctree::
-   :maxdepth: 2
+- **a mature fully featured testing tool**
 
-   overview
-   apiref
-   plugins
-   example/index
-   talks
-   develop
-   announce/index
+ - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython
+ - continously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
+ - used in :ref:`many projects <projects>`, ranging from 10 to 10000 tests
+ - has :ref:`comprehensive documentation <toc>`
+ - comes with :ref:`tested examples <examples>`
+ - supports :ref:`good integration practises <goodpractises>`
+
+- **provides no-boilerplate testing**
+
+ - makes it :ref:`easy to get started <getstarted>`, refined :ref:`usage options <usage>`
+ - :ref:`assert with the assert statement`
+ - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
+ - allows `print debugging <printdebugging>`_ and `generic output capturing <captures>`_
+ - supports :pep:`8` compliant coding style in tests
+
+- **supports functional testing and complex test setups**
+
+ - advanced :ref:`skip and xfail`
+ - generic :ref:`marking and test selection <mark>`
+ - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
+ - can :ref:`continously re-run failing tests <looponfailing>`
+ - many :ref:`builtin helpers <pytest helpers>`
+ - flexible :ref:`Python test discovery`
+ - unique :ref:`dependency injection through funcargs <funcargs>`
+ - :ref:`parametrized test functions <parametrized test functions>`
+
+- **integrates many common testing methods**
+
+ - can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style
+   tests, including running testcases made for Django and trial
+ - supports extended :ref:`xUnit style setup <xunitsetup>`
+ - supports domain-specific :ref:`non-python tests`
+ - supports generating testing coverage reports
+ - `Javasript unit- and functional testing`_
+
+- **extensive plugin and customization system**
+
+ - all collection, reporting, running aspects are delegated to hook functions
+ - customizations can be per-directory, per-project or per PyPI released plugins
+ - it is easy to add command line options or do other kind of add-ons and customizations.
+
+.. _`Javasript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
+
+.. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 
 .. toctree::
    :hidden:
 
-   changelog.txt
-   example/attic
+   contact.txt
+   contents.txt
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

@@ -40,7 +40,8 @@ def showhelp(config):
     tw.line()
     tw.line()
     #tw.sep( "=", "config file settings")
-    tw.line("setup.cfg or tox.ini options to be put into [pytest] section:")
+    tw.line("[pytest] ini-options in the next "
+            "pytest.ini|tox.ini|setup.cfg file:")
     tw.line()
 
     for name in config._parser._ininames:

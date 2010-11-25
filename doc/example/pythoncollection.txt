@@ -18,7 +18,8 @@ change naming conventions
 -----------------------------------------------------
 
 You can configure different naming conventions by setting
-the :confval:`pytest_pycollect` configuration option.  Example::
+the :confval:`python_files`, :confval:`python_classes` and
+:confval:`python_functions` configuration options.  Example::
 
     # content of setup.cfg
     # can also be defined in in tox.ini or pytest.ini file
@@ -57,7 +58,7 @@ example if you have unittest2 installed you can type::
 
     py.test --pyargs unittest2.test.test_skipping -q
 
-which will run the respective test module.   Like with
+which would run the respective test module.  Like with
 other options, through an ini-file and the :confval:`addopts` option you
 can make this change more permanently::
 

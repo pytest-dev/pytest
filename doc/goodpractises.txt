@@ -1,6 +1,6 @@
 
 .. highlightlang:: python
-.. _`good practises`:
+.. _`goodpractises`:
 
 Good Integration Practises
 =================================================
@@ -20,6 +20,78 @@ server Hudson_.
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/
 .. _pip: http://pypi.python.org/pypi/pip
+
+Use tox and Continous Integration servers
+-------------------------------------------------
+
+If you are (often) releasing code to the public you
+may want to look into `tox`_, the virtualenv test automation
+tool and its `pytest support <http://codespeak.net/tox/example/pytest.html>`_.
+The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continous integration server like Hudson_ pick it up.
+
+.. _standalone:
+.. _`genscript method`:
+
+Create a py.test standalone Script
+-------------------------------------------
+
+If you are a maintainer or application developer and want others
+to easily run tests you can generate a completely standalone "py.test"
+script::
+
+    py.test --genscript=runtests.py
+
+generates a ``runtests.py`` script which is a fully functional basic
+``py.test`` script, running unchanged under Python2 and Python3.
+You can tell people to download the script and then e.g.  run it like this::
+
+    python runtests.py
+
+
+.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
+.. _`distribute installation`: http://pypi.python.org/pypi/distribute
+
+
+Integrating with distutils / ``python setup.py test``
+--------------------------------------------------------
+
+You can easily integrate test runs into your distutils or
+setuptools based project.  Use the `genscript method`_
+to generate a standalone py.test script::
+
+    py.test --genscript=runtests.py
+
+and make this script part of your distribution and then add
+this to your ``setup.py`` file::
+
+    from distutils.core import setup, Command
+    # you can also import from setuptools
+
+    class PyTest(Command):
+        user_options = []
+        def initialize_options(self):
+            pass
+        def finalize_options(self):
+            pass
+        def run(self):
+            import sys,subprocess
+            errno = subprocess.call([sys.executable, 'runtest.py'])
+            raise SystemExit(errno)
+    setup(
+        #...,
+        cmdclass = {'test': PyTest},
+        #...,
+    )
+
+If you now type::
+
+    python setup.py test
+
+this will execute your tests using ``runtest.py``. As this is a
+standalone version of ``py.test`` no prior installation whatsoever is
+required for calling the test command. You can also pass additional
+arguments to the subprocess-calls like your test directory or other
+options.
 
 .. _`test discovery`:
 .. _`Python test discovery`:
@@ -93,70 +165,5 @@ You can always run your tests by pointing to it::
       you must follow the convention of having directory and file
       names map to the import names.
 
-.. _standalone:
-.. _`genscript method`:
-
-Generating a py.test standalone Script
--------------------------------------------
-
-If you are a maintainer or application developer and want others
-to easily run tests you can generate a completely standalone "py.test"
-script::
-
-    py.test --genscript=runtests.py
-
-generates a ``runtests.py`` script which is a fully functional basic
-``py.test`` script, running unchanged under Python2 and Python3.
-You can tell people to download and then e.g.  run it like this to
-produce a Paste URL::
-
-    python runtests.py --pastebin=all
-
-and ask them to send you the resulting URL.
-
-.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
-.. _`distribute installation`: http://pypi.python.org/pypi/distribute
-
-
-Integrating with distutils / ``python setup.py test``
---------------------------------------------------------
-
-You can easily integrate test runs into your distutils or
-setuptools based project.  Use the `genscript method`_
-to generate a standalone py.test script::
-
-    py.test --genscript=runtests.py
-
-and make this script part of your distribution and then add
-this to your ``setup.py`` file::
-
-    from distutils.core import setup, Command
-    # you can also import from setuptools
-
-    class PyTest(Command):
-        user_options = []
-        def initialize_options(self):
-            pass
-        def finalize_options(self):
-            pass
-        def run(self):
-            import sys,subprocess
-            errno = subprocess.call([sys.executable, 'runtest.py'])
-            raise SystemExit(errno)
-    setup(
-        #...,
-        cmdclass = {'test': PyTest},
-        #...,
-    )
-
-If you now type::
-
-    python setup.py test
-
-this will execute your tests using ``runtest.py``. As this is a
-standalone version of ``py.test`` no prior installation whatsoever is
-required for calling the test command. You can also pass additional
-arguments to the subprocess-calls like your test directory or other
-options.
 
 .. include:: links.inc

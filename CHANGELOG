@@ -7,6 +7,8 @@ Changes between 1.3.4 and 2.0.0dev0
   some custom plugins early.
 - try harder to run unittest test suites in a more compatible manner
   by deferring setup/teardown semantics to the unittest package.
+  also work harder to run twisted/trial and Django tests which
+  should now basically work by default.
 - introduce a new way to set config options via ini-style files,
   by default setup.cfg and tox.ini files are searched.  The old
   ways (certain environment variables, dynamic conftest.py reading

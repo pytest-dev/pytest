@@ -17,14 +17,14 @@ Setting capturing methods or disabling capturing
 
 There are two ways in which ``py.test`` can perform capturing:
 
-* ``fd`` level capturing (default): All writes going to the operating 
-  system file descriptors 1 and 2 will be captured, for example writes such 
-  as ``os.write(1, 'hello')``.  Capturing on ``fd``-level also includes 
+* ``fd`` level capturing (default): All writes going to the operating
+  system file descriptors 1 and 2 will be captured, for example writes such
+  as ``os.write(1, 'hello')``.  Capturing on ``fd``-level also includes
   **output from subprocesses**.
 
-* ``sys`` level capturing: The ``sys.stdout`` and ``sys.stderr`` will 
+* ``sys`` level capturing: The ``sys.stdout`` and ``sys.stderr`` will
   will be replaced with in-memory files and the ``print`` builtin or
-  output from code like ``sys.stderr.write(...)`` will be captured with 
+  output from code like ``sys.stderr.write(...)`` will be captured with
   this method.
 
 .. _`disable capturing`:
@@ -41,6 +41,8 @@ If you set capturing values in a conftest file like this::
     option_capture = 'fd'
 
 then all tests in that directory will execute with "fd" style capturing.
+
+_ `printdebugging`:
 
 Accessing captured output from a test function
 ---------------------------------------------------

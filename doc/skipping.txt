@@ -1,13 +1,15 @@
 
+.. _`skip and xfail`:
+
 skip and xfail mechanisms
 =====================================================================
 
 You can skip or "xfail" test functions, either by marking functions
 through a decorator or by calling the ``pytest.skip|xfail`` helpers.
 A *skip* means that you expect your test to pass unless a certain configuration or condition (e.g. wrong Python interpreter, missing dependency) prevents it to run.  And *xfail* means that you expect your test to fail because there is an
-implementation problem.  Counting and listing *xfailing* tests separately
-helps to maintain a list of implementation problems and you can provide
-info such as a bug number or a URL to provide a human readable problem context.
+implementation problem.  py.test counts and lists *xfailing* tests separately
+and you can provide info such as a bug number or a URL to provide a
+human readable problem context.
 
 Usually detailed information about skipped/xfailed tests is not shown
 to avoid cluttering the output.  You can use the ``-r`` option to
@@ -15,6 +17,8 @@ see details corresponding to the "short" letters shown in the
 test progress::
 
     py.test -rxs  # show extra info on skips and xfail tests
+
+(See :ref:`how to change command line options defaults`)
 
 .. _skipif:
 

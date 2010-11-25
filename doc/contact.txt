@@ -15,7 +15,8 @@ Contact channels
 
 - #pylib on irc.freenode.net IRC channel for random questions.
 
-- `tetamap`_: Holger Krekel's blog, often about testing and py.test related news.
+- private mail to Holger.Krekel at gmail com if you have sensitive issues to communicate
+
 - `commit mailing list`_
 
 - `merlinux.eu`_ offers on-site teaching and consulting services.

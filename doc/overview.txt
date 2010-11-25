@@ -1,13 +1,13 @@
 ==================================================
-Overview and Introduction
+Getting started basics
 ==================================================
 
 .. toctree::
    :maxdepth: 2
 
-   features.txt
    getting-started.txt
    usage.txt
    goodpractises.txt
+   projects.txt
    faq.txt
 

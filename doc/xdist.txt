@@ -1,3 +1,6 @@
+
+.. _`xdist`:
+
 xdist: pytest distributed testing plugin
 ===============================================================
 
@@ -38,8 +41,11 @@ a checkout of the `pytest-xdist repository`_ ::
 
     python setup.py develop
 
+
 Usage examples
 ---------------------
+
+.. _`xdistcpu`:
 
 Speed up test runs by sending tests to multiple CPUs
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -69,6 +75,24 @@ If you prefix the --tx option value like this::
 then three subprocesses would be created and tests
 will be load-balanced across these three processes.
 
+.. _looponfailing:
+
+
+Running tests in looponfailing mode
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+For refactoring a project with a medium or large test suite
+you can use the looponfailing mode, simply add the ``--f`` option::
+
+    py.test -f
+   
+and py.test will run your tests, then wait for file changes and re-run the failing test set.  Of course you can pass in more options to select tests or test files.  File changes are detected by looking at the root directory - you can override this automatic default by an ini-file setting::
+
+    # content of a pytest.ini, setup.cfg or tox.ini file
+    [pytest]
+    looponfailroots = mypkg testdir
+
+This would lead to only looking for file changes in the respective directories, specified relatively to the ini-file's directory.
 
 Sending tests to remote SSH accounts
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

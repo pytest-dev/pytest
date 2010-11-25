@@ -21,7 +21,7 @@ builtin function arguments
 -----------------------------------------------------
 
 You can ask for available builtin or project-custom
-:ref:`function arguments` by typing::
+:ref:`function arguments <funcargs>` by typing::
 
     $ py.test --funcargs
     pytestconfig

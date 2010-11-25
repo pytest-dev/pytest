@@ -6,7 +6,7 @@ Some Issues and Questions
     If you don't find an answer here, checkout the :ref:`contact channels`
     to get help.
 
-On naming, nosetests, licensing and magic XXX
+On naming, nosetests, licensing and magic
 ------------------------------------------------
 
 Why a ``py.test`` instead of a ``pytest`` command?
@@ -21,14 +21,16 @@ but then again many people have gotten used to the old name and there
 is another tool named "pytest" so we just decided to stick with
 ``py.test``.
 
-What's py.test's relation to ``nosetests``?
+What's the relation to nose and unittest?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 py.test and nose_ share basic philosophy when it comes
 to running Python tests.  In fact, you can run many tests
-written for unittest or nose with py.test.  nose_ was originally created
+written nose with py.test.  nose_ was originally created
 as a clone of ``py.test`` when py.test was in the ``0.8`` release
-cycle.
+cycle.  As of version 2.0 support for running unittest test
+suites is majorly improved and you should be able to run
+many Django and Twisted test suites.
 
 .. _features: test/features.html
 

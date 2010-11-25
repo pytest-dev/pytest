@@ -11,6 +11,7 @@ You can get help on options and ini-config values by running::
 This will display command line and configuration file settings
 which were registered by installed plugins.
 
+
 how test configuration is read from setup/tox ini-files
 --------------------------------------------------------
 
@@ -39,6 +40,26 @@ will look in the following dirs for a config file::
 
 If argument is provided to a py.test run, the current working directory
 is used to start the search.
+
+.. _`how to change command line options defaults`:
+.. _`adding default options`:
+
+how to change command line options defaults
+------------------------------------------------
+
+py.test provides a simple way to set some default
+command line options.  For example, if you want
+to always see detailed info on skipped and xfailed
+tests, as well as have terser "dot progress output",
+you can add this to your root directory::
+
+    # content of pytest.ini
+    # (or tox.ini or setup.cfg)
+    [pytest]
+    addopts = -rsxX -q
+
+From now on, running ``py.test`` will implicitely add
+the specified options.
 
 builtin configuration file options
 ----------------------------------------------
@@ -86,18 +107,20 @@ builtin configuration file options
    This would tell py.test to not recurse into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
-.. confval:: python_discovery
+.. confval:: python_files
 
-   Determines names and patterns for finding Python tests, specified
-   through indendent ``name = value`` settings with these possible names::
+   One or more Glob-style file patterns determining which python files
+   are considered as test modules.
 
-        [pytest]
-        python_discovery =
-            file = <glob-pattern> <glob-pattern>
-            func = <function-or-method-name-prefix>
-            class = <class-name-prefix>
+.. confval:: python_classes
 
-   See :ref:`change naming conventions` for examples. the ``class``
-   to be empty in which case all non-underscore empty classes
-   will be considered.
+   One or more name prefixes determining which test classes
+   are considered as test modules.
+
+.. confval:: python_functions
+
+   One or more name prefixes determining which test functions
+   and methods are considered as test modules.
+
+   See :ref:`change naming conventions` for examples.
 

@@ -6,6 +6,7 @@ include LICENSE
 #include conftest.py
 graft doc
 graft testing
+exclude doc/_build
 include testing
 #exclude *.orig 
 #exclude *.orig 

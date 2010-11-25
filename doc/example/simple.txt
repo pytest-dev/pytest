@@ -1,25 +1,8 @@
 
 .. highlightlang:: python
 
-simple hook using patterns
+basic patterns and examples
 ==========================================================
-
-adding custom options
-----------------------
-
-py.test supports adding of standard optparse_ Options.
-A plugin may implement the ``addoption`` hook for registering
-custom options::
-
-    def pytest_addoption(parser):
-        parser.addoption("-M", "--myopt", action="store",
-            help="specify string to set myopt")
-
-    def pytest_configure(config):
-        if config.option.myopt:
-            # do action based on option value
-
-.. _optparse: http://docs.python.org/library/optparse.html
 
 pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
@@ -37,7 +20,7 @@ Here is a basic pattern how to achieve this::
 
 
 For this to work we need to add a command line option and
-provide the ``cmdopt`` through a function argument factory::
+provide the ``cmdopt`` through a :ref:`function argument <funcarg>` factory::
 
     # content of conftest.py
     def pytest_addoption(parser):

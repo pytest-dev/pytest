@@ -1,0 +1,40 @@
+.. _projects:
+
+Project Examples
+==========================
+
+Here are some examples of projects using py.test:
+
+* `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over `16000 tests <http://test.pypy.org>`_
+* the `MoinMoin <http://moinmo.in>`_ Wiki Engine
+* `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
+* `PIDA <http://pida.co.uk>`_ framework for integrated development
+* `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
+* `six <http://pypi.python.org/pypi/six/>`_ Python 2 and 3 compatibility utilities
+* `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
+* `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
+* `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
+* `Circuits <http://pypi.python.org/pypi/circuits/1.2.1>`_ lightweight Event Driven Framework
+* `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_ easy interaction with PyGTK
+* `QuantumCore <http://quantumcore.org/>`_ statusmessage and repoze openid plugin
+* `pydataportability <http://pydataportability.net/>`_ libraries for managing the open web
+* `XIST <http://www.livinglogic.de/Python/xist/>`_ extensible HTML/XML generator
+* `tiddlyweb <http://pypi.python.org/pypi/tiddlyweb>`_ optionally headless, extensible RESTful datastore
+* `Paludis <http://paludis-tools.lunaryorn.de/>`_ tools for Gentoo Paludis package manager
+* `Gerald <http://halfcooked.com/code/gerald/>`_ schema comparison tool
+* `abjad <http://code.google.com/p/abjad/>`_ Python API for Formalized Score control
+* `bu <http://packages.python.org/bu/>`_ a microscopic build system
+* `katcp <https://bitbucket.org/hodgestar/katcp>`_ Telescope communication protocol over Twisted
+* `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
+* many more ... (please send notes via the :ref:`contact`)
+
+Some examples of organisations using py.test
+----------------------------------------------
+
+* `Square Kilometre Array <http://ska.ac.za/>`_
+* `Tandberg <http://www.tandberg.com/>`_
+* `Stups department of Heinrich Heine University <http://www.stups.uni-duesseldorf.de/projects.php>`_
+* `Open End <http://openend.se>`_
+* `Laboraratory of Bioinformatics <http://genesilico.pl/>`_
+* `merlinux <http://merlinux.eu>`_
+* many more ... (please send a note via the :ref:`contact`)
