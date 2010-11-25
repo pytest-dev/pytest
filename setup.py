@@ -30,7 +30,7 @@ def main():
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
         install_requires=['py>=1.4.0a2'],
-        classifiers=['Development Status :: 5 - Production',
+        classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',
