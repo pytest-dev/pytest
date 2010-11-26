@@ -49,8 +49,8 @@ line::
 
         assert f.read() != '...'
 
-This might fail but when re-interpretation comes along it might pass.
-You can rewrite this (and any other expression with side effects) easily, though:
+This might fail but when re-interpretation comes along it might pass.  You can
+rewrite this (and any other expression with side effects) easily, though::
 
         content = f.read()
         assert content != '...'
