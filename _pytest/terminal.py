@@ -136,6 +136,9 @@ class TerminalReporter:
             self._tw.line()
             self.currentfspath = None
 
+    def write(self, content, **markup):
+        self._tw.write(content, **markup)
+
     def write_line(self, line, **markup):
         line = str(line)
         self.ensure_newline()
@@ -215,7 +218,7 @@ class TerminalReporter:
 
     def pytest_collection(self):
         if not self.hasmarkup:
-            self.write_line("collecting ...", bold=True)
+            self.write("collecting ... ", bold=True)
 
     def pytest_collectreport(self, report):
         if report.failed:

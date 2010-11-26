@@ -49,7 +49,7 @@ copyright = u'2010, holger krekel et aliter'
 # built documents.
 #
 # The short X.Y version.
-version = '2.0.0'
+version = '2.0'
 # The full version, including alpha/beta/rc tags.
 import py, pytest
 assert py.path.local().relto(py.path.local(pytest.__file__).dirpath().dirpath())
