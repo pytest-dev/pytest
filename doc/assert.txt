@@ -23,21 +23,21 @@ assertion fails you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
-    test path 1: test_assert1.py
-
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 1 items
+    
     test_assert1.py F
-
+    
     ================================= FAILURES =================================
     ______________________________ test_function _______________________________
-
+    
         def test_function():
     >       assert f() == 4
     E       assert 3 == 4
     E        +  where 3 = f()
-
+    
     test_assert1.py:5: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.02 seconds =========================
 
 Reporting details about the failing assertion is achieved by re-evaluating
 the assert expression and recording intermediate values.
@@ -105,14 +105,14 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
-    test path 1: test_assert2.py
-
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 1 items
+    
     test_assert2.py F
-
+    
     ================================= FAILURES =================================
     ___________________________ test_set_comparison ____________________________
-
+    
         def test_set_comparison():
             set1 = set("1308")
             set2 = set("8035")
@@ -122,7 +122,7 @@ if you run this module::
     E         '1'
     E         Extra items in the right set:
     E         '5'
-
+    
     test_assert2.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 

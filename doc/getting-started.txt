@@ -16,7 +16,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.0.0.dev30, imported from /home/hpk/p/pytest/pytest.py
+    This is py.test version 2.0.0, imported from /home/hpk/p/pytest/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -38,19 +38,19 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
-    test path 1: /tmp/doc-exec-70
-
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 1 items
+    
     test_sample.py F
-
+    
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-
+    
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-
+    
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
@@ -58,9 +58,10 @@ py.test found the ``test_answer`` function by following :ref:`standard test disc
 
 .. note::
 
-    You can simply use the ``assert`` statement for coding expectations because
-    intermediate values will be presented to you. This is arguably easier than
-    learning all the `the JUnit legacy methods`_.
+    You can simply use the ``assert`` statement for asserting
+    expectations because intermediate values will be presented to you.
+    This is arguably easier than learning all the `the JUnit legacy
+    methods`_.
 
     However, there remains one caveat to using simple asserts: your
     assertion expression should better be side-effect free.  Because
@@ -94,6 +95,7 @@ use the ``raises`` helper::
 Running it with, this time in "quiet" reporting mode::
 
     $ py.test -q test_sysexit.py
+    collecting ... collected 1 items
     .
     1 passed in 0.00 seconds
 
@@ -121,17 +123,18 @@ There is no need to subclass anything.  We can simply
 run the module by passing its filename::
 
     $ py.test -q test_class.py
+    collecting ... collected 2 items
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
-
-    self = <test_class.TestClass instance at 0x288fc20>
-
+    
+    self = <test_class.TestClass instance at 0x11fa320>
+    
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       assert hasattr('hello', 'check')
-
+    
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.02 seconds
 
@@ -157,21 +160,22 @@ py.test will lookup and call a factory to create the resource
 before performing the test function call.  Let's just run it::
 
     $ py.test -q test_tmpdir.py
+    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
-
-    tmpdir = local('/tmp/pytest-122/test_needsfiles0')
-
+    
+    tmpdir = local('/tmp/pytest-7/test_needsfiles0')
+    
         def test_needsfiles(tmpdir):
             print tmpdir
     >       assert 0
     E       assert 0
-
+    
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-122/test_needsfiles0
-    1 failed in 0.05 seconds
+    /tmp/pytest-7/test_needsfiles0
+    1 failed in 0.04 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

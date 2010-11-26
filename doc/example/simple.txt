@@ -7,6 +7,8 @@ basic patterns and examples
 pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
 
+.. regendoc:wipe
+
 Suppose we want to write a test that depends on a command line option.
 Here is a basic pattern how to achieve this::
 
@@ -32,7 +34,8 @@ provide the ``cmdopt`` through a :ref:`function argument <funcarg>` factory::
 
 Let's run this without supplying our new command line option::
 
-    $ py.test -q
+    $ py.test -q test_sample.py
+    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
@@ -55,6 +58,7 @@ Let's run this without supplying our new command line option::
 And now with supplying a command line option::
 
     $ py.test -q --cmdopt=type2
+    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
@@ -82,6 +86,8 @@ on real-life examples.
 
 generating parameters combinations, depending on command line
 ----------------------------------------------------------------------------
+
+.. regendoc:wipe
 
 Let's say we want to execute a test with different parameters
 and the parameter range shall be determined by a command
@@ -112,13 +118,15 @@ Now we add a test configuration like this::
 This means that we only run 2 tests if we do not pass ``--all``::
 
     $ py.test -q test_compute.py
+    collecting ... collected 2 items
     ..
     2 passed in 0.01 seconds
 
 We run only two computations, so we see two dots.
 let's run the full monty::
 
-    $ py.test -q --all test_compute.py
+    $ py.test -q --all
+    collecting ... collected 5 items
     ....F
     ================================= FAILURES =================================
     _____________________________ test_compute[4] ______________________________
@@ -140,6 +148,8 @@ we'll get an error on the last one.
 
 control skipping of tests according to command line option
 --------------------------------------------------------------
+
+.. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
 line option to control skipping of ``slow`` marked tests::
@@ -171,31 +181,32 @@ We can now write a test module like this::
 
 and when running it will see a skipped "slow" test::
 
-    $ py.test test_module.py -rs    # "-rs" means report details on the little 's'
+    $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
-    test path 1: test_module.py
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-104/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-479/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
 Or run it including the ``slow`` marked test::
 
-    $ py.test test_module.py --runslow
+    $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev30
-    test path 1: test_module.py
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 2 items
     
     test_module.py ..
     
     ========================= 2 passed in 0.01 seconds =========================
 
-
 writing well integrated assertion helpers
 --------------------------------------------------
+
+.. regendoc:wipe
 
 If you have a test helper function called from a test you can
 use the ``pytest.fail`` marker to fail a test with a certain message.
@@ -218,7 +229,8 @@ of tracebacks: the ``checkconfig`` function will not be shown
 unless the ``--fulltrace`` command line option is specified.
 Let's run our little function::
 
-    $ py.test -q
+    $ py.test -q test_checkconfig.py
+    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     ______________________________ test_something ______________________________
@@ -230,16 +242,17 @@ Let's run our little function::
     test_checkconfig.py:8: Failed
     1 failed in 0.02 seconds
 
-
 Detect if running from within a py.test run
 --------------------------------------------------------------
+
+.. regendoc:wipe
 
 Usually it is a bad idea to make application code
 behave differently if called from a test.  But if you
 absolutely must find out if your application code is
 running from a test you can do something like this::
 
-    # content of conftest.py in your testing directory
+    # content of conftest.py
 
     def pytest_configure(config):
         import sys

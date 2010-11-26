@@ -15,9 +15,12 @@ Here are some examples of projects using py.test:
 * `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
+* `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
 * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
 * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
 * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
+* `waskr <http://pacha.cafepais.com/>`_ WSGI Stats Middleware
+* `guachi <http://code.google.com/p/guachi/>`_ global persistent configs for Python modules
 * `Circuits <http://pypi.python.org/pypi/circuits>`_ lightweight Event Driven Framework
 * `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_ easy interaction with PyGTK
 * `QuantumCore <http://quantumcore.org/>`_ statusmessage and repoze openid plugin

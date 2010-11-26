@@ -121,14 +121,14 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0.dev31
-    test path 1: xfail_demo.py
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    collecting ... collected 5 items
     
     xfail_demo.py xxxxx
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN]
+      reason: [NOTRUN] 
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
