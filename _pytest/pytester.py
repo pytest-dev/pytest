@@ -515,6 +515,8 @@ class TmpTestdir:
 
     def spawn(self, cmd, expect_timeout=10.0):
         pexpect = py.test.importorskip("pexpect", "2.4")
+        if hasattr(sys, 'pypy_version_info') and '64' in py.std.platform.machine():
+            pytest.skip("pypy-64 bit not supported")
         logfile = self.tmpdir.join("spawn.out")
         child = pexpect.spawn(cmd, logfile=logfile.open("w"))
         child.timeout = expect_timeout
