@@ -40,7 +40,7 @@ def pytest_addoption(parser):
         help="only load conftest.py's relative to specified dir.")
 
     group = parser.getgroup("debugconfig",
-        "test process debugging and configuration")
+        "test session debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
                help="base temporary directory for this test run.")
 
@@ -336,7 +336,7 @@ class Session(FSCollector):
     def __init__(self, config):
         super(Session, self).__init__(py.path.local(), parent=None,
             config=config, session=self)
-        self.config.pluginmanager.register(self, name="session", prepend=True)
+        assert self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")

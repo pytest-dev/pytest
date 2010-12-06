@@ -730,7 +730,7 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from _pytest.session import Session
+    from _pytest.main import Session
     session = Session(config)
     session.perform_collect()
     if session.items:

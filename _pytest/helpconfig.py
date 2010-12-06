@@ -80,7 +80,11 @@ def pytest_report_header(config):
         plugins = []
         items = config.pluginmanager._name2plugin.items()
         for name, plugin in items:
-            lines.append("    %-20s: %s" %(name, repr(plugin)))
+            if hasattr(plugin, '__file__'):
+                r = plugin.__file__
+            else:
+                r = repr(plugin)
+            lines.append("    %-20s: %s" %(name, r))
     return lines
 
 

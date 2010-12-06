@@ -1,5 +1,5 @@
 import pytest, py, os
-from _pytest.core import PluginManager, canonical_importname
+from _pytest.core import PluginManager
 from _pytest.core import MultiCall, HookRelay, varnames
 
 
@@ -15,30 +15,47 @@ class TestBootstrapping:
             pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
         """)
 
+    def test_plugin_prevent_register(self):
+        pluginmanager = PluginManager()
+        pluginmanager.consider_preparse(["xyz", "-p", "no:abc"])
+        l1 = pluginmanager.getplugins()
+        pluginmanager.register(42, name="abc")
+        l2 = pluginmanager.getplugins()
+        assert len(l2) == len(l1)
+
+    def test_plugin_prevent_register_unregistered_alredy_registered(self):
+        pluginmanager = PluginManager()
+        pluginmanager.register(42, name="abc")
+        l1 = pluginmanager.getplugins()
+        assert 42 in l1
+        pluginmanager.consider_preparse(["xyz", "-p", "no:abc"])
+        l2 = pluginmanager.getplugins()
+        assert 42 not in l2
+
     def test_plugin_skip(self, testdir, monkeypatch):
-        p = testdir.makepyfile(pytest_skipping1="""
+        p = testdir.makepyfile(skipping1="""
             import pytest
             pytest.skip("hello")
         """)
-        p.copy(p.dirpath("pytest_skipping2.py"))
+        p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
         result = testdir.runpytest("-p", "skipping1", "--traceconfig")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*hint*skipping2*hello*",
             "*hint*skipping1*hello*",
+            "*hint*skipping2*hello*",
         ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):
         pluginmanager = PluginManager()
         testdir.syspathinsert()
-        testdir.makepyfile(pytest_xy123="#")
+        testdir.makepyfile(xy123="#")
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'xy123')
         l1 = len(pluginmanager.getplugins())
         pluginmanager.consider_env()
         l2 = len(pluginmanager.getplugins())
         assert l2 == l1 + 1
-        assert pluginmanager.getplugin('pytest_xy123')
+        assert pluginmanager.getplugin('xy123')
         pluginmanager.consider_env()
         l3 = len(pluginmanager.getplugins())
         assert l2 == l3
@@ -48,7 +65,7 @@ class TestBootstrapping:
         def my_iter(name):
             assert name == "pytest11"
             class EntryPoint:
-                name = "mytestplugin"
+                name = "pytest_mytestplugin"
                 def load(self):
                     class PseudoPlugin:
                         x = 42
@@ -60,8 +77,6 @@ class TestBootstrapping:
         pluginmanager.consider_setuptools_entrypoints()
         plugin = pluginmanager.getplugin("mytestplugin")
         assert plugin.x == 42
-        plugin2 = pluginmanager.getplugin("pytest_mytestplugin")
-        assert plugin2 == plugin
 
     def test_consider_setuptools_not_installed(self, monkeypatch):
         monkeypatch.setitem(py.std.sys.modules, 'pkg_resources',
@@ -75,7 +90,7 @@ class TestBootstrapping:
         p = testdir.makepyfile("""
             import pytest
             def test_hello(pytestconfig):
-                plugin = pytestconfig.pluginmanager.getplugin('x500')
+                plugin = pytestconfig.pluginmanager.getplugin('pytest_x500')
                 assert plugin is not None
         """)
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
@@ -91,14 +106,14 @@ class TestBootstrapping:
         reset = testdir.syspathinsert()
         pluginname = "pytest_hello"
         testdir.makepyfile(**{pluginname: ""})
-        pluginmanager.import_plugin("hello")
+        pluginmanager.import_plugin("pytest_hello")
         len1 = len(pluginmanager.getplugins())
         pluginmanager.import_plugin("pytest_hello")
         len2 = len(pluginmanager.getplugins())
         assert len1 == len2
         plugin1 = pluginmanager.getplugin("pytest_hello")
         assert plugin1.__name__.endswith('pytest_hello')
-        plugin2 = pluginmanager.getplugin("hello")
+        plugin2 = pluginmanager.getplugin("pytest_hello")
         assert plugin2 is plugin1
 
     def test_import_plugin_dotted_name(self, testdir):
@@ -116,13 +131,13 @@ class TestBootstrapping:
     def test_consider_module(self, testdir):
         pluginmanager = PluginManager()
         testdir.syspathinsert()
-        testdir.makepyfile(pytest_plug1="#")
-        testdir.makepyfile(pytest_plug2="#")
+        testdir.makepyfile(pytest_p1="#")
+        testdir.makepyfile(pytest_p2="#")
         mod = py.std.types.ModuleType("temp")
-        mod.pytest_plugins = ["pytest_plug1", "pytest_plug2"]
+        mod.pytest_plugins = ["pytest_p1", "pytest_p2"]
         pluginmanager.consider_module(mod)
-        assert pluginmanager.getplugin("plug1").__name__ == "pytest_plug1"
-        assert pluginmanager.getplugin("plug2").__name__ == "pytest_plug2"
+        assert pluginmanager.getplugin("pytest_p1").__name__ == "pytest_p1"
+        assert pluginmanager.getplugin("pytest_p2").__name__ == "pytest_p2"
 
     def test_consider_module_import_module(self, testdir):
         mod = py.std.types.ModuleType("x")
@@ -198,8 +213,7 @@ class TestBootstrapping:
         mod = py.std.types.ModuleType("pytest_xyz")
         monkeypatch.setitem(py.std.sys.modules, 'pytest_xyz', mod)
         pp = PluginManager()
-        pp.import_plugin('xyz')
-        assert pp.getplugin('xyz') == mod
+        pp.import_plugin('pytest_xyz')
         assert pp.getplugin('pytest_xyz') == mod
         assert pp.isregistered(mod)
 
@@ -217,9 +231,6 @@ class TestBootstrapping:
                 pass
         excinfo = pytest.raises(Exception, "pp.register(hello())")
 
-    def test_canonical_importname(self):
-        for name in 'xyz', 'pytest_xyz', 'pytest_Xyz', 'Xyz':
-            impname = canonical_importname(name)
 
     def test_notify_exception(self, capfd):
         pp = PluginManager()
@@ -400,7 +411,7 @@ class TestPytestPluginInteractions:
         assert len(l) == 0
         config.pluginmanager.do_configure(config=config)
         assert len(l) == 1
-        config.pluginmanager.register(A())  # this should lead to a configured() plugin
+        config.pluginmanager.register(A())  # leads to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
 

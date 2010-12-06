@@ -219,7 +219,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
-def test_preparse_ordering(testdir, monkeypatch):
+def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = py.test.importorskip("pkg_resources")
     def my_iter(name):
         assert name == "pytest11"
@@ -239,3 +239,16 @@ def test_preparse_ordering(testdir, monkeypatch):
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin.x == 42
 
+def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
+    pkg_resources = py.test.importorskip("pkg_resources")
+    def my_iter(name):
+        assert name == "pytest11"
+        class EntryPoint:
+            name = "mytestplugin"
+            def load(self):
+                assert 0, "should not arrive here"
+        return iter([EntryPoint()])
+    monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+    config = testdir.parseconfig("-p", "no:mytestplugin")
+    plugin = config.pluginmanager.getplugin("mytestplugin")
+    assert plugin == -1

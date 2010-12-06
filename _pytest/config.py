@@ -300,9 +300,9 @@ class Config(object):
         if addopts:
             args[:] = self.getini("addopts") + args
         self._checkversion()
+        self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
-        self.pluginmanager.consider_preparse(args)
         self._setinitialconftest(args)
         self.pluginmanager.do_addoption(self._parser)
 

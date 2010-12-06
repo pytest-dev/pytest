@@ -6,7 +6,7 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from _pytest.session import Session
+from _pytest.main import Session
 from py.builtin import print_
 from _pytest.core import HookRelay
 

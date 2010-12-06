@@ -1,7 +1,11 @@
 Changes between 2.0.0 and 2.0.1.dev1
 ----------------------------------------------
 
-- refinements to terminal output
+- refinements to "collecting" output on non-ttys
+- refine internal plugin registration and --traceconfig output
+- introduce a mechanism to prevent/unregister plugins from the 
+  command line, see http://pytest.org/plugins.html#cmdunregister
+- activate resultlog plugin by default
 
 Changes between 1.3.4 and 2.0.0
 ----------------------------------------------

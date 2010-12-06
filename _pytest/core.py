@@ -11,11 +11,9 @@ assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
- "config mark session terminal runner python pdb unittest capture skipping "
+ "config mark main terminal runner python pdb unittest capture skipping "
  "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
- "junitxml doctest").split()
-
-IMPORTPREFIX = "pytest_"
+ "junitxml resultlog doctest").split()
 
 class TagTracer:
     def __init__(self, prefix="[pytest] "):
@@ -79,20 +77,12 @@ class PluginManager(object):
             for spec in default_plugins:
                 self.import_plugin(spec)
 
-    def _getpluginname(self, plugin, name):
-        if name is None:
-            if hasattr(plugin, '__name__'):
-                name = plugin.__name__.split(".")[-1]
-            else:
-                name = id(plugin)
-        return name
-
     def register(self, plugin, name=None, prepend=False):
         assert not self.isregistered(plugin), plugin
-        assert not self.isregistered(plugin), plugin
-        name = self._getpluginname(plugin, name)
+        name = name or getattr(plugin, '__name__', str(id(plugin)))
         if name in self._name2plugin:
             return False
+        #self.trace("registering", name, plugin)
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
         self.hook.pytest_plugin_registered(manager=self, plugin=plugin)
@@ -112,7 +102,7 @@ class PluginManager(object):
                 del self._name2plugin[name]
 
     def isregistered(self, plugin, name=None):
-        if self._getpluginname(plugin, name) in self._name2plugin:
+        if self.getplugin(name) is not None:
             return True
         for val in self._name2plugin.values():
             if plugin == val:
@@ -136,11 +126,12 @@ class PluginManager(object):
             return False
 
     def getplugin(self, name):
+        if name is None:
+            return None
         try:
             return self._name2plugin[name]
         except KeyError:
-            impname = canonical_importname(name)
-            return self._name2plugin[impname]
+            return self._name2plugin.get("_pytest." + name, None)
 
     # API for bootstrapping
     #
@@ -160,19 +151,28 @@ class PluginManager(object):
         except ImportError:
             return # XXX issue a warning
         for ep in iter_entry_points('pytest11'):
-            name = canonical_importname(ep.name)
-            if name in self._name2plugin:
+            if ep.name in self._name2plugin:
                 continue
             try:
                 plugin = ep.load()
             except DistributionNotFound:
                 continue
+            name = ep.name
+            if name.startswith("pytest_"):
+                name = name[7:]
             self.register(plugin, name=name)
 
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
             if opt1 == "-p":
-                self.import_plugin(opt2)
+                if opt2.startswith("no:"):
+                    name = opt2[3:]
+                    if self.getplugin(name) is not None:
+                        self.unregister(None, name=name)
+                    self._name2plugin[name] = -1
+                else:
+                    if self.getplugin(opt2) is None:
+                        self.import_plugin(opt2)
 
     def consider_conftest(self, conftestmodule):
         if self.register(conftestmodule, name=conftestmodule.__file__):
@@ -186,14 +186,18 @@ class PluginManager(object):
             for spec in attr:
                 self.import_plugin(spec)
 
-    def import_plugin(self, spec):
-        assert isinstance(spec, str)
-        modname = canonical_importname(spec)
-        if modname in self._name2plugin:
+    def import_plugin(self, modname):
+        assert isinstance(modname, str)
+        if self.getplugin(modname) is not None:
             return
         try:
+            #self.trace("importing", modname)
             mod = importplugin(modname)
         except KeyboardInterrupt:
+            raise
+        except ImportError:
+            if modname.startswith("pytest_"):
+                return self.import_plugin(modname[7:])
             raise
         except:
             e = py.std.sys.exc_info()[1]
@@ -290,34 +294,18 @@ class PluginManager(object):
         return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
                 kwargs=kwargs, firstresult=True).execute()
 
-def canonical_importname(name):
-    if '.' in name:
-        return name
-    name = name.lower()
-    if not name.startswith(IMPORTPREFIX):
-        name = IMPORTPREFIX + name
-    return name
 
 def importplugin(importspec):
-    #print "importing", importspec
+    name = importspec
     try:
-        return __import__(importspec, None, None, '__doc__')
+        mod = "_pytest." + name
+        return __import__(mod, None, None, '__doc__')
     except ImportError:
-        e = py.std.sys.exc_info()[1]
-        if str(e).find(importspec) == -1:
-            raise
-        name = importspec
-        try:
-            if name.startswith("pytest_"):
-                name = importspec[7:]
-            return __import__("_pytest.%s" %(name), None, None, '__doc__')
-        except ImportError:
-            e = py.std.sys.exc_info()[1]
-            if str(e).find(name) == -1:
-                raise
-            # show the original exception, not the failing internal one
-            return __import__(importspec, None, None, '__doc__')
-
+        #e = py.std.sys.exc_info()[1]
+        #if str(e).find(name) == -1:
+        #    raise
+        pass #
+    return __import__(importspec, None, None, '__doc__')
 
 class MultiCall:
     """ execute a call into multiple python functions/methods. """

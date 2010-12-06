@@ -27,7 +27,7 @@ class TestGeneralUsage:
             def test_option(pytestconfig):
                 assert pytestconfig.option.xyz == "123"
         """)
-        result = testdir.runpytest("-p", "xyz", "--xyz=123")
+        result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             '*1 passed*',

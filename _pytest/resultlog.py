@@ -1,12 +1,12 @@
 """ (disabled by default) create result information in a plain text file. """
 
 import py
-from py.builtin import print_
 
 def pytest_addoption(parser):
-    group = parser.getgroup("resultlog", "resultlog plugin options")
-    group.addoption('--resultlog', action="store", dest="resultlog", metavar="path", default=None,
-           help="path for machine-readable result log.")
+    group = parser.getgroup("terminal reporting", "resultlog plugin options")
+    group.addoption('--resultlog', action="store", dest="resultlog",
+        metavar="path", default=None,
+        help="path for machine-readable result log.")
 
 def pytest_configure(config):
     resultlog = config.option.resultlog
@@ -52,9 +52,9 @@ class ResultLog(object):
         self.logfile = logfile # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
-        print_("%s %s" % (lettercode, testpath), file=self.logfile)
+        py.builtin.print_("%s %s" % (lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
-            print_(" %s" % line, file=self.logfile)
+            py.builtin.print_(" %s" % line, file=self.logfile)
 
     def log_outcome(self, report, lettercode, longrepr):
         testpath = getattr(report, 'nodeid', None)

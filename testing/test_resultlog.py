@@ -2,10 +2,10 @@ import py, pytest
 import os
 from _pytest.resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
-from _pytest.session import Node, Item, FSCollector
+from _pytest.main import Node, Item, FSCollector
 
 def test_generic_path(testdir):
-    from _pytest.session import Session
+    from _pytest.main import Session
     config = testdir.parseconfig()
     session = Session(config)
     p1 = Node('a', config=config, session=session)
