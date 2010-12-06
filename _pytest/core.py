@@ -151,15 +151,15 @@ class PluginManager(object):
         except ImportError:
             return # XXX issue a warning
         for ep in iter_entry_points('pytest11'):
-            if ep.name in self._name2plugin:
+            name = ep.name
+            if name.startswith("pytest_"):
+                name = name[7:]
+            if ep.name in self._name2plugin or name in self._name2plugin:
                 continue
             try:
                 plugin = ep.load()
             except DistributionNotFound:
                 continue
-            name = ep.name
-            if name.startswith("pytest_"):
-                name = name[7:]
             self.register(plugin, name=name)
 
     def consider_preparse(self, args):

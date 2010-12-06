@@ -26,7 +26,9 @@ def pytest_unconfigure(config):
     capman = config.pluginmanager.getplugin('capturemanager')
     while capman._method2capture:
         name, cap = capman._method2capture.popitem()
-        cap.reset()
+        # XXX logging module may wants to close it itself on process exit
+        # otherwise we could do finalization here and call "reset()".
+        cap.suspend()
 
 class NoCapture:
     def startall(self):
