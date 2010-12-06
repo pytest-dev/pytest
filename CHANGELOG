@@ -1,9 +1,11 @@
 Changes between 2.0.0 and 2.0.1.dev1
 ----------------------------------------------
 
-- fix issue9: direct setup/teardown functions for an xfail-marked
-  test will report as xfail if they fail (but reported as normal
-  passing setup/teardown).
+- fix issue9: setup/teardown functions for an xfail-marked
+  test will report as xfail if they fail but report as normally
+  passing (not xpassing) if they succeed.  This only is true
+  for "direct" setup/teardown invocations because teardown_class/
+  teardown_module cannot closely relate to a single test.
 - fix issue8: no logging errors at process exit
 - refinements to "collecting" output on non-ttys
 - refine internal plugin registration and --traceconfig output

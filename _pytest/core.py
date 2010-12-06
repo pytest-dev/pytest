@@ -119,11 +119,7 @@ class PluginManager(object):
             py.test.skip("plugin %r is missing" % name)
 
     def hasplugin(self, name):
-        try:
-            self.getplugin(name)
-            return True
-        except KeyError:
-            return False
+        return bool(self.getplugin(name))
 
     def getplugin(self, name):
         if name is None:
