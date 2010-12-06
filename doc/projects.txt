@@ -3,18 +3,21 @@
 Project examples
 ==========================
 
-Here are some examples of projects using py.test:
+Here are some examples of projects using py.test (please send notes via :ref:`contact`):
 
 * `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over `16000 tests <http://test.pypy.org>`_
 * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
 * `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
+* `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
 * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
+* `applib <https://github.com/ActiveState/applib>`_ cross-platform utilities
 * `six <http://pypi.python.org/pypi/six/>`_ Python 2 and 3 compatibility utilities
 * `pediapress <http://code.pediapress.com/wiki/wiki>`_ MediaWiki articles
 * `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
+* `pylib <http://pylib.org>`_ cross-platform path, IO, dynamic code library
 * `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
 * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
 * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
@@ -34,15 +37,15 @@ Here are some examples of projects using py.test:
 * `bu <http://packages.python.org/bu/>`_ a microscopic build system
 * `katcp <https://bitbucket.org/hodgestar/katcp>`_ Telescope communication protocol over Twisted
 * `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
-* many more ... (please send notes via the :ref:`contact`)
 
 Some organisations using py.test
 -----------------------------------
 
-* `Square Kilometre Array <http://ska.ac.za/>`_
+* `Square Kilometre Array, Cape Town <http://ska.ac.za/>`_
 * `Tandberg <http://www.tandberg.com/>`_
-* `Stups department of Heinrich Heine University <http://www.stups.uni-duesseldorf.de/projects.php>`_
-* `Open End <http://openend.se>`_
-* `Laboraratory of Bioinformatics <http://genesilico.pl/>`_
-* `merlinux <http://merlinux.eu>`_
+* `Shootq <http://web.shootq.com/>`_
+* `Stups department of Heinrich Heine University Düsseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
+* `Open End, Gotenborg <http://www.openend.se>`_
+* `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
+* `merlinux, Germany <http://merlinux.eu>`_
 * many more ... (please be so kind to send a note via :ref:`contact`)

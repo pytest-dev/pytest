@@ -15,7 +15,7 @@ Contact channels
 
 - #pylib on irc.freenode.net IRC channel for random questions.
 
-- private mail to Holger.Krekel at gmail com if you have sensitive issues to communicate
+- private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
 
 - `commit mailing list`_
 

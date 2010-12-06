@@ -12,6 +12,47 @@ attempts to read from it.  This is important if some code paths in
 test otherwise might lead to waiting for input - which is usually
 not desired when running automated tests.
 
+.. _printdebugging:
+
+Using print statements for debugging
+---------------------------------------------------
+
+One primary benefit of the default capturing of stdout/stderr output
+is that you can use print statements for debugging::
+
+    # content of test_module.py
+   
+    def setup_function(function):
+        print ("setting up %s" % function)
+
+    def test_func1():
+        assert True
+
+    def test_func2():
+        assert False
+
+and running this module will show you precisely the output
+of the failing function and hide the other one::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev1
+    collecting ... collected 2 items
+    
+    test_module.py .F
+    
+    ================================= FAILURES =================================
+    ________________________________ test_func2 ________________________________
+    
+        def test_func2():
+    >       assert False
+    E       assert False
+    
+    test_module.py:9: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    setting up <function test_func2 at 0x1e6cd70>
+    ==================== 1 failed, 1 passed in 0.04 seconds ====================
+
 Setting capturing methods or disabling capturing
 -------------------------------------------------
 
@@ -35,14 +76,6 @@ You can influence output capturing mechanisms from the command line::
     py.test --capture=sys # replace sys.stdout/stderr with in-mem files
     py.test --capture=fd  # also point filedescriptors 1 and 2 to temp file
 
-If you set capturing values in a conftest file like this::
-
-    # conftest.py
-    option_capture = 'fd'
-
-then all tests in that directory will execute with "fd" style capturing.
-
-_ `printdebugging`:
 
 Accessing captured output from a test function
 ---------------------------------------------------
