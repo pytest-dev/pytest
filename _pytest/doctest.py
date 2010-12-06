@@ -34,7 +34,9 @@ class ReprFailDoctest(TerminalRepr):
 
 class DoctestItem(pytest.Item):
     def repr_failure(self, excinfo):
-        if excinfo.errisinstance(py.std.doctest.DocTestFailure):
+        doctest = py.std.doctest
+        if excinfo.errisinstance((doctest.DocTestFailure,
+                                  doctest.UnexpectedException)):
             doctestfailure = excinfo.value
             example = doctestfailure.example
             test = doctestfailure.test
@@ -50,12 +52,15 @@ class DoctestItem(pytest.Item):
             for line in filelines[i:lineno]:
                 lines.append("%03d %s" % (i+1, line))
                 i += 1
-            lines += checker.output_difference(example,
-                    doctestfailure.got, REPORT_UDIFF).split("\n")
+            if excinfo.errisinstance(doctest.DocTestFailure):
+                lines += checker.output_difference(example,
+                        doctestfailure.got, REPORT_UDIFF).split("\n")
+            else:
+                inner_excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
+                lines += ["UNEXPECTED EXCEPTION: %s" %
+                            repr(inner_excinfo.value)]
+
             return ReprFailDoctest(reprlocation, lines)
-        elif excinfo.errisinstance(py.std.doctest.UnexpectedException):
-            excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
-            return super(DoctestItem, self).repr_failure(excinfo)
         else:
             return super(DoctestItem, self).repr_failure(excinfo)
 

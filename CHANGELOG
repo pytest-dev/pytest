@@ -1,6 +1,9 @@
 Changes between 2.0.0 and 2.0.1.dev1
 ----------------------------------------------
 
+- fix issue10: assert failures in doctest modules.
+  unexpected failures in doctests will not generally
+  show nicer, i.e. within the doctest failing context.
 - fix issue9: setup/teardown functions for an xfail-marked
   test will report as xfail if they fail but report as normally
   passing (not xpassing) if they succeed.  This only is true

@@ -48,19 +48,16 @@ class TestDoctests:
     def test_doctest_unexpected_exception(self, testdir):
         p = testdir.maketxtfile("""
             >>> i = 0
-            >>> i = 1
-            >>> x
+            >>> 0 / i
             2
         """)
-        reprec = testdir.inline_run(p)
-        call = reprec.getcall("pytest_runtest_logreport")
-        assert call.report.failed
-        assert call.report.longrepr
-        # XXX
-        #testitem, = items
-        #excinfo = pytest.raises(Failed, "testitem.runtest()")
-        #repr = testitem.repr_failure(excinfo, ("", ""))
-        #assert repr.reprlocation
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines([
+            "*unexpected_exception*",
+            "*>>> i = 0*",
+            "*>>> 0 / i*",
+            "*UNEXPECTED*ZeroDivision*",
+        ])
 
     def test_doctestmodule(self, testdir):
         p = testdir.makepyfile("""
