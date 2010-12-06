@@ -97,19 +97,19 @@ def pytest_runtest_makereport(__multicall__, item, call):
             rep.keywords['xfail'] = "reason: " + call.excinfo.value.msg
             rep.outcome = "skipped"
             return rep
-    if call.when == "call":
-        rep = __multicall__.execute()
-        evalxfail = getattr(item, '_evalxfail')
-        if not item.config.getvalue("runxfail") and evalxfail.istrue():
-            if call.excinfo:
-                rep.outcome = "skipped"
-            else:
-                rep.outcome = "failed"
+    rep = __multicall__.execute()
+    evalxfail = item._evalxfail
+    if not item.config.option.runxfail and evalxfail.istrue():
+        if call.excinfo:
+            rep.outcome = "skipped"
             rep.keywords['xfail'] = evalxfail.getexplanation()
-        else:
-            if 'xfail' in rep.keywords:
-                del rep.keywords['xfail']
-        return rep
+        elif call.when == "call":
+            rep.outcome = "failed"
+            rep.keywords['xfail'] = evalxfail.getexplanation()
+    else:
+        if 'xfail' in rep.keywords:
+            del rep.keywords['xfail']
+    return rep
 
 # called by terminalreporter progress reporting
 def pytest_report_teststatus(report):

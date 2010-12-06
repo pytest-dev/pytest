@@ -308,6 +308,37 @@ class TestXFail:
             "*1 xfailed*",
         ])
 
+class TestXFailwithSetupTeardown:
+    def test_failing_setup_issue9(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def setup_function(func):
+                assert 0
+
+            @pytest.mark.xfail
+            def test_func():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*1 xfail*",
+        ])
+
+    def test_failing_teardown_issue9(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def teardown_function(func):
+                assert 0
+
+            @pytest.mark.xfail
+            def test_func():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*1 xfail*",
+        ])
+
 
 class TestSkipif:
     def test_skipif_conditional(self, testdir):
