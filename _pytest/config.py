@@ -399,7 +399,9 @@ class Config(object):
             return self._getconftest(name, path, check=False)
 
     def getvalueorskip(self, name, path=None):
-        """ (deprecated) return getvalue(name) or call py.test.skip if no value exists. """
+        """ (deprecated) return getvalue(name) or call
+        py.test.skip if no value exists. """
+        __tracebackhide__ = True
         try:
             val = self.getvalue(name, path)
             if val is None:

@@ -111,8 +111,15 @@ class TestConfigAPI:
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
         config.option.hello = None
-        pytest.raises(pytest.skip.Exception,
-            "config.getvalueorskip('hello')")
+        try:
+            config.getvalueorskip('hello')
+        except KeyboardInterrupt:
+            raise
+        except:
+            excinfo = py.code.ExceptionInfo()
+        frame = excinfo.traceback[-2].frame
+        assert frame.code.name == "getvalueorskip"
+        assert frame.eval("__tracebackhide__")
 
     def test_config_overwrite(self, testdir):
         o = testdir.tmpdir
