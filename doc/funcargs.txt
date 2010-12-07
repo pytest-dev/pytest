@@ -14,7 +14,7 @@ Dependency injection through function arguments
 py.test allows to inject values into test functions through the *funcarg
 mechanism*: For each argument name in a test function signature a factory is
 looked up and called to create the value.  The factory can live in the
-same test class, test module, in a per-directory ``confest.py`` file or
+same test class, test module, in a per-directory ``conftest.py`` file or
 in an external plugin.  It has full access to the requesting test
 function, can register finalizers and invoke lifecycle-caching
 helpers.  As can be expected from a systematic dependency
