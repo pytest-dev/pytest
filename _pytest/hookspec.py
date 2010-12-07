@@ -19,7 +19,7 @@ def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args. """
 pytest_cmdline_parse.firstresult = True
 
-def pytest_cmdline_processargs(config, args):
+def pytest_cmdline_preparse(config, args):
     """modify command line arguments before option parsing. """
 
 def pytest_addoption(parser):

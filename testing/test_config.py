@@ -261,7 +261,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
 
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest("""
-        def pytest_cmdline_processargs(args):
+        def pytest_cmdline_preparse(args):
             args.append("-h")
     """)
     result = testdir.runpytest()
