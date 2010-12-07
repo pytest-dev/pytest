@@ -271,6 +271,7 @@ initialisation, command line and configuration hooks
 
 .. currentmodule:: _pytest.hookspec
 
+.. autofunction:: pytest_cmdline_processargs
 .. autofunction:: pytest_cmdline_parse
 .. autofunction:: pytest_namespace
 .. autofunction:: pytest_addoption

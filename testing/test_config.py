@@ -82,7 +82,6 @@ class TestConfigCmdlineParsing:
 
 
 class TestConfigAPI:
-
     def test_config_trace(self, testdir):
         config = testdir.Config()
         l = []
@@ -252,3 +251,14 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     config = testdir.parseconfig("-p", "no:mytestplugin")
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin == -1
+
+def test_cmdline_processargs_simple(testdir):
+    testdir.makeconftest("""
+        def pytest_cmdline_processargs(args):
+            args.append("-h")
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*pytest*",
+        "*-h*",
+    ])

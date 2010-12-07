@@ -305,6 +305,8 @@ class Config(object):
         self.pluginmanager.consider_env()
         self._setinitialconftest(args)
         self.pluginmanager.do_addoption(self._parser)
+        if addopts:
+            self.hook.pytest_cmdline_processargs(config=self, args=args)
 
     def _checkversion(self):
         minver = self.inicfg.get('minversion', None)

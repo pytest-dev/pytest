@@ -19,6 +19,9 @@ def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args. """
 pytest_cmdline_parse.firstresult = True
 
+def pytest_cmdline_processargs(config, args):
+    """modify command line arguments before option parsing. """
+
 def pytest_addoption(parser):
     """add optparse-style options and ini-style config values via calls
     to ``parser.addoption`` and ``parser.addini(...)``.
@@ -201,7 +204,6 @@ def pytest_terminal_summary(terminalreporter):
 def pytest_doctest_prepare_content(content):
     """ return processed content for a given doctest"""
 pytest_doctest_prepare_content.firstresult = True
-
 
 # -------------------------------------------------------------------------
 # error handling and internal debugging hooks

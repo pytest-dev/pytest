@@ -1,6 +1,11 @@
 Changes between 2.0.0 and 2.0.1.dev1
 ----------------------------------------------
 
+- introduce a pytest_cmdline_processargs(args) hook
+  to allow dynamic computation of command line arguments.
+  This fixes a regression because py.test prior to 2.0
+  allowed to set command line options from conftest.py
+  files which so far pytest-2.0 only allowed from ini-files now.
 - fix issue7: assert failures in doctest modules.
   unexpected failures in doctests will not generally
   show nicer, i.e. within the doctest failing context.
