@@ -218,6 +218,12 @@ class TestGeneralUsage:
         assert res.ret
         res.stderr.fnmatch_lines(["*ERROR*not found*"])
 
+    def test_docstring_on_hookspec(self):
+        from _pytest import hookspec
+        for name, value in vars(hookspec).items():
+            if name.startswith("pytest_"):
+                assert value.__doc__, "no docstring for %s" % name
+
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""

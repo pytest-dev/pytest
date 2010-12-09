@@ -319,25 +319,6 @@ class TestPytestPluginInteractions:
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
 
-    def test_addhooks_docstring_error(self, testdir):
-        newhooks = testdir.makepyfile(newhooks="""
-            class A: # no pytest_ prefix
-                pass
-            def pytest_myhook(xyz):
-                pass
-        """)
-        conf = testdir.makeconftest("""
-            import sys ; sys.path.insert(0, '.')
-            import newhooks
-            def pytest_addhooks(pluginmanager):
-                pluginmanager.addhooks(newhooks)
-        """)
-        res = testdir.runpytest()
-        assert res.ret != 0
-        res.stderr.fnmatch_lines([
-            "*docstring*pytest_myhook*newhooks*"
-        ])
-
     def test_addhooks_nohooks(self, testdir):
         conf = testdir.makeconftest("""
             import sys

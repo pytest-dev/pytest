@@ -1,6 +1,9 @@
 Changes between 2.0.0 and 2.0.1.dev1
 ----------------------------------------------
 
+- improve behaviour/warnings when running on top of "python -OO"
+  (assertions and docstrings are turned off, leading to potential
+  false positives)
 - introduce a pytest_cmdline_processargs(args) hook
   to allow dynamic computation of command line arguments.
   This fixes a regression because py.test prior to 2.0

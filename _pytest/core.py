@@ -362,9 +362,6 @@ class HookRelay:
         added = False
         for name, method in vars(hookspecs).items():
             if name.startswith(prefix):
-                if not method.__doc__:
-                    raise ValueError("docstring required for hook %r, in %r"
-                        % (method, hookspecs))
                 firstresult = getattr(method, 'firstresult', False)
                 hc = HookCaller(self, name, firstresult=firstresult)
                 setattr(self, name, hc)

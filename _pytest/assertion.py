@@ -17,8 +17,8 @@ def pytest_configure(config):
     # turn call the hooks defined here as part of the
     # DebugInterpreter.
     config._monkeypatch = m = monkeypatch()
+    warn_about_missing_assertion()
     if not config.getvalue("noassert") and not config.getvalue("nomagic"):
-        warn_about_missing_assertion()
         def callbinrepr(op, left, right):
             hook_result = config.hook.pytest_assertrepr_compare(
                 config=config, op=op, left=left, right=right)
@@ -38,9 +38,8 @@ def warn_about_missing_assertion():
     except AssertionError:
         pass
     else:
-        py.std.warnings.warn("Assertions are turned off!"
-                             " (are you using python -O?)")
-
+        sys.stderr.write("WARNING: failing tests may report as passing because "
+        "assertions are turned off!  (are you using python -O?)\n")
 
 # Provide basestring in python3
 try:

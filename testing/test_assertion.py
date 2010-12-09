@@ -201,3 +201,14 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
+@pytest.mark.skipif("sys.version_info < (2,5)")
+def test_warn_missing(testdir):
+    p1 = testdir.makepyfile("")
+    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
+    result.stderr.fnmatch_lines([
+        "*WARNING*assertion*",
+    ])
+    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "--no-assert")
+    result.stderr.fnmatch_lines([
+        "*WARNING*assertion*",
+    ])
