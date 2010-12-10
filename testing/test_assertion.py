@@ -114,6 +114,11 @@ class TestAssert_reprcompare:
         expl = callequal(A(), '')
         assert not expl
 
+def test_reprcompare_notin():
+    detail = plugin.pytest_assertrepr_compare('not in', 'foo', 'aaafoobbb')[1:]
+    assert '- aaabbb' in detail
+    assert '+ aaafoobbb' in detail
+
 @needsnewassert
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""

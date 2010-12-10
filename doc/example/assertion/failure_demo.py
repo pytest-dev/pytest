@@ -77,6 +77,22 @@ class TestSpecialisedExplanations(object):
     def test_in_list(self):
         assert 1 in [0, 2, 3, 4, 5]
 
+    def test_not_in_text_multiline(self):
+        text = 'some multiline\ntext\nwhich\nincludes foo\nand a\ntail'
+        assert 'foo' not in text
+
+    def test_not_in_text_single(self):
+        text = 'single foo line'
+        assert 'foo' not in text
+
+    def test_not_in_text_single_long(self):
+        text = 'head ' * 50 + 'foo ' + 'tail ' * 20
+        assert 'foo' not in text
+
+    def test_not_in_text_single_long_term(self):
+        text = 'head ' * 50 + 'f'*70 + 'tail ' * 20
+        assert 'f'*70 not in text
+
 
 def test_attribute():
     class Foo(object):

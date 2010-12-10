@@ -50,8 +50,9 @@ except NameError:
 
 def pytest_assertrepr_compare(op, left, right):
     """return specialised explanations for some operators/operands"""
-    left_repr = py.io.saferepr(left, maxsize=30)
-    right_repr = py.io.saferepr(right, maxsize=30)
+    width = 80 - 15 - len(op) - 2 # 15 chars indentation, 1 space around op
+    left_repr = py.io.saferepr(left, maxsize=width/2)
+    right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
     summary = '%s %s %s' % (left_repr, op, right_repr)
 
     issequence = lambda x: isinstance(x, (list, tuple))
@@ -71,6 +72,9 @@ def pytest_assertrepr_compare(op, left, right):
             elif isdict(left) and isdict(right):
                 explanation = _diff_text(py.std.pprint.pformat(left),
                                          py.std.pprint.pformat(right))
+        elif op == 'not in':
+            if istext(left) and istext(right):
+                explanation = _notin_text(left, right)
     except py.builtin._sysex:
         raise
     except:
@@ -154,3 +158,11 @@ def _compare_eq_set(left, right):
         for item in diff_right:
             explanation.append(py.io.saferepr(item))
     return explanation
+
+
+def _notin_text(term, text):
+    index = text.find(term)
+    head = text[:index]
+    tail = text[index+len(term):]
+    correct_text = head + tail
+    return _diff_text(correct_text, text)
