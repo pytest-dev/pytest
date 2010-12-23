@@ -64,8 +64,8 @@ You can override the default temporary directory setting like this::
     py.test --basetemp=mydir
 
 When distributing tests on the local machine, ``py.test`` takes care to
-configure a basetemp directory for the sub processes such that all
-temporary data lands below below a single per-test run basetemp directory.
+configure a basetemp directory for the sub processes such that all temporary
+data lands below a single per-test run basetemp directory.
 
 .. _`py.path.local`: http://pylib.org/path.html
 
