@@ -1,6 +1,8 @@
 Changes between 2.0.0 and 2.0.1.devX
 ----------------------------------------------
 
+- remove somewhat surprising "same-conftest" detection because
+  it ignores conftest.py when they appear in several subdirs.
 - improve assertions ("not in"), thanks Floris
 - improve behaviour/warnings when running on top of "python -OO"
   (assertions and docstrings are turned off, leading to potential

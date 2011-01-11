@@ -170,21 +170,6 @@ def test_setinitial_confcut(testdir):
         assert conftest.getconftestmodules(sub) == []
         assert conftest.getconftestmodules(conf.dirpath()) == []
 
-def test_conftest_samecontent_detection(testdir):
-    conf = testdir.makeconftest("x=3")
-    p = testdir.mkdir("x")
-    conf.copy(p.join("conftest.py"))
-    conftest = Conftest()
-    conftest.setinitial([p])
-    l = conftest.getconftestmodules(p)
-    assert len(l) == 1
-    assert l[0].__file__ == p.join("conftest.py")
-    p2 = p.mkdir("y")
-    conf.copy(p2.join("conftest.py"))
-    l = conftest.getconftestmodules(p2)
-    assert len(l) == 1
-    assert l[0].__file__ == p.join("conftest.py")
-
 @pytest.mark.multi(name='test tests whatever .dotdir'.split())
 def test_setinitial_conftest_subdirs(testdir, name):
     sub = testdir.mkdir(name)
