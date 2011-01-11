@@ -6,7 +6,9 @@ def setup_module(mod):
 def test_nose_setup(testdir):
     p = testdir.makepyfile("""
         l = []
+        from nose.tools import with_setup
 
+        @with_setup(lambda: l.append(1), lambda: l.append(2))
         def test_hello():
             assert l == [1]
 
@@ -24,6 +26,8 @@ def test_nose_setup(testdir):
 
 def test_nose_setup_func(testdir):
     p = testdir.makepyfile("""
+        from nose.tools import with_setup
+
         l = []
 
         def my_setup():
@@ -34,16 +38,15 @@ def test_nose_setup_func(testdir):
             b = 2
             l.append(b)
 
+        @with_setup(my_setup, my_teardown)
         def test_hello():
-            print l
+            print (l)
             assert l == [1]
 
         def test_world():
-            print l
+            print (l)
             assert l == [1,2]
 
-        test_hello.setup = my_setup
-        test_hello.teardown = my_teardown
     """)
     result = testdir.runpytest(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
@@ -53,25 +56,25 @@ def test_nose_setup_func(testdir):
 
 def test_nose_setup_func_failure(testdir):
     p = testdir.makepyfile("""
-        l = []
+        from nose.tools import with_setup
 
+        l = []
         my_setup = lambda x: 1
         my_teardown = lambda x: 2
 
+        @with_setup(my_setup, my_teardown)
         def test_hello():
-            print l
+            print (l)
             assert l == [1]
 
         def test_world():
-            print l
+            print (l)
             assert l == [1,2]
 
-        test_hello.setup = my_setup
-        test_hello.teardown = my_teardown
     """)
     result = testdir.runpytest(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
-        "*TypeError: <lambda>() takes exactly 1 argument (0 given)*"
+        "*TypeError: <lambda>() takes exactly 1*0 given*"
     ])
 
 
@@ -83,11 +86,11 @@ def test_nose_setup_func_failure_2(testdir):
         my_teardown = 2
 
         def test_hello():
-            print l
+            print (l)
             assert l == [1]
 
         def test_world():
-            print l
+            print (l)
             assert l == [1,2]
 
         test_hello.setup = my_setup
@@ -118,11 +121,11 @@ def test_nose_setup_partial(testdir):
         my_teardown_partial = partial(my_teardown, 2)
 
         def test_hello():
-            print l
+            print (l)
             assert l == [1]
 
         def test_world():
-            print l
+            print (l)
             assert l == [1,2]
 
         test_hello.setup = my_setup_partial
@@ -173,21 +176,21 @@ def test_nose_test_generator_fixtures(testdir):
 
         class TestClass(object):
             def setup(self):
-                print "setup called in", self
+                print ("setup called in %s" % self)
                 self.called = ['setup']
 
             def teardown(self):
-                print "teardown called in", self
+                print ("teardown called in %s" % self)
                 eq_(self.called, ['setup'])
                 self.called.append('teardown')
 
             def test(self):
-                print "test called in", self
+                print ("test called in %s" % self)
                 for i in range(0, 5):
                     yield self.check, i
 
             def check(self, i):
-                print "check called in", self
+                print ("check called in %s" % self)
                 expect = ['setup']
                 #for x in range(0, i):
                 #    expect.append('setup')
