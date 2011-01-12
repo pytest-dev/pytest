@@ -23,7 +23,7 @@ Changes between 2.0.0 and 2.0.1.devX
   passing (not xpassing) if they succeed.  This only is true
   for "direct" setup/teardown invocations because teardown_class/
   teardown_module cannot closely relate to a single test.
-- fix issue8: no logging errors at process exit
+- fix issue14: no logging errors at process exit
 - refinements to "collecting" output on non-ttys
 - refine internal plugin registration and --traceconfig output
 - introduce a mechanism to prevent/unregister plugins from the 
