@@ -138,7 +138,7 @@ let's run the full monty::
     E       assert 4 < 4
     
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.02 seconds
+    1 failed, 4 passed in 0.03 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -167,13 +167,13 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev3
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8
     gw0 I / gw1 I / gw2 I / gw3 I
     gw0 [0] / gw1 [0] / gw2 [0] / gw3 [0]
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.29 seconds =============================
+    =============================  in 0.43 seconds =============================
 
 .. _`retrieved by hooks as item keywords`:
 
@@ -214,12 +214,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev3
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8
     collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-25/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-46/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
@@ -227,7 +227,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev3
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8
     collecting ... collected 2 items
     
     test_module.py ..
@@ -303,3 +303,57 @@ accordingly in your application.  It's also a good idea
 to rather use your own application module rather than ``sys``
 for handling flag.
 
+Adding info to test report header
+--------------------------------------------------------------
+
+.. regendoc:wipe
+
+It's easy to present extra information in a py.test run::
+
+    # content of conftest.py
+    
+    def pytest_report_header(config):
+        return "project deps: mylib-1.1"
+
+which will add the string to the test header accordingly::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8
+    project deps: mylib-1.1
+    collecting ... collected 0 items
+    
+    =============================  in 0.00 seconds =============================
+
+.. regendoc:wipe
+
+You can also return a list of strings which will be considered as several
+lines of information.  You can of course also make the amount of reporting
+information on e.g. the value of ``config.option.verbose`` so that
+you present more information appropriately::
+
+    # content of conftest.py
+    
+    def pytest_report_header(config):
+        if config.option.verbose > 0:
+            return ["info1: did you know that ...", "did you?"]
+
+which will add info only when run with "--v"::
+
+    $ py.test -v
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8 -- /home/hpk/venv/0/bin/python
+    info1: did you know that ...
+    did you?
+    collecting ... collected 0 items
+    
+    =============================  in 0.00 seconds =============================
+
+and nothing when run plainly::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev8
+    collecting ... collected 0 items
+    
+    =============================  in 0.00 seconds =============================

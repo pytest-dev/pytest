@@ -231,6 +231,8 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
         assert name == "pytest11"
         class EntryPoint:
             name = "mytestplugin"
+            class dist:
+                pass
             def load(self):
                 class PseudoPlugin:
                     x = 42

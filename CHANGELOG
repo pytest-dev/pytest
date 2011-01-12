@@ -1,5 +1,8 @@
 Changes between 2.0.0 and 2.0.1.devX
 ----------------------------------------------
+- fix issue12 - show plugin versions with "--version" and
+  "--traceconfig" and also document how to add extra information 
+  to reporting test header
 - fix issue17 (import-* reporting issue on python3) by
   requiring py>1.4.0 (1.4.1 is going to include it)
 - fix issue10 (numpy arrays truth checking) by refining

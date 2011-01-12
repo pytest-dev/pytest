@@ -63,6 +63,7 @@ class PluginManager(object):
         self._plugins = []
         self._hints = []
         self.trace = TagTracer().get("pluginmanage")
+        self._plugin_distinfo = []
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
             encoding = getattr(err, 'encoding', 'utf8')
@@ -156,6 +157,7 @@ class PluginManager(object):
                 plugin = ep.load()
             except DistributionNotFound:
                 continue
+            self._plugin_distinfo.append((ep.dist, plugin))
             self.register(plugin, name=name)
 
     def consider_preparse(self, args):

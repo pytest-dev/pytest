@@ -28,6 +28,10 @@ def pytest_cmdline_main(config):
         p = py.path.local(pytest.__file__)
         sys.stderr.write("This is py.test version %s, imported from %s\n" %
             (pytest.__version__, p))
+        plugininfo = getpluginversioninfo(config)
+        if plugininfo:
+            for line in plugininfo:
+                sys.stderr.write(line + "\n")
         return 0
     elif config.option.help:
         config.pluginmanager.do_configure(config)
@@ -69,11 +73,26 @@ conftest_options = [
     ('pytest_plugins', 'list of plugin names to load'),
 ]
 
+def getpluginversioninfo(config):
+    lines = []
+    plugininfo = config.pluginmanager._plugin_distinfo
+    if plugininfo:
+        lines.append("setuptools registered plugins:")
+        for dist, plugin in plugininfo:
+            loc = getattr(plugin, '__file__', repr(plugin))
+            content = "%s-%s at %s" % (dist.project_name, dist.version, loc)
+            lines.append("  " + content)
+    return lines
+
 def pytest_report_header(config):
     lines = []
     if config.option.debug or config.option.traceconfig:
         lines.append("using: pytest-%s pylib-%s" %
             (pytest.__version__,py.__version__))
+
+        verinfo = getpluginversioninfo(config)
+        if verinfo:
+            lines.extend(verinfo)
             
     if config.option.traceconfig:
         lines.append("active plugins:")

@@ -66,6 +66,7 @@ class TestBootstrapping:
             assert name == "pytest11"
             class EntryPoint:
                 name = "pytest_mytestplugin"
+                dist = None
                 def load(self):
                     class PseudoPlugin:
                         x = 42

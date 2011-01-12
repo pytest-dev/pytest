@@ -1,13 +1,18 @@
 import py, pytest,os
 from _pytest.helpconfig import collectattr
 
-def test_version(testdir):
+def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
     #p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([
         '*py.test*%s*imported from*' % (pytest.__version__, )
     ])
+    if pytestconfig.pluginmanager._plugin_distinfo:
+        result.stderr.fnmatch_lines([
+            "*setuptools registered plugins:",
+            "*at*",
+        ])
 
 def test_help(testdir):
     result = testdir.runpytest("--help")
@@ -51,3 +56,9 @@ def test_hookvalidation_optional(testdir):
     result = testdir.runpytest()
     assert result.ret == 0
 
+def test_traceconfig(testdir):
+    result = testdir.runpytest("--traceconfig")
+    result.stdout.fnmatch_lines([
+        "*using*pytest*py*",
+        "*active plugins*",
+    ])
