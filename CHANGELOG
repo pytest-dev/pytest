@@ -2,6 +2,8 @@ Changes between 2.0.0 and 2.0.1.devX
 ----------------------------------------------
 - fix issue17 (import-* reporting issue on python3) by
   requiring py>1.4.0 (1.4.1 is going to include it)
+- fix issue10 (numpy arrays truth checking) by refining
+  assertion interpretation in py lib
 - fix issue15: make nose compatibility tests compatible
   with python3 (now that nose-1.0 supports python3)
 - remove somewhat surprising "same-conftest" detection because
