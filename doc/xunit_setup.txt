@@ -73,7 +73,7 @@ you can also use the following functions to implement fixtures::
         function. Invoked for every test function in the module.
         """
 
-    def teardown_method(function):
+    def teardown_function(function):
         """ teardown any state that was previously setup
         with a setup_function call.
         """
