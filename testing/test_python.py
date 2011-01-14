@@ -196,6 +196,49 @@ class TestGenerator:
         assert passed == 4
         assert not skipped and not failed
 
+    def test_setupstate_is_preserved_134(self, testdir):
+        # yield-based tests are messy wrt to setupstate because
+        # during collection they already invoke setup functions
+        # and then again when they are run.  For now, we want to make sure
+        # that the old 1.3.4 behaviour is preserved such that all
+        # yielded functions all share the same "self" instance that
+        # has been used during collection.
+        o = testdir.makepyfile("""
+            setuplist = []
+            class TestClass:
+                def setup_method(self, func):
+                    #print "setup_method", self, func
+                    setuplist.append(self)
+                    self.init = 42
+
+                def teardown_method(self, func):
+                    self.init = None
+
+                def test_func1(self):
+                    pass
+
+                def test_func2(self):
+                    yield self.func2
+                    yield self.func2
+
+                def func2(self):
+                    assert self.init
+
+            def test_setuplist():
+                # once for test_func2 during collection
+                # once for test_func1 during test run
+                # once for test_func2 during test run
+                #print setuplist
+                assert len(setuplist) == 3, len(setuplist)
+                assert setuplist[0] == setuplist[2], setuplist
+                assert setuplist[1] != setuplist[2], setuplist
+        """)
+        reprec = testdir.inline_run(o, '-v')
+        passed, skipped, failed = reprec.countoutcomes()
+        assert passed == 4
+        assert not skipped and not failed
+
+
 class TestFunction:
     def test_getmodulecollector(self, testdir):
         item = testdir.getitem("def test_func(): pass")

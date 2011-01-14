@@ -304,7 +304,9 @@ class FunctionMixin(PyobjMixin):
             name = 'setup_method'
         else:
             name = 'setup_function'
-        if isinstance(self.parent, Instance):
+        if hasattr(self, '_preservedparent'):
+            obj = self._preservedparent
+        elif isinstance(self.parent, Instance):
             obj = self.parent.newinstance()
             self.obj = self._getobj()
         else:
@@ -377,7 +379,8 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
         self.config._setupstate.prepare(self)
-
+        # see FunctionMixin.setup and test_setupstate_is_preserved_134
+        self._preservedparent = self.parent.obj
         l = []
         seen = {}
         for i, x in enumerate(self.obj()):

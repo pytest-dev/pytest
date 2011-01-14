@@ -1,5 +1,6 @@
 Changes between 2.0.0 and 2.0.1.devX
 ----------------------------------------------
+
 - fix issue12 - show plugin versions with "--version" and
   "--traceconfig" and also document how to add extra information 
   to reporting test header
@@ -34,6 +35,12 @@ Changes between 2.0.0 and 2.0.1.devX
 - introduce a mechanism to prevent/unregister plugins from the 
   command line, see http://pytest.org/plugins.html#cmdunregister
 - activate resultlog plugin by default
+- fix regression wrt yielded tests which due to the
+  collection-before-running semantics were not 
+  setup as with pytest 1.3.4.  Note, however, that
+  the recommended and much cleaner way to do test 
+  parametraization remains the "pytest_generate_tests"
+  mechanism, see the docs.
 
 Changes between 1.3.4 and 2.0.0
 ----------------------------------------------
