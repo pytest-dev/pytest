@@ -73,7 +73,7 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     if collector._istestclasscandidate(name, obj):
         #if hasattr(collector.obj, 'unittest'):
         #    return # we assume it's a mixin class for a TestCase derived one
-        return Class(name, parent=collector)
+        return collector.Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
         if is_generator(obj):
             return Generator(name, parent=collector)
@@ -160,7 +160,7 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
         for prefix in self.config.getini("python_functions"):
             if name.startswith(prefix):
                 return True
-        
+
     def classnamefilter(self, name):
         for prefix in self.config.getini("python_classes"):
             if name.startswith(prefix):
@@ -214,11 +214,11 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
         plugins = self.getplugins() + extra
         gentesthook.pcall(plugins, metafunc=metafunc)
         if not metafunc._calls:
-            return Function(name, parent=self)
+            return self.Function(name, parent=self)
         l = []
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
-            function = Function(name=subname, parent=self,
+            function = self.Function(name=subname, parent=self,
                 callspec=callspec, callobj=funcobj, keywords={callspec.id:True})
             l.append(function)
         return l
@@ -272,7 +272,7 @@ class Module(pytest.File, PyCollectorMixin):
 class Class(PyCollectorMixin, pytest.Collector):
 
     def collect(self):
-        return [Instance(name="()", parent=self)]
+        return [self.Instance(name="()", parent=self)]
 
     def setup(self):
         setup_class = getattr(self.obj, 'setup_class', None)
@@ -394,7 +394,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
             if name in seen:
                 raise ValueError("%r generated tests with non-unique name %r" %(self, name))
             seen[name] = True
-            l.append(Function(name, self, args=args, callobj=call))
+            l.append(self.Function(name, self, args=args, callobj=call))
         return l
 
     def getcallargs(self, obj):
@@ -528,10 +528,10 @@ class Metafunc:
     def addcall(self, funcargs=None, id=_notexists, param=_notexists):
         """ add a new call to the underlying test function during the
         collection phase of a test run.
-        
+
         :arg funcargs: argument keyword dictionary used when invoking
             the test function.
-        
+
         :arg id: used for reporting and identification purposes.  If you
             don't supply an `id` the length of the currently
             list of calls to the test function will be used.
@@ -562,7 +562,7 @@ class FuncargRequest:
 
     class LookupError(LookupError):
         """ error on performing funcarg request. """
-   
+
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
         if hasattr(pyfuncitem, '_requestparam'):
@@ -590,7 +590,7 @@ class FuncargRequest:
     def module(self):
         """ module where the test function was collected. """
         return self._pyfuncitem.getparent(pytest.Module).obj
-       
+
     @property
     def cls(self):
         """ class (can be None) where the test function was collected. """
@@ -606,7 +606,7 @@ class FuncargRequest:
     def config(self):
         """ the pytest config object associated with this request. """
         return self._pyfuncitem.config
-    
+
     @property
     def fspath(self):
         """ the file system path of the test module which collected this test. """
@@ -780,7 +780,7 @@ def getlocation(function, curdir):
 def raises(ExpectedException, *args, **kwargs):
     """ assert that a code block/function call raises @ExpectedException
     and raise a failure exception otherwise.
-        
+
     If using Python 2.5 or above, you may use this function as a
     context manager::
 
@@ -803,7 +803,7 @@ def raises(ExpectedException, *args, **kwargs):
 
     A third possibility is to use a string which which will
     be executed::
-    
+
         >>> raises(ZeroDivisionError, "f(0)")
         <ExceptionInfo ...>
     """
@@ -852,3 +852,4 @@ class RaisesContext(object):
             pytest.fail("DID NOT RAISE")
         self.excinfo.__init__(tp)
         return issubclass(self.excinfo.type, self.ExpectedException)
+

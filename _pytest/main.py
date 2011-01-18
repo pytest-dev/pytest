@@ -152,6 +152,7 @@ class Node(object):
 
     Module = compatproperty("Module")
     Class = compatproperty("Class")
+    Instance = compatproperty("Instance")
     Function = compatproperty("Function")
     File = compatproperty("File")
     Item = compatproperty("Item")
