@@ -34,7 +34,7 @@ class Parser:
 
     def getgroup(self, name, description="", after=None):
         """ get (or create) a named option Group.
-       
+
         :name: unique name of the option group.
         :description: long description for --help output.
         :after: name of other group, used for ordering --help output.
@@ -270,13 +270,16 @@ class Config(object):
 
     def _setinitialconftest(self, args):
         # capture output during conftest init (#issue93)
-        name = hasattr(os, 'dup') and 'StdCaptureFD' or 'StdCapture'
-        cap = getattr(py.io, name)()
+        from _pytest.capture import CaptureManager
+        capman = CaptureManager()
+        self.pluginmanager.register(capman, 'capturemanager')
+        # will be unregistered in capture.py's unconfigure()
+        capman.resumecapture(capman._getmethod_preoptionparse(args))
         try:
             try:
                 self._conftest.setinitial(args)
             finally:
-                out, err = cap.reset()
+                out, err = capman.suspendcapture() # logging might have got it
         except:
             sys.stdout.write(out)
             sys.stderr.write(err)
@@ -417,7 +420,7 @@ def getcfg(args, inibasenames):
                     if 'pytest' in iniconfig.sections:
                         return iniconfig['pytest']
     return {}
-   
+
 def findupwards(current, basename):
     current = py.path.local(current)
     while 1:

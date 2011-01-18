@@ -19,10 +19,8 @@ def addouterr(rep, outerr):
         if content:
             repr.addsection("Captured std%s" % secname, content.rstrip())
 
-def pytest_configure(config):
-    config.pluginmanager.register(CaptureManager(), 'capturemanager')
-
 def pytest_unconfigure(config):
+    # registered in config.py during early conftest.py loading
     capman = config.pluginmanager.getplugin('capturemanager')
     while capman._method2capture:
         name, cap = capman._method2capture.popitem()
@@ -66,6 +64,14 @@ class CaptureManager:
             return NoCapture()
         else:
             raise ValueError("unknown capturing method: %r" % method)
+
+    def _getmethod_preoptionparse(self, args):
+        if '-s' in args or "--capture=no" in args:
+            return "no"
+        elif hasattr(os, 'dup') and '--capture=sys' not in args:
+            return "fd"
+        else:
+            return "sys"
 
     def _getmethod(self, config, fspath):
         if config.option.capture:

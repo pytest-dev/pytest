@@ -325,6 +325,40 @@ class TestLoggingInteraction:
         ])
         assert 'operation on closed file' not in result.stderr.str()
 
+    def test_conftestlogging_is_shown(self, testdir):
+        testdir.makeconftest("""
+                import logging
+                logging.basicConfig()
+                logging.warn("hello435")
+        """)
+        # make sure that logging is still captured in tests
+        result = testdir.runpytest("-s", "-p", "no:capturelog")
+        assert result.ret == 0
+        result.stderr.fnmatch_lines([
+            "WARNING*hello435*",
+        ])
+        assert 'operation on closed file' not in result.stderr.str()
+
+    def test_conftestlogging_and_test_logging(self, testdir):
+        testdir.makeconftest("""
+                import logging
+                logging.basicConfig()
+        """)
+        # make sure that logging is still captured in tests
+        p = testdir.makepyfile("""
+            def test_hello():
+                import logging
+                logging.warn("hello433")
+                assert 0
+        """)
+        result = testdir.runpytest(p, "-p", "no:capturelog")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "WARNING*hello433*",
+        ])
+        assert 'something' not in result.stderr.str()
+        assert 'operation on closed file' not in result.stderr.str()
+
 
 class TestCaptureFuncarg:
     def test_std_functional(self, testdir):
