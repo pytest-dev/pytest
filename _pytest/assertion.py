@@ -165,4 +165,15 @@ def _notin_text(term, text):
     head = text[:index]
     tail = text[index+len(term):]
     correct_text = head + tail
-    return _diff_text(correct_text, text)
+    diff = _diff_text(correct_text, text)
+    newdiff = ['%s is contained here:' % py.io.saferepr(term, maxsize=42)]
+    for line in diff:
+        if line.startswith('Skipping'):
+            continue
+        if line.startswith('- '):
+            continue
+        if line.startswith('+ '):
+            newdiff.append('  ' + line[2:])
+        else:
+            newdiff.append(line)
+    return newdiff
