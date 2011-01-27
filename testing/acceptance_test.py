@@ -346,6 +346,12 @@ class TestInvocationVariants:
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
+        path.join('test_hello.py').remove()
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        assert result.ret != 0
+        result.stderr.fnmatch_lines([
+            "*file*not*found*test_hello.py",
+        ])
 
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")

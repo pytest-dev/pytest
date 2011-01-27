@@ -449,7 +449,7 @@ class Session(FSCollector):
             p = p.dirpath()
         else:
             p = p.new(basename=p.purebasename+".py")
-        return p
+        return str(p)
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
