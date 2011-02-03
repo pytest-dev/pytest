@@ -23,7 +23,7 @@ assertion fails you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 1 items
     
     test_assert1.py F
@@ -105,7 +105,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 1 items
     
     test_assert2.py F

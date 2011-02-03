@@ -121,7 +121,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 5 items
     
     xfail_demo.py xxxxx
@@ -136,7 +136,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello5
       reason: reason
     
-    ======================== 5 xfailed in 0.04 seconds =========================
+    ======================== 5 xfailed in 0.05 seconds =========================
 
 imperative xfail from within a test or setup function
 ------------------------------------------------------

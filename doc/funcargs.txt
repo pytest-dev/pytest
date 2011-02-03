@@ -45,7 +45,7 @@ Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 1 items
     
     test_simplefactory.py F
@@ -150,7 +150,7 @@ Running this::
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 10 items
     
     test_example.py .........F
@@ -188,7 +188,7 @@ If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1 -- /home/hpk/venv/0/bin/python
     collecting ... collected 10 items
     
     test_example.py:6: test_func[7] PASSED

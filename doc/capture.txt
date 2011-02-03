@@ -36,7 +36,7 @@ of the failing function and hide the other one::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.1.dev1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 2 items
     
     test_module.py .F
@@ -50,8 +50,8 @@ of the failing function and hide the other one::
     
     test_module.py:9: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    setting up <function test_func2 at 0x1e6cd70>
-    ==================== 1 failed, 1 passed in 0.04 seconds ====================
+    setting up <function test_func2 at 0x15379b0>
+    ==================== 1 failed, 1 passed in 0.02 seconds ====================
 
 Setting capturing methods or disabling capturing
 -------------------------------------------------

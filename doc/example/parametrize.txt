@@ -46,7 +46,7 @@ the respective settings::
     ================================= FAILURES =================================
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize.TestClass instance at 0x26ef2d8>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x10c1f80>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -55,7 +55,7 @@ the respective settings::
     test_parametrize.py:17: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize.TestClass instance at 0x26fa758>, a = 3, b = 2
+    self = <test_parametrize.TestClass instance at 0x10c8bd8>, a = 3, b = 2
     
         def test_zerodivision(self, a, b):
     >       pytest.raises(ZeroDivisionError, "a/b")
@@ -103,7 +103,7 @@ Running it gives similar results as before::
     ================================= FAILURES =================================
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize2.TestClass instance at 0x1e5e638>, a = 1, b = 2
+    self = <test_parametrize2.TestClass instance at 0x2484ab8>, a = 1, b = 2
     
         @params([dict(a=1, b=2), dict(a=3, b=3), ])
         def test_equals(self, a, b):
@@ -113,7 +113,7 @@ Running it gives similar results as before::
     test_parametrize2.py:19: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize2.TestClass instance at 0x1e6f560>, a = 3, b = 2
+    self = <test_parametrize2.TestClass instance at 0x248da70>, a = 3, b = 2
     
         @params([dict(a=1, b=0), dict(a=3, b=2)])
         def test_zerodivision(self, a, b):
@@ -142,4 +142,4 @@ Running it (with Python-2.4 through to Python2.7 installed)::
    . $ py.test -q multipython.py
    collecting ... collected 75 items
    ....s....s....s....ssssss....s....s....s....ssssss....s....s....s....ssssss
-   48 passed, 27 skipped in 2.74 seconds
+   48 passed, 27 skipped in 2.08 seconds

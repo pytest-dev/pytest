@@ -16,7 +16,10 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.0.0, imported from /home/hpk/p/pytest/pytest.pyc
+    This is py.test version 2.0.1, imported from /home/hpk/p/pytest/pytest.py
+    setuptools registered plugins:
+      pytest-xdist-1.6.dev2 at /home/hpk/p/pytest-xdist/xdist/plugin.pyc
+      pytest-pep8-0.7 at /home/hpk/p/pytest-pep8/pytest_pep8.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -38,7 +41,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.5 -- pytest-2.0.0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
     collecting ... collected 1 items
     
     test_sample.py F
@@ -128,7 +131,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x11fa320>
+    self = <test_class.TestClass instance at 0x17ab998>
     
         def test_two(self):
             x = "hello"
@@ -165,7 +168,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-7/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-9/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -174,8 +177,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-7/test_needsfiles0
-    1 failed in 0.04 seconds
+    /tmp/pytest-9/test_needsfiles0
+    1 failed in 0.02 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.
