@@ -50,7 +50,7 @@ of the failing function and hide the other one::
     
     test_module.py:9: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    setting up <function test_func2 at 0x15379b0>
+    setting up <function test_func2 at 0x2897d70>
     ==================== 1 failed, 1 passed in 0.02 seconds ====================
 
 Setting capturing methods or disabling capturing

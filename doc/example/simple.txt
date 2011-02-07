@@ -138,7 +138,7 @@ let's run the full monty::
     E       assert 4 < 4
     
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.02 seconds
+    1 failed, 4 passed in 0.03 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -173,7 +173,7 @@ directory with the above conftest.py::
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.31 seconds =============================
+    =============================  in 0.29 seconds =============================
 
 .. _`retrieved by hooks as item keywords`:
 
@@ -219,7 +219,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-82/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-171/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 

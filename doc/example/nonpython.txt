@@ -37,7 +37,7 @@ now execute the test specification::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.15 seconds ====================
+    ==================== 1 failed, 1 passed in 0.06 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more

@@ -57,7 +57,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x1f2bdd0>
+    mysetup = <conftest.MySetup instance at 0x2526440>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -127,7 +127,7 @@ Running it yields::
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-77/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /tmp/doc-exec-166/conftest.py:22: specify ssh host with --ssh
     
     ======================== 1 skipped in 0.02 seconds =========================
 

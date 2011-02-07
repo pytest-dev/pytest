@@ -100,7 +100,7 @@ Running it with, this time in "quiet" reporting mode::
     $ py.test -q test_sysexit.py
     collecting ... collected 1 items
     .
-    1 passed in 0.00 seconds
+    1 passed in 0.01 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -131,12 +131,13 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x17ab998>
+    self = <test_class.TestClass instance at 0x178b2d8>
     
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
-    E       assert hasattr('hello', 'check')
+    E       assert False
+    E        +  where False = hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.02 seconds
@@ -168,7 +169,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-9/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-101/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -177,8 +178,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-9/test_needsfiles0
-    1 failed in 0.02 seconds
+    /tmp/pytest-101/test_needsfiles0
+    1 failed in 0.03 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.
