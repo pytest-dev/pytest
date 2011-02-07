@@ -45,7 +45,7 @@ Some organisations using py.test
 * `Tandberg <http://www.tandberg.com/>`_
 * `Shootq <http://web.shootq.com/>`_
 * `Stups department of Heinrich Heine University Düsseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
-* `cellzome`_ <http://www.cellzome.com/>`_
+* `cellzome <http://www.cellzome.com/>`_
 * `Open End, Gotenborg <http://www.openend.se>`_
 * `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
 * `merlinux, Germany <http://merlinux.eu>`_
