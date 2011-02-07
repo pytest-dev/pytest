@@ -495,9 +495,15 @@ class Session(FSCollector):
             node.ihook.pytest_collectstart(collector=node)
             rep = node.ihook.pytest_make_collect_report(collector=node)
             if rep.passed:
+                has_matched = False
                 for x in rep.result:
                     if x.name == name:
                         resultnodes.extend(self.matchnodes([x], nextnames))
+                        has_matched = True
+                # XXX accept IDs that don't have "()" for class instances
+                if not has_matched and len(rep.result) == 1 and x.name == "()":
+                    nextnames.insert(0, name)
+                    resultnodes.extend(self.matchnodes([x], nextnames))
             node.ihook.pytest_collectreport(report=rep)
         return resultnodes
 

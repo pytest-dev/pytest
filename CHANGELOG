@@ -4,6 +4,8 @@ Changes between 2.0.0 and 2.0.1
 - refine and unify initial capturing so that it works nicely
   even if the logging module is used on an early-loaded conftest.py
   file or plugin.
+- allow to omit "()" in test ids to allow for uniform test ids
+  as produced by Alfredo's nice pytest.vim plugin.
 - fix issue12 - show plugin versions with "--version" and
   "--traceconfig" and also document how to add extra information 
   to reporting test header

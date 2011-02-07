@@ -472,6 +472,21 @@ class TestSession:
         item2b, = newcol.perform_collect([item.nodeid], genitems=False)
         assert item2b == item2
 
+    def test_find_byid_without_instance_parents(self, testdir):
+        p = testdir.makepyfile("""
+            class TestClass:
+                def test_method(self):
+                    pass
+        """)
+        arg = p.basename + ("::TestClass::test_method")
+        config = testdir.parseconfig(arg)
+        rcol = Session(config)
+        rcol.perform_collect()
+        items = rcol.items
+        assert len(items) == 1
+        item, = items
+        assert item.nodeid.endswith("TestClass::()::test_method")
+
 class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
