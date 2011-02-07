@@ -1,19 +1,15 @@
 py.test 2.0.1: bug fixes
 ===========================================================================
 
-Welcome to pytest-2.0.1, a maintenance and bug fix release. For detailed
-changes see below.  pytest is a mature testing tool for Python,
-supporting CPython 2.4-3.2, Jython and latest PyPy interpreters. See
-docs here implementation.  See docs with examples here:
+Welcome to pytest-2.0.1, a maintenance and bug fix release of pytest,
+a mature testing tool for Python, supporting CPython 2.4-3.2, Jython
+and latest PyPy interpreters.  See extensive docs with tested examples here:
 
     http://pytest.org/
 
-A note on packaging: pytest used to part of the "py" distribution up
-until version py-1.3.4 but this has changed now:  pytest-2.0.X only
-contains py.test related code and is expected to be backward-compatible
-to existing test code. If you want to install pytest, just type one of::
+If you want to install or upgrade pytest, just type one of::
 
-    pip install -U pytest
+    pip install -U pytest # or
     easy_install -U pytest
 
 Many thanks to all issue reporters and people asking questions or
@@ -22,7 +18,6 @@ for their great coding contributions and many others for feedback and help.
 
 best,
 holger krekel
-
 
 Changes between 2.0.0 and 2.0.1
 ----------------------------------------------
