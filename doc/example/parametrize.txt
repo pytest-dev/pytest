@@ -1,10 +1,143 @@
 
+.. _paramexamples:
+
 parametrizing tests
 =================================================
 
 py.test allows to easily implement your own custom
 parametrization scheme for tests.  Here we provide
 some examples for inspiration and re-use.
+
+generating parameters combinations, depending on command line
+----------------------------------------------------------------------------
+
+.. regendoc:wipe
+
+Let's say we want to execute a test with different parameters
+and the parameter range shall be determined by a command
+line argument.  Let's first write a simple computation test::
+
+    # content of test_compute.py
+
+    def test_compute(param1):
+        assert param1 < 4
+
+Now we add a test configuration like this::
+
+    # content of conftest.py
+
+    def pytest_addoption(parser):
+        parser.addoption("--all", action="store_true",
+            help="run all combinations")
+
+    def pytest_generate_tests(metafunc):
+        if 'param1' in metafunc.funcargnames:
+            if metafunc.config.option.all:
+                end = 5
+            else:
+                end = 2
+            for i in range(end):
+                metafunc.addcall(funcargs={'param1': i})
+
+This means that we only run 2 tests if we do not pass ``--all``::
+
+    $ py.test -q test_compute.py
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.01 seconds
+
+We run only two computations, so we see two dots.
+let's run the full monty::
+
+    $ py.test -q --all
+    collecting ... collected 5 items
+    ....F
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
+    
+    param1 = 4
+    
+        def test_compute(param1):
+    >       assert param1 < 4
+    E       assert 4 < 4
+    
+    test_compute.py:3: AssertionError
+    1 failed, 4 passed in 0.03 seconds
+
+As expected when running the full range of ``param1`` values
+we'll get an error on the last one.
+
+Defering the setup of parametrizing resources
+---------------------------------------------------
+
+.. regendoc:wipe
+
+The parametrization of test functions happens at collection
+time.  It is often a good idea to setup possibly expensive
+resources only when the actual test is run.  Here is a simple
+example how you can achieve that::
+
+    # content of test_backends.py
+    
+    import pytest
+    def test_db_initialized(db):
+        # a dummy test
+        if db.__class__.__name__ == "DB2":
+            pytest.fail("deliberately failing for demo purposes")
+
+Now we add a test configuration that takes care to generate
+two invocations of the ``test_db_initialized`` function and
+furthermore a factory that creates a database object when
+each test is actually run::
+
+    # content of conftest.py
+
+    def pytest_generate_tests(metafunc):
+        if 'db' in metafunc.funcargnames:
+            metafunc.addcall(param="d1")
+            metafunc.addcall(param="d2")
+
+    class DB1:
+        "one database object"
+    class DB2:
+        "alternative database object"
+    
+    def pytest_funcarg__db(request):
+        if request.param == "d1":
+            return DB1()
+        elif request.param == "d2":
+            return DB2()
+        else:
+            raise ValueError("invalid internal test config")
+
+Let's first see how it looks like at collection time::
+
+    $ py.test test_backends.py --collectonly
+    <Module 'test_backends.py'>
+      <Function 'test_db_initialized[0]'>
+      <Function 'test_db_initialized[1]'>
+
+And then when we run the test::
+
+    $ py.test -q test_backends.py
+    collecting ... collected 2 items
+    .F
+    ================================= FAILURES =================================
+    __________________________ test_db_initialized[1] __________________________
+    
+    db = <conftest.DB2 instance at 0x1a5b488>
+    
+        def test_db_initialized(db):
+            # a dummy test
+            if db.__class__.__name__ == "DB2":
+    >           pytest.fail("deliberately failing for demo purposes")
+    E           Failed: deliberately failing for demo purposes
+    
+    test_backends.py:6: Failed
+    1 failed, 1 passed in 0.02 seconds
+
+Now you see that one invocation of the test passes and another fails,
+as it to be expected.
 
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
@@ -41,12 +174,23 @@ Running it means we are two tests for each test functions, using
 the respective settings::
 
     $ py.test -q
-    collecting ... collected 4 items
-    F..F
+    collecting ... collected 6 items
+    .FF..F
     ================================= FAILURES =================================
+    __________________________ test_db_initialized[1] __________________________
+    
+    db = <conftest.DB2 instance at 0xf81c20>
+    
+        def test_db_initialized(db):
+            # a dummy test
+            if db.__class__.__name__ == "DB2":
+    >           pytest.fail("deliberately failing for demo purposes")
+    E           Failed: deliberately failing for demo purposes
+    
+    test_backends.py:6: Failed
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize.TestClass instance at 0x1521440>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0xf93050>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -55,14 +199,14 @@ the respective settings::
     test_parametrize.py:17: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize.TestClass instance at 0x158aa70>, a = 3, b = 2
+    self = <test_parametrize.TestClass instance at 0xf93098>, a = 3, b = 2
     
         def test_zerodivision(self, a, b):
     >       pytest.raises(ZeroDivisionError, "a/b")
     E       Failed: DID NOT RAISE
     
     test_parametrize.py:20: Failed
-    2 failed, 2 passed in 0.03 seconds
+    3 failed, 3 passed in 0.04 seconds
 
 Parametrizing test methods through a decorator
 --------------------------------------------------------------
@@ -103,7 +247,7 @@ Running it gives similar results as before::
     ================================= FAILURES =================================
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize2.TestClass instance at 0x22a77e8>, a = 1, b = 2
+    self = <test_parametrize2.TestClass instance at 0x27e15a8>, a = 1, b = 2
     
         @params([dict(a=1, b=2), dict(a=3, b=3), ])
         def test_equals(self, a, b):
@@ -113,7 +257,7 @@ Running it gives similar results as before::
     test_parametrize2.py:19: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize2.TestClass instance at 0x2332a70>, a = 3, b = 2
+    self = <test_parametrize2.TestClass instance at 0x2953bd8>, a = 3, b = 2
     
         @params([dict(a=1, b=0), dict(a=3, b=2)])
         def test_zerodivision(self, a, b):
@@ -142,4 +286,4 @@ Running it (with Python-2.4 through to Python2.7 installed)::
    . $ py.test -q multipython.py
    collecting ... collected 75 items
    ....s....s....s....ssssss....s....s....s....ssssss....s....s....s....ssssss
-   48 passed, 27 skipped in 2.09 seconds
+   48 passed, 27 skipped in 1.59 seconds

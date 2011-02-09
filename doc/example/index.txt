@@ -12,7 +12,7 @@ need more examples or have questions. Also take a look at the :ref:`comprehensiv
 
    reportingdemo.txt
    simple.txt
-   pythoncollection.txt
    mysetup.txt
    parametrize.txt
+   pythoncollection.txt
    nonpython.txt

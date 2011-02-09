@@ -28,6 +28,8 @@ very useful if you want to test e.g. against different database backends
 or with multiple numerical arguments sets and want to reuse the same set
 of test functions.
 
+.. _funcarg:
+
 Basic funcarg example
 -----------------------
 
@@ -195,6 +197,8 @@ If you want to select only the run with the value ``7`` you could do::
     
     ======================== 9 tests deselected by '7' =========================
     ================== 1 passed, 9 deselected in 0.01 seconds ==================
+
+You might want to look at :ref:`more parametrization examples <paramexamples>`.
 
 .. _`metafunc object`:
 

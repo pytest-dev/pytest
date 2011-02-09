@@ -84,64 +84,6 @@ rather pass in different or more complex objects.  See the
 next example or refer to :ref:`mysetup` for more information
 on real-life examples.
 
-generating parameters combinations, depending on command line
-----------------------------------------------------------------------------
-
-.. regendoc:wipe
-
-Let's say we want to execute a test with different parameters
-and the parameter range shall be determined by a command
-line argument.  Let's first write a simple computation test::
-
-    # content of test_compute.py
-
-    def test_compute(param1):
-        assert param1 < 4
-
-Now we add a test configuration like this::
-
-    # content of conftest.py
-
-    def pytest_addoption(parser):
-        parser.addoption("--all", action="store_true",
-            help="run all combinations")
-
-    def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.funcargnames:
-            if metafunc.config.option.all:
-                end = 5
-            else:
-                end = 2
-            for i in range(end):
-                metafunc.addcall(funcargs={'param1': i})
-
-This means that we only run 2 tests if we do not pass ``--all``::
-
-    $ py.test -q test_compute.py
-    collecting ... collected 2 items
-    ..
-    2 passed in 0.01 seconds
-
-We run only two computations, so we see two dots.
-let's run the full monty::
-
-    $ py.test -q --all
-    collecting ... collected 5 items
-    ....F
-    ================================= FAILURES =================================
-    _____________________________ test_compute[4] ______________________________
-    
-    param1 = 4
-    
-        def test_compute(param1):
-    >       assert param1 < 4
-    E       assert 4 < 4
-    
-    test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.03 seconds
-
-As expected when running the full range of ``param1`` values
-we'll get an error on the last one.
 
 dynamically adding command line options
 --------------------------------------------------------------
@@ -167,15 +109,15 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
     gw0 I / gw1 I / gw2 I / gw3 I
     gw0 [0] / gw1 [0] / gw2 [0] / gw3 [0]
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.29 seconds =============================
+    =============================  in 0.37 seconds =============================
 
-.. _`retrieved by hooks as item keywords`:
+.. _`excontrolskip`:
 
 control skipping of tests according to command line option
 --------------------------------------------------------------
@@ -214,12 +156,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
     collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-171/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-275/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
@@ -227,7 +169,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
     collecting ... collected 2 items
     
     test_module.py ..
@@ -319,7 +261,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
     project deps: mylib-1.1
     collecting ... collected 0 items
     
@@ -342,7 +284,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0 -- /home/hpk/venv/0/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -353,7 +295,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
     collecting ... collected 0 items
     
     =============================  in 0.00 seconds =============================

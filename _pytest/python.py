@@ -537,12 +537,10 @@ class Metafunc:
             list of calls to the test function will be used.
 
         :arg param: will be exposed to a later funcarg factory invocation
-            through the ``request.param`` attribute.  Setting it (instead of
-            directly providing a ``funcargs`` ditionary) is called
-            *indirect parametrization*.  Indirect parametrization is
-            preferable if test values are expensive to setup or can
-            only be created after certain fixtures or test-run related
-            initialization code has been run.
+            through the ``request.param`` attribute.  It allows to
+            defer test fixture setup activities to when an actual
+            test is run.  Note that request.addcall() is called during
+            the collection phase of a test run.
         """
         assert funcargs is None or isinstance(funcargs, dict)
         if id is None:
@@ -556,7 +554,13 @@ class Metafunc:
         self._calls.append(CallSpec(funcargs, id, param))
 
 class FuncargRequest:
-    """ A request for function arguments from a test function. """
+    """ A request for function arguments from a test function.
+        
+        Note that there is an optional ``param`` attribute in case
+        there was an invocation to metafunc.addcall(param=...).
+        If no such call was done in a ``pytest_generate_tests``
+        hook, the attribute will not be present.
+    """
     _argprefix = "pytest_funcarg__"
     _argname = None
 
