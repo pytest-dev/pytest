@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2010, holger krekel et aliter'
+copyright = u'2011, holger krekel et alii'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -185,7 +185,7 @@ htmlhelp_basename = 'pytestdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'pytest.tex', u'pytest Documentation',
-   u'holger krekel et aliter', 'manual'),
+   u'holger krekel et alii', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -218,7 +218,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'pytest', u'pytest Documentation',
-     [u'holger krekel et aliter'], 1)
+     [u'holger krekel et alii'], 1)
 ]
 
 
@@ -226,9 +226,9 @@ man_pages = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'pytest'
-epub_author = u'holger krekel et aliter'
-epub_publisher = u'holger krekel et aliter'
-epub_copyright = u'2010, holger krekel et aliter'
+epub_author = u'holger krekel et alii'
+epub_publisher = u'holger krekel et alii'
+epub_copyright = u'2010, holger krekel et alii'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
