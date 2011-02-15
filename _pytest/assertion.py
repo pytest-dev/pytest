@@ -12,7 +12,7 @@ def pytest_addoption(parser):
         help="disable python assert expression reinterpretation."),
 
 def pytest_configure(config):
-    # The _pytesthook attribute on the AssertionError is used by
+    # The _reprcompare attribute on the py.code module is used by
     # py._code._assertionnew to detect this plugin was loaded and in
     # turn call the hooks defined here as part of the
     # DebugInterpreter.
@@ -51,7 +51,7 @@ except NameError:
 def pytest_assertrepr_compare(op, left, right):
     """return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2 # 15 chars indentation, 1 space around op
-    left_repr = py.io.saferepr(left, maxsize=width/2)
+    left_repr = py.io.saferepr(left, maxsize=int(width/2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
     summary = '%s %s %s' % (left_repr, op, right_repr)
 
