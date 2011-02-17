@@ -91,7 +91,7 @@ Making use of context-sensitive comparisons
 
 .. versionadded:: 2.0
 
-py.test has rich support for providing context-sensitive informations
+py.test has rich support for providing context-sensitive information
 when it encounters comparisons.  For example::
 
     # content of test_assert2.py

@@ -36,7 +36,7 @@ Install the plugin with::
     
     pip install pytest-xdist
 
-or use the package in develope/in-place mode with
+or use the package in develop/in-place mode with
 a checkout of the `pytest-xdist repository`_ ::
 
     python setup.py develop
@@ -157,7 +157,7 @@ at once.   The specifications strings use the `xspec syntax`_.
 Specifying test exec environments in an ini file
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-pytest (since version 2.0) supports ini-style cofiguration.
+pytest (since version 2.0) supports ini-style configuration.
 You can for example make running with three subprocesses
 your default like this::
 

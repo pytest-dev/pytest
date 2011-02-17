@@ -5,7 +5,7 @@ Mission
 py.test strives to make testing a fun and no-boilerplate effort.
 
 The tool is distributed as part of the `py` package which contains supporting APIs that
-are also useable independently.  The project independent ``py.test`` command line tool helps you to:
+are also usable independently.  The project independent ``py.test`` command line tool helps you to:
 
 * rapidly collect and run tests
 * run unit- or doctests, functional or integration tests

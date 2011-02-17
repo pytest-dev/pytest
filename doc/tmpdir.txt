@@ -56,7 +56,7 @@ the default base temporary directory
 
 Temporary directories are by default created as sub directories of
 the system temporary directory.  The base name will be ``pytest-NUM`` where
-``NUM`` will be incremenated with each test run.  Moreover, entries older
+``NUM`` will be incremented with each test run.  Moreover, entries older
 than 3 temporary directories will be removed.
 
 You can override the default temporary directory setting like this::

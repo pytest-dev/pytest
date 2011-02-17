@@ -48,7 +48,7 @@ the output.
 example: decorating a funcarg in a test module
 --------------------------------------------------------------
 
-For larger scale setups it's sometimes useful to decorare
+For larger scale setups it's sometimes useful to decorate
 a funcarg just for a particular test module.  We can
 extend the `accept example`_ by putting this in our test module:
 

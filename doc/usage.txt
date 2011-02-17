@@ -101,7 +101,7 @@ you :ref:`disable capturing`.
 creating JUnitXML format files
 ----------------------------------------------------
 
-To create result files which can be read by Hudson_ or other Continous
+To create result files which can be read by Hudson_ or other Continuous
 integration servers, use this invocation::
 
     py.test --junitxml=path

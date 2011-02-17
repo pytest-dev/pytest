@@ -7,7 +7,7 @@ Welcome to ``py.test``!
 - **a mature fully featured testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython
- - continously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
+ - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
  - used in :ref:`many projects and organisations <projects>`, ranging from 10 to 10000 tests
  - has :ref:`comprehensive documentation <toc>`
  - comes with :ref:`tested examples <examples>`
@@ -27,7 +27,7 @@ Welcome to ``py.test``!
  - advanced :ref:`skip and xfail`
  - generic :ref:`marking and test selection <mark>`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
- - can :ref:`continously re-run failing tests <looponfailing>`
+ - can :ref:`continuously re-run failing tests <looponfailing>`
  - many :ref:`builtin helpers <pytest helpers>`
  - flexible :ref:`Python test discovery`
  - unique :ref:`dependency injection through funcargs <funcargs>`
@@ -40,7 +40,7 @@ Welcome to ``py.test``!
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`
  - supports generating testing coverage reports
- - `Javasript unit- and functional testing`_
+ - `Javascript unit- and functional testing`_
 
 - **extensive plugin and customization system**
 
@@ -48,7 +48,7 @@ Welcome to ``py.test``!
  - customizations can be per-directory, per-project or per PyPI released plugins
  - it is easy to add command line options or do other kind of add-ons and customizations.
 
-.. _`Javasript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
+.. _`Javascript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
 
 .. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
 

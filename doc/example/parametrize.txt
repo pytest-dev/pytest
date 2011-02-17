@@ -67,7 +67,7 @@ let's run the full monty::
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
 
-Defering the setup of parametrizing resources
+Deferring the setup of parametrizing resources
 ---------------------------------------------------
 
 .. regendoc:wipe
@@ -271,7 +271,7 @@ checking serialization between Python interpreters
 --------------------------------------------------------------
 
 Here is a stripped down real-life example of using parametrized
-testing for testing serialization betwee different interpreters.
+testing for testing serialization between different interpreters.
 We define a ``test_basic_objects`` function which is to be run
 with different sets of arguments for its three arguments::
 

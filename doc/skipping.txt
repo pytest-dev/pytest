@@ -147,7 +147,7 @@ within test or setup code.  Example::
 
     def test_function():
         if not valid_config():
-            pytest.xfail("unsuppored configuration")
+            pytest.xfail("unsupported configuration")
 
 
 skipping on a missing import dependency
@@ -159,7 +159,7 @@ or within a test or test setup function::
     docutils = pytest.importorskip("docutils")
 
 If ``docutils`` cannot be imported here, this will lead to a
-skip outcome of the test.  You can also skip dependeing if
+skip outcome of the test.  You can also skip depending if
 if a library does not come with a high enough version::
 
     docutils = pytest.importorskip("docutils", minversion="0.3")
@@ -175,5 +175,5 @@ within test or setup code.  Example::
 
     def test_function():
         if not valid_config():
-            pytest.skip("unsuppored configuration")
+            pytest.skip("unsupported configuration")
 

@@ -58,7 +58,7 @@ you can add this to your root directory::
     [pytest]
     addopts = -rsxX -q
 
-From now on, running ``py.test`` will implicitely add
+From now on, running ``py.test`` will implicitly add
 the specified options.
 
 builtin configuration file options

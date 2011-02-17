@@ -129,7 +129,7 @@ put options values in a ``conftest.py`` file like this::
     option_tx = ['ssh=myhost//python=python2.5', 'popen//python=python2.5']
     option_dist = True
 
-Any commandline ``--tx`` specifictions  will add to the list of
+Any commandline ``--tx`` specifications  will add to the list of
 available execution environments.
 
 Specifying "rsync" dirs in a conftest.py

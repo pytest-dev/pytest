@@ -30,7 +30,7 @@ test parametrization:
 
 distributed testing:
 
-- `simultanously test your code on all platforms`_ (blog entry)
+- `simultaneously test your code on all platforms`_ (blog entry)
 
 plugin specific examples:
 
@@ -42,7 +42,7 @@ plugin specific examples:
 .. _`many examples in the docs for plugins`: plugin/index.html
 .. _`monkeypatch plugin`: plugin/monkeypatch.html
 .. _`application setup in test functions with funcargs`: funcargs.html#appsetup
-.. _`simultanously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
+.. _`simultaneously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
 .. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/

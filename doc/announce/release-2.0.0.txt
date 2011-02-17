@@ -117,7 +117,7 @@ Important Notes
 - py.test.collect.Directory does not exist anymore and it
   is not possible to provide an own "Directory" object.
   If you have used this and don't know what to do, get
-  in contact.  We'll figure someting out.
+  in contact.  We'll figure something out.
 
   Note that pytest_collect_directory() is still called but
   any return value will be ignored.  This allows to keep

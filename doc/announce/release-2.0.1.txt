@@ -63,5 +63,5 @@ Changes between 2.0.0 and 2.0.1
   collection-before-running semantics were not
   setup as with pytest 1.3.4.  Note, however, that
   the recommended and much cleaner way to do test
-  parametraization remains the "pytest_generate_tests"
+  parametrization remains the "pytest_generate_tests"
   mechanism, see the docs.

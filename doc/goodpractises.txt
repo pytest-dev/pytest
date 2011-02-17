@@ -14,20 +14,20 @@ the ``pytest`` package itself.  This way you get a much more reproducible
 environment.  A good tool to help you automate test runs against multiple
 dependency configurations or Python interpreters is `tox`_,
 independently created by the main py.test author.  The latter
-is also useful for integration with the continous integration
+is also useful for integration with the continuous integration
 server Hudson_.
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/
 .. _pip: http://pypi.python.org/pypi/pip
 
-Use tox and Continous Integration servers
+Use tox and Continuous Integration servers
 -------------------------------------------------
 
 If you are (often) releasing code to the public you
 may want to look into `tox`_, the virtualenv test automation
 tool and its `pytest support <http://codespeak.net/tox/example/pytest.html>`_.
-The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continous integration server like Hudson_ pick it up.
+The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continuous integration server like Hudson_ pick it up.
 
 .. _standalone:
 .. _`genscript method`:
