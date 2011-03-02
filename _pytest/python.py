@@ -297,13 +297,8 @@ class Instance(PyCollectorMixin, pytest.Collector):
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
-
     def setup(self):
         """ perform setup for this test function. """
-        if inspect.ismethod(self.obj):
-            name = 'setup_method'
-        else:
-            name = 'setup_function'
         if hasattr(self, '_preservedparent'):
             obj = self._preservedparent
         elif isinstance(self.parent, Instance):
@@ -311,6 +306,10 @@ class FunctionMixin(PyobjMixin):
             self.obj = self._getobj()
         else:
             obj = self.parent.obj
+        if inspect.ismethod(self.obj):
+            name = 'setup_method'
+        else:
+            name = 'setup_function'
         setup_func_or_method = getattr(obj, name, None)
         if setup_func_or_method is not None:
             setup_func_or_method(self.obj)

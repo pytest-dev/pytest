@@ -1,6 +1,8 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
+- fix issue28 - setup_method and pytest_generate_tests work together
+
 - fix issue24 - pytest_assertrepr_compare produces an in-line
   exception on python3
 

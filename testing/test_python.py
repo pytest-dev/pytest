@@ -1062,6 +1062,21 @@ class TestGenfuncFunctional:
             "*2 pass*",
         ])
 
+    def test_issue28_setup_method_in_generate_tests(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.addcall({'arg1': 1})
+
+            class TestClass:
+                def test_method(self, arg1):
+                    assert arg1 == self.val
+                def setup_method(self, func):
+                    self.val = 1
+            """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 pass*",
+        ])
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
