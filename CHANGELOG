@@ -1,10 +1,13 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
+- fix issue30 - better handling and error reporting for errors in xfail
+  expressions
+
 - fix issue28 - setup_method and pytest_generate_tests work together
 
-- fix issue24 - pytest_assertrepr_compare produces an in-line
-  exception on python3
+- fix issue23 - tmpdir argument now works on Python3.2 and WindowsXP
+  (which apparently starts to offer os.symlink now)
 
 - fixed some typos in the docs (thanks Victor)
 

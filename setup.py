@@ -29,7 +29,7 @@ def main():
         author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
-        install_requires=['py>1.4.0'],
+        install_requires=['py>1.4.1'],
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

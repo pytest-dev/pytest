@@ -470,3 +470,31 @@ def test_reportchars(testdir):
         "XPASS*test_3*",
         "SKIP*four*",
     ])
+
+def test_errors_in_xfail_skip_expressions(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.skipif("asd")
+        def test_nameerror():
+            pass
+        @pytest.mark.xfail("syntax error")
+        def test_syntax():
+            pass
+
+        def test_func():
+            pass
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*ERROR*test_nameerror*",
+        "*evaluating*skipif*expression*",
+        "*asd*",
+        "*ERROR*test_syntax*",
+        "*evaluating*xfail*expression*",
+        "    syntax error",
+        "                ^",
+        "SyntaxError: invalid syntax",
+        "*1 pass*2 error*",
+    ])
+
+

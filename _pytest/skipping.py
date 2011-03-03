@@ -1,6 +1,7 @@
 """ support for skip/xfail functions and markers. """
 
 import py, pytest
+import sys
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -32,7 +33,28 @@ class MarkEvaluator:
         return bool(self.holder)
     __nonzero__ = __bool__
 
+    def wasvalid(self):
+        return not hasattr(self, 'exc')
+
     def istrue(self):
+        try:
+            return self._istrue()
+        except KeyboardInterrupt:
+            raise
+        except:
+            self.exc = sys.exc_info()
+            if isinstance(self.exc[1], SyntaxError):
+                msg = [" " * (self.exc[1].offset + 4) + "^",]
+                msg.append("SyntaxError: invalid syntax")
+            else:
+                msg = py.std.traceback.format_exception_only(*self.exc[:2])
+            pytest.fail("Error evaluating %r expression\n"
+                        "    %s\n"
+                        "%s"
+                        %(self.name, self.expr, "\n".join(msg)),
+                        pytrace=False)
+
+    def _istrue(self):
         if self.holder:
             d = {'os': py.std.os, 'sys': py.std.sys, 'config': self.item.config}
             if self.holder.args:
@@ -99,16 +121,17 @@ def pytest_runtest_makereport(__multicall__, item, call):
             return rep
     rep = __multicall__.execute()
     evalxfail = item._evalxfail
-    if not item.config.option.runxfail and evalxfail.istrue():
-        if call.excinfo:
-            rep.outcome = "skipped"
-            rep.keywords['xfail'] = evalxfail.getexplanation()
-        elif call.when == "call":
-            rep.outcome = "failed"
-            rep.keywords['xfail'] = evalxfail.getexplanation()
-    else:
-        if 'xfail' in rep.keywords:
-            del rep.keywords['xfail']
+    if not item.config.option.runxfail:
+        if evalxfail.wasvalid() and evalxfail.istrue():
+            if call.excinfo:
+                rep.outcome = "skipped"
+                rep.keywords['xfail'] = evalxfail.getexplanation()
+            elif call.when == "call":
+                rep.outcome = "failed"
+                rep.keywords['xfail'] = evalxfail.getexplanation()
+            return rep
+    if 'xfail' in rep.keywords:
+        del rep.keywords['xfail']
     return rep
 
 # called by terminalreporter progress reporting
@@ -179,7 +202,8 @@ def cached_eval(config, expr, d):
     except KeyError:
         #import sys
         #print >>sys.stderr, ("cache-miss: %r" % expr)
-        config._evalcache[expr] = x = eval(expr, d)
+        exprcode = py.code.compile(expr, mode="eval")
+        config._evalcache[expr] = x = eval(exprcode, d)
         return x
 
 
