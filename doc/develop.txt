@@ -22,7 +22,7 @@ download and unpack a TAR file::
 
     http://pypi.python.org/pypi/pytest/
 
-activating a checkout with setuptools
+Activating a checkout with setuptools
 --------------------------------------------
 
 With a working Distribute_ or setuptools_ installation you can type::

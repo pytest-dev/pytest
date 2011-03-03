@@ -4,20 +4,20 @@ basic test configuration
 Command line options and configuration file settings
 -----------------------------------------------------------------
 
-You can get help on options and ini-config values by running::
+You can get help on command line options and values in INI-style
+configurations files by using the general help option::
 
     py.test -h   # prints options _and_ config file settings
 
 This will display command line and configuration file settings
 which were registered by installed plugins.
 
+How test configuration is read from configuration INI-files
+-------------------------------------------------------------
 
-how test configuration is read from setup/tox ini-files
---------------------------------------------------------
-
-py.test searched for the first matching ini-style configuration file
+py.test searches for the first matching ini-style configuration file
 in the directories of command line argument and the directories above.
-It looks for filenames in this order::
+It looks for file basenames in this order::
 
     pytest.ini
     tox.ini
@@ -44,29 +44,27 @@ is used to start the search.
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
 
-how to change command line options defaults
+How to change command line options defaults
 ------------------------------------------------
 
-py.test provides a simple way to set some default
-command line options.  For example, if you want
-to always see detailed info on skipped and xfailed
-tests, as well as have terser "dot progress output",
-you can add this to your root directory::
+It can be tedious to type the same series of command line options
+every time you use py.test .  For example, if you always want to see
+detailed info on skipped and xfailed tests, as well as have terser "dot"
+progress output, you can write it into a configuration file::
 
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
     [pytest]
     addopts = -rsxX -q
 
-From now on, running ``py.test`` will implicitly add
-the specified options.
+From now on, running ``py.test`` will add the specified options.
 
 builtin configuration file options
 ----------------------------------------------
 
 .. confval:: minversion
 
-   specifies a minimal pytest version needed for running tests.
+   specifies a minimal pytest version required for running tests.
 
         minversion = 2.1  # will fail if we run with pytest-2.0
 
@@ -97,14 +95,14 @@ builtin configuration file options
         [!seq]  matches any char not in seq
 
    Default patterns are ``.* _* CVS {args}``. Setting a ``norecurse``
-   replaces the default.  Here is a customizing example for avoiding
-   a different set of directories::
+   replaces the default.  Here is an example of how to avoid
+   certain directories::
 
     # content of setup.cfg
     [pytest]
     norecursedirs = .svn _build tmp*
 
-   This would tell py.test to not recurse into typical subversion or
+   This would tell py.test to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
 .. confval:: python_files

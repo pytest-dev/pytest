@@ -29,9 +29,8 @@ Changes between 2.0.1 and 2.0.2
   a newer py lib version the py.path.local() implementation acknowledges
   this.
 
-- fixed typos in the docs (thanks Victor, Brianna) and particular
-  thanks to Laura who also revieved the documentation which
-  lead to some improvements.
+- fixed typos in the docs (thanks Victor Garcia, Brianna Laugher) and particular
+  thanks to Laura Creighton who also revieved parts of the documentation.
 
 Changes between 2.0.0 and 2.0.1
 ----------------------------------------------

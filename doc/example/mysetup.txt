@@ -26,7 +26,7 @@ Let's write a simple test function using a ``mysetup`` funcarg::
 To run this test py.test needs to find and call a factory to
 obtain the required ``mysetup`` function argument.  To make
 an according factory findable we write down a specifically named factory
-method in a :ref:`local plugin`::
+method in a :ref:`local plugin <localplugin>` ::
 
     # content of conftest.py
     from myapp import MyApp
@@ -49,7 +49,7 @@ You can now run the test::
 
     $ py.test test_sample.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_sample.py F
@@ -57,7 +57,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x2526440>
+    mysetup = <conftest.MySetup instance at 0x1e2db90>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -122,12 +122,12 @@ Running it yields::
 
     $ py.test test_ssh.py -rs
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-166/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /tmp/doc-exec-35/conftest.py:22: specify ssh host with --ssh
     
     ======================== 1 skipped in 0.02 seconds =========================
 

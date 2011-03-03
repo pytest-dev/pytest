@@ -1,7 +1,7 @@
+.. _plugins:
+
 Working with plugins and conftest files
 =============================================
-
-.. _`local plugin`:
 
 py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic locations types:
 
@@ -12,14 +12,17 @@ py.test implements all aspects of configuration, collection, running and reporti
 .. _`pytest/plugin`: http://bitbucket.org/hpk42/pytest/src/tip/pytest/plugin/
 .. _`conftest.py plugins`:
 .. _`conftest.py`:
+.. _`localplugin`:
+.. _`conftest`:
 
 conftest.py: local per-directory plugins
 --------------------------------------------------------------
 
 local ``conftest.py`` plugins contain directory-specific hook
 implementations.  Session and test running activities will
-invoke all hooks defined in "higher up" ``conftest.py`` files.
-Example: Assume the following layout and content of files::
+invoke all hooks defined in ``conftest.py`` files closer to the
+root of the filesystem.  Example: Assume the following layout
+and content of files::
 
     a/conftest.py:
         def pytest_runtest_setup(item):
@@ -38,11 +41,6 @@ Here is how you might run it::
 
      py.test test_flat.py   # will not show "setting up"
      py.test a/test_sub.py  # will show "setting up"
-
-A note on ordering: ``py.test`` loads all ``conftest.py`` files upwards
-from the command line file arguments.  It usually performs look up
-right-to-left, i.e.  the hooks in "closer" conftest files will be called
-earlier than further away ones.
 
 .. Note::
     If you have ``conftest.py`` files which do not reside in a
@@ -112,12 +110,12 @@ Making your plugin installable by others
 -----------------------------------------------
 
 If you want to make your plugin externally available, you
-may define a so called entry point for your distribution so
+may define a so-called entry point for your distribution so
 that ``py.test`` finds your plugin module.  Entry points are
 a feature that is provided by `setuptools`_ or `Distribute`_.
-The concrete entry point is ``pytest11``.  To make your plugin
-available you can insert the following lines in your
-setuptools/distribute-based setup-invocation:
+py.test looks up the ``pytest11`` entrypoint to discover its
+plugins and you can thus make your plugin available by definig
+it in your setuptools/distribute-based setup-invocation:
 
 .. sourcecode:: python
 
@@ -137,8 +135,8 @@ setuptools/distribute-based setup-invocation:
     )
 
 If a package is installed this way, py.test will load
-``myproject.pluginmodule`` and accordingly call functions
-if they match the `well specified hooks`_.
+``myproject.pluginmodule`` as a plugin which can define
+`well specified hooks`_.
 
 Plugin discovery order at tool startup
 --------------------------------------------
@@ -260,11 +258,11 @@ hook specification and validation
 
 py.test calls hook functions to implement initialization, running,
 test execution and reporting.  When py.test loads a plugin it validates
-that all hook functions conform to their respective hook specification.
+that each hook function conforms to its respective hook specification.
 Each hook function name and its argument names need to match a hook
-specification exactly but it is allowed for a hook function to accept
-*less* parameters than specified.  If you mistype argument names or the
-hook name itself you get useful errors.
+specification.  However, a hook function may accept *fewer* parameters
+by simply not specifying them.  If you mistype argument names or the
+hook name itself you get an error showing the available arguments.
 
 initialisation, command line and configuration hooks
 --------------------------------------------------------------------
@@ -292,8 +290,9 @@ All all runtest related hooks receive a :py:class:`pytest.Item` object.
 
 For deeper understanding you may look at the default implementation of
 these hooks in :py:mod:`_pytest.runner` and maybe also
-in :py:mod:`_pytest.pdb` which intercepts creation
-of reports in order to drop to interactive debugging.
+in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+and its input/output capturing in order to immediately drop
+into interactive debugging when a test failure occurs.
 
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.

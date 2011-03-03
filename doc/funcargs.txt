@@ -1,5 +1,5 @@
 ==============================================================
-creating and managing test function arguments
+Injecting objects into test functions (funcargs)
 ==============================================================
 
 .. currentmodule:: _pytest.python
@@ -11,16 +11,26 @@ creating and managing test function arguments
 Dependency injection through function arguments
 =================================================
 
-py.test allows to inject values into test functions through the *funcarg
-mechanism*: For each argument name in a test function signature a factory is
-looked up and called to create the value.  The factory can live in the
-same test class, test module, in a per-directory ``conftest.py`` file or
-in an external plugin.  It has full access to the requesting test
-function, can register finalizers and invoke lifecycle-caching
-helpers.  As can be expected from a systematic dependency
-injection mechanism, this allows full de-coupling of resource and
-fixture setup from test code, enabling more maintainable and
-easy-to-modify test suites.
+py.test lets you inject objects into test functions and precisely
+control their life cycle in relation to the test execution. It is
+also possible to run a test function multiple times with different objects.
+
+The basic mechanism for injecting objects is also called the
+*funcarg mechanism* because objects are ultimatly injected
+by calling a test function with it as an argument.  Unlike the
+classical xUnit approach *funcargs* relate more to `Dependency Injection`_
+because they help to de-couple test code from objects required for
+them to execute.
+
+.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
+
+To create a value with which to call a test function a factory function
+is called which gets full access to the test function context and can
+register finalizers or invoke lifecycle-caching helpers.  The factory
+can be implemented in same test class or test module, or in a
+per-directory ``conftest.py`` file or even in an external plugin.  This
+allows full de-coupling of test code and objects needed for test
+execution.
 
 A test function may be invoked multiple times in which case we
 speak of :ref:`parametrized testing <parametrizing-tests>`. This can be
@@ -28,13 +38,13 @@ very useful if you want to test e.g. against different database backends
 or with multiple numerical arguments sets and want to reuse the same set
 of test functions.
 
+
 .. _funcarg:
 
-Basic funcarg example
------------------------
+Basic injection example
+--------------------------------
 
-Let's look at a simple self-contained example that you can put
-into a test module::
+Let's look at a simple self-contained test module::
 
     # content of ./test_simplefactory.py
     def pytest_funcarg__myfuncarg(request):
@@ -43,11 +53,15 @@ into a test module::
     def test_function(myfuncarg):
         assert myfuncarg == 17
 
+This test function needs an injected object named ``myfuncarg``.
+py.test will discover and call the factory named
+``pytest_funcarg__myfuncarg`` within the same module in this case.
+
 Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_simplefactory.py F
@@ -64,8 +78,8 @@ Running the test looks like this::
     test_simplefactory.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
-This means that the test function was called with a ``myfuncarg`` value
-of ``42`` and the assert fails accordingly.  Here is how py.test
+This means that indeed the test function was called with a ``myfuncarg``
+argument value of ``42`` and the assert fails.  Here is how py.test
 comes to call the test function this way:
 
 1. py.test :ref:`finds <test discovery>` the ``test_function`` because
@@ -76,14 +90,15 @@ comes to call the test function this way:
 2. ``pytest_funcarg__myfuncarg(request)`` is called and
    returns the value for ``myfuncarg``.
 
-3. the test function can now be called: ``test_function(42)``
-   and results in the above exception because of the assertion
+3. the test function can now be called: ``test_function(42)``.
+   This results in the above exception because of the assertion
    mismatch.
 
 Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error
-with a list of available function arguments. You can
-also issue::
+with a list of available function arguments.
+
+You can always issue::
 
     py.test --funcargs test_simplefactory.py
 
@@ -152,7 +167,7 @@ Running this::
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 10 items
     
     test_example.py .........F
@@ -167,7 +182,7 @@ Running this::
     E       assert 9 < 9
     
     test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.03 seconds ====================
+    ==================== 1 failed, 9 passed in 0.05 seconds ====================
 
 Note that the ``pytest_generate_tests(metafunc)`` hook is called during
 the test collection phase which is separate from the actual test running.
@@ -190,7 +205,7 @@ If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2 -- /home/hpk/venv/0/bin/python
     collecting ... collected 10 items
     
     test_example.py:6: test_func[7] PASSED

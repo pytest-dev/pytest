@@ -9,8 +9,8 @@ on global settings or which invokes code which cannot be easily
 tested such as network access.  The ``monkeypatch`` function argument
 helps you to safely set/delete an attribute, dictionary item or
 environment variable or to modify ``sys.path`` for importing.
-See the `monkeypatch blog post`_ one some introduction material
-and motivation.
+See the `monkeypatch blog post`_ for some introduction material
+and a discussion of its motivation.
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 
@@ -18,7 +18,7 @@ and motivation.
 Simple example: patching ``os.path.expanduser``
 ---------------------------------------------------
 
-If you e.g. want to pretend that ``os.expanduser`` returns a certain
+If, for instance, you want to pretend that ``os.expanduser`` returns a certain
 directory, you can use the :py:meth:`monkeypatch.setattr` method to
 patch this function before calling into a function which uses it::
 
@@ -39,7 +39,7 @@ will be undone.
 .. background check:
    $ py.test
    =========================== test session starts ============================
-   platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+   platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
    collecting ... collected 0 items
    
    =============================  in 0.00 seconds =============================

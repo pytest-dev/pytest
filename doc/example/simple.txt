@@ -109,13 +109,13 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     gw0 I / gw1 I / gw2 I / gw3 I
     gw0 [0] / gw1 [0] / gw2 [0] / gw3 [0]
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.37 seconds =============================
+    =============================  in 0.35 seconds =============================
 
 .. _`excontrolskip`:
 
@@ -156,12 +156,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-275/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-40/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
@@ -169,7 +169,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 2 items
     
     test_module.py ..
@@ -213,7 +213,7 @@ Let's run our little function::
     E       Failed: not configured: 42
     
     test_checkconfig.py:8: Failed
-    1 failed in 0.02 seconds
+    1 failed in 0.03 seconds
 
 Detect if running from within a py.test run
 --------------------------------------------------------------
@@ -261,7 +261,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     project deps: mylib-1.1
     collecting ... collected 0 items
     
@@ -284,7 +284,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2 -- /home/hpk/venv/0/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -295,7 +295,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev0
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 0 items
     
     =============================  in 0.00 seconds =============================

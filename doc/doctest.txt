@@ -1,5 +1,5 @@
 
-doctest integration for modules and test files.
+doctest integration for modules and test files
 =========================================================
 
 By default all files matching the ``test*.txt`` pattern will
@@ -44,7 +44,7 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     mymodule.py .

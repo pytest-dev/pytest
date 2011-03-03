@@ -65,7 +65,7 @@ Similarly, the following methods are called around each method invocation::
         with a setup_method call.
         """
 
-If you rather define test functions directly at module level
+If you would rather define test functions directly at module level
 you can also use the following functions to implement fixtures::
 
     def setup_function(function):

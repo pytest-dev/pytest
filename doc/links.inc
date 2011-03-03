@@ -16,4 +16,5 @@
 .. _`pip`: http://pypi.python.org/pypi/pip
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _hudson: http://hudson-ci.org/
+.. _jenkins: http://jenkins-ci.org/
 .. _tox: http://codespeak.net/tox

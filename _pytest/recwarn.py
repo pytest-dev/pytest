@@ -8,6 +8,9 @@ def pytest_funcarg__recwarn(request):
 
     * ``pop(category=None)``: return last warning matching the category.
     * ``clear()``: clear list of warnings
+   
+    See http://docs.python.org/library/warnings.html for information
+    on warning categories.
     """
     if sys.version_info >= (2,7):
         import warnings

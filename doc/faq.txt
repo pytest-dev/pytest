@@ -12,25 +12,26 @@ On naming, nosetests, licensing and magic
 Why a ``py.test`` instead of a ``pytest`` command?
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Some historic, some practical reasons: ``py.test`` used to be part of
-the ``py`` package which provided several developer utilities,
-all starting with ``py.<TAB>``, providing nice TAB-completion. If
+Some of the reasons are historic, others are practical.  ``py.test``
+used to be part of the ``py`` package which provided several developer
+utilities, all starting with ``py.<TAB>``, thus providing nice
+TAB-completion. If
 you install ``pip install pycmd`` you get these tools from a separate
 package.  These days the command line tool could be called ``pytest``
-but then again many people have gotten used to the old name and there
-is another tool named "pytest" so we just decided to stick with
+since many people have gotten used to the old name and there
+is another tool named "pytest" we just decided to stick with
 ``py.test``.
 
-What's the relation to nose and unittest?
+How does py.test relate to nose and unittest?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 py.test and nose_ share basic philosophy when it comes
-to running Python tests.  In fact, you can run many tests
-written nose with py.test.  nose_ was originally created
+to running and writing Python tests.  In fact, you can run many tests
+written for nose with py.test.  nose_ was originally created
 as a clone of ``py.test`` when py.test was in the ``0.8`` release
-cycle.  As of version 2.0 support for running unittest test
-suites is majorly improved and you should be able to run
-many Django and Twisted test suites.
+cycle.  Note that starting with pytest-2.0 support for running unittest
+test suites is majorly improved and you should be able to run
+many Django and Twisted test suites without modification.
 
 .. _features: test/features.html
 
@@ -39,22 +40,20 @@ What's this "magic" with py.test?
 ++++++++++++++++++++++++++++++++++++++++++
 
 Around 2007 (version ``0.8``) some people claimed that py.test
-was using too much "magic".  It has been refactored a lot.  Thrown
-out old code.  Deprecated unused approaches and code.  And it is today
-probably one of the smallest, most universally runnable and most
-customizable testing frameworks for Python.   It's true that
-``py.test`` uses metaprogramming techniques, i.e. it views
-test code similar to how compilers view programs, using a
-somewhat abstract internal model.
+was using too much "magic".  Partly this has been fixed by removing
+unused, deprecated or complicated code.  It is today probably one
+of the smallest, most universally runnable and most
+customizable testing frameworks for Python.   However,
+``py.test`` still uses many metaprogramming techniques and
+reading its source is thus likely not something for Python beginners.
 
-It's also true that the no-boilerplate testing is implemented by making
-use of the Python assert statement through "re-interpretation":
+A second "magic" issue arguably the assert statement re-intepreation:
 When an ``assert`` statement fails, py.test re-interprets the expression
 to show intermediate values if a test fails.  If your expression
-has side effects the intermediate values may not be the same, obfuscating
-the initial error (this is also explained at the command line if it happens).
+has side effects (better to avoid them anyway!) the intermediate values
+may not be the same, obfuscating the initial error (this is also
+explained at the command line if it happens).
 ``py.test --no-assert`` turns off assert re-interpretation.
-Sidenote: it is good practise to avoid asserts with side effects.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
@@ -69,7 +68,7 @@ Is using funcarg- versus xUnit setup a style question?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 For simple applications and for people experienced with nose_ or
-unittest-style test setup using `xUnit style setup`_ often
+unittest-style test setup using `xUnit style setup`_ probably
 feels natural.  For larger test suites, parametrized testing
 or setup of complex test resources using funcargs_ may feel more natural.
 Moreover, funcargs are ideal for writing advanced test support
@@ -86,13 +85,11 @@ in a managed class/module/function scope.
 Why the ``pytest_funcarg__*`` name for funcarg factories?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-We alternatively implemented an explicit registration mechanism for
-function argument factories.  But lacking a good use case for this
-indirection and flexibility we decided to go for `Convention over
-Configuration`_ and rather have factories specified by convention.
-Besides removing the need for an registration indirection it allows to
-"grep" for ``pytest_funcarg__MYARG`` and will safely find all factory
-functions for the ``MYARG`` function argument.
+We like `Convention over Configuration`_ and didn't see much point
+in allowing a more flexible or abstract mechanism.  Moreover,
+is is nice to be able to search for ``pytest_funcarg__MYARG`` in
+a source code and safely find all factory functions for
+the ``MYARG`` function argument.
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 

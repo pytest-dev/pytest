@@ -16,5 +16,5 @@ these renaming rules::
     py.test.cmdline.main -> pytest.main
 
 The old ``py.test.*`` ways to access functionality remain
-valid but you are encouraged to do global renames according
+valid but you are encouraged to do global renaming according
 to the above rules in your test code.

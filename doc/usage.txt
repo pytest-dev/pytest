@@ -12,7 +12,7 @@ calling pytest through ``python -m pytest``
 
 .. versionadded:: 2.0
 
-If you use Python-2.5 or above you can invoke testing through the
+If you use Python-2.5 or later you can invoke testing through the
 Python interpreter from the command line::
 
     python -m pytest [...]
@@ -20,8 +20,8 @@ Python interpreter from the command line::
 This is equivalent to invoking the command line script ``py.test [...]``
 directly.
 
-Getting help on version, option names, environment vars
------------------------------------------------------------
+Getting help on version, option names, environment variables
+--------------------------------------------------------------
 
 ::
 
@@ -96,7 +96,7 @@ can use a helper::
 .. versionadded: 2.0.0
 
 In previous versions you could only enter PDB tracing if
-you :ref:`disable capturing`.
+you disable capturing on the command line via ``py.test -s``.
 
 creating JUnitXML format files
 ----------------------------------------------------

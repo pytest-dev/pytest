@@ -5,19 +5,18 @@ skip and xfail mechanisms
 =====================================================================
 
 You can skip or "xfail" test functions, either by marking functions
-through a decorator or by calling the ``pytest.skip|xfail`` functions.
+with a decorator or by calling the ``pytest.skip|xfail`` functions.
 
 A *skip* means that you expect your test to pass unless a certain configuration or condition (e.g. wrong Python interpreter, missing dependency) prevents it to run.  And *xfail* means that you expect your test to fail because there is an
 implementation problem.  py.test counts and lists *xfailing* tests separately
-and you can provide info such as a bug number or a URL to provide a
-human readable problem context.
+and it is possible to give additional information, such as bug number or a URL.
 
-Usually detailed information about skipped/xfailed tests is not shown
+Detailed information about skipped/xfailed tests is by default not shown
 at the end of a test run to avoid cluttering the output.  You can use
 the ``-r`` option to see details corresponding to the "short" letters
 shown in the test progress::
 
-    py.test -rxs  # show extra info on skips and xfail tests
+    py.test -rxs  # show extra info on skips and xfails
 
 (See :ref:`how to change command line options defaults`)
 
@@ -26,7 +25,7 @@ shown in the test progress::
 Skipping a single function
 -------------------------------------------
 
-Here is an example for marking a test function to be skipped
+Here is an example of marking a test function to be skipped
 when run on a Python3 interpreter::
 
     import sys
@@ -60,7 +59,7 @@ on a test configuration value::
     def test_function(...):
         ...
 
-Create a shortcut for your conditional skip decorator
+You can create a shortcut for your conditional skip decorator
 at module level like this::
 
     win32only = pytest.mark.skipif("sys.platform != 'win32'")
@@ -73,9 +72,9 @@ at module level like this::
 skip all test functions of a class
 --------------------------------------
 
-As with all function :ref:`marking` you can do it at
+As with all function :ref:`mark` you can skip test functions at the
 `whole class- or module level`_.  Here is an example
-for skipping all methods of a test class based on platform::
+for skipping all methods of a test class based on the platform::
 
     class TestPosixCalls:
         pytestmark = pytest.mark.skipif("sys.platform == 'win32'")
@@ -93,9 +92,7 @@ the skipif decorator on classes::
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 
-It is fine in general to apply multiple "skipif" decorators
-on a single function - this means that if any of the conditions
-apply the function will be skipped.
+Using multiple "skipif" decorators on a single function is generally fine - it means that if any of the conditions apply the function execution will be skipped.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
@@ -122,16 +119,16 @@ By specifying on the commandline::
 you can force the running and reporting of an ``xfail`` marked test
 as if it weren't marked at all.
 
-Same as with skipif_ you can also selectively expect a failure
-depending on platform::
+As with skipif_ you can also mark your expectation of a failure
+on a particular platform::
 
     @pytest.mark.xfail("sys.version_info >= (3,0)")
     def test_function():
         ...
 
-You can also avoid running an "xfail" test at all or
+You can furthermore prevent the running of an "xfail" test or
 specify a reason such as a bug ID or similar.  Here is
-a simple test file with usages:
+a simple test file with the several usages:
 
 .. literalinclude:: example/xfail_demo.py
 
@@ -139,10 +136,10 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
-    collecting ... collected 5 items
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    collecting ... collected 6 items
     
-    xfail_demo.py xxxxx
+    xfail_demo.py xxxxxx
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
@@ -152,9 +149,11 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello4
       bug 110
     XFAIL xfail_demo.py::test_hello5
+      condition: pytest.__version__[0] != "17"
+    XFAIL xfail_demo.py::test_hello6
       reason: reason
     
-    ======================== 5 xfailed in 0.04 seconds =========================
+    ======================== 6 xfailed in 0.06 seconds =========================
 
 imperative xfail from within a test or setup function
 ------------------------------------------------------
@@ -177,8 +176,8 @@ or within a test or test setup function::
     docutils = pytest.importorskip("docutils")
 
 If ``docutils`` cannot be imported here, this will lead to a
-skip outcome of the test.  You can also skip depending if
-if a library does not come with a high enough version::
+skip outcome of the test.  You can also skip based on the
+version number of a library::
 
     docutils = pytest.importorskip("docutils", minversion="0.3")
 
@@ -188,7 +187,7 @@ imperative skip from within a test or setup function
 ------------------------------------------------------
 
 If for some reason you cannot declare skip-conditions
-you can also imperatively produce a Skip-outcome from
+you can also imperatively produce a skip-outcome from
 within test or setup code.  Example::
 
     def test_function():

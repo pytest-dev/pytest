@@ -46,7 +46,7 @@ Some organisations using py.test
 * `Shootq <http://web.shootq.com/>`_
 * `Stups department of Heinrich Heine University Düsseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
 * `cellzome <http://www.cellzome.com/>`_
-* `Open End, Gotenborg <http://www.openend.se>`_
+* `Open End, Gothenborg <http://www.openend.se>`_
 * `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
 * `merlinux, Germany <http://merlinux.eu>`_
 * many more ... (please be so kind to send a note via :ref:`contact`)

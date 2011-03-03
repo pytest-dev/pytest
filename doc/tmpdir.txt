@@ -28,7 +28,7 @@ Running this would result in a passed test except for the last
 
     $ py.test test_tmpdir.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_tmpdir.py F
@@ -36,7 +36,7 @@ Running this would result in a passed test except for the last
     ================================= FAILURES =================================
     _____________________________ test_create_file _____________________________
     
-    tmpdir = local('/tmp/pytest-102/test_create_file0')
+    tmpdir = local('/tmp/pytest-93/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")
@@ -47,14 +47,14 @@ Running this would result in a passed test except for the last
     E       assert 0
     
     test_tmpdir.py:7: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.04 seconds =========================
 
 .. _`base temporary directory`:
 
 the default base temporary directory
 -----------------------------------------------
 
-Temporary directories are by default created as sub directories of
+Temporary directories are by default created as sub-directories of
 the system temporary directory.  The base name will be ``pytest-NUM`` where
 ``NUM`` will be incremented with each test run.  Moreover, entries older
 than 3 temporary directories will be removed.

@@ -7,12 +7,12 @@ mark test functions with attributes
 .. currentmodule:: _pytest.mark
 
 By using the ``pytest.mark`` helper you can instantiate
-decorators that will set named meta data on test functions.
+decorators that will set named metadata on test functions.
 
 Marking a single function
 ----------------------------------------------------
 
-You can "mark" a test function with meta data like this::
+You can "mark" a test function with metadata like this::
 
     import pytest
     @pytest.mark.webtest
@@ -20,7 +20,7 @@ You can "mark" a test function with meta data like this::
         ...
 
 This will set the function attribute ``webtest`` to a :py:class:`MarkInfo`
-instance.  You can also specify parametrized meta data like this::
+instance.  You can also specify parametrized metadata like this::
 
     # content of test_mark.py
 
@@ -44,7 +44,7 @@ Marking whole classes or modules
 ----------------------------------------------------
 
 If you are programming with Python2.6 you may use ``pytest.mark`` decorators
-with classes to apply markers to all its test methods::
+with classes to apply markers to all of its test methods::
 
     # content of test_mark_classlevel.py
     import pytest
@@ -88,7 +88,7 @@ You can use the ``-k`` command line option to select tests::
 
     $ py.test -k webtest  # running with the above defined examples yields
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 4 items
     
     test_mark.py ..
@@ -100,7 +100,7 @@ And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k-webtest
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 4 items
     
     ===================== 4 tests deselected by '-webtest' =====================
@@ -110,7 +110,7 @@ Or to only select the class::
 
     $ py.test -kTestClass
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 4 items
     
     test_mark_classlevel.py ..

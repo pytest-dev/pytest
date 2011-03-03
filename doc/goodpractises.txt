@@ -8,14 +8,11 @@ Good Integration Practises
 Work with virtual environments
 -----------------------------------------------------------
 
-We recommend to work with virtualenv_ environments and use easy_install_
+We recommend to use virtualenv_ environments and use easy_install_
 (or pip_) for installing your application dependencies as well as
-the ``pytest`` package itself.  This way you get a much more reproducible
+the ``pytest`` package itself.  This way you will get a much more reproducible
 environment.  A good tool to help you automate test runs against multiple
-dependency configurations or Python interpreters is `tox`_,
-independently created by the main py.test author.  The latter
-is also useful for integration with the continuous integration
-server Hudson_.
+dependency configurations or Python interpreters is `tox`_.
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _`buildout`: http://www.buildout.org/
@@ -24,10 +21,11 @@ server Hudson_.
 Use tox and Continuous Integration servers
 -------------------------------------------------
 
-If you are (often) releasing code to the public you
+If you frequently relase code to the public you
 may want to look into `tox`_, the virtualenv test automation
 tool and its `pytest support <http://codespeak.net/tox/example/pytest.html>`_.
-The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continuous integration server like Hudson_ pick it up.
+The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continuous integration server like Jenkins_ pick it up
+and generate reports.
 
 .. _standalone:
 .. _`genscript method`:
@@ -90,7 +88,7 @@ If you now type::
 this will execute your tests using ``runtest.py``. As this is a
 standalone version of ``py.test`` no prior installation whatsoever is
 required for calling the test command. You can also pass additional
-arguments to the subprocess-calls like your test directory or other
+arguments to the subprocess-calls such as your test directory or other
 options.
 
 .. _`test discovery`:
@@ -101,14 +99,14 @@ Conventions for Python test discovery
 
 ``py.test`` implements the following standard test discovery:
 
-* collection starts from initial command line arguments
+* collection starts from the initial command line arguments
   which may be directories, filenames or test ids.
 * recurse into directories, unless they match :confval:`norecursedirs`
 * ``test_*.py`` or ``*_test.py`` files, imported by their `package name`_.
 * ``Test`` prefixed test classes (without an ``__init__`` method)
 * ``test_`` prefixed test functions or methods are test items
 
-For changing and customization example, see :doc:`example/pythoncollection`.
+For examples of how to cnd cusotmize your test discovery :doc:`example/pythoncollection`.
 
 py.test additionally discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
@@ -154,8 +152,8 @@ You can always run your tests by pointing to it::
 
     Test modules are imported under their fully qualified name as follows:
 
-    * find ``basedir`` -- this is the first "upward" directory not
-      containing an ``__init__.py``
+    * find ``basedir`` -- this is the first "upward" (towards the root)
+      directory not containing an ``__init__.py``
 
     * perform ``sys.path.insert(0, basedir)`` to make the fully
       qualified test module path importable.

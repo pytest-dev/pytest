@@ -16,7 +16,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.0.1, imported from /home/hpk/p/pytest/pytest.py
+    This is py.test version 2.0.2.dev2, imported from /home/hpk/p/pytest/pytest.py
     setuptools registered plugins:
       pytest-xdist-1.6.dev2 at /home/hpk/p/pytest-xdist/xdist/plugin.pyc
       pytest-pep8-0.7 at /home/hpk/p/pytest-pep8/pytest_pep8.pyc
@@ -41,7 +41,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_sample.py F
@@ -57,7 +57,7 @@ That's it. You can execute the test function now::
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
-py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.  The report is formatted using the :ref:`standard traceback reporting`.
+py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
 
 .. note::
 
@@ -80,10 +80,10 @@ py.test found the ``test_answer`` function by following :ref:`standard test disc
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
 
-Asserting a certain exception is raised
+Asserting that a certain exception is raised
 --------------------------------------------------------------
 
-If you want to assert some code raises an exception you can
+If you want to assert that some code raises an exception you can
 use the ``raises`` helper::
 
     # content of test_sysexit.py
@@ -107,9 +107,9 @@ Running it with, this time in "quiet" reporting mode::
 Grouping multiple tests in a class
 --------------------------------------------------------------
 
-If you start to have more than a few tests it often makes sense
-to group tests logically, in classes and modules.  Let's put two
-tests in a class like this::
+Once you start to have more than a few tests it often makes sense
+to group tests logically, in classes and modules.  Let's write a class
+containing two tests::
 
     # content of test_class.py
     class TestClass:
@@ -131,7 +131,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x178b2d8>
+    self = <test_class.TestClass instance at 0x187d758>
     
         def test_two(self):
             x = "hello"
@@ -140,7 +140,7 @@ run the module by passing its filename::
     E        +  where False = hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
-    1 failed, 1 passed in 0.02 seconds
+    1 failed, 1 passed in 0.04 seconds
 
 The first test passed, the second failed. Again we can easily see
 the intermediate values used in the assertion, helping us to
@@ -169,7 +169,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-101/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-92/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -178,8 +178,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-101/test_needsfiles0
-    1 failed in 0.03 seconds
+    /tmp/pytest-92/test_needsfiles0
+    1 failed in 0.14 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.
@@ -194,7 +194,7 @@ where to go next
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
-* :ref:`good practises` for virtualenv, test layout, genscript support
+* :ref:`good practises <goodpractises>` for virtualenv, test layout, genscript support
 * :ref:`apiref` for documentation and examples on using py.test
 * :ref:`plugins` managing and writing plugins
 
@@ -228,7 +228,7 @@ py.test not found on Windows despite installation?
 - **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
   so ``py.test`` will not work correctly.  You may install py.test on
   CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run py.test for your tests to run in Jython.
+  ``jython mytest`` to run py.test for your tests to run with Jython.
 
  :ref:`examples` for more complex examples
 

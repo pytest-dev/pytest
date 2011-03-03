@@ -14,8 +14,8 @@ def pytest_funcarg__monkeypatch(request):
         monkeypatch.delenv(name, value, raising=True)
         monkeypatch.syspath_prepend(path)
 
-    All modifications will be undone when the requesting
-    test function finished its execution.  The ``raising``
+    All modifications will be undone after the requesting
+    test function has finished. The ``raising``
     parameter determines if a KeyError or AttributeError
     will be raised if the set/deletion operation has no target.
     """

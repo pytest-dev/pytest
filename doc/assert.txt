@@ -1,15 +1,15 @@
 
-Writing and reporting of assertions in tests
-============================================
+The writing and reporting of assertions in tests
+==================================================
 
 .. _`assert with the assert statement`:
 
 assert with the ``assert`` statement
 ---------------------------------------------------------
 
-``py.test`` allows to use the standard python ``assert`` for verifying
+``py.test`` allows you to use the standard python ``assert`` for verifying
 expectations and values in Python tests.  For example, you can write the
-following in your tests::
+following::
 
     # content of test_assert1.py
     def f():
@@ -18,12 +18,12 @@ following in your tests::
     def test_function():
         assert f() == 4
 
-to state that your object has a certain ``attribute``. In case this
+to assert that your object returns a certain value. If this
 assertion fails you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_assert1.py F
@@ -37,23 +37,25 @@ assertion fails you will see the value of ``x``::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.03 seconds =========================
 
 Reporting details about the failing assertion is achieved by re-evaluating
-the assert expression and recording intermediate values.
+the assert expression and recording the intermediate values.
 
 Note: If evaluating the assert expression has side effects you may get a
 warning that the intermediate values could not be determined safely.  A
-common example for this issue is reading from a file and comparing in one
-line::
+common example of this issue is an assertion which reads from a file::
 
         assert f.read() != '...'
 
-This might fail but when re-interpretation comes along it might pass.  You can
-rewrite this (and any other expression with side effects) easily, though::
+If this assertion fails then the re-evaluation will probably succeed!
+This is because ``f.read()`` will return an empty string when it is
+called the second time during the re-evaluation.  However, it is
+easy to rewrite the assertion and avoid any trouble::
 
         content = f.read()
         assert content != '...'
+
 
 assertions about expected exceptions
 ------------------------------------------
@@ -61,6 +63,7 @@ assertions about expected exceptions
 In order to write assertions about raised exceptions, you can use
 ``pytest.raises`` as a context manager like this::
 
+    import pytest
     with pytest.raises(ZeroDivisionError):
         1 / 0
 
@@ -105,7 +108,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.1
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
     collecting ... collected 1 items
     
     test_assert2.py F

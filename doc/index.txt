@@ -4,23 +4,25 @@ Welcome to ``py.test``!
 =============================================
 
 
-- **a mature fully featured testing tool**
+- **a mature full-featured testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython
  - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
- - used in :ref:`many projects and organisations <projects>`, ranging from 10 to 10000 tests
+ - used in :ref:`many projects and organisations <projects>`, in test
+   suites ranging from 10 to 10s of thousands of tests
  - has :ref:`comprehensive documentation <toc>`
  - comes with :ref:`tested examples <examples>`
  - supports :ref:`good integration practises <goodpractises>`
 
 - **provides no-boilerplate testing**
 
- - makes it :ref:`easy to get started <getstarted>`, refined :ref:`usage options <usage>`
+ - makes it :ref:`easy to get started <getstarted>`,
+ - refined :ref:`usage options <usage>`
  - :ref:`assert with the assert statement`
  - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
- - allows :ref:`print debugging <printdebugging>` and :ref:`generic output
-   capturing <captures>`
- - supports :pep:`8` compliant coding style in tests
+ - allows :ref:`print debugging <printdebugging>` and :ref:`the
+   capturing of standard output during test execution <captures>`
+ - supports :pep:`8` compliant coding styles in tests
 
 - **supports functional testing and complex test setups**
 
@@ -39,7 +41,7 @@ Welcome to ``py.test``!
    tests, including running testcases made for Django and trial
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`
- - supports generating testing coverage reports
+ - supports the generation of testing coverage reports
  - `Javascript unit- and functional testing`_
 
 - **extensive plugin and customization system**

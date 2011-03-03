@@ -192,18 +192,16 @@ class CaptureManager:
         return rep
 
 def pytest_funcarg__capsys(request):
-    """captures writes to sys.stdout/sys.stderr and makes
-    them available successively via a ``capsys.readouterr()`` method
-    which returns a ``(out, err)`` tuple of captured snapshot strings.
+    """enables capturing of writes to sys.stdout/sys.stderr and makes
+    captured output available via ``capsys.readouterr()`` method calls
+    which return a ``(out, err)`` tuple.
     """
     return CaptureFuncarg(py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
-    """captures writes to file descriptors 1 and 2 and makes
-    snapshotted ``(out, err)`` string tuples available
-    via the ``capsys.readouterr()`` method.  If the underlying
-    platform does not have ``os.dup`` (e.g. Jython) tests using
-    this funcarg will automatically skip.
+    """enables capturing of writes to file descriptors 1 and 2 and makes
+    captured output available via ``capsys.readouterr()`` method calls
+    which return a ``(out, err)`` tuple.
     """
     if not hasattr(os, 'dup'):
         py.test.skip("capfd funcarg needs os.dup")

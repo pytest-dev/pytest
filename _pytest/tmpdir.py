@@ -59,7 +59,7 @@ def pytest_unconfigure(config):
 
 def pytest_funcarg__tmpdir(request):
     """return a temporary directory path object
-    unique to each test function invocation,
+    which is unique to each test function invocation,
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_
     path object.
