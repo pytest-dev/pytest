@@ -17,5 +17,9 @@ def test_hello3():
 def test_hello4():
     assert 0
 
+@xfail('pytest.__version__[0] != "17"')
 def test_hello5():
+    assert 0
+
+def test_hello6():
     pytest.xfail("reason")

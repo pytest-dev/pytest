@@ -54,9 +54,18 @@ class MarkEvaluator:
                         %(self.name, self.expr, "\n".join(msg)),
                         pytrace=False)
 
+    def _getglobals(self):
+        d = {'os': py.std.os, 'sys': py.std.sys, 'config': self.item.config}
+        func = self.item.obj
+        try:
+            d.update(func.__globals__)
+        except AttributeError:
+            d.update(func.func_globals)
+        return d
+
     def _istrue(self):
         if self.holder:
-            d = {'os': py.std.os, 'sys': py.std.sys, 'config': self.item.config}
+            d = self._getglobals()
             if self.holder.args:
                 self.result = False
                 for expr in self.holder.args:
@@ -64,7 +73,7 @@ class MarkEvaluator:
                     if isinstance(expr, str):
                         result = cached_eval(self.item.config, expr, d)
                     else:
-                        result = expr
+                        pytest.fail("expression is not a string")
                     if result:
                         self.result = True
                         self.expr = expr
@@ -82,7 +91,7 @@ class MarkEvaluator:
             if not hasattr(self, 'expr'):
                 return ""
             else:
-                return "condition: " + self.expr
+                return "condition: " + str(self.expr)
         return expl
 
 

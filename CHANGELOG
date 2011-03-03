@@ -1,15 +1,37 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
-- fix issue30 - better handling and error reporting for errors in xfail
-  expressions
+- fix issue30 - extended xfail/skipif handling and better reporting.
+  If you have a syntax error in your skip/xfail
+  expressions you now get nice error reports.
+
+  Also you can now access module globals from xfail/skipif
+  expressions so that this works now::
+  
+    import mymodule
+    @pytest.mark.skipif("mymodule.__version__[0] == "1")
+    def test_function():
+        pass
+
+  This will not run the test function if the module's version string 
+  does not start with a "1".  Note that specifying a string instead
+  of a boolean expressions allows py.test to report meaningful information 
+  when summarizing a test run as to what conditions lead to skipping 
+  (or xfail-ing) tests.
 
 - fix issue28 - setup_method and pytest_generate_tests work together
+  The setup_method fixture method now gets called also for
+  test function invocations generated from the pytest_generate_tests
+  hook.
 
 - fix issue23 - tmpdir argument now works on Python3.2 and WindowsXP
-  (which apparently starts to offer os.symlink now)
+  Starting with Python3.2 os.symlink may be supported. By requiring
+  a newer py lib version the py.path.local() implementation acknowledges
+  this.
 
-- fixed some typos in the docs (thanks Victor)
+- fixed typos in the docs (thanks Victor, Brianna) and particular
+  thanks to Laura who also revieved the documentation which
+  lead to some improvements.
 
 Changes between 2.0.0 and 2.0.1
 ----------------------------------------------

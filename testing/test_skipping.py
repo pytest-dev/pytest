@@ -497,4 +497,34 @@ def test_errors_in_xfail_skip_expressions(testdir):
         "*1 pass*2 error*",
     ])
 
+def test_xfail_skipif_with_globals(testdir):
+    testdir.makepyfile("""
+        import pytest
+        x = 3
+        @pytest.mark.skipif("x == 3")
+        def test_skip1():
+            pass
+        @pytest.mark.xfail("x == 3")
+        def test_boolean():
+            assert 0
+    """)
+    result = testdir.runpytest("-rsx")
+    result.stdout.fnmatch_lines([
+        "*SKIP*x == 3*",
+        "*XFAIL*test_boolean*",
+        "*x == 3*",
+    ])
+
+def test_direct_gives_error(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.skipif(True)
+        def test_skip1():
+            pass
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*1 error*",
+    ])
+
 
