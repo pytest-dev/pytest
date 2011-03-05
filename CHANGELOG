@@ -34,6 +34,8 @@ Changes between 2.0.1 and 2.0.2
 
 - more precise (avoiding of) deprecation warnings for node.Class|Function accesses
 
+- avoid std unittest assertion helper code in tracebacks (thanks Ronny)
+
 Changes between 2.0.0 and 2.0.1
 ----------------------------------------------
 
