@@ -588,7 +588,8 @@ class TestFillFuncArgs:
         item.config.pluginmanager.register(Provider())
         if hasattr(item, '_args'):
             del item._args
-        pytest._fillfuncargs(item)
+        from _pytest.python import fillfuncargs
+        fillfuncargs(item)
         assert len(item.funcargs) == 1
 
 class TestRequest:
