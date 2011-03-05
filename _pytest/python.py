@@ -486,10 +486,11 @@ def hasinit(obj):
             return True
 
 
-def getfuncargnames(function):
+def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
     argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
-    startindex = py.std.inspect.ismethod(function) and 1 or 0
+    if startindex is None:
+        startindex = py.std.inspect.ismethod(function) and 1 or 0
     defaults = getattr(function, 'func_defaults',
                        getattr(function, '__defaults__', None)) or ()
     numdefaults = len(defaults)
@@ -518,7 +519,8 @@ class Metafunc:
         self.config = config
         self.module = module
         self.function = function
-        self.funcargnames = getfuncargnames(function)
+        self.funcargnames = getfuncargnames(function,
+                                            startindex=int(cls is not None))
         self.cls = cls
         self.module = module
         self._calls = []
@@ -526,7 +528,11 @@ class Metafunc:
 
     def addcall(self, funcargs=None, id=_notexists, param=_notexists):
         """ add a new call to the underlying test function during the
-        collection phase of a test run.
+        collection phase of a test run.  Note that request.addcall() is
+        called during the test collection phase prior and independently
+        to actual test execution.  Therefore you should perform setup
+        of resources in a funcarg factory which can be instrumented
+        with the ``param``.
 
         :arg funcargs: argument keyword dictionary used when invoking
             the test function.
@@ -538,10 +544,13 @@ class Metafunc:
         :arg param: will be exposed to a later funcarg factory invocation
             through the ``request.param`` attribute.  It allows to
             defer test fixture setup activities to when an actual
-            test is run.  Note that request.addcall() is called during
-            the collection phase of a test run.
+            test is run.
         """
         assert funcargs is None or isinstance(funcargs, dict)
+        if funcargs is not None:
+            for name in funcargs:
+                if name not in self.funcargnames:
+                    pytest.fail("funcarg %r not used in this function." % name)
         if id is None:
             raise ValueError("id=None not allowed")
         if id is _notexists:

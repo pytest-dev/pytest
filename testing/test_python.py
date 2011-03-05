@@ -915,11 +915,12 @@ class TestMetafunc:
         assert metafunc._calls[2].param == 1
 
     def test_addcall_funcargs(self):
-        def func(arg1): pass
+        def func(x): pass
         metafunc = funcargs.Metafunc(func)
         class obj: pass
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})
+        pytest.raises(pytest.fail.Exception, "metafunc.addcall({'xyz': 0})")
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {'x': 2}
         assert metafunc._calls[1].funcargs == {'x': 3}
@@ -1002,6 +1003,21 @@ class TestGenfuncFunctional:
             "*test_func2*PASS*",
             "*1 failed, 3 passed*"
         ])
+
+    def test_noself_in_method(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                assert 'xyz' not in metafunc.funcargnames
+
+            class TestHello:
+                def test_hello(xyz):
+                    pass
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 pass*",
+        ])
+
 
     def test_generate_plugin_and_module(self, testdir):
         testdir.makeconftest("""
@@ -1339,5 +1355,3 @@ def test_customize_through_attributes(testdir):
         "*MyInstance*",
         "*MyFunction*test_hello*",
     ])
-
-
