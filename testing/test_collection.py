@@ -15,15 +15,10 @@ class TestCollector:
         """)
         recwarn.clear()
         assert modcol.Module == pytest.Module
-        recwarn.pop(DeprecationWarning)
         assert modcol.Class == pytest.Class
-        recwarn.pop(DeprecationWarning)
         assert modcol.Item == pytest.Item
-        recwarn.pop(DeprecationWarning)
         assert modcol.File == pytest.File
-        recwarn.pop(DeprecationWarning)
         assert modcol.Function == pytest.Function
-        recwarn.pop(DeprecationWarning)
 
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol("""

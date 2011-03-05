@@ -32,6 +32,8 @@ Changes between 2.0.1 and 2.0.2
 - fixed typos in the docs (thanks Victor Garcia, Brianna Laugher) and particular
   thanks to Laura Creighton who also revieved parts of the documentation.
 
+- more precise (avoiding of) deprecation warnings for node.Class|Function accesses
+
 Changes between 2.0.0 and 2.0.1
 ----------------------------------------------
 

@@ -121,9 +121,6 @@ class HookProxy:
 
 def compatproperty(name):
     def fget(self):
-        #print "retrieving %r property from %s" %(name, self.fspath)
-        py.log._apiwarn("2.0", "use pytest.%s for "
-            "test collection and item classes" % name)
         return getattr(pytest, name)
     return property(fget, None, None,
         "deprecated attribute %r, use pytest.%s" % (name,name))
@@ -156,6 +153,14 @@ class Node(object):
     Function = compatproperty("Function")
     File = compatproperty("File")
     Item = compatproperty("Item")
+
+    def _getcustomclass(self, name):
+        cls = getattr(self, name)
+        if cls != getattr(pytest, name):
+            py.log._apiwarn("2.0", "use of node.%s is deprecated, "
+                "use pytest_pycollect_makeitem(...) to create custom "
+                "collection nodes" % name)
+        return cls
 
     def __repr__(self):
         return "<%s %r>" %(self.__class__.__name__, getattr(self, 'name', None))

@@ -73,7 +73,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     if collector._istestclasscandidate(name, obj):
         #if hasattr(collector.obj, 'unittest'):
         #    return # we assume it's a mixin class for a TestCase derived one
-        return collector.Class(name, parent=collector)
+        Class = collector._getcustomclass("Class")
+        return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
         if is_generator(obj):
             return Generator(name, parent=collector)
@@ -213,15 +214,17 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
             extra.append(cls())
         plugins = self.getplugins() + extra
         gentesthook.pcall(plugins, metafunc=metafunc)
+        Function = self._getcustomclass("Function")
         if not metafunc._calls:
-            return self.Function(name, parent=self)
+            return Function(name, parent=self)
         l = []
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
-            function = self.Function(name=subname, parent=self,
+            function = Function(name=subname, parent=self,
                 callspec=callspec, callobj=funcobj, keywords={callspec.id:True})
             l.append(function)
         return l
+
 
 class Module(pytest.File, PyCollectorMixin):
     def _getobj(self):
@@ -272,7 +275,7 @@ class Module(pytest.File, PyCollectorMixin):
 class Class(PyCollectorMixin, pytest.Collector):
 
     def collect(self):
-        return [self.Instance(name="()", parent=self)]
+        return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):
         setup_class = getattr(self.obj, 'setup_class', None)
