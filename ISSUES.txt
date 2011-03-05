@@ -88,6 +88,16 @@ etc. Idea is to allow Python expressions which can operate
 on common spellings for operating systems and python
 interpreter versions.
 
+pytest.mark.xfail signature change
+-------------------------------------------------------
+tags: feature 2.1
+
+change to pytest.mark.xfail(reason, (optional)condition)
+to better implement the word meaning.  It also signals
+better that we always have some kind of an implementation
+reason that can be formualated.
+Compatibility? Maybe rename to "pytest.mark.xfail"?
+
 introduce py.test.mark registration
 -----------------------------------------
 tags: feature 2.1
