@@ -471,6 +471,7 @@ def test_reportchars(testdir):
         "SKIP*four*",
     ])
 
+@pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 def test_errors_in_xfail_skip_expressions(testdir):
     testdir.makepyfile("""
         import pytest
