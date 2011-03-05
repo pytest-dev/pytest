@@ -102,6 +102,10 @@ class TestCaseFunction(pytest.Function):
     def runtest(self):
         self._testcase(result=self)
 
+    def _prunetraceback(self, excinfo):
+        pytest.Function._prunetraceback(self, excinfo)
+        excinfo.traceback = excinfo.traceback.filter(lambda x:not x.frame.f_globals.get('__unittest'))
+
 @pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):

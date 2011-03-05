@@ -396,3 +396,15 @@ def test_djangolike_testcase(testdir):
         "*tearDown()*",
         "*_post_teardown()*",
     ])
+
+
+def test_unittest_not_shown_in_traceback(testdir):
+    testdir.makepyfile("""
+        import unittest
+        class t(unittest.TestCase):
+            def test_hello(self):
+                x = 3
+                self.assertEquals(x, 4)
+    """)
+    res = testdir.runpytest()
+    assert "failUnlessEqual" not in res.stdout.str()
