@@ -4,8 +4,7 @@ terminal reporting of the full testing process.
 import pytest,py
 import sys
 
-from _pytest.terminal import TerminalReporter, \
-    CollectonlyReporter,  repr_pythonversion, getreportopt
+from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
 from _pytest import runner
 
 def basic_run_report(item):
@@ -157,53 +156,35 @@ class TestTerminal:
 
 
 class TestCollectonly:
-    def test_collectonly_basic(self, testdir, linecomp):
-        modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
+    def test_collectonly_basic(self, testdir):
+        testdir.makepyfile("""
             def test_func():
                 pass
         """)
-        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.pluginmanager.register(rep)
-        indent = rep.indent
-        rep.config.hook.pytest_collectstart(collector=modcol)
-        linecomp.assert_contains_lines([
-           "<Module 'test_collectonly_basic.py'>"
-        ])
-        item = modcol.collect()[0]
-        rep.config.hook.pytest_itemcollected(item=item)
-        linecomp.assert_contains_lines([
+        result = testdir.runpytest("--collectonly",)
+        result.stdout.fnmatch_lines([
+           "<Module 'test_collectonly_basic.py'>",
            "  <Function 'test_func'>",
         ])
-        report = rep.config.hook.pytest_make_collect_report(collector=modcol)
-        rep.config.hook.pytest_collectreport(report=report)
-        assert rep.indent == indent
 
-    def test_collectonly_skipped_module(self, testdir, linecomp):
-        modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
+    def test_collectonly_skipped_module(self, testdir):
+        testdir.makepyfile("""
             import pytest
-            pytest.skip("nomod")
+            pytest.skip("hello")
         """)
-        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.pluginmanager.register(rep)
-        cols = list(testdir.genitems([modcol]))
-        assert len(cols) == 0
-        linecomp.assert_contains_lines("""
-            <Module 'test_collectonly_skipped_module.py'>
-              !!! Skipped: nomod !!!
-        """)
+        result = testdir.runpytest("--collectonly", "-rs")
+        result.stdout.fnmatch_lines([
+            "SKIP*hello*",
+            "*1 skip*",
+        ])
 
-    def test_collectonly_failed_module(self, testdir, linecomp):
-        modcol = testdir.getmodulecol(configargs=['--collectonly'], source="""
-            raise ValueError(0)
-        """)
-        rep = CollectonlyReporter(modcol.config, out=linecomp.stringio)
-        modcol.config.pluginmanager.register(rep)
-        cols = list(testdir.genitems([modcol]))
-        assert len(cols) == 0
-        linecomp.assert_contains_lines("""
-            <Module 'test_collectonly_failed_module.py'>
-              !!! ValueError: 0 !!!
-        """)
+    def test_collectonly_failed_module(self, testdir):
+        testdir.makepyfile("""raise ValueError(0)""")
+        result = testdir.runpytest("--collectonly")
+        result.stdout.fnmatch_lines([
+            "*raise ValueError*",
+            "*1 error*",
+        ])
 
     def test_collectonly_fatal(self, testdir):
         p1 = testdir.makeconftest("""
@@ -228,11 +209,11 @@ class TestCollectonly:
         stderr = result.stderr.str().strip()
         #assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
-        extra = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*<Module '*.py'>",
             "* <Function 'test_func1'*>",
             "* <Class 'TestClass'>",
-            "*  <Instance '()'>",
+            #"*  <Instance '()'>",
             "*   <Function 'test_method'*>",
         ])
 
@@ -241,11 +222,11 @@ class TestCollectonly:
         result = testdir.runpytest("--collectonly", p)
         stderr = result.stderr.str().strip()
         assert result.ret == 1
-        extra = result.stdout.fnmatch_lines(py.code.Source("""
-            *<Module '*.py'>
-              *ImportError*
-            *!!!*failures*!!!
-            *test_collectonly_error.py:1*
+        result.stdout.fnmatch_lines(py.code.Source("""
+            *ERROR*
+            *import Errlk*
+            *ImportError*
+            *1 error*
         """).strip())
 
 

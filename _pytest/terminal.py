@@ -32,22 +32,19 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
-    if config.option.collectonly:
-        reporter = CollectonlyReporter(config)
-    else:
-        # we try hard to make printing resilient against
-        # later changes on FD level.
-        stdout = py.std.sys.stdout
-        if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
-            try:
-                newfd = os.dup(stdout.fileno())
-                #print "got newfd", newfd
-            except ValueError:
-                pass
-            else:
-                stdout = os.fdopen(newfd, stdout.mode, 1)
-                config._toclose = stdout
-        reporter = TerminalReporter(config, stdout)
+    # we try hard to make printing resilient against
+    # later changes on FD level.
+    stdout = py.std.sys.stdout
+    if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
+        try:
+            newfd = os.dup(stdout.fileno())
+            #print "got newfd", newfd
+        except ValueError:
+            pass
+        else:
+            stdout = os.fdopen(newfd, stdout.mode, 1)
+            config._toclose = stdout
+    reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
         def mywriter(tags, args):
@@ -273,11 +270,44 @@ class TerminalReporter:
         for line in flatten(lines):
             self.write_line(line)
 
-    def pytest_collection_finish(self):
+    def pytest_collection_finish(self, session):
+        if self.config.option.collectonly:
+            self._printcollecteditems(session.items)
+            if self.stats.get('failed'):
+                self._tw.sep("!", "collection failures")
+                for rep in self.stats.get('failed'):
+                    rep.toterminal(self._tw)
+                return 1
+            return 0
         if not self.showheader:
             return
         #for i, testarg in enumerate(self.config.args):
         #    self.write_line("test path %d: %s" %(i+1, testarg))
+        
+    def _printcollecteditems(self, items):
+        # to print out items and their parent collectors
+        # we take care to leave out Instances aka ()
+        # because later versions are going to get rid of them anyway
+        if self.config.option.verbose < 0:
+            for item in items:
+                nodeid = item.nodeid
+                nodeid = nodeid.replace("::()::", "::")
+                self._tw.line(nodeid)
+            return
+        stack = []
+        indent = ""
+        for item in items:
+            needed_collectors = item.listchain()[1:] # strip root node
+            while stack:
+                if stack == needed_collectors[:len(stack)]:
+                    break
+                stack.pop()
+            for col in needed_collectors[len(stack):]:
+                stack.append(col)
+                #if col.name == "()":
+                #    continue
+                indent = (len(stack)-1) * "  "
+                self._tw.line("%s%s" %(indent, col))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
         __multicall__.execute()
@@ -402,52 +432,6 @@ class TerminalReporter:
         if 'deselected' in self.stats:
             self.write_sep("=", "%d tests deselected by %r" %(
                 len(self.stats['deselected']), self.config.option.keyword), bold=True)
-
-
-class CollectonlyReporter:
-    INDENT = "  "
-
-    def __init__(self, config, out=None):
-        self.config = config
-        if out is None:
-            out = py.std.sys.stdout
-        self._tw = py.io.TerminalWriter(out)
-        self.indent = ""
-        self._failed = []
-
-    def outindent(self, line):
-        self._tw.line(self.indent + str(line))
-
-    def pytest_internalerror(self, excrepr):
-        for line in str(excrepr).split("\n"):
-            self._tw.line("INTERNALERROR> " + line)
-
-    def pytest_collectstart(self, collector):
-        if collector.session != collector:
-            self.outindent(collector)
-            self.indent += self.INDENT
-
-    def pytest_itemcollected(self, item):
-        self.outindent(item)
-
-    def pytest_collectreport(self, report):
-        if not report.passed:
-            if hasattr(report.longrepr, 'reprcrash'):
-                msg = report.longrepr.reprcrash.message
-            else:
-                # XXX unify (we have CollectErrorRepr here)
-                msg = str(report.longrepr[2])
-            self.outindent("!!! %s !!!" % msg)
-            #self.outindent("!!! error !!!")
-            self._failed.append(report)
-        self.indent = self.indent[:-len(self.INDENT)]
-
-    def pytest_collection_finish(self):
-        if self._failed:
-            self._tw.sep("!", "collection failures")
-        for rep in self._failed:
-            rep.toterminal(self._tw)
-        return self._failed and 1 or 0
 
 def repr_pythonversion(v=None):
     if v is None:

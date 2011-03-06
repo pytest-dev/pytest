@@ -94,6 +94,8 @@ class TestCollectFS:
         tmpdir.ensure(".whatever", 'test_notfound.py')
         tmpdir.ensure(".bzr", 'test_notfound.py')
         tmpdir.ensure("normal", 'test_found.py')
+        for x in tmpdir.visit("test_*.py"):
+            x.write("def test_hello(): pass")
 
         result = testdir.runpytest("--collectonly")
         s = result.stdout.str()

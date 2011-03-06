@@ -89,9 +89,11 @@ class TestGeneralUsage:
             import pytest
             class MyFile(pytest.File):
                 def collect(self):
-                    return
+                    return [MyItem("hello", parent=self)]
             def pytest_collect_file(path, parent):
                 return MyFile(path, parent)
+            class MyItem(pytest.Item):
+                pass
         """)
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p, "--collectonly")

@@ -1,12 +1,12 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
-- fix issue30 - extended xfail/skipif handling and better reporting.
+- fix issue30 - extended xfail/skipif handling and improved reporting.
   If you have a syntax error in your skip/xfail
   expressions you now get nice error reports.
 
   Also you can now access module globals from xfail/skipif
-  expressions so that this works now::
+  expressions so that this for example works now::
   
     import mymodule
     @pytest.mark.skipif("mymodule.__version__[0] == "1")
@@ -23,6 +23,11 @@ Changes between 2.0.1 and 2.0.2
   The setup_method fixture method now gets called also for
   test function invocations generated from the pytest_generate_tests
   hook.
+
+- fix issue27 - collectonly and keyword-selection (-k) now work together
+  Also, if you do "py.test --collectonly -q" you now get a flat list
+  of test ids that you can use to paste to the py.test commandline
+  in order to execute a particular test.
 
 - fix issue23 - tmpdir argument now works on Python3.2 and WindowsXP
   Starting with Python3.2 os.symlink may be supported. By requiring

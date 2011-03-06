@@ -359,8 +359,8 @@ class TestConftestCustomization:
                 if path.basename == "test_xyz.py":
                     return MyModule(path, parent)
         """)
-        testdir.makepyfile("def some(): pass")
-        testdir.makepyfile(test_xyz="")
+        testdir.makepyfile("def test_some(): pass")
+        testdir.makepyfile(test_xyz="def test_func(): pass")
         result = testdir.runpytest("--collectonly")
         result.stdout.fnmatch_lines([
             "*<Module*test_pytest*",
