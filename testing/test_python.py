@@ -517,6 +517,10 @@ def test_callspec_repr():
     repr(cs)
 
 class TestFillFuncArgs:
+    def test_fillfuncargs_exposed(self):
+        # used by oejskit
+        assert pytest._fillfuncargs == funcargs.fillfuncargs
+
     def test_funcarg_lookupfails(self, testdir):
         testdir.makeconftest("""
             def pytest_funcarg__xyzsomething(request):

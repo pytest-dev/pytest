@@ -34,7 +34,7 @@ def pytest_namespace():
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
         'Function': Function, 'Generator': Generator,
-        }
+        '_fillfuncargs': fillfuncargs}
     }
 
 def pytest_funcarg__pytestconfig(request):
