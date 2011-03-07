@@ -326,7 +326,13 @@ class Item(Node):
             return self._location
         except AttributeError:
             location = self.reportinfo()
-            fspath = self.session.fspath.bestrelpath(location[0])
+            # bestrelpath is a quite slow function
+            cache = self.config.__dict__.setdefault("_bestrelpathcache", {})
+            try:
+                fspath = cache[location[0]]
+            except KeyError:
+                fspath = self.session.fspath.bestrelpath(location[0])
+                cache[location[0]] = fspath
             location = (fspath, location[1], str(location[2]))
             self._location = location
             return location

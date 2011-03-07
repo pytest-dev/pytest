@@ -60,6 +60,7 @@ class TagTracerSub:
 class PluginManager(object):
     def __init__(self, load=False):
         self._name2plugin = {}
+        self._listattrcache = {}
         self._plugins = []
         self._hints = []
         self.trace = TagTracer().get("pluginmanage")
@@ -272,6 +273,11 @@ class PluginManager(object):
     def listattr(self, attrname, plugins=None):
         if plugins is None:
             plugins = self._plugins
+        key = (attrname,) + tuple(plugins)
+        try:
+            return list(self._listattrcache[key])
+        except KeyError:
+            pass
         l = []
         last = []
         for plugin in plugins:
@@ -286,6 +292,7 @@ class PluginManager(object):
             except AttributeError:
                 continue
         l.extend(last)
+        self._listattrcache[key] = list(l)
         return l
 
     def call_plugin(self, plugin, methname, kwargs):
@@ -340,14 +347,20 @@ class MultiCall:
         return kwargs
 
 def varnames(func):
+    try:
+        return func._varnames
+    except AttributeError:
+        pass
     if not inspect.isfunction(func) and not inspect.ismethod(func):
         func = getattr(func, '__call__', func)
     ismethod = inspect.ismethod(func)
     rawcode = py.code.getrawcode(func)
     try:
-        return rawcode.co_varnames[ismethod:rawcode.co_argcount]
+        x = rawcode.co_varnames[ismethod:rawcode.co_argcount]
     except AttributeError:
-        return ()
+        x = ()
+    py.builtin._getfuncdict(func)['_varnames'] = x
+    return x
 
 class HookRelay:
     def __init__(self, hookspecs, pm, prefix="pytest_"):

@@ -1,6 +1,8 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
+- tackle issue32 - half the overhead for running test functions 
+
 - fix issue30 - extended xfail/skipif handling and improved reporting.
   If you have a syntax error in your skip/xfail
   expressions you now get nice error reports.

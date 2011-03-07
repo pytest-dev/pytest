@@ -2,6 +2,7 @@
 import py
 import pytest
 import inspect, sys
+from _pytest.core import varnames
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
@@ -135,12 +136,11 @@ def pytest_plugin_registered(manager, plugin):
                 fail = True
         else:
             #print "checking", method
-            method_args = getargs(method)
-            #print "method_args", method_args
+            method_args = list(varnames(method))
             if '__multicall__' in method_args:
                 method_args.remove('__multicall__')
             hook = hooks[name]
-            hookargs = getargs(hook)
+            hookargs = varnames(hook)
             for arg in method_args:
                 if arg not in hookargs:
                     Print("argument %r not available"  %(arg, ))
@@ -161,11 +161,6 @@ class PluginValidationError(Exception):
 def isgenerichook(name):
     return name == "pytest_plugins" or \
            name.startswith("pytest_funcarg__")
-
-def getargs(func):
-    args = inspect.getargs(py.code.getrawcode(func))[0]
-    startindex = inspect.ismethod(func) and 1 or 0
-    return args[startindex:]
 
 def collectattr(obj):
     methods = {}
