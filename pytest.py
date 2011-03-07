@@ -1,7 +1,7 @@
 """
 unit and functional testing with Python.
 """
-__version__ = '2.0.2.dev5'
+__version__ = '2.0.2.dev6'
 __all__ = ['main']
 
 from _pytest.core import main, UsageError, _preloadplugins

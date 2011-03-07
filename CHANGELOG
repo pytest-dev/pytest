@@ -29,6 +29,8 @@ Changes between 2.0.1 and 2.0.2
   of test ids that you can use to paste to the py.test commandline
   in order to execute a particular test.
 
+- fix issue25 avoid reported problems with --pdb and python3.2/encodings output
+
 - fix issue23 - tmpdir argument now works on Python3.2 and WindowsXP
   Starting with Python3.2 os.symlink may be supported. By requiring
   a newer py lib version the py.path.local() implementation acknowledges

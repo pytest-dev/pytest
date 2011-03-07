@@ -52,7 +52,10 @@ class PdbInvoke:
         if "xfail" in rep.keywords:
             return rep
         # we assume that the above execute() suspended capturing
-        tw = py.io.TerminalWriter()
+        # XXX we re-use the TerminalReporter's terminalwriter
+        # because this seems to avoid some encoding related troubles
+        # for not completely clear reasons.
+        tw = item.config.pluginmanager.getplugin("terminalreporter")._tw
         tw.line()
         tw.sep(">", "traceback")
         rep.toterminal(tw)
