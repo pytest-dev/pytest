@@ -31,4 +31,10 @@ With a working Distribute_ or setuptools_ installation you can type::
 
 in order to work inline with the tools and the lib of your checkout.
 
+If this command complains that it could not find the required version
+of "py" then you need to use the development pypi repository::
+
+    python setup.py develop -i http://pypi.testrun.org
+
+
 .. include:: links.inc
