@@ -335,19 +335,19 @@ class TerminalReporter:
                 excrepr.reprcrash.toterminal(self._tw)
 
     def _locationline(self, collect_fspath, fspath, lineno, domain):
+        # collect_fspath comes from testid which has a "/"-normalized path
         if fspath and fspath.replace("\\", "/") != collect_fspath:
             fspath = "%s <- %s" % (collect_fspath, fspath)
-        if lineno is not None:
-            lineno += 1
-        if fspath and lineno and domain:
-            line = "%(fspath)s:%(lineno)s: %(domain)s"
-        elif fspath and domain:
-            line = "%(fspath)s: %(domain)s"
-        elif fspath and lineno:
-            line = "%(fspath)s:%(lineno)s %(extrapath)s"
+        if fspath:
+            line = str(fspath)
+            if lineno is not None:
+                lineno += 1
+                line += ":" + str(lineno)
+            if domain:
+                line += ": " + str(domain)
         else:
-            line = "[nolocation]"
-        return line % locals() + " "
+            line = "[location]"
+        return line + " "
 
     def _getfailureheadline(self, rep):
         if hasattr(rep, 'location'):
