@@ -283,7 +283,7 @@ class TerminalReporter:
             return
         #for i, testarg in enumerate(self.config.args):
         #    self.write_line("test path %d: %s" %(i+1, testarg))
-        
+
     def _printcollecteditems(self, items):
         # to print out items and their parent collectors
         # we take care to leave out Instances aka ()
@@ -335,7 +335,7 @@ class TerminalReporter:
                 excrepr.reprcrash.toterminal(self._tw)
 
     def _locationline(self, collect_fspath, fspath, lineno, domain):
-        if fspath and fspath != collect_fspath:
+        if fspath and fspath.replace("\\", "/") != collect_fspath:
             fspath = "%s <- %s" % (collect_fspath, fspath)
         if lineno is not None:
             lineno += 1

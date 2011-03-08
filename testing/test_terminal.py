@@ -130,6 +130,20 @@ class TestTerminal:
             "*test_p2.py <- *test_p1.py:2: TestMore.test_p1*",
         ])
 
+    def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
+        a = testdir.mkpydir("a")
+        a.join("test_hello.py").write(py.code.Source("""
+            class TestClass:
+                def test_method(self):
+                    pass
+        """))
+        result = testdir.runpytest("-v")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*a/test_hello.py*PASS*",
+        ])
+        assert " <- " not in result.stdout.str()
+
     def test_keyboard_interrupt(self, testdir, option):
         p = testdir.makepyfile("""
             def test_foobar():
@@ -399,6 +413,7 @@ class TestTerminalFunctional:
             "*test_verbose_reporting.py:10: test_gen*FAIL*",
         ])
         assert result.ret == 1
+
         pytestconfig.pluginmanager.skipifmissing("xdist")
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([
@@ -507,7 +522,7 @@ def test_PYTEST_DEBUG(testdir, monkeypatch):
     result.stderr.fnmatch_lines([
         "*registered*PluginManager*"
     ])
-    
+
 
 class TestGenericReporting:
     """ this test class can be subclassed with a different option
