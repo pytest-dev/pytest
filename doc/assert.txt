@@ -23,7 +23,7 @@ assertion fails you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 1 items
     
     test_assert1.py F
@@ -37,7 +37,7 @@ assertion fails you will see the value of ``x``::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.07 seconds =========================
 
 Reporting details about the failing assertion is achieved by re-evaluating
 the assert expression and recording the intermediate values.
@@ -108,7 +108,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 1 items
     
     test_assert2.py F

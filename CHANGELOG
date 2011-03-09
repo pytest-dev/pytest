@@ -1,7 +1,8 @@
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
-- tackle issue32 - half the overhead for running test functions 
+- tackle issue32 - speed up test runs of very quick test functions
+  by reducing the relative overhead
 
 - fix issue30 - extended xfail/skipif handling and improved reporting.
   If you have a syntax error in your skip/xfail
@@ -9,7 +10,8 @@ Changes between 2.0.1 and 2.0.2
 
   Also you can now access module globals from xfail/skipif
   expressions so that this for example works now::
-  
+ 
+    import pytest
     import mymodule
     @pytest.mark.skipif("mymodule.__version__[0] == "1")
     def test_function():

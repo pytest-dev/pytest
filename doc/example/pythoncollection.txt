@@ -42,11 +42,16 @@ in functions and classes.  For example, if we have::
 then the test collection looks like this::
 
     $ py.test --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
+    collecting ... collected 2 items
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
         <Instance '()'>
           <Function 'check_simple'>
           <Function 'check_complex'>
+    
+    =============================  in 0.01 seconds =============================
 
 interpret cmdline arguments as Python packages
 -----------------------------------------------------
@@ -76,9 +81,14 @@ finding out what is collected
 You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collectonly pythoncollection.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
+    collecting ... collected 3 items
     <Module 'pythoncollection.py'>
       <Function 'test_function'>
       <Class 'TestClass'>
         <Instance '()'>
           <Function 'test_method'>
           <Function 'test_anothermethod'>
+    
+    =============================  in 0.06 seconds =============================

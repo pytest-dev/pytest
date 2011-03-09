@@ -49,7 +49,7 @@ You can now run the test::
 
     $ py.test test_sample.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 1 items
     
     test_sample.py F
@@ -57,7 +57,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x1e2db90>
+    mysetup = <conftest.MySetup instance at 0xfc64d0>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -122,12 +122,12 @@ Running it yields::
 
     $ py.test test_ssh.py -rs
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 1 items
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-35/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /tmp/doc-exec-36/conftest.py:22: specify ssh host with --ssh
     
     ======================== 1 skipped in 0.02 seconds =========================
 

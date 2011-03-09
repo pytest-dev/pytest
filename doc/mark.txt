@@ -88,19 +88,19 @@ You can use the ``-k`` command line option to select tests::
 
     $ py.test -k webtest  # running with the above defined examples yields
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 4 items
     
     test_mark.py ..
     test_mark_classlevel.py ..
     
-    ========================= 4 passed in 0.02 seconds =========================
+    ========================= 4 passed in 0.01 seconds =========================
 
 And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k-webtest
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 4 items
     
     ===================== 4 tests deselected by '-webtest' =====================
@@ -110,7 +110,7 @@ Or to only select the class::
 
     $ py.test -kTestClass
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2.dev2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
     collecting ... collected 4 items
     
     test_mark_classlevel.py ..
