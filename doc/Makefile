@@ -40,7 +40,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 install: clean html
-	rsync -avz _build/html/ code:www-pytest/2.0.2dev
+	rsync -avz _build/html/ code:www-pytest/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
