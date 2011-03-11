@@ -153,7 +153,7 @@ def pytest_runtest_makereport(item, call):
             longrepr = excinfo
         elif excinfo.errisinstance(py.test.skip.Exception):
             outcome = "skipped"
-            r = item._repr_failure_py(excinfo, "line").reprcrash
+            r = excinfo._getreprcrash()
             longrepr = (str(r.path), r.lineno, r.message)
         else:
             outcome = "failed"
