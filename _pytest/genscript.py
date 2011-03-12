@@ -1,8 +1,5 @@
 """ generate a single-file self-contained version of py.test """
 import py
-import pickle
-import zlib
-import base64
 
 def find_toplevel(name):
     for syspath in py.std.sys.path:
@@ -31,9 +28,9 @@ def pkg_to_mapping(name):
     return name2src
 
 def compress_mapping(mapping):
-    data = pickle.dumps(mapping, 2)
-    data = zlib.compress(data, 9)
-    data = base64.encodestring(data)
+    data = py.std.pickle.dumps(mapping, 2)
+    data = py.std.zlib.compress(data, 9)
+    data = py.std.base64.encodestring(data)
     data = data.decode('ascii')
     return data
 
@@ -43,7 +40,6 @@ def compress_packages(names):
     for name in names:
         mapping.update(pkg_to_mapping(name))
     return compress_mapping(mapping)
-
 
 def generate_script(entry, packages):
     data = compress_packages(packages)
