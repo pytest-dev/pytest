@@ -46,6 +46,16 @@ class TestClass:
         l = modcol.collect()
         assert len(l) == 0
 
+    def test_class_subclassobject(self, testdir):
+        testdir.getmodulecol("""
+            class test(object):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*collected 0*",
+        ])
+
 class TestGenerator:
     def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol("""

@@ -70,11 +70,13 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     res = __multicall__.execute()
     if res is not None:
         return res
-    if collector._istestclasscandidate(name, obj):
+    if inspect.isclass(obj):
         #if hasattr(collector.obj, 'unittest'):
         #    return # we assume it's a mixin class for a TestCase derived one
-        Class = collector._getcustomclass("Class")
-        return Class(name, parent=collector)
+        if collector.classnamefilter(name):
+            if not hasinit(obj):
+                Class = collector._getcustomclass("Class")
+                return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
         if is_generator(obj):
             return Generator(name, parent=collector)
@@ -193,14 +195,6 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
     def makeitem(self, name, obj):
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
-
-    def _istestclasscandidate(self, name, obj):
-        if self.classnamefilter(name) and \
-           inspect.isclass(obj):
-            if hasinit(obj):
-                # XXX WARN
-                return False
-            return True
 
     def _genfunctions(self, name, funcobj):
         module = self.getparent(Module).obj
