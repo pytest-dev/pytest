@@ -39,11 +39,13 @@ class level setup/teardown
 Similarly, the following methods are called at class level before
 and after all test methods of the class are called::
 
+    @classmethod
     def setup_class(cls):
         """ setup up any state specific to the execution
             of the given class (which usually contains tests).
         """
 
+    @classmethod
     def teardown_class(cls):
         """ teardown any state that was previously setup
             with a call to setup_class.
