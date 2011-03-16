@@ -164,14 +164,17 @@ class PluginManager(object):
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
             if opt1 == "-p":
-                if opt2.startswith("no:"):
-                    name = opt2[3:]
-                    if self.getplugin(name) is not None:
-                        self.unregister(None, name=name)
-                    self._name2plugin[name] = -1
-                else:
-                    if self.getplugin(opt2) is None:
-                        self.import_plugin(opt2)
+                self.consider_pluginarg(opt2)
+
+    def consider_pluginarg(self, arg):
+        if arg.startswith("no:"):
+            name = arg[3:]
+            if self.getplugin(name) is not None:
+                self.unregister(None, name=name)
+            self._name2plugin[name] = -1
+        else:
+            if self.getplugin(arg) is None:
+                self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
         if self.register(conftestmodule, name=conftestmodule.__file__):

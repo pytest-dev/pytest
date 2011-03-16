@@ -252,6 +252,16 @@ class Config(object):
         self.hook = self.pluginmanager.hook
         self._inicache = {}
 
+    @classmethod
+    def fromdictargs(cls, option_dict, args):
+        """ constructor useable for subprocesses. """
+        config = cls()
+        config._preparse(args, addopts=False)
+        config.option.__dict__.update(option_dict)
+        for x in config.option.plugins:
+            config.pluginmanager.consider_pluginarg(x)
+        return config
+
     def _onimportconftest(self, conftestmodule):
         self.trace("loaded conftestmodule %r" %(conftestmodule,))
         self.pluginmanager.consider_conftest(conftestmodule)
