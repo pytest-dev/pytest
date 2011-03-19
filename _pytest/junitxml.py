@@ -106,7 +106,13 @@ class LogXML(object):
                 '<skipped message="expected test failure">%s</skipped>',
                 report.keywords['xfail'])
         else:
-            self.appendlog("<skipped/>")
+            filename, lineno, skipreason = report.longrepr
+            if skipreason.startswith("Skipped: "):
+                skipreason = skipreason[9:]
+            self.appendlog('<skipped type="pytest.skip" '
+                           'message="%s">%s</skipped>',
+                skipreason, "%s:%s: %s" % report.longrepr,
+                )
         self._closetestcase()
         self.skipped += 1
 

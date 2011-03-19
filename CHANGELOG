@@ -1,6 +1,9 @@
 Changes between 2.0.2 and 2.0.3.dev
 ----------------------------------------------
 
+- fix missing skip reason/meta information in junitxml files, reported
+  via http://lists.idyll.org/pipermail/testing-in-python/2011-March/003928.html
+
 - fix issue34: avoid collection failure with "test" prefixed classes
   deriving from object.
 

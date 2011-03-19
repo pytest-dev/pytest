@@ -58,6 +58,26 @@ class TestPython:
         assert_attr(fnode, message="test setup failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_skip_contains_name_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def test_skip():
+                pytest.skip("hello23")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node = dom.getElementsByTagName("testsuite")[0]
+        assert_attr(node, skips=1)
+        tnode = node.getElementsByTagName("testcase")[0]
+        assert_attr(tnode,
+            classname="test_skip_contains_name_reason",
+            name="test_skip")
+        snode = tnode.getElementsByTagName("skipped")[0]
+        assert_attr(snode,
+            type="pytest.skip",
+            message="hello23",
+            )
+
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
             class TestClass:
