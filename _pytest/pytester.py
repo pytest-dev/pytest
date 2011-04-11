@@ -236,13 +236,14 @@ class TmpTestdir:
     def _makefile(self, ext, args, kwargs):
         items = list(kwargs.items())
         if args:
-            source = "\n".join(map(str, args)) + "\n"
+            source = py.builtin._totext("\n").join(
+                map(py.builtin._totext, args)) + py.builtin._totext("\n")
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
-            source = str(py.code.Source(value)).lstrip()
+            source = py.builtin._totext(py.code.Source(value)).lstrip()
             p.write(source.encode("utf-8"), "wb")
             if ret is None:
                 ret = p

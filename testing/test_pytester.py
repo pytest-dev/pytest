@@ -1,3 +1,4 @@
+import py
 import pytest
 import os, sys
 from _pytest.pytester import LineMatcher, LineComp, HookRecorder
@@ -113,3 +114,12 @@ def test_functional(testdir, linecomp):
             assert res == [42]
     """)
     reprec.assertoutcome(passed=1)
+
+
+def test_makepyfile_unicode(testdir):
+    global unichr
+    try:
+        unichr(65)
+    except NameError:
+        unichr = chr
+    testdir.makepyfile(unichr(0xfffd))
