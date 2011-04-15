@@ -13,6 +13,8 @@ Changes between 2.0.2 and 2.0.3.dev
 - speed up skips (by not doing a full traceback represenation
   internally)
 
+- fix issue37: avoid invalid characters in junitxml's output
+
 Changes between 2.0.1 and 2.0.2
 ----------------------------------------------
 
