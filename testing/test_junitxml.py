@@ -283,3 +283,71 @@ class TestNonPython:
         assert_attr(fnode, message="test failure")
         assert "custom item runtest failed" in fnode.toxml()
 
+
+def test_nullbyte(testdir):
+    # A null byte can not occur in XML (see section 2.2 of the spec)
+    testdir.makepyfile("""
+        import sys
+        def test_print_nullbyte():
+            sys.stdout.write('Here the null -->' + chr(0) + '<--')
+            sys.stdout.write('In repr form -->' + repr(chr(0)) + '<--')
+            assert False
+    """)
+    xmlf = testdir.tmpdir.join('junit.xml')
+    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    text = xmlf.read()
+    assert '\x00' not in text
+    assert '#x00' in text
+
+
+def test_nullbyte_replace(testdir):
+    # Check if the null byte gets replaced
+    testdir.makepyfile("""
+        import sys
+        def test_print_nullbyte():
+            sys.stdout.write('Here the null -->' + chr(0) + '<--')
+            sys.stdout.write('In repr form -->' + repr(chr(0)) + '<--')
+            assert False
+    """)
+    xmlf = testdir.tmpdir.join('junit.xml')
+    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    text = xmlf.read()
+    assert '#x0' in text
+
+
+def test_invalid_xml_escape(testdir):
+    # Test some more invalid xml chars, the full range should be
+    # tested really but let's just thest the edges of the ranges
+    # intead.
+    # XXX This only tests low unicode character points for now as
+    #     there are some issues with the testing infrastructure for
+    #     the higher ones.
+    # XXX Testing 0xD (\r) is tricky as it overwrites the just written
+    #     line in the output, so we skip it too.
+    global unichr
+    try:
+        unichr(65)
+    except NameError:
+        unichr = chr
+    u = py.builtin._totext
+    invalid = (0x1, 0xB, 0xC, 0xE, 0x19,)
+               # 0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)
+    valid = (0x9, 0xA, 0x20,) # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
+    all = invalid + valid
+    prints = [u("    sys.stdout.write('''0x%X-->%s<--''')") % (i, unichr(i))
+              for i in all]
+    testdir.makepyfile(u("# -*- coding: UTF-8 -*-"),
+                       u("import sys"),
+                       u("def test_print_bytes():"),
+                       u("\n").join(prints),
+                       u("    assert False"))
+    xmlf = testdir.tmpdir.join('junit.xml')
+    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    text = xmlf.read()
+    for i in invalid:
+        if i <= 0xFF:
+            assert '#x%02X' % i in text
+        else:
+            assert '#x%04X' % i in text
+    for i in valid:
+        assert chr(i) in text
