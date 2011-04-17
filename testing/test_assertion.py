@@ -44,7 +44,8 @@ class TestBinReprIntegration:
         config = testdir.parseconfig()
         plugin.pytest_configure(config)
         assert hook != py.code._reprcompare
-        plugin.pytest_unconfigure(config)
+        from _pytest.config import pytest_unconfigure
+        pytest_unconfigure(config)
         assert hook == py.code._reprcompare
 
 def callequal(left, right):

@@ -33,6 +33,19 @@ class TestGeneralUsage:
             '*INTERNALERROR*0 / 0*',
         ])
 
+    def test_early_hook_configure_error_issue38(self, testdir):
+        testdir.makeconftest("""
+            def pytest_configure():
+                0 / 0
+        """)
+        result = testdir.runpytest(testdir.tmpdir)
+        assert result.ret != 0
+        # here we get it on stderr
+        result.stderr.fnmatch_lines([
+            '*INTERNALERROR*File*conftest.py*line 2*',
+            '*0 / 0*',
+        ])
+
     def test_file_not_found(self, testdir):
         result = testdir.runpytest("asd")
         assert result.ret != 0

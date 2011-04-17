@@ -12,6 +12,10 @@ def pytest_cmdline_parse(pluginmanager, args):
         config.trace.root.setwriter(sys.stderr.write)
     return config
 
+def pytest_unconfigure(config):
+    for func in config._cleanup:
+        func()
+
 class Parser:
     """ Parser for command line arguments. """
 
@@ -251,7 +255,8 @@ class Config(object):
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
         self._inicache = {}
-
+        self._cleanup = []
+    
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """

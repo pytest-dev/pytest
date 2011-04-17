@@ -16,7 +16,8 @@ def pytest_configure(config):
     # py._code._assertionnew to detect this plugin was loaded and in
     # turn call the hooks defined here as part of the
     # DebugInterpreter.
-    config._monkeypatch = m = monkeypatch()
+    m = monkeypatch()
+    config._cleanup.append(m.undo)
     warn_about_missing_assertion()
     if not config.getvalue("noassert") and not config.getvalue("nomagic"):
         def callbinrepr(op, left, right):
@@ -28,9 +29,6 @@ def pytest_configure(config):
         m.setattr(py.builtin.builtins,
                   'AssertionError', py.code._AssertionError)
         m.setattr(py.code, '_reprcompare', callbinrepr)
-
-def pytest_unconfigure(config):
-    config._monkeypatch.undo()
 
 def warn_about_missing_assertion():
     try:

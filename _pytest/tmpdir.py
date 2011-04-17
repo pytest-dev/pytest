@@ -48,14 +48,11 @@ class TempdirHandler:
         self.trace("finish")
         
 def pytest_configure(config):
-    config._mp = mp = monkeypatch()
+    mp = monkeypatch()
     t = TempdirHandler(config)
+    config._cleanup.extend([mp.undo, t.finish])
     mp.setattr(config, '_tmpdirhandler', t, raising=False)
     mp.setattr(pytest, 'ensuretemp', t.ensuretemp, raising=False)
-
-def pytest_unconfigure(config):
-    config._tmpdirhandler.finish()
-    config._mp.undo()
 
 def pytest_funcarg__tmpdir(request):
     """return a temporary directory path object
