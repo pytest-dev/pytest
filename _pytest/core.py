@@ -265,8 +265,15 @@ class PluginManager(object):
         config.hook.pytest_unconfigure(config=config)
         config.pluginmanager.unregister(self)
 
-    def notify_exception(self, excinfo):
-        excrepr = excinfo.getrepr(funcargs=True, showlocals=True)
+    def notify_exception(self, excinfo, option=None):
+        if option and option.fulltrace:
+            style = "long"
+        else:
+            style = "native"
+        excrepr = excinfo.getrepr(funcargs=True,
+            showlocals=getattr(option, 'showlocals', False),
+            style=style,
+        )
         res = self.hook.pytest_internalerror(excrepr=excrepr)
         if not py.builtin.any(res):
             for line in str(excrepr).split("\n"):

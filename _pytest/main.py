@@ -71,7 +71,7 @@ def pytest_cmdline_main(config):
         session.exitstatus = EXIT_INTERRUPTED
     except:
         excinfo = py.code.ExceptionInfo()
-        config.pluginmanager.notify_exception(excinfo)
+        config.pluginmanager.notify_exception(excinfo, config.option)
         session.exitstatus = EXIT_INTERNALERROR
         if excinfo.errisinstance(SystemExit):
             sys.stderr.write("mainloop: caught Spurious SystemExit!\n")

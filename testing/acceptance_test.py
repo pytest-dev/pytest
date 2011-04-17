@@ -13,6 +13,26 @@ class TestGeneralUsage:
             '*ERROR: hello'
         ])
 
+    def test_early_hook_error_issue38_1(self, testdir):
+        testdir.makeconftest("""
+            def pytest_sessionstart():
+                0 / 0
+        """)
+        result = testdir.runpytest(testdir.tmpdir)
+        assert result.ret != 0
+        # tracestyle is native by default for hook failures
+        result.stdout.fnmatch_lines([
+            '*INTERNALERROR*File*conftest.py*line 2*',
+            '*0 / 0*',
+        ])
+        result = testdir.runpytest(testdir.tmpdir, "--fulltrace")
+        assert result.ret != 0
+        # tracestyle is native by default for hook failures
+        result.stdout.fnmatch_lines([
+            '*INTERNALERROR*def pytest_sessionstart():*',
+            '*INTERNALERROR*0 / 0*',
+        ])
+
     def test_file_not_found(self, testdir):
         result = testdir.runpytest("asd")
         assert result.ret != 0
