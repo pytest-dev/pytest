@@ -1,4 +1,4 @@
-Changes between 2.0.2 and 2.0.3.dev
+Changes between 2.0.2 and 2.0.3
 ----------------------------------------------
 
 - fix issue38: nicer tracebacks on calls to hooks, particularly early
