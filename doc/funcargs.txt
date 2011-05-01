@@ -61,7 +61,7 @@ Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
     collecting ... collected 1 items
     
     test_simplefactory.py F
@@ -167,7 +167,7 @@ Running this::
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
     collecting ... collected 10 items
     
     test_example.py .........F
@@ -182,7 +182,7 @@ Running this::
     E       assert 9 < 9
     
     test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.02 seconds ====================
+    ==================== 1 failed, 9 passed in 0.03 seconds ====================
 
 Note that the ``pytest_generate_tests(metafunc)`` hook is called during
 the test collection phase which is separate from the actual test running.
@@ -190,7 +190,7 @@ Let's just look at what is collected::
 
     $ py.test --collectonly test_example.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
     collecting ... collected 10 items
     <Module 'test_example.py'>
       <Function 'test_func[0]'>
@@ -210,7 +210,7 @@ If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.2 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.6.6 -- pytest-2.0.3 -- /home/hpk/venv/0/bin/python
     collecting ... collected 10 items
     
     test_example.py:6: test_func[7] PASSED
