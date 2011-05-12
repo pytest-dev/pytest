@@ -115,6 +115,9 @@ pytest_pyfunc_call.firstresult = True
 def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
+def pytest_configure_funcargs(request):
+    """ configure funcargs """
+
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
