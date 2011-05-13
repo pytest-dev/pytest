@@ -1,3 +1,8 @@
+Changes between 2.0.3 and DEV
+----------------------------------------------
+
+- introduce XXX pytest_configure_funcargs hack (thanks Ronny)
+
 Changes between 2.0.2 and 2.0.3
 ----------------------------------------------
 
