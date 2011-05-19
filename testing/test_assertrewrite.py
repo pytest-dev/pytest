@@ -196,6 +196,11 @@ class TestAssertionRewrite:
             a, b, c = range(3)
             assert a < b <= c
         getmsg(f, must_pass=True)
+        def f():
+            a, b, c = range(3)
+            assert a < b
+            assert b < c
+        getmsg(f, must_pass=True)
 
     def test_len(self):
         def f():
