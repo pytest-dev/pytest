@@ -16,11 +16,15 @@ def teardown_module(mod):
     del mod._old_reprcompare
 
 
+def rewrite(src):
+    tree = ast.parse(src)
+    rewrite_asserts(tree)
+    return tree
+
 def getmsg(f, extra_ns=None, must_pass=False):
     """Rewrite the assertions in f, run it, and get the failure message."""
     src = '\n'.join(py.code.Code(f).source().lines)
-    mod = ast.parse(src)
-    rewrite_asserts(mod)
+    mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
     ns = {}
     if extra_ns is not None:
@@ -42,6 +46,26 @@ def getmsg(f, extra_ns=None, must_pass=False):
 
 
 class TestAssertionRewrite:
+
+    def test_place_initial_imports(self):
+        s = """'Doc string'"""
+        m = rewrite(s)
+        assert isinstance(m.body[0], ast.Expr)
+        assert isinstance(m.body[0].value, ast.Str)
+        for imp in m.body[1:]:
+            assert isinstance(imp, ast.Import)
+        s = """from __future__ import with_statement"""
+        m = rewrite(s)
+        assert isinstance(m.body[0], ast.ImportFrom)
+        for imp in m.body[1:]:
+            assert isinstance(imp, ast.Import)
+        s = """'doc string'\nfrom __future__ import with_statement"""
+        m = rewrite(s)
+        assert isinstance(m.body[0], ast.Expr)
+        assert isinstance(m.body[0].value, ast.Str)
+        assert isinstance(m.body[1], ast.ImportFrom)
+        for imp in m.body[2:]:
+            assert isinstance(imp, ast.Import)
 
     def test_name(self):
         def f():

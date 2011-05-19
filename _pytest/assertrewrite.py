@@ -74,15 +74,23 @@ class AssertionRewriter(ast.NodeVisitor):
         if not mod.body:
             # Nothing to do.
             return
-        # Insert some special imports at top but after any docstrings.
+        # Insert some special imports at top but after any docstrings and
+        # __future__ imports.
         aliases = [ast.alias(py.builtin.builtins.__name__, "@py_builtins"),
                    ast.alias("py", "@pylib"),
                    ast.alias("_pytest.assertrewrite", "@pytest_ar")]
         imports = [ast.Import([alias], lineno=0, col_offset=0)
                    for alias in aliases]
+        expect_docstring = True
         pos = 0
-        if isinstance(mod.body[0], ast.Str):
-            pos = 1
+        for item in mod.body:
+            if (expect_docstring and isinstance(item, ast.Expr) and
+                isinstance(item.value, ast.Str)):
+                expect_docstring = False
+            elif (not isinstance(item, ast.ImportFrom) or item.level > 0 and
+                  item.identifier != "__future__"):
+                break
+            pos += 1
         mod.body[pos:pos] = imports
         # Collect asserts.
         asserts = []
