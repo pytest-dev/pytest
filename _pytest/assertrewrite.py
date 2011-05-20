@@ -93,7 +93,6 @@ class AssertionRewriter(ast.NodeVisitor):
             pos += 1
         mod.body[pos:pos] = imports
         # Collect asserts.
-        asserts = []
         nodes = collections.deque([mod])
         while nodes:
             node = nodes.popleft()
@@ -104,7 +103,6 @@ class AssertionRewriter(ast.NodeVisitor):
                         if isinstance(child, ast.Assert):
                             # Transform assert.
                             new.extend(self.visit(child))
-                            asserts.append((field, i, child))
                         else:
                             new.append(child)
                             if isinstance(child, ast.AST):
