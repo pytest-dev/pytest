@@ -314,6 +314,5 @@ class AssertionRewriter(ast.NodeVisitor):
                                 ast.Tuple(load_names, ast.Load()),
                                 ast.Tuple(expls, ast.Load()),
                                 ast.Tuple(results, ast.Load()))
-        args = [ast.List(load_names, ast.Load())]
-        res = ast.Call(self.builtin("all"), args, [], None, None)
+        res = ast.BoolOp(ast.And(), load_names)
         return res, self.explanation_param(self.pop_format_context(expl_call))
