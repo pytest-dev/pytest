@@ -225,6 +225,7 @@ class Module(pytest.File, PyCollectorMixin):
         return self._memoizedcall('_obj', self._importtestmodule)
 
     def _importtestmodule(self):
+        self.ihook.pytest_pycollect_before_module_import(mod=self)
         # we assume we are only called once per module
         try:
             mod = self.fspath.pyimport(ensuresyspath=True)
@@ -242,6 +243,8 @@ class Module(pytest.File, PyCollectorMixin):
                 "HINT: use a unique basename for your test file modules"
                  % e.args
             )
+        finally:
+            self.ihook.pytest_pycollect_after_module_import(mod=self)
         #print "imported test module", mod
         self.config.pluginmanager.consider_module(mod)
         return mod

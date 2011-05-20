@@ -104,6 +104,12 @@ def pytest_pycollect_makemodule(path, parent):
     """
 pytest_pycollect_makemodule.firstresult = True
 
+def pytest_pycollect_before_module_import(mod):
+    """Called before a module is imported."""
+
+def pytest_pycollect_after_module_import(mod):
+    """Called after a module is imported."""
+
 def pytest_pycollect_makeitem(collector, name, obj):
     """ return custom item/collector for a python object in a module, or None.  """
 pytest_pycollect_makeitem.firstresult = True
