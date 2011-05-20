@@ -67,6 +67,19 @@ binop_map = {
 }
 
 
+def set_location(node, lineno, col_offset):
+    """Set node location information recursively."""
+    def _fix(node, lineno, col_offset):
+        if "lineno" in node._attributes:
+            node.lineno = lineno
+        if "col_offset" in node._attributes:
+            node.col_offset = col_offset
+        for child in ast.iter_child_nodes(node):
+            _fix(child, lineno, col_offset)
+    _fix(node, lineno, col_offset)
+    return node
+
+
 class AssertionRewriter(ast.NodeVisitor):
 
     def run(self, mod):
@@ -196,9 +209,7 @@ class AssertionRewriter(ast.NodeVisitor):
             self.statements.append(delete)
         # Fix line numbers.
         for stmt in self.statements:
-            stmt.lineno = assert_.lineno
-            stmt.col_offset = assert_.col_offset
-            ast.fix_missing_locations(stmt)
+            set_location(stmt, assert_.lineno, assert_.col_offset)
         return self.statements
 
     def visit_Name(self, name):
