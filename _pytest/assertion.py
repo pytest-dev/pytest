@@ -43,6 +43,23 @@ def pytest_configure(config):
     else:
         rewrite_asserts = None
 
+def _write_pyc(co, source_path):
+    if hasattr(imp, "cache_from_source"):
+        # Handle PEP 3147 pycs.
+        pyc = py.path(imp.cache_from_source(source_math))
+        pyc.dirname.ensure(dir=True)
+    else:
+        pyc = source_path + "c"
+    mtime = int(source_path.mtime())
+    fp = pyc.open("wb")
+    try:
+        fp.write(imp.get_magic())
+        fp.write(struct.pack("<l", mtime))
+        marshal.dump(co, fp)
+    finally:
+        fp.close()
+    return pyc
+
 def pytest_pycollect_before_module_import(mod):
     if rewrite_asserts is None:
         return
@@ -61,21 +78,7 @@ def pytest_pycollect_before_module_import(mod):
         # It's possible that this error is from some bug in the assertion
         # rewriting, but I don't know of a fast way to tell.
         return
-    if hasattr(imp, "cache_from_source"):
-        # Handle PEP 3147 pycs.
-        pyc = py.path(imp.cache_from_source(mod.fspath))
-        pyc.dirname.ensure(dir=True)
-    else:
-        pyc = mod.fspath + "c"
-    mod._pyc = pyc
-    mtime = int(mod.fspath.mtime())
-    fp = pyc.open("wb")
-    try:
-        fp.write(imp.get_magic())
-        fp.write(struct.pack("<l", mtime))
-        marshal.dump(co, fp)
-    finally:
-        fp.close()
+    mod._pyc = _write_pyc(co, mod.fspath)
 
 def pytest_pycollect_after_module_import(mod):
     if rewrite_asserts is None or not hasattr(mod, "_pyc"):
