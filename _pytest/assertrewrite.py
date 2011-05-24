@@ -87,8 +87,8 @@ class AssertionRewriter(ast.NodeVisitor):
         if not mod.body:
             # Nothing to do.
             return
-        # Insert some special imports at top but after any docstrings and
-        # __future__ imports.
+        # Insert some special imports at the top of the module but after any
+        # docstrings and __future__ imports.
         aliases = [ast.alias(py.builtin.builtins.__name__, "@py_builtins"),
                    ast.alias("py", "@pylib"),
                    ast.alias("_pytest.assertrewrite", "@pytest_ar")]
