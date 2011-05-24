@@ -54,12 +54,16 @@ class TestAssertionRewrite:
         assert isinstance(m.body[0].value, ast.Str)
         for imp in m.body[1:4]:
             assert isinstance(imp, ast.Import)
+            assert imp.lineno == 2
+            assert imp.col_offset == 0
         assert isinstance(m.body[4], ast.Assign)
         s = """from __future__ import with_statement\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
         for imp in m.body[1:4]:
             assert isinstance(imp, ast.Import)
+            assert imp.lineno == 2
+            assert imp.col_offset == 0
         assert isinstance(m.body[4], ast.Expr)
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
@@ -68,6 +72,8 @@ class TestAssertionRewrite:
         assert isinstance(m.body[1], ast.ImportFrom)
         for imp in m.body[2:5]:
             assert isinstance(imp, ast.Import)
+            assert imp.lineno == 3
+            assert imp.col_offset == 0
         assert isinstance(m.body[5], ast.Expr)
 
     def test_name(self):
