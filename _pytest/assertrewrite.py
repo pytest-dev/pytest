@@ -180,7 +180,7 @@ class AssertionRewriter(ast.NodeVisitor):
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
         keys = [ast.Str(key) for key in current.keys()]
-        format_dict = ast.Dict(keys, current.values())
+        format_dict = ast.Dict(keys, list(current.values()))
         form = ast.BinOp(expl_expr, ast.Mod(), format_dict)
         name = "@py_format" + str(next(self.variable_counter))
         self.on_failure.append(ast.Assign([ast.Name(name, ast.Store())], form))
