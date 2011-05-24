@@ -76,6 +76,14 @@ class TestAssertionRewrite:
             assert imp.col_offset == 0
         assert isinstance(m.body[5], ast.Expr)
 
+    def test_dont_rewrite(self):
+        s = """'PYTEST_DONT_REWRITE'\nassert 14"""
+        m = rewrite(s)
+        assert len(m.body) == 2
+        assert isinstance(m.body[0].value, ast.Str)
+        assert isinstance(m.body[1], ast.Assert)
+        assert m.body[1].msg is None
+
     def test_name(self):
         def f():
             assert False

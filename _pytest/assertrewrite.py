@@ -98,7 +98,11 @@ class AssertionRewriter(ast.NodeVisitor):
         for item in mod.body:
             if (expect_docstring and isinstance(item, ast.Expr) and
                 isinstance(item.value, ast.Str)):
-                lineno += len(item.value.s.splitlines()) - 1
+                doc = item.value.s
+                if "PYTEST_DONT_REWRITE" in doc:
+                    # The module has disabled assertion rewriting.
+                    return
+                lineno += len(doc) - 1
                 expect_docstring = False
             elif (not isinstance(item, ast.ImportFrom) or item.level > 0 and
                   item.identifier != "__future__"):
