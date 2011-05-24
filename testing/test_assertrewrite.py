@@ -239,3 +239,17 @@ class TestAssertionRewrite:
         def f():
             assert 1 < 3 < 5 <= 4 < 7
         assert getmsg(f) == "assert 5 <= 4"
+
+    def test_assert_raising_nonzero_in_comparison(self):
+        def f():
+            class A(object):
+                def __nonzero__(self):
+                    raise ValueError(42)
+                def __lt__(self, other):
+                    return A()
+                def __repr__(self):
+                    return "<MY42 object>"
+            def myany(x):
+                return False
+            assert myany(A() < 0)
+        assert "<MY42 object> < 0" in getmsg(f)

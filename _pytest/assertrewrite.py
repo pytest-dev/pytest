@@ -25,7 +25,11 @@ def _format_boolop(operands, explanations, is_or):
 
 def _call_reprcompare(ops, results, expls, each_obj):
     for i, res, expl in zip(range(len(ops)), results, expls):
-        if not res:
+        try:
+            done = not res
+        except Exception:
+            done = True
+        if done:
             break
     if py.code._reprcompare is not None:
         custom = py.code._reprcompare(ops[i], each_obj[i], each_obj[i + 1])
