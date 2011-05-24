@@ -221,3 +221,10 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assertion*",
     ])
+
+def test_load_fake_pyc(testdir):
+    path = testdir.makepyfile("x = 'hello'")
+    co = compile("x = 'bye'", str(path), "exec")
+    plugin._write_pyc(co, path)
+    mod = path.pyimport()
+    assert mod.x == "bye"
