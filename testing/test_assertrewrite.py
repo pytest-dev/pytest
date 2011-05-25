@@ -4,7 +4,7 @@ import pytest
 
 ast = pytest.importorskip("ast")
 
-from _pytest.assertrewrite import rewrite_asserts
+from _pytest.assertion.rewrite import rewrite_asserts
 
 
 def setup_module(mod):

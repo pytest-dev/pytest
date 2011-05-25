@@ -95,7 +95,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # docstrings and __future__ imports.
         aliases = [ast.alias(py.builtin.builtins.__name__, "@py_builtins"),
                    ast.alias("py", "@pylib"),
-                   ast.alias("_pytest.assertrewrite", "@pytest_ar")]
+                   ast.alias("_pytest.assertion.rewrite", "@pytest_ar")]
         expect_docstring = True
         pos = 0
         lineno = 0

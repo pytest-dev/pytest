@@ -9,7 +9,7 @@ import sys
 from _pytest.monkeypatch import monkeypatch
 
 try:
-    from _pytest.assertrewrite import rewrite_asserts
+    from _pytest.assertion.rewrite import rewrite_asserts
 except ImportError:
     rewrite_asserts = None
 else:
