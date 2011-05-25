@@ -31,15 +31,16 @@ def pytest_configure(config):
     config._cleanup.append(m.undo)
     warn_about_missing_assertion()
     if not config.getvalue("noassert") and not config.getvalue("nomagic"):
+        from _pytest.assertion import reinterpret
         def callbinrepr(op, left, right):
             hook_result = config.hook.pytest_assertrepr_compare(
                 config=config, op=op, left=left, right=right)
             for new_expl in hook_result:
                 if new_expl:
                     return '\n~'.join(new_expl)
-        m.setattr(py.builtin.builtins,
-                  'AssertionError', py.code._AssertionError)
-        m.setattr(py.code, '_reprcompare', callbinrepr)
+        m.setattr(py.builtin.builtins, 'AssertionError',
+                  reinterpret.AssertionError)
+        m.setattr(sys.modules[__name__], '_reprcompare', callbinrepr)
     else:
         rewrite_asserts = None
 
@@ -97,6 +98,53 @@ def warn_about_missing_assertion():
     else:
         sys.stderr.write("WARNING: failing tests may report as passing because "
         "assertions are turned off!  (are you using python -O?)\n")
+
+# if set, will be called by assert reinterp for comparison ops
+_reprcompare = None
+
+def _format_explanation(explanation):
+    """This formats an explanation
+
+    Normally all embedded newlines are escaped, however there are
+    three exceptions: \n{, \n} and \n~.  The first two are intended
+    cover nested explanations, see function and attribute explanations
+    for examples (.visit_Call(), visit_Attribute()).  The last one is
+    for when one explanation needs to span multiple lines, e.g. when
+    displaying diffs.
+    """
+    raw_lines = (explanation or '').split('\n')
+    # escape newlines not followed by {, } and ~
+    lines = [raw_lines[0]]
+    for l in raw_lines[1:]:
+        if l.startswith('{') or l.startswith('}') or l.startswith('~'):
+            lines.append(l)
+        else:
+            lines[-1] += '\\n' + l
+
+    result = lines[:1]
+    stack = [0]
+    stackcnt = [0]
+    for line in lines[1:]:
+        if line.startswith('{'):
+            if stackcnt[-1]:
+                s = 'and   '
+            else:
+                s = 'where '
+            stack.append(len(result))
+            stackcnt[-1] += 1
+            stackcnt.append(0)
+            result.append(' +' + '  '*(len(stack)-1) + s + line[1:])
+        elif line.startswith('}'):
+            assert line.startswith('}')
+            stack.pop()
+            stackcnt.pop()
+            result[stack[-1]] += line[1:]
+        else:
+            assert line.startswith('~')
+            result.append('  '*len(stack) + line[1:])
+    assert len(stack) == 1
+    return '\n'.join(result)
+
 
 # Provide basestring in python3
 try:

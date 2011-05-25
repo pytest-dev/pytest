@@ -4,15 +4,16 @@ import pytest
 
 ast = pytest.importorskip("ast")
 
+from _pytest import assertion
 from _pytest.assertion.rewrite import rewrite_asserts
 
 
 def setup_module(mod):
-    mod._old_reprcompare = py.code._reprcompare
+    mod._old_reprcompare = assertion._reprcompare
     py.code._reprcompare = None
 
 def teardown_module(mod):
-    py.code._reprcompare = mod._old_reprcompare
+    assertion._reprcompare = mod._old_reprcompare
     del mod._old_reprcompare
 
 
@@ -229,13 +230,13 @@ class TestAssertionRewrite:
     def test_custom_reprcompare(self, monkeypatch):
         def my_reprcompare(op, left, right):
             return "42"
-        monkeypatch.setattr(py.code, "_reprcompare", my_reprcompare)
+        monkeypatch.setattr(assertion, "_reprcompare", my_reprcompare)
         def f():
             assert 42 < 3
         assert getmsg(f) == "assert 42"
         def my_reprcompare(op, left, right):
             return "%s %s %s" % (left, op, right)
-        monkeypatch.setattr(py.code, "_reprcompare", my_reprcompare)
+        monkeypatch.setattr(assertion, "_reprcompare", my_reprcompare)
         def f():
             assert 1 < 3 < 5 <= 4 < 7
         assert getmsg(f) == "assert 5 <= 4"

@@ -2,11 +2,12 @@ import sys
 
 import py, pytest
 import _pytest.assertion as plugin
+from _pytest.assertion import reinterpret
 
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 def interpret(expr):
-    return py.code._reinterpret(expr, py.code.Frame(sys._getframe(1)))
+    return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
 
 class TestBinReprIntegration:
     pytestmark = needsnewassert
@@ -25,7 +26,7 @@ class TestBinReprIntegration:
                 self.right = right
         mockhook = MockHook()
         monkeypatch = request.getfuncargvalue("monkeypatch")
-        monkeypatch.setattr(py.code, '_reprcompare', mockhook)
+        monkeypatch.setattr(plugin, '_reprcompare', mockhook)
         return mockhook
 
     def test_pytest_assertrepr_compare_called(self, hook):
@@ -40,13 +41,13 @@ class TestBinReprIntegration:
         assert hook.right == [0, 2]
 
     def test_configure_unconfigure(self, testdir, hook):
-        assert hook == py.code._reprcompare
+        assert hook == plugin._reprcompare
         config = testdir.parseconfig()
         plugin.pytest_configure(config)
-        assert hook != py.code._reprcompare
+        assert hook != plugin._reprcompare
         from _pytest.config import pytest_unconfigure
         pytest_unconfigure(config)
-        assert hook == py.code._reprcompare
+        assert hook == plugin._reprcompare
 
 def callequal(left, right):
     return plugin.pytest_assertrepr_compare('==', left, right)

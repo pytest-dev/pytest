@@ -13,7 +13,6 @@ def rewrite_asserts(mod):
 
 
 _saferepr = py.io.saferepr
-_format_explanation = py.code._format_explanation
 
 def _format_boolop(operands, explanations, is_or):
     show_explanations = []
@@ -31,8 +30,9 @@ def _call_reprcompare(ops, results, expls, each_obj):
             done = True
         if done:
             break
-    if py.code._reprcompare is not None:
-        custom = py.code._reprcompare(ops[i], each_obj[i], each_obj[i + 1])
+    from _pytest.assertion import _reprcompare
+    if _reprcompare is not None:
+        custom = _reprcompare(ops[i], each_obj[i], each_obj[i + 1])
         if custom is not None:
             return custom
     return expl
@@ -94,7 +94,7 @@ class AssertionRewriter(ast.NodeVisitor):
         # Insert some special imports at the top of the module but after any
         # docstrings and __future__ imports.
         aliases = [ast.alias(py.builtin.builtins.__name__, "@py_builtins"),
-                   ast.alias("py", "@pylib"),
+                   ast.alias("_pytest.assertion", "@pytest_a"),
                    ast.alias("_pytest.assertion.rewrite", "@pytest_ar")]
         expect_docstring = True
         pos = 0
@@ -153,11 +153,11 @@ class AssertionRewriter(ast.NodeVisitor):
 
     def display(self, expr):
         """Call py.io.saferepr on the expression."""
-        return self.helper("saferepr", expr)
+        return self.helper("ar", "saferepr", expr)
 
-    def helper(self, name, *args):
+    def helper(self, mod, name, *args):
         """Call a helper in this module."""
-        py_name = ast.Name("@pytest_ar", ast.Load())
+        py_name = ast.Name("@pytest_" + mod, ast.Load())
         attr = ast.Attribute(py_name, "_" + name, ast.Load())
         return ast.Call(attr, list(args), [], None, None)
 
@@ -211,7 +211,7 @@ class AssertionRewriter(ast.NodeVisitor):
         explanation = "assert " + explanation
         template = ast.Str(explanation)
         msg = self.pop_format_context(template)
-        fmt = self.helper("format_explanation", msg)
+        fmt = self.helper("a", "format_explanation", msg)
         body.append(ast.Assert(top_condition, fmt))
         # Delete temporary variables.
         names = [ast.Name(name, ast.Del()) for name in self.variables]
@@ -242,7 +242,7 @@ class AssertionRewriter(ast.NodeVisitor):
             explanations.append(explanation)
         expls = ast.Tuple([ast.Str(expl) for expl in explanations], ast.Load())
         is_or = ast.Num(isinstance(boolop.op, ast.Or))
-        expl_template = self.helper("format_boolop",
+        expl_template = self.helper("ar", "format_boolop",
                                     ast.Tuple(operands, ast.Load()), expls,
                                     is_or)
         expl = self.pop_format_context(expl_template)
@@ -321,7 +321,8 @@ class AssertionRewriter(ast.NodeVisitor):
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
         # Use py.code._reprcompare if that's available.
-        expl_call = self.helper("call_reprcompare", ast.Tuple(syms, ast.Load()),
+        expl_call = self.helper("ar", "call_reprcompare",
+                                ast.Tuple(syms, ast.Load()),
                                 ast.Tuple(load_names, ast.Load()),
                                 ast.Tuple(expls, ast.Load()),
                                 ast.Tuple(results, ast.Load()))
