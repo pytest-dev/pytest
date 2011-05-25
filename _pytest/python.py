@@ -228,7 +228,10 @@ class Module(pytest.File, PyCollectorMixin):
         self.ihook.pytest_pycollect_before_module_import(mod=self)
         # we assume we are only called once per module
         try:
-            mod = self.fspath.pyimport(ensuresyspath=True)
+            try:
+                mod = self.fspath.pyimport(ensuresyspath=True)
+            finally:
+                self.ihook.pytest_pycollect_after_module_import(mod=self)
         except SyntaxError:
             excinfo = py.code.ExceptionInfo()
             raise self.CollectError(excinfo.getrepr(style="short"))
@@ -243,8 +246,6 @@ class Module(pytest.File, PyCollectorMixin):
                 "HINT: use a unique basename for your test file modules"
                  % e.args
             )
-        finally:
-            self.ihook.pytest_pycollect_after_module_import(mod=self)
         #print "imported test module", mod
         self.config.pluginmanager.consider_module(mod)
         return mod
