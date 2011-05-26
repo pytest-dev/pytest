@@ -160,7 +160,7 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
-def test_functional(testdir):
+def test_assertion_options(testdir):
     testdir.makepyfile("""
         def test_hello():
             x = 3
@@ -168,8 +168,30 @@ def test_functional(testdir):
     """)
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
-    result = testdir.runpytest("--no-assert")
-    assert "3 == 4" not in result.stdout.str()
+    off_options = (("--no-assert",),
+                   ("--nomagic",),
+                   ("--no-assert", "--nomagic"),
+                   ("--assertmode=off",),
+                   ("--assertmode=off", "--no-assert"),
+                   ("--assertmode=off", "--nomagic"),
+                   ("--assertmode=off," "--no-assert", "--nomagic"))
+    for opt in off_options:
+        result = testdir.runpytest(*opt)
+        assert "3 == 4" not in result.stdout.str()
+    for mode in "on", "old":
+        for other_opt in off_options[:3]:
+            opt = ("--assertmode=" + mode,) + other_opt
+            result = testdir.runpytest(*opt)
+            assert result.ret == 3
+            assert "assertion options conflict" in result.stderr.str()
+
+def test_old_assert_mode(testdir):
+    testdir.makepyfile("""
+        def test_in_old_mode():
+            assert "@py_builtins" not in globals()
+    """)
+    result = testdir.runpytest("--assertmode=old")
+    assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""

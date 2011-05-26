@@ -6,6 +6,7 @@ import imp
 import marshal
 import struct
 import sys
+import pytest
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import reinterpret, util
 
@@ -18,26 +19,40 @@ else:
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
+    group._addoption('--assertmode', action="store", dest="assertmode",
+                     choices=("on", "old", "off", "default"), default="default",
+                     metavar="on|old|off",
+                     help="Control assertion debugging tools")
     group._addoption('--no-assert', action="store_true", default=False,
-        dest="noassert",
-        help="disable python assert expression reinterpretation."),
+        dest="noassert", help="DEPRECATED equivalent to --assertmode=off")
+    group._addoption('--nomagic', action="store_true", default=False,
+                     dest="nomagic",
+                     help="DEPRECATED equivalent to --assertmode=off")
+
 
 def pytest_configure(config):
     global rewrite_asserts
-    m = monkeypatch()
-    config._cleanup.append(m.undo)
     warn_about_missing_assertion()
-    if not config.getvalue("noassert") and not config.getvalue("nomagic"):
+    mode = config.getvalue("assertmode")
+    if config.getvalue("noassert") or config.getvalue("nomagic"):
+        if mode not in ("off", "default"):
+            raise pytest.UsageError("assertion options conflict")
+        mode = "off"
+    elif mode == "default":
+        mode = "on"
+    if mode != "off":
         def callbinrepr(op, left, right):
             hook_result = config.hook.pytest_assertrepr_compare(
                 config=config, op=op, left=left, right=right)
             for new_expl in hook_result:
                 if new_expl:
                     return '\n~'.join(new_expl)
+        m = monkeypatch()
+        config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)
         m.setattr(util, '_reprcompare', callbinrepr)
-    else:
+    if mode != "on":
         rewrite_asserts = None
 
 def _write_pyc(co, source_path):
