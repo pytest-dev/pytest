@@ -46,7 +46,8 @@ def pytest_addoption(parser):
 
 
 def pytest_namespace():
-    return dict(collect=dict(Item=Item, Collector=Collector, File=File))
+    collect = dict(Item=Item, Collector=Collector, File=File, Session=Session)
+    return dict(collect=collect)
         
 def pytest_configure(config):
     py.test.config = config # compatibiltiy
