@@ -65,7 +65,7 @@ def pytest_pycollect_before_module_import(mod):
     if rewrite_asserts is None:
         return
     # Some deep magic: load the source, rewrite the asserts, and write a
-    # fake pyc, so that it'll be loaded further down this function.
+    # fake pyc, so that it'll be loaded when the module is imported.
     source = mod.fspath.read()
     try:
         tree = ast.parse(source)
