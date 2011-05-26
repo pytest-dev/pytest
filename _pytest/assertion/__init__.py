@@ -37,7 +37,6 @@ class AssertionState:
         self.trace = config.trace.root.get("assertion")
 
 def pytest_configure(config):
-    global rewrite_asserts
     warn_about_missing_assertion()
     mode = config.getvalue("assertmode")
     if config.getvalue("noassert") or config.getvalue("nomagic"):
@@ -58,8 +57,8 @@ def pytest_configure(config):
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)
         m.setattr(util, '_reprcompare', callbinrepr)
-    if mode != "on":
-        rewrite_asserts = None
+    if mode == "on" and rewrite_asserts is None:
+        mode = "old"
     config._assertstate = AssertionState(config, mode)
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
@@ -81,7 +80,7 @@ def _write_pyc(co, source_path):
     return pyc
 
 def pytest_pycollect_before_module_import(mod):
-    if rewrite_asserts is None:
+    if mod.config._assertstate.mode != "on":
         return
     # Some deep magic: load the source, rewrite the asserts, and write a
     # fake pyc, so that it'll be loaded when the module is imported.
@@ -104,7 +103,7 @@ def pytest_pycollect_before_module_import(mod):
     mod.config._assertstate.trace("wrote pyc: %r" % (mod._pyc,))
 
 def pytest_pycollect_after_module_import(mod):
-    if rewrite_asserts is None or not hasattr(mod, "_pyc"):
+    if mod.config._assertstate.mode != "on"  or not hasattr(mod, "_pyc"):
         return
     # Remove our tweaked pyc to avoid subtle bugs.
     try:
