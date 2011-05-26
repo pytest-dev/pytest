@@ -328,7 +328,7 @@ class TestSession:
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        config = testdir.parseconfig(id)
+        config = testdir.parseconfigure(id)
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
@@ -363,7 +363,7 @@ class TestSession:
                    p.basename + "::TestClass::()",
                    normid,
                    ]:
-            config = testdir.parseconfig(id)
+            config = testdir.parseconfigure(id)
             rcol = Session(config=config)
             rcol.perform_collect()
             items = rcol.items
@@ -388,7 +388,7 @@ class TestSession:
         """ % p.basename)
         id = p.basename
 
-        config = testdir.parseconfig(id)
+        config = testdir.parseconfigure(id)
         rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
@@ -413,7 +413,7 @@ class TestSession:
         aaa = testdir.mkpydir("aaa")
         test_aaa = aaa.join("test_aaa.py")
         p.move(test_aaa)
-        config = testdir.parseconfig()
+        config = testdir.parseconfigure()
         rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
@@ -437,7 +437,7 @@ class TestSession:
         p.move(test_bbb)
 
         id = "."
-        config = testdir.parseconfig(id)
+        config = testdir.parseconfigure(id)
         rcol = Session(config)
         hookrec = testdir.getreportrecorder(config)
         rcol.perform_collect()
@@ -455,7 +455,7 @@ class TestSession:
 
     def test_serialization_byid(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
-        config = testdir.parseconfig()
+        config = testdir.parseconfigure()
         rcol = Session(config)
         rcol.perform_collect()
         items = rcol.items
@@ -476,7 +476,7 @@ class TestSession:
                     pass
         """)
         arg = p.basename + ("::TestClass::test_method")
-        config = testdir.parseconfig(arg)
+        config = testdir.parseconfigure(arg)
         rcol = Session(config)
         rcol.perform_collect()
         items = rcol.items
