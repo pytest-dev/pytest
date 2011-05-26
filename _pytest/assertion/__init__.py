@@ -24,10 +24,6 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     global rewrite_asserts
-    # The _reprcompare attribute on the py.code module is used by
-    # py._code._assertionnew to detect this plugin was loaded and in
-    # turn call the hooks defined here as part of the
-    # DebugInterpreter.
     m = monkeypatch()
     config._cleanup.append(m.undo)
     warn_about_missing_assertion()
