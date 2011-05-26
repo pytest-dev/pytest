@@ -29,6 +29,12 @@ def pytest_addoption(parser):
                      dest="nomagic",
                      help="DEPRECATED equivalent to --assertmode=off")
 
+class AssertionState:
+    """State for the assertion plugin."""
+
+    def __init__(self, config, mode):
+        self.mode = mode
+        self.trace = config.trace.root.get("assertion")
 
 def pytest_configure(config):
     global rewrite_asserts
@@ -54,6 +60,8 @@ def pytest_configure(config):
         m.setattr(util, '_reprcompare', callbinrepr)
     if mode != "on":
         rewrite_asserts = None
+    config._assertion = AssertionState(config, mode)
+    config._assertion.trace("configured with mode set to %r" % (mode,))
 
 def _write_pyc(co, source_path):
     if hasattr(imp, "cache_from_source"):
@@ -82,6 +90,7 @@ def pytest_pycollect_before_module_import(mod):
         tree = ast.parse(source)
     except SyntaxError:
         # Let this pop up again in the real import.
+        mod.config._assertstate.trace("failed to parse: %r" % (mod.fspath,))
         return
     rewrite_asserts(tree)
     try:
@@ -89,8 +98,10 @@ def pytest_pycollect_before_module_import(mod):
     except SyntaxError:
         # It's possible that this error is from some bug in the assertion
         # rewriting, but I don't know of a fast way to tell.
+        mod.config._assertstate.trace("failed to compile: %r" % (mod.fspath,))
         return
     mod._pyc = _write_pyc(co, mod.fspath)
+    mod.config._assertstate.trace("wrote pyc: %r" % (mod._pyc,))
 
 def pytest_pycollect_after_module_import(mod):
     if rewrite_asserts is None or not hasattr(mod, "_pyc"):
@@ -99,7 +110,9 @@ def pytest_pycollect_after_module_import(mod):
     try:
         mod._pyc.remove()
     except py.error.ENOENT:
-        pass
+        mod.config._assertstate.trace("couldn't find pyc: %r" % (mod._pyc,))
+    else:
+        mod.config._assertstate.trace("removed pyc: %r" % (mod._pyc,))
 
 def warn_about_missing_assertion():
     try:
