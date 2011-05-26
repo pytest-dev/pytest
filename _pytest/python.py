@@ -378,7 +378,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
-        self.config._setupstate.prepare(self)
+        self.session._setupstate.prepare(self)
         # see FunctionMixin.setup and test_setupstate_is_preserved_134
         self._preservedparent = self.parent.obj
         l = []
@@ -730,7 +730,7 @@ class FuncargRequest:
 
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
-        self.config._setupstate.addfinalizer(
+        self._pyfuncitem.session._setupstate.addfinalizer(
             finalizer=finalizer, colitem=colitem)
 
     def __repr__(self):
