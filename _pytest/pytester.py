@@ -6,7 +6,7 @@ import re
 import inspect
 import time
 from fnmatch import fnmatch
-from _pytest.main import Session
+from _pytest.main import Session, EXIT_OK
 from py.builtin import print_
 from _pytest.core import HookRelay
 
@@ -292,13 +292,19 @@ class TmpTestdir:
         assert '::' not in str(arg)
         p = py.path.local(arg)
         x = session.fspath.bestrelpath(p)
-        return session.perform_collect([x], genitems=False)[0]
+        config.hook.pytest_sessionstart(session=session)
+        res = session.perform_collect([x], genitems=False)[0]
+        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        return res
 
     def getpathnode(self, path):
         config = self.parseconfig(path)
         session = Session(config)
         x = session.fspath.bestrelpath(path)
-        return session.perform_collect([x], genitems=False)[0]
+        config.hook.pytest_sessionstart(session=session)
+        res = session.perform_collect([x], genitems=False)[0]
+        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
+        return res
 
     def genitems(self, colitems):
         session = colitems[0].session
@@ -312,7 +318,9 @@ class TmpTestdir:
         config = self.parseconfigure(*args)
         rec = self.getreportrecorder(config)
         session = Session(config)
+        config.hook.pytest_sessionstart(session=session)
         session.perform_collect()
+        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
         return session.items, rec
 
     def runitem(self, source):
