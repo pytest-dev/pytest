@@ -60,8 +60,11 @@ def pytest_collect_file(path, parent):
                     break
             else:
                return
-        return parent.ihook.pytest_pycollect_makemodule(
+        mod = parent.ihook.pytest_pycollect_makemodule(
             path=path, parent=parent)
+        if mod is not None:
+            parent.ihook.pytest_pycollect_onmodule(mod=mod)
+        return mod
 
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
