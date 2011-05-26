@@ -386,7 +386,10 @@ class Session(FSCollector):
             self._initialparts.append(parts)
             self._initialpaths.add(parts[0])
         self.ihook.pytest_collectstart(collector=self)
-        rep = self.ihook.pytest_make_collect_report(collector=self)
+        try:
+            rep = self.ihook.pytest_make_collect_report(collector=self)
+        finally:
+            self.ihook.pytest_after_initial_collect(collector=self)
         self.ihook.pytest_collectreport(report=rep)
         self.trace.root.indent -= 1
         if self._notfound:
