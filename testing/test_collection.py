@@ -313,7 +313,7 @@ class TestSession:
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        config = testdir.parseconfig(id)
+        config = testdir.parseconfigure(id)
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
