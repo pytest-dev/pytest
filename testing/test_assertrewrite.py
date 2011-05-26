@@ -4,16 +4,16 @@ import pytest
 
 ast = pytest.importorskip("ast")
 
-from _pytest import assertion
+from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts
 
 
 def setup_module(mod):
-    mod._old_reprcompare = assertion._reprcompare
+    mod._old_reprcompare = util._reprcompare
     py.code._reprcompare = None
 
 def teardown_module(mod):
-    assertion._reprcompare = mod._old_reprcompare
+    util._reprcompare = mod._old_reprcompare
     del mod._old_reprcompare
 
 
@@ -53,29 +53,29 @@ class TestAssertionRewrite:
         m = rewrite(s)
         assert isinstance(m.body[0], ast.Expr)
         assert isinstance(m.body[0].value, ast.Str)
-        for imp in m.body[1:4]:
+        for imp in m.body[1:3]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        assert isinstance(m.body[4], ast.Assign)
+        assert isinstance(m.body[3], ast.Assign)
         s = """from __future__ import with_statement\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
-        for imp in m.body[1:4]:
+        for imp in m.body[1:3]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        assert isinstance(m.body[4], ast.Expr)
+        assert isinstance(m.body[3], ast.Expr)
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.Expr)
         assert isinstance(m.body[0].value, ast.Str)
         assert isinstance(m.body[1], ast.ImportFrom)
-        for imp in m.body[2:5]:
+        for imp in m.body[2:4]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 3
             assert imp.col_offset == 0
-        assert isinstance(m.body[5], ast.Expr)
+        assert isinstance(m.body[4], ast.Expr)
 
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
@@ -230,13 +230,13 @@ class TestAssertionRewrite:
     def test_custom_reprcompare(self, monkeypatch):
         def my_reprcompare(op, left, right):
             return "42"
-        monkeypatch.setattr(assertion, "_reprcompare", my_reprcompare)
+        monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
         def f():
             assert 42 < 3
         assert getmsg(f) == "assert 42"
         def my_reprcompare(op, left, right):
             return "%s %s %s" % (left, op, right)
-        monkeypatch.setattr(assertion, "_reprcompare", my_reprcompare)
+        monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
         def f():
             assert 1 < 3 < 5 <= 4 < 7
         assert getmsg(f) == "assert 5 <= 4"

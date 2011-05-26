@@ -1,7 +1,7 @@
 "PYTEST_DONT_REWRITE"
 import pytest, py
 
-from _pytest import assertion
+from _pytest.assertion import util
 
 def exvalue():
     return py.std.sys.exc_info()[1]
@@ -249,7 +249,7 @@ class TestView:
 
 @py.test.mark.skipif("sys.version_info < (2,6)")
 def test_assert_customizable_reprcompare(monkeypatch):
-    monkeypatch.setattr(assertion, '_reprcompare', lambda *args: 'hello')
+    monkeypatch.setattr(util, '_reprcompare', lambda *args: 'hello')
     try:
         assert 3 == 4
     except AssertionError:

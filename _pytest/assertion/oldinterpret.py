@@ -1,7 +1,7 @@
 import py
 import sys, inspect
 from compiler import parse, ast, pycodegen
-from _pytest.assertion import _format_explanation
+from _pytest.assertion.util import format_explanation
 from _pytest.assertion.reinterpret import BuiltinAssertionError
 
 passthroughex = py.builtin._sysex
@@ -132,7 +132,7 @@ class Interpretable(View):
             raise Failure(self)
 
     def nice_explanation(self):
-        return _format_explanation(self.explanation)
+        return format_explanation(self.explanation)
 
 
 class Name(Interpretable):

@@ -7,8 +7,7 @@ import sys
 import ast
 
 import py
-from _pytest import assertion
-from _pytest.assertion import _format_explanation
+from _pytest.assertion import util
 from _pytest.assertion.reinterpret import BuiltinAssertionError
 
 
@@ -62,7 +61,7 @@ def run(offending_line, frame=None):
     return interpret(offending_line, frame)
 
 def getfailure(failure):
-    explanation = _format_explanation(failure.explanation)
+    explanation = util.format_explanation(failure.explanation)
     value = failure.cause[1]
     if str(value):
         lines = explanation.splitlines()
@@ -185,8 +184,8 @@ class DebugInterpreter(ast.NodeVisitor):
                 break
             left_explanation, left_result = next_explanation, next_result
 
-        if assertion._reprcompare is not None:
-            res = assertion._reprcompare(op_symbol, left_result, next_result)
+        if util._reprcompare is not None:
+            res = util._reprcompare(op_symbol, left_result, next_result)
             if res:
                 explanation = res
         return explanation, result
