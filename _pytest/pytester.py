@@ -298,7 +298,7 @@ class TmpTestdir:
         return res
 
     def getpathnode(self, path):
-        config = self.parseconfig(path)
+        config = self.parseconfigure(path)
         session = Session(config)
         x = session.fspath.bestrelpath(path)
         config.hook.pytest_sessionstart(session=session)
