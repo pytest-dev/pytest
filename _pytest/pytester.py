@@ -390,6 +390,8 @@ class TmpTestdir:
             c.basetemp = py.path.local.make_numbered_dir(prefix="reparse",
                 keep=0, rootdir=self.tmpdir, lock_timeout=None)
             c.parse(args)
+            c.pluginmanager.do_configure(c)
+            self.request.addfinalizer(lambda: c.pluginmanager.do_unconfigure(c))
             return c
         finally:
             py.test.config = oldconfig
