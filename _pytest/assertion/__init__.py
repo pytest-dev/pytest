@@ -60,8 +60,8 @@ def pytest_configure(config):
         m.setattr(util, '_reprcompare', callbinrepr)
     if mode != "on":
         rewrite_asserts = None
-    config._assertion = AssertionState(config, mode)
-    config._assertion.trace("configured with mode set to %r" % (mode,))
+    config._assertstate = AssertionState(config, mode)
+    config._assertstate.trace("configured with mode set to %r" % (mode,))
 
 def _write_pyc(co, source_path):
     if hasattr(imp, "cache_from_source"):
