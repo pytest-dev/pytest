@@ -19,19 +19,18 @@ else:
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
-    group._addoption('--assertmode', action="store", dest="assertmode",
-                     choices=("on", "old", "off", "default"), default="default",
-                     metavar="on|old|off",
-                     help="""control assertion debugging tools.
+    group.addoption('--assertmode', action="store", dest="assertmode",
+                    choices=("on", "old", "off", "default"), default="default",
+                    metavar="on|old|off",
+                    help="""control assertion debugging tools.
 'off' performs no assertion debugging.
 'old' reinterprets the expressions in asserts to glean information.
 'on' (the default) rewrites the assert statements in test modules to provide
 sub-expression results.""")
-    group._addoption('--no-assert', action="store_true", default=False,
+    group.addoption('--no-assert', action="store_true", default=False,
         dest="noassert", help="DEPRECATED equivalent to --assertmode=off")
-    group._addoption('--nomagic', action="store_true", default=False,
-                     dest="nomagic",
-                     help="DEPRECATED equivalent to --assertmode=off")
+    group.addoption('--nomagic', action="store_true", default=False,
+        dest="nomagic", help="DEPRECATED equivalent to --assertmode=off")
 
 class AssertionState:
     """State for the assertion plugin."""
