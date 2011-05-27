@@ -1,6 +1,6 @@
 
 from xml.dom import minidom
-import py, sys
+import py, sys, os
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -351,3 +351,16 @@ def test_invalid_xml_escape(testdir):
             assert '#x%04X' % i in text
     for i in valid:
         assert chr(i) in text
+
+def test_logxml_path_expansion():
+    from _pytest.junitxml import LogXML
+
+    home_tilde = py.path.local(os.path.expanduser('~/test.xml'))
+    # this is here for when $HOME is not set correct
+    home_var = py.path.local(os.path.expandvars('$HOME/test.xml'))
+
+    xml_tilde = LogXML('~/test.xml', None)
+    assert xml_tilde.logfile == home_tilde
+
+    xml_var = LogXML('$HOME/test.xml', None)
+    assert xml_var.logfile == home_var
