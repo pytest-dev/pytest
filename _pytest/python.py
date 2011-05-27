@@ -754,8 +754,10 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from _pytest.main import Session
-    session = Session(config)
+    from _pytest.main import wrap_session
+    return wrap_session(config, _showfuncargs_main)
+
+def _showfuncargs_main(config, session):
     session.perform_collect()
     if session.items:
         plugins = session.items[0].getplugins()

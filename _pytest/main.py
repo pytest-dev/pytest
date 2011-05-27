@@ -54,16 +54,14 @@ def pytest_configure(config):
     if config.option.exitfirst:
         config.option.maxfail = 1
 
-def pytest_cmdline_main(config):
-    """ default command line protocol for initialization, session,
-    running tests and reporting. """
+def wrap_session(config, doit):
+    """Skeleton command line program"""
     session = Session(config)
     session.exitstatus = EXIT_OK
     try:
         config.pluginmanager.do_configure(config)
         config.hook.pytest_sessionstart(session=session)
-        config.hook.pytest_collection(session=session)
-        config.hook.pytest_runtestloop(session=session)
+        doit(config, session)
     except pytest.UsageError:
         raise
     except KeyboardInterrupt:
@@ -82,6 +80,15 @@ def pytest_cmdline_main(config):
         exitstatus=session.exitstatus)
     config.pluginmanager.do_unconfigure(config)
     return session.exitstatus
+
+def pytest_cmdline_main(config):
+    return wrap_session(config, _main)
+
+def _main(config, session):
+    """ default command line protocol for initialization, session,
+    running tests and reporting. """
+    config.hook.pytest_collection(session=session)
+    config.hook.pytest_runtestloop(session=session)
 
 def pytest_collection(session):
     session.perform_collect()
