@@ -39,23 +39,6 @@ assertion fails you will see the value of ``x``::
     test_assert1.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
-Reporting details about the failing assertion is achieved by re-evaluating
-the assert expression and recording the intermediate values.
-
-Note: If evaluating the assert expression has side effects you may get a
-warning that the intermediate values could not be determined safely.  A
-common example of this issue is an assertion which reads from a file::
-
-        assert f.read() != '...'
-
-If this assertion fails then the re-evaluation will probably succeed!
-This is because ``f.read()`` will return an empty string when it is
-called the second time during the re-evaluation.  However, it is
-easy to rewrite the assertion and avoid any trouble::
-
-        content = f.read()
-        assert content != '...'
-
 
 assertions about expected exceptions
 ------------------------------------------
@@ -136,6 +119,46 @@ Special comparisons are done for a number of cases:
 * comparing dicts: different entries
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
+
+
+Assertion debugging details
+---------------------------
+
+Reporting details about the failing assertion is achieved either by rewriting
+assert statements before they are run or re-evaluating the assert expression and
+recording the intermediate values. Which technique is used depends on the
+location of the assert, py.test's configuration, and Python version being used
+to run py.test.
+
+By default, if the Python version is greater than or equal to 2.6, py.test
+rewrites assert statements in test modules. Rewritten assert statements put
+debugging information into the assertion failure message. Note py.test only
+rewrites test modules directly discovered by its test collection process, so
+asserts in supporting modules will not be rewritten.
+
+If an assert statement has not been rewritten or the Python version is less than
+2.6, py.test falls back on assert reinterpretation. In assert reinterpretation,
+py.test walks the frame of the function containing the assert statement to
+discover sub-expression results of the failing assert statement. You can force
+py.test to always use assertion reinterpretation by passing the
+``--assertmode=old`` option.
+
+Assert reinterpretation has a caveat not present with assert rewriting: If
+evaluating the assert expression has side effects you may get a warning that the
+intermediate values could not be determined safely.  A common example of this
+issue is an assertion which reads from a file::
+
+        assert f.read() != '...'
+
+If this assertion fails then the re-evaluation will probably succeed!
+This is because ``f.read()`` will return an empty string when it is
+called the second time during the re-evaluation.  However, it is
+easy to rewrite the assertion and avoid any trouble::
+
+        content = f.read()
+        assert content != '...'
+
+All assert debugging can be turned off by passing ``--assertmode=off``.
 
 ..
     Defining your own comparison
