@@ -22,7 +22,11 @@ def pytest_addoption(parser):
     group._addoption('--assertmode', action="store", dest="assertmode",
                      choices=("on", "old", "off", "default"), default="default",
                      metavar="on|old|off",
-                     help="Control assertion debugging tools")
+                     help="""control assertion debugging tools.
+'off' performs no assertion debugging.
+'old' reinterprets the expressions in asserts to glean information.
+'new' rewrites the assert statements in test modules to provide sub-expression
+results.""")
     group._addoption('--no-assert', action="store_true", default=False,
         dest="noassert", help="DEPRECATED equivalent to --assertmode=off")
     group._addoption('--nomagic', action="store_true", default=False,
