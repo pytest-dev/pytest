@@ -3,6 +3,7 @@
 import ast
 import collections
 import itertools
+import sys
 
 import py
 from _pytest.assertion import util
@@ -212,7 +213,13 @@ class AssertionRewriter(ast.NodeVisitor):
         template = ast.Str(explanation)
         msg = self.pop_format_context(template)
         fmt = self.helper("format_explanation", msg)
-        body.append(ast.Assert(top_condition, fmt))
+        err_name = ast.Name("AssertionError", ast.Load())
+        exc = ast.Call(err_name, [fmt], [], None, None)
+        if sys.version_info[0] >= 3:
+            raise_ = ast.Raise(exc, None)
+        else:
+            raise_ = ast.Raise(exc, None, None)
+        body.append(raise_)
         # Delete temporary variables.
         names = [ast.Name(name, ast.Del()) for name in self.variables]
         if names:
