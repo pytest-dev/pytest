@@ -91,12 +91,7 @@ def _main(config, session):
     config.hook.pytest_runtestloop(session=session)
 
 def pytest_collection(session):
-    session.perform_collect()
-    hook = session.config.hook
-    hook.pytest_collection_modifyitems(session=session,
-        config=session.config, items=session.items)
-    hook.pytest_collection_finish(session=session)
-    return True
+    return session.perform_collect()
 
 def pytest_runtestloop(session):
     if session.config.option.collectonly:
@@ -382,6 +377,16 @@ class Session(FSCollector):
         return HookProxy(fspath, self.config)
 
     def perform_collect(self, args=None, genitems=True):
+        hook = self.config.hook
+        try:
+            items = self._perform_collect(args, genitems)
+            hook.pytest_collection_modifyitems(session=self,
+                config=self.config, items=items)
+        finally:
+            hook.pytest_collection_finish(session=self)
+        return items
+
+    def _perform_collect(self, args, genitems):
         if args is None:
             args = self.config.args
         self.trace("perform_collect", self, args)
