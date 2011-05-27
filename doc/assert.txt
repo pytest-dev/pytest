@@ -18,8 +18,8 @@ following::
     def test_function():
         assert f() == 4
 
-to assert that your object returns a certain value. If this
-assertion fails you will see the value of ``x``::
+to assert that your function returns a certain value. If this assertion fails
+you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
@@ -38,6 +38,13 @@ assertion fails you will see the value of ``x``::
     
     test_assert1.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
+
+py.test has support for showing the values of the most common subexpressions
+including calls, attributes, comparisons, and binary and unary operators. This
+allows you to use the idiomatic python constructs without boilerplate code while
+not losing debugging information.
+
+See :ref:`assert-details` for more information on assertion debugging.
 
 
 assertions about expected exceptions
@@ -120,6 +127,8 @@ Special comparisons are done for a number of cases:
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
+
+.. _assert-details:
 
 Assertion debugging details
 ---------------------------
