@@ -228,13 +228,9 @@ class Module(pytest.File, PyCollectorMixin):
         return self._memoizedcall('_obj', self._importtestmodule)
 
     def _importtestmodule(self):
-        self.ihook.pytest_pycollect_before_module_import(mod=self)
         # we assume we are only called once per module
         try:
-            try:
-                mod = self.fspath.pyimport(ensuresyspath=True)
-            finally:
-                self.ihook.pytest_pycollect_after_module_import(mod=self)
+            mod = self.fspath.pyimport(ensuresyspath=True)
         except SyntaxError:
             excinfo = py.code.ExceptionInfo()
             raise self.CollectError(excinfo.getrepr(style="short"))
