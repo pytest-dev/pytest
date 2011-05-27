@@ -79,9 +79,6 @@ def pytest_collect_file(path, parent):
 def pytest_collectstart(collector):
     """ collector starts collecting. """
 
-def pytest_after_initial_collect(collector):
-    """ after the initial file system walk before genitems"""
-
 def pytest_itemcollected(item):
     """ we just collected a test item. """
 
