@@ -167,7 +167,7 @@ easy to rewrite the assertion and avoid any trouble::
         content = f.read()
         assert content != '...'
 
-All assert introspeciton can be turned off by passing ``--assertmode=off``.
+All assert introspection can be turned off by passing ``--assertmode=off``.
 
 .. versionadded:: 2.1
 
