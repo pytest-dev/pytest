@@ -65,7 +65,8 @@ def pytest_unconfigure(config):
 
 class LogXML(object):
     def __init__(self, logfile, prefix):
-        self.logfile = os.path.expanduser(os.path.expandvars(logfile))
+        logfile = os.path.expanduser(os.path.expandvars(logfile))
+        self.logfile = os.path.normpath(logfile)
         self.prefix = prefix
         self.test_logs = []
         self.passed = self.skipped = 0
