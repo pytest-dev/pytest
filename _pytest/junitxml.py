@@ -76,7 +76,7 @@ class LogXML(object):
         names = report.nodeid.split("::")
         names[0] = names[0].replace("/", '.')
         names = tuple(names)
-        d = {'time': self._durations.pop(names, "0")}
+        d = {'time': self._durations.pop(report.nodeid, "0")}
         names = [x.replace(".py", "") for x in names if x != "()"]
         classnames = names[:-1]
         if self.prefix:
@@ -170,12 +170,11 @@ class LogXML(object):
             self.append_skipped(report)
 
     def pytest_runtest_call(self, item, __multicall__):
-        names = tuple(item.listnames())
         start = time.time()
         try:
             return __multicall__.execute()
         finally:
-            self._durations[names] = time.time() - start
+            self._durations[item.nodeid] = time.time() - start
 
     def pytest_collectreport(self, report):
         if not report.passed:

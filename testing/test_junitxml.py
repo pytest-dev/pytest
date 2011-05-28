@@ -39,6 +39,18 @@ class TestPython:
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, errors=0, failures=1, skips=3, tests=2)
 
+    def test_timing_function(self, testdir):
+        testdir.makepyfile("""
+            import time, pytest
+            def test_sleep():
+                time.sleep(0.01)
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.getElementsByTagName("testsuite")[0]
+        tnode = node.getElementsByTagName("testcase")[0]
+        val = tnode.getAttributeNode("time").value
+        assert float(val) >= 0.01
+
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
             def pytest_funcarg__arg(request):
