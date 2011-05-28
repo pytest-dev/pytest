@@ -367,7 +367,7 @@ def test_invalid_xml_escape(testdir):
 def test_logxml_path_expansion():
     from _pytest.junitxml import LogXML
 
-    home_tilde = os.path.expanduser('~/test.xml')
+    home_tilde = os.path.normpath(os.path.expanduser('~/test.xml'))
     # this is here for when $HOME is not set correct
     home_var = os.path.normpath(os.path.expandvars('$HOME/test.xml'))
 
