@@ -49,7 +49,7 @@ class TestPython:
         node = dom.getElementsByTagName("testsuite")[0]
         tnode = node.getElementsByTagName("testcase")[0]
         val = tnode.getAttributeNode("time").value
-        assert float(val) >= 0.01
+        assert float(val) >= 0.001
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
