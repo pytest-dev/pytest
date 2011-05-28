@@ -42,9 +42,9 @@ you will see the value of ``x``::
 py.test has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary operators. This
 allows you to use the idiomatic python constructs without boilerplate code while
-not losing debugging information.
+not losing introspection information.
 
-See :ref:`assert-details` for more information on assertion debugging.
+See :ref:`assert-details` for more information on assertion introspection.
 
 
 assertions about expected exceptions
@@ -130,8 +130,8 @@ See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
 .. _assert-details:
 
-Assertion debugging details
----------------------------
+Assertion introspection details
+-------------------------------
 
 Reporting details about the failing assertion is achieved either by rewriting
 assert statements before they are run or re-evaluating the assert expression and
@@ -141,7 +141,7 @@ to run py.test.
 
 By default, if the Python version is greater than or equal to 2.6, py.test
 rewrites assert statements in test modules. Rewritten assert statements put
-debugging information into the assertion failure message. Note py.test only
+introspection information into the assertion failure message. Note py.test only
 rewrites test modules directly discovered by its test collection process, so
 asserts in supporting modules will not be rewritten.
 
@@ -167,11 +167,11 @@ easy to rewrite the assertion and avoid any trouble::
         content = f.read()
         assert content != '...'
 
-All assert debugging can be turned off by passing ``--assertmode=off``.
+All assert introspeciton can be turned off by passing ``--assertmode=off``.
 
 .. versionadded:: 2.1
 
-   Add assert rewriting as an alternate debugging technique.
+   Add assert rewriting as an alternate introspection technique.
 
 .. versionchanged:: 2.1
 
