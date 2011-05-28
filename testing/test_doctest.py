@@ -59,6 +59,21 @@ class TestDoctests:
             "*UNEXPECTED*ZeroDivision*",
         ])
 
+    def test_doctest_unex_importerror(self, testdir):
+        testdir.tmpdir.join("hello.py").write(py.code.Source("""
+            import asdalsdkjaslkdjasd
+        """))
+        p = testdir.maketxtfile("""
+            >>> import hello
+            >>>
+        """)
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines([
+            "*>>> import hello",
+            "*UNEXPECTED*ImportError*",
+            "*import asdals*",
+        ])
+
     def test_doctestmodule(self, testdir):
         p = testdir.makepyfile("""
             '''

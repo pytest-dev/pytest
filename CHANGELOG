@@ -1,6 +1,8 @@
 Changes between 2.0.3 and DEV
 ----------------------------------------------
 
+- fix issue43: improve doctests with better traceback reporting on
+  unexpected exceptions
 - fix issue47: timing output in junitxml for test cases is now correct
 - introduce XXX pytest_configure_funcargs hack (thanks Ronny)
 - env/username expansion for junitxml file path (fixes issue44)
