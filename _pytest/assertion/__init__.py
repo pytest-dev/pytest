@@ -65,10 +65,6 @@ def pytest_configure(config):
     config._assertstate = AssertionState(config, mode)
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
-def pytest_collectstart(collector):
-    if isinstance(collector, pytest.Session):
-        collector._rewritten_pycs = []
-
 def _write_pyc(co, source_path):
     if hasattr(imp, "cache_from_source"):
         # Handle PEP 3147 pycs.
@@ -86,9 +82,9 @@ def _write_pyc(co, source_path):
         fp.close()
     return pyc
 
-def pytest_pycollect_onmodule(mod):
-    if mod is None or mod.config._assertstate.mode != "on":
-        return mod
+def before_module_import(mod):
+    if mod.config._assertstate.mode != "on":
+        return
     # Some deep magic: load the source, rewrite the asserts, and write a
     # fake pyc, so that it'll be loaded when the module is imported.
     source = mod.fspath.read()
@@ -97,7 +93,7 @@ def pytest_pycollect_onmodule(mod):
     except SyntaxError:
         # Let this pop up again in the real import.
         mod.config._assertstate.trace("failed to parse: %r" % (mod.fspath,))
-        return mod
+        return
     rewrite_asserts(tree)
     try:
         co = compile(tree, str(mod.fspath), "exec")
@@ -105,25 +101,20 @@ def pytest_pycollect_onmodule(mod):
         # It's possible that this error is from some bug in the assertion
         # rewriting, but I don't know of a fast way to tell.
         mod.config._assertstate.trace("failed to compile: %r" % (mod.fspath,))
-        return mod
-    pyc = _write_pyc(co, mod.fspath)
-    mod.session._rewritten_pycs.append(pyc)
-    mod.config._assertstate.trace("wrote pyc: %r" % (pyc,))
-    return mod
-
-def pytest_collection_finish(session):
-    if not hasattr(session, "_rewritten_pycs"):
         return
-    state = session.config._assertstate
-    # Remove our tweaked pycs to avoid subtle bugs.
-    for pyc in session._rewritten_pycs:
-        try:
-            pyc.remove()
-        except py.error.ENOENT:
-            state.trace("couldn't find pyc: %r" % (pyc,))
-        else:
-            state.trace("removed pyc: %r" % (pyc,))
-    del session._rewritten_pycs[:]
+    mod._pyc = _write_pyc(co, mod.fspath)
+    mod.config._assertstate.trace("wrote pyc: %r" % (mod._pyc,))
+
+def after_module_import(mod):
+    if not hasattr(mod, "_pyc"):
+        return
+    state = mod.config._assertstate
+    try:
+        mod._pyc.remove()
+    except py.error.ENOENT:
+        state.trace("couldn't find pyc: %r" % (mod._pyc,))
+    else:
+        state.trace("removed pyc: %r" % (mod._pyc,))
 
 def warn_about_missing_assertion():
     try:

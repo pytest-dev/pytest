@@ -4,6 +4,7 @@ import inspect
 import sys
 import pytest
 from py._code.code import TerminalRepr
+from _pytest import assertion
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -60,11 +61,8 @@ def pytest_collect_file(path, parent):
                     break
             else:
                return
-        mod = parent.ihook.pytest_pycollect_makemodule(
+        return parent.ihook.pytest_pycollect_makemodule(
             path=path, parent=parent)
-        if mod is not None:
-            parent.ihook.pytest_pycollect_onmodule(mod=mod)
-        return mod
 
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
@@ -229,8 +227,12 @@ class Module(pytest.File, PyCollectorMixin):
 
     def _importtestmodule(self):
         # we assume we are only called once per module
+        assertion.before_module_import(self)
         try:
-            mod = self.fspath.pyimport(ensuresyspath=True)
+            try:
+                mod = self.fspath.pyimport(ensuresyspath=True)
+            finally:
+                assertion.after_module_import(self)
         except SyntaxError:
             excinfo = py.code.ExceptionInfo()
             raise self.CollectError(excinfo.getrepr(style="short"))
