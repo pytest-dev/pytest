@@ -114,7 +114,7 @@ class TestDoctests:
             >>> i + 1
             2
         """)
-        result = testdir.runpytest(p)
+        result = testdir.runpytest(p, "-s")
         result.stdout.fnmatch_lines([
             '001 >>> i = 0',
             '002 >>> i + 1',
