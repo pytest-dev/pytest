@@ -145,6 +145,15 @@ introspection information into the assertion failure message. Note py.test only
 rewrites test modules directly discovered by its test collection process, so
 asserts in supporting modules will not be rewritten.
 
+.. note::
+
+   py.test rewrites test modules as it collects tests from them. It does this by
+   writing a new pyc file which Python loads when the test module is
+   imported. If the module has already been loaded (it is in sys.modules),
+   though, Python will not load the rewritten module. This means if a test
+   module imports another test module which has not already been rewritten, then
+   py.test will not be able to rewrite the second module.
+
 If an assert statement has not been rewritten or the Python version is less than
 2.6, py.test falls back on assert reinterpretation. In assert reinterpretation,
 py.test walks the frame of the function containing the assert statement to
