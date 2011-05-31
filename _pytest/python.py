@@ -4,7 +4,6 @@ import inspect
 import sys
 import pytest
 from py._code.code import TerminalRepr
-from _pytest import assertion
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -227,6 +226,7 @@ class Module(pytest.File, PyCollectorMixin):
 
     def _importtestmodule(self):
         # we assume we are only called once per module
+        from _pytest import assertion
         assertion.before_module_import(self)
         try:
             try:

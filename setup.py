@@ -22,7 +22,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.1.0.dev2',
+        version='2.1.0.dev3',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -41,7 +41,7 @@ def main():
                      'Topic :: Utilities',
                      'Programming Language :: Python',
                      'Programming Language :: Python :: 3'],
-        packages=['_pytest', ],
+        packages=['_pytest', '_pytest.assertion'],
         py_modules=['pytest'],
         zip_safe=False,
     )
