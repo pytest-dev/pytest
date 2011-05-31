@@ -4,6 +4,7 @@ import inspect
 import sys
 import pytest
 from py._code.code import TerminalRepr
+from _pytest import assertion
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -226,8 +227,12 @@ class Module(pytest.File, PyCollectorMixin):
 
     def _importtestmodule(self):
         # we assume we are only called once per module
+        assertion.before_module_import(self)
         try:
-            mod = self.fspath.pyimport(ensuresyspath=True)
+            try:
+                mod = self.fspath.pyimport(ensuresyspath=True)
+            finally:
+                assertion.after_module_import(self)
         except SyntaxError:
             excinfo = py.code.ExceptionInfo()
             raise self.CollectError(excinfo.getrepr(style="short"))
@@ -374,7 +379,7 @@ class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
-        self.config._setupstate.prepare(self)
+        self.session._setupstate.prepare(self)
         # see FunctionMixin.setup and test_setupstate_is_preserved_134
         self._preservedparent = self.parent.obj
         l = []
@@ -726,7 +731,7 @@ class FuncargRequest:
 
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
-        self.config._setupstate.addfinalizer(
+        self._pyfuncitem.session._setupstate.addfinalizer(
             finalizer=finalizer, colitem=colitem)
 
     def __repr__(self):
@@ -747,8 +752,10 @@ class FuncargRequest:
         raise self.LookupError(msg)
 
 def showfuncargs(config):
-    from _pytest.main import Session
-    session = Session(config)
+    from _pytest.main import wrap_session
+    return wrap_session(config, _showfuncargs_main)
+
+def _showfuncargs_main(config, session):
     session.perform_collect()
     if session.items:
         plugins = session.items[0].getplugins()

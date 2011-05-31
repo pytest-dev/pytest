@@ -47,13 +47,17 @@ customizable testing frameworks for Python.   However,
 ``py.test`` still uses many metaprogramming techniques and
 reading its source is thus likely not something for Python beginners.
 
-A second "magic" issue arguably the assert statement re-intepreation:
-When an ``assert`` statement fails, py.test re-interprets the expression
-to show intermediate values if a test fails.  If your expression
-has side effects (better to avoid them anyway!) the intermediate values
-may not be the same, obfuscating the initial error (this is also
-explained at the command line if it happens).
-``py.test --no-assert`` turns off assert re-interpretation.
+A second "magic" issue arguably the assert statement debugging feature. When
+loading test modules py.test rewrites the source code of assert statements. When
+a rewritten assert statement fails, its error message has more information than
+the original. py.test also has a second assert debugging technique. When an
+``assert`` statement that was missed by the rewriter fails, py.test
+re-interprets the expression to show intermediate values if a test fails. This
+second technique suffers from caveat that the rewriting does not: If your
+expression has side effects (better to avoid them anyway!)  the intermediate
+values may not be the same, confusing the reinterpreter and obfuscating the
+initial error (this is also explained at the command line if it happens).
+You can turn off all assertion debugging with ``py.test --assertmode=off``.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py

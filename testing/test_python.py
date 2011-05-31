@@ -705,11 +705,11 @@ class TestRequest:
             def test_func(something): pass
         """)
         req = funcargs.FuncargRequest(item)
-        req.config._setupstate.prepare(item) # XXX
+        req._pyfuncitem.session._setupstate.prepare(item) # XXX
         req._fillfuncargs()
         # successively check finalization calls
         teardownlist = item.getparent(pytest.Module).obj.teardownlist
-        ss = item.config._setupstate
+        ss = item.session._setupstate
         assert not teardownlist
         ss.teardown_exact(item)
         print(ss.stack)
@@ -834,11 +834,11 @@ class TestRequestCachedSetup:
         ret1 = req1.cached_setup(setup, teardown, scope="function")
         assert l == ['setup']
         # artificial call of finalizer
-        req1.config._setupstate._callfinalizers(item1)
+        req1._pyfuncitem.session._setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown"]
         ret2 = req1.cached_setup(setup, teardown, scope="function")
         assert l == ["setup", "teardown", "setup"]
-        req1.config._setupstate._callfinalizers(item1)
+        req1._pyfuncitem.session._setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown", "setup", "teardown"]
 
     def test_request_cached_setup_two_args(self, testdir):

@@ -1,43 +1,57 @@
-"""
-support for presented detailed information in failing assertions.
-"""
+"""Utilities for assertion debugging"""
+
 import py
-import sys
-from _pytest.monkeypatch import monkeypatch
 
-def pytest_addoption(parser):
-    group = parser.getgroup("debugconfig")
-    group._addoption('--no-assert', action="store_true", default=False,
-        dest="noassert",
-        help="disable python assert expression reinterpretation."),
 
-def pytest_configure(config):
-    # The _reprcompare attribute on the py.code module is used by
-    # py._code._assertionnew to detect this plugin was loaded and in
-    # turn call the hooks defined here as part of the
-    # DebugInterpreter.
-    m = monkeypatch()
-    config._cleanup.append(m.undo)
-    warn_about_missing_assertion()
-    if not config.getvalue("noassert") and not config.getvalue("nomagic"):
-        def callbinrepr(op, left, right):
-            hook_result = config.hook.pytest_assertrepr_compare(
-                config=config, op=op, left=left, right=right)
-            for new_expl in hook_result:
-                if new_expl:
-                    return '\n~'.join(new_expl)
-        m.setattr(py.builtin.builtins,
-                  'AssertionError', py.code._AssertionError)
-        m.setattr(py.code, '_reprcompare', callbinrepr)
+# The _reprcompare attribute on the util module is used by the new assertion
+# interpretation code and assertion rewriter to detect this plugin was
+# loaded and in turn call the hooks defined here as part of the
+# DebugInterpreter.
+_reprcompare = None
 
-def warn_about_missing_assertion():
-    try:
-        assert False
-    except AssertionError:
-        pass
-    else:
-        sys.stderr.write("WARNING: failing tests may report as passing because "
-        "assertions are turned off!  (are you using python -O?)\n")
+def format_explanation(explanation):
+    """This formats an explanation
+
+    Normally all embedded newlines are escaped, however there are
+    three exceptions: \n{, \n} and \n~.  The first two are intended
+    cover nested explanations, see function and attribute explanations
+    for examples (.visit_Call(), visit_Attribute()).  The last one is
+    for when one explanation needs to span multiple lines, e.g. when
+    displaying diffs.
+    """
+    raw_lines = (explanation or '').split('\n')
+    # escape newlines not followed by {, } and ~
+    lines = [raw_lines[0]]
+    for l in raw_lines[1:]:
+        if l.startswith('{') or l.startswith('}') or l.startswith('~'):
+            lines.append(l)
+        else:
+            lines[-1] += '\\n' + l
+
+    result = lines[:1]
+    stack = [0]
+    stackcnt = [0]
+    for line in lines[1:]:
+        if line.startswith('{'):
+            if stackcnt[-1]:
+                s = 'and   '
+            else:
+                s = 'where '
+            stack.append(len(result))
+            stackcnt[-1] += 1
+            stackcnt.append(0)
+            result.append(' +' + '  '*(len(stack)-1) + s + line[1:])
+        elif line.startswith('}'):
+            assert line.startswith('}')
+            stack.pop()
+            stackcnt.pop()
+            result[stack[-1]] += line[1:]
+        else:
+            assert line.startswith('~')
+            result.append('  '*len(stack) + line[1:])
+    assert len(stack) == 1
+    return '\n'.join(result)
+
 
 # Provide basestring in python3
 try:
@@ -46,7 +60,7 @@ except NameError:
     basestring = str
 
 
-def pytest_assertrepr_compare(op, left, right):
+def assertrepr_compare(op, left, right):
     """return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2 # 15 chars indentation, 1 space around op
     left_repr = py.io.saferepr(left, maxsize=int(width/2))

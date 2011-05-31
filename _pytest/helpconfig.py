@@ -16,9 +16,6 @@ def pytest_addoption(parser):
     group.addoption('--traceconfig',
                action="store_true", dest="traceconfig", default=False,
                help="trace considerations of conftest.py files."),
-    group._addoption('--nomagic',
-               action="store_true", dest="nomagic", default=False,
-               help="don't reinterpret asserts, no traceback cutting. ")
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="generate and show internal debugging information.")

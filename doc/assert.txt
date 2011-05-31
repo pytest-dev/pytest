@@ -18,8 +18,8 @@ following::
     def test_function():
         assert f() == 4
 
-to assert that your object returns a certain value. If this
-assertion fails you will see the value of ``x``::
+to assert that your function returns a certain value. If this assertion fails
+you will see the value of ``x``::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
@@ -39,22 +39,12 @@ assertion fails you will see the value of ``x``::
     test_assert1.py:5: AssertionError
     ========================= 1 failed in 0.02 seconds =========================
 
-Reporting details about the failing assertion is achieved by re-evaluating
-the assert expression and recording the intermediate values.
+py.test has support for showing the values of the most common subexpressions
+including calls, attributes, comparisons, and binary and unary operators. This
+allows you to use the idiomatic python constructs without boilerplate code while
+not losing introspection information.
 
-Note: If evaluating the assert expression has side effects you may get a
-warning that the intermediate values could not be determined safely.  A
-common example of this issue is an assertion which reads from a file::
-
-        assert f.read() != '...'
-
-If this assertion fails then the re-evaluation will probably succeed!
-This is because ``f.read()`` will return an empty string when it is
-called the second time during the re-evaluation.  However, it is
-easy to rewrite the assertion and avoid any trouble::
-
-        content = f.read()
-        assert content != '...'
+See :ref:`assert-details` for more information on assertion introspection.
 
 
 assertions about expected exceptions
@@ -136,6 +126,66 @@ Special comparisons are done for a number of cases:
 * comparing dicts: different entries
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
+
+
+.. _assert-details:
+
+Assertion introspection details
+-------------------------------
+
+Reporting details about the failing assertion is achieved either by rewriting
+assert statements before they are run or re-evaluating the assert expression and
+recording the intermediate values. Which technique is used depends on the
+location of the assert, py.test's configuration, and Python version being used
+to run py.test.
+
+By default, if the Python version is greater than or equal to 2.6, py.test
+rewrites assert statements in test modules. Rewritten assert statements put
+introspection information into the assertion failure message. Note py.test only
+rewrites test modules directly discovered by its test collection process, so
+asserts in supporting modules will not be rewritten.
+
+.. note::
+
+   py.test rewrites test modules as it collects tests from them. It does this by
+   writing a new pyc file which Python loads when the test module is
+   imported. If the module has already been loaded (it is in sys.modules),
+   though, Python will not load the rewritten module. This means if a test
+   module imports another test module which has not already been rewritten, then
+   py.test will not be able to rewrite the second module.
+
+If an assert statement has not been rewritten or the Python version is less than
+2.6, py.test falls back on assert reinterpretation. In assert reinterpretation,
+py.test walks the frame of the function containing the assert statement to
+discover sub-expression results of the failing assert statement. You can force
+py.test to always use assertion reinterpretation by passing the
+``--assertmode=old`` option.
+
+Assert reinterpretation has a caveat not present with assert rewriting: If
+evaluating the assert expression has side effects you may get a warning that the
+intermediate values could not be determined safely.  A common example of this
+issue is an assertion which reads from a file::
+
+        assert f.read() != '...'
+
+If this assertion fails then the re-evaluation will probably succeed!
+This is because ``f.read()`` will return an empty string when it is
+called the second time during the re-evaluation.  However, it is
+easy to rewrite the assertion and avoid any trouble::
+
+        content = f.read()
+        assert content != '...'
+
+All assert introspection can be turned off by passing ``--assertmode=off``.
+
+.. versionadded:: 2.1
+
+   Add assert rewriting as an alternate introspection technique.
+
+.. versionchanged:: 2.1
+
+   Introduce the ``--assertmode`` option. Deprecate ``--no-assert`` and
+   ``--nomagic``.
 
 ..
     Defining your own comparison

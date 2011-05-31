@@ -2,11 +2,12 @@ import sys
 
 import py, pytest
 import _pytest.assertion as plugin
+from _pytest.assertion import reinterpret, util
 
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 def interpret(expr):
-    return py.code._reinterpret(expr, py.code.Frame(sys._getframe(1)))
+    return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
 
 class TestBinReprIntegration:
     pytestmark = needsnewassert
@@ -25,7 +26,7 @@ class TestBinReprIntegration:
                 self.right = right
         mockhook = MockHook()
         monkeypatch = request.getfuncargvalue("monkeypatch")
-        monkeypatch.setattr(py.code, '_reprcompare', mockhook)
+        monkeypatch.setattr(util, '_reprcompare', mockhook)
         return mockhook
 
     def test_pytest_assertrepr_compare_called(self, hook):
@@ -40,13 +41,13 @@ class TestBinReprIntegration:
         assert hook.right == [0, 2]
 
     def test_configure_unconfigure(self, testdir, hook):
-        assert hook == py.code._reprcompare
+        assert hook == util._reprcompare
         config = testdir.parseconfig()
         plugin.pytest_configure(config)
-        assert hook != py.code._reprcompare
+        assert hook != util._reprcompare
         from _pytest.config import pytest_unconfigure
         pytest_unconfigure(config)
-        assert hook == py.code._reprcompare
+        assert hook == util._reprcompare
 
 def callequal(left, right):
     return plugin.pytest_assertrepr_compare('==', left, right)
@@ -119,6 +120,10 @@ class TestAssert_reprcompare:
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
 
+@pytest.mark.skipif("config._assertstate.mode != 'on'")
+def test_rewritten():
+    assert "@py_builtins" in globals()
+
 def test_reprcompare_notin():
     detail = plugin.pytest_assertrepr_compare('not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
@@ -159,7 +164,7 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
-def test_functional(testdir):
+def test_assertion_options(testdir):
     testdir.makepyfile("""
         def test_hello():
             x = 3
@@ -167,8 +172,30 @@ def test_functional(testdir):
     """)
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
-    result = testdir.runpytest("--no-assert")
-    assert "3 == 4" not in result.stdout.str()
+    off_options = (("--no-assert",),
+                   ("--nomagic",),
+                   ("--no-assert", "--nomagic"),
+                   ("--assertmode=off",),
+                   ("--assertmode=off", "--no-assert"),
+                   ("--assertmode=off", "--nomagic"),
+                   ("--assertmode=off," "--no-assert", "--nomagic"))
+    for opt in off_options:
+        result = testdir.runpytest(*opt)
+        assert "3 == 4" not in result.stdout.str()
+    for mode in "on", "old":
+        for other_opt in off_options[:3]:
+            opt = ("--assertmode=" + mode,) + other_opt
+            result = testdir.runpytest(*opt)
+            assert result.ret == 3
+            assert "assertion options conflict" in result.stderr.str()
+
+def test_old_assert_mode(testdir):
+    testdir.makepyfile("""
+        def test_in_old_mode():
+            assert "@py_builtins" not in globals()
+    """)
+    result = testdir.runpytest("--assertmode=old")
+    assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
@@ -221,3 +248,10 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assertion*",
     ])
+
+def test_load_fake_pyc(testdir):
+    path = testdir.makepyfile("x = 'hello'")
+    co = compile("x = 'bye'", str(path), "exec")
+    plugin._write_pyc(co, path)
+    mod = path.pyimport()
+    assert mod.x == "bye"

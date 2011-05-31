@@ -14,17 +14,15 @@ def pytest_namespace():
 #
 # pytest plugin hooks
 
-# XXX move to pytest_sessionstart and fix py.test owns tests
-def pytest_configure(config):
-    config._setupstate = SetupState()
+def pytest_sessionstart(session):
+    session._setupstate = SetupState()
 
 def pytest_sessionfinish(session, exitstatus):
-    if hasattr(session.config, '_setupstate'):
-        hook = session.config.hook
-        rep = hook.pytest__teardown_final(session=session)
-        if rep:
-            hook.pytest__teardown_final_logerror(session=session, report=rep)
-            session.exitstatus = 1
+    hook = session.config.hook
+    rep = hook.pytest__teardown_final(session=session)
+    if rep:
+        hook.pytest__teardown_final_logerror(session=session, report=rep)
+        session.exitstatus = 1
 
 class NodeInfo:
     def __init__(self, location):
@@ -46,16 +44,16 @@ def runtestprotocol(item, log=True):
     return reports
 
 def pytest_runtest_setup(item):
-    item.config._setupstate.prepare(item)
+    item.session._setupstate.prepare(item)
 
 def pytest_runtest_call(item):
     item.runtest()
 
 def pytest_runtest_teardown(item):
-    item.config._setupstate.teardown_exact(item)
+    item.session._setupstate.teardown_exact(item)
 
 def pytest__teardown_final(session):
-    call = CallInfo(session.config._setupstate.teardown_all, when="teardown")
+    call = CallInfo(session._setupstate.teardown_all, when="teardown")
     if call.excinfo:
         ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
         call.excinfo.traceback = ntraceback.filter()
