@@ -9,13 +9,13 @@ cross-project testing tool for Python.
 
 Platforms: Linux, Win32, OSX
 
-Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy
+Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy-1.5
 
 Bugs and issues: http://bitbucket.org/hpk42/pytest/issues/
 
 Web page: http://pytest.org
 
-(c) Holger Krekel and others, 2004-2010
+(c) Holger Krekel and others, 2004-2011
 """
 def main():
     setup(
@@ -26,7 +26,7 @@ def main():
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
-        author='holger krekel, Guido Wesdorp, Carl Friedrich Bolz, Armin Rigo, Maciej Fijalkowski & others',
+        author='Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe and others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
         install_requires=['py>1.4.3'],
