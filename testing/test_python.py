@@ -606,22 +606,6 @@ class TestFillFuncArgs:
         fillfuncargs(item)
         assert len(item.funcargs) == 1
 
-    def test_configure_hook(self, testdir):
-        item = testdir.getitem("def test_func(some, other=20): pass")
-        class Provider:
-            def pytest_funcarg__some(self, request):
-                return []
-            def pytest_configure_funcargs(self, request):
-                request.getfuncargvalue('some').append(1)
-        item.config.pluginmanager.register(Provider())
-        if hasattr(item, '_args'):
-            del item._args
-        from _pytest.python import fillfuncargs
-        fillfuncargs(item)
-        assert len(item.funcargs) == 1
-        assert item.funcargs['some'] == [1]
-
-
 class TestRequest:
     def test_request_attributes(self, testdir):
         item = testdir.getitem("""

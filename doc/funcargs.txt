@@ -115,9 +115,6 @@ think of as "resources").
 .. _`funcarg factory`:
 .. _factory:
 
-
-
-
 The funcarg **request** object
 =============================================
 
@@ -142,16 +139,6 @@ factory and provides access to test configuration and context:
 .. _`test generators`:
 .. _`parametrizing-tests`:
 .. _`parametrized test functions`:
-
-
-Reconfiguring funcargs in a test's setup
-========================================
-
-Sometimes there is need to do additional funcarg setup steps
-which are outside of the normal setup and involve more than just one funcarg.
-For that reason the ``pytest_configure_funcargs(request)`` hook
-is called to implement and extend the funcarg filling mechanism.
-
 
 Parametrizing multiple calls to a test function
 ===========================================================

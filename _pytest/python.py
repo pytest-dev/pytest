@@ -505,16 +505,6 @@ def fillfuncargs(function):
     request = FuncargRequest(pyfuncitem=function)
     request._fillfuncargs()
 
-def pytest_configure_funcargs(request):
-    argnames = getfuncargnames(request.function)
-    if argnames:
-        item = request._pyfuncitem
-        assert not getattr(item, '_args', None), (
-                "yielded functions cannot have funcargs")
-        for argname in argnames:
-            if argname not in item.funcargs:
-                item.funcargs[argname] = request.getfuncargvalue(argname)
-
 _notexists = object()
 class CallSpec:
     def __init__(self, funcargs, id, param):
@@ -636,6 +626,14 @@ class FuncargRequest:
         """ the file system path of the test module which collected this test. """
         return self._pyfuncitem.fspath
 
+    def _fillfuncargs(self):
+        argnames = getfuncargnames(self.function)
+        if argnames:
+            assert not getattr(self._pyfuncitem, '_args', None), (
+                "yielded functions cannot have funcargs")
+        for argname in argnames:
+            if argname not in self._pyfuncitem.funcargs:
+                self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
 
 
     def applymarker(self, marker):
@@ -706,9 +704,6 @@ class FuncargRequest:
         finally:
             self._currentarg = oldarg
         return res
-
-    def _fillfuncargs(self):
-        self.config.hook.pytest_configure_funcargs.pcall(self._plugins, request=self)
 
     def _getscopeitem(self, scope):
         if scope == "function":
