@@ -9,6 +9,7 @@ Changes between 2.0.3 and 2.1.0.DEV
   unexpected exceptions
 - fix issue47: timing output in junitxml for test cases is now correct
 - fix issue48: typo in MarkInfo repr leading to exception
+- fix issue49: avoid confusing error when initizaliation partially fails
 - introduce XXX pytest_configure_funcargs hack (thanks Ronny)
 - env/username expansion for junitxml file path (fixes issue44)
 
