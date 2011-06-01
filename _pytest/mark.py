@@ -153,7 +153,7 @@ class MarkInfo:
 
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (
-                self._name, self.args, self.kwargs)
+                self.name, self.args, self.kwargs)
 
 def pytest_itemcollected(item):
     if not isinstance(item, pytest.Function):

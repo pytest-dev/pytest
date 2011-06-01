@@ -2,6 +2,11 @@ import py, pytest
 from _pytest.mark import MarkGenerator as Mark
 
 class TestMark:
+    def test_markinfo_repr(self):
+        from _pytest.mark import MarkInfo
+        m = MarkInfo("hello", (1,2), {})
+        repr(m)
+
     def test_pytest_exists_in_namespace_all(self):
         assert 'mark' in py.test.__all__
         assert 'mark' in pytest.__all__
