@@ -259,6 +259,19 @@ class TestGeneralUsage:
             if name.startswith("pytest_"):
                 assert value.__doc__, "no docstring for %s" % name
 
+    def test_initialization_error_issue49(self, testdir):
+        testdir.makeconftest("""
+            def pytest_configure():
+                x
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 3 # internal error
+        result.stderr.fnmatch_lines([
+            "INTERNAL*pytest_configure*",
+            "INTERNAL*x*",
+        ])
+        assert 'sessionstarttime' not in result.stderr.str()
+
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""

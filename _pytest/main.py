@@ -58,9 +58,12 @@ def wrap_session(config, doit):
     """Skeleton command line program"""
     session = Session(config)
     session.exitstatus = EXIT_OK
+    initstate = 0
     try:
         config.pluginmanager.do_configure(config)
+        initstate = 1
         config.hook.pytest_sessionstart(session=session)
+        initstate = 2
         doit(config, session)
     except pytest.UsageError:
         raise
@@ -76,9 +79,11 @@ def wrap_session(config, doit):
             sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
     if not session.exitstatus and session._testsfailed:
         session.exitstatus = EXIT_TESTSFAILED
-    config.hook.pytest_sessionfinish(session=session,
-        exitstatus=session.exitstatus)
-    config.pluginmanager.do_unconfigure(config)
+    if initstate >= 2:
+        config.hook.pytest_sessionfinish(session=session,
+            exitstatus=session.exitstatus)
+    if initstate >= 1:
+        config.pluginmanager.do_unconfigure(config)
     return session.exitstatus
 
 def pytest_cmdline_main(config):
