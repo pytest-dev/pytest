@@ -68,8 +68,8 @@ def pytest_configure(config):
 def _write_pyc(co, source_path):
     if hasattr(imp, "cache_from_source"):
         # Handle PEP 3147 pycs.
-        pyc = py.path(imp.cache_from_source(source_math))
-        pyc.dirname.ensure(dir=True)
+        pyc = py.path.local(imp.cache_from_source(str(source_path)))
+        pyc.ensure()
     else:
         pyc = source_path + "c"
     mtime = int(source_path.mtime())
