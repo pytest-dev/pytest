@@ -533,7 +533,7 @@ class TestGenericReporting:
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
             ">   import xyz",
-            "E   ImportError: No module named xyz",
+            "E   ImportError: No module named *xyz*",
             "*1 error*",
         ])
 

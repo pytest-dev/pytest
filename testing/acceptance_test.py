@@ -89,7 +89,7 @@ class TestGeneralUsage:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             #XXX on jython this fails:  ">   import import_fails",
-            "E   ImportError: No module named does_not_work",
+            "E   ImportError: No module named *does_not_work*",
         ])
         assert result.ret == 1
 
