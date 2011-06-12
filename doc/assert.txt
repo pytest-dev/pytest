@@ -179,11 +179,9 @@ easy to rewrite the assertion and avoid any trouble::
 All assert introspection can be turned off by passing ``--assertmode=off``.
 
 .. versionadded:: 2.1
-
    Add assert rewriting as an alternate introspection technique.
 
 .. versionchanged:: 2.1
-
    Introduce the ``--assertmode`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
 
