@@ -308,9 +308,6 @@ class DebugInterpreter(ast.NodeVisitor):
 
     def visit_Assert(self, assrt):
         test_explanation, test_result = self.visit(assrt.test)
-        if test_explanation.startswith("False\n{False =") and \
-                test_explanation.endswith("\n}"):
-            test_explanation = test_explanation[15:-2]
         explanation = "assert %s" % (test_explanation,)
         if not self.frame.is_true(test_result):
             try:

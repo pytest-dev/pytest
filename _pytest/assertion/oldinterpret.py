@@ -384,10 +384,6 @@ class Assert(Interpretable):
     def run(self, frame):
         test = Interpretable(self.test)
         test.eval(frame)
-        # simplify 'assert False where False = ...'
-        if (test.explanation.startswith('False\n{False = ') and
-            test.explanation.endswith('\n}')):
-            test.explanation = test.explanation[15:-2]
         # print the result as  'assert <explanation>'
         self.result = test.result
         self.explanation = 'assert ' + test.explanation

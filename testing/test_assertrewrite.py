@@ -164,24 +164,19 @@ class TestAssertionRewrite:
         ns = {"g" : g}
         def f():
             assert g()
-        assert getmsg(f, ns) == """assert False
- +  where False = g()"""
+        assert getmsg(f, ns) == """assert g()"""
         def f():
             assert g(1)
-        assert getmsg(f, ns) == """assert False
- +  where False = g(1)"""
+        assert getmsg(f, ns) == """assert g(1)"""
         def f():
             assert g(1, 2)
-        assert getmsg(f, ns) == """assert False
- +  where False = g(1, 2)"""
+        assert getmsg(f, ns) == """assert g(1, 2)"""
         def f():
             assert g(1, g=42)
-        assert getmsg(f, ns) == """assert False
- +  where False = g(1, g=42)"""
+        assert getmsg(f, ns) == """assert g(1, g=42)"""
         def f():
             assert g(1, 3, g=23)
-        assert getmsg(f, ns) == """assert False
- +  where False = g(1, 3, g=23)"""
+        assert getmsg(f, ns) == """assert g(1, 3, g=23)"""
 
     def test_attribute(self):
         class X(object):
@@ -194,8 +189,7 @@ class TestAssertionRewrite:
         def f():
             x.a = False
             assert x.a
-        assert getmsg(f, ns) == """assert False
- +  where False = x.a"""
+        assert getmsg(f, ns) == """assert x.a"""
 
     def test_comparisons(self):
         def f():

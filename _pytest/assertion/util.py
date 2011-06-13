@@ -19,6 +19,28 @@ def format_explanation(explanation):
     for when one explanation needs to span multiple lines, e.g. when
     displaying diffs.
     """
+    # simplify 'assert False where False = ...'
+    where = 0
+    while True:
+        start = where = explanation.find("False\n{False = ", where)
+        if where == -1:
+            break
+        level = 0
+        for i, c in enumerate(explanation[start:]):
+            if c == "{":
+                level += 1
+            elif c == "}":
+                level -= 1
+                if not level:
+                    break
+        else:
+            raise AssertionError("unbalanced braces: %r" % (explanation,))
+        end = start + i
+        where = end
+        if explanation[end - 1] == '\n':
+            explanation = (explanation[:start] + explanation[start+15:end-1] +
+                           explanation[end+1:])
+            where -= 17
     raw_lines = (explanation or '').split('\n')
     # escape newlines not followed by {, } and ~
     lines = [raw_lines[0]]
