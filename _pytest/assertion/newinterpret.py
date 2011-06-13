@@ -65,7 +65,7 @@ def getfailure(e):
     value = e.cause[1]
     if str(value):
         lines = explanation.split('\n')
-        lines[0] += "  << %s" % (e.value,)
+        lines[0] += "  << %s" % (value,)
         explanation = '\n'.join(lines)
     text = "%s: %s" % (e.cause[0].__name__, explanation)
     if text.startswith('AssertionError: assert '):
