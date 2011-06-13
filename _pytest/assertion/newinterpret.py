@@ -152,8 +152,8 @@ class DebugInterpreter(ast.NodeVisitor):
             local = self.frame.eval(co)
         except Exception:
             # have to assume it isn't
-            local = False
-        if not self.frame.is_true(local):
+            local = None
+        if local is None or not self.frame.is_true(local):
             return name.id, result
         return explanation, result
 
