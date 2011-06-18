@@ -44,6 +44,9 @@ including calls, attributes, comparisons, and binary and unary operators. This
 allows you to use the idiomatic python constructs without boilerplate code while
 not losing introspection information.
 
+Assertion introspection is enabled only when a message is not manually provided
+in the assert statement.
+
 See :ref:`assert-details` for more information on assertion introspection.
 
 
