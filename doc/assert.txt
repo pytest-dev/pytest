@@ -19,7 +19,7 @@ following::
         assert f() == 4
 
 to assert that your function returns a certain value. If this assertion fails
-you will see the value of ``x``::
+you will see the return value of the function call::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
@@ -40,15 +40,19 @@ you will see the value of ``x``::
     ========================= 1 failed in 0.02 seconds =========================
 
 py.test has support for showing the values of the most common subexpressions
-including calls, attributes, comparisons, and binary and unary operators. This
-allows you to use the idiomatic python constructs without boilerplate code while
-not losing introspection information.
+including calls, attributes, comparisons, and binary and unary
+operators. (See :ref:`tbreportdemo`).  This allows you to use the
+idiomatic python constructs without boilerplate code while not losing
+introspection information.
 
-Assertion introspection is enabled only when a message is not manually provided
-in the assert statement.
+However, if you specify a message with the assertion like this::
+
+    assert a % 2 == 0, "value was odd, should be even"
+
+then no assertion introspection takes places at all and the message
+will be simply shown in the traceback.
 
 See :ref:`assert-details` for more information on assertion introspection.
-
 
 assertions about expected exceptions
 ------------------------------------------
@@ -139,15 +143,17 @@ Advanced assertion introspection
 
 .. versionadded:: 2.1
 
-Reporting details about the failing assertion is achieved either by rewriting
+
+Reporting details about a failing assertion is achieved either by rewriting
 assert statements before they are run or re-evaluating the assert expression and
 recording the intermediate values. Which technique is used depends on the
 location of the assert, py.test's configuration, and Python version being used
-to run py.test.
+to run py.test.  However, for assert statements with a manually provided 
+message, i.e. ``assert expr, message``, no assertion introspection takes place and the manually provided message will be rendered in tracebacks.
 
 By default, if the Python version is greater than or equal to 2.6, py.test
 rewrites assert statements in test modules. Rewritten assert statements put
-introspection information into the assertion failure message. Note py.test only
+introspection information into the assertion failure message. py.test only
 rewrites test modules directly discovered by its test collection process, so
 asserts in supporting modules will not be rewritten.
 
