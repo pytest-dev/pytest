@@ -61,20 +61,10 @@ py.test found the ``test_answer`` function by following :ref:`standard test disc
 
 .. note::
 
-    You can simply use the ``assert`` statement for asserting
-    expectations because intermediate values will be presented to you.
-    This is arguably easier than learning all the `the JUnit legacy
-    methods`_.
-
-    However, there remains one caveat to using simple asserts: your
-    assertion expression should better be side-effect free.  Because
-    after an assertion failed py.test will re-evaluate the expression
-    in order to present intermediate values. You will get a nice warning
-    and you can easily fix it: compute the value ahead of the assert and
-    then do the assertion.  Or maybe just use the assert "explicit message"
-    syntax::
-
-       assert expr, "message" # show "message" if expr is not True
+    You can simply use the ``assert`` statement for asserting test
+    expectations.  pytest's :ref:`assert introspection` will intelligently
+    report intermediate values of the assert expression freeing
+    you from the need to learn the many names of `JUnit legacy methods`_.
 
 .. _`the JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 

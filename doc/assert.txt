@@ -132,9 +132,12 @@ See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
 
 .. _assert-details:
+.. _`assert introspection`:
 
-Assertion introspection details
--------------------------------
+Advanced assertion introspection
+----------------------------------
+
+.. versionadded:: 2.1
 
 Reporting details about the failing assertion is achieved either by rewriting
 assert statements before they are run or re-evaluating the assert expression and
