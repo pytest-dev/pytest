@@ -22,14 +22,14 @@ to assert that your function returns a certain value. If this assertion fails
 you will see the return value of the function call::
 
     $ py.test test_assert1.py
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.0 -- pytest-2.1.0.dev4
     collecting ... collected 1 items
     
     test_assert1.py F
     
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    =================================== FAILURES ===================================
+    ________________________________ test_function _________________________________
     
         def test_function():
     >       assert f() == 4
@@ -37,7 +37,7 @@ you will see the return value of the function call::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    =========================== 1 failed in 0.05 seconds ===========================
 
 py.test has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -104,14 +104,14 @@ when it encounters comparisons.  For example::
 if you run this module::
 
     $ py.test test_assert2.py
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.0 -- pytest-2.1.0.dev4
     collecting ... collected 1 items
     
     test_assert2.py F
     
-    ================================= FAILURES =================================
-    ___________________________ test_set_comparison ____________________________
+    =================================== FAILURES ===================================
+    _____________________________ test_set_comparison ______________________________
     
         def test_set_comparison():
             set1 = set("1308")
@@ -124,7 +124,7 @@ if you run this module::
     E         '5'
     
     test_assert2.py:5: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    =========================== 1 failed in 0.05 seconds ===========================
 
 Special comparisons are done for a number of cases:
 
@@ -134,6 +134,54 @@ Special comparisons are done for a number of cases:
 
 See the :ref:`reporting demo <tbreportdemo>` for many more examples.
 
+Defining your own assertion comparison
+----------------------------------------------
+
+It is possible to add your own detailed explanations by implementing
+the ``pytest_assertrepr_compare`` hook.
+
+.. autofunction:: _pytest.hookspec.pytest_assertrepr_compare
+
+As an example consider adding the following hook in a conftest.py which
+provides an alternative explanation for ``Foo`` objects::
+
+   # content of conftest.py
+   from test_foocompare import Foo
+   def pytest_assertrepr_compare(op, left, right):
+       if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
+        return ['Comparing Foo instances:',
+                  '   vals: %s != %s' % (left.val, right.val)]
+
+now, given this test module::
+
+   # content of test_foocompare.py
+   class Foo:
+       def __init__(self, val):
+            self.val = val
+
+   def test_compare():
+       f1 = Foo(1)
+       f2 = Foo(2)
+       assert f1 == f2
+
+you can run the test module and get the custom output defined in 
+the conftest file::
+
+   $ py.test -q test_foocompare.py
+   collecting ... collected 1 items
+   F
+   =================================== FAILURES ===================================
+   _________________________________ test_compare _________________________________
+   
+       def test_compare():
+           f1 = Foo(1)
+           f2 = Foo(2)
+   >       assert f1 == f2
+   E       assert Comparing Foo instances:
+   E            vals: 1 != 2
+   
+   test_foocompare.py:8: AssertionError
+   1 failed in 0.05 seconds
 
 .. _assert-details:
 .. _`assert introspection`:
@@ -198,111 +246,3 @@ All assert introspection can be turned off by passing ``--assertmode=off``.
    ``--nomagic``.
 
 
-Defining your own comparison
-----------------------------------------------
-
-
-As already shown in examples py.test is able to provide detailed
-explanations when an assertial fails.  E.g. when comparing a
-dictionary it will show you which elements differ::
-
-   $ py.test example.py
-   ============================= test session starts ==========================
-   platform linux2 -- Python 2.7.1 -- pytest-2.0.3
-   collected 1 items
-
-   example.py F
-
-   =================================== FAILURES ===============================
-   __________________________________ test_text _______________________________
-
-       def test_text():
-   >       assert {'foo': 0, 'bar': 1} == {'foo': 0, 'bar': 0}
-   E       assert {'bar': 1, 'foo': 0} == {'bar': 0, 'foo': 0}
-   E         - {'bar': 1, 'foo': 0}
-   E         ?         ^
-   E         + {'bar': 0, 'foo': 0}
-   E         ?         ^
-
-   example.py:2: AssertionError
-   =========================== 1 failed in 0.03 seconds =======================
-
-
-py.test has builtin knowledge about displaying detailed information
-for a number of types.  If the objects compared do not match those it
-will fall back to a less detailed genric comparison, e.g.::
-
-   $ py.test example2.py
-   ============================= test session starts ==========================
-   platform linux2 -- Python 2.7.1 -- pytest-2.0.3
-   collected 1 items
-
-   example2.py F
-
-   =================================== FAILURES ===============================
-   ________________________________ test_foo __________________________________
-
-       def test_foo():
-           f = Foo(1)
-           g = Foo(2)
-   >       assert f == g
-   E       assert <example2.Foo object at 0x190de90> == <example2.Foo object at 0x190df10>
-
-   example2.py:24: AssertionError
-   =========================== 1 failed in 0.03 seconds =======================
-
-
-The detailed builtin comparisons are currently only present for
-strings, sequences, sets and dictionaries which are compared for
-equality (``==``) and for strings with a ``not in`` comparison.
-However it is possible to add your own detailed explanations using the
-``pytest_assertrepr_compare`` hook.
-
-.. py:function:: pytest_assertrepr_compare(config, op, left, right)
-
-   The *config* argument is a ``_pytest.config.Config``
-   instance.  *op* will be the comparison operator: ``==``, ``<``,
-   ``in``, etc.  While *left* and *right* will contain the objects
-   which are being compared.
-
-   The return value must be either *None* in case this hook does not
-   provide an explanation for the arguments passed in, or a list of
-   strings.  Each string in the list will be regarded as a line and
-   displayed on a line by itself.  The first line is slightly special
-   and is meant to be a summary with the detailed explanation
-   following on the other lines.
-
-
-As an example consider adding following hook in a conftest.py which
-provides an alternative explanation for the ``Foo`` type used above::
-
-   def pytest_assertrepr_compare(op, left, right):
-       if (not isinstance(left, example2.Foo) or
-           not isinstance(right, example2.Foo) or
-           op != '=='):
-           return None
-       return ['Comparing Foo instances:',
-               '   vals: %s != %s' % (left.val, right.val)]
-
-When re-running the above example after adding this in the conftest.py
-file the output now contains a more detailed description::
-
-   $ python pytest.py example2.py
-   ============================= test session starts ==========================
-   platform linux2 -- Python 2.7.1 -- pytest-2.1.0.dev4
-   collected 1 items
-
-   example2.py F
-
-   =================================== FAILURES ===============================
-   ___________________________________ test_foo _______________________________
-
-       def test_foo():
-           f = Foo(1)
-           g = Foo(2)
-   >       assert f == g
-   E       assert Comparing Foo instances:
-   E            vals: 1 != 2
-
-   example2.py:24: AssertionError
-   =========================== 1 failed in 0.03 seconds =======================
