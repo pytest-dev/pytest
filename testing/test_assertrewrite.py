@@ -76,6 +76,13 @@ class TestAssertionRewrite:
             assert imp.lineno == 3
             assert imp.col_offset == 0
         assert isinstance(m.body[4], ast.Expr)
+        s = """from . import relative\nother_stuff"""
+        m = rewrite(s)
+        for imp in m.body[0:2]:
+            assert isinstance(imp, ast.Import)
+            assert imp.lineno == 1
+            assert imp.col_offset == 0
+        assert isinstance(m.body[3], ast.Expr)
 
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""

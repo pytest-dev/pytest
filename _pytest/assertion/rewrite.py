@@ -109,8 +109,8 @@ class AssertionRewriter(ast.NodeVisitor):
                     return
                 lineno += len(doc) - 1
                 expect_docstring = False
-            elif (not isinstance(item, ast.ImportFrom) or item.level > 0 and
-                  item.identifier != "__future__"):
+            elif (not isinstance(item, ast.ImportFrom) or item.level > 0 or
+                  item.module != "__future__"):
                 lineno = item.lineno
                 break
             pos += 1
