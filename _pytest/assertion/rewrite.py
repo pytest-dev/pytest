@@ -147,7 +147,7 @@ def _compute_pyc_location(source_path):
 
 def _use_cached_pyc(source, cache):
     try:
-        mtime = source.mtime()
+        mtime = int(source.mtime())
         fp = cache.open("rb")
         try:
             data = fp.read(8)
