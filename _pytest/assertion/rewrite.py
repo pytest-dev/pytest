@@ -113,9 +113,9 @@ class AssertionRewriter(ast.NodeVisitor):
                    for alias in aliases]
         mod.body[pos:pos] = imports
         # Collect asserts.
-        nodes = collections.deque([mod])
+        nodes = [mod]
         while nodes:
-            node = nodes.popleft()
+            node = nodes.pop()
             for name, field in ast.iter_fields(node):
                 if isinstance(field, list):
                     new = []
