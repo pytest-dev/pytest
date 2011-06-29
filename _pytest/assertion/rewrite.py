@@ -3,10 +3,171 @@
 import ast
 import collections
 import itertools
+import imp
+import marshal
+import os
+import struct
 import sys
 
 import py
 from _pytest.assertion import util
+
+
+# py.test caches rewritten pycs in __pycache__.
+if hasattr(imp, "get_tag"):
+    PYTEST_TAG = imp.get_tag() + "-PYTEST"
+else:
+    ver = sys.version_info
+    PYTEST_TAG = "cpython-" + str(ver[0]) + str(ver[1]) + "-PYTEST"
+    del ver
+
+class AssertionRewritingHook(object):
+    """Import hook which rewrites asserts.
+
+    Note this hook doesn't load modules itself. It uses find_module to write a
+    fake pyc, so the normal import system will find it.
+    """
+
+    def __init__(self):
+        self.session = None
+
+    def set_session(self, session):
+        self.fnpats = session.config.getini("python_files")
+        self.session = session
+
+    def find_module(self, name, path=None):
+        if self.session is None:
+            return None
+        sess = self.session
+        state = sess.config._assertstate
+        names = name.rsplit(".", 1)
+        lastname = names[-1]
+        pth = None
+        if path is not None and len(path) == 1:
+            pth = path[0]
+        if pth is None:
+            try:
+                fd, fn, desc = imp.find_module(lastname, path)
+            except ImportError:
+                return None
+            if fd is not None:
+                fd.close()
+            tp = desc[2]
+            if tp == imp.PY_COMPILED:
+                if hasattr(imp, "source_from_cache"):
+                    fn = imp.source_from_cache(fn)
+                else:
+                    fn = fn[:-1]
+            elif tp != imp.PY_SOURCE:
+                # Don't know what this is.
+                return None
+        else:
+            fn = os.path.join(pth, name + ".py")
+        fn_pypath = py.path.local(fn)
+        # Is this a test file?
+        if not sess.isinitpath(fn):
+            # We have to be very careful here because imports in this code can
+            # trigger a cycle.
+            self.session = None
+            try:
+                for pat in self.fnpats:
+                    if fn_pypath.fnmatch(pat):
+                        break
+                else:
+                    return None
+            finally:
+                self.session = sess
+        # This looks like a test file, so rewrite it. This is the most magical
+        # part of the process: load the source, rewrite the asserts, and write a
+        # fake pyc, so that it'll be loaded when the module is imported. This is
+        # complicated by the fact we cache rewritten pycs.
+        pyc = _compute_pyc_location(fn_pypath)
+        state.pycs.append(pyc)
+        cache_fn = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
+        cache = py.path.local(fn_pypath.dirname).join("__pycache__", cache_fn)
+        if _use_cached_pyc(fn_pypath, cache):
+            state.trace("found cached rewritten pyc for %r" % (fn,))
+            cache.copy(pyc)
+        else:
+            state.trace("rewriting %r" % (fn,))
+            _make_rewritten_pyc(state, fn_pypath, pyc)
+            # Try cache it in the __pycache__ directory.
+            _cache_pyc(state, pyc, cache)
+        return None
+
+def _drain_pycs(state):
+    for pyc in state.pycs:
+        try:
+            pyc.remove()
+        except py.error.ENOENT:
+            state.trace("couldn't find pyc: %r" % (pyc,))
+        else:
+            state.trace("removed pyc: %r" % (pyc,))
+
+def _write_pyc(co, source_path, pyc):
+    mtime = int(source_path.mtime())
+    fp = pyc.open("wb")
+    try:
+        fp.write(imp.get_magic())
+        fp.write(struct.pack("<l", mtime))
+        marshal.dump(co, fp)
+    finally:
+        fp.close()
+
+def _make_rewritten_pyc(state, fn, pyc):
+    try:
+        source = fn.read("rb")
+    except EnvironmentError:
+        return None
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        # Let this pop up again in the real import.
+        state.trace("failed to parse: %r" % (fn,))
+        return None
+    rewrite_asserts(tree)
+    try:
+        co = compile(tree, fn.strpath, "exec")
+    except SyntaxError:
+        # It's possible that this error is from some bug in the
+        # assertion rewriting, but I don't know of a fast way to tell.
+        state.trace("failed to compile: %r" % (fn,))
+        return None
+    _write_pyc(co, fn, pyc)
+
+def _compute_pyc_location(source_path):
+    if hasattr(imp, "cache_from_source"):
+        # Handle PEP 3147 pycs.
+        pyc = py.path.local(imp.cache_from_source(str(source_path)))
+        pyc.ensure()
+    else:
+        pyc = source_path + "c"
+    return pyc
+
+def _use_cached_pyc(source, cache):
+    try:
+        mtime = source.mtime()
+        fp = cache.open("rb")
+        try:
+            data = fp.read(8)
+        finally:
+            fp.close()
+    except EnvironmentError:
+        return False
+    if (len(data) != 8 or
+        data[:4] != imp.get_magic() or
+        struct.unpack("<l", data[4:])[0] != mtime):
+        # Invalid or out of date.
+        return False
+    # The cached pyc exists and is up to date.
+    return True
+
+def _cache_pyc(state, pyc, cache):
+    try:
+        cache.dirpath().ensure(dir=True)
+        pyc.copy(cache)
+    except EnvironmentError:
+        state.trace("failed to cache %r as %r" % (pyc, cache))
 
 
 def rewrite_asserts(mod):

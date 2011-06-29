@@ -2,20 +2,12 @@
 support for presenting detailed information in failing assertions.
 """
 import py
-import imp
-import marshal
-import struct
 import sys
 import pytest
 from _pytest.monkeypatch import monkeypatch
-from _pytest.assertion import reinterpret, util
+from _pytest.assertion import util
 
-try:
-    from _pytest.assertion.rewrite import rewrite_asserts
-except ImportError:
-    rewrite_asserts = None
-else:
-    import ast
+REWRITING_AVAILABLE = "_ast" in sys.builtin_module_names
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
@@ -38,9 +30,9 @@ class AssertionState:
     def __init__(self, config, mode):
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+        self.pycs = []
 
 def pytest_configure(config):
-    warn_about_missing_assertion()
     mode = config.getvalue("assertmode")
     if config.getvalue("noassert") or config.getvalue("nomagic"):
         if mode not in ("off", "default"):
@@ -48,7 +40,10 @@ def pytest_configure(config):
         mode = "off"
     elif mode == "default":
         mode = "on"
+    if mode == "on" and not REWRITING_AVAILABLE:
+        mode = "old"
     if mode != "off":
+        _load_modules(mode)
         def callbinrepr(op, left, right):
             hook_result = config.hook.pytest_assertrepr_compare(
                 config=config, op=op, left=left, right=right)
@@ -60,69 +55,55 @@ def pytest_configure(config):
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)
         m.setattr(util, '_reprcompare', callbinrepr)
-    if mode == "on" and rewrite_asserts is None:
-        mode = "old"
+    hook = None
+    if mode == "on":
+        hook = rewrite.AssertionRewritingHook()
+        sys.meta_path.append(hook)
+    warn_about_missing_assertion(mode)
     config._assertstate = AssertionState(config, mode)
+    config._assertstate.hook = hook
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
-def _write_pyc(co, source_path):
-    if hasattr(imp, "cache_from_source"):
-        # Handle PEP 3147 pycs.
-        pyc = py.path.local(imp.cache_from_source(str(source_path)))
-        pyc.ensure()
-    else:
-        pyc = source_path + "c"
-    mtime = int(source_path.mtime())
-    fp = pyc.open("wb")
-    try:
-        fp.write(imp.get_magic())
-        fp.write(struct.pack("<l", mtime))
-        marshal.dump(co, fp)
-    finally:
-        fp.close()
-    return pyc
+def pytest_unconfigure(config):
+    if config._assertstate.mode == "on":
+        rewrite._drain_pycs(config._assertstate)
+    hook = config._assertstate.hook
+    if hook is not None:
+        sys.meta_path.remove(hook)
 
-def before_module_import(mod):
-    if mod.config._assertstate.mode != "on":
-        return
-    # Some deep magic: load the source, rewrite the asserts, and write a
-    # fake pyc, so that it'll be loaded when the module is imported.
-    source = mod.fspath.read()
-    try:
-        tree = ast.parse(source)
-    except SyntaxError:
-        # Let this pop up again in the real import.
-        mod.config._assertstate.trace("failed to parse: %r" % (mod.fspath,))
-        return
-    rewrite_asserts(tree)
-    try:
-        co = compile(tree, str(mod.fspath), "exec")
-    except SyntaxError:
-        # It's possible that this error is from some bug in the assertion
-        # rewriting, but I don't know of a fast way to tell.
-        mod.config._assertstate.trace("failed to compile: %r" % (mod.fspath,))
-        return
-    mod._pyc = _write_pyc(co, mod.fspath)
-    mod.config._assertstate.trace("wrote pyc: %r" % (mod._pyc,))
+def pytest_sessionstart(session):
+    hook = session.config._assertstate.hook
+    if hook is not None:
+        hook.set_session(session)
 
-def after_module_import(mod):
-    if not hasattr(mod, "_pyc"):
-        return
-    state = mod.config._assertstate
-    try:
-        mod._pyc.remove()
-    except py.error.ENOENT:
-        state.trace("couldn't find pyc: %r" % (mod._pyc,))
-    else:
-        state.trace("removed pyc: %r" % (mod._pyc,))
+def pytest_sessionfinish(session):
+    if session.config._assertstate.mode == "on":
+        rewrite._drain_pycs(session.config._assertstate)
+    hook = session.config._assertstate.hook
+    if hook is not None:
+        hook.session = None
 
-def warn_about_missing_assertion():
+def _load_modules(mode):
+    """Lazily import assertion related code."""
+    global rewrite, reinterpret
+    from _pytest.assertion import reinterpret
+    if mode == "on":
+        from _pytest.assertion import rewrite
+
+def warn_about_missing_assertion(mode):
     try:
         assert False
     except AssertionError:
         pass
     else:
-        sys.stderr.write("WARNING: failing tests may report as passing because "
-        "assertions are turned off!  (are you using python -O?)\n")
+        if mode == "on":
+            specifically = ("assertions which are not in test modules "
+                            "will be ignored")
+        else:
+            specifically = "failing tests may report as passing"
+
+        sys.stderr.write("WARNING: " + specifically +
+                        " because assertions are turned off "
+                        "(are you using python -O?)\n")
 
 pytest_assertrepr_compare = util.assertrepr_compare

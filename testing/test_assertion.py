@@ -250,8 +250,9 @@ def test_warn_missing(testdir):
     ])
 
 def test_load_fake_pyc(testdir):
-    path = testdir.makepyfile("x = 'hello'")
+    rewrite = pytest.importorskip("_pytest.assertion.rewrite")
+    path = testdir.makepyfile(a_random_module="x = 'hello'")
     co = compile("x = 'bye'", str(path), "exec")
-    plugin._write_pyc(co, path)
+    rewrite._write_pyc(co, path, rewrite._compute_pyc_location(path))
     mod = path.pyimport()
     assert mod.x == "bye"

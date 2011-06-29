@@ -226,13 +226,8 @@ class Module(pytest.File, PyCollectorMixin):
 
     def _importtestmodule(self):
         # we assume we are only called once per module
-        from _pytest import assertion
-        assertion.before_module_import(self)
         try:
-            try:
-                mod = self.fspath.pyimport(ensuresyspath=True)
-            finally:
-                assertion.after_module_import(self)
+            mod = self.fspath.pyimport(ensuresyspath=True)
         except SyntaxError:
             excinfo = py.code.ExceptionInfo()
             raise self.CollectError(excinfo.getrepr(style="short"))
