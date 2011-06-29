@@ -103,6 +103,7 @@ def _drain_pycs(state):
             state.trace("couldn't find pyc: %r" % (pyc,))
         else:
             state.trace("removed pyc: %r" % (pyc,))
+    del state.pycs[:]
 
 def _write_pyc(co, source_path, pyc):
     mtime = int(source_path.mtime())
