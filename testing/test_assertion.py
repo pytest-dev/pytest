@@ -120,7 +120,7 @@ class TestAssert_reprcompare:
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
 
-@pytest.mark.skipif("config._assertstate.mode != 'on'")
+@pytest.mark.skipif("config._assertstate.mode != 'rewrite'")
 def test_rewritten():
     assert "@py_builtins" in globals()
 
