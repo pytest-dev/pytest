@@ -155,13 +155,10 @@ def _use_cached_pyc(source, cache):
             fp.close()
     except EnvironmentError:
         return False
-    if (len(data) != 8 or
-        data[:4] != imp.get_magic() or
-        struct.unpack("<l", data[4:])[0] != mtime):
-        # Invalid or out of date.
-        return False
-    # The cached pyc exists and is up to date.
-    return True
+    # Check for invalid or out of date pyc file.
+    return (len(data) == 8 and
+            data[:4] == imp.get_magic() and
+            struct.unpack("<l", data[4:])[0] == mtime)
 
 def _cache_pyc(state, pyc, cache):
     try:
