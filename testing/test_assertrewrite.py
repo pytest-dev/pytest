@@ -129,15 +129,22 @@ class TestAssertionRewrite:
             assert f or g
         assert getmsg(f) == "assert (False or False)"
         def f():
+            f = g = False
+            assert not f and not g
+        getmsg(f, must_pass=True)
+        def f():
             f = True
             g = False
             assert f or g
         getmsg(f, must_pass=True)
 
     def test_short_circut_evaluation(self):
-        pytest.xfail("complicated fix; I'm not sure if it's important")
         def f():
             assert True or explode
+        getmsg(f, must_pass=True)
+        def f():
+            x = 1
+            assert x == 1 or x == 2
         getmsg(f, must_pass=True)
 
     def test_unary_op(self):
