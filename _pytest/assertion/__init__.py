@@ -12,13 +12,13 @@ REWRITING_AVAILABLE = "_ast" in sys.builtin_module_names
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--assertmode', action="store", dest="assertmode",
-                    choices=("on", "old", "off", "default"), default="default",
-                    metavar="on|old|off",
+                    choices=("rewrite", "reinterp", "off", "default"),
+                    default="default", metavar="off|reinterp|rewrite",
                     help="""control assertion debugging tools.
 'off' performs no assertion debugging.
-'old' reinterprets the expressions in asserts to glean information.
-'on' (the default) rewrites the assert statements in test modules to provide
-sub-expression results.""")
+'reinterp' reinterprets the expressions in asserts to glean information.
+'rewrite' (the default) rewrites the assert statements in test modules on import
+to provide sub-expression results.""")
     group.addoption('--no-assert', action="store_true", default=False,
         dest="noassert", help="DEPRECATED equivalent to --assertmode=off")
     group.addoption('--nomagic', action="store_true", default=False,
@@ -39,9 +39,9 @@ def pytest_configure(config):
             raise pytest.UsageError("assertion options conflict")
         mode = "off"
     elif mode == "default":
-        mode = "on"
+        mode = "rewrite"
     if mode == "on" and not REWRITING_AVAILABLE:
-        mode = "old"
+        mode = "reinterp"
     if mode != "off":
         _load_modules(mode)
         def callbinrepr(op, left, right):
@@ -56,7 +56,7 @@ def pytest_configure(config):
                   reinterpret.AssertionError)
         m.setattr(util, '_reprcompare', callbinrepr)
     hook = None
-    if mode == "on":
+    if mode == "rewrite":
         hook = rewrite.AssertionRewritingHook()
         sys.meta_path.append(hook)
     warn_about_missing_assertion(mode)
@@ -65,7 +65,7 @@ def pytest_configure(config):
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
 def pytest_unconfigure(config):
-    if config._assertstate.mode == "on":
+    if config._assertstate.mode == "rewrite":
         rewrite._drain_pycs(config._assertstate)
     hook = config._assertstate.hook
     if hook is not None:
@@ -77,7 +77,7 @@ def pytest_sessionstart(session):
         hook.set_session(session)
 
 def pytest_sessionfinish(session):
-    if session.config._assertstate.mode == "on":
+    if session.config._assertstate.mode == "rewrite":
         rewrite._drain_pycs(session.config._assertstate)
     hook = session.config._assertstate.hook
     if hook is not None:
@@ -87,7 +87,7 @@ def _load_modules(mode):
     """Lazily import assertion related code."""
     global rewrite, reinterpret
     from _pytest.assertion import reinterpret
-    if mode == "on":
+    if mode == "rewrite":
         from _pytest.assertion import rewrite
 
 def warn_about_missing_assertion(mode):
@@ -96,7 +96,7 @@ def warn_about_missing_assertion(mode):
     except AssertionError:
         pass
     else:
-        if mode == "on":
+        if mode == "rewrite":
             specifically = ("assertions which are not in test modules "
                             "will be ignored")
         else:

@@ -182,7 +182,7 @@ def test_assertion_options(testdir):
     for opt in off_options:
         result = testdir.runpytest(*opt)
         assert "3 == 4" not in result.stdout.str()
-    for mode in "on", "old":
+    for mode in "rewrite", "reinterp":
         for other_opt in off_options[:3]:
             opt = ("--assertmode=" + mode,) + other_opt
             result = testdir.runpytest(*opt)
@@ -194,7 +194,7 @@ def test_old_assert_mode(testdir):
         def test_in_old_mode():
             assert "@py_builtins" not in globals()
     """)
-    result = testdir.runpytest("--assertmode=old")
+    result = testdir.runpytest("--assertmode=reinterp")
     assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
