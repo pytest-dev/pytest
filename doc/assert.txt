@@ -196,30 +196,32 @@ Reporting details about a failing assertion is achieved either by rewriting
 assert statements before they are run or re-evaluating the assert expression and
 recording the intermediate values. Which technique is used depends on the
 location of the assert, py.test's configuration, and Python version being used
-to run py.test.  However, for assert statements with a manually provided 
-message, i.e. ``assert expr, message``, no assertion introspection takes place and the manually provided message will be rendered in tracebacks.
+to run py.test.  Note that for assert statements with a manually provided
+message, i.e. ``assert expr, message``, no assertion introspection takes place
+and the manually provided message will be rendered in tracebacks.
 
 By default, if the Python version is greater than or equal to 2.6, py.test
 rewrites assert statements in test modules. Rewritten assert statements put
 introspection information into the assertion failure message. py.test only
 rewrites test modules directly discovered by its test collection process, so
-asserts in supporting modules will not be rewritten.
+asserts in supporting modules which are not themselves test modules will not be
+rewritten.
 
 .. note::
 
-   py.test rewrites test modules as it collects tests from them. It does this by
-   writing a new pyc file which Python loads when the test module is
-   imported. If the module has already been loaded (it is in sys.modules),
-   though, Python will not load the rewritten module. This means if a test
-   module imports another test module which has not already been rewritten, then
-   py.test will not be able to rewrite the second module.
+   py.test rewrites test modules on import. It does this by using an import hook
+   to write a new pyc files. Most of the time this works transparently. However,
+   if you are messing with import yourself, the import hook may interfere. If
+   this is the case, simply use ``--assertmode=reinterp`` or
+   ``--assertmode=off``. Additionally, rewriting will fail silently if it cannot
+   write new pycs, i.e. in a read-only filesystem or a zipfile.
 
 If an assert statement has not been rewritten or the Python version is less than
 2.6, py.test falls back on assert reinterpretation. In assert reinterpretation,
 py.test walks the frame of the function containing the assert statement to
 discover sub-expression results of the failing assert statement. You can force
 py.test to always use assertion reinterpretation by passing the
-``--assertmode=old`` option.
+``--assertmode=reinterp`` option.
 
 Assert reinterpretation has a caveat not present with assert rewriting: If
 evaluating the assert expression has side effects you may get a warning that the
@@ -244,5 +246,3 @@ All assert introspection can be turned off by passing ``--assertmode=off``.
 .. versionchanged:: 2.1
    Introduce the ``--assertmode`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
-
-
