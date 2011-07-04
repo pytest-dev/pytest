@@ -120,9 +120,12 @@ class TestAssert_reprcompare:
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
 
-@pytest.mark.skipif("config._assertstate.mode != 'rewrite'")
-def test_rewritten():
-    assert "@py_builtins" in globals()
+def test_rewritten(testdir):
+    testdir.makepyfile("""
+        def test_rewritten():
+            assert "@py_builtins" in globals()
+    """)
+    assert testdir.runpytest().ret == 0
 
 def test_reprcompare_notin():
     detail = plugin.pytest_assertrepr_compare('not in', 'foo', 'aaafoobbb')[1:]
