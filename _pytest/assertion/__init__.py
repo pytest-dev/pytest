@@ -68,7 +68,10 @@ def pytest_unconfigure(config):
     if hook is not None:
         sys.meta_path.remove(hook)
 
-def pytest_sessionstart(session):
+def pytest_collection(session):
+    # this hook is only called when test modules are collected
+    # so for example not in the master process of pytest-xdist
+    # (which does not collect test modules)
     hook = session.config._assertstate.hook
     if hook is not None:
         hook.set_session(session)
