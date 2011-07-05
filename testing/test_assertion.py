@@ -120,6 +120,7 @@ class TestAssert_reprcompare:
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
 
+@needsnewassert
 def test_rewritten(testdir):
     testdir.makepyfile("""
         def test_rewritten():

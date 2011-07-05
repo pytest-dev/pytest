@@ -7,8 +7,6 @@ import pytest
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
 
-REWRITING_AVAILABLE = "_ast" in sys.builtin_module_names
-
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--assertmode', action="store", dest="assertmode",
@@ -40,8 +38,11 @@ def pytest_configure(config):
         mode = "off"
     elif mode == "default":
         mode = "rewrite"
-    if mode == "on" and not REWRITING_AVAILABLE:
-        mode = "reinterp"
+    if mode == "rewrite":
+        try:
+            import ast
+        except ImportError:
+            mode = "reinterp"
     if mode != "off":
         _load_modules(mode)
         def callbinrepr(op, left, right):
