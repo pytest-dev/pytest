@@ -87,7 +87,7 @@ class AssertionRewritingHook(object):
         cache = py.path.local(fn_pypath.dirname).join("__pycache__", cache_fn)
         if _use_cached_pyc(fn_pypath, cache):
             state.trace("found cached rewritten pyc for %r" % (fn,))
-            cache.copy(pyc)
+            _atomic_copy(cache, pyc)
         else:
             state.trace("rewriting %r" % (fn,))
             _make_rewritten_pyc(state, fn_pypath, pyc)
@@ -163,9 +163,15 @@ def _use_cached_pyc(source, cache):
 def _cache_pyc(state, pyc, cache):
     try:
         cache.dirpath().ensure(dir=True)
-        pyc.copy(cache)
+        _atomic_copy(pyc, cache)
     except EnvironmentError:
         state.trace("failed to cache %r as %r" % (pyc, cache))
+
+def _atomic_copy(orig, to):
+    """An atomic copy (at least on POSIX platforms)"""
+    temp = py.path.local(orig.strpath + str(os.getpid()))
+    orig.copy(temp)
+    temp.rename(to)
 
 
 def rewrite_asserts(mod):
