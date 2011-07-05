@@ -1,6 +1,7 @@
 Changes between 2.0.3 and 2.1.0.DEV
 ----------------------------------------------
 
+- fix issue53 call nosestyle setup functions with correct ordering
 - fix issue58 and issue59: new assertion code fixes
 - merge Benjamin's assertionrewrite branch: now assertions
   for test modules on python 2.6 and above are done by rewriting

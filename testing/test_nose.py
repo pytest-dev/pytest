@@ -255,3 +255,19 @@ def test_nose_style_setup_teardown(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
+
+def test_nose_setup_ordering(testdir):
+    testdir.makepyfile("""
+        def setup_module(mod):
+            mod.visited = True
+
+        class TestClass:
+            def setup(self):
+                assert visited
+            def test_first(self):
+                pass
+        """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+    ])

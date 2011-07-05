@@ -13,6 +13,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
             call.excinfo = call2.excinfo
 
 
+@pytest.mark.trylast
 def pytest_runtest_setup(item):
     if isinstance(item, (pytest.Function)):
         if isinstance(item.parent, pytest.Generator):
