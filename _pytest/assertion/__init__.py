@@ -9,18 +9,18 @@ from _pytest.assertion import util
 
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
-    group.addoption('--assertmode', action="store", dest="assertmode",
-                    choices=("rewrite", "reinterp", "off", "default"),
-                    default="default", metavar="off|reinterp|rewrite",
+    group.addoption('--assert', action="store", dest="assertmode",
+                    choices=("rewrite", "reinterp", "plain",),
+                    default="rewrite", metavar="MODE",
                     help="""control assertion debugging tools.
-'off' performs no assertion debugging.
-'reinterp' reinterprets the expressions in asserts to glean information.
-'rewrite' (the default) rewrites the assert statements in test modules on import
-to provide sub-expression results.""")
+'plain' performs no assertion debugging.
+'reinterp' reinterprets assert statements after they failed to provide assertion expression information.
+'rewrite' (the default) rewrites assert statements in test modules on import
+to provide assert expression information. """)
     group.addoption('--no-assert', action="store_true", default=False,
-        dest="noassert", help="DEPRECATED equivalent to --assertmode=off")
+        dest="noassert", help="DEPRECATED equivalent to --assert=plain")
     group.addoption('--nomagic', action="store_true", default=False,
-        dest="nomagic", help="DEPRECATED equivalent to --assertmode=off")
+        dest="nomagic", help="DEPRECATED equivalent to --assert=plain")
 
 class AssertionState:
     """State for the assertion plugin."""
@@ -33,17 +33,13 @@ class AssertionState:
 def pytest_configure(config):
     mode = config.getvalue("assertmode")
     if config.getvalue("noassert") or config.getvalue("nomagic"):
-        if mode not in ("off", "default"):
-            raise pytest.UsageError("assertion options conflict")
-        mode = "off"
-    elif mode == "default":
-        mode = "rewrite"
+        mode = "plain"
     if mode == "rewrite":
         try:
             import ast
         except ImportError:
             mode = "reinterp"
-    if mode != "off":
+    if mode != "plain":
         _load_modules(mode)
         def callbinrepr(op, left, right):
             hook_result = config.hook.pytest_assertrepr_compare(
@@ -104,7 +100,8 @@ def warn_about_missing_assertion(mode):
             specifically = "failing tests may report as passing"
 
         sys.stderr.write("WARNING: " + specifically +
-                        " because assertions are turned off "
+                        " because assert statements are not executed "
+                        "by the underlying Python interpreter "
                         "(are you using python -O?)\n")
 
 pytest_assertrepr_compare = util.assertrepr_compare

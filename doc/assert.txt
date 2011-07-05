@@ -23,7 +23,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     ============================= test session starts ==============================
-    platform darwin -- Python 2.7.0 -- pytest-2.1.0.dev4
+    platform linux2 -- Python 2.6.6 -- pytest-2.1.0.dev6
     collecting ... collected 1 items
     
     test_assert1.py F
@@ -37,7 +37,7 @@ you will see the return value of the function call::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    =========================== 1 failed in 0.05 seconds ===========================
+    =========================== 1 failed in 0.01 seconds ===========================
 
 py.test has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -105,7 +105,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     ============================= test session starts ==============================
-    platform darwin -- Python 2.7.0 -- pytest-2.1.0.dev4
+    platform linux2 -- Python 2.6.6 -- pytest-2.1.0.dev6
     collecting ... collected 1 items
     
     test_assert2.py F
@@ -124,7 +124,7 @@ if you run this module::
     E         '5'
     
     test_assert2.py:5: AssertionError
-    =========================== 1 failed in 0.05 seconds ===========================
+    =========================== 1 failed in 0.01 seconds ===========================
 
 Special comparisons are done for a number of cases:
 
@@ -181,7 +181,7 @@ the conftest file::
    E            vals: 1 != 2
    
    test_foocompare.py:8: AssertionError
-   1 failed in 0.05 seconds
+   1 failed in 0.01 seconds
 
 .. _assert-details:
 .. _`assert introspection`:
@@ -212,8 +212,8 @@ rewritten.
    py.test rewrites test modules on import. It does this by using an import hook
    to write a new pyc files. Most of the time this works transparently. However,
    if you are messing with import yourself, the import hook may interfere. If
-   this is the case, simply use ``--assertmode=reinterp`` or
-   ``--assertmode=off``. Additionally, rewriting will fail silently if it cannot
+   this is the case, simply use ``--assert=reinterp`` or
+   ``--assert=plain``. Additionally, rewriting will fail silently if it cannot
    write new pycs, i.e. in a read-only filesystem or a zipfile.
 
 If an assert statement has not been rewritten or the Python version is less than
@@ -221,7 +221,7 @@ If an assert statement has not been rewritten or the Python version is less than
 py.test walks the frame of the function containing the assert statement to
 discover sub-expression results of the failing assert statement. You can force
 py.test to always use assertion reinterpretation by passing the
-``--assertmode=reinterp`` option.
+``--assert=reinterp`` option.
 
 Assert reinterpretation has a caveat not present with assert rewriting: If
 evaluating the assert expression has side effects you may get a warning that the
@@ -238,11 +238,11 @@ easy to rewrite the assertion and avoid any trouble::
         content = f.read()
         assert content != '...'
 
-All assert introspection can be turned off by passing ``--assertmode=off``.
+All assert introspection can be turned off by passing ``--assert=plain``.
 
 .. versionadded:: 2.1
    Add assert rewriting as an alternate introspection technique.
 
 .. versionchanged:: 2.1
-   Introduce the ``--assertmode`` option. Deprecate ``--no-assert`` and
+   Introduce the ``--assert`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
