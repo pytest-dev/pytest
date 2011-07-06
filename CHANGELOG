@@ -13,6 +13,7 @@ Changes between 2.0.3 and 2.1.0.DEV
 - fix issue48: typo in MarkInfo repr leading to exception
 - fix issue49: avoid confusing error when initizaliation partially fails
 - fix issue44: env/username expansion for junitxml file path
+- show releaselevel information for pypy
 
 Changes between 2.0.2 and 2.0.3
 ----------------------------------------------

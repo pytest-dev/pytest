@@ -259,7 +259,7 @@ class TerminalReporter:
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
         if hasattr(sys, 'pypy_version_info'):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
-            msg += "[pypy-%s]" % verinfo
+            msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
         msg += " -- pytest-%s" % (py.test.__version__)
         if self.verbosity > 0 or self.config.option.debug or \
            getattr(self.config.option, 'pastebin', None):
