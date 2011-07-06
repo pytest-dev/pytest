@@ -29,7 +29,9 @@ def main():
         author='Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe and others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
-        install_requires=['py>=1.4.4.dev2'],
+        # the following should be enabled for release
+        #install_requires=['py>=1.4.4'],
+        install_requires=['py>=1.4.3'],
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
