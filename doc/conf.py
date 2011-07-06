@@ -107,10 +107,10 @@ html_theme_options = {}
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = None
+html_short_title = "pytest-%s" % release
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -136,7 +136,7 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
-html_sidebars = {'index': 'indexsidebar.html'}
+#html_sidebars = {'*': 'sidebar.html'}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -145,16 +145,16 @@ html_sidebars = {'index': 'indexsidebar.html'}
 
 
 # If false, no module index is generated.
-#html_domain_indices = True
+html_domain_indices = True
 
 # If false, no index is generated.
-#html_use_index = True
+html_use_index = False
 
 # If true, the index is split into individual pages for each letter.
 #html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-#html_show_sourcelink = True
+html_show_sourcelink = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #html_show_sphinx = True

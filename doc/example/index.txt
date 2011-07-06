@@ -7,6 +7,10 @@ Usages and Examples
 Here is a (growing) list of examples. :ref:`Contact <contact>` us if you
 need more examples or have questions. Also take a look at the :ref:`comprehensive documentation <toc>` which contains many example snippets as well.
 
+.. note::
+
+   see :doc:`../getting-started` for basic introductionary examples
+
 .. toctree::
    :maxdepth: 2
 

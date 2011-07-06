@@ -1,0 +1,37 @@
+
+{%- if pagename != "search" %}
+<div id="searchbox" style="display: none">
+    <form class="search" action="{{ pathto('search') }}" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="{{ _('Search') }}" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+{%- endif %}
+
+<h3>quicklinks</h3>
+<div style="text-align: left; font-size: 100%; vertical-align: middle;">
+<table>
+<tr>
+<td>
+        <a href="{{ pathto('index') }}">index</a>
+</td><td>
+        <a href="{{ pathto('features') }}">features</a>
+</td></tr><tr><td>
+        <a href="{{ pathto('getting-started') }}">install</a>
+</td><td>
+        <a href="{{ pathto('changelog') }}">changelog</a>
+</td></tr><tr><td>
+        <a href="{{ pathto('example/index') }}">examples</a>
+</td><td>
+        <a href="{{ pathto('customize') }}">customize</a>
+</td></tr><tr><td>
+        <a href="https://bitbucket.org/hpk42/pytest/issues?status=new&status=open">issues[bb]</a>
+</td><td>
+        <a href="{{ pathto('contact') }}">contact</a>
+</td></tr></table>
+</div>
+{% extends "basic/localtoc.html" %}
+
