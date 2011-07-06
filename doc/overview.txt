@@ -5,7 +5,7 @@ Getting started basics
 .. toctree::
    :maxdepth: 2
 
-   features.txt
+   index.txt
    getting-started.txt
    usage.txt
    goodpractises.txt

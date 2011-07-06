@@ -1,0 +1,24 @@
+
+.. _toc:
+
+Table of Contents
+========================
+
+.. toctree::
+   :maxdepth: 2
+
+   overview
+   example/index
+   apiref
+   plugins
+   talks
+   develop
+   announce/index
+
+.. toctree::
+   :hidden:
+
+   changelog.txt
+   naming20.txt
+   example/attic
+
