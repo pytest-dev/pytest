@@ -318,11 +318,16 @@ class TerminalReporter:
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == 2:
             self._report_keyboardinterrupt()
+            del self._keyboardinterrupt_memo
         self.summary_deselected()
         self.summary_stats()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
+
+    def pytest_unconfigure(self):
+        if hasattr(self, '_keyboardinterrupt_memo'):
+            self._report_keyboardinterrupt()
 
     def _report_keyboardinterrupt(self):
         excrepr = self._keyboardinterrupt_memo

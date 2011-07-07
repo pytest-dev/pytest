@@ -15,6 +15,7 @@ Changes between 2.0.3 and 2.1.0.DEV
 - fix issue44: env/username expansion for junitxml file path
 - show releaselevel information in test runs for pypy
 - reworked doc pages for better navigation and PDF generation
+- report KeyboardInterrupt even if interrupted during session startup
 
 Changes between 2.0.2 and 2.0.3
 ----------------------------------------------

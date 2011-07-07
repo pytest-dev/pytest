@@ -167,6 +167,19 @@ class TestTerminal:
             ])
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
+    def test_keyboard_in_sessionstart(self, testdir):
+        testdir.makeconftest("""
+            def pytest_sessionstart():
+                raise KeyboardInterrupt
+        """)
+        p = testdir.makepyfile("""
+            def test_foobar():
+                pass
+        """)
+
+        result = testdir.runpytest()
+        assert result.ret == 2
+        result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
 
 class TestCollectonly:
