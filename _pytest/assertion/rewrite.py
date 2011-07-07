@@ -109,7 +109,7 @@ class AssertionRewritingHook(object):
             mod.__file__ = co.co_filename
             # Normally, this attribute is 3.2+.
             mod.__cached__ = pyc
-            exec co in mod.__dict__
+            py.builtin.exec_(co, mod.__dict__)
         except:
             del sys.modules[name]
             raise
