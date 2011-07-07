@@ -66,7 +66,7 @@ py.test found the ``test_answer`` function by following :ref:`standard test disc
     report intermediate values of the assert expression freeing
     you from the need to learn the many names of `JUnit legacy methods`_.
 
-.. _`the JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
+.. _`JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
 
