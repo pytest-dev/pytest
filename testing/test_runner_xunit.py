@@ -186,7 +186,7 @@ def test_setup_fails_again_on_all_tests(testdir):
     ])
     assert "passed" not in result.stdout.str()
 
-def test_setup_funcarg_setup_not_called_if_outer_scope_fails(testdir):
+def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
     p = testdir.makepyfile("""
         import pytest
         def setup_module(mod):
