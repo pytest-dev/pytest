@@ -7,13 +7,16 @@ tags: bug 2.4 core xdist
   the protocol now - setup/teardown is called at module level.
   consider making calling of setup/teardown configurable
 
-profiling / hook call optimization
--------------------------------------
-tags: enhancement 2.1
+fix start/finish partial finailization problem
+---------------------------------------------------------------
+tags: bug core
 
-bench/bench.py reveals that for very quick running
-unit tests the hook architecture is a bit slow.
-Profile and improve hook calls.
+if a configure/runtest_setup/sessionstart/... hook invocation partially
+fails the sessionfinishes is not called.  Each hook implementation
+should better be repsonsible for registering a cleanup/finalizer
+appropriately to avoid this issue.  Moreover/Alternatively, we could 
+record which implementations of a hook succeeded and only call their
+teardown.
 
 do early-teardown of test modules
 -----------------------------------------
