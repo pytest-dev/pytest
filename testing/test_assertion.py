@@ -246,11 +246,3 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
-
-def test_load_fake_pyc(testdir):
-    rewrite = pytest.importorskip("_pytest.assertion.rewrite")
-    path = testdir.makepyfile(a_random_module="x = 'hello'")
-    co = compile("x = 'bye'", str(path), "exec")
-    rewrite._write_pyc(co, path, rewrite._compute_pyc_location(path))
-    mod = path.pyimport()
-    assert mod.x == "bye"

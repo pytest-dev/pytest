@@ -28,7 +28,6 @@ class AssertionState:
     def __init__(self, config, mode):
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
-        self.pycs = []
 
 def pytest_configure(config):
     mode = config.getvalue("assertmode")
@@ -62,8 +61,6 @@ def pytest_configure(config):
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
 def pytest_unconfigure(config):
-    if config._assertstate.mode == "rewrite":
-        rewrite._drain_pycs(config._assertstate)
     hook = config._assertstate.hook
     if hook is not None:
         sys.meta_path.remove(hook)
@@ -77,8 +74,6 @@ def pytest_collection(session):
         hook.set_session(session)
 
 def pytest_sessionfinish(session):
-    if session.config._assertstate.mode == "rewrite":
-        rewrite._drain_pycs(session.config._assertstate)
     hook = session.config._assertstate.hook
     if hook is not None:
         hook.session = None
