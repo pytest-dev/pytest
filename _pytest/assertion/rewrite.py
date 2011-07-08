@@ -18,9 +18,15 @@ from _pytest.assertion import util
 if hasattr(imp, "get_tag"):
     PYTEST_TAG = imp.get_tag() + "-PYTEST"
 else:
+    if hasattr(sys, "pypy_version_info"):
+        impl = "pypy"
+    elif sys.platform == "java":
+        impl = "jython"
+    else:
+        impl = "cpython"
     ver = sys.version_info
-    PYTEST_TAG = "cpython-" + str(ver[0]) + str(ver[1]) + "-PYTEST"
-    del ver
+    PYTEST_TAG = "%s-%s%s-PYTEST" % (impl, ver[0], ver[1])
+    del ver, impl
 
 class AssertionRewritingHook(object):
     """Import hook which rewrites asserts."""
