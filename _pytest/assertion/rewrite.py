@@ -153,11 +153,16 @@ def _make_rewritten_pyc(state, fn, pyc):
         # assertion rewriting, but I don't know of a fast way to tell.
         state.trace("failed to compile: %r" % (fn,))
         return None
-    # Dump the code object into a file specific to this process.
-    proc_pyc = pyc + "." + str(os.getpid())
-    _write_pyc(co, fn, proc_pyc)
-    # Atomically replace the pyc.
-    os.rename(proc_pyc, pyc)
+    if sys.platform.startswith("win"):
+        # Windows grants exclusive access to open files and doesn't have atomic
+        # rename, so just write into the final file.
+        _write_pyc(co, fn, pyc)
+    else:
+        # When not on windows, assume rename is atomic. Dump the code object
+        # into a file specific to this process and atomically replace it.
+        proc_pyc = pyc + "." + str(os.getpid())
+        _write_pyc(co, fn, proc_pyc)
+        os.rename(proc_pyc, pyc)
     return co
 
 def _read_pyc(source, pyc):
