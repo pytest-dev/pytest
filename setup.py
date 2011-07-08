@@ -22,7 +22,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.1.0.dev12',
+        version='2.1.0',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -30,8 +30,7 @@ def main():
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
         # the following should be enabled for release
-        #install_requires=['py>=1.4.4'],
-        install_requires=['py>=1.4.3'],
+        install_requires=['py>=1.4.4'],
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
