@@ -1,8 +1,12 @@
 import os, sys
-if sys.version_info >= (3,0):
+try:
+    from setuptools import setup
+except ImportError:
+    if sys.version_info < (3,0):
+        raise
     from distribute_setup import use_setuptools
     use_setuptools()
-from setuptools import setup
+    from setuptools import setup
 
 long_description = """
 cross-project testing tool for Python.
