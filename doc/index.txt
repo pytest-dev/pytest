@@ -6,11 +6,11 @@ Welcome to pytest / features
 - **a mature full-featured testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython
+ - :ref:`comprehensive online and PDF documentation <toc>`
  - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
  - used in :ref:`many projects and organisations <projects>`, in test
    suites ranging from 10 to 10s of thousands of tests
- - has :ref:`comprehensive documentation <toc>`
- - comes with :ref:`tested examples <examples>`
+ - comes with many :ref:`tested examples <examples>`
  - supports :ref:`good integration practises <goodpractises>`
 
 - **provides no-boilerplate testing**

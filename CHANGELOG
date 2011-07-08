@@ -16,6 +16,7 @@ Changes between 2.0.3 and 2.1.0.DEV
 - show releaselevel information in test runs for pypy
 - reworked doc pages for better navigation and PDF generation
 - report KeyboardInterrupt even if interrupted during session startup
+- fix issue 35 - provide PDF doc version and download link from index page
 
 Changes between 2.0.2 and 2.0.3
 ----------------------------------------------
