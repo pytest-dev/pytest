@@ -7,6 +7,8 @@ Installation and Getting Started
 
 **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
 
+**documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
+
 .. _`getstarted`:
 
 Installation

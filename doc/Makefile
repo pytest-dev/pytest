@@ -39,8 +39,14 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-install: clean html
-	rsync -avz _build/html/ code:www-pytest/
+install: html
+	@rsync -avz _build/html/ pytest.org:/www/pytest.org/latest
+
+installpdf: latexpdf
+	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/latest
+
+installall: clean install installpdf
+	@echo "done"
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
