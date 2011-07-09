@@ -1,6 +1,6 @@
 
 
-Welcome to pytest / features
+Welcome to pytest!
 =============================================
 
 - **a mature full-featured testing tool**

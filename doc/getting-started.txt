@@ -1,7 +1,11 @@
 Installation and Getting Started
 ===================================
 
-**Compatibility**: Python 2.4-3.2, Jython, PyPy on Unix/Posix and Windows
+**Pythons**: Python 2.4-3.2, Jython, PyPy
+
+**Platforms**: Unix/Posix and Windows
+
+**PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
 
 .. _`getstarted`:
 
