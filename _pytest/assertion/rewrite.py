@@ -421,7 +421,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if chain:
                 where = []
                 if len(chain) > 1:
-                    cond = ast.Boolop(ast.And(), chain)
+                    cond = ast.BoolOp(ast.And(), list(chain))
                 else:
                     cond = chain[0]
                 self.statements.append(ast.If(cond, where, []))
