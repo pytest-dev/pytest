@@ -266,3 +266,14 @@ class TestAssertionRewrite:
                 return False
             assert myany(A() < 0)
         assert "<MY42 object> < 0" in getmsg(f)
+
+
+class TestRewriteOnImport:
+
+    def test_readonly(self, testdir):
+        sub = testdir.mkdir("testing")
+        sub.join("test_readonly.py").write("""
+def test_rewritten():
+    assert "@py_builtins" in globals()""")
+        sub.chmod(320)
+        assert testdir.runpytest().ret == 0

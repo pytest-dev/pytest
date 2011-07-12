@@ -90,16 +90,26 @@ class AssertionRewritingHook(object):
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
         cache_dir = os.path.join(fn_pypath.dirname, "__pycache__")
-        py.path.local(cache_dir).ensure(dir=True)
+        try:
+            py.path.local(cache_dir).ensure(dir=True)
+        except py.error.EACCES:
+            state.trace("read only directory: %r" % (fn_pypath.dirname,))
+            write = False
+        else:
+            write = True
         cache_name = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
         pyc = os.path.join(cache_dir, cache_name)
+        # Notice that even if we're in a read-only directory, I'm going to check
+        # for a cached pyc. This may not be optimal...
         co = _read_pyc(fn_pypath, pyc)
         if co is None:
             state.trace("rewriting %r" % (fn,))
-            co = _make_rewritten_pyc(state, fn_pypath, pyc)
+            co = _rewrite_test(state, fn_pypath)
             if co is None:
-                # Probably a SyntaxError in the module.
+                # Probably a SyntaxError in the test.
                 return None
+            if write:
+                _make_rewritten_pyc(state, fn_pypath, pyc, co)
         else:
             state.trace("found cached rewritten pyc for %r" % (fn,))
         self.modules[name] = co, pyc
@@ -135,12 +145,8 @@ def _write_pyc(co, source_path, pyc):
     finally:
         fp.close()
 
-def _make_rewritten_pyc(state, fn, pyc):
-    """Try to rewrite *fn* and dump the rewritten code to *pyc*.
-
-    Return the code object of the rewritten module on success. Return None if
-    there are problems parsing or compiling the module.
-    """
+def _rewrite_test(state, fn):
+    """Try to read and rewrite *fn* and return the code object."""
     try:
         source = fn.read("rb")
     except EnvironmentError:
@@ -159,6 +165,10 @@ def _make_rewritten_pyc(state, fn, pyc):
         # assertion rewriting, but I don't know of a fast way to tell.
         state.trace("failed to compile: %r" % (fn,))
         return None
+    return co
+
+def _make_rewritten_pyc(state, fn, pyc, co):
+    """Try to dump rewritten code to *pyc*."""
     if sys.platform.startswith("win"):
         # Windows grants exclusive access to open files and doesn't have atomic
         # rename, so just write into the final file.
