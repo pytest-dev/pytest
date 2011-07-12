@@ -1,7 +1,7 @@
 Changes between 2.1.0 and 2.1.1.DEV
 ----------------------------------------------
 
-- XXX
+- fix assertion rewriting on boolean operations with 3 or more operands
 
 Changes between 2.0.3 and 2.1.0.DEV
 ----------------------------------------------
