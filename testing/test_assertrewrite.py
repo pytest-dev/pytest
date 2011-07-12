@@ -137,6 +137,10 @@ class TestAssertionRewrite:
             g = False
             assert f or g
         getmsg(f, must_pass=True)
+        def f():
+            f = g = h = lambda: True
+            assert f() and g() and h()
+        getmsg(f, must_pass=True)
 
     def test_short_circut_evaluation(self):
         def f():

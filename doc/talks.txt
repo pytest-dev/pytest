@@ -28,6 +28,11 @@ test parametrization:
 - `parametrizing tests, generalized`_ (blog post)
 - `putting test-hooks into local or global plugins`_ (blog post)
 
+assertion introspection
+
+- `(07/2011) Behind the scenes of py.test's new assertion rewriting
+  <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_ 
+
 distributed testing:
 
 - `simultaneously test your code on all platforms`_ (blog entry)

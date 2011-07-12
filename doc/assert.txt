@@ -240,6 +240,8 @@ easy to rewrite the assertion and avoid any trouble::
 
 All assert introspection can be turned off by passing ``--assert=plain``.
 
+For further information, Benjamin Peterson wrote up `Behind the scenes of py.test's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
+
 .. versionadded:: 2.1
    Add assert rewriting as an alternate introspection technique.
 
