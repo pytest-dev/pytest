@@ -393,7 +393,7 @@ class TerminalReporter:
                 else:
                     msg = self._getfailureheadline(rep)
                     self.write_sep("_", msg)
-                    rep.toterminal(self._tw)
+                    self._outrep_summary(rep)
 
     def summary_errors(self):
         if self.config.option.tbstyle != "no":
@@ -411,7 +411,15 @@ class TerminalReporter:
                 elif rep.when == "teardown":
                     msg = "ERROR at teardown of " + msg
                 self.write_sep("_", msg)
-                rep.toterminal(self._tw)
+                self._outrep_summary(rep)
+
+    def _outrep_summary(self, rep):
+        rep.toterminal(self._tw)
+        for secname, content in rep.sections:
+            self._tw.sep("-", secname)
+            if content[-1:] == "\n":
+                content = content[:-1]
+            self._tw.line(content)
 
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime

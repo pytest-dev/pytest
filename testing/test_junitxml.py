@@ -131,7 +131,14 @@ class TestPython:
         assert "Division" in fnode.toxml()
 
     def test_failure_function(self, testdir):
-        testdir.makepyfile("def test_fail(): raise ValueError(42)")
+        testdir.makepyfile("""
+            import sys
+            def test_fail():
+                print ("hello-stdout")
+                sys.stderr.write("hello-stderr\\n")
+                raise ValueError(42)
+        """)
+            
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
@@ -143,6 +150,10 @@ class TestPython:
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
         assert "ValueError" in fnode.toxml()
+        systemout = fnode.getElementsByTagName("system-out")[0]
+        assert "hello-stdout" in systemout.toxml()
+        systemerr = fnode.getElementsByTagName("system-err")[0]
+        assert "hello-stderr" in systemerr.toxml()
 
     def test_failure_escape(self, testdir):
         testdir.makepyfile("""

@@ -167,7 +167,7 @@ class TestReport(BaseReport):
     they fail).
     """
     def __init__(self, nodeid, location,
-            keywords, outcome, longrepr, when):
+            keywords, outcome, longrepr, when, sections=()):
         #: normalized collection node id
         self.nodeid = nodeid
 
@@ -189,6 +189,10 @@ class TestReport(BaseReport):
         #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 
+        #: list of (secname, data) extra information which needs to
+        #: marshallable
+        self.sections = list(sections)
+
     def __repr__(self):
         return "<TestReport %r when=%r outcome=%r>" % (
             self.nodeid, self.when, self.outcome)
@@ -198,6 +202,7 @@ class TeardownErrorReport(BaseReport):
     when = "teardown"
     def __init__(self, longrepr):
         self.longrepr = longrepr
+        self.sections = []
 
 def pytest_make_collect_report(collector):
     call = CallInfo(collector._memocollect, "memocollect")
@@ -219,11 +224,12 @@ def pytest_make_collect_report(collector):
         getattr(call, 'result', None))
 
 class CollectReport(BaseReport):
-    def __init__(self, nodeid, outcome, longrepr, result):
+    def __init__(self, nodeid, outcome, longrepr, result, sections=()):
         self.nodeid = nodeid
         self.outcome = outcome
         self.longrepr = longrepr
         self.result = result or []
+        self.sections = list(sections)
 
     @property
     def location(self):

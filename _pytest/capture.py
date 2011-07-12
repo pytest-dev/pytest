@@ -12,12 +12,9 @@ def pytest_addoption(parser):
         help="shortcut for --capture=no.")
 
 def addouterr(rep, outerr):
-    repr = getattr(rep, 'longrepr', None)
-    if not hasattr(repr, 'addsection'):
-        return
     for secname, content in zip(["out", "err"], outerr):
         if content:
-            repr.addsection("Captured std%s" % secname, content.rstrip())
+            rep.sections.append(("Captured std%s" % secname, content))
 
 def pytest_unconfigure(config):
     # registered in config.py during early conftest.py loading

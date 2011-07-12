@@ -114,8 +114,16 @@ class LogXML(object):
                 '<skipped message="xfail-marked test passes unexpectedly"/>')
             self.skipped += 1
         else:
-            self.appendlog('<failure message="test failure">%s</failure>',
-                report.longrepr)
+            sec = dict(report.sections)
+            fmt = '<failure message="test failure">%s'
+            args = [report.longrepr]
+            for name in ('out', 'err'):
+                content = sec.get("Captured std%s" % name)
+                if content:
+                    fmt += "<system-%s>%%s</system-%s>" % (name, name)
+                    args.append(content)
+            fmt += "</failure>"
+            self.appendlog(fmt, *args)
             self.failed += 1
         self._closetestcase()
 

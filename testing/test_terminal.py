@@ -258,10 +258,13 @@ class TestCollectonly:
 
 
 def test_repr_python_version(monkeypatch):
-    monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
-    assert repr_pythonversion() == "2.5.1-final-0"
-    py.std.sys.version_info = x = (2,3)
-    assert repr_pythonversion() == str(x)
+    try:
+        monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
+        assert repr_pythonversion() == "2.5.1-final-0"
+        py.std.sys.version_info = x = (2,3)
+        assert repr_pythonversion() == str(x)
+    finally:
+        monkeypatch.undo() # do this early as pytest can get confused
 
 class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):
