@@ -150,9 +150,11 @@ class TestPython:
         fnode = tnode.getElementsByTagName("failure")[0]
         assert_attr(fnode, message="test failure")
         assert "ValueError" in fnode.toxml()
-        systemout = fnode.getElementsByTagName("system-out")[0]
+        systemout = fnode.nextSibling
+        assert systemout.tagName == "system-out"
         assert "hello-stdout" in systemout.toxml()
-        systemerr = fnode.getElementsByTagName("system-err")[0]
+        systemerr = systemout.nextSibling
+        assert systemerr.tagName == "system-err"
         assert "hello-stderr" in systemerr.toxml()
 
     def test_failure_escape(self, testdir):

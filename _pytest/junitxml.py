@@ -115,15 +115,13 @@ class LogXML(object):
             self.skipped += 1
         else:
             sec = dict(report.sections)
-            fmt = '<failure message="test failure">%s'
-            args = [report.longrepr]
+            self.appendlog('<failure message="test failure">%s</failure>',
+                report.longrepr)
             for name in ('out', 'err'):
                 content = sec.get("Captured std%s" % name)
                 if content:
-                    fmt += "<system-%s>%%s</system-%s>" % (name, name)
-                    args.append(content)
-            fmt += "</failure>"
-            self.appendlog(fmt, *args)
+                    self.appendlog(
+                        "<system-%s>%%s</system-%s>" % (name, name), content)
             self.failed += 1
         self._closetestcase()
 
