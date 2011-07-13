@@ -277,3 +277,13 @@ def test_rewritten():
     assert "@py_builtins" in globals()""")
         sub.chmod(320)
         assert testdir.runpytest().ret == 0
+
+    def test_dont_write_bytecode(self, testdir, monkeypatch):
+        testdir.makepyfile("""
+import os
+def test_no_bytecode():
+    assert "__pycache__" in __cached__
+    assert not os.path.exists(__cached__)
+    assert not os.path.exists(os.path.dirname(__cached__))""")
+        monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
+        assert testdir.runpytest().ret == 0

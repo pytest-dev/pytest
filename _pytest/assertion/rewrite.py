@@ -89,14 +89,14 @@ class AssertionRewritingHook(object):
         # tricky race conditions, we maintain the following invariant: The
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
+        write = not sys.dont_write_bytecode
         cache_dir = os.path.join(fn_pypath.dirname, "__pycache__")
-        try:
-            py.path.local(cache_dir).ensure(dir=True)
-        except py.error.EACCES:
-            state.trace("read only directory: %r" % (fn_pypath.dirname,))
-            write = False
-        else:
-            write = True
+        if write:
+            try:
+                py.path.local(cache_dir).ensure(dir=True)
+            except py.error.EACCES:
+                state.trace("read only directory: %r" % (fn_pypath.dirname,))
+                write = False
         cache_name = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going to check
