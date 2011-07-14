@@ -44,6 +44,7 @@ class AssertionRewritingHook(object):
             return None
         sess = self.session
         state = sess.config._assertstate
+        state.trace("find_module called for: %s" % name)
         names = name.rsplit(".", 1)
         lastname = names[-1]
         pth = None
@@ -76,11 +77,14 @@ class AssertionRewritingHook(object):
             try:
                 for pat in self.fnpats:
                     if fn_pypath.fnmatch(pat):
+                        state.trace("matched test file %r" % (fn,))
                         break
                 else:
                     return None
             finally:
                 self.session = sess
+        else:
+            state.trace("matched test file (was specified on cmdline): %r" % (fn,))
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
         # asserts, and load the rewritten source. We also cache the rewritten
@@ -97,6 +101,11 @@ class AssertionRewritingHook(object):
             except py.error.EACCES:
                 state.trace("read only directory: %r" % (fn_pypath.dirname,))
                 write = False
+            except py.error.EEXIST:
+                state.trace("failure to create directory: %r" % (
+                    fn_pypath.dirname,))
+                raise
+                #write = False
         cache_name = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going to check
