@@ -16,11 +16,10 @@ default_plugins = (
  "junitxml resultlog doctest").split()
 
 class TagTracer:
-    def __init__(self, prefix="[pytest] "):
+    def __init__(self):
         self._tag2proc = {}
         self.writer = None
         self.indent = 0
-        self.prefix = prefix
 
     def get(self, name):
         return TagTracerSub(self, (name,))
@@ -30,7 +29,7 @@ class TagTracer:
             if args:
                 indent = "  " * self.indent
                 content = " ".join(map(str, args))
-                self.writer("%s%s%s\n" %(self.prefix, indent, content))
+                self.writer("%s%s [%s]\n" %(indent, content, ":".join(tags)))
         try:
             self._tag2proc[tags](tags, args)
         except KeyError:

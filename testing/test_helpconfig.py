@@ -62,3 +62,17 @@ def test_traceconfig(testdir):
         "*using*pytest*py*",
         "*active plugins*",
     ])
+
+def test_debug(testdir, monkeypatch):
+    result = testdir.runpytest("--debug")
+    assert result.ret == 0
+    p = testdir.tmpdir.join("pytestdebug.log")
+    assert "pytest_sessionstart" in p.read()
+
+def test_PYTEST_DEBUG(testdir, monkeypatch):
+    monkeypatch.setenv("PYTEST_DEBUG", "1")
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stderr.fnmatch_lines([
+        "*registered*PluginManager*"
+    ])

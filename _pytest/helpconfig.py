@@ -1,7 +1,7 @@
 """ version info, help messages, tracing configuration.  """
 import py
 import pytest
-import inspect, sys
+import os, inspect, sys
 from _pytest.core import varnames
 
 def pytest_addoption(parser):
@@ -18,7 +18,29 @@ def pytest_addoption(parser):
                help="trace considerations of conftest.py files."),
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
-               help="generate and show internal debugging information.")
+               help="store internal tracing debug information in 'pytestdebug.log'.")
+
+
+def pytest_cmdline_parse(__multicall__):
+    config = __multicall__.execute()
+    if config.option.debug:
+        path = os.path.abspath("pytestdebug.log")
+        f = open(path, 'w')
+        config._debugfile = f
+        f.write("versions pytest-%s, py-%s, python-%s\ncwd=%s\nargs=%s\n\n" %(
+            pytest.__version__, py.__version__, ".".join(map(str, sys.version_info)),
+            os.getcwd(), config._origargs))
+        config.trace.root.setwriter(f.write)
+        sys.stderr.write("writing pytestdebug information to %s\n" % path)
+    return config
+
+@pytest.mark.trylast
+def pytest_unconfigure(config):
+    if hasattr(config, '_debugfile'):
+        config._debugfile.close()
+        sys.stderr.write("wrote pytestdebug information to %s\n" %
+            config._debugfile.name)
+        config.trace.root.setwriter(None)
 
 
 def pytest_cmdline_main(config):

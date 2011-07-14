@@ -524,21 +524,6 @@ def test_traceconfig(testdir, monkeypatch):
     ])
     assert result.ret == 0
 
-def test_debug(testdir, monkeypatch):
-    result = testdir.runpytest("--debug")
-    result.stderr.fnmatch_lines([
-        "*pytest_sessionstart*session*",
-    ])
-    assert result.ret == 0
-
-def test_PYTEST_DEBUG(testdir, monkeypatch):
-    monkeypatch.setenv("PYTEST_DEBUG", "1")
-    result = testdir.runpytest()
-    assert result.ret == 0
-    result.stderr.fnmatch_lines([
-        "*registered*PluginManager*"
-    ])
-
 
 class TestGenericReporting:
     """ this test class can be subclassed with a different option

@@ -8,8 +8,6 @@ import pytest
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
-    if config.option.debug:
-        config.trace.root.setwriter(sys.stderr.write)
     return config
 
 def pytest_unconfigure(config):
@@ -334,6 +332,7 @@ class Config(object):
         # Note that this can only be called once per testing process.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
+        self._origargs = args
         self._preparse(args)
         self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
