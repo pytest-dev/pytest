@@ -195,6 +195,10 @@ class TestAssertionRewrite:
         def f():
             assert g(1, 3, g=23)
         assert getmsg(f, ns) == """assert g(1, 3, g=23)"""
+        def f():
+            x = "a"
+            assert g(**{x : 2})
+        assert getmsg(f, ns) == """assert g(**{'a': 2})"""
 
     def test_attribute(self):
         class X(object):

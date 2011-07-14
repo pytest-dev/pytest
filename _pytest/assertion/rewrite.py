@@ -514,7 +514,7 @@ class AssertionRewriter(ast.NodeVisitor):
             new_star, expl = self.visit(call.starargs)
             arg_expls.append("*" + expl)
         if call.kwargs:
-            new_kwarg, expl = self.visit(call.kwarg)
+            new_kwarg, expl = self.visit(call.kwargs)
             arg_expls.append("**" + expl)
         expl = "%s(%s)" % (func_expl, ', '.join(arg_expls))
         new_call = ast.Call(new_func, new_args, new_kwargs, new_star, new_kwarg)
