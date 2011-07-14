@@ -23,6 +23,4 @@ Full pytest documenation
    :hidden:
 
    changelog.txt
-   naming20.txt
-   example/attic
 

@@ -66,7 +66,10 @@ version = ".".join(release.split(".")[:2])
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['links.inc', '_build', 'test', ] # XXX
+exclude_patterns = ['links.inc', '_build', 'naming20.txt', 'test/*',
+    'example/attic.txt',
+    ]
+
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -208,16 +211,15 @@ latex_documents = [
 #latex_appendices = []
 
 # If false, no module index is generated.
-#latex_domain_indices = True
-
+latex_domain_indices = False
 
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pytest', u'pytest Documentation',
-     [u'holger krekel et alii'], 1)
+    ('usage', 'pytest', u'pytest usage',
+     [u'holger krekel at merlinux eu'], 1)
 ]
 
 
@@ -225,8 +227,8 @@ man_pages = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'pytest'
-epub_author = u'holger krekel et alii'
-epub_publisher = u'holger krekel et alii'
+epub_author = u'holger krekel at merlinux eu'
+epub_publisher = u'holger krekel at merlinux eu'
 epub_copyright = u'2011, holger krekel et alii'
 
 # The language of the text. It defaults to the language option
