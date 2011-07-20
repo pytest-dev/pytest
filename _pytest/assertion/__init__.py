@@ -45,7 +45,13 @@ def pytest_configure(config):
                 config=config, op=op, left=left, right=right)
             for new_expl in hook_result:
                 if new_expl:
-                    return '\n~'.join(new_expl)
+                    res = '\n~'.join(new_expl)
+                    if mode == "rewrite":
+                        # The result will be fed back a python % formatting
+                        # operation, which will fail if there are extraneous
+                        # '%'s in the string. Escape them here.
+                        res = res.replace("%", "%%")
+                    return res
         m = monkeypatch()
         config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',

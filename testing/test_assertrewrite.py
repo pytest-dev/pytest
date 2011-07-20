@@ -275,6 +275,11 @@ class TestAssertionRewrite:
             assert myany(A() < 0)
         assert "<MY42 object> < 0" in getmsg(f)
 
+    def test_formatchar(self):
+        def f():
+            assert "%test" == "test"
+        assert getmsg(f).startswith("assert '%test' == 'test'")
+
 
 class TestRewriteOnImport:
 
