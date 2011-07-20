@@ -287,7 +287,8 @@ class TestRewriteOnImport:
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write("""
 def test_rewritten():
-    assert "@py_builtins" in globals()""")
+    assert "@py_builtins" in globals()
+""")
         sub.chmod(320)
         assert testdir.runpytest().ret == 0
 
