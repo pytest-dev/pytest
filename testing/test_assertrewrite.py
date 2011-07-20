@@ -285,10 +285,11 @@ class TestRewriteOnImport:
 
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
-        sub.join("test_readonly.py").write("""
+        sub.join("test_readonly.py").write(
+        py.builtin._totext("""
 def test_rewritten():
     assert "@py_builtins" in globals()
-""", "wb")
+""").encode("utf-8"), "wb")
         sub.chmod(320)
         assert testdir.runpytest().ret == 0
 
