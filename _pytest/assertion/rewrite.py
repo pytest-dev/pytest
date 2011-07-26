@@ -205,7 +205,6 @@ def _make_rewritten_pyc(state, fn, pyc, co):
         proc_pyc = pyc + "." + str(os.getpid())
         if _write_pyc(co, fn, proc_pyc):
             os.rename(proc_pyc, pyc)
-    return co
 
 def _read_pyc(source, pyc):
     """Possibly read a py.test pyc containing rewritten code.
