@@ -1,6 +1,7 @@
 Changes between 2.1.0 and 2.1.1.DEV
 ----------------------------------------------
 
+- fix error conditions involving the creation of __pycache__
 - fix assertion rewriting on inserts involving strings containing '%'
 - fix assertion rewriting on calls with a ** arg
 - don't cache rewritten modules if bytecode generation is disabled

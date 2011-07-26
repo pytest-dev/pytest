@@ -2,6 +2,7 @@
 
 import ast
 import collections
+import errno
 import itertools
 import imp
 import marshal
@@ -97,15 +98,23 @@ class AssertionRewritingHook(object):
         cache_dir = os.path.join(fn_pypath.dirname, "__pycache__")
         if write:
             try:
-                py.path.local(cache_dir).ensure(dir=True)
-            except py.error.EACCES:
-                state.trace("read only directory: %r" % (fn_pypath.dirname,))
-                write = False
-            except py.error.EEXIST:
-                state.trace("failure to create directory: %r" % (
-                    fn_pypath.dirname,))
-                raise
-                #write = False
+                os.mkdir(cache_dir)
+            except OSError:
+                e = sys.exc_info()[1].errno
+                if e == errno.EEXIST:
+                    # Either the __pycache__ directory already exists (the
+                    # common case) or it's blocked by a non-dir node. In the
+                    # latter case, we'll ignore it in _write_pyc.
+                    pass
+                elif e == errno.ENOTDIR:
+                    # One of the path components was not a directory, likely
+                    # because we're in a zip file.
+                    write = False
+                elif e == errno.EACCES:
+                    state.trace("read only directory: %r" % (fn_pypath.dirname,))
+                    write = False
+                else:
+                    raise
         cache_name = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going to check
@@ -146,13 +155,21 @@ def _write_pyc(co, source_path, pyc):
     # little reason deviate, and I hope sometime to be able to use
     # imp.load_compiled to load them. (See the comment in load_module above.)
     mtime = int(source_path.mtime())
-    fp = open(pyc, "wb")
+    try:
+        fp = open(pyc, "wb")
+    except IOError:
+        if sys.exc_info()[1].errno == errno.ENOTDIR:
+            # This happens when we get a EEXIST in find_module creating the
+            # __pycache__ directory and __pycache__ is by some non-dir node.
+            return False
+        raise
     try:
         fp.write(imp.get_magic())
         fp.write(struct.pack("<l", mtime))
         marshal.dump(co, fp)
     finally:
         fp.close()
+    return True
 
 def _rewrite_test(state, fn):
     """Try to read and rewrite *fn* and return the code object."""
@@ -186,8 +203,8 @@ def _make_rewritten_pyc(state, fn, pyc, co):
         # When not on windows, assume rename is atomic. Dump the code object
         # into a file specific to this process and atomically replace it.
         proc_pyc = pyc + "." + str(os.getpid())
-        _write_pyc(co, fn, proc_pyc)
-        os.rename(proc_pyc, pyc)
+        if _write_pyc(co, fn, proc_pyc):
+            os.rename(proc_pyc, pyc)
     return co
 
 def _read_pyc(source, pyc):

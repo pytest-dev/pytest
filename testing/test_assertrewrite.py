@@ -1,4 +1,5 @@
 import sys
+import zipfile
 import py
 import pytest
 
@@ -282,6 +283,29 @@ class TestAssertionRewrite:
 
 
 class TestRewriteOnImport:
+
+    def test_pycache_is_a_file(self, testdir):
+        testdir.tmpdir.join("__pycache__").write("Hello")
+        testdir.makepyfile("""
+def test_rewritten():
+    assert "@py_builtins" in globals()""")
+        assert testdir.runpytest().ret == 0
+
+    def test_zipfile(self, testdir):
+        z = testdir.tmpdir.join("myzip.zip")
+        z_fn = str(z)
+        f = zipfile.ZipFile(z_fn, "w")
+        try:
+            f.writestr("test_gum/__init__.py", "")
+            f.writestr("test_gum/test_lizard.py", "")
+        finally:
+            f.close()
+        z.chmod(256)
+        testdir.makepyfile("""
+import sys
+sys.path.append(%r)
+import test_gum.test_lizard""" % (z_fn,))
+        assert testdir.runpytest().ret == 0
 
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
