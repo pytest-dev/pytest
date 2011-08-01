@@ -19,11 +19,13 @@ def pytest_configure(config):
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     item = None
+    collector = None
 
     def set_trace(self):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         frame = sys._getframe().f_back
-        item = getattr(self, 'item', None)
+        item = self.item or self.collector
+
         if item is not None:
             capman = item.config.pluginmanager.getplugin("capturemanager")
             out, err = capman.suspendcapture()
@@ -37,6 +39,14 @@ class pytestPDB:
 def pdbitem(item):
     pytestPDB.item = item
 pytest_runtest_setup = pytest_runtest_call = pytest_runtest_teardown = pdbitem
+
+@pytest.mark.tryfirst
+def pytest_make_collect_report(__multicall__, collector):
+    try:
+        pytestPDB.collector = collector
+        return __multicall__.execute()
+    finally:
+        pytestPDB.collector = None
 
 def pytest_runtest_makereport():
     pytestPDB.item = None

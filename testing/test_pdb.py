@@ -144,6 +144,19 @@ class TestPDB:
         child.sendeof()
         child.wait()
 
+    def test_pdb_used_in_generate_tests(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                pytest.set_trace()
+                x = 5
+            def test_foo(a):
+                pass
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("x = 5")
+        child.sendeof()
+        child.wait()
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("""xxx """)
         result = testdir.runpytest("--pdb", p1)
