@@ -106,7 +106,8 @@ class AssertionRewritingHook(object):
                     # common case) or it's blocked by a non-dir node. In the
                     # latter case, we'll ignore it in _write_pyc.
                     pass
-                elif e == errno.ENOTDIR:
+                elif (e == errno.ENOTDIR or
+                      sys.platform == "win32" and e == errno.ENOENT):
                     # One of the path components was not a directory, likely
                     # because we're in a zip file.
                     write = False
