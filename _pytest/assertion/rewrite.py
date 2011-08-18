@@ -158,7 +158,9 @@ def _write_pyc(co, source_path, pyc):
     try:
         fp = open(pyc, "wb")
     except IOError:
-        if sys.exc_info()[1].errno == errno.ENOTDIR:
+        err = sys.exc_info()[1].errno
+        if (err == errno.ENOTDIR or
+            sys.platform == "win32" and err == errno.ENOENT):
             # This happens when we get a EEXIST in find_module creating the
             # __pycache__ directory and __pycache__ is by some non-dir node.
             return False
