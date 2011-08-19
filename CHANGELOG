@@ -1,4 +1,4 @@
-Changes between 2.1.0 and 2.1.1.DEV
+Changes between 2.1.0 and 2.1.1
 ----------------------------------------------
 
 - fix error conditions involving the creation of __pycache__
