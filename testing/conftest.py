@@ -53,7 +53,7 @@ def pytest_generate_tests(metafunc):
                 metafunc.addcall(funcargs={name: val})
     elif 'anypython' in metafunc.funcargnames:
         for name in ('python2.4', 'python2.5', 'python2.6',
-                     'python2.7', 'python3.1', 'pypy-c', 'jython'):
+                     'python2.7', 'python3.1', 'pypy', 'jython'):
             metafunc.addcall(id=name, param=name)
 
 # XXX copied from execnet's conftest.py - needs to be merged
@@ -78,6 +78,8 @@ def getexecutable(name, cache={}):
                 out, err = popen.communicate()
                 if not err or "2.5" not in err:
                     executable = None
+                if "2.5.2" in err:
+                    executable = None # http://bugs.jython.org/issue1790
         cache[name] = executable
         return executable
 
@@ -91,5 +93,5 @@ def pytest_funcarg__anypython(request):
                 executable = py.path.local(executable)
                 if executable.check():
                     return executable
-        pytest.skip("no %s found" % (name,))
+        pytest.skip("no suitable %s found" % (name,))
     return executable

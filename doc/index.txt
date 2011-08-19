@@ -5,7 +5,7 @@ Welcome to pytest!
 
 - **a mature full-featured testing tool**
 
- - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython
+ - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
  - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
  - used in :ref:`many projects and organisations <projects>`, in test
