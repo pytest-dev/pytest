@@ -1,13 +1,14 @@
 Changes between 2.1.0 and 2.1.1
 ----------------------------------------------
 
-- fix error conditions involving the creation of __pycache__
-- fix assertion rewriting on inserts involving strings containing '%'
+- fix issue64 / pytest.set_trace now works within pytest_generate_tests hooks
+- fix issue60 / fix error conditions involving the creation of __pycache__
+- fix issue63 / assertion rewriting on inserts involving strings containing '%'
 - fix assertion rewriting on calls with a ** arg
 - don't cache rewritten modules if bytecode generation is disabled
 - fix assertion rewriting in read-only directories
 - fix issue59: provide system-out/err tags for junitxml output
-- fix assertion rewriting on boolean operations with 3 or more operands
+- fix issue61: assertion rewriting on boolean operations with 3 or more operands
 - you can now build a man page with "cd doc ; make man"
 
 Changes between 2.0.3 and 2.1.0.DEV
