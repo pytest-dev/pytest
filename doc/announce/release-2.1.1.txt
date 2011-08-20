@@ -6,12 +6,12 @@ popular py.test testing tool.  See extensive docs with examples here:
 
      http://pytest.org/
 
-Most bug fixes fix remaining issues with the perfected assertions introduced
-with 2.1.0 - thanks to the bug reporters and to Benjamin Peterson for
-helping to fix them.  Also, junitxml output now produces system-out/err
-tags which are shown more nicely within Jenkins environments.
+Most bug fixes address remaining issues with the perfected assertions
+introduced with 2.1.0 - many thanks to the bug reporters and to Benjamin
+Peterson for helping to fix them.  Also, junitxml output now produces
+system-out/err tags which lead to better displays of tracebacks with Jenkins.
 
-NOTE particularly to package maintainers and others interested: there now
+Also a quick note to package maintainers and others interested: there now
 is a "pytest" man page which can be generated with "make man" in doc/.
 
 If you want to install or upgrade pytest, just type one of::
