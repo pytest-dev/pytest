@@ -27,7 +27,7 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
+    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
     collecting ... collected 2 items
     
     test_simple.yml .F
@@ -37,7 +37,7 @@ now execute the test specification::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.24 seconds ====================
+    ==================== 1 failed, 1 passed in 0.07 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -56,7 +56,7 @@ reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.3 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.7.1 -- pytest-2.1.1 -- /home/hpk/venv/0/bin/python
     collecting ... collected 2 items
     
     test_simple.yml:1: usecase: ok PASSED
@@ -67,17 +67,17 @@ reporting in ``verbose`` mode::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.07 seconds ====================
+    ==================== 1 failed, 1 passed in 0.06 seconds ====================
 
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.6.6 -- pytest-2.0.3
+    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
     collecting ... collected 2 items
     <YamlFile 'test_simple.yml'>
       <YamlItem 'ok'>
       <YamlItem 'hello'>
     
-    =============================  in 0.07 seconds =============================
+    =============================  in 0.06 seconds =============================

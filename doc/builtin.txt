@@ -24,6 +24,9 @@ You can ask for available builtin or project-custom
 :ref:`function arguments <funcargs>` by typing::
 
     $ py.test --funcargs
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    collected 0 items
     pytestconfig
         the pytest config object with access to command line opts.
     capsys
@@ -69,3 +72,5 @@ You can ask for available builtin or project-custom
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
         
+    
+    =============================  in 0.00 seconds =============================
