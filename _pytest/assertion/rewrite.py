@@ -35,6 +35,9 @@ else:
     PYTEST_TAG = "%s-%s%s-PYTEST" % (impl, ver[0], ver[1])
     del ver, impl
 
+PYC_EXT = ".py" + "c" if __debug__ else "o"
+PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
+
 class AssertionRewritingHook(object):
     """Import hook which rewrites asserts."""
 
@@ -121,7 +124,7 @@ class AssertionRewritingHook(object):
                     write = False
                 else:
                     raise
-        cache_name = fn_pypath.basename[:-3] + "." + PYTEST_TAG + ".pyc"
+        cache_name = fn_pypath.basename[:-3] + PYC_TAIL
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going to check
         # for a cached pyc. This may not be optimal...

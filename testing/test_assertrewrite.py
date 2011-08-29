@@ -326,3 +326,17 @@ def test_no_bytecode():
     assert not os.path.exists(os.path.dirname(__cached__))""")
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest().ret == 0
+
+    def test_pyc_vs_pyo(self, testdir, monkeypatch):
+        testdir.makepyfile("""
+import pytest
+def test_optimized():
+    "hello"
+    assert test_optimized.__doc__ is None""")
+        p = py.path.local.make_numbered_dir(prefix="runpytest-", keep=None,
+                                            rootdir=testdir.tmpdir)
+        tmp = "--basetemp=%s" % p
+        monkeypatch.setenv("PYTHONOPTIMIZE", "2")
+        assert testdir.runpybin("py.test", tmp).ret == 0
+        monkeypatch.undo()
+        assert testdir.runpybin("py.test", tmp).ret == 1
