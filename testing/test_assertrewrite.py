@@ -133,6 +133,14 @@ class TestAssertionRewrite:
             f = g = False
             assert not f and not g
         getmsg(f, must_pass=True)
+        def x():
+            return False
+        def f():
+            assert x() and x()
+        assert getmsg(f, {"x" : x}) == "assert (x())"
+        def f():
+            assert False or x()
+        assert getmsg(f, {"x" : x}) == "assert (False or x())"
         def f():
             f = True
             g = False

@@ -403,13 +403,6 @@ class AssertionRewriter(ast.NodeVisitor):
         self.explanation_specifiers[specifier] = expr
         return "%(" + specifier + ")s"
 
-    def enter_cond(self, cond, body):
-        self.statements.append(ast.If(cond, body, []))
-        self.cond_chain += cond,
-
-    def leave_cond(self, n=1):
-        self.cond_chain = self.cond_chain[:-n]
-
     def push_format_context(self):
         self.explanation_specifiers = {}
         self.stack.append(self.explanation_specifiers)
@@ -484,24 +477,30 @@ class AssertionRewriter(ast.NodeVisitor):
         app = ast.Attribute(expl_list, "append", ast.Load())
         is_or = isinstance(boolop.op, ast.Or)
         body = save = self.statements
+        fail_save = self.on_failure
         levels = len(boolop.values) - 1
         self.push_format_context()
         # Process each operand, short-circuting if needed.
         for i, v in enumerate(boolop.values):
+            self.push_format_context()
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
-            call = ast.Call(app, [ast.Str(expl)], [], None, None)
-            body.append(ast.Expr(call))
+            if i:
+                fail_inner = []
+                self.on_failure.append(ast.If(cond, fail_inner, []))
+                self.on_failure = fail_inner
+            expl_format = self.pop_format_context(ast.Str(expl))
+            call = ast.Call(app, [expl_format], [], None, None)
+            self.on_failure.append(ast.Expr(call))
             if i < levels:
-                inner = []
                 cond = res
                 if is_or:
                     cond = ast.UnaryOp(ast.Not(), cond)
-                self.enter_cond(cond, inner)
+                inner = []
+                self.statements.append(ast.If(cond, inner, []))
                 self.statements = body = inner
-        # Leave all conditions.
-        self.leave_cond(levels)
         self.statements = save
+        self.on_failure = fail_save
         expl_template = self.helper("format_boolop", expl_list, ast.Num(is_or))
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
