@@ -77,7 +77,7 @@ class AssertionRewritingHook(object):
                 # Don't know what this is.
                 return None
         else:
-            fn = os.path.join(pth, name + ".py")
+            fn = os.path.join(pth, name.rpartition(".")[2] + ".py")
         fn_pypath = py.path.local(fn)
         # Is this a test file?
         if not sess.isinitpath(fn):

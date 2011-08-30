@@ -340,3 +340,12 @@ def test_optimized():
         assert testdir.runpybin("py.test", tmp).ret == 0
         monkeypatch.undo()
         assert testdir.runpybin("py.test", tmp).ret == 1
+
+    def test_package(self, testdir):
+        pkg = testdir.tmpdir.join("pkg")
+        pkg.mkdir()
+        pkg.join("__init__.py").ensure()
+        pkg.join("test_blah.py").write("""
+def test_rewritten():
+    assert "@py_builtins" in globals()""")
+        assert testdir.runpytest().ret == 0
