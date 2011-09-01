@@ -2,7 +2,7 @@
 
 import py
 import pytest, _pytest
-import os, sys
+import os, sys, imp
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
 # exitcodes for the command line
@@ -469,16 +469,22 @@ class Session(FSCollector):
         return True
 
     def _tryconvertpyarg(self, x):
-        try:
-            mod = __import__(x, None, None, ['__doc__'])
-        except (ValueError, ImportError):
-            return x
-        p = py.path.local(mod.__file__)
-        if p.purebasename == "__init__":
-            p = p.dirpath()
-        else:
-            p = p.new(basename=p.purebasename+".py")
-        return str(p)
+        mod = None
+        path = [os.path.abspath('.')] + sys.path
+        for name in x.split('.'):
+            try:
+                fd, mod, type_ = imp.find_module(name, path)
+            except ImportError:
+                return x
+            else:
+                if fd is not None:
+                    fd.close()
+            
+            if type_[2] != imp.PKG_DIRECTORY:
+                path = [os.path.dirname(mod)]
+            else:
+                path = [mod]
+        return mod
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
