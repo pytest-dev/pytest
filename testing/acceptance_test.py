@@ -381,6 +381,8 @@ class TestInvocationVariants:
 
         result = testdir.runpytest("--pyargs", "tpkg.test_hello")
         assert result.ret != 0
+        # FIXME: It would be more natural to match NOT
+        # "ERROR*file*or*package*not*found*".
         result.stdout.fnmatch_lines([
             "*collected 0 items*"
         ])
