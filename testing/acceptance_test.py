@@ -374,6 +374,17 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
         assert "--myopt" in out
 
+    def test_pyargs_importerror(self, testdir, monkeypatch):
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
+        path = testdir.mkpydir("tpkg")
+        path.join("test_hello.py").write('raise ImportError')
+
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*collected 0 items*"
+        ])
+
     def test_cmdline_python_package(self, testdir, monkeypatch):
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
         path = testdir.mkpydir("tpkg")
