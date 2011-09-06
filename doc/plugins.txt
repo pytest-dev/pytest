@@ -203,7 +203,7 @@ and their names. It will also print local plugins aka
 
 .. _`cmdunregister`:
 
-deactivate / unregister a plugin by name
+Deactivating / unregistering a plugin by name
 ----------------------------------------------------------------------------
 
 You can prevent plugins from loading or unregister them::
@@ -253,7 +253,7 @@ in the `pytest repository <http://bitbucket.org/hpk42/pytest/>`_.
 py.test hook reference
 ====================================
 
-hook specification and validation
+Hook specification and validation
 -----------------------------------------
 
 py.test calls hook functions to implement initialization, running,
@@ -264,7 +264,7 @@ specification.  However, a hook function may accept *fewer* parameters
 by simply not specifying them.  If you mistype argument names or the
 hook name itself you get an error showing the available arguments.
 
-initialisation, command line and configuration hooks
+Initialisation, command line and configuration hooks
 --------------------------------------------------------------------
 
 .. currentmodule:: _pytest.hookspec
@@ -277,7 +277,7 @@ initialisation, command line and configuration hooks
 .. autofunction:: pytest_configure
 .. autofunction:: pytest_unconfigure
 
-generic "runtest" hooks
+Generic "runtest" hooks
 ------------------------------
 
 All all runtest related hooks receive a :py:class:`pytest.Item` object.
@@ -297,7 +297,7 @@ into interactive debugging when a test failure occurs.
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
 
-collection hooks
+Collection hooks
 ------------------------------
 
 py.test calls the following hooks for collecting files and directories:
@@ -312,7 +312,7 @@ you can use the following hook:
 .. autofunction:: pytest_pycollect_makeitem
 
 
-reporting hooks
+Reporting hooks
 ------------------------------
 
 Session related reporting hooks:

@@ -1,8 +1,8 @@
 
-asserting deprecation and other warnings.
+Asserting deprecation and other warnings.
 =====================================================
 
-recwarn function argument
+The recwarn function argument
 ------------------------------------
 
 You can use the ``recwarn`` funcarg to assert that code triggers
@@ -24,7 +24,7 @@ The ``recwarn`` function argument provides these methods:
 * ``pop(category=None)``: return last warning matching the category.
 * ``clear()``: clear list of warnings
 
-ensuring a function triggers a deprecation warning
+Ensuring a function triggers a deprecation warning
 -------------------------------------------------------
 
 You can also call a global helper for checking

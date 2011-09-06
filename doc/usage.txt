@@ -7,7 +7,7 @@ Usage and Invocations
 
 .. _cmdline:
 
-calling pytest through ``python -m pytest``
+Calling pytest through ``python -m pytest``
 -----------------------------------------------------
 
 .. versionadded:: 2.0
@@ -38,7 +38,7 @@ To stop the testing process after the first (N) failures::
     py.test -x            # stop after first failure
     py.test -maxfail=2    # stop after two failures
 
-specifying tests / selecting tests
+Specifying tests / selecting tests
 ---------------------------------------------------
 
 Several test run options::
@@ -98,7 +98,7 @@ can use a helper::
 In previous versions you could only enter PDB tracing if
 you disable capturing on the command line via ``py.test -s``.
 
-creating JUnitXML format files
+Creating JUnitXML format files
 ----------------------------------------------------
 
 To create result files which can be read by Hudson_ or other Continuous
@@ -108,7 +108,7 @@ integration servers, use this invocation::
 
 to create an XML file at ``path``.
 
-creating resultlog format files
+Creating resultlog format files
 ----------------------------------------------------
 
 To create plain-text machine-readable result files you can issue::
@@ -121,7 +121,7 @@ by the `PyPy-test`_ web page to show test results over several revisions.
 .. _`PyPy-test`: http://codespeak.net:8099/summary
 
 
-send test report to pocoo pastebin service
+Sending test report to pocoo pastebin service
 -----------------------------------------------------
 
 **Creating a URL for each test failure**::
@@ -138,7 +138,7 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://paste.pocoo.org service is implemented.
 
-calling pytest from Python code
+Calling pytest from Python code
 ----------------------------------------------------
 
 .. versionadded:: 2.0

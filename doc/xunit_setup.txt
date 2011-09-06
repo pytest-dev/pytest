@@ -1,7 +1,7 @@
 .. _xunitsetup:
 
 ====================================
-extended xUnit style setup fixtures
+Extended xUnit style setup fixtures
 ====================================
 
 .. _`funcargs`: funcargs.html
@@ -16,7 +16,7 @@ before running a test function and ``teardown`` after it has finished.
 handling by optionally calling per-module and per-class hooks.
 
 
-module level setup/teardown
+Module level setup/teardown
 =============================================
 
 If you have multiple test functions and test classes in a single
@@ -33,7 +33,7 @@ which will usually be called once for all the functions::
             with a setup_module method.
         """
 
-class level setup/teardown
+Class level setup/teardown
 =============================================
 
 Similarly, the following methods are called at class level before
@@ -51,7 +51,7 @@ and after all test methods of the class are called::
             with a call to setup_class.
         """
 
-method and function level setup/teardown
+Method and function level setup/teardown
 =============================================
 
 Similarly, the following methods are called around each method invocation::

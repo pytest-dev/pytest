@@ -6,7 +6,7 @@ Working with non-python tests
 
 .. _`yaml plugin`:
 
-a basic example for specifying tests in Yaml files
+A basic example for specifying tests in Yaml files
 --------------------------------------------------------------
 
 .. _`pytest-yamlwsgi`: http://bitbucket.org/aafshar/pytest-yamlwsgi/src/tip/pytest_yamlwsgi.py

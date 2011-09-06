@@ -1,5 +1,5 @@
 
-doctest integration for modules and test files
+Doctest integration for modules and test files
 =========================================================
 
 By default all files matching the ``test*.txt`` pattern will

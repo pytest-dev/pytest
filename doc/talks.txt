@@ -4,40 +4,40 @@ Talks and Tutorials
 
 .. _`funcargs`: funcargs.html
 
-tutorial examples and blog postings
+Tutorial examples and blog postings
 ---------------------------------------------
 
 .. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
-basic usage and funcargs:
+Basic usage and funcargs:
 
 - `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
 
-function arguments:
+Function arguments:
 
 - :ref:`mysetup`
 - `application setup in test functions with funcargs`_
 - `monkey patching done right`_ (blog post, consult `monkeypatch
   plugin`_ for actual 1.0 API)
 
-test parametrization:
+Test parametrization:
 
 - `generating parametrized tests with funcargs`_
 - `test generators and cached setup`_
 - `parametrizing tests, generalized`_ (blog post)
 - `putting test-hooks into local or global plugins`_ (blog post)
 
-assertion introspection
+Assertion introspection:
 
 - `(07/2011) Behind the scenes of py.test's new assertion rewriting
   <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_ 
 
-distributed testing:
+Distributed testing:
 
 - `simultaneously test your code on all platforms`_ (blog entry)
 
-plugin specific examples:
+Plugin specific examples:
 
 - `skipping slow tests by default in py.test`_ (blog entry)
 
@@ -54,7 +54,7 @@ plugin specific examples:
 .. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
 .. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
 
-conference talks and tutorials
+Conference talks and tutorials
 ----------------------------------------
 
 - `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009):

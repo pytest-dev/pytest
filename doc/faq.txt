@@ -63,7 +63,7 @@ You can turn off all assertion debugging with ``py.test --assertmode=off``.
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
 
 
-function arguments, parametrized tests and setup
+Function arguments, parametrized tests and setup
 -------------------------------------------------------
 
 .. _funcargs: test/funcargs.html

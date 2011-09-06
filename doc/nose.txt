@@ -1,4 +1,4 @@
-Running test written for nose
+Running tests written for nose
 =======================================
 
 .. include:: links.inc

@@ -1,4 +1,4 @@
-basic test configuration
+Basic test configuration
 ===================================
 
 Command line options and configuration file settings
@@ -59,7 +59,7 @@ progress output, you can write it into a configuration file::
 
 From now on, running ``py.test`` will add the specified options.
 
-builtin configuration file options
+Builtin configuration file options
 ----------------------------------------------
 
 .. confval:: minversion

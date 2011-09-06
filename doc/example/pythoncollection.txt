@@ -1,7 +1,7 @@
 Changing standard (Python) test discovery
 ===============================================
 
-changing directory recursion
+Changing directory recursion
 -----------------------------------------------------
 
 You can set the :confval:`norecursedirs` option in an ini-file, for example your ``setup.cfg`` in the project root directory::
@@ -14,7 +14,7 @@ This would tell py.test to not recurse into typical subversion or sphinx-build d
 
 .. _`change naming conventions`:
 
-change naming conventions
+Changing naming conventions
 -----------------------------------------------------
 
 You can configure different naming conventions by setting
@@ -53,7 +53,7 @@ then the test collection looks like this::
     
     =============================  in 0.01 seconds =============================
 
-interpret cmdline arguments as Python packages
+Interpreting cmdline arguments as Python packages
 -----------------------------------------------------
 
 You can use the ``--pyargs`` option to make py.test try
@@ -75,7 +75,7 @@ Now a simple invocation of ``py.test NAME`` will check
 if NAME exists as an importable package/module and otherwise
 treat it as a filesystem path.
 
-finding out what is collected
+Finding out what is collected
 -----------------------------------------------
 
 You can always peek at the collection tree without running tests like this::

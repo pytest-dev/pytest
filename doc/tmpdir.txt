@@ -1,10 +1,10 @@
 
 .. _`tmpdir handling`:
 
-temporary directories and files
+Temporary directories and files
 ================================================
 
-the 'tmpdir' test function argument
+The 'tmpdir' test function argument
 -----------------------------------
 
 You can use the ``tmpdir`` function argument which will
@@ -51,7 +51,7 @@ Running this would result in a passed test except for the last
 
 .. _`base temporary directory`:
 
-the default base temporary directory
+The default base temporary directory
 -----------------------------------------------
 
 Temporary directories are by default created as sub-directories of

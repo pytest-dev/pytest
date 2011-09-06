@@ -1,7 +1,7 @@
 
 .. _`pytest helpers`:
 
-pytest builtin helpers
+Pytest builtin helpers
 ================================================
 
 builtin pytest.* functions and helping objects
@@ -17,7 +17,7 @@ to get an overview on the globally available helpers.
 .. automodule:: pytest
     :members:
 
-builtin function arguments
+Builtin function arguments
 -----------------------------------------------------
 
 You can ask for available builtin or project-custom

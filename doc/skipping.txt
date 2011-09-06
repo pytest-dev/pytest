@@ -1,6 +1,6 @@
 .. _`skip and xfail`:
 
-skip and xfail: dealing with tests that can not succeed
+Skip and xfail: dealing with tests that can not succeed
 =====================================================================
 
 If you have test functions that cannot be run on certain platforms
@@ -62,7 +62,7 @@ decorator at module level like this::
     def test_function():
         ...
 
-skip all test functions of a class
+Skip all test functions of a class
 --------------------------------------
 
 As with all function :ref:`marking <mark>` you can skip test functions at the
@@ -92,7 +92,7 @@ Using multiple "skipif" decorators on a single function is generally fine - it m
 
 .. _xfail:
 
-mark a test function as expected to fail
+Mark a test function as expected to fail
 -------------------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
@@ -151,7 +151,7 @@ Running it with the report-on-xfail option gives this output::
 
 .. _`evaluation of skipif/xfail conditions`:
 
-evaluation of skipif/xfail expressions
+Evaluation of skipif/xfail expressions
 ----------------------------------------------------
 
 .. versionadded:: 2.0.2
@@ -174,7 +174,7 @@ which you might have added::
         ...
 
 
-imperative xfail from within a test or setup function
+Imperative xfail from within a test or setup function
 ------------------------------------------------------
 
 If you cannot declare xfail-conditions at import time
@@ -186,7 +186,7 @@ within test or setup code.  Example::
             pytest.xfail("unsupported configuration")
 
 
-skipping on a missing import dependency
+Skipping on a missing import dependency
 --------------------------------------------------
 
 You can use the following import helper at module level
@@ -202,7 +202,7 @@ version number of a library::
 
 The version will be read from the specified module's ``__version__`` attribute.
 
-imperative skip from within a test or setup function
+Imperative skip from within a test or setup function
 ------------------------------------------------------
 
 If for some reason you cannot declare skip-conditions

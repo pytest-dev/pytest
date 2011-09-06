@@ -1,7 +1,7 @@
 
 .. _`unittest.TestCase`:
 
-unittest.TestCase support
+Support for unittest.TestCase
 =====================================================================
 
 py.test has limited support for running Python `unittest.py style`_ tests.

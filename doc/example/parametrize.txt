@@ -1,14 +1,14 @@
 
 .. _paramexamples:
 
-parametrizing tests
+Parametrizing tests
 =================================================
 
 py.test allows to easily implement your own custom
 parametrization scheme for tests.  Here we provide
 some examples for inspiration and re-use.
 
-generating parameters combinations, depending on command line
+Generating parameters combinations, depending on command line
 ----------------------------------------------------------------------------
 
 .. regendoc:wipe
@@ -272,7 +272,7 @@ Running it gives similar results as before::
     test_parametrize2.py:23: Failed
     2 failed, 2 passed in 0.02 seconds
 
-checking serialization between Python interpreters
+Checking serialization between Python interpreters
 --------------------------------------------------------------
 
 Here is a stripped down real-life example of using parametrized

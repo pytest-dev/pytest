@@ -182,7 +182,7 @@ You can find out what kind of builtin :ref:`funcargs` exist by typing::
 
     py.test --funcargs   # shows builtin and custom function arguments
 
-where to go next
+Where to go next
 -------------------------------------
 
 Here are a few suggestions where to go next:

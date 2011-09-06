@@ -4,7 +4,7 @@ The writing and reporting of assertions in tests
 
 .. _`assert with the assert statement`:
 
-assert with the ``assert`` statement
+Asserting with the ``assert`` statement
 ---------------------------------------------------------
 
 ``py.test`` allows you to use the standard python ``assert`` for verifying
@@ -54,7 +54,7 @@ will be simply shown in the traceback.
 
 See :ref:`assert-details` for more information on assertion introspection.
 
-assertions about expected exceptions
+Assertions about expected exceptions
 ------------------------------------------
 
 In order to write assertions about raised exceptions, you can use

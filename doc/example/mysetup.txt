@@ -3,7 +3,7 @@
 
 .. _mysetup:
 
-mysetup pattern: application specific test fixtures
+Mysetup pattern: application specific test fixtures
 ==========================================================
 
 Here is a basic useful step-by-step example for managing and interacting
@@ -12,8 +12,8 @@ where we have the glue and test support code for bootstrapping and
 configuring application objects and allow test modules and test
 functions to stay ignorant of involved details.
 
-step1: implementing the test/app-specific ``mysetup`` pattern
--------------------------------------------------------------
+Step 1: Implementing the test/app-specific ``mysetup`` pattern
+--------------------------------------------------------------
 
 Let's write a simple test function using a ``mysetup`` funcarg::
 
@@ -76,7 +76,7 @@ the concrete question or answers actually mean, please see here_.
 .. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
 .. _`tut-cmdlineoption`:
 
-step 2: checking a command line option and skipping tests
+Step 2: Checking a command line option and skipping tests
 -----------------------------------------------------------
 
 To add a command line option we update the ``conftest.py`` of
