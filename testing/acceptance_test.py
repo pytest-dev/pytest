@@ -231,7 +231,7 @@ class TestGeneralUsage:
         res = testdir.runpytest(p)
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 skipped*"])
-        
+
     def test_direct_addressing_selects(self, testdir):
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
@@ -364,7 +364,7 @@ class TestInvocationVariants:
         retcode = testdir.pytestmain(testdir.tmpdir)
         assert not retcode
         out, err = capsys.readouterr()
-        
+
     def test_invoke_plugin_api(self, capsys):
         class MyPlugin:
             def pytest_addoption(self, parser):
@@ -373,6 +373,19 @@ class TestInvocationVariants:
         pytest.main(["-h"], plugins=[MyPlugin()])
         out, err = capsys.readouterr()
         assert "--myopt" in out
+
+    def test_pyargs_importerror(self, testdir, monkeypatch):
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
+        path = testdir.mkpydir("tpkg")
+        path.join("test_hello.py").write('raise ImportError')
+
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        assert result.ret != 0
+        # FIXME: It would be more natural to match NOT
+        # "ERROR*file*or*package*not*found*".
+        result.stdout.fnmatch_lines([
+            "*collected 0 items*"
+        ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
