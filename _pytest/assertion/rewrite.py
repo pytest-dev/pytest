@@ -38,6 +38,8 @@ else:
 PYC_EXT = ".py" + "c" if __debug__ else "o"
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
+REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
+
 class AssertionRewritingHook(object):
     """Import hook which rewrites asserts."""
 
@@ -181,12 +183,19 @@ def _write_pyc(co, source_path, pyc):
         fp.close()
     return True
 
+RN = "\r\n".encode("utf-8")
+N = "\n".encode("utf-8")
+
 def _rewrite_test(state, fn):
     """Try to read and rewrite *fn* and return the code object."""
     try:
         source = fn.read("rb")
     except EnvironmentError:
         return None
+    # On Python versions which are not 2.7 and less than or equal to 3.1, the
+    # parser expects *nix newlines.
+    if REWRITE_NEWLINES:
+        source = source.replace(RN, N) + N
     try:
         tree = ast.parse(source)
     except SyntaxError:

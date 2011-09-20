@@ -357,3 +357,9 @@ def test_optimized():
 def test_rewritten():
     assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
+
+    def test_translate_newlines(self, testdir):
+        content = "def test_rewritten():\r\n assert '@py_builtins' in globals()"
+        b = content.encode("utf-8")
+        testdir.tmpdir.join("test_newlines.py").write(b, "wb")
+        assert testdir.runpytest().ret == 0
