@@ -38,6 +38,9 @@ def pytest_configure(config):
             import ast
         except ImportError:
             mode = "reinterp"
+        else:
+            if sys.platform.startswith('java'):
+                mode = "reinterp"
     if mode != "plain":
         _load_modules(mode)
         def callbinrepr(op, left, right):
