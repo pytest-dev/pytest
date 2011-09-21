@@ -20,7 +20,7 @@ teardown.
 
 do early-teardown of test modules
 -----------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 currently teardowns are called when the next tests is setup
 except for the function/method level where interally
@@ -32,7 +32,7 @@ prints of teardown-code appear in the setup of the next test.
 
 consider and document __init__ file usage in test directories
 ---------------------------------------------------------------
-tags: bug 2.1 core
+tags: bug 2.2 core
 
 Currently, a test module is imported with its fully qualified
 package path, determined by checking __init__ files upwards.
@@ -47,7 +47,7 @@ certain scenarios makes sense.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 bb: http://bitbucket.org/hpk42/py-trunk/issue/64
 
 A local test run of a "tests" directory may work
@@ -58,25 +58,24 @@ i.e. port the nose-logic of unloading a test module.
 
 customize test function collection
 -------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 - introduce py.test.mark.nocollect for not considering a function for
   test collection at all.  maybe also introduce a py.test.mark.test to
   explicitely mark a function to become a tested one.  Lookup JUnit ways
   of tagging tests.
 
-- allow an easy way to customize "test_", "Test" prefixes for file paths
-  and test function/class names. the current customizable Item requires
-  too much code/concepts to influence this collection matching.
-  maybe introduce pytest_pycollect_filters = {
-    'file': 'test*.py',
-    'function': 'test*',
-    'class': 'Test*',
-  }
+introduce pytest.mark.importorskip
+-------------------------------------------------------
+tags: feature 2.2
+
+in addition to the imperative pytest.importorskip also introduce
+a pytest.mark.importorskip so that the test count is more correct.
+
 
 introduce py.test.mark.platform
 -------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 Introduce nice-to-spell platform-skipping, examples:
 
@@ -93,7 +92,7 @@ interpreter versions.
 
 pytest.mark.xfail signature change
 -------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 change to pytest.mark.xfail(reason, (optional)condition)
 to better implement the word meaning.  It also signals
@@ -103,7 +102,7 @@ Compatibility? Maybe rename to "pytest.mark.xfail"?
 
 introduce py.test.mark registration
 -----------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 introduce a hook that allows to register a named mark decorator
 with documentation and add "py.test --marks" to get
@@ -112,7 +111,7 @@ definitions.
 
 allow to non-intrusively apply skipfs/xfail/marks
 ---------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 use case: mark a module or directory structures
 to be skipped on certain platforms (i.e. no import
@@ -123,14 +122,14 @@ from conftests or plugins.
 
 explicit referencing of conftest.py files
 -----------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 allow to name conftest.py files (in sub directories) that should
 be imported early, as to include command line options.
 
 improve central py.test ini file
 ----------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 introduce more declarative configuration options:
 - (to-be-collected test directories)
@@ -141,7 +140,7 @@ introduce more declarative configuration options:
 
 new documentation
 ----------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 - logo py.test
 - examples for unittest or functional testing
@@ -152,7 +151,7 @@ tags: feature 2.1
 
 generalize parametrized testing to generate combinations
 -------------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 think about extending metafunc.addcall or add a new method to allow to
 generate tests with combinations of all generated versions - what to do
@@ -167,7 +166,7 @@ of values for a given function argument.
 
 have imported module mismatch honour relative paths
 --------------------------------------------------------
-tags: bug 2.1
+tags: bug 2.2
 
 With 1.1.1 py.test fails at least on windows if an import
 is relative and compared against an absolute conftest.py
@@ -175,7 +174,7 @@ path. Normalize.
 
 call termination with small timeout
 -------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
 
 Call gateway group termination with a small timeout if available.
@@ -183,7 +182,7 @@ Should make dist-testing less likely to leave lost processes.
 
 consider globals: py.test.ensuretemp and config
 --------------------------------------------------------------
-tags: experimental-wish 2.1
+tags: experimental-wish 2.2
 
 consider deprecating py.test.ensuretemp and py.test.config
 to further reduce py.test globality.  Also consider
@@ -192,7 +191,7 @@ a plugin rather than being there from the start.
 
 consider allowing funcargs for setup methods
 --------------------------------------------------------------
-tags: experimental-wish 2.1
+tags: experimental-wish 2.2
 
 Users have expressed the wish to have funcargs available to setup
 functions.  Experiment with allowing funcargs there - it might
@@ -208,7 +207,7 @@ setup_module -> request has no request.cls
 
 consider pytest_addsyspath hook
 -----------------------------------------
-tags: 2.1
+tags: 2.2
 
 py.test could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
@@ -220,7 +219,7 @@ and pytest_configure.
 
 show plugin information in test header
 ----------------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 Now that external plugins are becoming more numerous
 it would be useful to have external plugins along with
@@ -228,7 +227,7 @@ their versions displayed as a header line.
 
 deprecate global py.test.config usage
 ----------------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 py.test.ensuretemp and py.test.config are probably the last
 objects containing global state.  Often using them is not
@@ -238,7 +237,7 @@ as others.
 
 remove deprecated bits in collect.py
 -------------------------------------------------------------------
-tags: feature 2.1
+tags: feature 2.2
 
 In an effort to further simplify code, review and remove deprecated bits
 in collect.py.  Probably good:
