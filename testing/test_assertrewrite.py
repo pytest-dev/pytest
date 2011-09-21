@@ -4,6 +4,9 @@ import py
 import pytest
 
 ast = pytest.importorskip("ast")
+if sys.platform.startswith("java"):
+    # XXX should be xfail
+    pytest.skip("assert rewrite does currently not work on jython")
 
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts

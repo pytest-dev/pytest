@@ -281,6 +281,7 @@ class TestInvocationVariants:
         result = testdir.runpython(p)
         assert result.ret == 0
 
+    @pytest.mark.xfail("sys.platform.startswith('java')")
     def test_pydoc(self, testdir):
         for name in ('py.test', 'pytest'):
             result = testdir.runpython_c("import %s;help(%s)" % (name, name))

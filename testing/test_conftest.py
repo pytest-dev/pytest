@@ -89,7 +89,7 @@ class TestConftestValueAccessGlobal:
         assert  value == 1.5
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")
-        assert path.purebasename == "conftest"
+        assert path.purebasename.startswith("conftest")
 
 def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
