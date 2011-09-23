@@ -1,4 +1,4 @@
-Changes between 2.1.1 and [NEXT VERSION]
+Changes between 2.1.1 and 2.1.2
 ----------------------------------------
 
 - fix assertion rewriting on files with windows newlines on some Python versions
