@@ -16,8 +16,8 @@ Installation
 
 Installation options::
 
-    easy_install -U pytest  # or
-    pip install -U pytest
+    pip install -U pytest # or
+    easy_install -U pytest
 
 To check your installation has installed the correct version::
 
@@ -200,10 +200,15 @@ Known Installation issues
 easy_install or pip not found?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Consult `distribute docs`_ to install the ``easy_install``
-tool on your machine.  You may also use the older
-`setuptools`_ project but it lacks bug fixes and does not
-work on Python3.  If you use Python2 you may also install pip_.
+.. _`install pip`: http://www.pip-installer.org/en/latest/index.html
+
+`Install pip`_ for a state of the art python package installer.
+
+Or consult `distribute docs`_ to install the ``easy_install``
+tool on your machine.  
+
+You may also use the older `setuptools`_ project but it lacks bug fixes
+and does not work on Python3.
 
 py.test not found on Windows despite installation?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
