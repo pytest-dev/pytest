@@ -1,6 +1,6 @@
 """ basic collect and runtest protocol implementations """
 
-import py, sys
+import py, sys, time
 from py._code.code import TerminalRepr
 
 def pytest_namespace():
@@ -95,12 +95,16 @@ class CallInfo:
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
         self.when = when
+        self.start = time.time()
         try:
-            self.result = func()
-        except KeyboardInterrupt:
-            raise
-        except:
-            self.excinfo = py.code.ExceptionInfo()
+            try:
+                self.result = func()
+            except KeyboardInterrupt:
+                raise
+            except:
+                self.excinfo = py.code.ExceptionInfo()
+        finally:
+            self.stop = time.time()
 
     def __repr__(self):
         if self.excinfo:
@@ -139,6 +143,7 @@ class BaseReport(object):
 
 def pytest_runtest_makereport(item, call):
     when = call.when
+    duration = call.stop-call.start
     keywords = dict([(x,1) for x in item.keywords])
     excinfo = call.excinfo
     if not call.excinfo:
@@ -160,14 +165,15 @@ def pytest_runtest_makereport(item, call):
             else: # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo)
     return TestReport(item.nodeid, item.location,
-        keywords, outcome, longrepr, when)
+                      keywords, outcome, longrepr, when,
+                      duration=duration)
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
     they fail).
     """
     def __init__(self, nodeid, location,
-            keywords, outcome, longrepr, when, sections=()):
+            keywords, outcome, longrepr, when, sections=(), duration=0):
         #: normalized collection node id
         self.nodeid = nodeid
 
@@ -192,6 +198,9 @@ class TestReport(BaseReport):
         #: list of (secname, data) extra information which needs to
         #: marshallable
         self.sections = list(sections)
+
+        #: time it took to run just the test
+        self.duration = duration
 
     def __repr__(self):
         return "<TestReport %r when=%r outcome=%r>" % (
