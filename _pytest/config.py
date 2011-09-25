@@ -421,7 +421,7 @@ class Config(object):
 
 
 def getcfg(args, inibasenames):
-    args = [x for x in args if str(x)[0] != "-"]
+    args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [py.path.local()]
     for arg in args:
