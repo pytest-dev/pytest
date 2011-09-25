@@ -25,6 +25,7 @@ def pytest_configure(config):
         _pytest_fullpath
     except NameError:
         _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
+        _pytest_fullpath = _pytest_fullpath.replace("$py.class", ".py")
 
 def pytest_funcarg___pytest(request):
     return PytestArg(request)

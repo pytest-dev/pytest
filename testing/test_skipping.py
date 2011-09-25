@@ -1,4 +1,5 @@
 import pytest
+import sys
 
 from _pytest.skipping import MarkEvaluator, folded_skips
 from _pytest.skipping import pytest_runtest_setup
@@ -486,6 +487,10 @@ def test_errors_in_xfail_skip_expressions(testdir):
             pass
     """)
     result = testdir.runpytest()
+    markline = "                ^"
+    if sys.platform.startswith("java"):
+        # XXX report this to java
+        markline = "*" + markline[8:]
     result.stdout.fnmatch_lines([
         "*ERROR*test_nameerror*",
         "*evaluating*skipif*expression*",
@@ -493,7 +498,7 @@ def test_errors_in_xfail_skip_expressions(testdir):
         "*ERROR*test_syntax*",
         "*evaluating*xfail*expression*",
         "    syntax error",
-        "                ^",
+        markline,
         "SyntaxError: invalid syntax",
         "*1 pass*2 error*",
     ])
