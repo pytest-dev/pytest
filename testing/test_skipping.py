@@ -472,6 +472,21 @@ def test_reportchars(testdir):
         "SKIP*four*",
     ])
 
+def test_reportchars_error(testdir):
+    testdir.makepyfile(
+        conftest="""
+        def pytest_runtest_teardown():
+            assert 0
+        """,
+        test_simple="""
+        def test_foo():
+            pass
+        """)
+    result = testdir.runpytest('-rE')
+    result.stdout.fnmatch_lines([
+        'ERROR*test_foo*',
+    ])
+
 @pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 def test_errors_in_xfail_skip_expressions(testdir):
     testdir.makepyfile("""

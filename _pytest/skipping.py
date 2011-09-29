@@ -169,21 +169,23 @@ def pytest_terminal_summary(terminalreporter):
         elif char == "X":
             show_xpassed(terminalreporter, lines)
         elif char in "fF":
-            show_failed(terminalreporter, lines)
+            show_simple(terminalreporter, lines, 'failed', "FAIL %s")
         elif char in "sS":
             show_skipped(terminalreporter, lines)
+        elif char == "E":
+            show_simple(terminalreporter, lines, 'error', "ERROR %s")
     if lines:
         tr._tw.sep("=", "short test summary info")
         for line in lines:
             tr._tw.line(line)
 
-def show_failed(terminalreporter, lines):
+def show_simple(terminalreporter, lines, stat, format):
     tw = terminalreporter._tw
-    failed = terminalreporter.stats.get("failed")
+    failed = terminalreporter.stats.get(stat)
     if failed:
         for rep in failed:
             pos = rep.nodeid
-            lines.append("FAIL %s" %(pos, ))
+            lines.append(format %(pos, ))
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
