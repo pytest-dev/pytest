@@ -1,6 +1,7 @@
 Changes between 2.1.2 and [next version]
 ----------------------------------------
 
+- fix issue79: rewriting failed on some comparisons in boolops
 - correctly handle zero length arguments (a la pytest '')
 - fix issue67 / junitxml now contains correct test durations, thanks ronny
 - fix issue75 / skipping test failure on jython

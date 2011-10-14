@@ -491,13 +491,13 @@ class AssertionRewriter(ast.NodeVisitor):
         self.push_format_context()
         # Process each operand, short-circuting if needed.
         for i, v in enumerate(boolop.values):
-            self.push_format_context()
-            res, expl = self.visit(v)
-            body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             if i:
                 fail_inner = []
                 self.on_failure.append(ast.If(cond, fail_inner, []))
                 self.on_failure = fail_inner
+            self.push_format_context()
+            res, expl = self.visit(v)
+            body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             expl_format = self.pop_format_context(ast.Str(expl))
             call = ast.Call(app, [expl_format], [], None, None)
             self.on_failure.append(ast.Expr(call))

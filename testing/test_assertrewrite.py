@@ -145,6 +145,14 @@ class TestAssertionRewrite:
             assert False or x()
         assert getmsg(f, {"x" : x}) == "assert (False or x())"
         def f():
+            assert 1 in {} and 2 in {}
+        assert getmsg(f) == "assert (1 in {})"
+        def f():
+            x = 1
+            y = 2
+            assert x in {1 : None} and y in {}
+        assert getmsg(f) == "assert (1 in {1: None} and 2 in {})"
+        def f():
             f = True
             g = False
             assert f or g
