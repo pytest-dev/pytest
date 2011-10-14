@@ -484,7 +484,7 @@ class AssertionRewriter(ast.NodeVisitor):
         res_var = self.variable()
         expl_list = self.assign(ast.List([], ast.Load()))
         app = ast.Attribute(expl_list, "append", ast.Load())
-        is_or = isinstance(boolop.op, ast.Or)
+        is_or = int(isinstance(boolop.op, ast.Or))
         body = save = self.statements
         fail_save = self.on_failure
         levels = len(boolop.values) - 1
