@@ -43,23 +43,10 @@ def pytest_configure(config):
                 mode = "reinterp"
     if mode != "plain":
         _load_modules(mode)
-        def callbinrepr(op, left, right):
-            hook_result = config.hook.pytest_assertrepr_compare(
-                config=config, op=op, left=left, right=right)
-            for new_expl in hook_result:
-                if new_expl:
-                    res = '\n~'.join(new_expl)
-                    if mode == "rewrite":
-                        # The result will be fed back a python % formatting
-                        # operation, which will fail if there are extraneous
-                        # '%'s in the string. Escape them here.
-                        res = res.replace("%", "%%")
-                    return res
         m = monkeypatch()
         config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)
-        m.setattr(util, '_reprcompare', callbinrepr)
     hook = None
     if mode == "rewrite":
         hook = rewrite.AssertionRewritingHook()
@@ -81,6 +68,24 @@ def pytest_collection(session):
     hook = session.config._assertstate.hook
     if hook is not None:
         hook.set_session(session)
+
+def pytest_runtest_setup(item):
+    def callbinrepr(op, left, right):
+        hook_result = item.ihook.pytest_assertrepr_compare(
+            config=item.config, op=op, left=left, right=right)
+        for new_expl in hook_result:
+            if new_expl:
+                res = '\n~'.join(new_expl)
+                if item.config.getvalue("assertmode") == "rewrite":
+                    # The result will be fed back a python % formatting
+                    # operation, which will fail if there are extraneous
+                    # '%'s in the string. Escape them here.
+                    res = res.replace("%", "%%")
+                return res
+    util._reprcompare = callbinrepr
+
+def pytest_runtest_teardown(item):
+    util._reprcompare = None
 
 def pytest_sessionfinish(session):
     hook = session.config._assertstate.hook

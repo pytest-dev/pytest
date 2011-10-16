@@ -40,15 +40,6 @@ class TestBinReprIntegration:
         assert hook.left == [0, 1]
         assert hook.right == [0, 2]
 
-    def test_configure_unconfigure(self, testdir, hook):
-        assert hook == util._reprcompare
-        config = testdir.parseconfig()
-        plugin.pytest_configure(config)
-        assert hook != util._reprcompare
-        from _pytest.config import pytest_unconfigure
-        pytest_unconfigure(config)
-        assert hook == util._reprcompare
-
 def callequal(left, right):
     return plugin.pytest_assertrepr_compare('==', left, right)
 
@@ -166,6 +157,28 @@ def test_sequence_comparison_uses_repr(testdir):
         "*E*Extra items*right*",
         "*E*'y'*",
     ])
+
+@needsnewassert
+def test_assertrepr_loaded_per_dir(testdir):
+    testdir.makepyfile(test_base=['def test_base(): assert 1 == 2'])
+    a = testdir.mkdir('a')
+    a_test = a.join('test_a.py')
+    a_test.write('def test_a(): assert 1 == 2')
+    a_conftest = a.join('conftest.py')
+    a_conftest.write('def pytest_assertrepr_compare(): return ["summary a"]')
+    b = testdir.mkdir('b')
+    b_test = b.join('test_b.py')
+    b_test.write('def test_b(): assert 1 == 2')
+    b_conftest = b.join('conftest.py')
+    b_conftest.write('def pytest_assertrepr_compare(): return ["summary b"]')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+            '*def test_base():*',
+            '*E*assert 1 == 2*',
+            '*def test_a():*',
+            '*E*assert summary a*',
+            '*def test_b():*',
+            '*E*assert summary b*'])
 
 
 def test_assertion_options(testdir):
