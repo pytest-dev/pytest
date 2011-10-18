@@ -53,7 +53,7 @@ Let's run this without supplying our new command line option::
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     first
-    1 failed in 0.01 seconds
+    1 failed in 0.02 seconds
 
 And now with supplying a command line option::
 
@@ -76,7 +76,7 @@ And now with supplying a command line option::
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     second
-    1 failed in 0.01 seconds
+    1 failed in 0.02 seconds
 
 Ok, this completes the basic pattern.  However, one often rather
 wants to process command line options outside of the test and
@@ -109,13 +109,13 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
-    gw0 I / gw1 I
-    gw0 [0] / gw1 [0]
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
+    gw0 I
+    gw0 [0]
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.26 seconds =============================
+    =============================  in 0.48 seconds =============================
 
 .. _`excontrolskip`:
 
@@ -156,25 +156,25 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-301/conftest.py:9: need --runslow option to run
+    SKIP [1] /Users/hpk/tmp/doc-exec-172/conftest.py:9: need --runslow option to run
     
-    =================== 1 passed, 1 skipped in 0.01 seconds ====================
+    =================== 1 passed, 1 skipped in 0.02 seconds ====================
 
 Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     collecting ... collected 2 items
     
     test_module.py ..
     
-    ========================= 2 passed in 0.01 seconds =========================
+    ========================= 2 passed in 0.02 seconds =========================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -213,7 +213,7 @@ Let's run our little function::
     E       Failed: not configured: 42
     
     test_checkconfig.py:8: Failed
-    1 failed in 0.01 seconds
+    1 failed in 0.02 seconds
 
 Detect if running from within a py.test run
 --------------------------------------------------------------
@@ -261,7 +261,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     project deps: mylib-1.1
     collecting ... collected 0 items
     
@@ -284,7 +284,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1 -- /home/hpk/venv/0/bin/python
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3 -- /Users/hpk/venv/0/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -295,7 +295,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     collecting ... collected 0 items
     
     =============================  in 0.00 seconds =============================

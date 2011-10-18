@@ -24,7 +24,7 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     collecting ... collected 1 items
     
     test_unittest.py F
@@ -42,7 +42,7 @@ Running it yields::
     test_unittest.py:8: AssertionError
     ----------------------------- Captured stdout ------------------------------
     hello
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.04 seconds =========================
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 

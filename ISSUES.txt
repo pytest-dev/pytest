@@ -7,6 +7,13 @@ tags: bug 2.4 core xdist
   the protocol now - setup/teardown is called at module level.
   consider making calling of setup/teardown configurable
 
+optimizations 
+---------------------------------------------------------------
+tags: 2.4 core
+
+- look at ihook optimization such that all lookups for
+  hooks relating to the same fspath are cached.
+
 fix start/finish partial finailization problem
 ---------------------------------------------------------------
 tags: bug core

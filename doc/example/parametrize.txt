@@ -44,7 +44,7 @@ This means that we only run 2 tests if we do not pass ``--all``::
     $ py.test -q test_compute.py
     collecting ... collected 2 items
     ..
-    2 passed in 0.01 seconds
+    2 passed in 0.02 seconds
 
 We run only two computations, so we see two dots.
 let's run the full monty::
@@ -62,7 +62,7 @@ let's run the full monty::
     E       assert 4 < 4
     
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.01 seconds
+    1 failed, 4 passed in 0.03 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -114,13 +114,13 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.1.1
+    platform darwin -- Python 2.7.1 -- pytest-2.1.3
     collecting ... collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[0]'>
       <Function 'test_db_initialized[1]'>
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.01 seconds =============================
 
 And then when we run the test::
 
@@ -130,7 +130,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     __________________________ test_db_initialized[1] __________________________
     
-    db = <conftest.DB2 instance at 0x17829e0>
+    db = <conftest.DB2 instance at 0x101316b90>
     
         def test_db_initialized(db):
             # a dummy test
@@ -139,7 +139,7 @@ And then when we run the test::
     E           Failed: deliberately failing for demo purposes
     
     test_backends.py:6: Failed
-    1 failed, 1 passed in 0.01 seconds
+    1 failed, 1 passed in 0.02 seconds
 
 Now you see that one invocation of the test passes and another fails,
 as it to be expected.
@@ -184,7 +184,7 @@ the respective settings::
     ================================= FAILURES =================================
     __________________________ test_db_initialized[1] __________________________
     
-    db = <conftest.DB2 instance at 0x2acf4d0>
+    db = <conftest.DB2 instance at 0x10131c488>
     
         def test_db_initialized(db):
             # a dummy test
@@ -195,7 +195,7 @@ the respective settings::
     test_backends.py:6: Failed
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize.TestClass instance at 0x2ad2830>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x101322170>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -204,14 +204,14 @@ the respective settings::
     test_parametrize.py:17: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize.TestClass instance at 0x2ad8830>, a = 3, b = 2
+    self = <test_parametrize.TestClass instance at 0x1013228c0>, a = 3, b = 2
     
         def test_zerodivision(self, a, b):
     >       pytest.raises(ZeroDivisionError, "a/b")
     E       Failed: DID NOT RAISE
     
     test_parametrize.py:20: Failed
-    3 failed, 3 passed in 0.02 seconds
+    3 failed, 3 passed in 0.05 seconds
 
 Parametrizing test methods through a decorator
 --------------------------------------------------------------
@@ -252,7 +252,7 @@ Running it gives similar results as before::
     ================================= FAILURES =================================
     _________________________ TestClass.test_equals[0] _________________________
     
-    self = <test_parametrize2.TestClass instance at 0x1ef2170>, a = 1, b = 2
+    self = <test_parametrize2.TestClass instance at 0x10130ac20>, a = 1, b = 2
     
         @params([dict(a=1, b=2), dict(a=3, b=3), ])
         def test_equals(self, a, b):
@@ -262,7 +262,7 @@ Running it gives similar results as before::
     test_parametrize2.py:19: AssertionError
     ______________________ TestClass.test_zerodivision[1] ______________________
     
-    self = <test_parametrize2.TestClass instance at 0x20e4248>, a = 3, b = 2
+    self = <test_parametrize2.TestClass instance at 0x10131c878>, a = 3, b = 2
     
         @params([dict(a=1, b=0), dict(a=3, b=2)])
         def test_zerodivision(self, a, b):
@@ -270,7 +270,7 @@ Running it gives similar results as before::
     E       Failed: DID NOT RAISE
     
     test_parametrize2.py:23: Failed
-    2 failed, 2 passed in 0.02 seconds
+    2 failed, 2 passed in 0.04 seconds
 
 Checking serialization between Python interpreters
 --------------------------------------------------------------
@@ -290,5 +290,5 @@ Running it (with Python-2.4 through to Python2.7 installed)::
 
    . $ py.test -q multipython.py
    collecting ... collected 75 items
-   ....s....s....s....ssssss....s....s....s....ssssss....s....s....s....ssssss
-   48 passed, 27 skipped in 2.48 seconds
+   ssssss...ss...ss...ssssssssssss...ss...ss...ssssssssssss...ss...ss...ssssss
+   27 passed, 48 skipped in 3.04 seconds
