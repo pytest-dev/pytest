@@ -17,7 +17,7 @@ If you want to install or upgrade pytest, just type one of::
     easy_install -U pytest
 
 Thanks to the bug reporters and to Ronny Pfannschmidt, Benjamin Peterson
-and who implemented the fixes.
+and Floris Bruynooghe who implemented the fixes.
 
 best,
 holger krekel
