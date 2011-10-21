@@ -38,6 +38,7 @@ very useful if you want to test e.g. against different database backends
 or with multiple numerical arguments sets and want to reuse the same set
 of test functions.
 
+py.test comes with :ref:`builtinfuncargs` and there are some refined usages in the examples section.
 
 .. _funcarg:
 

@@ -17,6 +17,9 @@ to get an overview on the globally available helpers.
 .. automodule:: pytest
     :members:
 
+
+.. _builtinfuncargs:
+
 Builtin function arguments
 -----------------------------------------------------
 
