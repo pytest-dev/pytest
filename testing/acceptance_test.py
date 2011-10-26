@@ -408,6 +408,14 @@ class TestInvocationVariants:
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
+
+        result = testdir.runpytest("--pyargs", ".")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*2 passed*"
+        ])
+
+        monkeypatch.setenv('PYTHONPATH', testdir)
         path.join('test_hello.py').remove()
         result = testdir.runpytest("--pyargs", "tpkg.test_hello")
         assert result.ret != 0

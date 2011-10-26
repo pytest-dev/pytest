@@ -11,6 +11,8 @@ EXIT_TESTSFAILED = 1
 EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 
+name_re = py.std.re.compile("^[a-zA-Z_]\w*$")
+
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
         type="args", default=('.*', 'CVS', '_darcs', '{arch}'))
@@ -472,6 +474,13 @@ class Session(FSCollector):
         mod = None
         path = [os.path.abspath('.')] + sys.path
         for name in x.split('.'):
+            # ignore anything thats not a propper name here
+            # else something like --pyargs will mess up '.'
+            # since imp.find_module will actually sometimes works for it
+            # but its supposed to be considered a filesystem path
+            # not a package
+            if name_re.match(name) is None:
+                return x
             try:
                 fd, mod, type_ = imp.find_module(name, path)
             except ImportError:
