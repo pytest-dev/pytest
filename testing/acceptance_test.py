@@ -403,12 +403,9 @@ class TestInvocationVariants:
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
-        result = testdir.runpytest("--pyargs", ".")
-        assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*2 passed*"
-        ])
 
+        empty_package = testdir.mkpydir("empty_package")
+        monkeypatch.setenv('PYTHONPATH', empty_package)
         result = testdir.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
