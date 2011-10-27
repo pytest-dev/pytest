@@ -474,10 +474,10 @@ class Session(FSCollector):
         mod = None
         path = [os.path.abspath('.')] + sys.path
         for name in x.split('.'):
-            # ignore anything thats not a propper name here
+            # ignore anything that's not a proper name here
             # else something like --pyargs will mess up '.'
-            # since imp.find_module will actually sometimes works for it
-            # but its supposed to be considered a filesystem path
+            # since imp.find_module will actually sometimes work for it
+            # but it's supposed to be considered a filesystem path
             # not a package
             if name_re.match(name) is None:
                 return x
