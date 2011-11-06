@@ -46,7 +46,7 @@ class TempdirHandler:
 
     def finish(self):
         self.trace("finish")
-        
+
 def pytest_configure(config):
     mp = monkeypatch()
     t = TempdirHandler(config)
@@ -64,5 +64,5 @@ def pytest_funcarg__tmpdir(request):
     name = request._pyfuncitem.name
     name = py.std.re.sub("[\W]", "_", name)
     x = request.config._tmpdirhandler.mktemp(name, numbered=True)
-    return x.realpath()
+    return x
 
