@@ -402,6 +402,15 @@ class TmpTestdir:
         config.pluginmanager.do_configure(config)
         self.request.addfinalizer(lambda:
             config.pluginmanager.do_unconfigure(config))
+        # XXX we need to additionally reset FDs to prevent pen FDs
+        # during our test suite. see also capture.py's unconfigure XXX
+        # comment about logging
+        def finalize_capman():
+            capman = config.pluginmanager.getplugin('capturemanager')
+            while capman._method2capture:
+                name, cap = capman._method2capture.popitem()
+                cap.reset()
+        self.request.addfinalizer(finalize_capman)
         return config
 
     def getitem(self,  source, funcname="test_func"):

@@ -35,7 +35,7 @@ def pytest_unconfigure(config, __multicall__):
     __multicall__.execute()
     out2 = py.process.cmdexec("lsof -p %d" % pid)
     len2 = getopenfiles(out2)
-    assert len2 < config._numfiles + 7, out2
+    assert len2 < config._numfiles + 15, out2
 
 
 def pytest_runtest_setup(item):
