@@ -66,11 +66,11 @@ def test_basetemp(testdir):
     assert result.ret == 0
     assert mytemp.join('hello').check()
 
-@pytest.mark.skipif("not hasattr(os, 'symlink')")
+@pytest.mark.skipif("not hasattr(py.path.local, 'mksymlinkto')")
 def test_tmpdir_keeps_symlinks(testdir):
     realtemp = testdir.tmpdir.mkdir("myrealtemp")
     linktemp = testdir.tmpdir.join("symlinktemp")
-    os.symlink(str(realtemp), str(linktemp))
+    linktemp.mksymlinkto(realtemp)
     p = testdir.makepyfile("""
         def test_1(tmpdir):
             import os
