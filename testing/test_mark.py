@@ -189,58 +189,6 @@ class TestFunctional:
         ])
 
 
-class Test_genitems:
-    def test_check_collect_hashes(self, testdir):
-        p = testdir.makepyfile("""
-            def test_1():
-                pass
-
-            def test_2():
-                pass
-        """)
-        p.copy(p.dirpath(p.purebasename + "2" + ".py"))
-        items, reprec = testdir.inline_genitems(p.dirpath())
-        assert len(items) == 4
-        for numi, i in enumerate(items):
-            for numj, j in enumerate(items):
-                if numj != numi:
-                    assert hash(i) != hash(j)
-                    assert i != j
-
-    def test_root_conftest_syntax_error(self, testdir):
-        # do we want to unify behaviour with
-        # test_subdir_conftest_error?
-        p = testdir.makepyfile(conftest="raise SyntaxError\n")
-        pytest.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
-
-    def test_example_items1(self, testdir):
-        p = testdir.makepyfile('''
-            def testone():
-                pass
-
-            class TestX:
-                def testmethod_one(self):
-                    pass
-
-            class TestY(TestX):
-                pass
-        ''')
-        items, reprec = testdir.inline_genitems(p)
-        assert len(items) == 3
-        assert items[0].name == 'testone'
-        assert items[1].name == 'testmethod_one'
-        assert items[2].name == 'testmethod_one'
-
-        # let's also test getmodpath here
-        assert items[0].getmodpath() == "testone"
-        assert items[1].getmodpath() == "TestX.testmethod_one"
-        assert items[2].getmodpath() == "TestY.testmethod_one"
-
-        s = items[0].getmodpath(stopatmodule=False)
-        assert s.endswith("test_example_items1.testone")
-        print(s)
-
-
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile("""

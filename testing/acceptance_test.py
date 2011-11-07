@@ -13,6 +13,12 @@ class TestGeneralUsage:
             '*ERROR: hello'
         ])
 
+    def test_root_conftest_syntax_error(self, testdir):
+        p = testdir.makepyfile(conftest="raise SyntaxError\n")
+        result = testdir.runpytest()
+        result.stderr.fnmatch_lines(["*raise SyntaxError*"])
+        assert result.ret != 0
+
     def test_early_hook_error_issue38_1(self, testdir):
         testdir.makeconftest("""
             def pytest_sessionstart():
@@ -354,24 +360,24 @@ class TestInvocationVariants:
     def test_equivalence_pytest_pytest(self):
         assert pytest.main == py.test.cmdline.main
 
-    def test_invoke_with_string(self, capsys):
-        retcode = pytest.main("-h")
+    def test_invoke_with_string(self, testdir, capsys):
+        retcode = testdir.pytestmain("-h")
         assert not retcode
         out, err = capsys.readouterr()
         assert "--help" in out
-        pytest.raises(ValueError, lambda: pytest.main(retcode))
+        pytest.raises(ValueError, lambda: pytest.main(0))
 
     def test_invoke_with_path(self, testdir, capsys):
         retcode = testdir.pytestmain(testdir.tmpdir)
         assert not retcode
         out, err = capsys.readouterr()
 
-    def test_invoke_plugin_api(self, capsys):
+    def test_invoke_plugin_api(self, testdir, capsys):
         class MyPlugin:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
-        pytest.main(["-h"], plugins=[MyPlugin()])
+        testdir.pytestmain(["-h"], plugins=[MyPlugin()])
         out, err = capsys.readouterr()
         assert "--myopt" in out
 

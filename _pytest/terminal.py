@@ -43,7 +43,8 @@ def pytest_configure(config):
             pass
         else:
             stdout = os.fdopen(newfd, stdout.mode, 1)
-            config._toclose = stdout
+            config._cleanup.append(lambda: stdout.close())
+
     reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
@@ -51,11 +52,6 @@ def pytest_configure(config):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
         config.trace.root.setprocessor("pytest:config", mywriter)
-
-def pytest_unconfigure(config):
-    if hasattr(config, '_toclose'):
-        #print "closing", config._toclose, config._toclose.fileno()
-        config._toclose.close()
 
 def getreportopt(config):
     reportopts = ""

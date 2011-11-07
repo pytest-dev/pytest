@@ -50,7 +50,7 @@ def pytest_addoption(parser):
 def pytest_namespace():
     collect = dict(Item=Item, Collector=Collector, File=File, Session=Session)
     return dict(collect=collect)
-        
+
 def pytest_configure(config):
     py.test.config = config # compatibiltiy
     if config.option.exitfirst:
@@ -134,7 +134,7 @@ def compatproperty(name):
         return getattr(pytest, name)
     return property(fget, None, None,
         "deprecated attribute %r, use pytest.%s" % (name,name))
-    
+
 class Node(object):
     """ base class for all Nodes in the collection tree.
     Collector subclasses have children, Items are terminal nodes."""
@@ -145,13 +145,13 @@ class Node(object):
 
         #: the parent collector node.
         self.parent = parent
-        
+
         #: the test config object
         self.config = config or parent.config
 
         #: the collection this node is part of
         self.session = session or parent.session
-        
+
         #: filesystem path where this node was collected from
         self.fspath = getattr(parent, 'fspath', None)
         self.ihook = self.session.gethookproxy(self.fspath)
@@ -488,7 +488,7 @@ class Session(FSCollector):
             else:
                 if fd is not None:
                     fd.close()
-            
+
             if type_[2] != imp.PKG_DIRECTORY:
                 path = [os.path.dirname(mod)]
             else:
@@ -511,7 +511,7 @@ class Session(FSCollector):
             raise pytest.UsageError(msg + arg)
         parts[0] = path
         return parts
-   
+
     def matchnodes(self, matching, names):
         self.trace("matchnodes", matching, names)
         self.trace.root.indent += 1

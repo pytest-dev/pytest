@@ -54,17 +54,6 @@ class TestConfigTmpdir:
         assert b2.check()
         assert not h.check()
 
-    def test_reparse(self, testdir):
-        config2 = testdir.reparseconfig([])
-        config3 = testdir.reparseconfig([])
-        assert config2.basetemp != config3.basetemp
-        assert not config2.basetemp.relto(config3.basetemp)
-        assert not config3.basetemp.relto(config2.basetemp)
-
-    def test_reparse_filename_too_long(self, testdir):
-        config = testdir.reparseconfig(["--basetemp=%s" % ("123"*300)])
-
-
 def test_basetemp(testdir):
     mytemp = testdir.tmpdir.mkdir("mytemp")
     p = testdir.makepyfile("""

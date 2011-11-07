@@ -332,17 +332,6 @@ class TestPytestPluginInteractions:
             "*did not find*sys*"
         ])
 
-    def test_do_option_conftestplugin(self, testdir):
-        p = testdir.makepyfile("""
-            def pytest_addoption(parser):
-                parser.addoption('--test123', action="store_true")
-        """)
-        config = testdir.Config()
-        config._conftest.importconftest(p)
-        print(config.pluginmanager.getplugins())
-        config.parse([])
-        assert not config.option.test123
-
     def test_namespace_early_from_import(self, testdir):
         p = testdir.makepyfile("""
             from pytest import Item
@@ -370,9 +359,7 @@ class TestPytestPluginInteractions:
         ])
 
     def test_do_option_postinitialize(self, testdir):
-        config = testdir.Config()
-        config.parse([])
-        config.pluginmanager.do_configure(config=config)
+        config = testdir.parseconfigure()
         assert not hasattr(config.option, 'test123')
         p = testdir.makepyfile("""
             def pytest_addoption(parser):
@@ -640,7 +627,7 @@ class TestTracer:
         log2("seen")
         tags, args = l2[0]
         assert args == ("seen",)
-        
+
 
     def test_setmyprocessor(self):
         from _pytest.core import TagTracer

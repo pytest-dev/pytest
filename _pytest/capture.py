@@ -11,19 +11,22 @@ def pytest_addoption(parser):
     group._addoption('-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
 
+@pytest.mark.tryfirst
+def pytest_cmdline_parse(pluginmanager, args):
+    # we want to perform capturing already for plugin/conftest loading
+    if '-s' in args or "--capture=no" in args:
+        method = "no"
+    elif hasattr(os, 'dup') and '--capture=sys' not in args:
+        method = "fd"
+    else:
+        method = "sys"
+    capman = CaptureManager(method)
+    pluginmanager.register(capman, "capturemanager")
+
 def addouterr(rep, outerr):
     for secname, content in zip(["out", "err"], outerr):
         if content:
             rep.sections.append(("Captured std%s" % secname, content))
-
-def pytest_unconfigure(config):
-    # registered in config.py during early conftest.py loading
-    capman = config.pluginmanager.getplugin('capturemanager')
-    while capman._method2capture:
-        name, cap = capman._method2capture.popitem()
-        # XXX logging module may wants to close it itself on process exit
-        # otherwise we could do finalization here and call "reset()".
-        cap.suspend()
 
 class NoCapture:
     def startall(self):
@@ -36,8 +39,9 @@ class NoCapture:
         return "", ""
 
 class CaptureManager:
-    def __init__(self):
+    def __init__(self, defaultmethod=None):
         self._method2capture = {}
+        self._defaultmethod = defaultmethod
 
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
@@ -62,14 +66,6 @@ class CaptureManager:
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
-    def _getmethod_preoptionparse(self, args):
-        if '-s' in args or "--capture=no" in args:
-            return "no"
-        elif hasattr(os, 'dup') and '--capture=sys' not in args:
-            return "fd"
-        else:
-            return "sys"
-
     def _getmethod(self, config, fspath):
         if config.option.capture:
             method = config.option.capture
@@ -82,16 +78,22 @@ class CaptureManager:
             method = "sys"
         return method
 
+    def reset_capturings(self):
+        for name, cap in self._method2capture.items():
+            cap.reset()
+
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)
         if not hasattr(item, 'outerr'):
             item.outerr = ('', '') # we accumulate outerr on the item
         return self.resumecapture(method)
 
-    def resumecapture(self, method):
+    def resumecapture(self, method=None):
         if hasattr(self, '_capturing'):
             raise ValueError("cannot resume, already capturing with %r" %
                 (self._capturing,))
+        if method is None:
+            method = self._defaultmethod
         cap = self._method2capture.get(method)
         self._capturing = method
         if cap is None:

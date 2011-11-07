@@ -16,7 +16,6 @@ class TestCaptureManager:
 
     def test_configure_per_fspath(self, testdir):
         config = testdir.parseconfig(testdir.tmpdir)
-        assert config.getvalue("capture") is None
         capman = CaptureManager()
         hasfd = hasattr(os, 'dup')
         if hasfd:
@@ -53,6 +52,7 @@ class TestCaptureManager:
             capman.resumecapture(method)
             out, err = capman.suspendcapture()
             assert not out and not err
+            capman.reset_capturings()
         finally:
             capouter.reset()
 
@@ -60,20 +60,23 @@ class TestCaptureManager:
     def test_juggle_capturings(self, testdir):
         capouter = py.io.StdCaptureFD()
         try:
-            config = testdir.parseconfig(testdir.tmpdir)
+            #config = testdir.parseconfig(testdir.tmpdir)
             capman = CaptureManager()
-            capman.resumecapture("fd")
-            pytest.raises(ValueError, 'capman.resumecapture("fd")')
-            pytest.raises(ValueError, 'capman.resumecapture("sys")')
-            os.write(1, "hello\n".encode('ascii'))
-            out, err = capman.suspendcapture()
-            assert out == "hello\n"
-            capman.resumecapture("sys")
-            os.write(1, "hello\n".encode('ascii'))
-            py.builtin.print_("world", file=sys.stderr)
-            out, err = capman.suspendcapture()
-            assert not out
-            assert err == "world\n"
+            try:
+                capman.resumecapture("fd")
+                pytest.raises(ValueError, 'capman.resumecapture("fd")')
+                pytest.raises(ValueError, 'capman.resumecapture("sys")')
+                os.write(1, "hello\n".encode('ascii'))
+                out, err = capman.suspendcapture()
+                assert out == "hello\n"
+                capman.resumecapture("sys")
+                os.write(1, "hello\n".encode('ascii'))
+                py.builtin.print_("world", file=sys.stderr)
+                out, err = capman.suspendcapture()
+                assert not out
+                assert err == "world\n"
+            finally:
+                capman.reset_capturings()
         finally:
             capouter.reset()
 

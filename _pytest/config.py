@@ -11,8 +11,12 @@ def pytest_cmdline_parse(pluginmanager, args):
     return config
 
 def pytest_unconfigure(config):
-    for func in config._cleanup:
-        func()
+    while 1:
+        try:
+            fin = config._cleanup.pop()
+        except IndexError:
+            break
+        fin()
 
 class Parser:
     """ Parser for command line arguments. """
@@ -254,11 +258,14 @@ class Config(object):
         self.hook = self.pluginmanager.hook
         self._inicache = {}
         self._cleanup = []
-    
+
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
         config = cls()
+        # XXX slightly crude way to initialize capturing
+        import _pytest.capture
+        _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
         config._preparse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
@@ -283,11 +290,10 @@ class Config(object):
 
     def _setinitialconftest(self, args):
         # capture output during conftest init (#issue93)
-        from _pytest.capture import CaptureManager
-        capman = CaptureManager()
-        self.pluginmanager.register(capman, 'capturemanager')
-        # will be unregistered in capture.py's unconfigure()
-        capman.resumecapture(capman._getmethod_preoptionparse(args))
+        # XXX introduce load_conftest hook to avoid needing to know
+        # about capturing plugin here
+        capman = self.pluginmanager.getplugin("capturemanager")
+        capman.resumecapture()
         try:
             try:
                 self._conftest.setinitial(args)

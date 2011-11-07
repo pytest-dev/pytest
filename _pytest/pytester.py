@@ -314,16 +314,6 @@ class TmpTestdir:
             result.extend(session.genitems(colitem))
         return result
 
-    def inline_genitems(self, *args):
-        #config = self.parseconfig(*args)
-        config = self.parseconfigure(*args)
-        rec = self.getreportrecorder(config)
-        session = Session(config)
-        config.hook.pytest_sessionstart(session=session)
-        session.perform_collect()
-        config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
-        return session.items, rec
-
     def runitem(self, source):
         # used from runner functional tests
         item = self.getitem(source)
@@ -347,70 +337,52 @@ class TmpTestdir:
         assert len(reports) == 1, reports
         return reports[0]
 
-    def inline_run(self, *args):
-        args = ("-s", ) + args # otherwise FD leakage
-        config = self.parseconfig(*args)
-        reprec = self.getreportrecorder(config)
-        #config.pluginmanager.do_configure(config)
-        config.hook.pytest_cmdline_main(config=config)
-        #config.pluginmanager.do_unconfigure(config)
-        return reprec
+    def inline_genitems(self, *args):
+        return self.inprocess_run(list(args) + ['--collectonly'])
 
-    def config_preparse(self):
-        config = self.Config()
-        for plugin in self.plugins:
-            if isinstance(plugin, str):
-                config.pluginmanager.import_plugin(plugin)
-            else:
-                if isinstance(plugin, dict):
-                    plugin = PseudoPlugin(plugin)
-                if not config.pluginmanager.isregistered(plugin):
-                    config.pluginmanager.register(plugin)
-        return config
+    def inline_run(self, *args):
+        items, rec = self.inprocess_run(args)
+        return rec
+
+    def inprocess_run(self, args, plugins=None):
+        rec = []
+        items = []
+        class Collect:
+            def pytest_configure(x, config):
+                rec.append(self.getreportrecorder(config))
+            def pytest_itemcollected(self, item):
+                items.append(item)
+        if not plugins:
+            plugins = []
+        plugins.append(Collect())
+        self.pytestmain(list(args), plugins=[Collect()])
+        assert len(rec) == 1
+        return items, rec[0]
 
     def parseconfig(self, *args):
-        if not args:
-            args = (self.tmpdir,)
-        config = self.config_preparse()
-        args = list(args)
+        args = map(str, args)
         for x in args:
             if str(x).startswith('--basetemp'):
                 break
         else:
             args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
-        config.parse(args)
+        import _pytest.core
+        config = _pytest.core._prepareconfig(args, self.plugins)
+        # the in-process pytest invocation needs to avoid leaking FDs
+        # so we register a "reset_capturings" callmon the capturing manager
+        # and make sure it gets called
+        config._cleanup.append(
+            config.pluginmanager.getplugin("capturemanager").reset_capturings)
+        import _pytest.config
+        self.request.addfinalizer(
+            lambda: _pytest.config.pytest_unconfigure(config))
         return config
-
-    def reparseconfig(self, args=None):
-        """ this is used from tests that want to re-invoke parse(). """
-        if not args:
-            args = [self.tmpdir]
-        oldconfig = getattr(py.test, 'config', None)
-        try:
-            c = py.test.config = self.Config()
-            c.basetemp = py.path.local.make_numbered_dir(prefix="reparse",
-                keep=0, rootdir=self.tmpdir, lock_timeout=None)
-            c.parse(args)
-            c.pluginmanager.do_configure(c)
-            self.request.addfinalizer(lambda: c.pluginmanager.do_unconfigure(c))
-            return c
-        finally:
-            py.test.config = oldconfig
 
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
         config.pluginmanager.do_configure(config)
         self.request.addfinalizer(lambda:
-            config.pluginmanager.do_unconfigure(config))
-        # XXX we need to additionally reset FDs to prevent pen FDs
-        # during our test suite. see also capture.py's unconfigure XXX
-        # comment about logging
-        def finalize_capman():
-            capman = config.pluginmanager.getplugin('capturemanager')
-            while capman._method2capture:
-                name, cap = capman._method2capture.popitem()
-                cap.reset()
-        self.request.addfinalizer(finalize_capman)
+        config.pluginmanager.do_unconfigure(config))
         return config
 
     def getitem(self,  source, funcname="test_func"):
@@ -430,7 +402,6 @@ class TmpTestdir:
             self.makepyfile(__init__ = "#")
         self.config = config = self.parseconfigure(path, *configargs)
         node = self.getnode(config, path)
-        #config.pluginmanager.do_unconfigure(config)
         return node
 
     def collect_by_name(self, modcol, name):
@@ -447,9 +418,16 @@ class TmpTestdir:
         return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
 
     def pytestmain(self, *args, **kwargs):
-        ret = pytest.main(*args, **kwargs)
-        if ret == 2:
-            raise KeyboardInterrupt()
+        class ResetCapturing:
+            @pytest.mark.trylast
+            def pytest_unconfigure(self, config):
+                capman = config.pluginmanager.getplugin("capturemanager")
+                capman.reset_capturings()
+        plugins = kwargs.setdefault("plugins", [])
+        rc = ResetCapturing()
+        plugins.append(rc)
+        return pytest.main(*args, **kwargs)
+
     def run(self, *cmdargs):
         return self._run(*cmdargs)
 
@@ -549,10 +527,6 @@ def getdecoded(out):
         except UnicodeDecodeError:
             return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
                     py.io.saferepr(out),)
-
-class PseudoPlugin:
-    def __init__(self, vars):
-        self.__dict__.update(vars)
 
 class ReportRecorder(object):
     def __init__(self, hook):

@@ -56,6 +56,7 @@ def pytest_cmdline_main(config):
     elif config.option.help:
         config.pluginmanager.do_configure(config)
         showhelp(config)
+        config.pluginmanager.do_unconfigure(config)
         return 0
 
 def showhelp(config):
@@ -113,7 +114,7 @@ def pytest_report_header(config):
         verinfo = getpluginversioninfo(config)
         if verinfo:
             lines.extend(verinfo)
-            
+
     if config.option.traceconfig:
         lines.append("active plugins:")
         plugins = []

@@ -1,9 +1,9 @@
 import py, pytest
 
-from _pytest.config import getcfg, Config
+from _pytest.config import getcfg
 
 class TestParseIni:
-    def test_getcfg_and_config(self, tmpdir):
+    def test_getcfg_and_config(self, testdir, tmpdir):
         sub = tmpdir.mkdir("sub")
         sub.chdir()
         tmpdir.join("setup.cfg").write(py.code.Source("""
@@ -12,25 +12,23 @@ class TestParseIni:
         """))
         cfg = getcfg([sub], ["setup.cfg"])
         assert cfg['name'] == "value"
-        config = Config()
-        config._preparse([sub])
+        config = testdir.parseconfigure(sub)
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
         cfg = getcfg([''], ['setup.cfg']) #happens on py.test  ""
 
-    def test_append_parse_args(self, tmpdir):
+    def test_append_parse_args(self, testdir, tmpdir):
         tmpdir.join("setup.cfg").write(py.code.Source("""
             [pytest]
             addopts = --verbose
         """))
-        config = Config()
-        config.parse([tmpdir])
+        config = testdir.parseconfig(tmpdir)
         assert config.option.verbose
-        config = Config()
-        args = [tmpdir,]
-        config._preparse(args, addopts=False)
-        assert len(args) == 1
+        #config = testdir.Config()
+        #args = [tmpdir,]
+        #config._preparse(args, addopts=False)
+        #assert len(args) == 1
 
     def test_tox_ini_wrong_version(self, testdir):
         p = testdir.makefile('.ini', tox="""
@@ -49,8 +47,7 @@ class TestParseIni:
             [pytest]
             minversion = 1.0
         """))
-        config = Config()
-        config.parse([testdir.tmpdir])
+        config = testdir.parseconfig()
         assert config.getini("minversion") == "1.0"
 
     def test_toxini_before_lower_pytestini(self, testdir):
@@ -63,8 +60,7 @@ class TestParseIni:
             [pytest]
             minversion = 1.5
         """))
-        config = Config()
-        config.parse([sub])
+        config = testdir.parseconfigure(sub)
         assert config.getini("minversion") == "2.0"
 
     @pytest.mark.xfail(reason="probably not needed")
@@ -77,10 +73,10 @@ class TestParseIni:
         """)
         result = testdir.runpytest("--confcutdir=.")
         assert result.ret == 0
-    
+
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
-        config = testdir.reparseconfig([testdir.tmpdir])
+        config = testdir.parseconfig()
         pytest.raises(AssertionError, "config.parse([])")
 
 
@@ -101,7 +97,7 @@ class TestConfigAPI:
         assert config.getvalue("x") == 1
         assert config.getvalue("x", o.join('sub')) == 2
         pytest.raises(KeyError, "config.getvalue('y')")
-        config = testdir.reparseconfig([str(o.join('sub'))])
+        config = testdir.parseconfigure(str(o.join('sub')))
         assert config.getvalue("x") == 2
         assert config.getvalue("y") == 3
         assert config.getvalue("x", o) == 1
@@ -127,18 +123,18 @@ class TestConfigAPI:
     def test_config_overwrite(self, testdir):
         o = testdir.tmpdir
         o.ensure("conftest.py").write("x=1")
-        config = testdir.reparseconfig([str(o)])
+        config = testdir.parseconfig(str(o))
         assert config.getvalue('x') == 1
         config.option.x = 2
         assert config.getvalue('x') == 2
-        config = testdir.reparseconfig([str(o)])
+        config = testdir.parseconfig([str(o)])
         assert config.getvalue('x') == 1
 
     def test_getconftest_pathlist(self, testdir, tmpdir):
         somepath = tmpdir.join("x", "y", "z")
         p = tmpdir.join("conftest.py")
         p.write("pathlist = ['.', %r]" % str(somepath))
-        config = testdir.reparseconfig([p])
+        config = testdir.parseconfigure(p)
         assert config._getconftest_pathlist('notexist') is None
         pl = config._getconftest_pathlist('pathlist')
         print(pl)

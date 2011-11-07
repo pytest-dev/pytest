@@ -257,7 +257,7 @@ class TestFunction:
         assert hasattr(modcol.obj, 'test_func')
 
     def test_function_equality(self, testdir, tmpdir):
-        config = testdir.reparseconfig()
+        config = testdir.parseconfigure()
         session = testdir.Session(config)
         f1 = pytest.Function(name="name", config=config,
                 args=(1,), callobj=isinstance, session=session)
@@ -279,7 +279,7 @@ class TestFunction:
         assert not f1 != f1_b
 
     def test_function_equality_with_callspec(self, testdir, tmpdir):
-        config = testdir.reparseconfig()
+        config = testdir.parseconfigure()
         class callspec1:
             param = 1
             funcargs = {}
@@ -783,7 +783,7 @@ class TestRequestCachedSetup:
         req2 = funcargs.FuncargRequest(item2)
         ret2 = req2.cached_setup(setup, scope="class")
         assert ret2 == "hello"
-        
+
         req3 = funcargs.FuncargRequest(item3)
         ret3a = req3.cached_setup(setup, scope="class")
         ret3b = req3.cached_setup(setup, scope="class")
@@ -1320,7 +1320,7 @@ def test_customized_python_discovery(testdir):
         "*CheckMyApp*",
         "*check_meth*",
     ])
-    
+
     result = testdir.runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines([
@@ -1354,7 +1354,7 @@ def test_customize_through_attributes(testdir):
             Function = MyFunction
         class MyClass(pytest.Class):
             Instance = MyInstance
-    
+
         def pytest_pycollect_makeitem(collector, name, obj):
             if name.startswith("MyTestClass"):
                 return MyClass(name, parent=collector)

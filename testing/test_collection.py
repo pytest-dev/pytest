@@ -313,7 +313,8 @@ class TestSession:
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        config = testdir.parseconfigure(id)
+        # XXX migrate to inline_genitems? (see below)
+        config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
@@ -328,15 +329,9 @@ class TestSession:
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        config = testdir.parseconfigure(id)
         topdir = testdir.tmpdir
-        rcol = Session(config)
-        assert topdir == rcol.fspath
-        hookrec = testdir.getreportrecorder(config)
-        rcol.perform_collect()
-        items = rcol.items
-        assert len(items) == 1
-        item = items[0]
+        items, hookrec = testdir.inline_genitems(id)
+        item, = items
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
@@ -363,10 +358,7 @@ class TestSession:
                    p.basename + "::TestClass::()",
                    normid,
                    ]:
-            config = testdir.parseconfigure(id)
-            rcol = Session(config=config)
-            rcol.perform_collect()
-            items = rcol.items
+            items, hookrec = testdir.inline_genitems(id)
             assert len(items) == 1
             assert items[0].name == "test_method"
             newid = items[0].nodeid
@@ -388,11 +380,7 @@ class TestSession:
         """ % p.basename)
         id = p.basename
 
-        config = testdir.parseconfigure(id)
-        rcol = Session(config)
-        hookrec = testdir.getreportrecorder(config)
-        rcol.perform_collect()
-        items = rcol.items
+        items, hookrec = testdir.inline_genitems(id)
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         assert len(items) == 2
         hookrec.hookrecorder.contains([
@@ -413,11 +401,8 @@ class TestSession:
         aaa = testdir.mkpydir("aaa")
         test_aaa = aaa.join("test_aaa.py")
         p.move(test_aaa)
-        config = testdir.parseconfigure()
-        rcol = Session(config)
-        hookrec = testdir.getreportrecorder(config)
-        rcol.perform_collect()
-        items = rcol.items
+
+        items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         hookrec.hookrecorder.contains([
@@ -437,11 +422,8 @@ class TestSession:
         p.move(test_bbb)
 
         id = "."
-        config = testdir.parseconfigure(id)
-        rcol = Session(config)
-        hookrec = testdir.getreportrecorder(config)
-        rcol.perform_collect()
-        items = rcol.items
+
+        items, hookrec = testdir.inline_genitems(id)
         assert len(items) == 2
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
         hookrec.hookrecorder.contains([
@@ -455,19 +437,13 @@ class TestSession:
 
     def test_serialization_byid(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
-        config = testdir.parseconfigure()
-        rcol = Session(config)
-        rcol.perform_collect()
-        items = rcol.items
+        items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
         item, = items
-        rcol.config.pluginmanager.unregister(name="session")
-        newcol = Session(config)
-        item2, = newcol.perform_collect([item.nodeid], genitems=False)
+        items2, hookrec = testdir.inline_genitems(item.nodeid)
+        item2, = items2
         assert item2.name == item.name
         assert item2.fspath == item.fspath
-        item2b, = newcol.perform_collect([item.nodeid], genitems=False)
-        assert item2b == item2
 
     def test_find_byid_without_instance_parents(self, testdir):
         p = testdir.makepyfile("""
@@ -476,10 +452,7 @@ class TestSession:
                     pass
         """)
         arg = p.basename + ("::TestClass::test_method")
-        config = testdir.parseconfigure(arg)
-        rcol = Session(config)
-        rcol.perform_collect()
-        items = rcol.items
+        items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
         item, = items
         assert item.nodeid.endswith("TestClass::()::test_method")
@@ -487,7 +460,7 @@ class TestSession:
 class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
-        config = testdir.reparseconfig([x])
+        config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'
@@ -502,7 +475,7 @@ class Test_getinitialnodes:
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")
         subdir.ensure("__init__.py")
-        config = testdir.reparseconfig([x])
+        config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'subdir/x.py'
@@ -527,12 +500,6 @@ class Test_genitems:
                 if numj != numi:
                     assert hash(i) != hash(j)
                     assert i != j
-
-    def test_root_conftest_syntax_error(self, testdir):
-        # do we want to unify behaviour with
-        # test_subdir_conftest_error?
-        p = testdir.makepyfile(conftest="raise SyntaxError\n")
-        pytest.raises(SyntaxError, testdir.inline_genitems, p.dirpath())
 
     def test_example_items1(self, testdir):
         p = testdir.makepyfile('''
@@ -597,6 +564,6 @@ def test_matchnodes_two_collections_same_file(testdir):
     res.stdout.fnmatch_lines([
         "*1 passed*",
     ])
-    
+
 
 

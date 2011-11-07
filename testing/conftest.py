@@ -18,7 +18,7 @@ def pytest_configure(config):
         except py.process.cmdexec.Error:
             pass
         else:
-            config._numfiles = getopenfiles(out)
+            config._numfiles = len(getopenfiles(out))
 
 #def pytest_report_header():
 #    return "pid: %s" % os.getpid()
@@ -26,23 +26,31 @@ def pytest_configure(config):
 def getopenfiles(out):
     def isopen(line):
         return ("REG" in line or "CHR" in line) and (
-            "deleted" not in line and 'mem' not in line)
-    return len([x for x in out.split("\n") if isopen(x)])
+            "deleted" not in line and 'mem' not in line and "txt" not in line)
+    return [x for x in out.split("\n") if isopen(x)]
 
-def pytest_unconfigure(config, __multicall__):
-    if not hasattr(config, '_numfiles'):
-        return
-    __multicall__.execute()
+def check_open_files(config):
     out2 = py.process.cmdexec("lsof -p %d" % pid)
-    len2 = getopenfiles(out2)
-    assert len2 < config._numfiles + 15, out2
-
+    lines2 = getopenfiles(out2)
+    if len(lines2) > config._numfiles + 1:
+        error = []
+        error.append("***** %s FD leackage detected" %
+    (len(lines2)-config._numfiles))
+        error.extend(lines2)
+        error.append(error[0])
+        # update numfile so that the overall test run continuess
+        config._numfiles = len(lines2)
+        raise AssertionError("\n".join(error))
 
 def pytest_runtest_setup(item):
     item._oldir = py.path.local()
 
-def pytest_runtest_teardown(item):
+def pytest_runtest_teardown(item, __multicall__):
     item._oldir.chdir()
+    if hasattr(item.config, '_numfiles'):
+        x = __multicall__.execute()
+        check_open_files(item.config)
+        return x
 
 def pytest_generate_tests(metafunc):
     multi = getattr(metafunc.function, 'multi', None)

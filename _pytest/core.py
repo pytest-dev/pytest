@@ -431,10 +431,7 @@ _preinit = []
 def _preloadplugins():
     _preinit.append(PluginManager(load=True))
 
-def main(args=None, plugins=None):
-    """ returned exit code integer, after an in-process testing run
-    with the given command line arguments, preloading an optional list
-    of passed in plugin objects. """
+def _prepareconfig(args=None, plugins=None):
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -448,13 +445,19 @@ def main(args=None, plugins=None):
     else: # subsequent calls to main will create a fresh instance
         _pluginmanager = PluginManager(load=True)
     hook = _pluginmanager.hook
+    if plugins:
+        for plugin in plugins:
+            _pluginmanager.register(plugin)
+    return hook.pytest_cmdline_parse(
+            pluginmanager=_pluginmanager, args=args)
+
+def main(args=None, plugins=None):
+    """ returned exit code integer, after an in-process testing run
+    with the given command line arguments, preloading an optional list
+    of passed in plugin objects. """
     try:
-        if plugins:
-            for plugin in plugins:
-                _pluginmanager.register(plugin)
-        config = hook.pytest_cmdline_parse(
-                pluginmanager=_pluginmanager, args=args)
-        exitstatus = hook.pytest_cmdline_main(config=config)
+        config = _prepareconfig(args, plugins)
+        exitstatus = config.hook.pytest_cmdline_main(config=config)
     except UsageError:
         e = sys.exc_info()[1]
         sys.stderr.write("ERROR: %s\n" %(e.args[0],))
