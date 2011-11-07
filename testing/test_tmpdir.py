@@ -1,4 +1,5 @@
 import py, pytest
+import os
 
 from _pytest.tmpdir import pytest_funcarg__tmpdir, TempdirHandler
 from _pytest.python import FuncargRequest
@@ -69,7 +70,7 @@ def test_basetemp(testdir):
 def test_tmpdir_keeps_symlinks(testdir):
     realtemp = testdir.tmpdir.mkdir("myrealtemp")
     linktemp = testdir.tmpdir.join("symlinktemp")
-    linktemp.mksymlinkto(realtemp)
+    os.symlink(str(realtemp), str(linktemp))
     p = testdir.makepyfile("""
         def test_1(tmpdir):
             import os
