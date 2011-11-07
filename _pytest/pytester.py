@@ -360,7 +360,7 @@ class TmpTestdir:
         return items, rec[0]
 
     def parseconfig(self, *args):
-        args = map(str, args)
+        args = [str(x) for x in args]
         for x in args:
             if str(x).startswith('--basetemp'):
                 break
