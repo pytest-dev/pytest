@@ -538,7 +538,6 @@ class TestDurationWithFixture:
         frag = 0.01
         def setup_function(func):
             time.sleep(frag * 3)
-
         def test_1():
             time.sleep(frag*2)
         def test_2():
@@ -552,7 +551,6 @@ class TestDurationWithFixture:
         result.stdout.fnmatch_lines([
             "*durations*",
             "*setup*test_1*",
-            "*setup*test_2*",
             "*call*test_1*",
             "*call*test_2*",
         ])
