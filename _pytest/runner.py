@@ -26,25 +26,36 @@ def pytest_terminal_summary(terminalreporter):
         return
     tr = terminalreporter
     duration2rep = {}
+    alldurations = 0.0
     for key, replist in tr.stats.items():
         if key == "deselected":
             continue
         for rep in replist:
             duration2rep[rep.duration] = rep
+            alldurations += rep.duration
     if not duration2rep:
         return
-    d2 = duration2rep.items()
+    d2 = remaining = duration2rep.items()
     d2.sort()
     d2.reverse()
     if not durations:
         tr.write_sep("=", "slowest test durations")
     else:
         tr.write_sep("=", "slowest %s test durations" % durations)
+        remaining = d2[durations:]
         d2 = d2[:durations]
 
+    assert (alldurations/100) > 0
     for duration, rep in d2:
         nodeid = rep.nodeid.replace("::()::", "::")
-        tr.write_line("%2.2f %s %s" % (duration, rep.when, nodeid))
+        percent = rep.duration / (alldurations  / 100)
+        tr.write_line("%02.2fs %-02.2f%% %s %s" %
+            (duration, percent, rep.when, nodeid))
+    if remaining:
+        remsum = sum(map(lambda x: x[0], remaining))
+        tr.write_line("%02.2fs %-02.2f%% remaining in %d test phases" %(
+            remsum, remsum / (alldurations  / 100), len(remaining)))
+
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
@@ -110,7 +121,7 @@ def call_and_report(item, when, log=True):
     call = call_runtest_hook(item, when)
     hook = item.ihook
     report = hook.pytest_runtest_makereport(item=item, call=call)
-    if log and (when == "call" or not report.passed):
+    if log:
         hook.pytest_runtest_logreport(report=report)
     return report
 

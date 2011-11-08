@@ -149,7 +149,8 @@ def pytest_runtest_makereport(item, call):
 pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(report):
-    """ process item test report. """
+    """ process a test setup/call/teardown report relating to
+    the respective phase of executing a test. """
 
 # special handling for final teardown - somewhat internal for now
 def pytest__teardown_final(session):

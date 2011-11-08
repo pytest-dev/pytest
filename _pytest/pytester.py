@@ -334,8 +334,8 @@ class TmpTestdir:
         l = list(args) + [p]
         reprec = self.inline_run(*l)
         reports = reprec.getreports("pytest_runtest_logreport")
-        assert len(reports) == 1, reports
-        return reports[0]
+        assert len(reports) == 3, reports # setup/call/teardown
+        return reports[1]
 
     def inline_genitems(self, *args):
         return self.inprocess_run(list(args) + ['--collectonly'])

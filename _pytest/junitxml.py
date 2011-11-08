@@ -166,7 +166,8 @@ class LogXML(object):
 
     def pytest_runtest_logreport(self, report):
         if report.passed:
-            self.append_pass(report)
+            if report.when == "call": # ignore setup/teardown
+                self.append_pass(report)
         elif report.failed:
             if report.when != "call":
                 self.append_error(report)

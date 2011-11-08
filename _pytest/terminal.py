@@ -426,9 +426,10 @@ class TerminalReporter:
                 keys.append(key)
         parts = []
         for key in keys:
-            val = self.stats.get(key, None)
-            if val:
-                parts.append("%d %s" %(len(val), key))
+            if key: # setup/teardown reports have an empty key, ignore them
+                val = self.stats.get(key, None)
+                if val:
+                    parts.append("%d %s" %(len(val), key))
         line = ", ".join(parts)
         # XXX coloring
         msg = "%s in %.2f seconds" %(line, session_duration)

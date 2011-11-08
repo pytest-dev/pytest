@@ -1,8 +1,8 @@
-Changes between 2.1.3 and [next version]
+Changes between 2.1.3 and XXX 2.2.0
 ----------------------------------------
 
 - new feature to help optimizing your tests: --durations=N option for 
-  displaying N slowest test calls
+  displaying N slowest test calls and setup/teardown methods.
 - fix and cleanup pytest's own test suite to not leak FDs 
 - fix issue83: link to generated funcarg list
 - fix issue74: pyarg module names are now checked against imp.find_module false positives

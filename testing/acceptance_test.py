@@ -484,12 +484,15 @@ def test_duration_test(testdir):
         "*call*test_2*",
         "*call*test_1*",
     ])
+    assert "remaining in"  not in result.stdout.str()
+
     result = testdir.runpytest("--durations=2")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*durations*",
         "*call*test_3*",
         "*call*test_2*",
+        "*s*%*remaining in 7 test phases",
     ])
     assert "test_1" not in result.stdout.str()
     result = testdir.runpytest("--durations=0")
@@ -502,6 +505,28 @@ def test_duration_test(testdir):
                     break
             else:
                 raise AssertionError("not found %s %s" % (x,y))
+
+def test_duration_test_with_fixture(testdir):
+    testdir.makepyfile("""
+        import time
+        frag = 0.01
+        def setup_function(func):
+            time.sleep(frag * 3)
+
+        def test_1():
+            time.sleep(frag*2)
+        def test_2():
+            time.sleep(frag)
+    """)
+    result = testdir.runpytest("--durations=10")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*durations*",
+        "*setup*test_1*",
+        "*setup*test_2*",
+        "*call*test_1*",
+        "*call*test_2*",
+    ])
 
     result = testdir.runpytest("--durations=2", "-k test_1")
     assert result.ret == 0

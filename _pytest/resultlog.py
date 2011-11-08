@@ -63,6 +63,8 @@ class ResultLog(object):
         self.write_log_entry(testpath, lettercode, longrepr)
 
     def pytest_runtest_logreport(self, report):
+        if report.when != "call" and report.passed:
+            return
         res = self.config.hook.pytest_report_teststatus(report=report)
         code = res[1]
         if code == 'x':
