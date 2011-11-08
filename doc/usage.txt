@@ -98,6 +98,18 @@ can use a helper::
 In previous versions you could only enter PDB tracing if
 you disable capturing on the command line via ``py.test -s``.
 
+.. _durations:
+
+Profiling test execution duration 
+-------------------------------------
+
+.. versionadded: 2.2
+
+To get a list of the slowest 10 test durations::
+
+    py.test --durations=10
+
+
 Creating JUnitXML format files
 ----------------------------------------------------
 

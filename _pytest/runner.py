@@ -14,6 +14,38 @@ def pytest_namespace():
 #
 # pytest plugin hooks
 
+def pytest_addoption(parser):
+    group = parser.getgroup("terminal reporting", "reporting", after="general")
+    group.addoption('--durations',
+         action="store", type="int", dest="durations", default=None, metavar="N",
+         help="show N slowest setup/test durations (N=0 for all)."),
+
+def pytest_terminal_summary(terminalreporter):
+    durations = terminalreporter.config.option.durations
+    if durations is None:
+        return
+    tr = terminalreporter
+    duration2rep = {}
+    for key, replist in tr.stats.items():
+        if key == "deselected":
+            continue
+        for rep in replist:
+            duration2rep[rep.duration] = rep
+    if not duration2rep:
+        return
+    d2 = duration2rep.items()
+    d2.sort()
+    d2.reverse()
+    if not durations:
+        tr.write_sep("=", "slowest test durations")
+    else:
+        tr.write_sep("=", "slowest %s test durations" % durations)
+        d2 = d2[:durations]
+
+    for duration, rep in d2:
+        nodeid = rep.nodeid.replace("::()::", "::")
+        tr.write_line("%2.2f %s %s" % (duration, rep.when, nodeid))
+
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
 
@@ -185,13 +217,13 @@ class TestReport(BaseReport):
         #: a name -> value dictionary containing all keywords and
         #: markers associated with a test invocation.
         self.keywords = keywords
-        
+
         #: test outcome, always one of "passed", "failed", "skipped".
         self.outcome = outcome
 
         #: None or a failure representation.
         self.longrepr = longrepr
-        
+
         #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 

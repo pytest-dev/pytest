@@ -549,10 +549,17 @@ class ReportRecorder(object):
     def getreports(self, names="pytest_runtest_logreport pytest_collectreport"):
         return [x.report for x in self.getcalls(names)]
 
-    def matchreport(self, inamepart="", names="pytest_runtest_logreport pytest_collectreport", when=None):
+    def matchreport(self, inamepart="",
+        names="pytest_runtest_logreport pytest_collectreport", when=None):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
+            try:
+                if not when and rep.when != "call" and rep.passed:
+                    # setup/teardown passing reports - let's ignore those
+                    continue
+            except AttributeError:
+                pass
             if when and getattr(rep, 'when', None) != when:
                 continue
             if not inamepart or inamepart in rep.nodeid.split("::"):

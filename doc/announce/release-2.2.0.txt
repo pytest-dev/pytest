@@ -1,0 +1,21 @@
+py.test 2.2.0: new test duration profiling and bug fixes
+===========================================================================
+
+pytest-2.2.0 is a backward compatible release of the popular
+py.test testing tool.  It introduces the new "--duration=N" option
+showing the N slowest test execution or setup/teardown calls.   The
+release also contains a few fixes and some cleanup of pytest's own test
+suite allowing it to run on a wider range of environments.
+
+For general information, see extensive docs with examples here:
+
+     http://pytest.org/
+
+If you want to install or upgrade pytest you might just type::
+
+    pip install -U pytest # or
+    easy_install -U pytest
+
+best,
+holger krekel
+

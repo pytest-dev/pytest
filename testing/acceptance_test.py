@@ -465,3 +465,48 @@ class TestInvocationVariants:
             "*1 failed*",
         ])
 
+def test_duration_test(testdir):
+    testdir.makepyfile("""
+        import time
+        frag = 0.01
+        def test_2():
+            time.sleep(frag*2)
+        def test_1():
+            time.sleep(frag)
+        def test_3():
+            time.sleep(frag*3)
+    """)
+    result = testdir.runpytest("--durations=10")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*durations*",
+        "*call*test_3*",
+        "*call*test_2*",
+        "*call*test_1*",
+    ])
+    result = testdir.runpytest("--durations=2")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*durations*",
+        "*call*test_3*",
+        "*call*test_2*",
+    ])
+    assert "test_1" not in result.stdout.str()
+    result = testdir.runpytest("--durations=0")
+    assert result.ret == 0
+    for x in "123":
+        for y in 'call',: #'setup', 'call', 'teardown':
+            l = []
+            for line in result.stdout.lines:
+                if ("test_%s" % x) in line and y in line:
+                    break
+            else:
+                raise AssertionError("not found %s %s" % (x,y))
+
+    result = testdir.runpytest("--durations=2", "-k test_1")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*durations*",
+        "*call*test_1*",
+    ])
+

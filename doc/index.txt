@@ -25,6 +25,7 @@ Welcome to pytest!
 
 - **supports functional testing and complex test setups**
 
+ - (new in 2.2) :ref:`durations`
  - advanced :ref:`skip and xfail`
  - generic :ref:`marking and test selection <mark>`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`

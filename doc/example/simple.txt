@@ -299,3 +299,30 @@ and nothing when run plainly::
     collecting ... collected 0 items
     
     =============================  in 0.00 seconds =============================
+
+profiling test duration
+--------------------------
+
+.. regendoc:wipe
+
+.. versionadded: 2.2
+
+If you have a slow running large test suite you might want to find
+out which tests are slowest. Let's make an artifical test suite::
+
+    # content of test_some_are_slow.py
+   
+    import time 
+
+    def test_funcfast():
+        pass
+    
+    def test_funcslow1():
+        time.sleep(0.1)
+        
+    def test_funcslow2():
+        time.sleep(0.2)
+   
+Now we can profile which test functions execute slowest::
+
+    $ py.test --durations=3
