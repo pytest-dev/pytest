@@ -465,8 +465,8 @@ class TestInvocationVariants:
             "*1 failed*",
         ])
 
-def test_duration_test(testdir):
-    testdir.makepyfile("""
+class TestDurations:
+    source = """
         import time
         frag = 0.01
         def test_2():
@@ -475,39 +475,57 @@ def test_duration_test(testdir):
             time.sleep(frag)
         def test_3():
             time.sleep(frag*3)
-    """)
-    result = testdir.runpytest("--durations=10")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*durations*",
-        "*call*test_3*",
-        "*call*test_2*",
-        "*call*test_1*",
-    ])
-    assert "remaining in"  not in result.stdout.str()
+    """
 
-    result = testdir.runpytest("--durations=2")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*durations*",
-        "*call*test_3*",
-        "*call*test_2*",
-        "*s*%*remaining in 7 test phases",
-    ])
-    assert "test_1" not in result.stdout.str()
-    result = testdir.runpytest("--durations=0")
-    assert result.ret == 0
-    for x in "123":
-        for y in 'call',: #'setup', 'call', 'teardown':
-            l = []
-            for line in result.stdout.lines:
-                if ("test_%s" % x) in line and y in line:
-                    break
-            else:
-                raise AssertionError("not found %s %s" % (x,y))
+    def test_calls(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=10")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*durations*",
+            "*call*test_3*",
+            "*call*test_2*",
+            "*call*test_1*",
+        ])
+        assert "remaining in"  not in result.stdout.str()
 
-def test_duration_test_with_fixture(testdir):
-    testdir.makepyfile("""
+    def test_calls_show_2(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=2")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*durations*",
+            "*call*test_3*",
+            "*call*test_2*",
+            "*s*%*remaining in 7 test phases",
+        ])
+        assert "test_1" not in result.stdout.str()
+
+    def test_calls_showall(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=0")
+        assert result.ret == 0
+        for x in "123":
+            for y in 'call',: #'setup', 'call', 'teardown':
+                l = []
+                for line in result.stdout.lines:
+                    if ("test_%s" % x) in line and y in line:
+                        break
+                else:
+                    raise AssertionError("not found %s %s" % (x,y))
+
+    def test_with_deselected(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=2", "-k test_1")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*durations*",
+            "*call*test_1*",
+        ])
+
+
+class TestDurationWithFixture:
+    source = """
         import time
         frag = 0.01
         def setup_function(func):
@@ -517,21 +535,17 @@ def test_duration_test_with_fixture(testdir):
             time.sleep(frag*2)
         def test_2():
             time.sleep(frag)
-    """)
-    result = testdir.runpytest("--durations=10")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*durations*",
-        "*setup*test_1*",
-        "*setup*test_2*",
-        "*call*test_1*",
-        "*call*test_2*",
-    ])
+    """
+    def test_setup_function(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("--durations=10")
+        assert result.ret == 0
 
-    result = testdir.runpytest("--durations=2", "-k test_1")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*durations*",
-        "*call*test_1*",
-    ])
+        result.stdout.fnmatch_lines([
+            "*durations*",
+            "*setup*test_1*",
+            "*setup*test_2*",
+            "*call*test_1*",
+            "*call*test_2*",
+        ])
 
