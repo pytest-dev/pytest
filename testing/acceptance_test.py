@@ -523,6 +523,16 @@ class TestDurations:
             "*call*test_1*",
         ])
 
+    def test_with_failing_collection(self, testdir):
+        testdir.makepyfile(self.source)
+        testdir.makepyfile(test_collecterror="""xyz""")
+        result = testdir.runpytest("--durations=2", "-k test_1")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*durations*",
+            "*call*test_1*",
+        ])
+
 
 class TestDurationWithFixture:
     source = """

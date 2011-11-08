@@ -28,11 +28,10 @@ def pytest_terminal_summary(terminalreporter):
     duration2rep = {}
     alldurations = 0.0
     for key, replist in tr.stats.items():
-        if key == "deselected":
-            continue
         for rep in replist:
-            duration2rep[rep.duration] = rep
-            alldurations += rep.duration
+            if hasattr(rep, 'duration'):
+                duration2rep[rep.duration] = rep
+                alldurations += rep.duration
     if not duration2rep:
         return
     d2 = list(duration2rep.items())
