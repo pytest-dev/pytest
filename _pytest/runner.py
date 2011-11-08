@@ -35,9 +35,10 @@ def pytest_terminal_summary(terminalreporter):
             alldurations += rep.duration
     if not duration2rep:
         return
-    d2 = remaining = duration2rep.items()
+    d2 = list(duration2rep.items())
     d2.sort()
     d2.reverse()
+    remaining = []
     if not durations:
         tr.write_sep("=", "slowest test durations")
     else:
