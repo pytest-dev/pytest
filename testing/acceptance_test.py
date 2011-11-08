@@ -468,7 +468,7 @@ class TestInvocationVariants:
 class TestDurations:
     source = """
         import time
-        frag = 0.01
+        frag = 0.02
         def test_2():
             time.sleep(frag*2)
         def test_1():
@@ -550,8 +550,7 @@ class TestDurationWithFixture:
 
         result.stdout.fnmatch_lines([
             "*durations*",
-            "*setup*test_1*",
-            "*call*test_1*",
-            "*call*test_2*",
+            "* setup *test_1*",
+            "* call *test_1*",
         ])
 
