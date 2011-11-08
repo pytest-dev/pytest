@@ -26,35 +26,31 @@ def pytest_terminal_summary(terminalreporter):
         return
     tr = terminalreporter
     duration2rep = {}
-    alldurations = 0.0
     for key, replist in tr.stats.items():
         for rep in replist:
             if hasattr(rep, 'duration'):
                 duration2rep[rep.duration] = rep
-                alldurations += rep.duration
     if not duration2rep:
         return
     d2 = list(duration2rep.items())
     d2.sort()
     d2.reverse()
-    remaining = []
+    #remaining = []
     if not durations:
         tr.write_sep("=", "slowest test durations")
     else:
         tr.write_sep("=", "slowest %s test durations" % durations)
-        remaining = d2[durations:]
+        #remaining = d2[durations:]
         d2 = d2[:durations]
 
-    assert (alldurations/100) > 0
     for duration, rep in d2:
         nodeid = rep.nodeid.replace("::()::", "::")
-        percent = rep.duration / (alldurations  / 100)
-        tr.write_line("%02.2fs %-02.2f%% %s %s" %
-            (duration, percent, rep.when, nodeid))
-    if remaining:
-        remsum = sum(map(lambda x: x[0], remaining))
-        tr.write_line("%02.2fs %-02.2f%% remaining in %d test phases" %(
-            remsum, remsum / (alldurations  / 100), len(remaining)))
+        tr.write_line("%02.2fs %s %s" %
+            (duration, rep.when, nodeid))
+    #if remaining:
+    #    remsum = sum(map(lambda x: x[0], remaining))
+    #    tr.write_line("%02.2fs spent in %d remaining test phases" %(
+    #        remsum, len(remaining)))
 
 
 def pytest_sessionstart(session):

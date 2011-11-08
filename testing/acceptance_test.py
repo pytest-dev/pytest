@@ -487,7 +487,6 @@ class TestDurations:
             "*call*test_2*",
             "*call*test_1*",
         ])
-        assert "remaining in"  not in result.stdout.str()
 
     def test_calls_show_2(self, testdir):
         testdir.makepyfile(self.source)
@@ -497,7 +496,6 @@ class TestDurations:
             "*durations*",
             "*call*test_3*",
             "*call*test_2*",
-            "*s*%*remaining in 7 test phases",
         ])
         assert "test_1" not in result.stdout.str()
 
