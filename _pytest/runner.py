@@ -17,7 +17,7 @@ def pytest_namespace():
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption('--durations',
-         action="store", type="int", dest="durations", default=None, metavar="N",
+         action="store", type="int", default=None, metavar="N",
          help="show N slowest setup/test durations (N=0 for all)."),
 
 def pytest_terminal_summary(terminalreporter):
@@ -35,23 +35,16 @@ def pytest_terminal_summary(terminalreporter):
     d2 = list(duration2rep.items())
     d2.sort()
     d2.reverse()
-    #remaining = []
     if not durations:
         tr.write_sep("=", "slowest test durations")
     else:
         tr.write_sep("=", "slowest %s test durations" % durations)
-        #remaining = d2[durations:]
         d2 = d2[:durations]
 
     for duration, rep in d2:
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %s %s" %
             (duration, rep.when, nodeid))
-    #if remaining:
-    #    remsum = sum(map(lambda x: x[0], remaining))
-    #    tr.write_line("%02.2fs spent in %d remaining test phases" %(
-    #        remsum, len(remaining)))
-
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
