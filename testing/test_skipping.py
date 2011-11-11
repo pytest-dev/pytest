@@ -549,3 +549,10 @@ def test_direct_gives_error(testdir):
     ])
 
 
+def test_default_markers(testdir):
+    result = testdir.runpytest("--markers")
+    result.stdout.fnmatch_lines([
+        "*skipif(*conditions)*skip*",
+        "*xfail(*conditions, reason=None, run=True)*expected failure*",
+    ])
+

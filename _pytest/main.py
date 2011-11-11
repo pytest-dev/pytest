@@ -29,6 +29,9 @@ def pytest_addoption(parser):
                action="store", type="int", dest="maxfail", default=0,
                help="exit after first num failures or errors.")
 
+    group._addoption('--strict', action="store_true",
+               help="run pytest in strict mode, warnings become errors.")
+
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly',
         action="store_true", dest="collectonly",

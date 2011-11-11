@@ -68,7 +68,54 @@ class TestMark:
         assert 'reason' not in g.some.kwargs
         assert g.some.kwargs['reason2'] == "456"
 
+
+def test_ini_markers(testdir):
+    testdir.makeini("""
+        [pytest]
+        markers =
+            a1: this is a webtest marker
+            a2: this is a smoke marker
+    """)
+    testdir.makepyfile("""
+        def test_markers(pytestconfig):
+            markers = pytestconfig.getini("markers")
+            print (markers)
+            assert len(markers) >= 2
+            assert markers[0].startswith("a1:")
+            assert markers[1].startswith("a2:")
+    """)
+    rec = testdir.inline_run()
+    rec.assertoutcome(passed=1)
+
+def test_markers_option(testdir):
+    testdir.makeini("""
+        [pytest]
+        markers =
+            a1: this is a webtest marker
+            a1some: another marker
+    """)
+    result = testdir.runpytest("--markers", )
+    result.stdout.fnmatch_lines([
+        "*a1*this is a webtest*",
+        "*a1some*another marker",
+    ])
+
+
+def test_strict_prohibits_unregistered_markers(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.unregisteredmark
+        def test_hello():
+            pass
+    """)
+    result = testdir.runpytest("--strict")
+    assert result.ret != 0
+    result.stdout.fnmatch_lines([
+        "*unregisteredmark*not*registered*",
+    ])
+
 class TestFunctional:
+
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile("""
             import pytest

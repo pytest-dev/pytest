@@ -9,6 +9,21 @@ def pytest_addoption(parser):
            action="store_true", dest="runxfail", default=False,
            help="run tests even if they are marked xfail")
 
+def pytest_configure(config):
+    config.addinivalue_line("markers",
+        "skipif(*conditions): skip the given test function if evaluation "
+        "of all conditions has a True value.  Evaluation happens within the "
+        "module global context. Example: skipif('sys.platform == \"win32\"') "
+        "skips the test if we are on the win32 platform. "
+    )
+    config.addinivalue_line("markers",
+        "xfail(*conditions, reason=None, run=True): mark the the test function "
+        "as an expected failure. Optionally specify a reason and run=False "
+        "if you don't even want to execute the test function. Any positional "
+        "condition strings will be evaluated (like with skipif) and if one is "
+        "False the marker will not be applied."
+    )
+
 def pytest_namespace():
     return dict(xfail=xfail)
 

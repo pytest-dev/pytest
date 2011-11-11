@@ -211,6 +211,14 @@ class PluginManager(object):
             self.register(mod, modname)
             self.consider_module(mod)
 
+    def pytest_configure(self, config):
+        config.addinivalue_line("markers",
+            "tryfirst: mark a hook implementation function such that the "
+            "plugin machinery will try to call it first/as early as possible.")
+        config.addinivalue_line("markers",
+            "trylast: mark a hook implementation function such that the "
+            "plugin machinery will try to call it last/as late as possible.")
+
     def pytest_plugin_registered(self, plugin):
         import pytest
         dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}

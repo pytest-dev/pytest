@@ -12,6 +12,10 @@ def pytest_addoption(parser):
            help=("run FD checks if lsof is available"))
 
 def pytest_configure(config):
+    config.addinivalue_line("markers",
+        "multi(arg=[value1,value2, ...]): call the test function "
+        "multiple times with arg=value1, then with arg=value2, ... "
+    )
     if config.getvalue("lsof"):
         try:
             out = py.process.cmdexec("lsof -p %d" % pid)

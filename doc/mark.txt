@@ -68,9 +68,9 @@ For an example on how to add and work markers from a plugin, see
 
     * asking for existing markers via ``py.test --markers`` gives good output
 
-    * typos in function markers can be treated as an error if you use
-      the :ref:`--strict` option.  Later versions of py.test might treat
-      non-registered markers as an error by default.
+    * typos in function markers are treated as an error if you use
+      the ``--strict`` option. Later versions of py.test are probably
+      going to treat non-registered markers as an error.
 
 .. _`scoped-marking`:
 

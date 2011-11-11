@@ -644,3 +644,10 @@ class TestTracer:
         assert "1" in tags
         assert "2" in tags
         assert args == (42,)
+
+def test_default_markers(testdir):
+    result = testdir.runpytest("--markers")
+    result.stdout.fnmatch_lines([
+        "*tryfirst*first*",
+        "*trylast*last*",
+    ])

@@ -14,6 +14,24 @@ def pytest_addoption(parser):
              "Terminate expression with ':' to make the first match match "
              "all subsequent tests (usually file-order). ")
 
+    group.addoption("--markers", action="store_true", help=
+        "show markers (builtin, plugin and per-project ones).")
+
+    parser.addini("markers", "markers for test functions", 'linelist')
+
+def pytest_cmdline_main(config):
+    if config.option.markers:
+        config.pluginmanager.do_configure(config)
+        tw = py.io.TerminalWriter()
+        for line in config.getini("markers"):
+            name, rest = line.split(":", 1)
+            tw.write("@pytest.mark.%s:" %  name, bold=True)
+            tw.line(rest)
+            tw.line()
+        config.pluginmanager.do_unconfigure(config)
+        return 0
+pytest_cmdline_main.tryfirst = True
+
 def pytest_collection_modifyitems(items, config):
     keywordexpr = config.option.keyword
     if not keywordexpr:
@@ -37,13 +55,17 @@ def pytest_collection_modifyitems(items, config):
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
 
+def pytest_configure(config):
+    if config.option.strict:
+        pytest.mark._config = config
+
 def skipbykeyword(colitem, keywordexpr):
     """ return True if they given keyword expression means to
         skip this collector/item.
     """
     if not keywordexpr:
         return
-    
+
     itemkeywords = getkeywords(colitem)
     for key in filter(None, keywordexpr.split()):
         eor = key[:1] == '-'
@@ -77,14 +99,30 @@ class MarkGenerator:
          @py.test.mark.slowtest
          def test_function():
             pass
-  
+
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
 
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError(name)
+        if hasattr(self, '_config'):
+            self._check(name)
         return MarkDecorator(name)
+
+    def _check(self, name):
+        try:
+            if name in self._markers:
+                return
+        except AttributeError:
+            pass
+        self._markers = l = set()
+        for line in self._config.getini("markers"):
+            beginning = line.split(":", 1)
+            x = beginning[0].split("(", 1)[0]
+            l.add(x)
+        if name not in self._markers:
+            raise AttributeError("%r not a registered marker" % (name,))
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
