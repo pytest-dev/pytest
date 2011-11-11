@@ -114,6 +114,30 @@ def test_strict_prohibits_unregistered_markers(testdir):
         "*unregisteredmark*not*registered*",
     ])
 
+@pytest.mark.multi(spec=[
+        ("xyz", ("test_one",)),
+        ("xyz and xyz2", ()),
+        ("xyz2", ("test_two",)),
+        ("xyz or xyz2", ("test_one", "test_two"),)
+])
+def test_mark_option(spec, testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.xyz
+        def test_one():
+            pass
+        @pytest.mark.xyz2
+        def test_two():
+            pass
+    """)
+    opt, passed_result = spec
+    rec = testdir.inline_run("-m", opt)
+    passed, skipped, fail = rec.listoutcomes()
+    passed = [x.nodeid.split("::")[-1] for x in passed]
+    assert len(passed) == len(passed_result)
+    assert list(passed) == list(passed_result)
+
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):

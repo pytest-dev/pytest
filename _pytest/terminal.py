@@ -440,8 +440,15 @@ class TerminalReporter:
 
     def summary_deselected(self):
         if 'deselected' in self.stats:
+            l = []
+            k = self.config.option.keyword
+            if k:
+                l.append("-k%s" % k)
+            m = self.config.option.markexpr
+            if m:
+                l.append("-m %r" % m)
             self.write_sep("=", "%d tests deselected by %r" %(
-                len(self.stats['deselected']), self.config.option.keyword), bold=True)
+                len(self.stats['deselected']), " ".join(l)), bold=True)
 
 def repr_pythonversion(v=None):
     if v is None:

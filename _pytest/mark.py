@@ -14,6 +14,12 @@ def pytest_addoption(parser):
              "Terminate expression with ':' to make the first match match "
              "all subsequent tests (usually file-order). ")
 
+    group._addoption("-m",
+        action="store", dest="markexpr", default="", metavar="MARKEXPR",
+        help="only run tests which match given mark expression.  "
+             "An expression is a python expression which can use "
+             "marker names.")
+
     group.addoption("--markers", action="store_true", help=
         "show markers (builtin, plugin and per-project ones).")
 
@@ -34,10 +40,11 @@ pytest_cmdline_main.tryfirst = True
 
 def pytest_collection_modifyitems(items, config):
     keywordexpr = config.option.keyword
-    if not keywordexpr:
+    matchexpr = config.option.markexpr
+    if not keywordexpr and not matchexpr:
         return
     selectuntil = False
-    if keywordexpr[-1] == ":":
+    if keywordexpr[-1:] == ":":
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
 
@@ -47,13 +54,26 @@ def pytest_collection_modifyitems(items, config):
         if keywordexpr and skipbykeyword(colitem, keywordexpr):
             deselected.append(colitem)
         else:
-            remaining.append(colitem)
             if selectuntil:
                 keywordexpr = None
+            if matchexpr:
+                if not matchmark(colitem, matchexpr):
+                    deselected.append(colitem)
+                    continue
+            remaining.append(colitem)
 
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+class BoolDict:
+    def __init__(self, mydict):
+        self._mydict = mydict
+    def __getitem__(self, name):
+        return name in self._mydict
+
+def matchmark(colitem, matchexpr):
+    return eval(matchexpr, {}, BoolDict(colitem.obj.__dict__))
 
 def pytest_configure(config):
     if config.option.strict:
