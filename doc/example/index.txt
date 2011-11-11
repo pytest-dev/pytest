@@ -18,5 +18,6 @@ need more examples or have questions. Also take a look at the :ref:`comprehensiv
    simple.txt
    mysetup.txt
    parametrize.txt
+   markers.txt
    pythoncollection.txt
    nonpython.txt

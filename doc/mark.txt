@@ -6,37 +6,71 @@ Marking test functions with attributes
 
 .. currentmodule:: _pytest.mark
 
-By using the ``pytest.mark`` helper you can instantiate
-decorators that will set named metadata on test functions.
+By using the ``pytest.mark`` helper you can easily set
+metadata on your test functions. To begin with, there are
+some builtin markers, for example:
 
-Marking a single function
+* skipif - skip a test function if a certain condition is met
+* xfail - produce an "expected failure" outcome if a certain
+  condition is met
+
+It's also easy to create custom markers or to apply markers
+to whole test classes or modules.
+
+marking test functions and selecting them for a run
 ----------------------------------------------------
 
-You can "mark" a test function with metadata like this::
+You can "mark" a test function with custom metadata like this::
+
+    # content of test_server.py
 
     import pytest
     @pytest.mark.webtest
     def test_send_http():
-        ...
+        pass # perform some webtest test for your app
 
-This will set the function attribute ``webtest`` to a :py:class:`MarkInfo`
-instance.  You can also specify parametrized metadata like this::
+.. versionadded:: 2.2
 
-    # content of test_mark.py
+You can restrict a test run only tests marked with ``webtest`` like this::
 
-    import pytest
-    @pytest.mark.webtest(firefox=30)
-    def test_receive():
-        pass
+    $ py.test -m webtest
 
-    @pytest.mark.webtest("functional", firefox=30)
-    def test_run_and_look():
-        pass
+Or the inverse, running all tests except the webtest ones::
+    
+    $ py.test -m "not webtest"
 
-and access it from other places like this::
+Registering markers
+-------------------------------------
 
-    test_receive.webtest.kwargs['firefox'] == 30
-    test_run_and_look.webtest.args[0] == "functional"
+.. versionadded:: 2.2
+
+.. ini-syntax for custom markers:
+
+Registering markers for your test suite is simple::
+
+    # content of pytest.ini
+    [pytest]
+    markers = 
+        webtest: mark a test as a webtest. 
+
+You can ask which markers exist for your test suite::
+
+    $ py.test --markers
+
+For an example on how to add and work markers from a plugin, see 
+:ref:`adding a custom marker from a plugin`.
+
+.. note::
+
+    It is recommended to explicitely register markers so that:
+
+    * there is one place in your test suite defining your markers
+
+    * asking for existing markers via ``py.test --markers`` gives good output
+
+    * typos in function markers can be treated as an error if you use
+      the :ref:`--strict` option.  Later versions of py.test might treat
+      non-registered markers as an error by default.
 
 .. _`scoped-marking`:
 
@@ -58,7 +92,7 @@ with classes to apply markers to all of its test methods::
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-To remain compatible with Python2.5 you can also set a
+To remain backward-compatible with Python2.4 you can also set a
 ``pytestmark`` attribute on a TestClass like this::
 
     import pytest

@@ -327,7 +327,6 @@ test execution:
 
 .. autofunction: pytest_runtest_logreport
 
-
 Reference of important objects involved in hooks
 ===========================================================
 

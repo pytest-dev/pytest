@@ -1,0 +1,83 @@
+
+Working with custom markers
+=================================================
+
+
+Here are some example using the :ref:`mark` mechanism.
+
+.. _`adding a custom marker from a plugin`:
+
+custom marker and command line option to control test runs
+----------------------------------------------------------
+
+Plugins can provide custom markers and implement specific behaviour
+based on it. This is a self-contained example which adds a command
+line option and a parametrized test function marker to run tests
+specifies via named environments::
+
+    # content of conftest.py
+
+    import pytest
+    def pytest_addoption(parser):
+        parser.addoption("-E", dest="env", action="store", metavar="NAME",
+            help="only run tests matching the environment NAME.")
+
+    def pytest_configure(config):
+        # register an additional marker
+        config.addinivalue_line("markers", 
+            "env(name): mark test to run only on named environment")
+
+    def pytest_runtest_setup(item):
+        if not isinstance(item, item.Function):
+            return
+        if hasattr(item.obj, 'env'):
+            envmarker = getattr(item.obj, 'env')
+            envname = envmarker.args[0]
+            if envname != item.config.option.env:
+                pytest.skip("test requires env %r" % envname)
+
+A test file using this local plugin::
+
+    # content of test_someenv.py
+
+    import pytest
+    @pytest.mark.env("stage1")
+    def test_basic_db_operation():
+        pass
+
+and an example invocations specifying a different environment than what
+the test needs::
+
+    $ py.test -E stage2
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev6
+    collecting ... collected 1 items
+    
+    test_someenv.py s
+    
+    ========================== 1 skipped in 0.02 seconds ===========================
+  
+and here is one that specifies exactly the environment needed::
+
+    $ py.test -E stage1
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev6
+    collecting ... collected 1 items
+    
+    test_someenv.py .
+    
+    =========================== 1 passed in 0.02 seconds ===========================
+
+The ``--markers`` option always gives you a list of available markers::
+
+    $ py.test --markers
+    @pytest.mark.env(name): mark test to run only on named environment
+    
+    @pytest.mark.skipif(*conditions): skip the given test function if evaluation of all conditions has a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. 
+    
+    @pytest.mark.xfail(*conditions, reason=None, run=True): mark the the test function as an expected failure. Optionally specify a reason and run=False if you don't even want to execute the test function. Any positional condition strings will be evaluated (like with skipif) and if one is False the marker will not be applied.
+    
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    
