@@ -83,6 +83,7 @@ class Parser:
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
+
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
@@ -345,6 +346,14 @@ class Config(object):
         if not args:
             args.append(py.std.os.getcwd())
         self.args = args
+
+    def addinivalue_line(self, name, line):
+        """ add a line to an ini-file option. The option must have been
+        declared but might not yet be set in which case the line becomes the
+        the first line in its value. """
+        x = self.getini(name)
+        assert isinstance(x, list)
+        x.append(line) # modifies the cached list inline
 
     def getini(self, name):
         """ return configuration value from an ini file. If the

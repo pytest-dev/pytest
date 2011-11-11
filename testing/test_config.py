@@ -208,6 +208,40 @@ class TestConfigAPI:
         l = config.getini("a2")
         assert l == []
 
+    def test_addinivalue_line_existing(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("xy", "", type="linelist")
+        """)
+        p = testdir.makeini("""
+            [pytest]
+            xy= 123
+        """)
+        config = testdir.parseconfig()
+        l = config.getini("xy")
+        assert len(l) == 1
+        assert l == ["123"]
+        config.addinivalue_line("xy", "456")
+        l = config.getini("xy")
+        assert len(l) == 2
+        assert l == ["123", "456"]
+
+    def test_addinivalue_line_new(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("xy", "", type="linelist")
+        """)
+        config = testdir.parseconfig()
+        assert not config.getini("xy")
+        config.addinivalue_line("xy", "456")
+        l = config.getini("xy")
+        assert len(l) == 1
+        assert l == ["456"]
+        config.addinivalue_line("xy", "123")
+        l = config.getini("xy")
+        assert len(l) == 2
+        assert l == ["456", "123"]
+
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
         reprec = testdir.inline_run(*opts)
