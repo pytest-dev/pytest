@@ -340,7 +340,7 @@ class TestTerminalFunctional:
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
             "*test_deselected.py ..",
-            "=* 1 test*deselected by 'test_two:'*=",
+            "=* 1 test*deselected by*test_two:*=",
         ])
         assert result.ret == 0
 
