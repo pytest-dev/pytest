@@ -1,11 +1,22 @@
-py.test 2.2.0: new test duration profiling and bug fixes
+py.test 2.2.0: improved test markers and duration profiling
 ===========================================================================
 
-pytest-2.2.0 is a quite backward compatible release of the popular
-py.test testing tool.  It introduces the new "--duration=N" option
-showing the N slowest test execution or setup/teardown calls.   The
-release also contains a few fixes and some cleanup of pytest's own test
-suite allowing it to run on a wider range of environments.
+pytest-2.2.0 is a quite (*) backward compatible release of the popular
+py.test testing tool.  It includes the following new features:
+
+* new "--duration=N" option showing the N slowest test execution 
+  or setup/teardown calls.
+
+* new "-m markexpr" option for selecting tests according to their mark
+
+* new ini-variable for registering test markers and a "--strict"
+  option that will error out if you are using unregistered markers
+
+Usages of the improved marking mechanism is illustrated by a couple
+of initial examples, see XXX
+
+Besides there is the usual set of bug fixes along with a cleanup of
+pytest's own test suite allowing it to run on a wider range of environments.
 
 For general information, see extensive docs with examples here:
 
@@ -16,18 +27,21 @@ If you want to install or upgrade pytest you might just type::
     pip install -U pytest # or
     easy_install -U pytest
 
-incompatible change
-------------------------------------
+
+(*) incompatible changes:
 
 * You need a new version of the pytest-xdist plugin (1.7) for distributing 
   test runs.  
 
-* Also other plugins might need an upgrade if they implement
+* Other plugins might need an upgrade if they implement
   the ``pytest_runtest_logreport`` hook which now is called unconditionally
   for the setup/teardown fixture phases of a test. You can just choose to
   ignore them by inserting "if rep.when != 'call': return". Note that
   most code probably "just" works because the hook was already called
   for failing setup/teardown phases of a test.
+
+Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner XXX for their
+help and feedback on various issues.
 
 best,
 holger krekel
