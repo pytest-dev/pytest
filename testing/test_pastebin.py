@@ -1,3 +1,4 @@
+import pytest
 
 class TestPasting:
     def pytest_funcarg__pastebinlist(self, request):
@@ -45,3 +46,14 @@ class TestPasting:
         for x in 'test_fail test_skip skipped'.split():
             assert s.find(x), (s, x)
 
+
+class TestRPCClient:
+    def pytest_funcarg__pastebin(self, request):
+        return request.config.pluginmanager.getplugin('pastebin')
+
+    def test_getproxy(self, pastebin):
+        proxy = pastebin.getproxy()
+        assert proxy is not None
+        assert proxy.__class__.__module__.startswith('xmlrpc')
+
+    
