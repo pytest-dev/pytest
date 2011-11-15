@@ -106,6 +106,26 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_interaction_doctest(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pytest
+            def function_1():
+                '''
+                >>> i = 0
+                >>> assert i == 1
+                '''
+        """)
+        child = testdir.spawn_pytest("--doctest-modules --pdb %s" % p1)
+        child.expect("(Pdb)")
+        child.sendline('i')
+        child.expect("0")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read()
+        assert "1 failed" in rest
+        if child.isalive():
+            child.wait()
+
     def test_pdb_interaction_capturing_twice(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

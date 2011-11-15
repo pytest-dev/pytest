@@ -70,7 +70,13 @@ class PdbInvoke:
         tw.sep(">", "traceback")
         rep.toterminal(tw)
         tw.sep(">", "entering PDB")
-        post_mortem(call.excinfo._excinfo[2])
+        # A doctest.UnexpectedException is not useful for post_mortem.
+        # Use the underlying exception instead:
+        if isinstance(call.excinfo.value, py.std.doctest.UnexpectedException):
+            tb = call.excinfo.value.exc_info[2]
+        else:
+            tb = call.excinfo._excinfo[2]
+        post_mortem(tb)
         rep._pdbshown = True
         return rep
 

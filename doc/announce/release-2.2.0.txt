@@ -40,7 +40,7 @@ If you want to install or upgrade pytest you might just type::
   most code probably "just" works because the hook was already called
   for failing setup/teardown phases of a test.
 
-Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner XXX for their
+Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner, Daniel Nouri, XXX for their
 help and feedback on various issues.
 
 best,
