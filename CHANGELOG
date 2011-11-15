@@ -14,6 +14,7 @@ Changes between 2.1.3 and XXX 2.2.0
 - new feature to help optimizing the speed of your tests: 
   --durations=N option for displaying N slowest test calls 
   and setup/teardown methods.
+- fix issue87: --pastebin now works with python3
 - fix issue89: --pdb with unexpected exceptions in doctest work more sensibly
 - fix and cleanup pytest's own test suite to not leak FDs 
 - fix issue83: link to generated funcarg list
