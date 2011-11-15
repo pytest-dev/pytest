@@ -38,7 +38,11 @@ def pytest_unconfigure(config):
         del tr._tw.__dict__['write']
 
 def getproxy():
-    return py.std.xmlrpclib.ServerProxy(url.xmlrpc).pastes
+    if sys.version_info < (3, 0):
+        from xmlrpclib import ServerProxy
+    else:
+        from xmlrpc.client import ServerProxy
+    return ServerProxy(url.xmlrpc).pastes
 
 def pytest_terminal_summary(terminalreporter):
     if terminalreporter.config.option.pastebin != "failed":
