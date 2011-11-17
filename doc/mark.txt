@@ -10,9 +10,11 @@ By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. To begin with, there are
 some builtin markers, for example:
 
-* skipif - skip a test function if a certain condition is met
-* xfail - produce an "expected failure" outcome if a certain
+* :ref:`skipif <skipif>` - skip a test function if a certain condition is met
+* :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
   condition is met
+* :ref:`parametrize <parametrizemark>` to perform multiple calls
+  to the same test function.
 
 It's also easy to create custom markers or to apply markers
 to whole test classes or modules.

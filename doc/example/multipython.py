@@ -7,13 +7,11 @@ import py
 pythonlist = ['python2.4', 'python2.5', 'python2.6', 'python2.7', 'python2.8']
 
 def pytest_generate_tests(metafunc):
-    if 'python1' in metafunc.funcargnames:
-        assert 'python2' in metafunc.funcargnames
-        for obj in metafunc.function.multiarg.kwargs['obj']:
-            for py1 in pythonlist:
-                for py2 in pythonlist:
-                    metafunc.addcall(id="%s-%s-%s" % (py1, py2, obj),
-                        param=(py1, py2, obj))
+    for arg in metafunc.funcargnames:
+        if arg.startswith("python"):
+            metafunc.parametrize(arg, pythonlist, indirect=True)
+        elif arg == "obj":
+            metafunc.parametrize("obj", metafunc.function.multiarg.kwargs['obj'])
 
 @py.test.mark.multiarg(obj=[42, {}, {1:3},])
 def test_basic_objects(python1, python2, obj):
@@ -23,14 +21,11 @@ def test_basic_objects(python1, python2, obj):
 def pytest_funcarg__python1(request):
     tmpdir = request.getfuncargvalue("tmpdir")
     picklefile = tmpdir.join("data.pickle")
-    return Python(request.param[0], picklefile)
+    return Python(request.param, picklefile)
 
 def pytest_funcarg__python2(request):
     python1 = request.getfuncargvalue("python1")
-    return Python(request.param[1], python1.picklefile)
-
-def pytest_funcarg__obj(request):
-    return request.param[2]
+    return Python(request.param, python1.picklefile)
 
 class Python:
     def __init__(self, version, picklefile):

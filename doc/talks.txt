@@ -23,7 +23,8 @@ Function arguments:
 
 Test parametrization:
 
-- `generating parametrized tests with funcargs`_
+- `generating parametrized tests with funcargs`_ (uses deprecated
+ ``addcall()`` API.
 - `test generators and cached setup`_
 - `parametrizing tests, generalized`_ (blog post)
 - `putting test-hooks into local or global plugins`_ (blog post)

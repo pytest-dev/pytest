@@ -520,12 +520,6 @@ def test_getfuncargnames():
     if sys.version_info < (3,0):
         assert funcargs.getfuncargnames(A.f) == ['arg1']
 
-def test_callspec_repr():
-    cs = funcargs.CallSpec({}, 'hello', 1)
-    repr(cs)
-    cs = funcargs.CallSpec({}, 'hello', funcargs._notexists)
-    repr(cs)
-
 class TestFillFuncArgs:
     def test_fillfuncargs_exposed(self):
         # used by oejskit
@@ -886,6 +880,7 @@ class TestMetafunc:
         def function(): pass
         metafunc = funcargs.Metafunc(function)
         assert not metafunc.funcargnames
+        repr(metafunc._calls)
 
     def test_function_basic(self):
         def func(arg1, arg2="qwe"): pass
@@ -925,9 +920,9 @@ class TestMetafunc:
         metafunc.addcall(param=obj)
         metafunc.addcall(param=1)
         assert len(metafunc._calls) == 3
-        assert metafunc._calls[0].param == obj
-        assert metafunc._calls[1].param == obj
-        assert metafunc._calls[2].param == 1
+        assert metafunc._calls[0].getparam("arg1") == obj
+        assert metafunc._calls[1].getparam("arg1") == obj
+        assert metafunc._calls[2].getparam("arg1") == 1
 
     def test_addcall_funcargs(self):
         def func(x): pass
@@ -941,7 +936,119 @@ class TestMetafunc:
         assert metafunc._calls[1].funcargs == {'x': 3}
         assert not hasattr(metafunc._calls[1], 'param')
 
-class TestGenfuncFunctional:
+    def test_parametrize_error(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+        metafunc.parametrize("x", [1,2])
+        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5,6]))
+        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5,6]))
+        metafunc.parametrize("y", [1,2])
+        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
+        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
+
+    def test_parametrize_and_id(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+
+        metafunc.parametrize("x", [1,2], ids=['basic', 'advanced'])
+        metafunc.parametrize("y", ["abc", "def"])
+        ids = [x.id for x in metafunc._calls]
+        assert ids == ["basic-abc", "basic-def", "advanced-abc", "advanced-def"]
+
+    def test_parametrize_with_userobjects(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+        class A:
+            pass
+        metafunc.parametrize("x", [A(), A()])
+        metafunc.parametrize("y", list("ab"))
+        assert metafunc._calls[0].id == ".0-a"
+        assert metafunc._calls[1].id == ".0-b"
+        assert metafunc._calls[2].id == ".1-a"
+        assert metafunc._calls[3].id == ".1-b"
+
+    def test_addcall_and_parametrize(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+        metafunc.addcall({'x': 1})
+        metafunc.parametrize('y', [2,3])
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == {'x': 1, 'y': 2}
+        assert metafunc._calls[1].funcargs == {'x': 1, 'y': 3}
+        assert metafunc._calls[0].id == "0-2"
+        assert metafunc._calls[1].id == "0-3"
+
+    def test_parametrize_indirect(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+        metafunc.parametrize('x', [1], indirect=True)
+        metafunc.parametrize('y', [2,3], indirect=True)
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == {}
+        assert metafunc._calls[1].funcargs == {}
+        assert metafunc._calls[0].params == dict(x=1,y=2)
+        assert metafunc._calls[1].params == dict(x=1,y=3)
+
+    def test_addcalls_and_parametrize_indirect(self):
+        def func(x, y): pass
+        metafunc = funcargs.Metafunc(func)
+        metafunc.addcall(param="123")
+        metafunc.parametrize('x', [1], indirect=True)
+        metafunc.parametrize('y', [2,3], indirect=True)
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == {}
+        assert metafunc._calls[1].funcargs == {}
+        assert metafunc._calls[0].params == dict(x=1,y=2)
+        assert metafunc._calls[1].params == dict(x=1,y=3)
+
+    def test_parametrize_functional(self, testdir):
+        testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize('x', [1,2], indirect=True)
+                metafunc.parametrize('y', [2])
+            def pytest_funcarg__x(request):
+                return request.param * 10
+            def pytest_funcarg__y(request):
+                return request.param
+
+            def test_simple(x,y):
+                assert x in (10,20)
+                assert y == 2
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_simple*1-2*",
+            "*test_simple*2-2*",
+            "*2 passed*",
+        ])
+
+    def test_parametrize_onearg(self):
+        metafunc = funcargs.Metafunc(lambda x: None)
+        metafunc.parametrize("x", [1,2])
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == dict(x=1)
+        assert metafunc._calls[0].id == "1"
+        assert metafunc._calls[1].funcargs == dict(x=2)
+        assert metafunc._calls[1].id == "2"
+
+    def test_parametrize_onearg_indirect(self):
+        metafunc = funcargs.Metafunc(lambda x: None)
+        metafunc.parametrize("x", [1,2], indirect=True)
+        assert metafunc._calls[0].params == dict(x=1)
+        assert metafunc._calls[0].id == "1"
+        assert metafunc._calls[1].params == dict(x=2)
+        assert metafunc._calls[1].id == "2"
+
+    def test_parametrize_twoargs(self):
+        metafunc = funcargs.Metafunc(lambda x,y: None)
+        metafunc.parametrize(("x", "y"), [(1,2), (3,4)])
+        assert len(metafunc._calls) == 2
+        assert metafunc._calls[0].funcargs == dict(x=1, y=2)
+        assert metafunc._calls[0].id == "1-2"
+        assert metafunc._calls[1].funcargs == dict(x=3, y=4)
+        assert metafunc._calls[1].id == "3-4"
+
+class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
             # assumes that generate/provide runs in the same process
@@ -1108,6 +1215,46 @@ class TestGenfuncFunctional:
         result.stdout.fnmatch_lines([
             "*1 pass*",
         ])
+
+    def test_parametrize_functional2(self, testdir):
+        testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize("arg1", [1,2])
+                metafunc.parametrize("arg2", [4,5])
+            def test_hello(arg1, arg2):
+                assert 0, (arg1, arg2)
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*(1, 4)*",
+            "*(1, 5)*",
+            "*(2, 4)*",
+            "*(2, 5)*",
+            "*4 failed*",
+        ])
+
+    def test_parametrize_and_inner_getfuncargvalue(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize("arg1", [1], indirect=True)
+                metafunc.parametrize("arg2", [10], indirect=True)
+
+            def pytest_funcarg__arg1(request):
+                x = request.getfuncargvalue("arg2")
+                return x + request.param
+
+            def pytest_funcarg__arg2(request):
+                return request.param
+
+            def test_func1(arg1, arg2):
+                assert arg1 == 11
+        """)
+        result = testdir.runpytest("-v", p)
+        result.stdout.fnmatch_lines([
+            "*test_func1*1*PASS*",
+            "*1 passed*"
+        ])
+
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

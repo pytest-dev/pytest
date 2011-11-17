@@ -1,19 +1,25 @@
 py.test 2.2.0: improved test markers and duration profiling
 ===========================================================================
 
-pytest-2.2.0 is a quite (*) backward compatible release of the popular
-py.test testing tool.  It includes the following new features:
+pytest-2.2.0 is a quite [1] backward compatible release of the popular
+py.test testing tool. There are a couple of new features:
 
-* new "--duration=N" option showing the N slowest test execution 
+* "--duration=N" option showing the N slowest test execution 
   or setup/teardown calls.
 
-* new "-m markexpr" option for selecting tests according to their mark
+* @pytest.mark.parametrize decorator for runnin test functions
+  with multiple values and a new more powerful metafunc.parametrize()
+  helper to be used from pytest_generate_tests. Multiple parametrize
+  functions can now be invoked for the same test function.
 
-* new ini-variable for registering test markers and a "--strict"
-  option that will error out if you are using unregistered markers
+* "-m markexpr" option for selecting tests according to their mark and
+  a new "markers" ini-variable for registering test markers.  The new "--strict"
+  option will bail out with an error if you are using unregistered markers.
 
+Usage of improved parametrize is documented in examples at 
+http://pytest.org/latest/example/parametrize.html
 Usages of the improved marking mechanism is illustrated by a couple
-of initial examples, see XXX
+of initial examples, see http://pytest.org/latest/example/markers.html
 
 Besides there is the usual set of bug fixes along with a cleanup of
 pytest's own test suite allowing it to run on a wider range of environments.
@@ -27,8 +33,15 @@ If you want to install or upgrade pytest you might just type::
     pip install -U pytest # or
     easy_install -U pytest
 
+Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner, Daniel Nouri, XXX for their
+help and feedback on various issues.
 
-(*) incompatible changes:
+best,
+holger krekel
+
+
+[1] notes on incompatibility
+------------------------------
 
 * You need a new version of the pytest-xdist plugin (1.7) for distributing 
   test runs.  
@@ -39,10 +52,4 @@ If you want to install or upgrade pytest you might just type::
   ignore them by inserting "if rep.when != 'call': return". Note that
   most code probably "just" works because the hook was already called
   for failing setup/teardown phases of a test.
-
-Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner, Daniel Nouri, XXX for their
-help and feedback on various issues.
-
-best,
-holger krekel
 

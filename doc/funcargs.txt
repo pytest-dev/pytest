@@ -61,14 +61,14 @@ py.test will discover and call the factory named
 Running the test looks like this::
 
     $ py.test test_simplefactory.py
-    =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.1.3
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
     collecting ... collected 1 items
     
     test_simplefactory.py F
     
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    =================================== FAILURES ===================================
+    ________________________________ test_function _________________________________
     
     myfuncarg = 42
     
@@ -77,7 +77,7 @@ Running the test looks like this::
     E       assert 42 == 17
     
     test_simplefactory.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    =========================== 1 failed in 0.02 seconds ===========================
 
 This means that indeed the test function was called with a ``myfuncarg``
 argument value of ``42`` and the assert fails.  Here is how py.test
@@ -158,23 +158,22 @@ hook to generate several calls to the same test function::
     # content of test_example.py
     def pytest_generate_tests(metafunc):
         if "numiter" in metafunc.funcargnames:
-            for i in range(10):
-                metafunc.addcall(funcargs=dict(numiter=i))
+            metafunc.parametrize("numiter", range(10))
 
     def test_func(numiter):
         assert numiter < 9
 
-Running this::
+Running this will generate ten invocations of ``test_func`` passing in each of the items in the list of ``range(10)``::
 
     $ py.test test_example.py
-    =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.1.3
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
     collecting ... collected 10 items
     
     test_example.py .........F
     
-    ================================= FAILURES =================================
-    _______________________________ test_func[9] _______________________________
+    =================================== FAILURES ===================================
+    _________________________________ test_func[9] _________________________________
     
     numiter = 9
     
@@ -182,16 +181,16 @@ Running this::
     >       assert numiter < 9
     E       assert 9 < 9
     
-    test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.04 seconds ====================
+    test_example.py:6: AssertionError
+    ====================== 1 failed, 9 passed in 0.07 seconds ======================
 
-Note that the ``pytest_generate_tests(metafunc)`` hook is called during
+Obviously, only when ``numiter`` has the value of ``9`` does the test fail.  Note that the ``pytest_generate_tests(metafunc)`` hook is called during
 the test collection phase which is separate from the actual test running.
 Let's just look at what is collected::
 
     $ py.test --collectonly test_example.py
-    =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.1.3
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
     collecting ... collected 10 items
     <Module 'test_example.py'>
       <Function 'test_func[0]'>
@@ -205,37 +204,19 @@ Let's just look at what is collected::
       <Function 'test_func[8]'>
       <Function 'test_func[9]'>
     
-    =============================  in 0.01 seconds =============================
+    ===============================  in 0.01 seconds ===============================
 
 If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
-    =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.1.3 -- /Users/hpk/venv/0/bin/python
+    ============================= test session starts ==============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8 -- /Users/hpk/venv/1/bin/python
     collecting ... collected 10 items
     
-    test_example.py:6: test_func[0] PASSED
-    test_example.py:6: test_func[1] PASSED
-    test_example.py:6: test_func[2] PASSED
-    test_example.py:6: test_func[3] PASSED
-    test_example.py:6: test_func[4] PASSED
-    test_example.py:6: test_func[5] PASSED
-    test_example.py:6: test_func[6] PASSED
-    test_example.py:6: test_func[7] PASSED
-    test_example.py:6: test_func[8] PASSED
-    test_example.py:6: test_func[9] FAILED
+    test_example.py:5: test_func[7] PASSED
     
-    ================================= FAILURES =================================
-    _______________________________ test_func[9] _______________________________
-    
-    numiter = 9
-    
-        def test_func(numiter):
-    >       assert numiter < 9
-    E       assert 9 < 9
-    
-    test_example.py:7: AssertionError
-    ==================== 1 failed, 9 passed in 0.05 seconds ====================
+    ========================= 9 tests deselected by '-k7' ==========================
+    ==================== 1 passed, 9 deselected in 0.01 seconds ====================
 
 You might want to look at :ref:`more parametrization examples <paramexamples>`.
 
@@ -259,4 +240,5 @@ in the class or module where a test function is defined:
 
 ``metafunc.config``: access to command line opts and general config
 
+.. automethod:: Metafunc.parametrize(name, values, idmaker=None)
 .. automethod:: Metafunc.addcall(funcargs=None, id=_notexists, param=_notexists)
