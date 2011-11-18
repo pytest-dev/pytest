@@ -43,7 +43,7 @@ def pytest_terminal_summary(terminalreporter):
 
     for duration, rep in d2:
         nodeid = rep.nodeid.replace("::()::", "::")
-        tr.write_line("%02.2fs %s %s" %
+        tr.write_line("%02.2fs %-8s %s" %
             (duration, rep.when, nodeid))
 
 def pytest_sessionstart(session):
