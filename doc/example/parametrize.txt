@@ -17,8 +17,10 @@ simple "decorator" parametrization of a test function
 
 .. versionadded:: 2.2
 
-The builtin ``parametrize`` marker allows you to easily write generic
-test functions that will be invoked with multiple input/output values::
+The builtin ``pytest.mark.parametrize`` decorator directly enables 
+parametrization of arguments for a test function.  Here is an example
+of a test function that wants to compare that processing some input
+results in expected output::
 
     # content of test_expectation.py
     import pytest
@@ -30,14 +32,14 @@ test functions that will be invoked with multiple input/output values::
     def test_eval(input, expected):
         assert eval(input) == expected
 
-Here we parametrize two arguments of the test function so that the test 
+we parametrize two arguments of the test function so that the test 
 function is called three times.  Let's run it::
 
     $ py.test -q 
     collecting ... collected 3 items
     ..F
-    =================================== FAILURES ===================================
-    ______________________________ test_eval[6*9-42] _______________________________
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
     
     input = '6*9', expected = 42
     
@@ -51,7 +53,7 @@ function is called three times.  Let's run it::
     E       assert 54 == 42
     E        +  where 54 = eval('6*9')
     
-    test_expectation.py:9: AssertionError
+    test_expectation.py:8: AssertionError
     1 failed, 2 passed in 0.03 seconds
 
 As expected only one pair of input/output values fails the simple test function.
@@ -102,8 +104,8 @@ let's run the full monty::
     $ py.test -q --all
     collecting ... collected 5 items
     ....F
-    =================================== FAILURES ===================================
-    _______________________________ test_compute[4] ________________________________
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
     
     param1 = 4
     
@@ -151,20 +153,20 @@ only have to work a bit to construct the correct arguments for pytest's
 this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0
     collecting ... collected 2 items
     
     test_scenarios.py ..
     
-    =========================== 2 passed in 0.02 seconds ===========================
+    ========================= 2 passed in 0.02 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
     $ py.test --collectonly test_scenarios.py
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0
     collecting ... collected 2 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -172,7 +174,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo[basic]'>
           <Function 'test_demo[advanced]'>
     
-    ===============================  in 0.01 seconds ===============================
+    =============================  in 0.01 seconds =============================
 
 Deferring the setup of parametrized resources
 ---------------------------------------------------
@@ -219,24 +221,24 @@ creates a database object for the actual test invocations::
 Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0.dev8
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.0
     collecting ... collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    ===============================  in 0.01 seconds ===============================
+    =============================  in 0.01 seconds =============================
 
 And then when we run the test::
 
     $ py.test -q test_backends.py
     collecting ... collected 2 items
     .F
-    =================================== FAILURES ===================================
-    ___________________________ test_db_initialized[d2] ____________________________
+    ================================= FAILURES =================================
+    _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x1013195f0>
+    db = <conftest.DB2 instance at 0x10150ab90>
     
         def test_db_initialized(db):
             # a dummy test
@@ -290,10 +292,10 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     collecting ... collected 3 items
     F..
-    =================================== FAILURES ===================================
-    __________________________ TestClass.test_equals[1-2] __________________________
+    ================================= FAILURES =================================
+    ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x1013158c0>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x101509638>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -302,13 +304,13 @@ argument sets to use for each test function.  Let's run it::
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.03 seconds
 
-Checking serialization between Python interpreters
+Indirect parametrization with multiple resources
 --------------------------------------------------------------
 
 Here is a stripped down real-life example of using parametrized
 testing for testing serialization, invoking different python interpreters.
 We define a ``test_basic_objects`` function which is to be run
-with different sets of arguments for its three arguments::
+with different sets of arguments for its three arguments:
 
 * ``python1``: first python interpreter, run to pickle-dump an object to a file
 * ``python2``: second interpreter, run to pickle-load an object from a file 
@@ -316,9 +318,12 @@ with different sets of arguments for its three arguments::
 
 .. literalinclude:: multipython.py
 
-Running it (with Python-2.4 through to Python2.7 installed)::
+Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
-   . $ py.test -q multipython.py
+   . $ py.test -rs -q multipython.py
    collecting ... collected 75 items
    ssssssssssssssssss.........ssssss.........ssssss.........ssssssssssssssssss
-   27 passed, 48 skipped in 4.87 seconds
+   ========================= short test summary info ==========================
+   SKIP [24] /Users/hpk/p/pytest/doc/example/multipython.py:36: 'python2.8' not found
+   SKIP [24] /Users/hpk/p/pytest/doc/example/multipython.py:36: 'python2.4' not found
+   27 passed, 48 skipped in 3.03 seconds

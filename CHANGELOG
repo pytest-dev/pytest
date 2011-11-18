@@ -1,4 +1,4 @@
-Changes between 2.1.3 and XXX 2.2.0
+Changes between 2.1.3 and 2.2.0
 ----------------------------------------
 
 - fix issue90: introduce eager tearing down of test items so that

@@ -39,7 +39,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers",
         "parametrize(argnames, argvalues): call a test function multiple "
         "times passing in multiple different argument value sets. Example: "
-        "@parametrize(arg1, [1,2]) would lead to two calls of the decorated "
+        "@parametrize('arg1', [1,2]) would lead to two calls of the decorated "
         "test function, one with arg1=1 and another with arg1=2."
     )
 

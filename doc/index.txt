@@ -27,13 +27,13 @@ Welcome to pytest!
 
  - (new in 2.2) :ref:`durations`
  - (much improved in 2.2) :ref:`marking and test selection <mark>`
+ - (improved in 2.2) :ref:`parametrized test functions <parametrized test functions>`
  - advanced :ref:`skip and xfail`
+ - unique :ref:`dependency injection through funcargs <funcargs>`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - can :ref:`continuously re-run failing tests <looponfailing>`
  - many :ref:`builtin helpers <pytest helpers>`
  - flexible :ref:`Python test discovery`
- - unique :ref:`dependency injection through funcargs <funcargs>`
- - :ref:`parametrized test functions <parametrized test functions>`
 
 - **integrates many common testing methods**
 

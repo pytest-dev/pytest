@@ -16,9 +16,9 @@ def pytest_addoption(parser):
 
     group._addoption("-m",
         action="store", dest="markexpr", default="", metavar="MARKEXPR",
-        help="only run tests which match given mark expression.  "
-             "An expression is a python expression which can use "
-             "marker names.")
+        help="only run tests matching given mark expression.  "
+             "example: -m 'mark1 and not mark2'."
+             )
 
     group.addoption("--markers", action="store_true", help=
         "show markers (builtin, plugin and per-project ones).")
