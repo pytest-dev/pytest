@@ -29,10 +29,10 @@ def pytest_terminal_summary(terminalreporter):
     for replist in tr.stats.values():
         for rep in replist:
             if hasattr(rep, 'duration'):
-                dlist.append((rep.duration, rep))
+                dlist.append(rep)
     if not dlist:
         return
-    dlist.sort()
+    dlist.sort(key=lambda x: x.duration)
     dlist.reverse()
     if not durations:
         tr.write_sep("=", "slowest test durations")
@@ -40,10 +40,10 @@ def pytest_terminal_summary(terminalreporter):
         tr.write_sep("=", "slowest %s test durations" % durations)
         dlist = dlist[:durations]
 
-    for duration, rep in dlist:
+    for rep in dlist:
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %-8s %s" %
-            (duration, rep.when, nodeid))
+            (rep.duration, rep.when, nodeid))
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
