@@ -163,17 +163,6 @@ class CaptureManager:
     def pytest_runtest_teardown(self, item):
         self.resumecapture_item(item)
 
-    def pytest__teardown_final(self, __multicall__, session):
-        method = self._getmethod(session.config, None)
-        self.resumecapture(method)
-        try:
-            rep = __multicall__.execute()
-        finally:
-            outerr = self.suspendcapture()
-        if rep:
-            addouterr(rep, outerr)
-        return rep
-
     def pytest_keyboard_interrupt(self, excinfo):
         if hasattr(self, '_capturing'):
             self.suspendcapture()

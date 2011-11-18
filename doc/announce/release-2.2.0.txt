@@ -1,8 +1,8 @@
-py.test 2.2.0: improved test markers and duration profiling
+py.test 2.2.0: test marking++, parametrization++ and duration profiling
 ===========================================================================
 
-pytest-2.2.0 is a quite [1] backward compatible release of the popular
-py.test testing tool. There are a couple of new features:
+pytest-2.2.0 is a test-suite compatible release of the popular
+py.test testing tool.  There are a couple of new features and improvements:
 
 * "--duration=N" option showing the N slowest test execution 
   or setup/teardown calls.
@@ -16,8 +16,13 @@ py.test testing tool. There are a couple of new features:
   a new "markers" ini-variable for registering test markers.  The new "--strict"
   option will bail out with an error if you are using unregistered markers.
 
+* teardown functions are now more eagerly called so that they appear
+  more directly connected to the last test item that needed a particular
+  fixture/setup.
+
 Usage of improved parametrize is documented in examples at 
 http://pytest.org/latest/example/parametrize.html
+
 Usages of the improved marking mechanism is illustrated by a couple
 of initial examples, see http://pytest.org/latest/example/markers.html
 
@@ -40,8 +45,10 @@ best,
 holger krekel
 
 
-[1] notes on incompatibility
+notes on incompatibility
 ------------------------------
+
+While test suites should work unchanged you might need to upgrade plugins:
 
 * You need a new version of the pytest-xdist plugin (1.7) for distributing 
   test runs.  

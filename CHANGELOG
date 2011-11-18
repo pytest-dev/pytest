@@ -1,6 +1,8 @@
 Changes between 2.1.3 and XXX 2.2.0
 ----------------------------------------
 
+- fix issue90: introduce eager tearing down of test items so that
+  teardown function are called earlier.
 - add an all-powerful metafunc.parametrize function which allows to 
   parametrize test function arguments in multiple steps and therefore
   from indepdenent plugins and palces. 

@@ -82,11 +82,11 @@ def wrap_session(config, doit):
         session.exitstatus = EXIT_INTERNALERROR
         if excinfo.errisinstance(SystemExit):
             sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
-    if not session.exitstatus and session._testsfailed:
-        session.exitstatus = EXIT_TESTSFAILED
     if initstate >= 2:
         config.hook.pytest_sessionfinish(session=session,
-            exitstatus=session.exitstatus)
+            exitstatus=session.exitstatus or (session._testsfailed and 1))
+    if not session.exitstatus and session._testsfailed:
+        session.exitstatus = EXIT_TESTSFAILED
     if initstate >= 1:
         config.pluginmanager.do_unconfigure(config)
     return session.exitstatus
@@ -106,7 +106,7 @@ def pytest_collection(session):
 def pytest_runtestloop(session):
     if session.config.option.collectonly:
         return True
-    for item in session.session.items:
+    for item in session.items:
         item.config.hook.pytest_runtest_protocol(item=item)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)

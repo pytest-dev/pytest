@@ -355,9 +355,11 @@ class TmpTestdir:
         if not plugins:
             plugins = []
         plugins.append(Collect())
-        self.pytestmain(list(args), plugins=[Collect()])
+        ret = self.pytestmain(list(args), plugins=[Collect()])
+        reprec = rec[0]
+        reprec.ret = ret
         assert len(rec) == 1
-        return items, rec[0]
+        return items, reprec
 
     def parseconfig(self, *args):
         args = [str(x) for x in args]

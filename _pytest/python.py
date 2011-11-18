@@ -387,6 +387,7 @@ class FuncargLookupErrorRepr(TerminalRepr):
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
+
 class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
     def collect(self):
         # test generators are seen as collectors but they also

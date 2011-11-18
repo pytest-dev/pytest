@@ -160,6 +160,45 @@ class BaseFunctionalTests:
         #assert rep.failed.where.path.basename == "test_func.py"
         #assert rep.failed.failurerepr == "hello"
 
+    def test_teardown_final_returncode(self, testdir):
+        rec = testdir.inline_runsource("""
+            def test_func():
+                pass
+            def teardown_function(func):
+                raise ValueError(42)
+        """)
+        assert rec.ret == 1
+
+    def test_exact_teardown_issue90(self, testdir):
+        rec = testdir.inline_runsource("""
+            import pytest
+
+            class TestClass:
+                def test_method(self):
+                    pass
+                def teardown_class(cls):
+                    raise Exception()
+
+            def test_func():
+                pass
+            def teardown_function(func):
+                raise ValueError(42)
+        """)
+        reps = rec.getreports("pytest_runtest_logreport")
+        print (reps)
+        for i in range(2):
+            assert reps[i].nodeid.endswith("test_method")
+            assert reps[i].passed
+        assert reps[2].when == "teardown"
+        assert reps[2].failed
+        assert len(reps) == 6
+        for i in range(3,5):
+            assert reps[i].nodeid.endswith("test_func")
+            assert reps[i].passed
+        assert reps[5].when == "teardown"
+        assert reps[5].nodeid.endswith("test_func")
+        assert reps[5].failed
+
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
         testdir.makepyfile(conftest="""
             import pytest

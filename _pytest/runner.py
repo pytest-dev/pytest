@@ -60,19 +60,33 @@ class NodeInfo:
     def __init__(self, location):
         self.location = location
 
+def perform_pending_teardown(config, nextitem):
+    try:
+        olditem, log = config._pendingteardown
+    except AttributeError:
+        pass
+    else:
+        del config._pendingteardown
+        olditem.nextitem = nextitem
+        call_and_report(olditem, "teardown", log)
+
 def pytest_runtest_protocol(item):
+    perform_pending_teardown(item.config, item)
     item.ihook.pytest_runtest_logstart(
         nodeid=item.nodeid, location=item.location,
     )
-    runtestprotocol(item)
+    runtestprotocol(item, teardowndelayed=True)
     return True
 
-def runtestprotocol(item, log=True):
+def runtestprotocol(item, log=True, teardowndelayed=False):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
         reports.append(call_and_report(item, "call", log))
-    reports.append(call_and_report(item, "teardown", log))
+    if teardowndelayed:
+        item.config._pendingteardown = item, log
+    else:
+        reports.append(call_and_report(item, "teardown", log))
     return reports
 
 def pytest_runtest_setup(item):
@@ -85,12 +99,13 @@ def pytest_runtest_teardown(item):
     item.session._setupstate.teardown_exact(item)
 
 def pytest__teardown_final(session):
-    call = CallInfo(session._setupstate.teardown_all, when="teardown")
-    if call.excinfo:
-        ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
-        call.excinfo.traceback = ntraceback.filter()
-        longrepr = call.excinfo.getrepr(funcargs=True)
-        return TeardownErrorReport(longrepr)
+    perform_pending_teardown(session.config, None)
+    #call = CallInfo(session._setupstate.teardown_all, when="teardown")
+    #if call.excinfo:
+    #    ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
+    #    call.excinfo.traceback = ntraceback.filter()
+    #    longrepr = call.excinfo.getrepr(funcargs=True)
+    #    return TeardownErrorReport(longrepr)
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
@@ -325,19 +340,28 @@ class SetupState(object):
         assert not self._finalizers
 
     def teardown_exact(self, item):
-        if self.stack and item == self.stack[-1]:
+        try:
+            colitem = item.nextitem
+        except AttributeError:
+            # in distributed testing there might be no known nexitem
+            # and in this case we use the parent node to at least call
+            # teardown of the current item
+            colitem = item.parent
+        needed_collectors = colitem and colitem.listchain() or []
+        self._teardown_towards(needed_collectors)
+
+    def _teardown_towards(self, needed_collectors):
+        while self.stack:
+            if self.stack == needed_collectors[:len(self.stack)]:
+                break
             self._pop_and_teardown()
-        else:
-            self._callfinalizers(item)
 
     def prepare(self, colitem):
         """ setup objects along the collector chain to the test-method
             and teardown previously setup objects."""
         needed_collectors = colitem.listchain()
-        while self.stack:
-            if self.stack == needed_collectors[:len(self.stack)]:
-                break
-            self._pop_and_teardown()
+        self._teardown_towards(needed_collectors)
+
         # check if the last collection node has raised an error
         for col in self.stack:
             if hasattr(col, '_prepare_exc'):
