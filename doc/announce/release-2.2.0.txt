@@ -5,9 +5,9 @@ pytest-2.2.0 is a test-suite compatible release of the popular
 py.test testing tool.  Plugins might need upgrades. It comes 
 with these improvements:
 
-* more powerful parametrization of tests:
+* easier and more powerful parametrization of tests:
 
-  - new @pytest.mark.parametrize decorator for running test functions
+  - new @pytest.mark.parametrize decorator to run tests with different arguments
   - new metafunc.parametrize() API for parametrizing arguments independently
   - see examples at http://pytest.org/latest/example/parametrize.html
   - NOTE that parametrize() related APIs are still a bit experimental
