@@ -330,6 +330,8 @@ class Item(Node):
     """ a basic test invocation item. Note that for a single function
     there might be multiple test invocation items.
     """
+    nextitem = None
+
     def reportinfo(self):
         return self.fspath, None, ""
 

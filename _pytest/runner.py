@@ -340,13 +340,7 @@ class SetupState(object):
         assert not self._finalizers
 
     def teardown_exact(self, item):
-        try:
-            colitem = item.nextitem
-        except AttributeError:
-            # in distributed testing there might be no known nexitem
-            # and in this case we use the parent node to at least call
-            # teardown of the current item
-            colitem = item.parent
+        colitem = item.nextitem
         needed_collectors = colitem and colitem.listchain() or []
         self._teardown_towards(needed_collectors)
 
