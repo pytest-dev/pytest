@@ -28,6 +28,7 @@ Changes between 2.1.3 and XXX 2.2.0
 - fix and cleanup pytest's own test suite to not leak FDs 
 - fix issue83: link to generated funcarg list
 - fix issue74: pyarg module names are now checked against imp.find_module false positives
+- fix compatibility with twisted/trial-11.1.0 use cases
 
 Changes between 2.1.2 and 2.1.3
 ----------------------------------------

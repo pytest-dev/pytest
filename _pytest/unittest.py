@@ -120,14 +120,19 @@ def pytest_runtest_protocol(item, __multicall__):
             ut = sys.modules['twisted.python.failure']
             Failure__init__ = ut.Failure.__init__.im_func
             check_testcase_implements_trial_reporter()
-            def excstore(self, exc_value=None, exc_type=None, exc_tb=None):
+            def excstore(self, exc_value=None, exc_type=None, exc_tb=None,
+                captureVars=None):
                 if exc_value is None:
                     self._rawexcinfo = sys.exc_info()
                 else:
                     if exc_type is None:
                         exc_type = type(exc_value)
                     self._rawexcinfo = (exc_type, exc_value, exc_tb)
-                Failure__init__(self, exc_value, exc_type, exc_tb)
+                try:
+                    Failure__init__(self, exc_value, exc_type, exc_tb,
+                        captureVars=captureVars)
+                except TypeError:
+                    Failure__init__(self, exc_value, exc_type, exc_tb)
             ut.Failure.__init__ = excstore
             try:
                 return __multicall__.execute()
