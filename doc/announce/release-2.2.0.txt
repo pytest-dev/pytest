@@ -39,8 +39,7 @@ If you want to install or upgrade pytest you might just type::
     pip install -U pytest # or
     easy_install -U pytest
 
-Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner, Daniel Nouri,
-Alfredo Doza and all who gave feedback or sent bug reports.
+Thanks to Ronny Pfannschmidt, David Burns, Jeff Donner, Daniel Nouri, Alfredo Deza and all who gave feedback or sent bug reports.
 
 best,
 holger krekel
