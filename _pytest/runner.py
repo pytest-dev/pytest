@@ -25,23 +25,22 @@ def pytest_terminal_summary(terminalreporter):
     if durations is None:
         return
     tr = terminalreporter
-    duration2rep = {}
-    for key, replist in tr.stats.items():
+    dlist = []
+    for replist in tr.stats.values():
         for rep in replist:
             if hasattr(rep, 'duration'):
-                duration2rep[rep.duration] = rep
-    if not duration2rep:
+                dlist.append((rep.duration, rep))
+    if not dlist:
         return
-    d2 = list(duration2rep.items())
-    d2.sort()
-    d2.reverse()
+    dlist.sort()
+    dlist.reverse()
     if not durations:
         tr.write_sep("=", "slowest test durations")
     else:
         tr.write_sep("=", "slowest %s test durations" % durations)
-        d2 = d2[:durations]
+        dlist = dlist[:durations]
 
-    for duration, rep in d2:
+    for duration, rep in dlist:
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %-8s %s" %
             (duration, rep.when, nodeid))
