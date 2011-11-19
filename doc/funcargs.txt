@@ -240,5 +240,5 @@ in the class or module where a test function is defined:
 
 ``metafunc.config``: access to command line opts and general config
 
-.. automethod:: Metafunc.parametrize(name, values, idmaker=None)
-.. automethod:: Metafunc.addcall(funcargs=None, id=_notexists, param=_notexists)
+.. automethod:: Metafunc.parametrize
+.. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)

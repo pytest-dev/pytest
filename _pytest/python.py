@@ -588,22 +588,23 @@ class Metafunc:
         self._ids = py.builtin.set()
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None):
-        """ parametrize calls to the underlying test function during
-        the collection phase of a test run.  parametrize may be called
-        multiple times for disjunct argnames sets.
+        """ add new invocations to the underlying test function using the
+        list of argvalues for the given argnames.  Parametrization is performed
+        during the collection phase.  If you need to setup expensive resources
+        you may pass indirect=True and implement a funcarg factory which can
+        perform the expensive setup just before a test is actually run.
 
         :arg argnames: an argument name or a list of argument names
 
-        :arg argvalues: a list of values for a single argument if argnames
-            specified a single argument only or a list of tuples which specify
-            values for the multiple argument names.
+        :arg argvalues: a list of values for the argname or a list of tuples of
+            values for the list of argument names.
 
         :arg indirect: if True each argvalue corresponding to an argument will be
-            passed as request.param to the respective funcarg factory so that
+            passed as request.param to its respective funcarg factory so that
             it can perform more expensive setups during the setup phase of
-            a test rather than at collection time (which is the default).
+            a test rather than at collection time.
 
-        :arg ids: list of string ids corresponding to the (list of) argvalues
+        :arg ids: list of string ids each corresponding to the argvalues
             so that they are part of the test id. If no ids are provided
             they will be generated automatically from the argvalues.
         """
