@@ -11,7 +11,7 @@ cross-project testing tool for Python.
 
 Platforms: Linux, Win32, OSX
 
-Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy-1.5
+Interpreters: Python versions 2.4 through to 3.2, Jython 2.5.1 and PyPy-1.6/1.7
 
 Bugs and issues: http://bitbucket.org/hpk42/pytest/issues/
 
