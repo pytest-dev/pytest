@@ -25,6 +25,10 @@ except NameError:
     long = int
 
 
+class Junit(py.xml.Namespace):
+    pass
+
+
 # We need to get the subset of the invalid unicode ranges according to
 # XML 1.0 which are valid in this python build.  Hence we calculate
 # this dynamically instead of hardcoding it.  The spec range of valid
@@ -40,6 +44,14 @@ illegal_xml_re = re.compile(unicode('[%s]') %
 del _illegal_unichrs
 del _illegal_ranges
 
+def bin_xml_escape(arg):
+    def repl(matchobj):
+        i = ord(matchobj.group())
+        if i <= 0xFF:
+            return unicode('#x%02X') % i
+        else:
+            return unicode('#x%04X') % i
+    return illegal_xml_re.sub(repl, py.xml.escape(arg))
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
@@ -68,116 +80,97 @@ class LogXML(object):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(logfile)
         self.prefix = prefix
-        self.test_logs = []
+        self.tests = []
         self.passed = self.skipped = 0
         self.failed = self.errors = 0
 
     def _opentestcase(self, report):
         names = report.nodeid.split("::")
         names[0] = names[0].replace("/", '.')
-        names = tuple(names)
-        d = {'time': getattr(report, 'duration', 0)}
         names = [x.replace(".py", "") for x in names if x != "()"]
         classnames = names[:-1]
         if self.prefix:
             classnames.insert(0, self.prefix)
-        d['classname'] = ".".join(classnames)
-        d['name'] = py.xml.escape(names[-1])
-        attrs = ['%s="%s"' % item for item in sorted(d.items())]
-        self.test_logs.append("\n<testcase %s>" % " ".join(attrs))
+        self.tests.append(Junit.testcase(
+            classname=".".join(classnames),
+            name=names[-1],
+            time=getattr(report, 'duration', 0)
+        ))
 
-    def _closetestcase(self):
-        self.test_logs.append("</testcase>")
-
-    def appendlog(self, fmt, *args):
-        def repl(matchobj):
-            i = ord(matchobj.group())
-            if i <= 0xFF:
-                return unicode('#x%02X') % i
-            else:
-                return unicode('#x%04X') % i
-        args = tuple([illegal_xml_re.sub(repl, py.xml.escape(arg))
-                      for arg in args])
-        self.test_logs.append(fmt % args)
+    def append(self, obj):
+        self.tests[-1].append(obj)
 
     def append_pass(self, report):
         self.passed += 1
-        self._opentestcase(report)
-        self._closetestcase()
 
     def append_failure(self, report):
-        self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
         if "xfail" in report.keywords:
-            self.appendlog(
-                '<skipped message="xfail-marked test passes unexpectedly"/>')
+            self.append(
+                Junit.skipped(message="xfail-marked test passes unexpectedly"))
             self.skipped += 1
         else:
             sec = dict(report.sections)
-            self.appendlog('<failure message="test failure">%s</failure>',
-                report.longrepr)
+            fail = Junit.failure(message="test failure")
+            fail.append(str(report.longrepr))
+            self.append(fail)
             for name in ('out', 'err'):
                 content = sec.get("Captured std%s" % name)
                 if content:
-                    self.appendlog(
-                        "<system-%s>%%s</system-%s>" % (name, name), content)
+                    tag = getattr(Junit, 'system-'+name)
+                    self.append(tag(bin_xml_escape(content)))
             self.failed += 1
-        self._closetestcase()
 
     def append_collect_failure(self, report):
-        self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.appendlog('<failure message="collection failure">%s</failure>',
-            report.longrepr)
-        self._closetestcase()
+        self.append(Junit.failure(str(report.longrepr),
+                                  message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
-        self._opentestcase(report)
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.appendlog('<skipped message="collection skipped">%s</skipped>',
-            report.longrepr)
-        self._closetestcase()
+        self.append(Junit.skipped(str(report.longrepr),
+                                  message="collection skipped"))
         self.skipped += 1
 
     def append_error(self, report):
-        self._opentestcase(report)
-        self.appendlog('<error message="test setup failure">%s</error>',
-            report.longrepr)
-        self._closetestcase()
+        self.append(Junit.error(str(report.longrepr),
+                                message="test setup failure"))
         self.errors += 1
 
     def append_skipped(self, report):
-        self._opentestcase(report)
         if "xfail" in report.keywords:
-            self.appendlog(
-                '<skipped message="expected test failure">%s</skipped>',
-                report.keywords['xfail'])
+            self.append(Junit.skipped(str(report.keywords['xfail']),
+                                      message="expected test failure"))
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = skipreason[9:]
-            self.appendlog('<skipped type="pytest.skip" '
-                           'message="%s">%s</skipped>',
-                skipreason, "%s:%s: %s" % report.longrepr,
-                )
-        self._closetestcase()
+            self.append(
+                Junit.skipped("%s:%s: %s" % report.longrepr,
+                              type="pytest.skip",
+                              message=skipreason
+                ))
         self.skipped += 1
 
     def pytest_runtest_logreport(self, report):
         if report.passed:
             if report.when == "call": # ignore setup/teardown
+                self._opentestcase(report)
                 self.append_pass(report)
         elif report.failed:
+            self._opentestcase(report)
             if report.when != "call":
                 self.append_error(report)
             else:
                 self.append_failure(report)
         elif report.skipped:
+            self._opentestcase(report)
             self.append_skipped(report)
 
     def pytest_collectreport(self, report):
         if not report.passed:
+            self._opentestcase(report)
             if report.failed:
                 self.append_collect_failure(report)
             else:
@@ -186,10 +179,11 @@ class LogXML(object):
     def pytest_internalerror(self, excrepr):
         self.errors += 1
         data = py.xml.escape(excrepr)
-        self.test_logs.append(
-            '\n<testcase classname="pytest" name="internal">'
-            '    <error message="internal error">'
-            '%s</error></testcase>' % data)
+        self.tests.append(
+            Junit.testcase(
+                    Junit.error(data, message="internal error"),
+                    classname="pytest",
+                    name="internal"))
 
     def pytest_sessionstart(self, session):
         self.suite_start_time = time.time()
@@ -203,17 +197,17 @@ class LogXML(object):
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
         numtests = self.passed + self.failed
+
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
-        logfile.write('<testsuite ')
-        logfile.write('name="" ')
-        logfile.write('errors="%i" ' % self.errors)
-        logfile.write('failures="%i" ' % self.failed)
-        logfile.write('skips="%i" ' % self.skipped)
-        logfile.write('tests="%i" ' % numtests)
-        logfile.write('time="%.3f"' % suite_time_delta)
-        logfile.write(' >')
-        logfile.writelines(self.test_logs)
-        logfile.write('</testsuite>')
+        logfile.write(Junit.testsuite(
+            self.tests,
+            name="",
+            errors=self.errors,
+            failures=self.failed,
+            skips=self.skipped,
+            tests=numtests,
+            time="%.3f" % suite_time_delta,
+        ).unicode(indent=0))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):

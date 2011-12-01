@@ -30,6 +30,7 @@ Changes between 2.1.3 and 2.2.0
 - fix issue74: pyarg module names are now checked against imp.find_module false positives
 - fix compatibility with twisted/trial-11.1.0 use cases
 - simplify Node.listchain
+- simplify junitxml output code by relying on py.xml
 
 Changes between 2.1.2 and 2.1.3
 ----------------------------------------
