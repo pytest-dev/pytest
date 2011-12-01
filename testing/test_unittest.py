@@ -232,6 +232,29 @@ def test_module_level_pytestmark(testdir):
     reprec.assertoutcome(skipped=1)
 
 
+def test_testcase_skip_property(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            skip = 'dont run'
+            def test_func(self):
+                pass
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+def test_testfunction_skip_property(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            def test_func(self):
+                pass
+            test_func.skip = 'dont run'
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
 class TestTrialUnittest:
     def setup_class(cls):
         pytest.importorskip("twisted.trial.unittest")
