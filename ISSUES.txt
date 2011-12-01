@@ -105,7 +105,7 @@ change to pytest.mark.xfail(reason, (optional)condition)
 to better implement the word meaning.  It also signals
 better that we always have some kind of an implementation
 reason that can be formualated.
-Compatibility? Maybe rename to "pytest.mark.xfail"?
+Compatibility? how to introduce a new name/keep compat?
 
 introduce py.test.mark registration
 -----------------------------------------
@@ -250,3 +250,25 @@ In an effort to further simplify code, review and remove deprecated bits
 in collect.py.  Probably good:
 - inline consider_file/dir methods, no need to have them
   subclass-overridable because of hooks
+
+implement fslayout decorator
+---------------------------------
+tags: feature
+
+Improve the way how tests can work with pre-made examples,
+keeping the layout close to the test function:
+
+@pytest.mark.fslayout("""
+    conftest.py:
+        #  empty
+    tests/
+        test_%(NAME)s:  # becomes test_run1.py
+            def test_function(self):
+                pass
+""")
+def test_run(pytester, fslayout):
+    p = fslayout.find("test_*.py")
+    result = pytester.runpytest(p)
+    assert result.ret == 0
+    assert result.passed == 1
+
