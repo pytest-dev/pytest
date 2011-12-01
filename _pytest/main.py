@@ -229,13 +229,13 @@ class Node(object):
     def listchain(self):
         """ return list of all parent collectors up to self,
             starting from root of collection tree. """
-        l = [self]
-        while 1:
-            x = l[0]
-            if x.parent is not None: # and x.parent.parent is not None:
-                l.insert(0, x.parent)
-            else:
-                return l
+        chain = []
+        item = self
+        while item is not None:
+            chain.append(item)
+            item = item.parent
+        chain.reverse()
+        return chain
 
     def listnames(self):
         return [x.name for x in self.listchain()]
