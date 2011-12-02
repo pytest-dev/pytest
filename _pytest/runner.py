@@ -48,13 +48,6 @@ def pytest_terminal_summary(terminalreporter):
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
 
-def pytest_sessionfinish(session, exitstatus):
-    hook = session.config.hook
-    rep = hook.pytest__teardown_final(session=session)
-    if rep:
-        hook.pytest__teardown_final_logerror(session=session, report=rep)
-        session.exitstatus = 1
-
 class NodeInfo:
     def __init__(self, location):
         self.location = location

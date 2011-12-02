@@ -161,9 +161,6 @@ class TerminalReporter:
     def pytest_deselected(self, items):
         self.stats.setdefault('deselected', []).extend(items)
 
-    def pytest__teardown_final_logerror(self, report):
-        self.stats.setdefault("error", []).append(report)
-
     def pytest_runtest_logstart(self, nodeid, location):
         # ensure that the path is printed before the
         # 1st test of a module starts running

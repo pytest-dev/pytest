@@ -205,7 +205,7 @@ class TestPerTestCapturing:
             #"*1 fixture failure*"
         ])
 
-    def test_teardown_final_capturing(self, testdir):
+    def test_teardown_capturing_final(self, testdir):
         p = testdir.makepyfile("""
             def teardown_module(mod):
                 print ("teardown module")
