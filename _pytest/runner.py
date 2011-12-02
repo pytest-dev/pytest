@@ -59,33 +59,20 @@ class NodeInfo:
     def __init__(self, location):
         self.location = location
 
-def perform_pending_teardown(config, nextitem):
-    try:
-        olditem, log = config._pendingteardown
-    except AttributeError:
-        pass
-    else:
-        del config._pendingteardown
-        olditem.nextitem = nextitem
-        call_and_report(olditem, "teardown", log)
-
-def pytest_runtest_protocol(item):
-    perform_pending_teardown(item.config, item)
+def pytest_runtest_protocol(item, nextitem):
     item.ihook.pytest_runtest_logstart(
         nodeid=item.nodeid, location=item.location,
     )
-    runtestprotocol(item, teardowndelayed=True)
+    runtestprotocol(item, nextitem=nextitem)
     return True
 
-def runtestprotocol(item, log=True, teardowndelayed=False):
+def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
         reports.append(call_and_report(item, "call", log))
-    if teardowndelayed:
-        item.config._pendingteardown = item, log
-    else:
-        reports.append(call_and_report(item, "teardown", log))
+    reports.append(call_and_report(item, "teardown", log,
+        nextitem=nextitem))
     return reports
 
 def pytest_runtest_setup(item):
@@ -94,17 +81,8 @@ def pytest_runtest_setup(item):
 def pytest_runtest_call(item):
     item.runtest()
 
-def pytest_runtest_teardown(item):
-    item.session._setupstate.teardown_exact(item)
-
-def pytest__teardown_final(session):
-    perform_pending_teardown(session.config, None)
-    #call = CallInfo(session._setupstate.teardown_all, when="teardown")
-    #if call.excinfo:
-    #    ntraceback = call.excinfo.traceback .cut(excludepath=py._pydir)
-    #    call.excinfo.traceback = ntraceback.filter()
-    #    longrepr = call.excinfo.getrepr(funcargs=True)
-    #    return TeardownErrorReport(longrepr)
+def pytest_runtest_teardown(item, nextitem):
+    item.session._setupstate.teardown_exact(item, nextitem)
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
@@ -120,18 +98,18 @@ def pytest_report_teststatus(report):
 #
 # Implementation
 
-def call_and_report(item, when, log=True):
-    call = call_runtest_hook(item, when)
+def call_and_report(item, when, log=True, **kwds):
+    call = call_runtest_hook(item, when, **kwds)
     hook = item.ihook
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log:
         hook.pytest_runtest_logreport(report=report)
     return report
 
-def call_runtest_hook(item, when):
+def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
-    return CallInfo(lambda: ihook(item=item), when=when)
+    return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
 class CallInfo:
     """ Result/Exception info a function invocation. """
@@ -338,9 +316,8 @@ class SetupState(object):
         self._teardown_with_finalization(None)
         assert not self._finalizers
 
-    def teardown_exact(self, item):
-        colitem = item.nextitem
-        needed_collectors = colitem and colitem.listchain() or []
+    def teardown_exact(self, item, nextitem):
+        needed_collectors = nextitem and nextitem.listchain() or []
         self._teardown_towards(needed_collectors)
 
     def _teardown_towards(self, needed_collectors):

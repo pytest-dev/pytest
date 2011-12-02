@@ -106,8 +106,12 @@ def pytest_collection(session):
 def pytest_runtestloop(session):
     if session.config.option.collectonly:
         return True
-    for item in session.items:
-        item.config.hook.pytest_runtest_protocol(item=item)
+    for i, item in enumerate(session.items):
+        try:
+            nextitem = session.items[i+1]
+        except IndexError:
+            nextitem = None
+        item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
     return True

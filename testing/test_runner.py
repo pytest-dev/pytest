@@ -30,9 +30,9 @@ class TestSetupState:
     def test_teardown_exact_stack_empty(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
-        ss.teardown_exact(item)
-        ss.teardown_exact(item)
-        ss.teardown_exact(item)
+        ss.teardown_exact(item, None)
+        ss.teardown_exact(item, None)
+        ss.teardown_exact(item, None)
 
     def test_setup_fails_and_failure_is_cached(self, testdir):
         item = testdir.getitem("""

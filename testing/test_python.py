@@ -689,7 +689,7 @@ class TestRequest:
         teardownlist = item.getparent(pytest.Module).obj.teardownlist
         ss = item.session._setupstate
         assert not teardownlist
-        ss.teardown_exact(item)
+        ss.teardown_exact(item, None)
         print(ss.stack)
         assert teardownlist == [1]
 
