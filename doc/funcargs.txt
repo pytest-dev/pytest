@@ -16,7 +16,7 @@ control their life cycle in relation to the test execution. It is
 also possible to run a test function multiple times with different objects.
 
 The basic mechanism for injecting objects is also called the
-*funcarg mechanism* because objects are ultimatly injected
+*funcarg mechanism* because objects are ultimately injected
 by calling a test function with it as an argument.  Unlike the
 classical xUnit approach *funcargs* relate more to `Dependency Injection`_
 because they help to de-couple test code from objects required for
@@ -119,9 +119,9 @@ think of as "resources").
 The funcarg **request** object
 =============================================
 
-Each funcarg factory receives a **request** object which is tied to a
-specific test function call.  A request object is passed to a funcarg
-factory and provides access to test configuration and context:
+Each funcarg factory receives a **request** object tied to a specific test
+function call.  A request object is passed to a funcarg factory and provides
+access to test configuration and context:
 
 .. autoclass:: _pytest.python.FuncargRequest()
     :members: function,cls,module,keywords,config

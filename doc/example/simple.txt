@@ -240,9 +240,9 @@ and then check for the ``sys._called_from_test`` flag::
         # called from within a test run
     else:
         # called "normally"
-    
+
 accordingly in your application.  It's also a good idea
-to rather use your own application module rather than ``sys``
+to use your own application module rather than ``sys``
 for handling flag.
 
 Adding info to test report header
@@ -275,7 +275,7 @@ information on e.g. the value of ``config.option.verbose`` so that
 you present more information appropriately::
 
     # content of conftest.py
-    
+
     def pytest_report_header(config):
         if config.option.verbose > 0:
             return ["info1: did you know that ...", "did you?"]
@@ -308,22 +308,22 @@ profiling test duration
 .. versionadded: 2.2
 
 If you have a slow running large test suite you might want to find
-out which tests are slowest. Let's make an artifical test suite::
+out which tests are the slowest. Let's make an artifical test suite::
 
     # content of test_some_are_slow.py
-   
-    import time 
+
+    import time
 
     def test_funcfast():
         pass
-    
+
     def test_funcslow1():
         time.sleep(0.1)
-        
+
     def test_funcslow2():
         time.sleep(0.2)
-   
-Now we can profile which test functions execute slowest::
+
+Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================

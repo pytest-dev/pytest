@@ -96,11 +96,11 @@ can use a helper::
 .. versionadded: 2.0.0
 
 In previous versions you could only enter PDB tracing if
-you disable capturing on the command line via ``py.test -s``.
+you disabled capturing on the command line via ``py.test -s``.
 
 .. _durations:
 
-Profiling test execution duration 
+Profiling test execution duration
 -------------------------------------
 
 .. versionadded: 2.2

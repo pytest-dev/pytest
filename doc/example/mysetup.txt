@@ -38,7 +38,7 @@ method in a :ref:`local plugin <localplugin>` ::
         def myapp(self):
             return MyApp()
 
-To run the example we stub out a a simple ``MyApp`` application object::
+To run the example we stub out a simple ``MyApp`` application object::
 
     # content of myapp.py
     class MyApp:

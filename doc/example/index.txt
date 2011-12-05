@@ -9,7 +9,7 @@ need more examples or have questions. Also take a look at the :ref:`comprehensiv
 
 .. note::
 
-   see :doc:`../getting-started` for basic introductionary examples
+   see :doc:`../getting-started` for basic introductory examples
 
 .. toctree::
    :maxdepth: 2

@@ -1,5 +1,5 @@
 
-Asserting deprecation and other warnings.
+Asserting deprecation and other warnings
 =====================================================
 
 The recwarn function argument
@@ -35,4 +35,3 @@ warning::
 
     def test_global():
         pytest.deprecated_call(myfunction, 17)
-

@@ -73,7 +73,7 @@ and if you need to have access to the actual exception info you may use::
 
     # do checks related to excinfo.type, excinfo.value, excinfo.traceback
 
-If you want to write test code that works on Python2.4 as well,
+If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::
 
     pytest.raises(ExpectedException, func, *args, **kwargs)

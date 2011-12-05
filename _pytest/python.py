@@ -588,8 +588,8 @@ class Metafunc:
         self._ids = py.builtin.set()
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None):
-        """ add new invocations to the underlying test function using the
-        list of argvalues for the given argnames.  Parametrization is performed
+        """ Add new invocations to the underlying test function using the list
+        of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
         you may pass indirect=True and implement a funcarg factory which can
         perform the expensive setup just before a test is actually run.
@@ -599,14 +599,14 @@ class Metafunc:
         :arg argvalues: a list of values for the argname or a list of tuples of
             values for the list of argument names.
 
-        :arg indirect: if True each argvalue corresponding to an argument will be
-            passed as request.param to its respective funcarg factory so that
-            it can perform more expensive setups during the setup phase of
+        :arg indirect: if True each argvalue corresponding to an argument will
+            be passed as request.param to its respective funcarg factory so
+            that it can perform more expensive setups during the setup phase of
             a test rather than at collection time.
 
-        :arg ids: list of string ids each corresponding to the argvalues
-            so that they are part of the test id. If no ids are provided
-            they will be generated automatically from the argvalues.
+        :arg ids: list of string ids each corresponding to the argvalues so
+            that they are part of the test id. If no ids are provided they will
+            be generated automatically from the argvalues.
         """
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
@@ -628,12 +628,11 @@ class Metafunc:
         self._calls = newcalls
 
     def addcall(self, funcargs=None, id=_notexists, param=_notexists):
-        """ (deprecated, use parametrize) add a new call to the underlying
-        test function during
-        the collection phase of a test run.  Note that request.addcall() is
-        called during the test collection phase prior and independently
-        to actual test execution.  You should only use addcall()
-        if you need to specify multiple arguments of a test function
+        """ (deprecated, use parametrize) Add a new call to the underlying
+        test function during the collection phase of a test run.  Note that
+        request.addcall() is called during the test collection phase prior and
+        independently to actual test execution.  You should only use addcall()
+        if you need to specify multiple arguments of a test function.
 
         :arg funcargs: argument keyword dictionary used when invoking
             the test function.
@@ -750,7 +749,7 @@ class FuncargRequest:
 
 
     def applymarker(self, marker):
-        """ apply a marker to a single test function invocation.
+        """ Apply a marker to a single test function invocation.
         This method is useful if you don't want to have a keyword/marker
         on all function invocations.
 
@@ -762,7 +761,7 @@ class FuncargRequest:
         self._pyfuncitem.keywords[marker.markname] = marker
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
-        """ return a testing resource managed by ``setup`` &
+        """ Return a testing resource managed by ``setup`` &
         ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
         ``teardown`` function will be called so that subsequent calls to
         ``setup`` would recreate the resource.
@@ -937,8 +936,7 @@ def raises(ExpectedException, *args, **kwargs):
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    A third possibility is to use a string which which will
-    be executed::
+    A third possibility is to use a string to be executed::
 
         >>> raises(ZeroDivisionError, "f(0)")
         <ExceptionInfo ...>

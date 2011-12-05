@@ -264,7 +264,7 @@ specification.  However, a hook function may accept *fewer* parameters
 by simply not specifying them.  If you mistype argument names or the
 hook name itself you get an error showing the available arguments.
 
-Initialisation, command line and configuration hooks
+Initialization, command line and configuration hooks
 --------------------------------------------------------------------
 
 .. currentmodule:: _pytest.hookspec

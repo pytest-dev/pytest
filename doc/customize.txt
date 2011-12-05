@@ -64,13 +64,13 @@ Builtin configuration file options
 
 .. confval:: minversion
 
-   specifies a minimal pytest version required for running tests.
+   Specifies a minimal pytest version required for running tests.
 
         minversion = 2.1  # will fail if we run with pytest-2.0
 
 .. confval:: addopts
 
-   add the specified ``OPTS`` to the set of command line arguments as if they
+   Add the specified ``OPTS`` to the set of command line arguments as if they
    had been specified by the user. Example: if you have this ini file content::
 
        [pytest]
@@ -121,4 +121,3 @@ Builtin configuration file options
    and methods are considered as test modules.
 
    See :ref:`change naming conventions` for examples.
-

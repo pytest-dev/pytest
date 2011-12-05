@@ -6,7 +6,7 @@ Working with custom markers
 
 Here are some example using the :ref:`mark` mechanism.
 
-marking test functions and selecting them for a run
+Marking test functions and selecting them for a run
 ----------------------------------------------------
 
 You can "mark" a test function with custom metadata like this::
@@ -57,8 +57,8 @@ Registering markers for your test suite is simple::
 
     # content of pytest.ini
     [pytest]
-    markers = 
-        webtest: mark a test as a webtest. 
+    markers =
+        webtest: mark a test as a webtest.
 
 You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers::
 
@@ -76,7 +76,7 @@ You can ask which markers exist for your test suite - the list includes our just
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
-For an example on how to add and work with markers from a plugin, see 
+For an example on how to add and work with markers from a plugin, see
 :ref:`adding a custom marker from a plugin`.
 
 .. note::
@@ -96,8 +96,8 @@ For an example on how to add and work with markers from a plugin, see
 Marking whole classes or modules
 ----------------------------------------------------
 
-If you are programming with Python2.6 you may use ``pytest.mark`` decorators
-with classes to apply markers to all of its test methods::
+If you are programming with Python 2.6 or later you may use ``pytest.mark``
+decorators with classes to apply markers to all of its test methods::
 
     # content of test_mark_classlevel.py
     import pytest
@@ -111,7 +111,7 @@ with classes to apply markers to all of its test methods::
 This is equivalent to directly applying the decorator to the
 two test functions.
 
-To remain backward-compatible with Python2.4 you can also set a
+To remain backward-compatible with Python 2.4 you can also set a
 ``pytestmark`` attribute on a TestClass like this::
 
     import pytest
@@ -137,7 +137,8 @@ methods defined in the module.
 Using ``-k TEXT`` to select tests
 ----------------------------------------------------
 
-You can use the ``-k`` command line option to only run tests with names that match the given argument::
+You can use the ``-k`` command line option to only run tests with names matching
+the given argument::
 
     $ py.test -k send_http  # running with the above defined examples
     ============================= test session starts ==============================
@@ -176,7 +177,7 @@ Or to only select the class::
 
 .. _`adding a custom marker from a plugin`:
 
-custom marker and command line option to control test runs
+Custom marker and command line option to control test runs
 ----------------------------------------------------------
 
 .. regendoc:wipe
@@ -195,7 +196,7 @@ specifies via named environments::
 
     def pytest_configure(config):
         # register an additional marker
-        config.addinivalue_line("markers", 
+        config.addinivalue_line("markers",
             "env(name): mark test to run only on named environment")
 
     def pytest_runtest_setup(item):

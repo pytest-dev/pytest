@@ -21,7 +21,7 @@ dependency configurations or Python interpreters is `tox`_.
 Use tox and Continuous Integration servers
 -------------------------------------------------
 
-If you frequently relase code to the public you
+If you frequently release code to the public you
 may want to look into `tox`_, the virtualenv test automation
 tool and its `pytest support <http://codespeak.net/tox/example/pytest.html>`_.
 The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continuous integration server like Jenkins_ pick it up
@@ -30,7 +30,7 @@ and generate reports.
 .. _standalone:
 .. _`genscript method`:
 
-Create a py.test standalone Script
+Create a py.test standalone script
 -------------------------------------------
 
 If you are a maintainer or application developer and want others
@@ -159,7 +159,7 @@ You can run your tests by pointing to it::
 
     * find ``basedir`` -- this is the first "upward" (towards the root)
       directory not containing an ``__init__.py``.  If both the ``a``
-      and ``b`` directories contain an ``__init__.py`` the basedir will 
+      and ``b`` directories contain an ``__init__.py`` the basedir will
       be the parent dir of ``a``.
 
     * perform ``sys.path.insert(0, basedir)`` to make the test module

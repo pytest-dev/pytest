@@ -51,8 +51,8 @@ your own domain specific testing language this way.
     representation string of your choice.  It
     will be reported as a (red) string.
 
-``reportinfo()`` is used for representing the test location and is also consulted for
-reporting in ``verbose`` mode::
+``reportinfo()`` is used for representing the test location and is also
+consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================

@@ -18,7 +18,7 @@ utilities, all starting with ``py.<TAB>``, thus providing nice
 TAB-completion. If
 you install ``pip install pycmd`` you get these tools from a separate
 package.  These days the command line tool could be called ``pytest``
-since many people have gotten used to the old name and there
+but since many people have gotten used to the old name and there
 is another tool named "pytest" we just decided to stick with
 ``py.test``.
 
@@ -47,14 +47,14 @@ customizable testing frameworks for Python.   However,
 ``py.test`` still uses many metaprogramming techniques and
 reading its source is thus likely not something for Python beginners.
 
-A second "magic" issue arguably the assert statement debugging feature. When
+A second "magic" issue is arguably the assert statement debugging feature. When
 loading test modules py.test rewrites the source code of assert statements. When
 a rewritten assert statement fails, its error message has more information than
 the original. py.test also has a second assert debugging technique. When an
 ``assert`` statement that was missed by the rewriter fails, py.test
 re-interprets the expression to show intermediate values if a test fails. This
-second technique suffers from caveat that the rewriting does not: If your
-expression has side effects (better to avoid them anyway!)  the intermediate
+second technique suffers from a caveat that the rewriting does not: If your
+expression has side effects (better to avoid them anyway!) the intermediate
 values may not be the same, confusing the reinterpreter and obfuscating the
 initial error (this is also explained at the command line if it happens).
 You can turn off all assertion debugging with ``py.test --assertmode=off``.
@@ -91,8 +91,8 @@ Why the ``pytest_funcarg__*`` name for funcarg factories?
 
 We like `Convention over Configuration`_ and didn't see much point
 in allowing a more flexible or abstract mechanism.  Moreover,
-is is nice to be able to search for ``pytest_funcarg__MYARG`` in
-a source code and safely find all factory functions for
+it is nice to be able to search for ``pytest_funcarg__MYARG`` in
+source code and safely find all factory functions for
 the ``MYARG`` function argument.
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration

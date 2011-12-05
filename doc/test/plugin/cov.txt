@@ -35,10 +35,11 @@ However easy_install does not provide an uninstall facility.
 
 .. IMPORTANT::
 
-    Ensure that you manually delete the init_covmain.pth file in your site-packages directory.
+    Ensure that you manually delete the init_covmain.pth file in your
+    site-packages directory.
 
-    This file starts coverage collection of subprocesses if appropriate during site initialisation
-    at python startup.
+    This file starts coverage collection of subprocesses if appropriate during
+    site initialization at python startup.
 
 
 Usage
@@ -198,7 +199,7 @@ slave.
 
 For subprocess measurement environment variables must make it from the main process to the
 subprocess.  The python used by the subprocess must have pytest-cov installed.  The subprocess must
-do normal site initialisation so that the environment variables can be detected and coverage
+do normal site initialization so that the environment variables can be detected and coverage
 started.
 
 
