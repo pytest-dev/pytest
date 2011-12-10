@@ -91,5 +91,8 @@ class ResultLog(object):
             self.log_outcome(report, code, longrepr)
 
     def pytest_internalerror(self, excrepr):
-        path = excrepr.reprcrash.path
+        reprcrash = getattr(excrepr, 'reprcrash', None)
+        path = getattr(reprcrash, "path", None)
+        if path is None:
+            path = "cwd:%s" % py.path.local()
         self.write_log_entry(path, '!', str(excrepr))

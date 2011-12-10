@@ -133,22 +133,25 @@ class TestWithFunctionIntegration:
         assert lines[14].startswith('X ')
         assert len(lines) == 15
 
-    def test_internal_exception(self):
+    @pytest.mark.parametrize("style", ("native", "long", "short"))
+    def test_internal_exception(self, style):
         # they are produced for example by a teardown failing
-        # at the end of the run
+        # at the end of the run or a failing hook invocation
         try:
             raise ValueError
         except ValueError:
             excinfo = py.code.ExceptionInfo()
         reslog = ResultLog(None, py.io.TextIO())
-        reslog.pytest_internalerror(excinfo.getrepr())
+        reslog.pytest_internalerror(excinfo.getrepr(style=style))
         entry = reslog.logfile.getvalue()
         entry_lines = entry.splitlines()
 
         assert entry_lines[0].startswith('! ')
-        assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
+        if style != "native":
+            assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry
+
 
 def test_generic(testdir, LineMatcher):
     testdir.plugins.append("resultlog")
