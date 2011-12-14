@@ -156,6 +156,7 @@ class PyobjMixin(object):
             obj = obj.place_as
 
         self._fslineno = py.code.getfslineno(obj)
+        assert isinstance(self._fslineno[1], int), obj
         return self._fslineno
 
     def reportinfo(self):
@@ -173,6 +174,7 @@ class PyobjMixin(object):
         else:
             fspath, lineno = self._getfslineno()
             modpath = self.getmodpath()
+        assert isinstance(lineno, int)
         return fspath, lineno, modpath
 
 class PyCollectorMixin(PyobjMixin, pytest.Collector):

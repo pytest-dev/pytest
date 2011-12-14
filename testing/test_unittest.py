@@ -38,7 +38,7 @@ def test_setup(testdir):
                 assert self.foo2 == 1
             def teardown_method(self, method):
                 assert 0, "42"
-                
+
     """)
     reprec = testdir.inline_run("-s", testpath)
     assert reprec.matchreport("test_both", when="call").passed
@@ -431,3 +431,20 @@ def test_unittest_not_shown_in_traceback(testdir):
     """)
     res = testdir.runpytest()
     assert "failUnlessEqual" not in res.stdout.str()
+
+def test_unorderable_types(testdir):
+    testdir.makepyfile("""
+        import unittest
+        class TestJoinEmpty(unittest.TestCase):
+            pass
+
+        def make_test():
+            class Test(unittest.TestCase):
+                pass
+            Test.__name__ = "TestFoo"
+            return Test
+        TestFoo = make_test()
+    """)
+    result = testdir.runpytest()
+    assert "TypeError" not in result.stdout.str()
+    assert result.ret == 0

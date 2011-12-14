@@ -1517,3 +1517,20 @@ def test_customize_through_attributes(testdir):
         "*MyInstance*",
         "*MyFunction*test_hello*",
     ])
+
+
+def test_unorderable_types(testdir):
+    testdir.makepyfile("""
+        class TestJoinEmpty:
+            pass
+
+        def make_test():
+            class Test:
+                pass
+            Test.__name__ = "TestFoo"
+            return Test
+        TestFoo = make_test()
+    """)
+    result = testdir.runpytest()
+    assert "TypeError" not in result.stdout.str()
+    assert result.ret == 0
