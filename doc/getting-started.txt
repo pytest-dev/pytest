@@ -22,9 +22,9 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.2.0, imported from /Users/hpk/p/pytest/pytest.pyc
+    This is py.test version 2.2.1, imported from /Users/hpk/p/pytest/pytest.pyc
     setuptools registered plugins:
-      pytest-xdist-1.7.dev1 at /Users/hpk/p/pytest-xdist/xdist/plugin.pyc
+      pytest-xdist-1.8.dev2 at /Users/hpk/p/pytest-xdist/xdist/plugin.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -46,7 +46,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 1 items
     
     test_sample.py F
@@ -60,7 +60,7 @@ That's it. You can execute the test function now::
     E        +  where 4 = func(3)
     
     test_sample.py:5: AssertionError
-    ========================= 1 failed in 0.04 seconds =========================
+    ========================= 1 failed in 0.02 seconds =========================
 
 py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
 
@@ -126,7 +126,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x10150a170>
+    self = <test_class.TestClass instance at 0x10131a560>
     
         def test_two(self):
             x = "hello"
@@ -163,7 +163,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/Users/hpk/tmp/pytest-1595/test_needsfiles0')
+    tmpdir = local('/Users/hpk/tmp/pytest-679/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -172,8 +172,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /Users/hpk/tmp/pytest-1595/test_needsfiles0
-    1 failed in 0.15 seconds
+    /Users/hpk/tmp/pytest-679/test_needsfiles0
+    1 failed in 0.16 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

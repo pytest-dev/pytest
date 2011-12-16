@@ -1,4 +1,4 @@
-Changes between 2.2.0 and 2.2.1.dev
+Changes between 2.2.0 and 2.2.1
 ----------------------------------------
 
 - fix issue99 (in pytest and py) internallerrors with resultlog now

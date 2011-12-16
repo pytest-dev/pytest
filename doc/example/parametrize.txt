@@ -154,7 +154,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 2 items
     
     test_scenarios.py ..
@@ -166,7 +166,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collectonly test_scenarios.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 2 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -222,7 +222,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -238,7 +238,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x10150ab90>
+    db = <conftest.DB2 instance at 0x10131c6c8>
     
         def test_db_initialized(db):
             # a dummy test
@@ -295,7 +295,7 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x101509638>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x101320200>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -326,4 +326,4 @@ Running it results in some skips if we don't have all the python interpreters in
    ========================= short test summary info ==========================
    SKIP [24] /Users/hpk/p/pytest/doc/example/multipython.py:36: 'python2.8' not found
    SKIP [24] /Users/hpk/p/pytest/doc/example/multipython.py:36: 'python2.4' not found
-   27 passed, 48 skipped in 3.03 seconds
+   27 passed, 48 skipped in 3.01 seconds

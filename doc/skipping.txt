@@ -130,7 +130,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 6 items
     
     xfail_demo.py xxxxxx

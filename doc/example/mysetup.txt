@@ -49,7 +49,7 @@ You can now run the test::
 
     $ py.test test_sample.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 1 items
     
     test_sample.py F
@@ -57,7 +57,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x1012b2bd8>
+    mysetup = <conftest.MySetup instance at 0x10131c098>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -122,12 +122,12 @@ Running it yields::
 
     $ py.test test_ssh.py -rs
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 1 items
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /Users/hpk/tmp/doc-exec-625/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /Users/hpk/tmp/doc-exec-44/conftest.py:22: specify ssh host with --ssh
     
     ======================== 1 skipped in 0.02 seconds =========================
 

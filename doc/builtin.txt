@@ -28,7 +28,7 @@ You can ask for available builtin or project-custom
 
     $ py.test --funcargs
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collected 0 items
     pytestconfig
         the pytest config object with access to command line opts.

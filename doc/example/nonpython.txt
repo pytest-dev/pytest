@@ -27,7 +27,7 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 2 items
     
     test_simple.yml .F
@@ -37,7 +37,7 @@ now execute the test specification::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.10 seconds ====================
+    ==================== 1 failed, 1 passed in 0.09 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -56,7 +56,7 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0 -- /Users/hpk/venv/1/bin/python
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1 -- /Users/hpk/venv/1/bin/python
     collecting ... collected 2 items
     
     test_simple.yml:1: usecase: ok PASSED
@@ -74,7 +74,7 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collectonly
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 2 items
     <YamlFile 'test_simple.yml'>
       <YamlItem 'ok'>

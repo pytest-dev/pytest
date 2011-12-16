@@ -25,26 +25,26 @@ You can "mark" a test function with custom metadata like this::
 You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ py.test -v -m webtest
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0 -- /Users/hpk/venv/1/bin/python
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1 -- /Users/hpk/venv/1/bin/python
     collecting ... collected 2 items
     
     test_server.py:3: test_send_http PASSED
     
-    ===================== 1 tests deselected by "-m 'webtest'" =====================
-    ==================== 1 passed, 1 deselected in 0.01 seconds ====================
+    =================== 1 tests deselected by "-m 'webtest'" ===================
+    ================== 1 passed, 1 deselected in 0.01 seconds ==================
 
 Or the inverse, running all tests except the webtest ones::
     
     $ py.test -v -m "not webtest"
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0 -- /Users/hpk/venv/1/bin/python
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1 -- /Users/hpk/venv/1/bin/python
     collecting ... collected 2 items
     
     test_server.py:6: test_something_quick PASSED
     
-    =================== 1 tests deselected by "-m 'not webtest'" ===================
-    ==================== 1 passed, 1 deselected in 0.02 seconds ====================
+    ================= 1 tests deselected by "-m 'not webtest'" =================
+    ================== 1 passed, 1 deselected in 0.01 seconds ==================
 
 Registering markers
 -------------------------------------
@@ -141,39 +141,39 @@ You can use the ``-k`` command line option to only run tests with names matching
 the given argument::
 
     $ py.test -k send_http  # running with the above defined examples
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 4 items
     
     test_server.py .
     
-    ===================== 3 tests deselected by '-ksend_http' ======================
-    ==================== 1 passed, 3 deselected in 0.02 seconds ====================
+    =================== 3 tests deselected by '-ksend_http' ====================
+    ================== 1 passed, 3 deselected in 0.02 seconds ==================
 
 And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k-send_http
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 4 items
     
     test_mark_classlevel.py ..
     test_server.py .
     
-    ===================== 1 tests deselected by '-k-send_http' =====================
-    ==================== 3 passed, 1 deselected in 0.03 seconds ====================
+    =================== 1 tests deselected by '-k-send_http' ===================
+    ================== 3 passed, 1 deselected in 0.03 seconds ==================
 
 Or to only select the class::
 
     $ py.test -kTestClass
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 4 items
     
     test_mark_classlevel.py ..
     
-    ===================== 2 tests deselected by '-kTestClass' ======================
-    ==================== 2 passed, 2 deselected in 0.02 seconds ====================
+    =================== 2 tests deselected by '-kTestClass' ====================
+    ================== 2 passed, 2 deselected in 0.02 seconds ==================
 
 .. _`adding a custom marker from a plugin`:
 
@@ -221,24 +221,24 @@ and an example invocations specifying a different environment than what
 the test needs::
 
     $ py.test -E stage2
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 1 items
     
     test_someenv.py s
     
-    ========================== 1 skipped in 0.02 seconds ===========================
+    ======================== 1 skipped in 0.02 seconds =========================
   
 and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
-    ============================= test session starts ==============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.0
+    =========================== test session starts ============================
+    platform darwin -- Python 2.7.1 -- pytest-2.2.1
     collecting ... collected 1 items
     
     test_someenv.py .
     
-    =========================== 1 passed in 0.02 seconds ===========================
+    ========================= 1 passed in 0.01 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 

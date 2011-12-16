@@ -39,10 +39,10 @@ will be undone.
 .. background check:
    $ py.test
    =========================== test session starts ============================
-   platform darwin -- Python 2.7.1 -- pytest-2.2.0
+   platform darwin -- Python 2.7.1 -- pytest-2.2.1
    collecting ... collected 0 items
    
-   =============================  in 0.20 seconds =============================
+   =============================  in 0.00 seconds =============================
 
 Method reference of the monkeypatch function argument
 -----------------------------------------------------
