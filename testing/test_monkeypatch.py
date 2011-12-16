@@ -59,6 +59,20 @@ def test_setitem():
     monkeypatch.undo()
     assert d['x'] == 5
 
+def test_setitem_deleted_meanwhile():
+    d = {}
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setitem(d, 'x', 2)
+    del d['x']
+    monkeypatch.undo()
+    assert not d
+
+def test_setenv_deleted_meanwhile():
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv('XYZ123', 'hello')
+    monkeypatch.undo()
+    assert 'XYZ123' not in os.environ
+
 def test_delitem():
     d = {'x': 1}
     monkeypatch = MonkeyPatch()
