@@ -448,3 +448,14 @@ def test_unorderable_types(testdir):
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
     assert result.ret == 0
+
+def test_unittest_typerror_traceback(testdir):
+    testdir.makepyfile("""
+        import unittest
+        class TestJoinEmpty(unittest.TestCase):
+            def test_hello(self, arg1):
+                pass
+    """)
+    result = testdir.runpytest()
+    assert "TypeError" in result.stdout.str()
+    assert result.ret == 1

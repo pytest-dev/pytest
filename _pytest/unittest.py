@@ -108,7 +108,10 @@ class TestCaseFunction(pytest.Function):
 
     def _prunetraceback(self, excinfo):
         pytest.Function._prunetraceback(self, excinfo)
-        excinfo.traceback = excinfo.traceback.filter(lambda x:not x.frame.f_globals.get('__unittest'))
+        traceback = excinfo.traceback.filter(
+            lambda x:not x.frame.f_globals.get('__unittest'))
+        if traceback:
+            excinfo.traceback = traceback
 
 @pytest.mark.tryfirst
 def pytest_runtest_makereport(item, call):

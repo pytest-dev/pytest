@@ -3,6 +3,9 @@ Changes between 2.2.1 and 2.2.2.dev
 
 - make monkeypatch more robust against intermediate dict/env deletions
 - use distribute_setup script defaulting to 0.6.24 if no setuptools is installed
+- fix issue101: wrong args to unittest.TestCase test function now
+  produce better output
+  
 
 Changes between 2.2.0 and 2.2.1
 ----------------------------------------
