@@ -70,6 +70,7 @@ def test_setitem_deleted_meanwhile():
 def test_setenv_deleted_meanwhile():
     monkeypatch = MonkeyPatch()
     monkeypatch.setenv('XYZ123', 'hello')
+    del os.environ['XYZ123']
     monkeypatch.undo()
     assert 'XYZ123' not in os.environ
 
