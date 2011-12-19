@@ -410,15 +410,20 @@ class TestInvocationVariants:
             "*1 passed*"
         ])
 
+        def join_pythonpath(what):
+            cur = py.std.os.environ.get('PYTHONPATH')
+            if cur:
+                return str(what) + ':' + cur
+            return what
         empty_package = testdir.mkpydir("empty_package")
-        monkeypatch.setenv('PYTHONPATH', empty_package)
+        monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
         result = testdir.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
 
-        monkeypatch.setenv('PYTHONPATH', testdir)
+        monkeypatch.setenv('PYTHONPATH', join_pythonpath(testdir))
         path.join('test_hello.py').remove()
         result = testdir.runpytest("--pyargs", "tpkg.test_hello")
         assert result.ret != 0
