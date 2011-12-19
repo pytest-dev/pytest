@@ -477,7 +477,7 @@ class TestTracebackCutting:
         out = result.stdout.str()
         assert out.find("conftest.py:2: ValueError") != -1
         numentries = out.count("_ _ _ _") # separator for traceback entries
-        assert numentries >3
+        assert numentries > 3
 
     def test_traceback_error_during_import(self, testdir):
         testdir.makepyfile("""
