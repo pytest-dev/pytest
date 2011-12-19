@@ -28,17 +28,14 @@ def test_assert_with_explicit_message():
         assert e.msg == 'hello'
 
 def test_assert_within_finally():
-    class A:
-        def f():
-            pass
-    excinfo = py.test.raises(TypeError, """
+    excinfo = py.test.raises(ZeroDivisionError, """
         try:
-            A().f()
+            1/0
         finally:
             i = 42
     """)
     s = excinfo.exconly()
-    assert s.find("takes no argument") != -1
+    assert py.std.re.search("division.+by zero", s) is not None
 
     #def g():
     #    A.f()
