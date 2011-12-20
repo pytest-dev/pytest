@@ -259,7 +259,8 @@ class Module(pytest.File, PyCollectorMixin):
                 "  %s\n"
                 "which is not the same as the test file we want to collect:\n"
                 "  %s\n"
-                "HINT: use a unique basename for your test file modules"
+                "HINT: remove __pycache__ / .pyc files and/or use a "
+                "unique basename for your test file modules"
                  % e.args
             )
         #print "imported test module", mod

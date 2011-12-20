@@ -5,7 +5,8 @@ Changes between 2.2.1 and 2.2.2.dev
 - use distribute_setup script defaulting to 0.6.24 if no setuptools is installed
 - fix issue101: wrong args to unittest.TestCase test function now
   produce better output
-  
+- fix issue102: report more useful errors and hints for when a 
+  test directory was renamed and some pyc/__pycache__ remain
 
 Changes between 2.2.0 and 2.2.1
 ----------------------------------------
