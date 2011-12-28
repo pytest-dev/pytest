@@ -2,6 +2,9 @@
 import pytest, py
 import sys, pdb
 
+# for transfering markers
+from _pytest.python import transfer_markers
+
 def pytest_pycollect_makeitem(collector, name, obj):
     unittest = sys.modules.get('unittest')
     if unittest is None:
@@ -19,7 +22,12 @@ def pytest_pycollect_makeitem(collector, name, obj):
 class UnitTestCase(pytest.Class):
     def collect(self):
         loader = py.std.unittest.TestLoader()
+        module = self.getparent(pytest.Module).obj
+        cls = self.obj
         for name in loader.getTestCaseNames(self.obj):
+            x = getattr(self.obj, name)
+            funcobj = getattr(x, 'im_func', x)
+            transfer_markers(funcobj, cls, module)
             yield TestCaseFunction(name, parent=self)
 
     def setup(self):

@@ -221,9 +221,9 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
         module = self.getparent(Module).obj
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
+        transfer_markers(funcobj, cls, module)
         metafunc = Metafunc(funcobj, config=self.config,
             cls=cls, module=module)
-        transfer_markers(metafunc)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
         if cls is not None:
@@ -241,20 +241,19 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
             l.append(function)
         return l
 
-def transfer_markers(metafunc):
+def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
-    for holder in (metafunc.cls, metafunc.module):
+    for holder in (cls, mod):
         try:
             pytestmark = holder.pytestmark
         except AttributeError:
             continue
         if isinstance(pytestmark, list):
             for mark in pytestmark:
-                mark(metafunc.function)
+                mark(funcobj)
         else:
-            pytestmark(metafunc.function)
-
+            pytestmark(funcobj)
 
 class Module(pytest.File, PyCollectorMixin):
     def _getobj(self):
