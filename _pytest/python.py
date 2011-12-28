@@ -33,7 +33,8 @@ def pytest_generate_tests(metafunc):
         param = metafunc.function.parametrize
     except AttributeError:
         return
-    metafunc.parametrize(*param.args, **param.kwargs)
+    for p in param:
+        metafunc.parametrize(*p.args, **p.kwargs)
 
 def pytest_configure(config):
     config.addinivalue_line("markers",
@@ -222,6 +223,7 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
         cls = clscol and clscol.obj or None
         metafunc = Metafunc(funcobj, config=self.config,
             cls=cls, module=module)
+        transfer_markers(metafunc)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
         if cls is not None:
@@ -238,6 +240,20 @@ class PyCollectorMixin(PyobjMixin, pytest.Collector):
                 callspec=callspec, callobj=funcobj, keywords={callspec.id:True})
             l.append(function)
         return l
+
+def transfer_markers(metafunc):
+    # XXX this should rather be code in the mark plugin or the mark
+    # plugin should merge with the python plugin.
+    for holder in (metafunc.cls, metafunc.module):
+        try:
+            pytestmark = holder.pytestmark
+        except AttributeError:
+            continue
+        if isinstance(pytestmark, list):
+            for mark in pytestmark:
+                mark(metafunc.function)
+        else:
+            pytestmark(metafunc.function)
 
 
 class Module(pytest.File, PyCollectorMixin):
@@ -559,7 +575,7 @@ class CallSpec2(object):
 
     @property
     def id(self):
-        return "-".join(filter(None, self._idlist))
+        return "-".join(map(str, filter(None, self._idlist)))
 
     def setmulti(self, valtype, argnames, valset, id):
         for arg,val in zip(argnames, valset):

@@ -224,22 +224,3 @@ class MarkInfo:
         for args, kwargs in self._arglist:
             yield MarkInfo(self.name, args, kwargs)
 
-def pytest_itemcollected(item):
-    if not isinstance(item, pytest.Function):
-        return
-    try:
-        func = item.obj.__func__
-    except AttributeError:
-        func = getattr(item.obj, 'im_func', item.obj)
-    pyclasses = (pytest.Class, pytest.Module)
-    for node in item.listchain():
-        if isinstance(node, pyclasses):
-            marker = getattr(node.obj, 'pytestmark', None)
-            if marker is not None:
-                if isinstance(marker, list):
-                    for mark in marker:
-                        mark(func)
-                else:
-                    marker(func)
-        node = node.parent
-    item.keywords.update(py.builtin._getfuncdict(func))

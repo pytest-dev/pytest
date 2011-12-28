@@ -1048,6 +1048,23 @@ class TestMetafunc:
         assert metafunc._calls[1].funcargs == dict(x=3, y=4)
         assert metafunc._calls[1].id == "3-4"
 
+    def test_parametrize_multiple_times(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            pytestmark = pytest.mark.parametrize("x", [1,2])
+            def test_func(x):
+                assert 0, x
+            class TestClass:
+                pytestmark = pytest.mark.parametrize("y", [3,4])
+                def test_meth(self, x, y):
+                    assert 0, x
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*6 fail*",
+        ])
+
 class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""

@@ -228,26 +228,26 @@ class TestFunctional:
         keywords = item.keywords
         marker = keywords['hello']
         assert marker.args == ("pos0", "pos1")
-        assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
+        assert marker.kwargs == {'x': 1, 'y': 2, 'z': 4}
 
         # test the new __iter__ interface
         l = list(marker)
         assert len(l) == 3
         assert l[0].args == ("pos0",)
-        pytest.xfail(reason="needs reordering of parametrize transfermarks")
         assert l[1].args == ()
         assert l[2].args == ("pos1", )
 
-    def test_mark_other(self, testdir):
-        pytest.raises(TypeError, '''
-            testdir.getitem("""
+    def test_mark_with_wrong_marker(self, testdir):
+        reprec = testdir.inline_runsource("""
                 import pytest
                 class pytestmark:
                     pass
                 def test_func():
                     pass
-            """)
-        ''')
+        """)
+        l = reprec.getfailedcollections()
+        assert len(l) == 1
+        assert "TypeError" in str(l[0].longrepr)
 
     def test_mark_dynamically_in_funcarg(self, testdir):
         testdir.makeconftest("""

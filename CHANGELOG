@@ -7,6 +7,8 @@ Changes between 2.2.1 and 2.2.2.dev
   produce better output
 - fix issue102: report more useful errors and hints for when a 
   test directory was renamed and some pyc/__pycache__ remain
+- fix issue106: allow parametrize to be applied multiple times
+  e.g. from module, class and at function level.
 
 Changes between 2.2.0 and 2.2.1
 ----------------------------------------
