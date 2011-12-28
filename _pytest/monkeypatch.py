@@ -95,7 +95,10 @@ class monkeypatch:
         self._setattr[:] = []
         for dictionary, name, value in self._setitem:
             if value is notset:
-                dictionary.pop(name, None)
+                try:
+                    del dictionary[name]
+                except KeyError:
+                    pass # was already deleted, so we have the desired state
             else:
                 dictionary[name] = value
         self._setitem[:] = []

@@ -67,12 +67,20 @@ def test_setitem_deleted_meanwhile():
     monkeypatch.undo()
     assert not d
 
-def test_setenv_deleted_meanwhile():
+@pytest.mark.parametrize("before", [True, False])
+def test_setenv_deleted_meanwhile(before):
+    key = "qwpeoip123"
+    if before:
+        os.environ[key] = "world"
     monkeypatch = MonkeyPatch()
-    monkeypatch.setenv('XYZ123', 'hello')
-    del os.environ['XYZ123']
+    monkeypatch.setenv(key, 'hello')
+    del os.environ[key]
     monkeypatch.undo()
-    assert 'XYZ123' not in os.environ
+    if before:
+        assert os.environ[key] == "world"
+        del os.environ[key]
+    else:
+        assert key not in os.environ
 
 def test_delitem():
     d = {'x': 1}

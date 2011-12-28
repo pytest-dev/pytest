@@ -436,8 +436,7 @@ def test_pytest_cmdline_main(testdir):
            py.test.cmdline.main([__file__])
     """)
     import subprocess
-    popen = subprocess.Popen([sys.executable, str(p)],
-        stdout=subprocess.PIPE, env={})
+    popen = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE)
     s = popen.stdout.read()
     ret = popen.wait()
     assert ret == 0
