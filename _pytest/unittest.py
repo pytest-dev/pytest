@@ -28,6 +28,8 @@ class UnitTestCase(pytest.Class):
             x = getattr(self.obj, name)
             funcobj = getattr(x, 'im_func', x)
             transfer_markers(funcobj, cls, module)
+            if hasattr(funcobj, 'todo'):
+                pytest.mark.xfail(reason=str(funcobj.todo))(funcobj)
             yield TestCaseFunction(name, parent=self)
 
     def setup(self):
@@ -44,12 +46,6 @@ class UnitTestCase(pytest.Class):
 
 class TestCaseFunction(pytest.Function):
     _excinfo = None
-
-    def __init__(self, name, parent):
-        super(TestCaseFunction, self).__init__(name, parent)
-        if hasattr(self._obj, 'todo'):
-            getattr(self._obj, 'im_func', self._obj).xfail = \
-                pytest.mark.xfail(reason=str(self._obj.todo))
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
