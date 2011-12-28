@@ -191,8 +191,7 @@ class MarkDecorator:
                         holder = MarkInfo(self.markname, self.args, self.kwargs)
                         setattr(func, self.markname, holder)
                     else:
-                        holder.kwargs.update(self.kwargs)
-                        holder.args += self.args
+                        holder.add(self.args, self.kwargs)
                 return func
         kw = self.kwargs.copy()
         kw.update(kwargs)
@@ -208,10 +207,22 @@ class MarkInfo:
         self.args = args
         #: keyword argument dictionary, empty if nothing specified
         self.kwargs = kwargs
+        self._arglist = [(args, kwargs.copy())]
 
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (
                 self.name, self.args, self.kwargs)
+
+    def add(self, args, kwargs):
+        """ add a MarkInfo with the given args and kwargs. """
+        self._arglist.append((args, kwargs))
+        self.args += args
+        self.kwargs.update(kwargs)
+
+    def __iter__(self):
+        """ yield MarkInfo objects each relating to a marking-call. """
+        for args, kwargs in self._arglist:
+            yield MarkInfo(self.name, args, kwargs)
 
 def pytest_itemcollected(item):
     if not isinstance(item, pytest.Function):

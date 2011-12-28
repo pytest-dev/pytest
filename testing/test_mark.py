@@ -230,6 +230,14 @@ class TestFunctional:
         assert marker.args == ("pos0", "pos1")
         assert marker.kwargs == {'x': 3, 'y': 2, 'z': 4}
 
+        # test the new __iter__ interface
+        l = list(marker)
+        assert len(l) == 3
+        assert l[0].args == ("pos0",)
+        pytest.xfail(reason="needs reordering of parametrize transfermarks")
+        assert l[1].args == ()
+        assert l[2].args == ("pos1", )
+
     def test_mark_other(self, testdir):
         pytest.raises(TypeError, '''
             testdir.getitem("""
@@ -258,6 +266,23 @@ class TestFunctional:
         result.stdout.fnmatch_lines([
             "keyword: *hello*"
         ])
+
+    def test_merging_markers_two_functions(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.hello("pos1", z=4)
+            @pytest.mark.hello("pos0", z=3)
+            def test_func(self):
+                pass
+        """)
+        items, rec = testdir.inline_genitems(p)
+        item, = items
+        keywords = item.keywords
+        marker = keywords['hello']
+        l = list(marker)
+        assert len(l) == 2
+        assert l[0].args == ("pos0",)
+        assert l[1].args == ("pos1",)
 
 
 class TestKeywordSelection:
