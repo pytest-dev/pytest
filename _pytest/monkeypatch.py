@@ -30,6 +30,7 @@ class monkeypatch:
     def __init__(self):
         self._setattr = []
         self._setitem = []
+        self._cwd = None
 
     def setattr(self, obj, name, value, raising=True):
         """ set attribute ``name`` on ``obj`` to ``value``, by default
@@ -83,6 +84,14 @@ class monkeypatch:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
 
+    def chdir(self, path):
+        if self._cwd is None:
+            self._cwd = os.getcwd()
+        if hasattr(path, "chdir"):
+            path.chdir()
+        else:
+            os.chdir(path)
+
     def undo(self):
         """ undo previous changes.  This call consumes the
         undo stack.  Calling it a second time has no effect unless
@@ -105,3 +114,7 @@ class monkeypatch:
         if hasattr(self, '_savesyspath'):
             sys.path[:] = self._savesyspath
             del self._savesyspath
+
+        if self._cwd is not None:
+            os.chdir(self._cwd)
+            self._cwd = None

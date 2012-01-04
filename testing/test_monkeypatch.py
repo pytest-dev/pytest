@@ -172,3 +172,24 @@ def test_syspath_prepend_double_undo(mp):
     sys.path.append('more hello world')
     mp.undo()
     assert sys.path[-1] == 'more hello world'
+
+def test_chdir_with_path_local(mp, tmpdir):
+    mp.chdir(tmpdir)
+    assert os.getcwd() == tmpdir.strpath
+
+def test_chdir_with_str(mp, tmpdir):
+    mp.chdir(tmpdir.strpath)
+    assert os.getcwd() == tmpdir.strpath
+
+def test_chdir_undo(mp, tmpdir):
+    cwd = os.getcwd()
+    mp.chdir(tmpdir)
+    mp.undo()
+    assert os.getcwd() == cwd
+
+def test_chdir_double_undo(mp, tmpdir):
+    mp.chdir(tmpdir.strpath)
+    mp.undo()
+    tmpdir.chdir()
+    mp.undo()
+    assert os.getcwd() == tmpdir.strpath
