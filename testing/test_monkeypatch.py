@@ -2,6 +2,17 @@ import os, sys
 import pytest
 from _pytest.monkeypatch import monkeypatch as MonkeyPatch
 
+def pytest_funcarg__mp(request):
+    cwd = os.getcwd()
+    sys_path = list(sys.path)
+
+    def cleanup():
+        sys.path[:] = sys_path
+        os.chdir(cwd)
+
+    request.addfinalizer(cleanup)
+    return MonkeyPatch()
+
 def test_setattr():
     class A:
         x = 1
@@ -144,19 +155,20 @@ def test_monkeypatch_plugin(testdir):
     res = reprec.countoutcomes()
     assert tuple(res) == (1, 0, 0), res
 
-def test_syspath_prepend():
+def test_syspath_prepend(mp):
     old = list(sys.path)
-    try:
-        monkeypatch = MonkeyPatch()
-        monkeypatch.syspath_prepend('world')
-        monkeypatch.syspath_prepend('hello')
-        assert sys.path[0] == "hello"
-        assert sys.path[1] == "world"
-        monkeypatch.undo()
-        assert sys.path == old
-        monkeypatch.undo()
-        assert sys.path == old
-    finally:
-        sys.path[:] = old
+    mp.syspath_prepend('world')
+    mp.syspath_prepend('hello')
+    assert sys.path[0] == "hello"
+    assert sys.path[1] == "world"
+    mp.undo()
+    assert sys.path == old
+    mp.undo()
+    assert sys.path == old
 
-
+def test_syspath_prepend_double_undo(mp):
+    mp.syspath_prepend('hello world')
+    mp.undo()
+    sys.path.append('more hello world')
+    mp.undo()
+    assert sys.path[-1] == 'more hello world'
