@@ -104,3 +104,4 @@ class monkeypatch:
         self._setitem[:] = []
         if hasattr(self, '_savesyspath'):
             sys.path[:] = self._savesyspath
+            del self._savesyspath
