@@ -9,6 +9,7 @@ Changes between 2.2.1 and 2.2.2.dev
   test directory was renamed and some pyc/__pycache__ remain
 - fix issue106: allow parametrize to be applied multiple times
   e.g. from module, class and at function level.
+- add chdir method to monkeypatch funcarg
 
 Changes between 2.2.0 and 2.2.1
 ----------------------------------------

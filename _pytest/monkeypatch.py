@@ -13,6 +13,7 @@ def pytest_funcarg__monkeypatch(request):
         monkeypatch.setenv(name, value, prepend=False)
         monkeypatch.delenv(name, value, raising=True)
         monkeypatch.syspath_prepend(path)
+        monkeypatch.chdir(path)
 
     All modifications will be undone after the requesting
     test function has finished. The ``raising``
@@ -85,6 +86,9 @@ class monkeypatch:
         sys.path.insert(0, str(path))
 
     def chdir(self, path):
+        """ change the current working directory to the specified path
+        path can be a string or a py.path.local object
+        """
         if self._cwd is None:
             self._cwd = os.getcwd()
         if hasattr(path, "chdir"):
