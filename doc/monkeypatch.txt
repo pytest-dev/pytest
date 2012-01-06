@@ -37,11 +37,6 @@ Here our test function monkeypatches ``os.path.expanduser`` and
 then calls into an function that calls it.  After the test function 
 finishes the ``os.path.expanduser`` modification will be undone.
 
-.. note::
-
-    As with version 2.2.2 there is a ``mp`` function argument
-    which is a shortcut for "monkeypatch". 
-
 Method reference of the monkeypatch function argument
 -----------------------------------------------------
 

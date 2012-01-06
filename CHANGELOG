@@ -10,7 +10,6 @@ Changes between 2.2.1 and 2.2.2.dev
 - fix issue106: allow parametrize to be applied multiple times
   e.g. from module, class and at function level.
 - add chdir method to monkeypatch funcarg
-- add "mp" funcargs as a shortcut for "monkeypatch"
 - fix crash resulting from calling monkeypatch undo a second time
 
 Changes between 2.2.0 and 2.2.1
