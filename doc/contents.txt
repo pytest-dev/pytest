@@ -4,7 +4,7 @@
 Full pytest documenation
 ========================
 
-`Download latest version as PDF <http://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+`Download latest version as PDF <pytest.pdf>`_
 
 .. `Download latest version as EPUB <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
 
