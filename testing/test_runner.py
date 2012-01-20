@@ -315,6 +315,21 @@ class TestSessionReports:
         assert not rep.passed
         assert rep.skipped
 
+
+reporttypes = [
+    runner.BaseReport,
+    runner.TestReport,
+    runner.TeardownErrorReport,
+    runner.CollectReport,
+]
+
+@pytest.mark.parametrize('reporttype', reporttypes, ids=[x.__name__ for x in reporttypes])
+def test_report_extra_parameters(reporttype):
+    args = py.std.inspect.getargspec(reporttype.__init__)[0][1:]
+    basekw = dict.fromkeys(args, [])
+    report = reporttype(newthing=1, **basekw)
+    assert report.newthing == 1
+
 def test_callinfo():
     ci = runner.CallInfo(lambda: 0, '123')
     assert ci.when == "123"

@@ -141,6 +141,10 @@ def getslaveinfoline(node):
         return s
 
 class BaseReport(object):
+
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
     def toterminal(self, out):
         longrepr = self.longrepr
         if hasattr(self, 'node'):
@@ -190,7 +194,7 @@ class TestReport(BaseReport):
     they fail).
     """
     def __init__(self, nodeid, location,
-            keywords, outcome, longrepr, when, sections=(), duration=0):
+            keywords, outcome, longrepr, when, sections=(), duration=0, **extra):
         #: normalized collection node id
         self.nodeid = nodeid
 
@@ -219,6 +223,8 @@ class TestReport(BaseReport):
         #: time it took to run just the test
         self.duration = duration
 
+        self.__dict__.update(extra)
+
     def __repr__(self):
         return "<TestReport %r when=%r outcome=%r>" % (
             self.nodeid, self.when, self.outcome)
@@ -226,9 +232,10 @@ class TestReport(BaseReport):
 class TeardownErrorReport(BaseReport):
     outcome = "failed"
     when = "teardown"
-    def __init__(self, longrepr):
+    def __init__(self, longrepr, **extra):
         self.longrepr = longrepr
         self.sections = []
+        self.__dict__.update(extra)
 
 def pytest_make_collect_report(collector):
     call = CallInfo(collector._memocollect, "memocollect")
@@ -250,12 +257,13 @@ def pytest_make_collect_report(collector):
         getattr(call, 'result', None))
 
 class CollectReport(BaseReport):
-    def __init__(self, nodeid, outcome, longrepr, result, sections=()):
+    def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome
         self.longrepr = longrepr
         self.result = result or []
         self.sections = list(sections)
+        self.__dict__.update(extra)
 
     @property
     def location(self):
