@@ -1551,3 +1551,21 @@ def test_unorderable_types(testdir):
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
     assert result.ret == 0
+
+def test_issue117_sessionscopeteardown(testdir):
+    testdir.makepyfile("""
+        def pytest_funcarg__app(request):
+            app = request.cached_setup(
+                scope='session',
+                setup=lambda: 0,
+                teardown=lambda x: 3/x)
+            return app
+        def test_func(app):
+            pass
+    """)
+    result = testdir.runpytest()
+    assert result.ret != 0
+    result.stderr.fnmatch_lines([
+        "*3/x*",
+        "*ZeroDivisionError*",
+    ])

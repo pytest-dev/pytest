@@ -17,14 +17,14 @@ Bugs and issues: http://bitbucket.org/hpk42/pytest/issues/
 
 Web page: http://pytest.org
 
-(c) Holger Krekel and others, 2004-2011
+(c) Holger Krekel and others, 2004-2012
 """
 def main():
     setup(
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.2.2.dev6',
+        version='2.2.2.dev7',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],

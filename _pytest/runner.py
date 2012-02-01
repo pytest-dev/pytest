@@ -47,6 +47,8 @@ def pytest_terminal_summary(terminalreporter):
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
+def pytest_sessionfinish(session):
+    session._setupstate.teardown_all()
 
 class NodeInfo:
     def __init__(self, location):
