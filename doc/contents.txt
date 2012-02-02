@@ -1,8 +1,8 @@
 
 .. _toc:
 
-Full pytest documenation
-========================
+Full pytest documentation
+===========================
 
 `Download latest version as PDF <pytest.pdf>`_
 
