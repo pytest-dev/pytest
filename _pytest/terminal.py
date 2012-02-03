@@ -282,10 +282,18 @@ class TerminalReporter:
         # we take care to leave out Instances aka ()
         # because later versions are going to get rid of them anyway
         if self.config.option.verbose < 0:
-            for item in items:
-                nodeid = item.nodeid
-                nodeid = nodeid.replace("::()::", "::")
-                self._tw.line(nodeid)
+            if self.config.option.verbose < -1:
+                counts = {}
+                for item in items:
+                    name = item.nodeid.split('::', 1)[0]
+                    counts[name] = counts.get(name, 0) + 1
+                for name, count in sorted(counts.items()):
+                    self._tw.line("%s: %d" % (name, count))
+            else:
+                for item in items:
+                    nodeid = item.nodeid
+                    nodeid = nodeid.replace("::()::", "::")
+                    self._tw.line(nodeid)
             return
         stack = []
         indent = ""

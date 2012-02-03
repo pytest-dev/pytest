@@ -267,6 +267,20 @@ class TestCollectonly:
             '*ERROR: file not found*',
         ])
 
+    def test_collectonly_quiet(self, testdir):
+        testdir.makepyfile("def test_foo(): pass")
+        result = testdir.runpytest("--collectonly", "-q")
+        result.stdout.fnmatch_lines([
+            '*test_foo*',
+        ])
+
+    def test_collectonly_more_quiet(self, testdir):
+        testdir.makepyfile(test_fun="def test_foo(): pass")
+        result = testdir.runpytest("--collectonly", "-qq")
+        result.stdout.fnmatch_lines([
+            '*test_fun.py: 1*',
+        ])
+
 
 def test_repr_python_version(monkeypatch):
     try:
