@@ -410,6 +410,7 @@ class Session(FSCollector):
         self._notfound = []
         self._initialpaths = set()
         self._initialparts = []
+        self.items = items = []
         for arg in args:
             parts = self._parsearg(arg)
             self._initialparts.append(parts)
@@ -425,7 +426,6 @@ class Session(FSCollector):
         if not genitems:
             return rep.result
         else:
-            self.items = items = []
             if rep.passed:
                 for node in rep.result:
                     self.items.extend(self.genitems(node))

@@ -14,6 +14,8 @@ Changes between 2.2.1 and 2.2.2.dev
 - fix crash resulting from calling monkeypatch undo a second time
 - extend reports accepting kwargs to set arbitrary additional attributes
   this helps xdist serialization/deserialization of extended/customized reports
+- fix issue115: make --collectonly robust against preparse failure
+  (missing files/directories)
 
 Changes between 2.2.0 and 2.2.1
 ----------------------------------------

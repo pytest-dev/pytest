@@ -256,6 +256,17 @@ class TestCollectonly:
             *1 error*
         """).strip())
 
+    def test_collectonly_missing_path(self, testdir):
+        """this checks issue 115,
+            failure in parseargs will cause session
+            not to have the items attribute
+        """
+        result = testdir.runpytest("--collectonly", "uhm_missing_path")
+        assert result.ret == 3
+        result.stderr.fnmatch_lines([
+            '*ERROR: file not found*',
+        ])
+
 
 def test_repr_python_version(monkeypatch):
     try:
