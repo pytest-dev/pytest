@@ -629,9 +629,11 @@ class Metafunc:
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
             argvalues = [(val,) for val in argvalues]
-        for arg in argnames:
-            if arg not in self.funcargnames:
-                raise ValueError("%r has no argument %r" %(self.function, arg))
+        if not indirect:
+            #XXX should we also check for the opposite case?
+            for arg in argnames:
+                if arg not in self.funcargnames:
+                    raise ValueError("%r has no argument %r" %(self.function, arg))
         valtype = indirect and "params" or "funcargs"
         if not ids:
             idmaker = IDMaker()
