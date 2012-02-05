@@ -22,9 +22,10 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.2.1, imported from /Users/hpk/p/pytest/pytest.pyc
+    This is py.test version 2.2.2, imported from /Users/hpk/p/pytest/pytest.pyc
     setuptools registered plugins:
-      pytest-xdist-1.8.dev2 at /Users/hpk/p/pytest-xdist/xdist/plugin.pyc
+      pytest-xdist-1.8 at /Users/hpk/p/pytest-xdist/xdist/plugin.pyc
+      pytest-cov-1.4 at /Users/hpk/venv/0/lib/python2.7/site-packages/pytest_cov.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -46,7 +47,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collecting ... collected 1 items
     
     test_sample.py F
@@ -126,7 +127,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x10131a560>
+    self = <test_class.TestClass instance at 0x1013225a8>
     
         def test_two(self):
             x = "hello"
@@ -163,7 +164,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/Users/hpk/tmp/pytest-679/test_needsfiles0')
+    tmpdir = local('/Users/hpk/tmp/pytest-20/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -172,8 +173,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /Users/hpk/tmp/pytest-679/test_needsfiles0
-    1 failed in 0.16 seconds
+    /Users/hpk/tmp/pytest-20/test_needsfiles0
+    1 failed in 0.11 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

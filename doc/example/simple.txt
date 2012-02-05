@@ -53,7 +53,7 @@ Let's run this without supplying our new command line option::
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     first
-    1 failed in 0.02 seconds
+    1 failed in 0.50 seconds
 
 And now with supplying a command line option::
 
@@ -109,13 +109,13 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     gw0 I
     gw0 [0]
     
     scheduling tests via LoadScheduling
     
-    =============================  in 0.54 seconds =============================
+    =============================  in 5.12 seconds =============================
 
 .. _`excontrolskip`:
 
@@ -156,20 +156,20 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collecting ... collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /Users/hpk/tmp/doc-exec-49/conftest.py:9: need --runslow option to run
+    SKIP [1] /Users/hpk/tmp/doc-exec-158/conftest.py:9: need --runslow option to run
     
-    =================== 1 passed, 1 skipped in 0.02 seconds ====================
+    =================== 1 passed, 1 skipped in 0.09 seconds ====================
 
 Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collecting ... collected 2 items
     
     test_module.py ..
@@ -213,7 +213,7 @@ Let's run our little function::
     E       Failed: not configured: 42
     
     test_checkconfig.py:8: Failed
-    1 failed in 0.02 seconds
+    1 failed in 0.07 seconds
 
 Detect if running from within a py.test run
 --------------------------------------------------------------
@@ -261,11 +261,11 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     project deps: mylib-1.1
     collecting ... collected 0 items
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.01 seconds =============================
 
 .. regendoc:wipe
 
@@ -284,21 +284,21 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1 -- /Users/hpk/venv/1/bin/python
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2 -- /Users/hpk/venv/0/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.03 seconds =============================
 
 and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collecting ... collected 0 items
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.01 seconds =============================
 
 profiling test duration
 --------------------------
@@ -327,7 +327,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collecting ... collected 3 items
     
     test_some_are_slow.py ...
@@ -335,5 +335,5 @@ Now we can profile which test functions execute the slowest::
     ========================= slowest 3 test durations =========================
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
-    ========================= 3 passed in 0.32 seconds =========================
+    0.00s call     test_some_are_slow.py::test_funcfast
+    ========================= 3 passed in 0.33 seconds =========================

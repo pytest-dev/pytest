@@ -28,7 +28,7 @@ You can ask for available builtin or project-custom
 
     $ py.test --funcargs
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.1
+    platform darwin -- Python 2.7.1 -- pytest-2.2.2
     collected 0 items
     pytestconfig
         the pytest config object with access to command line opts.
@@ -60,6 +60,7 @@ You can ask for available builtin or project-custom
         monkeypatch.setenv(name, value, prepend=False)
         monkeypatch.delenv(name, value, raising=True)
         monkeypatch.syspath_prepend(path)
+        monkeypatch.chdir(path)
         
         All modifications will be undone after the requesting
         test function has finished. The ``raising``
@@ -75,5 +76,7 @@ You can ask for available builtin or project-custom
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
         
+    cov
+        A pytest funcarg that provides access to the underlying coverage object.
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.01 seconds =============================
