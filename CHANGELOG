@@ -1,3 +1,8 @@
+Changes between 2.2.2 and 2.2.3
+----------------------------------------
+
+- fix uploaded package to only include neccesary files
+
 Changes between 2.2.1 and 2.2.2
 ----------------------------------------
 
