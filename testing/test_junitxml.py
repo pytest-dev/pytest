@@ -340,7 +340,7 @@ def test_nullbyte_replace(testdir):
     assert '#x0' in text
 
 
-def test_invalid_xml_escape(testdir):
+def test_invalid_xml_escape():
     # Test some more invalid xml chars, the full range should be
     # tested really but let's just thest the edges of the ranges
     # intead.
@@ -355,27 +355,23 @@ def test_invalid_xml_escape(testdir):
     except NameError:
         unichr = chr
     u = py.builtin._totext
-    invalid = (0x1, 0xB, 0xC, 0xE, 0x19,)
-               # 0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)
+    invalid = (0x00, 0x1, 0xB, 0xC, 0xE, 0x19,
+                033, # issue #126
+               0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)
     valid = (0x9, 0xA, 0x20,) # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
-    all = invalid + valid
-    prints = [u("    sys.stdout.write('''0x%X-->%s<--''')") % (i, unichr(i))
-              for i in all]
-    testdir.makepyfile(u("# -*- coding: UTF-8 -*-"),
-                       u("import sys"),
-                       u("def test_print_bytes():"),
-                       u("\n").join(prints),
-                       u("    assert False"))
-    xmlf = testdir.tmpdir.join('junit.xml')
-    result = testdir.runpytest('--junitxml=%s' % xmlf)
-    text = xmlf.read()
+    
+    from _pytest.junitxml import bin_xml_escape
+
+
     for i in invalid:
+        got = bin_xml_escape(unichr(i))
         if i <= 0xFF:
-            assert '#x%02X' % i in text
+            expected = '#x%02X' % i
         else:
-            assert '#x%04X' % i in text
+            expected = '#x%04X' % i
+        assert got == expected
     for i in valid:
-        assert chr(i) in text
+        assert chr(i) == bin_xml_escape(unichr(i))
 
 def test_logxml_path_expansion():
     from _pytest.junitxml import LogXML

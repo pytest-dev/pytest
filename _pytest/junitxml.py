@@ -34,15 +34,21 @@ class Junit(py.xml.Namespace):
 # this dynamically instead of hardcoding it.  The spec range of valid
 # chars is: Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
 #                    | [#x10000-#x10FFFF]
-_illegal_unichrs = [(0x00, 0x08), (0x0B, 0x0C), (0x0E, 0x19),
-                   (0xD800, 0xDFFF), (0xFDD0, 0xFFFF)]
-_illegal_ranges = [unicode("%s-%s") % (unichr(low), unichr(high))
-                  for (low, high) in _illegal_unichrs
+_legal_chars = (0x09, 0x0A, 0x0d)
+_legal_ranges = (
+    (0x20, 0xD7FF),
+    (0xE000, 0xFFFD),
+    (0x10000, 0x10FFFF),
+)
+_legal_xml_re = [unicode("%s-%s") % (unichr(low), unichr(high))
+                  for (low, high) in _legal_ranges
                   if low < sys.maxunicode]
-illegal_xml_re = re.compile(unicode('[%s]') %
-                            unicode('').join(_illegal_ranges))
-del _illegal_unichrs
-del _illegal_ranges
+_legal_xml_re = [unichr(x) for x in _legal_chars] + _legal_xml_re
+illegal_xml_re = re.compile(unicode('[^%s]') %
+                            unicode('').join(_legal_xml_re))
+del _legal_chars
+del _legal_ranges
+del _legal_xml_re
 
 def bin_xml_escape(arg):
     def repl(matchobj):
