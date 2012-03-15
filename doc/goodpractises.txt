@@ -115,7 +115,7 @@ to support running a pytest from test requirements::
             pytest.main(self.test_args)
 
     setup(
-        ...,
+        #...,
         tests_require=['pytest'],
         cmdclass = {'test': pytest},
         )
