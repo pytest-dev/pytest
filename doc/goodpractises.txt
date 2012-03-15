@@ -94,6 +94,40 @@ options.
 .. _`test discovery`:
 .. _`Python test discovery`:
 
+
+Integration with setuptools/distribute test commands
+----------------------------------------------------
+
+Distribute/Setuptools support test requirements,
+which means its really easy to extend its test command
+to support running a pytest from test requirements::
+
+    from setuptools.command.test import test as TestCommand
+
+    class PyTest(TestCommand):
+        def finalize_options(self):
+            TestCommand.finalize_options(self)
+            self.test_args = []
+            self.test_suite = True
+        def run_tests(self):
+            #import here, cause outside the eggs aren't loaded
+            import pytest
+            pytest.main(self.test_args)
+
+    setup(
+        ...,
+        tests_require=['pytest'],
+        cmdclass = {'test': pytest},
+        )
+
+Now if you run::
+
+    python setup.py test
+
+this will download py.test if needed and then run py.test
+as you would expect it to.
+
+
 Conventions for Python test discovery
 -------------------------------------------------
 

@@ -3,6 +3,8 @@ Changese between 2.2.3 and ...
 
 - fix issue 126: correctly match all invalid xml characters for junitxml
   binary escape
+- document integration with the extended distribute/setuptools test commands
+
 
 Changes between 2.2.2 and 2.2.3
 ----------------------------------------
