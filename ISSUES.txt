@@ -1,6 +1,14 @@
-refine parametrize API in 2.2 series
+
+improve / add to dependency/test resource injection
 -------------------------------------------------------------
-tags: critical feature 2.2
+tags: wish feature  docs
+
+write up better examples showing the connection between
+the two.
+
+refine parametrize API
+-------------------------------------------------------------
+tags: critical feature 
 
 extend metafunc.parametrize to better support indirection
 by specifying a setupfunc(request, val) which will _substitute_
@@ -16,8 +24,28 @@ the funcarg factory.   Here is an example:
     def test_heavy_functional_test(db):
         ...
 
-There would be no need to write funcarg factories for this example, only
-to explain the attributes and functionality of "request".
+There would be no need to write or explain funcarg factories here.
+
+The examples and improvements should also show how to put the parametrize
+decorator to a class, to a module or even to a directory.  For the directory
+part a conftest.py content like this::
+
+    pytestmark = [
+        @pytest.mark.parametrize("db", ...),
+    ]
+
+probably makes sense in order to keep the declarative nature.   This mirrors
+the marker-mechanism with respect to a test module but puts it to a directory
+scale.
+
+When doing larger scoped parametrization it probably becomes neccessary 
+to allow parametrization to not match - currently any parametrized argument
+that is not present in a function will cause a ValueError. With 
+
+        @pytest.mark.parametrize("db", ..., mustmatch=False)
+
+we can tell pytest to not raise an error but simply ignore the parametrization
+if the signature of a decorated function does not match.
 
 checks / deprecations for next release
 ---------------------------------------------------------------
@@ -48,7 +76,7 @@ teardown.
 
 do early-teardown of test modules
 -----------------------------------------
-tags: feature 2.3
+tags: feature 
 
 currently teardowns are called when the next tests is setup
 except for the function/method level where interally
@@ -60,7 +88,7 @@ prints of teardown-code appear in the setup of the next test.
 
 consider and document __init__ file usage in test directories
 ---------------------------------------------------------------
-tags: bug 2.3 core
+tags: bug  core
 
 Currently, a test module is imported with its fully qualified
 package path, determined by checking __init__ files upwards.
@@ -75,7 +103,7 @@ certain scenarios makes sense.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 bb: http://bitbucket.org/hpk42/py-trunk/issue/64
 
 A local test run of a "tests" directory may work
@@ -86,7 +114,7 @@ i.e. port the nose-logic of unloading a test module.
 
 customize test function collection
 -------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 - introduce py.test.mark.nocollect for not considering a function for
   test collection at all.  maybe also introduce a py.test.mark.test to
@@ -95,7 +123,7 @@ tags: feature 2.3
 
 introduce pytest.mark.importorskip
 -------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 in addition to the imperative pytest.importorskip also introduce
 a pytest.mark.importorskip so that the test count is more correct.
@@ -103,7 +131,7 @@ a pytest.mark.importorskip so that the test count is more correct.
 
 introduce py.test.mark.platform
 -------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 Introduce nice-to-spell platform-skipping, examples:
 
@@ -120,7 +148,7 @@ interpreter versions.
 
 pytest.mark.xfail signature change
 -------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 change to pytest.mark.xfail(reason, (optional)condition)
 to better implement the word meaning.  It also signals
@@ -128,36 +156,27 @@ better that we always have some kind of an implementation
 reason that can be formualated.
 Compatibility? how to introduce a new name/keep compat?
 
-introduce py.test.mark registration
------------------------------------------
-tags: feature 2.3
-
-introduce a hook that allows to register a named mark decorator
-with documentation and add "py.test --marks" to get
-a list of available marks.  Deprecate "dynamic" mark
-definitions.
-
 allow to non-intrusively apply skipfs/xfail/marks
 ---------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 use case: mark a module or directory structures
 to be skipped on certain platforms (i.e. no import
 attempt will be made).
 
 consider introducing a hook/mechanism that allows to apply marks
-from conftests or plugins.
+from conftests or plugins. (See extended parametrization)
 
 explicit referencing of conftest.py files
 -----------------------------------------
-tags: feature 2.3
+tags: feature 
 
 allow to name conftest.py files (in sub directories) that should
 be imported early, as to include command line options.
 
 improve central py.test ini file
 ----------------------------------
-tags: feature 2.3
+tags: feature 
 
 introduce more declarative configuration options:
 - (to-be-collected test directories)
@@ -168,7 +187,7 @@ introduce more declarative configuration options:
 
 new documentation
 ----------------------------------
-tags: feature 2.3
+tags: feature 
 
 - logo py.test
 - examples for unittest or functional testing
@@ -177,23 +196,15 @@ tags: feature 2.3
 
 have imported module mismatch honour relative paths
 --------------------------------------------------------
-tags: bug 2.3
+tags: bug 
 
 With 1.1.1 py.test fails at least on windows if an import
 is relative and compared against an absolute conftest.py
 path. Normalize.
 
-call termination with small timeout
--------------------------------------------------
-tags: feature 2.3
-test: testing/pytest/dist/test_dsession.py - test_terminate_on_hanging_node
-
-Call gateway group termination with a small timeout if available.
-Should make dist-testing less likely to leave lost processes.
-
 consider globals: py.test.ensuretemp and config
 --------------------------------------------------------------
-tags: experimental-wish 2.3
+tags: experimental-wish 
 
 consider deprecating py.test.ensuretemp and py.test.config
 to further reduce py.test globality.  Also consider
@@ -202,7 +213,7 @@ a plugin rather than being there from the start.
 
 consider allowing funcargs for setup methods
 --------------------------------------------------------------
-tags: experimental-wish 2.3
+tags: experimental-wish 
 
 Users have expressed the wish to have funcargs available to setup
 functions.  Experiment with allowing funcargs there - it might
@@ -225,7 +236,7 @@ world.
 
 consider pytest_addsyspath hook
 -----------------------------------------
-tags: 2.3
+tags: 
 
 py.test could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
@@ -237,7 +248,7 @@ and pytest_configure.
 
 show plugin information in test header
 ----------------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 Now that external plugins are becoming more numerous
 it would be useful to have external plugins along with
@@ -245,7 +256,7 @@ their versions displayed as a header line.
 
 deprecate global py.test.config usage
 ----------------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 py.test.ensuretemp and py.test.config are probably the last
 objects containing global state.  Often using them is not
@@ -255,7 +266,7 @@ as others.
 
 remove deprecated bits in collect.py
 -------------------------------------------------------------------
-tags: feature 2.3
+tags: feature 
 
 In an effort to further simplify code, review and remove deprecated bits
 in collect.py.  Probably good:
@@ -264,7 +275,7 @@ in collect.py.  Probably good:
 
 implement fslayout decorator
 ---------------------------------
-tags: feature 2.3
+tags: feature 
 
 Improve the way how tests can work with pre-made examples,
 keeping the layout close to the test function:
@@ -278,9 +289,7 @@ keeping the layout close to the test function:
                 pass
 """)
 def test_run(pytester, fslayout):
-    p = fslayout.find("test_*.py")
+    p = fslayout.findone("test_*.py")
     result = pytester.runpytest(p)
     assert result.ret == 0
     assert result.passed == 1
-
-
