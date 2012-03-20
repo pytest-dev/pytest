@@ -132,6 +132,14 @@ def check_xfail_no_run(item):
 def pytest_runtest_makereport(__multicall__, item, call):
     if not isinstance(item, pytest.Function):
         return
+    # unitttest special case, see setting of _unexpectedsuccess
+    if hasattr(item, '_unexpectedsuccess'):
+        rep = __multicall__.execute()
+        if rep.when == "call":
+            # we need to translate into how py.test encodes xpass
+            rep.keywords['xfail'] = "reason: " + item._unexpectedsuccess
+            rep.outcome = "failed"
+        return rep
     if not (call.excinfo and
         call.excinfo.errisinstance(py.test.xfail.Exception)):
         evalxfail = getattr(item, '_evalxfail', None)

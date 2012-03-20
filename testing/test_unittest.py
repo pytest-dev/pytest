@@ -459,3 +459,24 @@ def test_unittest_typerror_traceback(testdir):
     result = testdir.runpytest()
     assert "TypeError" in result.stdout.str()
     assert result.ret == 1
+
+@pytest.mark.skipif("sys.version_info < (2,7)")
+def test_unittest_unexpected_failure(testdir):
+    testdir.makepyfile("""
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            @unittest.expectedFailure
+            def test_func1(self):
+                assert 0
+            @unittest.expectedFailure
+            def test_func2(self):
+                assert 1
+    """)
+    result = testdir.runpytest("-rxX")
+    result.stdout.fnmatch_lines([
+        "*XFAIL*MyTestCase*test_func1*",
+        "*XPASS*MyTestCase*test_func2*",
+        "*1 xfailed*1 xpass*",
+    ])
+
+

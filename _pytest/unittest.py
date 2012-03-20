@@ -91,22 +91,28 @@ class TestCaseFunction(pytest.Function):
         self._addexcinfo(rawexcinfo)
     def addFailure(self, testcase, rawexcinfo):
         self._addexcinfo(rawexcinfo)
+
     def addSkip(self, testcase, reason):
         try:
             pytest.skip(reason)
         except pytest.skip.Exception:
             self._addexcinfo(sys.exc_info())
-    def addExpectedFailure(self, testcase, rawexcinfo, reason):
+
+    def addExpectedFailure(self, testcase, rawexcinfo, reason=""):
         try:
             pytest.xfail(str(reason))
         except pytest.xfail.Exception:
             self._addexcinfo(sys.exc_info())
-    def addUnexpectedSuccess(self, testcase, reason):
-        pass
+
+    def addUnexpectedSuccess(self, testcase, reason=""):
+        self._unexpectedsuccess = reason
+
     def addSuccess(self, testcase):
         pass
+
     def stopTest(self, testcase):
         pass
+
     def runtest(self):
         self._testcase(result=self)
 
