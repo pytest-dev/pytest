@@ -1,7 +1,6 @@
 """Rewrite assertion AST to produce nice error messages"""
 
 import ast
-import collections
 import errno
 import itertools
 import imp
