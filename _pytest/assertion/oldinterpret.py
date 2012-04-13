@@ -1,8 +1,7 @@
 import py
 import sys, inspect
 from compiler import parse, ast, pycodegen
-from _pytest.assertion.util import format_explanation
-from _pytest.assertion.reinterpret import BuiltinAssertionError
+from _pytest.assertion.util import format_explanation, BuiltinAssertionError
 
 passthroughex = py.builtin._sysex
 

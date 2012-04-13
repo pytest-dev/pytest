@@ -1,7 +1,6 @@
 import sys
 import py
-
-BuiltinAssertionError = py.builtin.builtins.AssertionError
+from _pytest.assertion.util import BuiltinAssertionError
 
 class AssertionError(BuiltinAssertionError):
     def __init__(self, *args):

@@ -322,3 +322,18 @@ def test_assert_raises_in_nonzero_of_object_pytest_issue10():
         e = exvalue()
         s = str(e)
         assert "<MY42 object> < 0" in s
+
+@py.test.mark.skipif("sys.version_info >= (2,6)")
+def test_oldinterpret_importation():
+    # we had a cyclic import there
+    # requires pytest on sys.path
+    res = py.std.subprocess.call([
+        py.std.sys.executable, '-c', str(py.code.Source("""
+        try:
+            from _pytest.assertion.newinterpret import interpret
+        except ImportError:
+            from _pytest.assertion.oldinterpret import interpret
+        """))
+    ])
+
+    assert res == 0

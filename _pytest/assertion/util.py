@@ -2,6 +2,7 @@
 
 import py
 
+BuiltinAssertionError = py.builtin.builtins.AssertionError
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
