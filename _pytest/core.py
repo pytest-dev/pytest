@@ -321,13 +321,15 @@ def importplugin(importspec):
     name = importspec
     try:
         mod = "_pytest." + name
-        return __import__(mod, None, None, '__doc__')
+        __import__(mod)
+        return sys.modules[mod]
     except ImportError:
         #e = py.std.sys.exc_info()[1]
         #if str(e).find(name) == -1:
         #    raise
         pass #
-    return __import__(importspec, None, None, '__doc__')
+    __import__(importspec)
+    return sys.modules[importspec]
 
 class MultiCall:
     """ execute a call into multiple python functions/methods. """

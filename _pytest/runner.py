@@ -416,9 +416,10 @@ def importorskip(modname, minversion=None):
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:
-        mod = __import__(modname, None, None, ['__doc__'])
+        __import__(modname)
     except ImportError:
         py.test.skip("could not import %r" %(modname,))
+    mod = sys.modules[modname]
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
