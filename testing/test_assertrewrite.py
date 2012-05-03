@@ -195,6 +195,10 @@ class TestAssertionRewrite:
             y = -1
             assert x + y
         assert getmsg(f) == "assert (1 + -1)"
+        def f():
+            x = range(10)
+            assert not 5 % 4
+        assert getmsg(f) == "assert not (5 % 4)"
 
     def test_call(self):
         def g(a=42, *args, **kwargs):

@@ -297,7 +297,7 @@ binop_map = {
     ast.Mult : "*",
     ast.Div : "/",
     ast.FloorDiv : "//",
-    ast.Mod : "%",
+    ast.Mod : "%%", # escaped for string formatting
     ast.Eq : "==",
     ast.NotEq : "!=",
     ast.Lt : "<",
