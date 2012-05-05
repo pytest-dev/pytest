@@ -50,7 +50,7 @@ def pytest_configure(config):
     hook = None
     if mode == "rewrite":
         hook = rewrite.AssertionRewritingHook()
-        sys.meta_path.append(hook)
+        sys.meta_path.insert(0, hook)
     warn_about_missing_assertion(mode)
     config._assertstate = AssertionState(config, mode)
     config._assertstate.hook = hook
