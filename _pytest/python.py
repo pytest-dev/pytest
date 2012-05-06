@@ -311,12 +311,14 @@ class Class(PyCollectorMixin, pytest.Collector):
         setup_class = getattr(self.obj, 'setup_class', None)
         if setup_class is not None:
             setup_class = getattr(setup_class, 'im_func', setup_class)
+            setup_class = getattr(setup_class, '__func__', setup_class)
             setup_class(self.obj)
 
     def teardown(self):
         teardown_class = getattr(self.obj, 'teardown_class', None)
         if teardown_class is not None:
             teardown_class = getattr(teardown_class, 'im_func', teardown_class)
+            teardown_class = getattr(teardown_class, '__func__', teardown_class)
             teardown_class(self.obj)
 
 class Instance(PyCollectorMixin, pytest.Collector):

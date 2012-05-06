@@ -56,6 +56,24 @@ class TestClass:
             "*collected 0*",
         ])
 
+    def test_setup_teardown_class_as_classmethod(self, testdir):
+        testdir.makepyfile("""
+            class TestClassMethod:
+                @classmethod
+                def setup_class(cls):
+                    pass
+                def test_1(self):
+                    pass
+                @classmethod
+                def teardown_class(cls):
+                    pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+        ])
+
+
 class TestGenerator:
     def test_generative_functions(self, testdir):
         modcol = testdir.getmodulecol("""
