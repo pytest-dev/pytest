@@ -7,6 +7,8 @@ Changese between 2.2.3 and ...
 - fix issue with unittest: now @unittest.expectedFailure markers should
   be processed correctly (you can also use @pytest.mark markers)
 - document integration with the extended distribute/setuptools test commands
+- fix issue 140: propperly get the real functions
+  of bound classmethods for setup/teardown_class
 
 
 Changes between 2.2.2 and 2.2.3
