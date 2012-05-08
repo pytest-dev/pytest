@@ -2,7 +2,7 @@
 import py, sys
 
 class url:
-    base = "http://paste.pocoo.org"
+    base = "http://bpaste.net"
     xmlrpc = base + "/xmlrpc/"
     show = base + "/show/"
 
