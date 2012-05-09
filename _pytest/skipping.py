@@ -137,7 +137,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
         rep = __multicall__.execute()
         if rep.when == "call":
             # we need to translate into how py.test encodes xpass
-            rep.keywords['xfail'] = "reason: " + item._unexpectedsuccess
+            rep.keywords['xfail'] = "reason: " + repr(item._unexpectedsuccess)
             rep.outcome = "failed"
         return rep
     if not (call.excinfo and
