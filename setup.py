@@ -32,7 +32,7 @@ def main():
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
         # the following should be enabled for release
-        install_requires=['py>=1.4.7.dev2'],
+        install_requires=['py>=1.4.8'],
         classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
