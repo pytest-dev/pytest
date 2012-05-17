@@ -10,6 +10,7 @@ EXIT_OK = 0
 EXIT_TESTSFAILED = 1
 EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
+EXIT_USAGEERROR = 4
 
 name_re = py.std.re.compile("^[a-zA-Z_]\w*$")
 
@@ -65,30 +66,34 @@ def wrap_session(config, doit):
     session.exitstatus = EXIT_OK
     initstate = 0
     try:
-        config.pluginmanager.do_configure(config)
-        initstate = 1
-        config.hook.pytest_sessionstart(session=session)
-        initstate = 2
-        doit(config, session)
-    except pytest.UsageError:
-        raise
-    except KeyboardInterrupt:
-        excinfo = py.code.ExceptionInfo()
-        config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
-        session.exitstatus = EXIT_INTERRUPTED
-    except:
-        excinfo = py.code.ExceptionInfo()
-        config.pluginmanager.notify_exception(excinfo, config.option)
-        session.exitstatus = EXIT_INTERNALERROR
-        if excinfo.errisinstance(SystemExit):
-            sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
-    if initstate >= 2:
-        config.hook.pytest_sessionfinish(session=session,
-            exitstatus=session.exitstatus or (session._testsfailed and 1))
-    if not session.exitstatus and session._testsfailed:
-        session.exitstatus = EXIT_TESTSFAILED
-    if initstate >= 1:
-        config.pluginmanager.do_unconfigure(config)
+        try:
+            config.pluginmanager.do_configure(config)
+            initstate = 1
+            config.hook.pytest_sessionstart(session=session)
+            initstate = 2
+            doit(config, session)
+        except pytest.UsageError:
+            msg = sys.exc_info()[1].args[0]
+            sys.stderr.write("ERROR: %s\n" %(msg,))
+            session.exitstatus = EXIT_USAGEERROR
+        except KeyboardInterrupt:
+            excinfo = py.code.ExceptionInfo()
+            config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
+            session.exitstatus = EXIT_INTERRUPTED
+        except:
+            excinfo = py.code.ExceptionInfo()
+            config.pluginmanager.notify_exception(excinfo, config.option)
+            session.exitstatus = EXIT_INTERNALERROR
+            if excinfo.errisinstance(SystemExit):
+                sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
+    finally:
+        if initstate >= 2:
+            config.hook.pytest_sessionfinish(session=session,
+                exitstatus=session.exitstatus or (session._testsfailed and 1))
+        if not session.exitstatus and session._testsfailed:
+            session.exitstatus = EXIT_TESTSFAILED
+        if initstate >= 1:
+            config.pluginmanager.do_unconfigure(config)
     return session.exitstatus
 
 def pytest_cmdline_main(config):

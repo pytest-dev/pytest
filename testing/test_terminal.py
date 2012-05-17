@@ -262,7 +262,7 @@ class TestCollectonly:
             not to have the items attribute
         """
         result = testdir.runpytest("--collectonly", "uhm_missing_path")
-        assert result.ret == 3
+        assert result.ret == 4
         result.stderr.fnmatch_lines([
             '*ERROR: file not found*',
         ])

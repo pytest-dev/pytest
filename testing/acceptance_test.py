@@ -57,6 +57,22 @@ class TestGeneralUsage:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
 
+    def test_file_not_found_unconfigure_issue143(self, testdir):
+        testdir.makeconftest("""
+            def pytest_configure():
+                print("---configure")
+            def pytest_unconfigure():
+                print("---unconfigure")
+        """)
+        result = testdir.runpytest("-s", "asd")
+        assert result.ret == 4 # EXIT_USAGEERROR
+        result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
+        s = result.stdout.fnmatch_lines([
+            "*---configure",
+            "*---unconfigure",
+        ])
+        
+
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
             def pytest_addoption(parser):

@@ -465,13 +465,8 @@ def main(args=None, plugins=None):
     """ returned exit code integer, after an in-process testing run
     with the given command line arguments, preloading an optional list
     of passed in plugin objects. """
-    try:
-        config = _prepareconfig(args, plugins)
-        exitstatus = config.hook.pytest_cmdline_main(config=config)
-    except UsageError:
-        e = sys.exc_info()[1]
-        sys.stderr.write("ERROR: %s\n" %(e.args[0],))
-        exitstatus = 3
+    config = _prepareconfig(args, plugins)
+    exitstatus = config.hook.pytest_cmdline_main(config=config)
     return exitstatus
 
 class UsageError(Exception):
