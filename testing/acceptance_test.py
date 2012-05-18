@@ -491,11 +491,11 @@ class TestDurations:
         import time
         frag = 0.02
         def test_2():
-            time.sleep(frag*2)
+            time.sleep(frag*5)
         def test_1():
             time.sleep(frag)
         def test_3():
-            time.sleep(frag*3)
+            time.sleep(frag*10)
     """
 
     def test_calls(self, testdir):
