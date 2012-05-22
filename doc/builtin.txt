@@ -28,7 +28,7 @@ You can ask for available builtin or project-custom
 
     $ py.test --funcargs
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collected 0 items
     pytestconfig
         the pytest config object with access to command line opts.
@@ -76,7 +76,5 @@ You can ask for available builtin or project-custom
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
         
-    cov
-        A pytest funcarg that provides access to the underlying coverage object.
     
-    =============================  in 0.01 seconds =============================
+    =============================  in 0.00 seconds =============================

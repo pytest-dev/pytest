@@ -22,10 +22,9 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.2.2, imported from /Users/hpk/p/pytest/pytest.pyc
+    This is py.test version 2.2.4, imported from /home/hpk/p/pytest/pytest.py
     setuptools registered plugins:
-      pytest-xdist-1.8 at /Users/hpk/p/pytest-xdist/xdist/plugin.pyc
-      pytest-cov-1.4 at /Users/hpk/venv/0/lib/python2.7/site-packages/pytest_cov.pyc
+      pytest-xdist-1.8 at /home/hpk/p/pytest-xdist/xdist/plugin.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -47,7 +46,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 1 items
     
     test_sample.py F
@@ -61,7 +60,7 @@ That's it. You can execute the test function now::
     E        +  where 4 = func(3)
     
     test_sample.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
 
@@ -96,7 +95,7 @@ Running it with, this time in "quiet" reporting mode::
     $ py.test -q test_sysexit.py
     collecting ... collected 1 items
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.00 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -127,7 +126,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x1013225a8>
+    self = <test_class.TestClass instance at 0x1a956c8>
     
         def test_two(self):
             x = "hello"
@@ -135,7 +134,7 @@ run the module by passing its filename::
     E       assert hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
-    1 failed, 1 passed in 0.03 seconds
+    1 failed, 1 passed in 0.01 seconds
 
 The first test passed, the second failed. Again we can easily see
 the intermediate values used in the assertion, helping us to
@@ -164,7 +163,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/Users/hpk/tmp/pytest-20/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-22/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -173,8 +172,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /Users/hpk/tmp/pytest-20/test_needsfiles0
-    1 failed in 0.11 seconds
+    /tmp/pytest-22/test_needsfiles0
+    1 failed in 0.01 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

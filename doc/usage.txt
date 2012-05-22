@@ -174,14 +174,18 @@ You can specify additional plugins to ``pytest.main``::
     # content of myinvoke.py
     import pytest
     class MyPlugin:
-        def pytest_addoption(self, parser):
-            raise pytest.UsageError("hi from our plugin")
+        def pytest_sessionfinish(self):
+            print("*** test run reporting finishing")
 
-    pytest.main(plugins=[MyPlugin()])
+    pytest.main("-qq", plugins=[MyPlugin()])
 
-Running it will exit quickly::
+Running it will show that ``MyPlugin`` was added and its
+hook was invoked::
 
     $ python myinvoke.py
-    ERROR: hi from our plugin
+    collecting ... collected 0 items
+    
+     in 0.00 seconds
+    *** test run reporting finishing
 
 .. include:: links.inc

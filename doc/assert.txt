@@ -23,7 +23,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 1 items
     
     test_assert1.py F
@@ -37,7 +37,7 @@ you will see the return value of the function call::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 py.test has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -105,7 +105,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 1 items
     
     test_assert2.py F
@@ -124,7 +124,7 @@ if you run this module::
     E         '5'
     
     test_assert2.py:5: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 Special comparisons are done for a number of cases:
 
@@ -181,7 +181,7 @@ the conftest file::
    E            vals: 1 != 2
    
    test_foocompare.py:8: AssertionError
-   1 failed in 0.02 seconds
+   1 failed in 0.01 seconds
 
 .. _assert-details:
 .. _`assert introspection`:

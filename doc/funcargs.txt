@@ -62,7 +62,7 @@ Running the test looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 1 items
     
     test_simplefactory.py F
@@ -77,7 +77,7 @@ Running the test looks like this::
     E       assert 42 == 17
     
     test_simplefactory.py:5: AssertionError
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 This means that indeed the test function was called with a ``myfuncarg``
 argument value of ``42`` and the assert fails.  Here is how py.test
@@ -167,7 +167,7 @@ Running this will generate ten invocations of ``test_func`` passing in each of t
 
     $ py.test test_example.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 10 items
     
     test_example.py .........F
@@ -182,7 +182,7 @@ Running this will generate ten invocations of ``test_func`` passing in each of t
     E       assert 9 < 9
     
     test_example.py:6: AssertionError
-    ==================== 1 failed, 9 passed in 0.07 seconds ====================
+    ==================== 1 failed, 9 passed in 0.02 seconds ====================
 
 Obviously, only when ``numiter`` has the value of ``9`` does the test fail.  Note that the ``pytest_generate_tests(metafunc)`` hook is called during
 the test collection phase which is separate from the actual test running.
@@ -190,7 +190,7 @@ Let's just look at what is collected::
 
     $ py.test --collectonly test_example.py
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 10 items
     <Module 'test_example.py'>
       <Function 'test_func[0]'>
@@ -204,13 +204,13 @@ Let's just look at what is collected::
       <Function 'test_func[8]'>
       <Function 'test_func[9]'>
     
-    =============================  in 0.01 seconds =============================
+    =============================  in 0.00 seconds =============================
 
 If you want to select only the run with the value ``7`` you could do::
 
     $ py.test -v -k 7 test_example.py  # or -k test_func[7]
     =========================== test session starts ============================
-    platform darwin -- Python 2.7.1 -- pytest-2.2.2 -- /Users/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4 -- /home/hpk/venv/0/bin/python
     collecting ... collected 10 items
     
     test_example.py:5: test_func[7] PASSED
