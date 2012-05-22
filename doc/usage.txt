@@ -36,7 +36,7 @@ Stopping after the first (or N) failures
 To stop the testing process after the first (N) failures::
 
     py.test -x            # stop after first failure
-    py.test -maxfail=2    # stop after two failures
+    py.test --maxfail=2    # stop after two failures
 
 Specifying tests / selecting tests
 ---------------------------------------------------
