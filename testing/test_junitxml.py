@@ -279,6 +279,13 @@ class TestPython:
         if not sys.platform.startswith("java"):
             assert "hx" in fnode.toxml()
 
+def test_mangle_testnames():
+    from _pytest.junitxml import mangle_testnames
+    names = ["a/pything.py", "Class", "()", "method"]
+    newnames = mangle_testnames(names)
+    assert newnames == ["a.pything", "Class", "method"]
+
+
 class TestNonPython:
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""

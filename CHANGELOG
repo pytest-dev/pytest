@@ -12,6 +12,7 @@ Changes between 2.2.3 and 2.2.4
 - fix issue #141: switch from the deceased paste.pocoo.org to bpaste.net
 - fix issue #143: call unconfigure/sessionfinish always when
   configure/sessionstart where called
+- fix issue #144: better mangle test ids to junitxml classnames
 
 Changes between 2.2.2 and 2.2.3
 ----------------------------------------

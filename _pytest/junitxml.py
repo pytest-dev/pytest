@@ -81,6 +81,11 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(xml)
 
 
+def mangle_testnames(names):
+    names = [x.replace(".py", "") for x in names if x != '()']
+    names[0] = names[0].replace("/", '.')
+    return names
+
 class LogXML(object):
     def __init__(self, logfile, prefix):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
@@ -91,9 +96,7 @@ class LogXML(object):
         self.failed = self.errors = 0
 
     def _opentestcase(self, report):
-        names = report.nodeid.split("::")
-        names[0] = names[0].replace("/", '.')
-        names = [x.replace(".py", "") for x in names if x != "()"]
+        names = mangle_testnames(report.nodeid.split("::"))
         classnames = names[:-1]
         if self.prefix:
             classnames.insert(0, self.prefix)
