@@ -350,6 +350,7 @@ def test_no_bytecode():
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest().ret == 0
 
+    @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
         testdir.makepyfile("""
 import pytest
