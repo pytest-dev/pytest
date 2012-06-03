@@ -373,6 +373,33 @@ class TestCaptureFuncarg:
         """)
         reprec.assertoutcome(passed=1)
 
+    def test_capsyscapfd(self, testdir):
+        p = testdir.makepyfile("""
+            def test_one(capsys, capfd):
+                pass
+            def test_two(capfd, capsys):
+                pass
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR*setup*test_one*",
+            "*capsys*capfd*same*time*",
+            "*ERROR*setup*test_two*",
+            "*capsys*capfd*same*time*",
+            "*2 error*"])
+
+    @pytest.mark.parametrize("method", ["sys", "fd"])
+    def test_capture_is_represented_on_failure_issue128(self, testdir, method):
+        p = testdir.makepyfile("""
+            def test_hello(cap%s):
+                print ("xxx42xxx")
+                assert 0
+        """ % method)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "xxx42xxx",
+        ])
+
     @needsosdup
     def test_stdfd_functional(self, testdir):
         reprec = testdir.inline_runsource("""
