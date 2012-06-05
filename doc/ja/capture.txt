@@ -1,0 +1,170 @@
+
+.. _`captures`:
+
+標準出力/標準エラーのキャプチャ
+===============================
+
+..
+    Capturing of the stdout/stderr output
+    =========================================================
+
+..
+    Default stdout/stderr/stdin capturing behaviour
+    ---------------------------------------------------------
+
+デフォルトの stdout/stderr/stdin のキャプチャ処理
+-------------------------------------------------
+
+..
+    During test execution any output sent to ``stdout`` and ``stderr`` is
+    captured.  If a test or a setup method fails its according captured
+    output will usually be shown along with the failure traceback.
+
+テストの実行中 ``stdout`` と ``stderr`` へ送られる全ての出力内容はキャプチャされます。テストまたはセットアップメソッドが失敗した場合、そこでキャプチャされた出力は、通常、エラートレースバックと一緒に表示されます。
+
+..
+    In addition, ``stdin`` is set to a "null" object which will
+    fail on attempts to read from it because it is rarely desired
+    to wait for interactive input when running automated tests.
+
+加えて ``stdin`` は、その読み込みに失敗する "null" オブジェクトがセットされます。その理由は自動テストを実行するときに対話式の入力を待つのを考慮することはほとんどないからです。
+
+..
+    By default capturing is done by intercepting writes to low level
+    file descriptors.  This allows to capture output from simple
+    print statements as well as output from a subprocess started by
+    a test.
+
+デフォルトのキャプチャは、低レベルのファイルディスクリプタへの書き込みを横取りします。単純な print 文からの出力も、あるテストが生成したサブプロセスからの出力も同じようにキャプチャできます。
+
+..
+    Setting capturing methods or disabling capturing
+    -------------------------------------------------
+
+メソッドをキャプチャする、または無効にする設定
+----------------------------------------------
+
+..
+    There are two ways in which ``py.test`` can perform capturing:
+
+``py.test`` でキャプチャを実行する方法が2つあります:
+
+..
+    * file descriptor (FD) level capturing (default): All writes going to the
+      operating system file descriptors 1 and 2 will be captured.
+
+* ファイルディスクリプタ (FD) レベルのキャプチャ (デフォルト): オペレーティングシステムのファイルディスクリプタ1と2への全ての書き込みをキャプチャする
+
+..
+    * ``sys`` level capturing: Only writes to Python files ``sys.stdout``
+      and ``sys.stderr`` will be captured.  No capturing of writes to
+      filedescriptors is performed.
+
+* ``sys`` レベルのキャプチャ: Python ファイル ``sys.stdout`` と ``sys.stderr`` への書き込みのみキャプチャする、ファイルディスクリプタへの書き込みはキャプチャしない
+
+..
+    You can influence output capturing mechanisms from the command line::
+
+.. _`disable capturing`:
+
+コマンドラインから出力内容のキャプチャ設定を制御できます::
+
+    py.test -s            # 全てのキャプチャを無効にする
+    py.test --capture=sys # sys.stdout/stderr を in-mem ファイルに置き換える
+    py.test --capture=fd  # ファイルディスクリプタ1と2を一時ファイルに差し向ける
+
+.. _printdebugging:
+
+デバッグに print 文を使う
+-------------------------
+
+..
+    Using print statements for debugging
+    ---------------------------------------------------
+
+..
+    One primary benefit of the default capturing of stdout/stderr output
+    is that you can use print statements for debugging::
+
+デフォルトで stdout/stderr の出力をキャプチャする主な利点の1つとして、デバッグに print 文が使えます::
+
+    # test_module.py の内容
+    def setup_function(function):
+        print ("setting up %s" % function)
+
+    def test_func1():
+        assert True
+
+    def test_func2():
+        assert False
+
+..
+    and running this module will show you precisely the output
+    of the failing function and hide the other one::
+
+このモジュールを実行すると、失敗するテスト関数の出力を適切に表示して、成功するもう1つのテストを非表示にします::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 2 items
+    
+    test_module.py .F
+    
+    ================================= FAILURES =================================
+    ________________________________ test_func2 ________________________________
+    
+        def test_func2():
+    >       assert False
+    E       assert False
+    
+    test_module.py:9: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    setting up <function test_func2 at 0x20160c8>
+    ==================== 1 failed, 1 passed in 0.01 seconds ====================
+
+..
+    Accessing captured output from a test function
+    ---------------------------------------------------
+
+テスト関数からキャプチャされた出力へのアクセス
+----------------------------------------------
+
+..
+    The :ref:`funcarg mechanism` allows test function a very easy
+    way to access the captured output by simply using the names
+    ``capsys`` or ``capfd`` in the test function signature.  Here
+    is an example test function that performs some output related
+    checks::
+
+:ref:`funcarg mechanism` により、テスト関数のシグネチャに ``capsys`` または ``capfd`` という名前を使うだけで、簡単にキャプチャされた出力へアクセスできます。次に関連する値の確認を行うテスト関数のサンプルを紹介します::
+
+    def test_myoutput(capsys): # または fd レベルの "capfd" を使う
+        print ("hello")
+        sys.stderr.write("world\n")
+        out, err = capsys.readouterr()
+        assert out == "hello\n"
+        assert err == "world\n"
+        print "next"
+        out, err = capsys.readouterr()
+        assert out == "next\n"
+
+..
+    The ``readouterr()`` call snapshots the output so far -
+    and capturing will be continued.  After the test
+    function finishes the original streams will
+    be restored.  Using ``capsys`` this way frees your
+    test from having to care about setting/resetting
+    output streams and also interacts well with py.test's
+    own per-test capturing.
+
+``readouterr()`` 呼び出しは、その時点での出力内容のスナップショットを返し、その後もキャプチャが続行されます。テスト関数が終了した後、元のストリームが復元されます。 ``capsys`` を使うことで、テスト内で出力ストリームをセット/リセットすることに注意を払わなくてよくなります。また、pytest が保持するテスト単位のキャプチャも扱えます。
+
+..
+    If you want to capture on ``fd`` level you can use
+    the ``capfd`` function argument which offers the exact
+    same interface.
+
+``fd`` レベルのキャプチャを行う場合も全く同じインターフェースを提供する ``capfd`` という関数の引数を使います。
+
+.. include:: links.inc

@@ -1,0 +1,74 @@
+
+..
+    Doctest integration for modules and test files
+    =========================================================
+
+モジュールやテストファイルの doctest
+====================================
+
+..
+    By default all files matching the ``test*.txt`` pattern will
+    be run through the python standard ``doctest`` module.  You
+    can change the pattern by issuing::
+
+デフォルトで ``test*.txt`` のパターンに一致する全てのファイルは、Python 標準の ``doctest`` モジュールで実行されます。次のようにコマンドラインでこのパターンを変更できます::
+
+    py.test --doctest-glob='*.rst'
+
+..
+    on the command line.  You can also trigger running of doctests
+    from docstrings in all python modules (including regular
+    python test modules)::
+
+Python モジュール (通常 python テストモジュールを含む) の docstring からも doctest を実行できます::
+
+    py.test --doctest-modules
+
+..
+    You can make these changes permanent in your project by
+    putting them into a pytest.ini file like this::
+
+次のように pytest.ini にその設定を追加することで、自分のプロジェクトでそういった変更を永続化できます::
+
+    # pytest.ini の内容
+    [pytest]
+    addopts = --doctest-modules
+
+..
+    If you then have a text file like this::
+
+次のようなテキストファイルが存在して::
+
+    # example.rst の内容
+
+    hello this is a doctest
+    >>> x = 3
+    >>> x
+    3
+
+..
+    and another like this::
+
+他にも次のようなファイルも存在するとします::
+
+    # mymodule.py の内容
+    def something():
+        """ a doctest in a docstring
+        >>> something()
+        42
+        """
+        return 42
+
+..
+    then you can just invoke ``py.test`` without command line options::
+
+コマンドラインオプションを指定せず ``py.test`` を実行するだけです::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    mymodule.py .
+    
+    ========================= 1 passed in 0.02 seconds =========================

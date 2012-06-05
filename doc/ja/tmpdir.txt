@@ -1,0 +1,102 @@
+
+.. _`tmpdir handling`:
+
+一時ディレクトリとファイル
+==========================
+
+..
+    Temporary directories and files
+    ================================================
+
+..
+    The 'tmpdir' test function argument
+    -----------------------------------
+
+テスト関数の引数 'tmpdir'
+-------------------------
+
+..
+    You can use the ``tmpdir`` function argument which will
+    provide a temporary directory unique to the test invocation,
+    created in the `base temporary directory`_.
+
+``tmpdir`` という関数の引数を一意な一時ディレクトリを提供するのに使えます。それは :ref:`base temporary directory` に作成されます。
+
+..
+    ``tmpdir`` is a `py.path.local`_ object which offers ``os.path`` methods
+    and more.  Here is an example test usage::
+
+``tmpdir`` は ``os.path`` メソッドやさらに他のメソッドを提供する `py.path.local`_ オブジェクトです。次にテストでの使用例を紹介します::
+
+    # test_tmpdir.py の内容
+    import os
+    def test_create_file(tmpdir):
+        p = tmpdir.mkdir("sub").join("hello.txt")
+        p.write("content")
+        assert p.read() == "content"
+        assert len(tmpdir.listdir()) == 1
+        assert 0
+
+..
+    Running this would result in a passed test except for the last
+    ``assert 0`` line which we use to look at values::
+
+このテストを実行すると、最終行の ``assert 0`` が失敗して ``tmpdir`` の値が見えます::
+
+    $ py.test test_tmpdir.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_tmpdir.py F
+    
+    ================================= FAILURES =================================
+    _____________________________ test_create_file _____________________________
+    
+    tmpdir = local('/tmp/pytest-23/test_create_file0')
+    
+        def test_create_file(tmpdir):
+            p = tmpdir.mkdir("sub").join("hello.txt")
+            p.write("content")
+            assert p.read() == "content"
+            assert len(tmpdir.listdir()) == 1
+    >       assert 0
+    E       assert 0
+    
+    test_tmpdir.py:7: AssertionError
+    ========================= 1 failed in 0.02 seconds =========================
+
+.. _`base temporary directory`:
+
+デフォルトの一時ディレクトリ
+----------------------------
+
+..
+    The default base temporary directory
+    -----------------------------------------------
+
+..
+    Temporary directories are by default created as sub-directories of
+    the system temporary directory.  The base name will be ``pytest-NUM`` where
+    ``NUM`` will be incremented with each test run.  Moreover, entries older
+    than 3 temporary directories will be removed.
+
+デフォルトでは、テスト向けの一時ディレクトリは、システムの一時ディレクトリのサブディレクトリとして作成されます。基本となる名前は ``pytest-NUM`` となり ``NUM`` はテストが実行される度に数字が増えます。また、3世代より古い一時ディレクトリは削除されます。
+
+..
+    You can override the default temporary directory setting like this::
+
+デフォルトの一時ディレクトリの設定は次のように書き換えられます::
+
+    py.test --basetemp=mydir
+
+..
+    When distributing tests on the local machine, ``py.test`` takes care to
+    configure a basetemp directory for the sub processes such that all temporary
+    data lands below a single per-test run basetemp directory.
+
+``py.test`` は、ローカルマシン上で分散テストを行うとき、全ての一時データが basetemp ディレクトリの配下で実行されてテスト毎に一意になるよう、サブプロセスに対しても basetemp ディレクトリをちゃんと設定します。
+
+.. _`py.path.local`: http://pylib.org/path.html
+
+

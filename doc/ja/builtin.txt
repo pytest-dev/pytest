@@ -1,0 +1,152 @@
+
+.. _`pytest helpers`:
+
+Pytest 組み込みヘルパー機能
+===========================
+
+..
+    Pytest builtin helpers
+    ================================================
+
+..
+    builtin pytest.* functions and helping objects
+    -----------------------------------------------------
+
+組み込みの pytest.* 関数とヘルパーオブジェクト
+----------------------------------------------
+
+..
+    You can always use an interactive Python prompt and type::
+
+Python インタープリターの対話モードから次のように入力すると::
+
+    import pytest
+    help(pytest)
+
+..
+    to get an overview on the globally available helpers.
+
+グローバルに利用できるヘルパー機能の概要を把握できます。
+
+.. automodule:: pytest
+    :members:
+
+
+.. _builtinfuncargs:
+
+組み込み関数の引数
+------------------
+
+..
+    Builtin function arguments
+    -----------------------------------------------------
+
+..
+    You can ask for available builtin or project-custom
+    :ref:`function arguments <funcargs>` by typing::
+
+次のように入力して、利用できる組み込みまたはプロジェクトカスタムの :ref:`関数の引数 <funcargs>` を確認できます。
+
+    | $ py.test --funcargs
+    | ====================== test session starts =======================
+    | platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    | collected 0 items
+    | pytestconfig
+    |     pytest の config オブジェクトとコマンドラインオプションへのアクセス
+    |
+    | capsys
+    |     sys.stdout/sys.stderr への書き込み内容を取得できる
+    |     キャプチャした出力内容は ``(out, err)`` のタプルを返す
+    |     ``capsys.readouterr()`` メソッドで利用できる
+    |
+    | capfd
+    |     ファイルディスクリプタ 1 と 2 へ書き込み内容を取得できる
+    |     キャプチャした出力内容は ``(out, err)`` のタプルを返す
+    |     ``capsys.readouterr()`` メソッドで利用できる
+    |
+    | tmpdir
+    |     基本となる一時ディレクトリ配下にサブディレクトリを作成して、
+    |     テスト関数の実行毎に一意な一時ディレクトリのオブジェクトを返す
+    |     これは py.path.local のパスオブジェクトが返される
+    |
+    | monkeypatch
+    |     オブジェクト、ディクショナリ、os.environ を変更する
+    |     次のヘルパーメソッドを提供する ``monkeypatch`` オブジェクトが返される
+    |     
+    |     monkeypatch.setattr(obj, name, value, raising=True)
+    |     monkeypatch.delattr(obj, name, raising=True)
+    |     monkeypatch.setitem(mapping, name, value)
+    |     monkeypatch.delitem(obj, name, raising=True)
+    |     monkeypatch.setenv(name, value, prepend=False)
+    |     monkeypatch.delenv(name, value, raising=True)
+    |     monkeypatch.syspath_prepend(path)
+    |     monkeypatch.chdir(path)
+    |    
+    |     全ての変更はテスト関数の呼び出しが終わった後で元に戻ります
+    |     ``raising`` パラメーターは、セット／削除の操作対象がないときに
+    |     KeyError や AttributeError を発生させるかどうかを決めます
+    |
+    | recwarn
+    |     次のメソッドを提供する WarningsRecorder インスタンスを返す
+    |     
+    |     * ``pop(category=None)``: category に一致する最後の警告を返す
+    |     * ``clear()``: 警告のリストを削除する
+    |     
+    |     警告については http://docs.python.org/library/warnings.html を
+    |     参照してください
+    |
+    | ========================  in 0.00 seconds ========================
+
+..
+        $ py.test --funcargs
+        =========================== test session starts ============================
+        platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+        collected 0 items
+        pytestconfig
+            the pytest config object with access to command line opts.
+        capsys
+            enables capturing of writes to sys.stdout/sys.stderr and makes
+            captured output available via ``capsys.readouterr()`` method calls
+            which return a ``(out, err)`` tuple.
+            
+        capfd
+            enables capturing of writes to file descriptors 1 and 2 and makes
+            captured output available via ``capsys.readouterr()`` method calls
+            which return a ``(out, err)`` tuple.
+            
+        tmpdir
+            return a temporary directory path object
+            which is unique to each test function invocation,
+            created as a sub directory of the base temporary
+            directory.  The returned object is a `py.path.local`_
+            path object.
+            
+        monkeypatch
+            The returned ``monkeypatch`` funcarg provides these
+            helper methods to modify objects, dictionaries or os.environ::
+            
+            monkeypatch.setattr(obj, name, value, raising=True)
+            monkeypatch.delattr(obj, name, raising=True)
+            monkeypatch.setitem(mapping, name, value)
+            monkeypatch.delitem(obj, name, raising=True)
+            monkeypatch.setenv(name, value, prepend=False)
+            monkeypatch.delenv(name, value, raising=True)
+            monkeypatch.syspath_prepend(path)
+            monkeypatch.chdir(path)
+            
+            All modifications will be undone after the requesting
+            test function has finished. The ``raising``
+            parameter determines if a KeyError or AttributeError
+            will be raised if the set/deletion operation has no target.
+            
+        recwarn
+            Return a WarningsRecorder instance that provides these methods:
+            
+            * ``pop(category=None)``: return last warning matching the category.
+            * ``clear()``: clear list of warnings
+            
+            See http://docs.python.org/library/warnings.html for information
+            on warning categories.
+            
+        
+        =============================  in 0.00 seconds =============================

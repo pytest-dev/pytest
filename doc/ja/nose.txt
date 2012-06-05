@@ -1,0 +1,72 @@
+..
+    Running tests written for nose
+    =======================================
+
+nose 向けに書かれたテストの実行
+===============================
+
+.. include:: links.inc
+
+..
+    py.test has basic support for running tests written for nose_.
+
+py.test は、基本的には nose_ 向けに書かれたテストの実行に対応しています。
+
+..
+    Usage
+    -------------
+
+使用方法
+--------
+
+..
+    type::
+
+単純に::
+
+    py.test  # 'nosetests' の代わりに実行
+
+..
+    and you should be able to run your nose style tests and
+    make use of py.test's capabilities.
+
+を実行します。pytest の機能を使って nose スタイルのテストを実行できます。
+
+..
+    Supported nose Idioms
+    ----------------------
+
+対応している nose イディオム
+----------------------------
+
+..
+    * setup and teardown at module/class/method level
+    * SkipTest exceptions and markers
+    * setup/teardown decorators
+    * yield-based tests and their setup
+    * general usage of nose utilities
+
+* モジュール／クラス／メソッドレベルの setup と teardown 
+* SkipTest 例外とマーカー
+* setup/teardown デコレーター
+* yield ベースのテストとそのセットアップ
+* nose ユーティリティの一般的な使用方法
+
+..
+    Unsupported idioms / known issues
+    ----------------------------------
+
+対応していないイディオムと既知の課題
+------------------------------------
+
+..
+    - nose-style doctests are not collected and executed correctly,
+      also doctest fixtures don't work.
+
+- nose スタイルの doctest は探索されず、正常に実行されません、また doctest フィクスチャも動作しません
+
+..
+    - no nose-configuration is recognized
+
+- nose 設定は認識されません
+

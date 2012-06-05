@@ -1,0 +1,143 @@
+
+..
+    Talks and Tutorials
+    ==========================
+
+講演とチュートリアル
+====================
+
+.. _`funcargs`: funcargs.html
+
+チュートリアルやブログ記事
+--------------------------
+
+..
+    Tutorial examples and blog postings
+    ---------------------------------------------
+
+.. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
+.. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
+
+..
+    Basic usage and funcargs:
+
+基本的な使用方法と関数の引数 (funcarg):
+
+..
+    - `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
+
+- `pycon 2010 tutorial PDF`_ と `tutorial1 repository`_
+
+..
+    Function arguments:
+
+関数の引数:
+
+- :ref:`mysetup`
+- `application setup in test functions with funcargs`_
+
+..
+    - `monkey patching done right`_ (blog post, consult `monkeypatch
+      plugin`_ for actual 1.0 API)
+
+- `monkey patching done right`_ (ブログ記事、実際の 1.0 API は `monkeypatch plugin`_ を参照)
+
+..
+    Test parametrization:
+
+パラメーターテスト:
+
+..
+    - `generating parametrized tests with funcargs`_ (uses deprecated ``addcall()`` API.
+    - `test generators and cached setup`_
+    - `parametrizing tests, generalized`_ (blog post)
+    - `putting test-hooks into local or global plugins`_ (blog post)
+
+- `generating parametrized tests with funcargs`_ （非推奨 ``addcall()`` API を使用)
+- `test generators and cached setup`_
+- `parametrizing tests, generalized`_ (ブログ記事)
+- `putting test-hooks into local or global plugins`_ (ブログ記事)
+
+..
+    Assertion introspection:
+
+アサートイントロスペクション:
+
+- `(07/2011) Behind the scenes of py.test's new assertion rewriting
+  <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_ 
+
+..
+    Distributed testing:
+
+分散テスト:
+
+..
+    - `simultaneously test your code on all platforms`_ (blog entry)
+
+- `simultaneously test your code on all platforms`_ (ブログ記事)
+
+..
+    Plugin specific examples:
+
+プラグインに特化した例:
+
+..
+    - `skipping slow tests by default in py.test`_ (blog entry)
+
+- `skipping slow tests by default in py.test`_ (ブログ記事)
+
+- `many examples in the docs for plugins`_
+
+.. _`skipping slow tests by default in py.test`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
+.. _`many examples in the docs for plugins`: plugin/index.html
+.. _`monkeypatch plugin`: plugin/monkeypatch.html
+.. _`application setup in test functions with funcargs`: funcargs.html#appsetup
+.. _`simultaneously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
+.. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
+.. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
+.. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
+.. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
+
+..
+    Conference talks and tutorials
+    ----------------------------------------
+
+カンファレンス講演とチュートリアル
+----------------------------------
+
+..
+    - `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009):
+      - testing terminology
+      - basic py.test usage, file system layout
+      - test function arguments (funcargs_) and test fixtures
+      - existing plugins
+      - distributed testing
+
+- `ep2009-rapidtesting.pdf`_ チュートリアルのスライド (2009年7月):
+
+  - テストの専門用語
+  - 基本的な py.test 使用方法、ファイルシステムの配置
+  - テスト関数の引数 (funcargs_) とテストフィクスチャ
+  - 既存のプラグイン
+  - 分散テスト
+
+..
+    - `ep2009-pytest.pdf`_ 60 minute py.test talk, highlighting unique features and a roadmap (July 2009)
+
+- `ep2009-pytest.pdf`_: 60分の py.test 講演、独特の機能やロードマップを強調して説明 (2009年7月)
+
+..
+    - `pycon2009-pytest-introduction.zip`_ slides and files, extended version of py.test basic introduction, discusses more options, also introduces old-style xUnit setup, looponfailing and other features.
+
+- `pycon2009-pytest-introduction.zip`_: スライドとファイル、py.test 入門の拡張バージョン、より多くのオプションの議論、古いスタイル xUnit setup の導入、looponfailing とその他の機能
+
+..
+    - `pycon2009-pytest-advanced.pdf`_ contain a slightly older version of funcargs and distributed testing, compared to the EuroPython 2009 slides.
+
+- `pycon2009-pytest-advanced.pdf`_: EuroPython 2009 のスライドと比較して、ちょっと古いバージョンの funcargs や分散テストを含む
+
+.. _`ep2009-rapidtesting.pdf`: http://codespeak.net/download/py/ep2009-rapidtesting.pdf
+.. _`ep2009-pytest.pdf`: http://codespeak.net/download/py/ep2009-pytest.pdf
+.. _`pycon2009-pytest-introduction.zip`: http://codespeak.net/download/py/pycon2009-pytest-introduction.zip
+.. _`pycon2009-pytest-advanced.pdf`: http://codespeak.net/download/py/pycon2009-pytest-advanced.pdf

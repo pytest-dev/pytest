@@ -1,0 +1,34 @@
+
+.. _toc:
+
+pytest ドキュメント
+===================
+
+..
+    Full pytest documentation
+    ===========================
+
+..
+    `Download latest version as PDF <pytest.pdf>`_
+
+`PDF で最新バージョンをダウンロードする <pytest.pdf>`_
+
+.. `Download latest version as EPUB <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
+.. `PDF で最新バージョンをダウンロードする <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
+
+.. toctree::
+   :maxdepth: 2
+
+   overview
+   example/index
+   apiref
+   plugins
+   talks
+   develop
+   announce/index
+
+.. toctree::
+   :hidden:
+
+   changelog.txt
+

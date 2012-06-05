@@ -1,0 +1,19 @@
+..
+    ==================================================
+    Getting started basics
+    ==================================================
+
+================
+基本から始めよう
+================
+
+.. toctree::
+   :maxdepth: 2
+
+   index.txt
+   getting-started.txt
+   usage.txt
+   goodpractises.txt
+   projects.txt
+   faq.txt
+

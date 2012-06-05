@@ -1,0 +1,315 @@
+
+.. highlightlang:: python
+.. _`goodpractises`:
+
+優れたインテグレーションプラクティス
+====================================
+
+..
+    Good Integration Practises
+    =================================================
+
+..
+    Work with virtual environments
+    -----------------------------------------------------------
+
+仮想環境での作業
+----------------
+
+..
+    We recommend to use virtualenv_ environments and use easy_install_
+    (or pip_) for installing your application dependencies as well as
+    the ``pytest`` package itself.  This way you will get a much more reproducible
+    environment.  A good tool to help you automate test runs against multiple
+    dependency configurations or Python interpreters is `tox`_.
+
+virtualenv_ 環境を構築して、 ``pytest`` パッケージとその他に依存するアプリケーションをインストールするのに easy_install_ (または pip_) を使うことをお奨めします。 `tox`_ という、複数の依存設定や Python インタープリターに対して自動的にテストを実行する便利なツールがあります。
+
+.. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
+.. _`buildout`: http://www.buildout.org/
+.. _pip: http://pypi.python.org/pypi/pip
+
+..
+    Use tox and Continuous Integration servers
+    -------------------------------------------------
+
+tox と継続的インテグレーションサーバーの利用
+--------------------------------------------
+
+..
+    If you frequently release code to the public you
+    may want to look into `tox`_, the virtualenv test automation
+    tool and its `pytest support <http://codespeak.net/tox/example/pytest.html>`_.
+    The basic idea is to generate a JUnitXML file through the ``--junitxml=PATH`` option and have a continuous integration server like Jenkins_ pick it up
+    and generate reports.
+
+もし頻繁にコードを一般向けにリリースするなら、virtualenv のテスト自動化とその `pytest サポート <http://codespeak.net/tox/example/pytest.html>`_ を行う `tox`_ を調べてみたくなるでしょう。基本的な考え方は、 ``--junitxml=PATH`` オプションにより JUnitXML ファイルを生成します。そして Jenkins_ のような継続的インテグレーションサーバーがそのファイルを取得してレポートを生成します。
+
+.. _standalone:
+.. _`genscript method`:
+
+単独実行できる py.test スクリプトの作成
+---------------------------------------
+
+..
+    Create a py.test standalone script
+    -------------------------------------------
+
+..
+    If you are a maintainer or application developer and want others
+    to easily run tests you can generate a completely standalone "py.test"
+    script::
+
+あなたがメンテナーまたはアプリケーション開発者で、他の人にも簡単にテストを実行させたいなら、単独で実行できる "py.test" スクリプトを作成できます::
+
+    py.test --genscript=runtests.py
+
+..
+    generates a ``runtests.py`` script which is a fully functional basic
+    ``py.test`` script, running unchanged under Python2 and Python3.
+    You can tell people to download the script and then e.g.  run it like this::
+
+基本的に ``py.test`` スクリプトと完全に同機能をもつ ``runtests.py`` スクリプトを生成します。このスクリプトは Python2 と Python3 においても修正せず実行できます。このスクリプトをダウンロードして、例えば、次のように実行してくださいと伝えれば良いです::
+
+    python runtests.py
+
+.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
+.. _`distribute installation`: http://pypi.python.org/pypi/distribute
+
+``python setup.py test`` による distutils との連携
+--------------------------------------------------
+
+..
+    Integrating with distutils / ``python setup.py test``
+    --------------------------------------------------------
+
+..
+    You can integrate test runs into your distutils or
+    setuptools based project.  Use the `genscript method`_
+    to generate a standalone py.test script::
+
+プロジェクトベースの distutils または setuptools でテスト実行を連携できます。単独で実行できる py.test スクリプトを生成するには :ref:`genscript メソッド <genscript method>` を使ってください::
+
+    py.test --genscript=runtests.py
+
+..
+    and make this script part of your distribution and then add
+    this to your ``setup.py`` file::
+
+このスクリプトを配布物の一部にして ``setup.py`` ファイルに次のコードを追加します::
+
+    from distutils.core import setup, Command
+    # setuptools からもインポートできます
+
+    class PyTest(Command):
+        user_options = []
+        def initialize_options(self):
+            pass
+        def finalize_options(self):
+            pass
+        def run(self):
+            import sys,subprocess
+            errno = subprocess.call([sys.executable, 'runtest.py'])
+            raise SystemExit(errno)
+    setup(
+        #...,
+        cmdclass = {'test': PyTest},
+        #...,
+    )
+
+..
+    If you now type::
+
+ここで次のように実行します::
+
+    python setup.py test
+
+..
+    this will execute your tests using ``runtest.py``. As this is a
+    standalone version of ``py.test`` no prior installation whatsoever is
+    required for calling the test command. You can also pass additional
+    arguments to the subprocess-calls such as your test directory or other
+    options.
+
+これは ``runtest.py`` を使ってテストを実行します。このように、単独で実行できる ``py.test`` スクリプトは、そのテストコマンドを呼び出すために依存パッケージをインストールする必要がありません。さらにテストディレクトリやその他のオプションなど、subprocess.call に追加の引数として渡せます。
+
+.. _`test discovery`:
+.. _`Python test discovery`:
+
+setuptools/distribute のテストコマンドとの組み合わせ
+----------------------------------------------------
+
+..
+    Integration with setuptools/distribute test commands
+    ----------------------------------------------------
+
+..
+    Distribute/Setuptools support test requirements,
+    which means its really easy to extend its test command
+    to support running a pytest from test requirements::
+
+setuptools/distribute は、テストに必要なパッケージ要件から pytest を実行するテストコマンドをとても簡単に拡張できる tests_require に対応しています::
+
+    from setuptools.command.test import test as TestCommand
+
+    class PyTest(TestCommand):
+        def finalize_options(self):
+            TestCommand.finalize_options(self)
+            self.test_args = []
+            self.test_suite = True
+        def run_tests(self):
+            # 外部で egg を読み込ませたくないならここでインポートしてください
+            import pytest
+            pytest.main(self.test_args)
+
+    setup(
+        #...,
+        tests_require=['pytest'],
+        cmdclass = {'test': pytest},
+        )
+
+..
+    Now if you run::
+
+ここで次のように実行します::
+
+    python setup.py test
+
+..
+    this will download py.test if needed and then run py.test
+    as you would expect it to.
+
+必要に応じて py.test をダウンロードしてから、期待した通りに py.test を実行します。
+
+..
+    Conventions for Python test discovery
+    -------------------------------------------------
+
+Python テスト探索の規約
+-----------------------
+
+..
+    ``py.test`` implements the following standard test discovery:
+
+``py.test`` は次のテスト探索標準を実装します:
+
+..
+    * collection starts from the initial command line arguments
+      which may be directories, filenames or test ids.
+    * recurse into directories, unless they match :confval:`norecursedirs`
+    * ``test_*.py`` or ``*_test.py`` files, imported by their `package name`_.
+    * ``Test`` prefixed test classes (without an ``__init__`` method)
+    * ``test_`` prefixed test functions or methods are test items
+
+* コレクションは、ディレクトリ、ファイル名、テスト ID といった最初に与えたコマンドライン引数から開始する
+* :confval:`norecursedirs` に一致しない限り、ディレクトリを再帰的に探索する
+* `package name`_ でインポートされる ``test_*.py`` または ``*_test.py`` ファイル
+* ``Test`` という接頭辞をもつテストクラス (``__init__`` メソッドをもたない)
+* ``test_`` という接頭辞をもつテスト関数やメソッドがテスト項目になる
+
+..
+    For examples of how to customize your test discovery :doc:`example/pythoncollection`.
+
+テスト探索をカスタマイズする方法の例は :doc:`example/pythoncollection` を参照してください。
+
+..
+    Within Python modules, py.test also discovers tests using the standard
+    :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
+
+Python モジュール内では、py.test も標準ライブラリの :ref:`unittest.TestCase <unittest.TestCase>` のサブクラス化を使ってテストを探索します。
+
+..
+    Choosing a test layout / import rules
+    ------------------------------------------
+
+テストレイアウト選択とインポートルール
+--------------------------------------
+
+..
+    py.test supports common test layouts:
+
+py.test は一般的なテストレイアウトに対応しています:
+
+..
+    * inlining test directories into your application package, useful if you want to
+      keep (unit) tests and actually tested code close together::
+
+* アプリケーション内に test ディレクトリを配置しています。(ユニット) テストを保持して実際にテストされたコードを一緒にしておくのに役立ちます::
+
+    mypkg/
+        __init__.py
+        appmodule.py
+        ...
+        test/
+            test_app.py
+            ...
+
+..
+    * putting tests into an extra directory outside your actual application
+      code, useful if you have many functional tests or want to keep
+      tests separate from actual application code::
+
+* テストをアプリケーションコードの外部に配置しています。多くの機能テストがある、または実際のアプリケーションコードからテストを分離して保持したいときに役立ちます::
+
+    mypkg/
+        __init__.py
+        appmodule.py
+    tests/
+        test_app.py
+        ...
+
+..
+    In both cases you usually need to make sure that ``mypkg`` is importable,
+    for example by using the setuptools ``python setup.py develop`` method.
+
+どちらの場合も、普通に ``mypkg`` がインポートできることを保証する必要があります。例えば、setuptools の ``python setup.py develop`` メソッドを使います。
+
+..
+    You can run your tests by pointing to it::
+
+次のようにテストを実行できます::
+
+    py.test tests/test_app.py       # 外部のテストディレクトリ
+    py.test mypkg/test/test_app.py  # 内部のテストディレクトリ
+    py.test mypkg                   # テストディレクトリ配下にある全てのテストを実行
+    py.test                         # カレントディテクリ配下にある全てのテストを実行
+    ...
+
+.. _`package name`:
+
+.. note::
+
+    py.test がファイルシステムを再帰的に辿って "a/b/test_module.py" テストファイルを検出する場合、インポート名を次のようにして決定します。
+
+    * ``basedir`` を検出する -- これは ``__init__.py`` を含まない最初の "upward" (ルートに向かう) ディレクトリです。 ``a`` と ``b`` のディレクトリ両方に ``__init__.py`` を含む場合、basedir は ``a`` の親ディレクトリになります
+
+    * テストモジュールを完全修飾インポート名でインポートできるようにするために ``sys.path.insert(0, basedir)`` を実行します
+
+    * パス区切り文字 ``/`` を "." に変換することで決まる ``import a.b.test_module`` を行う、つまりインポート名に直接ディレクトリやファイル名を対応付ける規約に従わないといけません
+
+    この少し進化したインポートテクニックを使う理由は、巨大なプロジェクトでは複数のテストモジュールがお互いにインポートする可能性があるからです。そして、このように導出されたインポート名の標準化は、テストモジュールを2回インポートしてしまって驚かないようにするのに役立ちます。
+
+..
+        If py.test finds a "a/b/test_module.py" test file while
+        recursing into the filesystem it determines the import name
+        as follows:
+
+        * find ``basedir`` -- this is the first "upward" (towards the root)
+          directory not containing an ``__init__.py``.  If both the ``a``
+          and ``b`` directories contain an ``__init__.py`` the basedir will
+          be the parent dir of ``a``.
+
+        * perform ``sys.path.insert(0, basedir)`` to make the test module
+          importable under the fully qualified import name.
+
+        * ``import a.b.test_module`` where the path is determined
+          by converting path separators ``/`` into "." characters.  This means
+          you must follow the convention of having directory and file
+          names map directly to the import names.
+
+        The reason for this somewhat evolved importing technique is
+        that in larger projects multiple test modules might import
+        from each other and thus deriving a canonical import name helps
+        to avoid surprises such as a test modules getting imported twice.
+
+.. include:: links.inc

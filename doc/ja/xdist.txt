@@ -1,0 +1,325 @@
+
+.. _`xdist`:
+
+xdist: pytest の分散テストプラグイン
+====================================
+
+..
+    xdist: pytest distributed testing plugin
+    ===============================================================
+
+..
+    The `pytest-xdist`_ plugin extends py.test with some unique
+    test execution modes:
+
+`pytest-xdist`_ プラグインは、独自のテストモードで py.test を拡張します:
+
+..
+    * Looponfail: run your tests repeatedly in a subprocess.  After each
+      run, py.test waits until a file in your project changes and then
+      re-runs the previously failing tests.  This is repeated until all
+      tests pass.  At this point a full run is again performed.
+
+* Looponfail: サブプロセスでテストを繰り返し実行します。各テストを実行してから py.test はプロジェクト内のファイルが変更されるまで待ち、事前に失敗したテストのみを再実行します。この動作は全てのテストが成功するまで繰り返されます。この段階になって再度、全てのテストを実行します。
+
+..
+    * multiprocess Load-balancing: if you have multiple CPUs or hosts you can use
+      them for a combined test run.  This allows to speed up
+      development or to use special resources of remote machines.
+
+* マルチプロセス負荷分散: 複数 CPU または複数ホストがある場合、それらを結合テストの実行に使います。これにより開発を高速化したり、リモートマシンの特別なリソースを使ったりします。
+
+..
+    * Multi-Platform coverage: you can specify different Python interpreters
+      or different platforms and run tests in parallel on all of them.
+
+* マルチプラットフォームのカバレッジ: 異なる Python インタープリター、または異なるプラットフォームを指定して、全ての環境で並行してテストを実行します。
+
+..
+    Before running tests remotely, ``py.test`` efficiently "rsyncs" your
+    program source code to the remote place.  All test results
+    are reported back and displayed to your local terminal.
+    You may specify different Python versions and interpreters.
+
+リモート環境でテストを実行する前に、 ``py.test`` はプログラムのソースコードをリモートマシンへ効率的に "rsync" します。全てのテスト結果は、ローカルマシンのターミナル上で表示されます。異なる Python バージョンやインタープリターも指定できます。
+
+..
+    Installation of xdist plugin
+    ------------------------------
+
+xdist プラグインのインストール
+------------------------------
+
+..
+    Install the plugin with::
+
+プラグインをインストールします::
+
+    easy_install pytest-xdist
+
+    # または
+    
+    pip install pytest-xdist
+
+..
+    or use the package in develop/in-place mode with
+    a checkout of the `pytest-xdist repository`_ ::
+
+もしくは `pytest-xdist リポジトリ`_ からチェックアウトして develop コマンドでパッケージを使います::
+
+    python setup.py develop
+
+..
+    Usage examples
+    ---------------------
+
+使用例
+------
+
+.. _`xdistcpu`:
+
+複数の CPU を使ったテスト実行の高速化
++++++++++++++++++++++++++++++++++++++
+
+..
+    Speed up test runs by sending tests to multiple CPUs
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    To send tests to multiple CPUs, type::
+
+複数の CPU でテストを行うには、次のように実行します::
+
+    py.test -n NUM
+
+..
+    Especially for longer running tests or tests requiring
+    a lot of I/O this can lead to considerable speed ups.
+
+特に長時間実行されるテスト、またはたくさんの I/O を必要とするテストの速度向上が見込めます。
+
+..
+    Running tests in a Python subprocess
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Python のサブプロセスでテスト実行
++++++++++++++++++++++++++++++++++
+
+..
+    To instantiate a Python-2.4 subprocess and send tests to it, you may type::
+
+Python 2.4 の subprocess をインスタンス化するには、そこにテストを送り、次のように実行します::
+
+    py.test -d --tx popen//python=python2.4
+
+..
+    This will start a subprocess which is run with the "python2.4"
+    Python interpreter, found in your system binary lookup path.
+
+システムのバイナリ検索パスで見つけた "Python 2.4" インタープリターで実行するサブプロセスを開始します。
+
+..
+    If you prefix the --tx option value like this::
+
+次のように --tx オプションに値を指定する場合::
+
+    py.test -d --tx 3*popen//python=python2.4
+
+..
+    then three subprocesses would be created and the tests
+    will be distributed to three subprocesses and run simultanously.
+
+3つのサブプロセスが作成され、その3つのサブプロセスにテストが分散されて並行で実行されます。
+
+.. _looponfailing:
+
+looponfailing モードでのテスト実行 
+++++++++++++++++++++++++++++++++++
+
+..
+    Running tests in looponfailing mode
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    For refactoring a project with a medium or large test suite
+    you can use the looponfailing mode. Simply add the ``--f`` option::
+
+中規模または大規模のテストスイートをもつプロジェクトをリファクタリングするために、looponfailing モードが便利です。単純に ``--f`` オプションを追加します::
+
+    py.test -f
+
+..
+    and py.test will run your tests. Assuming you have failures it will then
+    wait for file changes and re-run the failing test set.  File changes are detected by looking at ``looponfailingroots`` root directories and all of their contents (recursively).  If the default for this value does not work for you you
+    can change it in your project by setting a configuration option::
+
+py.test はテストを実行します。ここで実行したテストに失敗すると仮定して、ファイルの更新を待ってからその失敗したテストを再実行します。ファイルの更新は ``looponfailingroots`` というルートディレクトリとその全てのコンテンツを (再帰的に) 調べることで検出されます。このデフォルト値が意図したように作用しないなら、設定オプションを追加することで自分のプロジェクト向けの値を変更できます::
+
+    # pytest.ini, setup.cfg または tox.ini ファイルの内容
+    [pytest]
+    looponfailroots = mypkg testdir
+
+..
+    This would lead to only looking for file changes in the respective directories, specified relatively to the ini-file's directory.
+
+この設定は ini ファイルがあるディレクトリからみて、相対パスで指定したディレクトリのファイルの更新のみを調べるようにします。
+
+..
+    Sending tests to remote SSH accounts
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+リモートの SSH アカウントへテストを送信
++++++++++++++++++++++++++++++++++++++++
+
+..
+    Suppose you have a package ``mypkg`` which contains some
+    tests that you can successfully run locally. And you also
+    have a ssh-reachable machine ``myhost``.  Then
+    you can ad-hoc distribute your tests by typing::
+
+ローカルで正常に実行できるテストを含む ``mypkg`` と、ssh でログインできるマシン ``myhost`` もあると仮定します。次のように実行してアドホックに分散テストを実行できます::
+
+    py.test -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
+
+..
+    This will synchronize your ``mypkg`` package directory
+    with a remote ssh account and then collect and run your
+    tests at the remote side.
+
+これはリモートの ssh アカウントで ``mypkg`` パッケージのディレクトリを同期させ、リモートマシン上でテストを実行します。
+
+..
+    You can specify multiple ``--rsyncdir`` directories
+    to be sent to the remote side.
+
+リモートマシンへ送るために 複数の ``--rsyncdir`` ディレクトリを指定できます。
+
+.. XXX CHECK
+
+    **NOTE:** For py.test to collect and send tests correctly
+    you not only need to make sure all code and tests
+    directories are rsynced, but that any test (sub) directory
+    also has an ``__init__.py`` file because internally
+    py.test references tests as a fully qualified python
+    module path.  **You will otherwise get strange errors**
+    during setup of the remote side.
+
+..
+    Sending tests to remote Socket Servers
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+リモートのソケットサーバーへテストを送信
+++++++++++++++++++++++++++++++++++++++++
+
+..
+    Download the single-module `socketserver.py`_ Python program
+    and run it like this::
+
+`socketserver.py`_ という単一モジュールの Python プログラムをダウンロードし、次のように実行してください::
+
+    python socketserver.py
+
+..
+    It will tell you that it starts listening on the default
+    port.  You can now on your home machine specify this
+    new socket host with something like this::
+
+このプログラムはデフォルトのポートで待機状態を起動します。自宅のマシン上で、何かのパッケージと一緒にこの新たなソケットホストを指定できます::
+
+    py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
+
+.. _`atonce`:
+
+多くのプラットフォーム上で同時にテストを実行
+++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Running tests on many platforms at once
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    The basic command to run tests on multiple platforms is::
+
+複数のプラットフォームでテストを実行する基本的なコマンドです::
+
+    py.test --dist=each --tx=spec1 --tx=spec2
+
+..
+    If you specify a windows host, an OSX host and a Linux
+    environment this command will send each tests to all
+    platforms - and report back failures from all platforms
+    at once.   The specifications strings use the `xspec syntax`_.
+
+Windows ホスト、OSX ホスト、Linux 環境を指定する場合、このコマンドはそれぞれのテストを全てのプラットフォームに送信します。そして、全てのプラットフォームから同時に失敗レポートを受け取ります。この設定には `xspec 構文`_ を使います。
+
+.. _`xspec syntax`: http://codespeak.net/execnet/basics.html#xspec
+.. _`xspec 構文`: http://codespeak.net/execnet/basics.html#xspec
+
+.. _`socketserver.py`: http://bitbucket.org/hpk42/execnet/raw/2af991418160/execnet/script/socketserver.py
+
+.. _`execnet`: http://codespeak.net/execnet
+
+..
+    Specifying test exec environments in an ini file
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Ini ファイルでテスト実行環境の指定
+++++++++++++++++++++++++++++++++++
+
+..
+    pytest (since version 2.0) supports ini-style configuration.
+    For example, you could make running with three subprocesses your default::
+
+pytest (バージョン 2.0) は ini スタイルの設定ファイルに対応しています。例えば、デフォルトで3つのサブプロセスを使ってテストを実行させます::
+
+    [pytest]
+    addopts = -n3
+
+..
+    You can also add default environments like this::
+
+次のようにしてデフォルト環境も追加できます::
+
+    [pytest]
+    addopts = --tx ssh=myhost//python=python2.5 --tx ssh=myhost//python=python2.6
+
+..
+    and then just type::
+
+そして、次のように入力して実行すると::
+
+    py.test --dist=each
+
+..
+    to run tests in each of the environments.
+
+それぞれの環境でテストが実行されます。
+
+..
+    Specifying "rsync" dirs in an ini-file
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ini ファイルで "rsync" ディレクトリの指定
++++++++++++++++++++++++++++++++++++++++++
+
+..
+    In a ``tox.ini`` or ``setup.cfg`` file in your root project directory
+    you may specify directories to include or to exclude in synchronisation::
+
+プロジェクトのルートディレクトリに ``tox.ini`` か ``setup.cfg`` ファイルを置き、同期に含める、または除外するディレクトリを指定することもできます::
+
+    [pytest]
+    rsyncdirs = . mypkg helperpkg
+    rsyncignore = .hg
+
+..
+    These directory specifications are relative to the directory
+    where the configuration file was found.
+
+ここで設定されるディレクトリは、設定ファイルの場所から相対パスでディレクトリを指定します。
+
+.. _`pytest-xdist`: http://pypi.python.org/pypi/pytest-xdist
+.. _`pytest-xdist repository`: http://bitbucket.org/hpk42/pytest-xdist
+.. _`pytest-xdist リポジトリ`: http://bitbucket.org/hpk42/pytest-xdist
+.. _`pytest`: http://pytest.org
+

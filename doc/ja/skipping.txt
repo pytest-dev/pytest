@@ -1,0 +1,327 @@
+.. _`skip and xfail`:
+
+skip と xfail: 成功しないテストを扱う
+=====================================
+
+..
+    Skip and xfail: dealing with tests that can not succeed
+    =====================================================================
+
+..
+    If you have test functions that cannot be run on certain platforms
+    or that you expect to fail you can mark them accordingly or you
+    may call helper functions during execution of setup or test functions.
+
+テスト関数が、特定のプラットフォームで実行できない、またはマークしたものが失敗することを期待する、またはテスト関数や setup 関数の実行中にヘルパー関数を呼び出すといった場合があります。
+
+..
+    A *skip* means that you expect your test to pass unless a certain
+    configuration or condition (e.g. wrong Python interpreter, missing
+    dependency) prevents it to run.  And *xfail* means that your test
+    can run but you expect it to fail because there is an implementation problem.
+
+*skip* は、特定の設定や条件 (誤った Python インタープリターや依存関係の欠落など) がテスト関数を実行させない場合を除けば、テストが成功するのを期待します。 *xfail* は、テストそのものは実行しますが、実装上の問題からそのテストが失敗することを期待します。
+
+..
+    py.test counts and lists *skip* and *xfail* tests separately. However,
+    detailed information about skipped/xfailed tests is not shown by default
+    to avoid cluttering the output.  You can use the ``-r`` option to see
+    details corresponding to the "short" letters shown in the test
+    progress::
+
+py.test は *skip* と *xfail* テストを別々に数えて一覧表示します。しかし、スキップした／失敗したテストテストについての詳細な情報は、出力内容がごちゃごちゃにならないようにデフォルトでは表示されません。テストの進捗状況を表示する "短い" 文字に対応する詳細を見るために ``-r`` オプションが使えます::
+
+    py.test -rxs  # skips と xfails の補足情報を表示
+
+..
+    (See :ref:`how to change command line options defaults`)
+
+(:ref:`how to change command line options defaults` を参照)
+
+.. _skipif:
+
+スキップするテスト関数のマーク
+------------------------------
+
+..
+    Marking a test function to be skipped
+    -------------------------------------------
+
+..
+    Here is an example of marking a test function to be skipped
+    when run on a Python3 interpreter::
+
+Python 3 インタープリターで実行するときにスキップするテスト関数をマークする例を紹介します::
+
+    import sys
+    @pytest.mark.skipif("sys.version_info >= (3,0)")
+    def test_function():
+        ...
+
+..
+    During test function setup the skipif condition is
+    evaluated by calling ``eval('sys.version_info >= (3,0)', namespace)``.
+    (*New in version 2.0.2*) The namespace contains all the module globals of the test function so that
+    you can for example check for versions of a module you are using::
+
+テスト関数の setup 処理中に skipif の条件が ``eval('sys.version_info >= (3,0)', namespace)`` を呼び出すことにより評価されます (*バージョン 2.0.2 で追加*) 。その名前空間は、例えば使っているモジュールのバージョンをチェックできるように、テスト関数の全モジュールの globals を含みます::
+
+    import mymodule
+
+    @pytest.mark.skipif("mymodule.__version__ < '1.2'")
+    def test_function():
+        ...
+
+..
+    The test function will not be run ("skipped") if
+    ``mymodule`` is below the specified version.  The reason
+    for specifying the condition as a string is mainly that
+    py.test can report a summary of skip conditions.
+    For information on the construction of the ``namespace``
+    see `evaluation of skipif/xfail conditions`_.
+
+このテスト関数は、 ``mymodule`` が指定したバージョンより低いときには実行されません ("スキップされる") 。こういった条件を文字列で指定する主な理由は、py.test が skip 条件の概要をレポートできるからです。 ``namespace`` の構築に関する詳細は :ref:`evaluation of skipif/xfail conditions` を参照してください。
+
+..
+    You can of course create a shortcut for your conditional skip
+    decorator at module level like this::
+
+次のようにモジュールレベルで条件付きの skipif デコレーターのショートカットも作成できます::
+
+    win32only = pytest.mark.skipif("sys.platform != 'win32'")
+
+    @win32only
+    def test_function():
+        ...
+
+..
+    Skip all test functions of a class
+    --------------------------------------
+
+クラスの全テスト関数のスキップ
+------------------------------
+
+..
+    As with all function :ref:`marking <mark>` you can skip test functions at the
+    `whole class- or module level`_.  Here is an example
+    for skipping all methods of a test class based on the platform::
+
+全ての関数を :ref:`マークする <mark>` のと同様に `クラス全体またはモジュールレベル`_ でテスト関数をスキップできます。プラットフォームによりテストクラスの全メソッドをスキップするサンプルを紹介します::
+
+    class TestPosixCalls:
+        pytestmark = pytest.mark.skipif("sys.platform == 'win32'")
+
+        def test_function(self):
+            "will not be setup or run under 'win32' platform"
+
+..
+    The ``pytestmark`` special name tells py.test to apply it to each test
+    function in the class.  If your code targets python2.6 or above you can
+    more naturally use the skipif decorator (and any other marker) on
+    classes::
+
+``pytestmark`` という特別な名前を使って、クラス内の各テスト関数へセットした関数を pytest に適用させます。テストコードが Python 2.6 以上を想定しているなら、もっと自然に skipif デコレーター (その他の任意のマーカー) をクラスに対して適用できます::
+
+    @pytest.mark.skipif("sys.platform == 'win32'")
+    class TestPosixCalls:
+
+        def test_function(self):
+            "will not be setup or run under 'win32' platform"
+
+..
+    Using multiple "skipif" decorators on a single function is generally fine - it means that if any of the conditions apply the function execution will be skipped.
+
+1つの関数に複数の "skipif" デコレーターを使うことは一般的に良いことです。いずれかの条件が適用された場合にそのテスト関数の実行はスキップされることになります。
+
+.. _`whole class- or module level`: mark.html#scoped-marking
+.. _`クラス全体またはモジュールレベル`: mark.html#scoped-marking
+
+.. _xfail:
+
+失敗を期待するテスト関数のマーク
+--------------------------------
+
+..
+    Mark a test function as expected to fail
+    -------------------------------------------------------
+
+..
+    You can use the ``xfail`` marker to indicate that you
+    expect the test to fail::
+
+テストの失敗を期待していることを表すのに ``xfail`` マーカーを使います::
+
+    @pytest.mark.xfail
+    def test_function():
+        ...
+
+..
+    This test will be run but no traceback will be reported
+    when it fails. Instead terminal reporting will list it in the
+    "expected to fail" or "unexpectedly passing" sections.
+
+このテストは実行されますが、失敗するときにトレースバックを表示しません。その代わり、ターミナル上に "expected to fail" か "unexpectedly passing" セクションにその一覧が表示されます。
+
+..
+    By specifying on the commandline::
+
+コマンドラインで次のように指定すると::
+
+    pytest --runxfail
+
+..
+    you can force the running and reporting of an ``xfail`` marked test
+    as if it weren't marked at all.
+
+``xfail`` でマークされていないかのように ``xfail`` でマークされたテスト関数を実行してレポートの表示を強制できます。
+
+..
+    As with skipif_ you can also mark your expectation of a failure
+    on a particular platform::
+
+skipif_ と同様に、特定のプラットフォームでの失敗を期待するようにもマークできます::
+
+    @pytest.mark.xfail("sys.version_info >= (3,0)")
+    def test_function():
+        ...
+
+..
+    You can furthermore prevent the running of an "xfail" test or
+    specify a reason such as a bug ID or similar.  Here is
+    a simple test file with the several usages:
+
+さらに、バグ ID といった reason を指定して "xfail" テストを実行しないようにもできます。他にも使用例と簡単なテストを紹介します:
+
+.. literalinclude:: example/xfail_demo.py
+
+..
+    Running it with the report-on-xfail option gives this output::
+
+次のように xfail のレポートを表示するオプションを指定して実行します::
+
+    example $ py.test -rx xfail_demo.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 6 items
+    
+    xfail_demo.py xxxxxx
+    ========================= short test summary info ==========================
+    XFAIL xfail_demo.py::test_hello
+    XFAIL xfail_demo.py::test_hello2
+      reason: [NOTRUN] 
+    XFAIL xfail_demo.py::test_hello3
+      condition: hasattr(os, 'sep')
+    XFAIL xfail_demo.py::test_hello4
+      bug 110
+    XFAIL xfail_demo.py::test_hello5
+      condition: pytest.__version__[0] != "17"
+    XFAIL xfail_demo.py::test_hello6
+      reason: reason
+    
+    ======================== 6 xfailed in 0.03 seconds =========================
+
+.. _`evaluation of skipif/xfail conditions`:
+
+skipif/xfail 式の評価
+---------------------
+
+..
+    Evaluation of skipif/xfail expressions
+    ----------------------------------------------------
+
+.. versionadded:: 2.0.2
+
+..
+    The evaluation of a condition string in ``pytest.mark.skipif(conditionstring)``
+    or ``pytest.mark.xfail(conditionstring)`` takes place in a namespace
+    dictionary which is constructed as follows:
+
+``pytest.mark.skipif(conditionstring)`` または ``pytest.mark.xfail(conditionstring)`` の条件文字列の評価は、次のように構築された名前空間ディクショナリの中で行われます:
+
+..
+    * the namespace is initialized by putting the ``sys`` and ``os`` modules
+      and the pytest ``config`` object into it.
+
+* ``sys`` と ``os`` モジュールと pytest の ``config`` オブジェクトを加えて名前空間が初期化される
+
+..
+    * updated with the module globals of the test function for which the
+      expression is applied.
+
+* その式の評価を適用するテスト関数のモジュールの globals が更新される
+
+..
+    The pytest ``config`` object allows you to skip based on a test configuration value
+    which you might have added::
+
+pytest の ``config`` オブジェクトを使って、追加したテスト設定値によりスキップさせます::
+
+    @pytest.mark.skipif("not config.getvalue('db')")
+    def test_function(...):
+        ...
+
+..
+    Imperative xfail from within a test or setup function
+    ------------------------------------------------------
+
+テスト関数または setup 関数内から命令型 xfail
+---------------------------------------------
+
+..
+    If you cannot declare xfail-conditions at import time
+    you can also imperatively produce an XFail-outcome from
+    within test or setup code.  Example::
+
+インポート時に xfail の条件を宣言できない場合、テスト関数または setup コード内から xfail するように命令的に記述できます。サンプルを紹介します::
+
+    def test_function():
+        if not valid_config():
+            pytest.xfail("unsupported configuration")
+
+..
+    Skipping on a missing import dependency
+    --------------------------------------------------
+
+インポートの依存関係の欠落をスキップ
+------------------------------------
+
+..
+    You can use the following import helper at module level
+    or within a test or test setup function::
+
+モジュールレベル、またはテスト関数や setup 関数内から次のインポートヘルパーが使えます::
+
+    docutils = pytest.importorskip("docutils")
+
+..
+    If ``docutils`` cannot be imported here, this will lead to a
+    skip outcome of the test.  You can also skip based on the
+    version number of a library::
+
+もし ``docutils`` がこの場所でインポートできないなら、このテストはスキップされます。ライブラリのバージョンによりスキップさせることもできます::
+
+    docutils = pytest.importorskip("docutils", minversion="0.3")
+
+..
+    The version will be read from the specified module's ``__version__`` attribute.
+
+このバージョンは指定したモジュールの ``__ version__`` 属性から読み込まれます。
+
+..
+    Imperative skip from within a test or setup function
+    ------------------------------------------------------
+
+テスト関数または setup 関数内から命令型スキップ
+-----------------------------------------------
+
+..
+    If for some reason you cannot declare skip-conditions
+    you can also imperatively produce a skip-outcome from
+    within test or setup code.  Example::
+
+何らかの理由でスキップ条件を宣言できない場合も、テスト関数または setup コード内からスキップするように命令的に記述できます。サンプルを紹介します::
+
+    def test_function():
+        if not valid_config():
+            pytest.skip("unsupported configuration")
+

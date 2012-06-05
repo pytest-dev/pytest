@@ -1,0 +1,33 @@
+
+.. _examples:
+
+使用方法と例
+============
+
+..
+    Usages and Examples
+    ===========================================
+
+..
+    Here is a (growing) list of examples. :ref:`Contact <contact>` us if you
+    need more examples or have questions. Also take a look at the :ref:`comprehensive documentation <toc>` which contains many example snippets as well.
+
+次に pytest の使い方のサンプルリストがあります (さらに増やし続けます) 。もっと良いサンプルや質問があれば :ref:`ご連絡ください <contact>` 。また :ref:`オンラインドキュメント全体 <toc>` を見渡しても多くのサンプルやスニペットがあります。
+
+..
+       see :doc:`../getting-started` for basic introductory examples
+
+.. note::
+
+   基本的な使い方は :doc:`../getting-started` を参照してください 
+
+.. toctree::
+   :maxdepth: 2
+
+   reportingdemo.txt
+   simple.txt
+   mysetup.txt
+   parametrize.txt
+   markers.txt
+   pythoncollection.txt
+   nonpython.txt

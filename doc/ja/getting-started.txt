@@ -1,0 +1,364 @@
+..
+    Installation and Getting Started
+    ===================================
+
+インストールして始めよう
+========================
+
+
+**Pythons**: Python 2.4-3.2, Jython, PyPy
+
+..
+    **Platforms**: Unix/Posix and Windows
+
+**Platforms** : Unix/Posix と Windows
+
+..
+    **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
+
+**PyPI パッケージ名** : `pytest <http://pypi.python.org/pypi/pytest>`_
+
+..
+    **documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
+
+**PDF ドキュメント** : `最新をダウンロード <http://pytest.org/latest/pytest.pdf>`_
+
+
+.. _`getstarted`:
+
+インストール
+------------
+
+..
+    Installation
+    ----------------------------------------
+
+..
+    Installation options::
+
+インストールオプション::
+
+    pip install -U pytest # or
+    easy_install -U pytest
+
+..
+    To check your installation has installed the correct version::
+
+インストール後に適切なバージョンかを確認するには、次のように実行します::
+
+    $ py.test --version
+    This is py.test version 2.2.4, imported from /home/hpk/p/pytest/pytest.py
+    setuptools registered plugins:
+      pytest-xdist-1.8 at /home/hpk/p/pytest-xdist/xdist/plugin.pyc
+
+..
+    If you get an error checkout :ref:`installation issues`.
+
+エラーが発生したら :ref:`installation issues` を確認してください。
+
+
+.. _`simpletest`:
+
+初めてのテスト実行
+------------------
+
+..
+    Our first test run
+    ----------------------------------------------------------
+
+..
+    Let's create a first test file with a simple test function::
+
+簡単なテスト関数を含む最初のテストファイルを作りましょう::
+
+    # test_sample.py の内容
+    def func(x):
+        return x + 1
+
+    def test_answer():
+        assert func(3) == 5
+
+..
+    That's it. You can execute the test function now::
+
+こんな感じです。さあ、テスト関数を実行しましょう::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_sample.py F
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
+        def test_answer():
+    >       assert func(3) == 5
+    E       assert 4 == 5
+    E        +  where 4 = func(3)
+    
+    test_sample.py:5: AssertionError
+    ========================= 1 failed in 0.01 seconds =========================
+
+..
+    py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
+
+py.test は :ref:`標準的なテスト探索ルール <test discovery>` に従い ``test_answer`` 関数を検出します。基本的には ``test_`` の接頭辞をもつファイルや関数です。先ほど作成した ``func(3)`` 呼び出しが ``5`` を返さなかったという失敗レポートを受け取りました。
+
+..
+        You can simply use the ``assert`` statement for asserting test
+        expectations.  pytest's :ref:`assert introspection` will intelligently
+        report intermediate values of the assert expression freeing
+        you from the need to learn the many names of `JUnit legacy methods`_.
+
+.. note::
+
+    テストの期待値をアサートするには単純に ``assert`` 文を使います。pytest の :ref:`assert introspection` は assert 評価時の中間値を賢くレポートします。これにより、多くの `JUnit レガシーメソッド`_ の名前を覚える必要がなくなります。
+
+.. _`JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
+.. _`JUnit レガシーメソッド`: http://docs.python.org/library/unittest.html#test-cases
+
+.. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+
+特定の例外が発生したことをアサートする
+--------------------------------------
+
+..
+    Asserting that a certain exception is raised
+    --------------------------------------------------------------
+
+..
+    If you want to assert that some code raises an exception you can
+    use the ``raises`` helper::
+
+例外を発生させるコードをテストしたいなら ``raises`` ヘルパー関数を使います::
+
+    # test_sysexit.py の内容
+    import pytest
+    def f():
+        raise SystemExit(1)
+
+    def test_mytest():
+        with pytest.raises(SystemExit):
+            f()
+
+..
+    Running it with, this time in "quiet" reporting mode::
+
+このコードを "quiet" モードで実行します::
+
+    $ py.test -q test_sysexit.py
+    collecting ... collected 1 items
+    .
+    1 passed in 0.00 seconds
+
+.. todo:: For further ways to assert exceptions see the `raises`
+
+..
+    Grouping multiple tests in a class
+    --------------------------------------------------------------
+
+1つのクラスで複数のテストをグループ化する
+-----------------------------------------
+
+..
+    Once you start to have more than a few tests it often makes sense
+    to group tests logically, in classes and modules.  Let's write a class
+    containing two tests::
+
+テストを書き始めて何個か作成したら、クラスやモジュール内にそういったテストをグループ化すると分かりやすくなります。2つのテストを含むクラスを作成しましょう::
+
+    # test_class.py の内容
+    class TestClass:
+        def test_one(self):
+            x = "this"
+            assert 'h' in x
+
+        def test_two(self):
+            x = "hello"
+            assert hasattr(x, 'check')
+
+..
+    The two tests are found because of the standard :ref:`test discovery`.
+    There is no need to subclass anything.  We can simply
+    run the module by passing its filename::
+
+:ref:`標準的なテスト探索ルール <test discovery>` により、2つのテストが検出されました。サブクラス化する必要はありません。単純にそのファイル名を与えることで、対象のモジュールを実行できます::
+
+    $ py.test -q test_class.py
+    collecting ... collected 2 items
+    .F
+    ================================= FAILURES =================================
+    ____________________________ TestClass.test_two ____________________________
+    
+    self = <test_class.TestClass instance at 0x1a956c8>
+    
+        def test_two(self):
+            x = "hello"
+    >       assert hasattr(x, 'check')
+    E       assert hasattr('hello', 'check')
+    
+    test_class.py:8: AssertionError
+    1 failed, 1 passed in 0.01 seconds
+
+..
+    The first test passed, the second failed. Again we can easily see
+    the intermediate values used in the assertion, helping us to
+    understand the reason for the failure.
+
+最初のテストは成功し、2番目のテストは失敗しました。また、失敗した原因を理解しやすいよう、このアサーションの中間値がぱっと見て分かります。
+
+..
+    Going functional: requesting a unique temporary directory
+    --------------------------------------------------------------
+
+機能テスト: 一時ディレクトリの要求
+----------------------------------
+
+..
+    For functional tests one often needs to create some files
+    and pass them to application objects.  py.test provides
+    the versatile :ref:`funcarg mechanism` which allows to request
+    arbitrary resources, for example a unique temporary directory::
+
+機能テストでは、ファイルを作成して、アプリケーションのオブジェクトをそのファイルに書き込むようなことがよくあります。py.test は、1つだけ存在する一時ディレクトリといった、任意のリソース要求を扱う万能の :ref:`funcarg mechanism` を提供します::
+
+    # test_tmpdir.py の内容
+    def test_needsfiles(tmpdir):
+        print tmpdir
+        assert 0
+
+..
+    We list the name ``tmpdir`` in the test function signature and
+    py.test will lookup and call a factory to create the resource
+    before performing the test function call.  Let's just run it::
+
+テスト関数のシグネチャに ``tmpdir`` という名前を含めます。py.test はその名前を見つけ、テスト関数が呼び出される前にリソースを作成するファクトリー関数を呼び出します。では、実行してみましょう::
+
+    $ py.test -q test_tmpdir.py
+    collecting ... collected 1 items
+    F
+    ================================= FAILURES =================================
+    _____________________________ test_needsfiles ______________________________
+    
+    tmpdir = local('/tmp/pytest-22/test_needsfiles0')
+    
+        def test_needsfiles(tmpdir):
+            print tmpdir
+    >       assert 0
+    E       assert 0
+    
+    test_tmpdir.py:3: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    /tmp/pytest-22/test_needsfiles0
+    1 failed in 0.01 seconds
+
+..
+    Before the test runs, a unique-per-test-invocation temporary directory
+    was created.  More info at :ref:`tmpdir handling`.
+
+テストを実行する毎に、そのテスト関数の実行前に一時ディレクトリが作成されました。さらに詳細は :ref:`tmpdir handling` を参照してください。
+
+..
+    You can find out what kind of builtin :ref:`funcargs` exist by typing::
+
+組み込みの :ref:`funcargs` を把握するには、次のコマンドを実行します::
+
+    py.test --funcargs   # 組み込み/カスタムの関数の引数を表示する
+
+..
+    Where to go next
+    -------------------------------------
+
+次に学ぶこと
+------------
+
+..
+    Here are a few suggestions where to go next:
+
+次のドキュメントを見てましょう:
+
+..
+    * :ref:`cmdline` for command line invocation examples
+    * :ref:`good practises <goodpractises>` for virtualenv, test layout, genscript support
+    * :ref:`apiref` for documentation and examples on using py.test
+    * :ref:`plugins` managing and writing plugins
+
+* :ref:`cmdline`: コマンドラインの実行方法のサンプル
+* :ref:`優れたプラクティス <goodpractises>`: virtualenv、テストレイアウト、genscript の対応
+* :ref:`apiref`: ドキュメントと py.test を使う上でのサンプル
+* :ref:`plugins`: プラグインの管理と作成
+
+.. _`installation issues`:
+
+インストールに関する既知の問題
+------------------------------
+
+..
+    Known Installation issues
+    ------------------------------
+
+..
+    easy_install or pip not found?
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+easy_install や pip が見つかりません
+++++++++++++++++++++++++++++++++++++
+
+.. _`install pip`: http://www.pip-installer.org/en/latest/index.html
+.. _`pip をインストール`: http://www.pip-installer.org/en/latest/index.html
+
+..
+    `Install pip`_ for a state of the art python package installer.
+
+最先端の Python パッケージインストーラーである `pip をインストール`_ してください。
+
+..
+    Or consult `distribute docs`_ to install the ``easy_install``
+    tool on your machine.  
+
+もしくは ``easy_install`` ツールをインストールするために `distribute docs`_ を読んでください。
+
+..
+    You may also use the older `setuptools`_ project but it lacks bug fixes
+    and does not work on Python3.
+
+旧来の `setuptools`_ プロジェクトも使えますが、それはバグ修正が行われてなく Python 3 でも動作しません。
+
+..
+    py.test not found on Windows despite installation?
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+インストールしたのに Windows 上で py.test が見つかりません
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
+
+..
+    - **Windows**: If "easy_install" or "py.test" are not found
+      you need to add the Python script path to your ``PATH``, see here:
+      `Python for Windows`_.  You may alternatively use an `ActivePython install`_
+      which does this for you automatically.
+
+- **Windows**: "easy_install" または "py.test" が見つからないなら、 ``PATH`` にそれらの Python スクリプトを追加する必要があります。 `Python for Windows`_ を参照してください。別の方法として、自動的にパス設定を行ってくれる `ActivePython install`_ を使うこともできます。
+
+.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
+
+.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
+.. _`Jython はコマンドラインランチャーを作らない`: http://bugs.jython.org/issue1491
+
+..
+    - **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
+      so ``py.test`` will not work correctly.  You may install py.test on
+      CPython and type ``py.test --genscript=mytest`` and then use
+
+     :ref:`examples` for more complex examples
+
+      ``jython mytest`` to run py.test for your tests to run with Jython.
+
+- **Windows XP 上の Jython2.5.1**: `Jython はコマンドラインランチャーを作らない`_ ので ``py.test`` は正常に動作しません。CPython 上に py.test をインストールして ``py.test --genscript=mytest`` を実行すると、Jython で行うテストを py.test で実行する ``jython mytest`` が使えます。
+
+ 複雑な例は :ref:`examples` を参照してください。
+
+.. include:: links.inc

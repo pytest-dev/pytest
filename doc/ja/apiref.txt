@@ -1,0 +1,29 @@
+
+.. _apiref:
+
+py.test リファレンスドキュメント
+================================
+
+..
+    py.test reference documentation
+    ================================================
+
+.. toctree::
+   :maxdepth: 2
+
+   builtin.txt
+   customize.txt
+   assert.txt
+   funcargs.txt
+   xunit_setup.txt
+   capture.txt
+   monkeypatch.txt
+   xdist.txt
+   tmpdir.txt
+   skipping.txt
+   mark.txt
+   recwarn.txt
+   unittest.txt
+   nose.txt
+   doctest.txt
+

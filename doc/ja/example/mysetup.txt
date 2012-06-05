@@ -1,0 +1,185 @@
+
+.. highlightlang:: python
+
+.. _mysetup:
+
+Mysetup パターン: アプリケーションに特化したテストフィクスチャ
+==============================================================
+
+..
+    Mysetup pattern: application specific test fixtures
+    ==========================================================
+
+..
+    Here is a basic useful step-by-step example for managing and interacting
+    with application specific test setup.  The goal is to have one place
+    where we have the glue and test support code for bootstrapping and
+    configuring application objects and allow test modules and test
+    functions to stay ignorant of involved details.
+
+アプリケーションに特化したテストのセットアップを管理したり、相互にやり取りする、基本的且つ便利なサンプルを順を追って紹介します。その目的としては、アプリケーションオブジェクトの一連の開始処理や設定のグルーコードやテストコードを1つの場所に集め、実行時にテストモジュールとテスト関数からそういった処理の詳細を見えなくすることです。
+
+..
+    Step 1: Implementing the test/app-specific ``mysetup`` pattern
+    --------------------------------------------------------------
+
+ステップ 1: アプリケーションに特化した ``mysetup`` パターンの実装
+-----------------------------------------------------------------
+
+..
+    Let's write a simple test function using a ``mysetup`` funcarg::
+
+``mysetup`` という関数の引数を使って、簡単なテスト関数を書いてみましょう::
+
+    # test_sample.py の内容
+    def test_answer(mysetup):
+        app = mysetup.myapp()
+        answer = app.question()
+        assert answer == 42
+
+..
+    To run this test py.test needs to find and call a factory to
+    obtain the required ``mysetup`` function argument.  To make
+    an according factory findable we write down a specifically named factory
+    method in a :ref:`local plugin <localplugin>` ::
+
+このテストを実行するために py.test は、関数の引数に与えられた ``mysetup`` を扱うファクトリー関数を探して呼び出す必要があります。このファクトリー関数を探し出せるように :ref:`local プラグイン <localplugin>` に特別な名前をもつファクトリーメソッドを書きます::
+
+    # conftest.py の内容
+    from myapp import MyApp
+
+    def pytest_funcarg__mysetup(request): # "mysetup" ファクトリー関数
+        return MySetup()
+
+    class MySetup: # このインスタンスはテスト関数から見える
+        def myapp(self):
+            return MyApp()
+
+..
+    To run the example we stub out a simple ``MyApp`` application object::
+
+このサンプルを実行するために ``MyApp`` アプリケーションオブジェクトの簡単なスタブを作ります::
+
+    # myapp.py の内容
+    class MyApp:
+        def question(self):
+            return 6 * 9
+
+..
+    You can now run the test::
+
+テストを実行します::
+
+    $ py.test test_sample.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_sample.py F
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
+    mysetup = <conftest.MySetup instance at 0x17f21b8>
+    
+        def test_answer(mysetup):
+            app = mysetup.myapp()
+            answer = app.question()
+    >       assert answer == 42
+    E       assert 54 == 42
+    
+    test_sample.py:4: AssertionError
+    ========================= 1 failed in 0.01 seconds =========================
+
+..
+    This means that our ``mysetup`` object was successfully instantiated
+    and ``mysetup.app()`` returned an initialized ``MyApp`` instance.
+    We can ask it about the question and if you are confused as to what
+    the concrete question or answers actually mean, please see here_.
+
+``mysetup`` オブジェクトが正常にインスタンス化されて、 ``mysetup.app()`` が初期化された ``MyApp`` インスタンスを返しました。あなたが具体的に何を聞けば良いのか、もしくは実際に何が起こったかに混乱しているなら、その質問に関して尋ねられます。 `ここ`_ をご覧ください。
+
+.. _here: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
+.. _ここ: http://uncyclopedia.wikia.com/wiki/The_Hitchhiker's_Guide_to_the_Galaxy
+.. _`tut-cmdlineoption`:
+
+ステップ 2: コマンドラインオプションとテストのスキップを確認
+------------------------------------------------------------
+
+..
+    Step 2: Checking a command line option and skipping tests
+    -----------------------------------------------------------
+
+..
+    To add a command line option we update the ``conftest.py`` of
+    the previous example to add a command line option
+    and to offer a new mysetup method::
+
+コマンドラインオプションを追加するには、前述したサンプルの ``conftest.py`` に、コマンドラインオプションを追加して新たな mysetup メソッドを提供するように変更します::
+
+    # ./conftest.py の内容
+    import pytest
+    from myapp import MyApp
+
+    def pytest_funcarg__mysetup(request): # "mysetup" ファクトリー関数
+        return MySetup(request)
+
+    def pytest_addoption(parser):
+        parser.addoption("--ssh", action="store", default=None,
+            help="specify ssh host to run tests with")
+
+
+    class MySetup:
+        def __init__(self, request):
+            self.config = request.config
+
+        def myapp(self):
+            return MyApp()
+
+        def getsshconnection(self):
+            host = self.config.option.ssh
+            if host is None:
+                pytest.skip("specify ssh host with --ssh")
+            return execnet.SshGateway(host)
+
+
+..
+    Now any test function can use the ``mysetup.getsshconnection()`` method
+    like this::
+
+次のようにテスト関数から ``mysetup.getsshconnection()`` メソッドを使えます::
+
+    # test_ssh.py の内容
+    class TestClass:
+        def test_function(self, mysetup):
+            conn = mysetup.getsshconnection()
+            # conn を使ってテストする
+
+..
+    Running it yields::
+
+実行すると次のようなレポートが表示されます::
+
+    $ py.test test_ssh.py -rs
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_ssh.py s
+    ========================= short test summary info ==========================
+    SKIP [1] /tmp/doc-exec-220/conftest.py:22: specify ssh host with --ssh
+    
+    ======================== 1 skipped in 0.01 seconds =========================
+
+..
+    If you specify a command line option like ``py.test --ssh=python.org`` the test will execute as expected.
+
+``py.test --ssh=python.org`` のようにコマンドラインオプションを指定すると、期待した通りにテストが実行されます。
+
+..
+    Note that neither the ``TestClass`` nor the ``test_function`` need to
+    know anything about how to setup the test state.  It is handled separately
+    in your "test setup glue" code in the ``conftest.py`` file.  It is easy
+    to extend the ``mysetup`` object for further needs in the test code - and for use by any other test functions in the files and directories below the ``conftest.py`` file.
+
+``TestClass`` も ``test_function`` のどちらとも、テストの状態をセットアップする方法について何も知る必要がないことに注目してください。 ``conftest.py`` ファイルの "テストをセットアップするグルー" コードは別々に処理されます。テストコード内で必要に応じて ``mysetup`` オブジェクトを拡張するのは簡単です。 ``conftest.py`` ファイルの配下にあるファイルやディレクトリの、任意のテスト関数によって使われます。

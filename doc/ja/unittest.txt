@@ -1,0 +1,59 @@
+
+.. _`unittest.TestCase`:
+
+unittest.TestCase の対応
+========================
+
+..
+    Support for unittest.TestCase
+    =====================================================================
+
+..
+    py.test has limited support for running Python `unittest.py style`_ tests.
+    It will automatically collect ``unittest.TestCase`` subclasses
+    and their ``test`` methods in test files.  It will invoke
+    ``setUp/tearDown`` methods but also perform py.test's standard ways
+    of treating tests such as IO capturing::
+
+py.test は、Python の `unittest スタイル`_ のテストに制限付きで対応しています。テストファイル内の ``unittest.TestCase`` のサブクラスとその ``test`` メソッドを自動的に探します。 ``setUp/tearDown`` メソッドを実行しますが、IO キャプチャのようなテストの扱いは pytest の標準的な方法で行います::
+
+    # test_unittest.py の内容
+
+    import unittest
+    class MyTest(unittest.TestCase):
+        def setUp(self):
+            print ("hello") # 出力内容をキャプチャ
+        def test_method(self):
+            x = 1
+            self.assertEquals(x, 3)
+
+..
+    Running it yields::
+
+このコードを実行すると次のようになります::
+
+    $ py.test test_unittest.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_unittest.py F
+    
+    ================================= FAILURES =================================
+    ____________________________ MyTest.test_method ____________________________
+    
+    self = <test_unittest.MyTest testMethod=test_method>
+    
+        def test_method(self):
+            x = 1
+    >       self.assertEquals(x, 3)
+    E       AssertionError: 1 != 3
+    
+    test_unittest.py:8: AssertionError
+    ----------------------------- Captured stdout ------------------------------
+    hello
+    ========================= 1 failed in 0.01 seconds =========================
+
+.. _`unittest.py style`: http://docs.python.org/library/unittest.html
+.. _`unittest スタイル`: http://docs.python.org/library/unittest.html
+

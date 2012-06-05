@@ -1,0 +1,141 @@
+標準的な (Python) テスト探索の変更
+==================================
+
+..
+    Changing standard (Python) test discovery
+    ===============================================
+
+..
+    Changing directory recursion
+    -----------------------------------------------------
+
+ディレクトリの再帰探索の変更
+----------------------------
+
+..
+    You can set the :confval:`norecursedirs` option in an ini-file, for example your ``setup.cfg`` in the project root directory::
+
+ini ファイルで :confval:`norecursedirs` オプションを設定できます。例えば、プロジェクトのルートディレクトリにある ``setup.cfg`` に設定します::
+
+    # setup.cfg の内容
+    [pytest]
+    norecursedirs = .svn _build tmp*
+
+..
+    This would tell py.test to not recurse into typical subversion or sphinx-build directories or into any ``tmp`` prefixed directory.
+
+これは典型的な subversion と sphinx の build ディレクトリと ``tmp`` という接頭辞をもつディレクトリを再帰探索しない設定です。
+
+.. _`change naming conventions`:
+
+命名規則の変更
+--------------
+
+..
+    Changing naming conventions
+    -----------------------------------------------------
+
+..
+    You can configure different naming conventions by setting
+    the :confval:`python_files`, :confval:`python_classes` and
+    :confval:`python_functions` configuration options.  Example::
+
+:confval:`python_files`, :confval:`python_classes`, :confval:`python_functions` オプションを設定することで別の命名規則を使うこともできます。サンプルを紹介します::
+
+    # setup.cfg の内容
+    # tox.ini または pytest.init ファイルでも定義できる
+    [pytest]
+    python_files=check_*.py
+    python_classes=Check
+    python_functions=check
+
+..
+    This would make py.test look for ``check_`` prefixes in
+    Python filenames, ``Check`` prefixes in classes and ``check`` prefixes
+    in functions and classes.  For example, if we have::
+
+この設定は Python ファイル名に ``check_`` 、 クラス名に ``Check`` 、関数名に ``check`` という接頭辞を py.test が探すようにします。例えば、次のようなファイルです::
+
+    # check_myapp.py の内容
+    class CheckMyApp:
+        def check_simple(self):
+            pass
+        def check_complex(self):
+            pass
+
+..
+    then the test collection looks like this::
+
+テストコレクションは次のようになります::
+
+    $ py.test --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 2 items
+    <Module 'check_myapp.py'>
+      <Class 'CheckMyApp'>
+        <Instance '()'>
+          <Function 'check_simple'>
+          <Function 'check_complex'>
+    
+    =============================  in 0.00 seconds =============================
+
+..
+    Interpreting cmdline arguments as Python packages
+    -----------------------------------------------------
+
+Python パッケージとしてコマンドライン引数を解釈
+-----------------------------------------------
+
+..
+    You can use the ``--pyargs`` option to make py.test try
+    interpreting arguments as python package names, deriving
+    their file system path and then running the test. For
+    example if you have unittest2 installed you can type::
+
+py.test がファイルシステムのパスから Python パッケージ名として引数を解釈するように ``--pyargs`` オプションを使えます。例えば、unittest2 をインストール済みなら、次のように指定できます::
+
+    py.test --pyargs unittest2.test.test_skipping -q
+
+..
+    which would run the respective test module.  Like with
+    other options, through an ini-file and the :confval:`addopts` option you
+    can make this change more permanently::
+
+それぞれのテストモジュールを実行します。その他のオプションと同様に ini ファイルと :confval:`addopts` オプションにより、この変更を永続化できます::
+
+    # pytest.ini の内容
+    [pytest]
+    addopts = --pyargs
+
+..
+    Now a simple invocation of ``py.test NAME`` will check
+    if NAME exists as an importable package/module and otherwise
+    treat it as a filesystem path.
+
+単純に ``py.test NAME`` を実行すると、NAME がインポート可能なパッケージ／モジュールとして存在しているかどうかをチェックします。存在しない場合、ファイルシステム上のパスとして NAME を扱います。
+
+..
+    Finding out what is collected
+    -----------------------------------------------
+
+コレクションの探索
+------------------
+
+..
+    You can always peek at the collection tree without running tests like this::
+
+次のようにテストを実行せずにコレクションツリーをピークできます::
+
+    . $ py.test --collectonly pythoncollection.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 3 items
+    <Module 'pythoncollection.py'>
+      <Function 'test_function'>
+      <Class 'TestClass'>
+        <Instance '()'>
+          <Function 'test_method'>
+          <Function 'test_anothermethod'>
+    
+    =============================  in 0.00 seconds =============================

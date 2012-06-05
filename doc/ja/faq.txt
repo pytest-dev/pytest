@@ -1,0 +1,230 @@
+課題と質問
+==========
+
+..
+    Some Issues and Questions
+    ==================================
+
+..
+        If you don't find an answer here, checkout the :ref:`contact channels`
+        to get help.
+
+.. note::
+
+    ここで答えが見つからない場合は :ref:`contact channels` から助けを求めてください。
+
+..
+    On naming, nosetests, licensing and magic
+    ------------------------------------------------
+
+名前付け、nosetests、ライセンスと魔法
+-------------------------------------
+
+..
+    Why a ``py.test`` instead of a ``pytest`` command?
+    ++++++++++++++++++++++++++++++++++++++++++++++++++
+
+どうしてコマンド名は ``pytest`` ではなく ``py.test`` なの？
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Some of the reasons are historic, others are practical.  ``py.test``
+    used to be part of the ``py`` package which provided several developer
+    utilities, all starting with ``py.<TAB>``, thus providing nice
+    TAB-completion. If
+    you install ``pip install pycmd`` you get these tools from a separate
+    package.  These days the command line tool could be called ``pytest``
+    but since many people have gotten used to the old name and there
+    is another tool named "pytest" we just decided to stick with
+    ``py.test``.
+
+理由の一部は歴史的なもので、それ以外は実用上のものです。 ``py.test`` は、複数の開発者向けユーティリティを提供する ``py`` パッケージの一部として使われていました。それは全て ``py.<TAB>`` で始まり、このように <TAB> を補完する優れた機能を提供しています。 ``pip install pycmd`` でインストールしたら、別々のパッケージからそういったツールを確認できます。最近になって、コマンドラインツールは ``pytest`` と呼んでいますが、昔からの多くの人たちが古い名前になじんでいて "pytest" という名前は別ツールに思えます。そのため、我々は ``py.test`` という名前を使い続けることに決めました。
+
+..
+    How does py.test relate to nose and unittest?
+    +++++++++++++++++++++++++++++++++++++++++++++++++
+
+py.test は nose や unittest とどんな関係があるの？
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    py.test and nose_ share basic philosophy when it comes
+    to running and writing Python tests.  In fact, you can run many tests
+    written for nose with py.test.  nose_ was originally created
+    as a clone of ``py.test`` when py.test was in the ``0.8`` release
+    cycle.  Note that starting with pytest-2.0 support for running unittest
+    test suites is majorly improved and you should be able to run
+    many Django and Twisted test suites without modification.
+
+py.test と nose_ は、Python テストを書いて実行するのに同じ基本理念をもっています。 nose_ は、もともと ``py.test`` が ``0.8`` リリースのときに py.test のクローンとして作成されました。pytest 2.0 は unittest のテストスイートを実行できるようになったのが主な改善点であることに注目してください。そして、多くの Django や Twisted のテストスイートを変更せずに実行できます。
+
+.. _features: test/features.html
+
+py.test の "魔法" は一体何なの？
+++++++++++++++++++++++++++++++++
+
+..
+    What's this "magic" with py.test?
+    ++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Around 2007 (version ``0.8``) some people claimed that py.test
+    was using too much "magic".  Partly this has been fixed by removing
+    unused, deprecated or complicated code.  It is today probably one
+    of the smallest, most universally runnable and most
+    customizable testing frameworks for Python.   However,
+    ``py.test`` still uses many metaprogramming techniques and
+    reading its source is thus likely not something for Python beginners.
+
+2007年頃 (バージョン ``0.8``)、py.test はあまりにも多くの "魔法" を使っていると主張する人たちがいました。未使用なコード、非推奨、複雑なコードを削除することで部分的には解消されました。今日では、py.test は確かに Python 向けの最も小さく普遍的でカスタマイズ可能なテストフレームワークの1つです。但し ``py.test`` は、まだ多くのメタプログラミングテクニックを使っていて、Python 初心者がそのソースを読めるものではありません。
+
+..
+    A second "magic" issue is arguably the assert statement debugging feature. When
+    loading test modules py.test rewrites the source code of assert statements. When
+    a rewritten assert statement fails, its error message has more information than
+    the original. py.test also has a second assert debugging technique. When an
+    ``assert`` statement that was missed by the rewriter fails, py.test
+    re-interprets the expression to show intermediate values if a test fails. This
+    second technique suffers from a caveat that the rewriting does not: If your
+    expression has side effects (better to avoid them anyway!) the intermediate
+    values may not be the same, confusing the reinterpreter and obfuscating the
+    initial error (this is also explained at the command line if it happens).
+    You can turn off all assertion debugging with ``py.test --assertmode=off``.
+
+2番目の "魔法" の課題は、間違いなく assert 文のデバッグ機能です。テストモジュールが読み込まれると、py.test は assert 文のソースコードを書き換えます。書き換えられた assert 文が失敗したとき、そのエラーメッセージは、オリジナルの assert 文より分かりやすいものです。py.test にも別のデバッグ手法があります。書き換えが失敗することにより ``assert`` 文が失敗したとき、py.test はテストが失敗したときに中間値を表示するためにその式を再解釈します。この別のデバッグ手法は書き換えが行われなかったという警告で悩まされます。その式が副作用 (とにかく触らないのが良い！) をもつなら、中間値は同じにならない可能性があります。それは再解釈するインタープリターを混乱させ、初期のエラーを分かり難くします (これも発生したらコマンドラインで表示される) 。 ``py.test --assertmode=off`` により、全てのアサーションデバッグを無効にできます。
+
+.. _`py namespaces`: index.html
+.. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
+
+関数の引数、パラメーターテストとセットアップ
+--------------------------------------------
+
+..
+    Function arguments, parametrized tests and setup
+    -------------------------------------------------------
+
+.. _funcargs: test/funcargs.html
+
+funcarg- 対 xUnit セットアップスタイルの疑問
+++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Is using funcarg- versus xUnit setup a style question?
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    For simple applications and for people experienced with nose_ or
+    unittest-style test setup using `xUnit style setup`_ probably
+    feels natural.  For larger test suites, parametrized testing
+    or setup of complex test resources using funcargs_ may feel more natural.
+    Moreover, funcargs are ideal for writing advanced test support
+    code (like e.g. the monkeypatch_, the tmpdir_ or capture_ funcargs)
+    because the support code can register setup/teardown functions
+    in a managed class/module/function scope.
+
+シンプルなアプリケーション向けや、nose_ か unittest スタイルの経験がある人たちにとっては、おそらく :ref:`xunitsetup` を使う方が自然に感じるはずです。しかし、巨大なテストスイート向けでは、パラメーターテストや funcargs_ を使った複雑なテストリソースのセットアップの方がもっと自然に感じるかもしれません。さらに言うと、funcargs は高度なテストサポートコード (例えば monkeypatch_, tmpdir_, capture_, funcargs) を書くのに最適です。というのは、そのサポートコードは class/module/function スコープを管理する setup/teardown 関数を登録できるからです。
+
+.. _monkeypatch: test/plugin/monkeypatch.html
+.. _tmpdir: test/plugin/tmpdir.html
+.. _capture: test/plugin/capture.html
+
+.. _`why pytest_pyfuncarg__ methods?`:
+
+どうして funcarg ファクトリーの名前は ``pytest_funcarg__*`` なの？ 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Why the ``pytest_funcarg__*`` name for funcarg factories?
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    We like `Convention over Configuration`_ and didn't see much point
+    in allowing a more flexible or abstract mechanism.  Moreover,
+    it is nice to be able to search for ``pytest_funcarg__MYARG`` in
+    source code and safely find all factory functions for
+    the ``MYARG`` function argument.
+
+我々は `設定より規約`_ を好み、より柔軟に抽象的な仕組みを許容するのに意味があるとは思いませんでした。さらに、ソースコード内で ``pytest_funcarg__MYARG`` を検索できるのは便利で、 ``MYARG`` という関数の引数に対する全てのファクトリー関数を戸惑いなく探せます。
+
+.. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
+.. _`設定より規約`: http://en.wikipedia.org/wiki/Convention_over_Configuration
+
+funcarg ファクトリー関数から複数の値を yield できますか？
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    Can I yield multiple values from a funcarg factory function?
+    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    There are two conceptual reasons why yielding from a factory function
+    is not possible:
+
+ファクトリー関数が yield できない概念上の理由が2つあります:
+
+..
+    * Calling factories for obtaining test function arguments
+      is part of setting up and running a test.  At that
+      point it is not possible to add new test calls to
+      the test collection anymore.
+
+* テスト関数の引数を取得するためにファクトリー関数を呼び出すのは、テストの設定と実行の部分です。その時点では、テストコレクションのために新たなテスト呼び出しを追加できません。
+
+..
+    * If multiple factories yielded values there would
+      be no natural place to determine the combination
+      policy - in real-world examples some combinations
+      often should not run.
+
+* 複数のファクトリー関数が値を yield した場合、組み合わせ方法を決定するのに適当な場所がありません。現実の世界の例は、そういった組み合わせが多くの場合に実行されません。
+
+..
+    Use the `pytest_generate_tests`_ hook to solve both issues
+    and implement the `parametrization scheme of your choice`_.
+
+両方の課題を解決するために `pytest_generate_tests`_ フックを使い、 `パラメーター化の仕組みにあったものを選択して`_ 実装してください。
+
+.. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
+.. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
+.. _`パラメーター化の仕組みにあったものを選択して`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
+
+その他のパッケージと py.test の相互連携
+---------------------------------------
+
+..
+    py.test interaction with other packages
+    ---------------------------------------------------
+
+..
+    Issues with py.test, multiprocess and setuptools?
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+py.test, multiprocess, setuptools と関連する問題？
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+    On windows the multiprocess package will instantiate sub processes
+    by pickling and thus implicitly re-import a lot of local modules.
+    Unfortunately, setuptools-0.6.11 does not ``if __name__=='__main__'``
+    protect its generated command line script.  This leads to infinite
+    recursion when running a test that instantiates Processes.
+
+Windows 上の multiprocess パッケージは、pickle 化することでサブプロセスをインスタンス化し、暗黙的にたくさんのローカルモジュールを再インポートします。残念ながら、setuptools 0.6.11 が作成したコマンドラインスクリプトは ``if __name__=='__main__'`` による保護がありません。これにより、実行中のテストがプロセスをインスタンス化するときに無限再帰を引き起こします。
+
+..
+    A good solution is to `install Distribute`_ as a drop-in replacement
+    for setuptools and then re-install ``pytest``.  Otherwise you could
+    fix the script that is created by setuptools by inserting an
+    ``if __name__ == '__main__'``.  Or you can create a "pytest.py"
+    script with this content and invoke that with the python version::
+
+良い解決策は、setuptools の置き換えとして `distribute をインストールする`_ ことです。その後に ``pytest`` を再インストールします。別の方法では、setuptools が作成したスクリプトに ``if __name__ == '__main__'`` を追加して修正します。もしくは、この内容を含む "pytest.py" スクリプトを作成して、そのスクリプトを実行します::
+
+    import pytest
+    if __name__ == '__main__':
+        pytest.main()
+
+.. _`install distribute`: http://pypi.python.org/pypi/distribute#installation-instructions
+.. _`distribute をインストールする`: http://pypi.python.org/pypi/distribute#installation-instructions
+
+.. include:: links.inc

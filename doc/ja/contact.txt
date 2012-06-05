@@ -1,0 +1,73 @@
+
+.. _`contact channels`:
+.. _`contact`:
+
+連絡先
+======
+
+..
+    Contact channels
+    ===================================
+
+..
+    - `new issue tracker`_ to report bugs or suggest features (for version
+      2.0 and above).  You may also peek at the `old issue tracker`_ but please
+      don't submit bugs there anymore.
+
+- バグ報告や機能提案は `新イシュートラッカー`_ を使ってください (バージョン 2.0 以上) 。 `旧イシュートラッカー`_ を覗くこともあるかもしれませんが、そこには登録しないようにしてください。
+
+..
+    - `Testing In Python`_: a mailing list for Python testing tools and discussion.
+
+- `Python におけるテスト`_ は Python のテストツールとその議論のためのメーリングリストです。
+
+..
+    - `py-dev developers list`_ pytest specific announcements and discussions.
+
+- `py-dev 開発者のメーリングリスト`_ は pytest に特化したアナウンスと議論のメーリングリストです。
+
+..
+    - #pylib on irc.freenode.net IRC channel for random questions.
+
+- あれこれ聞くための irc.freenode.net IRC チャネルは #pylib です。
+
+..
+    - private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
+
+- 慎重な対応を求める問題があるなら Holger.Krekel at gmail com 宛へメールしてください。
+
+..
+    - `commit mailing list`_
+
+- `コミットメーリングリスト`_ です。
+
+..
+    - `merlinux.eu`_ offers on-site teaching and consulting services.
+
+- `merlinux.eu`_ はオンサイト教育とコンサルティングサービスを提供しています。
+
+.. _`new issue tracker`: http://bitbucket.org/hpk42/pytest/issues/
+.. _`新イシュートラッカー`: http://bitbucket.org/hpk42/pytest/issues/
+.. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
+.. _`旧イシュートラッカー`: http://bitbucket.org/hpk42/py-trunk/issues/
+
+.. _`merlinux.eu`: http://merlinux.eu
+
+.. _`get an account`:
+
+.. _tetamap: http://tetamap.wordpress.com
+
+.. _`@pylibcommit`: http://twitter.com/pylibcommit
+
+
+.. _`Testing in Python`: http://lists.idyll.org/listinfo/testing-in-python
+.. _`Python におけるテスト`: http://lists.idyll.org/listinfo/testing-in-python
+.. _FOAF: http://en.wikipedia.org/wiki/FOAF
+.. _`py-dev`:
+.. _`development mailing list`:
+.. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev
+.. _`py-dev 開発者のメーリングリスト`: http://codespeak.net/mailman/listinfo/py-dev
+.. _`py-svn`:
+.. _`commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn
+.. _`コミットメーリングリスト`: http://codespeak.net/mailman/listinfo/py-svn
+

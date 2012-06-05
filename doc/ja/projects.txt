@@ -1,0 +1,112 @@
+.. _projects:
+
+プロジェクトの例
+================
+
+..
+    Project examples
+    ==========================
+
+..
+    Here are some examples of projects using py.test (please send notes via :ref:`contact`):
+
+py.test を使っているプロジェクトを紹介します (:ref:`contact` を通してメモを送ってください):
+
+..
+    * `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over 
+      `16000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
+    * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
+    * `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
+    * `PIDA <http://pida.co.uk>`_ framework for integrated development
+    * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
+    * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
+    * `applib <https://github.com/ActiveState/applib>`_ cross-platform utilities
+    * `six <http://pypi.python.org/pypi/six/>`_ Python 2 and 3 compatibility utilities
+    * `pediapress <http://code.pediapress.com/wiki/wiki>`_ MediaWiki articles
+    * `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
+    * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
+    * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
+    * `pylib <http://pylib.org>`_ cross-platform path, IO, dynamic code library
+    * `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
+    * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
+    * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
+    * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
+    * `waskr <http://pacha.cafepais.com/>`_ WSGI Stats Middleware
+    * `guachi <http://code.google.com/p/guachi/>`_ global persistent configs for Python modules
+    * `Circuits <http://pypi.python.org/pypi/circuits>`_ lightweight Event Driven Framework
+    * `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_ easy interaction with PyGTK
+    * `QuantumCore <http://quantumcore.org/>`_ statusmessage and repoze openid plugin
+    * `pydataportability <http://pydataportability.net/>`_ libraries for managing the open web
+    * `XIST <http://www.livinglogic.de/Python/xist/>`_ extensible HTML/XML generator
+    * `tiddlyweb <http://pypi.python.org/pypi/tiddlyweb>`_ optionally headless, extensible RESTful datastore
+    * `fancycompleter <http://bitbucket.org/antocuni/fancycompleter/src>`_ for colorful tab-completion
+    * `Paludis <http://paludis-tools.lunaryorn.de/>`_ tools for Gentoo Paludis package manager
+    * `Gerald <http://halfcooked.com/code/gerald/>`_ schema comparison tool
+    * `abjad <http://code.google.com/p/abjad/>`_ Python API for Formalized Score control
+    * `bu <http://packages.python.org/bu/>`_ a microscopic build system
+    * `katcp <https://bitbucket.org/hodgestar/katcp>`_ Telescope communication protocol over Twisted
+    * `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
+
+* `PyPy <http://pypy.org>`_: JIT コンパイラーを備えた Python、 `16000 テスト <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_ 以上を実行
+* `MoinMoin <http://moinmo.in>`_: Wiki エンジン
+* `tox <http://codespeak.net/tox>`_: virtualenv/Jenkins インテグレーションツール
+* `PIDA <http://pida.co.uk>`_: 統合開発フレームワーク
+* `PyPM <http://code.activestate.com/pypm/>`_: Activestate 社のパッケージマネージャー
+* `Fom <http://packages.python.org/Fom/>`_: FluidDB の fluid オブジェクトマッパー
+* `applib <https://github.com/ActiveState/applib>`_: クロスプラットフォームユーティリティ
+* `six <http://pypi.python.org/pypi/six/>`_: Python 2 と 3 の互換ユーティリティ
+* `pediapress <http://code.pediapress.com/wiki/wiki>`_: MediaWiki の記事
+* `mwlib <http://pypi.python.org/pypi/mwlib>`_: mediawiki のパーサーとユーティリティライブラリ
+* `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_: ローカライズと変換
+* `execnet <http://codespeak.net/execnet>`_: 高速な multi-Python デプロイ
+* `pylib <http://pylib.org>`_: クロスプラットフォームのパス、IO、動的コードライブラリ
+* `Pacha <http://pacha.cafepais.com/>`_: 5分でできる構成管理
+* `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_: Python スクリプトから単独で実行できる実行可能ファイルの作成
+* `pdb++ <http://bitbucket.org/antocuni/pdb>`_: PDB の手の込んだバージョン
+* `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_: Amazon S3 FUSE ベースのファイルシステム
+* `waskr <http://pacha.cafepais.com/>`_: WSGI 統計ミドルウェア
+* `guachi <http://code.google.com/p/guachi/>`_: Python モジュールのグローバルな永続的設定
+* `Circuits <http://pypi.python.org/pypi/circuits>`_: 軽量のイベント駆動型フレームワーク
+* `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_: PyGTK による簡単操作
+* `QuantumCore <http://quantumcore.org/>`_: statusmessage と repoze の openid プラグイン
+* `pydataportability <http://pydataportability.net/>`_: open web を管理するためのライブラリ
+* `XIST <http://www.livinglogic.de/Python/xist/>`_: 拡張可能な HTML/XML ジェネレーター
+* `tiddlyweb <http://pypi.python.org/pypi/tiddlyweb>`_: ヘッドレスを選択できる拡張可能な RESTful データストア
+* `fancycompleter <http://bitbucket.org/antocuni/fancycompleter/src>`_: カラフルなタブ補完
+* `Paludis <http://paludis-tools.lunaryorn.de/>`_: Gentoo Paludis パッケージマネージャーツール
+* `Gerald <http://halfcooked.com/code/gerald/>`_: スキーマ比較ツール
+* `abjad <http://code.google.com/p/abjad/>`_: Formalized Score 制御のための Python API
+* `bu <http://packages.python.org/bu/>`_: 微小ビルドシステム
+* `katcp <https://bitbucket.org/hodgestar/katcp>`_: Twisted 上の Telescope 通信プロトコル
+* `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
+
+..
+    Some organisations using py.test
+    -----------------------------------
+
+py.test を使っている組織
+------------------------
+
+..
+    * `Square Kilometre Array, Cape Town <http://ska.ac.za/>`_
+    * `Some Mozilla QA people <http://www.theautomatedtester.co.uk/blog/2011/pytest_and_xdist_plugin.html>`_ use pytest to distribute their Selenium tests
+    * `Tandberg <http://www.tandberg.com/>`_
+    * `Shootq <http://web.shootq.com/>`_
+    * `Stups department of Heinrich Heine University Duesseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
+    * `cellzome <http://www.cellzome.com/>`_
+    * `Open End, Gothenborg <http://www.openend.se>`_
+    * `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
+    * `merlinux, Germany <http://merlinux.eu>`_
+    * many more ... (please be so kind to send a note via :ref:`contact`)
+
+* `Square Kilometre Array, Cape Town <http://ska.ac.za/>`_
+* `Some Mozilla QA people <http://www.theautomatedtester.co.uk/blog/2011/pytest_and_xdist_plugin.html>`_: Selenium テストを配布するために pytest を使用
+* `Tandberg <http://www.tandberg.com/>`_
+* `Shootq <http://web.shootq.com/>`_
+* `Stups department of Heinrich Heine University Duesseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
+* `cellzome <http://www.cellzome.com/>`_
+* `Open End, Gothenborg <http://www.openend.se>`_
+* `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
+* `merlinux, Germany <http://merlinux.eu>`_
+* さらにたくさん ... (:ref:`contact` を通してメモを送ってください）
+

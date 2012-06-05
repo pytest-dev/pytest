@@ -1,0 +1,362 @@
+
+..
+    The writing and reporting of assertions in tests
+    ==================================================
+
+テストのアサーションにおける書き込みとレポート
+==============================================
+
+.. _`assert with the assert statement`:
+
+``assert`` 文によるアサーション
+-------------------------------
+
+..
+    Asserting with the ``assert`` statement
+    ---------------------------------------------------------
+
+..
+    ``py.test`` allows you to use the standard python ``assert`` for verifying
+    expectations and values in Python tests.  For example, you can write the
+    following::
+
+``py.test`` は、テストで期待値と実際の値を検証するのに Python 標準の ``assert`` 文が使えます。例えば、次のようにテストを作成します::
+
+    # test_assert1.py の内容
+    def f():
+        return 3
+
+    def test_function():
+        assert f() == 4
+
+..
+    to assert that your function returns a certain value. If this assertion fails
+    you will see the return value of the function call::
+
+このサンプルは、関数が特定の値を返すのをアサートします。このアサーションが失敗した場合、関数呼び出しの返り値が表示されます::
+
+    $ py.test test_assert1.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_assert1.py F
+    
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
+    
+        def test_function():
+    >       assert f() == 4
+    E       assert 3 == 4
+    E        +  where 3 = f()
+    
+    test_assert1.py:5: AssertionError
+    ========================= 1 failed in 0.01 seconds =========================
+
+..
+    py.test has support for showing the values of the most common subexpressions
+    including calls, attributes, comparisons, and binary and unary
+    operators. (See :ref:`tbreportdemo`).  This allows you to use the
+    idiomatic python constructs without boilerplate code while not losing
+    introspection information.
+
+py.test は、関数呼び出し、属性、比較、バイナリや単項演算子といった処理を含む通常の部分式の値を表示する機能があります (:ref:`tbreportdemo` を参照) 。この機能により、定型的なコードを必要とせず、Python イディオム的な概念も利用できます。その上でイントロスペクション情報を失うこともありません。
+
+..
+    However, if you specify a message with the assertion like this::
+
+但し、次のようにアサーションと一緒にメッセージを指定した場合::
+
+    assert a % 2 == 0, "value was odd, should be even"
+
+..
+    then no assertion introspection takes places at all and the message
+    will be simply shown in the traceback.
+
+そこでアサートイントロスペクションを行わず、このメッセージは単純にトレースバックで表示されます。
+
+..
+    See :ref:`assert-details` for more information on assertion introspection.
+
+アサートイントロスペクションの詳細については :ref:`assert-details` を参照してください。
+
+..
+    Assertions about expected exceptions
+    ------------------------------------------
+
+例外発生を期待するアサーション
+------------------------------
+
+..
+    In order to write assertions about raised exceptions, you can use
+    ``pytest.raises`` as a context manager like this::
+
+発生した例外のアサーションを行うには、次のようにコンテキスト マネージャーとして ``pytest.raises`` を使います::
+
+    import pytest
+    with pytest.raises(ZeroDivisionError):
+        1 / 0
+
+..
+    and if you need to have access to the actual exception info you may use::
+
+もし実際の例外の情報を調べる必要があるなら、次のように行います::
+
+    with pytest.raises(RuntimeError) as excinfo:
+        def f():
+            f()
+        f()
+
+    # excinfo.type, excinfo.value, excinfo.traceback といった関連する値を確認する
+
+..
+    If you want to write test code that works on Python 2.4 as well,
+    you may also use two other ways to test for an expected exception::
+
+Python 2.4 でも同じように動作するテストコードを書きたいなら、例外発生を期待するテストを行う別の方法が2つあります::
+
+    pytest.raises(ExpectedException, func, *args, **kwargs)
+    pytest.raises(ExpectedException, "func(*args, **kwargs)")
+
+..
+    both of which execute the specified function with args and kwargs and
+    asserts that the given ``ExpectedException`` is raised.  The reporter will
+    provide you with helpful output in case of failures such as *no
+    exception* or *wrong exception*.
+
+両方とも指定した関数へ args と kwargs を渡して実行し、引数として与えた ``ExpectedException`` が発生することをアサートします。このレポートは *no exception* または *wrong exception* といったテストに失敗したときに分かりやすい内容を表示します。
+
+.. _newreport:
+
+コンテキストに依存した内容の比較
+--------------------------------
+
+..
+    Making use of context-sensitive comparisons
+    -------------------------------------------------
+
+.. versionadded:: 2.0
+
+..
+    py.test has rich support for providing context-sensitive information
+    when it encounters comparisons.  For example::
+
+py.test は、比較するときにコンテキスト依存の情報を分かりやすく表示します。例えば、::
+
+    # test_assert2.py の内容
+
+    def test_set_comparison():
+        set1 = set("1308")
+        set2 = set("8035")
+        assert set1 == set2
+
+..
+    if you run this module::
+
+このモジュールを実行すると::
+
+    $ py.test test_assert2.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_assert2.py F
+    
+    ================================= FAILURES =================================
+    ___________________________ test_set_comparison ____________________________
+    
+        def test_set_comparison():
+            set1 = set("1308")
+            set2 = set("8035")
+    >       assert set1 == set2
+    E       assert set(['0', '1', '3', '8']) == set(['0', '3', '5', '8'])
+    E         Extra items in the left set:
+    E         '1'
+    E         Extra items in the right set:
+    E         '5'
+    
+    test_assert2.py:5: AssertionError
+    ========================= 1 failed in 0.01 seconds =========================
+
+..
+    Special comparisons are done for a number of cases:
+
+複数のケースにおいて、特別な比較が行われます:
+
+..
+    * comparing long strings: a context diff is shown
+    * comparing long sequences: first failing indices
+    * comparing dicts: different entries
+
+* 長い文字列の比較: コンテキスト diff を表示
+* 長いシーケンスの比較: 最初に失敗したインデックス
+* ディクショナリの比較: 異なるエントリ
+
+..
+    See the :ref:`reporting demo <tbreportdemo>` for many more examples.
+
+より多くのサンプルについては :ref:`レポートのデモ <tbreportdemo>` 参照してください。
+
+..
+    Defining your own assertion comparison
+    ----------------------------------------------
+
+アサーション比較の定義
+----------------------
+
+..
+    It is possible to add your own detailed explanations by implementing
+    the ``pytest_assertrepr_compare`` hook.
+
+``pytest_assertrepr_compare`` フックを実装することで独自の詳細説明を追加できます。
+
+.. autofunction:: _pytest.hookspec.pytest_assertrepr_compare
+
+..
+    As an example consider adding the following hook in a conftest.py which
+    provides an alternative explanation for ``Foo`` objects::
+
+例として、conftest.py に次のフックを追加してみます。これは ``Foo`` オブジェクトの別の説明を提供します::
+
+   # conftest.py の内容
+   from test_foocompare import Foo
+   def pytest_assertrepr_compare(op, left, right):
+       if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
+        return ['Comparing Foo instances:',
+                  '   vals: %s != %s' % (left.val, right.val)]
+
+..
+    now, given this test module::
+
+ここで次のテストモジュールがあります::
+
+   # test_foocompare.py の内容
+   class Foo:
+       def __init__(self, val):
+            self.val = val
+
+   def test_compare():
+       f1 = Foo(1)
+       f2 = Foo(2)
+       assert f1 == f2
+
+..
+    you can run the test module and get the custom output defined in 
+    the conftest file::
+
+このテストモジュールを実行すると、conftest ファイルで定義した独自の出力内容が表示されます::
+
+   $ py.test -q test_foocompare.py
+   collecting ... collected 1 items
+   F
+   ================================= FAILURES =================================
+   _______________________________ test_compare _______________________________
+   
+       def test_compare():
+           f1 = Foo(1)
+           f2 = Foo(2)
+   >       assert f1 == f2
+   E       assert Comparing Foo instances:
+   E            vals: 1 != 2
+   
+   test_foocompare.py:8: AssertionError
+   1 failed in 0.01 seconds
+
+.. _assert-details:
+.. _`assert introspection`:
+
+高度なアサートイントロスペクション
+----------------------------------
+
+..
+    Advanced assertion introspection
+    ----------------------------------
+
+.. versionadded:: 2.1
+
+..
+    Reporting details about a failing assertion is achieved either by rewriting
+    assert statements before they are run or re-evaluating the assert expression and
+    recording the intermediate values. Which technique is used depends on the
+    location of the assert, py.test's configuration, and Python version being used
+    to run py.test.  Note that for assert statements with a manually provided
+    message, i.e. ``assert expr, message``, no assertion introspection takes place
+    and the manually provided message will be rendered in tracebacks.
+
+失敗するアサーションに関する詳細のレポートは、実行前に assert 文を書き換えるか、または assert 式を再評価して中間値を記録するかのどちらかの方法で行われます。どちらの方法を使うかは assert の位置、pytest の設定、pytest を実行するのに使われる Python バージョンに依存します。 ``assert expr, message`` のように直接コード内でメッセージを記述した assert 文は、アサートイントロスペクションが行われず、指定したメッセージがトレースバックに表示されることに注意してください。
+
+..
+    By default, if the Python version is greater than or equal to 2.6, py.test
+    rewrites assert statements in test modules. Rewritten assert statements put
+    introspection information into the assertion failure message. py.test only
+    rewrites test modules directly discovered by its test collection process, so
+    asserts in supporting modules which are not themselves test modules will not be
+    rewritten.
+
+デフォルトでは、Python バージョンが 2.6 以上の場合、py.test はテストモジュールの assert 文を書き換えます。書き換えられた assert 文は、イントロスペクション情報をアサーションの失敗メッセージに追加します。py.test は、テストコレクション処理で検出したテストモジュールのみを直接書き換えます。そのため、テストモジュールではないサポートライブラリの assert 文は書き換えられません。
+
+.. note::
+
+   ..
+       py.test rewrites test modules on import. It does this by using an import hook
+       to write a new pyc files. Most of the time this works transparently. However,
+       if you are messing with import yourself, the import hook may interfere. If
+       this is the case, simply use ``--assert=reinterp`` or
+       ``--assert=plain``. Additionally, rewriting will fail silently if it cannot
+       write new pycs, i.e. in a read-only filesystem or a zipfile.
+
+   py.test は、インポート時にテストモジュールを書き換えます。新たに pyc ファイルを書き込むためにインポートフックを使うことでこの処理を行います。この処理はほとんど透過的に行われます。但し、自分でインポートを行ってごちゃごちゃになっている場合、そのインポートフックがインターフェースになる可能性があります。このようなケースでは、単純に ``--assert=reinterp`` か ``--assert=plain`` を使ってください。さらに、新たに pyc ファイルを書き込めない場合、書き換えはサイレントモードで失敗します。例えば、読み込み専用ファイルシステムや zip ファイルで行うようなときです。
+
+..
+    If an assert statement has not been rewritten or the Python version is less than
+    2.6, py.test falls back on assert reinterpretation. In assert reinterpretation,
+    py.test walks the frame of the function containing the assert statement to
+    discover sub-expression results of the failing assert statement. You can force
+    py.test to always use assertion reinterpretation by passing the
+    ``--assert=reinterp`` option.
+
+assert 文が書き換えられない、または Python バージョン 2.6 よりも小さい場合、py.test はアサーションの再解釈を行います。アサーションの再解釈では、py.test が、assert 文の失敗する部分式を見つけるために assert 文を含む関数のフレームを辿ります。py.test にアサーションの再解釈を行うよう強制するには ``--assert=reinterp`` オプションを指定します。
+
+..
+    Assert reinterpretation has a caveat not present with assert rewriting: If
+    evaluating the assert expression has side effects you may get a warning that the
+    intermediate values could not be determined safely.  A common example of this
+    issue is an assertion which reads from a file::
+
+アサーションの再解釈は、assert 文の書き換えを行わないことの注意が必要です: それは assert 式の評価が副作用をもつ場合、中間値が安全に決定しないという警告を受け取るかもしれません。この問題の一般的な例として、ファイルを読み込むアサーションがあります::
+
+        assert f.read() != '...'
+
+..
+    If this assertion fails then the re-evaluation will probably succeed!
+    This is because ``f.read()`` will return an empty string when it is
+    called the second time during the re-evaluation.  However, it is
+    easy to rewrite the assertion and avoid any trouble::
+
+このアサーションが失敗した場合、その再評価はおそらく成功します！つまり再評価において2回目に呼び出されたときに ``f.read()`` が空の文字列を返すからです。とはいえ、このアサーションを書き換えて、そういったトラブルを避けるのは簡単です::
+
+        content = f.read()
+        assert content != '...'
+
+..
+    All assert introspection can be turned off by passing ``--assert=plain``.
+
+全てのアサートイントロスペクションを無効にするには ``--assert=plain`` を指定します。
+
+..
+    For further information, Benjamin Peterson wrote up `Behind the scenes of py.test's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
+
+詳細については、Benjamin Peterson が詳しくまとめた `Behind the scenes of py.test's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_ を参照してください。
+
+..
+    Add assert rewriting as an alternate introspection technique.
+
+.. versionadded:: 2.1
+   代替イントロスペクション手法として assert 書き換え機能を追加
+
+..
+   Introduce the ``--assert`` option. Deprecate ``--no-assert`` and
+   ``--nomagic``.
+
+.. versionchanged:: 2.1
+   ``--assert`` オプションを追加。 ``--no-assert`` と ``--nomagic`` を廃止。

@@ -1,0 +1,404 @@
+
+.. _`mark examples`:
+
+カスタムマーカーを使う
+======================
+
+..
+    Working with custom markers
+    =================================================
+
+..
+    Here are some example using the :ref:`mark` mechanism.
+
+ここでは :ref:`mark` の仕組みを使ったサンプルを紹介します。
+
+..
+    Marking test functions and selecting them for a run
+    ----------------------------------------------------
+
+テスト関数をマークして実行時に選択
+----------------------------------
+
+..
+    You can "mark" a test function with custom metadata like this::
+
+次のようにカスタムメタデータでテスト関数を "マーク" できます::
+
+    # test_server.py の内容
+
+    import pytest
+    @pytest.mark.webtest
+    def test_send_http():
+        pass # アプリの webtest テストを実行
+    def test_something_quick():
+        pass
+
+.. versionadded:: 2.2
+
+..
+    You can then restrict a test run to only run tests marked with ``webtest``::
+
+``webtest`` でマークされたテストのみを実行するように制限できます::
+
+    $ py.test -v -m webtest
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4 -- /home/hpk/venv/0/bin/python
+    collecting ... collected 2 items
+    
+    test_server.py:3: test_send_http PASSED
+    
+    =================== 1 tests deselected by "-m 'webtest'" ===================
+    ================== 1 passed, 1 deselected in 0.00 seconds ==================
+
+..
+    Or the inverse, running all tests except the webtest ones::
+
+もしくは逆に webtest を除く全てのテストを実行します::
+
+    $ py.test -v -m "not webtest"
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4 -- /home/hpk/venv/0/bin/python
+    collecting ... collected 2 items
+    
+    test_server.py:6: test_something_quick PASSED
+    
+    ================= 1 tests deselected by "-m 'not webtest'" =================
+    ================== 1 passed, 1 deselected in 0.00 seconds ==================
+
+..
+    Registering markers
+    -------------------------------------
+
+マーカーの登録
+--------------
+
+.. versionadded:: 2.2
+
+..
+    Registering markers for your test suite is simple::
+
+.. ini-syntax for custom markers:
+
+テストスイートにマーカーを登録するのは登録です:: 
+
+    # pytest.ini の内容
+    [pytest]
+    markers =
+        webtest: mark a test as a webtest.
+
+..
+    You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers::
+
+テストスイートに存在するマーカーが調べます。次の一覧では、先ほど定義した ``webtest`` マーカーがあります::
+
+    $ py.test --markers
+    @pytest.mark.webtest: mark a test as a webtest.
+    
+    @pytest.mark.skipif(*conditions): skip the given test function if evaluation of all conditions has a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. 
+    
+    @pytest.mark.xfail(*conditions, reason=None, run=True): mark the the test function as an expected failure. Optionally specify a reason and run=False if you don't even want to execute the test function. Any positional condition strings will be evaluated (like with skipif) and if one is False the marker will not be applied.
+    
+    @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in multiple different argument value sets. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.
+    
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+
+..
+    For an example on how to add and work with markers from a plugin, see
+    :ref:`adding a custom marker from a plugin`.
+
+プラグインからマーカーを追加して処理するサンプルについては :ref:`adding a custom marker from a plugin` を参照してください。
+
+..
+        It is recommended to explicitely register markers so that:
+
+        * there is one place in your test suite defining your markers
+
+        * asking for existing markers via ``py.test --markers`` gives good output
+
+        * typos in function markers are treated as an error if you use
+          the ``--strict`` option. Later versions of py.test are probably
+          going to treat non-registered markers as an error.
+
+.. note::
+
+    次のように明示的にマーカーを登録することを推奨します:
+
+    * テストスイートの一箇所でマーカーを定義する
+
+    * ``py.test --markers`` で既存のマーカーに関する分かりやすい説明を表示する
+
+    * ``--strict`` オプションを使うと、関数マーカー内の誤字をエラーにします、最近の py.test バージョンでは、未登録マーカーをエラーとして扱うようにしています
+
+.. _`scoped-marking`:
+
+クラスまたはモジュール全体をマーキング
+--------------------------------------
+
+..
+    Marking whole classes or modules
+    ----------------------------------------------------
+
+..
+    If you are programming with Python 2.6 or later you may use ``pytest.mark``
+    decorators with classes to apply markers to all of its test methods::
+
+Python 2.6 か、それ以上のバージョンでコーディングしているなら、クラスのテストメソッド全てにマーカーを適用するために ``pytest.mark`` をクラスデコレーターとして使えます::
+
+    # test_mark_classlevel.py の内容
+    import pytest
+    @pytest.mark.webtest
+    class TestClass:
+        def test_startup(self):
+            pass
+        def test_startup_and_more(self):
+            pass
+
+..
+    This is equivalent to directly applying the decorator to the
+    two test functions.
+
+これは2つのテスト関数に直接デコレーターを適用するのと同じです。
+
+..
+    To remain backward-compatible with Python 2.4 you can also set a
+    ``pytestmark`` attribute on a TestClass like this::
+
+Pythn 2.4 との後方互換性を維持するには、次のように TestClass に ``pytestmark`` 属性も設定できます::
+
+    import pytest
+
+    class TestClass:
+        pytestmark = pytest.mark.webtest
+
+..
+    or if you need to use multiple markers you can use a list::
+
+もしくは、複数のマーカーを使う必要がある場合はリストも使えます::
+
+    import pytest
+
+    class TestClass:
+        pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
+
+..
+    You can also set a module level marker::
+
+モジュールレベルのマーカーも設定できます::
+
+    import pytest
+    pytestmark = pytest.mark.webtest
+
+..
+    in which case it will be applied to all functions and
+    methods defined in the module.
+
+この場合、そのモジュール内で定義されている全ての関数とメソッドに適用されます。
+
+..
+    Using ``-k TEXT`` to select tests
+    ----------------------------------------------------
+
+``-k TEXT`` を使ったテストの選択
+--------------------------------
+
+..
+    You can use the ``-k`` command line option to only run tests with names matching
+    the given argument::
+
+指定した引数に一致する名前のテストを実行するには ``-k`` コマンドラインオプションを使います::
+
+    $ py.test -k send_http  # 前節で定義したサンプルを実行
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 4 items
+    
+    test_server.py .
+    
+    =================== 3 tests deselected by '-ksend_http' ====================
+    ================== 1 passed, 3 deselected in 0.01 seconds ==================
+
+..
+    And you can also run all tests except the ones that match the keyword::
+
+また、そのキーワードに一致するものを除く全てのテストを実行することもできます::
+
+    $ py.test -k-send_http
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 4 items
+    
+    test_mark_classlevel.py ..
+    test_server.py .
+    
+    =================== 1 tests deselected by '-k-send_http' ===================
+    ================== 3 passed, 1 deselected in 0.01 seconds ==================
+
+..
+    Or to only select the class::
+
+もしくは、クラスのみを選択するには次のようにします::
+
+    $ py.test -kTestClass
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 4 items
+    
+    test_mark_classlevel.py ..
+    
+    =================== 2 tests deselected by '-kTestClass' ====================
+    ================== 2 passed, 2 deselected in 0.01 seconds ==================
+
+.. _`adding a custom marker from a plugin`:
+
+カスタムマーカーとコマンドラインオプションによるテストの実行制御
+----------------------------------------------------------------
+
+..
+    Custom marker and command line option to control test runs
+    ----------------------------------------------------------
+
+.. regendoc:wipe
+
+..
+    Plugins can provide custom markers and implement specific behaviour
+    based on it. This is a self-contained example which adds a command
+    line option and a parametrized test function marker to run tests
+    specifies via named environments::
+
+プラグインは、カスタムマーカーを提供して、そのマーカーに基づく特別な振る舞いを実装します。これは、コマンドラインオプションと、名前付きの環境の値に特化したテストを実行するためのパラメーター化されたテスト関数マーカーを追加する自己完結型のサンプルです::
+
+    # conftest.py の内容
+
+    import pytest
+    def pytest_addoption(parser):
+        parser.addoption("-E", dest="env", action="store", metavar="NAME",
+            help="only run tests matching the environment NAME.")
+
+    def pytest_configure(config):
+        # 追加のマーカーを登録
+        config.addinivalue_line("markers",
+            "env(name): mark test to run only on named environment")
+
+    def pytest_runtest_setup(item):
+        if not isinstance(item, item.Function):
+            return
+        if hasattr(item.obj, 'env'):
+            envmarker = getattr(item.obj, 'env')
+            envname = envmarker.args[0]
+            if envname != item.config.option.env:
+                pytest.skip("test requires env %r" % envname)
+
+..
+    A test file using this local plugin::
+
+この local プラグインを使うテストファイルです::
+
+    # test_someenv.py の内容
+
+    import pytest
+    @pytest.mark.env("stage1")
+    def test_basic_db_operation():
+        pass
+
+..
+    and an example invocations specifying a different environment than what
+    the test needs::
+
+そのテストが必要とするものではない別の環境を指定して実行する例です::
+
+    $ py.test -E stage2
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_someenv.py s
+    
+    ======================== 1 skipped in 0.00 seconds =========================
+  
+..
+    and here is one that specifies exactly the environment needed::
+
+今度は正しく必要とする環境を指定して実行します::
+
+    $ py.test -E stage1
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 1 items
+    
+    test_someenv.py .
+    
+    ========================= 1 passed in 0.00 seconds =========================
+
+..
+    The ``--markers`` option always gives you a list of available markers::
+
+``--markers`` オプションは利用できるマーカーの一覧を表示します::
+
+    $ py.test --markers
+    @pytest.mark.env(name): mark test to run only on named environment
+    
+    @pytest.mark.skipif(*conditions): skip the given test function if evaluation of all conditions has a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. 
+    
+    @pytest.mark.xfail(*conditions, reason=None, run=True): mark the the test function as an expected failure. Optionally specify a reason and run=False if you don't even want to execute the test function. Any positional condition strings will be evaluated (like with skipif) and if one is False the marker will not be applied.
+    
+    @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in multiple different argument value sets. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.
+    
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+
+
+..
+    Reading markers which were set from multiple places
+    ----------------------------------------------------
+
+複数の場所から設定されたマーカーを読み込む
+------------------------------------------
+
+.. versionadded: 2.2.2
+
+..
+    If you are heavily using markers in your test suite you may encounter the case where a marker is applied several times to a test function.  From plugin
+    code you can read over all such settings.  Example::
+
+テストスイート内でマーカーをたくさん使うと、テスト関数に対して数回マーカーが適用される場合があります。プラグインコードから、そういった全ての設定を読み込めます。サンプルを紹介します::
+
+    # test_mark_three_times.py の内容
+    import pytest
+    pytestmark = pytest.mark.glob("module", x=1)
+
+    @pytest.mark.glob("class", x=2)
+    class TestClass:
+        @pytest.mark.glob("function", x=3)
+        def test_something(self):
+            pass
+
+..
+    Here we have the marker "glob" applied three times to the same
+    test function.  From a conftest file we can read it like this::
+
+ここでは、同じテスト関数に対して3回適用される "glob" マーカーがあります。conftest ファイルから次のようにしてそれを調べます::
+
+    # conftest.py の内容
+
+    def pytest_runtest_setup(item):
+        g = getattr(item.obj, 'glob', None)
+        if g is not None:
+            for info in g:
+                print ("glob args=%s kwargs=%s" %(info.args, info.kwargs))
+
+..
+    Let's run this without capturing output and see what we get::
+
+標準出力を取得せずにこのテストを実行して、何が表示されるかを見てみましょう::
+
+    $ py.test -q -s 
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.01 seconds
+    glob args=('function',) kwargs={'x': 3}
+    glob args=('class',) kwargs={'x': 2}
+    glob args=('module',) kwargs={'x': 1}

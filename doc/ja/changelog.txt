@@ -1,0 +1,11 @@
+
+.. _changelog:
+
+変更履歴
+========
+
+..
+    Changelog history
+    =================================
+
+.. include:: ../../CHANGELOG

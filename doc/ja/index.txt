@@ -1,0 +1,104 @@
+
+..
+    Welcome to pytest!
+    =============================================
+
+Pytest へようこそ！
+===================
+
+..
+    - **a mature full-featured testing tool**
+     - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython-2.5.1
+     - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
+     - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
+     - used in :ref:`many projects and organisations <projects>`, in test
+       suites ranging from 10 to 10s of thousands of tests
+     - comes with many :ref:`tested examples <examples>`
+     - supports :ref:`good integration practises <goodpractises>`
+
+- **長い間開発され、全ての機能を備えたテストツール**
+
+ - Posix/Windows, Python 2.4-3.2, PyPy, Jython 2.5.1 に対応
+ - :ref:`包括的なオンラインドキュメント <toc>` と `PDF ドキュメント <pytest.pdf>`_
+ - 継続的に `多くの Python インタープリターでテスト <http://hudson.testrun.org/view/pytest/job/pytest/>`_
+ - :ref:`様々なプロジェクトと組織 <projects>` の、数万もの幅広いテストスイートで利用
+ - 多くの :ref:`テストサンプル <examples>` が付属
+ - :ref:`優れたインテグレーションプラクティス <goodpractises>` に対応
+
+..
+    - **provides no-boilerplate testing**
+     - makes it :ref:`easy to get started <getstarted>`,
+     - refined :ref:`usage options <usage>`
+     - :ref:`assert with the assert statement`
+     - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
+     - allows :ref:`print debugging <printdebugging>` and :ref:`the
+       capturing of standard output during test execution <captures>`
+     - supports :pep:`8` compliant coding styles in tests
+
+- **ボイラープレート (ひな形) のいらないテストを提供**
+
+ - :ref:`簡単に始められる <getstarted>`
+ - 洗練された :ref:`オプションの使い方 <usage>`
+ - :ref:`assert with the assert statement`
+ - 分かりやすい :ref:`トレースバックと失敗時のレポート <tbreportdemo>`
+ - :ref:`print デバッグ <printdebugging>` と :ref:`テスト実行時の標準出力のキャプチャ <captures>`
+ - テストのコーディングスタイルを :pep:`8` 準拠に対応
+
+..
+    - **supports functional testing and complex test setups**
+     - (new in 2.2) :ref:`durations`
+     - (much improved in 2.2) :ref:`marking and test selection <mark>`
+     - (improved in 2.2) :ref:`parametrized test functions <parametrized test functions>`
+     - advanced :ref:`skip and xfail`
+     - unique :ref:`dependency injection through funcargs <funcargs>`
+     - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
+     - can :ref:`continuously re-run failing tests <looponfailing>`
+     - many :ref:`builtin helpers <pytest helpers>`
+     - flexible :ref:`Python test discovery`
+
+- **機能テストと複雑なテストのセットアップ**
+
+ - (2.2 の新機能) :ref:`durations`
+ - (2.2 でかなり改善) :ref:`マーキングとテスト選択 <mark>`
+ - (2.2 で改善) :ref:`パラメーターテスト機能 <parametrized test functions>`
+ - :ref:`skip and xfail`
+ - ユニークな :ref:`funcargs を用いた依存性の注入 <funcargs>`
+ - :ref:`xdist プラグイン <xdist>` を用いた :ref:`複数 CPU に対する分散テスト <xdistcpu>`
+ - :ref:`失敗するテストのみを継続的に再実行 <looponfailing>`
+ - 多くの :ref:`組み込みヘルパー機能 <pytest helpers>`
+ - 柔軟な :ref:`Python test discovery`
+
+..
+    - **integrates many common testing methods**
+     - can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style
+       tests, including running testcases made for Django and trial
+     - supports extended :ref:`xUnit style setup <xunitsetup>`
+     - supports domain-specific :ref:`non-python tests`
+     - supports the generation of testing coverage reports
+     - `Javascript unit- and functional testing`_
+
+- **多くの共通テストメソッドを統合**
+
+ - ``nose``, ``unittest.py``, ``doctest.py`` スタイルのテスト、Django のテストランナー (試作段階)
+ - :ref:`xUnit スタイルの setup <xunitsetup>` の拡張
+ - ドメイン固有の :ref:`non-python tests`
+ - テストカバレッジレポートの生成
+ - `Javascript のユニット/機能テスト <Javascript unit- and functional testing>`_
+
+..
+    - **extensive plugin and customization system**
+     - all collection, reporting, running aspects are delegated to hook functions
+     - customizations can be per-directory, per-project or per PyPI released plugins
+     - it is easy to add command line options or do other kind of add-ons and customizations.
+
+- **豊富なプラグインとカスタマイズの仕組み**
+
+ - 全てのコレクション、レポート、実行状態をフック関数に委譲
+ - ディレクトリ単位、プロジェクト単位、PyPI でリリースされたプラグイン単位でのカスタマイズ
+ - コマンドラインオプションを追加したり、その他のアドオンやカスタマイズが簡単
+
+.. _`Javascript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
+
+.. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
+
+

@@ -1,0 +1,74 @@
+
+..
+    Monkeypatching/mocking modules and environments
+    ================================================================
+
+モンキーパッチ／モックのモジュールと環境
+========================================
+
+.. currentmodule:: _pytest.monkeypatch
+
+..
+    Sometimes tests need to invoke functionality which depends
+    on global settings or which invokes code which cannot be easily
+    tested such as network access.  The ``monkeypatch`` function argument
+    helps you to safely set/delete an attribute, dictionary item or
+    environment variable or to modify ``sys.path`` for importing.
+    See the `monkeypatch blog post`_ for some introduction material
+    and a discussion of its motivation.
+
+時々、グローバル設定に依存する機能のテストを実行する、またはネットワークアクセスを伴うような簡単にテストできないコードを実行する必要があります。 ``monkeypatch`` という関数の引数を使うことで、属性、ディクショナリの項目、環境変数、インポートのための ``sys.path`` の変更を安全に追加／削除するのを支援します。入門記事とその動機付けの議論は `monkeypatch のブログ記事`_ を参照してください。
+
+.. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+.. _`monkeypatch のブログ記事`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+
+..
+    Simple example: monkeypatching functions
+    ---------------------------------------------------
+
+簡単な例: モンキーパッチ機能
+----------------------------
+
+..
+    If you want to pretend that ``os.expanduser`` returns a certain
+    directory, you can use the :py:meth:`monkeypatch.setattr` method to
+    patch this function before calling into a function which uses it::
+
+``os.expanduser`` が特定のディレクトリを返すようにさせたい場合、関数内で ``os.expanduser`` が呼ばれる前にこの関数へパッチを当てるために :py:meth:`monkeypatch.setattr` メソッドが使えます::
+
+    # test_module.py の内容
+    import os.path
+    def getssh(): # 疑似アプリケーションコード
+        return os.path.join(os.path.expanduser("~admin"), '.ssh')
+
+    def test_mytest(monkeypatch):
+        def mockreturn(path):
+            return '/abc'
+        monkeypatch.setattr(os.path, 'expanduser', mockreturn)
+        x = getssh()
+        assert x == '/abc/.ssh'
+
+..
+    Here our test function monkeypatches ``os.path.expanduser`` and
+    then calls into an function that calls it.  After the test function 
+    finishes the ``os.path.expanduser`` modification will be undone.
+
+このテスト関数は ``os.path.expanduser`` にモンキーパッチを当てた後で、ある関数内からその関数が呼ばれます。このテスト関数が終了した後で ``os.path.expanduser`` に対する変更は元に戻ります。
+
+..
+    Method reference of the monkeypatch function argument
+    -----------------------------------------------------
+
+関数の引数 monkeypatch のメソッドリファレンス
+---------------------------------------------
+
+.. autoclass:: monkeypatch
+    :members: setattr, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
+
+..
+    ``monkeypatch.setattr/delattr/delitem/delenv()`` all
+    by default raise an Exception if the target does not exist.
+    Pass ``raising=False`` if you want to skip this check.
+
+``monkeypatch.setattr/delattr/delitem/delenv()`` の全ての関数において、変更対象が存在しない場合にデフォルトで例外を発生させます。このチェック処理をスキップしたいなら ``raising=False`` を渡してください。
+

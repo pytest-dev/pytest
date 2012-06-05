@@ -1,0 +1,68 @@
+..
+    =================================================
+    Feedback and contribute to py.test
+    =================================================
+
+=================================
+フィードバックや py.test への貢献
+=================================
+
+.. toctree::
+   :maxdepth: 2
+
+   contact.txt
+
+.. _checkout:
+
+バージョン管理や tarball を使った作業
+=====================================
+
+..
+    Working from version control or a tarball
+    =================================================
+
+..
+    To follow development or start experiments, checkout the
+    complete code and documentation source with mercurial_::
+
+開発を追いかけたり実験したりするには、 mercurial_ でドキュメントやプログラムのソースをチェックアウトしてください::
+
+    hg clone https://bitbucket.org/hpk42/pytest/
+
+..
+    You can also go to the python package index and
+    download and unpack a TAR file::
+
+または Python パッケージインデックスから TAR ファイルをダウンロードして解凍します::
+
+    http://pypi.python.org/pypi/pytest/
+
+..
+    Activating a checkout with setuptools
+    --------------------------------------------
+
+setuptools でチェックアウトしたものを有効にする
+-----------------------------------------------
+
+..
+    With a working Distribute_ or setuptools_ installation you can type::
+
+distribute_ または setuptools_ を使うと、次のようにしてインストールできます::
+
+    python setup.py develop
+
+..
+    in order to work inline with the tools and the lib of your checkout.
+
+チェックアウトしたツールやライブラリを使います。
+
+..
+    If this command complains that it could not find the required version
+    of "py" then you need to use the development pypi repository::
+
+このコマンドが "py" の必要なバージョンを発見できなかったとエラーを発生させる場合、開発版の pypi リポジトリを使う必要があります::
+
+    python setup.py develop -i http://pypi.testrun.org
+
+
+.. include:: links.inc

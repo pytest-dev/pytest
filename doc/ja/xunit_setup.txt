@@ -1,0 +1,107 @@
+.. _xunitsetup:
+
+===================================================
+拡張された xUnit スタイルのセットアップフィクスチャ
+===================================================
+
+..
+    ====================================
+    Extended xUnit style setup fixtures
+    ====================================
+
+.. _`funcargs`: funcargs.html
+.. _`test parametrization`: funcargs.html#parametrizing-tests
+.. _`unittest plugin`: plugin/unittest.html
+.. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
+
+..
+    Python, Java and many other languages support xUnit_ style testing.
+    This typically involves the call of a ``setup`` ("fixture") method
+    before running a test function and ``teardown`` after it has finished.
+    ``py.test`` supports a more fine-grained model of setup/teardown
+    handling by optionally calling per-module and per-class hooks.
+
+Python、Java および他の多くの言語は xUnit_ スタイルのテストに対応しています。これはテスト関数の実行前に ``setup`` ("フィクスチャ") メソッドを、テスト関数の実行後に ``teardown`` メソッドを呼び出す典型的なスタイルです。 ``py.test`` は、モジュール単位やクラス単位のフックを必要に応じて呼び出して処理する、より細分化された setup/teardown のモデルに対応しています。
+
+..
+    Module level setup/teardown
+    =============================================
+
+モジュールレベルの setup/teardown
+=================================
+
+..
+    If you have multiple test functions and test classes in a single
+    module you can optionally implement the following fixture methods
+    which will usually be called once for all the functions::
+
+1つのモジュールに複数のテスト関数やテストクラスがある場合、必要に応じて、全ての関数に対して通常1度だけ呼び出されるフィクスチャメソッドを実装できます::
+
+    def setup_module(module):
+        """ モジュールの実行に関して任意の状態をセットアップする """
+
+    def teardown_module(module):
+        """ setup_module で事前にセットアップした状態を解体する """
+
+..
+    Class level setup/teardown
+    =============================================
+
+クラスレベルの setup/teardown
+=============================
+
+..
+    Similarly, the following methods are called at class level before
+    and after all test methods of the class are called::
+
+同様に、クラスの全てのテストメソッドが呼び出される前後に、クラスレベルで次のメソッドが呼ばれます::
+
+    @classmethod
+    def setup_class(cls):
+        """ (通常はテストを含む) クラスの実行に関して任意の状態をセットアップする """
+
+    @classmethod
+    def teardown_class(cls):
+        """ setup_class で事前にセットアップした状態を解体する """
+
+..
+    Method and function level setup/teardown
+    =============================================
+
+メソッドや関数レベルの setup/teardown
+=====================================
+
+..
+    Similarly, the following methods are called around each method invocation::
+
+同様に、それぞれのメソッド呼び出しの前後で次のメソッドが呼ばれます::
+
+    def setup_method(self, method):
+        """ クラス内のメソッドの実行に関して任意の状態をセットアップする
+        setup_method はクラスのテストメソッド単位で実行される
+        """
+
+    def teardown_method(self, method):
+        """ setup_method で事前にセットアップした状態を解体する """
+
+..
+    If you would rather define test functions directly at module level
+    you can also use the following functions to implement fixtures::
+
+モジュールレベルで直接的にテスト関数を定義したいなら、次の関数もフィクスチャを実装するのに使えます::
+
+    def setup_function(function):
+        """ 関数の実行に関して任意の状態をセットアップする
+        モジュール内の関数単位で実行される
+        """
+
+    def teardown_function(function):
+        """ setup_function で事前にセットアップした状態を解体する """
+
+..
+    Note that it is possible for setup/teardown pairs to be invoked multiple times
+    per testing process.
+
+テストプロセスにつき複数回実行される setup/teardown の組み合わせに使えることも覚えておいてください。
+
+.. _`unittest.py module`: http://docs.python.org/library/unittest.html

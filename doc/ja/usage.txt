@@ -1,0 +1,313 @@
+
+.. _usage:
+
+使用方法とテスト実行
+====================
+
+..
+    Usage and Invocations
+    ==========================================
+
+.. _cmdline:
+
+``python -m pytest`` による pytest 呼び出し
+-------------------------------------------
+
+..
+    Calling pytest through ``python -m pytest``
+    -----------------------------------------------------
+
+.. versionadded:: 2.0
+
+..
+    If you use Python-2.5 or later you can invoke testing through the
+    Python interpreter from the command line::
+
+Python 2.5 か、それ以上のバージョンを使っているなら、コマンドラインから Python インタープリターでテストを実行できます::
+
+    python -m pytest [...]
+
+..
+    This is equivalent to invoking the command line script ``py.test [...]``
+    directly.
+
+これは直接的にコマンドラインスクリプト ``py.test [...]`` を実行するのと同じです。
+
+..
+    Getting help on version, option names, environment variables
+    --------------------------------------------------------------
+
+バージョン、オプション名、環境変数のヘルプを表示
+------------------------------------------------
+
+::
+
+    py.test --version   # pytest がインポートされた場所を表示
+    py.test --funcargs  # 利用できる組み込みの関数引数を表示
+    py.test -h | --help # コマンドラインと設定ファイルオプションのヘルプを表示
+
+..
+    Stopping after the first (or N) failures
+    ---------------------------------------------------
+
+最初 (または N 回) 失敗したときにテストを中止
+---------------------------------------------
+
+..
+    To stop the testing process after the first (N) failures::
+
+    py.test -x            # stop after first failure
+    py.test --maxfail=2    # stop after two failures
+
+最初 (N 回) 失敗したときにテストプロセスを中止するには、次のようにします::
+
+    py.test -x            # 最初に失敗したときに中止
+    py.test --maxfail=2   # 2 回失敗したときに中止
+
+..
+    Specifying tests / selecting tests
+    ---------------------------------------------------
+
+テストの指定と選択
+------------------
+
+..
+    Several test run options::
+
+次のようなテスト実行のオプションがあります::
+
+    py.test test_mod.py   # モジュール内のテストを実行
+    py.test somepath      # 指定したパスの全てのテストを実行
+    py.test -k string     # string を含む名前をもつテストのみを実行
+
+..
+    Import 'pkg' and use its filesystem location to find and run tests::
+
+'pkg' をインポートして、そのファイルシステム上の位置からテストを探して実行します::
+
+    py.test --pyargs pkg # pkg のディレクトリ配下にある全てのテストを実行
+
+..
+    Modifying Python traceback printing
+    ----------------------------------------------
+
+Python のトレースバック表示を変更
+---------------------------------
+
+..
+    Examples for modifying traceback printing::
+
+トレースバック表示を変更する例です::
+
+    py.test --showlocals # トレースバックのローカル変数を表示
+    py.test -l           # トレースバックのローカル変数を表示 (短いオプション)
+
+    py.test --tb=long    # デフォルトの詳細なトレースバック形式
+    py.test --tb=native  # Python 標準ライブラリの形式
+    py.test --tb=short   # 短いトレースバック形式
+    py.test --tb=line    # 失敗したテストを1行表示
+
+..
+    Dropping to PDB (Python Debugger) on failures
+    ----------------------------------------------
+
+失敗したときに PDB (Python デバッガー) を起動
+---------------------------------------------
+
+.. _PDB: http://docs.python.org/library/pdb.html
+
+..
+    Python comes with a builtin Python debugger called PDB_.  ``py.test``
+    allows one to drop into the PDB prompt via a command line option::
+
+Python には PDB_ という組み込みの Python デバッガーが付属しています。 ``py.test`` は、コマンドラインオプションで PDB プロンプトを起動できます::
+
+    py.test --pdb
+
+..
+    This will invoke the Python debugger on every failure.  Often you might
+    only want to do this for the first failing test to understand a certain
+    failure situation::
+
+このオプションは、テストが失敗したときに Python デバッガーを起動します。多くの場合、特定のエラー状況を把握するのに最初に失敗したときのみデバッガーを起動したいはずです::
+
+    py.test -x --pdb   # 最初にテストが失敗したときに PDB を起動してテストセッションを終了
+    py.test --pdb --maxfail=3  # 最初の 3 回の失敗に対して PDB を起動
+
+..
+    Setting a breakpoint / aka ``set_trace()``
+    ----------------------------------------------------
+
+``set_trace()`` というブレークポイントの設定
+--------------------------------------------
+
+..
+    If you want to set a breakpoint and enter the ``pdb.set_trace()`` you
+    can use a helper::
+
+ブレークポイントを設定して ``pdb.set_trace()`` を行いたいなら、ヘルパー関数を使えます::
+
+    import pytest
+    def test_function():
+        ...
+        pytest.set_trace()    # PDB デバッガーを起動してトレースする
+
+.. versionadded: 2.0.0
+
+..
+    In previous versions you could only enter PDB tracing if
+    you disabled capturing on the command line via ``py.test -s``.
+
+以前のバージョンでは、コマンドラインから ``py.test -s`` で標準出力の取得を無効にした場合のみ、PDB トレースが可能でした。
+
+.. _durations:
+
+テストの実行時間をプロファイリング
+----------------------------------
+
+..
+    Profiling test execution duration
+    -------------------------------------
+
+.. versionadded: 2.2
+
+..
+    To get a list of the slowest 10 test durations::
+
+最も遅い 10 個のテスト一覧を取得するには、次のようにします::
+
+    py.test --durations=10
+
+..
+    Creating JUnitXML format files
+    ----------------------------------------------------
+
+JUnitXML 形式のファイル作成
+---------------------------
+
+..
+    To create result files which can be read by Hudson_ or other Continuous
+    integration servers, use this invocation::
+
+Hudson_ やその他の継続的インテグレーションサーバーで読み込める結果ファイルを作成するには、次のように実行します::
+
+    py.test --junitxml=path
+
+..
+    to create an XML file at ``path``.
+
+``path`` に XML ファイルが作成されます。
+
+..
+    Creating resultlog format files
+    ----------------------------------------------------
+
+resultlog 形式のファイル作成
+----------------------------
+
+..
+    To create plain-text machine-readable result files you can issue::
+
+コンピューターが読める平文の結果ファイルを作成するには、次のようにします::
+
+    py.test --resultlog=path
+
+..
+    and look at the content at the ``path`` location.  Such files are used e.g.
+    by the `PyPy-test`_ web page to show test results over several revisions.
+
+``path`` に作成されたファイルがあります。そういったファイルは、例えば `PyPy-test`_ で複数バージョンでのテスト結果を表示するのに使われます。
+
+.. _`PyPy-test`: http://codespeak.net:8099/summary
+
+..
+    Sending test report to pocoo pastebin service
+    -----------------------------------------------------
+
+pocoo pastbin サービスにテスト結果を投稿
+----------------------------------------
+
+..
+    **Creating a URL for each test failure**::
+
+**テストが失敗する毎に URL を作成します**::
+
+    py.test --pastebin=failed
+
+..
+    This will submit test run information to a remote Paste service and
+    provide a URL for each failure.  You may select tests as usual or add
+    for example ``-x`` if you only want to send one particular failure.
+
+これはリモートの Paste サービスへテストの実行情報を投稿して、失敗したテスト毎に URL を提供します。特定のエラーのみを投稿したい場合、普通にテストを選択するか、例えば ``-x`` を追加します。
+
+..
+    **Creating a URL for a whole test session log**::
+
+**全てのテストセッションログに対して1つの URL を作成します**::
+
+    py.test --pastebin=all
+
+..
+    Currently only pasting to the http://paste.pocoo.org service is implemented.
+
+いまのところは、http://paste.pocoo.org サービスへのペーストのみが実装されています。
+
+..
+    Calling pytest from Python code
+    ----------------------------------------------------
+
+Python コードからの pytest 呼び出し
+-----------------------------------
+
+.. versionadded:: 2.0
+
+..
+    You can invoke ``py.test`` from Python code directly::
+
+Python コードから直接 ``py.test`` を呼び出せます::
+
+    pytest.main()
+
+..
+    this acts as if you would call "py.test" from the command line.
+    It will not raise ``SystemExit`` but return the exitcode instead.
+    You can pass in options and arguments::
+
+これはコマンドラインから "py.test" を呼び出すように動作します。 ``SystemExit`` を発生させない代わりに終了コードを返します。次のようにオプションと引数を渡します::
+
+    pytest.main(['x', 'mytestdir'])
+
+..
+    or pass in a string::
+
+または、文字列で渡します::
+
+    pytest.main("-x mytestdir")
+
+..
+    You can specify additional plugins to ``pytest.main``::
+
+``pytest.main`` に追加のプラグインを指定できます::
+
+    # myinvoke.py の内容
+    import pytest
+    class MyPlugin:
+        def pytest_sessionfinish(self):
+            print("*** test run reporting finishing")
+
+    pytest.main("-qq", plugins=[MyPlugin()])
+
+..
+    Running it will show that ``MyPlugin`` was added and its
+    hook was invoked::
+
+このコードを実行すると ``MyPlugin`` が追加され、そのフックが実行されたことを表示します::
+
+    $ python myinvoke.py
+    collecting ... collected 0 items
+    
+     in 0.00 seconds
+    *** test run reporting finishing
+
+.. include:: links.inc

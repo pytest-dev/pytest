@@ -1,0 +1,564 @@
+.. _plugins:
+
+プラグインと conftest ファイルの連携
+====================================
+
+..
+    Working with plugins and conftest files
+    =============================================
+
+..
+    py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic locations types:
+
+py.test は :ref:`よく練られたフック <well specified hooks>` を呼び出すことにより、設定、コレクション、実行、レポートの全箇所で処理を実装します。事実上、任意の Python モジュールをプラグインとして登録できます。このプラグインは、フック関数の区別や検出を容易にして ``pytest_`` という接頭辞をもつ全フック関数から任意のフック関数 (通常は2つか3つ) を実装します。3つの基本的な配置場所があります:
+
+..
+    * `builtin plugins`_: loaded from py.test's own ``pytest/plugin`` directory.
+    * `external plugins`_: modules discovered through `setuptools entry points`_
+    * `conftest.py plugins`_: modules auto-discovered in test directories
+
+* :ref:`組み込みプラグイン <builtin plugins>`: py.test がもつ ``pytest/plugin`` ディレクトリから読み込む
+* :ref:`外部プラグイン <external plugins>`: :ref:`setuptools のエントリーポイント <setuptools entry points>` からモジュールを検出
+* :ref:`conftest.py プラグイン <conftest.py plugins>`: テストディレクトリから自動的にモジュールを検出
+
+.. _`pytest/plugin`: http://bitbucket.org/hpk42/pytest/src/tip/pytest/plugin/
+.. _`conftest.py plugins`:
+.. _`conftest.py`:
+.. _`localplugin`:
+.. _`conftest`:
+
+conftest.py: ディレクトリ毎のローカルプラグイン
+-----------------------------------------------
+
+..
+    conftest.py: local per-directory plugins
+    --------------------------------------------------------------
+
+..
+    local ``conftest.py`` plugins contain directory-specific hook
+    implementations.  Session and test running activities will
+    invoke all hooks defined in ``conftest.py`` files closer to the
+    root of the filesystem.  Example: Assume the following layout
+    and content of files::
+
+ローカルの ``conftest.py`` プラグインは、ディレクトリ固有のフック実装を含みます。セッションとテストの実行処理は、ファイルシステムのルートディレクトリに近い ``conftest.py`` ファイルで定義された全てのフックを実行します。ファイルを次の場所に置くと仮定してください::
+
+    a/conftest.py:
+        def pytest_runtest_setup(item):
+            # 'a' ディレクトリにある各テストの実行向けに呼ばれる
+            print ("setting up", item)
+
+    a/test_in_subdir.py:
+        def test_sub():
+            pass
+
+    test_flat.py:
+        def test_flat():
+            pass
+
+..
+    Here is how you might run it::
+
+このコードの実行方法です::
+
+     py.test test_flat.py   # "setting up" を表示しない
+     py.test a/test_sub.py  # "setting up" を表示
+
+.. Note::
+
+    ..
+        If you have ``conftest.py`` files which do not reside in a
+        python package directory (i.e. one containing an ``__init__.py``) then
+        "import conftest" can be ambiguous because there might be other
+        ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
+        It is thus good practise for projects to either put ``conftest.py``
+        under a package scope or to never import anything from a
+        conftest.py file.
+
+    Python パッケージディレクトリ (例えば ``__Init__.py`` を含むディレクトリ) に置かれてない ``conftest.py`` ファイルがある場合、PYTHONPATH または ``sys.path`` に同じ名前をもつ別の ``conftest.py`` ファイルを置く可能性があり、"import conftest" が曖昧になるときがあります。こういったプロジェクトでは、パッケージスコープの中で ``conftest.py`` を置くか ``conftest.py`` ファイルから決してインポートしないかのどちらか一方を選択するのが良いプラクティスです。
+
+.. _`external plugins`:
+.. _`extplugins`:
+
+外部プラグインのインストールと探索
+----------------------------------
+
+..
+    Installing External Plugins / Searching
+    ------------------------------------------------------
+
+..
+    Installing a plugin happens through any usual Python installation
+    tool, for example::
+
+プラグインのインストールは、普通の Python インストールツールを使って行います。例えば::
+
+    pip install pytest-NAME
+    pip uninstall pytest-NAME
+
+..
+    If a plugin is installed,  py.test automatically finds and integrates it,
+    there is no need to activate it.  Here is a list of known plugins:
+
+プラグインがインストール済みなら、py.test が自動的に検出してそのプラグインを組み込みます。プラグインを有効化する必要はありません。既知のプラグイン一覧を紹介します:
+
+..
+    * `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_:
+      to capture and assert about messages from the logging module
+
+* `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_: logging モジュールからのメッセージに関するアサートやキャプチャ
+
+..
+    * `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_:
+      to distribute tests to CPUs and remote hosts, looponfailing mode,
+      see also :ref:`xdist`
+
+* `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_: CPU やリモートホストを使った分散テスト、 :ref:`xdist` を参照
+
+..
+    * `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
+      coverage reporting, compatible with distributed testing
+
+* `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_: 分散テストでの互換性やカバレッジレポート
+
+..
+    * `pytest-pep8 <http://pypi.python.org/pypi/pytest-pep8>`_:
+      a ``--pep8`` option to enable PEP8 compliance checking.
+
+* `pytest-pep8 <http://pypi.python.org/pypi/pytest-pep8>`_: ``--pep8`` オプションを使った PEP8 規約チェック
+
+..
+    * `oejskit <http://pypi.python.org/pypi/oejskit>`_:
+      a plugin to run javascript unittests in life browsers
+      (**version 0.8.9 not compatible with pytest-2.0**)
+
+* `oejskit <http://pypi.python.org/pypi/oejskit>`_: 実際のブラウザーで javascript の unittests を実行するプラグイン (**バージョン 0.8.9 は pytest-2.0 では互換性がありません** )
+
+..
+    You may discover more plugins through a `pytest- pypi.python.org search`_.
+
+`"pytest-" で pypi.python.org を検索`_ すると、もっとプラグインが見つかるでしょう。
+
+.. _`available installable plugins`:
+.. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
+.. _`"pytest-" で pypi.python.org を検索`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
+
+サンプルによるプラグインの記述
+------------------------------
+
+..
+    Writing a plugin by looking at examples
+    ------------------------------------------------------
+
+.. _`Distribute`: http://pypi.python.org/pypi/distribute
+.. _`setuptools`: http://pypi.python.org/pypi/setuptools
+
+..
+    If you want to write a plugin, there are many real-life examples
+    you can copy from:
+
+自分でプラグインを作成したいなら、たくさんある実際のプラグインをコピーしてから始めると良いです:
+
+..
+    * a custom collection example plugin: :ref:`yaml plugin`
+    * around 20 `builtin plugins`_ which comprise py.test's own functionality
+    * around 10 `external plugins`_ providing additional features
+
+* カスタムコレクションのサンプルプラグイン: :ref:`yaml プラグイン <yaml plugin>`
+* py.test の独自機能を構成する約20個の :ref:`組み込みプラグイン <builtin plugins>`
+* 追加機能を提供する約10個の :ref:`外部プラグイン <external plugins>`
+
+..
+    All of these plugins implement the documented `well specified hooks`_
+    to extend and add functionality.
+
+これらの全プラグインは、機能を追加／拡張するためにドキュメント付きの :ref:`よく練られたフック <well specified hooks>` を実装します。
+
+.. _`setuptools entry points`:
+
+独自プラグインを他からインストール可能にする
+--------------------------------------------
+
+..
+    Making your plugin installable by others
+    -----------------------------------------------
+
+..
+    If you want to make your plugin externally available, you
+    may define a so-called entry point for your distribution so
+    that ``py.test`` finds your plugin module.  Entry points are
+    a feature that is provided by `setuptools`_ or `Distribute`_.
+    py.test looks up the ``pytest11`` entrypoint to discover its
+    plugins and you can thus make your plugin available by definig
+    it in your setuptools/distribute-based setup-invocation:
+
+自分で作成したプラグインを外部から利用できるようにしたいなら、 ``py.test`` がプラグインモジュールを見つけられるように、ディストリビューションのいわゆるエントリーポイントを定義します。エントリーポイントは `setuptools`_ または `distribute`_ が提供する機能です。py.test は、プラグインを検出するために ``pytest11`` というエントリーポイントを調べます。このように setuptools/distribute の setup 処理でエントリーポイントを定義することにより、自分のプラグインを利用できます。
+
+.. sourcecode:: python
+
+    # サンプルの ./setup.py ファイル
+    from setuptools import setup
+
+    setup(
+        name="myproject",
+        packages = ['myproject']
+
+        # 次のように記述して py.test からプラグインを利用可能にする
+        entry_points = {
+            'pytest11': [
+                'name_of_plugin = myproject.pluginmodule',
+            ]
+        },
+    )
+
+..
+    If a package is installed this way, py.test will load
+    ``myproject.pluginmodule`` as a plugin which can define
+    `well specified hooks`_.
+
+パッケージがこの方法でインストールされる場合、py.test は :ref:`よく練られたフック <well specified hooks>` を定義するプラグインとして ``myproject.pluginmodule`` を読み込みます。
+
+..
+    Plugin discovery order at tool startup
+    --------------------------------------------
+
+ツール起動時のプラグイン検出順序
+--------------------------------
+
+..
+    py.test loads plugin modules at tool startup in the following way:
+
+py.test は、次の方法でツール起動時にプラグインモジュールを読み込みます。
+
+..
+    * by loading all builtin plugins
+
+* 全ての組み込みプラグインを読み込む。
+
+..
+    * by loading all plugins registered through `setuptools entry points`_.
+
+* :ref:`setuptools のエントリーポイント <setuptools entry points>` から登録された全てのプラグインを読み込む。
+
+..
+    * by pre-scanning the command line for the ``-p name`` option
+      and loading the specified plugin before actual command line parsing.
+
+* コマンドラインの ``-p name`` オプションを事前に調べ、実際にコマンドラインの引数解析を行う前に指定したプラグインを読み込む。
+
+..
+    * by loading all :file:`conftest.py` files as inferred by the command line
+      invocation (test files and all of its *parent* directories).
+      Note that ``conftest.py`` files from *sub* directories are by default
+      not loaded at tool startup.
+
+* コマンドラインの実行で推定される全ての :file:`conftest.py` ファイルを読み込む (テストファイルと全ての *親* ディレクトリ) 。 *サブ* ディレクトリからの ``conftest.py`` ファイルは、デフォルトでは、ツールの起動時に読み込まれないことに注意してください。
+
+..
+    * by recursively loading all plugins specified by the
+      ``pytest_plugins`` variable in ``conftest.py`` files
+
+* ``conftest.py`` ファイルの ``pytest_plugins`` 変数で指定された全てのプラグインを再帰的に読み込む
+
+テストモジュールまたは conftest ファイルのプラグインの要求と読み込み
+--------------------------------------------------------------------
+
+..
+    Requiring/Loading plugins in a test module or conftest file
+    -------------------------------------------------------------
+
+..
+    You can require plugins in a test module or a conftest file like this::
+
+テストモジュール、または conftest ファイル内でプラグインを要求できます::
+
+    pytest_plugins = "name1", "name2",
+
+..
+    When the test module or conftest plugin is loaded the specified plugins
+    will be loaded as well.  You can also use dotted path like this::
+
+テストモジュール、または conftest プラグインが読み込まれるとき、指定したプラグインも同様に読み込まれます。さらに次のようにドット区切りのパスも使えます::
+
+    pytest_plugins = "myapp.testsupport.myplugin"
+
+..
+    which will import the specified module as a py.test plugin.
+
+これは py.test プラグインとして指定したモジュールをインポートします。
+
+..
+    Accessing another plugin by name
+    --------------------------------------------
+
+プラグイン名で別のプラグインへアクセス
+--------------------------------------
+
+..
+    If a plugin wants to collaborate with code from
+    another plugin it can obtain a reference through
+    the plugin manager like this:
+
+あるプラグインと別のプラグインのコードを協調させたいなら、次のようにプラグインマネージャーを使ってリファレンスを取得できます:
+
+.. sourcecode:: python
+
+    plugin = config.pluginmanager.getplugin("name_of_plugin")
+
+..
+    If you want to look at the names of existing plugins, use
+    the ``--traceconfig`` option.
+
+既存のプラグイン名を調べたい場合は ``--traceconfig`` オプションを使ってください。
+
+.. _`findpluginname`:
+
+有効なプラグインの検出
+----------------------
+
+..
+    Finding out which plugins are active
+    ----------------------------------------------------------------------------
+
+..
+    If you want to find out which plugins are active in your
+    environment you can type::
+
+自分の環境で有効なプラグインを調べたいなら、次のように実行してください::
+
+    py.test --traceconfig
+
+..
+    and will get an extended test header which shows activated plugins
+    and their names. It will also print local plugins aka
+    :ref:`conftest.py <conftest>` files when they are loaded.
+
+有効なプラグインとその名前を表示する拡張テストヘッダーを取得します。 :ref:`conftest.py <conftest>` が読み込まれるときにそのローカルプラグインも表示します。
+
+.. _`cmdunregister`:
+
+名前からプラグインの無効化や登録解除
+------------------------------------
+
+..
+    Deactivating / unregistering a plugin by name
+    ----------------------------------------------------------------------------
+
+..
+    You can prevent plugins from loading or unregister them::
+
+プラグインを読み込ませない、または登録を解除できます::
+
+    py.test -p no:NAME
+
+..
+    This means that any subsequent try to activate/load the named
+    plugin will it already existing.  See :ref:`findpluginname` for
+    how to obtain the name of a plugin.
+
+このオプションは、有効化／読み込もうとするプラグインが既に存在するものとして扱います。プラグイン名を取得する方法は :ref:`findpluginname` を参照してください。
+
+.. _`builtin plugins`:
+
+py.test のデフォルトのプラグインリファレンス
+============================================
+
+..
+    py.test default plugin reference
+    ====================================
+
+..
+    You can find the source code for the following plugins
+    in the `pytest repository <http://bitbucket.org/hpk42/pytest/>`_.
+
+次のプラグインのソースコードが `pytest リポジトリ <http://bitbucket.org/hpk42/pytest/>`_ に含まれています。
+
+.. autosummary::
+
+    _pytest.assertion
+    _pytest.capture
+    _pytest.config
+    _pytest.doctest
+    _pytest.genscript
+    _pytest.helpconfig
+    _pytest.junitxml
+    _pytest.mark
+    _pytest.monkeypatch
+    _pytest.nose
+    _pytest.pastebin
+    _pytest.pdb
+    _pytest.pytester
+    _pytest.python
+    _pytest.recwarn
+    _pytest.resultlog
+    _pytest.runner
+    _pytest.main
+    _pytest.skipping
+    _pytest.terminal
+    _pytest.tmpdir
+    _pytest.unittest
+
+.. _`well specified hooks`:
+
+py.test のフックリファレンス
+============================
+
+..
+    py.test hook reference
+    ====================================
+
+..
+    Hook specification and validation
+    -----------------------------------------
+
+フックの仕様と検証
+------------------
+
+..
+    py.test calls hook functions to implement initialization, running,
+    test execution and reporting.  When py.test loads a plugin it validates
+    that each hook function conforms to its respective hook specification.
+    Each hook function name and its argument names need to match a hook
+    specification.  However, a hook function may accept *fewer* parameters
+    by simply not specifying them.  If you mistype argument names or the
+    hook name itself you get an error showing the available arguments.
+
+py.test は、初期化、テスト実行、レポートを実装するフック関数を呼び出します。py.test がプラグインを読み込むとき、各フック関数名はその対応するフック仕様を確認します。各フック関数名とその引数の名前は、フック仕様に一致する必要があります。但し、フック関数を単に指定しないことにより *少ない* パラメーターは許容します。引数の名前やフック名そのものを誤入力した場合、利用できる引数を表示するエラーが表示されます。
+
+..
+    Initialization, command line and configuration hooks
+    --------------------------------------------------------------------
+
+初期化、コマンドライン、設定のフック
+------------------------------------
+
+.. currentmodule:: _pytest.hookspec
+
+.. autofunction:: pytest_cmdline_preparse
+.. autofunction:: pytest_cmdline_parse
+.. autofunction:: pytest_namespace
+.. autofunction:: pytest_addoption
+.. autofunction:: pytest_cmdline_main
+.. autofunction:: pytest_configure
+.. autofunction:: pytest_unconfigure
+
+..
+    Generic "runtest" hooks
+    ------------------------------
+
+汎用的な "runtest" フック
+-------------------------
+
+..
+    All all runtest related hooks receive a :py:class:`pytest.Item` object.
+
+フックに関連する全ての runtest は :py:class:`pytest.Item` オブジェクトを受け取ります。
+
+.. autofunction:: pytest_runtest_protocol
+.. autofunction:: pytest_runtest_setup
+.. autofunction:: pytest_runtest_call
+.. autofunction:: pytest_runtest_teardown
+.. autofunction:: pytest_runtest_makereport
+
+..
+    For deeper understanding you may look at the default implementation of
+    these hooks in :py:mod:`_pytest.runner` and maybe also
+    in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+    and its input/output capturing in order to immediately drop
+    into interactive debugging when a test failure occurs.
+
+より深く理解するには :py:mod:`_pytest.runner` の実際のフックのデフォルト実装を調べることになるかもしれません。さらに、テストが失敗したときにそのまま対話式のデバッガーに入る、その入出力のキャプチャや :py:mod:`_pytest.capture` と相互にやり取りする :py:mod:`_pytest.pdb` もきっと見たくなるでしょう。
+
+..
+    The :py:mod:`_pytest.terminal` reported specifically uses
+    the reporting hook to print information about a test run.
+
+実際にレポートを行う :py:mod:`_pytest.terminal` は、テスト実行に関する情報を表示するためにレポートフックを使います。
+
+..
+    Collection hooks
+    ------------------------------
+
+コレクションのフック
+--------------------
+
+..
+    py.test calls the following hooks for collecting files and directories:
+
+py.test はファイルとディレクトリを探索するために次のフックを呼び出します:
+
+.. autofunction:: pytest_ignore_collect
+.. autofunction:: pytest_collect_directory
+.. autofunction:: pytest_collect_file
+
+..
+    For influencing the collection of objects in Python modules
+    you can use the following hook:
+
+Python モジュール内のオブジェクトのコレクションに影響を与えるには、次のフックが使えます:
+
+.. autofunction:: pytest_pycollect_makeitem
+
+..
+    Reporting hooks
+    ------------------------------
+
+レポートフック
+--------------
+
+..
+    Session related reporting hooks:
+
+レポートフックに関連するセッション:
+
+.. autofunction:: pytest_collectstart
+.. autofunction:: pytest_itemcollected
+.. autofunction:: pytest_collectreport
+.. autofunction:: pytest_deselected
+
+..
+    And here is the central hook for reporting about
+    test execution:
+
+そして、テストの実行に関する中央のフックです:
+
+.. autofunction:: pytest_runtest_logreport
+
+..
+    Reference of important objects involved in hooks
+    ===========================================================
+
+フックで実行される重要なオブジェクトのリファレンス
+==================================================
+
+.. autoclass:: _pytest.config.Config
+    :members:
+
+.. autoclass:: _pytest.config.Parser
+    :members:
+
+.. autoclass:: _pytest.main.Node(name, parent)
+    :members:
+
+..
+    .. autoclass:: _pytest.main.File(fspath, parent)
+        :members:
+
+    .. autoclass:: _pytest.main.Item(name, parent)
+        :members:
+
+    .. autoclass:: _pytest.python.Module(name, parent)
+        :members:
+
+    .. autoclass:: _pytest.python.Class(name, parent)
+        :members:
+
+    .. autoclass:: _pytest.python.Function(name, parent)
+        :members:
+
+.. autoclass:: _pytest.runner.CallInfo
+    :members:
+
+.. autoclass:: _pytest.runner.TestReport
+    :members:
+

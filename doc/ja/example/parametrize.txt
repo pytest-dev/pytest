@@ -1,0 +1,425 @@
+
+.. _paramexamples:
+
+パラメーターテスト
+==================
+
+..
+    Parametrizing tests
+    =================================================
+
+.. currentmodule:: _pytest.python
+
+py.test は、簡単にパラメーターをテスト関数へ渡せます。パラメーターテストを行うための組み込みの仕組みを使ったサンプルを紹介します。
+
+..
+    py.test allows to easily parametrize test functions.
+    In the following we provide some examples using
+    the builtin mechanisms.
+
+.. _parametrizemark:
+
+シンプルな "デコレーター" によるパラメーターテスト
+--------------------------------------------------
+
+..
+    Simple "decorator" parametrization of a test function
+    ----------------------------------------------------------------------------
+
+.. versionadded:: 2.2
+
+..
+    The builtin ``pytest.mark.parametrize`` decorator directly enables
+    parametrization of arguments for a test function.  Here is an example
+    of a test function that wants to compare that processing some input
+    results in expected output::
+
+組み込みの ``pytest.mark.parametrize`` デコレーターは、直接、テスト関数の引数へパラメーターを渡せます。入力値を処理して、その結果として期待される出力値を比較したいテスト関数のサンプルを紹介します::
+
+    # test_expectation.py の内容
+    import pytest
+    @pytest.mark.parametrize(("input", "expected"), [
+        ("3+5", 8),
+        ("2+4", 6),
+        ("6*9", 42),
+    ])
+    def test_eval(input, expected):
+        assert eval(input) == expected
+
+..
+    we parametrize two arguments of the test function so that the test
+    function is called three times.  Let's run it::
+
+テスト関数が3回呼び出され、そのテスト関数へ2つの引数をパラメーターとして渡します。実行してみましょう::
+
+    $ py.test -q 
+    collecting ... collected 3 items
+    ..F
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
+    
+    input = '6*9', expected = 42
+    
+        @pytest.mark.parametrize(("input", "expected"), [
+            ("3+5", 8),
+            ("2+4", 6),
+            ("6*9", 42),
+        ])
+        def test_eval(input, expected):
+    >       assert eval(input) == expected
+    E       assert 54 == 42
+    E        +  where 54 = eval('6*9')
+    
+    test_expectation.py:8: AssertionError
+    1 failed, 2 passed in 0.01 seconds
+
+..
+    As expected only one pair of input/output values fails the simple test function.
+
+期待した通り、入力値／出力値の組み合わせの1つだけがこの単純なテスト関数を失敗させます。
+
+..
+    Note that there are various ways how you can mark groups of functions,
+    see :ref:`mark`.
+
+関数のグループをマークする方法は様々なやり方があるのに注意してください。詳細は :ref:`mark` を参照してください。
+
+..
+    Generating parameters combinations, depending on command line
+    ----------------------------------------------------------------------------
+
+コマンドラインからパラメーターの組み合わせを作成
+------------------------------------------------
+
+.. regendoc:wipe
+
+..
+    Let's say we want to execute a test with different computation
+    parameters and the parameter range shall be determined by a command
+    line argument.  Let's first write a simple (do-nothing) computation test::
+
+別のパラメーターでテストを実行したいときに、そのパラメーターの範囲はコマンドライン引数によって決まるものとしましょう。最初の簡単な (何もしない) テストを書いてみます::
+
+    # test_compute.py の内容
+
+    def test_compute(param1):
+        assert param1 < 4
+
+..
+    Now we add a test configuration like this::
+
+次のようなテスト設定を追加します::
+
+    # conftest.py の内容
+
+    def pytest_addoption(parser):
+        parser.addoption("--all", action="store_true",
+            help="run all combinations")
+
+    def pytest_generate_tests(metafunc):
+        if 'param1' in metafunc.funcargnames:
+            if metafunc.config.option.all:
+                end = 5
+            else:
+                end = 2
+            metafunc.parametrize("param1", range(end))
+
+..
+    This means that we only run 2 tests if we do not pass ``--all``::
+
+これは ``--all`` を指定しない場合、2回だけテストを実行します::
+
+    $ py.test -q test_compute.py
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.01 seconds
+
+..
+    We run only two computations, so we see two dots.
+    let's run the full monty::
+
+2回だけテストを実行するので、ドットが2つ表示されます。では、全テストを実行してみましょう::
+
+    $ py.test -q --all
+    collecting ... collected 5 items
+    ....F
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
+    
+    param1 = 4
+    
+        def test_compute(param1):
+    >       assert param1 < 4
+    E       assert 4 < 4
+    
+    test_compute.py:3: AssertionError
+    1 failed, 4 passed in 0.02 seconds
+
+..
+    As expected when running the full range of ``param1`` values
+    we'll get an error on the last one.
+
+期待した通り ``param1`` の全ての範囲値を実行すると、最後の1つがエラーになります。
+
+..
+    A quick port of "testscenarios"
+    ------------------------------------
+
+"testscenarios" の手早い移行
+----------------------------
+
+.. _`test scenarios`: http://bazaar.launchpad.net/~lifeless/testscenarios/trunk/annotate/head%3A/doc/example.py
+
+..
+    Here is a quick port to run tests configured with `test scenarios`_,
+    an add-on from Robert Collins for the standard unittest framework. We
+    only have to work a bit to construct the correct arguments for pytest's
+    :py:func:`Metafunc.parametrize`::
+
+Robert Collins による標準ライブラリの unittest フレームワークのアドオンである `test scenarios`_ で設定されたテストを実行するために手早い移行方法を紹介します。pytest の :py:func:`Metafunc.parametrize` へ渡す正しい引数を作成するために少しだけコーディングが必要です::
+
+    # test_scenarios.py の内容
+
+    def pytest_generate_tests(metafunc):
+        idlist = []
+        argvalues = []
+        for scenario in metafunc.cls.scenarios:
+            idlist.append(scenario[0])
+            items = scenario[1].items()
+            argnames = [x[0] for x in items]
+            argvalues.append(([x[1] for x in items]))
+        metafunc.parametrize(argnames, argvalues, ids=idlist)
+
+    scenario1 = ('basic', {'attribute': 'value'})
+    scenario2 = ('advanced', {'attribute': 'value2'})
+
+    class TestSampleWithScenarios:
+        scenarios = [scenario1, scenario2]
+
+        def test_demo(self, attribute):
+            assert isinstance(attribute, str)
+
+..
+    this is a fully self-contained example which you can run with::
+
+これはすぐ実行できる完全な自己完結型サンプルです::
+
+    $ py.test test_scenarios.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 2 items
+    
+    test_scenarios.py ..
+    
+    ========================= 2 passed in 0.01 seconds =========================
+
+..
+    If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
+
+ただテストを (実行せずに) 集めるだけなら、テスト関数の変数として 'advanced' と 'basic' もうまく表示されます::
+
+    $ py.test --collectonly test_scenarios.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 2 items
+    <Module 'test_scenarios.py'>
+      <Class 'TestSampleWithScenarios'>
+        <Instance '()'>
+          <Function 'test_demo[basic]'>
+          <Function 'test_demo[advanced]'>
+    
+    =============================  in 0.00 seconds =============================
+
+..
+    Deferring the setup of parametrized resources
+    ---------------------------------------------------
+
+パラメーター化されたリソースの遅延セットアップ
+----------------------------------------------
+
+.. regendoc:wipe
+
+..
+    The parametrization of test functions happens at collection
+    time.  It is a good idea to setup expensive resources like DB
+    connections or subprocess only when the actual test is run.
+    Here is a simple example how you can achieve that, first
+    the actual test requiring a ``db`` object::
+
+テスト関数へのパラメーター渡しはコレクション時に発生します。実際にテストを実行するときのみ、DB コネクションやサブプロセスといった高価なリソースをセットアップするのは良い考えです。そういったテストを行う簡単なサンプルが次になります。最初のテストは ``db`` オブジェクトを要求します::
+
+    # test_backends.py の内容
+
+    import pytest
+    def test_db_initialized(db):
+        # ダミーテスト
+        if db.__class__.__name__ == "DB2":
+            pytest.fail("deliberately failing for demo purposes")
+
+..
+    We can now add a test configuration that generates two invocations of
+    the ``test_db_initialized`` function and also implements a factory that
+    creates a database object for the actual test invocations::
+
+``test_db_initialized`` 関数の2回実行するようにテスト設定を追加します。さらに実際のテスト実行時にデータベースオブジェクトを作成するファクトリー関数も実装します::
+
+    # conftest.py の内容
+
+    def pytest_generate_tests(metafunc):
+        if 'db' in metafunc.funcargnames:
+            metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
+
+    class DB1:
+        "one database object"
+    class DB2:
+        "alternative database object"
+
+    def pytest_funcarg__db(request):
+        if request.param == "d1":
+            return DB1()
+        elif request.param == "d2":
+            return DB2()
+        else:
+            raise ValueError("invalid internal test config")
+
+..
+    Let's first see how it looks like at collection time::
+
+コレクション時に先ほどの設定がどうなるかを最初に見てみましょう::
+
+    $ py.test test_backends.py --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    collecting ... collected 2 items
+    <Module 'test_backends.py'>
+      <Function 'test_db_initialized[d1]'>
+      <Function 'test_db_initialized[d2]'>
+    
+    =============================  in 0.00 seconds =============================
+
+..
+    And then when we run the test::
+
+それからテストを実行します::
+
+    $ py.test -q test_backends.py
+    collecting ... collected 2 items
+    .F
+    ================================= FAILURES =================================
+    _________________________ test_db_initialized[d2] __________________________
+    
+    db = <conftest.DB2 instance at 0x1d4eb00>
+    
+        def test_db_initialized(db):
+            # ダミーテスト
+            if db.__class__.__name__ == "DB2":
+    >           pytest.fail("deliberately failing for demo purposes")
+    E           Failed: deliberately failing for demo purposes
+    
+    test_backends.py:6: Failed
+    1 failed, 1 passed in 0.01 seconds
+
+..
+    The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``pytest_funcarg__db`` factory has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
+
+最初の ``db == "DB1"`` による実行が成功したのに対して、2番目の ``db == "DB2"`` は失敗しました。 ``pytest_funcarg__db`` ファクトリーは、セットアップフェーズのときにそれぞれの DB 値をインスタンス化しました。一方 ``pytest_generate_tests`` は、コレクションフェーズのときに2回の ``test_db_initialized`` 呼び出しを生成しました。
+
+.. regendoc:wipe
+
+..
+    Parametrizing test methods through per-class configuration
+    --------------------------------------------------------------
+
+クラス設定毎のテストメソッドのパラメーター渡し
+----------------------------------------------
+
+.. _`unittest parameterizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
+
+..
+    Here is an example ``pytest_generate_function`` function implementing a
+    parametrization scheme similar to Michael Foord's `unittest
+    parameterizer`_ but in a lot less code::
+
+Michael Foord の `unittest parameterizer`_ とよく似ていますが、それよりもずっと少ないコードでパラメーターを渡す仕組みを実装する ``pytest_generate_function`` 関数のサンプルがあります::
+
+    # ./test_parametrize.py の内容
+    import pytest
+
+    def pytest_generate_tests(metafunc):
+        # それぞれのテスト関数毎に1回呼び出される
+        funcarglist = metafunc.cls.params[metafunc.function.__name__]
+        argnames = list(funcarglist[0])
+        metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
+                for funcargs in funcarglist])
+
+    class TestClass:
+        # テストメソッドのために複数の引数セットを指定するディクショナリ
+        params = {
+            'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],
+            'test_zerodivision': [dict(a=1, b=0), ],
+        }
+
+        def test_equals(self, a, b):
+            assert a == b
+
+        def test_zerodivision(self, a, b):
+            pytest.raises(ZeroDivisionError, "a/b")
+
+..
+    Our test generator looks up a class-level definition which specifies which
+    argument sets to use for each test function.  Let's run it::
+
+テストジェネレーターは、それぞれのテストメソッドへどの引数セットを渡すかを特定するクラスレベルの定義を調べます。実行してみましょう::
+
+    $ py.test -q
+    collecting ... collected 3 items
+    F..
+    ================================= FAILURES =================================
+    ________________________ TestClass.test_equals[1-2] ________________________
+    
+    self = <test_parametrize.TestClass instance at 0x10d2e18>, a = 1, b = 2
+    
+        def test_equals(self, a, b):
+    >       assert a == b
+    E       assert 1 == 2
+    
+    test_parametrize.py:18: AssertionError
+    1 failed, 2 passed in 0.01 seconds
+
+..
+    Indirect parametrization with multiple resources
+    --------------------------------------------------------------
+
+複数リソースでの間接的なパラメーター渡し
+----------------------------------------
+
+..
+    Here is a stripped down real-life example of using parametrized
+    testing for testing serialization, invoking different python interpreters.
+    We define a ``test_basic_objects`` function which is to be run
+    with different sets of arguments for its three arguments:
+
+別々の Python インタープリターで実行し、シリアライズ化を検証するのにパラメーターテストを使う、実際の世界でのサンプルを解説します。次の3つの引数を全組み合わせで実行する ``test_basic_objects`` 関数を定義します。
+
+..
+    * ``python1``: first python interpreter, run to pickle-dump an object to a file
+    * ``python2``: second interpreter, run to pickle-load an object from a file
+    * ``obj``: object to be dumped/loaded
+
+* ``python1`` : 1番目の Python インタープリター、オブジェクトをファイルへ pickle-dump するために実行
+* ``python2`` : 2番目の Python インタープリター、ファイルからオブジェクトを pickle-load するために実行
+* ``obj`` : ダンプしたり読み込むためのオブジェクト
+
+.. literalinclude:: multipython.py
+
+..
+    Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
+
+もし全ての Python インタープリターがインストールされていない場合、実行してもスキップされます。インストール済みの場合、全ての組み合わせが実行されます (5つのインタープリター * 5つのインタープリター * 3つのシリアライズ／デシリアライズするオブジェクト)::
+
+   . $ py.test -rs -q multipython.py
+   collecting ... collected 75 items
+   ............sss............sss............sss............ssssssssssssssssss
+   ========================= short test summary info ==========================
+   SKIP [27] /home/hpk/p/pytest/doc/example/multipython.py:36: 'python2.8' not found
+   48 passed, 27 skipped in 1.71 seconds

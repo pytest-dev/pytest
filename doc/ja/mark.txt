@@ -1,0 +1,53 @@
+
+.. _mark:
+
+属性をもつテスト関数のマーク
+============================
+
+..
+    Marking test functions with attributes
+    =================================================================
+
+.. currentmodule:: _pytest.mark
+
+..
+    By using the ``pytest.mark`` helper you can easily set
+    metadata on your test functions. There are
+    some builtin markers, for example:
+
+``pytest.mark`` ヘルパーを使って、テスト関数にメタデータを簡単に設定できます。組み込みのマーカーを紹介します:
+
+..
+    * :ref:`skipif <skipif>` - skip a test function if a certain condition is met
+    * :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
+      condition is met
+    * :ref:`parametrize <parametrizemark>` to perform multiple calls
+      to the same test function.
+
+* :ref:`skipif <skipif>`: 特定の条件を満たした場合にテスト関数をスキップ
+* :ref:`xfail <xfail>`: 特定の条件を満たした場合に "失敗を期待"
+* :ref:`parametrize <parametrizemark>`: 同じテスト関数に対して複数回の呼び出しを実行
+
+..
+    It's easy to create custom markers or to apply markers
+    to whole test classes or modules. See :ref:`mark examples` for examples
+    which also serve as documentation.
+
+カスタムマーカーを作成する、または全体のテストクラスやモジュールにマーカーを適用するのは簡単です。ドキュメントでもある :ref:`mark examples` のサンプルを参照してください。
+
+..
+    API reference for mark related objects
+    ------------------------------------------------
+
+マーカー関連オブジェクトの API リファレンス
+-------------------------------------------
+
+.. autoclass:: MarkGenerator
+    :members:
+
+.. autoclass:: MarkDecorator
+    :members:
+
+.. autoclass:: MarkInfo
+    :members:
+

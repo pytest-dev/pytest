@@ -1,0 +1,196 @@
+..
+    Basic test configuration
+    ===================================
+
+基本的なテストの設定
+====================
+
+..
+    Command line options and configuration file settings
+    -----------------------------------------------------------------
+
+コマンドラインオプションと構成ファイルの設定
+--------------------------------------------
+
+..
+    You can get help on command line options and values in INI-style
+    configurations files by using the general help option::
+
+一般的なヘルプオプションを使って、ini スタイルの構成ファイルのコマンドラインオプションとその値のヘルプを確認できます::
+
+    py.test -h   # オプションと構成ファイルの設定を表示
+
+..
+    This will display command line and configuration file settings
+    which were registered by installed plugins.
+
+これはインストール済みのプラグインが登録したコマンドライン設定と構成ファイル設定も表示します。
+
+..
+    How test configuration is read from configuration INI-files
+    -------------------------------------------------------------
+
+INI 構成ファイルからテスト設定の読み込み方法
+--------------------------------------------
+
+..
+    py.test searches for the first matching ini-style configuration file
+    in the directories of command line argument and the directories above.
+    It looks for file basenames in this order::
+
+py.test は、コマンドライン引数のディレクトリとその上位ディレクトリの、最初に一致する ini スタイルの構成ファイルを検索します。次の順番でファイル名を見ていきます::
+
+    pytest.ini
+    tox.ini
+    setup.cfg
+
+..
+    Searching stops when the first ``[pytest]`` section is found.
+    There is no merging of configuration values from multiple files.  Example::
+
+最初の ``[pytest]`` のセクションを見つけたときに検索を中止します。複数の設定ファイルから設定値をマージするようなことはしません。サンプルを紹介します::
+
+    py.test path/to/testdir
+
+次のように構成ファイルを含むディレクトリがあります::
+
+    path/to/testdir/pytest.ini
+    path/to/testdir/tox.ini
+    path/to/testdir/setup.cfg
+    path/to/pytest.ini
+    path/to/tox.ini
+    path/to/setup.cfg
+    ... # ファイルシステムのルートまで上る
+
+..
+    If argument is provided to a py.test run, the current working directory
+    is used to start the search.
+
+引数が py.test を実行するために提供されるものなら、カレントディレクトリがその検索の開始位置に使われます。
+
+.. _`how to change command line options defaults`:
+.. _`adding default options`:
+
+コマンドラインオプションのデフォルト値の変更方法
+------------------------------------------------
+
+..
+    How to change command line options defaults
+    ------------------------------------------------
+
+..
+    It can be tedious to type the same series of command line options
+    every time you use py.test .  For example, if you always want to see
+    detailed info on skipped and xfailed tests, as well as have terser "dot"
+    progress output, you can write it into a configuration file::
+
+py.test を使うときに毎回一連のコマンドラインオプションを入力するのは飽き飽きしてきます。例えば、毎回スキップしたり xfail したテストの詳細情報を見たいなら、進捗状況を簡潔な "ドット" 出力にするのと同様に、構成ファイル内にその設定を記述できます::
+
+    # pytest.ini の内容
+    # (または tox.ini か setup.cfg)
+    [pytest]
+    addopts = -rsxX -q
+
+..
+    From now on, running ``py.test`` will add the specified options.
+
+設定後に実行すると ``py.test`` は指定したオプションを追加します。
+
+..
+    Builtin configuration file options
+    ----------------------------------------------
+
+組み込みの構成ファイルオプション
+---------------------------------
+
+.. confval:: minversion
+
+    ..
+       Specifies a minimal pytest version required for running tests.
+            minversion = 2.1  # will fail if we run with pytest-2.0
+
+   テストの実行に必要な pytest の最小バージョンを指定します
+
+        minversion = 2.1  # pytest-2.0 で実行すると失敗する
+
+.. confval:: addopts
+
+   ..
+      Add the specified ``OPTS`` to the set of command line arguments as if they
+      had been specified by the user. Example: if you have this ini file content::
+         [pytest]
+         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
+      issuing ``py.test test_hello.py`` actually means::
+         py.test --maxfail=2 -rf test_hello.py
+      Default is to add no options.
+
+   ユーザーが指定するようにコマンドライン引数をセットするのに特化した ``OPTS`` を追加します。次のような ini ファイルがある場合::
+
+      [pytest]
+      addopts = --maxfail=2 -rf  # 2回失敗したら終了して、その内容をレポートする
+
+   ``py.test test_hello.py`` は、実際には次の内容と同じです::
+
+       py.test --maxfail=2 -rf test_hello.py
+
+   デフォルトでは何のオプションを追加しません。
+
+.. confval:: norecursedirs
+
+   ..
+      Set the directory basename patterns to avoid when recursing
+      for test discovery.  The individual (fnmatch-style) patterns are
+      applied to the basename of a directory to decide if to recurse into it.
+      Pattern matching characters::
+        *       matches everything
+        ?       matches any single character
+        [seq]   matches any character in seq
+        [!seq]  matches any char not in seq
+      Default patterns are ``.* _* CVS {args}``. Setting a ``norecursedir``
+      replaces the default.  Here is an example of how to avoid
+      certain directories::
+       # content of setup.cfg
+       [pytest]
+       norecursedirs = .svn _build tmp*
+
+   再帰的に探索しないテストディレクトリのディレクトリ名のパターンを設定します。それぞれ (fnmatch スタイル) のパターンがそのディレクトリ内を再帰的に調べるかを決めるのにディレクトリ名に適用されます。パターンマッチング文字は次の通りです::
+
+        *       全てに一致する
+        ?       任意の1文字に一致する
+        [seq]   seq のうち任意の1文字に一致する
+        [!seq]  seq のどの文字にも一致しない
+
+   デフォルトパターンは ``.* _* CVS {args}`` となっており、 ``norecursedir`` を設定することで置き換えられます。特定のディレクトリを探索しない方法のサンプルは次の通りです::
+
+    # setup.cfg の内容
+    [pytest]
+    norecursedirs = .svn _build tmp*
+
+   これは典型的な subversion と sphinx の build ディレクトリと ``tmp`` という接頭辞をもつディレクトリを再帰探索しない設定です。
+
+.. confval:: python_files
+
+   ..
+      One or more Glob-style file patterns determining which python files
+      are considered as test modules.
+
+   python ファイルをテストモジュールとみなす、1つかそれ以上の Glob スタイルのファイルパターンです。
+
+.. confval:: python_classes
+
+   ..
+      One or more name prefixes determining which test classes
+      are considered as test modules.
+
+   テストクラスをテストモジュールとみなす、1つかそれ以上の接頭辞です。
+
+.. confval:: python_functions
+
+   ..
+      One or more name prefixes determining which test functions
+      and methods are considered as test modules.
+      See :ref:`change naming conventions` for examples.
+
+   テスト関数やメソッドをテストモジュールとみなす、1つかそれ以上の接頭辞です。
+
+   :ref:`change naming conventions` のサンプルもご覧ください。
