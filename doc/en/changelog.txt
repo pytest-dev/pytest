@@ -4,4 +4,4 @@
 Changelog history
 =================================
 
-.. include:: ../CHANGELOG
+.. include:: ../../CHANGELOG
