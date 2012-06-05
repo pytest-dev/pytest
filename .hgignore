@@ -15,7 +15,7 @@ syntax:glob
 *.orig
 *~
 
-doc/_build
+doc/*/_build
 build/
 dist/
 *.egg-info
