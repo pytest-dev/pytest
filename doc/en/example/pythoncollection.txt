@@ -43,7 +43,7 @@ then the test collection looks like this::
 
     $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.2.5.dev1
     collecting ... collected 2 items
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
@@ -82,7 +82,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collectonly pythoncollection.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.2.5.dev1
     collecting ... collected 3 items
     <Module 'pythoncollection.py'>
       <Function 'test_function'>
@@ -92,3 +92,55 @@ You can always peek at the collection tree without running tests like this::
           <Function 'test_anothermethod'>
     
     =============================  in 0.00 seconds =============================
+
+customizing test collection to find all *.py files
+---------------------------------------------------------
+
+.. regendoc:wipe
+
+You can easily instruct py.test to discover tests from every python file::
+
+
+    # content of pytest.ini
+    [pytest]
+    python_files = *.py
+
+However, many projects will have a ``setup.py`` which they don't want to be imported. Moreover, there may files only importable by a specific python version.
+For such cases you can dynamically define files to be ignored by listing 
+them in a ``conftest.py`` file:: 
+
+    # content of conftest.py
+    import sys
+
+    collect_ignore = ["setup.py"]
+    if sys.version_info[0] > 2:
+        collect_ignore.append("pkg/module_py2.py")
+
+And then if you have a module file like this::
+
+    # content of pkg/module_py2.py
+    def test_only_on_python2():
+        try:
+            assert 0
+        except Exception, e:
+            pass
+
+and a setup.py dummy file like this::
+
+    # content of setup.py
+    0/0  # will raise exeption if imported
+
+then a pytest run on python2 will find the one test when run with a python2 
+interpreters and will leave out the setup.py file::
+    
+    $ py.test --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.2.5.dev1
+    collecting ... collected 1 items
+    <Module 'pkg/module_py2.py'>
+      <Function 'test_only_on_python2'>
+    
+    =============================  in 0.01 seconds =============================
+
+If you run with a Python3 interpreter the moduled added through the conftest.py file will not be considered for test collection.
+
