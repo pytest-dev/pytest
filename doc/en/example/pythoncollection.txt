@@ -93,7 +93,7 @@ You can always peek at the collection tree without running tests like this::
     
     =============================  in 0.00 seconds =============================
 
-customizing test collection to find all *.py files
+customizing test collection to find all .py files
 ---------------------------------------------------------
 
 .. regendoc:wipe

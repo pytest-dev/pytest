@@ -262,10 +262,10 @@ Reading markers which were set from multiple places
 
 .. versionadded: 2.2.2
 
+.. regendoc:wipe
+
 If you are heavily using markers in your test suite you may encounter the case where a marker is applied several times to a test function.  From plugin
 code you can read over all such settings.  Example::
-
-.. regendoc:wipe
 
     # content of test_mark_three_times.py
     import pytest
@@ -303,13 +303,13 @@ Let's run this without capturing output and see what we get::
 marking platform specific tests with pytest
 --------------------------------------------------------------
 
+.. regendoc:wipe
+
 Consider you have a test suite which marks tests for particular platforms,
 namely ``pytest.mark.osx``, ``pytest.mark.win32`` etc. and you
 also have tests that run on all platforms and have no specific
 marker.  If you now want to have a way to only run the tests 
 for your particular platform, you could use the following plugin::
-
-.. regendoc:wipe
 
     # content of conftest.py
     #
