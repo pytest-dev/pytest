@@ -201,7 +201,7 @@ specifies via named environments::
             "env(name): mark test to run only on named environment")
 
     def pytest_runtest_setup(item):
-        if not isinstance(item, item.Function):
+        if not isinstance(item, pytest.Function):
             return
         if hasattr(item.obj, 'env'):
             envmarker = getattr(item.obj, 'env')
