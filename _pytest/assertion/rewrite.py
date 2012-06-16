@@ -40,7 +40,7 @@ PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
 
 class AssertionRewritingHook(object):
-    """Import hook which rewrites asserts."""
+    """PEP302 Import hook which rewrites asserts."""
 
     def __init__(self):
         self.session = None
