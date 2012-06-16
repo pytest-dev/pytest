@@ -79,10 +79,11 @@ class PluginManager(object):
                 self.import_plugin(spec)
 
     def register(self, plugin, name=None, prepend=False):
-        assert not self.isregistered(plugin), plugin
+        if self._name2plugin.get(name, None) == -1:
+            return
         name = name or getattr(plugin, '__name__', str(id(plugin)))
-        if name in self._name2plugin:
-            return False
+        if self.isregistered(plugin, name):
+            raise ValueError("Plugin already registered: %s=%s" %(name, plugin))
         #self.trace("registering", name, plugin)
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})

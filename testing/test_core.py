@@ -32,6 +32,11 @@ class TestBootstrapping:
         l2 = pluginmanager.getplugins()
         assert 42 not in l2
 
+    def test_plugin_double_register(self):
+        pm = PluginManager()
+        pm.register(42, name="abc")
+        pytest.raises(ValueError, lambda: pm.register(42, name="abc"))
+
     def test_plugin_skip(self, testdir, monkeypatch):
         p = testdir.makepyfile(skipping1="""
             import pytest
@@ -203,10 +208,10 @@ class TestBootstrapping:
         assert pp.isregistered(mod)
         l = pp.getplugins()
         assert mod in l
-        pytest.raises(AssertionError, "pp.register(mod)")
+        pytest.raises(ValueError, "pp.register(mod)")
         mod2 = py.std.types.ModuleType("pytest_hello")
         #pp.register(mod2) # double pm
-        pytest.raises(AssertionError, "pp.register(mod)")
+        pytest.raises(ValueError, "pp.register(mod)")
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == l
 
