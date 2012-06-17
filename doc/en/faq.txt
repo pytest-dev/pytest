@@ -9,6 +9,75 @@ Some Issues and Questions
 On naming, nosetests, licensing and magic
 ------------------------------------------------
 
+How does py.test relate to nose and unittest?
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+py.test and nose_ share basic philosophy when it comes
+to running and writing Python tests.  In fact, you can run many tests
+written for nose with py.test.  nose_ was originally created
+as a clone of ``py.test`` when py.test was in the ``0.8`` release
+cycle.  Note that starting with pytest-2.0 support for running unittest
+test suites is majorly improved.
+
+how does py.test relate to twisted's trial?
+++++++++++++++++++++++++++++++++++++++++++++++
+
+Since some time py.test has builtin support for supporting tests
+written using trial. It does not itself start a reactor, however,
+and does not handle Deferreds returned from a test.  Someone using
+these features might eventually write a dedicated ``pytest-twisted`` 
+plugin which will surely see strong support from the pytest development
+team.
+ 
+how does py.test work with Django?
+++++++++++++++++++++++++++++++++++++++++++++++
+
+In 2012, some work is going into the `pytest-django plugin <http://pypi.python.org/pypi/pytest-django>`_.  It substitutes the usage of Django's
+``manage.py test`` and allows to use all pytest features_ most of which
+are not available from Django directly.
+
+.. _features: test/features.html
+
+
+What's this "magic" with py.test? (historic notes)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Around 2007 (version ``0.8``) some people thought that py.test
+was using too much "magic".  It had been part of the `pylib`_ which
+contains a lot of unreleated python library code.  Around 2010 there
+was a major cleanup refactoring, which removed unused or deprecated code 
+and resulted in the new ``pytest`` PyPI package which strictly contains
+only test-related code.  This relese also brought a complete pluginification
+such that the core is around 300 lines of code and everything else is
+implemented in plugins.  Thus ``pytest`` today is a small, universally runnable 
+and customizable testing framework for Python.   Note, however, that
+``pytest`` uses metaprogramming techniques and reading its source is 
+thus likely not something for Python beginners.
+
+A second "magic" issue was the assert statement debugging feature.  
+Nowadays, py.test explicitely rewrites assert statements in test modules
+in order to provide more useful :ref:`assert feedback <assertfeedback>`.
+This completely avoids previous issues of confusing assertion-reporting.  
+It also means, that you can use Python's ``-O`` optimization without loosing
+assertions in test modules.
+
+py.test contains a second assert debugging technique, invoked via
+``--assert=reinterpret``, activated by default on Python-2.5: When an
+``assert`` statement that was missed by the rewriter fails, py.test
+re-interprets the expression to show intermediate values if a test
+fails. This second technique suffers from a caveat that the rewriting
+does not: If your expression has side effects (better to avoid them
+anyway!) the intermediate values may not be the same, confusing the
+reinterpreter and obfuscating the initial error (this is also explained
+at the command line if it happens).  
+
+You can also turn off all assertion interaction using the
+``--assertmode=off`` option.
+
+.. _`py namespaces`: index.html
+.. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
+
+
 Why a ``py.test`` instead of a ``pytest`` command?
 ++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -20,48 +89,7 @@ you install ``pip install pycmd`` you get these tools from a separate
 package.  These days the command line tool could be called ``pytest``
 but since many people have gotten used to the old name and there
 is another tool named "pytest" we just decided to stick with
-``py.test``.
-
-How does py.test relate to nose and unittest?
-+++++++++++++++++++++++++++++++++++++++++++++++++
-
-py.test and nose_ share basic philosophy when it comes
-to running and writing Python tests.  In fact, you can run many tests
-written for nose with py.test.  nose_ was originally created
-as a clone of ``py.test`` when py.test was in the ``0.8`` release
-cycle.  Note that starting with pytest-2.0 support for running unittest
-test suites is majorly improved and you should be able to run
-many Django and Twisted test suites without modification.
-
-.. _features: test/features.html
-
-
-What's this "magic" with py.test?
-++++++++++++++++++++++++++++++++++++++++++
-
-Around 2007 (version ``0.8``) some people claimed that py.test
-was using too much "magic".  Partly this has been fixed by removing
-unused, deprecated or complicated code.  It is today probably one
-of the smallest, most universally runnable and most
-customizable testing frameworks for Python.   However,
-``py.test`` still uses many metaprogramming techniques and
-reading its source is thus likely not something for Python beginners.
-
-A second "magic" issue is arguably the assert statement debugging feature. When
-loading test modules py.test rewrites the source code of assert statements. When
-a rewritten assert statement fails, its error message has more information than
-the original. py.test also has a second assert debugging technique. When an
-``assert`` statement that was missed by the rewriter fails, py.test
-re-interprets the expression to show intermediate values if a test fails. This
-second technique suffers from a caveat that the rewriting does not: If your
-expression has side effects (better to avoid them anyway!) the intermediate
-values may not be the same, confusing the reinterpreter and obfuscating the
-initial error (this is also explained at the command line if it happens).
-You can turn off all assertion debugging with ``py.test --assertmode=off``.
-
-.. _`py namespaces`: index.html
-.. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
-
+``py.test`` for now.
 
 Function arguments, parametrized tests and setup
 -------------------------------------------------------

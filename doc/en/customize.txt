@@ -23,8 +23,9 @@ It looks for file basenames in this order::
     tox.ini
     setup.cfg
 
-Searching stops when the first ``[pytest]`` section is found.
-There is no merging of configuration values from multiple files.  Example::
+Searching stops when the first ``[pytest]`` section is found in any of
+these files.  There is no merging of configuration values from multiple 
+files.  Example:: 
 
     py.test path/to/testdir
 

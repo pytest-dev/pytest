@@ -2,6 +2,7 @@
 The writing and reporting of assertions in tests
 ==================================================
 
+.. _`assertfeedback`:
 .. _`assert with the assert statement`:
 
 Asserting with the ``assert`` statement

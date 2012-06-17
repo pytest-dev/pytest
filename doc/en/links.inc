@@ -18,3 +18,4 @@
 .. _hudson: http://hudson-ci.org/
 .. _jenkins: http://jenkins-ci.org/
 .. _tox: http://codespeak.net/tox
+.. _pylib: http://pylib.org

@@ -4,6 +4,9 @@ Changes between 2.2.4 and 2.2.5.dev
 - fix issue128: show captured output when capsys/capfd are used
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
+- fix issue129: improve http://pytest.org/latest/faq.html 
+  especially with respect to the "magic" history, also mention
+  pytest-django, trial and unittest integration.
 
 Changes between 2.2.3 and 2.2.4
 -----------------------------------
