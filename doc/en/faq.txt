@@ -61,15 +61,14 @@ This completely avoids previous issues of confusing assertion-reporting.
 It also means, that you can use Python's ``-O`` optimization without loosing
 assertions in test modules.
 
-py.test contains a second assert debugging technique, invoked via
-``--assert=reinterpret``, activated by default on Python-2.5: When an
-``assert`` statement that was missed by the rewriter fails, py.test
-re-interprets the expression to show intermediate values if a test
-fails. This second technique suffers from a caveat that the rewriting
-does not: If your expression has side effects (better to avoid them
-anyway!) the intermediate values may not be the same, confusing the
-reinterpreter and obfuscating the initial error (this is also explained
-at the command line if it happens).  
+py.test contains a second mostly obsolete assert debugging technique,
+invoked via ``--assert=reinterpret``, activated by default on
+Python-2.5: When an ``assert`` statement fails, py.test re-interprets
+the expression part to show intermediate values.  This technique suffers
+from a caveat that the rewriting does not: If your expression has side
+effects (better to avoid them anyway!) the intermediate values may not
+be the same, confusing the reinterpreter and obfuscating the initial
+error (this is also explained at the command line if it happens).  
 
 You can also turn off all assertion interaction using the
 ``--assertmode=off`` option.
