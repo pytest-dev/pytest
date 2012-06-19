@@ -556,3 +556,19 @@ def test_default_markers(testdir):
         "*xfail(*conditions, reason=None, run=True)*expected failure*",
     ])
 
+
+def test_xfail_test_setup_exception(testdir):
+    testdir.makeconftest("""
+            def pytest_runtest_setup():
+                0 / 0
+        """)
+    p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                assert 0
+        """)
+    result = testdir.runpytest(p)
+    assert result.ret == 0
+    assert 'xfailed' in result.stdout.str()
+    assert 'xpassed' not in result.stdout.str()

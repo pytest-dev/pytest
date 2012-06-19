@@ -110,6 +110,7 @@ class MarkEvaluator:
         return expl
 
 
+@pytest.mark.tryfirst
 def pytest_runtest_setup(item):
     if not isinstance(item, pytest.Function):
         return
