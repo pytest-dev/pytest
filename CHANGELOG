@@ -1,6 +1,7 @@
 Changes between 2.2.4 and 2.2.5.dev
 -----------------------------------
 
+- always report installed 3rd party plugins
 - fix issue160: a failing setup of an xfail-marked tests should
   be reported as xfail (not xpass)
 - fix issue128: show captured output when capsys/capfd are used

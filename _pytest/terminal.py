@@ -263,6 +263,17 @@ class TerminalReporter:
         for line in flatten(lines):
             self.write_line(line)
 
+    def pytest_report_header(self, config):
+        plugininfo = config.pluginmanager._plugin_distinfo
+        if plugininfo:
+            l = []
+            for dist, plugin in plugininfo:
+                name = dist.project_name
+                if name.startswith("pytest-"):
+                    name = name[7:]
+                l.append(name)
+            return "plugins: %s" % ", ".join(l)
+
     def pytest_collection_finish(self, session):
         if self.config.option.collectonly:
             self._printcollecteditems(session.items)

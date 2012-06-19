@@ -416,6 +416,10 @@ class TestTerminalFunctional:
             "*test_header_trailer_info.py .",
             "=* 1 passed in *.[0-9][0-9] seconds *=",
         ])
+        if pytest.config.pluginmanager._plugin_distinfo:
+            result.stdout.fnmatch_lines([
+                "plugins: *",
+            ])
 
     def test_showlocals(self, testdir):
         p1 = testdir.makepyfile("""
