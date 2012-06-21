@@ -10,6 +10,13 @@ Changes between 2.2.4 and 2.2.5.dev
 - fix issue159: improve http://pytest.org/latest/faq.html 
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
+- reporting refinements:
+  - pytest_report_header now receives a "startdir" so that
+    you can use startdir.bestrelpath(yourpath) to show
+    nice relative path
+  - allow plugins to implement both pytest_report_header and 
+    pytest_sessionstart (sessionstart is invoked first).
+  - don't show deselected reason line if there is none
 
 Changes between 2.2.3 and 2.2.4
 -----------------------------------

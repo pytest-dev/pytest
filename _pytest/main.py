@@ -29,7 +29,6 @@ def pytest_addoption(parser):
     group._addoption('--maxfail', metavar="num",
                action="store", type="int", dest="maxfail", default=0,
                help="exit after first num failures or errors.")
-
     group._addoption('--strict', action="store_true",
                help="run pytest in strict mode, warnings become errors.")
 

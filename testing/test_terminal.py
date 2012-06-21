@@ -632,17 +632,20 @@ class TestGenericReporting:
 
     def test_pytest_report_header(self, testdir, option):
         testdir.makeconftest("""
+            def pytest_sessionstart(session):
+                session.config._somevalue = 42
             def pytest_report_header(config):
-                return "hello: info"
+                return "hello: %s" % config._somevalue
         """)
         testdir.mkdir("a").join("conftest.py").write("""
-def pytest_report_header(config):
-    return ["line1", "line2"]""")
+def pytest_report_header(config, startdir):
+    return ["line1", str(startdir)]
+""")
         result = testdir.runpytest("a")
         result.stdout.fnmatch_lines([
             "line1",
-            "line2",
-            "*hello: info*",
+            str(testdir.tmpdir),
+            "*hello: 42*",
         ])
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")

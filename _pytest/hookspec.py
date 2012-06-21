@@ -193,7 +193,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 # hooks for influencing reporting (invoked from _pytest_terminal)
 # -------------------------------------------------------------------------
 
-def pytest_report_header(config):
+def pytest_report_header(config, startdir):
     """ return a string to be displayed as header info for terminal reporting."""
 
 def pytest_report_teststatus(report):

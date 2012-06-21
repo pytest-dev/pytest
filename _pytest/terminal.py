@@ -2,7 +2,8 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-import pytest, py
+import pytest
+import py
 import sys
 import os
 
@@ -94,7 +95,7 @@ class TerminalReporter:
         self._numcollected = 0
 
         self.stats = {}
-        self.curdir = py.path.local()
+        self.startdir = self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
         self._tw = py.io.TerminalWriter(file)
@@ -109,9 +110,9 @@ class TerminalReporter:
     def write_fspath_result(self, fspath, res):
         if fspath != self.currentfspath:
             self.currentfspath = fspath
-            #fspath = self.curdir.bestrelpath(fspath)
+            #fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            #relpath = self.curdir.bestrelpath(fspath)
+            #relpath = self.startdir.bestrelpath(fspath)
             self._tw.write(fspath + " ")
         self._tw.write(res)
 
@@ -243,6 +244,7 @@ class TerminalReporter:
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
+    @pytest.mark.trylast
     def pytest_sessionstart(self, session):
         self._sessionstarttime = py.std.time.time()
         if not self.showheader:
@@ -258,7 +260,8 @@ class TerminalReporter:
            getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
         self.write_line(msg)
-        lines = self.config.hook.pytest_report_header(config=self.config)
+        lines = self.config.hook.pytest_report_header(
+            config=self.config, startdir=self.startdir)
         lines.reverse()
         for line in flatten(lines):
             self.write_line(line)
@@ -463,8 +466,9 @@ class TerminalReporter:
             m = self.config.option.markexpr
             if m:
                 l.append("-m %r" % m)
-            self.write_sep("=", "%d tests deselected by %r" %(
-                len(self.stats['deselected']), " ".join(l)), bold=True)
+            if l:
+                self.write_sep("=", "%d tests deselected by %r" %(
+                    len(self.stats['deselected']), " ".join(l)), bold=True)
 
 def repr_pythonversion(v=None):
     if v is None:
