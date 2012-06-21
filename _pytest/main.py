@@ -133,8 +133,10 @@ class HookProxy:
     def __init__(self, fspath, config):
         self.fspath = fspath
         self.config = config
+
     def __getattr__(self, name):
         hookmethod = getattr(self.config.hook, name)
+
         def call_matching_hooks(**kwargs):
             plugins = self.config._getmatchingplugins(self.fspath)
             return hookmethod.pcall(plugins, **kwargs)
@@ -143,8 +145,9 @@ class HookProxy:
 def compatproperty(name):
     def fget(self):
         return getattr(pytest, name)
+
     return property(fget, None, None,
-        "deprecated attribute %r, use pytest.%s" % (name,name))
+        "deprecated attribute %r, use pytest.%s" % (name, name))
 
 class Node(object):
     """ base class for all Nodes in the collection tree.
@@ -184,7 +187,8 @@ class Node(object):
         return cls
 
     def __repr__(self):
-        return "<%s %r>" %(self.__class__.__name__, getattr(self, 'name', None))
+        return "<%s %r>" %(self.__class__.__name__,
+                           getattr(self, 'name', None))
 
     # methods for ordering nodes
     @property
@@ -201,8 +205,8 @@ class Node(object):
     def __eq__(self, other):
         if not isinstance(other, Node):
             return False
-        return self.__class__ == other.__class__ and \
-               self.name == other.name and self.parent == other.parent
+        return (self.__class__ == other.__class__ and
+                self.name == other.name and self.parent == other.parent)
 
     def __ne__(self, other):
         return not self == other
@@ -371,7 +375,8 @@ class Session(FSCollector):
     def __init__(self, config):
         super(Session, self).__init__(py.path.local(), parent=None,
             config=config, session=self)
-        assert self.config.pluginmanager.register(self, name="session", prepend=True)
+        assert self.config.pluginmanager.register(
+            self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
@@ -457,7 +462,7 @@ class Session(FSCollector):
         if path.check(dir=1):
             assert not names, "invalid arg %r" %(arg,)
             for path in path.visit(fil=lambda x: x.check(file=1),
-                rec=self._recurse, bf=True, sort=True):
+                                   rec=self._recurse, bf=True, sort=True):
                 for x in self._collectfile(path):
                     yield x
         else:
@@ -469,13 +474,13 @@ class Session(FSCollector):
         ihook = self.gethookproxy(path)
         if not self.isinitpath(path):
             if ihook.pytest_ignore_collect(path=path, config=self.config):
-               return ()
+                return ()
         return ihook.pytest_collect_file(path=path, parent=self)
 
     def _recurse(self, path):
         ihook = self.gethookproxy(path.dirpath())
         if ihook.pytest_ignore_collect(path=path, config=self.config):
-           return
+            return
         for pat in self._norecursepatterns:
             if path.check(fnmatch=pat):
                 return False

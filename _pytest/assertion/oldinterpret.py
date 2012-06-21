@@ -526,10 +526,13 @@ if __name__ == '__main__':
     # example:
     def f():
         return 5
+
     def g():
         return 3
+
     def h(x):
         return 'never'
+
     check("f() * g() == 5")
     check("not f()")
     check("not (f() and g() or 0)")

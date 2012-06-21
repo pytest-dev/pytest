@@ -116,9 +116,7 @@ def assertrepr_compare(op, left, right):
         excinfo = py.code.ExceptionInfo()
         explanation = ['(pytest_assertion plugin: representation of '
             'details failed. Probably an object has a faulty __repr__.)',
-            str(excinfo)
-            ]
-
+            str(excinfo)]
 
     if not explanation:
         return None

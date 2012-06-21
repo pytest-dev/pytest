@@ -44,4 +44,3 @@ if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
     from _pytest.assertion.newinterpret import interpret as reinterpret
 else:
     reinterpret = reinterpret_old
-
