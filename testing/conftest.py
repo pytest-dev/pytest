@@ -46,6 +46,7 @@ def check_open_files(config):
         config._numfiles = len(lines2)
         raise AssertionError("\n".join(error))
 
+@pytest.mark.tryfirst # XXX rather do item.addfinalizer
 def pytest_runtest_setup(item):
     item._oldir = py.path.local()
 
