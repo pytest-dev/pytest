@@ -355,3 +355,31 @@ def test_run(pytester, fslayout):
     result = pytester.runpytest(p)
     assert result.ret == 0
     assert result.passed == 1
+
+Another idea is to allow to define a full scenario including the run
+in one content string::
+
+    runscenario("""
+        test_{TESTNAME}.py:
+            import pytest
+            @pytest.mark.xfail
+            def test_that_fails():
+                assert 0
+
+            @pytest.mark.skipif("True")
+            def test_hello():
+                pass
+
+        conftest.py:
+            import pytest
+            def pytest_runsetup_setup(item):
+                pytest.skip("abc")
+
+        runpytest -rsxX
+        *SKIP*{TESTNAME}*
+        *1 skipped* 
+    """)
+
+This could be run with at least three different ways to invoke pytest:
+through the shell, through "python -m pytest" and inlined. As inlined
+would be the fastest it could be run first (or "--fast" mode).

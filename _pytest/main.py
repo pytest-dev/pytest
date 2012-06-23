@@ -387,7 +387,7 @@ class Session(FSCollector):
             raise self.Interrupted(self.shouldstop)
 
     def pytest_runtest_logreport(self, report):
-        if report.failed and 'xfail' not in getattr(report, 'keywords', []):
+        if report.failed and not hasattr(report, 'wasxfail'):
             self._testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self._testsfailed >= maxfail:

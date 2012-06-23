@@ -114,7 +114,7 @@ class LogXML(object):
 
     def append_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        if "xfail" in report.keywords:
+        if hasattr(report, "wasxfail"):
             self.append(
                 Junit.skipped(message="xfail-marked test passes unexpectedly"))
             self.skipped += 1
@@ -148,8 +148,8 @@ class LogXML(object):
         self.errors += 1
 
     def append_skipped(self, report):
-        if "xfail" in report.keywords:
-            self.append(Junit.skipped(str(report.keywords['xfail']),
+        if hasattr(report, "wasxfail"):
+            self.append(Junit.skipped(str(report.wasxfail),
                                       message="expected test failure"))
         else:
             filename, lineno, skipreason = report.longrepr

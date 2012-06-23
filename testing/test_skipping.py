@@ -113,8 +113,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.skipped
-        expl = callreport.keywords['xfail']
-        assert expl == ""
+        assert callreport.wasxfail == ""
 
     def test_xfail_xpassed(self, testdir):
         item = testdir.getitem("""
@@ -127,8 +126,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.failed
-        expl = callreport.keywords['xfail']
-        assert expl == ""
+        assert callreport.wasxfail == ""
 
     def test_xfail_run_anyway(self, testdir):
         testdir.makepyfile("""
@@ -155,7 +153,8 @@ class TestXFail:
         reports = runtestprotocol(item, log=False)
         callreport = reports[1]
         assert callreport.failed
-        assert 'xfail' not in callreport.keywords
+        assert not hasattr(callreport, "wasxfail")
+        assert 'xfail' in callreport.keywords
 
     def test_xfail_not_report_default(self, testdir):
         p = testdir.makepyfile(test_one="""
@@ -572,3 +571,28 @@ def test_xfail_test_setup_exception(testdir):
     assert result.ret == 0
     assert 'xfailed' in result.stdout.str()
     assert 'xpassed' not in result.stdout.str()
+
+def test_imperativeskip_on_xfail_test(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.xfail
+        def test_that_fails():
+            assert 0
+
+        @pytest.mark.skipif("True")
+        def test_hello():
+            pass
+    """)
+    testdir.makeconftest("""
+        import pytest
+        def pytest_runtest_setup(item):
+            pytest.skip("abc")
+    """)
+    result = testdir.runpytest("-rsxX")
+    result.stdout.fnmatch_lines_random("""
+        *SKIP*abc*
+        *SKIP*condition: True*
+        *2 skipped*
+    """)
+
+

@@ -138,7 +138,7 @@ class TestPython:
                 sys.stderr.write("hello-stderr\\n")
                 raise ValueError(42)
         """)
-            
+
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
@@ -366,7 +366,7 @@ def test_invalid_xml_escape():
                 27, # issue #126
                0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)
     valid = (0x9, 0xA, 0x20,) # 0xD, 0xD7FF, 0xE000, 0xFFFD, 0x10000, 0x10FFFF)
-    
+
     from _pytest.junitxml import bin_xml_escape
 
 

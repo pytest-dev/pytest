@@ -50,7 +50,7 @@ def pytest_make_collect_report(__multicall__, collector):
 
 def pytest_runtest_makereport():
     pytestPDB.item = None
-    
+
 class PdbInvoke:
     @pytest.mark.tryfirst
     def pytest_runtest_makereport(self, item, call, __multicall__):
@@ -59,7 +59,7 @@ class PdbInvoke:
             call.excinfo.errisinstance(pytest.skip.Exception) or \
             call.excinfo.errisinstance(py.std.bdb.BdbQuit):
             return rep
-        if "xfail" in rep.keywords:
+        if hasattr(rep, "wasxfail"):
             return rep
         # we assume that the above execute() suspended capturing
         # XXX we re-use the TerminalReporter's terminalwriter
