@@ -1,12 +1,14 @@
 Changes between 2.2.4 and 2.2.5.dev
 -----------------------------------
 
+- catch unicode-issues when writing failure representations
+  to terminal to prevent the whole session from crashing
 - fix xfail/skip confusion: a skip-mark or an imperative pytest.skip
   will now take precedence before xfail-markers because we
   can't determine xfail/xpass status in case of a skip. see also:
   http://stackoverflow.com/questions/11105828/in-py-test-when-i-explicitly-skip-a-test-that-is-marked-as-xfail-how-can-i-get
 
-- always report installed 3rd party plugins
+- always report installed 3rd party plugins in the header of a test run
 
 - fix issue160: a failing setup of an xfail-marked tests should
   be reported as xfail (not xpass)

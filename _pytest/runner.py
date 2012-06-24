@@ -154,7 +154,10 @@ class BaseReport(object):
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
-            out.line(str(longrepr))
+            try:
+                out.line(longrepr)
+            except UnicodeEncodeError:
+                out.line("<unprintable longrepr>")
 
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
@@ -279,7 +282,7 @@ class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):
         self.longrepr = msg
     def toterminal(self, out):
-        out.line(str(self.longrepr), red=True)
+        out.line(self.longrepr, red=True)
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """

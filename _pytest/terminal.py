@@ -38,13 +38,14 @@ def pytest_configure(config):
     stdout = py.std.sys.stdout
     if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
         try:
-            newfd = os.dup(stdout.fileno())
-            #print "got newfd", newfd
+            newstdout = py.io.dupfile(stdout, buffering=1,
+                                      encoding=stdout.encoding)
         except ValueError:
             pass
         else:
-            stdout = os.fdopen(newfd, stdout.mode, 1)
-            config._cleanup.append(lambda: stdout.close())
+            config._cleanup.append(lambda: newstdout.close())
+            assert stdout.encoding  == newstdout.encoding
+            stdout = newstdout
 
     reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')

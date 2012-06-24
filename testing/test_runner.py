@@ -456,3 +456,21 @@ def test_pytest_cmdline_main(testdir):
     ret = popen.wait()
     assert ret == 0
 
+
+def test_unicode_in_longrepr(testdir):
+    testdir.makeconftest("""
+        import py
+        def pytest_runtest_makereport(__multicall__):
+            rep = __multicall__.execute()
+            if rep.when == "call":
+                rep.longrepr = py.builtin._totext("\\xc3\\xa4", "utf8")
+            return rep
+    """)
+    testdir.makepyfile("""
+        def test_out():
+            assert 0
+    """)
+    result = testdir.runpytest()
+    assert result.ret == 1
+    assert "UnicodeEncodeError" not in result.stderr.str()
+
