@@ -496,7 +496,7 @@ def getfuncargnames(function, startindex=None):
 def fillfuncargs(node):
     """ fill missing funcargs. """
     if not isinstance(node, Function):
-        node = FuncargRequest(pyfuncitem=node)
+        node = OldFuncargRequest(pyfuncitem=node)
     if node.funcargs is None:
         node.funcargs = getattr(node, "_funcargs", {})
     if not isinstance(node, Function) or not node._isyieldedfunction():
@@ -882,7 +882,7 @@ def itemapi_property(name, set=False):
     return property(get, set, None, doc)
 
 
-class FuncargRequest(Request):
+class OldFuncargRequest(Request):
     """ (deprecated) helper interactions with a test function invocation.
 
     Note that there is an optional ``param`` attribute in case
@@ -901,7 +901,7 @@ class FuncargRequest(Request):
             pass
 
     def __repr__(self):
-        return "<FuncargRequest for %r>" % (self._pyfuncitem.name)
+        return "<OldFuncargRequest for %r>" % (self._pyfuncitem.name)
 
     _getscopeitem = itemapi_property("_getscopeitem")
     funcargs = itemapi_property("funcargs", set=True)
