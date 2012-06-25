@@ -2,7 +2,6 @@ import py, pytest
 import os
 
 from _pytest.tmpdir import pytest_funcarg__tmpdir, TempdirHandler
-from _pytest.python import FuncargRequest
 
 def test_funcarg(testdir):
     item = testdir.getitem("""
@@ -11,12 +10,12 @@ def test_funcarg(testdir):
                 metafunc.addcall(id='b')
             def test_func(tmpdir): pass
             """, 'test_func[a]')
-    p = pytest_funcarg__tmpdir(FuncargRequest(item))
+    p = pytest_funcarg__tmpdir(item)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn.endswith("test_func_a_")
     item.name = "qwe/\\abc"
-    p = pytest_funcarg__tmpdir(FuncargRequest(item))
+    p = pytest_funcarg__tmpdir(item)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn == "qwe__abc"

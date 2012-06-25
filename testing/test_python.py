@@ -690,8 +690,8 @@ class TestRequest:
         assert val2 == 2
         val2 = req.getfuncargvalue("other")  # see about caching
         assert val2 == 2
-        req._fillfuncargs()
-        assert item.funcargs == {'something': 1}
+        pytest._fillfuncargs(item)
+        assert item.funcargs == {'something': 1, "other": 2}
 
     def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
@@ -700,9 +700,8 @@ class TestRequest:
                 request.addfinalizer(lambda: teardownlist.append(1))
             def test_func(something): pass
         """)
-        req = funcargs.FuncargRequest(item)
-        req._pyfuncitem.session._setupstate.prepare(item) # XXX
-        req._fillfuncargs()
+        item.session._setupstate.prepare(item)
+        pytest._fillfuncargs(item)
         # successively check finalization calls
         teardownlist = item.getparent(pytest.Module).obj.teardownlist
         ss = item.session._setupstate
@@ -799,7 +798,8 @@ class TestRequestCachedSetup:
         req3 = funcargs.FuncargRequest(item3)
         ret3a = req3.cached_setup(setup, scope="class")
         ret3b = req3.cached_setup(setup, scope="class")
-        assert ret3a == ret3b == "hello2"
+        assert ret3a == "hello2"
+        assert ret3b == "hello2"
         req4 = funcargs.FuncargRequest(item4)
         ret4 = req4.cached_setup(setup, scope="class")
         assert ret4 == ret3a
@@ -830,11 +830,12 @@ class TestRequestCachedSetup:
         ret1 = req1.cached_setup(setup, teardown, scope="function")
         assert l == ['setup']
         # artificial call of finalizer
-        req1._pyfuncitem.session._setupstate._callfinalizers(item1)
+        setupstate = req1._pyfuncitem.session._setupstate
+        setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown"]
         ret2 = req1.cached_setup(setup, teardown, scope="function")
         assert l == ["setup", "teardown", "setup"]
-        req1._pyfuncitem.session._setupstate._callfinalizers(item1)
+        setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown", "setup", "teardown"]
 
     def test_request_cached_setup_two_args(self, testdir):
@@ -1092,9 +1093,9 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
-            def pytest_funcarg__metafunc(request):
-                assert request._pyfuncitem._genid == "0"
-                return request.param
+            def pytest_funcarg__metafunc(item):
+                assert item._genid == "0"
+                return item.param
 
             def test_function(metafunc, pytestconfig):
                 assert metafunc.config == pytestconfig
@@ -1588,3 +1589,61 @@ def test_issue117_sessionscopeteardown(testdir):
         "*3/x*",
         "*ZeroDivisionError*",
     ])
+
+class TestRequestAPI:
+    def test_addfinalizer_cachedsetup_getfuncargvalue(self, testdir):
+        testdir.makeconftest("""
+            l = []
+            def pytest_runtest_setup(item):
+                item.addfinalizer(lambda: l.append(1))
+                l2 = item.getfuncargvalue("l")
+                assert l2 is l
+                item.cached_setup(lambda: l.append(2), lambda val: l.append(3),
+                                  scope="function")
+            def pytest_funcarg__l(request):
+                return l
+        """)
+        testdir.makepyfile("""
+            def test_hello():
+                pass
+            def test_hello2(l):
+                assert l == [2, 3, 1, 2]
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*2 passed*",
+        ])
+
+    def test_runtest_setup_sees_filled_funcargs(self, testdir):
+        testdir.makeconftest("""
+            def pytest_runtest_setup(item):
+                assert item.funcargs is None
+        """)
+        testdir.makepyfile("""
+            def pytest_funcarg__a(request):
+                return 1
+            def pytest_funcarg__b(request):
+                return request.getfuncargvalue("a") + 1
+            def test_hello(b):
+                assert b == 2
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+        ])
+
+        result = testdir.makeconftest("""
+            import pytest
+            @pytest.mark.trylast
+            def pytest_runtest_setup(item):
+                assert item.funcargs == {"a": 1, "b": 2}
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+        ])
+
+

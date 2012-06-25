@@ -12,33 +12,25 @@ def interpret(expr):
 class TestBinReprIntegration:
     pytestmark = needsnewassert
 
-    def pytest_funcarg__hook(self, request):
-        class MockHook(object):
-            def __init__(self):
-                self.called = False
-                self.args = tuple()
-                self.kwargs = dict()
-
-            def __call__(self, op, left, right):
-                self.called = True
-                self.op = op
-                self.left = left
-                self.right = right
-        mockhook = MockHook()
-        monkeypatch = request.getfuncargvalue("monkeypatch")
-        monkeypatch.setattr(util, '_reprcompare', mockhook)
-        return mockhook
-
-    def test_pytest_assertrepr_compare_called(self, hook):
-        interpret('assert 0 == 1')
-        assert hook.called
-
-
-    def test_pytest_assertrepr_compare_args(self, hook):
-        interpret('assert [0, 1] == [0, 2]')
-        assert hook.op == '=='
-        assert hook.left == [0, 1]
-        assert hook.right == [0, 2]
+    def test_pytest_assertrepr_compare_called(self, testdir):
+        testdir.makeconftest("""
+            l = []
+            def pytest_assertrepr_compare(op, left, right):
+                l.append((op, left, right))
+            def pytest_funcarg__l(request):
+                return l
+        """)
+        testdir.makepyfile("""
+            def test_hello():
+                assert 0 == 1
+            def test_check(l):
+                assert l == [("==", 0, 1)]
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_hello*FAIL*",
+            "*test_check*PASS*",
+        ])
 
 def callequal(left, right):
     return plugin.pytest_assertrepr_compare('==', left, right)

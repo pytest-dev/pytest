@@ -1,6 +1,19 @@
-Changes between 2.2.4 and 2.2.5.dev
+Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- merge FuncargRequest and Item API such that funcarg-functionality
+  is now natively available on the "item" object passed to the various
+  pytest_runtest hooks.  This allows more sensitive behaviour
+  of e.g. the pytest-django plugin which previously had no full
+  access to all instantiated funcargs.
+  This internal API re-organisation is a fully backward compatible
+  change: existing factories accepting a "request" object will 
+  get a Function "item" object which carries the same API.  In fact,
+  the FuncargRequest API (or rather then a ResourceRequestAPI)
+  could be available for all collection and item nodes but this is
+  left for later consideration because it would render the documentation
+  invalid and the "funcarg" naming sounds odd in context of
+  directory, file, class, etc. nodes.
 - catch unicode-issues when writing failure representations
   to terminal to prevent the whole session from crashing
 - fix xfail/skip confusion: a skip-mark or an imperative pytest.skip
@@ -23,6 +36,7 @@ Changes between 2.2.4 and 2.2.5.dev
   pytest-django, trial and unittest integration.
 
 - reporting refinements:
+
   - pytest_report_header now receives a "startdir" so that
     you can use startdir.bestrelpath(yourpath) to show
     nice relative path

@@ -296,7 +296,6 @@ into interactive debugging when a test failure occurs.
 
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
-
 Collection hooks
 ------------------------------
 
@@ -327,37 +326,44 @@ test execution:
 
 .. autofunction: pytest_runtest_logreport
 
-Reference of important objects involved in hooks
+Reference of objects involved in hooks
 ===========================================================
 
-.. autoclass:: _pytest.config.Config
+.. autoclass:: _pytest.main.Request()
     :members:
 
-.. autoclass:: _pytest.config.Parser
+.. autoclass:: _pytest.config.Config()
     :members:
 
-.. autoclass:: _pytest.main.Node(name, parent)
+.. autoclass:: _pytest.config.Parser()
     :members:
 
-..
-    .. autoclass:: _pytest.main.File(fspath, parent)
-        :members:
-
-    .. autoclass:: _pytest.main.Item(name, parent)
-        :members:
-
-    .. autoclass:: _pytest.python.Module(name, parent)
-        :members:
-
-    .. autoclass:: _pytest.python.Class(name, parent)
-        :members:
-
-    .. autoclass:: _pytest.python.Function(name, parent)
-        :members:
-
-.. autoclass:: _pytest.runner.CallInfo
+.. autoclass:: _pytest.main.Node()
     :members:
 
-.. autoclass:: _pytest.runner.TestReport
+.. autoclass:: _pytest.main.Collector()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.main.Item()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.python.Module()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.python.Class()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.python.Function()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.runner.CallInfo()
+    :members:
+
+.. autoclass:: _pytest.runner.TestReport()
     :members:
 

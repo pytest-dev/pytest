@@ -119,7 +119,7 @@ class CaptureManager:
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
-        if hasattr(pyfuncitem, 'funcargs'):
+        if pyfuncitem.funcargs:
             for name, capfuncarg in pyfuncitem.funcargs.items():
                 if name in ('capsys', 'capfd'):
                     assert not hasattr(self, '_capturing_funcarg')
@@ -186,7 +186,7 @@ def pytest_funcarg__capsys(request):
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
-    if "capfd" in request._funcargs:
+    if "capfd" in request.funcargs:
         raise request.LookupError(error_capsysfderror)
     return CaptureFuncarg(py.io.StdCapture)
 
@@ -195,7 +195,7 @@ def pytest_funcarg__capfd(request):
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
-    if "capsys" in request._funcargs:
+    if "capsys" in request.funcargs:
         raise request.LookupError(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
