@@ -1,11 +1,11 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
-- merge FuncargRequest and Item API such that funcarg-functionality
-  is now natively available on the "item" object passed to the various
-  pytest_runtest hooks.  This allows more sensitive behaviour
-  of e.g. the pytest-django plugin which previously had no full
-  access to all instantiated funcargs.
+- fix issue139 - merge FuncargRequest and Item API such that 
+  funcarg-functionality is now directly available on the "item" 
+  object passed to the various pytest_runtest hooks.  This allows more 
+  sensitive behaviour of e.g. the pytest-django plugin which previously 
+  had no full access to all instantiated funcargs.
   This internal API re-organisation is a fully backward compatible
   change: existing factories accepting a "request" object will 
   get a Function "item" object which carries the same API.  In fact,
