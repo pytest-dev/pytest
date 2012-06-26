@@ -35,9 +35,6 @@ class Parser:
             if option.dest:
                 self._processopt(option)
 
-    def addnote(self, note):
-        self._notes.append(note)
-
     def getgroup(self, name, description="", after=None):
         """ get (or create) a named option Group.
 
