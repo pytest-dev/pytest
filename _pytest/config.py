@@ -151,20 +151,24 @@ class Conftest(object):
                     p = current.join(opt1[len(opt)+1:], abs=1)
                 self._confcutdir = p
                 break
-        for arg in args + [current]:
+        foundanchor = False
+        for arg in args:
             if hasattr(arg, 'startswith') and arg.startswith("--"):
                 continue
             anchor = current.join(arg, abs=1)
             if anchor.check(): # we found some file object
-                self._path2confmods[None] = self.getconftestmodules(anchor)
-                # let's also consider test* dirs
-                if anchor.check(dir=1):
-                    for x in anchor.listdir("test*"):
-                        if x.check(dir=1):
-                            self.getconftestmodules(x)
-                break
-        else:
-            assert 0, "no root of filesystem?"
+                self._try_load_conftest(anchor)
+                foundanchor = True
+        if not foundanchor:
+            self._try_load_conftest(current)
+
+    def _try_load_conftest(self, anchor):
+        self._path2confmods[None] = self.getconftestmodules(anchor)
+        # let's also consider test* subdirs
+        if anchor.check(dir=1):
+            for x in anchor.listdir("test*"):
+                if x.check(dir=1):
+                    self.getconftestmodules(x)
 
     def getconftestmodules(self, path):
         """ return a list of imported conftest modules for the given path.  """

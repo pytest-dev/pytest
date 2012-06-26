@@ -15,7 +15,8 @@ def pytest_funcarg__basedir(request):
             d.ensure("adir/__init__.py")
             d.ensure("adir/b/__init__.py")
         return d
-    return request.cached_setup(lambda: basedirmaker(request), extrakey=request.param)
+    return request.cached_setup(
+        lambda: basedirmaker(request), extrakey=request.param)
 
 def ConftestWithSetinitial(path):
     conftest = Conftest()
@@ -105,6 +106,17 @@ def test_doubledash_not_considered(testdir):
     conftest.setinitial([conf.basename, conf.basename])
     l = conftest.getconftestmodules(None)
     assert len(l) == 0
+
+def test_issue151_load_all_conftests(testdir):
+    names = "code proj src".split()
+    for name in names:
+        p = testdir.mkdir(name)
+        p.ensure("conftest.py")
+
+    conftest = Conftest()
+    conftest.setinitial(names)
+    d = list(conftest._conftestpath2mod.values())
+    assert len(d) == len(names)
 
 def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
