@@ -121,9 +121,6 @@ def assertrepr_compare(op, left, right):
     if not explanation:
         return None
 
-    # Don't include pageloads of data, should be configurable
-    if len(''.join(explanation)) > 80*8:
-        explanation = ['Detailed information too verbose, truncated']
 
     return [summary] + explanation
 

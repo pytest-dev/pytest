@@ -46,6 +46,8 @@ Changes between 2.2.4 and 2.3.0.dev
 
   - don't show deselected reason line if there is none
 
+  - py.test -vv will show all of assert comparisations instead of truncating
+
 Changes between 2.2.3 and 2.2.4
 -----------------------------------
 

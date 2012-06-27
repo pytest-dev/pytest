@@ -150,6 +150,29 @@ def test_sequence_comparison_uses_repr(testdir):
         "*E*'y'*",
     ])
 
+
+def test_assert_compare_truncate_longmessage(testdir):
+    testdir.makepyfile(r"""
+        def test_long():
+            a = list(range(200))
+            b = a[::2]
+            a = '\n'.join(map(str, a))
+            b = '\n'.join(map(str, b))
+            assert a == b
+    """)
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*too verbose, truncated*",
+    ])
+
+
+    result = testdir.runpytest('-vv')
+    result.stdout.fnmatch_lines([
+        "*- 197",
+    ])
+
+
 @needsnewassert
 def test_assertrepr_loaded_per_dir(testdir):
     testdir.makepyfile(test_base=['def test_base(): assert 1 == 2'])
