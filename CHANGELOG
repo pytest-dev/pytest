@@ -1,6 +1,7 @@
 Changes between 2.2.4 and 2.2.5.dev
 -----------------------------------
 
+- fix issue165 - broken links in documentation
 - catch unicode-issues when writing failure representations
   to terminal to prevent the whole session from crashing
 - fix xfail/skip confusion: a skip-mark or an imperative pytest.skip
@@ -290,7 +291,7 @@ Changes between 2.0.0 and 2.0.1
 - refinements to "collecting" output on non-ttys
 - refine internal plugin registration and --traceconfig output
 - introduce a mechanism to prevent/unregister plugins from the 
-  command line, see http://pytest.org/plugins.html#cmdunregister
+  command line, see http://pytest.org/latest/plugins.html#cmdunregister
 - activate resultlog plugin by default
 - fix regression wrt yielded tests which due to the
   collection-before-running semantics were not 
