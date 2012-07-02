@@ -32,7 +32,7 @@ Here are some examples of projects using py.test (please send notes via :ref:`co
 * `XIST <http://www.livinglogic.de/Python/xist/>`_ extensible HTML/XML generator
 * `tiddlyweb <http://pypi.python.org/pypi/tiddlyweb>`_ optionally headless, extensible RESTful datastore
 * `fancycompleter <http://bitbucket.org/antocuni/fancycompleter/src>`_ for colorful tab-completion
-* `Paludis <http://paludis-tools.lunaryorn.de/>`_ tools for Gentoo Paludis package manager
+* `Paludis <http://paludis.exherbo.org/>`_ tools for Gentoo Paludis package manager
 * `Gerald <http://halfcooked.com/code/gerald/>`_ schema comparison tool
 * `abjad <http://code.google.com/p/abjad/>`_ Python API for Formalized Score control
 * `bu <http://packages.python.org/bu/>`_ a microscopic build system

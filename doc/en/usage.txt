@@ -130,7 +130,7 @@ To create plain-text machine-readable result files you can issue::
 and look at the content at the ``path`` location.  Such files are used e.g.
 by the `PyPy-test`_ web page to show test results over several revisions.
 
-.. _`PyPy-test`: http://codespeak.net:8099/summary
+.. _`PyPy-test`: http://buildbot.pypy.org/summary
 
 
 Sending test report to pocoo pastebin service
@@ -148,7 +148,7 @@ for example ``-x`` if you only want to send one particular failure.
 
     py.test --pastebin=all
 
-Currently only pasting to the http://paste.pocoo.org service is implemented.
+Currently only pasting to the http://bpaste.net service is implemented.
 
 Calling pytest from Python code
 ----------------------------------------------------

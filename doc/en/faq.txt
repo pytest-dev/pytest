@@ -3,8 +3,9 @@ Some Issues and Questions
 
 .. note::
 
-    If you don't find an answer here, checkout the :ref:`contact channels`
-    to get help.
+    If you don't find an answer here, you may checkout 
+    `pytest Q&A at Stackoverflow <http://stackoverflow.com/search?q=pytest>`_ 
+    or other :ref:`contact channels` to get help.
 
 On naming, nosetests, licensing and magic
 ------------------------------------------------
@@ -36,7 +37,7 @@ In 2012, some work is going into the `pytest-django plugin <http://pypi.python.o
 ``manage.py test`` and allows to use all pytest features_ most of which
 are not available from Django directly.
 
-.. _features: test/features.html
+.. _features: features.html
 
 
 What's this "magic" with py.test? (historic notes)
@@ -93,7 +94,7 @@ is another tool named "pytest" we just decided to stick with
 Function arguments, parametrized tests and setup
 -------------------------------------------------------
 
-.. _funcargs: test/funcargs.html
+.. _funcargs: funcargs.html
 
 Is using funcarg- versus xUnit setup a style question?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -107,9 +108,9 @@ code (like e.g. the monkeypatch_, the tmpdir_ or capture_ funcargs)
 because the support code can register setup/teardown functions
 in a managed class/module/function scope.
 
-.. _monkeypatch: test/plugin/monkeypatch.html
-.. _tmpdir: test/plugin/tmpdir.html
-.. _capture: test/plugin/capture.html
+.. _monkeypatch: monkeypatch.html
+.. _tmpdir: tmpdir.html
+.. _capture: capture.html
 
 .. _`why pytest_pyfuncarg__ methods?`:
 

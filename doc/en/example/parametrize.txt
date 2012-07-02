@@ -122,7 +122,7 @@ we'll get an error on the last one.
 A quick port of "testscenarios"
 ------------------------------------
 
-.. _`test scenarios`: http://bazaar.launchpad.net/~lifeless/testscenarios/trunk/annotate/head%3A/doc/example.py
+.. _`test scenarios`: http://pypi.python.org/pypi/testscenarios/
 
 Here is a quick port to run tests configured with `test scenarios`_,
 an add-on from Robert Collins for the standard unittest framework. We

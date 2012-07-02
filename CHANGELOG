@@ -1,6 +1,7 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix issue165 - fix broken doc links and mention stackoverflow for FAQ
 - fix issue139 - merge FuncargRequest and Item API such that 
   funcarg-functionality is now directly available on the "item" 
   object passed to the various pytest_runtest hooks.  This allows more 
