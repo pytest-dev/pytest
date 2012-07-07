@@ -103,6 +103,7 @@ which means its really easy to extend its test command
 to support running a pytest from test requirements::
 
     from setuptools.command.test import test as TestCommand
+    import sys
 
     class PyTest(TestCommand):
         def finalize_options(self):
@@ -112,7 +113,8 @@ to support running a pytest from test requirements::
         def run_tests(self):
             #import here, cause outside the eggs aren't loaded
             import pytest
-            pytest.main(self.test_args)
+            errno = pytest.main(self.test_args)
+            sys.exit(errno)
 
     setup(
         #...,
