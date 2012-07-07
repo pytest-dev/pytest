@@ -1,3 +1,4 @@
+import os
 import sys
 import zipfile
 import py
@@ -352,6 +353,7 @@ def test_no_bytecode():
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
+        import _pytest.assertion.rewrite
         testdir.makepyfile("""
 import pytest
 def test_optimized():
@@ -362,8 +364,12 @@ def test_optimized():
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         assert testdir.runpybin("py.test", tmp).ret == 0
+        fname = 'test_pyc_vs_pyo.%s.pyo' % _pytest.assertion.rewrite.PYTEST_TAG
+        assert fname in os.listdir('__pycache__')
         monkeypatch.undo()
         assert testdir.runpybin("py.test", tmp).ret == 1
+        fname = 'test_pyc_vs_pyo.%s.pyc' % _pytest.assertion.rewrite.PYTEST_TAG
+        assert fname in os.listdir('__pycache__')
 
     def test_package(self, testdir):
         pkg = testdir.tmpdir.join("pkg")
