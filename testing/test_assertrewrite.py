@@ -10,7 +10,7 @@ if sys.platform.startswith("java"):
     pytest.skip("assert rewrite does currently not work on jython")
 
 from _pytest.assertion import util
-from _pytest.assertion.rewrite import rewrite_asserts
+from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG
 
 
 def setup_module(mod):
@@ -353,7 +353,6 @@ def test_no_bytecode():
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
-        import _pytest.assertion.rewrite
         testdir.makepyfile("""
 import pytest
 def test_optimized():
@@ -364,12 +363,11 @@ def test_optimized():
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         assert testdir.runpybin("py.test", tmp).ret == 0
-        fname = 'test_pyc_vs_pyo.%s.pyo' % _pytest.assertion.rewrite.PYTEST_TAG
-        assert fname in os.listdir('__pycache__')
+        tagged = "test_pyc_vs_pyo." + PYTEST_TAG
+        assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.undo()
         assert testdir.runpybin("py.test", tmp).ret == 1
-        fname = 'test_pyc_vs_pyo.%s.pyc' % _pytest.assertion.rewrite.PYTEST_TAG
-        assert fname in os.listdir('__pycache__')
+        assert tagged + ".pyc" in os.listdir("__pycache__")
 
     def test_package(self, testdir):
         pkg = testdir.tmpdir.join("pkg")
