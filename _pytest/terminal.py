@@ -12,7 +12,7 @@ def pytest_addoption(parser):
     group._addoption('-v', '--verbose', action="count",
                dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-q', '--quiet', action="count",
-               dest="quiet", default=0, help="decreate verbosity."),
+               dest="quiet", default=0, help="decrease verbosity."),
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
