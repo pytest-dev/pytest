@@ -296,6 +296,7 @@ into interactive debugging when a test failure occurs.
 
 The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
+
 Collection hooks
 ------------------------------
 
@@ -309,6 +310,7 @@ For influencing the collection of objects in Python modules
 you can use the following hook:
 
 .. autofunction:: pytest_pycollect_makeitem
+.. autofunction:: pytest_generate_tests
 
 
 Reporting hooks
@@ -329,7 +331,7 @@ test execution:
 Reference of objects involved in hooks
 ===========================================================
 
-.. autoclass:: _pytest.main.Request()
+.. autoclass:: _pytest.python.Request()
     :members:
 
 .. autoclass:: _pytest.config.Config()

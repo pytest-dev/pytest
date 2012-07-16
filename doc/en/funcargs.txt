@@ -110,11 +110,12 @@ with a list of available function arguments.
 The request object passed to factories
 -----------------------------------------
 
-Each funcarg factory receives a :py:class:`~_pytest.main.Request` object which
+Each funcarg factory receives a :py:class:`~_pytest.python.Request` object which
 provides methods to manage caching and finalization in the context of the
 test invocation as well as several attributes of the the underlying test item.  In fact, as of version pytest-2.3, the request API is implemented on all Item 
 objects and therefore the request object has general :py:class:`Node attributes and methods <_pytest.main.Node>` attributes.  This is a backward compatible 
 change so no changes are neccessary for pre-2.3 funcarg factories.
+
 
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 

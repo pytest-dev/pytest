@@ -610,6 +610,7 @@ class Session(FSCollector):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
 
+    # XXX not used yet
     def register_resource_factory(self, name, factoryfunc,
                                   matchscope=None,
                                   cachescope=None):
@@ -630,7 +631,6 @@ class Session(FSCollector):
                      if you want no caching. Pass "session" if you want to
                      to cache on a per-session level.
         """
-
 
 
 

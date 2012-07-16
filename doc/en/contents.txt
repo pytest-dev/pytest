@@ -23,5 +23,6 @@ Full pytest documentation
    :hidden:
 
    changelog.txt
-   examples/resources.txt
+   resources
+   example/resources_attic
 
