@@ -609,3 +609,29 @@ class Session(FSCollector):
                     for x in self.genitems(subnode):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
+
+    def register_resource_factory(self, name, factoryfunc,
+                                  matchscope=None,
+                                  cachescope=None):
+        """ register a factory function for the given name.
+
+        :param name: the name which can be used to retrieve a value constructed
+                     by the factory function later.
+        :param factoryfunc: a function accepting (name, reqnode) parameters
+                     and returning a value.
+        :param matchscope: denotes visibility of the factory func.
+                     Pass a particular Node instance if you want to
+                     restrict factory function visilbility to its descendants.
+                     Pass None if you want the factory func to be globally
+                     availabile.
+        :param cachescope: denotes caching scope. If you pass a node instance
+                     the value returned by getresource() will be reused
+                     for all descendants of that node.  Pass None (the default)
+                     if you want no caching. Pass "session" if you want to
+                     to cache on a per-session level.
+        """
+
+
+
+
+

@@ -1,0 +1,167 @@
+
+V2: Creating and working with parametrized test resources
+===============================================================
+
+# XXX collection versus setup-time
+# XXX parametrize-relation?
+
+pytest-2.3 provides generalized resource management allowing
+to flexibly manage caching and parametrization across your test suite.
+
+This is draft documentation, pending refinements and changes according
+to feedback and to implementation or backward compatibility issues
+(the new mechanism is supposed to allow fully backward compatible
+operations for uses of the "funcarg" mechanism.
+
+the new global pytest_runtest_init hook
+------------------------------------------------------
+
+Prior to 2.3, pytest offered a pytest_configure and a pytest_sessionstart
+hook which was used often to setup global resources.  This suffers from
+several problems. First of all, in distributed testing the master would
+also setup test resources that are never needed because it only co-ordinates
+the test run activities of the slave processes.  Secondly, in large test
+suites resources are setup that might not be needed for the concrete test
+run.  The first issue is solved through the introduction of a specific
+hook::
+
+    def pytest_runtest_init(session):
+        # called ahead of pytest_runtestloop() test execution
+
+This hook will only be called in processes that actually run tests.
+
+The second issue is solved through a new register/getresource API which
+will only ever setup resources if they are needed.  See the following
+examples and sections on how this works.
+
+
+managing a global database resource
+---------------------------------------------------------------
+
+If you have one database object which you want to use in tests
+you can write the following into a conftest.py file::
+
+    class Database:
+        def __init__(self):
+            print ("database instance created")
+        def destroy(self):
+            print ("database instance destroyed")
+
+    def factory_db(name, node):
+        db = Database()
+        node.addfinalizer(db.destroy)
+        return db
+
+    def pytest_runtest_init(session):
+        session.register_resource("db", factory_db, atnode=session)
+
+You can then access the constructed resource in a test like this::
+
+    def test_something(db):
+        ...
+
+The "db" function argument will lead to a lookup of the respective
+factory value and be passed to the function body.  According to the
+registration, the db object will be instantiated on a per-session basis
+and thus reused across all test functions that require it.
+
+instantiating a database resource per-module
+---------------------------------------------------------------
+
+If you want one database instance per test module you can restrict
+caching by modifying the "atnode" parameter of the registration 
+call above::
+
+    def pytest_runtest_init(session):
+        session.register_resource("db", factory_db, atnode=pytest.Module)
+
+Neither the tests nor the factory function will need to change.
+This also means that you can decide the scoping of resources
+at runtime - e.g. based on a command line option: for developer
+settings you might want per-session and for Continous Integration
+runs you might prefer per-module or even per-function scope like this::
+
+    def pytest_runtest_init(session):
+        session.register_resource_factory("db", factory_db, 
+                                          atnode=pytest.Function)
+
+parametrized resources
+----------------------------------
+
+If you want to rerun tests with different resource values you can specify
+a list of factories instead of just one::
+
+    def pytest_runtest_init(session):
+        session.register_factory("db", [factory1, factory2], atnode=session)
+
+In this case all tests that depend on the "db" resource will be run twice
+using the respective values obtained from the two factory functions.
+
+
+Using a resource from another resource factory
+----------------------------------------------
+
+You can use the database resource from a another resource factory through
+the ``node.getresource()`` method.  Let's add a resource factory for
+a "db_users" table at module-level, extending the previous db-example::
+
+    def pytest_runtest_init(session):
+        ...
+        session.register_factory("db_users", createusers, atnode=module)
+
+    def createusers(name, node):
+        db = node.getresource("db")
+        table = db.create_table("users", ...)
+        node.addfinalizer(lambda: db.destroy_table("users")
+
+    def test_user_creation(db_users):
+        ...
+
+The create-users will be called for each module.  After the tests in
+that module finish execution, the table will be destroyed according
+to registered finalizer.  Note that calling getresource() for a resource
+which has a tighter scope will raise a LookupError because the
+is not available at a more general scope. Concretely, if you
+table is defined as a per-session resource and the database object as a
+per-module one, the table creation cannot work on a per-session basis.
+
+
+Setting resources as class attributes 
+-------------------------------------------
+
+If you want to make an attribute available on a test class, you can 
+use the resource_attr marker::
+
+    @pytest.mark.resource_attr("db")
+    class TestClass:
+        def test_something(self):
+            #use self.db 
+
+Note that this way of using resources can be used on unittest.TestCase
+instances as well (function arguments can not be added due to unittest 
+limitations).
+
+
+How the funcarg mechanism is implemented (internal notes)
+-------------------------------------------------------------
+
+Prior to pytest-2.3/4, pytest advertised the "funcarg" mechanism 
+which provided a subset functionality to the generalized resource management.
+In fact, the previous mechanism is implemented in terms of the new API
+and should continue to work unmodified.  It basically automates the
+registration of  factories through automatic discovery of 
+``pytest_funcarg_NAME`` function on plugins, Python modules and classes.
+
+As an example let's consider the Module.setup() method::
+
+    class Module(PyCollector):
+        def setup(self):
+            for name, func in self.obj.__dict__.items():
+                if name.startswith("pytest_funcarg__"):
+                    resourcename = name[len("pytest_funcarg__"):]
+                    self._register_factory(resourcename, 
+                                           RequestAdapter(self, name, func))
+
+The request adapater takes care to provide the pre-2.3 API for funcarg
+factories, providing request.cached_setup/addfinalizer/getfuncargvalue
+methods.
