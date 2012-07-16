@@ -119,8 +119,9 @@ class CaptureManager:
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
-        if pyfuncitem.funcargs:
-            for name, capfuncarg in pyfuncitem.funcargs.items():
+        funcargs = getattr(pyfuncitem, "funcargs", None)
+        if funcargs is not None:
+            for name, capfuncarg in funcargs.items():
                 if name in ('capsys', 'capfd'):
                     assert not hasattr(self, '_capturing_funcarg')
                     self._capturing_funcarg = capfuncarg

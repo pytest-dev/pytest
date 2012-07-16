@@ -1647,3 +1647,21 @@ class TestRequestAPI:
         ])
 
 
+
+class TestResourceIntegrationFunctional:
+    def test_parametrize_with_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,2)],
+                                     ids=["basic", "advanced"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*test_function*basic*PASSED",
+            "*test_function*advanced*FAILED",
+        ])

@@ -3,7 +3,6 @@
 import py
 import pytest, _pytest
 import os, sys, imp
-from _pytest.monkeypatch import monkeypatch
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -151,130 +150,6 @@ def compatproperty(name):
 
     return property(fget)
 
-def pyobj_property(name):
-    def get(self):
-        node = self.getparent(getattr(pytest, name))
-        if node is not None:
-            return node.obj
-    doc = "python %s object this node was collected from (can be None)." % (
-          name.lower(),)
-    return property(get, None, None, doc)
-
-class Request(object):
-    _argprefix = "pytest_funcarg__"
-
-    class LookupError(LookupError):
-        """ error while performing funcarg factory lookup. """
-
-    def _initattr(self):
-        self._name2factory = {}
-        self._currentarg = None
-
-    @property
-    def _plugins(self):
-        extra = [obj for obj in (self.module, self.instance) if obj]
-        return self.getplugins() + extra
-
-    def _getscopeitem(self, scope):
-        if scope == "function":
-            return self
-        elif scope == "session":
-            return None
-        elif scope == "class":
-            x = self.getparent(pytest.Class)
-            if x is not None:
-                return x
-            scope = "module"
-        if scope == "module":
-            return self.getparent(pytest.Module)
-        raise ValueError("unknown scope %r" %(scope,))
-
-    def getfuncargvalue(self, argname):
-        """ Retrieve a named function argument value.
-
-        This function looks up a matching factory and invokes
-        it to obtain the return value.  The factory receives
-        the same request object and can itself perform recursive
-        calls to this method, effectively allowing to make use of
-        multiple other funcarg values or to decorate values from
-        other name-matching factories.
-        """
-        try:
-            return self.funcargs[argname]
-        except KeyError:
-            pass
-        except TypeError:
-            self.funcargs = getattr(self, "_funcargs", {})
-        if argname not in self._name2factory:
-            self._name2factory[argname] = self.config.pluginmanager.listattr(
-                    plugins=self._plugins,
-                    attrname=self._argprefix + str(argname)
-            )
-        #else: we are called recursively
-        if not self._name2factory[argname]:
-            self._raiselookupfailed(argname)
-        funcargfactory = self._name2factory[argname].pop()
-        oldarg = self._currentarg
-        mp = monkeypatch()
-        mp.setattr(self, '_currentarg', argname)
-        try:
-            param = self.callspec.getparam(argname)
-        except (AttributeError, ValueError):
-            pass
-        else:
-            mp.setattr(self, 'param', param, raising=False)
-        try:
-            self.funcargs[argname] = res = funcargfactory(self)
-        finally:
-            mp.undo()
-        return res
-
-    def addfinalizer(self, finalizer):
-        """ add a no-args finalizer function to be called when the underlying
-        node is torn down."""
-        self.session._setupstate.addfinalizer(finalizer, self)
-
-    def cached_setup(self, setup, teardown=None,
-                     scope="module", extrakey=None):
-        """ Return a cached testing resource created by ``setup`` &
-        detroyed by a respective ``teardown(resource)`` call.
-
-        :arg teardown: function receiving a previously setup resource.
-        :arg setup: a no-argument function creating a resource.
-        :arg scope: a string value out of ``function``, ``class``, ``module``
-            or ``session`` indicating the caching lifecycle of the resource.
-        :arg extrakey: added to internal caching key.
-        """
-        if not hasattr(self.config, '_setupcache'):
-            self.config._setupcache = {} # XXX weakref?
-        colitem = self._getscopeitem(scope)
-        cachekey = (self._currentarg, colitem, extrakey)
-        cache = self.config._setupcache
-        try:
-            val = cache[cachekey]
-        except KeyError:
-            val = setup()
-            cache[cachekey] = val
-            if teardown is not None:
-                def finalizer():
-                    del cache[cachekey]
-                    teardown(val)
-                self.session._setupstate.addfinalizer(finalizer, colitem)
-        return val
-
-    def _raiselookupfailed(self, argname):
-        available = []
-        for plugin in self._plugins:
-            for name in vars(plugin):
-                if name.startswith(self._argprefix):
-                    name = name[len(self._argprefix):]
-                    if name not in available:
-                        available.append(name)
-        fspath, lineno, msg = self.reportinfo()
-        msg = "LookupError: no factory found for function argument %r" % (argname,)
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        raise self.LookupError(msg)
 
 class Node(object):
     """ base class for Collector and Item the test collection tree.
@@ -302,17 +177,18 @@ class Node(object):
         #: fspath sensitive hook proxy used to call pytest hooks
         self.ihook = self.session.gethookproxy(self.fspath)
 
+        self.extrainit()
+
+    def extrainit(self):
+        """"extra initialization after Node is initialized.  Implemented
+        by some subclasses. """
+
     Module = compatproperty("Module")
     Class = compatproperty("Class")
     Instance = compatproperty("Instance")
     Function = compatproperty("Function")
     File = compatproperty("File")
     Item = compatproperty("Item")
-
-    module = pyobj_property("Module")
-    cls = pyobj_property("Class")
-    instance = pyobj_property("Instance")
-
 
     def _getcustomclass(self, name):
         cls = getattr(self, name)
@@ -476,19 +352,11 @@ class FSCollector(Collector):
 class File(FSCollector):
     """ base class for collecting tests from a file. """
 
-class Item(Node, Request):
+class Item(Node):
     """ a basic test invocation item. Note that for a single function
     there might be multiple test invocation items.
     """
     nextitem = None
-
-    def __init__(self, name, parent=None, config=None, session=None):
-        super(Item, self).__init__(name, parent, config, session)
-        self._initattr()
-        self.funcargs = None # later set to a dict from fillfuncargs() or
-                             # from getfuncargvalue().  Setting it to
-                             # None prevents users from performing
-                             # "name in item.funcargs" checks too early.
 
     def reportinfo(self):
         return self.fspath, None, ""
@@ -532,10 +400,9 @@ class Session(FSCollector):
         __module__ = 'builtins' # for py3
 
     def __init__(self, config):
-        super(Session, self).__init__(py.path.local(), parent=None,
-            config=config, session=self)
-        assert self.config.pluginmanager.register(
-            self, name="session", prepend=True)
+        FSCollector.__init__(self, py.path.local(), parent=None,
+                             config=config, session=self)
+        self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")

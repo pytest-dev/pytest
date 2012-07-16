@@ -4,7 +4,7 @@ import inspect
 import sys
 import pytest
 from py._code.code import TerminalRepr
-from _pytest.main import Request, Item
+from _pytest.monkeypatch import monkeypatch
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -23,6 +23,135 @@ def cached_property(f):
             x = self._property_cache[f] = f(self)
             return x
     return property(get)
+
+def pyobj_property(name):
+    def get(self):
+        node = self.getparent(getattr(pytest, name))
+        if node is not None:
+            return node.obj
+    doc = "python %s object this node was collected from (can be None)." % (
+          name.lower(),)
+    return property(get, None, None, doc)
+
+class Request(object):
+    _argprefix = "pytest_funcarg__"
+
+    class LookupError(LookupError):
+        """ error while performing funcarg factory lookup. """
+
+    def extrainit(self):
+        self._name2factory = {}
+        self._currentarg = None
+        self.funcargs = None # later set to a dict from fillfuncargs() or
+                             # from getfuncargvalue().  Setting it to
+                             # None prevents users from performing
+                             # "name in item.funcargs" checks too early.
+
+    @property
+    def _plugins(self):
+        extra = [obj for obj in (self.module, self.instance) if obj]
+        return self.getplugins() + extra
+
+    def _getscopeitem(self, scope):
+        if scope == "function":
+            return self
+        elif scope == "session":
+            return None
+        elif scope == "class":
+            x = self.getparent(pytest.Class)
+            if x is not None:
+                return x
+            scope = "module"
+        if scope == "module":
+            return self.getparent(pytest.Module)
+        raise ValueError("unknown scope %r" %(scope,))
+
+    def getfuncargvalue(self, argname):
+        """ Retrieve a named function argument value.
+
+        This function looks up a matching factory and invokes
+        it to obtain the return value.  The factory receives
+        can itself perform recursive calls to this method,
+        either for using multiple other funcarg values under the hood
+        or to decorate values from other factories matching the same name.
+        """
+        try:
+            return self.funcargs[argname]
+        except KeyError:
+            pass
+        except TypeError:
+            self.funcargs = getattr(self, "_funcargs", {})
+        if argname not in self._name2factory:
+            self._name2factory[argname] = self.config.pluginmanager.listattr(
+                    plugins=self._plugins,
+                    attrname=self._argprefix + str(argname)
+            )
+        #else: we are called recursively
+        if not self._name2factory[argname]:
+            self._raiselookupfailed(argname)
+        funcargfactory = self._name2factory[argname].pop()
+        oldarg = self._currentarg
+        mp = monkeypatch()
+        mp.setattr(self, '_currentarg', argname)
+        try:
+            param = self.callspec.getparam(argname)
+        except (AttributeError, ValueError):
+            pass
+        else:
+            mp.setattr(self, 'param', param, raising=False)
+        try:
+            self.funcargs[argname] = res = funcargfactory(self)
+        finally:
+            mp.undo()
+        return res
+
+    def addfinalizer(self, finalizer):
+        """ add a no-args finalizer function to be called when the underlying
+        node is torn down."""
+        self.session._setupstate.addfinalizer(finalizer, self)
+
+    def cached_setup(self, setup, teardown=None,
+                     scope="module", extrakey=None):
+        """ Return a cached testing resource created by ``setup`` &
+        detroyed by a respective ``teardown(resource)`` call.
+
+        :arg teardown: function receiving a previously setup resource.
+        :arg setup: a no-argument function creating a resource.
+        :arg scope: a string value out of ``function``, ``class``, ``module``
+            or ``session`` indicating the caching lifecycle of the resource.
+        :arg extrakey: added to internal caching key.
+        """
+        if not hasattr(self.config, '_setupcache'):
+            self.config._setupcache = {} # XXX weakref?
+        colitem = self._getscopeitem(scope)
+        cachekey = (self._currentarg, colitem, extrakey)
+        cache = self.config._setupcache
+        try:
+            val = cache[cachekey]
+        except KeyError:
+            val = setup()
+            cache[cachekey] = val
+            if teardown is not None:
+                def finalizer():
+                    del cache[cachekey]
+                    teardown(val)
+                self.session._setupstate.addfinalizer(finalizer, colitem)
+        return val
+
+    def _raiselookupfailed(self, argname):
+        available = []
+        for plugin in self._plugins:
+            for name in vars(plugin):
+                if name.startswith(self._argprefix):
+                    name = name[len(self._argprefix):]
+                    if name not in available:
+                        available.append(name)
+        fspath, lineno, msg = self.reportinfo()
+        msg = "LookupError: no factory found for function argument %r" % (argname,)
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
+        raise self.LookupError(msg)
+
 
 
 def pytest_addoption(parser):
@@ -133,8 +262,12 @@ def is_generator(func):
         # assume them to not be generators
         return False
 
-class PyobjMixin(object):
+class PyobjContext(object):
+    module = pyobj_property("Module")
+    cls = pyobj_property("Class")
+    instance = pyobj_property("Instance")
 
+class PyobjMixin(Request, PyobjContext):
     def obj():
         def fget(self):
             try:
@@ -203,7 +336,7 @@ class PyobjMixin(object):
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
 
-class PyCollectorMixin(PyobjMixin, pytest.Collector):
+class PyCollector(PyobjMixin, pytest.Collector):
 
     def funcnamefilter(self, name):
         for prefix in self.config.getini("python_functions"):
@@ -283,7 +416,7 @@ def transfer_markers(funcobj, cls, mod):
         else:
             pytestmark(funcobj)
 
-class Module(pytest.File, PyCollectorMixin):
+class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
     def _getobj(self):
         return self._memoizedcall('_obj', self._importtestmodule)
@@ -331,7 +464,7 @@ class Module(pytest.File, PyCollectorMixin):
             else:
                 self.obj.teardown_module()
 
-class Class(PyCollectorMixin, pytest.Collector):
+class Class(PyCollector):
     """ Collector for test methods. """
     def collect(self):
         return [self._getcustomclass("Instance")(name="()", parent=self)]
@@ -350,7 +483,7 @@ class Class(PyCollectorMixin, pytest.Collector):
             teardown_class = getattr(teardown_class, '__func__', teardown_class)
             teardown_class(self.obj)
 
-class Instance(PyCollectorMixin, pytest.Collector):
+class Instance(PyCollector):
     def _getobj(self):
         return self.parent.obj()
 
@@ -437,7 +570,7 @@ class FuncargLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
 
-class Generator(FunctionMixin, PyCollectorMixin, pytest.Collector):
+class Generator(FunctionMixin, PyCollector):
     def collect(self):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
@@ -882,7 +1015,7 @@ def itemapi_property(name, set=False):
     return property(get, set, None, doc)
 
 
-class OldFuncargRequest(Request):
+class OldFuncargRequest(Request, PyobjContext):
     """ (deprecated) helper interactions with a test function invocation.
 
     Note that there is an optional ``param`` attribute in case
@@ -892,9 +1025,11 @@ class OldFuncargRequest(Request):
     """
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
-        Request._initattr(self)
+        Request.extrainit(self)
+        self.funcargs = pyfuncitem.funcargs
         self.getplugins = self._pyfuncitem.getplugins
         self.reportinfo = self._pyfuncitem.reportinfo
+        self.getparent = self._pyfuncitem.getparent
         try:
             self.param = self._pyfuncitem.param
         except AttributeError:
@@ -906,9 +1041,6 @@ class OldFuncargRequest(Request):
     _getscopeitem = itemapi_property("_getscopeitem")
     funcargs = itemapi_property("funcargs", set=True)
     keywords = itemapi_property("keywords")
-    module   = itemapi_property("module")
-    cls      = itemapi_property("cls")
-    instance = itemapi_property("instance")
     config   = itemapi_property("config")
     session  = itemapi_property("session")
     fspath   = itemapi_property("fspath")
