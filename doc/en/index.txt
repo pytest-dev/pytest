@@ -37,7 +37,7 @@ Welcome to pytest!
 
 - **integrates many common testing methods**
 
- - can integrate ``nose``, ``unittest.py`` and ``doctest.py`` style
+ - can run many ``nose``, ``unittest.py`` and ``doctest.py`` style
    tests, including running testcases made for Django and trial
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`

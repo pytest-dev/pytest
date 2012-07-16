@@ -24,7 +24,8 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
     collecting ... collected 1 items
     
     test_unittest.py F
@@ -42,7 +43,7 @@ Running it yields::
     test_unittest.py:8: AssertionError
     ----------------------------- Captured stdout ------------------------------
     hello
-    ========================= 1 failed in 0.01 seconds =========================
+    ========================= 1 failed in 0.03 seconds =========================
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 

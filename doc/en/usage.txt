@@ -185,7 +185,7 @@ hook was invoked::
     $ python myinvoke.py
     collecting ... collected 0 items
     
-     in 0.00 seconds
+     in 0.01 seconds
     *** test run reporting finishing
 
 .. include:: links.inc

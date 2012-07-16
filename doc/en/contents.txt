@@ -23,4 +23,5 @@ Full pytest documentation
    :hidden:
 
    changelog.txt
+   examples/resources.txt
 

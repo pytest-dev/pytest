@@ -49,7 +49,8 @@ You can now run the test::
 
     $ py.test test_sample.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
     collecting ... collected 1 items
     
     test_sample.py F
@@ -57,7 +58,7 @@ You can now run the test::
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
     
-    mysetup = <conftest.MySetup instance at 0x17f21b8>
+    mysetup = <conftest.MySetup instance at 0x27e5320>
     
         def test_answer(mysetup):
             app = mysetup.myapp()
@@ -66,7 +67,7 @@ You can now run the test::
     E       assert 54 == 42
     
     test_sample.py:4: AssertionError
-    ========================= 1 failed in 0.01 seconds =========================
+    ========================= 1 failed in 0.02 seconds =========================
 
 This means that our ``mysetup`` object was successfully instantiated
 and ``mysetup.app()`` returned an initialized ``MyApp`` instance.
@@ -122,14 +123,15 @@ Running it yields::
 
     $ py.test test_ssh.py -rs
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
     collecting ... collected 1 items
     
     test_ssh.py s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-220/conftest.py:22: specify ssh host with --ssh
+    SKIP [1] /home/hpk/tmp/doc-exec-306/conftest.py:22: specify ssh host with --ssh
     
-    ======================== 1 skipped in 0.01 seconds =========================
+    ======================== 1 skipped in 0.02 seconds =========================
 
 If you specify a command line option like ``py.test --ssh=python.org`` the test will execute as expected.
 
