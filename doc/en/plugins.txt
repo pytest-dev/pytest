@@ -331,7 +331,7 @@ test execution:
 Reference of objects involved in hooks
 ===========================================================
 
-.. autoclass:: _pytest.python.Request()
+.. autoclass:: _pytest.python.FuncargRequest()
     :members:
 
 .. autoclass:: _pytest.config.Config()

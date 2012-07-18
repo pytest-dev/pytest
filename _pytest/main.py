@@ -177,11 +177,11 @@ class Node(object):
         #: fspath sensitive hook proxy used to call pytest hooks
         self.ihook = self.session.gethookproxy(self.fspath)
 
-        self.extrainit()
+        #self.extrainit()
 
-    def extrainit(self):
-        """"extra initialization after Node is initialized.  Implemented
-        by some subclasses. """
+    #def extrainit(self):
+    #    """"extra initialization after Node is initialized.  Implemented
+    #    by some subclasses. """
 
     Module = compatproperty("Module")
     Class = compatproperty("Class")

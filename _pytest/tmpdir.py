@@ -54,15 +54,15 @@ def pytest_configure(config):
     mp.setattr(config, '_tmpdirhandler', t, raising=False)
     mp.setattr(pytest, 'ensuretemp', t.ensuretemp, raising=False)
 
-def pytest_funcarg__tmpdir(item):
+def pytest_funcarg__tmpdir(request):
     """return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_
     path object.
     """
-    name = item.name
+    name = request._pyfuncitem.name
     name = py.std.re.sub("[\W]", "_", name)
-    x = item.config._tmpdirhandler.mktemp(name, numbered=True)
+    x = request.config._tmpdirhandler.mktemp(name, numbered=True)
     return x
 

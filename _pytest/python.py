@@ -33,126 +33,6 @@ def pyobj_property(name):
           name.lower(),)
     return property(get, None, None, doc)
 
-class Request(object):
-    _argprefix = "pytest_funcarg__"
-
-    class LookupError(LookupError):
-        """ error while performing funcarg factory lookup. """
-
-    def extrainit(self):
-        self._name2factory = {}
-        self._currentarg = None
-        self.funcargs = None # later set to a dict from fillfuncargs() or
-                             # from getfuncargvalue().  Setting it to
-                             # None prevents users from performing
-                             # "name in item.funcargs" checks too early.
-
-    @property
-    def _plugins(self):
-        extra = [obj for obj in (self.module, self.instance) if obj]
-        return self.getplugins() + extra
-
-    def _getscopeitem(self, scope):
-        if scope == "function":
-            return self
-        elif scope == "session":
-            return None
-        elif scope == "class":
-            x = self.getparent(pytest.Class)
-            if x is not None:
-                return x
-            scope = "module"
-        if scope == "module":
-            return self.getparent(pytest.Module)
-        raise ValueError("unknown scope %r" %(scope,))
-
-    def getfuncargvalue(self, argname):
-        """ Retrieve a named function argument value.
-
-        This function looks up a matching factory and invokes
-        it to obtain the return value.  The factory receives
-        can itself perform recursive calls to this method,
-        either for using multiple other funcarg values under the hood
-        or to decorate values from other factories matching the same name.
-        """
-        try:
-            return self.funcargs[argname]
-        except KeyError:
-            pass
-        except TypeError:
-            self.funcargs = getattr(self, "_funcargs", {})
-        if argname not in self._name2factory:
-            self._name2factory[argname] = self.config.pluginmanager.listattr(
-                    plugins=self._plugins,
-                    attrname=self._argprefix + str(argname)
-            )
-        #else: we are called recursively
-        if not self._name2factory[argname]:
-            self._raiselookupfailed(argname)
-        funcargfactory = self._name2factory[argname].pop()
-        oldarg = self._currentarg
-        mp = monkeypatch()
-        mp.setattr(self, '_currentarg', argname)
-        try:
-            param = self.callspec.getparam(argname)
-        except (AttributeError, ValueError):
-            pass
-        else:
-            mp.setattr(self, 'param', param, raising=False)
-        try:
-            self.funcargs[argname] = res = funcargfactory(self)
-        finally:
-            mp.undo()
-        return res
-
-    def addfinalizer(self, finalizer):
-        """ add a no-args finalizer function to be called when the underlying
-        node is torn down."""
-        self.session._setupstate.addfinalizer(finalizer, self)
-
-    def cached_setup(self, setup, teardown=None,
-                     scope="module", extrakey=None):
-        """ Return a cached testing resource created by ``setup`` &
-        detroyed by a respective ``teardown(resource)`` call.
-
-        :arg teardown: function receiving a previously setup resource.
-        :arg setup: a no-argument function creating a resource.
-        :arg scope: a string value out of ``function``, ``class``, ``module``
-            or ``session`` indicating the caching lifecycle of the resource.
-        :arg extrakey: added to internal caching key.
-        """
-        if not hasattr(self.config, '_setupcache'):
-            self.config._setupcache = {} # XXX weakref?
-        colitem = self._getscopeitem(scope)
-        cachekey = (self._currentarg, colitem, extrakey)
-        cache = self.config._setupcache
-        try:
-            val = cache[cachekey]
-        except KeyError:
-            val = setup()
-            cache[cachekey] = val
-            if teardown is not None:
-                def finalizer():
-                    del cache[cachekey]
-                    teardown(val)
-                self.session._setupstate.addfinalizer(finalizer, colitem)
-        return val
-
-    def _raiselookupfailed(self, argname):
-        available = []
-        for plugin in self._plugins:
-            for name in vars(plugin):
-                if name.startswith(self._argprefix):
-                    name = name[len(self._argprefix):]
-                    if name not in available:
-                        available.append(name)
-        fspath, lineno, msg = self.reportinfo()
-        msg = "LookupError: no factory found for function argument %r" % (argname,)
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        raise self.LookupError(msg)
-
-
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -222,6 +102,15 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
                     funcargs[name] = pyfuncitem.funcargs[name]
             testfunction(**funcargs)
 
+def pytest_pyfunc_call(__multicall__, pyfuncitem):
+    if not __multicall__.execute():
+        testfunction = pyfuncitem.obj
+        if pyfuncitem._isyieldedfunction():
+            testfunction(*pyfuncitem._args)
+        else:
+            funcargs = pyfuncitem.funcargs
+            testfunction(**funcargs)
+
 def pytest_collect_file(path, parent):
     ext = path.ext
     pb = path.purebasename
@@ -267,7 +156,7 @@ class PyobjContext(object):
     cls = pyobj_property("Class")
     instance = pyobj_property("Instance")
 
-class PyobjMixin(Request, PyobjContext):
+class PyobjMixin(PyobjContext):
     def obj():
         def fget(self):
             try:
@@ -390,14 +279,12 @@ class PyCollector(PyobjMixin, pytest.Collector):
         gentesthook.pcall(plugins, metafunc=metafunc)
         Function = self._getcustomclass("Function")
         if not metafunc._calls:
-            return Function(name, parent=self,
-                            funcargnames=metafunc.funcargnames)
+            return Function(name, parent=self)
         l = []
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
             function = Function(name=subname, parent=self,
                 callspec=callspec, callobj=funcobj,
-                funcargnames=metafunc.funcargnames,
                 keywords={callspec.id:True})
             l.append(function)
         return l
@@ -494,6 +381,7 @@ class Instance(PyCollector):
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.
     """
+
     def setup(self):
         """ perform setup for this test function. """
         if hasattr(self, '_preservedparent'):
@@ -535,7 +423,7 @@ class FunctionMixin(PyobjMixin):
             excinfo.traceback = ntraceback.filter()
 
     def _repr_failure_py(self, excinfo, style="long"):
-        if excinfo.errisinstance(Request.LookupError):
+        if excinfo.errisinstance(FuncargRequest.LookupError):
             fspath, lineno, msg = self.reportinfo()
             lines, _ = inspect.getsourcelines(self.obj)
             for i, line in enumerate(lines):
@@ -626,10 +514,21 @@ def getfuncargnames(function, startindex=None):
         return argnames[startindex:-numdefaults]
     return argnames[startindex:]
 
-def fillfuncargs(node):
+def fillfuncargs(function):
     """ fill missing funcargs. """
-    if not isinstance(node, Function):
-        node = OldFuncargRequest(pyfuncitem=node)
+    #if not getattr(function, "_args", None) is not None:
+    #    request = FuncargRequest(pyfuncitem=function)
+    #    request._fillfuncargs()
+    if getattr(function, "_args", None) is None:
+        try:
+            request = function._request
+        except AttributeError:
+            request = FuncargRequest(function)
+        request._fillfuncargs()
+
+def XXXfillfuncargs(node):
+    """ fill missing funcargs. """
+    node = FuncargRequest(node)
     if node.funcargs is None:
         node.funcargs = getattr(node, "_funcargs", {})
     if not isinstance(node, Function) or not node._isyieldedfunction():
@@ -815,8 +714,8 @@ def _showfuncargs_main(config, session):
     for plugin in plugins:
         available = []
         for name, factory in vars(plugin).items():
-            if name.startswith(Request._argprefix):
-                name = name[len(Request._argprefix):]
+            if name.startswith(FuncargRequest._argprefix):
+                name = name[len(FuncargRequest._argprefix):]
                 if name not in available:
                     available.append([name, factory])
         if available:
@@ -931,11 +830,9 @@ class Function(FunctionMixin, pytest.Item):
     """
     _genid = None
     def __init__(self, name, parent=None, args=None, config=None,
-                 callspec=None, callobj=_dummy, keywords=None,
-                 session=None, funcargnames=()):
+                 callspec=None, callobj=_dummy, keywords=None, session=None):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
-        self.funcargnames = funcargnames
         self._args = args
         if self._isyieldedfunction():
             assert not callspec, (
@@ -943,12 +840,17 @@ class Function(FunctionMixin, pytest.Item):
         else:
             if callspec is not None:
                 self.callspec = callspec
-                self._funcargs = callspec.funcargs or {}
+                self.funcargs = callspec.funcargs or {}
                 self._genid = callspec.id
                 if hasattr(callspec, "param"):
                     self.param = callspec.param
+            else:
+                self.funcargs = {}
+            self._request = req = FuncargRequest(self)
         if callobj is not _dummy:
-            self._obj = callobj
+            self.obj = callobj
+        startindex = int(self.cls is not None)
+        self.funcargnames = getfuncargnames(self.obj, startindex=startindex)
 
         self.keywords.update(py.builtin._getfuncdict(self.obj) or {})
         if keywords:
@@ -1002,49 +904,196 @@ class Function(FunctionMixin, pytest.Item):
         return hash((self.parent, self.name))
 
 
-def itemapi_property(name, set=False):
-    prop = getattr(Function, name, None)
-    doc = getattr(prop, "__doc__", None)
-    def get(self):
-        return getattr(self._pyfuncitem, name)
-    if set:
-        def set(self, value):
-            setattr(self._pyfuncitem, name, value)
-    else:
-        set = None
-    return property(get, set, None, doc)
+class FuncargRequest:
+    """ A request for function arguments from a test function.
 
-
-class OldFuncargRequest(Request, PyobjContext):
-    """ (deprecated) helper interactions with a test function invocation.
-
-    Note that there is an optional ``param`` attribute in case
-    there was an invocation to metafunc.addcall(param=...).
-    If no such call was done in a ``pytest_generate_tests``
-    hook, the attribute will not be present.
+        Note that there is an optional ``param`` attribute in case
+        there was an invocation to metafunc.addcall(param=...).
+        If no such call was done in a ``pytest_generate_tests``
+        hook, the attribute will not be present.
     """
+    _argprefix = "pytest_funcarg__"
+    _argname = None
+
+    class LookupError(LookupError):
+        """ error on performing funcarg request. """
+
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
-        Request.extrainit(self)
-        self.funcargs = pyfuncitem.funcargs
-        self.getplugins = self._pyfuncitem.getplugins
-        self.reportinfo = self._pyfuncitem.reportinfo
-        self.getparent = self._pyfuncitem.getparent
-        try:
-            self.param = self._pyfuncitem.param
-        except AttributeError:
-            pass
+        if hasattr(pyfuncitem, '_requestparam'):
+            self.param = pyfuncitem._requestparam
+        self.getparent = pyfuncitem.getparent
+        self._funcargs  = self._pyfuncitem.funcargs.copy()
+        self._name2factory = {}
+        self._currentarg = None
 
-    def __repr__(self):
-        return "<OldFuncargRequest for %r>" % (self._pyfuncitem.name)
+    @cached_property
+    def _plugins(self):
+        extra = [obj for obj in (self.module, self.instance) if obj]
+        return self._pyfuncitem.getplugins() + extra
 
-    _getscopeitem = itemapi_property("_getscopeitem")
-    funcargs = itemapi_property("funcargs", set=True)
-    keywords = itemapi_property("keywords")
-    config   = itemapi_property("config")
-    session  = itemapi_property("session")
-    fspath   = itemapi_property("fspath")
-    applymarker = itemapi_property("applymarker")
     @property
     def function(self):
+        """ function object of the test invocation. """
         return self._pyfuncitem.obj
+
+    @property
+    def keywords(self):
+        """ keywords of the test function item.
+
+        .. versionadded:: 2.0
+        """
+        return self._pyfuncitem.keywords
+
+    @property
+    def module(self):
+        """ module where the test function was collected. """
+        return self._pyfuncitem.getparent(pytest.Module).obj
+
+    @property
+    def cls(self):
+        """ class (can be None) where the test function was collected. """
+        clscol = self._pyfuncitem.getparent(pytest.Class)
+        if clscol:
+            return clscol.obj
+    @property
+    def instance(self):
+        """ instance (can be None) on which test function was collected. """
+        return py.builtin._getimself(self.function)
+
+    @property
+    def config(self):
+        """ the pytest config object associated with this request. """
+        return self._pyfuncitem.config
+
+    @property
+    def fspath(self):
+        """ the file system path of the test module which collected this test. """
+        return self._pyfuncitem.fspath
+
+    def _fillfuncargs(self):
+        argnames = getfuncargnames(self.function)
+        if argnames:
+            assert not getattr(self._pyfuncitem, '_args', None), (
+                "yielded functions cannot have funcargs")
+        for argname in argnames:
+            if argname not in self._pyfuncitem.funcargs:
+                self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
+
+
+    def applymarker(self, marker):
+        """ Apply a marker to a single test function invocation.
+        This method is useful if you don't want to have a keyword/marker
+        on all function invocations.
+
+        :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
+            created by a call to ``py.test.mark.NAME(...)``.
+        """
+        if not isinstance(marker, py.test.mark.XYZ.__class__):
+            raise ValueError("%r is not a py.test.mark.* object")
+        self._pyfuncitem.keywords[marker.markname] = marker
+
+    def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
+        """ Return a testing resource managed by ``setup`` &
+        ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
+        ``teardown`` function will be called so that subsequent calls to
+        ``setup`` would recreate the resource.
+
+        :arg teardown: function receiving a previously setup resource.
+        :arg setup: a no-argument function creating a resource.
+        :arg scope: a string value out of ``function``, ``class``, ``module``
+            or ``session`` indicating the caching lifecycle of the resource.
+        :arg extrakey: added to internal caching key of (funcargname, scope).
+        """
+        if not hasattr(self.config, '_setupcache'):
+            self.config._setupcache = {} # XXX weakref?
+        cachekey = (self._currentarg, self._getscopeitem(scope), extrakey)
+        cache = self.config._setupcache
+        try:
+            val = cache[cachekey]
+        except KeyError:
+            val = setup()
+            cache[cachekey] = val
+            if teardown is not None:
+                def finalizer():
+                    del cache[cachekey]
+                    teardown(val)
+                self._addfinalizer(finalizer, scope=scope)
+        return val
+
+    def getfuncargvalue(self, argname):
+        """ Retrieve a function argument by name for this test
+        function invocation.  This allows one function argument factory
+        to call another function argument factory.  If there are two
+        funcarg factories for the same test function argument the first
+        factory may use ``getfuncargvalue`` to call the second one and
+        do something additional with the resource.
+        """
+        try:
+            return self._funcargs[argname]
+        except KeyError:
+            pass
+        if argname not in self._name2factory:
+            self._name2factory[argname] = self.config.pluginmanager.listattr(
+                    plugins=self._plugins,
+                    attrname=self._argprefix + str(argname)
+            )
+        #else: we are called recursively
+        if not self._name2factory[argname]:
+            self._raiselookupfailed(argname)
+        funcargfactory = self._name2factory[argname].pop()
+        oldarg = self._currentarg
+        mp = monkeypatch()
+        mp.setattr(self, '_currentarg', argname)
+        try:
+            param = self._pyfuncitem.callspec.getparam(argname)
+        except (AttributeError, ValueError):
+            pass
+        else:
+            mp.setattr(self, 'param', param, raising=False)
+        try:
+            self._funcargs[argname] = res = funcargfactory(request=self)
+        finally:
+            mp.undo()
+        return res
+
+    def _getscopeitem(self, scope):
+        if scope == "function":
+            return self._pyfuncitem
+        elif scope == "session":
+            return None
+        elif scope == "class":
+            x = self._pyfuncitem.getparent(pytest.Class)
+            if x is not None:
+                return x
+            scope = "module"
+        if scope == "module":
+            return self._pyfuncitem.getparent(pytest.Module)
+        raise ValueError("unknown finalization scope %r" %(scope,))
+
+    def addfinalizer(self, finalizer):
+        """add finalizer function to be called after test function
+        finished execution. """
+        self._addfinalizer(finalizer, scope="function")
+
+    def _addfinalizer(self, finalizer, scope):
+        colitem = self._getscopeitem(scope)
+        self._pyfuncitem.session._setupstate.addfinalizer(
+            finalizer=finalizer, colitem=colitem)
+
+    def __repr__(self):
+        return "<FuncargRequest for %r>" %(self._pyfuncitem)
+
+    def _raiselookupfailed(self, argname):
+        available = []
+        for plugin in self._plugins:
+            for name in vars(plugin):
+                if name.startswith(self._argprefix):
+                    name = name[len(self._argprefix):]
+                    if name not in available:
+                        available.append(name)
+        fspath, lineno, msg = self._pyfuncitem.reportinfo()
+        msg = "LookupError: no factory found for function argument %r" % (argname,)
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
+        raise self.LookupError(msg)

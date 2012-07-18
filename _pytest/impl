@@ -1,0 +1,97 @@
+
+Implementation plan for resources
+------------------------------------------
+
+1. Revert FuncargRequest to the old form, unmerge item/request
+2. make setup functions be discovered at collection time
+3. make funcarg factories be discovered at collection time
+4. Introduce funcarg marker
+5. Introduce funcarg scope parameter
+6. Introduce funcarg parametrize parameter
+7. (Introduce a pytest_fixture_protocol/setup_funcargs hook)
+
+methods and data structures
+--------------------------------
+
+A FuncarcDB holds all information about funcarg definitions,
+parametrization and the places where funcargs are required.  It can
+answer the following questions:
+
+* given a node and a funcargname, return a paramlist so that collection 
+  can perform parametrization (parametrized nodes?)
+* given a node (possibly containing a param), perform a funcargrequest 
+  and return the value
+* if funcargname is an empty string, it matches general setup.
+
+pytest could perform 2-pass collection:
+- first perform normal collection (no parametrization at all!), populate
+  FuncargDB
+- walk through the node tree and ask FuncargDB for each node for
+  required funcargs and their parameters - clone subtrees (deepcopy) and
+  substitute the un-parametrized node with parametrized ones
+
+as a simple example, let's consider a tree where a test function requires
+a "abc" funcarg and its factory defines it as parametrized and scoped
+for Modules.  When the 2nd collection pass asks FuncargDB to return
+params for the test module, it will know that the test functions in it
+requires "abc" and that is it parametrized and defined for module scope.
+Therefore parametrization of the module node is performed, substituting
+the node with multiple module nodes ("test_module.py[1]", ...).
+When test_module.py[1] is setup() it will call all its (parametrized)
+factories and populate a funcargs dictionary, mapping funcargnames to values.
+When a test function below test_module.py[1] is executed, it looks up
+its required arguments from the thus populated funcargs dictionary.
+
+Let's add to this example a second funcarg "def" that has a per-function parametrization.  When the 2nd collection pass asks FuncargDB to return
+params for the test function, it will know that the test functions in it
+requires "def" and that is it parametrized and defined for function scope.
+Therefore parametrization of the function node is performed, substituting
+the node with multiple function nodes ("test_function[1]", ...).
+
+When test_function[1] is setup() it will call all its (parametrized)
+factories and populate a funcargs dictionary.  The "def" will only appear
+in the funcargs dict seen by test_function[1]. When test_function[1] 
+executes, it will use its funcargs.
+
+
+
+
+where
+
+* ``nodeidbase`` is a basestring; for all nodeids matching
+  startswith(nodeidbase) it defines a (scopecls, factorylist) tuple
+* ``scopecls`` is a node class for the which the factorylist s defined
+* ``param`` is a parametrizing parameter for the factorylist
+* ``factorylist`` is a list of factories which will be used to perform
+  a funcarg request
+* the whole list is sorted by length of nodeidbase (longest first)
+
+conftest loading:
+    each funcarg-factory will populate FuncargDefs which keeps references
+    to all definitions the funcarg2 marked function or pytest_funcarg__ 
+
+
+scope can be a string or a nodenames-tuple. 
+
+        scopestring -> list of (funcargname, factorylist)
+
+        nodenames -> (funcargname, list of factories)
+
+It needs to be a list because factories can decorate
+
+For any given node and a required funcarg it is thus
+easy to lookup a list of matching factories.
+
+When a test item is collected, it grows a dictionary 
+(funcargname2factorycalllist).  A factory lookup is performed 
+for each required funcarg.  The resulting factory call is stored 
+with the item.  If a function is parametrized multiple items are 
+created with respective factory calls. Else if a factory is parametrized
+multiple items and calls to the factory function are created as well.
+
+At setup time, an item populates a funcargs mapping, mapping names
+to values.  If a value is funcarg factories are queried for a given item
+test functions and setup functions are put in a class
+which looks up required funcarg factories.
+
+
