@@ -119,7 +119,7 @@ to support running a pytest from test requirements::
     setup(
         #...,
         tests_require=['pytest'],
-        cmdclass = {'test': pytest},
+        cmdclass = {'test': PyTest},
         )
 
 Now if you run::
