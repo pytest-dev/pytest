@@ -188,7 +188,7 @@ def pytest_funcarg__capsys(request):
     which return a ``(out, err)`` tuple.
     """
     if "capfd" in request._funcargs:
-        raise request.LookupError(error_capsysfderror)
+        raise request.raiseerror(error_capsysfderror)
     return CaptureFuncarg(py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
@@ -197,7 +197,7 @@ def pytest_funcarg__capfd(request):
     which return a ``(out, err)`` tuple.
     """
     if "capsys" in request._funcargs:
-        raise request.LookupError(error_capsysfderror)
+        request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
     return CaptureFuncarg(py.io.StdCaptureFD)

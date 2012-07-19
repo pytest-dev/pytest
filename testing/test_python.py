@@ -1,5 +1,6 @@
 import pytest, py, sys
 from _pytest import python as funcargs
+from _pytest.main import FuncargLookupError
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -301,24 +302,14 @@ class TestFunction:
         assert not f1 != f1_b
 
     def test_function_equality_with_callspec(self, testdir, tmpdir):
-        config = testdir.parseconfigure()
-        class callspec1:
-            param = 1
-            funcargs = {}
-            id = "hello"
-        class callspec2:
-            param = 1
-            funcargs = {}
-            id = "world"
-        session = testdir.Session(config)
-        def func():
-            pass
-        f5 = pytest.Function(name="name", config=config,
-            callspec=callspec1, callobj=func, session=session)
-        f5b = pytest.Function(name="name", config=config,
-            callspec=callspec2, callobj=func, session=session)
-        assert f5 != f5b
-        assert not (f5 == f5b)
+        items = testdir.getitems("""
+            import pytest
+            @pytest.mark.parametrize('arg', [1,2])
+            def test_function(arg):
+                pass
+        """)
+        assert items[0] != items[1]
+        assert not (items[0] == items[1])
 
     def test_pyfunc_call(self, testdir):
         item = testdir.getitem("def test_func(): raise ValueError")
@@ -550,33 +541,30 @@ class TestFillFuncArgs:
         assert pytest._fillfuncargs == funcargs.fillfuncargs
 
     def test_funcarg_lookupfails(self, testdir):
-        testdir.makeconftest("""
+        testdir.makepyfile("""
             def pytest_funcarg__xyzsomething(request):
                 return 42
-        """)
-        item = testdir.getitem("def test_func(some): pass")
-        exc = pytest.raises(funcargs.FuncargRequest.LookupError,
-            "funcargs.fillfuncargs(item)")
-        s = str(exc.value)
-        assert s.find("xyzsomething") != -1
 
-    def test_funcarg_lookup_default(self, testdir):
-        item = testdir.getitem("def test_func(some, other=42): pass")
-        class Provider:
-            def pytest_funcarg__some(self, request):
-                return request.function.__name__
-        item.config.pluginmanager.register(Provider())
-        funcargs.fillfuncargs(item)
-        assert len(item.funcargs) == 1
+            def test_func(some):
+                pass
+        """)
+        result = testdir.runpytest() # "--collectonly")
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*def test_func(some)*",
+            "*LookupError*",
+            "*xyzsomething*",
+        ])
 
     def test_funcarg_basic(self, testdir):
-        item = testdir.getitem("def test_func(some, other): pass")
-        class Provider:
-            def pytest_funcarg__some(self, request):
+        item = testdir.getitem("""
+            def pytest_funcarg__some(request):
                 return request.function.__name__
-            def pytest_funcarg__other(self, request):
+            def pytest_funcarg__other(request):
                 return 42
-        item.config.pluginmanager.register(Provider())
+            def test_func(some, other):
+                pass
+        """)
         funcargs.fillfuncargs(item)
         assert len(item.funcargs) == 2
         assert item.funcargs['some'] == "test_func"
@@ -612,17 +600,6 @@ class TestFillFuncArgs:
             "*1 passed*"
         ])
 
-    def test_fillfuncargs_exposed(self, testdir):
-        item = testdir.getitem("def test_func(some, other=42): pass")
-        class Provider:
-            def pytest_funcarg__some(self, request):
-                return request.function.__name__
-        item.config.pluginmanager.register(Provider())
-        if hasattr(item, '_args'):
-            del item._args
-        from _pytest.python import fillfuncargs
-        fillfuncargs(item)
-        assert len(item.funcargs) == 1
 
 class TestRequest:
     def test_request_attributes(self, testdir):
@@ -642,10 +619,12 @@ class TestRequest:
     def test_request_attributes_method(self, testdir):
         item, = testdir.getitems("""
             class TestB:
+                def pytest_funcarg__something(request):
+                    return 1
                 def test_func(self, something):
                     pass
         """)
-        req = funcargs.FuncargRequest(item)
+        req = item._request
         assert req.cls.__name__ == "TestB"
         assert req.instance.__class__ == req.cls
 
@@ -686,8 +665,8 @@ class TestRequest:
                 return l.pop()
             def test_func(something): pass
         """)
-        req = funcargs.FuncargRequest(item)
-        pytest.raises(req.LookupError, req.getfuncargvalue, "notexists")
+        req = item._request
+        pytest.raises(FuncargLookupError, req.getfuncargvalue, "notexists")
         val = req.getfuncargvalue("something")
         assert val == 1
         val = req.getfuncargvalue("something")
@@ -729,7 +708,7 @@ class TestRequest:
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            "*1 passed*1 error*"
+            "*1 error*"  # XXX the whole module collection fails
             ])
 
     def test_request_getmodulepath(self, testdir):
@@ -740,6 +719,8 @@ class TestRequest:
 
 def test_applymarker(testdir):
     item1,item2 = testdir.getitems("""
+        def pytest_funcarg__something(request):
+            pass
         class TestClass:
             def test_func1(self, something):
                 pass
@@ -756,60 +737,38 @@ def test_applymarker(testdir):
     pytest.raises(ValueError, "req1.applymarker(42)")
 
 class TestRequestCachedSetup:
-    def test_request_cachedsetup(self, testdir):
-        item1,item2 = testdir.getitems("""
-            def test_func1(self, something):
-                pass
-            class TestClass:
-                def test_func2(self, something):
-                    pass
-        """)
-        req1 = funcargs.FuncargRequest(item1)
-        l = ["hello"]
-        def setup():
-            return l.pop()
-        # cached_setup's scope defaults to 'module'
-        ret1 = req1.cached_setup(setup)
-        assert ret1 == "hello"
-        ret1b = req1.cached_setup(setup)
-        assert ret1 == ret1b
-        req2 = funcargs.FuncargRequest(item2)
-        ret2 = req2.cached_setup(setup)
-        assert ret2 == ret1
+    def test_request_cachedsetup_defaultmodule(self, testdir):
+        reprec = testdir.inline_runsource("""
+            mysetup = ["hello",].pop
 
-    def test_request_cachedsetup_class(self, testdir):
-        item1, item2, item3, item4 = testdir.getitems("""
-            def test_func1(self, something):
-                pass
-            def test_func2(self, something):
-                pass
+            def pytest_funcarg__something(request):
+                return request.cached_setup(mysetup, scope="module")
+
+            def test_func1(something):
+                assert something == "hello"
             class TestClass:
                 def test_func1a(self, something):
-                    pass
-                def test_func2b(self, something):
-                    pass
+                    assert something == "hello"
         """)
-        req1 = funcargs.FuncargRequest(item2)
-        l = ["hello2", "hello"]
-        def setup():
-            return l.pop()
+        reprec.assertoutcome(passed=2)
 
-        # module level functions setup with scope=class
-        # automatically turn "class" to "module" scope
-        ret1 = req1.cached_setup(setup, scope="class")
-        assert ret1 == "hello"
-        req2 = funcargs.FuncargRequest(item2)
-        ret2 = req2.cached_setup(setup, scope="class")
-        assert ret2 == "hello"
+    def test_request_cachedsetup_class(self, testdir):
+        reprec = testdir.inline_runsource("""
+            mysetup = ["hello", "hello2"].pop
 
-        req3 = funcargs.FuncargRequest(item3)
-        ret3a = req3.cached_setup(setup, scope="class")
-        ret3b = req3.cached_setup(setup, scope="class")
-        assert ret3a == "hello2"
-        assert ret3b == "hello2"
-        req4 = funcargs.FuncargRequest(item4)
-        ret4 = req4.cached_setup(setup, scope="class")
-        assert ret4 == ret3a
+            def pytest_funcarg__something(request):
+                return request.cached_setup(mysetup, scope="class")
+            def test_func1(something):
+                assert something == "hello2"
+            def test_func2(something):
+                assert something == "hello2"
+            class TestClass:
+                def test_func1a(self, something):
+                    assert something == "hello"
+                def test_func2b(self, something):
+                    assert something == "hello"
+        """)
+        reprec.assertoutcome(passed=4)
 
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
@@ -1351,7 +1310,7 @@ def test_funcarg_lookup_error(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        "*ERROR at setup of test_lookup_error*",
+        "*ERROR*collecting*test_funcarg_lookup_error.py*",
         "*def test_lookup_error(unknown):*",
         "*LookupError: no factory found*unknown*",
         "*available funcargs*",

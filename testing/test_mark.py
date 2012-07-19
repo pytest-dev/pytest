@@ -272,7 +272,7 @@ class TestFunctional:
             import pytest
             @pytest.mark.hello("pos1", z=4)
             @pytest.mark.hello("pos0", z=3)
-            def test_func(self):
+            def test_func():
                 pass
         """)
         items, rec = testdir.inline_genitems(p)

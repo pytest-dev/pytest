@@ -9,24 +9,24 @@ class SessionTests:
                 assert 0
             def test_other():
                 raise ValueError(23)
-            def test_two(someargs):
-                pass
+            class TestClass:
+                def test_two(self, someargs):
+                    pass
         """)
         reprec = testdir.inline_run(tfile)
         passed, skipped, failed = reprec.listoutcomes()
         assert len(skipped) == 0
         assert len(passed) == 1
-        assert len(failed) == 3
+        assert len(failed) == 2
         end = lambda x: x.nodeid.split("::")[-1]
         assert end(failed[0]) == "test_one_one"
         assert end(failed[1]) == "test_other"
-        assert end(failed[2]) == "test_two"
         itemstarted = reprec.getcalls("pytest_itemcollected")
-        assert len(itemstarted) == 4
-        colstarted = reprec.getcalls("pytest_collectstart")
-        assert len(colstarted) == 1 + 1
-        col = colstarted[1].collector
-        assert isinstance(col, pytest.Module)
+        assert len(itemstarted) == 3
+        # XXX check for failing funcarg setup
+        colreports = reprec.getcalls("pytest_collectreport")
+        assert len(colreports) == 4
+        assert colreports[1].report.failed
 
     def test_nested_import_error(self, testdir):
         tfile = testdir.makepyfile("""

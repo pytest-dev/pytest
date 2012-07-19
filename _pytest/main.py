@@ -2,7 +2,11 @@
 
 import py
 import pytest, _pytest
+import inspect
 import os, sys, imp
+
+from _pytest.monkeypatch import monkeypatch
+from py._code.code import TerminalRepr
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -279,6 +283,15 @@ class Node(object):
         pass
 
     def _repr_failure_py(self, excinfo, style=None):
+        LE = self.session.funcargmanager.FuncargLookupError
+        if excinfo.errisinstance(LE):
+            request = excinfo.value.request
+            fspath, lineno, msg = request._pyfuncitem.reportinfo()
+            lines, _ = inspect.getsourcelines(request.function)
+            for i, line in enumerate(lines):
+                if line.strip().startswith('def'):
+                    return FuncargLookupErrorRepr(fspath, lineno, lines[:i+1],
+                                str(excinfo.value.msg))
         if self.config.option.fulltrace:
             style="long"
         else:
@@ -391,6 +404,75 @@ class Item(Node):
             self._location = location
             return location
 
+class FuncargLookupError(LookupError):
+    """ could not find a factory. """
+    def __init__(self, request, msg):
+        self.request = request
+        self.msg = msg
+
+class FuncargManager:
+    _argprefix = "pytest_funcarg__"
+    FuncargLookupError = FuncargLookupError
+
+    def __init__(self, session):
+        self.session = session
+        self.config = session.config
+        self.node2name2factory = {}
+
+    def _discoverfactories(self, request, argname):
+        node = request._pyfuncitem
+        name2factory = self.node2name2factory.setdefault(node, {})
+        if argname not in name2factory:
+            name2factory[argname] = self.config.pluginmanager.listattr(
+                    plugins=request._plugins,
+                    attrname=self._argprefix + str(argname)
+            )
+        #else: we are called recursively
+        if not name2factory[argname]:
+            self._raiselookupfailed(request, argname)
+
+    def _getfuncarg(self, request, argname):
+        node = request._pyfuncitem
+        try:
+            factorylist = self.node2name2factory[node][argname]
+        except KeyError:
+            # XXX at collection time this funcarg was not know to be a
+            # requirement, would be better if it would be known
+            self._discoverfactories(request, argname)
+            factorylist = self.node2name2factory[node][argname]
+
+        if not factorylist:
+            self._raiselookupfailed(request, argname)
+        funcargfactory = factorylist.pop()
+        oldarg = request._currentarg
+        mp = monkeypatch()
+        mp.setattr(request, '_currentarg', argname)
+        try:
+            param = node.callspec.getparam(argname)
+        except (AttributeError, ValueError):
+            pass
+        else:
+            mp.setattr(request, 'param', param, raising=False)
+        try:
+            return funcargfactory(request=request)
+        finally:
+            mp.undo()
+
+    def _raiselookupfailed(self, request, argname):
+        available = []
+        for plugin in request._plugins:
+            for name in vars(plugin):
+                if name.startswith(self._argprefix):
+                    name = name[len(self._argprefix):]
+                    if name not in available:
+                        available.append(name)
+        fspath, lineno, msg = request._pyfuncitem.reportinfo()
+        msg = "LookupError: no factory found for argument %r" % (argname,)
+        msg += "\n available funcargs: %s" %(", ".join(available),)
+        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
+        raise FuncargLookupError(request, msg)
+
+
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
 
@@ -407,6 +489,7 @@ class Session(FSCollector):
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
+        self.funcargmanager = FuncargManager(self)
 
     def pytest_collectstart(self):
         if self.shouldstop:
@@ -634,4 +717,18 @@ class Session(FSCollector):
 
 
 
+class FuncargLookupErrorRepr(TerminalRepr):
+    def __init__(self, filename, firstlineno, deflines, errorstring):
+        self.deflines = deflines
+        self.errorstring = errorstring
+        self.filename = filename
+        self.firstlineno = firstlineno
 
+    def toterminal(self, tw):
+        tw.line()
+        for line in self.deflines:
+            tw.line("    " + line.strip())
+        for line in self.errorstring.split("\n"):
+            tw.line("        " + line.strip(), red=True)
+        tw.line()
+        tw.line("%s:%d" % (self.filename, self.firstlineno+1))

@@ -3,8 +3,6 @@ import py
 import inspect
 import sys
 import pytest
-from py._code.code import TerminalRepr
-from _pytest.monkeypatch import monkeypatch
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -278,9 +276,9 @@ class PyCollector(PyobjMixin, pytest.Collector):
         plugins = self.getplugins() + extra
         gentesthook.pcall(plugins, metafunc=metafunc)
         Function = self._getcustomclass("Function")
-        if not metafunc._calls:
-            return Function(name, parent=self)
         l = []
+        if not metafunc._calls:
+            l.append(Function(name, parent=self))
         for callspec in metafunc._calls:
             subname = "%s[%s]" %(name, callspec.id)
             function = Function(name=subname, parent=self,
@@ -423,13 +421,6 @@ class FunctionMixin(PyobjMixin):
             excinfo.traceback = ntraceback.filter()
 
     def _repr_failure_py(self, excinfo, style="long"):
-        if excinfo.errisinstance(FuncargRequest.LookupError):
-            fspath, lineno, msg = self.reportinfo()
-            lines, _ = inspect.getsourcelines(self.obj)
-            for i, line in enumerate(lines):
-                if line.strip().startswith('def'):
-                    return FuncargLookupErrorRepr(fspath, lineno,
-            lines[:i+1], str(excinfo.value))
         if excinfo.errisinstance(pytest.fail.Exception):
             if not excinfo.value.pytrace:
                 return str(excinfo.value)
@@ -440,22 +431,6 @@ class FunctionMixin(PyobjMixin):
         assert outerr is None, "XXX outerr usage is deprecated"
         return self._repr_failure_py(excinfo,
             style=self.config.option.tbstyle)
-
-class FuncargLookupErrorRepr(TerminalRepr):
-    def __init__(self, filename, firstlineno, deflines, errorstring):
-        self.deflines = deflines
-        self.errorstring = errorstring
-        self.filename = filename
-        self.firstlineno = firstlineno
-
-    def toterminal(self, tw):
-        tw.line()
-        for line in self.deflines:
-            tw.line("    " + line.strip())
-        for line in self.errorstring.split("\n"):
-            tw.line("        " + line.strip(), red=True)
-        tw.line()
-        tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
 
 class Generator(FunctionMixin, PyCollector):
@@ -523,22 +498,8 @@ def fillfuncargs(function):
         try:
             request = function._request
         except AttributeError:
-            request = FuncargRequest(function)
+            request = function._request = FuncargRequest(function)
         request._fillfuncargs()
-
-def XXXfillfuncargs(node):
-    """ fill missing funcargs. """
-    node = FuncargRequest(node)
-    if node.funcargs is None:
-        node.funcargs = getattr(node, "_funcargs", {})
-    if not isinstance(node, Function) or not node._isyieldedfunction():
-        try:
-            funcargnames = node.funcargnames
-        except AttributeError:
-            funcargnames = getfuncargnames(node.function)
-        if funcargnames:
-            for argname in funcargnames:
-                node.getfuncargvalue(argname)
 
 _notexists = object()
 
@@ -711,11 +672,12 @@ def _showfuncargs_main(config, session):
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
+    argprefix = session.funcargmanager._argprefix
     for plugin in plugins:
         available = []
         for name, factory in vars(plugin).items():
-            if name.startswith(FuncargRequest._argprefix):
-                name = name[len(FuncargRequest._argprefix):]
+            if name.startswith(argprefix):
+                name = name[len(argprefix):]
                 if name not in available:
                     available.append([name, factory])
         if available:
@@ -847,11 +809,11 @@ class Function(FunctionMixin, pytest.Item):
             else:
                 self.funcargs = {}
             self._request = req = FuncargRequest(self)
+            req._discoverfactories()
         if callobj is not _dummy:
             self.obj = callobj
         startindex = int(self.cls is not None)
         self.funcargnames = getfuncargnames(self.obj, startindex=startindex)
-
         self.keywords.update(py.builtin._getfuncdict(self.obj) or {})
         if keywords:
             self.keywords.update(keywords)
@@ -912,11 +874,6 @@ class FuncargRequest:
         If no such call was done in a ``pytest_generate_tests``
         hook, the attribute will not be present.
     """
-    _argprefix = "pytest_funcarg__"
-    _argname = None
-
-    class LookupError(LookupError):
-        """ error on performing funcarg request. """
 
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
@@ -925,12 +882,23 @@ class FuncargRequest:
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._name2factory = {}
+        self.funcargmanager = pyfuncitem.session.funcargmanager
         self._currentarg = None
+        self.funcargnames = getfuncargnames(self.function)
+
+    def _discoverfactories(self):
+        for argname in self.funcargnames:
+            if argname not in self._funcargs:
+                self.funcargmanager._discoverfactories(self, argname)
 
     @cached_property
     def _plugins(self):
         extra = [obj for obj in (self.module, self.instance) if obj]
         return self._pyfuncitem.getplugins() + extra
+
+    def raiseerror(self, msg):
+        """ raise a FuncargLookupError with the given message. """
+        raise self.funcargmanager.FuncargLookupError(self, msg)
 
     @property
     def function(self):
@@ -972,14 +940,13 @@ class FuncargRequest:
         return self._pyfuncitem.fspath
 
     def _fillfuncargs(self):
-        argnames = getfuncargnames(self.function)
-        if argnames:
+        if self.funcargnames:
             assert not getattr(self._pyfuncitem, '_args', None), (
                 "yielded functions cannot have funcargs")
-        for argname in argnames:
+        for argname in self.funcargnames:
             if argname not in self._pyfuncitem.funcargs:
-                self._pyfuncitem.funcargs[argname] = self.getfuncargvalue(argname)
-
+                self._pyfuncitem.funcargs[argname] = \
+                        self.getfuncargvalue(argname)
 
     def applymarker(self, marker):
         """ Apply a marker to a single test function invocation.
@@ -1021,6 +988,7 @@ class FuncargRequest:
                 self._addfinalizer(finalizer, scope=scope)
         return val
 
+
     def getfuncargvalue(self, argname):
         """ Retrieve a function argument by name for this test
         function invocation.  This allows one function argument factory
@@ -1033,29 +1001,9 @@ class FuncargRequest:
             return self._funcargs[argname]
         except KeyError:
             pass
-        if argname not in self._name2factory:
-            self._name2factory[argname] = self.config.pluginmanager.listattr(
-                    plugins=self._plugins,
-                    attrname=self._argprefix + str(argname)
-            )
-        #else: we are called recursively
-        if not self._name2factory[argname]:
-            self._raiselookupfailed(argname)
-        funcargfactory = self._name2factory[argname].pop()
-        oldarg = self._currentarg
-        mp = monkeypatch()
-        mp.setattr(self, '_currentarg', argname)
-        try:
-            param = self._pyfuncitem.callspec.getparam(argname)
-        except (AttributeError, ValueError):
-            pass
-        else:
-            mp.setattr(self, 'param', param, raising=False)
-        try:
-            self._funcargs[argname] = res = funcargfactory(request=self)
-        finally:
-            mp.undo()
-        return res
+        val = self.funcargmanager._getfuncarg(self, argname)
+        self._funcargs[argname] = val
+        return val
 
     def _getscopeitem(self, scope):
         if scope == "function":
@@ -1084,16 +1032,3 @@ class FuncargRequest:
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)
 
-    def _raiselookupfailed(self, argname):
-        available = []
-        for plugin in self._plugins:
-            for name in vars(plugin):
-                if name.startswith(self._argprefix):
-                    name = name[len(self._argprefix):]
-                    if name not in available:
-                        available.append(name)
-        fspath, lineno, msg = self._pyfuncitem.reportinfo()
-        msg = "LookupError: no factory found for function argument %r" % (argname,)
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        raise self.LookupError(msg)
