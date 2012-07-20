@@ -1805,3 +1805,25 @@ class TestFuncargMarker:
             "*ScopeMismatch*You tried*function*from*session*",
         ])
 
+    def test_register_only_with_mark(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            finalized = []
+            created = []
+            @pytest.mark.funcarg
+            def arg(request):
+                return 1
+        """)
+        testdir.makepyfile(
+            test_mod1="""
+                import pytest
+                @pytest.mark.funcarg
+                def arg(request):
+                    return request.getfuncargvalue("arg") + 1
+                def test_1(arg):
+                    assert arg == 2
+            """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+

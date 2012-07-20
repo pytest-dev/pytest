@@ -463,11 +463,20 @@ class FuncargManager:
         self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
             #print "check", holderobj, name
-            if name.startswith(self._argprefix):
-                fname = name[len(self._argprefix):]
-                faclist = self.arg2facspec.setdefault(fname, [])
-                obj = getattr(holderobj, name)
-                faclist.append((nodeid, obj))
+            obj = getattr(holderobj, name)
+            # funcarg factories either have a pytest_funcarg__ prefix
+            # or are "funcarg" marked
+            if hasattr(obj, "funcarg"):
+                if name.startswith(self._argprefix):
+                    argname = name[len(self._argprefix):]
+                else:
+                    argname = name
+            elif name.startswith(self._argprefix):
+                argname = name[len(self._argprefix):]
+            else:
+                continue
+            faclist = self.arg2facspec.setdefault(argname, [])
+            faclist.append((nodeid, obj))
 
     def getfactorylist(self, argname, nodeid, function, raising=True):
         try:
