@@ -256,7 +256,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        metafunc = Metafunc(funcobj, config=self.config,
+        metafunc = Metafunc(funcobj, parentid=self.nodeid, config=self.config,
             cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
@@ -555,10 +555,12 @@ class CallSpec2(object):
 
 
 class Metafunc:
-    def __init__(self, function, config=None, cls=None, module=None):
+    def __init__(self, function, config=None, cls=None, module=None,
+                 parentid=""):
         self.config = config
         self.module = module
         self.function = function
+        self.parentid = parentid
         self.funcargnames = getfuncargnames(function,
                                             startindex=int(cls is not None))
         self.cls = cls
@@ -884,11 +886,6 @@ class FuncargRequest:
         self._currentarg = None
         self.funcargnames = getfuncargnames(self.function)
         self.parentid = pyfuncitem.parent.nodeid
-
-    def _discoverfactories(self):
-        for argname in self.funcargnames:
-            if argname not in self._funcargs:
-                self._getfaclist(argname)
 
     def _getfaclist(self, argname):
         faclist = self._name2factory.get(argname, None)

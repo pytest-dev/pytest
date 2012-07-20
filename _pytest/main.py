@@ -443,6 +443,19 @@ class FuncargManager:
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
+    def pytest_generate_tests(self, metafunc):
+        for argname in metafunc.funcargnames:
+            faclist = self.getfactorylist(argname, metafunc.parentid,
+                                          metafunc.function, raising=False)
+            if faclist is None:
+                continue # will raise at setup time
+            for fac in faclist:
+                marker = getattr(fac, "funcarg", None)
+                if marker is not None:
+                    params = marker.kwargs.get("params")
+                    if params is not None:
+                        metafunc.parametrize(argname, params, indirect=True)
+
     def _parsefactories(self, holderobj, nodeid):
         if holderobj in self._holderobjseen:
             return
@@ -456,12 +469,14 @@ class FuncargManager:
                 obj = getattr(holderobj, name)
                 faclist.append((nodeid, obj))
 
-    def getfactorylist(self, argname, nodeid, function):
+    def getfactorylist(self, argname, nodeid, function, raising=True):
         try:
             factorydef = self.arg2facspec[argname]
         except KeyError:
-            self._raiselookupfailed(argname, function, nodeid)
-        return self._matchfactories(factorydef, nodeid)
+            if raising:
+                self._raiselookupfailed(argname, function, nodeid)
+        else:
+            return self._matchfactories(factorydef, nodeid)
 
     def _matchfactories(self, factorydef, nodeid):
         l = []

@@ -989,6 +989,7 @@ class TestMetafunc:
     def test_parametrize_functional(self, testdir):
         testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
+                assert "test_parametrize_functional" in metafunc.parentid
                 metafunc.parametrize('x', [1,2], indirect=True)
                 metafunc.parametrize('y', [2])
             def pytest_funcarg__x(request):
@@ -1680,3 +1681,20 @@ class TestFuncargManager:
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
+
+class TestFuncargMarker:
+    def test_parametrize(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.funcarg(params=["a", "b", "c"])
+            def pytest_funcarg__arg(request):
+                return request.param
+            l = []
+            def test_param(arg):
+                l.append(arg)
+            def test_result():
+                assert l == list("abc")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=4)
+
