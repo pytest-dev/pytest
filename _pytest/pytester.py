@@ -388,10 +388,12 @@ class TmpTestdir:
         return config
 
     def getitem(self,  source, funcname="test_func"):
-        for item in self.getitems(source):
+        items = self.getitems(source)
+        for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "%r item not found in module:\n%s" %(funcname, source)
+        assert 0, "%r item not found in module:\n%s\nitems: %s" %(
+                  funcname, source, items)
 
     def getitems(self,  source):
         modcol = self.getmodulecol(source)

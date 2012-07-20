@@ -647,15 +647,14 @@ class TestRequest:
             def pytest_funcarg__something(request):
                 return 1
         """)
-        item = testdir.getitem("""
+        item = testdir.makepyfile("""
             def pytest_funcarg__something(request):
                 return request.getfuncargvalue("something") + 1
             def test_func(something):
                 assert something == 2
         """)
-        req = funcargs.FuncargRequest(item)
-        val = req.getfuncargvalue("something")
-        assert val == 2
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
     def test_getfuncargvalue(self, testdir):
         item = testdir.getitem("""
@@ -1296,7 +1295,9 @@ def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
         class MyClass:
             pass
     """)
-    clscol = modcol.collect()[0]
+    # this hook finds funcarg factories
+    rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
+    clscol = rep.result[0]
     clscol.obj = lambda arg1: None
     clscol.funcargs = {}
     funcargs.fillfuncargs(clscol)
@@ -1310,7 +1311,7 @@ def test_funcarg_lookup_error(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        "*ERROR*collecting*test_funcarg_lookup_error.py*",
+        "*ERROR*test_lookup_error*",
         "*def test_lookup_error(unknown):*",
         "*LookupError: no factory found*unknown*",
         "*available funcargs*",
@@ -1633,3 +1634,49 @@ class TestResourceIntegrationFunctional:
             "*test_function*basic*PASSED",
             "*test_function*advanced*FAILED",
         ])
+
+### XXX shift to test_session.py
+class TestFuncargManager:
+    def pytest_funcarg__testdir(self, request):
+        testdir = request.getfuncargvalue("testdir")
+        testdir.makeconftest("""
+            def pytest_funcarg__hello(request):
+                return "conftest"
+
+            def pytest_funcarg__fm(request):
+                return request.funcargmanager
+
+            def pytest_funcarg__item(request):
+                return request._pyfuncitem
+        """)
+        return testdir
+
+    def test_parsefactories_conftest(self, testdir):
+        testdir.makepyfile("""
+            def test_hello(item, fm):
+                for name in ("fm", "hello", "item"):
+                    faclist = fm.getfactorylist(name, item.nodeid, item.obj)
+                    assert len(faclist) == 1
+                    fac = faclist[0]
+                    assert fac.__name__ == "pytest_funcarg__" + name
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=1)
+
+    def test_parsefactories_conftest_and_module_and_class(self, testdir):
+        testdir.makepyfile("""
+            def pytest_funcarg__hello(request):
+                return "module"
+            class TestClass:
+                def pytest_funcarg__hello(self, request):
+                    return "class"
+                def test_hello(self, item, fm):
+                    faclist = fm.getfactorylist("hello", item.nodeid, item.obj)
+                    print faclist
+                    assert len(faclist) == 3
+                    assert faclist[0](item._request) == "conftest"
+                    assert faclist[1](item._request) == "module"
+                    assert faclist[2](item._request) == "class"
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=1)

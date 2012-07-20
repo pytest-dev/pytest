@@ -4,12 +4,18 @@ import os
 from _pytest.tmpdir import pytest_funcarg__tmpdir, TempdirHandler
 
 def test_funcarg(testdir):
-    item = testdir.getitem("""
+    testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(id='a')
                 metafunc.addcall(id='b')
             def test_func(tmpdir): pass
-            """, 'test_func[a]')
+    """)
+    reprec = testdir.inline_run()
+    calls = reprec.getcalls("pytest_runtest_setup")
+    item = calls[0].item
+    # pytest_unconfigure has deleted the TempdirHandler already
+    config = item.config
+    config._tmpdirhandler = TempdirHandler(config)
     p = pytest_funcarg__tmpdir(item)
     assert p.check()
     bn = p.basename.strip("0123456789")

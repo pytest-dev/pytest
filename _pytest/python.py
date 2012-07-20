@@ -3,6 +3,8 @@ import py
 import inspect
 import sys
 import pytest
+from _pytest.main import getfslineno
+from _pytest.monkeypatch import monkeypatch
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
@@ -192,18 +194,7 @@ class PyobjMixin(PyobjContext):
         return s.replace(".[", "[")
 
     def _getfslineno(self):
-        try:
-            return self._fslineno
-        except AttributeError:
-            pass
-        obj = self.obj
-        # xxx let decorators etc specify a sane ordering
-        if hasattr(obj, 'place_as'):
-            obj = obj.place_as
-
-        self._fslineno = py.code.getfslineno(obj)
-        assert isinstance(self._fslineno[1], int), obj
-        return self._fslineno
+        return getfslineno(self.obj)
 
     def reportinfo(self):
         # XXX caching?
@@ -213,12 +204,10 @@ class PyobjMixin(PyobjContext):
             fspath = sys.modules[obj.__module__].__file__
             if fspath.endswith(".pyc"):
                 fspath = fspath[:-1]
-            #assert 0
-            #fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
             lineno = obj.compat_co_firstlineno
             modpath = obj.__module__
         else:
-            fspath, lineno = self._getfslineno()
+            fspath, lineno = getfslineno(obj)
             modpath = self.getmodpath()
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
@@ -306,6 +295,10 @@ class Module(pytest.File, PyCollector):
     def _getobj(self):
         return self._memoizedcall('_obj', self._importtestmodule)
 
+    def collect(self):
+        self.session.funcargmanager._parsefactories(self.obj, self.nodeid)
+        return super(Module, self).collect()
+
     def _importtestmodule(self):
         # we assume we are only called once per module
         try:
@@ -370,7 +363,12 @@ class Class(PyCollector):
 
 class Instance(PyCollector):
     def _getobj(self):
-        return self.parent.obj()
+        obj = self.parent.obj()
+        return obj
+
+    def collect(self):
+        self.session.funcargmanager._parsefactories(self.obj, self.nodeid)
+        return super(Instance, self).collect()
 
     def newinstance(self):
         self.obj = self._getobj()
@@ -809,7 +807,7 @@ class Function(FunctionMixin, pytest.Item):
             else:
                 self.funcargs = {}
             self._request = req = FuncargRequest(self)
-            req._discoverfactories()
+            #req._discoverfactories()
         if callobj is not _dummy:
             self.obj = callobj
         startindex = int(self.cls is not None)
@@ -885,20 +883,28 @@ class FuncargRequest:
         self.funcargmanager = pyfuncitem.session.funcargmanager
         self._currentarg = None
         self.funcargnames = getfuncargnames(self.function)
+        self.parentid = pyfuncitem.parent.nodeid
 
     def _discoverfactories(self):
         for argname in self.funcargnames:
             if argname not in self._funcargs:
-                self.funcargmanager._discoverfactories(self, argname)
+                self._getfaclist(argname)
 
-    @cached_property
-    def _plugins(self):
-        extra = [obj for obj in (self.module, self.instance) if obj]
-        return self._pyfuncitem.getplugins() + extra
+    def _getfaclist(self, argname):
+        faclist = self._name2factory.get(argname, None)
+        if faclist is None:
+            faclist = self.funcargmanager.getfactorylist(argname,
+                                                         self.parentid,
+                                                         self.function)
+            self._name2factory[argname] = faclist
+        elif not faclist:
+            self.funcargmanager._raiselookupfailed(argname, self.function,
+                                                   self.parentid)
+        return faclist
 
     def raiseerror(self, msg):
         """ raise a FuncargLookupError with the given message. """
-        raise self.funcargmanager.FuncargLookupError(self, msg)
+        raise self.funcargmanager.FuncargLookupError(self.function, msg)
 
     @property
     def function(self):
@@ -1001,9 +1007,23 @@ class FuncargRequest:
             return self._funcargs[argname]
         except KeyError:
             pass
-        val = self.funcargmanager._getfuncarg(self, argname)
-        self._funcargs[argname] = val
-        return val
+        factorylist = self._getfaclist(argname)
+        funcargfactory = factorylist.pop()
+        node = self._pyfuncitem
+        oldarg = self._currentarg
+        mp = monkeypatch()
+        mp.setattr(self, '_currentarg', argname)
+        try:
+            param = node.callspec.getparam(argname)
+        except (AttributeError, ValueError):
+            pass
+        else:
+            mp.setattr(self, 'param', param, raising=False)
+        try:
+            self._funcargs[argname] = val = funcargfactory(request=self)
+            return val
+        finally:
+            mp.undo()
 
     def _getscopeitem(self, scope):
         if scope == "function":

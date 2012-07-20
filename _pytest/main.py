@@ -285,13 +285,15 @@ class Node(object):
     def _repr_failure_py(self, excinfo, style=None):
         LE = self.session.funcargmanager.FuncargLookupError
         if excinfo.errisinstance(LE):
-            request = excinfo.value.request
-            fspath, lineno, msg = request._pyfuncitem.reportinfo()
-            lines, _ = inspect.getsourcelines(request.function)
-            for i, line in enumerate(lines):
-                if line.strip().startswith('def'):
-                    return FuncargLookupErrorRepr(fspath, lineno, lines[:i+1],
-                                str(excinfo.value.msg))
+            function = excinfo.value.function
+            if function is not None:
+                fspath, lineno = getfslineno(function)
+                lines, _ = inspect.getsourcelines(function)
+                for i, line in enumerate(lines):
+                    if line.strip().startswith('def'):
+                        return FuncargLookupErrorRepr(fspath,
+                                    lineno, lines[:i+1],
+                                    str(excinfo.value.msg))
         if self.config.option.fulltrace:
             style="long"
         else:
@@ -406,8 +408,8 @@ class Item(Node):
 
 class FuncargLookupError(LookupError):
     """ could not find a factory. """
-    def __init__(self, request, msg):
-        self.request = request
+    def __init__(self, function, msg):
+        self.function = function
         self.msg = msg
 
 class FuncargManager:
@@ -417,60 +419,68 @@ class FuncargManager:
     def __init__(self, session):
         self.session = session
         self.config = session.config
-        self.node2name2factory = {}
+        self.arg2facspec = {}
+        session.config.pluginmanager.register(self, "funcmanage")
+        self._holderobjseen = set()
 
-    def _discoverfactories(self, request, argname):
-        node = request._pyfuncitem
-        name2factory = self.node2name2factory.setdefault(node, {})
-        if argname not in name2factory:
-            name2factory[argname] = self.config.pluginmanager.listattr(
-                    plugins=request._plugins,
-                    attrname=self._argprefix + str(argname)
-            )
-        #else: we are called recursively
-        if not name2factory[argname]:
-            self._raiselookupfailed(request, argname)
-
-    def _getfuncarg(self, request, argname):
-        node = request._pyfuncitem
+    ### XXX this hook should be called for historic events like pytest_configure
+    ### so that we don't have to do the below pytest_collection hook
+    def pytest_plugin_registered(self, plugin):
+        #print "plugin_registered", plugin
+        nodeid = ""
         try:
-            factorylist = self.node2name2factory[node][argname]
-        except KeyError:
-            # XXX at collection time this funcarg was not know to be a
-            # requirement, would be better if it would be known
-            self._discoverfactories(request, argname)
-            factorylist = self.node2name2factory[node][argname]
-
-        if not factorylist:
-            self._raiselookupfailed(request, argname)
-        funcargfactory = factorylist.pop()
-        oldarg = request._currentarg
-        mp = monkeypatch()
-        mp.setattr(request, '_currentarg', argname)
-        try:
-            param = node.callspec.getparam(argname)
-        except (AttributeError, ValueError):
+            p = py.path.local(plugin.__file__)
+        except AttributeError:
             pass
         else:
-            mp.setattr(request, 'param', param, raising=False)
-        try:
-            return funcargfactory(request=request)
-        finally:
-            mp.undo()
+            if p.basename.startswith("conftest.py"):
+                nodeid = p.dirpath().relto(self.session.fspath)
+        self._parsefactories(plugin, nodeid)
 
-    def _raiselookupfailed(self, request, argname):
+    @pytest.mark.tryfirst
+    def pytest_collection(self, session):
+        plugins = session.config.pluginmanager.getplugins()
+        for plugin in plugins:
+            self.pytest_plugin_registered(plugin)
+
+    def _parsefactories(self, holderobj, nodeid):
+        if holderobj in self._holderobjseen:
+            return
+        #print "parsefactories", holderobj
+        self._holderobjseen.add(holderobj)
+        for name in dir(holderobj):
+            #print "check", holderobj, name
+            if name.startswith(self._argprefix):
+                fname = name[len(self._argprefix):]
+                faclist = self.arg2facspec.setdefault(fname, [])
+                obj = getattr(holderobj, name)
+                faclist.append((nodeid, obj))
+
+    def getfactorylist(self, argname, nodeid, function):
+        try:
+            factorydef = self.arg2facspec[argname]
+        except KeyError:
+            self._raiselookupfailed(argname, function, nodeid)
+        return self._matchfactories(factorydef, nodeid)
+
+    def _matchfactories(self, factorydef, nodeid):
+        l = []
+        for baseid, factory in factorydef:
+            #print "check", basepath, nodeid
+            if nodeid.startswith(baseid):
+                l.append(factory)
+        return l
+
+    def _raiselookupfailed(self, argname, function, nodeid):
         available = []
-        for plugin in request._plugins:
-            for name in vars(plugin):
-                if name.startswith(self._argprefix):
-                    name = name[len(self._argprefix):]
-                    if name not in available:
-                        available.append(name)
-        fspath, lineno, msg = request._pyfuncitem.reportinfo()
+        for name, facdef in self.arg2facspec.items():
+            faclist = self._matchfactories(facdef, nodeid)
+            if faclist:
+                available.append(name)
         msg = "LookupError: no factory found for argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        raise FuncargLookupError(request, msg)
+        raise FuncargLookupError(function, msg)
 
 
 class NoMatch(Exception):
@@ -715,6 +725,13 @@ class Session(FSCollector):
                      to cache on a per-session level.
         """
 
+def getfslineno(obj):
+    # xxx let decorators etc specify a sane ordering
+    if hasattr(obj, 'place_as'):
+        obj = obj.place_as
+    fslineno = py.code.getfslineno(obj)
+    assert isinstance(fslineno[1], int), obj
+    return fslineno
 
 
 class FuncargLookupErrorRepr(TerminalRepr):
