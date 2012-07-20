@@ -886,6 +886,7 @@ class FuncargRequest:
         self._currentarg = None
         self.funcargnames = getfuncargnames(self.function)
         self.parentid = pyfuncitem.parent.nodeid
+        self.scope = "function"
 
     def _getfaclist(self, argname):
         faclist = self._name2factory.get(argname, None)
@@ -982,6 +983,9 @@ class FuncargRequest:
         try:
             val = cache[cachekey]
         except KeyError:
+            __tracebackhide__ = True
+            check_scope(self.scope, scope)
+            __tracebackhide__ = False
             val = setup()
             cache[cachekey] = val
             if teardown is not None:
@@ -1007,7 +1011,6 @@ class FuncargRequest:
         factorylist = self._getfaclist(argname)
         funcargfactory = factorylist.pop()
         node = self._pyfuncitem
-        oldarg = self._currentarg
         mp = monkeypatch()
         mp.setattr(self, '_currentarg', argname)
         try:
@@ -1016,11 +1019,24 @@ class FuncargRequest:
             pass
         else:
             mp.setattr(self, 'param', param, raising=False)
-        try:
-            self._funcargs[argname] = val = funcargfactory(request=self)
-            return val
-        finally:
-            mp.undo()
+
+        # implemenet funcarg marker scope
+        marker = getattr(funcargfactory, "funcarg", None)
+        scope = None
+        if marker is not None:
+            scope = marker.kwargs.get("scope")
+        if scope is not None:
+            __tracebackhide__ = True
+            check_scope(self.scope, scope)
+            __tracebackhide__ = False
+            mp.setattr(self, "scope", scope)
+            val = self.cached_setup(lambda: funcargfactory(request=self),
+                                    scope=scope)
+        else:
+            val = funcargfactory(request=self)
+        mp.undo()
+        self._funcargs[argname] = val
+        return val
 
     def _getscopeitem(self, scope):
         if scope == "function":
@@ -1039,7 +1055,7 @@ class FuncargRequest:
     def addfinalizer(self, finalizer):
         """add finalizer function to be called after test function
         finished execution. """
-        self._addfinalizer(finalizer, scope="function")
+        self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer, scope):
         colitem = self._getscopeitem(scope)
@@ -1049,3 +1065,15 @@ class FuncargRequest:
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)
 
+class ScopeMismatchError(Exception):
+    """ A funcarg factory tries to access a funcargvalue/factory
+    which has a lower scope (e.g. a Session one calls a function one)
+    """
+scopes = "session module class function".split()
+def check_scope(currentscope, newscope):
+    __tracebackhide__ = True
+    i_currentscope = scopes.index(currentscope)
+    i_newscope = scopes.index(newscope)
+    if i_newscope > i_currentscope:
+        raise ScopeMismatchError("You tried to access a %r scoped funcarg "
+            "from a %r scoped one." % (newscope, currentscope))

@@ -58,7 +58,7 @@ class TestClass:
         ])
 
     def test_setup_teardown_class_as_classmethod(self, testdir):
-        testdir.makepyfile("""
+        testdir.makepyfile(test_mod1="""
             class TestClassMethod:
                 @classmethod
                 def setup_class(cls):
@@ -1697,4 +1697,111 @@ class TestFuncargMarker:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
+
+    def test_scope_session(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.mark.funcarg(scope="module")
+            def pytest_funcarg__arg(request):
+                l.append(1)
+                return 1
+
+            def test_1(arg):
+                assert arg == 1
+            def test_2(arg):
+                assert arg == 1
+                assert len(l) == 1
+            class TestClass:
+                def test3(self, arg):
+                    assert arg == 1
+                    assert len(l) == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=3)
+
+    def test_scope_module_uses_session(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.mark.funcarg(scope="module")
+            def pytest_funcarg__arg(request):
+                l.append(1)
+                return 1
+
+            def test_1(arg):
+                assert arg == 1
+            def test_2(arg):
+                assert arg == 1
+                assert len(l) == 1
+            class TestClass:
+                def test3(self, arg):
+                    assert arg == 1
+                    assert len(l) == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=3)
+
+    def test_scope_module_and_finalizer(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            finalized = []
+            created = []
+            @pytest.mark.funcarg(scope="module")
+            def pytest_funcarg__arg(request):
+                created.append(1)
+                assert request.scope == "module"
+                request.addfinalizer(lambda: finalized.append(1))
+            def pytest_funcarg__created(request):
+                return len(created)
+            def pytest_funcarg__finalized(request):
+                return len(finalized)
+        """)
+        testdir.makepyfile(
+            test_mod1="""
+                def test_1(arg, created, finalized):
+                    assert created == 1
+                    assert finalized == 0
+                def test_2(arg, created, finalized):
+                    assert created == 1
+                    assert finalized == 0""",
+            test_mod2="""
+                def test_3(arg, created, finalized):
+                    assert created == 2
+                    assert finalized == 1""",
+            test_mode3="""
+                def test_4(arg, created, finalized):
+                    assert created == 3
+                    assert finalized == 2
+            """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=4)
+
+    @pytest.mark.parametrize("method", [
+        'request.getfuncargvalue("arg")',
+        'request.cached_setup(lambda: None, scope="function")',
+    ], ids=["getfuncargvalue", "cached_setup"])
+    def test_scope_mismatch(self, testdir, method):
+        testdir.makeconftest("""
+            import pytest
+            finalized = []
+            created = []
+            @pytest.mark.funcarg(scope="function")
+            def pytest_funcarg__arg(request):
+                pass
+        """)
+        testdir.makepyfile(
+            test_mod1="""
+                import pytest
+                @pytest.mark.funcarg(scope="session")
+                def pytest_funcarg__arg(request):
+                    %s
+                def test_1(arg):
+                    pass
+            """ % method)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*ScopeMismatch*You tried*function*from*session*",
+        ])
 
