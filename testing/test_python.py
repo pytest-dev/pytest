@@ -1826,4 +1826,17 @@ class TestFuncargMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-
+    def test_parametrize_and_scope(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.funcarg(scope="module", params=["a", "b", "c"])
+            def pytest_funcarg__arg(request):
+                return request.param
+            l = []
+            def test_param(arg):
+                l.append(arg)
+            def test_result():
+                assert l == list("abc")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=4)

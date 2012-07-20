@@ -21,3 +21,4 @@ need more examples or have questions. Also take a look at the :ref:`comprehensiv
    markers.txt
    pythoncollection.txt
    nonpython.txt
+   newexamples.txt

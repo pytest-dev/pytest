@@ -1030,8 +1030,11 @@ class FuncargRequest:
             check_scope(self.scope, scope)
             __tracebackhide__ = False
             mp.setattr(self, "scope", scope)
+            kwargs = {}
+            if hasattr(self, "param"):
+                kwargs["extrakey"] = param
             val = self.cached_setup(lambda: funcargfactory(request=self),
-                                    scope=scope)
+                                    scope=scope, **kwargs)
         else:
             val = funcargfactory(request=self)
         mp.undo()

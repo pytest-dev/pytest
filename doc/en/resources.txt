@@ -94,6 +94,8 @@ each of these problems.
 Direct scoping of funcarg factories
 --------------------------------------------------------
 
+.. note:: Implemented
+
 Instead of calling cached_setup(), you can decorate your factory
 to state its scope::
 
@@ -115,6 +117,8 @@ still want to have your factory get called on a per-item basis.
 
 Direct parametrization of funcarg resource factories 
 ----------------------------------------------------------
+
+.. note:: Implemented
 
 Previously, funcarg factories could not directly cause parametrization.
 You needed to specify a ``@parametrize`` or implement a ``pytest_generate_tests`` hook to perform parametrization, i.e. calling a test multiple times
@@ -154,6 +158,8 @@ factory function.
 Direct usage of funcargs with funcargs factories
 ----------------------------------------------------------
 
+.. note:: Not Implemented - unclear if to.
+
 You can now directly use funcargs in funcarg factories.  Example::
 
     @pytest.mark.funcarg(scope="session")
@@ -168,6 +174,8 @@ actually parametrized.
 
 The "pytest_funcarg__" prefix becomes optional
 -----------------------------------------------------
+
+.. note:: Implemented
 
 When using the ``@funcarg`` decorator you do not need to use
 the ``pytest_funcarg__`` prefix any more::
@@ -185,6 +193,8 @@ that the funcarg factory will be called for each test function invocation.
 
 support for a new @setup marker
 ------------------------------------------------------
+
+.. note:: Not-Implemented, still under consideration if to.
 
 pytest for a long time offered a pytest_configure and a pytest_sessionstart
 hook which are often used to setup global resources.  This suffers from
@@ -252,6 +262,8 @@ funcarg which represents a takes on each of the values in the
 Using funcarg resources in xUnit setup methods
 ------------------------------------------------------------
 
+.. note:: Not implemented. Not clear if to.
+
 XXX Consider this feature in contrast to the @setup feature - probably
 introducing one of them is better and the @setup decorator is more flexible.
 
@@ -296,6 +308,8 @@ resource, collection would early on report a ScopingMismatch error.
 the "directory" caching scope
 --------------------------------------------
 
+.. note:: Not implemented.
+
 All API accepting a scope (:py:func:`cached_setup()`  and
 the new funcarg/setup decorators) now also accept a "directory"
 specification.  This allows to restrict/cache resource values on a
@@ -303,6 +317,8 @@ per-directory level.
 
 funcarg and setup discovery now happens at collection time
 ---------------------------------------------------------------------
+
+.. note:: Partially implemented - collectonly shows no extra information
 
 pytest-2.X takes care to discover funcarg factories and setup_X methods
 at collection time.  This is more efficient especially for large test suites. 
@@ -404,7 +420,7 @@ through the ``node.session`` attribute::
 ISSUES
 --------------------------
 
-decorating a parametrized funcarg factory:
+decorating a parametrized funcarg factory::
 
     @pytest.mark.funcarg(scope="session", params=["mysql", "pg"])
     def db(request):

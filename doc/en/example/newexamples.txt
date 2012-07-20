@@ -1,0 +1,183 @@
+
+Scoping and parametrizing Funcarg factories
+---------------------------------------------------
+
+.. regendoc:wipe
+
+.. versionadded:: 2.3
+
+The ``@pytest.mark.funcarg`` marker allows 
+
+* to mark a function without a ``pytest_funcarg__`` as a factory
+* to cause parametrization and run all tests multiple times
+  with the multiple created resources
+* to set a scope which determines the level of caching
+
+Here is a simple example for defining a SMTPServer server
+object with a session scope::
+
+    # content of conftest.py
+    import pytest
+    import smtplib
+
+    @pytest.mark.funcarg(scope="session")
+    def smtp(request):
+        smtp = smtplib.SMTP("merlinux.eu")
+        request.addfinalizer(smtp.close)
+        return smtp
+
+You can now use this server connection from your tests::
+
+    # content of test_module.py
+    def test_ehlo(smtp):
+        response = smtp.ehlo()
+        assert response[0] == 250 
+        assert "merlinux" in response[1]
+        assert 0  # for demo purposes
+
+    def test_noop(smtp):
+        response = smtp.noop()
+        assert response[0] == 250
+        assert 0  # for demo purposes
+
+If you run the tests::
+
+    $ py.test -q
+    collecting ... collected 2 items
+    FF
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
+    
+    smtp = <smtplib.SMTP instance at 0x28599e0>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:5: AssertionError
+    ________________________________ test_noop _________________________________
+    
+    smtp = <smtplib.SMTP instance at 0x28599e0>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    2 failed in 0.14 seconds
+
+you will see the two ``assert 0`` failing and can see that
+the same (session-scoped) object was passed into the two test functions.
+
+If you now want to test multiple servers you can simply parametrize
+the ``smtp`` factory::
+
+    # content of conftest.py
+    import pytest
+    import smtplib
+
+    @pytest.mark.funcarg(scope="session", 
+                         params=["merlinux.eu", "mail.python.org"])
+    def smtp(request):
+        smtp = smtplib.SMTP(request.param)
+        def fin():
+            print "closing", smtp
+            smtp.close()
+        request.addfinalizer(fin)
+        return smtp
+
+Only two lines changed and no test code needs to change.  Let's do
+another run::
+
+    $ py.test -q
+    collecting ... collected 4 items
+    FFFF
+    ================================= FAILURES =================================
+    __________________________ test_ehlo[merlinux.eu] __________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2bf3d40>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:5: AssertionError
+    ________________________ test_ehlo[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2bf9170>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+    >       assert "merlinux" in response[1]
+    E       assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    
+    test_module.py:4: AssertionError
+    __________________________ test_noop[merlinux.eu] __________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2bf3d40>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    ________________________ test_noop[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2bf9170>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    4 failed in 5.70 seconds
+    closing <smtplib.SMTP instance at 0x2bf9170>
+    closing <smtplib.SMTP instance at 0x2bf3d40>
+
+We get four failures because we are running the two tests twice with
+different ``smtp`` instantiations as defined on the factory.
+Note that with the ``mail.python.org`` connection the second tests
+fails already in ``test_ehlo`` because it wrongly expects a specific
+server string.
+
+You can look at what tests pytest collects without running them::
+
+    $ py.test --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
+    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    collecting ... collected 4 items
+    <Module 'test_module.py'>
+      <Function 'test_ehlo[merlinux.eu]'>
+      <Function 'test_ehlo[mail.python.org]'>
+      <Function 'test_noop[merlinux.eu]'>
+      <Function 'test_noop[mail.python.org]'>
+    
+    =============================  in 0.02 seconds =============================
+
+And you can run without output capturing and minimized failure reporting to check that the ``smtp`` objects are finalized at session end::
+
+    $ py.test --tb=line -q -s
+    collecting ... collected 4 items
+    FFFF
+    ================================= FAILURES =================================
+    /home/hpk/tmp/doc-exec-330/test_module.py:5: assert 0
+    /home/hpk/tmp/doc-exec-330/test_module.py:4: assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    /home/hpk/tmp/doc-exec-330/test_module.py:10: assert 0
+    /home/hpk/tmp/doc-exec-330/test_module.py:10: assert 0
+    4 failed in 6.02 seconds
+    closing <smtplib.SMTP instance at 0x1f5ef38>
+    closing <smtplib.SMTP instance at 0x1f5acf8>
