@@ -3,7 +3,7 @@ import py
 import inspect
 import sys
 import pytest
-from _pytest.main import getfslineno
+from _pytest.main import getfslineno, getfuncargnames
 from _pytest.monkeypatch import monkeypatch
 
 import _pytest
@@ -475,17 +475,6 @@ def hasinit(obj):
             return True
 
 
-def getfuncargnames(function, startindex=None):
-    # XXX merge with main.py's varnames
-    argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
-    if startindex is None:
-        startindex = py.std.inspect.ismethod(function) and 1 or 0
-    defaults = getattr(function, 'func_defaults',
-                       getattr(function, '__defaults__', None)) or ()
-    numdefaults = len(defaults)
-    if numdefaults:
-        return argnames[startindex:-numdefaults]
-    return argnames[startindex:]
 
 def fillfuncargs(function):
     """ fill missing funcargs. """
@@ -887,6 +876,7 @@ class FuncargRequest:
         self.funcargnames = getfuncargnames(self.function)
         self.parentid = pyfuncitem.parent.nodeid
         self.scope = "function"
+        self._factorystack = []
 
     def _getfaclist(self, argname):
         faclist = self._name2factory.get(argname, None)
@@ -947,7 +937,8 @@ class FuncargRequest:
         if self.funcargnames:
             assert not getattr(self._pyfuncitem, '_args', None), (
                 "yielded functions cannot have funcargs")
-        for argname in self.funcargnames:
+        while self.funcargnames:
+            argname = self.funcargnames.pop(0)
             if argname not in self._pyfuncitem.funcargs:
                 self._pyfuncitem.funcargs[argname] = \
                         self.getfuncargvalue(argname)
@@ -984,7 +975,10 @@ class FuncargRequest:
             val = cache[cachekey]
         except KeyError:
             __tracebackhide__ = True
-            check_scope(self.scope, scope)
+            if scopemismatch(self.scope, scope):
+                raise ScopeMismatchError("You tried to access a %r scoped "
+                    "resource with a %r scoped request object" %(
+                    (scope, self.scope)))
             __tracebackhide__ = False
             val = setup()
             cache[cachekey] = val
@@ -1010,6 +1004,21 @@ class FuncargRequest:
             pass
         factorylist = self._getfaclist(argname)
         funcargfactory = factorylist.pop()
+        self._factorystack.append(funcargfactory)
+        try:
+            return self._getfuncargvalue(funcargfactory, argname)
+        finally:
+            self._factorystack.pop()
+
+    def _getfuncargvalue(self, funcargfactory, argname):
+        # collect funcargs from the factory
+        newnames = getfuncargnames(funcargfactory)
+        newnames.remove("request")
+        factory_kwargs = {"request": self}
+        def fillfactoryargs():
+            for newname in newnames:
+                factory_kwargs[newname] = self.getfuncargvalue(newname)
+
         node = self._pyfuncitem
         mp = monkeypatch()
         mp.setattr(self, '_currentarg', argname)
@@ -1027,16 +1036,30 @@ class FuncargRequest:
             scope = marker.kwargs.get("scope")
         if scope is not None:
             __tracebackhide__ = True
-            check_scope(self.scope, scope)
+            if scopemismatch(self.scope, scope):
+                # try to report something helpful
+                lines = []
+                for factory in self._factorystack:
+                    fs, lineno = getfslineno(factory)
+                    p = self._pyfuncitem.session.fspath.bestrelpath(fs)
+                    args = inspect.formatargspec(*inspect.getargspec(factory))
+                    lines.append("%s:%d\n  def %s%s" %(
+                        p, lineno, factory.__name__, args))
+                raise ScopeMismatchError("You tried to access the %r scoped "
+                    "funcarg %r with a %r scoped request object, "
+                    "involved factories\n%s" %(
+                    (scope, argname, self.scope, "\n".join(lines))))
             __tracebackhide__ = False
             mp.setattr(self, "scope", scope)
             kwargs = {}
             if hasattr(self, "param"):
                 kwargs["extrakey"] = param
-            val = self.cached_setup(lambda: funcargfactory(request=self),
+            fillfactoryargs()
+            val = self.cached_setup(lambda: funcargfactory(**factory_kwargs),
                                     scope=scope, **kwargs)
         else:
-            val = funcargfactory(request=self)
+            fillfactoryargs()
+            val = funcargfactory(**factory_kwargs)
         mp.undo()
         self._funcargs[argname] = val
         return val
@@ -1072,11 +1095,14 @@ class ScopeMismatchError(Exception):
     """ A funcarg factory tries to access a funcargvalue/factory
     which has a lower scope (e.g. a Session one calls a function one)
     """
+
 scopes = "session module class function".split()
-def check_scope(currentscope, newscope):
-    __tracebackhide__ = True
-    i_currentscope = scopes.index(currentscope)
-    i_newscope = scopes.index(newscope)
-    if i_newscope > i_currentscope:
-        raise ScopeMismatchError("You tried to access a %r scoped funcarg "
-            "from a %r scoped one." % (newscope, currentscope))
+def scopemismatch(currentscope, newscope):
+    return scopes.index(newscope) > scopes.index(currentscope)
+
+def slice_kwargs(names, kwargs):
+    new_kwargs = {}
+    for name in names:
+        new_kwargs[name] = kwargs[name]
+    return new_kwargs
+

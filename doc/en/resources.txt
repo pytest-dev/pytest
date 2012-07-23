@@ -248,10 +248,11 @@ You can also use ``@setup`` inside a test module or class::
     def modes(tmpdir, request):
         # ...
 
-This would execute the ``modes`` function once for each parameter.
-In addition to normal funcargs you can also receive the "request"
-funcarg which represents a takes on each of the values in the
-``params=[1,2,3]`` decorator argument. 
+This would execute the ``modes`` function once for each parameter
+which will be put at ``request.param``.  This request object offers
+the ``addfinalizer(func)`` helper which allows to register a function
+which will be executed when test functions within the specified scope 
+finished execution.
 
 .. note::
    

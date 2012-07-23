@@ -619,7 +619,7 @@ class TestRequest:
     def test_request_attributes_method(self, testdir):
         item, = testdir.getitems("""
             class TestB:
-                def pytest_funcarg__something(request):
+                def pytest_funcarg__something(self, request):
                     return 1
                 def test_func(self, something):
                     pass
@@ -1616,6 +1616,70 @@ class TestRequestAPI:
             "*1 passed*",
         ])
 
+class TestFuncargFactory:
+    def test_receives_funcargs(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.funcarg
+            def arg1(request):
+                return 1
+
+            @pytest.mark.funcarg
+            def arg2(request, arg1):
+                return arg1 + 1
+
+            def test_add(arg2):
+                assert arg2 == 2
+            def test_all(arg1, arg2):
+                assert arg1 == 1
+                assert arg2 == 2
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_receives_funcargs_scope_mismatch(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.funcarg(scope="function")
+            def arg1(request):
+                return 1
+
+            @pytest.mark.funcarg(scope="module")
+            def arg2(request, arg1):
+                return arg1 + 1
+
+            def test_add(arg2):
+                assert arg2 == 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ScopeMismatch*involved factories*",
+            "* def arg2*",
+            "* def arg1*",
+            "*1 error*"
+        ])
+
+    def test_funcarg_parametrized_and_used_twice(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.mark.funcarg(params=[1,2])
+            def arg1(request):
+                l.append(1)
+                return request.param
+
+            @pytest.mark.funcarg
+            def arg2(request, arg1):
+                return arg1 + 1
+
+            def test_add(arg1, arg2):
+                assert arg2 == arg1 + 1
+                assert len(l) == arg1
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*2 passed*"
+        ])
 
 
 class TestResourceIntegrationFunctional:
@@ -1802,7 +1866,7 @@ class TestFuncargMarker:
         result = testdir.runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
-            "*ScopeMismatch*You tried*function*from*session*",
+            "*ScopeMismatch*You tried*function*session*request*",
         ])
 
     def test_register_only_with_mark(self, testdir):

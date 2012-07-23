@@ -444,17 +444,26 @@ class FuncargManager:
             self.pytest_plugin_registered(plugin)
 
     def pytest_generate_tests(self, metafunc):
-        for argname in metafunc.funcargnames:
+        funcargnames = list(metafunc.funcargnames)
+        seen = set()
+        while funcargnames:
+            argname = funcargnames.pop(0)
+            if argname in seen:
+                continue
+            seen.add(argname)
             faclist = self.getfactorylist(argname, metafunc.parentid,
                                           metafunc.function, raising=False)
             if faclist is None:
-                continue # will raise at setup time
+                continue # will raise FuncargLookupError at setup time
             for fac in faclist:
                 marker = getattr(fac, "funcarg", None)
                 if marker is not None:
                     params = marker.kwargs.get("params")
                     if params is not None:
                         metafunc.parametrize(argname, params, indirect=True)
+                newfuncargnames = getfuncargnames(fac)
+                newfuncargnames.remove("request")
+                funcargnames.extend(newfuncargnames)
 
     def _parsefactories(self, holderobj, nodeid):
         if holderobj in self._holderobjseen:
@@ -773,3 +782,15 @@ class FuncargLookupErrorRepr(TerminalRepr):
             tw.line("        " + line.strip(), red=True)
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
+
+def getfuncargnames(function, startindex=None):
+    # XXX merge with main.py's varnames
+    argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
+    if startindex is None:
+        startindex = py.std.inspect.ismethod(function) and 1 or 0
+    defaults = getattr(function, 'func_defaults',
+                       getattr(function, '__defaults__', None)) or ()
+    numdefaults = len(defaults)
+    if numdefaults:
+        return argnames[startindex:-numdefaults]
+    return argnames[startindex:]
