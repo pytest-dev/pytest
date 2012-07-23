@@ -38,8 +38,8 @@ function is called three times.  Let's run it::
     $ py.test -q 
     collecting ... collected 3 items
     ..F
-    =================================== FAILURES ===================================
-    ______________________________ test_eval[6*9-42] _______________________________
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
     
     input = '6*9', expected = 42
     
@@ -104,8 +104,8 @@ let's run the full monty::
     $ py.test -q --all
     collecting ... collected 5 items
     ....F
-    =================================== FAILURES ===================================
-    _______________________________ test_compute[4] ________________________________
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
     
     param1 = 4
     
@@ -153,21 +153,21 @@ only have to work a bit to construct the correct arguments for pytest's
 this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 2 items
     
     test_scenarios.py ..
     
-    =========================== 2 passed in 0.02 seconds ===========================
+    ========================= 2 passed in 0.02 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
     $ py.test --collectonly test_scenarios.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 2 items
     <Module 'test_scenarios.py'>
@@ -176,7 +176,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo[basic]'>
           <Function 'test_demo[advanced]'>
     
-    ===============================  in 0.01 seconds ===============================
+    =============================  in 0.02 seconds =============================
 
 Deferring the setup of parametrized resources
 ---------------------------------------------------
@@ -223,25 +223,25 @@ creates a database object for the actual test invocations::
 Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    ===============================  in 0.01 seconds ===============================
+    =============================  in 0.02 seconds =============================
 
 And then when we run the test::
 
     $ py.test -q test_backends.py
     collecting ... collected 2 items
     .F
-    =================================== FAILURES ===================================
-    ___________________________ test_db_initialized[d2] ____________________________
+    ================================= FAILURES =================================
+    _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x2df8fc8>
+    db = <conftest.DB2 instance at 0x26bcea8>
     
         def test_db_initialized(db):
             # a dummy test
@@ -295,10 +295,10 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     collecting ... collected 3 items
     F..
-    =================================== FAILURES ===================================
-    __________________________ TestClass.test_equals[1-2] __________________________
+    ================================= FAILURES =================================
+    ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x1e11830>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x2fa9050>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -326,9 +326,9 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ py.test -rs -q multipython.py
    collecting ... collected 75 items
    ............sss............sss............sss............ssssssssssssssssss
-   =========================== short test summary info ============================
+   ========================= short test summary info ==========================
    SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:36: 'python2.8' not found
-   48 passed, 27 skipped in 1.89 seconds
+   48 passed, 27 skipped in 1.70 seconds
 
 .. regendoc:wipe
 
@@ -337,13 +337,13 @@ Grouping test execution by parameter
 
 By default pytest will execute test functions by executing all its parametrized invocations.  If you rather want to group execution by parameter, you can
 use something like the following ``conftest.py`` example.  It uses
-a parametrized "session" object::
+a parametrized "resource" object::
 
     # content of conftest.py
     def pytest_collection_modifyitems(items):
         def cmp(item1, item2):
-            param1 = item1.callspec.getparam("session")
-            param2 = item2.callspec.getparam("session")
+            param1 = item1.callspec.getparam("resource")
+            param2 = item2.callspec.getparam("resource")
             if param1 < param2:
                 return -1
             elif param1 > param2:
@@ -352,49 +352,64 @@ a parametrized "session" object::
         items.sort(cmp=cmp)
 
     def pytest_generate_tests(metafunc):
-        if "session" in metafunc.funcargnames:
-            metafunc.parametrize("session", [1,2], indirect=True)
+        if "resource" in metafunc.funcargnames:
+            metafunc.parametrize("resource", [1,2], indirect=True)
 
-    class Session:
+    class Resource:
         def __init__(self, num):
             self.num = num
+        def finalize(self):
+            print "finalize", self
 
-    def pytest_funcarg__session(request):
-        return Session(request.param)
+    def pytest_funcarg__resource(request):
+        return request.cached_setup(lambda: Resource(request.param),
+                                    teardown=lambda res: res.finalize(),
+                                    extrakey=request.param)
 
 
-If you know have a test file like this::
+If you have a test file like this::
 
-    # content of test_session.py
-    def test_hello(session):
+    # content of test_resource.py
+    def test_hello(resource):
         pass
 
-    def test_world(session):
+    def test_world(resource):
         pass
 
     class TestClass:
-        def test_method1(self, session):
+        def test_method1(self, resource):
             pass
-        def test_method2(self, session):
+        def test_method2(self, resource):
             pass
 
 then a subsequent execution will order the running of tests by
 parameter value::
 
-    $ py.test -v
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/tmp/doc-exec-313/.cache
+    $ py.test -v -s
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-340/.cache
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 8 items
     
-    test_session.py:1: test_hello[1] PASSED
-    test_session.py:4: test_world[1] PASSED
-    test_session.py:8: TestClass.test_method1[1] PASSED
-    test_session.py:10: TestClass.test_method2[1] PASSED
-    test_session.py:1: test_hello[2] PASSED
-    test_session.py:4: test_world[2] PASSED
-    test_session.py:8: TestClass.test_method1[2] PASSED
-    test_session.py:10: TestClass.test_method2[2] PASSED
+    test_resource.py:1: test_hello[1] PASSED
+    test_resource.py:4: test_world[1] PASSED
+    test_resource.py:8: TestClass.test_method1[1] PASSED
+    test_resource.py:10: TestClass.test_method2[1] PASSED
+    test_resource.py:1: test_hello[2] PASSED
+    test_resource.py:4: test_world[2] PASSED
+    test_resource.py:8: TestClass.test_method1[2] PASSED
+    test_resource.py:10: TestClass.test_method2[2] PASSED
     
-    =========================== 8 passed in 0.02 seconds ===========================
+    ========================= 8 passed in 0.03 seconds =========================
+    finalize <conftest.Resource instance at 0x2e7f878>
+    finalize <conftest.Resource instance at 0x2e7ddd0>
+
+.. note::
+    Despite the per-session ordering the finalize() of the session-scoped
+    resource executes at the end of the whole test session.  The life
+    cycle of the two parametrized instantiated resources will thus overlap.  
+    One possible workaround is to make the resource instantiations be
+    aware of each other and teardown the other one before returning a new
+    resource.  There are plans for future releases of pytest to offer an
+    out-of-the-box way to support session-ordering.
