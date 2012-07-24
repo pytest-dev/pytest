@@ -48,7 +48,7 @@ If you run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x28599e0>
+    smtp = <smtplib.SMTP instance at 0x20ba7e8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -60,7 +60,7 @@ If you run the tests::
     test_module.py:5: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x28599e0>
+    smtp = <smtplib.SMTP instance at 0x20ba7e8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -69,7 +69,7 @@ If you run the tests::
     E       assert 0
     
     test_module.py:10: AssertionError
-    2 failed in 0.14 seconds
+    2 failed in 0.27 seconds
 
 you will see the two ``assert 0`` failing and can see that
 the same (session-scoped) object was passed into the two test functions.
@@ -100,7 +100,7 @@ another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2bf3d40>
+    smtp = <smtplib.SMTP instance at 0x2a51830>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -112,7 +112,7 @@ another run::
     test_module.py:5: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x2bf9170>
+    smtp = <smtplib.SMTP instance at 0x2a56c20>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -123,7 +123,7 @@ another run::
     test_module.py:4: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2bf3d40>
+    smtp = <smtplib.SMTP instance at 0x2a51830>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -134,7 +134,7 @@ another run::
     test_module.py:10: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x2bf9170>
+    smtp = <smtplib.SMTP instance at 0x2a56c20>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -143,9 +143,9 @@ another run::
     E       assert 0
     
     test_module.py:10: AssertionError
-    4 failed in 5.70 seconds
-    closing <smtplib.SMTP instance at 0x2bf9170>
-    closing <smtplib.SMTP instance at 0x2bf3d40>
+    4 failed in 6.91 seconds
+    closing <smtplib.SMTP instance at 0x2a56c20>
+    closing <smtplib.SMTP instance at 0x2a51830>
 
 We get four failures because we are running the two tests twice with
 different ``smtp`` instantiations as defined on the factory.
@@ -157,7 +157,7 @@ You can look at what tests pytest collects without running them::
 
     $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev4
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 4 items
     <Module 'test_module.py'>
@@ -174,10 +174,113 @@ And you can run without output capturing and minimized failure reporting to chec
     collecting ... collected 4 items
     FFFF
     ================================= FAILURES =================================
-    /home/hpk/tmp/doc-exec-330/test_module.py:5: assert 0
-    /home/hpk/tmp/doc-exec-330/test_module.py:4: assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
-    /home/hpk/tmp/doc-exec-330/test_module.py:10: assert 0
-    /home/hpk/tmp/doc-exec-330/test_module.py:10: assert 0
-    4 failed in 6.02 seconds
-    closing <smtplib.SMTP instance at 0x1f5ef38>
-    closing <smtplib.SMTP instance at 0x1f5acf8>
+    /home/hpk/tmp/doc-exec-361/test_module.py:5: assert 0
+    /home/hpk/tmp/doc-exec-361/test_module.py:4: assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    /home/hpk/tmp/doc-exec-361/test_module.py:10: assert 0
+    /home/hpk/tmp/doc-exec-361/test_module.py:10: assert 0
+    4 failed in 6.83 seconds
+    closing <smtplib.SMTP instance at 0x236da28>
+    closing <smtplib.SMTP instance at 0x23687e8>
+
+.. _`new_setup`:
+
+``@pytest.mark.setup``: xUnit on steroids
+--------------------------------------------------------------------
+
+.. regendoc:wipe
+
+.. versionadded:: 2.3
+
+The ``@pytest.mark.setup`` marker allows 
+
+* to mark a function as a setup/fixture method; the function can itself
+  receive funcargs
+* to set a scope which determines the level of caching and how often
+  the setup function is going to be called.
+
+Here is a simple example which configures a global funcarg without
+the test needing to have it in its signature::
+
+    # content of conftest.py
+    import pytest
+
+    @pytest.mark.funcarg(scope="module")
+    def resource(request, tmpdir):
+        def fin():
+            print "finalize", tmpdir
+        request.addfinalizer(fin)
+        print "created resource", tmpdir
+        return tmpdir
+
+And the test file contains a setup function using this resource::
+
+    # content of test_module.py
+    import pytest
+
+    @pytest.mark.setup(scope="function")
+    def setresource(resource):
+        global myresource
+        myresource = resource
+
+    def test_1():
+        assert myresource
+        print "using myresource", myresource
+
+    def test_2():
+        assert myresource
+        print "using myresource", myresource
+
+Let's run this module::
+
+    $ py.test -qs
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.24 seconds
+    created resource /home/hpk/tmp/pytest-3715/test_10
+    using myresource /home/hpk/tmp/pytest-3715/test_10
+    using myresource /home/hpk/tmp/pytest-3715/test_10
+    finalize /home/hpk/tmp/pytest-3715/test_10
+
+The two test functions will see the same resource instance because it has
+a module life cycle or scope.  
+
+The resource funcarg can later add parametrization without any test
+or setup code needing to change::
+
+    # content of conftest.py
+    import pytest
+
+    @pytest.mark.funcarg(scope="module", params=["aaa", "bbb"])
+    def resource(request, tmpdir):
+        newtmp = tmpdir.join(request.param)
+        def fin():
+            print "finalize", newtmp
+        request.addfinalizer(fin)
+        print "created resource", newtmp
+        return newtmp
+
+Running this will run four tests::
+
+    $ py.test -qs
+    collecting ... collected 4 items
+    ....
+    4 passed in 0.24 seconds
+    created resource /home/hpk/tmp/pytest-3716/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-3716/test_1_aaa_0/aaa
+    created resource /home/hpk/tmp/pytest-3716/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-3716/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-3716/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-3716/test_1_bbb_0/bbb
+    finalize /home/hpk/tmp/pytest-3716/test_1_bbb_0/bbb
+    finalize /home/hpk/tmp/pytest-3716/test_1_aaa_0/aaa
+
+Each parameter causes the creation of a respective resource and the
+unchanged test module uses it in its ``@setup`` decorated method.
+
+.. note::
+
+   Currently, parametrized tests are sorted by test function location
+   so a test function will execute multiple times with different parametrized
+   funcargs.  If you have class/module/session scoped funcargs and
+   they cause global side effects this can cause problems because the
+   code under test may not be prepared to deal with it.

@@ -1746,12 +1746,121 @@ class TestFuncargManager:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+class TestSetupDiscovery:
+    def pytest_funcarg__testdir(self, request):
+        testdir = request.getfuncargvalue("testdir")
+        testdir.makeconftest("""
+            import pytest
+            @pytest.mark.setup
+            def perfunction(request):
+                pass
+            @pytest.mark.setup
+            def perfunction2(request):
+                pass
+
+            def pytest_funcarg__fm(request):
+                return request.funcargmanager
+
+            def pytest_funcarg__item(request):
+                return request._pyfuncitem
+        """)
+        return testdir
+
+    def test_parsefactories_conftest(self, testdir):
+        testdir.makepyfile("""
+            def test_check_setup(item, fm):
+                setuplist, allnames = fm.getsetuplist(item.nodeid)
+                assert len(setuplist) == 2
+                assert setuplist[0][0].__name__ == "perfunction"
+                assert "request" in setuplist[0][1]
+                assert setuplist[1][0].__name__ == "perfunction2"
+                assert "request" in setuplist[1][1]
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=1)
+
+
+class TestSetupManagement:
+    def test_funcarg_and_setup(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.mark.funcarg(scope="module")
+            def arg(request):
+                l.append(1)
+                return 0
+            @pytest.mark.setup(scope="class")
+            def something(request, arg):
+                l.append(2)
+
+            def test_hello(arg):
+                assert len(l) == 2
+                assert l == [1,2]
+                assert arg == 0
+
+            def test_hello2(arg):
+                assert len(l) == 2
+                assert l == [1,2]
+                assert arg == 0
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_setup_uses_parametrized_resource(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.mark.funcarg(params=[1,2])
+            def arg(request):
+                return request.param
+
+            @pytest.mark.setup
+            def something(request, arg):
+                l.append(arg)
+
+            def test_hello():
+                if len(l) == 1:
+                    assert l == [1]
+                elif len(l) == 2:
+                    assert l == [1, 2]
+                else:
+                    0/0
+
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=2)
+
+    def test_session_parametrized_function_setup(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            l = []
+
+            @pytest.mark.funcarg(scope="session", params=[1,2])
+            def arg(request):
+               return request.param
+
+            @pytest.mark.setup(scope="function")
+            def append(request, arg):
+                if request.function.__name__ == "test_some":
+                    l.append(arg)
+
+            def test_some():
+                pass
+
+            def test_result(arg):
+                assert len(l) == 2
+                assert l == [1,2]
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=4)
+
 class TestFuncargMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""
             import pytest
             @pytest.mark.funcarg(params=["a", "b", "c"])
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 return request.param
             l = []
             def test_param(arg):
@@ -1767,7 +1876,7 @@ class TestFuncargMarker:
             import pytest
             l = []
             @pytest.mark.funcarg(scope="module")
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 l.append(1)
                 return 1
 
@@ -1789,7 +1898,7 @@ class TestFuncargMarker:
             import pytest
             l = []
             @pytest.mark.funcarg(scope="module")
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 l.append(1)
                 return 1
 
@@ -1812,7 +1921,7 @@ class TestFuncargMarker:
             finalized = []
             created = []
             @pytest.mark.funcarg(scope="module")
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 created.append(1)
                 assert request.scope == "module"
                 request.addfinalizer(lambda: finalized.append(1))
@@ -1851,14 +1960,14 @@ class TestFuncargMarker:
             finalized = []
             created = []
             @pytest.mark.funcarg(scope="function")
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 pass
         """)
         testdir.makepyfile(
             test_mod1="""
                 import pytest
                 @pytest.mark.funcarg(scope="session")
-                def pytest_funcarg__arg(request):
+                def arg(request):
                     %s
                 def test_1(arg):
                     pass
@@ -1894,7 +2003,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
             @pytest.mark.funcarg(scope="module", params=["a", "b", "c"])
-            def pytest_funcarg__arg(request):
+            def arg(request):
                 return request.param
             l = []
             def test_param(arg):

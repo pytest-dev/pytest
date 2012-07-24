@@ -1,43 +1,55 @@
 
-V3: Creating and working with parametrized test resources
+V4: Creating and working with parametrized resources
 ===============================================================
 
 **Target audience**: Reading this document requires basic knowledge of 
 python testing, xUnit setup methods and the basic pytest funcarg mechanism,
 see http://pytest.org/latest/funcargs.html 
 
-**Abstract**: pytest-2.X provides more powerful and more flexible funcarg
-and setup machinery.  It does so by introducing a new @funcarg and a
-new @setup marker which allows to define scoping and parametrization
-parameters.  If using ``@funcarg``, following the ``pytest_funcarg__`` 
-naming pattern becomes optional.  Functions decorated with ``@setup`` 
-are called independenlty from the definition of funcargs but can 
-access funcarg values if needed.  This allows for ultimate flexibility
-in designing your test fixtures and their parametrization. Also,
-you can now use ``py.test --collectonly`` to inspect your fixture 
-setup.  Nonwithstanding these extensions, pre-existing test suites 
-and plugins written to work for previous pytest versions shall run unmodified.
+**Abstract**: pytest-2.X provides yet more powerful and flexible 
+fixture machinery by introducing:
+
+* a new ``@pytest.mark.funcarg`` marker to define funcarg factories and their
+  scoping and parametrization.  No special ``pytest_funcarg__`` naming there.
+
+* a new ``@pytest.mark.setup`` marker to define setup functions and their 
+  scoping.
+
+* directly use funcargs through funcarg factory signatures
+
+Both funcarg factories and setup functions can be defined in test modules,
+classes, conftest.py files and installed plugins.
+
+The introduction of these two markers lifts several prior limitations
+and allows to easily define and implement complex testing scenarios.
+
+Nonwithstanding these extensions, already existing test suites and plugins
+written to work for previous pytest versions shall run unmodified.
 
 
-**Changes**: This V3 draft is based on incorporating and thinking about
-feedback provided by Floris Bruynooghe, Carl Meyer and Samuele Pedroni.
-It remains as draft documentation, pending further refinements and
-changes according to implementation or backward compatibility issues.
-The main changes to V2 are:
+**Changes**: This V4 draft is based on incorporating and thinking about
+feedback on previous versions provided by Floris Bruynooghe, Carl Meyer,
+Ronny Pfannschmidt and Samuele Pedroni.  It remains as draft
+documentation, pending further refinements and changes according to
+implementation or backward compatibility issues.  The main changes are:
 
-* Collapse funcarg factory decorator into a single "@funcarg" one.
-  You can specify scopes and params with it.  Moreover, if you supply
-  a "name" you do not need to follow the "pytest_funcarg__NAME" naming
-  pattern.  Keeping with "funcarg" naming arguable now makes more
-  sense since the main interface using these resources are test and
-  setup functions. Keeping it probably causes the least semantic friction.
+* Collapse funcarg factory decorators into a single "@funcarg" one.
+  You can specify scopes and params with it.  When using the decorator
+  the "pytest_funcarg__" prefix becomes optional.
 
-* Drop setup_directory/setup_session and introduce a new @setup
-  decorator similar to the @funcarg one but accepting funcargs.
+* funcarg factories can now use funcargs themselves
 
-* cosnider the extended setup_X funcargs for dropping because
-  the new @setup decorator probably is more flexible and introduces
-  less implementation complexity.
+* Drop setup/directory scope from this draft
+
+* introduce a new @setup decorator similar to the @funcarg one
+  except that setup-markers cannot define parametriation themselves.
+  Instead they can easily depend on a parametrized funcarg (which
+  must not be visible at test function signatures).
+
+* drop consideration of setup_X support for funcargs because
+  it is less flexible and probably causes more implementation
+  troubles than the current @setup approach which can share
+  a lot of logic with the @funcarg one.
 
 .. currentmodule:: _pytest
 
@@ -78,17 +90,13 @@ There are some problems with this approach:
    ``extrakey`` parameter containing ``request.param`` to the 
    :py:func:`~python.Request.cached_setup` call.
 
-3. the current implementation is inefficient: it performs factory discovery
-   each time a "db" argument is required.  This discovery wrongly happens at 
-   setup-time.
+3. there is no way how you can make use of funcarg factories
+   in xUnit setup methods.
 
-4. there is no way how you can use funcarg factories, let alone 
-   parametrization, when your tests use the xUnit setup_X approach.
+4. A non-parametrized funcarg factory cannot use a parametrized 
+   funcarg resource if it isn't stated in the test function signature.
 
-5. there is no way to specify a per-directory scope for caching.
-
-In the following sections, API extensions are presented to solve 
-each of these problems. 
+The following sections address the advances which solve all of these problems.
 
 
 Direct scoping of funcarg factories
@@ -158,7 +166,7 @@ factory function.
 Direct usage of funcargs with funcargs factories
 ----------------------------------------------------------
 
-.. note:: Not Implemented - unclear if to.
+.. note:: Implemented.
 
 You can now directly use funcargs in funcarg factories.  Example::
 
@@ -168,33 +176,39 @@ You can now directly use funcargs in funcarg factories.  Example::
 
 Apart from convenience it also solves an issue when your factory
 depends on a parametrized funcarg.  Previously, a call to 
-``request.getfuncargvalue()`` would not allow pytest to know
-at collection time about the fact that a required resource is
-actually parametrized.
+``request.getfuncargvalue()`` happens at test execution time and
+thus pytest would not know at collection time about the fact that 
+a required resource is parametrized.
 
-The "pytest_funcarg__" prefix becomes optional
------------------------------------------------------
+No ``pytest_funcarg__`` prefix when using @funcarg decorator
+-------------------------------------------------------------------
+
 
 .. note:: Implemented
 
-When using the ``@funcarg`` decorator you do not need to use
-the ``pytest_funcarg__`` prefix any more::
+When using the ``@funcarg`` decorator the name of the function
+does not need to (and in fact cannot) use the ``pytest_funcarg__``
+naming::
 
     @pytest.mark.funcarg
     def db(request):
         ...
 
 The name under which the funcarg resource can be requested is ``db``.
-Any ``pytest_funcarg__`` prefix will be stripped. Note that a an
-unqualified funcarg-marker implies a scope of "function" meaning
-that the funcarg factory will be called for each test function invocation.
+
+You can also use the "old" non-decorator way of specifying funcarg factories 
+aka::
+
+    def pytest_funcarg__db(request):
+        ...
+
+It is recommended to use the funcarg-decorator, however.
 
 
+solving per-session setup / the new @setup marker
+--------------------------------------------------------------
 
-support for a new @setup marker
-------------------------------------------------------
-
-.. note:: Not-Implemented, still under consideration if to.
+.. note:: Implemented, at least working for basic situations.
 
 pytest for a long time offered a pytest_configure and a pytest_sessionstart
 hook which are often used to setup global resources.  This suffers from
@@ -212,9 +226,7 @@ several problems:
    fact that this hook is actually used for reporting, in particular
    the test-header with platform/custom information.
 
-4. there is no direct way how you can restrict setup to a directory scope.
-
-Moreover, it is today not easy to define scoped setup from plugins or
+Moreover, it is today not easy to define a scoped setup from plugins or
 conftest files other than to implement a ``pytest_runtest_setup()`` hook
 and caring for scoping/caching yourself.  And it's virtually impossible
 to do this with parametrization as ``pytest_runtest_setup()`` is called
@@ -222,222 +234,76 @@ during test execution and parametrization happens at collection time.
 
 It follows that pytest_configure/session/runtest_setup are often not
 appropriate for implementing common fixture needs.  Therefore, 
-pytest-2.X introduces a new "@pytest.mark.setup" marker, accepting
-the same parameters as the @funcargs decorator.  The difference is
-that the decorated function can accept function arguments itself
-Example::
-    
-    # content of conftest.py
-    import pytest
-    @pytest.mark.setup(scope="session")
-    def mysetup(db):
-        ...
+pytest-2.X introduces a new "@pytest.mark.setup" marker which takes
+an optional "scope" parameter.  
 
-This ``mysetup`` function is going to be executed when the first
-test in the directory tree executes.  It is going to be executed once
-per-session and it receives the ``db`` funcarg which must be of same
-of higher scope; you e. g. generally cannot use a per-module or per-function 
-scoped resource in a session-scoped setup function.
-
-You can also use ``@setup`` inside a test module or class::
-
-    # content of test_module.py
-    import pytest
-
-    @pytest.mark.setup(scope="module", params=[1,2,3])
-    def modes(tmpdir, request):
-        # ...
-
-This would execute the ``modes`` function once for each parameter
-which will be put at ``request.param``.  This request object offers
-the ``addfinalizer(func)`` helper which allows to register a function
-which will be executed when test functions within the specified scope 
-finished execution.
-
-.. note::
-   
-  For each scope, the funcargs will be setup and then the setup functions
-  will be called.  This allows @setup-decorated functions to depend
-  on already setup funcarg values by accessing ``request.funcargs``.
-
-Using funcarg resources in xUnit setup methods
-------------------------------------------------------------
-
-.. note:: Not implemented. Not clear if to.
-
-XXX Consider this feature in contrast to the @setup feature - probably
-introducing one of them is better and the @setup decorator is more flexible.
-
-For a long time, pytest has recommended the usage of funcarg 
-factories as a primary means for managing resources in your test run.
-It is a better approach than the jUnit-based approach in many cases, even 
-more with the new pytest-2.X features, because the funcarg resource factory
-provides a single place to determine scoping and parametrization.  Your tests 
-do not need to encode setup/teardown details in every test file's 
-setup_module/class/method.  
-
-However, the jUnit methods originally introduced by pytest to Python,
-remain popoular with nose and unittest-based test suites.  Without question,
-there are large existing test suites using this paradigm.  pytest-2.X
-recognizes this fact and now offers direct integration with funcarg resources.  Here is a basic example for getting a per-module tmpdir::
-
-    def setup_module(mod, tmpdir):
-        mod.tmpdir = tmpdir
-
-This will trigger pytest's funcarg mechanism to create a value of
-"tmpdir" which can then be used throughout the module as a global.
-
-The new extension to setup_X methods also works in case a resource is 
-parametrized. For example, let's consider an setup_class example using
-our "db" resource::
-
-    class TestClass:
-        def setup_class(cls, db):
-            cls.db = db
-            # perform some extra things on db
-            # so that test methods can work with it
-
-With pytest-2.X the setup* methods will be discovered at collection-time,
-allowing to seemlessly integrate this approach with parametrization,
-allowing the factory specification to determine all details. The
-setup_class itself does not itself need to be aware of the fact that 
-"db" might be a mysql/PG database.
-Note that if the specified resource is provided only as a per-testfunction
-resource, collection would early on report a ScopingMismatch error.
-
-
-the "directory" caching scope
---------------------------------------------
-
-.. note:: Not implemented.
-
-All API accepting a scope (:py:func:`cached_setup()`  and
-the new funcarg/setup decorators) now also accept a "directory"
-specification.  This allows to restrict/cache resource values on a
-per-directory level.
+See :ref:`new_setup` for examples.
 
 funcarg and setup discovery now happens at collection time
 ---------------------------------------------------------------------
 
-.. note:: Partially implemented - collectonly shows no extra information
+.. note:: 
+    Partially implemented - collectonly shows no extra information however.
 
-pytest-2.X takes care to discover funcarg factories and setup_X methods
+pytest-2.X takes care to discover funcarg factories and @setup methods
 at collection time.  This is more efficient especially for large test suites. 
 Moreover, a call to "py.test --collectonly" should be able to show
 a lot of setup-information and thus presents a nice method to get an
 overview of resource management in your project.
 
-Implementation level 
-===================================================================
 
-To implement the above new features, pytest-2.X grows some new hooks and
-methods.  At the time of writing V2 and without actually implementing
-it, it is not clear how much of this new internal API will also be
-exposed and advertised e. g. for plugin writers. 
+Sorting tests by funcarg scopes
+-------------------------------------------
 
-The main effort, however, will lie in revising what is done at
-collection and what at test setup time.  All funcarg factories and
-xUnit setup methods need to be discovered at collection time
-for the above mechanism to work.  Additionally all test function
-signatures need to be parsed in order to know which resources are
-used.  On the plus side, all previously collected fixtures and
-test functions only need to be called, no discovery is neccessary
-is required anymore.
+.. note:: Not implemented, Under consideration.
 
-the "request" object incorporates scope-specific behaviour
-------------------------------------------------------------------
+pytest by default sorts test items by their source location.
+For class/module/session scoped funcargs it is not always
+desirable to have multiple active funcargs.  Sometimes,
+the application under test may not even be able to handle it
+because it relies on global state/side effects related to those 
+resources.
 
-funcarg factories receive a request object to help with implementing
-finalization and inspection of the requesting-context.  If there is
-no scoping is in effect, nothing much will change of the API behaviour.
-However, with scoping the request object represents the according context.
-Let's consider this example::
+Therefore, pytest-2.3 tries to minimize the number of active
+resources and re-orders test items accordingly.  Consider the following
+example::
 
-    @pytest.mark.factory_scope("class")
-    def pytest_funcarg__db(request):
-        # ...
-        request.getfuncargvalue(...)
-        #
-        request.addfinalizer(db)
-
-Due to the class-scope, the request object will:
-
-- provide a ``None`` value for the ``request.function`` attribute. 
-- default to per-class finalization with the addfinalizer() call.
-- raise a ScopeMismatchError if a more broadly scoped factory
-  wants to use a more tighly scoped factory (e.g. per-function)
-
-In fact, the request object is likely going to provide a "node" 
-attribute, denoting the current collection node on which it internally
-operates.  (Prior to pytest-2.3 there already was an internal
-_pyfuncitem).
-
-As these are rather intuitive extensions, not much friction is expected 
-for test/plugin writers using the new scoping and parametrization mechanism. 
-It's, however, a serious internal effort to reorganize the pytest 
-implementation.
-
-
-node.register_factory/getresource() methods
---------------------------------------------------------
-
-In order to implement factory- and setup-method discovery at
-collection time, a new node API will be introduced to allow
-for factory registration and a getresource() call to obtain
-created values.  The exact details of this API remain subject
-to experimentation. The basic idea is to introduce two new
-methods to the Session class which is already available on all nodes
-through the ``node.session`` attribute::
-
-    class Session:
-        def register_resource_factory(self, name, factory_or_list, scope):
-            """ register a resource factory for the given name.
-
-            :param name: Name of the resource.
-            :factory_or_list: a function or a list of functions creating
-                              one or multiple resource values.
-            :param scope: a node instance. The factory will be only visisble
-                          available for all descendant nodes.
-                          specify the "session" instance for global availability
-            """
-
-        def getresource(self, name, node):
-            """ get a named resource for the give node.
-
-            This method looks up a matching funcarg resource factory 
-            and calls it.
-            """
-
-.. todo::
-
-    XXX While this new API (or some variant of it) may suffices to implement
-    all of the described new usage-level features, it remains unclear how the
-    existing "@parametrize" or "metafunc.parametrize()" calls will map to it.
-    These parametrize-approaches tie resource parametrization to the 
-    function/funcargs-usage rather than to the factories. 
-
-
-
-ISSUES
---------------------------
-
-decorating a parametrized funcarg factory::
-
-    @pytest.mark.funcarg(scope="session", params=["mysql", "pg"])
-    def db(request):
+    @pytest.mark.funcarg(scope="module", params=[1,2])
+    def arg(request):
         ...
-    class TestClass:
-        @pytest.mark.funcarg(scope="function")
-        def something(self, request):
-            session_db = request.getfuncargvalue("db")
-            ...
+    @pytest.mark.funcarg(scope="function", params=[1,2])
+    def otherarg(request):
+        ...
 
-Here the function-scoped "something" factory uses the session-scoped
-"db" factory to perform some additional steps.  The dependency, however,
-is only visible at setup-time, when the factory actually gets called.
+    def test_0(otherarg):
+        pass
+    def test_1(arg):
+        pass
+    def test_2(arg, otherarg):
+        pass
 
-In order to allow parametrization at collection-time I see two ways:
+if arg.1, arg.2, otherarg.1, otherarg.2 denote the respective
+parametrized funcarg instances this will re-order test
+execution like follows::
 
-- allow specifying dependencies in the funcarg-marker 
-- allow funcargs for factories as well 
+    test_0(otherarg.1)
+    test_0(otherarg.2)
+    test_1(arg.1) 
+    test_2(arg.1, otherarg.1)
+    test_2(arg.1, otherarg.2)
+    test_1(arg.2)
+    test_2(arg.2, otherarg.1)
+    test_2(arg.2, otherarg.2)
+
+Moreover, test_2(arg.1) will execute any registered teardowns for
+the arg.1 resource after the test finished execution.
+
+.. note::
+
+    XXX it's quite unclear at the moment how to implement.
+    If we have a 1000 tests requiring different sets of parametrized
+    resources with different scopes, how to re-order accordingly?  
+    It even seems difficult to express the expectation in a 
+    concise manner.
+
 

@@ -834,6 +834,8 @@ class Function(FunctionMixin, pytest.Item):
     def setup(self):
         super(Function, self).setup()
         fillfuncargs(self)
+        if hasattr(self, "_request"):
+            self._request._callsetup()
 
     def __eq__(self, other):
         try:
@@ -990,6 +992,22 @@ class FuncargRequest:
         return val
 
 
+    def _callsetup(self):
+        setuplist, allnames = self.funcargmanager.getsetuplist(
+                                                    self._pyfuncitem.nodeid)
+        for setupfunc, funcargnames in setuplist:
+            kwargs = {}
+            for name in funcargnames:
+                if name == "request":
+                    kwargs[name] = self
+                else:
+                    kwargs[name] = self.getfuncargvalue(name)
+            scope = readscope(setupfunc, "setup")
+            if scope is None:
+                setupfunc(**kwargs)
+            else:
+                self.cached_setup(lambda: setupfunc(**kwargs), scope=scope)
+
     def getfuncargvalue(self, argname):
         """ Retrieve a function argument by name for this test
         function invocation.  This allows one function argument factory
@@ -1030,10 +1048,8 @@ class FuncargRequest:
             mp.setattr(self, 'param', param, raising=False)
 
         # implemenet funcarg marker scope
-        marker = getattr(funcargfactory, "funcarg", None)
-        scope = None
-        if marker is not None:
-            scope = marker.kwargs.get("scope")
+        scope = readscope(funcargfactory, "funcarg")
+
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
@@ -1106,3 +1122,7 @@ def slice_kwargs(names, kwargs):
         new_kwargs[name] = kwargs[name]
     return new_kwargs
 
+def readscope(func, markattr):
+    marker = getattr(func, markattr, None)
+    if marker is not None:
+        return marker.kwargs.get("scope")

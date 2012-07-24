@@ -8,6 +8,8 @@ import os, sys, imp
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
 
+from _pytest.mark import MarkInfo
+
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
 # exitcodes for the command line
@@ -422,6 +424,7 @@ class FuncargManager:
         self.arg2facspec = {}
         session.config.pluginmanager.register(self, "funcmanage")
         self._holderobjseen = set()
+        self.setuplist = []
 
     ### XXX this hook should be called for historic events like pytest_configure
     ### so that we don't have to do the below pytest_collection hook
@@ -445,6 +448,9 @@ class FuncargManager:
 
     def pytest_generate_tests(self, metafunc):
         funcargnames = list(metafunc.funcargnames)
+        setuplist, allargnames = self.getsetuplist(metafunc.parentid)
+        #print "setuplist, allargnames", setuplist, allargnames
+        funcargnames.extend(allargnames)
         seen = set()
         while funcargnames:
             argname = funcargnames.pop(0)
@@ -465,6 +471,8 @@ class FuncargManager:
                 newfuncargnames.remove("request")
                 funcargnames.extend(newfuncargnames)
 
+
+
     def _parsefactories(self, holderobj, nodeid):
         if holderobj in self._holderobjseen:
             return
@@ -473,19 +481,35 @@ class FuncargManager:
         for name in dir(holderobj):
             #print "check", holderobj, name
             obj = getattr(holderobj, name)
+            if not callable(obj):
+                continue
             # funcarg factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
             if hasattr(obj, "funcarg"):
-                if name.startswith(self._argprefix):
-                    argname = name[len(self._argprefix):]
-                else:
-                    argname = name
+                assert not name.startswith(self._argprefix)
+                argname = name
             elif name.startswith(self._argprefix):
                 argname = name[len(self._argprefix):]
             else:
+                # no funcargs. check if we have a setup function.
+                setup = getattr(obj, "setup", None)
+                if setup is not None and isinstance(setup, MarkInfo):
+                    self.setuplist.append((nodeid, obj))
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
             faclist.append((nodeid, obj))
+
+    def getsetuplist(self, nodeid):
+        l = []
+        allargnames = set()
+        for baseid, setup in self.setuplist:
+            #print "check", baseid, setup
+            if nodeid.startswith(baseid):
+                funcargnames = getfuncargnames(setup)
+                l.append((setup, funcargnames))
+                allargnames.update(funcargnames)
+        return l, allargnames
+
 
     def getfactorylist(self, argname, nodeid, function, raising=True):
         try:
