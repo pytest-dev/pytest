@@ -586,6 +586,8 @@ class Metafunc:
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
             argvalues = [(val,) for val in argvalues]
+        if scope is None:
+            scope = "function"
         scopenum = scopes.index(scope)
         if not indirect:
             #XXX should we also check for the opposite case?
@@ -888,16 +890,15 @@ class FuncargRequest:
         self._factorystack = []
 
     def _getfaclist(self, argname):
-        faclist = self._name2factory.get(argname, None)
-        if faclist is None:
-            faclist = self.funcargmanager.getfactorylist(argname,
-                                                         self.parentid,
-                                                         self.function)
-            self._name2factory[argname] = faclist
-        elif not faclist:
+        facdeflist = self._name2factory.get(argname, None)
+        if facdeflist is None:
+            facdeflist = self.funcargmanager.getfactorylist(
+                            argname, self.parentid, self.function)
+            self._name2factory[argname] = facdeflist
+        elif not facdeflist:
             self.funcargmanager._raiselookupfailed(argname, self.function,
                                                    self.parentid)
-        return faclist
+        return facdeflist
 
     def raiseerror(self, msg):
         """ raise a FuncargLookupError with the given message. """
@@ -1033,18 +1034,19 @@ class FuncargRequest:
             return self._funcargs[argname]
         except KeyError:
             pass
-        factorylist = self._getfaclist(argname)
-        funcargfactory = factorylist.pop()
-        self._factorystack.append(funcargfactory)
+        factorydeflist = self._getfaclist(argname)
+        factorydef = factorydeflist.pop()
+        self._factorystack.append(factorydef)
         try:
-            return self._getfuncargvalue(funcargfactory, argname)
+            return self._getfuncargvalue(factorydef)
         finally:
             self._factorystack.pop()
 
-    def _getfuncargvalue(self, funcargfactory, argname):
+    def _getfuncargvalue(self, factorydef):
         # collect funcargs from the factory
-        newnames = getfuncargnames(funcargfactory)
+        newnames = list(factorydef.funcargnames)
         newnames.remove("request")
+        argname = factorydef.argname
         factory_kwargs = {"request": self}
         def fillfactoryargs():
             for newname in newnames:
@@ -1060,15 +1062,15 @@ class FuncargRequest:
         else:
             mp.setattr(self, 'param', param, raising=False)
 
-        # implement funcarg marker scope
-        scope = readscope(funcargfactory, "funcarg")
-
+        scope = factorydef.scope
+        funcargfactory = factorydef.func
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
                 # try to report something helpful
                 lines = []
-                for factory in self._factorystack:
+                for factorydef in self._factorystack:
+                    factory = factorydef.func
                     fs, lineno = getfslineno(factory)
                     p = self._pyfuncitem.session.fspath.bestrelpath(fs)
                     args = inspect.formatargspec(*inspect.getargspec(factory))

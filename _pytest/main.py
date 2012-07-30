@@ -454,24 +454,18 @@ class FuncargManager:
         seen = set()
         while funcargnames:
             argname = funcargnames.pop(0)
-            if argname in seen:
+            if argname in seen or argname == "request":
                 continue
             seen.add(argname)
             faclist = self.getfactorylist(argname, metafunc.parentid,
                                           metafunc.function, raising=False)
             if faclist is None:
                 continue # will raise FuncargLookupError at setup time
-            for fac in faclist:
-                marker = getattr(fac, "funcarg", None)
-                if marker is not None:
-                    params = marker.kwargs.get("params")
-                    scope = marker.kwargs.get("scope", "function")
-                    if params is not None:
-                        metafunc.parametrize(argname, params, indirect=True,
-                                             scope=scope)
-                newfuncargnames = getfuncargnames(fac)
-                newfuncargnames.remove("request")
-                funcargnames.extend(newfuncargnames)
+            for facdef in faclist:
+                if facdef.params is not None:
+                    metafunc.parametrize(argname, facdef.params, indirect=True,
+                                             scope=facdef.scope)
+                funcargnames.extend(facdef.funcargnames)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
@@ -520,11 +514,18 @@ class FuncargManager:
                 continue
             # funcarg factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
-            if hasattr(obj, "funcarg"):
+            if not callable(obj):
+                continue
+            marker = getattr(obj, "funcarg", None)
+            if marker is not None and isinstance(marker, MarkInfo):
                 assert not name.startswith(self._argprefix)
                 argname = name
+                scope = marker.kwargs.get("scope")
+                params = marker.kwargs.get("params")
             elif name.startswith(self._argprefix):
                 argname = name[len(self._argprefix):]
+                scope = None
+                params = None
             else:
                 # no funcargs. check if we have a setup function.
                 setup = getattr(obj, "setup", None)
@@ -534,7 +535,9 @@ class FuncargManager:
                     self.setuplist.append(sf)
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
-            faclist.append((nodeid, obj))
+            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params)
+            faclist.append(factorydef)
+            ### check scope/params mismatch?
 
     def getsetuplist(self, nodeid):
         l = []
@@ -548,19 +551,19 @@ class FuncargManager:
 
     def getfactorylist(self, argname, nodeid, function, raising=True):
         try:
-            factorydef = self.arg2facspec[argname]
+            factorydeflist = self.arg2facspec[argname]
         except KeyError:
             if raising:
                 self._raiselookupfailed(argname, function, nodeid)
         else:
-            return self._matchfactories(factorydef, nodeid)
+            return self._matchfactories(factorydeflist, nodeid)
 
-    def _matchfactories(self, factorydef, nodeid):
+    def _matchfactories(self, factorydeflist, nodeid):
         l = []
-        for baseid, factory in factorydef:
+        for factorydef in factorydeflist:
             #print "check", basepath, nodeid
-            if nodeid.startswith(baseid):
-                l.append(factory)
+            if nodeid.startswith(factorydef.baseid):
+                l.append(factorydef)
         return l
 
     def _raiselookupfailed(self, argname, function, nodeid):
@@ -574,6 +577,17 @@ class FuncargManager:
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         raise FuncargLookupError(function, msg)
 
+
+class FactoryDef:
+    """ A container for a factory definition. """
+    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
+        self.funcargmanager = funcargmanager
+        self.baseid = baseid
+        self.func = func
+        self.argname = argname
+        self.scope = scope
+        self.params = params
+        self.funcargnames = getfuncargnames(func)
 
 class SetupCall:
     """ a container/helper for managing calls to setup functions. """

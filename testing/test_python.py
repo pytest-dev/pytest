@@ -1723,7 +1723,7 @@ class TestFuncargManager:
                     faclist = fm.getfactorylist(name, item.nodeid, item.obj)
                     assert len(faclist) == 1
                     fac = faclist[0]
-                    assert fac.__name__ == "pytest_funcarg__" + name
+                    assert fac.func.__name__ == "pytest_funcarg__" + name
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
@@ -1739,9 +1739,9 @@ class TestFuncargManager:
                     faclist = fm.getfactorylist("hello", item.nodeid, item.obj)
                     print faclist
                     assert len(faclist) == 3
-                    assert faclist[0](item._request) == "conftest"
-                    assert faclist[1](item._request) == "module"
-                    assert faclist[2](item._request) == "class"
+                    assert faclist[0].func(item._request) == "conftest"
+                    assert faclist[1].func(item._request) == "module"
+                    assert faclist[2].func(item._request) == "class"
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
