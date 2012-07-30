@@ -1695,7 +1695,7 @@ class TestResourceIntegrationFunctional:
         """)
         result = testdir.runpytest("-v")
         assert result.ret == 1
-        result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines_random([
             "*test_function*basic*PASSED",
             "*test_function*advanced*FAILED",
         ])
@@ -1849,10 +1849,10 @@ class TestSetupManagement:
                 pass
 
             def test_result(arg):
-                assert len(l) == 2
-                assert l == [1,2]
+                assert len(l) == arg
+                assert l[:arg] == [1,2][:arg]
         """)
-        reprec = testdir.inline_run("-s")
+        reprec = testdir.inline_run("-v", "-s")
         reprec.assertoutcome(passed=4)
 
 class TestFuncargMarker:
@@ -2013,3 +2013,170 @@ class TestFuncargMarker:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
+
+    def test_scope_mismatch(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            @pytest.mark.funcarg(scope="function")
+            def arg(request):
+                pass
+        """)
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.funcarg(scope="session")
+            def arg(request, arg):
+                pass
+            def test_mismatch(arg):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ScopeMismatch*",
+            "*1 error*",
+        ])
+
+    def test_parametrize_separated_order(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="module", params=[1, 2])
+            def arg(request):
+                return request.param
+
+            l = []
+            def test_1(arg):
+                l.append(arg)
+            def test_2(arg):
+                l.append(arg)
+            def test_3():
+                assert len(l) == 4
+                assert l[0] == l[1]
+                assert l[2] == l[3]
+
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=5)
+
+    def test_parametrize_separated_order_higher_scope_first(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="function", params=[1, 2])
+            def arg(request):
+                param = request.param
+                request.addfinalizer(lambda: l.append("fin:%s" % param))
+                l.append("create:%s" % param)
+                return request.param
+
+            @pytest.mark.funcarg(scope="module", params=["mod1", "mod2"])
+            def modarg(request):
+                param = request.param
+                request.addfinalizer(lambda: l.append("fin:%s" % param))
+                l.append("create:%s" % param)
+                return request.param
+
+            l = []
+            def test_1(arg):
+                l.append("test1")
+            def test_2(modarg):
+                l.append("test2")
+            def test_3(arg, modarg):
+                l.append("test3")
+            def test_4(modarg, arg):
+                l.append("test4")
+            def test_5():
+                assert len(l) == 12 * 3
+                import pprint
+                pprint.pprint(l)
+                assert l == [
+                    'create:1', 'test1', 'fin:1',
+                    'create:2', 'test1', 'fin:2',
+                    'create:mod1', 'test2', 'create:1', 'test3', 'fin:1',
+                    'create:1', 'test4', 'fin:1', 'create:2', 'test3', 'fin:2',
+                    'create:2', 'test4', 'fin:mod1', 'fin:2',
+
+                    'create:mod2', 'test2', 'create:1', 'test3', 'fin:1',
+                    'create:1', 'test4', 'fin:1', 'create:2', 'test3', 'fin:2',
+                    'create:2', 'test4', 'fin:mod2', 'fin:2',
+                ]
+
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=12+1)
+
+    def test_parametrize_separated_lifecycle(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="module", params=[1, 2])
+            def arg(request):
+                x = request.param
+                request.addfinalizer(lambda: l.append("fin%s" % x))
+                return request.param
+
+            l = []
+            def test_1(arg):
+                l.append(arg)
+            def test_2(arg):
+                l.append(arg)
+            def test_3():
+                assert len(l) == 6
+                assert l[0] == l[1]
+                assert l[2] == "fin1"
+                assert l[3] == l[4]
+                assert l[5] == "fin2"
+
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=5)
+
+    def test_parametrize_function_scoped_finalizers_called(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="function", params=[1, 2])
+            def arg(request):
+                x = request.param
+                request.addfinalizer(lambda: l.append("fin%s" % x))
+                return request.param
+
+            l = []
+            def test_1(arg):
+                l.append(arg)
+            def test_2(arg):
+                l.append(arg)
+            def test_3():
+                assert len(l) == 8
+                assert l == [1, "fin1", 1, "fin1", 2, "fin2", 2, "fin2"]
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=5)
+
+    def test_parametrize_setup_function(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="module", params=[1, 2])
+            def arg(request):
+                return request.param
+
+            @pytest.mark.setup(scope="module")
+            def mysetup(request, arg):
+                request.addfinalizer(lambda: l.append("fin%s" % arg))
+                l.append("setup%s" % arg)
+
+            l = []
+            def test_1(arg):
+                l.append(arg)
+            def test_2(arg):
+                l.append(arg)
+            def test_3():
+                import pprint
+                pprint.pprint(l)
+                assert l == ["setup1", 1, 1, "fin1",
+                             "setup2", 2, 2, "fin2",]
+
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=5)
+

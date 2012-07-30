@@ -51,6 +51,8 @@ implementation or backward compatibility issues.  The main changes are:
   troubles than the current @setup approach which can share
   a lot of logic with the @funcarg one.
 
+* tests are grouped by any parametrized resource
+
 .. currentmodule:: _pytest
 
 
@@ -252,58 +254,82 @@ a lot of setup-information and thus presents a nice method to get an
 overview of resource management in your project.
 
 
-Sorting tests by funcarg scopes
--------------------------------------------
+Grouping tests by resource parameters
+----------------------------------------------------------
 
-.. note:: Not implemented, Under consideration.
+.. note:: Implemented.
 
-pytest by default sorts test items by their source location.
-For class/module/session scoped funcargs it is not always
-desirable to have multiple active funcargs.  Sometimes,
-the application under test may not even be able to handle it
-because it relies on global state/side effects related to those 
-resources.
+pytest usually sorts test items by their source location.
+With pytest-2.X tests are first grouped by resource parameters.
+If you have a parametrized resource, then all the tests using it
+will first execute with it.  Then any finalizers are called and then
+the next parametrized resource instance is created and its tests are run.
+Among other things, this allows to have per-session parametrized setups
+including ones which affect global state of an application.
 
-Therefore, pytest-2.3 tries to minimize the number of active
-resources and re-orders test items accordingly.  Consider the following
-example::
+The following example uses two parametrized funcargs, one of which is 
+scoped on a per-module basis::
 
-    @pytest.mark.funcarg(scope="module", params=[1,2])
-    def arg(request):
-        ...
+    # content of test_module.py
+    import pytest
+
+    @pytest.mark.funcarg(scope="module", params=["mod1", "mod2"])
+    def modarg(request):
+        param = request.param
+        print "create", param
+        def fin():
+            print "fin", param
+        request.addfinalizer(fin)
+        return param
+
     @pytest.mark.funcarg(scope="function", params=[1,2])
     def otherarg(request):
-        ...
+        return request.param
 
     def test_0(otherarg):
-        pass
-    def test_1(arg):
-        pass
-    def test_2(arg, otherarg):
-        pass
+        print "  test0", otherarg
+    def test_1(modarg):
+        print "  test1", modarg
+    def test_2(otherarg, modarg):
+        print "  test2", otherarg, modarg
 
-if arg.1, arg.2, otherarg.1, otherarg.2 denote the respective
-parametrized funcarg instances this will re-order test
-execution like follows::
+If you run the tests in verbose mode and with looking at captured output::
 
-    test_0(otherarg.1)
-    test_0(otherarg.2)
-    test_1(arg.1) 
-    test_2(arg.1, otherarg.1)
-    test_2(arg.1, otherarg.2)
-    test_1(arg.2)
-    test_2(arg.2, otherarg.1)
-    test_2(arg.2, otherarg.2)
+    $ py.test -v -s
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev5 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-382/.cache
+    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    collecting ... collected 8 items
+    
+    test_module.py:16: test_0[1] PASSED
+    test_module.py:16: test_0[2] PASSED
+    test_module.py:18: test_1[mod1] PASSED
+    test_module.py:20: test_2[1-mod1] PASSED
+    test_module.py:20: test_2[2-mod1] PASSED
+    test_module.py:18: test_1[mod2] PASSED
+    test_module.py:20: test_2[1-mod2] PASSED
+    test_module.py:20: test_2[2-mod2] PASSED
+    
+    ========================= 8 passed in 0.03 seconds =========================
+      test0 1
+      test0 2
+    create mod1
+      test1 mod1
+      test2 1 mod1
+      test2 2 mod1
+    fin mod1
+    create mod2
+      test1 mod2
+      test2 1 mod2
+      test2 2 mod2
+    fin mod2
 
-Moreover, test_2(arg.1) will execute any registered teardowns for
-the arg.1 resource after the test finished execution.
+You can see that that the parametrized ``modarg`` resource lead to
+a re-ordering of test execution. Moreover, the finalizer for the
+"mod1" parametrized resource was executed before the "mod2" resource 
+was setup with a different parameter.
 
 .. note::
 
-    XXX it's quite unclear at the moment how to implement.
-    If we have a 1000 tests requiring different sets of parametrized
-    resources with different scopes, how to re-order accordingly?  
-    It even seems difficult to express the expectation in a 
-    concise manner.
-
-
+    The current implementation is experimental.

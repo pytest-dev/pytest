@@ -499,11 +499,13 @@ class CallSpec2(object):
         self._globalid = _notexists
         self._globalid_args = set()
         self._globalparam = _notexists
+        self._arg2scopenum = {}  # used for sorting parametrized resources
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
+        cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
         cs._globalid_args = self._globalid_args
@@ -526,10 +528,11 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtype, argnames, valset, id):
+    def setmulti(self, valtype, argnames, valset, id, scopenum=0):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
+            self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
 
     def setall(self, funcargs, id, param):
@@ -556,8 +559,10 @@ class Metafunc:
         self.module = module
         self._calls = []
         self._ids = py.builtin.set()
+        self._arg2scopenum = {}
 
-    def parametrize(self, argnames, argvalues, indirect=False, ids=None):
+    def parametrize(self, argnames, argvalues, indirect=False, ids=None,
+        scope="function"):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -581,6 +586,7 @@ class Metafunc:
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
             argvalues = [(val,) for val in argvalues]
+        scopenum = scopes.index(scope)
         if not indirect:
             #XXX should we also check for the opposite case?
             for arg in argnames:
@@ -595,7 +601,8 @@ class Metafunc:
             for i, valset in enumerate(argvalues):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtype, argnames, valset, ids[i])
+                newcallspec.setmulti(valtype, argnames, valset, ids[i],
+                                     scopenum)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -995,6 +1002,7 @@ class FuncargRequest:
     def _callsetup(self):
         setuplist, allnames = self.funcargmanager.getsetuplist(
                                                     self._pyfuncitem.nodeid)
+        mp = monkeypatch()
         for setupfunc, funcargnames in setuplist:
             kwargs = {}
             for name in funcargnames:
@@ -1002,11 +1010,16 @@ class FuncargRequest:
                     kwargs[name] = self
                 else:
                     kwargs[name] = self.getfuncargvalue(name)
+
             scope = readscope(setupfunc, "setup")
-            if scope is None:
-                setupfunc(**kwargs)
-            else:
-                self.cached_setup(lambda: setupfunc(**kwargs), scope=scope)
+            mp.setattr(self, 'scope', scope)
+            try:
+                if scope is None:
+                    setupfunc(**kwargs)
+                else:
+                    self.cached_setup(lambda: setupfunc(**kwargs), scope=scope)
+            finally:
+                mp.undo()
 
     def getfuncargvalue(self, argname):
         """ Retrieve a function argument by name for this test
@@ -1047,7 +1060,7 @@ class FuncargRequest:
         else:
             mp.setattr(self, 'param', param, raising=False)
 
-        # implemenet funcarg marker scope
+        # implement funcarg marker scope
         scope = readscope(funcargfactory, "funcarg")
 
         if scope is not None:
@@ -1100,7 +1113,12 @@ class FuncargRequest:
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer, scope):
-        colitem = self._getscopeitem(scope)
+        if scope != "function" and hasattr(self, "param"):
+            # parametrized resources are sorted by param
+            # so we rather store finalizers per (argname, param)
+            colitem = (self._currentarg, self.param)
+        else:
+            colitem = self._getscopeitem(scope)
         self._pyfuncitem.session._setupstate.addfinalizer(
             finalizer=finalizer, colitem=colitem)
 

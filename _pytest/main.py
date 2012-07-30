@@ -465,13 +465,48 @@ class FuncargManager:
                 marker = getattr(fac, "funcarg", None)
                 if marker is not None:
                     params = marker.kwargs.get("params")
+                    scope = marker.kwargs.get("scope", "function")
                     if params is not None:
-                        metafunc.parametrize(argname, params, indirect=True)
+                        metafunc.parametrize(argname, params, indirect=True,
+                                             scope=scope)
                 newfuncargnames = getfuncargnames(fac)
                 newfuncargnames.remove("request")
                 funcargnames.extend(newfuncargnames)
 
+    def pytest_collection_modifyitems(self, items):
+        # separate parametrized setups
+        def sortparam(item1, item2):
+            try:
+                cs1 = item1.callspec
+                cs2 = item2.callspec
+                common = set(cs1.params).intersection(cs2.params)
+            except AttributeError:
+                pass
+            else:
+                if common:
+                    common = list(common)
+                    common.sort(key=lambda x: cs1._arg2scopenum[x])
+                    for x in common:
+                        res = cmp(cs1.params[x], cs2.params[x])
+                        if res != 0:
+                            return res
+            return 0  # leave previous order
+        items.sort(cmp=sortparam)
 
+    def pytest_runtest_teardown(self, item, nextitem):
+        try:
+            cs1 = item.callspec
+        except AttributeError:
+            return
+        for name in cs1.params:
+            try:
+                if name in nextitem.callspec.params and \
+                    cs1.params[name] == nextitem.callspec.params[name]:
+                    continue
+            except AttributeError:
+                pass
+            key = (name, cs1.params[name])
+            item.session._setupstate._callfinalizers(key)
 
     def _parsefactories(self, holderobj, nodeid):
         if holderobj in self._holderobjseen:
