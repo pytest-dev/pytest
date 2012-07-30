@@ -448,7 +448,7 @@ class FuncargManager:
 
     def pytest_generate_tests(self, metafunc):
         funcargnames = list(metafunc.funcargnames)
-        setuplist, allargnames = self.getsetuplist(metafunc.parentid)
+        _, allargnames = self.getsetuplist(metafunc.parentid)
         #print "setuplist, allargnames", setuplist, allargnames
         funcargnames.extend(allargnames)
         seen = set()
@@ -529,7 +529,9 @@ class FuncargManager:
                 # no funcargs. check if we have a setup function.
                 setup = getattr(obj, "setup", None)
                 if setup is not None and isinstance(setup, MarkInfo):
-                    self.setuplist.append((nodeid, obj))
+                    scope = setup.kwargs.get("scope")
+                    sf = SetupCall(self, nodeid, obj, scope)
+                    self.setuplist.append(sf)
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
             faclist.append((nodeid, obj))
@@ -537,12 +539,10 @@ class FuncargManager:
     def getsetuplist(self, nodeid):
         l = []
         allargnames = set()
-        for baseid, setup in self.setuplist:
-            #print "check", baseid, setup
-            if nodeid.startswith(baseid):
-                funcargnames = getfuncargnames(setup)
-                l.append((setup, funcargnames))
-                allargnames.update(funcargnames)
+        for setupcall in self.setuplist:
+            if nodeid.startswith(setupcall.baseid):
+                l.append(setupcall)
+                allargnames.update(setupcall.funcargnames)
         return l, allargnames
 
 
@@ -573,6 +573,33 @@ class FuncargManager:
         msg += "\n available funcargs: %s" %(", ".join(available),)
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         raise FuncargLookupError(function, msg)
+
+
+class SetupCall:
+    """ a container/helper for managing calls to setup functions. """
+    def __init__(self, funcargmanager, baseid, func, scope):
+        self.funcargmanager = funcargmanager
+        self.baseid = baseid
+        self.func = func
+        self.funcargnames = getfuncargnames(func)
+        self.scope = scope
+        self.active = False
+        self._finalizer = []
+
+    def execute(self, kwargs):
+        #assert not self.active
+        self.active = True
+        mp = monkeypatch()
+        #if "request" in kwargs:
+        #    request = kwargs["request"]
+        #    def addfinalizer(func):
+        #        #scopeitem = request._getscopeitem(scope)
+        #        self._finalizer.append(func)
+        #    mp.setattr(request, "addfinalizer", addfinalizer)
+        try:
+            self.func(**kwargs)
+        finally:
+            mp.undo()
 
 
 class NoMatch(Exception):
@@ -853,3 +880,8 @@ def getfuncargnames(function, startindex=None):
     if numdefaults:
         return argnames[startindex:-numdefaults]
     return argnames[startindex:]
+
+def readscope(func, markattr):
+    marker = getattr(func, markattr, None)
+    if marker is not None:
+        return marker.kwargs.get("scope")

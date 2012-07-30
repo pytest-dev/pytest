@@ -1752,10 +1752,14 @@ class TestSetupDiscovery:
         testdir.makeconftest("""
             import pytest
             @pytest.mark.setup
-            def perfunction(request):
+            def perfunction(request, tmpdir):
+                pass
+
+            @pytest.mark.funcarg
+            def arg1(request, tmpdir):
                 pass
             @pytest.mark.setup
-            def perfunction2(request):
+            def perfunction2(request, arg1):
                 pass
 
             def pytest_funcarg__fm(request):
@@ -1769,12 +1773,16 @@ class TestSetupDiscovery:
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
             def test_check_setup(item, fm):
-                setuplist, allnames = fm.getsetuplist(item.nodeid)
-                assert len(setuplist) == 2
-                assert setuplist[0][0].__name__ == "perfunction"
-                assert "request" in setuplist[0][1]
-                assert setuplist[1][0].__name__ == "perfunction2"
-                assert "request" in setuplist[1][1]
+                setupcalls, allnames = fm.getsetuplist(item.nodeid)
+                assert len(setupcalls) == 2
+                assert setupcalls[0].func.__name__ == "perfunction"
+                assert "request" in setupcalls[0].funcargnames
+                assert "tmpdir" in setupcalls[0].funcargnames
+                assert setupcalls[1].func.__name__ == "perfunction2"
+                assert "request" in setupcalls[1].funcargnames
+                assert "arg1" in setupcalls[1].funcargnames
+                assert "tmpdir" not in setupcalls[1].funcargnames
+                #assert "tmpdir" in setupcalls[1].depfuncargs
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)

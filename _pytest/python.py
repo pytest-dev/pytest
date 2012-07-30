@@ -3,7 +3,7 @@ import py
 import inspect
 import sys
 import pytest
-from _pytest.main import getfslineno, getfuncargnames
+from _pytest.main import getfslineno, getfuncargnames, readscope
 from _pytest.monkeypatch import monkeypatch
 
 import _pytest
@@ -1003,21 +1003,21 @@ class FuncargRequest:
         setuplist, allnames = self.funcargmanager.getsetuplist(
                                                     self._pyfuncitem.nodeid)
         mp = monkeypatch()
-        for setupfunc, funcargnames in setuplist:
+        for setupcall in setuplist:
             kwargs = {}
-            for name in funcargnames:
+            for name in setupcall.funcargnames:
                 if name == "request":
                     kwargs[name] = self
                 else:
                     kwargs[name] = self.getfuncargvalue(name)
 
-            scope = readscope(setupfunc, "setup")
-            mp.setattr(self, 'scope', scope)
+            mp.setattr(self, 'scope', setupcall.scope)
             try:
-                if scope is None:
-                    setupfunc(**kwargs)
+                if setupcall.scope is None:
+                    setupcall.execute(kwargs)
                 else:
-                    self.cached_setup(lambda: setupfunc(**kwargs), scope=scope)
+                    self.cached_setup(lambda: setupcall.execute(kwargs),
+                                      scope=setupcall.scope)
             finally:
                 mp.undo()
 
@@ -1140,7 +1140,3 @@ def slice_kwargs(names, kwargs):
         new_kwargs[name] = kwargs[name]
     return new_kwargs
 
-def readscope(func, markattr):
-    marker = getattr(func, markattr, None)
-    if marker is not None:
-        return marker.kwargs.get("scope")
