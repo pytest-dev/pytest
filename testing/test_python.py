@@ -1,6 +1,6 @@
 import pytest, py, sys
 from _pytest import python as funcargs
-from _pytest.main import FuncargLookupError
+from _pytest.python import FuncargLookupError
 
 class TestModule:
     def test_failing_import(self, testdir):
