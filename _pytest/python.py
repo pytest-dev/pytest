@@ -1001,26 +1001,7 @@ class FuncargRequest:
 
 
     def _callsetup(self):
-        setuplist, allnames = self.funcargmanager.getsetuplist(
-                                                    self._pyfuncitem.nodeid)
-        mp = monkeypatch()
-        for setupcall in setuplist:
-            kwargs = {}
-            for name in setupcall.funcargnames:
-                if name == "request":
-                    kwargs[name] = self
-                else:
-                    kwargs[name] = self.getfuncargvalue(name)
-
-            mp.setattr(self, 'scope', setupcall.scope)
-            try:
-                if setupcall.scope is None:
-                    setupcall.execute(kwargs)
-                else:
-                    self.cached_setup(lambda: setupcall.execute(kwargs),
-                                      scope=setupcall.scope)
-            finally:
-                mp.undo()
+        self.funcargmanager.ensure_setupcalls(self)
 
     def getfuncargvalue(self, argname):
         """ Retrieve a function argument by name for this test

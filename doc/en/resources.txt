@@ -51,7 +51,7 @@ implementation or backward compatibility issues.  The main changes are:
   troubles than the current @setup approach which can share
   a lot of logic with the @funcarg one.
 
-* tests are grouped by any parametrized resource
+* tests are grouped by parametrized funcargs
 
 .. currentmodule:: _pytest
 
@@ -259,13 +259,13 @@ Grouping tests by resource parameters
 
 .. note:: Implemented.
 
-pytest usually sorts test items by their source location.
-With pytest-2.X tests are first grouped by resource parameters.
-If you have a parametrized resource, then all the tests using it
+pytest used to always sort test items by their source location.
+With pytest-2.X tests are first grouped by funcarg parameters.
+If you have a parametrized funcarg, then all the tests using it
 will first execute with it.  Then any finalizers are called and then
 the next parametrized resource instance is created and its tests are run.
-Among other things, this allows to have per-session parametrized setups
-including ones which affect global state of an application.
+Among other things, this eases testing of applications which create 
+and use global state.
 
 The following example uses two parametrized funcargs, one of which is 
 scoped on a per-module basis::
@@ -293,12 +293,12 @@ scoped on a per-module basis::
     def test_2(otherarg, modarg):
         print "  test2", otherarg, modarg
 
-If you run the tests in verbose mode and with looking at captured output::
+Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev5 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/tmp/doc-exec-382/.cache
+    cachedir: /home/hpk/tmp/doc-exec-388/.cache
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 8 items
     
@@ -326,9 +326,8 @@ If you run the tests in verbose mode and with looking at captured output::
     fin mod2
 
 You can see that that the parametrized ``modarg`` resource lead to
-a re-ordering of test execution. Moreover, the finalizer for the
-"mod1" parametrized resource was executed before the "mod2" resource 
-was setup with a different parameter.
+a re-ordering of test execution. The finalizer for the "mod1" parametrized 
+resource was executed before the "mod2" resource was setup.
 
 .. note::
 

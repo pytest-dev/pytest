@@ -48,7 +48,7 @@ If you run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x2c0f170>
+    smtp = <smtplib.SMTP instance at 0x2b8ebd8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -60,7 +60,7 @@ If you run the tests::
     test_module.py:5: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x2c0f170>
+    smtp = <smtplib.SMTP instance at 0x2b8ebd8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -69,7 +69,7 @@ If you run the tests::
     E       assert 0
     
     test_module.py:10: AssertionError
-    2 failed in 0.21 seconds
+    2 failed in 0.26 seconds
 
 you will see the two ``assert 0`` failing and can see that
 the same (session-scoped) object was passed into the two test functions.
@@ -98,31 +98,9 @@ another run::
     collecting ... collected 4 items
     FFFF
     ================================= FAILURES =================================
-    ________________________ test_ehlo[mail.python.org] ________________________
-    
-    smtp = <smtplib.SMTP instance at 0x20fca70>
-    
-        def test_ehlo(smtp):
-            response = smtp.ehlo()
-            assert response[0] == 250
-    >       assert "merlinux" in response[1]
-    E       assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
-    
-    test_module.py:4: AssertionError
-    ________________________ test_noop[mail.python.org] ________________________
-    
-    smtp = <smtplib.SMTP instance at 0x20fca70>
-    
-        def test_noop(smtp):
-            response = smtp.noop()
-            assert response[0] == 250
-    >       assert 0  # for demo purposes
-    E       assert 0
-    
-    test_module.py:10: AssertionError
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2104bd8>
+    smtp = <smtplib.SMTP instance at 0x2ee5200>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -134,7 +112,7 @@ another run::
     test_module.py:5: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2104bd8>
+    smtp = <smtplib.SMTP instance at 0x2ee5200>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -143,7 +121,29 @@ another run::
     E       assert 0
     
     test_module.py:10: AssertionError
-    4 failed in 6.48 seconds
+    ________________________ test_ehlo[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2eee5a8>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+    >       assert "merlinux" in response[1]
+    E       assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    
+    test_module.py:4: AssertionError
+    ________________________ test_noop[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x2eee5a8>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    4 failed in 6.94 seconds
 
 We get four failures because we are running the two tests twice with
 different ``smtp`` instantiations as defined on the factory.
@@ -159,10 +159,10 @@ You can look at what tests pytest collects without running them::
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 4 items
     <Module 'test_module.py'>
-      <Function 'test_ehlo[mail.python.org]'>
-      <Function 'test_noop[mail.python.org]'>
       <Function 'test_ehlo[merlinux.eu]'>
       <Function 'test_noop[merlinux.eu]'>
+      <Function 'test_ehlo[mail.python.org]'>
+      <Function 'test_noop[mail.python.org]'>
     
     =============================  in 0.02 seconds =============================
 
@@ -172,13 +172,13 @@ And you can run without output capturing and minimized failure reporting to chec
     collecting ... collected 4 items
     FFFF
     ================================= FAILURES =================================
-    /home/hpk/tmp/doc-exec-386/test_module.py:4: assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
-    /home/hpk/tmp/doc-exec-386/test_module.py:10: assert 0
-    /home/hpk/tmp/doc-exec-386/test_module.py:5: assert 0
-    /home/hpk/tmp/doc-exec-386/test_module.py:10: assert 0
-    4 failed in 6.45 seconds
-    closing <smtplib.SMTP instance at 0x29d0a28>
-    closing <smtplib.SMTP instance at 0x29d8878>
+    /home/hpk/tmp/doc-exec-389/test_module.py:5: assert 0
+    /home/hpk/tmp/doc-exec-389/test_module.py:10: assert 0
+    /home/hpk/tmp/doc-exec-389/test_module.py:4: assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    /home/hpk/tmp/doc-exec-389/test_module.py:10: assert 0
+    4 failed in 9.99 seconds
+    closing <smtplib.SMTP instance at 0x2a61560>
+    closing <smtplib.SMTP instance at 0x2a6b248>
 
 .. _`new_setup`:
 
@@ -191,8 +191,11 @@ And you can run without output capturing and minimized failure reporting to chec
 
 The ``@pytest.mark.setup`` marker allows 
 
+* to define setup-functions close to test code or in conftest.py files
+  or plugins.
 * to mark a function as a setup/fixture method; the function can itself
-  receive funcargs
+  receive funcargs and will execute multiple times if the funcargs
+  are parametrized
 * to set a scope which determines the level of caching and how often
   the setup function is going to be called.
 
@@ -234,12 +237,12 @@ Let's run this module::
     $ py.test -qs
     collecting ... collected 2 items
     ..
-    2 passed in 0.24 seconds
-    created resource /home/hpk/tmp/pytest-3875/test_10
-    setupresource /home/hpk/tmp/pytest-3875/test_10
-    using myresource /home/hpk/tmp/pytest-3875/test_10
-    using myresource /home/hpk/tmp/pytest-3875/test_10
-    finalize /home/hpk/tmp/pytest-3875/test_10
+    2 passed in 0.62 seconds
+    created resource /home/hpk/tmp/pytest-4224/test_10
+    setupresource /home/hpk/tmp/pytest-4224/test_10
+    using myresource /home/hpk/tmp/pytest-4224/test_10
+    using myresource /home/hpk/tmp/pytest-4224/test_10
+    finalize /home/hpk/tmp/pytest-4224/test_10
 
 The two test functions will see the same resource instance because it has
 a module life cycle or scope.  
@@ -265,15 +268,16 @@ Running this will run four tests::
     collecting ... collected 4 items
     ....
     4 passed in 0.25 seconds
-    created resource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    setupresource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    using myresource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    using myresource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    finalize /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    created resource /home/hpk/tmp/pytest-3876/test_1_bbb_0/bbb
-    using myresource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    using myresource /home/hpk/tmp/pytest-3876/test_1_aaa_0/aaa
-    finalize /home/hpk/tmp/pytest-3876/test_1_bbb_0/bbb
+    created resource /home/hpk/tmp/pytest-4225/test_1_aaa_0/aaa
+    setupresource /home/hpk/tmp/pytest-4225/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-4225/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-4225/test_1_aaa_0/aaa
+    finalize /home/hpk/tmp/pytest-4225/test_1_aaa_0/aaa
+    created resource /home/hpk/tmp/pytest-4225/test_1_bbb_0/bbb
+    setupresource /home/hpk/tmp/pytest-4225/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-4225/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-4225/test_1_bbb_0/bbb
+    finalize /home/hpk/tmp/pytest-4225/test_1_bbb_0/bbb
 
 Each parameter causes the creation of a respective resource and the
 unchanged test module uses it in its ``@setup`` decorated method.

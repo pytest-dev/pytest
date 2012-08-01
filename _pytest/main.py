@@ -425,6 +425,7 @@ class FuncargManager:
         session.config.pluginmanager.register(self, "funcmanage")
         self._holderobjseen = set()
         self.setuplist = []
+        self._arg2finish = {}
 
     ### XXX this hook should be called for historic events like pytest_configure
     ### so that we don't have to do the below pytest_collection hook
@@ -469,23 +470,7 @@ class FuncargManager:
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
-        def sortparam(item1, item2):
-            try:
-                cs1 = item1.callspec
-                cs2 = item2.callspec
-                common = set(cs1.params).intersection(cs2.params)
-            except AttributeError:
-                pass
-            else:
-                if common:
-                    common = list(common)
-                    common.sort(key=lambda x: cs1._arg2scopenum[x])
-                    for x in common:
-                        res = cmp(cs1.params[x], cs2.params[x])
-                        if res != 0:
-                            return res
-            return 0  # leave previous order
-        items.sort(cmp=sortparam)
+        items[:] = parametrize_sorted(items, set(), {}, 0)
 
     def pytest_runtest_teardown(self, item, nextitem):
         try:
@@ -501,6 +486,10 @@ class FuncargManager:
                 pass
             key = (name, cs1.params[name])
             item.session._setupstate._callfinalizers(key)
+            l = self._arg2finish.get(name)
+            if l is not None:
+                for fin in l:
+                    fin()
 
     def _parsefactories(self, holderobj, nodeid):
         if holderobj in self._holderobjseen:
@@ -577,17 +566,59 @@ class FuncargManager:
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         raise FuncargLookupError(function, msg)
 
+    def ensure_setupcalls(self, request):
+        setuplist, allnames = self.getsetuplist(request._pyfuncitem.nodeid)
+        for setupcall in setuplist:
+            if setupcall.active:
+                continue
+            setuprequest = SetupRequest(request, setupcall)
+            kwargs = {}
+            for name in setupcall.funcargnames:
+                if name == "request":
+                    kwargs[name] = setuprequest
+                else:
+                    kwargs[name] = request.getfuncargvalue(name)
+            scope = setupcall.scope or "function"
+            scol = setupcall.scopeitem = request._getscopeitem(scope)
+            self.session._setupstate.addfinalizer(setupcall.finish, scol)
+            for argname in setupcall.funcargnames: # XXX all deps?
+                self.addargfinalizer(setupcall.finish, argname)
+            setupcall.execute(kwargs)
 
-class FactoryDef:
-    """ A container for a factory definition. """
-    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
-        self.funcargmanager = funcargmanager
-        self.baseid = baseid
-        self.func = func
-        self.argname = argname
-        self.scope = scope
-        self.params = params
-        self.funcargnames = getfuncargnames(func)
+    def addargfinalizer(self, finalizer, argname):
+        l = self._arg2finish.setdefault(argname, [])
+        l.append(finalizer)
+
+    def removefinalizer(self, finalizer):
+        for l in self._arg2finish.values():
+            try:
+                l.remove(finalizer)
+            except ValueError:
+                pass
+
+def rprop(attr, doc=None):
+    if doc is None:
+        doc = "%r of underlying test item"
+    return property(lambda x: getattr(x._request, attr), doc=doc)
+
+class SetupRequest:
+    def __init__(self, request, setupcall):
+        self._request = request
+        self._setupcall = setupcall
+        self._finalizers = []
+
+    # no getfuncargvalue(), cached_setup, applymarker helpers here
+    # on purpose
+
+    function = rprop("function")
+    cls = rprop("cls")
+    instance = rprop("instance")
+    fspath = rprop("fspath")
+    keywords = rprop("keywords")
+    config = rprop("config", "pytest config object.")
+
+    def addfinalizer(self, finalizer):
+        self._setupcall.addfinalizer(finalizer)
 
 class SetupCall:
     """ a container/helper for managing calls to setup functions. """
@@ -601,20 +632,32 @@ class SetupCall:
         self._finalizer = []
 
     def execute(self, kwargs):
-        #assert not self.active
+        assert not self.active
         self.active = True
-        mp = monkeypatch()
-        #if "request" in kwargs:
-        #    request = kwargs["request"]
-        #    def addfinalizer(func):
-        #        #scopeitem = request._getscopeitem(scope)
-        #        self._finalizer.append(func)
-        #    mp.setattr(request, "addfinalizer", addfinalizer)
-        try:
-            self.func(**kwargs)
-        finally:
-            mp.undo()
+        self.func(**kwargs)
 
+    def addfinalizer(self, finalizer):
+        assert self.active
+        self._finalizer.append(finalizer)
+
+    def finish(self):
+        while self._finalizer:
+            func = self._finalizer.pop()
+            func()
+        # check neccesity of next commented call
+        self.funcargmanager.removefinalizer(self.finish)
+        self.active = False
+
+class FactoryDef:
+    """ A container for a factory definition. """
+    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
+        self.funcargmanager = funcargmanager
+        self.baseid = baseid
+        self.func = func
+        self.argname = argname
+        self.scope = scope
+        self.params = params
+        self.funcargnames = getfuncargnames(func)
 
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
@@ -899,3 +942,75 @@ def readscope(func, markattr):
     marker = getattr(func, markattr, None)
     if marker is not None:
         return marker.kwargs.get("scope")
+
+# algorithm for sorting on a per-parametrized resource setup basis
+
+def parametrize_sorted(items, ignore, cache, scopenum):
+    if scopenum >= 3:
+        return items
+    newitems = []
+    olditems = []
+    slicing_argparam = None
+    for item in items:
+        argparamlist = getfuncargparams(item, ignore, scopenum, cache)
+        if slicing_argparam is None and argparamlist:
+            slicing_argparam = argparamlist[0]
+            slicing_index = len(olditems)
+        if slicing_argparam in argparamlist:
+            newitems.append(item)
+        else:
+            olditems.append(item)
+    if newitems:
+        newignore = ignore.copy()
+        newignore.add(slicing_argparam)
+        newitems = parametrize_sorted(newitems + olditems[slicing_index:],
+                                      newignore, cache, scopenum)
+        old1 = parametrize_sorted(olditems[:slicing_index], newignore,
+                                  cache, scopenum+1)
+        return old1 + newitems
+    else:
+        olditems = parametrize_sorted(olditems, ignore, cache, scopenum+1)
+    return olditems + newitems
+
+def getfuncargparams(item, ignore, scopenum, cache):
+    """ return list of (arg,param) tuple, sorted by broader scope first. """
+    assert scopenum < 3  # function
+    try:
+        cs = item.callspec
+    except AttributeError:
+        return []
+    if scopenum == 0:
+        argparams = [x for x in cs.params.items() if x not in ignore
+                        and cs._arg2scopenum[x[0]] == scopenum]
+    elif scopenum == 1:  # module
+        argparams = []
+        for argname, param in cs.params.items():
+            if cs._arg2scopenum[argname] == scopenum:
+                key = (argname, param, item.fspath)
+                if key in ignore:
+                    continue
+                argparams.append(key)
+    elif scopenum == 2:  # class
+        argparams = []
+        for argname, param in cs.params.items():
+            if cs._arg2scopenum[argname] == scopenum:
+                l = cache.setdefault(item.fspath, [])
+                try:
+                    i = l.index(item.cls)
+                except ValueError:
+                    i = len(l)
+                    l.append(item.cls)
+                key = (argname, param, item.fspath, i)
+                if key in ignore:
+                    continue
+                argparams.append(key)
+    #elif scopenum == 3:
+    #    argparams = []
+    #    for argname, param in cs.params.items():
+    #        if cs._arg2scopenum[argname] == scopenum:
+    #            key = (argname, param, getfslineno(item.obj))
+    #            if key in ignore:
+    #                continue
+    #            argparams.append(key)
+    return argparams
+

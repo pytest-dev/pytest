@@ -1559,33 +1559,8 @@ def test_issue117_sessionscopeteardown(testdir):
     ])
 
 class TestRequestAPI:
-    @pytest.mark.xfail(reason="reverted refactoring")
-    def test_addfinalizer_cachedsetup_getfuncargvalue(self, testdir):
-        testdir.makeconftest("""
-            l = []
-            def pytest_runtest_setup(item):
-                item.addfinalizer(lambda: l.append(1))
-                l2 = item.getfuncargvalue("l")
-                assert l2 is l
-                item.cached_setup(lambda: l.append(2), lambda val: l.append(3),
-                                  scope="function")
-            def pytest_funcarg__l(request):
-                return l
-        """)
-        testdir.makepyfile("""
-            def test_hello():
-                pass
-            def test_hello2(l):
-                assert l == [2, 3, 1, 2]
-        """)
-        result = testdir.runpytest()
-        assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*2 passed*",
-        ])
-
-    @pytest.mark.xfail(reason="consider item's funcarg access and error conditions")
-    def test_runtest_setup_sees_filled_funcargs(self, testdir):
+    @pytest.mark.xfail(reason="consider flub feedback")
+    def test_setup_can_query_funcargs(self, testdir):
         testdir.makeconftest("""
             def pytest_runtest_setup(item):
                 assert not hasattr(item, "_request")
@@ -1606,9 +1581,9 @@ class TestRequestAPI:
 
         result = testdir.makeconftest("""
             import pytest
-            @pytest.mark.trylast
-            def pytest_runtest_setup(item):
-                assert item.funcargs == {"a": 1, "b": 2}
+            @pytest.mark.setup
+            def mysetup(testcontext):
+                testcontext.uses_funcarg("db")
         """)
         result = testdir.runpytest()
         assert result.ret == 0
@@ -1737,7 +1712,7 @@ class TestFuncargManager:
                     return "class"
                 def test_hello(self, item, fm):
                     faclist = fm.getfactorylist("hello", item.nodeid, item.obj)
-                    print faclist
+                    print (faclist)
                     assert len(faclist) == 3
                     assert faclist[0].func(item._request) == "conftest"
                     assert faclist[1].func(item._request) == "module"
@@ -1862,6 +1837,43 @@ class TestSetupManagement:
         """)
         reprec = testdir.inline_run("-v", "-s")
         reprec.assertoutcome(passed=4)
+
+    def test_class_function_parametrization_finalization(self, testdir):
+        p = testdir.makeconftest("""
+            import pytest
+            import pprint
+
+            l = []
+
+            @pytest.mark.funcarg(scope="function", params=[1,2])
+            def farg(request):
+                return request.param
+
+            @pytest.mark.funcarg(scope="class", params=list("ab"))
+            def carg(request):
+                return request.param
+
+            @pytest.mark.setup(scope="class")
+            def append(request, farg, carg):
+                def fin():
+                    l.append("fin_%s%s" % (carg, farg))
+                request.addfinalizer(fin)
+        """)
+        testdir.makepyfile("""
+            import pytest
+
+            class TestClass:
+                def test_1(self):
+                    pass
+            class TestClass2:
+                def test_2(self):
+                    pass
+        """)
+        reprec = testdir.inline_run("-v",)
+        reprec.assertoutcome(passed=8)
+        config = reprec.getcalls("pytest_unconfigure")[0].config
+        l = config._conftest.getconftestmodules(p)[0].l
+        assert l == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
 class TestFuncargMarker:
     def test_parametrize(self, testdir):
@@ -2016,11 +2028,14 @@ class TestFuncargMarker:
             l = []
             def test_param(arg):
                 l.append(arg)
-            def test_result():
-                assert l == list("abc")
         """)
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=4)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=3)
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        assert len(l) == 3
+        assert "a" in l
+        assert "b" in l
+        assert "c" in l
 
     def test_scope_mismatch(self, testdir):
         testdir.makeconftest("""
@@ -2056,14 +2071,105 @@ class TestFuncargMarker:
                 l.append(arg)
             def test_2(arg):
                 l.append(arg)
-            def test_3():
-                assert len(l) == 4
-                assert l[0] == l[1]
-                assert l[2] == l[3]
-
         """)
         reprec = testdir.inline_run("-v")
-        reprec.assertoutcome(passed=5)
+        reprec.assertoutcome(passed=4)
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        assert l == [1,1,2,2]
+
+    def test_module_parametrized_ordering(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.mark.funcarg(scope="session", params="s1 s2".split())
+            def sarg(request):
+                pass
+            @pytest.mark.funcarg(scope="module", params="m1 m2".split())
+            def marg(request):
+                pass
+        """)
+        testdir.makepyfile(test_mod1="""
+            def test_func(sarg):
+                pass
+            def test_func1(marg):
+                pass
+        """, test_mod2="""
+            def test_func2(sarg):
+                pass
+            def test_func3(sarg, marg):
+                pass
+            def test_func3b(sarg, marg):
+                pass
+            def test_func4(marg):
+                pass
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines("""
+            test_mod1.py:1: test_func[s1] PASSED
+            test_mod2.py:1: test_func2[s1] PASSED
+            test_mod2.py:3: test_func3[s1-m1] PASSED
+            test_mod2.py:5: test_func3b[s1-m1] PASSED
+            test_mod2.py:3: test_func3[s1-m2] PASSED
+            test_mod2.py:5: test_func3b[s1-m2] PASSED
+            test_mod1.py:1: test_func[s2] PASSED
+            test_mod2.py:1: test_func2[s2] PASSED
+            test_mod2.py:3: test_func3[s2-m1] PASSED
+            test_mod2.py:5: test_func3b[s2-m1] PASSED
+            test_mod2.py:7: test_func4[m1] PASSED
+            test_mod2.py:3: test_func3[s2-m2] PASSED
+            test_mod2.py:5: test_func3b[s2-m2] PASSED
+            test_mod2.py:7: test_func4[m2] PASSED
+            test_mod1.py:3: test_func1[m1] PASSED
+            test_mod1.py:3: test_func1[m2] PASSED
+        """)
+
+    def test_class_ordering(self, testdir):
+        p = testdir.makeconftest("""
+            import pytest
+
+            l = []
+
+            @pytest.mark.funcarg(scope="function", params=[1,2])
+            def farg(request):
+                return request.param
+
+            @pytest.mark.funcarg(scope="class", params=list("ab"))
+            def carg(request):
+                return request.param
+
+            @pytest.mark.setup(scope="class")
+            def append(request, farg, carg):
+                def fin():
+                    l.append("fin_%s%s" % (carg, farg))
+                request.addfinalizer(fin)
+        """)
+        testdir.makepyfile("""
+            import pytest
+
+            class TestClass2:
+                def test_1(self):
+                    pass
+                def test_2(self):
+                    pass
+            class TestClass:
+                def test_3(self):
+                    pass
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines("""
+            test_class_ordering.py:4: TestClass2.test_1[1-a] PASSED
+            test_class_ordering.py:4: TestClass2.test_1[2-a] PASSED
+            test_class_ordering.py:6: TestClass2.test_2[1-a] PASSED
+            test_class_ordering.py:6: TestClass2.test_2[2-a] PASSED
+            test_class_ordering.py:4: TestClass2.test_1[1-b] PASSED
+            test_class_ordering.py:4: TestClass2.test_1[2-b] PASSED
+            test_class_ordering.py:6: TestClass2.test_2[1-b] PASSED
+            test_class_ordering.py:6: TestClass2.test_2[2-b] PASSED
+            test_class_ordering.py:9: TestClass.test_3[1-a] PASSED
+            test_class_ordering.py:9: TestClass.test_3[2-a] PASSED
+            test_class_ordering.py:9: TestClass.test_3[1-b] PASSED
+            test_class_ordering.py:9: TestClass.test_3[2-b] PASSED
+        """)
 
     def test_parametrize_separated_order_higher_scope_first(self, testdir):
         testdir.makepyfile("""
@@ -2097,17 +2203,14 @@ class TestFuncargMarker:
                 import pprint
                 pprint.pprint(l)
                 assert l == [
-                    'create:1', 'test1', 'fin:1',
-                    'create:2', 'test1', 'fin:2',
-                    'create:mod1', 'test2', 'create:1', 'test3', 'fin:1',
-                    'create:1', 'test4', 'fin:1', 'create:2', 'test3', 'fin:2',
-                    'create:2', 'test4', 'fin:mod1', 'fin:2',
-
-                    'create:mod2', 'test2', 'create:1', 'test3', 'fin:1',
-                    'create:1', 'test4', 'fin:1', 'create:2', 'test3', 'fin:2',
-                    'create:2', 'test4', 'fin:mod2', 'fin:2',
-                ]
-
+                    'create:1', 'test1', 'fin:1', 'create:2', 'test1',
+                    'fin:2', 'create:mod1', 'test2', 'create:1', 'test3',
+                    'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
+                    'test4', 'fin:1', 'create:2', 'test4', 'fin:mod1',
+                    'fin:2', 'create:mod2', 'test2', 'create:1', 'test3',
+                    'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
+                    'test4', 'fin:1', 'create:2', 'test4', 'fin:mod2',
+                'fin:2']
         """)
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=12+1)
@@ -2118,6 +2221,7 @@ class TestFuncargMarker:
 
             @pytest.mark.funcarg(scope="module", params=[1, 2])
             def arg(request):
+                request.config.l = l # to access from outer
                 x = request.param
                 request.addfinalizer(lambda: l.append("fin%s" % x))
                 return request.param
@@ -2127,16 +2231,18 @@ class TestFuncargMarker:
                 l.append(arg)
             def test_2(arg):
                 l.append(arg)
-            def test_3():
-                assert len(l) == 6
-                assert l[0] == l[1]
-                assert l[2] == "fin1"
-                assert l[3] == l[4]
-                assert l[5] == "fin2"
-
         """)
         reprec = testdir.inline_run("-v")
-        reprec.assertoutcome(passed=5)
+        reprec.assertoutcome(passed=4)
+        l = reprec.getcalls("pytest_configure")[0].config.l
+        import pprint
+        pprint.pprint(l)
+        assert len(l) == 6
+        assert l[0] == l[1] == 1
+        assert l[2] == "fin1"
+        assert l[3] == l[4] == 2
+        assert l[5] == "fin2"
+
 
     def test_parametrize_function_scoped_finalizers_called(self, testdir):
         testdir.makepyfile("""
@@ -2155,7 +2261,7 @@ class TestFuncargMarker:
                 l.append(arg)
             def test_3():
                 assert len(l) == 8
-                assert l == [1, "fin1", 1, "fin1", 2, "fin2", 2, "fin2"]
+                assert l == [1, "fin1", 2, "fin2", 1, "fin1", 2, "fin2"]
         """)
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=5)
@@ -2181,10 +2287,13 @@ class TestFuncargMarker:
             def test_3():
                 import pprint
                 pprint.pprint(l)
-                assert l == ["setup1", 1, 1, "fin1",
-                             "setup2", 2, 2, "fin2",]
+                if arg == 1:
+                    assert l == ["setup1", 1, 1, ]
+                elif arg == 2:
+                    assert l == ["setup1", 1, 1, "fin1",
+                                 "setup2", 2, 2, ]
 
         """)
         reprec = testdir.inline_run("-v")
-        reprec.assertoutcome(passed=5)
+        reprec.assertoutcome(passed=6)
 

@@ -1,3 +1,29 @@
+Sorting per-resource
+-----------------------------
+
+for any given set of items:
+
+- collect items per session-scoped parametrized funcarg
+- re-order until items no parametrizations are mixed
+
+  examples:
+
+        test()
+        test1(s1)
+        test1(s2)     
+        test2()
+        test3(s1)
+        test3(s2)
+
+  gets sorted to:
+
+        test()
+        test2()
+        test1(s1)
+        test3(s1)
+        test1(s2)
+        test3(s2)
+ 
 
 the new @setup functions 
 --------------------------------------
