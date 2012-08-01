@@ -151,6 +151,7 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
+@pytest.mark.xfail("sys.version_info < (2,6)")
 def test_assert_compare_truncate_longmessage(testdir):
     testdir.makepyfile(r"""
         def test_long():
