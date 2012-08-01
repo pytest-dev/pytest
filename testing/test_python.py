@@ -1595,12 +1595,12 @@ class TestFuncargFactory:
     def test_receives_funcargs(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.mark.funcarg
-            def arg1(request):
+            @pytest.mark.factory
+            def arg1():
                 return 1
 
-            @pytest.mark.funcarg
-            def arg2(request, arg1):
+            @pytest.mark.factory
+            def arg2(arg1):
                 return arg1 + 1
 
             def test_add(arg2):
@@ -1615,12 +1615,12 @@ class TestFuncargFactory:
     def test_receives_funcargs_scope_mismatch(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.mark.funcarg(scope="function")
-            def arg1(request):
+            @pytest.mark.factory(scope="function")
+            def arg1():
                 return 1
 
-            @pytest.mark.funcarg(scope="module")
-            def arg2(request, arg1):
+            @pytest.mark.factory(scope="module")
+            def arg2(arg1):
                 return arg1 + 1
 
             def test_add(arg2):
@@ -1638,13 +1638,13 @@ class TestFuncargFactory:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.mark.funcarg(params=[1,2])
-            def arg1(request):
+            @pytest.mark.factory(params=[1,2])
+            def arg1(testcontext):
                 l.append(1)
-                return request.param
+                return testcontext.param
 
-            @pytest.mark.funcarg
-            def arg2(request, arg1):
+            @pytest.mark.factory
+            def arg2(arg1):
                 return arg1 + 1
 
             def test_add(arg1, arg2):
@@ -1675,7 +1675,6 @@ class TestResourceIntegrationFunctional:
             "*test_function*advanced*FAILED",
         ])
 
-### XXX shift to test_session.py
 class TestFuncargManager:
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")
@@ -1727,14 +1726,14 @@ class TestSetupDiscovery:
         testdir.makeconftest("""
             import pytest
             @pytest.mark.setup
-            def perfunction(request, tmpdir):
+            def perfunction(testcontext, tmpdir):
                 pass
 
-            @pytest.mark.funcarg
-            def arg1(request, tmpdir):
+            @pytest.mark.factory
+            def arg1(tmpdir):
                 pass
             @pytest.mark.setup
-            def perfunction2(request, arg1):
+            def perfunction2(arg1):
                 pass
 
             def pytest_funcarg__fm(request):
@@ -1751,10 +1750,10 @@ class TestSetupDiscovery:
                 setupcalls, allnames = fm.getsetuplist(item.nodeid)
                 assert len(setupcalls) == 2
                 assert setupcalls[0].func.__name__ == "perfunction"
-                assert "request" in setupcalls[0].funcargnames
+                assert "testcontext" in setupcalls[0].funcargnames
                 assert "tmpdir" in setupcalls[0].funcargnames
                 assert setupcalls[1].func.__name__ == "perfunction2"
-                assert "request" in setupcalls[1].funcargnames
+                assert "testcontext" not in setupcalls[1].funcargnames
                 assert "arg1" in setupcalls[1].funcargnames
                 assert "tmpdir" not in setupcalls[1].funcargnames
                 #assert "tmpdir" in setupcalls[1].depfuncargs
@@ -1768,12 +1767,12 @@ class TestSetupManagement:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.mark.funcarg(scope="module")
-            def arg(request):
+            @pytest.mark.factory(scope="module")
+            def arg():
                 l.append(1)
                 return 0
             @pytest.mark.setup(scope="class")
-            def something(request, arg):
+            def something(arg):
                 l.append(2)
 
             def test_hello(arg):
@@ -1793,12 +1792,12 @@ class TestSetupManagement:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.mark.funcarg(params=[1,2])
-            def arg(request):
-                return request.param
+            @pytest.mark.factory(params=[1,2])
+            def arg(testcontext):
+                return testcontext.param
 
             @pytest.mark.setup
-            def something(request, arg):
+            def something(arg):
                 l.append(arg)
 
             def test_hello():
@@ -1819,13 +1818,13 @@ class TestSetupManagement:
 
             l = []
 
-            @pytest.mark.funcarg(scope="session", params=[1,2])
-            def arg(request):
-               return request.param
+            @pytest.mark.factory(scope="session", params=[1,2])
+            def arg(testcontext):
+               return testcontext.param
 
             @pytest.mark.setup(scope="function")
-            def append(request, arg):
-                if request.function.__name__ == "test_some":
+            def append(testcontext, arg):
+                if testcontext.function.__name__ == "test_some":
                     l.append(arg)
 
             def test_some():
@@ -1845,19 +1844,19 @@ class TestSetupManagement:
 
             l = []
 
-            @pytest.mark.funcarg(scope="function", params=[1,2])
-            def farg(request):
-                return request.param
+            @pytest.mark.factory(scope="function", params=[1,2])
+            def farg(testcontext):
+                return testcontext.param
 
-            @pytest.mark.funcarg(scope="class", params=list("ab"))
-            def carg(request):
-                return request.param
+            @pytest.mark.factory(scope="class", params=list("ab"))
+            def carg(testcontext):
+                return testcontext.param
 
             @pytest.mark.setup(scope="class")
-            def append(request, farg, carg):
+            def append(testcontext, farg, carg):
                 def fin():
                     l.append("fin_%s%s" % (carg, farg))
-                request.addfinalizer(fin)
+                testcontext.addfinalizer(fin)
         """)
         testdir.makepyfile("""
             import pytest
@@ -1879,9 +1878,9 @@ class TestFuncargMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.mark.funcarg(params=["a", "b", "c"])
-            def arg(request):
-                return request.param
+            @pytest.mark.factory(params=["a", "b", "c"])
+            def arg(testcontext):
+                return testcontext.param
             l = []
             def test_param(arg):
                 l.append(arg)
@@ -1895,8 +1894,8 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.mark.funcarg(scope="module")
-            def arg(request):
+            @pytest.mark.factory(scope="module")
+            def arg():
                 l.append(1)
                 return 1
 
@@ -1917,8 +1916,8 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.mark.funcarg(scope="module")
-            def arg(request):
+            @pytest.mark.factory(scope="module")
+            def arg():
                 l.append(1)
                 return 1
 
@@ -1940,11 +1939,11 @@ class TestFuncargMarker:
             import pytest
             finalized = []
             created = []
-            @pytest.mark.funcarg(scope="module")
-            def arg(request):
+            @pytest.mark.factory(scope="module")
+            def arg(testcontext):
                 created.append(1)
-                assert request.scope == "module"
-                request.addfinalizer(lambda: finalized.append(1))
+                assert testcontext.scope == "module"
+                testcontext.addfinalizer(lambda: finalized.append(1))
             def pytest_funcarg__created(request):
                 return len(created)
             def pytest_funcarg__finalized(request):
@@ -1979,15 +1978,15 @@ class TestFuncargMarker:
             import pytest
             finalized = []
             created = []
-            @pytest.mark.funcarg(scope="function")
-            def arg(request):
+            @pytest.mark.factory(scope="function")
+            def arg(testcontext):
                 pass
         """)
         testdir.makepyfile(
             test_mod1="""
                 import pytest
-                @pytest.mark.funcarg(scope="session")
-                def arg(request):
+                @pytest.mark.factory(scope="session")
+                def arg(testcontext):
                     %s
                 def test_1(arg):
                     pass
@@ -2001,18 +2000,16 @@ class TestFuncargMarker:
     def test_register_only_with_mark(self, testdir):
         testdir.makeconftest("""
             import pytest
-            finalized = []
-            created = []
-            @pytest.mark.funcarg
-            def arg(request):
+            @pytest.mark.factory
+            def arg():
                 return 1
         """)
         testdir.makepyfile(
             test_mod1="""
                 import pytest
-                @pytest.mark.funcarg
-                def arg(request):
-                    return request.getfuncargvalue("arg") + 1
+                @pytest.mark.factory
+                def arg(arg):
+                    return arg + 1
                 def test_1(arg):
                     assert arg == 2
             """)
@@ -2022,9 +2019,9 @@ class TestFuncargMarker:
     def test_parametrize_and_scope(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.mark.funcarg(scope="module", params=["a", "b", "c"])
-            def arg(request):
-                return request.param
+            @pytest.mark.factory(scope="module", params=["a", "b", "c"])
+            def arg(testcontext):
+                return testcontext.param
             l = []
             def test_param(arg):
                 l.append(arg)
@@ -2040,14 +2037,14 @@ class TestFuncargMarker:
     def test_scope_mismatch(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.mark.funcarg(scope="function")
-            def arg(request):
+            @pytest.mark.factory(scope="function")
+            def arg(testcontext):
                 pass
         """)
         testdir.makepyfile("""
             import pytest
-            @pytest.mark.funcarg(scope="session")
-            def arg(request, arg):
+            @pytest.mark.factory(scope="session")
+            def arg(arg):
                 pass
             def test_mismatch(arg):
                 pass
@@ -2062,9 +2059,9 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.funcarg(scope="module", params=[1, 2])
-            def arg(request):
-                return request.param
+            @pytest.mark.factory(scope="module", params=[1, 2])
+            def arg(testcontext):
+                return testcontext.param
 
             l = []
             def test_1(arg):
@@ -2081,11 +2078,11 @@ class TestFuncargMarker:
         testdir.makeconftest("""
             import pytest
 
-            @pytest.mark.funcarg(scope="session", params="s1 s2".split())
-            def sarg(request):
+            @pytest.mark.factory(scope="session", params="s1 s2".split())
+            def sarg():
                 pass
-            @pytest.mark.funcarg(scope="module", params="m1 m2".split())
-            def marg(request):
+            @pytest.mark.factory(scope="module", params="m1 m2".split())
+            def marg():
                 pass
         """)
         testdir.makepyfile(test_mod1="""
@@ -2129,19 +2126,19 @@ class TestFuncargMarker:
 
             l = []
 
-            @pytest.mark.funcarg(scope="function", params=[1,2])
-            def farg(request):
-                return request.param
+            @pytest.mark.factory(scope="function", params=[1,2])
+            def farg(testcontext):
+                return testcontext.param
 
-            @pytest.mark.funcarg(scope="class", params=list("ab"))
-            def carg(request):
-                return request.param
+            @pytest.mark.factory(scope="class", params=list("ab"))
+            def carg(testcontext):
+                return testcontext.param
 
             @pytest.mark.setup(scope="class")
-            def append(request, farg, carg):
+            def append(testcontext, farg, carg):
                 def fin():
                     l.append("fin_%s%s" % (carg, farg))
-                request.addfinalizer(fin)
+                testcontext.addfinalizer(fin)
         """)
         testdir.makepyfile("""
             import pytest
@@ -2175,19 +2172,19 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.funcarg(scope="function", params=[1, 2])
-            def arg(request):
-                param = request.param
-                request.addfinalizer(lambda: l.append("fin:%s" % param))
+            @pytest.mark.factory(scope="function", params=[1, 2])
+            def arg(testcontext):
+                param = testcontext.param
+                testcontext.addfinalizer(lambda: l.append("fin:%s" % param))
                 l.append("create:%s" % param)
-                return request.param
+                return testcontext.param
 
-            @pytest.mark.funcarg(scope="module", params=["mod1", "mod2"])
-            def modarg(request):
-                param = request.param
-                request.addfinalizer(lambda: l.append("fin:%s" % param))
+            @pytest.mark.factory(scope="module", params=["mod1", "mod2"])
+            def modarg(testcontext):
+                param = testcontext.param
+                testcontext.addfinalizer(lambda: l.append("fin:%s" % param))
                 l.append("create:%s" % param)
-                return request.param
+                return testcontext.param
 
             l = []
             def test_1(arg):
@@ -2219,12 +2216,12 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.funcarg(scope="module", params=[1, 2])
-            def arg(request):
-                request.config.l = l # to access from outer
-                x = request.param
-                request.addfinalizer(lambda: l.append("fin%s" % x))
-                return request.param
+            @pytest.mark.factory(scope="module", params=[1, 2])
+            def arg(testcontext):
+                testcontext.config.l = l # to access from outer
+                x = testcontext.param
+                testcontext.addfinalizer(lambda: l.append("fin%s" % x))
+                return testcontext.param
 
             l = []
             def test_1(arg):
@@ -2248,11 +2245,11 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.funcarg(scope="function", params=[1, 2])
-            def arg(request):
-                x = request.param
-                request.addfinalizer(lambda: l.append("fin%s" % x))
-                return request.param
+            @pytest.mark.factory(scope="function", params=[1, 2])
+            def arg(testcontext):
+                x = testcontext.param
+                testcontext.addfinalizer(lambda: l.append("fin%s" % x))
+                return testcontext.param
 
             l = []
             def test_1(arg):
@@ -2270,13 +2267,13 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.funcarg(scope="module", params=[1, 2])
-            def arg(request):
-                return request.param
+            @pytest.mark.factory(scope="module", params=[1, 2])
+            def arg(testcontext):
+                return testcontext.param
 
             @pytest.mark.setup(scope="module")
-            def mysetup(request, arg):
-                request.addfinalizer(lambda: l.append("fin%s" % arg))
+            def mysetup(testcontext, arg):
+                testcontext.addfinalizer(lambda: l.append("fin%s" % arg))
                 l.append("setup%s" % arg)
 
             l = []
@@ -2297,3 +2294,76 @@ class TestFuncargMarker:
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=6)
 
+@pytest.mark.parametrize(("scope", "ok", "error"),[
+    ["session", "", "fspath class function module"],
+    ["module", "module fspath", "cls function"],
+    ["class", "module fspath cls", "function"],
+    ["function", "module fspath cls function", ""]
+])
+class TestTestContextScopeAccess:
+    def test_setup(self, testdir, scope, ok, error):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.setup(scope=%r)
+            def myscoped(testcontext):
+                for x in %r:
+                    assert hasattr(testcontext, x)
+                for x in %r:
+                    pytest.raises(AttributeError, lambda:
+                        getattr(testcontext, x))
+                assert testcontext.session
+                assert testcontext.config
+            def test_func():
+                pass
+        """ %(scope, ok.split(), error.split()))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_resource(self, testdir, scope, ok, error):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.factory(scope=%r)
+            def arg(testcontext):
+                for x in %r:
+                    assert hasattr(testcontext, x)
+                for x in %r:
+                    pytest.raises(AttributeError, lambda:
+                        getattr(testcontext, x))
+                assert testcontext.session
+                assert testcontext.config
+            def test_func(arg):
+                pass
+        """ %(scope, ok.split(), error.split()))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+class TestTestContextVarious:
+    def test_newstyle_no_request(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.factory
+            def arg(request):
+                pass
+            def test_1(arg):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*no factory found*request*",
+        ])
+
+    def test_setupcontext_no_param(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.factory(params=[1,2])
+            def arg(testcontext):
+                return testcontext.param
+
+            @pytest.mark.setup
+            def mysetup(testcontext, arg):
+                assert not hasattr(testcontext, "param")
+            def test_1(arg):
+                assert arg in (1,2)
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)

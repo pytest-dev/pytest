@@ -922,6 +922,11 @@ class FuncargRequest:
         return self._pyfuncitem.keywords
 
     @property
+    def session(self):
+        """ pytest session object. """
+        return self._pyfuncitem.session
+
+    @property
     def module(self):
         """ module where the test function was collected. """
         return self._pyfuncitem.getparent(pytest.Module).obj
@@ -1029,13 +1034,18 @@ class FuncargRequest:
 
     def _getfuncargvalue(self, factorydef):
         # collect funcargs from the factory
-        newnames = list(factorydef.funcargnames)
-        newnames.remove("request")
+        newnames = factorydef.funcargnames
         argname = factorydef.argname
-        factory_kwargs = {"request": self}
+        factory_kwargs = {}
         def fillfactoryargs():
             for newname in newnames:
-                factory_kwargs[newname] = self.getfuncargvalue(newname)
+                if newname == "testcontext":
+                    val = TestContextResource(self)
+                elif newname == "request" and not factorydef.new:
+                    val = self
+                else:
+                    val = self.getfuncargvalue(newname)
+                factory_kwargs[newname] = val
 
         node = self._pyfuncitem
         mp = monkeypatch()
@@ -1237,20 +1247,22 @@ class FuncargManager:
             obj = getattr(holderobj, name)
             if not callable(obj):
                 continue
-            # funcarg factories either have a pytest_funcarg__ prefix
+            # resource factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
             if not callable(obj):
                 continue
-            marker = getattr(obj, "funcarg", None)
+            marker = getattr(obj, "factory", None)
             if marker is not None and isinstance(marker, MarkInfo):
                 assert not name.startswith(self._argprefix)
                 argname = name
                 scope = marker.kwargs.get("scope")
                 params = marker.kwargs.get("params")
+                new = True
             elif name.startswith(self._argprefix):
                 argname = name[len(self._argprefix):]
                 scope = None
                 params = None
+                new = False
             else:
                 # no funcargs. check if we have a setup function.
                 setup = getattr(obj, "setup", None)
@@ -1260,7 +1272,8 @@ class FuncargManager:
                     self.setuplist.append(sf)
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
-            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params)
+            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params,
+                                    new)
             faclist.append(factorydef)
             ### check scope/params mismatch?
 
@@ -1307,13 +1320,16 @@ class FuncargManager:
         for setupcall in setuplist:
             if setupcall.active:
                 continue
-            setuprequest = SetupRequest(request, setupcall)
+            testcontext = TestContextSetup(request, setupcall)
             kwargs = {}
             for name in setupcall.funcargnames:
-                if name == "request":
-                    kwargs[name] = setuprequest
-                else:
+                try:
                     kwargs[name] = request.getfuncargvalue(name)
+                except FuncargLookupError:
+                    if name == "testcontext":
+                        kwargs[name] = testcontext
+                    else:
+                        raise
             scope = setupcall.scope or "function"
             scol = setupcall.scopeitem = request._getscopeitem(scope)
             self.session._setupstate.addfinalizer(setupcall.finish, scol)
@@ -1332,29 +1348,66 @@ class FuncargManager:
             except ValueError:
                 pass
 
+scope2props = dict(session=())
+scope2props["module"] = ("fspath", "module")
+scope2props["class"] = scope2props["module"] + ("cls",)
+scope2props["function"] = scope2props["class"] + ("function", "keywords")
+
+def scopeprop(attr, name=None, doc=None):
+    if doc is None:
+        doc = "%s of underlying test context" % (attr,)
+    name = name or attr
+    def get(self):
+        if name in scope2props[self.scope]:
+            return getattr(self._request, name)
+        raise AttributeError("%s not available in %s-scoped context" % (
+            name, self.scope))
+    return property(get, doc=doc)
+
 def rprop(attr, doc=None):
     if doc is None:
-        doc = "%r of underlying test item"
+        doc = "%s of underlying test context" % attr
     return property(lambda x: getattr(x._request, attr), doc=doc)
 
-class SetupRequest:
-    def __init__(self, request, setupcall):
+class TestContext(object):
+    def __init__(self, request, scope):
         self._request = request
-        self._setupcall = setupcall
-        self._finalizers = []
+        self.scope = scope
 
     # no getfuncargvalue(), cached_setup, applymarker helpers here
     # on purpose
 
-    function = rprop("function")
-    cls = rprop("cls")
-    instance = rprop("instance")
-    fspath = rprop("fspath")
-    keywords = rprop("keywords")
     config = rprop("config", "pytest config object.")
+    session = rprop("session", "pytest session object.")
+    param = rprop("param")
+
+    function = scopeprop("function")
+    module = scopeprop("module")
+    cls = scopeprop("class", "cls")
+    instance = scopeprop("instance")
+    fspath = scopeprop("fspath")
+    #keywords = scopeprop("keywords")
+
+class TestContextSetup(TestContext):
+    def __init__(self, request, setupcall):
+        self._setupcall = setupcall
+        self._finalizers = []
+        super(TestContextSetup, self).__init__(request, setupcall.scope)
 
     def addfinalizer(self, finalizer):
+        """ Add a finalizer to be called after the last test in the
+        test context executes. """
         self._setupcall.addfinalizer(finalizer)
+
+class TestContextResource(TestContext):
+    def __init__(self, request):
+        super(TestContextResource, self).__init__(request, request.scope)
+
+    def addfinalizer(self, finalizer):
+        """ Add a finalizer to be called after the last test in the
+        test context executes. """
+        self._request.addfinalizer(finalizer)
+
 
 class SetupCall:
     """ a container/helper for managing calls to setup functions. """
@@ -1386,15 +1439,16 @@ class SetupCall:
 
 class FactoryDef:
     """ A container for a factory definition. """
-    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
+    def __init__(self, funcargmanager, baseid, argname, func, scope, params,
+                 new):
         self.funcargmanager = funcargmanager
         self.baseid = baseid
         self.func = func
         self.argname = argname
         self.scope = scope
         self.params = params
+        self.new = new
         self.funcargnames = getfuncargnames(func)
-
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
