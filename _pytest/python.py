@@ -1355,7 +1355,8 @@ scope2props["function"] = scope2props["class"] + ("function", "keywords")
 
 def scopeprop(attr, name=None, doc=None):
     if doc is None:
-        doc = "%s of underlying test context" % (attr,)
+        doc = ("%s of underlying test context, may not exist "
+               "if the testcontext has a higher scope" % (attr,))
     name = name or attr
     def get(self):
         if name in scope2props[self.scope]:
@@ -1370,6 +1371,7 @@ def rprop(attr, doc=None):
     return property(lambda x: getattr(x._request, attr), doc=doc)
 
 class TestContext(object):
+    """ Basic objects of the current testing context. """
     def __init__(self, request, scope):
         self._request = request
         self.scope = scope
@@ -1379,7 +1381,6 @@ class TestContext(object):
 
     config = rprop("config", "pytest config object.")
     session = rprop("session", "pytest session object.")
-    param = rprop("param")
 
     function = scopeprop("function")
     module = scopeprop("module")
@@ -1400,6 +1401,8 @@ class TestContextSetup(TestContext):
         self._setupcall.addfinalizer(finalizer)
 
 class TestContextResource(TestContext):
+    param = rprop("param")
+
     def __init__(self, request):
         super(TestContextResource, self).__init__(request, request.scope)
 

@@ -11,6 +11,13 @@ Injecting objects into test functions (funcargs)
 Dependency injection through function arguments
 =================================================
 
+.. note::
+
+    This section describes the pytest mechanisms prior
+    to the pytest-2.3 release.  If you haven't used these
+    features yet, it makes more sense to stop here and read 
+    :ref:`resources` instead.
+
 py.test lets you inject objects into test invocations and precisely
 control their life cycle in relation to the overall test execution.  Moreover,
 you can run a test function multiple times injecting different objects.
@@ -39,7 +46,7 @@ very useful if you want to test e.g. against different database backends
 or with multiple numerical arguments sets and want to reuse the same set
 of test functions.
 
-py.test comes with some :ref:`builtinfuncargs` and there are some refined usages in the examples section.
+py.test comes with some :ref:`builtinresources` and there are some refined usages in the examples section.
 
 .. _funcarg:
 

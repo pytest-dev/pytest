@@ -1,271 +1,414 @@
 
-V4: Creating and working with parametrized resources
-===============================================================
+.. _resources:
 
-**Target audience**: Reading this document requires basic knowledge of 
-python testing, xUnit setup methods and the basic pytest funcarg mechanism,
-see http://pytest.org/latest/funcargs.html 
+test resource management and xUnit setup (on steroids)
+=======================================================
 
-**Abstract**: pytest-2.X provides yet more powerful and flexible 
-fixture machinery by introducing:
+.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
-* a new ``@pytest.mark.funcarg`` marker to define funcarg factories and their
-  scoping and parametrization.  No special ``pytest_funcarg__`` naming there.
+.. versionadded: 2.3
 
-* a new ``@pytest.mark.setup`` marker to define setup functions and their 
+pytest offers advanced resource parametrization and injection mechanisms
+including a fully integrated generalization of the popular xUnit
+setup-style methods.  A resource is created by a ``@pytest.mark.factory`` 
+marked function and its name is the name of the function.  A resource
+is injected into test or setup functions if they use the name 
+in their signature.  Therefore and also for historic reasons, resources are
+sometimes called "funcargs" because they ultimately appear as 
+function arguments.
+
+The pytest resource management and setup features are exposed through
+three decorators:
+
+* a `@pytest.mark.factory`_ marker to define resource factories,
+  their scoping and parametrization.
+
+* a `@pytest.mark.setup`_ marker to define setup functions and their 
   scoping.
 
-* directly use funcargs through funcarg factory signatures
+* a `@pytest.mark.parametrize`_ marker for executing test functions
+  multiple times with different parameter sets
 
-Both funcarg factories and setup functions can be defined in test modules,
-classes, conftest.py files and installed plugins.
+Generally, resource factories and setup functions: 
 
-The introduction of these two markers lifts several prior limitations
-and allows to easily define and implement complex testing scenarios.
+- can be defined in test modules, test classes, conftest.py files or
+  in plugins.
 
-Nonwithstanding these extensions, already existing test suites and plugins
-written to work for previous pytest versions shall run unmodified.
+- can themselves receive resources through their function arguments, 
+  simplifying the setup and use of interdependent resources.
 
+- can use the special `testcontext`_ object for access to the 
+  context in which the factory/setup is called and for registering 
+  finalizers.
 
-**Changes**: This V4 draft is based on incorporating and thinking about
-feedback on previous versions provided by Floris Bruynooghe, Carl Meyer,
-Ronny Pfannschmidt and Samuele Pedroni.  It remains as draft
-documentation, pending further refinements and changes according to
-implementation or backward compatibility issues.  The main changes are:
+This document showcases these features through some basic examples.
 
-* Collapse funcarg factory decorators into a single "@funcarg" one.
-  You can specify scopes and params with it.  When using the decorator
-  the "pytest_funcarg__" prefix becomes optional.
+Note that pytest also comes with some :ref:`builtinresources` which
+you can use without defining them yourself.
 
-* funcarg factories can now use funcargs themselves
+Background and terms
+---------------------------
 
-* Drop setup/directory scope from this draft
+The pytest resource management mechanism is an example of `Dependency
+Injection`_ which helps to de-couple test code from resource
+instantiation code required for them to execute.  At test writing time
+you typically do not need to care for the details of how your required
+resources are constructed, if they live through a function, class,
+module or session scope or if the test will be called multiple times
+with different resource instances.
 
-* introduce a new @setup decorator similar to the @funcarg one
-  except that setup-markers cannot define parametriation themselves.
-  Instead they can easily depend on a parametrized funcarg (which
-  must not be visible at test function signatures).
+To create a value with which to call a test function a resource factory 
+function is called which gets full access to the test context and can
+register finalizers which are to be run after the last test in that context
+finished. Resource factories can be implemented in same test class or 
+test module, in a per-directory ``conftest.py`` file or in an external plugin.  This allows total de-coupling of test and setup code.
 
-* drop consideration of setup_X support for funcargs because
-  it is less flexible and probably causes more implementation
-  troubles than the current @setup approach which can share
-  a lot of logic with the @funcarg one.
-
-* tests are grouped by parametrized funcargs
-
-.. currentmodule:: _pytest
-
-
-Shortcomings of the previous pytest_funcarg__ mechanism
----------------------------------------------------------
-
-The previous funcarg mechanism calls a factory each time a
-funcarg for a test function is requested.  If a factory wants
-t re-use a resource across different scopes, it often used 
-the ``request.cached_setup()`` helper to manage caching of 
-resources.  Here is a basic example how we could implement 
-a per-session Database object::
-
-    # content of conftest.py 
-    class Database:
-        def __init__(self):
-            print ("database instance created")
-        def destroy(self):
-            print ("database instance destroyed")
-
-    def pytest_funcarg__db(request):
-        return request.cached_setup(setup=DataBase, 
-                                    teardown=lambda db: db.destroy,
-                                    scope="session")
-
-There are some problems with this approach:
-
-1. Scoping resource creation is not straight forward, instead one must
-   understand the intricate cached_setup() method mechanics.
-
-2. parametrizing the "db" resource is not straight forward: 
-   you need to apply a "parametrize" decorator or implement a
-   :py:func:`~hookspec.pytest_generate_tests` hook 
-   calling :py:func:`~python.Metafunc.parametrize` which
-   performs parametrization at the places where the resource 
-   is used.  Moreover, you need to modify the factory to use an 
-   ``extrakey`` parameter containing ``request.param`` to the 
-   :py:func:`~python.Request.cached_setup` call.
-
-3. there is no way how you can make use of funcarg factories
-   in xUnit setup methods.
-
-4. A non-parametrized funcarg factory cannot use a parametrized 
-   funcarg resource if it isn't stated in the test function signature.
-
-The following sections address the advances which solve all of these problems.
+A test function may be invoked multiple times in which case we
+speak of :ref:`parametrized testing <parametrizing-tests>`. This can be
+very useful if you want to test e.g. against different database backends
+or with multiple numerical arguments sets and want to reuse the same set
+of test functions.
 
 
-Direct scoping of funcarg factories
---------------------------------------------------------
+.. _`@pytest.mark.factory`:
 
-.. note:: Implemented
+``@pytest.mark.factory``: Creating parametrized, scoped resources
+-----------------------------------------------------------------
 
-Instead of calling cached_setup(), you can decorate your factory
-to state its scope::
+.. regendoc:wipe
 
-    @pytest.mark.funcarg(scope="session")
-    def pytest_funcarg__db(request):
-        # factory will only be invoked once per session - 
-        db = DataBase()
-        request.addfinalizer(db.destroy)  # destroy when session is finished
-        return db
+.. versionadded:: 2.3
 
-This factory implementation does not need to call ``cached_setup()`` anymore
-because it will only be invoked once per session.  Moreover, the 
-``request.addfinalizer()`` registers a finalizer according to the specified
-resource scope on which the factory function is operating.  With this new
-scoping, the still existing ``cached_setup()`` should be much less used
-but will remain for compatibility reasons and for the case where you
-still want to have your factory get called on a per-item basis.
+The `@pytest.mark.factory`_ marker allows to
+
+* mark a function as a factory for resources used by test and setup functions 
+* define parametrization to run tests multiple times with different
+  resource instances
+* set a scope which determines the level of caching. valid scopes
+  are ``session``, ``module``, ``class`` and ``function``.
+
+Here is a simple example of a factory creating a shared ``smtplib.SMTP``
+connection resource which test functions then may use across the whole
+test session::
+
+    # content of conftest.py
+    import pytest
+    import smtplib
+
+    @pytest.mark.factory(scope="session")
+    def smtp(testcontext):
+        smtp = smtplib.SMTP("merlinux.eu")
+        testcontext.addfinalizer(smtp.close)
+        return smtp
+
+The name of the resource is ``smtp`` (the factory function name) 
+and you can now access the ``smtp`` resource by listing it as
+an input parameter in any test function below the directory where
+``conftest.py`` is located::
+
+    # content of test_module.py
+    def test_ehlo(smtp):
+        response = smtp.ehlo()
+        assert response[0] == 250 
+        assert "merlinux" in response[1]
+        assert 0  # for demo purposes
+
+    def test_noop(smtp):
+        response = smtp.noop()
+        assert response[0] == 250
+        assert 0  # for demo purposes
+
+If you run the tests::
+
+    $ py.test -q
+    collecting ... collected 2 items
+    FF
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1c7c638>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:5: AssertionError
+    ________________________________ test_noop _________________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1c7c638>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    2 failed in 0.18 seconds
+
+you will see the two ``assert 0`` failing and can see that
+the same (session-scoped) object was passed into the two test functions.
+
+If you now want to test multiple servers you can simply parametrize
+the ``smtp`` factory::
+
+    # content of conftest.py
+    import pytest
+    import smtplib
+
+    @pytest.mark.factory(scope="session", 
+                         params=["merlinux.eu", "mail.python.org"])
+    def smtp(testcontext):
+        smtp = smtplib.SMTP(testcontext.param)
+        def fin():
+            smtp.close()
+        testcontext.addfinalizer(fin)
+        return smtp
+
+The main change is the definition of a ``params`` list in the
+``factory``-marker and the ``testcontext.param`` access within the
+factory function.  No test code needs to change.  So let's just do another
+run::
+
+    $ py.test -q
+    collecting ... collected 4 items
+    FFFF
+    ================================= FAILURES =================================
+    __________________________ test_ehlo[merlinux.eu] __________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1d162d8>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:5: AssertionError
+    __________________________ test_noop[merlinux.eu] __________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1d162d8>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    ________________________ test_ehlo[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1d1f098>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+    >       assert "merlinux" in response[1]
+    E       assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+    
+    test_module.py:4: AssertionError
+    ________________________ test_noop[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP instance at 0x1d1f098>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:10: AssertionError
+    4 failed in 6.42 seconds
+
+We get four failures because we are running the two tests twice with
+different ``smtp`` instantiations as defined on the factory.
+Note that with the ``mail.python.org`` connection the second test
+fails in ``test_ehlo`` because it expects a specific server string.
+
+You can also look at what tests pytest collects without running them::
+
+    $ py.test --collectonly
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev7
+    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    collecting ... collected 4 items
+    <Module 'test_module.py'>
+      <Function 'test_ehlo[merlinux.eu]'>
+      <Function 'test_noop[merlinux.eu]'>
+      <Function 'test_ehlo[mail.python.org]'>
+      <Function 'test_noop[mail.python.org]'>
+    
+    =============================  in 0.02 seconds =============================
+
+Note that pytest orders your test run by resource usage, minimizing
+the number of active resources at any given time.
 
 
-Direct parametrization of funcarg resource factories 
+Accessing resources from a factory function
 ----------------------------------------------------------
 
-.. note:: Implemented
+You can directly use resources as funcargs in resource factories.  
+Extending the previous example we can instantiate an application
+object and stick the live ``smtp`` resource into it::
 
-Previously, funcarg factories could not directly cause parametrization.
-You needed to specify a ``@parametrize`` or implement a ``pytest_generate_tests`` hook to perform parametrization, i.e. calling a test multiple times
-with different value sets.  pytest-2.X introduces a decorator for use
-on the factory itself::
+    # content of test_appsetup.py
+   
+    import pytest
 
-    @pytest.mark.funcarg(params=["mysql", "pg"])
-    def pytest_funcarg__db(request):
-        ...
+    class App:
+        def __init__(self, smtp):
+            self.smtp = smtp
 
-Here the factory will be invoked twice (with the respective "mysql" 
-and "pg" values set as ``request.param`` attributes) and and all of 
-the tests requiring "db" will run twice as well.  The "mysql" and 
-"pg" values will also be used for reporting the test-invocation variants.
+    @pytest.mark.factory(scope="module")
+    def app(smtp):
+        return App(smtp)
 
-This new way of parametrizing funcarg factories should in many cases
-allow to re-use already written factories because effectively
-``request.param`` are already the parametrization attribute for test 
-functions/classes were parametrized via
-:py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
+    def test_exists(app):
+        assert app.smtp
 
-Of course it's perfectly fine to combine parametrization and scoping::
+Let's run this::
 
-    @pytest.mark.funcarg(scope="session", params=["mysql", "pg"])
-    def pytest_funcarg__db(request):
-        if request.param == "mysql":
-            db = MySQL()
-        elif request.param == "pg":
-            db = PG()
-        request.addfinalizer(db.destroy)  # destroy when session is finished
-        return db
+    $ py.test -v test_appsetup.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev7 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-398/.cache
+    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    collecting ... collected 2 items
+    
+    test_appsetup.py:12: test_exists[merlinux.eu] PASSED
+    test_appsetup.py:12: test_exists[mail.python.org] PASSED
+    
+    ========================= 2 passed in 5.96 seconds =========================
 
-This would execute all tests requiring the per-session "db" resource twice,
-receiving the values created by the two respective invocations to the
-factory function.
-
-Direct usage of funcargs with funcargs factories
-----------------------------------------------------------
-
-.. note:: Implemented.
-
-You can now directly use funcargs in funcarg factories.  Example::
-
-    @pytest.mark.funcarg(scope="session")
-    def db(request, tmpdir):
-        # tmpdir is a session-specific tempdir
-
-Apart from convenience it also solves an issue when your factory
-depends on a parametrized funcarg.  Previously, a call to 
-``request.getfuncargvalue()`` happens at test execution time and
-thus pytest would not know at collection time about the fact that 
-a required resource is parametrized.
-
-No ``pytest_funcarg__`` prefix when using @funcarg decorator
--------------------------------------------------------------------
+Due to the parametrization of ``smtp`` the test will
+run twice with two different ``App`` instances and respective smtp servers.
+There is no need for the ``app`` factory to be aware of the parametrization.
 
 
-.. note:: Implemented
+.. _`new_setup`:
+.. _`@pytest.mark.setup`:
 
-When using the ``@funcarg`` decorator the name of the function
-does not need to (and in fact cannot) use the ``pytest_funcarg__``
-naming::
+``@pytest.mark.setup``: xUnit setup methods on steroids
+-----------------------------------------------------------------
 
-    @pytest.mark.funcarg
-    def db(request):
-        ...
+.. regendoc:wipe
 
-The name under which the funcarg resource can be requested is ``db``.
+.. versionadded:: 2.3
 
-You can also use the "old" non-decorator way of specifying funcarg factories 
-aka::
+The ``@pytest.mark.setup`` marker allows 
 
-    def pytest_funcarg__db(request):
-        ...
+* to define setup-functions close to test code or in conftest.py files
+  or plugins.
+* to mark a function as a setup method; the function can itself
+  receive funcargs and will execute multiple times if the funcargs
+  are parametrized
+* to set a scope which influences when the setup function going to be
+  called.  valid scopes are ``session``, ``module``, ``class`` and ``function``.
 
-It is recommended to use the funcarg-decorator, however.
+Here is a simple example.  First we define a global ``globdir`` resource::
 
+    # content of conftest.py
+    import pytest
 
-solving per-session setup / the new @setup marker
---------------------------------------------------------------
+    @pytest.mark.factory(scope="module")
+    def globdir(testcontext, tmpdir):
+        def fin():
+            print "finalize", tmpdir
+        testcontext.addfinalizer(fin)
+        print "created resource", tmpdir
+        return tmpdir
 
-.. note:: Implemented, at least working for basic situations.
+And then we write a test file containing a setup-marked function 
+taking this resource and setting it as a module global::
 
-pytest for a long time offered a pytest_configure and a pytest_sessionstart
-hook which are often used to setup global resources.  This suffers from
-several problems:
+    # content of test_module.py
+    import pytest
 
-1. in distributed testing the master process would setup test resources
-   that are never needed because it only co-ordinates the test run
-   activities of the slave processes.  
+    @pytest.mark.setup(scope="module")
+    def setresource(testcontext, globdir):
+        print "setupresource", globdir
+        testcontext.module.myresource = globdir
 
-2. if you only perform a collection (with "--collectonly") 
-   resource-setup will still be executed.  
+    def test_1():
+        assert myresource
+        print "using myresource", myresource
 
-3. If a pytest_sessionstart is contained in some subdirectories
-   conftest.py file, it will not be called.  This stems from the
-   fact that this hook is actually used for reporting, in particular
-   the test-header with platform/custom information.
+    def test_2():
+        assert myresource
+        print "using myresource", myresource
 
-Moreover, it is today not easy to define a scoped setup from plugins or
-conftest files other than to implement a ``pytest_runtest_setup()`` hook
-and caring for scoping/caching yourself.  And it's virtually impossible
-to do this with parametrization as ``pytest_runtest_setup()`` is called
-during test execution and parametrization happens at collection time.
+Let's run this module::
 
-It follows that pytest_configure/session/runtest_setup are often not
-appropriate for implementing common fixture needs.  Therefore, 
-pytest-2.X introduces a new "@pytest.mark.setup" marker which takes
-an optional "scope" parameter.  
+    $ py.test -qs
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.26 seconds
+    created resource /home/hpk/tmp/pytest-4427/test_10
+    setupresource /home/hpk/tmp/pytest-4427/test_10
+    using myresource /home/hpk/tmp/pytest-4427/test_10
+    using myresource /home/hpk/tmp/pytest-4427/test_10
+    finalize /home/hpk/tmp/pytest-4427/test_10
 
-See :ref:`new_setup` for examples.
+The two test functions in the module use the same global ``myresource``
+object because the ``setresource`` set it as a module attribute.
 
-funcarg and setup discovery now happens at collection time
----------------------------------------------------------------------
+The ``globdir`` factory can now become parametrized without any test
+or setup code needing to change::
 
-.. note:: 
-    Partially implemented - collectonly shows no extra information however.
+    # content of conftest.py
+    import pytest
 
-pytest-2.X takes care to discover funcarg factories and @setup methods
-at collection time.  This is more efficient especially for large test suites. 
-Moreover, a call to "py.test --collectonly" should be able to show
-a lot of setup-information and thus presents a nice method to get an
-overview of resource management in your project.
+    @pytest.mark.factory(scope="module", params=["aaa", "bbb"])
+    def globdir(testcontext, tmpdir):
+        newtmp = tmpdir.join(testcontext.param)
+        def fin():
+            print "finalize", newtmp
+        testcontext.addfinalizer(fin)
+        print "created resource", newtmp
+        return newtmp
 
+Running the unchanged previous test files now runs four tests::
+
+    $ py.test -qs
+    collecting ... collected 4 items
+    ....
+    4 passed in 0.26 seconds
+    created resource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
+    setupresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
+    using myresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
+    finalize /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
+    created resource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
+    setupresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
+    using myresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
+    finalize /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
+
+Each parameter causes the creation of a respective resource and the
+unchanged test module uses it in its ``@setup`` decorated method.
+
+.. note::
+
+   Tests using a particular parametrized resource instance will
+   executed next to each other.  Any finalizers will be run before the 
+   next parametrized resource instance is being setup and tests
+   are rerun.
 
 Grouping tests by resource parameters
 ----------------------------------------------------------
 
-.. note:: Implemented.
+.. regendoc: wipe
 
-pytest used to always sort test items by their source location.
-With pytest-2.X tests are first grouped by funcarg parameters.
-If you have a parametrized funcarg, then all the tests using it
-will first execute with it.  Then any finalizers are called and then
-the next parametrized resource instance is created and its tests are run.
-Among other things, this eases testing of applications which create 
-and use global state.
+pytest minimizes the number of active resources during test runs.
+If you have a parametrized resource, then all the tests using one
+resource instance will execute one after another.  Then any finalizers
+are called for that resource instance and then the next parametrized
+resource instance is created and its tests are run.  Among other things,
+this eases testing of applications which create and use global state.
 
 The following example uses two parametrized funcargs, one of which is 
 scoped on a per-module basis::
@@ -273,18 +416,18 @@ scoped on a per-module basis::
     # content of test_module.py
     import pytest
 
-    @pytest.mark.funcarg(scope="module", params=["mod1", "mod2"])
-    def modarg(request):
-        param = request.param
+    @pytest.mark.factory(scope="module", params=["mod1", "mod2"])
+    def modarg(testcontext):
+        param = testcontext.param
         print "create", param
         def fin():
             print "fin", param
-        request.addfinalizer(fin)
+        testcontext.addfinalizer(fin)
         return param
 
-    @pytest.mark.funcarg(scope="function", params=[1,2])
-    def otherarg(request):
-        return request.param
+    @pytest.mark.factory(scope="function", params=[1,2])
+    def otherarg(testcontext):
+        return testcontext.param
 
     def test_0(otherarg):
         print "  test0", otherarg
@@ -297,8 +440,8 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev5 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/tmp/doc-exec-388/.cache
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev7 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-398/.cache
     plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
     collecting ... collected 8 items
     
@@ -325,10 +468,132 @@ Let's run the tests in verbose mode and with looking at the print-output::
       test2 2 mod2
     fin mod2
 
-You can see that that the parametrized ``modarg`` resource lead to
-a re-ordering of test execution. The finalizer for the "mod1" parametrized 
-resource was executed before the "mod2" resource was setup.
+You can see that the parametrized module-scoped ``modarg`` resource caused
+a re-ordering of test execution. The finalizer for the ``mod1`` parametrized 
+resource was executed before the ``mod2`` resource was setup.
 
-.. note::
+.. currentmodule:: _pytest.python
+.. _`testcontext`:
 
-    The current implementation is experimental.
+``testcontext``: interacting with test context
+---------------------------------------------------
+
+The ``testcontext`` object may be received by `@pytest.mark.factory`_ or
+`@pytest.mark.setup`_ marked functions.  It contains information relating
+to the test context within which the function executes. Moreover, you
+can call ``testcontext.addfinalizer(myfinalizer)`` in order to trigger
+a call to ``myfinalizer`` after the last test in the test context has executed.
+If passed to a parametrized factory ``testcontext.param`` will contain
+a parameter (one value out of the ``params`` list specified with the 
+`@pytest.mark.factory`_ marker).
+
+.. autoclass:: _pytest.python.TestContext()
+    :members:
+
+.. _`@pytest.mark.parametrize`:
+
+``@pytest.mark.parametrize``: directly parametrizing  test functions
+----------------------------------------------------------------------------
+
+.. versionadded:: 2.2
+
+The builtin ``pytest.mark.parametrize`` decorator enables
+parametrization of arguments for a test function.  Here is an example
+of a test function that wants check for expected output given a certain input::
+
+    # content of test_expectation.py
+    import pytest
+    @pytest.mark.parametrize(("input", "expected"), [
+        ("3+5", 8),
+        ("2+4", 6),
+        ("6*9", 42),
+    ])
+    def test_eval(input, expected):
+        assert eval(input) == expected
+
+we parametrize two arguments of the test function so that the test
+function is called three times.  Let's run it::
+
+    $ py.test -q 
+    collecting ... collected 11 items
+    ..F........
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
+    
+    input = '6*9', expected = 42
+    
+        @pytest.mark.parametrize(("input", "expected"), [
+            ("3+5", 8),
+            ("2+4", 6),
+            ("6*9", 42),
+        ])
+        def test_eval(input, expected):
+    >       assert eval(input) == expected
+    E       assert 54 == 42
+    E        +  where 54 = eval('6*9')
+    
+    test_expectation.py:8: AssertionError
+    1 failed, 10 passed in 0.04 seconds
+
+As expected only one pair of input/output values fails the simple test function.
+
+Note that there are various ways how you can mark groups of functions,
+see :ref:`mark`.
+
+Generating parameters combinations, depending on command line
+----------------------------------------------------------------------------
+
+.. regendoc:wipe
+
+Let's say we want to execute a test with different computation
+parameters and the parameter range shall be determined by a command
+line argument.  Let's first write a simple (do-nothing) computation test::
+
+    # content of test_compute.py
+
+    def test_compute(param1):
+        assert param1 < 4
+
+Now we add a test configuration like this::
+
+    # content of conftest.py
+
+    def pytest_addoption(parser):
+        parser.addoption("--all", action="store_true",
+            help="run all combinations")
+
+    def pytest_generate_tests(metafunc):
+        if 'param1' in metafunc.funcargnames:
+            if metafunc.config.option.all:
+                end = 5
+            else:
+                end = 2
+            metafunc.parametrize("param1", range(end))
+
+This means that we only run 2 tests if we do not pass ``--all``::
+
+    $ py.test -q test_compute.py
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.03 seconds
+
+We run only two computations, so we see two dots.
+let's run the full monty::
+
+    $ py.test -q --all
+    collecting ... collected 5 items
+    ....F
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
+    
+    param1 = 4
+    
+        def test_compute(param1):
+    >       assert param1 < 4
+    E       assert 4 < 4
+    
+    test_compute.py:3: AssertionError
+    1 failed, 4 passed in 0.03 seconds
+
+As expected when running the full range of ``param1`` values
+we'll get an error on the last one.
