@@ -41,7 +41,7 @@ to mark functions as setup functions which:
 All of these features are now demonstrated by little examples.
 
 .. _`new_setup`:
-.. _`@pytest.mark.setup`:
+.. _`@pytest.setup`:
 
 basic per-function setup
 -------------------------------
@@ -56,7 +56,7 @@ the test execute with this directory as current working dir::
     import pytest
     import os
 
-    @pytest.mark.setup()
+    @pytest.setup()
     def mydir(tmpdir):
         tmpdir.join("myfile").write("example content")
         old = tmpdir.chdir()
@@ -72,7 +72,7 @@ the test execute with this directory as current working dir::
         assert not os.path.exists("anotherfile")
 
 Our ``mydir`` setup function is executed on a per-function basis,
-the default scope used by the ``pytest.mark.setup`` decorator.
+the default scope used by the ``pytest.setup`` decorator.
 It accesses the ``tmpdir`` resource which provides a new empty
 directory path object.  The ``test_function2`` here checks that 
 it executes with a fresh directory and specifically
@@ -103,7 +103,7 @@ it into a ``conftest.py`` file into the root of your project::
     import pytest
     import os
 
-    @pytest.mark.setup()
+    @pytest.setup()
     def cleandir(tmpdir):
         old = tmpdir.chdir()
 
@@ -118,7 +118,7 @@ test modules accessing a global resource
 If you want test modules to access a global resource,
 you can stick the resource to the module globals in
 a per-module setup function.  We use a :ref:`resource factory
-<@pytest.mark.factory>` to create our global resource::
+<@pytest.factory>` to create our global resource::
 
     # content of conftest.py
     import pytest
@@ -127,11 +127,11 @@ a per-module setup function.  We use a :ref:`resource factory
         def __init__(self):
             pass
 
-    @pytest.mark.factory(scope="session")
+    @pytest.factory(scope="session")
     def globresource():
         return GlobalResource()
 
-    @pytest.mark.setup(scope="module")
+    @pytest.setup(scope="module")
     def setresource(testcontext, globresource):
         testcontext.module.globresource = globresource
        
@@ -169,7 +169,7 @@ factory and also add a finalizer::
         def __init__(self, param):
             self.param = param
 
-    @pytest.mark.factory(scope="session", params=[1,2])
+    @pytest.factory(scope="session", params=[1,2])
     def globresource(testcontext):
         g = GlobalResource(testcontext.param)
         def fin():
@@ -177,7 +177,7 @@ factory and also add a finalizer::
         testcontext.addfinalizer(fin)
         return g
 
-    @pytest.mark.setup(scope="module")
+    @pytest.setup(scope="module")
     def setresource(testcontext, globresource):
         testcontext.module.globresource = globresource
 

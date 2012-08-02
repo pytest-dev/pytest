@@ -209,7 +209,7 @@ during test execution and parametrization happens at collection time.
 
 It follows that pytest_configure/session/runtest_setup are often not
 appropriate for implementing common fixture needs.  Therefore, 
-pytest-2.X introduces a new "@pytest.mark.setup" marker which takes
+pytest-2.X introduces a new :ref:`@pytest.setup` marker which takes
 an optional "scope" parameter.  
 
 See :ref:`new_setup` for examples.

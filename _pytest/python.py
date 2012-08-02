@@ -6,10 +6,44 @@ import pytest
 from _pytest.main import getfslineno
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
-from _pytest.mark import MarkInfo
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
+
+class FactoryMarker:
+    def __init__(self, scope, params):
+        self.scope = scope
+        self.params = params
+    def __call__(self, function):
+        function._pytestfactory = self
+        return function
+
+class SetupMarker:
+    def __init__(self, scope):
+        self.scope = scope
+    def __call__(self, function):
+        function._pytestsetup = self
+        return function
+
+# XXX a test fails when scope="function" how it should be, investigate
+def factory(scope=None, params=None):
+    """ return a decorator to mark functions as resource factories.
+
+    :arg scope: the scope for which this resource is shared, one of
+                "function", "class", "module", "session". Defaults to "function".
+    :arg params: an optional list of parameters which will cause multiple
+                invocations of tests depending on the resource.
+    """
+    return FactoryMarker(scope, params)
+
+def setup(scope="function"):
+    """ return a decorator to mark functions as setup functions.
+
+    :arg scope: the scope for which the setup function will be active, one
+                of "function", "class", "module", "session".
+                Defaults to "function".
+    """
+    return SetupMarker(scope)
 
 def cached_property(f):
     """returns a cached property that is calculated by function f.
@@ -78,6 +112,8 @@ def pytest_sessionstart(session):
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
+        'factory': factory,
+        'setup': setup,
         'raises' : raises,
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
@@ -1251,12 +1287,12 @@ class FuncargManager:
             # or are "funcarg" marked
             if not callable(obj):
                 continue
-            marker = getattr(obj, "factory", None)
-            if marker is not None and isinstance(marker, MarkInfo):
+            marker = getattr(obj, "_pytestfactory", None)
+            if marker is not None:
                 assert not name.startswith(self._argprefix)
                 argname = name
-                scope = marker.kwargs.get("scope")
-                params = marker.kwargs.get("params")
+                scope = marker.scope
+                params = marker.params
                 new = True
             elif name.startswith(self._argprefix):
                 argname = name[len(self._argprefix):]
@@ -1265,9 +1301,9 @@ class FuncargManager:
                 new = False
             else:
                 # no funcargs. check if we have a setup function.
-                setup = getattr(obj, "setup", None)
-                if setup is not None and isinstance(setup, MarkInfo):
-                    scope = setup.kwargs.get("scope")
+                setup = getattr(obj, "_pytestsetup", None)
+                if setup is not None:
+                    scope = setup.scope
                     sf = SetupCall(self, nodeid, obj, scope)
                     self.setuplist.append(sf)
                 continue

@@ -43,7 +43,7 @@ instead of the default per-function scope.
 
 Concretely, there are three means of resource and parametrization management:
 
-* a `@pytest.mark.factory`_ marker to define resource factories,
+* a `@pytest.factory`_ marker to define resource factories,
   their scoping and parametrization.   Factories can themselves 
   receive resources through their function arguments, easing
   the setup of interdependent resources.  They can also use
@@ -62,16 +62,16 @@ you can use without defining them yourself. Moreover, third-party
 plugins offer their own resources so that after installation
 you can simply use them in your test and setup functions.
 
-.. _`@pytest.mark.factory`:
+.. _`@pytest.factory`:
 
-``@pytest.mark.factory``: Creating parametrized, scoped resources
+``@pytest.factory``: Creating parametrized, scoped resources
 -----------------------------------------------------------------
 
 .. regendoc:wipe
 
 .. versionadded:: 2.3
 
-The `@pytest.mark.factory`_ marker allows to
+The `@pytest.factory`_ marker allows to
 
 * mark a function as a factory for resources, useable by test and setup functions 
 * define parameters in order to run tests multiple times with different
@@ -88,7 +88,7 @@ test session::
     import pytest
     import smtplib
 
-    @pytest.mark.factory(scope="session")
+    @pytest.factory(scope="session")
     def smtp(testcontext):
         smtp = smtplib.SMTP("merlinux.eu")
         testcontext.addfinalizer(smtp.close)
@@ -152,7 +152,7 @@ the ``smtp`` factory::
     import pytest
     import smtplib
 
-    @pytest.mark.factory(scope="session", 
+    @pytest.factory(scope="session", 
                          params=["merlinux.eu", "mail.python.org"])
     def smtp(testcontext):
         smtp = smtplib.SMTP(testcontext.param)
@@ -256,7 +256,7 @@ object by sticking the ``smtp`` resource into it::
         def __init__(self, smtp):
             self.smtp = smtp
 
-    @pytest.mark.factory(scope="module")
+    @pytest.factory(scope="module")
     def app(smtp):
         return App(smtp)
 
@@ -301,7 +301,7 @@ scoped on a per-module basis::
     # content of test_module.py
     import pytest
 
-    @pytest.mark.factory(scope="module", params=["mod1", "mod2"])
+    @pytest.factory(scope="module", params=["mod1", "mod2"])
     def modarg(testcontext):
         param = testcontext.param
         print "create", param
@@ -310,7 +310,7 @@ scoped on a per-module basis::
         testcontext.addfinalizer(fin)
         return param
 
-    @pytest.mark.factory(scope="function", params=[1,2])
+    @pytest.factory(scope="function", params=[1,2])
     def otherarg(testcontext):
         return testcontext.param
 
@@ -363,14 +363,14 @@ resource was executed before the ``mod2`` resource was setup.
 ``testcontext``: interacting with test context
 ---------------------------------------------------
 
-The ``testcontext`` object may be received by `@pytest.mark.factory`_ or
-`@pytest.mark.setup`_ marked functions.  It contains information relating
+The ``testcontext`` object may be received by `@pytest.factory`_ or
+`@pytest.setup`_ marked functions.  It contains information relating
 to the test context within which the function executes. Moreover, you
 can call ``testcontext.addfinalizer(myfinalizer)`` in order to trigger
 a call to ``myfinalizer`` after the last test in the test context has executed.
 If passed to a parametrized factory ``testcontext.param`` will contain
 a parameter (one value out of the ``params`` list specified with the 
-`@pytest.mark.factory`_ marker).
+`@pytest.factory`_ marker).
 
 .. autoclass:: _pytest.python.TestContext()
     :members:
