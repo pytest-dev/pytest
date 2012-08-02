@@ -1,74 +1,66 @@
 
 .. _resources:
 
-test resource management and xUnit setup (on steroids)
+=======================================================
+test resource injection and parametrization
 =======================================================
 
 .. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
 .. versionadded: 2.3
 
-pytest offers advanced resource parametrization and injection mechanisms
-including a fully integrated generalization of the popular xUnit
-setup-style methods.  A resource is created by a ``@pytest.mark.factory`` 
-marked function and its name is the name of the function.  A resource
-is injected into test or setup functions if they use the name 
-in their signature.  Therefore and also for historic reasons, resources are
-sometimes called "funcargs" because they ultimately appear as 
-function arguments.
-
-The pytest resource management and setup features are exposed through
-three decorators:
-
-* a `@pytest.mark.factory`_ marker to define resource factories,
-  their scoping and parametrization.
-
-* a `@pytest.mark.setup`_ marker to define setup functions and their 
-  scoping.
-
-* a `@pytest.mark.parametrize`_ marker for executing test functions
-  multiple times with different parameter sets
-
-Generally, resource factories and setup functions: 
-
-- can be defined in test modules, test classes, conftest.py files or
-  in plugins.
-
-- can themselves receive resources through their function arguments, 
-  simplifying the setup and use of interdependent resources.
-
-- can use the special `testcontext`_ object for access to the 
-  context in which the factory/setup is called and for registering 
-  finalizers.
-
-This document showcases these features through some basic examples.
-
-Note that pytest also comes with some :ref:`builtinresources` which
-you can use without defining them yourself.
-
-Background and terms
----------------------------
+pytest offers very flexible means for managing test resources and
+test parametrization.
 
 The pytest resource management mechanism is an example of `Dependency
-Injection`_ which helps to de-couple test code from resource
-instantiation code required for them to execute.  At test writing time
-you typically do not need to care for the details of how your required
-resources are constructed, if they live through a function, class,
-module or session scope or if the test will be called multiple times
-with different resource instances.
+Injection`_ because test and :ref:`setup functions <xunitsetup>` receive
+resources simply by stating them as an input argument.  Therefore and
+also for historic reasons, they are often called **funcargs**.  At test
+writing time you typically do not need to care for the details of how
+your required resources are constructed, if they live through a
+function, class, module or session scope or if the test will be called
+multiple times with different resource instances.
 
 To create a value with which to call a test function a resource factory 
 function is called which gets full access to the test context and can
 register finalizers which are to be run after the last test in that context
 finished. Resource factories can be implemented in same test class or 
-test module, in a per-directory ``conftest.py`` file or in an external plugin.  This allows total de-coupling of test and setup code.
+test module, in a per-directory ``conftest.py`` file or in an external
+plugin.  This allows **total de-coupling of test and setup code**, 
+lowering the cost of refactoring.
 
 A test function may be invoked multiple times in which case we
-speak of :ref:`parametrized testing <parametrizing-tests>`. This can be
-very useful if you want to test e.g. against different database backends
-or with multiple numerical arguments sets and want to reuse the same set
-of test functions.
+speak of parametrization.  You can parametrize resources or parametrize
+test function arguments directly or even implement your own parametrization
+scheme through a plugin hook.
 
+A resource has a **name** under which test and setup functions 
+can access it by listing it as an input argument.  Due to this and
+also for historic reasons, resources are often called **funcargs**.
+A resource is created by a factory which can be flagged with a **scope**
+to only create resources on a per-class/per-module/per-session basis
+instead of the default per-function scope.
+
+Concretely, there are three means of resource and parametrization management:
+
+* a `@pytest.mark.factory`_ marker to define resource factories,
+  their scoping and parametrization.   Factories can themselves 
+  receive resources through their function arguments, easing
+  the setup of interdependent resources.  They can also use
+  the special `testcontext`_ object to access details n which
+  the factory/setup is called and for registering finalizers.
+
+* a `@pytest.mark.parametrize`_ marker for executing test functions
+  multiple times with different parameter sets
+
+* a `pytest_generate_tests`_ plugin hook marker for implementing
+  your parametrization for a test function which may depend on 
+  command line options, class/module attributes etc.
+
+Finally, pytest comes with some :ref:`builtinresources` which
+you can use without defining them yourself. Moreover, third-party
+plugins offer their own resources so that after installation
+you can simply use them in your test and setup functions.
 
 .. _`@pytest.mark.factory`:
 
@@ -81,11 +73,12 @@ of test functions.
 
 The `@pytest.mark.factory`_ marker allows to
 
-* mark a function as a factory for resources used by test and setup functions 
-* define parametrization to run tests multiple times with different
+* mark a function as a factory for resources, useable by test and setup functions 
+* define parameters in order to run tests multiple times with different
   resource instances
-* set a scope which determines the level of caching. valid scopes
-  are ``session``, ``module``, ``class`` and ``function``.
+* set a scope which determines the level of caching, i.e. how often
+  the factory will be called. Valid scopes are ``session``, ``module``, 
+  ``class`` and ``function``.
 
 Here is a simple example of a factory creating a shared ``smtplib.SMTP``
 connection resource which test functions then may use across the whole
@@ -248,12 +241,12 @@ Note that pytest orders your test run by resource usage, minimizing
 the number of active resources at any given time.
 
 
-Accessing resources from a factory function
+Interdepdendent resources
 ----------------------------------------------------------
 
-You can directly use resources as funcargs in resource factories.  
-Extending the previous example we can instantiate an application
-object and stick the live ``smtp`` resource into it::
+You can not only use resources in test functions but also in resource factories
+themselves.  Extending the previous example we can instantiate an application
+object by sticking the ``smtp`` resource into it::
 
     # content of test_appsetup.py
    
@@ -289,114 +282,6 @@ run twice with two different ``App`` instances and respective smtp servers.
 There is no need for the ``app`` factory to be aware of the parametrization.
 
 
-.. _`new_setup`:
-.. _`@pytest.mark.setup`:
-
-``@pytest.mark.setup``: xUnit setup methods on steroids
------------------------------------------------------------------
-
-.. regendoc:wipe
-
-.. versionadded:: 2.3
-
-The ``@pytest.mark.setup`` marker allows 
-
-* to define setup-functions close to test code or in conftest.py files
-  or plugins.
-* to mark a function as a setup method; the function can itself
-  receive funcargs and will execute multiple times if the funcargs
-  are parametrized
-* to set a scope which influences when the setup function going to be
-  called.  valid scopes are ``session``, ``module``, ``class`` and ``function``.
-
-Here is a simple example.  First we define a global ``globdir`` resource::
-
-    # content of conftest.py
-    import pytest
-
-    @pytest.mark.factory(scope="module")
-    def globdir(testcontext, tmpdir):
-        def fin():
-            print "finalize", tmpdir
-        testcontext.addfinalizer(fin)
-        print "created resource", tmpdir
-        return tmpdir
-
-And then we write a test file containing a setup-marked function 
-taking this resource and setting it as a module global::
-
-    # content of test_module.py
-    import pytest
-
-    @pytest.mark.setup(scope="module")
-    def setresource(testcontext, globdir):
-        print "setupresource", globdir
-        testcontext.module.myresource = globdir
-
-    def test_1():
-        assert myresource
-        print "using myresource", myresource
-
-    def test_2():
-        assert myresource
-        print "using myresource", myresource
-
-Let's run this module::
-
-    $ py.test -qs
-    collecting ... collected 2 items
-    ..
-    2 passed in 0.26 seconds
-    created resource /home/hpk/tmp/pytest-4427/test_10
-    setupresource /home/hpk/tmp/pytest-4427/test_10
-    using myresource /home/hpk/tmp/pytest-4427/test_10
-    using myresource /home/hpk/tmp/pytest-4427/test_10
-    finalize /home/hpk/tmp/pytest-4427/test_10
-
-The two test functions in the module use the same global ``myresource``
-object because the ``setresource`` set it as a module attribute.
-
-The ``globdir`` factory can now become parametrized without any test
-or setup code needing to change::
-
-    # content of conftest.py
-    import pytest
-
-    @pytest.mark.factory(scope="module", params=["aaa", "bbb"])
-    def globdir(testcontext, tmpdir):
-        newtmp = tmpdir.join(testcontext.param)
-        def fin():
-            print "finalize", newtmp
-        testcontext.addfinalizer(fin)
-        print "created resource", newtmp
-        return newtmp
-
-Running the unchanged previous test files now runs four tests::
-
-    $ py.test -qs
-    collecting ... collected 4 items
-    ....
-    4 passed in 0.26 seconds
-    created resource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
-    setupresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
-    using myresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
-    using myresource /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
-    finalize /home/hpk/tmp/pytest-4428/test_1_aaa_0/aaa
-    created resource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
-    setupresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
-    using myresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
-    using myresource /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
-    finalize /home/hpk/tmp/pytest-4428/test_1_bbb_0/bbb
-
-Each parameter causes the creation of a respective resource and the
-unchanged test module uses it in its ``@setup`` decorated method.
-
-.. note::
-
-   Tests using a particular parametrized resource instance will
-   executed next to each other.  Any finalizers will be run before the 
-   next parametrized resource instance is being setup and tests
-   are rerun.
 
 Grouping tests by resource parameters
 ----------------------------------------------------------
@@ -540,7 +425,10 @@ As expected only one pair of input/output values fails the simple test function.
 Note that there are various ways how you can mark groups of functions,
 see :ref:`mark`.
 
-Generating parameters combinations, depending on command line
+
+.. _`pytest_generate_tests`:
+
+``pytest_generate_test``: implementing your own parametrization scheme
 ----------------------------------------------------------------------------
 
 .. regendoc:wipe
