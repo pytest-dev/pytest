@@ -907,12 +907,15 @@ class Function(FunctionMixin, pytest.Item):
 
 
 class FuncargRequest:
-    """ A request for function arguments from a test function.
+    """ (old-style) A request for function arguments from a test function.
 
         Note that there is an optional ``param`` attribute in case
         there was an invocation to metafunc.addcall(param=...).
         If no such call was done in a ``pytest_generate_tests``
-        hook, the attribute will not be present.
+        hook, the attribute will not be present.  Note that
+        as of pytest-2.3 you probably rather want to use the
+        testcontext object and mark your factory with a ``@pytest.factory``
+        marker.
     """
 
     def __init__(self, pyfuncitem):

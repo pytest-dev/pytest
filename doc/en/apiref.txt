@@ -11,6 +11,8 @@ py.test reference documentation
    customize.txt
    assert.txt
    funcargs.txt
+   funcarg_compare.txt
+   setup.txt
    xunit_setup.txt
    capture.txt
    monkeypatch.txt

@@ -1,5 +1,7 @@
 .. _xunitsetup:
 .. _setup:
+.. _`setup functions`:
+.. _`@pytest.setup`:
 
 ``@setup`` functions or: xunit on steroids
 ========================================================
@@ -18,19 +20,20 @@ it has finished.  Unlike :ref:`injected resources <resources>` setup
 functions work indirectly by causing global side effects or 
 setting test case attributes which test methods can then access.  
 
-pytest originally introduced in 2005 a fine-grained model of detecting
+pytest originally introduced in 2005 a scope-specific model of detecting
 setup and teardown functions on a per-module, class or function basis.
-The Python unittest module and nose have subsequently incorporated them.
-This model remains supported as :ref:`old-style xunit`.
+The Python unittest package and nose have subsequently incorporated them.
+This model remains supported by pytest as :ref:`old-style xunit`.
 
-With pytest-2.3 a new ``pytest.setup()`` decorator is introduced
-to mark functions as setup functions which:
+Moreover, pytest-2.3 introduces a new ``pytest.setup()`` decorator
+to mark functions as setup functions which allow to implement everything
+you can do with the old-style and much more.  Specifically setup functions:
 
-- can receive resources through funcargs,
+- can receive :ref:`resources through funcargs <resources>`,
 - fully interoperate with parametrized resources,
-- can be defined in a plugin or conftest.py file and get called 
+- can be defined in a plugin or :ref:`conftest.py` file and get called 
   on a per-session, per-module, per-class or per-function basis,
-- can access the full :ref:`testcontext` for which the setup is called,
+- can access the :ref:`testcontext <testcontext>` for which the setup is called,
 - can precisely control teardown by registering one or multiple 
   teardown functions as soon as they have performed some actions 
   which need undoing, eliminating the no need for a separate 
@@ -75,7 +78,7 @@ Our ``mydir`` setup function is executed on a per-function basis,
 the default scope used by the ``pytest.setup`` decorator.
 It accesses the ``tmpdir`` resource which provides a new empty
 directory path object.  The ``test_function2`` here checks that 
-it executes with a fresh directory and specifically
+it executes with a fresh directory and that it
 does not see the previously created ``anotherfile``.  We can
 thus expect two passing tests::
 
@@ -114,6 +117,11 @@ empty directory ahead of running a test.
 
 test modules accessing a global resource
 -------------------------------------------------------
+
+.. note::
+
+    Relying on `global state is considered bad programming practise <http://en.wikipedia.org/wiki/Global_variable>`_ but when you work with an application
+    that relies on it you often have no choice.
 
 If you want test modules to access a global resource,
 you can stick the resource to the module globals in

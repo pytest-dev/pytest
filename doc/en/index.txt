@@ -27,7 +27,7 @@ Welcome to pytest!
 
  - (new in 2.3) :ref:`easy test resource management, scoping and
    parametrization <resources>`
- - (new in 2.3) :ref:`xunitsetup`.
+ - (new in 2.3) :ref:`setup functions`.
  - (new in 2.2) :ref:`durations`
  - (much improved in 2.2) :ref:`marking and test selection <mark>`
  - (improved in 2.2) :ref:`parametrized test functions <parametrized test functions>`

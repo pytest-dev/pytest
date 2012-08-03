@@ -4,10 +4,13 @@
 Old-style xunit-style setup
 ========================================
 
-This section describes the old way how you can implement setup and
-teardown on a per-module/class/function basis.  It remains fully
-supported but it is recommended to rather use :ref:`@setup functions <setup>` 
-or :ref:`injected resources <resources>` for implementing your setup needs.
+.. note:: 
+
+    This section describes the old way how you can implement setup and
+    teardown on a per-module/class/function basis.  It remains fully
+    supported but it is recommended to rather use :ref:`@setup functions
+    <setup>` or :ref:`injected resources <resources>` for implementing your
+    setup needs.
 
 Module level setup/teardown
 --------------------------------------
