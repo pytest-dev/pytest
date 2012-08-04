@@ -1,6 +1,9 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix junitxml=path construction so that if tests change the
+  current working directory and the path is a relative path
+  it is constructed correctly from the original current working dir.
 - fix "python setup.py test" example to cause a proper "errno" return
 - fix issue165 - fix broken doc links and mention stackoverflow for FAQ
 - fix issue139 - merge FuncargRequest and Item API such that 

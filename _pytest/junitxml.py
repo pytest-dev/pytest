@@ -89,7 +89,7 @@ def mangle_testnames(names):
 class LogXML(object):
     def __init__(self, logfile, prefix):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
-        self.logfile = os.path.normpath(logfile)
+        self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.tests = []
         self.passed = self.skipped = 0

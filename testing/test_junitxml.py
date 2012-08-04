@@ -392,3 +392,15 @@ def test_logxml_path_expansion():
 
     xml_var = LogXML('$HOME/test.xml', None)
     assert xml_var.logfile == home_var
+
+def test_logxml_changingdir(testdir):
+    testdir.makepyfile("""
+        def test_func():
+            import os
+            os.chdir("a")
+    """)
+    testdir.tmpdir.mkdir("a")
+    result = testdir.runpytest("--junitxml=a/x.xml")
+    assert result.ret == 0
+    assert testdir.tmpdir.join("a/x.xml").check()
+

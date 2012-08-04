@@ -31,7 +31,7 @@ you can do with the old-style and much more.  Specifically setup functions:
 
 - can receive :ref:`resources through funcargs <resources>`,
 - fully interoperate with parametrized resources,
-- can be defined in a plugin or :ref:`conftest.py` file and get called 
+- can be defined in a plugin or :ref:`conftest.py <conftest.py>` file and get called 
   on a per-session, per-module, per-class or per-function basis,
 - can access the :ref:`testcontext <testcontext>` for which the setup is called,
 - can precisely control teardown by registering one or multiple 
