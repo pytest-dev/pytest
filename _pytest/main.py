@@ -285,6 +285,7 @@ class Node(object):
         fm = self.session.funcargmanager
         if excinfo.errisinstance(fm.FuncargLookupError):
             function = excinfo.value.function
+            factblines = excinfo.value.factblines
             if function is not None:
                 fspath, lineno = getfslineno(function)
                 lines, _ = inspect.getsourcelines(function)
@@ -292,7 +293,7 @@ class Node(object):
                     if line.strip().startswith('def'):
                         return fm.FuncargLookupErrorRepr(fspath,
                                     lineno, lines[:i+1],
-                                    str(excinfo.value.msg))
+                                    str(excinfo.value.msg), factblines)
         if self.config.option.fulltrace:
             style="long"
         else:

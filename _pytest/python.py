@@ -935,17 +935,23 @@ class FuncargRequest:
     def _getfaclist(self, argname):
         facdeflist = self._name2factory.get(argname, None)
         if facdeflist is None:
+            if self._factorystack:
+                function = self._factorystack[-1].func
+                getfactb = lambda: self._factorystack[:-1]
+            else:
+                function = self.function
+                getfactb = None
             facdeflist = self.funcargmanager.getfactorylist(
-                            argname, self.parentid, self.function)
+                            argname, self.parentid, function, getfactb)
             self._name2factory[argname] = facdeflist
         elif not facdeflist:
             self.funcargmanager._raiselookupfailed(argname, self.function,
                                                    self.parentid)
         return facdeflist
 
-    def raiseerror(self, msg):
-        """ raise a FuncargLookupError with the given message. """
-        raise self.funcargmanager.FuncargLookupError(self.function, msg)
+    #def raiseerror(self, msg):
+    #    """ raise a FuncargLookupError with the given message. """
+    #    raise self.funcargmanager.FuncargLookupError(self.function, msg)
 
     @property
     def function(self):
@@ -1102,14 +1108,7 @@ class FuncargRequest:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
                 # try to report something helpful
-                lines = []
-                for factorydef in self._factorystack:
-                    factory = factorydef.func
-                    fs, lineno = getfslineno(factory)
-                    p = self._pyfuncitem.session.fspath.bestrelpath(fs)
-                    args = inspect.formatargspec(*inspect.getargspec(factory))
-                    lines.append("%s:%d\n  def %s%s" %(
-                        p, lineno, factory.__name__, args))
+                lines = self._factorytraceback()
                 raise ScopeMismatchError("You tried to access the %r scoped "
                     "funcarg %r with a %r scoped request object, "
                     "involved factories\n%s" %(
@@ -1128,6 +1127,18 @@ class FuncargRequest:
         mp.undo()
         self._funcargs[argname] = val
         return val
+
+    def _factorytraceback(self):
+        lines = []
+        for factorydef in self._factorystack:
+            factory = factorydef.func
+            fs, lineno = getfslineno(factory)
+            p = self._pyfuncitem.session.fspath.bestrelpath(fs)
+            args = inspect.formatargspec(*inspect.getargspec(factory))
+            lines.append("%s:%d:  def %s%s" %(
+                p, lineno, factory.__name__, args))
+        return lines
+
 
     def _getscopeitem(self, scope):
         if scope == "function":
@@ -1178,19 +1189,23 @@ def slice_kwargs(names, kwargs):
 
 class FuncargLookupError(LookupError):
     """ could not find a factory. """
-    def __init__(self, function, msg):
+    def __init__(self, function, msg, factblines=None):
         self.function = function
         self.msg = msg
+        self.factblines = factblines
 
 class FuncargLookupErrorRepr(TerminalRepr):
-    def __init__(self, filename, firstlineno, deflines, errorstring):
+    def __init__(self, filename, firstlineno, deflines, errorstring, factblines):
         self.deflines = deflines
         self.errorstring = errorstring
         self.filename = filename
         self.firstlineno = firstlineno
+        self.factblines = factblines
 
     def toterminal(self, tw):
         tw.line()
+        for line in self.factblines or []:
+            tw.line(line)
         for line in self.deflines:
             tw.line("    " + line.strip())
         for line in self.errorstring.split("\n"):
@@ -1326,12 +1341,12 @@ class FuncargManager:
         return l, allargnames
 
 
-    def getfactorylist(self, argname, nodeid, function, raising=True):
+    def getfactorylist(self, argname, nodeid, function, getfactb=None, raising=True):
         try:
             factorydeflist = self.arg2facspec[argname]
         except KeyError:
             if raising:
-                self._raiselookupfailed(argname, function, nodeid)
+                self._raiselookupfailed(argname, function, nodeid, getfactb)
         else:
             return self._matchfactories(factorydeflist, nodeid)
 
@@ -1343,7 +1358,7 @@ class FuncargManager:
                 l.append(factorydef)
         return l
 
-    def _raiselookupfailed(self, argname, function, nodeid):
+    def _raiselookupfailed(self, argname, function, nodeid, getfactb=None):
         available = []
         for name, facdef in self.arg2facspec.items():
             faclist = self._matchfactories(facdef, nodeid)
@@ -1352,7 +1367,8 @@ class FuncargManager:
         msg = "LookupError: no factory found for argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        raise FuncargLookupError(function, msg)
+        lines = getfactb and getfactb() or []
+        raise FuncargLookupError(function, msg, lines)
 
     def ensure_setupcalls(self, request):
         setuplist, allnames = self.getsetuplist(request._pyfuncitem.nodeid)

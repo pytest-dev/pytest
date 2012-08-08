@@ -2319,7 +2319,7 @@ class TestTestContextScopeAccess:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_resource(self, testdir, scope, ok, error):
+    def test_funcarg(self, testdir, scope, ok, error):
         testdir.makepyfile("""
             import pytest
             @pytest.factory(scope=%r)
@@ -2336,6 +2336,23 @@ class TestTestContextScopeAccess:
         """ %(scope, ok.split(), error.split()))
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
+
+
+def test_illdefined_factory(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.factory()
+        def gen(request):
+            return 1
+        def test_something(gen):
+            pass
+    """)
+    result = testdir.runpytest()
+    assert result.ret != 0
+    result.stdout.fnmatch_lines([
+        "*def gen(request):*",
+        "*no factory*request*",
+    ])
 
 class TestTestContextVarious:
     def test_newstyle_no_request(self, testdir):
