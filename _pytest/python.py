@@ -949,9 +949,9 @@ class FuncargRequest:
                                                    self.parentid)
         return facdeflist
 
-    #def raiseerror(self, msg):
-    #    """ raise a FuncargLookupError with the given message. """
-    #    raise self.funcargmanager.FuncargLookupError(self.function, msg)
+    def raiseerror(self, msg):
+        """ raise a FuncargLookupError with the given message. """
+        raise self.funcargmanager.FuncargLookupError(self.function, msg)
 
     @property
     def function(self):
@@ -1375,22 +1375,26 @@ class FuncargManager:
         for setupcall in setuplist:
             if setupcall.active:
                 continue
-            testcontext = TestContextSetup(request, setupcall)
-            kwargs = {}
-            for name in setupcall.funcargnames:
-                try:
-                    kwargs[name] = request.getfuncargvalue(name)
-                except FuncargLookupError:
-                    if name == "testcontext":
-                        kwargs[name] = testcontext
-                    else:
-                        raise
-            scope = setupcall.scope or "function"
-            scol = setupcall.scopeitem = request._getscopeitem(scope)
-            self.session._setupstate.addfinalizer(setupcall.finish, scol)
-            for argname in setupcall.funcargnames: # XXX all deps?
-                self.addargfinalizer(setupcall.finish, argname)
-            setupcall.execute(kwargs)
+            request._factorystack.append(setupcall)
+            try:
+                testcontext = TestContextSetup(request, setupcall)
+                kwargs = {}
+                for name in setupcall.funcargnames:
+                    try:
+                        kwargs[name] = request.getfuncargvalue(name)
+                    except FuncargLookupError:
+                        if name == "testcontext":
+                            kwargs[name] = testcontext
+                        else:
+                            raise
+                scope = setupcall.scope or "function"
+                scol = setupcall.scopeitem = request._getscopeitem(scope)
+                self.session._setupstate.addfinalizer(setupcall.finish, scol)
+                for argname in setupcall.funcargnames: # XXX all deps?
+                    self.addargfinalizer(setupcall.finish, argname)
+                setupcall.execute(kwargs)
+            finally:
+                request._factorystack.remove(setupcall)
 
     def addargfinalizer(self, finalizer, argname):
         l = self._arg2finish.setdefault(argname, [])

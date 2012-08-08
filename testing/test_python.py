@@ -2338,21 +2338,41 @@ class TestTestContextScopeAccess:
         reprec.assertoutcome(passed=1)
 
 
-def test_illdefined_factory(testdir):
-    testdir.makepyfile("""
-        import pytest
-        @pytest.factory()
-        def gen(request):
-            return 1
-        def test_something(gen):
-            pass
-    """)
-    result = testdir.runpytest()
-    assert result.ret != 0
-    result.stdout.fnmatch_lines([
-        "*def gen(request):*",
-        "*no factory*request*",
-    ])
+class TestErrors:
+    def test_subfactory_missing_funcarg(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.factory()
+            def gen(request):
+                return 1
+            def test_something(gen):
+                pass
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*def gen(request):*",
+            "*no factory*request*",
+            "*1 error*",
+        ])
+
+    def test_setupfunc_missing_funcarg(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.setup()
+            def gen(request):
+                return 1
+            def test_something():
+                pass
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        result.stdout.fnmatch_lines([
+            "*def gen(request):*",
+            "*no factory*request*",
+            "*1 error*",
+        ])
+
 
 class TestTestContextVarious:
     def test_newstyle_no_request(self, testdir):
