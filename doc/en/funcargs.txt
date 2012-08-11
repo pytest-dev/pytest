@@ -438,8 +438,8 @@ resource instance is created and its tests are run.  Among other things,
 this eases testing of applications which create and use global state.
 
 The following example uses two parametrized funcargs, one of which is 
-scoped on a per-module basis, and all the functions perform ``print`` call 
-it to document the flow of calls::
+scoped on a per-module basis, and all the functions perform ``print`` call s
+to show the flow of calls::
 
     # content of test_module.py
     import pytest
@@ -508,8 +508,8 @@ resource was executed before the ``mod2`` resource was setup.
 
 The ``testcontext`` object may be used by `@pytest.factory`_ or
 :ref:`@pytest.setup <setup>` marked functions.  It contains
-information relating to the test context within which the function
-executes. Moreover, you can call
+information relating to the test context within which the marked
+function executes. Moreover, you can call
 ``testcontext.addfinalizer(myfinalizer)`` in order to trigger a call to
 ``myfinalizer`` after the last test in the test context has executed.
 If passed to a parametrized factory ``testcontext.param`` will contain a
@@ -693,7 +693,7 @@ Compatibility notes
 ============================================================
 
 **Funcargs** were originally introduced to pytest-2.0.  In pytest-2.3 
-the mechanism were extended and refined.  Here are some related notes:
+the mechanism was extended and refined:
 
 * previously funcarg factories were specified with a special 
   ``pytest_funcarg__NAME`` prefix instead of using the 
