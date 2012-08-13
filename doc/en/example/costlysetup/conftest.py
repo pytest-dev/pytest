@@ -1,10 +1,11 @@
 
-def pytest_funcarg__setup(request):
-    return request.cached_setup(
-        setup=lambda: CostlySetup(),
-        teardown=lambda costlysetup: costlysetup.finalize(),
-        scope="session",
-    )
+import pytest
+
+@pytest.factory("session")
+def setup(testcontext):
+    setup = CostlySetup()
+    testcontext.addfinalizer(setup.finalize)
+    return setup
 
 class CostlySetup:
     def __init__(self):

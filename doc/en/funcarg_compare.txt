@@ -88,7 +88,7 @@ parametrization, i.e. calling a test multiple times with different value
 sets.  pytest-2.3 introduces a decorator for use on the factory itself::
 
     @pytest.factory(params=["mysql", "pg"])
-    def pytest_funcarg__db(testcontext):
+    def db(testcontext):
         ... # use testcontext.param
 
 Here the factory will be invoked twice (with the respective "mysql" 
@@ -105,7 +105,7 @@ functions/classes were parametrized via
 Of course it's perfectly fine to combine parametrization and scoping::
 
     @pytest.factory(scope="session", params=["mysql", "pg"])
-    def pytest_funcarg__db(testcontext):
+    def db(testcontext):
         if testcontext.param == "mysql":
             db = MySQL()
         elif testcontext.param == "pg":
@@ -137,7 +137,9 @@ aka::
     def pytest_funcarg__db(request):
         ...
 
-It is recommended to use the resource decorator, however.
+
+But it is then not possible to define scoping and parametrization.
+It is thus recommended to use the factory decorator.
 
 
 solving per-session setup / the new @setup marker
