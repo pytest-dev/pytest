@@ -1874,6 +1874,28 @@ class TestSetupManagement:
         l = config._conftest.getconftestmodules(p)[0].l
         assert l == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
+    def test_setup_scope_ordering(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.setup(scope="function")
+            def fappend2():
+                l.append(2)
+            @pytest.setup(scope="class")
+            def classappend3():
+                l.append(3)
+            @pytest.setup(scope="module")
+            def mappend():
+                l.append(1)
+
+            class TestHallo:
+                def test_method(self):
+                    assert l == [1,3,2]
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+
 class TestFuncargMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""
@@ -2404,3 +2426,33 @@ class TestTestContextVarious:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+def test_setupdecorator_and_xunit(testdir):
+    testdir.makepyfile("""
+        import pytest
+        l = []
+        @pytest.setup(scope='module')
+        def setup_module():
+            l.append("module")
+        @pytest.setup()
+        def setup_function():
+            l.append("function")
+
+        def test_func():
+            pass
+
+        class TestClass:
+            @pytest.setup(scope="class")
+            def setup_class(self):
+                l.append("class")
+            @pytest.setup()
+            def setup_method(self):
+                l.append("method")
+            def test_method(self):
+                pass
+        def test_all():
+            assert l == ["module", "function", "class",
+                         "function", "method", "function"]
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=3)

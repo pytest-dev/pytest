@@ -363,24 +363,26 @@ class Module(pytest.File, PyCollector):
         return mod
 
     def setup(self):
-        if hasattr(self.obj, 'setup_module'):
+        setup_module = xunitsetup(self.obj, "setup_module")
+        if setup_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a pytest style one
             # so we pass the current module object
-            if inspect.getargspec(self.obj.setup_module)[0]:
-                self.obj.setup_module(self.obj)
+            if inspect.getargspec(setup_module)[0]:
+                setup_module(self.obj)
             else:
-                self.obj.setup_module()
+                setup_module()
 
     def teardown(self):
-        if hasattr(self.obj, 'teardown_module'):
+        teardown_module = xunitsetup(self.obj, 'teardown_module')
+        if teardown_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a py.test style one
             # so we pass the current module object
-            if inspect.getargspec(self.obj.teardown_module)[0]:
-                self.obj.teardown_module(self.obj)
+            if inspect.getargspec(teardown_module)[0]:
+                teardown_module(self.obj)
             else:
-                self.obj.teardown_module()
+                teardown_module()
 
 class Class(PyCollector):
     """ Collector for test methods. """
@@ -388,14 +390,14 @@ class Class(PyCollector):
         return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):
-        setup_class = getattr(self.obj, 'setup_class', None)
+        setup_class = xunitsetup(self.obj, 'setup_class')
         if setup_class is not None:
             setup_class = getattr(setup_class, 'im_func', setup_class)
             setup_class = getattr(setup_class, '__func__', setup_class)
             setup_class(self.obj)
 
     def teardown(self):
-        teardown_class = getattr(self.obj, 'teardown_class', None)
+        teardown_class = xunitsetup(self.obj, 'teardown_class')
         if teardown_class is not None:
             teardown_class = getattr(teardown_class, 'im_func', teardown_class)
             teardown_class = getattr(teardown_class, '__func__', teardown_class)
@@ -431,7 +433,7 @@ class FunctionMixin(PyobjMixin):
             name = 'setup_method'
         else:
             name = 'setup_function'
-        setup_func_or_method = getattr(obj, name, None)
+        setup_func_or_method = xunitsetup(obj, name)
         if setup_func_or_method is not None:
             setup_func_or_method(self.obj)
 
@@ -442,7 +444,7 @@ class FunctionMixin(PyobjMixin):
         else:
             name = 'teardown_function'
         obj = self.parent.obj
-        teardown_func_or_meth = getattr(obj, name, None)
+        teardown_func_or_meth = xunitsetup(obj, name)
         if teardown_func_or_meth is not None:
             teardown_func_or_meth(self.obj)
 
@@ -1338,6 +1340,7 @@ class FuncargManager:
             if nodeid.startswith(setupcall.baseid):
                 l.append(setupcall)
                 allargnames.update(setupcall.funcargnames)
+        l.sort(key=lambda x: x.scopenum)
         return l, allargnames
 
 
@@ -1479,6 +1482,7 @@ class SetupCall:
         self.func = func
         self.funcargnames = getfuncargnames(func)
         self.scope = scope
+        self.scopenum = scopes.index(scope)
         self.active = False
         self._finalizer = []
 
@@ -1595,3 +1599,9 @@ def getfuncargparams(item, ignore, scopenum, cache):
     #            argparams.append(key)
     return argparams
 
+
+def xunitsetup(obj, name):
+    meth = getattr(obj, name, None)
+    if meth is not None:
+        if not hasattr(meth, "_pytestsetup"):
+            return meth

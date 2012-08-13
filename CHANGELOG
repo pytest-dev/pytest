@@ -1,6 +1,8 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix issue172 duplicate call of pytest.setup-decoratored setup_module
+  functions
 - fix junitxml=path construction so that if tests change the
   current working directory and the path is a relative path
   it is constructed correctly from the original current working dir.
