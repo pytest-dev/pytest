@@ -31,7 +31,7 @@ py.test を使っているプロジェクトを紹介します (:ref:`contact` �
     * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
     * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
     * `py-s3fuse <http://code.google.com/p/py-s3fuse/>`_ Amazon S3 FUSE based filesystem
-    * `waskr <http://pacha.cafepais.com/>`_ WSGI Stats Middleware
+    * `waskr <http://code.google.com/p/waskr/>`_ WSGI Stats Middleware
     * `guachi <http://code.google.com/p/guachi/>`_ global persistent configs for Python modules
     * `Circuits <http://pypi.python.org/pypi/circuits>`_ lightweight Event Driven Framework
     * `pygtk-helpers <http://bitbucket.org/aafshar/pygtkhelpers-main/>`_ easy interaction with PyGTK
