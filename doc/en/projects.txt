@@ -38,6 +38,17 @@ Here are some examples of projects using py.test (please send notes via :ref:`co
 * `bu <http://packages.python.org/bu/>`_ a microscopic build system
 * `katcp <https://bitbucket.org/hodgestar/katcp>`_ Telescope communication protocol over Twisted
 * `kss plugin timer <http://pypi.python.org/pypi/kss.plugin.timer>`_
+* `pyudev <http://pyudev.readthedocs.org/en/latest/tests/plugins.html>`_ a pure Python binding to the Linux library libudev
+* `pytest-localserver <https://bitbucket.org/basti/pytest-localserver/>`_ a plugin for pytest that provides a httpserver and smtpserver
+* `pytest-monkeyplus <http://pypi.python.org/pypi/pytest-monkeyplus/>`_ a plugin that extends monkeypatch
+
+These projects help integrate py.test into other Python frameworks:
+
+* `pytest-django <http://pypi.python.org/pypi/pytest-django/>`_ for Django
+* `zope.pytest <http://packages.python.org/zope.pytest/>`_ for Zope and Grok
+* `pytest__gae <http://pypi.python.org/pypi/pytest_gae/0.2.1>`_ for Google App Engine
+* There is `some work <https://github.com/Pylons/Kotti/pull/101>`_ underway for Kotti, a CMS built in Pyramid/Pylons
+
 
 Some organisations using py.test
 -----------------------------------
