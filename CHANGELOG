@@ -42,6 +42,8 @@ Changes between 2.2.4 and 2.3.0.dev
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
 
+- fix issue 178: xml binary escapes are now wrapped in py.xml.raw
+
 - reporting refinements:
 
   - pytest_report_header now receives a "startdir" so that

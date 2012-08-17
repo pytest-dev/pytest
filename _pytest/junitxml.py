@@ -57,7 +57,7 @@ def bin_xml_escape(arg):
             return unicode('#x%02X') % i
         else:
             return unicode('#x%04X') % i
-    return illegal_xml_re.sub(repl, py.xml.escape(arg))
+    return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")

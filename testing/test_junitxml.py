@@ -159,24 +159,27 @@ class TestPython:
 
     def test_failure_escape(self, testdir):
         testdir.makepyfile("""
-            def pytest_generate_tests(metafunc):
-                metafunc.addcall(id="<", funcargs=dict(arg1=42))
-                metafunc.addcall(id="&", funcargs=dict(arg1=44))
+            import pytest
+            @pytest.mark.parametrize('arg1', "<&'", ids="<&'")
             def test_func(arg1):
+                print arg1
                 assert 0
         """)
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
-        assert_attr(node, failures=2, tests=2)
-        tnode = node.getElementsByTagName("testcase")[0]
-        assert_attr(tnode,
-            classname="test_failure_escape",
-            name="test_func[<]")
-        tnode = node.getElementsByTagName("testcase")[1]
-        assert_attr(tnode,
-            classname="test_failure_escape",
-            name="test_func[&]")
+        assert_attr(node, failures=3, tests=3)
+
+        for index, char in enumerate("<&'"):
+        
+            tnode = node.getElementsByTagName("testcase")[index]
+            assert_attr(tnode,
+                classname="test_failure_escape",
+                name="test_func[%s]" % char)
+            sysout = tnode.getElementsByTagName('system-out')[0]
+            text = sysout.childNodes[0].wholeText
+            assert text == '%s\n' % char
+
 
     def test_junit_prefixing(self, testdir):
         testdir.makepyfile("""
