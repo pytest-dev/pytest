@@ -1761,6 +1761,23 @@ class TestSetupDiscovery:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_callables_nocode(self, testdir):
+        """
+        a imported mock.call would break setup/factory discovery
+        due to it being callable and __code__ not being a code object
+        """
+        testdir.makepyfile("""
+           class _call(tuple):
+               def __call__(self, *k, **kw):
+                   pass
+               def __getattr__(self, k):
+                   return self
+
+           call = _call()
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(failed=0, passed=0)
+
 
 class TestSetupManagement:
     def test_funcarg_and_setup(self, testdir):

@@ -44,6 +44,9 @@ Changes between 2.2.4 and 2.3.0.dev
 
 - fix issue 178: xml binary escapes are now wrapped in py.xml.raw
 
+- factory discovery no longer fails with magic global callables
+  that provide no sane __code__ object (mock.call for example)
+
 - reporting refinements:
 
   - pytest_report_header now receives a "startdir" so that
