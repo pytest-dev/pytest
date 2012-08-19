@@ -44,6 +44,10 @@ Changes between 2.2.4 and 2.3.0.dev
 
 - fix issue 178: xml binary escapes are now wrapped in py.xml.raw
 
+- fix issue 176: correctly catch the builtin AssertionError
+  even when we replaced AssertionError with a subclass on the
+  python level
+
 - factory discovery no longer fails with magic global callables
   that provide no sane __code__ object (mock.call for example)
 

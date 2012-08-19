@@ -1419,6 +1419,14 @@ class TestRaises:
         except pytest.raises.Exception:
             pass
 
+    def test_raises_flip_builtin_AssertionError(self):
+        # we replace AssertionError on python level
+        # however c code might still raise the builtin one
+        import exceptions
+        pytest.raises(AssertionError,"""
+            raise exceptions.AssertionError
+        """)
+
     @pytest.mark.skipif('sys.version < "2.5"')
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile("""
