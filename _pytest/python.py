@@ -1308,16 +1308,14 @@ class FuncargManager:
             obj = getattr(holderobj, name)
             if not callable(obj):
                 continue
-            # to avoid breaking on magic global callables
-            # we explicitly check if we get a sane code object
-            # else having mock.call in the globals fails for example
-            code = py.code.getrawcode(obj)
-            if not inspect.iscode(code):
-                continue
             # resource factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
             marker = getattr(obj, "_pytestfactory", None)
             if marker is not None:
+                if not isinstance(marker, FactoryMarker):
+                    # magic globals  with __getattr__
+                    # give us something thats wrong for that case
+                    continue
                 assert not name.startswith(self._argprefix)
                 argname = name
                 scope = marker.scope
