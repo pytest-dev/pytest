@@ -35,6 +35,8 @@ Changes between 2.2.4 and 2.3.0.dev
 
 - fix issue128: show captured output when capsys/capfd are used
 
+- fix issue179: propperly show the dependency chain of factories
+
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
 

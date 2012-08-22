@@ -1211,8 +1211,14 @@ class FuncargLookupErrorRepr(TerminalRepr):
 
     def toterminal(self, tw):
         tw.line()
-        for line in self.factblines or []:
-            tw.line(line)
+        if self.factblines:
+            tw.line('    dependency of:')
+            for factorydef in self.factblines:
+                tw.line('        %s in %s' % (
+                    factorydef.argname,
+                    factorydef.baseid,
+                ))
+            tw.line()
         for line in self.deflines:
             tw.line("    " + line.strip())
         for line in self.errorstring.split("\n"):

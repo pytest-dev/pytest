@@ -1664,8 +1664,7 @@ class TestFuncargFactory:
             "*2 passed*"
         ])
 
-    @pytest.mark.xfail(reason="factorydef passed to tw.line")
-    def test_factory_uses_unknown_funcarg_error(self, testdir):
+    def test_factory_uses_unknown_funcarg_as_dependency_error(self, testdir):
         testdir.makepyfile("""
             import pytest
 
@@ -1682,7 +1681,10 @@ class TestFuncargFactory:
             """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            "*LookupError: no factory found for argument 'missing'"
+            "*dependency of:*",
+            "*call_fail*",
+            "*def fail(*",
+            "*LookupError: no factory found for argument 'missing'",
         ])
 
 
