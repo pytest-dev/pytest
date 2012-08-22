@@ -1668,12 +1668,16 @@ class TestFuncargFactory:
     def test_factory_uses_unknown_funcarg_error(self, testdir):
         testdir.makepyfile("""
             import pytest
-            
-            @pytest.factory(scope='session')
-            def arg1(missing):
+
+            @pytest.factory()
+            def fail(missing):
                 return
 
-            def test_missing(arg1):
+            @pytest.factory()
+            def call_fail(fail):
+                return
+
+            def test_missing(call_fail):
                 pass
             """)
         result = testdir.runpytest()
