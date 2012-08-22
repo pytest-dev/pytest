@@ -1664,6 +1664,24 @@ class TestFuncargFactory:
             "*2 passed*"
         ])
 
+    @pytest.mark.xfail(reason="factorydef passed to tw.line")
+    def test_factory_uses_unknown_funcarg_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            
+            @pytest.factory(scope='session')
+            def arg1(missing):
+                return
+
+            def test_missing(arg1):
+                pass
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*LookupError: no factory found for argument 'missing'"
+        ])
+
+
 
 class TestResourceIntegrationFunctional:
     def test_parametrize_with_ids(self, testdir):
