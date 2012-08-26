@@ -12,7 +12,11 @@ Tutorial examples and blog postings
 
 Basic usage and funcargs:
 
+- `pycon australia 2012 pytest talk from Brianna Laugher
+  <http://2012.pycon-au.org/schedule/52/view_talk?day=sunday>`_ (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
+- `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_ 
 - `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
+
 
 Function arguments:
 
