@@ -1422,9 +1422,9 @@ class TestRaises:
     def test_raises_flip_builtin_AssertionError(self):
         # we replace AssertionError on python level
         # however c code might still raise the builtin one
-        import exceptions
+        from _pytest.assertion.util import BuiltinAssertionError
         pytest.raises(AssertionError,"""
-            raise exceptions.AssertionError
+            raise BuiltinAssertionError
         """)
 
     @pytest.mark.skipif('sys.version < "2.5"')

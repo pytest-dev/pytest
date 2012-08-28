@@ -781,7 +781,7 @@ def raises(ExpectedException, *args, **kwargs):
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
         # see https://bitbucket.org/hpk42/pytest/issue/176/pytestraises
-        from exceptions import AssertionError as ExpectedException
+        from _pytest.assertion.util import BuiltinAssertionError as ExpectedException
 
     if not args:
         return RaisesContext(ExpectedException)
