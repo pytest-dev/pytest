@@ -162,7 +162,7 @@ class TestPython:
             import pytest
             @pytest.mark.parametrize('arg1', "<&'", ids="<&'")
             def test_func(arg1):
-                print arg1
+                print(arg1)
                 assert 0
         """)
         result, dom = runandparse(testdir)

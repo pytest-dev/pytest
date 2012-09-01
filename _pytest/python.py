@@ -781,7 +781,7 @@ def raises(ExpectedException, *args, **kwargs):
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
         # see https://bitbucket.org/hpk42/pytest/issue/176/pytestraises
-        from exceptions import AssertionError as ExpectedException
+        from _pytest.assertion.util import BuiltinAssertionError as ExpectedException
 
     if not args:
         return RaisesContext(ExpectedException)
@@ -1211,8 +1211,14 @@ class FuncargLookupErrorRepr(TerminalRepr):
 
     def toterminal(self, tw):
         tw.line()
-        for line in self.factblines or []:
-            tw.line(line)
+        if self.factblines:
+            tw.line('    dependency of:')
+            for factorydef in self.factblines:
+                tw.line('        %s in %s' % (
+                    factorydef.argname,
+                    factorydef.baseid,
+                ))
+            tw.line()
         for line in self.deflines:
             tw.line("    " + line.strip())
         for line in self.errorstring.split("\n"):
@@ -1308,16 +1314,14 @@ class FuncargManager:
             obj = getattr(holderobj, name)
             if not callable(obj):
                 continue
-            # to avoid breaking on magic global callables
-            # we explicitly check if we get a sane code object
-            # else having mock.call in the globals fails for example
-            code = py.code.getrawcode(obj)
-            if not inspect.iscode(code):
-                continue
             # resource factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
             marker = getattr(obj, "_pytestfactory", None)
             if marker is not None:
+                if not isinstance(marker, FactoryMarker):
+                    # magic globals  with __getattr__
+                    # give us something thats wrong for that case
+                    continue
                 assert not name.startswith(self._argprefix)
                 argname = name
                 scope = marker.scope

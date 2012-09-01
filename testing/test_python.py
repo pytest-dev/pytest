@@ -1422,9 +1422,9 @@ class TestRaises:
     def test_raises_flip_builtin_AssertionError(self):
         # we replace AssertionError on python level
         # however c code might still raise the builtin one
-        import exceptions
+        from _pytest.assertion.util import BuiltinAssertionError
         pytest.raises(AssertionError,"""
-            raise exceptions.AssertionError
+            raise BuiltinAssertionError
         """)
 
     @pytest.mark.skipif('sys.version < "2.5"')
@@ -1663,6 +1663,30 @@ class TestFuncargFactory:
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
+
+    def test_factory_uses_unknown_funcarg_as_dependency_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.factory()
+            def fail(missing):
+                return
+
+            @pytest.factory()
+            def call_fail(fail):
+                return
+
+            def test_missing(call_fail):
+                pass
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*dependency of:*",
+            "*call_fail*",
+            "*def fail(*",
+            "*LookupError: no factory found for argument 'missing'",
+        ])
+
 
 
 class TestResourceIntegrationFunctional:
