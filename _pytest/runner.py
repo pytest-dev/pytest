@@ -1,6 +1,7 @@
 """ basic collect and runtest protocol implementations """
 
-import py, sys, time
+import py, sys
+from time import time
 from py._code.code import TerminalRepr
 
 def pytest_namespace():
@@ -114,7 +115,7 @@ class CallInfo:
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
         self.when = when
-        self.start = time.time()
+        self.start = time()
         try:
             try:
                 self.result = func()
@@ -123,7 +124,7 @@ class CallInfo:
             except:
                 self.excinfo = py.code.ExceptionInfo()
         finally:
-            self.stop = time.time()
+            self.stop = time()
 
     def __repr__(self):
         if self.excinfo:

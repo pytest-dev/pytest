@@ -599,6 +599,35 @@ see :ref:`mark`.
 Basic ``pytest_generate_tests`` example
 ---------------------------------------------
 
+..  XXX
+
+    > line 598 "Basic ``pytest_generate_tests`` example" - I think this is
+    > not a very basic example! I think it is copied from parametrize.txt
+    > page, where it might make more sense. Here is what I would consider a
+    > basic example.
+    > 
+    > # code
+    > def isSquare(n):
+    >     n = n ** 0.5
+    >     return int(n) == n
+    > 
+    > # test file
+    > def pytest_generate_tests(metafunc):
+    >     squares = [1, 4, 9, 16, 25, 36, 49]
+    >     for n in range(1, 50):
+    >         expected = n in squares
+    >         if metafunc.function.__name__ == 'test_isSquare':
+    >             metafunc.addcall(id=n, funcargs=dict(n=n,
+    >             expected=expected))
+    > 
+    > 
+    > def test_isSquare(n, expected):
+    >     assert isSquare(n) == expected
+
+
+.. XXX
+    consider adding more examples, also mixed (factory-parametrized/test-function-parametrized, see mail from Brianna)
+
 The ``pytest_generate_tests`` hook is typically used if you want
 to go beyond what ``@pytest.mark.parametrize`` offers.  For example,
 let's say we want to execute a test with different computation

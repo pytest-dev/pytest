@@ -193,3 +193,16 @@ def test_chdir_double_undo(mp, tmpdir):
     tmpdir.chdir()
     mp.undo()
     assert os.getcwd() == tmpdir.strpath
+
+def test_issue185_time_breaks(testdir):
+    testdir.makepyfile("""
+        import time
+        def test_m(monkeypatch):
+            def f():
+                raise Exception
+            monkeypatch.setattr(time, "time", f)
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *1 passed*
+    """)
