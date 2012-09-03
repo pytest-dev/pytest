@@ -54,6 +54,8 @@ Changes between 2.2.4 and 2.3.0.dev
 - factory discovery no longer fails with magic global callables
   that provide no sane __code__ object (mock.call for example)
 
+- fix issue 182: testdir.inprocess_run now considers passed plugins
+
 - reporting refinements:
 
   - pytest_report_header now receives a "startdir" so that

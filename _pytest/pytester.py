@@ -355,7 +355,7 @@ class TmpTestdir:
         if not plugins:
             plugins = []
         plugins.append(Collect())
-        ret = self.pytestmain(list(args), plugins=[Collect()])
+        ret = self.pytestmain(list(args), plugins=plugins)
         reprec = rec[0]
         reprec.ret = ret
         assert len(rec) == 1

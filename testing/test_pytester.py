@@ -123,3 +123,13 @@ def test_makepyfile_unicode(testdir):
     except NameError:
         unichr = chr
     testdir.makepyfile(unichr(0xfffd))
+
+def test_inprocess_plugins(testdir):
+    class Plugin(object):
+        configured = False
+        def pytest_configure(self, config):
+            self.configured = True
+    plugin = Plugin()
+    testdir.inprocess_run([], [plugin])
+
+    assert plugin.configured
