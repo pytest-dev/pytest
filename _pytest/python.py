@@ -1235,14 +1235,17 @@ class FuncargManager:
         self.session = session
         self.config = session.config
         self.arg2facspec = {}
-        session.config.pluginmanager.register(self, "funcmanage")
+        self._seenplugins = set()
         self._holderobjseen = set()
         self.setuplist = []
         self._arg2finish = {}
+        session.config.pluginmanager.register(self, "funcmanage")
 
     ### XXX this hook should be called for historic events like pytest_configure
-    ### so that we don't have to do the below pytest_collection hook
+    ### so that we don't have to do the below pytest_configure hook
     def pytest_plugin_registered(self, plugin):
+        if plugin in self._seenplugins:
+            return
         #print "plugin_registered", plugin
         nodeid = ""
         try:
@@ -1253,10 +1256,11 @@ class FuncargManager:
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.session.fspath)
         self._parsefactories(plugin, nodeid)
+        self._seenplugins.add(plugin)
 
     @pytest.mark.tryfirst
-    def pytest_collection(self, session):
-        plugins = session.config.pluginmanager.getplugins()
+    def pytest_configure(self, config):
+        plugins = config.pluginmanager.getplugins()
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
