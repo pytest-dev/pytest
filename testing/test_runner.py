@@ -180,7 +180,12 @@ class BaseFunctionalTests:
                     raise Exception()
 
             def test_func():
-                pass
+                import sys
+                # on python2 exc_info is keept till a function exits
+                # so we would end up calling test functions while
+                # sys.exc_info would return the indexerror
+                # from guessing the lastitem
+                assert sys.exc_info()[0] is None
             def teardown_function(func):
                 raise ValueError(42)
         """)
