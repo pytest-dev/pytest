@@ -114,11 +114,18 @@ def pytest_collection(session):
 def pytest_runtestloop(session):
     if session.config.option.collectonly:
         return True
-    for i, item in enumerate(session.items):
+
+    def getnextitem(i):
+        # this is a function to avoid python2
+        # keeping sys.exc_info set when calling into a test
+        # python2 keeps sys.exc_info till the frame is left
         try:
-            nextitem = session.items[i+1]
+            return session.items[i+1]
         except IndexError:
-            nextitem = None
+            return None
+
+    for i, item in enumerate(session.items):
+        nextitem = getnextitem(i)
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
